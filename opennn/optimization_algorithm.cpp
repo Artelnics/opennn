@@ -427,7 +427,7 @@ string OptimizationAlgorithm::Results::write_stopping_condition() const
         return "Maximum selection error increases";
 
     case MaximumEpochsNumber:
-        return "Maximum number of iterations";
+        return "Maximum number of epochs";
 
     case MaximumTime:
         return "Maximum training time";

@@ -246,7 +246,7 @@ void GeneticAlgorithm::set_default()
     if(training_strategy_pointer == nullptr
             || !training_strategy_pointer->has_neural_network())
     {
-        maximum_iterations_number = 100;
+        maximum_epochs_number = 100;
 
         mutation_rate = 0.5;
 
@@ -255,7 +255,7 @@ void GeneticAlgorithm::set_default()
     else
     {
         inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
-        maximum_iterations_number = static_cast<Index>(max(100.,inputs_number*5.));
+        maximum_epochs_number = static_cast<Index>(max(100.,inputs_number*5.));
 
         mutation_rate = static_cast<type>(1.0/inputs_number);
 
@@ -1878,7 +1878,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     initialize_population();
 
-    for(Index iteration = 0; iteration < maximum_iterations_number; iteration++)
+    for(Index iteration = 0; iteration < maximum_epochs_number; iteration++)
     {
         cout << "iteration: " << iteration << endl;
 
@@ -1987,16 +1987,16 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
             results->stopping_condition = InputsSelection::SelectionErrorGoal;
         }
-        else if(iteration >= maximum_iterations_number-1)
+        else if(iteration >= maximum_epochs_number-1)
         {
             end_algortihm = true;
 
             if(display)
             {
-                cout << "Maximum number of iterations reached." << endl;
+                cout << "Maximum number of epochs reached." << endl;
             }
 
-            results->stopping_condition = InputsSelection::MaximumIterations;
+            results->stopping_condition = InputsSelection::MaximumEpochs;
         }
 
         for(Index j = 0; j < current_inputs.size(); j++)
@@ -2436,7 +2436,7 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MaximumGenerationsNumber");
 
     buffer.str("");
-    buffer << maximum_iterations_number;
+    buffer << maximum_epochs_number;
 
     file_stream.PushText(buffer.str().c_str());
 

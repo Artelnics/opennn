@@ -51,7 +51,7 @@ public:
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumIterations, MaximumSelectionFailures, AlgorithmFinished};
+    enum StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, AlgorithmFinished};
 
     // Structures
 
@@ -64,8 +64,6 @@ public:
        virtual ~Results() {}
 
        string write_stopping_condition() const;
-
-
 
        /// Neurons of the diferent neural networks.
 
@@ -172,8 +170,6 @@ public:
 
     virtual Results* perform_neurons_selection() = 0;
 
-    //
-
     /// Writes the time from seconds in format HH:mm:ss.
 
     const string write_elapsed_time(const type&) const;
@@ -234,7 +230,7 @@ protected:
 
     type selection_error_goal;
 
-    /// Maximum number of iterations to perform_neurons_selection. It is used as a stopping criterion.
+    /// Maximum number of epochs to perform_neurons_selection. It is used as a stopping criterion.
 
     Index maximum_epochs_number;
 
