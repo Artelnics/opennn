@@ -3281,7 +3281,7 @@ void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type,
                                                                                             outputs,
                                                                                             labels);
 
-    Tensor<float, 1> well_classified_numerical_probabilities(well_classified_samples.dimension(0));
+    Tensor<type, 1> well_classified_numerical_probabilities(well_classified_samples.dimension(0));
 
     for(Index i = 0; i < well_classified_numerical_probabilities.size(); i++)
     {
@@ -3305,7 +3305,7 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
                                                                                         outputs,
                                                                                         labels);
 
-    Tensor<float, 1> misclassified_numerical_probabilities(misclassified_samples.dimension(0));
+    Tensor<type, 1> misclassified_numerical_probabilities(misclassified_samples.dimension(0));
 
     for(Index i = 0; i < misclassified_numerical_probabilities.size(); i++)
     {
@@ -3329,7 +3329,7 @@ void TestingAnalysis::save_well_classified_samples_probability_histogram(const T
                                                                                             outputs,
                                                                                             labels);
 
-    Tensor<float, 1> well_classified_numerical_probabilities(well_classified_samples.dimension(0));
+    Tensor<type, 1> well_classified_numerical_probabilities(well_classified_samples.dimension(0));
 
     for(Index i = 0; i < well_classified_numerical_probabilities.size(); i++)
     {
@@ -3345,7 +3345,7 @@ void TestingAnalysis::save_well_classified_samples_probability_histogram(const T
                                                                            const string& histogram_file_name)
 {
 
-    Tensor<float, 1> well_classified_numerical_probabilities(well_classified_samples.dimension(0));
+    Tensor<type, 1> well_classified_numerical_probabilities(well_classified_samples.dimension(0));
 
     for(Index i = 0; i < well_classified_numerical_probabilities.size(); i++)
     {
@@ -3366,7 +3366,7 @@ void TestingAnalysis::save_misclassified_samples_probability_histogram(const Ten
                                                                                           outputs,
                                                                                           labels);
 
-    Tensor<float, 1> misclassified_numerical_probabilities(misclassified_samples.dimension(0));
+    Tensor<type, 1> misclassified_numerical_probabilities(misclassified_samples.dimension(0));
 
     for(Index i = 0; i < misclassified_numerical_probabilities.size(); i++)
     {
@@ -3382,7 +3382,7 @@ void TestingAnalysis::save_misclassified_samples_probability_histogram(const Ten
                                                                           const string& histogram_file_name)
 {
 
-    Tensor<float, 1> misclassified_numerical_probabilities(misclassified_samples.dimension(0));
+    Tensor<type, 1> misclassified_numerical_probabilities(misclassified_samples.dimension(0));
 
     for(Index i = 0; i < misclassified_numerical_probabilities.size(); i++)
     {

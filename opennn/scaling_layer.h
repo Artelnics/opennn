@@ -174,8 +174,8 @@ protected:
 
    /// min and max range for minmaxscaling
 
-   float min_range;
-   float max_range;
+   type min_range;
+   type max_range;
 
    /// Display warning messages to screen. 
 
