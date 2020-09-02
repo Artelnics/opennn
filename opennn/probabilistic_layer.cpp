@@ -597,11 +597,39 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 
 void ProbabilisticLayer::set_parameters_random()
 {
+
     biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
+/// Initializes the synaptic weights with glorot uniform distribution.
+
+void ProbabilisticLayer::set_synaptic_weights_constant_glorot_uniform()
+{
+    Index fan_in;
+    Index fan_out;
+
+    type scale = 1.0;
+    type limit;
+
+    fan_in = synaptic_weights.dimension(0);
+    fan_out = synaptic_weights.dimension(1);
+
+    scale /= ((fan_in + fan_out) / static_cast<type>(2.0));
+    limit = sqrt(static_cast<type>(3.0) * scale);
+
+//    biases.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
+    biases.setZero();
+
+    synaptic_weights.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
+
+    Eigen::Tensor<type, 0> min_weight = synaptic_weights.minimum();
+    Eigen::Tensor<type, 0> max_weight = synaptic_weights.maximum();
+
+    synaptic_weights = (synaptic_weights - synaptic_weights.constant(min_weight(0))) / (synaptic_weights.constant(max_weight(0))- synaptic_weights.constant(min_weight(0)));
+    synaptic_weights = (synaptic_weights * synaptic_weights.constant(2. * limit)) - synaptic_weights.constant(limit);
+}
 
 void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, const Index& )
 {
@@ -744,7 +772,6 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const
 {
     calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
-
     calculate_activations_derivatives(forward_propagation.combinations_2d,
                                       forward_propagation.activations_2d,
                                       forward_propagation.activations_derivatives_3d);
