@@ -117,7 +117,7 @@ private:
 
     Index maximum_inputs_number;
 
-    /// Maximum number of iterations at which the selection error increases.
+    /// Maximum number of epochs at which the selection error increases.
 
     Index maximum_selection_failures;
 };

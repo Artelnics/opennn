@@ -263,7 +263,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             if(display) cout << "Maximum number of epochs reached." << endl;
 
-            results->stopping_condition = IncrementalNeurons::MaximumIterations;
+            results->stopping_condition = IncrementalNeurons::MaximumEpochs;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
@@ -299,7 +299,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
     if(display)
     {
         cout << endl
-             << "Optimal order: " << optimal_neurons_number <<  endl
+             << "Optimal neurons number: " << optimal_neurons_number <<  endl
              << "Optimum selection error: " << optimum_selection_error << endl
              << "Corresponding training error: " << optimum_training_error << endl;
     }
@@ -329,116 +329,109 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
 
 /// Writes as matrix of strings the most representative atributes.
+/// @todo
 
 Tensor<string, 2> IncrementalNeurons::to_string_matrix() const
 {
-    /*
         ostringstream buffer;
 
         Tensor<string, 1> labels;
         Tensor<string, 1> values;
 
-       // Minimum order
+       // Minimum neurons number
 
-       labels.push_back("Minimum order");
+//       labels.push_back("Minimum neurons");
 
        buffer.str("");
-       buffer << minimum_order;
+       buffer << minimum_neurons;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
 
        // Maximum order
 
-       labels.push_back("Maximum order");
+//       labels.push_back("Maximum neurons");
 
        buffer.str("");
-       buffer << maximum_order;
+       buffer << maximum_neurons;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
 
        // Step
 
-       labels.push_back("Step");
+//       labels.push_back("Step");
 
        buffer.str("");
        buffer << step;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
 
        // Trials number
 
-       labels.push_back("Trials number");
+//       labels.push_back("Trials number");
 
        buffer.str("");
        buffer << trials_number;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
 
        // Tolerance
 
-       labels.push_back("Tolerance");
+//       labels.push_back("Tolerance");
 
        buffer.str("");
        buffer << tolerance;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
 
        // Selection loss goal
 
-       labels.push_back("Selection loss goal");
+//       labels.push_back("Selection loss goal");
 
        buffer.str("");
        buffer << selection_error_goal;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
 
        // Maximum selection failures
 
-       labels.push_back("Maximum selection failures");
+//       labels.push_back("Maximum selection failures");
 
        buffer.str("");
        buffer << maximum_selection_failures;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
 
        // Maximum iterations number
 
-       labels.push_back("Maximum iterations number");
+//       labels.push_back("Maximum iterations number");
 
        buffer.str("");
-       buffer << maximum_iterations_number;
+       buffer << maximum_epochs_number;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
 
        // Maximum time
 
-       labels.push_back("Maximum time");
+//       labels.push_back("Maximum time");
 
        buffer.str("");
        buffer << maximum_time;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
 
        // Plot training error history
 
-       labels.push_back("Plot training error history");
+//       labels.push_back("Plot training error history");
 
        buffer.str("");
 
-       if(reserve_training_error_data)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
+       reserve_training_error_data ? buffer << "true" : buffer << "false";
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
 
        // Plot selection error history
 
-       labels.push_back("Plot selection error history");
+//       labels.push_back("Plot selection error history");
 
        buffer.str("");
 
@@ -451,20 +444,19 @@ Tensor<string, 2> IncrementalNeurons::to_string_matrix() const
            buffer << "false";
        }
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
 
        const Index rows_number = labels.size();
        const Index columns_number = 2;
 
        Tensor<string, 2> string_matrix(rows_number, columns_number);
 
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
+//       string_matrix.set_column(0, labels, "name");
+//       string_matrix.set_column(1, values, "value");
 
         return string_matrix;
-    */
 
-    return Tensor<string, 2>();
+//    return Tensor<string, 2>();
 }
 
 

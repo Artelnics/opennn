@@ -86,7 +86,6 @@ public:
     // Serialization methods
 
     Tensor<string, 2> to_string_matrix() const;
-
     
     void from_XML(const tinyxml2::XMLDocument&);
 
@@ -101,7 +100,7 @@ private:
 
    Index step;
 
-   /// Maximum number of iterations at which the selection error increases.
+   /// Maximum number of epochs at which the selection error increases.
 
    Index maximum_selection_failures;
 

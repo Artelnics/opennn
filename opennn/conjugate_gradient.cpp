@@ -272,7 +272,7 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
 /// <li> Loss goal: -numeric_limits<type>::max().
 /// <li> Gradient norm goal: 0.0.
 /// <li> Maximum training time: 1.0e6.
-/// <li> Maximum number of iterations: 100.
+/// <li> Maximum number of epochs: 100.
 /// </ul>
 /// User stuff:
 /// <ul>
@@ -408,7 +408,7 @@ void ConjugateGradient::set_gradient_norm_goal(const type& new_gradient_norm_goa
 
 
 /// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_error_increases Maximum number of iterations in which the selection evalutation increases.
+/// @param new_maximum_selection_error_increases Maximum number of epochs in which the selection evalutation increases.
 
 void ConjugateGradient::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_increases)
 {
@@ -417,7 +417,7 @@ void ConjugateGradient::set_maximum_selection_error_increases(const Index& new_m
 
 
 /// Sets a maximum number of epochs for training.
-/// @param new_maximum_iterations_number Maximum number of iterations for training.
+/// @param new_maximum_iterations_number Maximum number of epochs for training.
 
 void ConjugateGradient::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {

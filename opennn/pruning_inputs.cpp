@@ -250,9 +250,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     // Model selection
 
-    if(used_columns_number < maximum_iterations_number) maximum_iterations_number = used_columns_number;
+    if(used_columns_number < maximum_epochs_number) maximum_epochs_number = used_columns_number;
 
-    for(Index iteration = 0; iteration < maximum_iterations_number; iteration++)
+    for(Index iteration = 0; iteration < maximum_epochs_number; iteration++)
     {
         OptimizationAlgorithm::Results training_results;
 
@@ -351,13 +351,13 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
             results->stopping_condition = InputsSelection::SelectionErrorGoal;
         }
-        else if(iteration >= maximum_iterations_number)
+        else if(iteration >= maximum_epochs_number)
         {
             end_algorithm = true;
 
-            if(display) cout << "Maximum number of iterations reached." << endl;
+            if(display) cout << "Maximum number of epochs reached." << endl;
 
-            results->stopping_condition = InputsSelection::MaximumIterations;
+            results->stopping_condition = InputsSelection::MaximumEpochs;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
@@ -693,7 +693,7 @@ void PruningInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MaximumEpochsNumber");
 
     buffer.str("");
-    buffer << maximum_iterations_number;
+    buffer << maximum_epochs_number;
 
     file_stream.PushText(buffer.str().c_str());
 

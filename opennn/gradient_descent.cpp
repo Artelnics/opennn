@@ -340,7 +340,7 @@ void GradientDescent::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 
 
 /// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_error_increases Maximum number of iterations in which the selection evalutation
+/// @param new_maximum_selection_error_increases Maximum number of epochs in which the selection evalutation
 /// increases.
 
 void GradientDescent::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_increases)

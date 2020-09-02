@@ -172,7 +172,7 @@ const type& LevenbergMarquardtAlgorithm::get_maximum_damping_parameter() const
 /// <li> Loss goal: 1.0e-6.
 /// <li> Gradient norm goal: 1.0e-6.
 /// <li> Maximum training time: 1000 secondata_set.
-/// <li> Maximum number of iterations: 1000.
+/// <li> Maximum number of epochs: 1000.
 /// </ul>
 /// User stuff:
 /// <ul>
@@ -397,7 +397,7 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const type& new_gradien
 
 
 /// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_error_increases Maximum number of iterations in which the
+/// @param new_maximum_selection_error_increases Maximum number of epochs in which the
 /// selection evalutation increases.
 
 void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(
@@ -408,7 +408,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(
 
 
 /// Sets a maximum number of iterations for training.
-/// @param new_maximum_epochs_number Maximum number of iterations for training.
+/// @param new_maximum_epochs_number Maximum number of epochs for training.
 
 void LevenbergMarquardtAlgorithm::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
