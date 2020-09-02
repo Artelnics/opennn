@@ -376,7 +376,7 @@ void NeuronsSelection::set_selection_error_goal(const type& new_selection_error_
 
 
 /// Sets the maximum epochs number for the neurons selection algorithm.
-/// @param new_maximum_epochs_number Maximum number of iterations.
+/// @param new_maximum_epochs_number Maximum number of epochs.
 
 void NeuronsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
@@ -784,32 +784,27 @@ const string NeuronsSelection::write_elapsed_time(const type& time) const
     return elapsed_time.str();
 }
 
+
 /// Return a string with the stopping condition of the Results
 
 string NeuronsSelection::Results::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-    case MaximumTime:
-    {
-        return "MaximumTime";
-    }
-    case SelectionErrorGoal:
-    {
-        return "SelectionErrorGoal";
-    }
-    case MaximumIterations:
-    {
-        return "MaximumIterations";
-    }
-    case MaximumSelectionFailures:
-    {
-        return "MaximumSelectionFailures";
-    }
-    case AlgorithmFinished:
-    {
-        return "AlgorithmFinished";
-    }
+        case MaximumTime:
+            return "MaximumTime";
+
+        case SelectionErrorGoal:
+            return "SelectionErrorGoal";
+
+        case MaximumEpochs:
+            return "MaximumEpochs";
+
+        case MaximumSelectionFailures:
+            return "MaximumSelectionFailures";
+
+        case AlgorithmFinished:
+            return "AlgorithmFinished";
     }
 
     return string();

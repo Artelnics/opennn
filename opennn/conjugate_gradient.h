@@ -224,12 +224,12 @@ private:
 
    type gradient_norm_goal = 0;
 
-   /// Maximum number of iterations at which the selection error increases.
+   /// Maximum number of epochs at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
    Index maximum_selection_error_increases;
 
-   /// Maximum number of iterations to perform_training. It is used as a stopping criterion.
+   /// Maximum number of epochs to perform_training. It is used as a stopping criterion.
 
    Index maximum_epochs_number;
 

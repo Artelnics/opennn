@@ -138,7 +138,7 @@ const type& InputsSelection::get_selection_error_goal() const
 
 const Index& InputsSelection::get_maximum_iterations_number() const
 {
-    return maximum_iterations_number;
+    return maximum_epochs_number;
 }
 
 
@@ -210,7 +210,7 @@ void InputsSelection::set_default()
 
     selection_error_goal = 0;
 
-    maximum_iterations_number = 1000;
+    maximum_epochs_number = 1000;
 
     maximum_correlation = 1.0;
     minimum_correlation = 0;
@@ -307,11 +307,11 @@ void InputsSelection::set_selection_error_goal(const type& new_selection_error_g
 
 
 /// Sets the maximum iterations number for the inputs selection algorithm.
-/// @param new_maximum_iterations_number Maximum number of iterations.
+/// @param new_maximum_iterations_number Maximum number of epochs.
 
 void InputsSelection::set_maximum_iterations_number(const Index& new_maximum_iterations_number)
 {
-    maximum_iterations_number = new_maximum_iterations_number;
+    maximum_epochs_number = new_maximum_iterations_number;
 }
 
 
@@ -826,9 +826,9 @@ string InputsSelection::Results::write_stopping_condition() const
     {
         return "MinimumInputs";
     }
-    case MaximumIterations:
+    case MaximumEpochs:
     {
-        return "MaximumIterations";
+        return "MaximumEpochs";
     }
     case MaximumSelectionFailures:
     {
