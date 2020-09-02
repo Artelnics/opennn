@@ -54,7 +54,7 @@
 
 #include "model_selection.h"
 #include "neurons_selection.h"
-#include "incremental_neurons.h"
+#include "growing_neurons.h"
 #include "inputs_selection.h"
 #include "growing_inputs.h"
 #include "pruning_inputs.h"

@@ -1,13 +1,13 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N C R E M E N T A L   N E U R O N S   C L A S S   H E A D E R
+//   G R O W I N G   N E U R O N S   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef INCREMENTALNEURONS_H
-#define INCREMENTALNEURONS_H
+#ifndef GROWINGNEURONS_H
+#define GROWINGNEURONS_H
 
 // System includes
 
@@ -28,39 +28,39 @@
 namespace OpenNN
 {
 
-/// This concrete class represents an incremental algorithm for the NeuronsSelection as part of the ModelSelection[1] class.
+/// This concrete class represents an growing neurons algorithm for the NeuronsSelection as part of the ModelSelection[1] class.
 
 /// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
 /// \ref https://www.neuraldesigner.com/blog/model-selection
 
-class IncrementalNeurons : public NeuronsSelection
+class GrowingNeurons : public NeuronsSelection
 {
 
 public:
 
     // Constructors
 
-    explicit IncrementalNeurons();
+    explicit GrowingNeurons();
 
-    explicit IncrementalNeurons(TrainingStrategy*);
+    explicit GrowingNeurons(TrainingStrategy*);
 
     // Destructor
 
-    virtual ~IncrementalNeurons();
+    virtual ~GrowingNeurons();
 
-    /// This structure contains the training results for the incremental order method.
+    /// This structure contains the training results for the growing neurons method.
 
-    struct IncrementalNeuronsResults : public NeuronsSelection::Results
+    struct GrowingNeuronsResults : public NeuronsSelection::Results
     {
         /// Default constructor.
 
-        explicit IncrementalNeuronsResults() : NeuronsSelection::Results()
+        explicit GrowingNeuronsResults() : NeuronsSelection::Results()
         {
         }
 
         /// Destructor.
 
-        virtual ~IncrementalNeuronsResults()
+        virtual ~GrowingNeuronsResults()
         {
         }
     };
@@ -81,11 +81,11 @@ public:
 
     // Order selection methods
 
-    IncrementalNeuronsResults* perform_neurons_selection();
+    GrowingNeuronsResults* perform_neurons_selection();
 
     // Serialization methods
 
-    Tensor<string, 2> to_string_matrix() const;
+    <string, 2> to_string_matrix() const;
     
     void from_XML(const tinyxml2::XMLDocument&);
 
