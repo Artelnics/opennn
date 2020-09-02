@@ -1,19 +1,19 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N C R E M E N T A L   N E U R O N S   C L A S S
+//   G R O W I N G   N E U R O N S   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "incremental_neurons.h"
+#include "growing_neurons.h"
 
 namespace OpenNN
 {
 
 /// Default constructor.
 
-IncrementalNeurons::IncrementalNeurons()
+GrowingNeurons::GrowingNeurons()
     : NeuronsSelection()
 {
     set_default();
@@ -23,7 +23,7 @@ IncrementalNeurons::IncrementalNeurons()
 /// Training strategy constructor.
 /// @param new_training_strategy_pointer Pointer to a gradient descent object.
 
-IncrementalNeurons::IncrementalNeurons(TrainingStrategy* new_training_strategy_pointer)
+GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy_pointer)
     : NeuronsSelection(new_training_strategy_pointer)
 {
     set_default();
@@ -32,14 +32,14 @@ IncrementalNeurons::IncrementalNeurons(TrainingStrategy* new_training_strategy_p
 
 /// Destructor.
 
-IncrementalNeurons::~IncrementalNeurons()
+GrowingNeurons::~GrowingNeurons()
 {
 }
 
 
-/// Returns the number of the hidden perceptrons pointed in each iteration of the Incremental neurons algorithm.
+/// Returns the number of the hidden perceptrons pointed in each iteration of the growing neurons algorithm.
 
-const Index& IncrementalNeurons::get_step() const
+const Index& GrowingNeurons::get_step() const
 {
     return step;
 }
@@ -47,7 +47,7 @@ const Index& IncrementalNeurons::get_step() const
 
 /// Returns the maximum number of selection failures in the model order selection algorithm.
 
-const Index& IncrementalNeurons::get_maximum_selection_failures() const
+const Index& GrowingNeurons::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
 }
@@ -55,7 +55,7 @@ const Index& IncrementalNeurons::get_maximum_selection_failures() const
 
 /// Sets the members of the model selection object to their default values:
 
-void IncrementalNeurons::set_default()
+void GrowingNeurons::set_default()
 {
     step = 1;
 
@@ -63,11 +63,11 @@ void IncrementalNeurons::set_default()
 }
 
 
-/// Sets the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm
+/// Sets the number of the hidden perceptrons pointed in each iteration of the growing algorithm
 /// in the model order selection process.
 /// @param new_step number of hidden perceptrons pointed.
 
-void IncrementalNeurons::set_step(const Index& new_step)
+void GrowingNeurons::set_step(const Index& new_step)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -75,7 +75,7 @@ void IncrementalNeurons::set_step(const Index& new_step)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: IncrementalNeurons class.\n"
+        buffer << "OpenNN Exception: GrowingNeurons class.\n"
                << "void set_step(const Index&) method.\n"
                << "New_step(" << new_step << ") must be greater than 0.\n";
 
@@ -88,10 +88,10 @@ void IncrementalNeurons::set_step(const Index& new_step)
 }
 
 
-/// Sets the maximum selection failures for the Incremental order selection algorithm.
-/// @param new_maximum_loss_failures Maximum number of selection failures in the Incremental order selection algorithm.
+/// Sets the maximum selection failures for the growing order selection algorithm.
+/// @param new_maximum_loss_failures Maximum number of selection failures in the growing neurons selection algorithm.
 
-void IncrementalNeurons::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
+void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -99,7 +99,7 @@ void IncrementalNeurons::set_maximum_selection_failures(const Index& new_maximum
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: IncrementalNeurons class.\n"
+        buffer << "OpenNN Exception: GrowingNeurons class.\n"
                << "void set_maximum_selection_failures(const Index&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
@@ -112,15 +112,15 @@ void IncrementalNeurons::set_maximum_selection_failures(const Index& new_maximum
 }
 
 
-/// Perform the neurons selection with the Incremental method.
+/// Perform the neurons selection with the growing neurons method.
 
-IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neurons_selection()
+GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection()
 {
-    IncrementalNeuronsResults* results = new IncrementalNeuronsResults();
+    GrowingNeuronsResults* results = new GrowingNeuronsResults();
 
     if(display)
     {
-        cout << "Performing Incremental neurons selection..." << endl;
+        cout << "Performing growing neurons selection..." << endl;
         cout.flush();
     }
 
@@ -247,7 +247,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             if(display) cout << "Maximum time reached." << endl;
 
-            results->stopping_condition = IncrementalNeurons::MaximumTime;
+            results->stopping_condition = GrowingNeurons::MaximumTime;
         }
         else if(current_selection_error <= selection_error_goal)
         {
@@ -255,7 +255,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             if(display) cout << "Selection loss reached." << endl;
 
-            results->stopping_condition = IncrementalNeurons::SelectionErrorGoal;
+            results->stopping_condition = GrowingNeurons::SelectionErrorGoal;
         }
         else if(iterations >= maximum_epochs_number)
         {
@@ -263,7 +263,11 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             if(display) cout << "Maximum number of epochs reached." << endl;
 
+<<<<<<< Updated upstream:opennn/incremental_neurons.cpp
             results->stopping_condition = IncrementalNeurons::MaximumEpochs;
+=======
+            results->stopping_condition = GrowingNeurons::MaximumIterations;
+>>>>>>> Stashed changes:opennn/growing_neurons.cpp
         }
         else if(selection_failures >= maximum_selection_failures)
         {
@@ -271,7 +275,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             if(display) cout << "Maximum selection failures (" << selection_failures << ") reached." << endl;
 
-            results->stopping_condition = IncrementalNeurons::MaximumSelectionFailures;
+            results->stopping_condition = GrowingNeurons::MaximumSelectionFailures;
         }
         else if(neurons_number == maximum_neurons)
         {
@@ -279,7 +283,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             if(display) cout << "Algorithm finished." << endl;
 
-            results->stopping_condition = IncrementalNeurons::AlgorithmFinished;
+            results->stopping_condition = GrowingNeurons::AlgorithmFinished;
         }
 
         if(display)
@@ -331,7 +335,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 /// Writes as matrix of strings the most representative atributes.
 /// @todo
 
-Tensor<string, 2> IncrementalNeurons::to_string_matrix() const
+Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 {
         ostringstream buffer;
 
@@ -460,15 +464,15 @@ Tensor<string, 2> IncrementalNeurons::to_string_matrix() const
 }
 
 
-/// Serializes the incremental order object into a XML document of the TinyXML library without
+/// Serializes the growing neurons object into a XML document of the TinyXML library without
 /// keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
-void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("IncrementalNeurons");
+    //file_stream.OpenElement("GrowingNeurons");
 
     // Minimum order
 
@@ -585,20 +589,20 @@ void IncrementalNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Deserializes a TinyXML document into this incremental order object.
+/// Deserializes a TinyXML document into this growing neurons object.
 /// @param document TinyXML document containing the member data.
 
-void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
+void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("IncrementalNeurons");
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("GrowingNeurons");
 
     if(!root_element)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: IncrementalNeurons class.\n"
+        buffer << "OpenNN Exception: GrowingNeurons class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "IncrementalNeurons element is nullptr.\n";
+               << "GrowingNeurons element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -797,10 +801,10 @@ void IncrementalNeurons::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Saves to a XML-type file the members of the incremental order object.
-/// @param file_name Name of incremental order XML-type file.
+/// Saves to a XML-type file the members of the growing neurons object.
+/// @param file_name Name of growing neurons XML-type file.
 
-void IncrementalNeurons::save(const string& file_name) const
+void GrowingNeurons::save(const string& file_name) const
 {
 //    tinyxml2::XMLDocument* document = to_XML();
 
@@ -810,10 +814,10 @@ void IncrementalNeurons::save(const string& file_name) const
 }
 
 
-/// Loads a incremental order object from a XML-type file.
-/// @param file_name Name of incremental order XML-type file.
+/// Loads a growing neurons object from a XML-type file.
+/// @param file_name Name of growing neurons XML-type file.
 
-void IncrementalNeurons::load(const string& file_name)
+void GrowingNeurons::load(const string& file_name)
 {
     set_default();
 
@@ -823,7 +827,7 @@ void IncrementalNeurons::load(const string& file_name)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: IncrementalNeurons class.\n"
+        buffer << "OpenNN Exception: GrowingNeurons class.\n"
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 

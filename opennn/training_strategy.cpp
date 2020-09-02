@@ -245,10 +245,6 @@ WeightedSquaredError* TrainingStrategy::get_weighted_squared_error_pointer()
     return &weighted_squared_error;
 }
 
-//DataSet* TrainingStrategy::get_data_set_pointer()
-//{
-//    return &;
-//}
 
 /// Returns the type of the main loss algorithm composing this training strategy object.
 
@@ -1015,68 +1011,14 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             const tinyxml2::XMLElement* loss_method_element = element->FirstChildElement("LossMethod");
 
             set_loss_method(loss_method_element->GetText());
-            /*// Sum squared error
-
-            const tinyxml2::XMLElement* sum_squared_error_element = element->FirstChildElement("SumSquaredError");
-
-            if(sum_squared_error_element)
-            {
-                tinyxml2::XMLDocument new_document;
-
-                tinyxml2::XMLElement* sum_squared_error_element_copy = new_document.NewElement("SumSquaredError");
-
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-                {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    sum_squared_error_element_copy->InsertEndChild(copy);
-                }
-
-                new_document.InsertEndChild(sum_squared_error_element_copy);
-
-                sum_squared_error.from_XML(new_document);
-            }*/
 
             // Mean squared error
 
             const tinyxml2::XMLElement* mean_squared_error_element = element->FirstChildElement("MeanSquaredError");
 
-            if(mean_squared_error_element)
-            {
-                /*tinyxml2::XMLDocument new_document;
-
-                tinyxml2::XMLElement* mean_squared_error_element_copy = new_document.NewElement("SumSquaredError");
-
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-                {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    mean_squared_error_element_copy->InsertEndChild(copy);
-                }
-
-                new_document.InsertEndChild(mean_squared_error_element_copy);
-
-                mean_squared_error.from_XML(new_document);*/
-            }
-
             // Normalized squared error
 
             const tinyxml2::XMLElement* normalized_squared_error_element = element->FirstChildElement("NormalizedSquaredError");
-
-            if(normalized_squared_error_element)
-            {
-                /*tinyxml2::XMLDocument new_document;
-
-                tinyxml2::XMLElement* normalized_squared_error_element_copy = new_document.NewElement("NormalizedSquaredError");
-
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-                {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    normalized_squared_error_element_copy->InsertEndChild(copy );
-                }
-
-                new_document.InsertEndChild(normalized_squared_error_element_copy);
-
-                normalized_squared_error.from_XML(new_document);*/
-            }
 
             // Minkowski error
 

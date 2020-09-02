@@ -221,27 +221,27 @@ private:
 
    // Optimization algorithm
 
-   /// Pointer to a gradient descent object to be used as a main optimization algorithm.
+   /// Gradient descent object to be used as a main optimization algorithm.
 
    GradientDescent gradient_descent;
 
-   /// Pointer to a conjugate gradient object to be used as a main optimization algorithm.
+   /// Conjugate gradient object to be used as a main optimization algorithm.
 
    ConjugateGradient conjugate_gradient;
 
-   /// Pointer to a quasi-Newton method object to be used as a main optimization algorithm.
+   /// Quasi-Newton method object to be used as a main optimization algorithm.
 
    QuasiNewtonMethod quasi_Newton_method;
 
-   /// Pointer to a Levenberg-Marquardt algorithm object to be used as a main optimization algorithm.
+   /// Levenberg-Marquardt algorithm object to be used as a main optimization algorithm.
 
    LevenbergMarquardtAlgorithm Levenberg_Marquardt_algorithm;
 
-   /// Pointer to a stochastic gradient descent algorithm object to be used as a main optimization algorithm.
+   /// Stochastic gradient descent algorithm object to be used as a main optimization algorithm.
 
    StochasticGradientDescent stochastic_gradient_descent;
 
-   /// Pointer to a adaptive moment estimation algorithm object to be used as a main optimization algorithm.
+   /// Adaptive moment estimation algorithm object to be used as a main optimization algorithm.
 
    AdaptiveMomentEstimation adaptive_moment_estimation;
 

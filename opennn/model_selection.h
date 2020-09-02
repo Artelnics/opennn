@@ -22,7 +22,7 @@
 
 #include "config.h"
 #include "training_strategy.h"
-#include "incremental_neurons.h"
+#include "growing_neurons.h"
 #include "growing_inputs.h"
 #include "pruning_inputs.h"
 #include "genetic_algorithm.h"
@@ -54,7 +54,7 @@ public:
 
     /// Enumeration of all the available order selection algorithms.
 
-    enum NeuronsSelectionMethod{NO_NEURONS_SELECTION, INCREMENTAL_NEURONS};
+    enum NeuronsSelectionMethod{NO_NEURONS_SELECTION, GROWING_NEURONS};
 
     /// Enumeration of all the available inputs selection algorithms.
 
@@ -68,9 +68,9 @@ public:
 
         explicit Results();
 
-        /// Pointer to a structure with the results from the incremental order selection algorithm.
+        /// Pointer to a structure with the results from the growing neurons selection algorithm.
 
-        IncrementalNeurons::IncrementalNeuronsResults* incremental_neurons_results_pointer = nullptr;
+        GrowingNeurons::GrowingNeuronsResults* growing_neurons_results_pointer = nullptr;
 
 
         /// Pointer to a structure with the results from the growing inputs selection algorithm.
@@ -97,11 +97,11 @@ public:
     const NeuronsSelectionMethod& get_neurons_selection_method() const;
     const InputsSelectionMethod& get_inputs_selection_method() const;
 
-    IncrementalNeurons* get_incremental_neurons_pointer() const;
+    GrowingNeurons* get_growing_neurons_pointer();
 
-    GrowingInputs* get_growing_inputs_pointer() const;
-    PruningInputs* get_pruning_inputs_pointer() const;
-    GeneticAlgorithm* get_genetic_algorithm_pointer() const;
+    GrowingInputs* get_growing_inputs_pointer();
+    PruningInputs* get_pruning_inputs_pointer();
+    GeneticAlgorithm* get_genetic_algorithm_pointer();
 
     // Set methods
 
@@ -119,28 +119,24 @@ public:
 
     void set_approximation(const bool&);
 
-    // Pointer methods
-
-    void destruct_neurons_selection();
-
-    void destruct_inputs_selection();
-
     // Model selection methods
 
     void check() const;
 
-    Results perform_neurons_selection() const;
+    Results perform_neurons_selection();
 
-    Results perform_inputs_selection() const;
+    Results perform_inputs_selection();
 
-    Results perform_model_selection() const;
+    Results perform_model_selection();
 
     // Serialization methods
-
     
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
+
+    string write_neurons_selection_method() const;
+    string write_inputs_selection_method() const;
 
     void print() const;
     void save(const string&) const;
@@ -152,21 +148,21 @@ private:
 
     TrainingStrategy* training_strategy_pointer = nullptr;
 
-    /// Pointer to a incremental order object to be used for order selection.
+    /// Growing order object to be used for order selection.
 
-    IncrementalNeurons* incremental_neurons_pointer = nullptr;
+    GrowingNeurons growing_neurons;
 
-    /// Pointer to a growing inputs object to be used for inputs selection.
+    /// Growing inputs object to be used for inputs selection.
 
-    GrowingInputs* growing_inputs_pointer = nullptr;
+    GrowingInputs growing_inputs;
 
-    /// Pointer to a pruning inputs object to be used for inputs selection.
+    /// Pruning inputs object to be used for inputs selection.
 
-    PruningInputs* pruning_inputs_pointer = nullptr;
+    PruningInputs pruning_inputs;
 
-    /// Pointer to a genetic algorithm object to be used for inputs selection.
+    /// Genetic algorithm object to be used for inputs selection.
 
-    GeneticAlgorithm* genetic_algorithm_pointer = nullptr;
+    GeneticAlgorithm genetic_algorithm;
 
     /// Type of order selection algorithm.
 
