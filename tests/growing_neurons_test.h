@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                           
 
-#ifndef INCREMENTALNEURONSTEST_H
-#define INCREMENTALNEURONSTEST_H
+#ifndef GROWINGNEURONSTEST_H
+#define GROWINGNEURONSTEST_H
 
 // Unit testing includes
 
@@ -16,7 +16,7 @@
 using namespace OpenNN;
 
 
-class IncrementalNeuronsTest : public UnitTesting
+class GrowingNeuronsTest : public UnitTesting
 {
 
 #define	STRING(x) #x
@@ -25,9 +25,9 @@ class IncrementalNeuronsTest : public UnitTesting
 
 public:
 
-   explicit IncrementalNeuronsTest();
+   explicit GrowingNeuronsTest();
 
-   virtual ~IncrementalNeuronsTest();
+   virtual ~GrowingNeuronsTest();
 
    // Constructor and destructor methods
 

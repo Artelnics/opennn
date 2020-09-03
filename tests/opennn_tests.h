@@ -50,7 +50,7 @@
 
 #include "model_selection_test.h"
 #include "neurons_selection_test.h"
-#include "incremental_neurons_test.h"
+#include "growing_neurons_test.h"
 #include "inputs_selection_test.h"
 #include "growing_inputs_test.h"
 #include "pruning_inputs_test.h"

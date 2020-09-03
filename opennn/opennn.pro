@@ -87,7 +87,7 @@ HEADERS += \
     conjugate_gradient.h\
     model_selection.h \
     neurons_selection.h \
-    incremental_neurons.h \
+    growing_neurons.h \
     inputs_selection.h \
     growing_inputs.h \
     pruning_inputs.h \
@@ -137,7 +137,7 @@ SOURCES += \
     conjugate_gradient.cpp \
     model_selection.cpp \
     neurons_selection.cpp \
-    incremental_neurons.cpp \
+    growing_neurons.cpp \
     inputs_selection.cpp \
     growing_inputs.cpp \
     pruning_inputs.cpp \
