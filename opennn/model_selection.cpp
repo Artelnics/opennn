@@ -604,6 +604,8 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             new_growing_neurons_document.InsertEndChild(growing_element);
 
             growing_neurons.from_XML(new_growing_neurons_document);
+
+            cout << "growing neurons" << endl;
         }
     }
 
@@ -614,7 +616,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const tinyxml2::XMLElement* inputs_selection_method_element = element->FirstChildElement("NeuronsSelectionMethod");
+            const tinyxml2::XMLElement* inputs_selection_method_element = element->FirstChildElement("InputsSelectionMethod");
 
             set_inputs_selection_method(inputs_selection_method_element->GetText());
 
@@ -634,6 +636,8 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
             growing_inputs.from_XML(new_growing_inputs_document);
 
+            cout << "growing inputs" << endl;
+
             // Pruning inputs
 
             tinyxml2::XMLDocument new_pruning_inputs_document;
@@ -650,6 +654,8 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
             pruning_inputs.from_XML(new_pruning_inputs_document);
 
+            cout << "pruning inputs" << endl;
+
             // Genetic algorithm
 
             tinyxml2::XMLDocument new_document;
@@ -665,6 +671,8 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             new_document.InsertEndChild(genetic_element);
 
             genetic_algorithm.from_XML(new_document);
+
+            cout << "genetic algorithm" << endl;
         }
     }
 }
