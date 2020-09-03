@@ -82,7 +82,7 @@ int main(void)
         training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 
@@ -99,19 +99,17 @@ int main(void)
         cout << "Slope: " << linear_regression_analysis.slope << endl;
         cout << "Correlation: " << linear_regression_analysis.correlation << endl;
 
-        // Save results
+//         Save results
 
-//        data_set.save("../data/data_set.xml");
+        data_set.save("../data/data_set.xml");
 
-//        neural_network.save("../data/neural_network.xml");
+        neural_network.save("../data/neural_network.xml");
 
-//        training_strategy.save("../data/training_strategy.xml");
+        training_strategy.save("../data/training_strategy.xml");
 
-//        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
+        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
 
-//        linear_regression_analysis.save("../data/linear_regression_analysis.dat");
-
-        cout << "End" << endl;
+        linear_regression_analysis.save("../data/linear_regression_analysis.dat");
 
         return 0;
     }

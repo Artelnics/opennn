@@ -13,29 +13,29 @@
          <ScalingNeuron Index="1">
             <Minimum>4.3</Minimum>
             <Maximum>7.9</Maximum>
-            <Mean>5.84027</Mean>
-            <StandardDeviation>0.830005</StandardDeviation>
+            <Mean>5.84333</Mean>
+            <StandardDeviation>0.828055</StandardDeviation>
             <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
          <ScalingNeuron Index="2">
             <Minimum>2</Minimum>
             <Maximum>4.4</Maximum>
-            <Mean>3.0557</Mean>
-            <StandardDeviation>0.436878</StandardDeviation>
+            <Mean>3.05733</Mean>
+            <StandardDeviation>0.435863</StandardDeviation>
             <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
          <ScalingNeuron Index="3">
             <Minimum>1</Minimum>
             <Maximum>6.9</Maximum>
-            <Mean>3.74295</Mean>
-            <StandardDeviation>1.76157</StandardDeviation>
+            <Mean>3.758</Mean>
+            <StandardDeviation>1.7653</StandardDeviation>
             <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
          <ScalingNeuron Index="4">
             <Minimum>0.1</Minimum>
             <Maximum>2.5</Maximum>
-            <Mean>1.1906</Mean>
-            <StandardDeviation>0.757248</StandardDeviation>
+            <Mean>1.19933</Mean>
+            <StandardDeviation>0.762237</StandardDeviation>
             <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
       </ScalingLayer>
@@ -43,13 +43,13 @@
          <InputsNumber>4</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>-0.0235345 1.40338 -0.850152 0.333815 0.501397 -0.90903 -0.988804 0.551562 0.900767 -2.24044 -1.90295 -0.389611 0.732933 -1.13219 -1.03741</Parameters>
+         <Parameters>0.224247 -0.855741 -1.50754 -0.0363741 0.969824 -0.9217 -0.525826 -0.423427 0.621184 -1.32975 -0.843912 -0.48227 -0.717762 2.70926 1.55394</Parameters>
       </PerceptronLayer>
       <ProbabilisticLayer>
          <InputsNumber>3</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <ActivationFunction>Softmax</ActivationFunction>
-         <Parameters>0.204133 -0.452024 0.155639 1.45375 0.932851 1.42899 -0.397567 2.78156 -1.94135 -1.44136 -2.51416 -0.436376</Parameters>
+         <Parameters>0.123408 -0.247566 0.129448 1.2092 2.00538 -0.584616 0.0240896 -1.70204 -1.90627 -1.52082 -0.324715 3.05167</Parameters>
          <DecisionThreshold>0.5</DecisionThreshold>
       </ProbabilisticLayer>
    </Layers>

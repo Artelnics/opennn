@@ -16,7 +16,7 @@
             <Minimum>35.5</Minimum>
             <Maximum>41.5</Maximum>
             <Mean>38.7242</Mean>
-            <StandardDeviation>1.81913</StandardDeviation>
+            <StandardDeviation>1.81905</StandardDeviation>
             <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
          <ScalingNeuron Index="2">
@@ -59,13 +59,13 @@
          <InputsNumber>6</InputsNumber>
          <NeuronsNumber>6</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>-0.0213501 0.0201822 -0.027172 0.0154715 -0.0204489 0.0193747 0.496519 0.533132 0.592431 0.297064 -0.0563342 0.30764 -0.48751 -0.520283 -0.581232 -0.286801 0.0576039 -0.298307 0.483734 0.517043 0.577124 0.283153 -0.0629621 0.293082 -0.4503 -0.472018 -0.539255 -0.265333 0.057105 -0.276258 0.485746 0.514486 0.582163 0.291617 -0.0652907 0.300254 -0.44813 -0.468194 -0.535509 -0.266242 0.0615487 -0.27636</Parameters>
+         <Parameters>-0.0114886 0.00869156 -0.00253701 0.0092089 0.0335664 0.0173672 0.443166 0.514622 0.574662 0.282311 -0.0501636 0.291375 -0.472823 -0.565527 -0.620501 -0.305884 0.0543085 -0.318421 0.441916 0.503552 0.57328 0.281589 -0.0502604 0.290611 -0.450331 -0.525824 -0.585828 -0.290289 0.0412706 -0.299704 -0.463999 -0.540774 -0.62137 -0.294649 0.0575094 -0.315452 -0.453701 -0.496978 -0.548091 -0.271856 0.0475792 -0.290179</Parameters>
       </PerceptronLayer>
       <ProbabilisticLayer>
          <InputsNumber>6</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <ActivationFunction>Logistic</ActivationFunction>
-         <Parameters>-0.0643901 1.24289 -1.20508 1.22408 -1.11459 1.20721 -1.09419</Parameters>
+         <Parameters>-0.0360461 1.16717 -1.29074 1.15599 -1.19665 -1.26018 -1.10135</Parameters>
          <DecisionThreshold>0.5</DecisionThreshold>
       </ProbabilisticLayer>
    </Layers>

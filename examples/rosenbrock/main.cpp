@@ -37,8 +37,8 @@ int main(void)
 
         // Data Set
 
-        const Index samples = 1000000;
-        const Index variables = 1000;
+        const Index samples = 10000;
+        const Index variables = 10;
 
         DataSet data_set;
 

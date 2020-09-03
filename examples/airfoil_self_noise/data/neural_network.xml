@@ -15,49 +15,49 @@
             <Minimum>200</Minimum>
             <Maximum>20000</Maximum>
             <Mean>2886.38</Mean>
-            <StandardDeviation>3152.57</StandardDeviation>
-            <ScalingMethod>MeanStandardDeviation</ScalingMethod>
+            <StandardDeviation>3152.58</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
          <ScalingNeuron Index="2">
             <Minimum>0</Minimum>
             <Maximum>22.2</Maximum>
-            <Mean>6.7823</Mean>
-            <StandardDeviation>5.91813</StandardDeviation>
-            <ScalingMethod>MeanStandardDeviation</ScalingMethod>
+            <Mean>6.78228</Mean>
+            <StandardDeviation>5.91815</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
          <ScalingNeuron Index="3">
             <Minimum>0.0254</Minimum>
             <Maximum>0.3048</Maximum>
             <Mean>0.136548</Mean>
-            <StandardDeviation>0.0935407</StandardDeviation>
-            <ScalingMethod>MeanStandardDeviation</ScalingMethod>
+            <StandardDeviation>0.0935372</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
          <ScalingNeuron Index="4">
             <Minimum>31.7</Minimum>
             <Maximum>71.3</Maximum>
-            <Mean>50.8607</Mean>
-            <StandardDeviation>15.5728</StandardDeviation>
-            <ScalingMethod>MeanStandardDeviation</ScalingMethod>
+            <Mean>50.861</Mean>
+            <StandardDeviation>15.573</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
          <ScalingNeuron Index="5">
             <Minimum>0.000400682</Minimum>
             <Maximum>0.0584113</Maximum>
             <Mean>0.0111399</Mean>
             <StandardDeviation>0.0131502</StandardDeviation>
-            <ScalingMethod>MeanStandardDeviation</ScalingMethod>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
       </ScalingLayer>
       <PerceptronLayer>
          <InputsNumber>5</InputsNumber>
-         <NeuronsNumber>10</NeuronsNumber>
+         <NeuronsNumber>7</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>1.05779 0.772834 -0.818991 0.15152 0.925823 -0.263239 -3.40226 0.983971 -0.047387 -0.00636478 0.89913 -0.690161 -0.11013 -0.124609 0.305747 -0.187236 0.241526 0.259348 -0.282705 0.0215434 0.192888 0.117402 -0.263035 -0.0224914 -0.101566 0.565319 0.59808 1.05815 0.0340678 -0.0504175 -0.0521401 0.331202 0.41324 -0.109365 -0.124218 -1.28352 -1.12364 -0.501332 0.136336 -0.095847 -2.07505 -0.101142 -0.327529 0.0895168 -0.341289 1.16167 0.76231 -0.370653 -0.14708 -0.314123 -0.26205 -0.322826 -0.507322 0.528284 0.351354 -0.347632 0.0358043 -0.818444 0.446589 -0.383381</Parameters>
+         <Parameters>0.0452019 0.00542882 -0.0148488 0.4505 -0.00411506 0.668149 0.469244 -0.271352 -0.444041 -0.013759 0.0804843 -0.315191 -0.000429614 -0.012021 0.00768866 0.0108559 -0.0102769 0.0018964 0.0178596 -0.00473785 -0.00286278 0.0222588 -0.781381 0.342777 0.281156 0.00707042 0.148156 -0.0046514 0.0124068 -0.00975008 -0.00760044 0.00753709 0.93913 -0.0228732 0.671653 -0.0250305 0.396087 0.647115 -0.28977 -0.702035 -0.0814385 -0.303673</Parameters>
       </PerceptronLayer>
       <PerceptronLayer>
-         <InputsNumber>10</InputsNumber>
+         <InputsNumber>7</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
-         <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>-0.215027 -2.04866 -0.947809 0.943289 -1.43175 -1.10334 1.46156 -3.5977 -1.79798 -0.695708 0.89186</Parameters>
+         <ActivationFunction>Linear</ActivationFunction>
+         <Parameters>0.267846 0.564396 0.0211638 -0.0332331 -0.763364 -0.0198445 -1.0014 -0.836754</Parameters>
       </PerceptronLayer>
       <UnscalingLayer>
          <UnscalingNeuronsNumber>1</UnscalingNeuronsNumber>
@@ -65,15 +65,15 @@
             <Minimum>103.38</Minimum>
             <Maximum>140.987</Maximum>
             <Mean>124.836</Mean>
-            <StandardDeviation>6.89866</StandardDeviation>
-            <UnscalingMethod>MeanStandardDeviation</UnscalingMethod>
+            <StandardDeviation>6.8998</StandardDeviation>
+            <UnscalingMethod>MinimumMaximum</UnscalingMethod>
          </Descriptives>
       </UnscalingLayer>
       <BoundingLayer>
          <BoundingNeuronsNumber>1</BoundingNeuronsNumber>
          <Item Index="1">
-            <LowerBound>-1.79769e+308</LowerBound>
-            <UpperBound>1.79769e+308</UpperBound>
+            <LowerBound>-3.40282e+38</LowerBound>
+            <UpperBound>3.40282e+38</UpperBound>
          </Item>
          <UseBoundingLayer>1</UseBoundingLayer>
       </BoundingLayer>
