@@ -61,8 +61,6 @@ public:
 
    bool is_empty() const;
 
-
-
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
@@ -201,8 +199,6 @@ public:
    string write_combinations_python() const;
    string write_activations_python() const;
    string write_expression_python() const;
-
-   
 
    // Serialization methods
 
