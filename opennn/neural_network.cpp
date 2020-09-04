@@ -2274,6 +2274,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
 
 
 /// Prints to the screen the members of a neural network object in a XML-type format.
+/// @todo
 
 void NeuralNetwork::print() const
 {

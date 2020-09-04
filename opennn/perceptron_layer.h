@@ -61,8 +61,6 @@ public:
 
    bool is_empty() const;
 
-
-
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
@@ -93,7 +91,6 @@ public:
 
    void set();
    void set(const Index&, const Index&, const PerceptronLayer::ActivationFunction& = PerceptronLayer::HyperbolicTangent);
-   void set(const PerceptronLayer&);
 
    void set_default();
 
@@ -121,7 +118,7 @@ public:
    // Parameters initialization methods
    void set_biases_constant(const type&);
    void set_synaptic_weights_constant(const type&);
-   void set_synaptic_weights_constant_glorot_uniform();
+   void set_synaptic_weights_glorot();
 
    void set_parameters_constant(const type&);
 
@@ -201,8 +198,6 @@ public:
    string write_combinations_python() const;
    string write_activations_python() const;
    string write_expression_python() const;
-
-   
 
    // Serialization methods
 
