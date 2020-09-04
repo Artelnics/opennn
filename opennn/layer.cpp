@@ -94,6 +94,7 @@ void Layer::set_parameters_random()
     throw logic_error(buffer.str());
 }
 
+
 void Layer::set_synaptic_weights_constant_glorot_uniform()
 {
     ostringstream buffer;

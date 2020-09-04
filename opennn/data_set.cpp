@@ -3677,13 +3677,19 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& sample_index, const Tensor
 
 /// Returns the inputs values of a single sample in the data set.
 /// @param sample_index Index of the sample.
-/// @todo Check, delete method?
 
 Tensor<type, 2> DataSet::get_sample_input_data(const Index & sample_index) const
 {
+    const Index input_variables_number = get_input_variables_number();
+
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_subtensor_data(Tensor<Index, 1>(sample_index), input_variables_indices);
+    Tensor<type, 2> inputs(1, input_variables_number);
+
+    for(Index i = 0; i < input_variables_number; i++)
+        inputs(0, i) = data(sample_index, input_variables_indices(i));
+
+    return inputs;
 }
 
 
@@ -3952,8 +3958,8 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
     }
 
 #endif
-    return data.chip(variable_index(0), 1);
 
+    return data.chip(variable_index(0), 1);
 }
 
 
@@ -10543,57 +10549,6 @@ void DataSet::shuffle()
 
     data = new_data;
     rows_labels = new_rows_labels;
-
-/*
-    const Index samples_number = get_samples_number();
-
-    const Index columns_number = get_columns_number();
-
-    Tensor<Index, 1> samples_indices;
-
-    Tensor<type, 2> shuffled_data(samples_number, columns_number);
-
-    Tensor<string, 1> data_labels(this->rows_labels.size());
-
-    // Generate random permutation
-
-    samples_indices.resize(samples_number);
-
-    initialize_sequential_eigen_tensor(samples_indices, 0, 1, samples_number - 1);
-
-    random_shuffle(&samples_indices(0), &samples_indices(samples_number - 1));
-
-//    cout << samples_indices << endl;
-
-    for(int i = 0; i < samples_number; i++)
-    {
-        Index row_number = samples_indices(i);
-
-        data_labels(i) = rows_labels(row_number);
-
-        for(int j = 0; j < columns_number; j++)
-        {
-            shuffled_data(i, j) = data(row_number, j);
-        }
-    }
-
-    // Generate dataset with shuffled data
-
-    DataSet shuffled_data_set(shuffled_data);
-    shuffled_data_set.set_columns_names(this->get_columns_names());
-    shuffled_data_set.rows_labels = data_labels;
-
-
-//    shuffled_data_set.rows_labels = this->get_rows_label_tensor();
-
-    if(shuffled_data_set.get_rows_label_tensor().size() > 0)
-    {
-        shuffled_data_set.set_has_rows_label(true);
-    }
-
-
-    return shuffled_data_set;
-*/
 }
 
 
@@ -10602,10 +10557,7 @@ bool DataSet::get_has_rows_labels() const
     return this->has_rows_labels;
 }
 
-
-
 }
-
 
 
 // OpenNN: Open Neural Networks Library.
