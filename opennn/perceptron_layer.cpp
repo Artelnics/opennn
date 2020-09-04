@@ -38,6 +38,7 @@ PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& ne
     layer_type = Perceptron;
 
     layer_name = "perceptron_layer_" + to_string(layer_number);
+
 }
 
 
@@ -266,11 +267,11 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
 {
     biases = Tensor<type, 2>(1, new_neurons_number);
 
-    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    biases.setZero();
 
     synaptic_weights = Tensor<type, 2>(new_inputs_number, new_neurons_number);
 
-    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    set_synaptic_weights_constant_glorot_uniform();
 
     activation_function = new_activation_function;
 
