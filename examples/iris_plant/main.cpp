@@ -86,20 +86,20 @@ int main(void)
         // Testing analysis
 
         Tensor<type, 2> inputs(3,4);
-/*
+
         inputs.setValues({{5.1,3.5,1.4,0.2},
                           {6.4,3.2,4.5,1.5},
                           {6.3,2.7,4.9,1.8}});
-*/
-        cout<<neural_network.calculate_outputs(inputs);
 
-        system("pause");
-/*
+        cout << "inputs: " << endl;
+        cout << inputs << endl;
+
+        cout << "outputs: " << endl;
+        cout << neural_network.calculate_outputs(inputs) << endl;
+
         data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
-
-        testing_analysis.set_thread_pool_device(thread_pool_device);
 
         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
@@ -108,16 +108,10 @@ int main(void)
 
         // Save results
 
-
         data_set.save("../data/data_set.xml");
-        cout << "1" << endl;
-
         neural_network.save("../data/neural_network.xml");
-cout << "2" << endl;
         training_strategy.save("../data/training_strategy.xml");
-cout << "3" << endl;
-        cout << "Bye" << endl;
-*/
+
         return 0;
     }
     catch(exception& e)

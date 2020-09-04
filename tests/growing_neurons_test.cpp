@@ -6,19 +6,19 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                           
 
-#include "incremental_neurons_test.h"
+#include "growing_neurons_test.h"
 
-IncrementalNeuronsTest::IncrementalNeuronsTest() : UnitTesting()
+GrowingNeuronsTest::GrowingNeuronsTest() : UnitTesting()
 {
 }
 
 
-IncrementalNeuronsTest::~IncrementalNeuronsTest()
+GrowingNeuronsTest::~GrowingNeuronsTest()
 {
 }
 
 
-void IncrementalNeuronsTest::test_constructor()
+void GrowingNeuronsTest::test_constructor()
 {
     cout << "test_constructor\n";
 
@@ -27,34 +27,34 @@ void IncrementalNeuronsTest::test_constructor()
 
     TrainingStrategy training_strategy(&nn, &ds);
 
-    IncrementalNeurons io1(&training_strategy);
+    GrowingNeurons io1(&training_strategy);
 
     assert_true(io1.has_training_strategy(), LOG);
 
-    IncrementalNeurons io2;
+    GrowingNeurons io2;
 
     assert_true(!io2.has_training_strategy(), LOG);
 
 }
 
 
-void IncrementalNeuronsTest::test_destructor()
+void GrowingNeuronsTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    IncrementalNeurons* io = new IncrementalNeurons;
+    GrowingNeurons* io = new GrowingNeurons;
 
     delete io;
 }
 
 
-void IncrementalNeuronsTest::test_set_default()
+void GrowingNeuronsTest::test_set_default()
 {
     cout << "test_set_default\n";
 }
 
 
-void IncrementalNeuronsTest::test_perform_neurons_selection() // @todo
+void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
 {
     cout << "test_perform_neurons_selection\n";
 
@@ -66,9 +66,9 @@ void IncrementalNeuronsTest::test_perform_neurons_selection() // @todo
 //    DataSet data_set;
 //    TrainingStrategy ts(&neural_network, &data_set);
 
-//    IncrementalNeurons io(&ts);
+//    GrowingNeurons io(&ts);
 
-//    IncrementalNeurons::IncrementalNeuronsResults* results = nullptr;
+//    GrowingNeurons::GrowingNeuronsResults* results = nullptr;
 
 //    // Test
 
@@ -184,11 +184,11 @@ void IncrementalNeuronsTest::test_perform_neurons_selection() // @todo
 }
 
 
-void IncrementalNeuronsTest::test_to_XML()
+void GrowingNeuronsTest::test_to_XML()
 {
     cout << "test_to_XML\n";
 
-    IncrementalNeurons io;
+    GrowingNeurons io;
 
 //    tinyxml2::XMLDocument* document = io.to_XML();
 //    assert_true(document != nullptr, LOG);
@@ -197,11 +197,11 @@ void IncrementalNeuronsTest::test_to_XML()
 }
 
 
-void IncrementalNeuronsTest::test_from_XML()
+void GrowingNeuronsTest::test_from_XML()
 {
     cout << "test_from_XML\n";
 
-    IncrementalNeurons io;
+    GrowingNeurons io;
 
 //    tinyxml2::XMLDocument* document = io.to_XML();
 //    io.from_XML(*document);
@@ -210,7 +210,7 @@ void IncrementalNeuronsTest::test_from_XML()
 }
 
 
-void IncrementalNeuronsTest::run_test_case()
+void GrowingNeuronsTest::run_test_case()
 {
     cout << "Running incremental order test case...\n";
 

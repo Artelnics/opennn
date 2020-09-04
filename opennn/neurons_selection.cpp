@@ -215,7 +215,7 @@ void NeuronsSelection::set_default()
     selection_error_goal = 0;
 
     maximum_epochs_number = 1000;
-    maximum_time = 10000.0;
+    maximum_time = 3600;
 
     tolerance = 0;
 }

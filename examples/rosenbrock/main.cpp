@@ -21,10 +21,6 @@
 
 #include "../../opennn/opennn.h"
 
-#include <../eigen/unsupported/Eigen/CXX11/Tensor>
-
-#include <../../eigen/unsupported/Eigen/CXX11/ThreadPool>
-
 using namespace OpenNN;
 using namespace std;
 using namespace Eigen;
@@ -37,8 +33,8 @@ int main(void)
 
         // Data Set
 
-        const Index samples = 1000000;
-        const Index variables = 1000;
+        const Index samples = 10000;
+        const Index variables = 10;
 
         DataSet data_set;
 
