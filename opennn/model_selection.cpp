@@ -313,45 +313,11 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
 {
     training_strategy_pointer = new_training_strategy_pointer;
 
-    switch(neurons_selection_method)
-    {
-    case NO_NEURONS_SELECTION:
-    {
-        // do nothing
+    growing_neurons.set_training_strategy_pointer(new_training_strategy_pointer);
 
-        break;
-    }
-    case GROWING_NEURONS:
-    {
-        growing_neurons.set_training_strategy_pointer(new_training_strategy_pointer);
-        break;
-    }
-    }
-
-    switch(inputs_selection_method)
-    {
-    case NO_INPUTS_SELECTION:
-    {
-        // do nothing
-
-        break;
-    }
-    case GROWING_INPUTS:
-    {
-        growing_inputs.set_training_strategy_pointer(new_training_strategy_pointer);
-        break;
-    }
-    case PRUNING_INPUTS:
-    {
-        pruning_inputs.set_training_strategy_pointer(new_training_strategy_pointer);
-        break;
-    }
-    case GENETIC_ALGORITHM:
-    {
-        genetic_algorithm.set_training_strategy_pointer(new_training_strategy_pointer);
-        break;
-    }
-    }
+    growing_inputs.set_training_strategy_pointer(new_training_strategy_pointer);
+    pruning_inputs.set_training_strategy_pointer(new_training_strategy_pointer);
+    genetic_algorithm.set_training_strategy_pointer(new_training_strategy_pointer);
 }
 
 

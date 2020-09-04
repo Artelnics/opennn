@@ -2306,7 +2306,7 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("GeneticAlgorithm");
+    file_stream.OpenElement("GeneticAlgorithm");
 
     // Trials number
 
@@ -2494,6 +2494,8 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     buffer << reserve_generation_standard_deviation;
 
     file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
 
     file_stream.CloseElement();
 }
