@@ -106,8 +106,8 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
     if(layer_pointer->get_type_string() == "Recurrent" || layer_pointer->get_type_string() == "LongShortTermMemory"){
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "NeuralNetwork::add_layer() method.\n"
                << "Long Short Term Memory Layer and Recurrent Layer are not available yet. Both of them will be included in future versions.\n";
 
         throw logic_error(buffer.str());
@@ -116,12 +116,11 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
     if(layer_pointer->get_type_string() == "Convolutional"){
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "NeuralNetwork::add_layer() method.\n"
                << "Convolutional Layer is not available yet. It will be included in future versions.!!\n";
 
         throw logic_error(buffer.str());
-
     }
 
     const Layer::Type layer_type = layer_pointer->get_type();

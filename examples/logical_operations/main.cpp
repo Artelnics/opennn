@@ -19,10 +19,6 @@
 
 #include "../../opennn/opennn.h"
 
-#include <../eigen/unsupported/Eigen/CXX11/Tensor>
-
-#include <../../eigen/unsupported/Eigen/CXX11/ThreadPool>
-
 using namespace OpenNN;
 
 int main(void)
@@ -56,7 +52,7 @@ int main(void)
         Tensor<Index, 1> architecture(3);
         architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
@@ -115,8 +111,6 @@ int main(void)
         neural_network.save("../data/neural_network.xml");
 
         training_strategy.save("../data/training_strategy.xml");
-
-        cout<<"bye";
 
         return 0;
 

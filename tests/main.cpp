@@ -345,7 +345,7 @@ int main()
 
       else if(test == "incremental_neurons" || test == "in")
       {
-        IncrementalNeuronsTest incremental_order_test;
+        GrowingNeuronsTest incremental_order_test;
         incremental_order_test.run_test_case();
         tests_count += incremental_order_test.get_tests_count();
         tests_passed_count += incremental_order_test.get_tests_passed_count();
@@ -594,7 +594,7 @@ int main()
 
           // incremental order
 
-          IncrementalNeuronsTest incremental_order_test;
+          GrowingNeuronsTest incremental_order_test;
           incremental_order_test.run_test_case();
           tests_count += incremental_order_test.get_tests_count();
           tests_passed_count += incremental_order_test.get_tests_passed_count();

@@ -83,6 +83,14 @@ void GrowingInputs::set_default()
     }
 
     minimum_inputs_number = 1;
+
+    minimum_correlation = 0.0;
+
+    trials_number = 3;
+
+    maximum_epochs_number = 1000;
+
+    maximum_time = 3600.0;
 }
 
 
@@ -587,7 +595,7 @@ void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("GrowingInputs");
+    file_stream.OpenElement("GrowingInputs");
 
     // Trials number
 
@@ -721,8 +729,7 @@ void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-
-    //file_stream.CloseElement();
+    file_stream.CloseElement();
 }
 
 

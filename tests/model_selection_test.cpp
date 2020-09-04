@@ -140,7 +140,7 @@ void ModelSelectionTest::test_from_XML()
     ModelSelection ms1;
     ModelSelection ms2;
 
-    ms1.set_neurons_selection_method(ModelSelection::INCREMENTAL_NEURONS);
+//    ms1.set_neurons_selection_method(ModelSelection::INCREMENTAL_NEURONS);
 
 //    tinyxml2::XMLDocument* document = ms1.to_XML();
 
@@ -170,16 +170,16 @@ void ModelSelectionTest::test_load()
 {
     cout << "test_load\n";
 
-    string file_name = "../data/model_selection.xml";
+//    string file_name = "../data/model_selection.xml";
 
-    ModelSelection ms;
+//    ModelSelection ms;
 
-    ms.set_neurons_selection_method(ModelSelection::INCREMENTAL_NEURONS);
+//    ms.set_neurons_selection_method(ModelSelection::INCREMENTAL_NEURONS);
 
-    // Test
+//    // Test
 
-    ms.save(file_name);
-    ms.load(file_name);
+//    ms.save(file_name);
+//    ms.load(file_name);
 
 }
 

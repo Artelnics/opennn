@@ -57,9 +57,17 @@ const Index& GrowingNeurons::get_maximum_selection_failures() const
 
 void GrowingNeurons::set_default()
 {
+    minimum_neurons = 1;
+
+    maximum_neurons = 10;
+
+    trials_number = 3;
+
     step = 1;
 
     maximum_selection_failures = 10;
+
+    maximum_time = 3600;
 }
 
 
@@ -468,7 +476,7 @@ void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("GrowingNeurons");
+    file_stream.OpenElement("GrowingNeurons");
 
     // Minimum order
 
@@ -580,8 +588,7 @@ void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-
-    //file_stream.CloseElement();
+    file_stream.CloseElement();
 }
 
 

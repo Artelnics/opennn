@@ -28,11 +28,11 @@ void NeuronsSelectionTest::test_constructor()
 
     TrainingStrategy training_strategy(&nn, &ds);
 
-    IncrementalNeurons io1(&training_strategy);
+    GrowingNeurons io1(&training_strategy);
 
     assert_true(io1.has_training_strategy() == true, LOG);
 
-    IncrementalNeurons io2;
+    GrowingNeurons io2;
 
     assert_true(!io2.has_training_strategy() == true, LOG);
 }
@@ -42,7 +42,7 @@ void NeuronsSelectionTest::test_destructor()
 {
     cout << "tes_destructor\n";
 
-    IncrementalNeurons* io = new IncrementalNeurons;
+    GrowingNeurons* io = new GrowingNeurons;
 
     delete io;
 }
@@ -54,7 +54,7 @@ void NeuronsSelectionTest::test_get_training_strategy_pointer()
 
     TrainingStrategy training_strategy;
 
-    IncrementalNeurons io(&training_strategy);
+    GrowingNeurons io(&training_strategy);
 
     assert_true(io.get_training_strategy_pointer() != nullptr, LOG);
 }
@@ -69,7 +69,7 @@ void NeuronsSelectionTest::test_set_training_strategy_pointer()
 
     TrainingStrategy training_strategy(&nn, &ds);
 
-    IncrementalNeurons in;
+    GrowingNeurons in;
 
     in.set_training_strategy_pointer(&training_strategy);
 

@@ -14,7 +14,7 @@
 #include <time.h>
 #include <omp.h>
 
-// OpenNN includes
+// OpenNN includesk
 
 #include "../../opennn/opennn.h"
 
