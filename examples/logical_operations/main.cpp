@@ -57,7 +57,7 @@ int main(void)
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
 
-        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_synaptic_weights_constant_glorot_uniform();
+        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_synaptic_weights_glorot();
 
         // Training strategy
 

@@ -304,9 +304,9 @@ int main(void)
         training_strategy.set_maximum_epochs_number(20);
 
         neural_network.set_parameters_random();
-        neural_network.get_first_perceptron_layer_pointer()->set_synaptic_weights_constant_glorot_uniform();
+        neural_network.get_first_perceptron_layer_pointer()->set_synaptic_weights_glorot();
         neural_network.get_first_perceptron_layer_pointer()->set_biases_constant(0);
-        neural_network.get_probabilistic_layer_pointer()->set_synaptic_weights_constant_glorot_uniform();
+        neural_network.get_probabilistic_layer_pointer()->set_synaptic_weights_glorot();
 
         training_strategy.perform_training();
 
