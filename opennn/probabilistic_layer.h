@@ -88,7 +88,7 @@ public:
    void set_synaptic_weights(const Tensor<type, 2>&);
 
    void set_parameters(const Tensor<type, 1>&, const Index& index=0);
-   void set_synaptic_weights_constant_glorot_uniform();
+   void set_synaptic_weights_glorot();
    void set_decision_threshold(const type&);
 
    void set_activation_function(const ActivationFunction&);

@@ -210,7 +210,7 @@ public:
 
     virtual void set_parameters_random();
 
-    virtual void set_synaptic_weights_constant_glorot_uniform();
+    virtual void set_synaptic_weights_glorot();
 
     // Architecture
 

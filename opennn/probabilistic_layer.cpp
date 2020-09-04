@@ -605,7 +605,7 @@ void ProbabilisticLayer::set_parameters_random()
 
 /// Initializes the synaptic weights with glorot uniform distribution.
 
-void ProbabilisticLayer::set_synaptic_weights_constant_glorot_uniform()
+void ProbabilisticLayer::set_synaptic_weights_glorot()
 {
     Index fan_in;
     Index fan_out;
