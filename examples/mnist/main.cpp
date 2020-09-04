@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-// This is an approximation application. 
+// This is an approximation application.
 
 // System includes
 
@@ -198,6 +198,7 @@ int main(void)
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_methods);
 
+
         data_set.unuse_constant_columns();
 
         if(display_data_set)
@@ -225,10 +226,13 @@ int main(void)
 
 
 
-/*
+
         // Neural network
 
         bool display_neural_network = false;
+
+        cout << "input_variables_number" << input_variables_number <<endl;
+        cout << "target_variables_number" << target_variables_number <<endl;
 
         Tensor<Index, 1> architecture(3);
         architecture[0] = input_variables_number;
@@ -236,7 +240,8 @@ int main(void)
         architecture[2] = target_variables_number;
 
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, architecture);
-        neural_network.set_thread_pool_device(thread_pool_device);
+        PerceptronLayer* perceptron_layer_pointer = neural_network.get_first_perceptron_layer_pointer();
+        perceptron_layer_pointer->set_activation_function("RectifiedLinear");
 
         if(display_neural_network)
         {
@@ -252,10 +257,40 @@ int main(void)
             }
         }
 
+
+
+        ///TEST
+//        Index samples_number = data_set.get_samples_number();
+//        DataSet::Batch batch(samples_number, &data_set);
+
+//        Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
+//        const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
+//        const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
+
+//        batch.fill(samples_indices, input_indices, target_indices);
+
+//        NormalizedSquaredError nse(&neural_network, &data_set);
+
+//        NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
+//        LossIndex::BackPropagation training_back_propagation(samples_number, &nse);
+
+//        neural_network.forward_propagate(batch, forward_propagation);
+
+////        forward_propagation.print();
+
+//        nse.back_propagate(batch, forward_propagation, training_back_propagation);
+
+
+
+////        training_back_propagation.print();
+
+
         // Training strategy
 
+
+
         TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.set_thread_pool_device(thread_pool_device);
+
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
 
@@ -266,14 +301,18 @@ int main(void)
 
         training_strategy.set_display_period(5);
 
-        training_strategy.set_maximum_epochs_number(2000);
+        training_strategy.set_maximum_epochs_number(20);
+
+        neural_network.set_parameters_random();
+        neural_network.get_first_perceptron_layer_pointer()->set_synaptic_weights_constant_glorot_uniform();
+        neural_network.get_first_perceptron_layer_pointer()->set_biases_constant(0);
+        neural_network.get_probabilistic_layer_pointer()->set_synaptic_weights_constant_glorot_uniform();
 
         training_strategy.perform_training();
 
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
-        testing_analysis.set_thread_pool_device(thread_pool_device);
 
         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         Tensor<type, 1> multiple_classification_tests = testing_analysis.calculate_multiple_classification_tests();
@@ -284,9 +323,6 @@ int main(void)
         cout << "Accuracy: " << multiple_classification_tests(0)*100 << endl;
         cout << "Error: " << multiple_classification_tests(1)*100 << endl;
 
-*/
-
-
         return 0;
     }
     catch(exception& e)
@@ -295,7 +331,7 @@ int main(void)
 
         return 1;
     }
-}  
+}
 
 
 
