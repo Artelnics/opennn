@@ -267,30 +267,13 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
 {
     biases = Tensor<type, 2>(1, new_neurons_number);
 
-    biases.setZero();
+    biases.setRandom();
 
     synaptic_weights = Tensor<type, 2>(new_inputs_number, new_neurons_number);
 
-    set_synaptic_weights_constant_glorot_uniform();
+    set_synaptic_weights_glorot();
 
     activation_function = new_activation_function;
-
-    set_default();
-}
-
-
-/// Sets the members of this perceptron layer object with those from other perceptron layer object.
-/// @param other_perceptron_layer PerceptronLayer object to be copied.
-
-void PerceptronLayer::set(const PerceptronLayer& other_perceptron_layer)
-{
-    biases = other_perceptron_layer.biases;
-
-    synaptic_weights = other_perceptron_layer.synaptic_weights;
-
-    activation_function = other_perceptron_layer.activation_function;
-
-    display = other_perceptron_layer.display;
 
     set_default();
 }
@@ -497,7 +480,7 @@ void PerceptronLayer::set_synaptic_weights_constant(const type& value)
 
 /// Initializes the synaptic weights of all the perceptrons in the layer of perceptrons with glorot uniform distribution.
 
-void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
+void PerceptronLayer::set_synaptic_weights_glorot()
 {
     Index fan_in;
     Index fan_out;
