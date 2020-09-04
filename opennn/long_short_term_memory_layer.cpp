@@ -1023,7 +1023,7 @@ void LongShortTermMemoryLayer::initialize_cell_states(const type& value)
 }
 
 
-void LongShortTermMemoryLayer::initialize_weights_Glorot(const type& minimum,const type& maximum)
+void LongShortTermMemoryLayer::set_synaptic_weights_glorot(const type& minimum,const type& maximum)
 {
     /*
     get_weights().setRandom(minimum, maximum);
