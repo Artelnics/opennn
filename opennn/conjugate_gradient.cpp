@@ -1050,7 +1050,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.training_error_history(epoch) = training_back_propagation.loss;
         }
 
-        if(reserve_selection_error_history)
+        if(has_selection && reserve_selection_error_history)
         {
             results.selection_error_history(epoch) = selection_error;
         }
@@ -1107,7 +1107,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(selection_error_increases >= maximum_selection_error_increases)
+        else if(has_selection
+                && selection_error_increases >= maximum_selection_error_increases)
         {
             if(display)
             {
@@ -1169,7 +1170,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.final_parameters_norm = parameters_norm;
 
             results.final_training_error = training_back_propagation.error;
-            results.final_selection_error = selection_error;
+            if(has_selection) results.final_selection_error = selection_error;
 
             results.final_gradient_norm = gradient_norm;
 
@@ -1200,10 +1201,10 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
         // Update stuff
 
-        old_selection_error = selection_error;
+        if(has_selection) old_selection_error = selection_error;
     }
 
-    if(choose_best_selection)
+    if(has_selection && choose_best_selection)
     {
         neural_network_pointer->set_parameters(minimal_selection_parameters);
 
@@ -1220,7 +1221,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     results.final_parameters_norm = parameters_norm;
 
     results.final_training_error = training_back_propagation.error;
-    results.final_selection_error = selection_error;
+    if(has_selection) results.final_selection_error = selection_error;
 
     results.final_gradient_norm = gradient_norm;
 
