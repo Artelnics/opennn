@@ -478,11 +478,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     NeuralNetwork::ForwardPropagation forward_propagation(batch_samples_number, neural_network_pointer);
+
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
     LossIndex::BackPropagation back_propagation(batch_samples_number, loss_index_pointer);
+
     LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     type training_error = numeric_limits<type>::max();
