@@ -95,9 +95,14 @@ public:
 
                 activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
             }
-            else // Probabilistic
+            else if(layer_pointer->get_type() == Probabilistic) // Probabilistic
             {
                 activations_derivatives_3d.resize(batch_samples_number, neurons_number, neurons_number);
+            }
+            else // Convolutional
+            {
+                activations_4d.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);
+                activations_derivatives_4d.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);// @todo
             }
         }
 
@@ -180,9 +185,13 @@ public:
 
         Tensor<type, 2> delta;
 
+        Tensor<type, 4> delta_4d;
+
         Tensor<type, 1> biases_derivatives;
 
         Tensor<type, 2> synaptic_weights_derivatives;
+
+        Tensor<type, 4> synaptic_weights_derivatives_4d;
     };
 
 
@@ -231,12 +240,13 @@ public:
 
     virtual Tensor<type, 4> calculate_outputs_4D(const Tensor<type, 4>&) {return Tensor<type, 4>();}
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&,
-                                          const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
+    virtual void calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const {}
     virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const {}
 
+    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation&) const {}
     virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) const {}
 
     // Deltas

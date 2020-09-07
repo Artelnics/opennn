@@ -78,11 +78,8 @@ public:
     Index get_row_stride() const;
 
     Index get_filters_number() const;
-
     Index get_filters_channels_number() const;
-
     Index get_filters_rows_number() const;
-
     Index get_filters_columns_number() const;
 
     Index get_padding_width() const;
@@ -136,6 +133,11 @@ public:
 
     void calculate_combinations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
+    void calculate_combinations(const Tensor<type, 4>& inputs,
+                                const Tensor<type, 2>& biases,
+                                const Tensor<type, 4>& synaptic_weights,
+                                Tensor<type, 4>& combinations_4d) const;
+
     // Activation
 
     void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
@@ -150,22 +152,38 @@ public:
 //   void calculate_outputs_2d(const Tensor<type, 2>&, Tensor<type, 2>&);
 
    void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const;
+   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const;
 
-//   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const;
+   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation&) const;
+   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) const;
 
 
    // Delta methods
 
-   void calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
+//   void calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
+   void calculate_hidden_delta(Layer* next_layer_pointer,
+                               const Tensor<type, 2>&,
+                               ForwardPropagation& forward_propagation,
+                               const Tensor<type, 2>& next_layer_delta,
+                               Tensor<type, 2>& hidden_delta) const;
 
-   void calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
-   void calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
-   void calculate_hidden_delta_perceptron(const PerceptronLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
+
+   void calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 2>&) const;
+   void calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
+   void calculate_hidden_delta_perceptron(const PerceptronLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
+   void calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, Tensor<type, 1>&);
+   void calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, const Tensor<type, 4>&, Tensor<type, 1>&);
+   void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 4>&, Tensor<type, 1>&);
+
+   void calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
+   void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
+
+   void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) const;
+
+   void to_2d(const Tensor<type, 4>&, Tensor<type, 2>) const;
 
 protected:
 

@@ -77,54 +77,54 @@ void ConvolutionalLayerTest::test_eigen_convolution()
     assert_true(output_3.dimension(2) == 4, LOG);
     assert_true(output_3.dimension(3) == 4, LOG);
 
-    assert_true((output_3(0, 0, 0, 0) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 0, 1) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 0, 2) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 0, 3) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 1, 0) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 1, 1) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 1, 2) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 1, 3) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 2, 0) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 2, 1) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 2, 2) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 2, 3) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 3, 0) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 3, 1) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 3, 2) - 1.f) <= 1e-6f &&
-                (output_3(0, 0, 3, 3) - 1.f) <= 1e-6f &&
-                (output_3(1, 0, 0, 0) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 0, 1) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 0, 2) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 0, 3) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 1, 0) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 1, 1) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 1, 2) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 1, 3) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 2, 0) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 2, 1) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 2, 2) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 2, 3) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 3, 0) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 3, 1) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 3, 2) - 2.f) <= 1e-6f &&
-                (output_3(1, 0, 3, 3) - 2.f) <= 1e-6f &&
-                (output_3(2, 0, 0, 0) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 0, 1) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 0, 2) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 0, 3) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 1, 0) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 1, 1) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 1, 2) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 1, 3) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 2, 0) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 2, 1) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 2, 2) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 2, 3) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 3, 0) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 3, 1) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 3, 2) - 3.f) <= 1e-6f &&
-                (output_3(2, 0, 3, 3) - 3.f) <= 1e-6f, LOG);
+    assert_true(abs(output_3(0, 0, 0, 0) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 0, 1) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 0, 2) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 0, 3) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 1, 0) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 1, 1) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 1, 2) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 1, 3) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 2, 0) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 2, 1) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 2, 2) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 2, 3) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 3, 0) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 3, 1) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 3, 2) - 1.f) <= 1e-6f &&
+                abs(output_3(0, 0, 3, 3) - 1.f) <= 1e-6f &&
+                abs(output_3(1, 0, 0, 0) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 0, 1) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 0, 2) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 0, 3) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 1, 0) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 1, 1) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 1, 2) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 1, 3) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 2, 0) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 2, 1) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 2, 2) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 2, 3) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 3, 0) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 3, 1) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 3, 2) - 2.f) <= 1e-6f &&
+                abs(output_3(1, 0, 3, 3) - 2.f) <= 1e-6f &&
+                abs(output_3(2, 0, 0, 0) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 0, 1) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 0, 2) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 0, 3) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 1, 0) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 1, 1) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 1, 2) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 1, 3) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 2, 0) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 2, 1) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 2, 2) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 2, 3) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 3, 0) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 3, 1) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 3, 2) - 3.f) <= 1e-6f &&
+                abs(output_3(2, 0, 3, 3) - 3.f) <= 1e-6f, LOG);
 
 }
 
@@ -163,47 +163,95 @@ void ConvolutionalLayerTest::test_get_parameters() // @todo
 {
     cout << "test_get_parameters\n";
 
-//    ConvolutionalLayer convolutional_layer;
-//    Tensor<type, 2> new_synaptic_weights;
-//    Tensor<type, 1> new_biases;
-//    Tensor<type, 1> new_parameters;
+    ConvolutionalLayer convolutional_layer;
+    Tensor<type, 4> synaptic_weights(2, 3, 2, 2);
+    Tensor<type, 1> biases(2);
+    Tensor<type, 1> parameters(26);
 
-//    // Test
+    synaptic_weights(0,0,0,0) = 1;
+    synaptic_weights(0,0,0,1) = 2;
+    synaptic_weights(0,0,1,0) = 3;
+    synaptic_weights(0,0,1,1) = 4;
+    synaptic_weights(0,1,0,0) = 5;
+    synaptic_weights(0,1,0,1) = 6;
+    synaptic_weights(0,1,1,0) = 7;
+    synaptic_weights(0,1,1,1) = 8;
+    synaptic_weights(0,2,0,0) = 9;
+    synaptic_weights(0,2,0,1) = 10;
+    synaptic_weights(0,2,1,0) = 11;
+    synaptic_weights(0,2,1,1) = 12;
+    synaptic_weights(1,0,0,0) = 13;
+    synaptic_weights(1,0,0,1) = 14;
+    synaptic_weights(1,0,1,0) = 15;
+    synaptic_weights(1,0,1,1) = 16;
+    synaptic_weights(1,1,0,0) = 17;
+    synaptic_weights(1,1,0,1) = 18;
+    synaptic_weights(1,1,1,0) = 19;
+    synaptic_weights(1,1,1,1) = 20;
+    synaptic_weights(1,2,0,0) = 21;
+    synaptic_weights(1,2,0,1) = 22;
+    synaptic_weights(1,2,1,0) = 23;
+    synaptic_weights(1,2,1,1) = 24;
 
-//    new_synaptic_weights.resize(2,3,2,2);
-//    new_synaptic_weights(0,0,0,0) = 1.111;
-//    new_synaptic_weights(0,0,0,1) = 1.112;
-//    new_synaptic_weights(0,0,1,0) = 1.121;
-//    new_synaptic_weights(0,0,1,1) = 1.122;
-//    new_synaptic_weights(0,1,0,0) = 1.211;
-//    new_synaptic_weights(0,1,0,1) = 1.212;
-//    new_synaptic_weights(0,1,1,0) = 1.221;
-//    new_synaptic_weights(0,1,1,1) = 1.222;
-//    new_synaptic_weights(0,2,0,0) = 1.311;
-//    new_synaptic_weights(0,2,0,1) = 1.312;
-//    new_synaptic_weights(0,2,1,0) = 1.321;
-//    new_synaptic_weights(0,2,1,1) = 1.322;
-//    new_synaptic_weights(1,0,0,0) = 2.111;
-//    new_synaptic_weights(1,0,0,1) = 2.112;
-//    new_synaptic_weights(1,0,1,0) = 2.121;
-//    new_synaptic_weights(1,0,1,1) = 2.122;
-//    new_synaptic_weights(1,1,0,0) = 2.211;
-//    new_synaptic_weights(1,1,0,1) = 2.212;
-//    new_synaptic_weights(1,1,1,0) = 2.221;
-//    new_synaptic_weights(1,1,1,1) = 2.222;
-//    new_synaptic_weights(1,2,0,0) = 2.311;
-//    new_synaptic_weights(1,2,0,1) = 2.312;
-//    new_synaptic_weights(1,2,1,0) = 2.321;
-//    new_synaptic_weights(1,2,1,1) = 2.322;
-//    new_biases = Tensor<type, 1>({4,8});
-//    new_parameters = Tensor<type, 1>({1.111,2.111,1.211,2.211,1.311,2.311,1.121,2.121,1.221,2.221,1.321,2.321,
-//                                     1.112,2.112,1.212,2.212,1.312,2.312,1.122,2.122,1.222,2.222,1.322,2.322,
-//                                     4,8});
+    biases(0) = 400;
+    biases(1) = 800;
 
-//    convolutional_layer.set_synaptic_weights(new_synaptic_weights);
-//    convolutional_layer.set_biases(new_biases);
+    parameters(0) = 400;
+    parameters(1) = 800;
+    parameters(2) = 1;
+    parameters(3) = 2;
+    parameters(4) = 3;
+    parameters(5) = 4;
+    parameters(6) = 5;
+    parameters(7) = 6;
+    parameters(8) = 7;
+    parameters(9) = 8;
+    parameters(10) = 9;
+    parameters(11) = 10;
+    parameters(12) = 11;
+    parameters(13) = 12;
+    parameters(14) = 13;
+    parameters(15) = 14;
+    parameters(16) = 15;
+    parameters(17) = 16;
+    parameters(18) = 17;
+    parameters(19) = 18;
+    parameters(20) = 19;
+    parameters(21) = 20;
+    parameters(22) = 21;
+    parameters(23) = 22;
+    parameters(24) = 23;
+    parameters(25) = 24;
 
-//    assert_true(convolutional_layer.get_parameters() == new_parameters, LOG);
+    convolutional_layer.set_synaptic_weights(synaptic_weights);
+    convolutional_layer.set_biases(biases);
+
+    assert_true(abs(convolutional_layer.get_parameters()(0) - parameters(0)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(1) - parameters(1)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(2) - parameters(2)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(3) - parameters(3)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(4) - parameters(4)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(5) - parameters(5)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(6) - parameters(6)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(7) - parameters(7)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(8) - parameters(8)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(9) - parameters(9)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(10) - parameters(10)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(11) - parameters(11)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(12) - parameters(12)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(13) - parameters(13)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(14) - parameters(14)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(15) - parameters(15)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(16) - parameters(16)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(17) - parameters(17)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(18) - parameters(18)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(19) - parameters(19)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(20) - parameters(20)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(21) - parameters(21)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(22) - parameters(22)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(23) - parameters(23)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(24) - parameters(24)) < 1.e-6f &&
+                abs(convolutional_layer.get_parameters()(25) - parameters(25)) < 1.e-6f, LOG);
 }
 
 
@@ -305,33 +353,79 @@ void ConvolutionalLayerTest::test_set_parameters()
 {
     cout << "test_set_parameters\n";
 
-//    ConvolutionalLayer convolutional_layer;
-//    Tensor<type, 2> new_synaptic_weights;
-//    Tensor<type, 1> new_biases;
+    ConvolutionalLayer convolutional_layer;
+    Tensor<type, 4> new_synaptic_weights(2, 2, 2, 2);
+    Tensor<type, 1> new_biases(2);
+    Tensor<type, 1> parameters(18);
 
-//    // Test
+    convolutional_layer.set_biases(new_biases);
+    convolutional_layer.set_synaptic_weights(new_synaptic_weights);
 
-//    new_synaptic_weights.resize(({2,2,2,2}));
-//    new_synaptic_weights(0,0,0,0) = 1.111;
-//    new_synaptic_weights(0,0,0,1) = 1.112;
-//    new_synaptic_weights(0,0,1,0) = 1.121;
-//    new_synaptic_weights(0,0,1,1) = 1.122;
-//    new_synaptic_weights(0,1,0,0) = 1.211;
-//    new_synaptic_weights(0,1,0,1) = 1.212;
-//    new_synaptic_weights(0,1,1,0) = 1.221;
-//    new_synaptic_weights(0,1,1,1) = 1.222;
-//    new_synaptic_weights(1,0,0,0) = 2.111;
-//    new_synaptic_weights(1,0,0,1) = 2.112;
-//    new_synaptic_weights(1,0,1,0) = 2.121;
-//    new_synaptic_weights(1,0,1,1) = 2.122;
-//    new_synaptic_weights(1,1,0,0) = 2.211;
-//    new_synaptic_weights(1,1,0,1) = 2.212;
-//    new_synaptic_weights(1,1,1,0) = 2.221;
-//    new_synaptic_weights(1,1,1,1) = 2.222;
-//    new_biases = Tensor<type, 1>({-1,1});
 
-//    convolutional_layer.set({2,3,3}, {2,2,2});
-//    convolutional_layer.set_parameters({1.111,2.111,1.211,2.211,1.121,2.121,1.221,2.221,1.112,2.112,1.212,2.212,1.122,2.122,1.222,2.222,-1,1});
+    new_synaptic_weights(0,0,0,0) = 1;
+    new_synaptic_weights(0,0,0,1) = 2;
+    new_synaptic_weights(0,0,1,0) = 3;
+    new_synaptic_weights(0,0,1,1) = 4;
+    new_synaptic_weights(0,1,0,0) = 5;
+    new_synaptic_weights(0,1,0,1) = 6;
+    new_synaptic_weights(0,1,1,0) = 7;
+    new_synaptic_weights(0,1,1,1) = 8;
+    new_synaptic_weights(1,0,0,0) = 9;
+    new_synaptic_weights(1,0,0,1) = 10;
+    new_synaptic_weights(1,0,1,0) = 11;
+    new_synaptic_weights(1,0,1,1) = 12;
+    new_synaptic_weights(1,1,0,0) = 13;
+    new_synaptic_weights(1,1,0,1) = 14;
+    new_synaptic_weights(1,1,1,0) = 15;
+    new_synaptic_weights(1,1,1,1) = 16;
+
+    new_biases(0) = 100;
+    new_biases(1) = 200;
+
+    parameters(0) = 100;
+    parameters(1) = 200;
+    parameters(2) = 1;
+    parameters(3) = 2;
+    parameters(4) = 3;
+    parameters(5) = 4;
+    parameters(6) = 5;
+    parameters(7) = 6;
+    parameters(8) = 7;
+    parameters(9) =  8;
+    parameters(10) = 9;
+    parameters(11) = 10;
+    parameters(12) = 11;
+    parameters(13) = 12;
+    parameters(14) = 13;
+    parameters(15) = 14;
+    parameters(16) = 15;
+    parameters(17) = 16;
+
+    convolutional_layer.set_parameters(parameters, 0);
+
+    const Tensor<type, 4> synaptic_weight = convolutional_layer.get_synaptic_weights();
+    const Tensor<type, 1> biases = convolutional_layer.get_biases();
+
+    assert_true(abs(biases(0) - new_biases(0)) < 1.e-6f &&
+                abs(biases(1) - new_biases(1)) < 1.e-6f,LOG);
+
+    assert_true(abs(synaptic_weight(0,0,0,0) - new_synaptic_weights(0,0,0,0)) < 1.e-6f &&
+                abs(synaptic_weight(0,0,0,1) - new_synaptic_weights(0,0,0,1)) < 1.e-6f &&
+                abs(synaptic_weight(0,0,1,0) - new_synaptic_weights(0,0,1,0)) < 1.e-6f &&
+                abs(synaptic_weight(0,0,1,1) - new_synaptic_weights(0,0,1,1)) < 1.e-6f &&
+                abs(synaptic_weight(0,1,0,0) - new_synaptic_weights(0,1,0,0)) < 1.e-6f &&
+                abs(synaptic_weight(0,1,0,1) - new_synaptic_weights(0,1,0,1)) < 1.e-6f &&
+                abs(synaptic_weight(0,1,1,0) - new_synaptic_weights(0,1,1,0)) < 1.e-6f &&
+                abs(synaptic_weight(0,1,1,1) - new_synaptic_weights(0,1,1,1)) < 1.e-6f &&
+                abs(synaptic_weight(1,0,0,0) - new_synaptic_weights(1,0,0,0)) < 1.e-6f &&
+                abs(synaptic_weight(1,0,0,1) - new_synaptic_weights(1,0,0,1)) < 1.e-6f &&
+                abs(synaptic_weight(1,0,1,0) - new_synaptic_weights(1,0,1,0)) < 1.e-6f &&
+                abs(synaptic_weight(1,0,1,1) - new_synaptic_weights(1,0,1,1)) < 1.e-6f &&
+                abs(synaptic_weight(1,1,0,0) - new_synaptic_weights(1,1,0,0)) < 1.e-6f &&
+                abs(synaptic_weight(1,1,0,1) - new_synaptic_weights(1,1,0,1)) < 1.e-6f &&
+                abs(synaptic_weight(1,1,1,0) - new_synaptic_weights(1,1,1,0)) < 1.e-6f &&
+                abs(synaptic_weight(1,1,1,1) - new_synaptic_weights(1,1,1,1)) < 1.e-6f, LOG);
+
 
 //    assert_true(convolutional_layer.is_empty() == false &&
 //                convolutional_layer.get_parameters_number() == 18 &&
@@ -1508,13 +1602,58 @@ void ConvolutionalLayerTest::test_forward_propagate()
     convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::RectifiedLinear);
 
     inputs.setConstant(1.f);
-    biases.setConstant(0.f);
+    biases(0) = 0.f;
+    biases(1) = 1.f;
     kernels.setConstant(1.f/12);
 
     convolutional_layer.set_biases(biases);
     convolutional_layer.set_synaptic_weights(kernels);
 
     convolutional_layer.forward_propagate(inputs, forward_propagation);
+
+    assert_true(forward_propagation.activations_4d.dimension(0) == 2 &&
+                forward_propagation.activations_4d.dimension(1) == 2 &&
+                forward_propagation.activations_4d.dimension(2) == 2 &&
+                forward_propagation.activations_4d.dimension(3) == 2, LOG);
+
+    assert_true(forward_propagation.activations_derivatives_4d.dimension(0) == 2 &&
+                forward_propagation.activations_derivatives_4d.dimension(1) == 2 &&
+                forward_propagation.activations_derivatives_4d.dimension(2) == 2 &&
+                forward_propagation.activations_derivatives_4d.dimension(3) == 2, LOG);
+
+    assert_true(abs(forward_propagation.activations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(0, 0, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(0, 0, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(0, 0, 1, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(0, 1, 0, 0) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(0, 1, 0, 1) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(0, 1, 1, 0) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(0, 1, 1, 1) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(1, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(1, 0, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(1, 0, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(1, 0, 1, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(1, 1, 0, 0) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(1, 1, 0, 1) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(1, 1, 1, 0) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations_4d(1, 1, 1, 1) - 2.f) < 1.e-6f, LOG);
+
+    assert_true(abs(forward_propagation.activations_derivatives_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(0, 0, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(0, 0, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(0, 0, 1, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(0, 1, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(0, 1, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(0, 1, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(0, 1, 1, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(1, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(1, 0, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(1, 0, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(1, 0, 1, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(1, 1, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(1, 1, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(1, 1, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives_4d(1, 1, 1, 1) - 1.f) < 1.e-6f, LOG);
 
     assert_true(abs(forward_propagation.combinations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
                 abs(forward_propagation.activations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
@@ -1529,6 +1668,83 @@ void ConvolutionalLayerTest::test_forward_propagate()
 }
 
 
+void ConvolutionalLayerTest::test_calculate_error_gradient()
+{
+    cout << "test_calculate_error_gradient\n";
+
+    ConvolutionalLayer convolutional_layer;
+    Tensor<type, 4> inputs_4d(1, 3, 5, 5);
+    Tensor<type, 4> kernels(1, 3, 3, 3);
+    Tensor<type, 1> biases(1);
+    Tensor<type, 2> outputs;
+
+    inputs_4d.setConstant(1.f);
+    kernels.setConstant(1.f/27);
+    biases.setZero();
+
+    Tensor<type, 2> output_gradient;
+
+    Tensor<type, 2> output_delta;
+
+    convolutional_layer.set(inputs_4d, kernels, biases);
+
+    NumericalDifferentiation numerical_differentiation;
+    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+//    Tensor<type, 4> numerical_activations = numerical_differentiation.calculate_derivatives(convolutional_layer,
+//                                                                                            &ConvolutionalLayer::calculate_error_gradient,
+//                                                                                            0,
+//                                                                                            kernels);
+
+    Layer::ForwardPropagation forward_propagation(1, &convolutional_layer);
+    convolutional_layer.forward_propagate(inputs_4d, forward_propagation);
+    Layer::BackPropagation back_propagation(1, &convolutional_layer);
+
+    /*
+    PerceptronLayer perceptron_layer(2,2, 0,PerceptronLayer::Linear);
+
+    Tensor<type, 1> parameters(6);
+    Tensor<type, 2> inputs(1,2);
+
+    Tensor<type, 2> output_gradient(1,2);
+
+    Tensor<type, 2> output_delta(1,2);
+
+    // Test 1
+
+    parameters.setConstant(1);
+    perceptron_layer.set_parameters(parameters);
+
+    inputs.setValues({{0,1}});
+
+    Layer::ForwardPropagation forward_propagation(1, &perceptron_layer);
+    perceptron_layer.forward_propagate(inputs, forward_propagation);
+
+    Layer::BackPropagation back_propagation(1, &perceptron_layer);
+
+    output_gradient.setValues({{2,-2}});
+
+    perceptron_layer.calculate_output_delta(forward_propagation,output_gradient, output_delta);
+
+    back_propagation.delta = output_delta;
+
+    perceptron_layer.calculate_error_gradient(inputs, forward_propagation, back_propagation);
+
+    assert_true(back_propagation.biases_derivatives.rank() == 1, LOG);
+    assert_true(back_propagation.biases_derivatives.dimension(0) == 2, LOG);
+    assert_true(abs(back_propagation.biases_derivatives(0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.biases_derivatives(1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
+
+    assert_true(back_propagation.synaptic_weights_derivatives.rank() == 2, LOG);
+    assert_true(back_propagation.synaptic_weights_derivatives.dimension(0) == 2, LOG);
+    assert_true(back_propagation.synaptic_weights_derivatives.dimension(1) == 2, LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,0) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
+*/
+}
+
+
 void ConvolutionalLayerTest::run_test_case() // @todo
 {
    cout << "Running convolutional layer test case...\n";
@@ -1540,8 +1756,10 @@ void ConvolutionalLayerTest::run_test_case() // @todo
 
    // Set methods
 
-//   test_set(); //
-//   test_set_parameters();
+   test_set();
+   test_set_parameters();
+
+   test_get_parameters();
 
    // Convolutions
 
@@ -1579,6 +1797,10 @@ void ConvolutionalLayerTest::run_test_case() // @todo
    // Forward propagate
 
    test_forward_propagate();
+
+   // Gradient
+
+   test_calculate_error_gradient();
 
    cout << "End of convolutional layer test case.\n\n";
 }
