@@ -694,8 +694,8 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
 
 
 void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
-                              const NeuralNetwork::ForwardPropagation& forward_propagation,
-                              BackPropagation& back_propagation) const
+                                         const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                         BackPropagation& back_propagation) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -710,23 +710,32 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
     const Tensor<Index, 1> trainable_layers_parameters_number
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-    trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_2d,
-                                                           forward_propagation.layers(0),
-                                                           back_propagation.neural_network.layers(0));
+    if(trainable_layers_pointers(0)->get_type() == Layer::Convolutional)
+    {
+        trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_4d,
+                                                               forward_propagation.layers(0),
+                                                               back_propagation.neural_network.layers(0));
+    }
+    else
+    {
+        trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_2d,
+                                                               forward_propagation.layers(0),
+                                                               back_propagation.neural_network.layers(0));
+    }
 
     Index index = 0;
 
     trainable_layers_pointers(0)->insert_gradient(back_propagation.neural_network.layers(0),
-            index, back_propagation.gradient);
+                                                  index,
+                                                  back_propagation.gradient);
 
     index += trainable_layers_parameters_number(0);
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
-        trainable_layers_pointers(i)->calculate_error_gradient(
-                forward_propagation.layers(i-1).activations_2d,
-                forward_propagation.layers(i-1),
-                back_propagation.neural_network.layers(i));
+        trainable_layers_pointers(i)->calculate_error_gradient(forward_propagation.layers(i-1).activations_2d,
+                                                               forward_propagation.layers(i-1),
+                                                               back_propagation.neural_network.layers(i));
 
         trainable_layers_pointers(i)->insert_gradient(back_propagation.neural_network.layers(i),
                                                       index,
