@@ -682,6 +682,12 @@ void QuasiNewtonMethod::update_epoch(
         LossIndex::BackPropagation& back_propagation,
         QNMOptimizationData& optimization_data)
 {
+    #ifdef __OPENNN_DEBUG__
+
+        check();
+
+    #endif
+
     optimization_data.old_training_loss = back_propagation.loss;
 
     optimization_data.parameters_difference.device(*thread_pool_device)
@@ -888,6 +894,19 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         // Optimization data
 
         update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+
+        #ifdef __OPENNN_DEBUG__
+
+        if(::isnan(training_back_propagation.error)){
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+                   << "type perform_training() mehtod.\n"
+                   << "Error is NAN.\n";
+
+            throw logic_error(buffer.str());
+        }
+        #endif
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
