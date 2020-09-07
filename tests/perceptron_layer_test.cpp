@@ -856,7 +856,7 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
    biases.setValues({{-0.5}});
 
    Tensor<type, 2> inputs(1, 3);
-//   inputs.setValues({{-0.8, 0.2, -0.4}});
+   inputs.setValues({{-0.8, 0.2, -0.4}});
 
    PerceptronLayer perceptron_layer_2(input_number, neuron_number, layer_number, PerceptronLayer::HyperbolicTangent);
 
