@@ -781,7 +781,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, Forwar
 void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                    Tensor<type, 1> potential_parameters,
                                    ForwardPropagation& forward_propagation) const
-   {
+{
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
@@ -895,8 +895,8 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
 // Gradient methods
 
 void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                              const Layer::ForwardPropagation&,
-                              Layer::BackPropagation& back_propagation) const
+                                                  const Layer::ForwardPropagation&,
+                                                  Layer::BackPropagation& back_propagation) const
 {
     back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 

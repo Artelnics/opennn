@@ -1373,13 +1373,21 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 /// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
-                                   ForwardPropagation& forward_propagation) const
+                                      ForwardPropagation& forward_propagation) const
 {
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
 
-    trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
+    if(trainable_layers_pointers(0)->get_type() == Layer::Convolutional)
+    {
+
+        trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, forward_propagation.layers(0));
+    }
+    else
+    {
+        trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
+    }
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
@@ -1395,8 +1403,8 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 /// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
-                                   Tensor<type, 1>& parameters,
-                                   ForwardPropagation& forward_propagation) const
+                                      Tensor<type, 1>& parameters,
+                                      ForwardPropagation& forward_propagation) const
 {
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
@@ -1406,7 +1414,14 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
     const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data(), parameters_number);
 
-    trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, potential_parameters, forward_propagation.layers(0));
+    if(trainable_layers_pointers(0)->get_type() == Layer::Convolutional)
+    {
+        trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, potential_parameters, forward_propagation.layers(0));
+    }
+    else
+    {
+        trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, potential_parameters, forward_propagation.layers(0));
+    }
 
     Index index = parameters_number;
 
@@ -1416,10 +1431,11 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
         const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
 
-         trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
-                                                                     potential_parameters,
-                                                                     forward_propagation.layers(i));
-         index += parameters_number;
+        trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
+                                                        potential_parameters,
+                                                        forward_propagation.layers(i));
+
+        index += parameters_number;
     }
 }
 

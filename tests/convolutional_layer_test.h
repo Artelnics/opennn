@@ -73,6 +73,10 @@ public:
 
   void test_calculate_hidden_delta();
 
+  // Gradient
+
+  void test_calculate_error_gradient();
+
   // Unit testing methods
 
   void run_test_case();

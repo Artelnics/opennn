@@ -832,8 +832,8 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(Layer* next_layer_poi
 // Gradient methods
 
 void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                              const Layer::ForwardPropagation&,
-                              Layer::BackPropagation& back_propagation) const
+                                               const Layer::ForwardPropagation&,
+                                               Layer::BackPropagation& back_propagation) const
 {
     back_propagation.biases_derivatives.device(*thread_pool_device)
             = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
