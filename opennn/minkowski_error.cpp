@@ -120,6 +120,19 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
      #ifdef __OPENNN_DEBUG__
 
      check();
+     for (Index i=1; i<back_propagation.output_gradient.dimension(0); i++) {
+         if(::isnan(back_propagation.output_gradient(i))){
+             ostringstream buffer;
+
+             buffer << "OpenNN Exception: MinkowskiError class.\n"
+                    << "void calculate_output_gradient method (const DataSet::Batch& batch, \n"
+                    << "const NeuralNetwork::ForwardPropagation& forward_propagation, \n"
+                    << "BackPropagation& back_propagation) \n"
+                    << "Output gradient is NAN. Modify Minkowski Parameter.\n";
+
+             throw logic_error(buffer.str());
+         }
+     }
 
      #endif
 
@@ -137,6 +150,8 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
 
      errors.device(*thread_pool_device) = outputs - targets;
 
+     errors = errors.unaryExpr([](type value) { return value<1e-10? value : static_cast<type>(1e-3);});
+
      const Tensor<type, 0> p_norm_derivative = (errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
 
      back_propagation.output_gradient.device(*thread_pool_device)
@@ -144,6 +159,7 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
 
      back_propagation.output_gradient.device(*thread_pool_device) =
              back_propagation.output_gradient/(static_cast<type>(training_samples_number)*(p_norm_derivative()));
+
 }
 
 
