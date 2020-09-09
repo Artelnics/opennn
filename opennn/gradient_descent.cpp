@@ -677,7 +677,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         if(reserve_training_error_history) results.training_error_history(epoch) = training_back_propagation.error;
 
-        if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
+        if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
 
         // Stopping Criteria
 
