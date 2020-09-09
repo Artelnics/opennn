@@ -1683,7 +1683,7 @@ void DataSet::set_default_columns_uses()
         const Index inputs_number = get_input_variables_number();
         const Index targets_number = get_target_variables_number();
 
-        input_variables_dimensions.resize(inputs_number);
+        input_variables_dimensions.resize(1);
     }
 }
 
@@ -1750,7 +1750,7 @@ void DataSet::set_default_classification_columns_uses()
         const Index inputs_number = get_input_variables_number();
         const Index targets_number = get_target_variables_number();
 
-        input_variables_dimensions.resize(inputs_number);
+        input_variables_dimensions.resize(1);
     }
 }
 
@@ -4308,6 +4308,11 @@ void DataSet::set_default()
     set_default_columns_uses();
 
     set_default_columns_names();
+
+    input_variables_dimensions.resize(1);
+
+    input_variables_dimensions.setConstant(get_input_variables_number());
+
 }
 
 
@@ -10415,7 +10420,7 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
 
     const type* data_pointer = data.data();
 
-    if(input_variables_dimensions.rank() == 1)
+    if(input_variables_dimensions.size() == 1)
     {
         type* inputs_2d_pointer = inputs_2d.data();
 
@@ -10431,7 +10436,7 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
             }
         }
     }
-    else if(input_variables_dimensions.rank() == 3)
+    else if(input_variables_dimensions.size() == 3)
     {
         const Index channels_number = input_variables_dimensions(0);
         const Index rows_number = input_variables_dimensions(1);
