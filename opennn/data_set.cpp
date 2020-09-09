@@ -10415,7 +10415,7 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
 
     const type* data_pointer = data.data();
 
-    if(input_variables_dimensions.size() == 1)
+    if(input_variables_dimensions.rank() == 1)
     {
         type* inputs_2d_pointer = inputs_2d.data();
 
@@ -10431,7 +10431,7 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
             }
         }
     }
-    else if(input_variables_dimensions.size() == 3)
+    else if(input_variables_dimensions.rank() == 3)
     {
         const Index channels_number = input_variables_dimensions(0);
         const Index rows_number = input_variables_dimensions(1);
