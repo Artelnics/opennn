@@ -161,6 +161,7 @@ public:
            gradient = Tensor<type, 1>(parameters_number);
            error_terms_Jacobian = Tensor<type, 2>(samples_number, parameters_number);
            hessian = Tensor<type, 2>(parameters_number, parameters_number);
+           error_terms = Tensor<type, 1>(samples_number);
        }
 
        void sum_hessian_diagonal(const type& value)

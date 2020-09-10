@@ -537,7 +537,8 @@ void LossIndex::calculate_error_terms_output_gradient(const DataSet::Batch& batc
     // Gives Eigen error in debug
 
 #ifndef __OPENNN_DEBUG__
-//    back_propagation.output_gradient.device(*thread_pool_device) = (outputs-targets)/second_order_loss.error_terms;
+
+//     back_propagation.output_gradient.device(*thread_pool_device) = (outputs-targets)/second_order_loss.error_terms;
 
     back_propagation.output_gradient = (outputs-targets);
 
