@@ -296,6 +296,7 @@ void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch
 
      #endif
 
+
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
      const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
@@ -306,14 +307,14 @@ void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch
 
      const type coefficient = static_cast<type>(2.0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-     cout << "+ w " << positives_weight <<endl;
-     cout << "- w " << negatives_weight <<endl;
-     cout << "batch samples " << batch_samples_number <<endl;
-     cout << "total samples " << total_samples_number<<endl;
-     cout << "output " << outputs<<endl;
-     cout << "target " << targets<<endl;
-     cout << "norm  " << normalization_coefficient<<endl;
-     cout << "error " << back_propagation.error<<endl;
+//     cout << "+ w " << positives_weight <<endl;
+//     cout << "- w " << negatives_weight <<endl;
+//     cout << "batch samples " << batch_samples_number <<endl;
+//     cout << "total samples " << total_samples_number<<endl;
+//     cout << "output " << outputs<<endl;
+//     cout << "target " << targets<<endl;
+//     cout << "norm  " << normalization_coefficient<<endl;
+//     cout << "error " << back_propagation.error<<endl;
 
 
      const Tensor<bool, 2> if_sentence = targets == targets.constant(1);
@@ -331,7 +332,7 @@ void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch
 
      f_3 = outputs.constant(0);
 
-     cout << f_2;
+//     cout << f_2;
 //     back_propagation.output_gradient = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
      back_propagation.output_gradient.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
 
