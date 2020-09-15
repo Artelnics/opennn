@@ -36,22 +36,6 @@ LIBS += -fopenmp -pthread -lgomp
 
 # OpenNN library
 
-#win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../../source/release/ -lopennn
-#else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../../source/debug/ -lopennn
-#else:unix: LIBS += -L$$OUT_PWD/../../source/ -lopennn
-
-#INCLUDEPATH += $$PWD/../../source
-#DEPENDPATH += $$PWD/../../source
-
-#win32-msvc:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../source/release/opennn.lib
-#else:win32-msvc:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../source/debug/opennn.lib
-
-#win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../source/release/libopennn.a
-#else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../source/debug/libopennn.a
-
-#else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../source/libopennn.a
-
-
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../../opennn/release/ -lopennn
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../../opennn/debug/ -lopennn
 else:unix: LIBS += -L$$OUT_PWD/../../opennn/ -lopennn

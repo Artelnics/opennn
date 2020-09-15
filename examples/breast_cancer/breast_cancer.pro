@@ -61,4 +61,3 @@ LIBS += -fopenmp -pthread -lgomp
 }else: macx{
 INCLUDEPATH += /usr/local/opt/libomp/include
 LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
-
