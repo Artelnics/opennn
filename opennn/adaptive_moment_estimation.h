@@ -210,6 +210,10 @@ private:
 
    Index maximum_epochs_number = 10000;
 
+   /// Maximum selection error allowed
+
+   Index maximum_selection_error_increases = 1000;
+
    /// Maximum training time. It is used as a stopping criterion.
 
    type maximum_time = 3600;
@@ -227,6 +231,8 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history = true;
+
+   /// Training and selection batch size.
 
    Index batch_samples_number = 1000;
 

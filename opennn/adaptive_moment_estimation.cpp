@@ -298,52 +298,65 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Start training
 
-    if(display) cout << "Training with adaptive moment estimator \"Adam\" ...\n";
+    if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
 
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+    const bool has_selection = data_set_pointer->has_selection();
+
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+
+    Index batch_size_training = 0;
+    Index batch_size_selection = 0;
 
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    if(training_samples_number < batch_samples_number) batch_samples_number = training_samples_number;
+    training_samples_number < batch_samples_number ? batch_size_training = training_samples_number : batch_size_training = batch_samples_number;
+    selection_samples_number < batch_samples_number && selection_samples_number != 0 ? batch_size_selection = selection_samples_number : batch_size_selection = batch_samples_number;
 
-    const bool has_selection = data_set_pointer->has_selection();
+    DataSet::Batch batch_training(batch_size_training, data_set_pointer);
+    DataSet::Batch batch_selection(batch_size_selection, data_set_pointer);
 
-    DataSet::Batch training_batch(batch_samples_number, data_set_pointer);
+    const Index training_batches_number = training_samples_number/batch_size_training;
+    const Index selection_batches_number = selection_samples_number/batch_size_selection;
 
-    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
-    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
+    Tensor<Index, 2> training_batches(training_batches_number, batch_size_training);
+    Tensor<Index, 2> selection_batches(selection_batches_number, batch_size_selection);
 
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+    const Index parameters_number = neural_network_pointer->get_parameters_number();
     type parameters_norm = 0;
-    Index parameters_number = neural_network_pointer->get_parameters_number();
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_samples_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
     // Loss index
 
-    LossIndex::BackPropagation training_back_propagation(batch_samples_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    LossIndex::BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
+    LossIndex::BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
     type training_error = 0;
     type training_loss = 0;
 
+    type selection_error = 0;
     type old_selection_error = 0;
+
     Index selection_error_increases = 0;
+    type gradient_norm = 0;
 
     // Optimization algorithm
+
+    OptimizationData optimization_data(this);
 
     type learning_rate = 0;
 
@@ -356,12 +369,10 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    results.resize_training_history(maximum_epochs_number + 1);
-    if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
-
-    OptimizationData optimization_data(this);
-
     bool is_forecasting = false;
+
+    results.resize_training_history(maximum_epochs_number+1);
+    if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
 
     if(neural_network_pointer->has_long_short_term_memory_layer()
     || neural_network_pointer->has_recurrent_layer())
@@ -371,9 +382,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices,
-                                                                                         batch_samples_number,
-                                                                                         is_forecasting);
+        const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, is_forecasting);
+
         const Index batches_number = training_batches.dimension(0);
 
         parameters_norm = l2_norm(optimization_data.parameters);
@@ -389,15 +399,15 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             // Data set
 
-            training_batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+            batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
-            neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
 
             // Loss index
 
-            loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+            loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
 
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
@@ -409,6 +419,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             neural_network_pointer->set_parameters(optimization_data.parameters);
         }
 
+        gradient_norm = l2_norm(training_back_propagation.gradient);
+
         // Loss
 
         training_loss /= static_cast<type>(batches_number);
@@ -416,21 +428,40 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+            selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, is_forecasting);
 
-            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+            selection_error = 0;
+
+            for(Index iteration = 0; iteration < selection_batches_number; iteration++)
+            {
+                // Data set
+
+                batch_selection.fill(selection_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
+
+                // Neural network
+
+                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
+
+                // Loss
+
+                loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
+
+                selection_error += selection_back_propagation.error;
+            }
+
+            selection_error /= static_cast<type>(selection_batches_number);
 
             if(epoch == 0)
             {
-                minimum_selection_error = selection_back_propagation.error;
+                minimum_selection_error = selection_error;
             }
-            else if(selection_back_propagation.error > old_selection_error)
+            else if(selection_error > old_selection_error)
             {
                 selection_error_increases++;
             }
-            else if(selection_back_propagation.error <= minimum_selection_error)
+            else if(selection_error <= minimum_selection_error)
             {
-                minimum_selection_error = selection_back_propagation.error;
+                minimum_selection_error = selection_error;
                 minimal_selection_parameters = optimization_data.parameters;
             }
         }
@@ -444,7 +475,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
 
-        if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
+        if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         if(epoch == maximum_epochs_number)
         {
@@ -473,6 +504,28 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             results.stopping_condition  = LossGoal;
         }
 
+        else if(gradient_norm <= gradient_norm_goal)
+        {
+            if(display) cout << "Epoch " << epoch+1 << ": Gradient norm goal reached.\n";
+
+            stop_training = true;
+
+            results.stopping_condition = GradientNormGoal;
+        }
+
+        else if(selection_error_increases >= maximum_selection_error_increases)
+        {
+            if(display)
+            {
+                cout << "Epoch " << epoch+1 << ": Maximum selection error increases reached.\n"
+                     << "Selection error increases: " << selection_error_increases << endl;
+            }
+
+            stop_training = true;
+
+            results.stopping_condition = MaximumSelectionErrorIncreases;
+        }
+
         if(epoch != 0 && epoch % save_period == 0)
         {
             neural_network_pointer->save(neural_network_file_name);
@@ -487,7 +540,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
                      << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-                if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl<<endl;
+                if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
             }
 
             results.resize_training_error_history(epoch+1);
@@ -500,7 +553,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             results.final_training_error = training_error;
 
-            if(has_selection) results.final_selection_error = selection_back_propagation.error;
+            if(has_selection) results.final_selection_error = selection_error;
 
             results.elapsed_time = elapsed_time;
 
@@ -517,13 +570,13 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
                      << "Batch size: " << batch_samples_number << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-                if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl<<endl;
+                if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
             }
         }
 
         // Update stuff
 
-        if(has_selection) old_selection_error = selection_back_propagation.error;
+        if(has_selection) old_selection_error = selection_error;
 
         if(stop_training) break;
     }
@@ -535,7 +588,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
-        selection_back_propagation.error = minimum_selection_error;
+        selection_error = minimum_selection_error;
     }
 
     return results;
