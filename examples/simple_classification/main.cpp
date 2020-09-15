@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S I M P L E   P A T T E R N   R E C O G N I T I O N   A P P L I C A T I O N
+//   S I M P L E   C L A S S I F I C A T I O N    A P P L I C A T I O N
 //
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com

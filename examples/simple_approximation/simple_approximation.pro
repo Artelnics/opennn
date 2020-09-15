@@ -1,9 +1,9 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.opennn.net                                                                      #
+#   www.opennn.net                                                                                #
 #                                                                                                 #
-#   S I M P L E   P A T T E R N   R E C O G N I T I O N   P R O J E C T                           #
+#   S I M P L E   A P P R O X I M A T I O N    P R O J E C T                                      #
 #                                                                                                 #
 #   Artificial Intelligence Techniques SL (Artelnics)                                             #
 #   artelnics@artelnics.com                                                                       #
@@ -18,7 +18,7 @@ mac{
     CONFIG-=app_bundle
 }
 
-TARGET = simple_pattern_recognition
+TARGET = simple_approximation
 
 DESTDIR = "$$PWD/bin"
 
@@ -52,16 +52,12 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../opennn/libopennn.a
 # OpenMP library
 
 win32:!win32-g++{
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp
-
-QMAKE_LFLAGS += -fopenmp -pthread #-lgomp
+QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
+QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 LIBS += -fopenmp -pthread #-lgomp
-}else:!macx{
-QMAKE_CXXFLAGS+= -fopenmp #-lgomp
-QMAKE_LFLAGS += -fopenmp #-lgomp
-LIBS += -openmp -pthread #-lgomp
+}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
+QMAKE_LFLAGS += -fopenmp -lgomp
+LIBS += -fopenmp -pthread -lgomp
 }else: macx{
 INCLUDEPATH += /usr/local/opt/libomp/include
-LIBS += /usr/local/opt/libomp/lib/libomp.dylib
-}
-
+LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
