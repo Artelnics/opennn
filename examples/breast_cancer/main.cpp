@@ -24,7 +24,6 @@ int main(void)
 {
     try
     {
-
         cout << "OpenNN. Breast Cancer Application." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
