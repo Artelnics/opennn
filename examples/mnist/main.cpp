@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S I M P L E   F U N C T I O N   R E G R E S S I O N   A P P L I C A T I O N
+//   M N I S T    A P P L I C A T I O N
 //
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
@@ -26,34 +26,6 @@ using namespace std;
 using namespace OpenNN;
 
 
-string transform_number_to_category(const string& line)
-{
-    Tensor<string,1> line_tokens = get_tokens(line, ',');
-    const Index tokens_number = line_tokens.size();
-
-    if(line_tokens(0) == "0") line_tokens(0) = "zero";
-    else if(line_tokens(0) == "1") line_tokens(0) = "one";
-    else if(line_tokens(0) == "2") line_tokens(0) = "two";
-    else if(line_tokens(0) == "3") line_tokens(0) = "three";
-    else if(line_tokens(0) == "4") line_tokens(0) = "four";
-    else if(line_tokens(0) == "5") line_tokens(0) = "five";
-    else if(line_tokens(0) == "6") line_tokens(0) = "six";
-    else if(line_tokens(0) == "7") line_tokens(0) = "seven";
-    else if(line_tokens(0) == "8") line_tokens(0) = "eight";
-    else if(line_tokens(0) == "9") line_tokens(0) = "nine";
-
-    string new_line = "";
-
-    for(Index i = 0; i < tokens_number; i++)
-    {
-        new_line += line_tokens(i);
-
-        if(i != tokens_number-1) new_line += ",";
-    }
-
-    return new_line;
-}
-
 int main(void)
 {
     try
@@ -62,122 +34,6 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        // Preprocess data
-
-        bool reload = true;
-
-        ifstream training_file("../data/mnist_train.csv");
-
-        if(!training_file.is_open() || reload)
-        {
-            cout << "Creating training data set..." << endl;
-
-            ofstream complete_file("../data/mnist_train.csv");
-
-            ifstream file_1("../data/mnist_train_1.csv");
-
-            if(!file_1.is_open())
-            {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: MNIST example.\n"
-                       << "Cannot open data file: mnist_train_1.csv \n";
-
-                throw logic_error(buffer.str());
-            }
-
-            Index lines_count = 0;
-            string line;
-
-            while(file_1.good())
-            {
-                getline(file_1, line);
-
-                trim(line);
-
-                erase(line, '"');
-
-                if(line.empty()) continue;
-
-                complete_file << transform_number_to_category(line);
-                complete_file << endl;
-
-                lines_count++;
-            }
-
-            file_1.close();
-
-            ifstream file_2("../data/mnist_train_2.csv");
-
-            if(!file_2.is_open())
-            {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: MNIST example.\n"
-                       << "Cannot open data file: mnist_train_2.csv \n";
-
-                throw logic_error(buffer.str());
-            }
-
-            lines_count = 0;
-
-            while(file_2.good())
-            {
-                getline(file_2, line);
-
-                trim(line);
-
-                erase(line, '"');
-
-                if(line.empty()) continue;
-
-                complete_file << transform_number_to_category(line);
-                complete_file << endl;
-
-                lines_count++;
-            }
-
-            file_2.close();
-
-            ifstream file_test("../data/mnist_test.csv");
-
-            if(!file_test.is_open())
-            {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: MNIST example.\n"
-                       << "Cannot open data file: mnist_test.csv \n";
-
-                throw logic_error(buffer.str());
-            }
-
-            lines_count = 0;
-
-            while(file_test.good())
-            {
-                getline(file_test, line);
-
-                trim(line);
-
-                erase(line, '"');
-
-                if(line.empty()) continue;
-
-                complete_file << transform_number_to_category(line);
-                complete_file << endl;
-
-                lines_count++;
-            }
-
-            file_test.close();
-
-            complete_file.close();
-        }
-        else
-        {
-            training_file.close();
-        }
-
         // Data set
 
         bool display_data_set = false;
@@ -185,6 +41,7 @@ int main(void)
         DataSet data_set("../data/mnist_train.csv",',',true);
 
         data_set.set_input();
+
         data_set.set_column_use(0, DataSet::VariableUse::Target);
 
         const Tensor<string, 1> unused_variables = data_set.unuse_constant_columns();
@@ -194,10 +51,10 @@ int main(void)
         const Index target_variables_number = data_set.get_target_variables_number();
 
         Tensor<string, 1> scaling_methods(input_variables_number);
+
         scaling_methods.setConstant("MinimumMaximum");
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_methods);
-
 
         data_set.unuse_constant_columns();
 
@@ -223,9 +80,6 @@ int main(void)
             cout << "Input variables number: " << data_set.get_target_variables_number() << endl;
             cout << "Target variables number: " << data_set.get_target_variables_number() << endl;
         }
-
-
-
 
         // Neural network
 
@@ -257,56 +111,17 @@ int main(void)
             }
         }
 
-
-
-        ///TEST
-//        Index samples_number = data_set.get_samples_number();
-//        DataSet::Batch batch(samples_number, &data_set);
-
-//        Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
-//        const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
-//        const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
-
-//        batch.fill(samples_indices, input_indices, target_indices);
-
-//        NormalizedSquaredError nse(&neural_network, &data_set);
-
-//        NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
-//        LossIndex::BackPropagation training_back_propagation(samples_number, &nse);
-
-//        neural_network.forward_propagate(batch, forward_propagation);
-
-////        forward_propagation.print();
-
-//        nse.back_propagate(batch, forward_propagation, training_back_propagation);
-
-
-
-////        training_back_propagation.print();
-
-
         // Training strategy
-
-
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
+        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
 
-        NormalizedSquaredError* normalized_squared_error_pointer = training_strategy.get_normalized_squared_error_pointer();
-        normalized_squared_error_pointer->set_normalization_coefficient();
+        training_strategy.set_display_period(10);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-
-        training_strategy.set_display_period(5);
-
-        training_strategy.set_maximum_epochs_number(20);
-
-        neural_network.set_parameters_random();
-        neural_network.get_first_perceptron_layer_pointer()->set_synaptic_weights_glorot();
-        neural_network.get_first_perceptron_layer_pointer()->set_biases_constant(0);
-        neural_network.get_probabilistic_layer_pointer()->set_synaptic_weights_glorot();
+        training_strategy.set_maximum_epochs_number(1000);
 
         training_strategy.perform_training();
 
