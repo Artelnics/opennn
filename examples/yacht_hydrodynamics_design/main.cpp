@@ -78,8 +78,6 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 
         // Testing analysis
@@ -88,7 +86,7 @@ int main(void)
 
         const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
 
-        cout<<linear_regression_analysis.correlation;
+        cout<<"correlation: "<<linear_regression_analysis.correlation<<endl;
 
         // Save results
 
