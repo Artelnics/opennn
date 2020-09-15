@@ -651,7 +651,7 @@ public:
    void unscale_target_minimum_maximum(const Descriptives&, const Index&);
    void unscale_target_mean_standard_deviation(const Descriptives&, const Index&);
    void unscale_target_logarithmic(const Descriptives&, const Index&);
-   void unscale_targets(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
+   void unscale_target_variables(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
 
    // Classification methods
 
