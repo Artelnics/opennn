@@ -523,8 +523,12 @@ void PerceptronLayer::set_parameters_constant(const type& value)
 
 void PerceptronLayer::set_parameters_random()
 {
+
     biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
     synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+
+    biases = 1e-3*biases;
+    synaptic_weights = 1e-3*synaptic_weights;
 
 }
 
