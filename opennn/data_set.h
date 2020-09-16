@@ -428,11 +428,6 @@ public:
 
    void binarize_input_data(const type&);
 
-   // Columns check methods
-
-   Index count_binary_columns() const;
-   Index count_categorical_columns() const;
-
    // Variables set methods
 
    void set_variables_names(const Tensor<string, 1>&);
