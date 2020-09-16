@@ -258,7 +258,7 @@ private:
 
    /// Hardware use.
 
-   string hardware_use;
+   string hardware_use = "Multi-core";
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"

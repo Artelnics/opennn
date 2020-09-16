@@ -284,7 +284,7 @@ private:
 
    /// Hardware use.
 
-   string hardware_use;
+   string hardware_use = "Multi-core";
 };
 
 }
