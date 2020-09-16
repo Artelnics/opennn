@@ -73,8 +73,6 @@ int main(void)
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
-        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
         AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
 
         adam->set_loss_goal(1.0e-3);

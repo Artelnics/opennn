@@ -94,6 +94,8 @@ public:
         Tensor<type, 1> parameters_increment;
         Tensor<type, 1> nesterov_increment;
         Tensor<type, 1> last_parameters_increment;
+
+        Tensor<type, 1> minimal_selection_parameters;
     };
 
     static vector<Index> tensor_to_vector(const Tensor<Index, 1>& tensor)
@@ -230,6 +232,10 @@ private:
 
    type training_loss_goal = 0;
 
+   /// gradient norm goal. It is used as a stopping criterion.
+
+   type gradient_norm_goal = 0;
+
    /// Maximum epochs number
 
    Index maximum_epochs_number;
@@ -237,6 +243,10 @@ private:
    /// Maximum training time. It is used as a stopping criterion.
 
    type maximum_time;
+
+   /// Maximum selection error allowed
+
+   Index maximum_selection_error_increases = 1000;
 
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 

@@ -142,6 +142,7 @@ void StochasticGradientDescent::set_default()
     // Stopping criteria
 
     training_loss_goal = 0;
+    gradient_norm_goal = 0;
     maximum_time = 3600.0;
     maximum_epochs_number = 1000;
     choose_best_selection = false;
@@ -435,14 +436,12 @@ void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagatio
 OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 {
     Results results;
-#ifdef __OPENNN_DEBUG__
 
     check();
 
-#endif
     // Start training
 
-    if(display) cout << "Training with stochastic gradient descent...\n";
+    if(display) cout << "Training with stochastic gradient descent \"SGD\" ...\n";
 
     // Data set
 
@@ -456,48 +455,55 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
     Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
+    Index batch_size_training = 0;
+    Index batch_size_selection = 0;
+
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    if(training_samples_number < batch_samples_number) batch_samples_number = training_samples_number;
+    training_samples_number < batch_samples_number ? batch_size_training = training_samples_number : batch_size_training = batch_samples_number;
+    selection_samples_number < batch_samples_number && selection_samples_number != 0 ? batch_size_selection = selection_samples_number : batch_size_selection = batch_samples_number;
 
-    Tensor<Index, 1> batch_samples_indices(batch_samples_number);
-    batch_samples_indices.setConstant(1);
+    DataSet::Batch batch_training(batch_size_training, data_set_pointer);
+    DataSet::Batch batch_selection(batch_size_selection, data_set_pointer);
 
-    DataSet::Batch batch(batch_samples_number, data_set_pointer);
+    const Index training_batches_number = training_samples_number/batch_size_training;
+    const Index selection_batches_number = selection_samples_number/batch_size_selection;
 
-    const Index training_batches_number = training_samples_number/batch_samples_number;
-
-    Tensor<Index, 2> training_batches(training_batches_number, batch_samples_number);
-
-    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
-    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
+    Tensor<Index, 2> training_batches(training_batches_number, batch_size_training);
+    Tensor<Index, 2> selection_batches(selection_batches_number, batch_size_selection);
 
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    NeuralNetwork::ForwardPropagation forward_propagation(batch_samples_number, neural_network_pointer);
+    const Index parameters_number = neural_network_pointer->get_parameters_number();
+    type parameters_norm = 0;
 
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
     // Loss index
 
-    LossIndex::BackPropagation back_propagation(batch_samples_number, loss_index_pointer);
+    LossIndex::BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
+    LossIndex::BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
-    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    type training_error = 0;
+    type training_loss = 0;
 
-    type training_error = numeric_limits<type>::max();
-    type training_loss = numeric_limits<type>::max();
-
+    type selection_error = 0;
     type old_selection_error = 0;
+
     Index selection_error_increases = 0;
+    type gradient_norm = 0;
 
     // Optimization algorithm
 
     SGDOptimizationData optimization_data(this);
 
-    Tensor<type, 1> minimal_selection_parameters;
+    type learning_rate = 0;
+
+    Tensor<type, 1> minimal_selection_parameters(parameters_number);
     type minimum_selection_error = numeric_limits<type>::max();
 
     bool stop_training = false;
@@ -506,95 +512,113 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    results.resize_training_history(maximum_epochs_number + 1);
+    bool is_forecasting = false;
+
+    results.resize_training_history(maximum_epochs_number+1);
     if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
 
-    bool shuffle = false;
+    if(neural_network_pointer->has_long_short_term_memory_layer()
+    || neural_network_pointer->has_recurrent_layer())
+        is_forecasting = true;
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-        training_batches = data_set_pointer->get_batches(training_samples_indices,
-                                                         batch_samples_number,
-                                                         shuffle);
+        const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, is_forecasting);
 
-        training_error = 0;
+        const Index batches_number = training_batches.dimension(0);
+
+        parameters_norm = l2_norm(optimization_data.parameters);
+
         training_loss = 0;
+        training_error = 0;
 
         optimization_data.iteration = 0;
 
-        for(Index iteration = 0; iteration < training_batches_number; iteration++)
+        for(Index iteration = 0; iteration < batches_number; iteration++)
         {
+            optimization_data.iteration++;
+
             // Data set
 
-            batch.fill(training_batches.chip(iteration,0),
-                       input_variables_indices, target_variables_indices);
+            batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
-            neural_network_pointer->forward_propagate(batch, forward_propagation);
+            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
 
-            // Loss
+            // Loss index
 
-            loss_index_pointer->back_propagate(batch, forward_propagation, back_propagation);
+            loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
 
-            training_error += back_propagation.error;
-            training_loss += back_propagation.loss;
+            training_error += training_back_propagation.error;
+            training_loss += training_back_propagation.loss;
 
-            // Optimization algorithm
+            // Gradient
 
-            update_iteration(back_propagation, optimization_data);
+            update_iteration(training_back_propagation, optimization_data);
 
             neural_network_pointer->set_parameters(optimization_data.parameters);
         }
 
+        gradient_norm = l2_norm(training_back_propagation.gradient);
+
         // Loss
 
-        training_error /= static_cast<type>(training_batches_number);
-        training_loss /= static_cast<type>(training_batches_number);
+        training_loss /= static_cast<type>(batches_number);
+        training_error /= static_cast<type>(batches_number);
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+            selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, is_forecasting);
 
-            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+            selection_error = 0;
+
+            for(Index iteration = 0; iteration < selection_batches_number; iteration++)
+            {
+                // Data set
+
+                batch_selection.fill(selection_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
+
+                // Neural network
+
+                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
+
+                // Loss
+
+                loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
+
+                selection_error += selection_back_propagation.error;
+            }
+
+            selection_error /= static_cast<type>(selection_batches_number);
 
             if(epoch == 0)
             {
-                minimum_selection_error = selection_back_propagation.error;
+                minimum_selection_error = selection_error;
             }
-            else if(selection_back_propagation.error > old_selection_error)
+            else if(selection_error > old_selection_error)
             {
                 selection_error_increases++;
             }
-            else if(selection_back_propagation.error <= minimum_selection_error)
+            else if(selection_error <= minimum_selection_error)
             {
-                minimum_selection_error = selection_back_propagation.error;
+                minimum_selection_error = selection_error;
                 minimal_selection_parameters = optimization_data.parameters;
             }
         }
 
-        // Training history loss index
+        // Elapsed time
+
+        time(&current_time);
+        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+
+        // Training history
 
         if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
 
-        if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
-
-        // Stopping criteria
-
-        time(&current_time);
-
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
-        if(training_loss <= training_loss_goal)
-        {
-            if(display) cout << "Epoch " << epoch+1 << ": Training loss goal reached.\n";
-
-            stop_training = true;
-
-            results.stopping_condition = LossGoal;
-        }
+        if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         if(epoch == maximum_epochs_number)
         {
@@ -614,6 +638,37 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             results.stopping_condition = MaximumTime;
         }
 
+        else if(training_loss <= training_loss_goal)
+        {
+            if(display) cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
+
+            stop_training = true;
+
+            results.stopping_condition  = LossGoal;
+        }
+
+        else if(gradient_norm <= gradient_norm_goal)
+        {
+            if(display) cout << "Epoch " << epoch+1 << ": Gradient norm goal reached.\n";
+
+            stop_training = true;
+
+            results.stopping_condition = GradientNormGoal;
+        }
+
+        else if(selection_error_increases >= maximum_selection_error_increases)
+        {
+            if(display)
+            {
+                cout << "Epoch " << epoch+1 << ": Maximum selection error increases reached.\n"
+                     << "Selection error increases: " << selection_error_increases << endl;
+            }
+
+            stop_training = true;
+
+            results.stopping_condition = MaximumSelectionErrorIncreases;
+        }
+
         if(epoch != 0 && epoch % save_period == 0)
         {
             neural_network_pointer->save(neural_network_file_name);
@@ -623,46 +678,60 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Training error: " << training_error << "\n"
-                     << "Batch size: " << batch_samples_number << "\n"
+                cout << "Parameters norm: " << parameters_norm << "\n"
+                     << "Training error: " << training_error << "\n"
+                     << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-                if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl << endl;
+                if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
             }
 
             results.resize_training_error_history(epoch+1);
+
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
             results.final_parameters = optimization_data.parameters;
+
+            results.final_parameters_norm = parameters_norm;
+
             results.final_training_error = training_error;
-            results.final_selection_error = selection_back_propagation.error;
+
+            if(has_selection) results.final_selection_error = selection_error;
+
             results.elapsed_time = elapsed_time;
+
             results.epochs_number = epoch;
 
             break;
         }
-        else if((display && epoch == 0) || (display && (epoch+1) % display_period == 0))
+        else if(epoch == 0 || (epoch+1)%display_period == 0)
         {
-            cout << "Epoch " << epoch+1 << "/"<<maximum_epochs_number << ":\n"
-                 << "Training error: " << training_error << "\n"
-                 << "Batch size: " << batch_samples_number << "\n"
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
+            if(display)
+            {
+                cout << "Epoch " << epoch+1 << ";\n"
+                     << "Training error: " << training_error << "\n"
+                     << "Batch size: " << batch_samples_number << "\n"
+                     << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-            if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl << endl;
+                if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
+            }
         }
 
-        old_selection_error = selection_back_propagation.error;
+        // Update stuff
+
+        if(has_selection) old_selection_error = selection_error;
 
         if(stop_training) break;
     }
 
-    if(has_selection && choose_best_selection)
+    if(choose_best_selection)
     {
-        optimization_data.parameters = minimal_selection_parameters;
+        optimization_data.parameters = optimization_data.minimal_selection_parameters;
+        parameters_norm = l2_norm(optimization_data.parameters);
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
-        results.final_selection_error = selection_back_propagation.error;
+        selection_error = minimum_selection_error;
     }
 
     return results;

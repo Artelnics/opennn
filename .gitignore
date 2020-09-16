@@ -211,7 +211,7 @@ Makefile*
 *.qmlproject.user.*
 
 # Examples
-[Ee]xamples/*
+#[Ee]xamples/*
 *filters
 *vcxproj
 *sln
@@ -222,8 +222,6 @@ Makefile*
 ![Ee]xamples/leukemia
 ![Ee]xamples/logical_operations
 ![Ee]xamples/pima_indians_diabetes
-![Ee]xamples/simple_function_regression
-![Ee]xamples/simple_pattern_recognition
 ![Ee]xamples/urinary_inflammations_diagnosis
 ![Ee]xamples/yacht_hydrodynamics_design
 ![Ee]xamples/yacht_hydrodynamics_production

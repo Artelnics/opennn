@@ -76,7 +76,7 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_optimization_method(TrainingStrategy::CONJUGATE_GRADIENT);
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
