@@ -55,7 +55,7 @@ int main(void)
 
         // Neural network
 
-        const Index hidden_neurons_number = 7;
+        const Index hidden_neurons_number = 10;
 
         Tensor<Index, 1> neural_network_architecture(3);
         neural_network_architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
@@ -79,15 +79,18 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::L2);
 
-        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+        AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
+
+        adam->set_maximum_epochs_number(10000);
+        adam->set_display_period(1000);
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 
         data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
-        data_set.unscale_targets(scaling_target_methods, target_descriptives);
+        data_set.unscale_target_variables(scaling_target_methods, target_descriptives);
 
         // Testing analysis
 

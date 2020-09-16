@@ -24,7 +24,6 @@ int main(void)
 {
     try
     {
-
         cout << "OpenNN. Breast Cancer Application." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
@@ -66,8 +65,6 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
-        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
 
@@ -86,43 +83,43 @@ int main(void)
 
         // Model selection
 
-         ModelSelection model_selection(&training_strategy);
+//         ModelSelection model_selection(&training_strategy);
 
-        model_selection.perform_neurons_selection();
+//         model_selection.perform_neurons_selection();
 
-        // Testing analysis
+         // Testing analysis
 
-        data_set.unscale_input_variables(scaling_methods, inputs_descriptives);
+         data_set.unscale_input_variables(scaling_methods, inputs_descriptives);
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
-        cout << "Confusion: " << endl;
-        cout << confusion << endl;
+         cout << "Confusion: " << endl;
+         cout << confusion << endl;
 
-        Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+         Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
 
-        cout << "Binary classification tests: " << endl;
-        cout << "Classification accuracy         : " << binary_classification_tests[0] << endl;
-        cout << "Error rate                      : " << binary_classification_tests[1] << endl;
-        cout << "Sensitivity                     : " << binary_classification_tests[2] << endl;
-        cout << "Specificity                     : " << binary_classification_tests[3] << endl;
-        cout << "Precision                       : " << binary_classification_tests[4] << endl;
-        cout << "Positive likelihood             : " << binary_classification_tests[5] << endl;
-        cout << "Negative likelihood             : " << binary_classification_tests[6] << endl;
-        cout << "F1 score                        : " << binary_classification_tests[7] << endl;
-        cout << "False positive rate             : " << binary_classification_tests[8] << endl;
-        cout << "False discovery rate            : " << binary_classification_tests[9] << endl;
-        cout << "False negative rate             : " << binary_classification_tests[10] << endl;
-        cout << "Negative predictive value       : " << binary_classification_tests[11] << endl;
-        cout << "Matthews correlation coefficient: " << binary_classification_tests[12] << endl;
-        cout << "Informedness                    : " << binary_classification_tests[13] << endl;
-        cout << "Markedness                      : " << binary_classification_tests[14] << endl;
+         cout << "Binary classification tests: " << endl;
+         cout << "Classification accuracy         : " << binary_classification_tests[0] << endl;
+         cout << "Error rate                      : " << binary_classification_tests[1] << endl;
+         cout << "Sensitivity                     : " << binary_classification_tests[2] << endl;
+         cout << "Specificity                     : " << binary_classification_tests[3] << endl;
+         cout << "Precision                       : " << binary_classification_tests[4] << endl;
+         cout << "Positive likelihood             : " << binary_classification_tests[5] << endl;
+         cout << "Negative likelihood             : " << binary_classification_tests[6] << endl;
+         cout << "F1 score                        : " << binary_classification_tests[7] << endl;
+         cout << "False positive rate             : " << binary_classification_tests[8] << endl;
+         cout << "False discovery rate            : " << binary_classification_tests[9] << endl;
+         cout << "False negative rate             : " << binary_classification_tests[10] << endl;
+         cout << "Negative predictive value       : " << binary_classification_tests[11] << endl;
+         cout << "Matthews correlation coefficient: " << binary_classification_tests[12] << endl;
+         cout << "Informedness                    : " << binary_classification_tests[13] << endl;
+         cout << "Markedness                      : " << binary_classification_tests[14] << endl;
 
-        cout << "End" << endl;
+         cout << "End" << endl;
 
-        return 0;
+         return 0;
     }
     catch(exception& e)
     {

@@ -7148,7 +7148,7 @@ void DataSet::unscale_target_logarithmic(const Descriptives& target_statistics, 
 /// It unscales the input variables with that values.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::unscale_targets(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& targets_descriptives)
+void DataSet::unscale_target_variables(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& targets_descriptives)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
