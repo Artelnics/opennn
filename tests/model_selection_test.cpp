@@ -156,7 +156,7 @@ void ModelSelectionTest::test_save()
 {
     cout << "test_save\n";
 
-    string file_name = "../data/model_selection.xml";
+    string file_name = "../data/model_selection1.xml";
 
     ModelSelection ms;
 
@@ -170,16 +170,18 @@ void ModelSelectionTest::test_load()
 {
     cout << "test_load\n";
 
-//    string file_name = "../data/model_selection.xml";
+    string file_name = "../data/model_selection.xml";
+    string file_name2 = "../data/model_selection2.xml";
 
-//    ModelSelection ms;
+    ModelSelection ms;
 
-//    ms.set_neurons_selection_method(ModelSelection::INCREMENTAL_NEURONS);
+    ms.set_neurons_selection_method(ModelSelection::GROWING_NEURONS);
 
-//    // Test
+    // Test
 
-//    ms.save(file_name);
-//    ms.load(file_name);
+    ms.save(file_name);
+    ms.load(file_name);
+    ms.save(file_name2);
 
 }
 
