@@ -689,11 +689,17 @@ void ModelSelection::print() const
 
 void ModelSelection::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+    FILE *pFile;
+//    int err;
 
-//    document->SaveFile(file_name.c_str());
+//    err = fopen_s(&pFile, file_name.c_str(), "w");
+    pFile = fopen(file_name.c_str(), "w");
 
-//    delete document;
+    tinyxml2::XMLPrinter document(pFile);
+
+    write_XML(document);
+
+    fclose(pFile);
 }
 
 
