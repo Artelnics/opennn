@@ -561,7 +561,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     Results results;
 
     results.resize_training_history(maximum_epochs_number);
-
+    results.resize_selection_history(maximum_epochs_number);
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
