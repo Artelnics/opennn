@@ -77,10 +77,10 @@ void WeightedSquaredError::set_default()
     }
     else
     {
-        negatives_weight = 1.0;
-        positives_weight = 1.0;
+        negatives_weight = -1.0;
+        positives_weight = -1.0;
 
-        normalization_coefficient = 1.0;
+        normalization_coefficient = -1.0;
     }
 }
 
@@ -172,6 +172,20 @@ void WeightedSquaredError::set_normalization_coefficient()
     const Index negatives = data_set_pointer->calculate_used_negatives(target_variables_indices[0]);
 
     normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
+}
+
+
+///
+/// \brief set_data_set_pointer
+/// \param new_data_set_pointer
+
+void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
+{
+    data_set_pointer = new_data_set_pointer;
+
+    set_weights();
+
+    set_normalization_coefficient();
 }
 
 
