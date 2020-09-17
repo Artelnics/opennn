@@ -9222,7 +9222,7 @@ void DataSet::impute_missing_values_mean()
 
     for(Index j = 0; j < variables_number; j++)
     {
-        for(Index i = 0 ; i < samples_number - 1 ; i++)
+        for(Index i = 0; i < samples_number; i++)
         {
             if(::isnan(data(i,j))) data(i,j) = means(j);
         }
