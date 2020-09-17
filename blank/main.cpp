@@ -63,7 +63,7 @@ int main(void)
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
 
         training_strategy.perform_training();
 
