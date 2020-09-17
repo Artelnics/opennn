@@ -167,8 +167,8 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-//   data_set.set_data_random();
-   data_set.initialize_data(0.2);
+   data_set.set_data_random();
+//   data_set.initialize_data(0.2);
    data_set.set_training();
 
    DataSet::Batch batch(1, &data_set);
@@ -184,8 +184,8 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    neural_network.set(NeuralNetwork::Classification, architecture);
 
-//   neural_network.set_parameters_random();
-    neural_network.set_parameters_constant(1);
+   neural_network.set_parameters_random();
+//    neural_network.set_parameters_constant(1);
 
    NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
    LossIndex::BackPropagation training_back_propagation(data_set.get_training_samples_number(), &cee);
@@ -201,6 +201,10 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation(&cee);
 
    const Tensor<type, 1> difference = training_back_propagation.gradient-numerical_error_gradient;
+
+   cout << "Gradient: " << training_back_propagation.gradient << endl;
+
+   cout << "Num gradient: " << numerical_error_gradient << endl;
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-2); }), LOG);
 }
@@ -370,13 +374,13 @@ void CrossEntropyErrorTest::run_test_case()
 
    // Error methods
 
-   test_calculate_error();
+//   test_calculate_error();
    test_calculate_error_gradient();
 
    // Serialization methods
 
-   test_to_XML();
-   test_from_XML();
+//   test_to_XML();
+//   test_from_XML();
 
    cout << "End of cross entropy error test case.\n\n";
 }
