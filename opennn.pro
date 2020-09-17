@@ -18,7 +18,7 @@ SUBDIRS += opennn
 
 SUBDIRS += tests
 SUBDIRS += examples
-#SUBDIRS += blank
+SUBDIRS += blank
 
 CONFIG += ordered
 
