@@ -167,8 +167,13 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-   data_set.set_data_random();
-//   data_set.initialize_data(0.2);
+   Tensor<type, 2> data(samples_number, inputs_number+outputs_number);
+   data.setRandom();
+
+   data(0, inputs_number) = 1;
+
+   data_set.set_data(data);
+
    data_set.set_training();
 
    DataSet::Batch batch(1, &data_set);
@@ -193,10 +198,6 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    neural_network.forward_propagate(batch, forward_propagation);
 
    cee.back_propagate(batch, forward_propagation, training_back_propagation);
-
-   cee.calculate_error(batch, forward_propagation, training_back_propagation);
-
-   cee.calculate_output_gradient(batch, forward_propagation, training_back_propagation);
 
    numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation(&cee);
 
