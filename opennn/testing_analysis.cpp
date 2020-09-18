@@ -308,9 +308,6 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
 
     Tensor<LinearRegressionAnalysis, 1> linear_regression_results(outputs_number);
 
-//    cout<<outputs_number<<endl;
-
-
     for(Index i = 0;  i < outputs_number; i++)
     {
         const Tensor<type, 1> targets = testing_targets.chip(i,1);

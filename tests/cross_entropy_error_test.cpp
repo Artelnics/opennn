@@ -160,18 +160,24 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    // Test perceptron and probabilistic
 {
-   samples_number = 1;
-   inputs_number = 3;
+   samples_number = 2;
+   inputs_number = 1;
    outputs_number = 1;
    hidden_neurons = 1;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-   data_set.set_data_random();
-//   data_set.initialize_data(0.2);
+   Tensor<type, 2> data(samples_number, inputs_number+outputs_number);
+   data.setRandom();
+
+   data(0, 1) = 1;
+   data(1, 1) = 0;
+
+   data_set.set_data(data);
+
    data_set.set_training();
 
-   DataSet::Batch batch(1, &data_set);
+   DataSet::Batch batch(samples_number, &data_set);
 
    Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -185,28 +191,20 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    neural_network.set(NeuralNetwork::Classification, architecture);
 
    neural_network.set_parameters_random();
-//    neural_network.set_parameters_constant(1);
 
    NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
    LossIndex::BackPropagation training_back_propagation(data_set.get_training_samples_number(), &cee);
+   cee.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
    cee.back_propagate(batch, forward_propagation, training_back_propagation);
 
-   cee.calculate_error(batch, forward_propagation, training_back_propagation);
-
-   cee.calculate_output_gradient(batch, forward_propagation, training_back_propagation);
-
    numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation(&cee);
 
    const Tensor<type, 1> difference = training_back_propagation.gradient-numerical_error_gradient;
 
-   cout << "Gradient: " << training_back_propagation.gradient << endl;
-
-   cout << "Num gradient: " << numerical_error_gradient << endl;
-
-   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-2); }), LOG);
+   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
 
 //   neural_network.set();

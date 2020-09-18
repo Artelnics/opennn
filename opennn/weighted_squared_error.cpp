@@ -126,7 +126,7 @@ void WeightedSquaredError::set_weights()
 
 #endif
 
-    if(data_set_pointer)
+    if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
     {
         const Tensor<Index, 1> target_distribution = data_set_pointer->calculate_target_distribution();
 
@@ -167,11 +167,19 @@ void WeightedSquaredError::set_normalization_coefficient()
 
 #endif
 
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
+    {
+        const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const Index negatives = data_set_pointer->calculate_used_negatives(target_variables_indices[0]);
+        const Index negatives = data_set_pointer->calculate_used_negatives(target_variables_indices[0]);
 
-    normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
+        normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
+    }
+    else
+    {
+        normalization_coefficient = static_cast<type>(1);
+    }
+
 }
 
 
@@ -183,9 +191,9 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 {
     data_set_pointer = new_data_set_pointer;
 
-    set_weights();
+//    set_weights();
 
-    set_normalization_coefficient();
+//    set_normalization_coefficient();
 }
 
 

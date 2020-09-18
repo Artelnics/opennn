@@ -91,6 +91,7 @@ void GrowingInputs::set_default()
     maximum_epochs_number = 1000;
 
     maximum_time = 3600.0;
+
 }
 
 
@@ -266,7 +267,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         const Index input_variables_number = data_set_pointer->get_input_variables_number();
 
-        data_set_pointer->set_input_variables_dimensions({input_variables_number});
+        data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1>(1).setConstant(input_variables_number));
 
         neural_network_pointer->set_inputs_number(input_variables_number);
 
@@ -274,10 +275,11 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         type optimum_selection_error_trial = numeric_limits<type>::max();
         type optimum_training_error_trial = numeric_limits<type>::max();
-        Tensor<type, 1> optimum_parameters_trial;
+        Tensor<type, 1> optimum_parameters_trial(neural_network_pointer->get_parameters_number());
 
         for(Index i = 0; i < trials_number; i++)
         {
+            neural_network_pointer->set_parameters_random();
             OptimizationAlgorithm::Results training_results = training_strategy_pointer->perform_training();
 
             type current_training_error_trial = training_results.final_training_error;
@@ -299,7 +301,6 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
                 optimum_training_error_trial = current_training_error_trial;
             }
         }
-
         current_selection_error = optimum_selection_error_trial;
         current_training_error = optimum_training_error_trial;
         current_parameters = optimum_parameters_trial;
@@ -310,6 +311,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
             optimal_parameters = current_parameters;
             optimum_selection_error = current_selection_error;
             optimum_training_error = current_training_error;
+
         }
         else if (previus_selection_error < current_selection_error)
         {
@@ -401,7 +403,6 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         if(end_algorithm == true)
         {
             // Save results
-
             results->optimal_inputs_indices = optimal_columns_indices;
             results->final_selection_error = optimum_selection_error;
             results->final_training_error = optimum_training_error;
@@ -444,7 +445,6 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         cout << "Optimum selection error: " << optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
-
     return results;
 }
 

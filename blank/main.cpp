@@ -44,38 +44,7 @@ int main(void)
     {
         cout << "OpenNN. Blank Application." << endl;
 
-        DataSet data_set("C:\\Users\\Usuario\\Documents\\breastcancer.csv", ';', true);
-
-        data_set.impute_missing_values_mean();
-
-        const Index inputs_number = data_set.get_input_variables_number();
-        const Index targets_number = data_set.get_target_variables_number();
-
-        Tensor<Index, 1> architecture(3);
-        architecture[0] = inputs_number;
-        architecture[1] = 7;
-        architecture[2] = targets_number;
-
-        cout << "Architecture: " << architecture << endl;
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, architecture);
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-
-        training_strategy.perform_training();
-
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
-
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-
-        const Tensor<Index, 0> confusion_sum = confusion.sum();
-
-        cout << "Confusion: " << endl << confusion << endl;
-
-        cout << "Accuracy: " << (static_cast<type>(confusion(0,0))+static_cast<type>(confusion(1,1)))/static_cast<type>(confusion_sum()) << endl;
+        // Write your code here
 
         cout << "End" << endl;
 
