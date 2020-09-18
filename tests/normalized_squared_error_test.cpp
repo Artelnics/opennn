@@ -712,39 +712,6 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors(void) // @todo
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_maximal_errors(void) // @todo
-{
-    cout << "test_calculate_maximal_errors\n";
-
-    NeuralNetwork neural_network;
-
-    DataSet data_set;
-
-    NormalizedSquaredError nse(&neural_network, &data_set);
-
-    Tensor<type, 1> squared_errors;
-    Tensor<Index, 1> maximal_errors;
-    Tensor<Index, 1> architecture(2);
-
-    // Test
-
-    architecture.setValues({1,1});
-
-    neural_network.set(NeuralNetwork::Approximation, architecture);
-    neural_network.set_parameters_random();
-
-    data_set.set(3, 1, 1);
-    data_set.set_data_random();
-//    nse.calculate_output_gradient()
-//    squared_errors = nse.calculate_squared_errors();
-//    maximal_errors = nse.calculate_maximal_errors(3);
-
-//    assert_true(maximal_errors.size() == 3, LOG);
-
-//    assert_true(squared_errors.get_subvector(maximal_errors).is_decrescent(), LOG);
-}
-
-
 void NormalizedSquaredErrorTest::test_to_XML(void) // @todo
 {
    cout << "test_to_XML\n";
@@ -784,7 +751,6 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
    // Squared errors methods
 
    test_calculate_squared_errors();
-   test_calculate_maximal_errors();
 
    // Serialization methods
 

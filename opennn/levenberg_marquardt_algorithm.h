@@ -185,10 +185,6 @@ public:
 
    virtual void set_reserve_all_training_history(const bool&);
 
-   // Utilities
-
-   void set_display_period(const Index&);
-
    // Training methods
 
    void check() const;

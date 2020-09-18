@@ -406,33 +406,6 @@ void GradientDescent::set_reserve_selection_error_history(const bool& new_reserv
 }
 
 
-/// Sets a new number of iterations between the training showing progress.
-/// @param new_display_period
-/// Number of iterations between the training showing progress.
-
-void GradientDescent::set_display_period(const Index& new_display_period)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_display_period(const type&) method.\n"
-               << "First learning rate must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    display_period = new_display_period;
-}
-
-
 /// Returns the gradient descent training direction,
 /// which is the negative of the normalized gradient.
 /// @param gradient Loss index gradient.

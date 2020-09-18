@@ -183,10 +183,6 @@ public:
 
    void set_hardware_use(const string&);
 
-   // Utilities
-
-   void set_display_period(const Index&);
-
    // Training methods
 
    void update_iteration(const LossIndex::BackPropagation& back_propagation,

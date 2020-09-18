@@ -461,30 +461,6 @@ void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_rese
 }
 
 
-/// Sets a new number of epochs between the training showing progress.
-/// @param new_display_period
-/// Number of epochs between the training showing progress.
-
-void QuasiNewtonMethod::set_display_period(const Index& new_display_period)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_display_period == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_display_period(const Index&) method.\n"
-               << "Display period must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    display_period = new_display_period;
-}
-
 
 void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QNMOptimizationData& optimization_data) const
 {

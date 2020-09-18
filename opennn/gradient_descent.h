@@ -199,10 +199,6 @@ public:
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
 
-   // Utilities
-
-   void set_display_period(const Index&);
-
    // Training methods
 
    void calculate_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;

@@ -469,30 +469,6 @@ void LevenbergMarquardtAlgorithm::set_reserve_selection_error_history(const bool
 }
 
 
-/// Sets a new number of iterations between the training showing progress.
-/// @param new_display_period
-/// Number of iterations between the training showing progress.
-
-void LevenbergMarquardtAlgorithm::set_display_period(const Index& new_display_period)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void set_display_period(const type&) method.\n"
-               << "First learning rate must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    display_period = new_display_period;
-}
-
 /// Checks that the Levenberg-Marquard object is ok for training.
 /// In particular, it checks that:
 /// <ul>
