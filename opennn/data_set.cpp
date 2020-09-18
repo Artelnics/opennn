@@ -8882,7 +8882,7 @@ void DataSet::generate_inputs_selection_data(const Index& samples_number, const 
 {
     set(samples_number,variables_number);
 
-//    data.setRandom(0.0, 1.0);
+    data.setRandom();
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -10342,7 +10342,6 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
                           const Tensor<Index, 1>& targets)
 {
 //    samples_number = samples.size();
-
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
