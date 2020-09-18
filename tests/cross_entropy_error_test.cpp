@@ -160,23 +160,28 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    // Test perceptron and probabilistic
 {
-   samples_number = 1;
-   inputs_number = 3;
+   samples_number = 2;
+   inputs_number = 1;
    outputs_number = 1;
    hidden_neurons = 1;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
    Tensor<type, 2> data(samples_number, inputs_number+outputs_number);
-   data.setRandom();
+//   data.setRandom();
 
-   data(0, inputs_number) = 1;
+   data(0, 0) = 0.544604;
+   data(0, 1) = 1;
+   data(1, 0) = 0.0641534;
+   data(1, 1) = 0;
 
    data_set.set_data(data);
 
+   cout << "data: " << endl << data_set.get_data() << endl;
+
    data_set.set_training();
 
-   DataSet::Batch batch(1, &data_set);
+   DataSet::Batch batch(samples_number, &data_set);
 
    Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -189,15 +194,25 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    neural_network.set(NeuralNetwork::Classification, architecture);
 
-   neural_network.set_parameters_random();
-//    neural_network.set_parameters_constant(1);
+//   neural_network.set_parameters_random();
+    neural_network.set_parameters_constant(1);
 
    NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
    LossIndex::BackPropagation training_back_propagation(data_set.get_training_samples_number(), &cee);
 
+   cout << "Batch: " << batch.inputs_2d << endl;
+
    neural_network.forward_propagate(batch, forward_propagation);
 
+   cout << "Perceptron combination: " << forward_propagation.layers(0).combinations_2d << endl;
+   cout << "Perceptron activation: " << forward_propagation.layers(0).activations_2d << endl;
+
+   cout << "Probabilistic combination: " << forward_propagation.layers(1).combinations_2d << endl;
+   cout << "Probabilistic activation: " << forward_propagation.layers(1).activations_2d << endl;
+
    cee.back_propagate(batch, forward_propagation, training_back_propagation);
+
+   cout << "error: " << training_back_propagation.error << endl;
 
    numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation(&cee);
 
