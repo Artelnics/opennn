@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "conjugate_gradient.h"
+#include "training_strategy.h"
 
 namespace OpenNN
 {
@@ -476,31 +477,6 @@ void ConjugateGradient::set_reserve_training_error_history(const bool& new_reser
 void ConjugateGradient::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
 {
     reserve_selection_error_history = new_reserve_selection_error_history;
-}
-
-
-/// Sets a new number of iterations between the training showing progress.
-/// @param new_display_period
-/// Number of iterations between the training showing progress.
-
-void ConjugateGradient::set_display_period(const Index& new_display_period)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_display_period(const type&) method.\n"
-               << "Display period must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    display_period = new_display_period;
 }
 
 

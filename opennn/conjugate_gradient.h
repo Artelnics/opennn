@@ -158,7 +158,6 @@ public:
 
    // Utilities
 
-   void set_display_period(const Index&);
    void set_save_period(const Index&);
 
    // Training direction methods

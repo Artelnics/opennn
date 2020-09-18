@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "training_strategy.h"
+#include "optimization_algorithm.h"
 
 namespace OpenNN
 {
@@ -686,12 +687,7 @@ void TrainingStrategy::set_maximum_epochs_number(const int & maximum_epochs_numb
 
 void TrainingStrategy::set_display_period(const int & display_period)
 {
-    gradient_descent.set_display_period(display_period);
-    conjugate_gradient.set_display_period(display_period);
-    stochastic_gradient_descent.set_display_period(display_period);
-    adaptive_moment_estimation.set_display_period(display_period);
-    quasi_Newton_method.set_display_period(display_period);
-    Levenberg_Marquardt_algorithm.set_display_period(display_period);
+    get_optimization_algorithm_pointer()->set_display_period(display_period);
 }
 
 
@@ -1051,7 +1047,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             if(cross_entropy_element)
             {
-                /*tinyxml2::XMLDocument new_document;
+                tinyxml2::XMLDocument new_document;
 
                 tinyxml2::XMLElement* cross_entropy_error_element_copy = new_document.NewElement("CrossEntropyError");
 
@@ -1063,7 +1059,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 new_document.InsertEndChild(cross_entropy_error_element_copy);
 
-                cross_entropy_error.from_XML(new_document);*/
+                cross_entropy_error.from_XML(new_document);
             }
 
             // Weighted squared error

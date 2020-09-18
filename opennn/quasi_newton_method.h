@@ -234,10 +234,6 @@ public:
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
 
-   // Utilities
-
-   void set_display_period(const Index&);
-
    // Training methods
 
    void calculate_DFP_inverse_hessian(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
