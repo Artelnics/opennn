@@ -191,9 +191,9 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 {
     data_set_pointer = new_data_set_pointer;
 
-    set_weights();
+//    set_weights();
 
-    set_normalization_coefficient();
+//    set_normalization_coefficient();
 }
 
 
