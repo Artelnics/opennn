@@ -67,7 +67,7 @@ void CrossEntropyError::calculate_binary_error(const DataSet::Batch& batch,
     const Tensor<type, 2>& targets = batch.targets_2d;
 
     Tensor<type, 0> cross_entropy_error;
-    cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs.log())).sum() + ((1-targets)*((1-outputs).log())).sum();
+    cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs.log())).sum() - ((1-targets)*((1-outputs).log())).sum();
 
     back_propagation.error = cross_entropy_error();
 }
@@ -122,7 +122,7 @@ void CrossEntropyError::calculate_binary_output_gradient(const DataSet::Batch& b
     const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
 
     back_propagation.output_gradient.device(*thread_pool_device) =
-            -static_cast<type>(1)*(targets/outputs) - (static_cast<type>(1) - targets)/(static_cast<type>(1) - outputs);
+            static_cast<type>(-1)*(targets/outputs) + (static_cast<type>(1) - targets)/(static_cast<type>(1) - outputs);
 }
 
 
