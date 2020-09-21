@@ -172,10 +172,6 @@ void CrossEntropyError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("CrossEntropyError");
 
     file_stream.CloseElement();
-
-    // Regularization
-
-    write_regularization_XML(file_stream);
 }
 
 

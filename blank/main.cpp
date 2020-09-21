@@ -44,7 +44,27 @@ int main(void)
     {
         cout << "OpenNN. Blank Application." << endl;
 
-        // Write your code here
+        DataSet data_set("C:\\Users\\Usuario\\Documents\\breastcancer.csv", ';', true);
+
+        data_set.scale_input_variables_minimum_maximum();
+//        data_set.scale_target_variables_minimum_maximum();
+
+        const Index inputs_number = data_set.get_input_variables_number();
+        const Index targets_number = data_set.get_target_variables_number();
+
+        Tensor<Index,1> architecture(3);
+        architecture(0) = inputs_number;
+        architecture(1) = 5;
+        architecture(2) = targets_number;
+
+        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+
+        training_strategy.perform_training();
+
 
         cout << "End" << endl;
 

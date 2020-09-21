@@ -334,10 +334,6 @@ void NormalizedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("NormalizedSquaredError");
 
     file_stream.CloseElement();
-
-    // Regularization
-
-    write_regularization_XML(file_stream);
 }
 
 
@@ -358,19 +354,6 @@ void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
         throw logic_error(buffer.str());
     }
-
-    // Regularization
-
-    tinyxml2::XMLDocument regularization_document;
-    tinyxml2::XMLNode* element_clone;
-
-    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
-
-    element_clone = regularization_element->DeepClone(&regularization_document);
-
-    regularization_document.InsertFirstChild(element_clone);
-
-    regularization_from_XML(regularization_document);
 }
 
 }
