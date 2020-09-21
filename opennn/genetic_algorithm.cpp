@@ -2110,191 +2110,220 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
 Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix(10, 2);
-/*
-        ostringstream buffer;
+    Tensor<string, 2> string_matrix(18, 2);
 
-        Tensor<string, 1> labels;
-        Tensor<string, 1> values;
+    ostringstream buffer;
 
-       // Trials number
+    Tensor<string, 1> labels(18);
+    Tensor<string, 1> values(18);
 
-       string_matrix(0, 0) = "Trials number";
+    // Trials number
 
-       buffer.str("");
-       buffer << trials_number;
+//    string_matrix(0, 0) = "Trials number";
+    labels(0) = "Trials number";
 
-       // Tolerance
+    buffer.str("");
+    buffer << trials_number;
+    values(0) = buffer.str();
 
-       string_matrix(1, 0) = "Tolerance";
+    // Tolerance
 
-       buffer.str("");
-       buffer << tolerance;
+    string_matrix(1, 0) = "Tolerance";
+    labels(1) = "Tolerance";
 
-       // Population size
+    buffer.str("");
+    buffer << tolerance;
+    values(1) = buffer.str();
 
-       string_matrix(2, 0) = "Population size";
 
-       buffer.str("");
-       buffer << population_size;
+    // Population size
 
-       // Initialization method
+//    string_matrix(2, 0) = "Population size";
+    labels(2) = "Population size";
 
-       string_matrix(3, 0) = "Initialization method";
+    buffer.str("");
+    buffer << population_size;
+    values(2) = buffer.str();
 
-       const string initialization_method = write_initialization_method();
+    // Initialization method
 
-       // Fitness assignment method
+//    string_matrix(3, 0) = "Initialization method";
+    labels(3) = "Initialization method";
 
-       labels.push_back("Fitness assignment method");
+    const string initialization_method = write_initialization_method();
+    values(3) = initialization_method;
 
-       const string fitnes_assignment_method = write_fitness_assignment_method();
+    // Fitness assignment method
 
-       values.push_back(fitnes_assignment_method);
+//    labels.push_back("Fitness assignment method");
+    labels(4) = "Fitness assignment method";
 
-       // Crossover method
+    const string fitnes_assignment_method = write_fitness_assignment_method();
 
-       labels.push_back("Crossover method");
+//    values.push_back(fitnes_assignment_method);
+    values(4) = fitnes_assignment_method;
 
-       const string crossover_method = write_crossover_method();
+    // Crossover method
 
-       values.push_back(crossover_method);
+//    labels.push_back("Crossover method");
+    labels(5) ="Crossover method";
 
-       // Elitism size
+    const string crossover_method = write_crossover_method();
 
-       labels.push_back("Elitism size");
+//    values.push_back(crossover_method);
+    values(5) = crossover_method;
 
-       buffer.str("");
-       buffer << elitism_size;
+    // Elitism size
 
+//    labels.push_back("Elitism size");
+    labels(6) = "Elitism size";
 
-       // Crossover first point
+    buffer.str("");
+    buffer << elitism_size;
+    values(6) = buffer.str();
 
-       labels.push_back("Crossover first point");
 
-       buffer.str("");
-       buffer << crossover_first_point;
+    // Crossover first point
 
-       // Crossover second point
+//    labels.push_back("Crossover first point");
+    labels(7) = "Crossover first point";
 
-       labels.push_back("Crossover second point");
+    buffer.str("");
+    buffer << crossover_first_point;
+    values(7) = buffer.str();
 
-       buffer.str("");
-       buffer << crossover_second_point;
+    // Crossover second point
 
-       // Selective pressure
+//    labels.push_back("Crossover second point");
+    labels(8) = "Crossover second point";
 
-       labels.push_back("Selective pressure");
+    buffer.str("");
+    buffer << crossover_second_point;
+    values(8) = buffer.str();
 
-       buffer.str("");
-       buffer << selective_pressure;
+    // Selective pressure
 
-       // Mutation rate
+//    labels.push_back("Selective pressure");
+    labels(9) = "Selective pressure";
 
-       labels.push_back("Mutation rate");
+    buffer.str("");
+    buffer << selective_pressure;
+    values(9) = buffer.str();
 
-       buffer.str("");
-       buffer << mutation_rate;
+    // Mutation rate
 
-       values.push_back(buffer.str());
+//    labels.push_back("Mutation rate");
+    labels(10) = "Mutation rate";
 
-       // Selection loss goal
+    buffer.str("");
+    buffer << mutation_rate;
+    values(10) = buffer.str();
 
-       labels.push_back("Selection loss goal");
 
-       buffer.str("");
-       buffer << selection_error_goal;
+    // Selection loss goal
 
-       values.push_back(buffer.str());
+//    labels.push_back("Selection loss goal");
+    labels(11) = "Selection loss goal";
 
-       // Maximum Generations number
+    buffer.str("");
+    buffer << selection_error_goal;
+    values(11) = buffer.str();
 
-       labels.push_back("Maximum Generations number");
+    // Maximum Generations number
 
-       buffer.str("");
-       buffer << maximum_epochs_number;
+//    labels.push_back("Maximum Generations number");
+    labels(12) = "Maximum Generations number";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << maximum_epochs_number;
+    values(12) = buffer.str();
 
-       // Maximum time
+    // Maximum time
 
-       labels.push_back("Maximum time");
+//    labels.push_back("Maximum time");
+    labels(13) = "Maximum time";
 
-       buffer.str("");
-       buffer << maximum_time;
+    buffer.str("");
+    buffer << maximum_time;
+    values(13) = buffer.str();
 
-       values.push_back(buffer.str());
+    // Plot training error history
 
-       // Plot training error history
+//    labels.push_back("Plot training error history");
+    labels(14) = "Plot training error history";
 
-       labels.push_back("Plot training error history");
+    buffer.str("");
 
-       buffer.str("");
+    if(reserve_training_error_data)
+    {
+        buffer << "true";
+    }
+    else
+    {
+        buffer << "false";
+    }
 
-       if(reserve_error_data)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
+//    values.push_back(buffer.str());
+    values(14) = buffer.str();
 
-       values.push_back(buffer.str());
+    // Plot selection error history
 
-       // Plot selection error history
+//    labels.push_back("Plot selection error history");
+    labels(15) = "Plot selection error histroy";
 
-       labels.push_back("Plot selection error history");
+    buffer.str("");
 
-       buffer.str("");
+    if(reserve_selection_error_data)
+    {
+        buffer << "true";
+    }
+    else
+    {
+        buffer << "false";
+    }
 
-       if(reserve_selection_error_data)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
+    values(15) = buffer.str();
 
-       values.push_back(buffer.str());
+    // Plot generation mean history
 
-       // Plot generation mean history
+//    labels.push_back("Plot generation mean history");
+    labels(16) = "Plot generation mean history";
 
-       labels.push_back("Plot generation mean history");
+    buffer.str("");
 
-       buffer.str("");
+    if(reserve_generation_mean)
+    {
+        buffer << "true";
+    }
+    else
+    {
+        buffer << "false";
+    }
 
-       if(reserve_generation_mean)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
+    values(16) = buffer.str();
 
-       values.push_back(buffer.str());
+    // Plot generation standard deviation history
 
-       // Plot generation standard deviation history
+//    labels.push_back("Plot generation standard deviation history");
+    labels(17) = "Plot generation standard deviation history";
 
-       labels.push_back("Plot generation standard deviation history");
+    buffer.str("");
 
-       buffer.str("");
+    if(reserve_generation_standard_deviation)
+    {
+        buffer << "true";
+    }
+    else
+    {
+        buffer << "false";
+    }
 
-       if(reserve_generation_standard_deviation)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
+    values(17) = buffer.str();
 
-       values.push_back(buffer.str());
+    string_matrix.chip(0, 1) = labels;
+    string_matrix.chip(1, 1) = values;
 
-*/
-        return string_matrix;
+    return string_matrix;
 }
 
 
