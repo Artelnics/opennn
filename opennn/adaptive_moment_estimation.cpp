@@ -583,7 +583,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     if(choose_best_selection)
     {
-        optimization_data.parameters = optimization_data.minimal_selection_parameters;
+        neural_network_pointer->set_parameters(minimal_selection_parameters);
+
         parameters_norm = l2_norm(optimization_data.parameters);
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
