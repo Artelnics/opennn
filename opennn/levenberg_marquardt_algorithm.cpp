@@ -791,6 +791,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             }
 
             results.resize_training_error_history(1+epoch);
+            results.resize_selection_error_history(1+epoch);
 
             results.final_parameters = optimization_data.parameters;
             results.final_parameters_norm = parameters_norm;

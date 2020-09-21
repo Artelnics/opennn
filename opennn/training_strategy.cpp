@@ -946,7 +946,6 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(write_loss_method().c_str());
     file_stream.CloseElement();
 
-//    sum_squared_error.write_XML(file_stream);
     mean_squared_error.write_XML(file_stream);
     normalized_squared_error.write_XML(file_stream);
     Minkowski_error.write_XML(file_stream);
