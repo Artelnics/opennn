@@ -304,7 +304,6 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
             current_parameters = training_results.final_parameters;
         }
 
-
         if(display)
         {
             cout << endl << "Trial number: " << iteration << endl;
@@ -463,139 +462,136 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
 Tensor<string, 2> PruningInputs::to_string_matrix() const
 {
-    /*
-        ostringstream buffer;
 
-        Tensor<string, 1> labels;
-        Tensor<string, 1> values;
+    ostringstream buffer;
 
-       // Trials number
+    Tensor<string, 1> labels(11);
+    Tensor<string, 1> values(11);
 
-       labels.push_back("Trials number");
+    // Trials number
 
-       buffer.str("");
-       buffer << trials_number;
+    labels(0) = "Trials number";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << trials_number;
 
-       // Tolerance
+    values(0) = buffer.str();
 
-       labels.push_back("Tolerance");
+    // Tolerance
 
-       buffer.str("");
-       buffer << tolerance;
+    labels(1) = "Tolerance";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << tolerance;
 
-       // Selection loss goal
+    values(1) = buffer.str();
 
-       labels.push_back("Selection loss goal");
+    // Selection loss goal
 
-       buffer.str("");
-       buffer << selection_error_goal;
+    labels(2) = "Selection loss goal";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << selection_error_goal;
 
-       // Maximum selection failures
+    values(2) = buffer.str();
 
-       labels.push_back("Maximum selection failures");
+    // Maximum selection failures
 
-       buffer.str("");
-       buffer << maximum_selection_failures;
+    labels(3) = "Maximum selection failures";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << maximum_selection_failures;
 
-       // Minimum inputs number
+    values(3) = buffer.str();
 
-       labels.push_back("Minimum inputs number");
+    // Minimum inputs number
 
-       buffer.str("");
-       buffer << minimum_inputs_number;
+    labels(4) = "Minimum inputs number";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << minimum_inputs_number;
 
-       // Minimum correlation
+    values(4) = buffer.str();
 
-       labels.push_back("Minimum correlation");
+    // Minimum correlation
 
-       buffer.str("");
-       buffer << minimum_correlation;
+    labels(5) = "Minimum correlation";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << minimum_correlation;
 
-       // Maximum correlation
+    values(5) = buffer.str();
 
-       labels.push_back("Maximum correlation");
+    // Maximum correlation
 
-       buffer.str("");
-       buffer << maximum_correlation;
+    labels(6) = "Maximum correlation";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << maximum_correlation;
 
-       // Maximum iterations number
+    values(6) = buffer.str();
 
-       labels.push_back("Maximum iterations number");
+    // Maximum iterations number
 
-       buffer.str("");
-       buffer << maximum_epochs_number;
+    labels(7) = "Maximum iterations number";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << maximum_epochs_number;
 
-       // Maximum time
+    values(7) = buffer.str();
 
-       labels.push_back("Maximum time");
+    // Maximum time
 
-       buffer.str("");
-       buffer << maximum_time;
+    labels(8) = "Maximum time";
 
-       values.push_back(buffer.str());
+    buffer.str("");
+    buffer << maximum_time;
 
-       // Plot training loss history
+    values(8) = buffer.str();
 
-       labels.push_back("Plot training loss history");
+    // Plot training loss history
 
-       buffer.str("");
+    labels(9) = "Plot training loss history";
 
-       if(reserve_error_data)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
+    buffer.str("");
 
-       values.push_back(buffer.str());
+    if(reserve_training_error_data)
+    {
+        buffer << "true";
+    }
+    else
+    {
+        buffer << "false";
+    }
 
-       // Plot selection error history
+    values(9) = buffer.str();
 
-       labels.push_back("Plot selection error history");
+    // Plot selection error history
 
-       buffer.str("");
+    labels(10) = "Plot selection error hitory";
 
-       if(reserve_selection_error_data)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
+    buffer.str("");
 
-       values.push_back(buffer.str());
+    if(reserve_selection_error_data)
+    {
+        buffer << "true";
+    }
+    else
+    {
+        buffer << "false";
+    }
 
-       const Index rows_number = labels.size();
-       const Index columns_number = 2;
+    values(10) = buffer.str();
 
-       Tensor<string, 2> string_matrix(rows_number, columns_number);
+    const Index rows_number = labels.size();
+    const Index columns_number = 2;
 
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
+    Tensor<string, 2> string_matrix(rows_number, columns_number);
 
-        return string_matrix;
-    */
-    return Tensor<string, 2>();
+    string_matrix.chip(0, 1) = labels;
+    string_matrix.chip(1, 1) = values;
 
+     return string_matrix;
 }
 
 
