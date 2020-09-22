@@ -124,6 +124,21 @@ void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_los
 
 GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection()
 {
+    #ifdef __OPENNN_DEBUG__
+
+    if(!training_strategy_pointer)
+    {
+         ostringstream buffer;
+
+         buffer << "OpenNN Exception: growing_neurons class.\n"
+                << "TrainingStrategy* training_strategy_pointer const method.\n"
+                << "training_strategy_pointer is nullptr.\n";
+
+         throw logic_error(buffer.str());
+    }
+
+    #endif
+
     GrowingNeuronsResults* results = new GrowingNeuronsResults();
 
     if(display)
@@ -132,8 +147,7 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
         cout.flush();
     }
 
-    // Neural network
-
+    // Neural network    
     NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
 
     const Index trainable_layers_number = neural_network->get_trainable_layers_number();
