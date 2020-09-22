@@ -419,6 +419,10 @@ ModelSelection::Results ModelSelection::perform_neurons_selection()
     {
         growing_neurons.set_display(display);
 
+        TrainingStrategy* ts = get_training_strategy_pointer();
+
+        growing_neurons.set_training_strategy_pointer(ts);
+
         results.growing_neurons_results_pointer = growing_neurons.perform_neurons_selection();
 
         break;
