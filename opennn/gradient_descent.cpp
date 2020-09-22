@@ -1026,8 +1026,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("HardwareUse");
 
-    cout << "hardware_use: " << hardware_use << endl;
-
     buffer.str("");
     buffer << hardware_use;
 
@@ -1116,6 +1114,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
+            cout << "MinimumLossDecrease" << endl;
             const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
 
             try
@@ -1230,6 +1229,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
+            cout << "ReserveTrainingErrorHistory" << endl;
             const string new_reserve_training_error_history = element->GetText();
 
             try
@@ -1269,7 +1269,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         if(element)
         {
             const string new_hardware_use = element->GetText();
-
             try
             {
                 set_hardware_use(new_hardware_use);
