@@ -172,8 +172,6 @@ public:
    Tensor<Tensor<Descriptives, 1>, 1> calculate_error_data_descriptives() const;
    void print_error_data_descriptives() const;
 
-//   Tensor<Tensor<type, 2>, 1> calculate_error_data_statistics_matrices() const;
-
    Tensor<Histogram, 1> calculate_error_data_histograms(const Index& = 10) const;
 
    Tensor<Tensor<Index, 1>, 1> calculate_maximal_errors(const Index& = 10) const;

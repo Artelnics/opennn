@@ -3995,11 +3995,15 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
 
 void TestingAnalysis::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+    FILE *pFile;
 
-//    document->SaveFile(file_name.c_str());
+    pFile = fopen(file_name.c_str(), "w");
 
-//    delete document;
+    tinyxml2::XMLPrinter document(pFile);
+
+    write_XML(document);
+
+    fclose(pFile);
 }
 
 
