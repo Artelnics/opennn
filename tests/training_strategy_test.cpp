@@ -90,6 +90,12 @@ void TrainingStrategyTest::test_set()
 void TrainingStrategyTest::test_set_default()
 {
    cout << "test_set_default\n"; 
+
+   TrainingStrategy ts1;
+
+   ts1.set_default();
+
+
 }
 
 
@@ -104,47 +110,57 @@ void TrainingStrategyTest::test_perform_training()
    cout << "test_perform_training\n";
 
     NeuralNetwork neural_network;
-    Tensor<Index, 1> architecture;
+    Tensor<Index, 1> architecture(3);
 
-    DataSet data_set;
+    DataSet data_set(2, 2);
 
-    SumSquaredError sum_squared_error(&neural_network, &data_set);
+    Tensor<type, 2> new_data(2, 2);
+    new_data(0,0) = 0.0;
+    new_data(0,1) = 0.0;
+    new_data(1,0) = 1.0;
+    new_data(1,1) = 1.0;
+
+    data_set.set_data(new_data);
+
+    NormalizedSquaredError nse(&neural_network, &data_set);
 
     TrainingStrategy ts(&neural_network, &data_set);
 
     // Test
 
-//    architecture.setValues({1, 1});
+    architecture.setValues({1, 1, 1});
 
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
-//    data_set.set(1,1,2);
+    neural_network.set(NeuralNetwork::Approximation, architecture);
+    ts.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+    neural_network.set_parameters_random();
 
-//    ts.perform_training();
+    ts.set_maximum_epochs_number(10);
+    ts.set_display(false);
 
+    ts.perform_training();
 }
 
-///@todo
 
 void TrainingStrategyTest::test_to_XML()
 {
    cout << "test_to_XML\n";
 
-   TrainingStrategy training_strategy;
+   TrainingStrategy ts;
 
-   // Test
+   FILE *pFile;
 
-//   training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
+   string file_name = "../data/training_strategy.xml";
 
-//   tinyxml2::XMLDocument* document = training_strategy.to_XML();
+   pFile = fopen(file_name.c_str(), "w");
 
-//   assert_true(document != nullptr, LOG);
+   tinyxml2::XMLPrinter document(pFile);
 
-//   delete document;
+   ts.write_XML(document);
+
+   fclose(pFile);
 
 }
 
-
-///@todo
 
 void TrainingStrategyTest::test_from_XML()
 {
@@ -155,14 +171,24 @@ void TrainingStrategyTest::test_from_XML()
 
    ts1.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
-//    tinyxml2::XMLDocument* document = ts1.to_XML();
+   ts1.set_default();
 
-//    ts2.from_XML(*document);
+   tinyxml2::XMLDocument document;
 
-//    delete document;
+   string file_name = "../data/training_strategy.xml";
 
-//    assert_true(ts2.get_optimization_method() == TrainingStrategy::GRADIENT_DESCENT, LOG);
+   if(document.LoadFile(file_name.c_str()))
+   {
+       ostringstream buffer;
 
+       buffer << "OpenNN Exception: TrainingStrategy class.\n"
+              << "void load(const string&) method.\n"
+              << "Cannot load XML file " << file_name << ".\n";
+
+       throw logic_error(buffer.str());
+   }
+
+   ts1.from_XML(document);
 }
 
 
@@ -171,8 +197,6 @@ void TrainingStrategyTest::test_print()
    cout << "test_print\n";
 }
 
-
-///@todo
 
 void TrainingStrategyTest::test_save()
 {
@@ -184,7 +208,7 @@ void TrainingStrategyTest::test_save()
 
    training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
-//   training_strategy.save(file_name);
+   training_strategy.save(file_name);
 }
 
 
@@ -203,25 +227,6 @@ void TrainingStrategyTest::test_load()
 
    training_strategy.save(file_name);
    training_strategy.load(file_name);
-}
-
-
-void TrainingStrategyTest::test_results_constructor()
-{
-    cout << "test_results_constructor\n";
-
-//    TrainingStrategy::TrainingStrategyResults results;
-
-}
-
-
-void TrainingStrategyTest::test_results_destructor()
-{
-    cout << "test_results_destructor\n";
-
-//    TrainingStrategy::TrainingStrategyResults* results = new TrainingStrategy::TrainingStrategyResults();
-
-//    delete results;
 }
 
 
@@ -264,12 +269,6 @@ void TrainingStrategyTest::run_test_case()
    test_print();
    test_save();
    test_load();
-
-
-   // Results methods
-
-   test_results_constructor();
-   test_results_destructor();
 
    cout << "End of training strategy test case.\n\n";
 }
