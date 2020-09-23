@@ -1285,9 +1285,7 @@ void TrainingStrategy::save(const string& file_name) const
 {
 
     FILE *pFile;
-//    errno_t err;
 
-//    err = fopen_s(&pFile, file_name.c_str(), "w");
     pFile = fopen(file_name.c_str(), "w");
 
     tinyxml2::XMLPrinter document(pFile);

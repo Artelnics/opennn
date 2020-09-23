@@ -66,11 +66,6 @@ public:
    void test_save();
    void test_load();
 
-   // Results methods
-
-   void test_results_constructor();
-   void test_results_destructor();
-
    // Unit testing methods
 
    void run_test_case();
