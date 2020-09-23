@@ -117,6 +117,28 @@ void ModelSelectionTest::test_perform_neurons_selection() // @todo
 }
 
 
+void ModelSelectionTest::test_to_XML()
+{
+    cout << "test_to_XML\n";
+
+    ModelSelection ms;
+
+    ms.save("../data/model_selection.xml");
+}
+
+
+void ModelSelectionTest::test_save()
+{
+    cout << "test_save\n";
+
+    string file_name = "../data/model_selection1.xml";
+
+    ModelSelection ms;
+
+    ms.save(file_name);
+}
+
+
 void ModelSelectionTest::test_load()
 {
     cout << "test_load\n";
