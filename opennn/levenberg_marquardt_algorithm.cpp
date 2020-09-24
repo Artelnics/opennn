@@ -107,6 +107,7 @@ const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
     return choose_best_selection;
 }
 
+/// Returns the hardware used. Default: Multi-core
 
 string LevenbergMarquardtAlgorithm::get_hardware_use() const
 {
@@ -306,6 +307,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
     maximum_damping_parameter = new_maximum_damping_parameter;
 }
 
+/// Set hardware to use. Default: Multi-core.
 
 void LevenbergMarquardtAlgorithm::set_hardware_use(const string & new_hardware_use)
 {
@@ -844,6 +846,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     return results;
 }
 
+/// Trains a neural network with an associated loss index according to the Levenberg-Marquardt algorithm.
+/// Training occurs according to the training parameters.
 
 void LevenbergMarquardtAlgorithm::perform_training_void()
 {
@@ -905,6 +909,7 @@ void LevenbergMarquardtAlgorithm::set_reserve_all_training_history(const bool&)
     reserve_selection_error_history = true;
 }
 
+/// Writes the optimization algorithm type.
 
 string LevenbergMarquardtAlgorithm::write_optimization_algorithm_type() const
 {

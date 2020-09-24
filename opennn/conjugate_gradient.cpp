@@ -59,6 +59,7 @@ LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
     return &learning_rate_algorithm;
 }
 
+/// Returns the hardware used. Default: Multi-core
 
 string ConjugateGradient::get_hardware_use() const
 {
@@ -184,6 +185,8 @@ void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer
     learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
 }
 
+
+/// Set hardware to use. Default: Multi-core.
 
 void ConjugateGradient::set_hardware_use(const string & new_hardware_use)
 {
@@ -805,6 +808,11 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
     training_direction.device(*thread_pool_device) = -gradient + old_training_direction*FR_parameter;
 }
 
+
+///
+////// \brief ConjugateGradient::calculate_gradient_descent_training_direction
+////// \param gradient
+////// \param training_direction
 
 void ConjugateGradient::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient,
                                                                       Tensor<type, 1>& training_direction) const
@@ -1847,6 +1855,11 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+////// \brief ConjugateGradient::update_epoch
+////// \param batch
+////// \param forward_propagation
+////// \param back_propagation
+////// \param optimization_data
 void ConjugateGradient::update_epoch(
         const DataSet::Batch& batch,
         NeuralNetwork::ForwardPropagation& forward_propagation,

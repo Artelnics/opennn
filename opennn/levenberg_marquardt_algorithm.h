@@ -147,8 +147,6 @@ public:
    const type& get_minimum_damping_parameter() const;
    const type& get_maximum_damping_parameter() const;
 
-   const Tensor<type, 1>& get_damping_parameter_history() const;
-
    // Set methods
 
    void set_default();

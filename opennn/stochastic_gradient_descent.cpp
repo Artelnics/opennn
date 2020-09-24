@@ -114,6 +114,8 @@ const bool& StochasticGradientDescent::get_reserve_selection_error_history() con
 }
 
 
+/// Returns the hardware used. Default: Multi-core
+
 const string& StochasticGradientDescent::get_hardware_use() const
 {
     return hardware_use;
@@ -366,6 +368,7 @@ void StochasticGradientDescent::set_hardware_use(const string& new_hardware_use)
 }
 
 
+/// Set hardware to use. Default: Multi-core.
 
 void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
                       SGDOptimizationData& optimization_data)
