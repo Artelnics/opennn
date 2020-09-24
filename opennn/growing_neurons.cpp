@@ -166,6 +166,7 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
     type current_training_loss = 0;
     type current_selection_error = 0;
 
+
     Tensor<type, 1> current_parameters;
 
     // Optimization algorithm
@@ -190,7 +191,11 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
         // Set new neurons number
 
         trainable_layers_pointers(trainable_layers_number-2)->set_neurons_number(neurons_number);
+        trainable_layers_pointers(trainable_layers_number-2)->set_synaptic_weights_glorot();
+
         trainable_layers_pointers(trainable_layers_number-1)->set_inputs_number(neurons_number);
+        trainable_layers_pointers(trainable_layers_number-1)->set_parameters_random();
+
         results->neurons_data = insert_index_result(neurons_number, results->neurons_data);
 
         // Loss index
@@ -201,14 +206,12 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
 
         for(Index i = 0; i < trials_number; i++)
         {
-            neural_network->set_parameters_random();
-
             const OptimizationAlgorithm::Results optimization_algorithm_results
                     = training_strategy_pointer->perform_training();
 
             const type current_training_error_trial = optimization_algorithm_results.final_training_error;
             const type current_selection_error_trial = optimization_algorithm_results.final_selection_error;
-            const Tensor<type, 1> current_parameters_trial = optimization_algorithm_results.final_parameters;
+            const Tensor<type, 1> current_parameters_trial = neural_network->get_parameters();
 
             if(current_selection_error_trial < optimum_selection_error_trial)
             {
@@ -327,7 +330,6 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
     }
 
     // Save neural network
-
     trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(optimal_neurons_number);
     trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(optimal_neurons_number);
 
