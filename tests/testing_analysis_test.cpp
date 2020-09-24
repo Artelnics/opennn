@@ -94,7 +94,7 @@ void TestingAnalysisTest::test_set_display()
 }
 
 
-void TestingAnalysisTest::test_calculate_error_data() // @todo
+void TestingAnalysisTest::test_calculate_error_data()
 {
     cout << "test_calculate_error_data\n";
 
@@ -131,7 +131,7 @@ void TestingAnalysisTest::test_calculate_error_data() // @todo
 }
 
 
-void TestingAnalysisTest::test_calculate_percentage_error_data() // @todo
+void TestingAnalysisTest::test_calculate_percentage_error_data()
 {
     cout << "test_calculate_percentage_error_data\n";
 
@@ -199,11 +199,11 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
 
     Tensor<Descriptives, 1> error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
-//    assert_true(error_data.size() == 1, LOG);
-//    assert_true(static_cast<double>(error_data[0].minimum) == 0.0, LOG);
-//    assert_true(static_cast<double>(error_data[0].maximum) == 0.0, LOG);
-//    assert_true(static_cast<double>(error_data[0].mean) == 0.0, LOG);
-//    assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
+    assert_true(error_data.size() == 1, LOG);
+    assert_true(static_cast<double>(error_data[0].minimum) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data[0].maximum) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data[0].mean) == 0.0, LOG);
+    assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
 }
 
 void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
@@ -279,9 +279,9 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
 }
 
 
-void TestingAnalysisTest::test_print_error_data_statistics()
+void TestingAnalysisTest::test_print_error_data_descriptives()
 {
-    cout << "test_print_error_data_statistics\n";
+    cout << "test_print_error_data_descriptives\n";
 
     // DataSet
 
@@ -304,7 +304,7 @@ void TestingAnalysisTest::test_print_error_data_statistics()
 
     TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-//    testing_analysis.print_error_data_statistics();
+    testing_analysis.print_error_data_descriptives();
 
 
 }
@@ -577,7 +577,7 @@ void TestingAnalysisTest::test_calculate_confusion()
 }
 
 
-void TestingAnalysisTest::test_calculate_binary_classification_test() // @todo
+void TestingAnalysisTest::test_calculate_binary_classification_test()
 {
    cout << "test_calculate_binary_classification_test\n";
 
@@ -1201,7 +1201,7 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
 
     assert_true(!not_empty(0), LOG);
 
-//    assert_true(false_positives_indices.empty(), LOG);
+    assert_true(false_positives_indices.size() == 0, LOG);
 }
 
 
@@ -1262,7 +1262,7 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
 
     false_negatives_indices = ta.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
-//    assert_true(false_negatives_indices.empty(), LOG);
+    assert_true(false_negatives_indices.size() == 0, LOG);
 
     const Tensor<bool, 0> not_empty = false_negatives_indices.any();
 
@@ -1466,7 +1466,7 @@ void TestingAnalysisTest::run_test_case()
    test_calculate_error_data_descriptives();
    test_calculate_absolute_errors_descriptives();
    test_calculate_percentage_errors_descriptives();
-   test_print_error_data_statistics();
+   test_print_error_data_descriptives();
    test_calculate_error_data_histograms();
    test_calculate_maximal_errors();
 
