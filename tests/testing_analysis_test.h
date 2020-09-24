@@ -54,7 +54,7 @@ public:
    void test_calculate_absolute_errors_descriptives();
    void test_calculate_percentage_errors_descriptives();
    void test_calculate_error_data_descriptives();
-   void test_print_error_data_statistics();
+   void test_print_error_data_descriptives();
    void test_calculate_error_data_histograms();
    void test_calculate_maximal_errors();
 
