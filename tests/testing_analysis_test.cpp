@@ -94,7 +94,7 @@ void TestingAnalysisTest::test_set_display()
 }
 
 
-void TestingAnalysisTest::test_calculate_error_data() // @todo
+void TestingAnalysisTest::test_calculate_error_data()
 {
     cout << "test_calculate_error_data\n";
 
@@ -577,7 +577,7 @@ void TestingAnalysisTest::test_calculate_confusion()
 }
 
 
-void TestingAnalysisTest::test_calculate_binary_classification_test() // @todo
+void TestingAnalysisTest::test_calculate_binary_classification_test()
 {
    cout << "test_calculate_binary_classification_test\n";
 
