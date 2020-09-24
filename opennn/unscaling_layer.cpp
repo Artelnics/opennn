@@ -42,7 +42,8 @@ UnscalingLayer::~UnscalingLayer()
 }
 
 
-
+/// Returns the number of inputs
+c
 Index UnscalingLayer::get_inputs_number() const
 {
     return descriptives.size();

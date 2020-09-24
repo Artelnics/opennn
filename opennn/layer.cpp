@@ -155,6 +155,8 @@ Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &)
 }
 
 
+/// Returns the number of inputs
+
 Index Layer::get_inputs_number() const
 {
     ostringstream buffer;
@@ -177,6 +179,9 @@ Index Layer::get_neurons_number() const
 
     throw logic_error(buffer.str());
 }
+
+
+/// Returns the number of layer's synaptic weights
 
 Index Layer::get_synaptic_weights_number() const
 {
