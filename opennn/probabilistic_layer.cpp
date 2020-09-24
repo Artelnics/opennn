@@ -62,6 +62,8 @@ Index ProbabilisticLayer::get_biases_number() const
 }
 
 
+/// Returns the number of layer's synaptic weights
+
 Index ProbabilisticLayer::get_synaptic_weights_number() const
 {
     return synaptic_weights.size();

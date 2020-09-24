@@ -41,6 +41,10 @@ MeanSquaredError::~MeanSquaredError()
 }
 
 
+////// \brief MeanSquaredError::calculate_error
+////// \param batch
+////// \param forward_propagation
+////// \param back_propagation
 void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
                      LossIndex::BackPropagation& back_propagation) const

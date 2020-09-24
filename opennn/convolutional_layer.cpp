@@ -1087,6 +1087,8 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 }
 
 
+/// Returns the dimension of the input variables
+
 Tensor<Index, 1> ConvolutionalLayer::get_input_variables_dimensions() const
 {
     return input_variables_dimensions;
@@ -1191,11 +1193,15 @@ Index ConvolutionalLayer::get_padding_height() const
 }
 
 
+/// Returns the number of inputs
+
 Index ConvolutionalLayer::get_inputs_number() const
 {
     return get_inputs_channels_number() * get_inputs_rows_number() * get_inputs_columns_number();
 }
 
+
+/// Returns the number of neurons
 
 Index ConvolutionalLayer::get_neurons_number() const
 {
@@ -1376,6 +1382,8 @@ void ConvolutionalLayer::set_parameters_constant(const type& value)
 }
 
 
+// Sets the parameters to random numbers using Eigen's setRandom.
+
 void ConvolutionalLayer::set_parameters_random()
 {
     biases.setRandom();
@@ -1502,6 +1510,8 @@ const Tensor<type, 4>& ConvolutionalLayer::get_synaptic_weights() const
     return synaptic_weights;
 }
 
+
+/// Returns the number of layer's synaptic weights
 
 Index ConvolutionalLayer::get_synaptic_weights_number() const
 {

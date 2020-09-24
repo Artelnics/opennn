@@ -855,6 +855,13 @@ void LevenbergMarquardtAlgorithm::perform_training_void()
 }
 
 
+
+////// \brief LevenbergMarquardtAlgorithm::update_epoch
+////// \param batch
+////// \param forward_propagation
+////// \param back_propagation
+////// \param terms_second_order_loss
+////// \param optimization_data
 void LevenbergMarquardtAlgorithm::update_epoch(const DataSet::Batch& batch,
                                                NeuralNetwork::ForwardPropagation& forward_propagation,
                                                LossIndex::BackPropagation& back_propagation,
