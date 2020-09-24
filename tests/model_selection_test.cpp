@@ -79,7 +79,7 @@ void ModelSelectionTest::test_set_default()
 }
 
 
-void ModelSelectionTest::test_perform_neurons_selection() // @todo
+void ModelSelectionTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
 
