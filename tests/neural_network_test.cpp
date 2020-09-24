@@ -52,13 +52,13 @@ void NeuralNetworkTest::test_constructor()
   assert_true(neural_network_1_2.get_layer_pointer(1)->get_type() == Layer::Perceptron, LOG);
   assert_true(neural_network_1_2.get_layer_pointer(2)->get_type() == Layer::Probabilistic, LOG);
 
-  NeuralNetwork neural_network_1_3(NeuralNetwork::Forecasting, architecture);
+//  NeuralNetwork neural_network_1_3(NeuralNetwork::Forecasting, architecture);
 
-  assert_true(neural_network_1_3.get_layers_number() == 4, LOG);
-  assert_true(neural_network_1_3.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
-//  assert_true(neural_network_1_3.get_layer_pointer(1)->get_type() == Layer::LongShortTermMemory, LOG);
-  assert_true(neural_network_1_3.get_layer_pointer(2)->get_type() == Layer::Perceptron, LOG);
-  assert_true(neural_network_1_3.get_layer_pointer(3)->get_type() == Layer::Unscaling, LOG);
+//  assert_true(neural_network_1_3.get_layers_number() == 4, LOG);
+//  assert_true(neural_network_1_3.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
+////  assert_true(neural_network_1_3.get_layer_pointer(1)->get_type() == Layer::LongShortTermMemory, LOG);
+//  assert_true(neural_network_1_3.get_layer_pointer(2)->get_type() == Layer::Perceptron, LOG);
+//  assert_true(neural_network_1_3.get_layer_pointer(3)->get_type() == Layer::Unscaling, LOG);
 
 //  NeuralNetwork neural_network_1_4(NeuralNetwork::ImageApproximation, architecture);
 
@@ -110,24 +110,20 @@ void NeuralNetworkTest::test_constructor()
 
   Tensor<Layer*, 1> layers_3(10);
 
-  layers_3.setValues({new ScalingLayer, new ConvolutionalLayer, new PerceptronLayer,
-                          new PoolingLayer, new ProbabilisticLayer, new LongShortTermMemoryLayer,
-                          new RecurrentLayer, new UnscalingLayer, new PrincipalComponentsLayer, new BoundingLayer});
+  layers_3.setValues({new ScalingLayer, new PerceptronLayer,
+                          new PoolingLayer, new ProbabilisticLayer, new UnscalingLayer,
+                          new PrincipalComponentsLayer, new BoundingLayer});
 
   NeuralNetwork neural_network_3_2(layers_3);
 
   assert_true(!neural_network_3_2.is_empty(), LOG);
   assert_true(neural_network_3_2.get_layers_number() == 10, LOG);
   assert_true(neural_network_3_2.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
-  assert_true(neural_network_3_2.get_layer_pointer(1)->get_type() == Layer::Convolutional, LOG);
-  assert_true(neural_network_3_2.get_layer_pointer(2)->get_type() == Layer::Perceptron, LOG);
-  assert_true(neural_network_3_2.get_layer_pointer(3)->get_type() == Layer::Pooling, LOG);
-  assert_true(neural_network_3_2.get_layer_pointer(4)->get_type() == Layer::Probabilistic, LOG);
-//  assert_true(neural_network_3_2.get_layer_pointer(5)->get_type() == Layer::LongShortTermMemory, LOG);
-  assert_true(neural_network_3_2.get_layer_pointer(6)->get_type() == Layer::Recurrent, LOG);
-  assert_true(neural_network_3_2.get_layer_pointer(7)->get_type() == Layer::Unscaling, LOG);
-//  assert_true(neural_network_3_2.get_layer_pointer(8)->get_type() == Layer::PrincipalComponents, LOG);
-  assert_true(neural_network_3_2.get_layer_pointer(9)->get_type() == Layer::Bounding, LOG);
+  assert_true(neural_network_3_2.get_layer_pointer(1)->get_type() == Layer::Perceptron, LOG);
+  assert_true(neural_network_3_2.get_layer_pointer(2)->get_type() == Layer::Pooling, LOG);
+  assert_true(neural_network_3_2.get_layer_pointer(3)->get_type() == Layer::Probabilistic, LOG);
+  assert_true(neural_network_3_2.get_layer_pointer(4)->get_type() == Layer::Unscaling, LOG);
+  assert_true(neural_network_3_2.get_layer_pointer(5)->get_type() == Layer::Bounding, LOG);
 
    // File constructor @todo
 
@@ -162,19 +158,25 @@ void NeuralNetworkTest::test_add_layer()
 {
    cout << "test_add_layer\n";
 
-   NeuralNetwork neural_network_;
+//    // LSTM
 
-   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer;
-   neural_network_.add_layer(long_short_term_memory_layer);
-   assert_true(neural_network_.get_layers_number() == 1, LOG);
-   assert_true(neural_network_.get_layer_pointer(0)->get_type() == Layer::LongShortTermMemory, LOG);
+//   NeuralNetwork neural_network_;
 
-   NeuralNetwork neural_network__;
+//   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer;
+//   neural_network_.add_layer(long_short_term_memory_layer);
+//   assert_true(neural_network_.get_layers_number() == 1, LOG);
+//   assert_true(neural_network_.get_layer_pointer(0)->get_type() == Layer::LongShortTermMemory, LOG);
 
-   RecurrentLayer* recurrent_layer = new RecurrentLayer;
-   neural_network__.add_layer(recurrent_layer);
-   assert_true(neural_network__.get_layers_number() == 1, LOG);
-   assert_true(neural_network__.get_layer_pointer(0)->get_type() == Layer::Recurrent, LOG);
+//    // RECURRENT
+
+//   NeuralNetwork neural_network__;
+
+//   RecurrentLayer* recurrent_layer = new RecurrentLayer;
+//   neural_network__.add_layer(recurrent_layer);
+//   assert_true(neural_network__.get_layers_number() == 1, LOG);
+//   assert_true(neural_network__.get_layer_pointer(0)->get_type() == Layer::Recurrent, LOG);
+
+   // SCALING
 
    NeuralNetwork neural_network;
 
@@ -183,39 +185,51 @@ void NeuralNetworkTest::test_add_layer()
    assert_true(neural_network.get_layers_number() == 1, LOG);
    assert_true(neural_network.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
 
-   ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer;
-   neural_network.add_layer(convolutional_layer);
-   assert_true(neural_network.get_layers_number() == 2, LOG);
-   assert_true(neural_network.get_layer_pointer(1)->get_type() == Layer::Convolutional, LOG);
+   // CONVOLUTIONAL
+
+//   ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer;
+//   neural_network.add_layer(convolutional_layer);
+//   assert_true(neural_network.get_layers_number() == 2, LOG);
+//   assert_true(neural_network.get_layer_pointer(1)->get_type() == Layer::Convolutional, LOG);
+
+   // PERCEPTRON
 
    PerceptronLayer* perceptron_layer = new PerceptronLayer;
    neural_network.add_layer(perceptron_layer);
-   assert_true(neural_network.get_layers_number() == 3, LOG);
-   assert_true(neural_network.get_layer_pointer(2)->get_type() == Layer::Perceptron, LOG);
+   assert_true(neural_network.get_layers_number() == 2, LOG);
+   assert_true(neural_network.get_layer_pointer(1)->get_type() == Layer::Perceptron, LOG);
+
+   // POOLING
 
    PoolingLayer* pooling_layer = new PoolingLayer;
 
    neural_network.add_layer(pooling_layer);
-   assert_true(neural_network.get_layers_number() == 4, LOG);
-   assert_true(neural_network.get_layer_pointer(3)->get_type() == Layer::Pooling, LOG);
+   assert_true(neural_network.get_layers_number() == 3, LOG);
+   assert_true(neural_network.get_layer_pointer(2)->get_type() == Layer::Pooling, LOG);
+
+   //PROBABILISTIC
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer;
 
    neural_network.add_layer(probabilistic_layer);
-   assert_true(neural_network.get_layers_number() == 5, LOG);
-   assert_true(neural_network.get_layer_pointer(4)->get_type() == Layer::Probabilistic, LOG);
+   assert_true(neural_network.get_layers_number() == 4, LOG);
+   assert_true(neural_network.get_layer_pointer(3)->get_type() == Layer::Probabilistic, LOG);
+
+   // UNSCALING
 
    UnscalingLayer* unscaling_layer = new UnscalingLayer;
 
    neural_network.add_layer(unscaling_layer);
-   assert_true(neural_network.get_layers_number() == 6, LOG);
-   assert_true(neural_network.get_layer_pointer(5)->get_type() == Layer::Unscaling, LOG);
+   assert_true(neural_network.get_layers_number() == 5, LOG);
+   assert_true(neural_network.get_layer_pointer(4)->get_type() == Layer::Unscaling, LOG);
+
+   // BOUNDING
 
    BoundingLayer* bounding_layer = new BoundingLayer;
 
    neural_network.add_layer(bounding_layer);
-   assert_true(neural_network.get_layers_number() == 7, LOG);
-   assert_true(neural_network.get_layer_pointer(6)->get_type() == Layer::Bounding, LOG);
+   assert_true(neural_network.get_layers_number() == 6, LOG);
+   assert_true(neural_network.get_layer_pointer(5)->get_type() == Layer::Bounding, LOG);
 
 }
 
@@ -435,20 +449,20 @@ void NeuralNetworkTest::test_set()
    assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
    assert_true(neural_network.get_layers_pointers().size() == 3, LOG);
 
-   neural_network.set(NeuralNetwork::Forecasting, architecture);
-   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
-   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
-   assert_true(neural_network.get_layers_pointers().size() == 4, LOG);
+//   neural_network.set(NeuralNetwork::Forecasting, architecture);
+//   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+//   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+//   assert_true(neural_network.get_layers_pointers().size() == 4, LOG);
 
-   neural_network.set(NeuralNetwork::ImageApproximation, architecture);
-   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
-   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
-   assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
+//   neural_network.set(NeuralNetwork::ImageApproximation, architecture);
+//   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+//   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+//   assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
 
-   neural_network.set(NeuralNetwork::ImageClassification, architecture);
-   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
-   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
-   assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
+//   neural_network.set(NeuralNetwork::ImageClassification, architecture);
+//   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+//   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+//   assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
 
    // Test 2 / Convolutional layer set
 
