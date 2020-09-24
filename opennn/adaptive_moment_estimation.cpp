@@ -380,7 +380,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, is_forecasting);
 
@@ -477,7 +477,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
-        if(epoch == maximum_epochs_number)
+        if(epoch == maximum_epochs_number-1)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
 
