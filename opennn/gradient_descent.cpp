@@ -594,7 +594,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -711,7 +711,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(epoch == maximum_epochs_number)
+        else if(epoch == maximum_epochs_number-1)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
 
