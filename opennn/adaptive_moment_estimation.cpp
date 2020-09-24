@@ -114,6 +114,8 @@ const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() cons
 }
 
 
+/// Returns the hardware used. Default: Multi-core
+
 const string& AdaptiveMomentEstimation::get_hardware_use() const
 {
     return hardware_use;
@@ -278,6 +280,8 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
     reserve_selection_error_history = new_reserve_selection_error_history;
 }
 
+
+/// Set hardware to use. Default: Multi-core.
 
 void AdaptiveMomentEstimation::set_hardware_use(const string & new_hardware_use)
 {
@@ -983,11 +987,15 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+/// Set number of samples in each batch. Default 1000.
+
 void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_samples_number)
 {
     batch_samples_number = new_batch_samples_number;
 }
 
+
+/// Update iteration parameters
 
 void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation& back_propagation,
                               OptimizationData& optimization_data)

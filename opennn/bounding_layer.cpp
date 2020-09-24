@@ -89,6 +89,8 @@ string BoundingLayer::write_bounding_method() const
 }
 
 
+/// Get number of inputs
+
 Index BoundingLayer::get_inputs_number() const
 {
     return lower_bounds.dimension(0);

@@ -89,8 +89,6 @@ public:
 
    explicit AdaptiveMomentEstimation(LossIndex*);   
 
-   explicit AdaptiveMomentEstimation(const tinyxml2::XMLDocument&);
-
    virtual ~AdaptiveMomentEstimation();
    
    // Training operators

@@ -97,6 +97,8 @@ const Index& QuasiNewtonMethod::get_epochs_number() const
 }
 
 
+/// Returns the hardware used. Default: Multi-core
+
 string QuasiNewtonMethod::get_hardware_use() const
 {
     return hardware_use;
@@ -435,6 +437,8 @@ void QuasiNewtonMethod::set_choose_best_selection(const bool& new_choose_best_se
     choose_best_selection = new_choose_best_selection;
 }
 
+
+/// Set hardware to use. Default: Multi-core.
 
 void QuasiNewtonMethod::set_hardware_use(const string & new_hardware_use)
 {

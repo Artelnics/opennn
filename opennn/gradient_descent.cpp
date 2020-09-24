@@ -59,6 +59,8 @@ LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm_pointer()
 }
 
 
+/// Returns the hardware used. Default: Multi-core
+
 string GradientDescent::get_hardware_use() const
 {
     return hardware_use;
@@ -209,6 +211,8 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
     reserve_selection_error_history = new_reserve_all_training_history;
 }
 
+
+/// Set hardware to use. Default: Multi-core.
 
 void GradientDescent::set_hardware_use(const string & new_hardware_use)
 {
