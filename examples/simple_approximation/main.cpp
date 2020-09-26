@@ -35,7 +35,7 @@ int main(void)
 
         // Data set
 
-        DataSet data_set("../data/simple_function_regression.csv", ';', true);
+        DataSet data_set("../data/simple_function_regression2.csv", ';', true);
 
         data_set.split_samples_random();
 
