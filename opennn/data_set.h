@@ -714,6 +714,8 @@ public:
 
    void load_time_series_data_binary();
 
+   Tensor<type, 2> read_input_csv(const string&);
+
    // Trasform methods
 
    void transform_time_series();
