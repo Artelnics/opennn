@@ -409,6 +409,8 @@ ModelSelection::Results ModelSelection::perform_neurons_selection()
 {
     Results results;
 
+    TrainingStrategy* ts = get_training_strategy_pointer();
+
     switch(neurons_selection_method)
     {
     case NO_NEURONS_SELECTION:
@@ -418,8 +420,6 @@ ModelSelection::Results ModelSelection::perform_neurons_selection()
     case GROWING_NEURONS:
     {
         growing_neurons.set_display(display);
-
-        TrainingStrategy* ts = get_training_strategy_pointer();
 
         growing_neurons.set_training_strategy_pointer(ts);
 
@@ -440,6 +440,8 @@ ModelSelection::Results ModelSelection::perform_inputs_selection()
 {
     Results results;
 
+    TrainingStrategy* ts = get_training_strategy_pointer();
+
     switch(inputs_selection_method)
     {
     case NO_INPUTS_SELECTION:
@@ -450,6 +452,8 @@ ModelSelection::Results ModelSelection::perform_inputs_selection()
     {
         growing_inputs.set_display(display);
 
+        growing_inputs.set_training_strategy_pointer(ts);
+
         results.growing_inputs_results_pointer = growing_inputs.perform_inputs_selection();
 
         break;
@@ -458,6 +462,8 @@ ModelSelection::Results ModelSelection::perform_inputs_selection()
     {
         pruning_inputs.set_display(display);
 
+        pruning_inputs.set_training_strategy_pointer(ts);
+
         results.pruning_inputs_results_pointer = pruning_inputs.perform_inputs_selection();
 
         break;
@@ -465,6 +471,8 @@ ModelSelection::Results ModelSelection::perform_inputs_selection()
     case GENETIC_ALGORITHM:
     {
         genetic_algorithm.set_display(display);
+
+        genetic_algorithm.set_training_strategy_pointer(ts);
 
         results.genetic_algorithm_results_pointer = genetic_algorithm.perform_inputs_selection();
 

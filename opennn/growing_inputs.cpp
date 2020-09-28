@@ -271,6 +271,10 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         neural_network_pointer->set_inputs_number(input_variables_number);
 
+        neural_network_pointer->get_first_perceptron_layer_pointer()->set_synaptic_weights_glorot();
+
+        Tensor<type, 1> initial_parameters = neural_network_pointer->get_parameters();
+
         // Trial
 
         type optimum_selection_error_trial = numeric_limits<type>::max();
@@ -279,7 +283,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         for(Index i = 0; i < trials_number; i++)
         {
-            neural_network_pointer->set_parameters_random();
+            neural_network_pointer->set_parameters(initial_parameters);
             OptimizationAlgorithm::Results training_results = training_strategy_pointer->perform_training();
 
             type current_training_error_trial = training_results.final_training_error;
@@ -301,11 +305,15 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
                 optimum_training_error_trial = current_training_error_trial;
             }
         }
+
         current_selection_error = optimum_selection_error_trial;
         current_training_error = optimum_training_error_trial;
         current_parameters = optimum_parameters_trial;
 
-        if(current_selection_error < optimum_selection_error)
+//        if(current_selection_error < optimum_selection_error)
+        if(iteration == 0
+                ||(optimum_selection_error > current_selection_error
+                   && abs(optimum_selection_error - current_selection_error) > tolerance))
         {
             optimal_columns_indices = current_columns_indices;
             optimal_parameters = current_parameters;
@@ -424,10 +432,10 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     {
         Index optimal_input_index = optimal_columns_indices[i];
 
-        data_set_pointer->set_column_use(optimal_input_index,DataSet::Input);
+        data_set_pointer->set_column_use(optimal_input_index, DataSet::Input);
     }
 
-    data_set_pointer->set_input_variables_dimensions({optimal_inputs_number});
+    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).setConstant(optimal_inputs_number));
 
     // Set Neural network stuff
 
@@ -445,6 +453,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         cout << "Optimum selection error: " << optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
+
     return results;
 }
 
