@@ -8491,6 +8491,31 @@ void DataSet::load_time_series_data_binary()
 }
 
 
+/// @todo
+
+
+Tensor<type, 2> DataSet::read_input_csv(const string& data_file_name)
+{
+    ifstream file(data_file_name.c_str());
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_input_csv() method.\n"
+               << "Cannot open data file: " << data_file_name << "\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Count rows number
+
+
+
+}
+
+
 /// Returns a vector containing the number of samples of each class in the data set.
 /// If the number of target variables is one then the number of classes is two.
 /// If the number of target variables is greater than one then the number of classes is equal to the number
