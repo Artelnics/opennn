@@ -193,6 +193,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+    const Tensor<Index, 1> original_input_columns_indices = data_set_pointer->get_input_columns_indices();
+
     const Index inputs_number = data_set_pointer->get_input_columns_number();
 
     const Index used_columns_number = data_set_pointer->get_used_columns_number();
@@ -228,6 +230,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     // Neural network
 
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_neural_network_pointer();
+
+    const Tensor<Descriptives, 1> original_input_variables_descriptives = neural_network_pointer->get_scaling_layer_pointer()->get_descriptives();
 
     // Optimization algorithm
 
@@ -444,6 +448,34 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     neural_network_pointer->set_parameters(optimal_parameters);
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+
+    Tensor<Descriptives, 1> new_input_descriptives(optimal_inputs_number);
+
+    Index descriptive_index = 0;
+
+    for(Index i = 0; i < original_input_columns_indices.size(); i++)
+    {
+        const Index current_column_index = original_input_columns_indices(i);
+
+        if(data_set_pointer->get_column_use(current_column_index) == DataSet::Input)
+        {
+            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical)
+            {
+                new_input_descriptives(descriptive_index) = original_input_variables_descriptives(i);
+                descriptive_index++;
+            }
+            else
+            {
+                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++)
+                {
+                    new_input_descriptives(descriptive_index) = original_input_variables_descriptives(i);
+                    descriptive_index++;
+                }
+            }
+        }
+    }
+
+    neural_network_pointer->get_scaling_layer_pointer()->set_descriptives(new_input_descriptives);
 
     if(display)
     {
