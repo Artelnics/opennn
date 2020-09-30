@@ -1814,40 +1814,38 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     GeneticAlgorithmResults* results = new GeneticAlgorithmResults();
 
-    if(display)
-    {
-        cout << "Performing genetic inputs selection..." << endl;
-    }
+    if(display) cout << "Performing genetic inputs selection..." << endl;
 
     // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
+    type optimum_selection_error = numeric_limits<type>::max();
+    type optimum_training_error = numeric_limits<type>::max();
+
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+
+    const Tensor<Index, 1> original_input_columns_indices = data_set_pointer->get_input_columns_indices();
 
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+    const Tensor<Descriptives, 1> original_input_variables_descriptives = neural_network_pointer->get_scaling_layer_pointer()->get_descriptives();
+
     // Optimization algorithm
 
     Index minimal_index;
-    type current_training_error;
-    type current_selection_error;
+    type current_training_error = 0;
+    type current_selection_error = 0;
 
     Tensor<bool, 1> current_inputs;
     Tensor<DataSet::VariableUse, 1> current_uses;
     Tensor<type, 0> current_mean;
     type current_standard_deviation;
     Tensor<type, 1> current_parameters;
-
-    type optimum_selection_error = 1e10;
-    type optimum_training_error = 0;
-
-    Tensor<bool, 1> optimal_inputs;
-    Tensor<type, 1> optimal_parameters;
 
     Index optimal_generation = 0;
 
@@ -1862,15 +1860,12 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     current_uses = original_uses;
 
-    Index count = 0;
+    Index count = data_set_pointer->get_input_columns_number();
 
-    for(Index i = 0; i < original_uses.size(); i++)
-    {
-        if(original_uses(i) == DataSet::Input) count++;
-    }
+    Tensor<bool, 1> optimal_inputs(count);
+    optimal_inputs.setZero();
 
-    optimal_inputs.resize(count);
-    optimal_inputs.setConstant(0);
+    Tensor<type, 1> optimal_parameters;
 
     Tensor<type, 2>  test(100,4);
 
@@ -1884,16 +1879,10 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         if(iteration != 0)
         {
-            cout << "Before evolve" << endl;
-
             evolve_population();
-
-            cout << "Evolve" << endl;
         }
 
         evaluate_population();
-
-        cout << "Evaluate" << endl;
 
         minimal_index = get_optimal_individual_index();
 
@@ -1907,7 +1896,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         current_training_error = loss(minimal_index,0);
 
-        current_parameters = neural_network_pointer->get_parameters();
+        current_parameters = parameters_history((population_size * iteration) + minimal_index);
 
         Index count_optimal = 0;
         Index count_inputs = 0;
@@ -1920,8 +1909,8 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         if((abs(optimum_selection_error - current_selection_error) >= tolerance &&
                 optimum_selection_error > current_selection_error) ||
-                (abs(optimum_selection_error - current_selection_error) < tolerance &&
-                 count_optimal < count_inputs))
+            (abs(optimum_selection_error - current_selection_error) < tolerance &&
+            count_inputs < count_optimal))
         {
             optimal_inputs = current_inputs;
             optimum_training_error = current_training_error;
@@ -1935,32 +1924,22 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         if(reserve_generation_mean)
         {
-            results->generation_selection_error_mean_history
-                    = insert_result(current_mean(), results->generation_selection_error_mean_history);
+            results->generation_selection_error_mean_history = insert_result(current_mean(), results->generation_selection_error_mean_history);
         }
 
         if(reserve_generation_standard_deviation)
         {
-//            results->generation_standard_deviation_history.push_back(current_standard_deviation);
-
-            results->generation_selection_error_standard_deviation_history
-                    = insert_result(current_standard_deviation, results->generation_selection_error_standard_deviation_history);
+            results->generation_selection_error_standard_deviation_history = insert_result(current_standard_deviation, results->generation_selection_error_standard_deviation_history);
         }
 
         if(reserve_generation_minimum_selection)
         {
-//            results->generation_minimum_selection_history.push_back(current_selection_error);
-
-            results->generation_minimum_selection_error_history
-                    = insert_result(current_selection_error, results->generation_minimum_selection_error_history);
+            results->generation_minimum_selection_error_history = insert_result(current_selection_error, results->generation_minimum_selection_error_history);
         }
 
         if(reserve_generation_optimum_loss)
         {
-//            results->generation_optimum_loss_history.push_back(current_training_error);
-
-            results->generation_optimum_training_error_history
-                    = insert_result(current_training_error, results->generation_optimum_training_error_history);
+            results->generation_optimum_training_error_history = insert_result(current_training_error, results->generation_optimum_training_error_history);
         }
 
         // Stopping criteria
@@ -1999,10 +1978,10 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             results->stopping_condition = InputsSelection::MaximumEpochs;
         }
 
+        current_uses.setConstant(DataSet::UnusedVariable);
         for(Index j = 0; j < current_inputs.size(); j++)
         {
             index = get_input_index(original_uses,j);
-
             if(current_inputs[j] == false)
             {
                 current_uses(index) = DataSet::UnusedVariable;
@@ -2036,24 +2015,22 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         if(end_algortihm == true)
         {
             // Save results
-
             results->optimal_inputs = optimal_inputs;
             results->final_selection_error = optimum_selection_error;
             results->final_training_error = optimum_training_error;
-            results->iterations_number = iteration+1;
+            results->iterations_number = iteration + 1;
             results->elapsed_time = elapsed_time;
-            results->minimal_parameters = optimal_parameters;
-
+            results->minimal_parameters = optimal_parameters;            
             break;
         }
     }
-
 
     Index original_index;
 
     Tensor<DataSet::VariableUse, 1> optimal_uses = original_uses;
 
     for(Index i = 0; i < optimal_inputs.size(); i++)
+
     {
         original_index = get_input_index(original_uses, i);
         if(optimal_inputs[i] == 1)
@@ -2070,33 +2047,56 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     data_set_pointer->set_columns_uses(optimal_uses);
 
-    cout << "data set results" << endl;
+    const Index optimal_inputs_number = data_set_pointer->get_input_variables_number();
 
-    // Set Neural network results
+    results->optimal_inputs_indices = data_set_pointer->get_input_variables_indices();
 
-    neural_network_pointer->set_inputs_number(optimal_inputs);
+    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).setConstant(optimal_inputs_number));
 
-    cout << "inputs number" << endl;
+//    // Set Neural network results
+
+    neural_network_pointer->set_inputs_number(optimal_inputs_number);
 
     neural_network_pointer->set_parameters(optimal_parameters);
 
-    cout << "set parameters" << endl;
-
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-        cout << "inputs names" << endl;
+    Tensor<Descriptives, 1> new_input_descriptives(optimal_inputs_number);
+
+    Index descriptive_index = 0;
+
+    for(Index i = 0; i < original_input_columns_indices.size(); i++)
+    {
+        const Index current_column_index = original_input_columns_indices(i);
+
+        if(data_set_pointer->get_column_use(current_column_index) == DataSet::Input)
+        {
+            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical)
+            {
+                new_input_descriptives(descriptive_index) = original_input_variables_descriptives(i);
+                descriptive_index++;
+            }
+            else
+            {
+                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++)
+                {
+                    new_input_descriptives(descriptive_index) = original_input_variables_descriptives(i);
+                    descriptive_index++;
+                }
+            }
+        }
+    }
+
+    neural_network_pointer->get_scaling_layer_pointer()->set_descriptives(new_input_descriptives);
 
     time(&current_time);
     elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
-
-        cout << "time" << endl;
 
     if(display)
     {
         cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << endl;
         cout << "Optimal generation: " << optimal_generation << endl;
-        cout << "Optimal number of inputs: " << data_set_pointer->get_input_variables_names().size() << endl;
+        cout << "Optimal number of inputs: " << optimal_inputs_number << endl;
         cout << "Optimum training error: " << optimum_training_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
