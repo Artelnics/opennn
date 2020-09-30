@@ -8494,7 +8494,11 @@ void DataSet::load_time_series_data_binary()
 /// @todo
 /// check if has columns names
 
-Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name, const char& separator_char) const
+Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
+                                        const char& separator_char,
+                                        const string& missing_values_label,
+                                        const bool& has_columns_name,
+                                        const bool& has_rows_label) const
 {
     ifstream file(input_data_file_name.c_str());
 
@@ -8542,7 +8546,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name, cons
                    << "void read_input_csv() method.\n"
                    << "Line " << line_number << ": Size of tokens("
                    << tokens_count << ") is not equal to number of columns("
-                   << columns_number << ").\n";
+                   << columns_number << ").\n";            
 
             throw logic_error(buffer.str());
         }
@@ -8552,7 +8556,9 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name, cons
 
     file.close();
 
-    Index variables_number = get_variables_number() - get_target_variables_number();
+    Index variables_number = get_input_variables_number();
+
+    if(has_columns_name) input_samples_count--;
 
     Tensor<type, 2> input_data(input_samples_count, variables_number);
 
@@ -8571,10 +8577,27 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name, cons
         throw logic_error(buffer.str());
     }
 
+    // Read first line
+
+    if(has_columns_name)
+    {
+        while(file.good())
+        {
+            getline(file, line);
+
+            if(line.empty()) continue;
+
+            break;
+        }
+    }
+
+    // Read rest of the lines
+
     Tensor<string, 1> tokens;
 
     line_number = 0;
     Index variable_index = 0;
+    Index token_index = 0;
 
     const bool is_float = is_same<type, float>::value;
 
@@ -8588,40 +8611,51 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name, cons
 
         if(line.empty()) continue;
 
-        tokens = get_tokens(line, separator);
+        tokens = get_tokens(line, separator_char);
 
         variable_index = 0;
+        token_index = 0;
 
-        for(Index i = 0; i < tokens.size(); i++)
+        for(Index i = 0; i < columns.size(); i++)
         {
+            if(columns(i).column_use == UnusedVariable)
+            {
+                token_index++;
+                continue;
+            }
+            else if(columns(i).column_use != Input)
+            {
+                continue;
+            }
+
             if(columns(i).type == Numeric)
             {
-                if(tokens(i) == missing_values_label || tokens(i).empty())
+                if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
                     input_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(is_float)
                 {
-                    input_data(line_number, variable_index) = strtof(tokens(i).data(), NULL);
+                    input_data(line_number, variable_index) = strtof(tokens(token_index).data(), NULL);
                 }
                 else
                 {
-                    input_data(line_number, variable_index) = stof(tokens(i));
+                    input_data(line_number, variable_index) = stof(tokens(token_index));
                 }
 
                 variable_index++;
             }
             else if(columns(i).type == Binary)
             {
-                if(tokens(i) == missing_values_label)
+                if(tokens(token_index) == missing_values_label)
                 {
                     input_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
-                else if(columns(i).categories.size() > 0 && tokens(i) == columns(i).categories(0))
+                else if(columns(i).categories.size() > 0 && tokens(token_index) == columns(i).categories(0))
                 {
                     input_data(line_number, variable_index) = 1.0;
                 }
-                else if(tokens(i) == columns(i).name)
+                else if(tokens(token_index) == columns(i).name)
                 {
                     input_data(line_number, variable_index) = 1.0;
                 }
@@ -8632,11 +8666,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name, cons
             {
                 for(Index k = 0; k < columns(i).get_categories_number(); k++)
                 {
-                    if(tokens(i) == missing_values_label)
+                    if(tokens(token_index) == missing_values_label)
                     {
                         input_data(line_number, variable_index) = static_cast<type>(NAN);
                     }
-                    else if(tokens(i) == columns(i).categories(k))
+                    else if(tokens(token_index) == columns(i).categories(k))
                     {
                         input_data(line_number, variable_index) = 1.0;
                     }
@@ -8646,25 +8680,39 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name, cons
             }
             else if(columns(i).type == DateTime)
             {
-                if(tokens(i) == missing_values_label || tokens(i).empty())
+                if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
                     input_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else
                 {
-                    input_data(line_number, variable_index) = static_cast<type>(date_to_timestamp(tokens(i), gmt));
+                    input_data(line_number, variable_index) = static_cast<type>(date_to_timestamp(tokens(token_index), gmt));
                 }
 
                 variable_index++;
             }
             else if(columns(i).type == Constant)
             {
+                if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
+                {
+                    input_data(line_number, variable_index) = static_cast<type>(NAN);
+                }
+                else if(is_float)
+                {
+                    input_data(line_number, variable_index) = strtof(tokens(token_index).data(), NULL);
+                }
+                else
+                {
+                    input_data(line_number, variable_index) = stof(tokens(token_index));
+                }
 
+                variable_index++;
             }
+
+            token_index++;
         }
 
         line_number++;
-
     }
 
     file.close();
