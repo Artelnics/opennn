@@ -877,14 +877,8 @@ void NeuralNetwork::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_dev
 {
     const Index layers_number = get_layers_number();
 
-    cout << "Layers number: " << layers_number << endl;
-
     for(Index i = 0; i < layers_number; i++)
     {
-        cout << "i: " << i << ": ";
-
-        cout << layers_pointers(i)->get_type_string() << endl;
-
         layers_pointers(i)->set_thread_pool_device(new_thread_pool_device);
     }
 }
@@ -2677,6 +2671,57 @@ void NeuralNetwork::save_expression_python(const string& file_name)
     }
 
     file << write_expression_python();
+
+    file.close();
+}
+
+
+/// Saves a csv file containing the outputs for a set of given inputs.
+/// @param inputs Inputs to calculate the outputs.
+/// @param file_name Name of data file
+
+void NeuralNetwork::save_outputs(const Tensor<type, 2> & inputs, const string & file_name)
+{
+    const Tensor<type, 2> outputs = calculate_outputs(inputs);
+
+    ofstream file(file_name.c_str());
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void  save_expression_python(const string&) method.\n"
+               << "Cannot open expression text file.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    const Tensor<string, 1> outputs_names = get_outputs_names();
+
+    const Index outputs_number = get_outputs_number();
+    const Index samples_number = inputs.dimension(0);
+
+    for(Index i = 0; i < outputs_number; i++)
+    {
+        file << outputs_names[i];
+
+        if(i != outputs_names.size()-1) file << ";";
+    }
+
+    file << "\n";
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        for(Index j = 0; j < outputs_number; j++)
+        {
+            file << outputs(i,j);
+
+            if(j != outputs_number-1) file << ";";
+        }
+
+        file << "\n";
+    }
 
     file.close();
 }

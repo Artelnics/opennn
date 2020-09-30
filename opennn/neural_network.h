@@ -346,6 +346,8 @@ public:
    void save_expression_c(const string&);
    void save_expression_python(const string&);
 
+   void save_outputs(const Tensor<type, 2>&, const string&);
+
    /// Calculate de forward propagation in the neural network
 
    void forward_propagate(const DataSet::Batch&, ForwardPropagation&) const;
