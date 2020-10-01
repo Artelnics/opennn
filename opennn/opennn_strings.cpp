@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "opennn_strings.h"
-#include <QDebug>
 namespace OpenNN
 {
 
@@ -278,6 +277,7 @@ bool is_date_time_string(const string& str)
                                    "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
                                    "|([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])"
                                    "|([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])"
+                                   "|([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M"
                                   );
 
     if(regex_match(str,regular_expression))
@@ -320,21 +320,12 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     const string format_10 = "([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])";
     const string format_11 = "(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])";
     const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
+
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12);
+                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  +"|" + format_13);
 
-    const regex regular("(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
-                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
-                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
-                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])"
-                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
-                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
-                        "|([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])"
-                        "|(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])");
 
     regex_search(date, matchs, regular_expression);
 
@@ -635,6 +626,20 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         time_structure.tm_hour = stoi(matchs[48].str());
         time_structure.tm_min = stoi(matchs[49].str());
         time_structure.tm_sec = stoi(matchs[50].str());
+    }
+    else if(matchs[51] != "") // mm/dd/aaaa hh:mm:ss [AP]M
+    {
+        time_structure.tm_year = stoi(matchs[53].str());
+        time_structure.tm_mon = stoi(matchs[51].str());
+        time_structure.tm_mday = stoi(matchs[52].str());
+        time_structure.tm_min = stoi(matchs[55].str());
+        time_structure.tm_sec = stoi(matchs[56].str());
+        if(matchs[57].str()=="PM"){
+            time_structure.tm_hour = stoi(matchs[54].str())+12;
+        }
+        else{
+            time_structure.tm_hour = stoi(matchs[54].str());
+        }
     }
     else if(is_numeric_string(date)){
     }
