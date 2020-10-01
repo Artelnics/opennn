@@ -8489,8 +8489,78 @@ void DataSet::load_time_series_data_binary()
 }
 
 
-/// @todo
-/// check if has columns names
+/// This method checks if the input data file has the correct format. Returns an error message.
+
+void DataSet::check_input_csv(const string & input_data_file_name, const char & separator_char) const
+{
+    ifstream file(input_data_file_name.c_str());
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_input_csv() method.\n"
+               << "Cannot open input data file: " << input_data_file_name << "\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    string line;
+    Index line_number = 0;
+    Index total_lines = 0;
+
+    Index tokens_count;
+
+    const Index columns_number = get_columns_number() - get_target_columns_number();
+
+    while(file.good())
+    {
+        line_number++;
+
+        getline(file, line);
+
+        trim(line);
+
+        erase(line, '"');
+
+        if(line.empty()) continue;
+
+        total_lines++;
+
+        tokens_count = count_tokens(line, separator_char);
+
+        if(tokens_count != columns_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_input_csv() method.\n"
+                   << "Line " << line_number << ": Size of tokens in input file ("
+                   << tokens_count << ") is not equal to number of columns("
+                   << columns_number << "). \n"
+                   << "Input csv must contain values for all the variables except the target. \n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
+    file.close();
+
+    if(total_lines == 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_input_csv() method.\n"
+               << "Input data file is empty. \n";
+
+        throw logic_error(buffer.str());
+    }
+}
+
+
+/// This method loads data from a file and returns a matrix containing the input columns.
 
 Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                                         const char& separator_char,
@@ -8596,6 +8666,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     line_number = 0;
     Index variable_index = 0;
     Index token_index = 0;
+    bool is_ID = has_rows_label;
 
     const bool is_float = is_same<type, float>::value;
 
@@ -8613,9 +8684,16 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         variable_index = 0;
         token_index = 0;
+        is_ID = has_rows_label;
 
         for(Index i = 0; i < columns.size(); i++)
         {
+            if(is_ID)
+            {
+                is_ID = false;
+                continue;
+            }
+
             if(columns(i).column_use == UnusedVariable)
             {
                 token_index++;
