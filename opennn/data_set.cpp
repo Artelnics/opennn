@@ -363,7 +363,6 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
     if(type_element->GetText())
     {
         const string new_type = type_element->GetText();
-
         set_type(new_type);
     }
 
@@ -7791,7 +7790,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             if(type_element->GetText())
             {
                 const string new_type = type_element->GetText();
-
                 columns(i).set_type(new_type);
             }
 
@@ -10135,7 +10133,9 @@ void DataSet::read_csv_3_complete()
     for(Index column_index = 0; column_index < columns.size(); column_index++)
     {
         const regex regular_expression("[Tt]ime");
-        if(regex_match(columns(column_index).name,regular_expression)){
+        smatch match;
+
+        if(regex_search(columns(column_index).name, match, regular_expression)){
              columns(column_index).type = DateTime;
          }
     }
