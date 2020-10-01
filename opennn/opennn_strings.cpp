@@ -326,6 +326,17 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
                                    + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  +"|" + format_13);
 
+    const regex regular("(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
+                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
+                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
+                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
+                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
+                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])"
+                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
+                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
+                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
+                        "|([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])"
+                        "|(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])");
 
     regex_search(date, matchs, regular_expression);
 
@@ -344,12 +355,14 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         }
         else
         {
+
             time_structure.tm_year = stoi(matchs[1].str())-1900;
             time_structure.tm_mon = stoi(matchs[2].str())-1;
             time_structure.tm_mday = stoi(matchs[3].str());
             time_structure.tm_hour = stoi(matchs[4].str()) - static_cast<int>(gmt);
             time_structure.tm_min = stoi(matchs[5].str());
             time_structure.tm_sec = stoi(matchs[6].str());
+
         }
     }
     else if (matchs[7] != "") // yyyy/mm/dd hh:mm
@@ -394,6 +407,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_hour = 0;
             time_structure.tm_min = 0;
             time_structure.tm_sec = 0;
+
         }
     }
     else if (matchs[15] != "") // dd/mm/yyyy hh:mm:ss
@@ -620,16 +634,17 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     }
     else if(matchs[48] != "") // hh:mm:ss
     {
-        time_structure.tm_year = 1970;
+        time_structure.tm_year = 100;
         time_structure.tm_mon = 1;
         time_structure.tm_mday = 1;
         time_structure.tm_hour = stoi(matchs[48].str());
         time_structure.tm_min = stoi(matchs[49].str());
         time_structure.tm_sec = stoi(matchs[50].str());
+
     }
     else if(matchs[51] != "") // mm/dd/aaaa hh:mm:ss [AP]M
     {
-        time_structure.tm_year = stoi(matchs[53].str());
+        time_structure.tm_year = stoi(matchs[53].str())-1900;
         time_structure.tm_mon = stoi(matchs[51].str());
         time_structure.tm_mday = stoi(matchs[52].str());
         time_structure.tm_min = stoi(matchs[55].str());
@@ -640,6 +655,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         else{
             time_structure.tm_hour = stoi(matchs[54].str());
         }
+
     }
     else if(is_numeric_string(date)){
     }
@@ -655,7 +671,8 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     }
 
     if(is_numeric_string(date)){
-        return(stoi(date));
+        time_t time_t_date = stoi(date);
+        return(time_t_date);
     }
     else{
     return mktime(&time_structure);
