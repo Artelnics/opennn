@@ -634,7 +634,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     }
     else if(matchs[48] != "") // hh:mm:ss
     {
-        time_structure.tm_year = 100;
+        time_structure.tm_year = 70;
         time_structure.tm_mon = 1;
         time_structure.tm_mday = 1;
         time_structure.tm_hour = stoi(matchs[48].str());
