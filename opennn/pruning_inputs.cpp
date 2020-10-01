@@ -199,8 +199,6 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     const Tensor<Index, 1> original_input_columns_indices = data_set_pointer->get_input_columns_indices();
 
-//    const Index inputs_number = data_set_pointer->get_input_columns_number();
-
     const Tensor<Index, 1> inputs_variables_indices = data_set_pointer->get_input_variables_indices();
 
     const Index used_columns_number = data_set_pointer->get_used_columns_number();
@@ -234,8 +232,6 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
             }
         }
     }
-
-//    data_set_pointer->set_input_columns_unused();
 
     // Neural network
 
@@ -299,14 +295,13 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
             const Index input_variables_number = data_set_pointer->get_input_variables_number();
 
-            data_set_pointer->set_input_variables_dimensions({input_variables_number});
+            data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> ().constant(input_variables_number));
 
             neural_network_pointer->set_inputs_number(input_variables_number);
             trainable_layers[trainable_layers_number - 2]->set_synaptic_weights_glorot();
             trainable_layers[trainable_layers_number - 1]->set_parameters_random();
 
             // Trial
-
             training_results = training_strategy_pointer->perform_training();
 
             current_training_error = training_results.final_training_error;
