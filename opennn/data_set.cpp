@@ -9908,7 +9908,10 @@ void DataSet::read_csv_3_simple()
     for(Index column_index = 0; column_index < columns.size(); column_index++)
     {
         const regex regular_expression("[Tt]ime");
-        if(regex_match(columns(column_index).name,regular_expression)){
+
+        smatch match;
+
+        if(regex_search(columns(column_index).name, match, regular_expression)){
              columns(column_index).type = DateTime;
          }
     }
@@ -10133,6 +10136,7 @@ void DataSet::read_csv_3_complete()
     for(Index column_index = 0; column_index < columns.size(); column_index++)
     {
         const regex regular_expression("[Tt]ime");
+
         smatch match;
 
         if(regex_search(columns(column_index).name, match, regular_expression)){
@@ -10265,7 +10269,7 @@ void DataSet::read_csv_3_complete()
 
     for(Index column = 0; column < get_columns_number(); column++)
     {
-        if(is_constant_numeric(data.chip(column, 1)))
+        if(is_constant_numeric(data.chip(column, 1)) & columns(column).type!=DateTime)
         {
             columns(column).type = Constant;
             columns(column).column_use = UnusedVariable;
