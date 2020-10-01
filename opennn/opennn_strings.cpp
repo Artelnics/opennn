@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn_strings.h"
-
+#include <QDebug>
 namespace OpenNN
 {
 
@@ -298,6 +298,8 @@ bool is_date_time_string(const string& str)
 time_t date_to_timestamp(const string& date, const Index& gmt)
 {
     struct tm time_structure;
+
+
 
     smatch month;
 
@@ -625,11 +627,16 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = 0;
         }
     }
-    else if(matchs[48] != "") // yyyy/ mm
+    else if(matchs[48] != "") // hh:mm:ss
     {
+        time_structure.tm_year = 1970;
+        time_structure.tm_mon = 1;
+        time_structure.tm_mday = 1;
         time_structure.tm_hour = stoi(matchs[48].str());
         time_structure.tm_min = stoi(matchs[49].str());
         time_structure.tm_sec = stoi(matchs[50].str());
+    }
+    else if(is_numeric_string(date)){
     }
     else
     {
@@ -642,7 +649,12 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         throw logic_error(buffer.str());
     }
 
+    if(is_numeric_string(date)){
+        return(stoi(date));
+    }
+    else{
     return mktime(&time_structure);
+    }
 }
 
 
