@@ -5440,6 +5440,18 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
                 correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input_column);
             }
+            else if(input_type == Binary && target_type == Categorical)
+            {
+                correlations(i,j).correlation = 0;
+            }
+            else if(input_type == Categorical && target_type == Binary)
+            {
+                correlations(i,j).correlation = 0;
+            }
+            else if(input_type == DateTime || target_type == DateTime)
+            {
+                correlations(i,j).correlation = 0;
+            }
             else
             {
                 ostringstream buffer;
@@ -5689,6 +5701,10 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 // Nothing
             }
             else if(input_type == Binary && target_type == Categorical)
+            {
+                // nothing
+            }
+            else if(input_type == Categorical && target_type == Binary)
             {
                 // nothing
             }
