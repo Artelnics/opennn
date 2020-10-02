@@ -5049,7 +5049,6 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples
             positive_sample_index++;
         }
     }
-
     return descriptives(data, positive_used_samples_indices, input_variables_indices);
 }
 
