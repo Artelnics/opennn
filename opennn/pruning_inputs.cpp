@@ -440,7 +440,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         data_set_pointer->set_column_use(optimal_input_index, DataSet::Input);
     }
 
-    data_set_pointer->set_input_variables_dimensions({optimal_inputs_number});
+    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> ().constant(optimal_inputs_number));
 
     // Set Neural network stuff
 
