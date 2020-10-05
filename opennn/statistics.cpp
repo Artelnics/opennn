@@ -833,10 +833,9 @@ type variance(const Tensor<type, 1>& vector)
         return 0.0;
     }
 
-    const double numerator = squared_sum/static_cast<double>(count) -(sum/static_cast<double>(count))*(sum*static_cast<double>(count));
-    const double denominator = static_cast<double>(count - 1);
+    const type variance = squared_sum/static_cast<type>(count - 1) -(sum/static_cast<type>(count))*(sum/static_cast<type>(count))*static_cast<type>(count)/static_cast<type>(count-1);
 
-    return numerator/denominator;
+    return variance;
 }
 
 
@@ -888,10 +887,9 @@ type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
         return 0.0;
     }
 
-    const type numerator = squared_sum -(sum * sum) /static_cast<type>(count);
-    const type denominator = static_cast<type>(count - 1);
+    const type variance = squared_sum/static_cast<type>(count - 1) -(sum/static_cast<type>(count))*(sum/static_cast<type>(count))*static_cast<type>(count)/static_cast<type>(count-1);
 
-    return numerator/denominator;
+    return variance;
 }
 
 
@@ -916,8 +914,11 @@ type standard_deviation(const Tensor<type, 1>& vector)
     }
 
 #endif
-
-    return sqrt(variance(vector));
+    if(variance(vector)<static_cast<double>(1e-9)){
+        return static_cast<double>(0);
+    }else{
+        return sqrt(variance(vector));
+    }
 }
 
 
@@ -942,8 +943,11 @@ type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& i
     }
 
 #endif
-
-    return sqrt(variance(vector, indices));
+    if(variance(vector, indices)<static_cast<double>(1e-9)){
+        return static_cast<double>(0);
+    }else{
+        return sqrt(variance(vector, indices));
+    }
 }
 
 
@@ -1892,11 +1896,19 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     {
         for(Index i = 0; i < columns_indices_size; i++)
         {
+
+            const type variance = squared_sums(i)/(count(i)-1) -(sums(i)/count(i))*(sums(i)/count(i))*count(i)/(count(i)-1);
+
             const double numerator = squared_sums(i)/count(i)-(sums(i)/count(i))*(sums(i)/count(i));
             const double denominator = static_cast<double>(count(i) - 1);
 
-            standard_deviation(i) = numerator / denominator;
-            standard_deviation(i) = sqrt(standard_deviation(i));
+            standard_deviation(i) = numerator;
+
+            if(standard_deviation(i)<static_cast<double>(1e-9)){
+                standard_deviation(i) = static_cast<double>(0);
+            }else{
+                standard_deviation(i) = sqrt(standard_deviation(i));
+            }
         }
     }
 
@@ -1906,13 +1918,6 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
         descriptives(i).maximum = maximums(i);
         descriptives(i).mean = mean(i);
         descriptives(i).standard_deviation = standard_deviation(i);
-
-        cout << minimums(i) << endl;
-        cout << maximums(i) << endl;
-        cout << mean(i) << endl;
-        cout << standard_deviation(i) << endl;
-        cout << "__________" << endl;
-
     }
 
     return descriptives;
