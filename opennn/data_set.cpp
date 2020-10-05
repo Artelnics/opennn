@@ -8623,6 +8623,8 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         if(tokens_count != columns_number)
         {
+            cout << "LINE: " << line << endl;
+
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
@@ -10356,7 +10358,7 @@ void DataSet::read_csv_3_complete()
 
     set_binary_simple_columns();
 
-    // Check Constant
+    // Check Constant and DateTime to unused
 
     cout << "Checking constant columns..." << endl;
 
@@ -10376,12 +10378,11 @@ void DataSet::read_csv_3_complete()
         }
         else if(columns(column).type == DateTime)
         {
-            variable_index++;
+            columns(column).column_use = UnusedVariable;
         }
         else if(columns(column).type == Constant)
         {
             variable_index++;
-
         }
         else if(columns(column).type == Binary)
         {
