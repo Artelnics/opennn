@@ -833,8 +833,8 @@ type variance(const Tensor<type, 1>& vector)
         return 0.0;
     }
 
-    const type numerator = squared_sum -(sum * sum) /static_cast<type>(count);
-    const type denominator = static_cast<type>(count - 1);
+    const double numerator = squared_sum/static_cast<double>(count) -(sum/static_cast<double>(count))*(sum*static_cast<double>(count));
+    const double denominator = static_cast<double>(count - 1);
 
     return numerator/denominator;
 }
