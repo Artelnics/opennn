@@ -1848,8 +1848,8 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     Tensor<type, 1> maximums(columns_indices_size);
     maximums.setConstant(numeric_limits<type>::min());
 
-    Tensor<type, 1> sums(columns_indices_size);
-    Tensor<type, 1> squared_sums(columns_indices_size);
+    Tensor<double, 1> sums(columns_indices_size);
+    Tensor<double, 1> squared_sums(columns_indices_size);
     Tensor<Index, 1> count(columns_indices_size);
 
     sums.setZero();
@@ -1884,7 +1884,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
         }
     }
 
-    const Tensor<type, 1> mean = sums/count;
+    const Tensor<double, 1> mean = sums/count;
 
     Tensor<type, 1> standard_deviation(columns_indices_size);
 
@@ -1892,11 +1892,10 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     {
         for(Index i = 0; i < columns_indices_size; i++)
         {
-            const type numerator = squared_sums(i) -(sums(i) * sums(i)) / count(i);
-            const type denominator = static_cast<type>(count(i) - 1);
+            const double numerator = squared_sums(i)/count(i)-(sums(i)/count(i))*(sums(i)/count(i));
+            const double denominator = static_cast<double>(count(i) - 1);
 
             standard_deviation(i) = numerator / denominator;
-
             standard_deviation(i) = sqrt(standard_deviation(i));
         }
     }
@@ -1907,6 +1906,13 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
         descriptives(i).maximum = maximums(i);
         descriptives(i).mean = mean(i);
         descriptives(i).standard_deviation = standard_deviation(i);
+
+        cout << minimums(i) << endl;
+        cout << maximums(i) << endl;
+        cout << mean(i) << endl;
+        cout << standard_deviation(i) << endl;
+        cout << "__________" << endl;
+
     }
 
     return descriptives;
