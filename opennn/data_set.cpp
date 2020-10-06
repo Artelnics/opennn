@@ -10855,7 +10855,7 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
         }
 */
     }
-    data_set_pointer->fill_submatrix(data, samples, targets, targets_2d);
+    data_set_pointer->fill_submatrix(data, samples, targets, targets_2d.data());
 }
 
 DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_pointer)
