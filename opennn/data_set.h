@@ -185,9 +185,9 @@ public:
 
        void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
 
-       void fill_submatrix(const Tensor<type, 2>& matrix,
-                 const Tensor<Index, 1>& rows_indices,
-                 const Tensor<Index, 1>& columns_indices, Tensor<type, 2>& submatrix);
+//       void fill_submatrix(const Tensor<type, 2>& matrix,
+//                 const Tensor<Index, 1>& rows_indices,
+//                 const Tensor<Index, 1>& columns_indices, Tensor<type, 2>& submatrix);
 
 
        Index samples_number = 0;
@@ -762,6 +762,10 @@ public:
    void intialize_sequential_eigen_type_tensor(Tensor<type, 1>&, const type&, const type&, const type&) const;
 
    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
+
+   void fill_submatrix(const Tensor<type, 2>& matrix,
+             const Tensor<Index, 1>& rows_indices,
+             const Tensor<Index, 1>& columns_indices, Tensor<type, 2>& submatrix);
 
    bool get_has_rows_labels() const;
 
