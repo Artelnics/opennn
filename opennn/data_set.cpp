@@ -10746,57 +10746,59 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
     return batches;
 }
 
+void DataSet::Batch::fill_submatrix(const Tensor<type, 2>& matrix,
+          const Tensor<Index, 1>& rows_indices,
+          const Tensor<Index, 1>& columns_indices, Tensor<type, 2>& submatrix)
+{
+    const Index rows_number = rows_indices.size();
+    const Index columns_number = columns_indices.size();
+
+    const type* matrix_pointer = matrix.data();
+    type* submatrix_pointer = submatrix.data();
+
+#pragma omp parallel for
+
+    for(Index j = 0; j < columns_number; j++)
+    {
+        const type* matrix_column_pointer = matrix_pointer + rows_number*columns_indices[j];
+        type* submatrix_column_pointer = submatrix_pointer + rows_number*j;
+
+        const type* value_pointer = nullptr;
+        const Index* rows_indices_pointer = rows_indices.data();
+        for(Index i = 0; i < rows_number; i++)
+        {
+            value_pointer = matrix_column_pointer + *rows_indices_pointer;
+            rows_indices_pointer++;
+            *submatrix_column_pointer = *value_pointer;
+            submatrix_column_pointer++;
+        }
+    }
+}
+
 
 void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
                           const Tensor<Index, 1>& inputs,
                           const Tensor<Index, 1>& targets)
 {
-//    samples_number = samples.size();
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
-    const Index rows_number = samples.size();
-    const Index inputs_number = inputs.size();
-    const Index total_rows = data.dimension(0);
-
-    Index variable = 0;
-
-    Index rows_number_j = 0;
-    Index total_rows_variable = 0;
-
-    const type* data_pointer = data.data();
-
     if(input_variables_dimensions.size() == 1)
     {
-        type* inputs_2d_pointer = inputs_2d.data();
-
-        for(int j = 0; j < inputs_number; j++)
-        {
-            variable = inputs[j];
-            rows_number_j = rows_number*j;
-            total_rows_variable = total_rows*variable;
-
-            for(int i = 0; i < rows_number; i++)
-            {
-                inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+samples[i]];
-            }
-        }
+        fill_submatrix(data, samples, inputs, inputs_2d);
     }
     else if(input_variables_dimensions.size() == 3)
     {
+/*
         const Index channels_number = input_variables_dimensions(0);
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
-
         inputs_4d.resize(samples_number, channels_number, rows_number, columns_number);
-
         Index index = 0;
-
         for(Index image = 0; image < samples_number; image++)
         {
             index = 0;
-
             for(Index channel = 0; channel < channels_number; channel++)
             {
                 for(Index row = 0; row < rows_number; row++)
@@ -10809,24 +10811,10 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
                 }
             }
         }
+*/
     }
-
-    type* targets_2d_pointer = targets_2d.data();
-    const Index targets_number = targets.size();
-
-    for(int j = 0; j < targets_number; j++)
-    {
-        variable = targets[j];
-        rows_number_j = rows_number*j;
-        total_rows_variable = total_rows*variable;
-
-        for(int i = 0; i < rows_number; i++)
-        {
-            targets_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+samples[i]];
-        }
-    }
+    fill_submatrix(data, samples, targets, targets_2d);
 }
-
 
 DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_pointer)
 {
