@@ -1890,21 +1890,18 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
 
     const Tensor<double, 1> mean = sums/count;
 
-    Tensor<type, 1> standard_deviation(columns_indices_size);
+    Tensor<double, 1> standard_deviation(columns_indices_size);
 
     if(row_indices_size > 1)
     {
         for(Index i = 0; i < columns_indices_size; i++)
         {
 
-            const type variance = squared_sums(i)/(count(i)-1) -(sums(i)/count(i))*(sums(i)/count(i))*count(i)/(count(i)-1);
+            const double variance = squared_sums(i)/static_cast<double>(count(i)-1) -(sums(i)/static_cast<double>(count(i)))*(sums(i)/static_cast<double>(count(i)))*static_cast<double>(count(i))/static_cast<double>((count(i)-1));
 
-            const double numerator = squared_sums(i)/count(i)-(sums(i)/count(i))*(sums(i)/count(i));
-            const double denominator = static_cast<double>(count(i) - 1);
+            standard_deviation(i) = variance;
 
-            standard_deviation(i) = numerator;
-
-            if(standard_deviation(i)<static_cast<double>(1e-9)){
+            if(standard_deviation(i)<static_cast<double>(5e-3)){
                 standard_deviation(i) = static_cast<double>(0);
             }else{
                 standard_deviation(i) = sqrt(standard_deviation(i));
