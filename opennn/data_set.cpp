@@ -10819,6 +10819,37 @@ void DataSet::fill_submatrix(const Tensor<type, 2>& matrix,
 }
 
 
+void DataSet::fill_submatrix_cuda(const Tensor<type, 2>& matrix,
+          const Tensor<Index, 1>& rows_indices,
+          const Tensor<Index, 1>& columns_indices, float* submatrix_pointer)
+{
+    const Index rows_number = rows_indices.size();
+    const Index columns_number = columns_indices.size();
+
+    const type* matrix_pointer = matrix.data();
+//    type* submatrix_pointer = submatrix;
+
+#pragma omp parallel for
+
+    for(Index j = 0; j < columns_number; j++)
+    {
+        const type* matrix_column_pointer = matrix_pointer + rows_number*columns_indices[j];
+        type* submatrix_column_pointer = submatrix_pointer + rows_number*j;
+
+        const type* value_pointer = nullptr;
+        const Index* rows_indices_pointer = rows_indices.data();
+        for(Index i = 0; i < rows_number; i++)
+        {
+            value_pointer = matrix_column_pointer + *rows_indices_pointer;
+            rows_indices_pointer++;
+            *submatrix_column_pointer = *value_pointer;
+            submatrix_column_pointer++;
+        }
+    }
+}
+
+
+
 void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
                           const Tensor<Index, 1>& inputs,
                           const Tensor<Index, 1>& targets)
