@@ -3033,6 +3033,13 @@ void DataSet::set_binary_simple_columns()
                     different_values++;
                 }
 
+                if(row_index == (data.dimension(0)-1)){
+                    if(different_values==1){
+                        is_binary = false;
+                        break;
+                    }
+                }
+
                 if(different_values > 2)
                 {
                     is_binary = false;
@@ -10015,12 +10022,6 @@ void DataSet::read_csv_3_simple()
 
     cout << "Data read succesfully..." << endl;
 
-    // Check Binary
-
-    cout << "Checking binary columns..." << endl;
-
-    set_binary_simple_columns();
-
     // Check Constant
 
     cout << "Checking constant columns..." << endl;
@@ -10034,6 +10035,11 @@ void DataSet::read_csv_3_simple()
         }
     }
 
+    // Check Binary
+
+    cout << "Checking binary columns..." << endl;
+
+    set_binary_simple_columns();
 }
 
 
@@ -10354,6 +10360,7 @@ void DataSet::read_csv_3_complete()
 
     file.close();
 
+    // Check binary
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
@@ -10370,8 +10377,8 @@ void DataSet::read_csv_3_complete()
         {
             if(is_constant_numeric(data.chip(variable_index, 1)))
             {
-                columns(column).type = Constant;
-                columns(column).column_use = UnusedVariable;
+`                columns(variable_index).type = Constant;
+                columns(variable_index).column_use = UnusedVariable;
             }
 
             variable_index++;
@@ -10379,6 +10386,7 @@ void DataSet::read_csv_3_complete()
         else if(columns(column).type == DateTime)
         {
             columns(column).column_use = UnusedVariable;
+            variable_index++;
         }
         else if(columns(column).type == Constant)
         {

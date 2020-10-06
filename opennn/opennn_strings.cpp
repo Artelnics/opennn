@@ -252,7 +252,7 @@ bool is_constant_numeric(const Tensor<type, 1>& str){
 
     for (int i = 1; i < str.size(); i++)
     {
-        if (str[i] != a0)
+        if (abs(str[i]-a0)>1e-3)
             return false;
     }
     return true;
