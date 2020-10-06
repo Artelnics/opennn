@@ -767,6 +767,10 @@ public:
              const Tensor<Index, 1>& rows_indices,
              const Tensor<Index, 1>& columns_indices, Tensor<type, 2>& submatrix);
 
+   void fill_submatrix_cuda(const Tensor<type, 2>& matrix,
+             const Tensor<Index, 1>& rows_indices,
+             const Tensor<Index, 1>& columns_indices, float* submatrix);
+
    bool get_has_rows_labels() const;
 
    void shuffle();
