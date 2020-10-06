@@ -10789,7 +10789,7 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
     return batches;
 }
 
-void DataSet::Batch::fill_submatrix(const Tensor<type, 2>& matrix,
+void DataSet::fill_submatrix(const Tensor<type, 2>& matrix,
           const Tensor<Index, 1>& rows_indices,
           const Tensor<Index, 1>& columns_indices, Tensor<type, 2>& submatrix)
 {
@@ -10829,7 +10829,7 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
 
     if(input_variables_dimensions.size() == 1)
     {
-        fill_submatrix(data, samples, inputs, inputs_2d);
+        data_set_pointer->fill_submatrix(data, samples, inputs, inputs_2d);
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -10856,7 +10856,7 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
         }
 */
     }
-    fill_submatrix(data, samples, targets, targets_2d);
+    data_set_pointer->fill_submatrix(data, samples, targets, targets_2d);
 }
 
 DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_pointer)
