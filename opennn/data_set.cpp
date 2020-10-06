@@ -10377,8 +10377,8 @@ void DataSet::read_csv_3_complete()
         {
             if(is_constant_numeric(data.chip(variable_index, 1)))
             {
-`                columns(variable_index).type = Constant;
-                columns(variable_index).column_use = UnusedVariable;
+                columns(column).type = Constant;
+                columns(column).column_use = UnusedVariable;
             }
 
             variable_index++;
