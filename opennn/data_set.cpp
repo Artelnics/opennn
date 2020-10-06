@@ -10024,17 +10024,60 @@ void DataSet::read_csv_3_simple()
 
     // Check Constant
 
+
     cout << "Checking constant columns..." << endl;
 
-    for(Index column = 0; column < columns_number; column++)
-    {
-        if(is_constant_numeric(data.chip(column, 1)))
-        {
-            columns(column).type = Constant;
-            columns(column).column_use = UnusedVariable;
-        }
-    }
+    Index variable_index = 0;
 
+    for(Index column = 0; column < get_columns_number(); column++)
+    {
+        if(columns(column).type == Numeric)
+        {
+            if(is_constant_numeric(data.chip(variable_index, 1)))
+            {
+                cout << column<< endl;
+                columns(column).type = Constant;
+                columns(column).column_use = UnusedVariable;
+            }
+
+            variable_index++;
+        }
+        else if(columns(column).type == DateTime)
+        {
+            columns(column).column_use = UnusedVariable;
+            variable_index++;
+        }
+        else if(columns(column).type == Constant)
+        {
+            variable_index++;
+        }
+        else if(columns(column).type == Binary)
+        {
+            if(columns(column).get_categories_number() == 1)
+            {
+                columns(column).type = Constant;
+                columns(column).column_use = UnusedVariable;
+            }
+
+            variable_index++;
+        }
+        else if(columns(column).type == Categorical)
+        {
+            if(columns(column).get_categories_number() == 1)
+            {
+                columns(column).type = Constant;
+                columns(column).column_use = UnusedVariable;
+            }
+
+            variable_index += columns(column).get_categories_number();
+        }
+
+//        if(is_constant_numeric(data.chip(column, 1)) && columns(column).type!=DateTime)
+//        {
+//            columns(column).type = Constant;
+//            columns(column).column_use = UnusedVariable;
+//        }
+    }
     // Check Binary
 
     cout << "Checking binary columns..." << endl;
