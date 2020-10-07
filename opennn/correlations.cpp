@@ -910,7 +910,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
     // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
-    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    coefficients.setRandom();
     coefficients = static_cast<type>(1e-2)*coefficients;
 
     const Index epochs_number = 10000;
@@ -1237,7 +1237,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
-    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    coefficients.setRandom();
     coefficients = static_cast<type>(1.0e-2)*coefficients;
 
     const Index epochs_number = 10000;
@@ -1352,10 +1352,10 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
     // Calculate coefficients
 
     Tensor<type, 2> weights(new_columns, 1);
-    weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    weights.setRandom();
 
     Tensor<type, 1> bias(1);
-    bias.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    bias.setRandom();
 
     const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
@@ -1599,7 +1599,7 @@ CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device
 
     Tensor<type, 1> coefficients(2);
     Tensor<type, 1> last_coefficients(2);
-    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    coefficients.setRandom();
     last_coefficients.setConstant(0.0);
 
     const Index epochs_number = 10000;

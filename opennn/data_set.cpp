@@ -3018,7 +3018,7 @@ void DataSet::set_binary_simple_columns()
         if(columns(column_index).type == Numeric)
         {
             Tensor<type, 1> values(3);
-            values.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+            values.setRandom();
             different_values = 0;
             is_binary = true;
 
@@ -6877,7 +6877,7 @@ void DataSet::scale_target_minimum_maximum(const Descriptives& target_statistics
 //        data(i, target_index) = data(i, target_index)*slope + intercept;
 //    }
 
-    const type slope = (max_range-min_range)/(target_statistics.maximum-target_statistics.minimum);
+    const type slope = static_cast<type>((max_range-min_range))/static_cast<type>((target_statistics.maximum-target_statistics.minimum));
 
     const type intercept = -(target_statistics.minimum*(max_range-min_range))/(target_statistics.maximum - target_statistics.minimum) + min_range;
 
@@ -7179,7 +7179,7 @@ void DataSet::initialize_data(const type& new_value)
 
 void DataSet::set_data_random()
 {
-    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    data.setRandom();
 }
 
 /// Sets max and min scaling range for minmaxscaling.
@@ -9134,7 +9134,7 @@ void DataSet::generate_random_data(const Index& samples_number, const Index& var
 {
     set(samples_number, variables_number);
 
-    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    data.setRandom();
 
 //        data.setRandom(0.0, 1.0);
 
@@ -9172,7 +9172,9 @@ void DataSet::generate_paraboloid_data(const Index& samples_number, const Index&
 
     set(samples_number, variables_number);
 
-    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+//    data.setRandom();
+
+    data.setRandom();
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -9197,9 +9199,7 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 
     set(samples_number, variables_number);
 
-//    data.setRandom(-2.048, 2.048);
-
-    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    data.setRandom();
 
     #pragma omp parallel for
 
@@ -9248,7 +9248,7 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
 {
     set(samples_number,variables_number);
 
-    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    data.setRandom();
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -9307,7 +9307,7 @@ void DataSet::generate_data_multiple_classification(const Index& samples_number,
 {
     Tensor<type, 2> new_data(samples_number, inputs_number);
 
-    new_data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    new_data.setRandom();
 
     Tensor<type, 2> targets(samples_number, outputs_number);
 
