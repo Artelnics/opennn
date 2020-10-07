@@ -686,8 +686,6 @@ void QuasiNewtonMethod::update_epoch(
     || is_zero(optimization_data.parameters_difference)
     || is_zero(optimization_data.gradient_difference))
     {
-        cout << optimization_data.epoch << endl;
-
         if(is_zero(optimization_data.parameters_difference)) cout << "parameters_difference" << endl;
         if(is_zero(optimization_data.gradient_difference)) cout << "gradient_difference" << endl;
 

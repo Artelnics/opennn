@@ -36,6 +36,6 @@
 
 namespace OpenNN
 {
-    typedef float type;
+    typedef double type;
 }
 
