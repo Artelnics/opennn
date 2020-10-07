@@ -190,7 +190,6 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     type optimum_training_error = numeric_limits<type>::max();
     type optimum_selection_error = numeric_limits<type>::max();
-
     type previus_selection_error = numeric_limits<type>::max();
 
     // Data set
@@ -199,21 +198,19 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     const Tensor<Index, 1> original_input_columns_indices = data_set_pointer->get_input_columns_indices();
 
-    const Tensor<Index, 1> inputs_variables_indices = data_set_pointer->get_input_variables_indices();
+//    const Tensor<Index, 1> inputs_variables_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> inputs_variables_indices = data_set_pointer->get_input_columns_indices();
 
     const Index used_columns_number = data_set_pointer->get_used_columns_number();
 
     const Tensor<string, 1> used_columns_names = data_set_pointer->get_used_columns_names();
+//    const Tensor<string, 1> used_columns_names = data_set_pointer->get_input_variables_names();
 
     const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
 
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
     const Tensor<type, 1> total_correlations = correlations.sum(rows_sum).abs();
-
-//    const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
-
-//    const Tensor<Index, 1> correlations_ascending_indices = total_correlations.sort_ascending_indices();
 
     Tensor<type, 1> correlations_ascending(total_correlations);
 
@@ -262,7 +259,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     // Model selection
 
-    if(used_columns_number < maximum_epochs_number) maximum_epochs_number = used_columns_number;
+//    if(used_columns_number < maximum_epochs_number) maximum_epochs_number = used_columns_number;
 
     for(Index iteration = 0; iteration < maximum_epochs_number; iteration++)
     {
@@ -317,7 +314,10 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
             cout << "Stopping condition: " << training_results.write_stopping_condition() << endl << endl;
         }
 
-        if(current_selection_error < optimum_selection_error)
+//        if(current_selection_error < optimum_selection_error)
+        if(iteration == 0
+                ||(optimum_selection_error > current_selection_error
+                   && abs(optimum_selection_error - current_selection_error) > tolerance))
         {
             optimal_columns_indices = current_columns_indices;
             optimal_parameters = current_parameters;
@@ -435,12 +435,14 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     for(Index i = 0; i < optimal_inputs_number; i++)
     {
-        Index optimal_input_index = optimal_columns_indices[i];
+        const Index optimal_input_index = optimal_columns_indices[i];
 
         data_set_pointer->set_column_use(optimal_input_index, DataSet::Input);
     }
 
-    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> ().constant(optimal_inputs_number));
+    const Index optimal_input_variables_number = data_set_pointer->get_input_variables_names().size();
+
+    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> ().constant(optimal_input_variables_number));
 
     // Set Neural network stuff
 
@@ -450,9 +452,11 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-    Tensor<Descriptives, 1> new_input_descriptives(optimal_inputs_number);
+//    Tensor<Descriptives, 1> new_input_descriptives(optimal_inputs_number);
+    Tensor<Descriptives, 1> new_input_descriptives(optimal_input_variables_number);
 
     Index descriptive_index = 0;
+    Index unused = 0;
 
     for(Index i = 0; i < original_input_columns_indices.size(); i++)
     {
@@ -462,17 +466,21 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         {
             if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical)
             {
-                new_input_descriptives(descriptive_index) = original_input_variables_descriptives(i);
+                new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
                 descriptive_index++;
             }
             else
             {
                 for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++)
                 {
-                    new_input_descriptives(descriptive_index) = original_input_variables_descriptives(i);
+                    new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
                     descriptive_index++;
                 }
             }
+        }
+        else if(data_set_pointer->get_column_use(current_column_index) == DataSet::UnusedVariable)
+        {
+            unused++;
         }
     }
 
@@ -481,7 +489,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
     if(display)
     {
         cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << endl;
-        cout << "Optimal number of inputs: " << optimal_columns_indices.size() << endl;
+        cout << "Optimal number of inputs: " << optimal_input_variables_number << endl;
         cout << "Optimum training error: " << optimum_training_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
