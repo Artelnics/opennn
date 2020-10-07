@@ -8188,9 +8188,8 @@ void DataSet::print_data_preview() const
 
         cout << "First sample:  \n";
 
-        for(int i; i< first_sample.dimension(0); i++)
+        for(int i = 0; i< first_sample.dimension(0); i++)
         {
-
             cout  << first_sample(i) << "  ";
         }
 
@@ -8203,7 +8202,7 @@ void DataSet::print_data_preview() const
 
         cout << "Second sample:  \n";
 
-        for(int i; i< second_sample.dimension(0); i++)
+        for(int i = 0; i< second_sample.dimension(0); i++)
         {
 
             cout  << second_sample(i) << "  ";
@@ -8219,7 +8218,7 @@ void DataSet::print_data_preview() const
 
         cout << "Last sample:  \n";
 
-        for(int i; i< last_sample.dimension(0); i++)
+        for(int i = 0; i< last_sample.dimension(0); i++)
         {
 
             cout  << last_sample(i) << "  ";
