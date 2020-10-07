@@ -10820,7 +10820,7 @@ void DataSet::fill_submatrix(const Tensor<type, 2>& matrix,
 
     for(Index j = 0; j < columns_number; j++)
     {
-        const type* matrix_column_pointer = matrix_pointer + rows_number*columns_indices[j];
+        const type* matrix_column_pointer = matrix_pointer + matrix.dimension(0)*columns_indices[j];
         type* submatrix_column_pointer = submatrix_pointer + rows_number*j;
 
         const type* value_pointer = nullptr;
