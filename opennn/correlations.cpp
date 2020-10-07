@@ -905,11 +905,13 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     const Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
 
+    const Index samples_number = scaled_x.dimension(0);
+
     // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
     coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
-//    coefficients.setRandom();
+    coefficients = static_cast<type>(1e-2)*coefficients;
 
     const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
@@ -919,6 +921,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     Tensor<type, 0> mean_squared_error;
     Tensor<type, 0> gradient_norm;
+    Tensor<type, 0> parameters_increment_norm;
 
     Tensor<type, 1> gradient(2);
 
@@ -934,7 +937,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
         error.device(*thread_pool_device) = activation - new_y;
 
-        mean_squared_error.device(*thread_pool_device) = error.square().sum();
+        mean_squared_error.device(*thread_pool_device) = error.square().sum()/static_cast<type>(samples_number);
 
         if(mean_squared_error() < error_goal) break;
 
@@ -943,15 +946,15 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
         Tensor<type, 0> sum_b;
         sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(scaled_x)).sum();
 
-        gradient(0) = sum_a();
-        gradient(1) = sum_b();
+        gradient(0) = sum_a()/static_cast<type>(samples_number);
+        gradient(1) = sum_b()/static_cast<type>(samples_number);
 
-        gradient_norm = gradient.square().sum().sqrt();
+        gradient_norm.device(*thread_pool_device) = gradient.square().sum().sqrt();
+        parameters_increment_norm.device(*thread_pool_device) = (gradient*step_size).square().sum().sqrt();
 
         if(gradient_norm() < gradient_norm_goal) break;
 
         coefficients += gradient*step_size;
-
     }
 
     // Regression results
@@ -1235,8 +1238,9 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     Tensor<type, 1> coefficients(2);
     coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    coefficients = static_cast<type>(1.0e-2)*coefficients;
 
-    const Index epochs_number = 100000;
+    const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
 
     const type error_goal = static_cast<type>(1.0e-3);
