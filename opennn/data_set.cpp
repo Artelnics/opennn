@@ -5698,22 +5698,37 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
             else if(input_type == Categorical && target_type == Categorical)
             {
                 // Nothing
+
+                regressions(i,j).a = 0;
+                regressions(i,j).b = 0;
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
                 // Nothing
+
+                regressions(i,j).a = 0;
+                regressions(i,j).b = 0;
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
                 // Nothing
+
+                regressions(i,j).a = 0;
+                regressions(i,j).b = 0;
             }
             else if(input_type == Binary && target_type == Categorical)
             {
                 // nothing
+
+                regressions(i,j).a = 0;
+                regressions(i,j).b = 0;
             }
             else if(input_type == Categorical && target_type == Binary)
             {
                 // nothing
+
+                regressions(i,j).a = 0;
+                regressions(i,j).b = 0;
             }
             else
             {
@@ -5725,6 +5740,9 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 throw logic_error(buffer.str());
             }
+
+            cout << "regressions(i,j).a: " << regressions(i,j).a << endl;
+            cout << "regressions(i,j).b: " << regressions(i,j).b << endl;
         }
     }
 
