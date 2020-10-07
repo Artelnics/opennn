@@ -2064,6 +2064,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     Tensor<Descriptives, 1> new_input_descriptives(optimal_inputs_number);
 
     Index descriptive_index = 0;
+    Index unused = 0;
 
     for(Index i = 0; i < original_input_columns_indices.size(); i++)
     {
@@ -2073,17 +2074,21 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         {
             if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical)
             {
-                new_input_descriptives(descriptive_index) = original_input_variables_descriptives(i);
+                new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
                 descriptive_index++;
             }
             else
             {
                 for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++)
                 {
-                    new_input_descriptives(descriptive_index) = original_input_variables_descriptives(i);
+                    new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
                     descriptive_index++;
                 }
             }
+        }
+        else if(data_set_pointer->get_column_use(current_column_index) == DataSet::UnusedVariable)
+        {
+            unused++;
         }
     }
 

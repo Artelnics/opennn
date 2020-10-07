@@ -257,7 +257,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     // Model selection
 
-    if(used_columns_number < maximum_epochs_number) maximum_epochs_number = used_columns_number;
+//    if(used_columns_number < maximum_epochs_number) maximum_epochs_number = used_columns_number;
 
     for(Index iteration = 0; iteration < maximum_epochs_number; iteration++)
     {
@@ -439,7 +439,10 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         data_set_pointer->set_column_use(optimal_input_index, DataSet::Input);
     }
 
-    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).setConstant(optimal_inputs_number));
+    const Index optimal_input_variables_number = data_set_pointer->get_input_variables_names().size();
+
+//    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).setConstant(optimal_inputs_number));
+    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).setConstant(optimal_input_variables_number));
 
     // Set Neural network stuff
 
@@ -449,9 +452,11 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-    Tensor<Descriptives, 1> new_input_descriptives(optimal_inputs_number);
+//    Tensor<Descriptives, 1> new_input_descriptives(optimal_inputs_number);
+    Tensor<Descriptives, 1> new_input_descriptives(optimal_input_variables_number);
 
     Index descriptive_index = 0;
+    Index unused = 0;
 
     for(Index i = 0; i < original_input_columns_indices.size(); i++)
     {
@@ -461,17 +466,21 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         {
             if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical)
             {
-                new_input_descriptives(descriptive_index) = original_input_variables_descriptives(i);
+                new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
                 descriptive_index++;
             }
             else
             {
                 for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++)
                 {
-                    new_input_descriptives(descriptive_index) = original_input_variables_descriptives(i);
+                    new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
                     descriptive_index++;
                 }
             }
+        }
+        else if(data_set_pointer->get_column_use(current_column_index) == DataSet::UnusedVariable)
+        {
+            unused++;
         }
     }
 
