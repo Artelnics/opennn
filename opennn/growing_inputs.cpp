@@ -233,6 +233,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     const Tensor<Descriptives, 1> original_input_variables_descriptives = neural_network_pointer->get_scaling_layer_pointer()->get_descriptives();
 
+    const Tensor<ScalingLayer::ScalingMethod, 1> original_scaling_methods = neural_network_pointer->get_scaling_layer_pointer()->get_scaling_methods();
+
     // Optimization algorithm
 
     type current_training_error = 0;
@@ -446,7 +448,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     // Set Neural network stuff
 
-    neural_network_pointer->set_inputs_number(optimal_inputs_number);
+    neural_network_pointer->set_inputs_number(optimal_input_variables_number);
 
     neural_network_pointer->set_parameters(optimal_parameters);
 
@@ -454,6 +456,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
 //    Tensor<Descriptives, 1> new_input_descriptives(optimal_inputs_number);
     Tensor<Descriptives, 1> new_input_descriptives(optimal_input_variables_number);
+    Tensor<ScalingLayer::ScalingMethod, 1> new_scaling_methods(optimal_input_variables_number);
 
     Index descriptive_index = 0;
     Index unused = 0;
@@ -467,6 +470,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
             if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical)
             {
                 new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
+                new_scaling_methods(descriptive_index) = original_scaling_methods(descriptive_index + unused);
                 descriptive_index++;
             }
             else
@@ -474,6 +478,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
                 for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++)
                 {
                     new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
+                    new_scaling_methods(descriptive_index) = original_scaling_methods(descriptive_index + unused);
                     descriptive_index++;
                 }
             }
@@ -485,6 +490,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     }
 
     neural_network_pointer->get_scaling_layer_pointer()->set_descriptives(new_input_descriptives);
+    neural_network_pointer->get_scaling_layer_pointer()->set_scaling_methods(new_scaling_methods);
 
     if(display)
     {
