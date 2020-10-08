@@ -1835,6 +1835,8 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     const Tensor<Descriptives, 1> original_input_variables_descriptives = neural_network_pointer->get_scaling_layer_pointer()->get_descriptives();
 
+    const Tensor<ScalingLayer::ScalingMethod, 1> original_scaling_methods = neural_network_pointer->get_scaling_layer_pointer()->get_scaling_methods();
+
     // Optimization algorithm
 
     Index minimal_index;
@@ -2051,17 +2053,20 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     results->optimal_inputs_indices = data_set_pointer->get_input_variables_indices();
 
-    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).setConstant(optimal_inputs_number));
+    const Index optimal_input_variables_number = data_set_pointer->get_input_variables_names().size();
+
+    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).setConstant(optimal_input_variables_number));
 
 //    // Set Neural network results
 
-    neural_network_pointer->set_inputs_number(optimal_inputs_number);
+    neural_network_pointer->set_inputs_number(optimal_input_variables_number);
 
     neural_network_pointer->set_parameters(optimal_parameters);
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-    Tensor<Descriptives, 1> new_input_descriptives(optimal_inputs_number);
+    Tensor<Descriptives, 1> new_input_descriptives(optimal_input_variables_number);
+    Tensor<ScalingLayer::ScalingMethod, 1> new_scaling_methods(optimal_input_variables_number);
 
     Index descriptive_index = 0;
     Index unused = 0;
@@ -2075,6 +2080,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical)
             {
                 new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
+                new_scaling_methods(descriptive_index) = original_scaling_methods(descriptive_index + unused);
                 descriptive_index++;
             }
             else
@@ -2082,6 +2088,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
                 for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++)
                 {
                     new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
+                    new_scaling_methods(descriptive_index) = original_scaling_methods(descriptive_index + unused);
                     descriptive_index++;
                 }
             }
@@ -2093,6 +2100,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     }
 
     neural_network_pointer->get_scaling_layer_pointer()->set_descriptives(new_input_descriptives);
+    neural_network_pointer->get_scaling_layer_pointer()->set_scaling_methods(new_scaling_methods);
 
     time(&current_time);
     elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
