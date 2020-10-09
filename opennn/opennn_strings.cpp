@@ -642,7 +642,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         time_structure.tm_sec = stoi(matchs[50].str());
 
     }
-    else if(matchs[51] != "") // mm/dd/aaaa hh:mm:ss [AP]M
+    else if(matchs[51] != "") // mm/dd/yyyy hh:mm:ss [AP]M
     {
         time_structure.tm_year = stoi(matchs[53].str())-1900;
         time_structure.tm_mon = stoi(matchs[51].str());
