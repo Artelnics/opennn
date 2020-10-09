@@ -4032,7 +4032,7 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
     const Index rows_number = rows_indices.size();
     const Index variables_number = variables_indices.size();
 
-    Tensor<type, 2> subtensor(rows_indices.size(), variables_indices.size());
+    Tensor<type, 2> subtensor(rows_number, variables_number);
 
     Index row_index;
     Index variable_index;
@@ -9562,7 +9562,8 @@ void DataSet::impute_missing_values_mean()
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
-    const Index samples_number = get_samples_number();
+//    const Index samples_number = get_samples_number();
+    const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
 
 #pragma omp parallel for schedule(dynamic)
@@ -9571,7 +9572,11 @@ void DataSet::impute_missing_values_mean()
     {
         for(Index i = 0; i < samples_number; i++)
         {
-            if(::isnan(data(i,j))) data(i,j) = means(j);
+            if(::isnan(data(used_samples_indices(i), used_variables_indices(j))))
+            {
+                data(used_samples_indices(i),used_variables_indices(j)) = means(j);
+            }
+
         }
     }
 }
@@ -9587,7 +9592,7 @@ void DataSet::impute_missing_values_median()
     const Tensor<type, 1> medians = median(data, used_samples_indices, used_variables_indices);
 
     const Index variables_number = used_variables_indices.size();
-    const Index samples_number = get_samples_number();
+    const Index samples_number = used_samples_indices.size();
 
 #pragma omp parallel for schedule(dynamic)
 
@@ -9595,7 +9600,7 @@ void DataSet::impute_missing_values_median()
     {
         for(Index i = 0 ; i < samples_number ; i++)
         {
-            if(::isnan(data(i,j))) data(i,j) = medians(j);
+            if(::isnan(data(used_samples_indices(i),used_variables_indices(j)))) data(used_samples_indices(i),used_variables_indices(j)) = medians(j);
         }
     }
 }
