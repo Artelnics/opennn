@@ -678,11 +678,12 @@ string ModelSelection::write_neurons_selection_method() const
 {
     switch (neurons_selection_method)
     {
-    case NO_NEURONS_SELECTION:
-        return "NO_NEURONS_SELECTION";
-
     case GROWING_NEURONS:
         return "GROWING_NEURONS";
+
+    case NO_NEURONS_SELECTION:
+    default:
+        return "NO_NEURONS_SELECTION";
     }
 }
 
@@ -691,9 +692,6 @@ string ModelSelection::write_inputs_selection_method() const
 {
     switch (inputs_selection_method)
     {
-    case NO_INPUTS_SELECTION:
-        return "NO_INPUTS_SELECTION";
-
     case GROWING_INPUTS:
         return "GROWING_INPUTS";
 
@@ -702,6 +700,10 @@ string ModelSelection::write_inputs_selection_method() const
 
     case GENETIC_ALGORITHM:
         return "GENETIC_ALGORITHM";
+
+    case NO_INPUTS_SELECTION:
+    default:
+        return "NO_INPUTS_SELECTION";
     }
 }
 

@@ -9,6 +9,7 @@
 #ifndef OPENNN_H
 #define OPENNN_H
 
+#include "opennn_config.h"
 #include "config.h"
 
 #include "statistics.h"
