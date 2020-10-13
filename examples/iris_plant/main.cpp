@@ -20,7 +20,7 @@
 
 // OpenNN includes
 
-#include "../../opennn/opennn.h"
+#include <opennn/opennn.h>
 
 using namespace OpenNN;
 
@@ -118,7 +118,7 @@ int main(void)
 
         return 1;
     }
-}  
+}
 
 
 // OpenNN: Open Neural Networks Library.

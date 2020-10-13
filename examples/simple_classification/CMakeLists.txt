@@ -1,16 +1,14 @@
-cmake_minimum_required(VERSION 2.8.10)
+cmake_minimum_required(VERSION 2.6)
 
-# Project's name
+project(opennn_test)
 
-project(simple_pattern_recognition)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED true)
 
-set (PROJECT_LINK_LIBS ../../opennn/Release/opennn)
-
-link_directories(${CMAKE_SOURCE_DIR}/opennn)
-
-include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 add_executable(simple_pattern_recognition main.cpp)
 
-target_link_libraries(simple_pattern_recognition ${PROJECT_LINK_LIBS})
+add_library(libopennn SHARED IMPORTED)
+set_property(TARGET libopennn PROPERTY IMPORTED_LOCATION "/usr/local/lib/libopennn.so")
 
+target_link_libraries(simple_pattern_recognition libopennn)

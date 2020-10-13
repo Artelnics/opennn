@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-// This is a pattern recognition problem. 
+// This is a pattern recognition problem.
 
 // System includes
 
@@ -18,7 +18,7 @@
 
 // OpenNN includes
 
-#include "../../opennn/opennn.h"
+#include <opennn/opennn.h>
 
 using namespace OpenNN;
 
@@ -103,7 +103,7 @@ int main(void)
 
         return 1;
     }
-}  
+}
 
 
 // OpenNN: Open Neural Networks Library.

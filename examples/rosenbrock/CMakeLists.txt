@@ -1,19 +1,14 @@
-# Specify the minimum version for CMake
+cmake_minimum_required(VERSION 2.6)
 
-cmake_minimum_required(VERSION 2.8.10)
+project(opennn_test)
 
-# Project's name
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED true)
 
-project(rosenbrock)
-
-set (PROJECT_LINK_LIBS ../opennn/Release/opennn)
-
-link_directories(${CMAKE_SOURCE_DIR}/opennn)
-
-include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 add_executable(rosenbrock main.cpp)
 
-target_link_libraries(rosenbrock ${PROJECT_LINK_LIBS})
+add_library(libopennn SHARED IMPORTED)
+set_property(TARGET libopennn PROPERTY IMPORTED_LOCATION "/usr/local/lib/libopennn.so")
 
-
+target_link_libraries(rosenbrock libopennn)

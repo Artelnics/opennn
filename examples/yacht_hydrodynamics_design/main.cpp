@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-// This is an approximation application. 
+// This is an approximation application.
 
 // System includes
 
@@ -20,7 +20,7 @@
 
 // OpenNN includes
 
-#include "../../opennn/opennn.h"
+#include <opennn/opennn.h>
 
 using namespace OpenNN;
 
@@ -109,7 +109,7 @@ int main(void)
 
         return 1;
     }
-}  
+}
 
 
 // OpenNN: Open Neural Networks Library.

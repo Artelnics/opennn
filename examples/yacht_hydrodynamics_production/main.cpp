@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-// This is an example of a neural network working on the production phase. 
+// This is an example of a neural network working on the production phase.
 
 // System includes
 
@@ -20,7 +20,7 @@
 
 // OpenNN includes
 
-#include "../../opennn/opennn.h"
+#include <opennn/opennn.h>
 
 using namespace OpenNN;
 
@@ -80,7 +80,7 @@ int main(void)
 
         return 1;
     }
-}  
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2019 Artificial Intelligence Techniques SL

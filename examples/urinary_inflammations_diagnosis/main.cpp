@@ -20,7 +20,7 @@
 
 // OpenNN includes
 
-#include "../../opennn/opennn.h"
+#include <opennn/opennn.h>
 
 using namespace OpenNN;
 
@@ -36,7 +36,7 @@ int main(void)
 
         DataSet data_set("../data/urinary_inflammations_diagnosis.csv", ';', true);
 
-        // Variables      
+        // Variables
 
         Tensor<string, 1> uses(8);
         uses.setValues({"Input","Input","Input","Input","Input","Input","Unused","Target"});

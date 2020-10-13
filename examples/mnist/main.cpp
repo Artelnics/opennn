@@ -19,8 +19,8 @@
 
 // OpenNN includes
 
-#include "../../opennn/opennn.h"
-#include "../../opennn/opennn_strings.h"
+#include <opennn/opennn.h>
+#include <opennn/opennn_strings.h>
 
 using namespace std;
 using namespace OpenNN;

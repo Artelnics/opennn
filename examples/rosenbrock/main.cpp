@@ -19,14 +19,14 @@
 
 // OpenNN includes
 
-#include "../../opennn/opennn.h"
+#include <opennn/opennn.h>
 
 using namespace OpenNN;
 using namespace std;
 using namespace Eigen;
 
 int main(void)
-{          
+{
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
