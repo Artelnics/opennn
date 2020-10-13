@@ -10440,7 +10440,9 @@ void DataSet::read_csv_3_complete()
     {
         if(columns(column).type == Numeric)
         {
-            if(is_constant_numeric(data.chip(variable_index, 1)))
+            const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
+
+            if(standard_deviation(numeric_column) - static_cast<type>(0) < static_cast<type>(1.0-3))
             {
                 columns(column).type = Constant;
                 columns(column).column_use = UnusedVariable;
@@ -10581,16 +10583,8 @@ bool DataSet::has_binary_columns() const
 {
     const Index variables_number = columns.size();
 
-    cout << "VARIABLES NUMBER: " << variables_number << endl;
-
     for(Index i = 0; i < variables_number; i++)
     {
-        if(columns(i).type == Binary) cout << "column " << i << ": Binary" << endl;
-        if(columns(i).type == Categorical) cout << "column " << i << ": Categorical" << endl;
-        if(columns(i).type == Numeric) cout << "column " << i << ": Numeric" << endl;
-        if(columns(i).type == DateTime) cout << "column " << i << ": DateTime" << endl;
-        if(columns(i).type == Constant) cout << "column " << i << ": Constant" << endl;
-
         if(columns(i).type == Binary) return true;
     }
 

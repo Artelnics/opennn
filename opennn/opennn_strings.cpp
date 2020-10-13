@@ -229,8 +229,8 @@ bool is_numeric_string(const string& str)
 /// Returns true if given string vector is constant, false otherwise.
 /// @param str vector to be checked.
 ///
-bool is_constant_string(const Tensor<string, 1>& str){
-
+bool is_constant_string(const Tensor<string, 1>& str)
+{
     const string str0 = str[0];
     string str1;
 
@@ -246,8 +246,8 @@ bool is_constant_string(const Tensor<string, 1>& str){
 /// Returns true if given numeric vector is constant, false otherwise.
 /// @param str vector to be checked.
 
-bool is_constant_numeric(const Tensor<type, 1>& str){
-
+bool is_constant_numeric(const Tensor<type, 1>& str)
+{
     const type a0 = str[0];
 
     for (int i = 1; i < str.size(); i++)
