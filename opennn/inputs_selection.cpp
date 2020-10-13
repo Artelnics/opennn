@@ -518,8 +518,6 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
         return optimum_losses;
     }
 
-    neural_network->set_inputs_number(inputs);
-
     neural_network->perturbate_parameters(static_cast<type>(0.001));
 
     for(Index i = 0; i < trials_number; i++)
@@ -547,6 +545,7 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
             optimum_parameters = parameters;
         }
     }
+
     if(display)
     {
         if(trials_number != 1) cout << "Trial number: " << trials_number << endl;

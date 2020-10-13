@@ -259,7 +259,7 @@ void GeneticAlgorithm::set_default()
 
         mutation_rate = static_cast<type>(1.0/inputs_number);
 
-        population_size = 10*inputs_number;
+        population_size = 10 * inputs_number;
 
     }
 
@@ -915,7 +915,9 @@ void GeneticAlgorithm::initialize_weighted_population()
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    const Index inputs_number = neural_network_pointer->get_inputs_number();
+//    const Index inputs_number = neural_network_pointer->get_inputs_number();
+
+    const Index inputs_number = data_set_pointer->get_input_columns_number();
 
     // Optimization algortihm stuff
 
@@ -1011,6 +1013,7 @@ void GeneticAlgorithm::initialize_weighted_population()
 
             random_loops = 0;
         }
+
     }
 }
 
@@ -1085,7 +1088,7 @@ void GeneticAlgorithm::evaluate_population()
 
         data_set_pointer->set_columns_uses(current_uses);
 
-        neural_network_pointer->set_inputs_number(current_inputs);
+        neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
         // Training Neural networks
 
@@ -2002,8 +2005,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         if(display)
         {
             cout << "Generation: " << iteration+1 << endl;
-            cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>()
-                 << " " << endl;
+            cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << " " << endl;
             cout << "Generation optimal number of inputs: " << data_set_pointer->get_input_variables_names().size() << endl;
             cout << "Generation optimum selection error: " << current_selection_error << endl;
             cout << "Corresponding training loss: " << current_training_error << endl;
