@@ -1,8 +1,7 @@
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.10)
 
-project(opennn
-	DESCRIPTION "Open Neural Netwok library")
+project(opennn DESCRIPTION "Open Neural Netwok library")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
@@ -10,19 +9,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 add_subdirectory(opennn)
 include_directories(opennn)
 
-option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" OFF)
+
+option(OpenNN_BUILD_TESTS "Build OpenNN tests" OFF)
 if(OpenNN_BUILD_TESTS)
    add_subdirectory(tests)
 endif(OpenNN_BUILD_TESTS)
 
-option(OpenNN_BUILD_TESTS    "Build OpenNN tests"    OFF)
-if(OpenNN_BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif(OpenNN_BUILD_EXAMPLES)
-
-
-set(CPACK_GENERATOR "TGZ")
-include(CPack)
 
 # uninstall target
 if(NOT TARGET uninstall)

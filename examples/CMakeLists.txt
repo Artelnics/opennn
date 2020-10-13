@@ -1,11 +1,11 @@
-# Specify the minimum version for CMake
-
 cmake_minimum_required(VERSION 2.8.10)
 
+project(example DESCRIPTION "Usage example for OpenNN shared library")
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 
-# Project's name
-project(examples)
 add_subdirectory(airfoil_self_noise)
 add_subdirectory(breast_cancer)
 add_subdirectory(iris_plant)
