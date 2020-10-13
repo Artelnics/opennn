@@ -8655,7 +8655,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                    << "void read_input_csv() method.\n"
                    << "Line " << line_number << ": Size of tokens("
                    << tokens_count << ") is not equal to number of columns("
-                   << columns_number << ").\n";            
+                   << columns_number << ").\n";
 
             throw logic_error(buffer.str());
         }
@@ -10444,6 +10444,7 @@ void DataSet::read_csv_3_complete()
 
             if(standard_deviation(numeric_column) - static_cast<type>(0) < static_cast<type>(1.0-3))
             {
+
                 columns(column).type = Constant;
                 columns(column).column_use = UnusedVariable;
             }
@@ -10457,6 +10458,8 @@ void DataSet::read_csv_3_complete()
         }
         else if(columns(column).type == Constant)
         {
+            columns(column).column_use = UnusedVariable;
+
             variable_index++;
         }
         else if(columns(column).type == Binary)
@@ -10479,12 +10482,6 @@ void DataSet::read_csv_3_complete()
 
             variable_index += columns(column).get_categories_number();
         }
-
-//        if(is_constant_numeric(data.chip(column, 1)) && columns(column).type!=DateTime)
-//        {
-//            columns(column).type = Constant;
-//            columns(column).column_use = UnusedVariable;
-//        }
     }
 
 }
