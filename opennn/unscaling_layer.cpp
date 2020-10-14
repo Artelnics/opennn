@@ -771,7 +771,7 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     {
                         const type slope = descriptives(j).standard_deviation;
 
-                        const type intercept = descriptives(j).mean;
+                        const type intercept = descriptives(j).mean / descriptives(j).standard_deviation;
 
                         outputs(i,j) = inputs(i,j)*slope + intercept;
                     }
