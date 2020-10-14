@@ -14,20 +14,17 @@ convolutional_layer.cpp
 correlations.cpp
 cross_entropy_error.cpp
 data_set.cpp
-functions.cpp
 genetic_algorithm.cpp
 gradient_descent.cpp
 growing_inputs.cpp
-incremental_neurons.cpp
+growing_neurons.cpp
 inputs_selection.cpp
-k_means.cpp
 layer.cpp
 learning_rate_algorithm.cpp
 levenberg_marquardt_algorithm.cpp
 long_short_term_memory_layer.cpp
 loss_index.cpp
 mean_squared_error.cpp
-metrics.cpp
 minkowski_error.cpp
 model_selection.cpp
 neural_network.cpp
@@ -52,9 +49,10 @@ sum_squared_error.cpp
 testing_analysis.cpp
 tinyxml2.cpp
 training_strategy.cpp
-transformations.cpp
 unit_testing.cpp
 unscaling_layer.cpp
 weighted_squared_error.cpp
 )
+
+
 
