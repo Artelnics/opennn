@@ -862,6 +862,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
 
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
+
     // SSE
     errors(0) = sum_squared_error(0);
 
@@ -1404,9 +1405,9 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
 
     Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
 
-    f_1 = (targets - outputs).sum().square()*positives_weight;
+    f_1 = (targets - outputs).square() * positives_weight;
 
-    f_2 = (targets - outputs).sum().square()*negatives_weight;
+    f_2 = (targets - outputs).square()*negatives_weight;
 
     f_3 = targets.constant(0);
 

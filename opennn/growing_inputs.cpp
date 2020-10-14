@@ -277,7 +277,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         neural_network_pointer->set_inputs_number(input_variables_number);
 
-        neural_network_pointer->get_first_perceptron_layer_pointer()->set_synaptic_weights_glorot();
+        neural_network_pointer->get_first_perceptron_layer_pointer()->set_parameters_random();
 
         Tensor<type, 1> initial_parameters = neural_network_pointer->get_parameters();
 
@@ -286,7 +286,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         type optimum_selection_error_trial = numeric_limits<type>::max();
         type optimum_training_error_trial = numeric_limits<type>::max();
         Tensor<type, 1> optimum_parameters_trial(neural_network_pointer->get_parameters_number());
-
+#pragma omp parallel for
         for(Index i = 0; i < trials_number; i++)
         {
             neural_network_pointer->set_parameters(initial_parameters);
