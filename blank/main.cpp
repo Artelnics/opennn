@@ -44,27 +44,11 @@ int main(void)
     {
         cout << "OpenNN. Blank Application." << endl;
 
-        DataSet data_set("C:\\Users\\Usuario\\Documents\\breastcancer.csv", ';', true);
+        DataSet data_set("C:\\Users\\Usuario\\Documents\\diabetic_data.csv", ';', true);
 
-        data_set.scale_input_variables_minimum_maximum();
-//        data_set.scale_target_variables_minimum_maximum();
+        cout << "Read finished" << endl;
 
-        const Index inputs_number = data_set.get_input_variables_number();
-        const Index targets_number = data_set.get_target_variables_number();
-
-        Tensor<Index,1> architecture(3);
-        architecture(0) = inputs_number;
-        architecture(1) = 5;
-        architecture(2) = targets_number;
-
-        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
-
-        training_strategy.perform_training();
-
+        cout << "Nan columns: " << data_set.count_nan_columns() << endl;
 
         cout << "End" << endl;
 
