@@ -7319,6 +7319,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
+    cout << "columns number" << endl;
+
     // Columns items
 
     {
@@ -7335,6 +7337,9 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
     }
+
+
+    cout << "columns items" << endl;
 
     // Close columns
 
@@ -7362,6 +7367,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
+    cout << "rows labels" << endl;
+
     // Samples
 
     file_stream.OpenElement("Samples");
@@ -7377,6 +7384,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
+
+    cout << "samples" << endl;
 
     // Samples uses
 
@@ -7398,6 +7407,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
+
+    cout << "samples uses" << endl;
 
     // Close samples
 
@@ -7428,6 +7439,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
+    cout << "missing method" << endl;
+
     // Missing values number
 
     const Index missing_values_number = count_nan();
@@ -7443,6 +7456,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
+    cout << "missing values number" << endl;
+
     if(missing_values_number > 0)
     {
         // Columns missing values number
@@ -7451,6 +7466,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.OpenElement("ColumnsMissingValuesNumber");
 
             const auto columns_missing_values_number = count_nan_columns();
+            cout << "count nan columns" << endl;
             const Index columns_number = columns_missing_values_number.size();
 
             buffer.str("");
@@ -7467,6 +7483,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
 
+        cout << "Columns with missing values" << endl;
+
         // Rows missing values number
 
         {
@@ -7475,11 +7493,17 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             buffer.str("");
             buffer << count_rows_with_nan();
 
+            cout << "Count rows with nan" << endl;
+
             file_stream.PushText(buffer.str().c_str());
 
             file_stream.CloseElement();
         }
+
+        cout << "rows with missing values" << endl;
     }
+
+    cout << "missing values number" << endl;
 
     // Missing values
 
@@ -7516,6 +7540,8 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
+
+    cout << "preview data" << endl;
 
     // Close preview data
 
@@ -9831,7 +9857,6 @@ void DataSet::read_csv_1()
             column_index++;
         }
     }
-
 }
 
 
@@ -10201,13 +10226,15 @@ void DataSet::read_csv_2_complete()
             {
                 if(find(columns(column_index).categories.data(), columns(column_index).categories.data() + columns(column_index).categories.size(), tokens(j)) == (columns(column_index).categories.data() + columns(column_index).categories.size()))
                 {
-                    if(tokens(j) == missing_values_label) continue;
+                    if(tokens(j) == missing_values_label)
+                    {
+                        column_index++;
+                        continue;
+                    }
 
                     columns(column_index).add_category(tokens(j));
                 }
             }
-
-            column_index++;
         }
 
         column_index = 0;
@@ -10215,7 +10242,7 @@ void DataSet::read_csv_2_complete()
         lines_count++;
     }
 
-    cout << "Setting categories..." << endl;
+    cout << "Setting types..." << endl;
 
     for(unsigned j = 0; j < columns_number; j++)
     {
@@ -10224,8 +10251,6 @@ void DataSet::read_csv_2_complete()
             if(columns(j).categories.size() == 2)
             {
                 columns(j).type = Binary;
-//                columns(j).categories.resize(0);
-//                columns(j).categories_uses.resize(0);
             }
         }
     }
@@ -10244,6 +10269,8 @@ void DataSet::read_csv_2_complete()
     set_default_columns_uses();
 
     samples_uses.resize(static_cast<Index>(samples_number));
+
+    samples_uses.setConstant(Training);
 
     split_samples_random();
 }
