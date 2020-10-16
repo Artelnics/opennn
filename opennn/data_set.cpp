@@ -9430,6 +9430,9 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
 
             if(get_sample_use(sample_index) == UnusedSample) continue;
 
+            if(fabsf(data(sample_index, variable_index) - minimums(i)) <= static_cast<type>(1e-3)
+                    || fabsf(data(sample_index, variable_index) - maximums(i)) <= static_cast<type>(1e-3)) continue;
+
             if(data(sample_index,variable_index) < minimums(i)
                     || data(sample_index,variable_index) > maximums(i))
             {
