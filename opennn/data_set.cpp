@@ -471,8 +471,10 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    if(type == Categorical)
+    if(type == Categorical || type == Binary)
     {
+        if(categories.size() == 0) return;
+
         // Categories
 
         file_stream.OpenElement("Categories");
@@ -520,7 +522,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-    else if(type == Binary)
+    /*else if(type == Binary)
     {
         if(categories.size() > 0)
         {
@@ -574,7 +576,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.CloseElement();
         }
-    }
+    }*/
 }
 
 
@@ -1707,6 +1709,8 @@ void DataSet::set_default_classification_columns_uses()
 
         for(Index i = columns.size()-1; i >= 0; i--)
         {
+            if(columns(i).type == Constant) continue;
+
             if(columns(i).type == Binary)
             {
                 columns(i).set_use(Target);
@@ -2944,6 +2948,8 @@ void DataSet::set_input()
 {
     for(Index i = 0; i < columns.size(); i++)
     {
+        if(columns(i).type == Constant) continue;
+
         columns(i).set_use(Input);
     }
 }
@@ -10235,6 +10241,8 @@ void DataSet::read_csv_2_complete()
                     columns(column_index).add_category(tokens(j));
                 }
             }
+
+            column_index++;
         }
 
         column_index = 0;
@@ -10244,7 +10252,7 @@ void DataSet::read_csv_2_complete()
 
     cout << "Setting types..." << endl;
 
-    for(unsigned j = 0; j < columns_number; j++)
+    for(Index j = 0; j < columns_number; j++)
     {
         if(columns(j).type == Categorical)
         {
@@ -10495,6 +10503,7 @@ void DataSet::read_csv_3_complete()
             {
                 columns(column).type = Constant;
                 columns(column).column_use = UnusedVariable;
+                columns(column).set_categories_uses(UnusedVariable);
             }
 
             variable_index++;
@@ -10505,12 +10514,12 @@ void DataSet::read_csv_3_complete()
             {
                 columns(column).type = Constant;
                 columns(column).column_use = UnusedVariable;
+                columns(column).set_categories_uses(UnusedVariable);
             }
 
             variable_index += columns(column).get_categories_number();
         }
     }
-
 }
 
 
