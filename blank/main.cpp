@@ -44,20 +44,6 @@ int main(void)
     {
         cout << "OpenNN. Blank Application." << endl;
 
-        DataSet data_set;//("C:\\Users\\Usuario\\Documents\\diabetic_data.csv", ';', true);
-        data_set.set_data_file_name("C:\\Users\\Usuario\\Documents\\diabetic_data.csv");
-        data_set.set_has_columns_names(true);
-        data_set.set_has_rows_label(true);
-        data_set.set_separator("Semicolon");
-
-        data_set.read_csv();
-
-
-        cout << "Read finished" << endl;
-
-        cout << "Nan columns: " << data_set.count_nan_columns() << endl;
-
-        cout << "End" << endl;
 
         return 0;
     }

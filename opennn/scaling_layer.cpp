@@ -843,16 +843,15 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     {
                         const type slope = (max_range-min_range)/(descriptives(j).maximum-descriptives(j).minimum);
 
-                        const type intercept = -(descriptives(j).minimum*(max_range-min_range))/(descriptives(j).maximum - descriptives(j).minimum) + min_range;
+                        const type intercept = ((1-(max_range-min_range))*descriptives(j).minimum-descriptives(j).maximum)/(descriptives(j).maximum-descriptives(j).minimum);
 
                         outputs(i,j) = inputs(i,j)*slope + intercept;
                     }
                     else if(scaling_methods(j) == MeanStandardDeviation)
                     {
-
                         const type slope = static_cast<type>(1)/descriptives(j).standard_deviation;
 
-                        const type intercept = -static_cast<type>(1)*descriptives(j).mean/descriptives(j).standard_deviation;
+                        const type intercept = -descriptives(j).mean/descriptives(j).standard_deviation;
 
                         outputs(i,j) = inputs(i,j)*slope + intercept;
 
