@@ -93,6 +93,7 @@ public:
    void set(const Index&, const Index&, const PerceptronLayer::ActivationFunction& = PerceptronLayer::HyperbolicTangent);
 
    void set_default();
+   void set_layer_name(const string&);
 
    // Architecture
 
