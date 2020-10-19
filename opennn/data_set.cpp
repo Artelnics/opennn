@@ -6411,9 +6411,13 @@ void DataSet::scale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_des
 
 void DataSet::scale_input_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
-    const type slope = static_cast<type>(1)/input_statistics.standard_deviation;
+    const type slope = (input_statistics.standard_deviation -0) < static_cast<type>(1e-3) ?
+                0 :
+                static_cast<type>(1)/input_statistics.standard_deviation;
 
-    const type intercept = -static_cast<type>(1)*input_statistics.mean/input_statistics.standard_deviation;
+    const type intercept = (input_statistics.standard_deviation -0) < static_cast<type>(1e-3) ?
+                0 :
+                -static_cast<type>(1)*input_statistics.mean/input_statistics.standard_deviation;
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
