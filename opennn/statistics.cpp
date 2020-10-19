@@ -1892,16 +1892,15 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     {
         for(Index i = 0; i < columns_indices_size; i++)
         {
-
             const double variance = squared_sums(i)/static_cast<double>(count(i)-1) -(sums(i)/static_cast<double>(count(i)))*(sums(i)/static_cast<double>(count(i)))*static_cast<double>(count(i))/static_cast<double>((count(i)-1));
 
             standard_deviation(i) = variance;
 
-            if(standard_deviation(i)<static_cast<double>(5e-3)){
-                standard_deviation(i) = static_cast<double>(0);
-            }else{
+//            if(standard_deviation(i)<static_cast<double>(5e-3)){
+//                standard_deviation(i) = static_cast<double>(0);
+//            }else{
                 standard_deviation(i) = sqrt(standard_deviation(i));
-            }
+//            }
         }
     }
 
