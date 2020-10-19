@@ -297,6 +297,11 @@ void PerceptronLayer::set_default()
     layer_type = Perceptron;
 }
 
+void PerceptronLayer::set_layer_name(const string& new_layer_name)
+{
+    layer_name = new_layer_name;
+}
+
 
 /// Sets a new number of inputs in the layer.
 /// The new synaptic weights are initialized at random.
@@ -1005,6 +1010,25 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
+
+    // Layer name
+
+    const tinyxml2::XMLElement* layer_name_element = perceptron_layer_element->FirstChildElement("LayerName");
+
+    if(!layer_name_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "LayerName element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(layer_name_element->GetText())
+    {
+        set_layer_name(layer_name_element->GetText());
+    }
+
     // Inputs number
 
     const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
@@ -1089,8 +1113,14 @@ void PerceptronLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("PerceptronLayer");
 
-    // Inputs number
+    // Layer name
+    file_stream.OpenElement("LayerName");
+    buffer.str("");
+    buffer << layer_name;
+    file_stream.PushText(buffer.str().c_str());
+    file_stream.CloseElement();
 
+    // Inputs number
     file_stream.OpenElement("InputsNumber");
 
     buffer.str("");
