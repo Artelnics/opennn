@@ -305,6 +305,8 @@ void ScalingLayer::set()
 {
     descriptives.resize(0);
 
+    scaling_methods.resize(0);
+
     set_default();
 }
 
