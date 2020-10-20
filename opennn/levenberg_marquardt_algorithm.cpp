@@ -781,7 +781,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training loss: " << terms_second_order_loss.error << "\n"
+                     << "Training error: " << terms_second_order_loss.error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << "Damping parameter: " << damping_parameter << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
@@ -812,7 +812,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training loss: " << terms_second_order_loss.loss << "\n"
+                 << "Training error: " << terms_second_order_loss.loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << "Damping parameter: " << damping_parameter << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
