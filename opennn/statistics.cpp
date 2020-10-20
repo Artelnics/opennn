@@ -2572,6 +2572,8 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
     {
         column_index = columns_indices(j);
 
+        count = 0;
+
         for(Index i = 0; i < row_indices_size; i++)
         {
             row_index = row_indices(i);
