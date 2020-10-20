@@ -7336,7 +7336,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         }
     }
 
-
     cout << "columns items" << endl;
 
     // Close columns
@@ -7441,8 +7440,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Missing values number
 
-    const Index missing_values_number = count_nan();
-
     {
         file_stream.OpenElement("MissingValuesNumber");
 
@@ -7463,7 +7460,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         {
             file_stream.OpenElement("ColumnsMissingValuesNumber");
 
-            const auto columns_missing_values_number = count_nan_columns();
             cout << "count nan columns" << endl;
             const Index columns_number = columns_missing_values_number.size();
 
@@ -7489,7 +7485,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.OpenElement("RowsMissingValuesNumber");
 
             buffer.str("");
-            buffer << count_rows_with_nan();
+            buffer << rows_missing_values_number;
 
             cout << "Count rows with nan" << endl;
 
@@ -8011,6 +8007,67 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if(missing_values_method_element->GetText())
     {
         set_missing_values_method(missing_values_method_element->GetText());
+    }
+
+    // Missing values number
+
+    const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
+
+    if(!missing_values_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Missing values number element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(missing_values_number_element->GetText())
+    {
+        missing_values_number = static_cast<Index>(atoi(missing_values_number_element->GetText()));
+    }
+
+    // Columns Missing values number
+
+    const tinyxml2::XMLElement* columns_missing_values_number_element = missing_values_element->FirstChildElement("ColumnsMissingValuesNumber");
+
+    if(!columns_missing_values_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Columns missing values number element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(columns_missing_values_number_element->GetText())
+    {
+        Tensor<string, 1> new_columns_missing_values_number = get_tokens(columns_missing_values_number_element->GetText(), ' ');
+
+        columns_missing_values_number.resize(new_columns_missing_values_number.size());
+
+        for(Index i = 0; i < new_columns_missing_values_number.size(); i++)
+        {
+            columns_missing_values_number(i) = atoi(new_columns_missing_values_number(i).c_str());
+        }
+    }
+
+    // Rows missing values number
+
+    const tinyxml2::XMLElement* rows_missing_values_number_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
+
+    if(!rows_missing_values_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Rows missing values number element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(rows_missing_values_number_element->GetText())
+    {
+        rows_missing_values_number = static_cast<Index>(atoi(rows_missing_values_number_element->GetText()));
     }
 
     // Preview data
