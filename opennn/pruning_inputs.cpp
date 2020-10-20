@@ -225,7 +225,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         {
             if(correlations_ascending(i) == total_correlations(j))
             {
-                correlations_ascending_indices(i) = j;
+//                correlations_ascending_indices(i) = j;
+                correlations_ascending_indices(i) = original_input_columns_indices(j);
+                continue;
             }
         }
     }

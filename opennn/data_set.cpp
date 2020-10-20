@@ -5514,15 +5514,19 @@ Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() co
 
 bool DataSet::has_nan() const
 {
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        for(Index j = 0; j < data.dimension(1); j++)
-        {
-            if(::isnan(data(i,j))) return true;
-        }
-    }
+    for(Index i = 0; i < data.size(); i++) if(::isnan(data(i))) return true;
 
     return false;
+
+//    for(Index i = 0; i < data.dimension(0); i++)
+//    {
+//        for(Index j = 0; j < data.dimension(1); j++)
+//        {
+//            if(::isnan(data(i,j))) return true;
+//        }
+//    }
+
+//    return false;
 }
 
 
@@ -7332,7 +7336,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         }
     }
 
-
     cout << "columns items" << endl;
 
     // Close columns
@@ -7437,8 +7440,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Missing values number
 
-    const Index missing_values_number = count_nan();
-
     {
         file_stream.OpenElement("MissingValuesNumber");
 
@@ -7459,7 +7460,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         {
             file_stream.OpenElement("ColumnsMissingValuesNumber");
 
-            const auto columns_missing_values_number = count_nan_columns();
             cout << "count nan columns" << endl;
             const Index columns_number = columns_missing_values_number.size();
 
@@ -7485,7 +7485,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.OpenElement("RowsMissingValuesNumber");
 
             buffer.str("");
-            buffer << count_rows_with_nan();
+            buffer << rows_missing_values_number;
 
             cout << "Count rows with nan" << endl;
 
@@ -8007,6 +8007,70 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if(missing_values_method_element->GetText())
     {
         set_missing_values_method(missing_values_method_element->GetText());
+    }
+
+    // Missing values number
+
+    const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
+
+    if(!missing_values_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Missing values number element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(missing_values_number_element->GetText())
+    {
+        missing_values_number = static_cast<Index>(atoi(missing_values_number_element->GetText()));
+    }
+
+    if(missing_values_number > 0)
+    {
+        // Columns Missing values number
+
+        const tinyxml2::XMLElement* columns_missing_values_number_element = missing_values_element->FirstChildElement("ColumnsMissingValuesNumber");
+
+        if(!columns_missing_values_number_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Columns missing values number element is nullptr.\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        if(columns_missing_values_number_element->GetText())
+        {
+            Tensor<string, 1> new_columns_missing_values_number = get_tokens(columns_missing_values_number_element->GetText(), ' ');
+
+            columns_missing_values_number.resize(new_columns_missing_values_number.size());
+
+            for(Index i = 0; i < new_columns_missing_values_number.size(); i++)
+            {
+                columns_missing_values_number(i) = atoi(new_columns_missing_values_number(i).c_str());
+            }
+        }
+
+        // Rows missing values number
+
+        const tinyxml2::XMLElement* rows_missing_values_number_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
+
+        if(!rows_missing_values_number_element)
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Rows missing values number element is nullptr.\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        if(rows_missing_values_number_element->GetText())
+        {
+            rows_missing_values_number = static_cast<Index>(atoi(rows_missing_values_number_element->GetText()));
+        }
     }
 
     // Preview data
@@ -9368,9 +9432,9 @@ bool DataSet::has_data() const
 
 Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type, 1>& maximums)
 {
-    const Tensor<Index, 1> used_variables_indices = get_used_columns_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
 
-    const Index used_variables_number = get_used_variables_number();
+    const Index used_variables_number = used_variables_indices.size();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -9417,6 +9481,8 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
             sample_index = used_samples_indices(j);
 
             if(get_sample_use(sample_index) == UnusedSample) continue;
+
+            if(isnan(data(sample_index, variable_index))) continue;
 
             if(fabsf(data(sample_index, variable_index) - minimums(i)) <= static_cast<type>(1e-3)
                     || fabsf(data(sample_index, variable_index) - maximums(i)) <= static_cast<type>(1e-3)) continue;
@@ -9585,21 +9651,26 @@ void DataSet::impute_missing_values_mean()
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
-//    const Index samples_number = get_samples_number();
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
+
+    Index current_variable;
+    Index current_sample;
 
 #pragma omp parallel for schedule(dynamic)
 
     for(Index j = 0; j < variables_number; j++)
     {
+        current_variable = used_variables_indices(j);
+
         for(Index i = 0; i < samples_number; i++)
         {
-            if(::isnan(data(used_samples_indices(i), used_variables_indices(j))))
-            {
-                data(used_samples_indices(i),used_variables_indices(j)) = means(j);
-            }
+            current_sample = used_samples_indices(i);
 
+            if(::isnan(data(current_sample, current_variable)))
+            {
+                data(current_sample,current_variable) = means(j);
+            }
         }
     }
 }
