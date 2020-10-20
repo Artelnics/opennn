@@ -10834,6 +10834,81 @@ void DataSet::set_rows_missing_values_number()
 }
 
 
+void DataSet::fix_repeated_names()
+{
+    // Fix columns names
+
+    const Index columns_number = columns.size();
+
+    std::map<std::string, Index> columns_count_map;
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        auto result = columns_count_map.insert(std::pair<std::string, Index>(columns(i).name, 1));
+
+        if (!result.second) result.first->second++;
+    }
+
+    for (auto & element : columns_count_map)
+    {
+        if(element.second > 1)
+        {
+            const string repeated_name = element.first;
+            Index repeated_index = 1;
+
+            for(Index i = 0; i < columns.size(); i++)
+            {
+                if(columns(i).name == repeated_name)
+                {
+                    columns(i).name = columns(i).name + "_" + std::to_string(repeated_index);
+                    repeated_index++;
+                }
+            }
+        }
+    }
+
+    // Fix variables names
+
+    if(has_categorical_columns() || has_binary_columns())
+    {
+        Tensor<string, 1> variables_names = get_variables_names();
+
+        const Index variables_number = variables_names.size();
+
+        std::map<std::string, Index> variables_count_map;
+
+        for(Index i = 0; i < variables_number; i++)
+        {
+            auto result = variables_count_map.insert(std::pair<std::string, Index>(variables_names(i), 1));
+
+            if (!result.second) result.first->second++;
+        }
+
+        for (auto & element : variables_count_map)
+        {
+            if(element.second > 1)
+            {
+                const string repeated_name = element.first;
+
+                for(Index i = 0; i < variables_number; i++)
+                {
+                    if(variables_names(i) == repeated_name)
+                    {
+                        const Index column_index = get_column_index(i);
+
+                        if(columns(column_index).type != Categorical) continue;
+
+                        variables_names(i) = variables_names(i) + "_" + columns(column_index).name;
+                    }
+                }
+            }
+        }
+
+        set_variables_names(variables_names);
+    }
+}
+
+
 Tensor<Index, 1> DataSet::push_back(const Tensor<Index, 1>& old_vector, const Index& new_string) const
 {
     const Index old_size = old_vector.size();
