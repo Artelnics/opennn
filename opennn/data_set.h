@@ -749,6 +749,15 @@ public:
    Index count_rows_with_nan() const;
    Index count_nan() const;
 
+   void set_missing_values_number(const Index&);
+   void set_missing_values_number();
+
+   void set_columns_missing_values_number(const Tensor<Index, 1>&);
+   void set_columns_missing_values_number();
+
+   void set_rows_missing_values_number(const Index&);
+   void set_rows_missing_values_number();
+
    // scaling
 
    void set_min_max_range(const type min, const type max);

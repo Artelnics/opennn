@@ -10798,6 +10798,42 @@ Index DataSet::count_nan() const
 }
 
 
+void DataSet::set_missing_values_number(const Index& new_missing_values_number)
+{
+    missing_values_number = new_missing_values_number;
+}
+
+
+void DataSet::set_missing_values_number()
+{
+    missing_values_number = count_nan();
+}
+
+
+void DataSet::set_columns_missing_values_number(const Tensor<Index, 1>& new_columns_missing_values_number)
+{
+    columns_missing_values_number = new_columns_missing_values_number;
+}
+
+
+void DataSet::set_columns_missing_values_number()
+{
+    columns_missing_values_number = count_nan_columns();
+}
+
+
+void DataSet::set_rows_missing_values_number(const Index& new_rows_missing_values_number)
+{
+    rows_missing_values_number = new_rows_missing_values_number;
+}
+
+
+void DataSet::set_rows_missing_values_number()
+{
+    rows_missing_values_number = count_rows_with_nan();
+}
+
+
 Tensor<Index, 1> DataSet::push_back(const Tensor<Index, 1>& old_vector, const Index& new_string) const
 {
     const Index old_size = old_vector.size();
