@@ -626,13 +626,35 @@ type maximum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
     return maximum;
 }
 
+/// Returns the largest element of a index vector.
+/// @param vector Vector to obtain the maximum value.
 
-time_t maximum(const Tensor<time_t, 1>& vector)
+Index maximum(const Tensor<Index, 1>& vector)
 {
-    const Tensor<time_t,0> max_element = vector.maximum();
+    const Index size = vector.size();
 
-    return max_element(0);
+    if(size == 0) return 0;
+
+    Index maximum = -numeric_limits<Index>::max();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(vector(i) > maximum)
+        {
+            maximum = vector(i);
+        }
+    }
+
+    return maximum;
 }
+
+
+//time_t maximum(const Tensor<time_t, 1>& vector)
+//{
+//    const Tensor<time_t,0> max_element = vector.maximum();
+
+//    return max_element(0);
+//}
 
 
 /// Returns the maximums values of given columns.

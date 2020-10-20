@@ -2591,13 +2591,16 @@ string NeuralNetwork::write_expression_python() const
     buffer <<"\tsample = [input_1, input_2, input_3, input_4, ...] 	 \t"<<endl;
     buffer <<"\toutputs = neural_network(sample)"<<endl;
     buffer <<""<<endl;
+    buffer <<"\tInputs Names: \t"<<endl;
+    buffer <<"\t" << get_inputs_names() << endl;
+    buffer <<""<<endl;
     buffer <<"Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
     buffer <<"however you can loop throw neural network function in order to get multiple outputs.\t"<<endl;
     buffer <<"'''"<<endl;
     buffer <<""<<endl;
     buffer << "import numpy as np\n" << endl;
 
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i  < layers_number; i++)
     {
         buffer << layers_pointers[i]->write_expression_python() << endl;
     }
