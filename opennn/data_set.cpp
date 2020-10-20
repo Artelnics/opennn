@@ -5514,15 +5514,19 @@ Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() co
 
 bool DataSet::has_nan() const
 {
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        for(Index j = 0; j < data.dimension(1); j++)
-        {
-            if(::isnan(data(i,j))) return true;
-        }
-    }
+    for(Index i = 0; i < data.size(); i++) if(::isnan(data(i))) return true;
 
     return false;
+
+//    for(Index i = 0; i < data.dimension(0); i++)
+//    {
+//        for(Index j = 0; j < data.dimension(1); j++)
+//        {
+//            if(::isnan(data(i,j))) return true;
+//        }
+//    }
+
+//    return false;
 }
 
 
@@ -9587,21 +9591,26 @@ void DataSet::impute_missing_values_mean()
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
-//    const Index samples_number = get_samples_number();
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
+
+    Index current_variable;
+    Index current_sample;
 
 #pragma omp parallel for schedule(dynamic)
 
     for(Index j = 0; j < variables_number; j++)
     {
+        current_variable = used_variables_indices(j);
+
         for(Index i = 0; i < samples_number; i++)
         {
-            if(::isnan(data(used_samples_indices(i), used_variables_indices(j))))
-            {
-                data(used_samples_indices(i),used_variables_indices(j)) = means(j);
-            }
+            current_sample = used_samples_indices(i);
 
+            if(::isnan(data(current_sample, current_variable)))
+            {
+                data(current_sample,current_variable) = means(j);
+            }
         }
     }
 }
