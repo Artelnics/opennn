@@ -758,6 +758,10 @@ public:
    void set_rows_missing_values_number(const Index&);
    void set_rows_missing_values_number();
 
+   // Other methods
+
+   void fix_repeated_names();
+
    // scaling
 
    void set_min_max_range(const type min, const type max);
