@@ -9368,9 +9368,9 @@ bool DataSet::has_data() const
 
 Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type, 1>& maximums)
 {
-    const Tensor<Index, 1> used_variables_indices = get_used_columns_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
 
-    const Index used_variables_number = get_used_variables_number();
+    const Index used_variables_number = used_variables_indices.size();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -9417,6 +9417,8 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
             sample_index = used_samples_indices(j);
 
             if(get_sample_use(sample_index) == UnusedSample) continue;
+
+            if(isnan(data(sample_index, variable_index))) continue;
 
             if(fabsf(data(sample_index, variable_index) - minimums(i)) <= static_cast<type>(1e-3)
                     || fabsf(data(sample_index, variable_index) - maximums(i)) <= static_cast<type>(1e-3)) continue;
