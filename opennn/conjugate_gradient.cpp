@@ -1139,7 +1139,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training loss: " << training_back_propagation.loss << "\n"
+                     << "Training error: " << training_back_propagation.error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;

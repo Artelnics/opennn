@@ -511,7 +511,7 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
     {
         if(display)
         {
-            cout << "Training loss: " << optimum_losses[0] << endl;
+            cout << "Training error: " << optimum_losses[0] << endl;
             cout << "Selection error: " << optimum_losses[1] << endl;
             cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
         }
@@ -533,7 +533,7 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
         if(display && trials_number != 1)
         {
             cout << "Trial number: " << i << endl;
-            cout << "Training loss: " << training_error << endl;
+            cout << "Training error: " << training_error << endl;
             cout << "Selection error: " << selection_error << endl;
             cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
         }
@@ -549,7 +549,7 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
     if(display)
     {
         if(trials_number != 1) cout << "Trial number: " << trials_number << endl;
-        cout << "Training loss: " << optimum_training_error << endl;
+        cout << "Training error: " << optimum_training_error << endl;
         cout << "Selection error: " << optimum_selection_error << endl;
         cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
     }

@@ -311,7 +311,7 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
         {
             cout << "Iteration: " << iterations << endl
                  << "Hidden neurons number: " << neurons_number << endl
-                 << "Training loss: " << current_training_loss << endl
+                 << "Training error: " << current_training_loss << endl
                  << "Selection error: " << current_selection_error << endl
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }

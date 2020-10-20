@@ -409,7 +409,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
             cout << "Current inputs: " <<  data_set_pointer->get_input_variables_names().cast<string>() << endl;
             cout << "Number of inputs: " << current_columns_indices.size() << endl;
-            cout << "Training loss: " << current_training_error << endl;
+            cout << "Training error: " << current_training_error << endl;
             cout << "Selection error: " << current_selection_error << endl;
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
