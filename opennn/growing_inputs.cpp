@@ -220,7 +220,9 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         {
             if(total_correlations(i) == correlations_descending(j))
             {
-                correlations_descending_indices(i) = j;
+//                correlations_descending_indices(i) = j;
+                correlations_descending_indices(i) = original_input_columns_indices(j);
+//                continue;
             }
         }
     }
@@ -286,7 +288,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         type optimum_selection_error_trial = numeric_limits<type>::max();
         type optimum_training_error_trial = numeric_limits<type>::max();
         Tensor<type, 1> optimum_parameters_trial(neural_network_pointer->get_parameters_number());
-#pragma omp parallel for
+
         for(Index i = 0; i < trials_number; i++)
         {
             neural_network_pointer->set_parameters(initial_parameters);
@@ -427,24 +429,22 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
             break;
         }
     }
-
     // Set Data set stuff
 
     data_set_pointer->set_input_columns_unused();
 
     const Index optimal_inputs_number = optimal_columns_indices.size();
 
-    for(Index i = 0; i< optimal_inputs_number; i++)
+    for(Index i = 0; i < optimal_inputs_number; i++)
     {
-        Index optimal_input_index = optimal_columns_indices[i];
+        const Index optimal_input_index = optimal_columns_indices[i];
 
         data_set_pointer->set_column_use(optimal_input_index, DataSet::Input);
     }
 
     const Index optimal_input_variables_number = data_set_pointer->get_input_variables_names().size();
 
-//    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).setConstant(optimal_inputs_number));
-    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).setConstant(optimal_input_variables_number));
+    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).constant(optimal_input_variables_number));
 
     // Set Neural network stuff
 
@@ -454,7 +454,6 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-//    Tensor<Descriptives, 1> new_input_descriptives(optimal_inputs_number);
     Tensor<Descriptives, 1> new_input_descriptives(optimal_input_variables_number);
     Tensor<ScalingLayer::ScalingMethod, 1> new_scaling_methods(optimal_input_variables_number);
 

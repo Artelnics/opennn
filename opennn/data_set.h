@@ -866,6 +866,14 @@ private:
 
    Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
 
+   /// Missing values
+
+   Index missing_values_number;
+
+   Tensor<Index, 1> columns_missing_values_number;
+
+   Index rows_missing_values_number;
+
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"
 #endif
