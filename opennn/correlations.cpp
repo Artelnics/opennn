@@ -20,8 +20,8 @@ type linear_correlation(const ThreadPoolDevice* thread_pool_device,
 {
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_x = filter_vectors.first;
-    const Tensor<type, 1> new_y = filter_vectors.second;
+    const Tensor<type, 1> new_x = scale_minimum_maximum(filter_vectors.first);
+    const Tensor<type, 1> new_y = scale_minimum_maximum(filter_vectors.second);
 
     const Index x_size = new_x.size();
 
@@ -656,8 +656,8 @@ RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,c
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_x = filter_vectors.first;
-    const Tensor<type, 1> new_y = filter_vectors.second;
+    const Tensor<type, 1> new_x = scale_minimum_maximum(filter_vectors.first);
+    const Tensor<type, 1> new_y = scale_minimum_maximum(filter_vectors.second);
 
     const Index new_size = new_x.size();
 
@@ -1003,8 +1003,8 @@ CorrelationResults linear_correlations(const ThreadPoolDevice*, const Tensor<typ
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_vector_x = filter_vectors.first;
-    const Tensor<type, 1> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_vector_x = scale_minimum_maximum(filter_vectors.first);
+    const Tensor<type, 1> new_vector_y = scale_minimum_maximum(filter_vectors.second);
 
     n = new_vector_x.size();
 
@@ -1238,7 +1238,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     Tensor<type, 1> coefficients(2);
     coefficients.setRandom();
-    coefficients = static_cast<type>(1.0e-2)*coefficients;
+//    coefficients = static_cast<type>(1.0e-2)*coefficients;
 
     const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
@@ -1281,6 +1281,8 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
         coefficients += gradient*step_size;
     }
+
+    cout << "Coefficients: " << coefficients << endl;
 
     // Logistic correlation
 
@@ -2228,11 +2230,17 @@ Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>& x)
     const Tensor<type, 0> minimum = x.minimum();
     const Tensor<type, 0> maximum = x.maximum();
 
+    const type min_range = -1;
+    const type max_range = 1;
+
+    const type slope = (max_range-min_range)/(maximum()-minimum());
+    const type intercept = (min_range*maximum()-max_range*minimum())/(maximum()-minimum());
+
     Tensor<type, 1> scaled_x(x.size());
 
     for(Index i = 0; i < scaled_x.size(); i++)
     {
-        scaled_x(i) = static_cast<type>(2.0)*(x(i)-minimum())/(maximum()-minimum())-static_cast<type>(1.0);
+        scaled_x(i) = slope*x(i)+intercept;
     }
 
     return scaled_x;
@@ -2250,14 +2258,20 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 
     const Tensor<type, 1> columns_maximums = OpenNN::columns_maximums(x);
 
+    const type min_range = -1;
+    const type max_range = -1;
+
     for(Index j = 0; j < columns_number; j++)
     {
         const type minimum = columns_minimums(j);
-        const type maximum = columns_maximums(j);        
+        const type maximum = columns_maximums(j);
+
+        const type slope = (max_range-min_range)/(maximum-minimum);
+        const type intercept = (min_range*maximum-max_range*minimum)/(maximum-minimum);
 
         for(Index i = 0; i < rows_number; i++)
         {
-            scaled_x(i,j) = static_cast<type>(2.0)*(x(i,j)-minimum)/(maximum-minimum)-static_cast<type>(1.0);
+            scaled_x(i,j) = slope*x(i,j)+intercept;
         }
     }
 
