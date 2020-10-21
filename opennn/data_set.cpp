@@ -5750,9 +5750,6 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 throw logic_error(buffer.str());
             }
-
-            cout << "regressions(i,j).a: " << regressions(i,j).a << endl;
-            cout << "regressions(i,j).b: " << regressions(i,j).b << endl;
         }
     }
 
@@ -6514,11 +6511,11 @@ void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, 
 {
     const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ?
                 0 :
-                static_cast<type>((max_range-min_range))/(input_statistics.maximum-input_statistics.minimum);
+                (max_range-min_range)/(input_statistics.maximum-input_statistics.minimum);
 
     const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ?
                 0 :
-                ((static_cast<type>(1)-static_cast<type>((max_range-min_range)))*input_statistics.minimum-input_statistics.maximum)/(input_statistics.maximum-input_statistics.minimum);
+                (min_range*input_statistics.maximum-max_range*input_statistics.minimum)/(input_statistics.maximum-input_statistics.minimum);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -6874,11 +6871,11 @@ void DataSet::scale_target_minimum_maximum(const Descriptives& target_statistics
 {
     const type slope = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
                 0 :
-                static_cast<type>((max_range-min_range))/(target_statistics.maximum-target_statistics.minimum);
+                (max_range-min_range)/(target_statistics.maximum-target_statistics.minimum);
 
     const type intercept = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
                 0 :
-                ((static_cast<type>(1)-static_cast<type>((max_range-min_range)))*target_statistics.minimum-target_statistics.maximum)/(target_statistics.maximum-target_statistics.minimum);
+                (min_range*target_statistics.maximum-max_range*target_statistics.minimum)/(target_statistics.maximum-target_statistics.minimum);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -6970,18 +6967,9 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables(const Tensor<string, 1>&
 
 void DataSet::unscale_input_variable_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
-//    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum - input_statistics.minimum)/static_cast<type>(2);
+    const type slope = std::abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
 
-//    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? input_statistics.minimum : (input_statistics.minimum + input_statistics.maximum)/static_cast<type>(2);
-
-//    for(Index i = 0; i < data.dimension(0); i++)
-//    {
-//        data(i, input_index) = data(i, input_index)*slope + intercept;
-//    }
-
-    const type slope = (input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
-
-    const type intercept = input_statistics.minimum - min_range*(input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
+    const type intercept = std::abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : -(min_range*input_statistics.maximum-max_range*input_statistics.minimum)/(max_range-min_range);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -7078,9 +7066,9 @@ void DataSet::unscale_input_variables(const Tensor<string, 1>& scaling_unscaling
 
 void DataSet::unscale_target_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
 {
-    const type slope = (target_statistics.maximum-target_statistics.minimum)/(max_range-min_range);
+    const type slope = std::abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : (target_statistics.maximum-target_statistics.minimum)/(max_range-min_range);
 
-    const type intercept = target_statistics.minimum - min_range*(target_statistics.maximum-target_statistics.minimum)/(max_range-min_range);
+    const type intercept = std::abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : -(min_range*target_statistics.maximum-max_range*target_statistics.minimum)/(max_range-min_range);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {

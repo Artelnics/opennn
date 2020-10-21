@@ -843,9 +843,11 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     }
                     else if(scaling_methods(j) == MinimumMaximum)
                     {
-                        const type slope = (max_range-min_range)/(descriptives(j).maximum-descriptives(j).minimum);
+                        const type slope =
+                                    (max_range-min_range)/(descriptives(j).maximum-descriptives(j).minimum);
 
-                        const type intercept = ((1-(max_range-min_range))*descriptives(j).minimum-descriptives(j).maximum)/(descriptives(j).maximum-descriptives(j).minimum);
+                        const type intercept =
+                                    (min_range*descriptives(j).maximum-max_range*descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum);
 
                         outputs(i,j) = inputs(i,j)*slope + intercept;
                     }
