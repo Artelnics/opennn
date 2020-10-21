@@ -1128,7 +1128,7 @@ void GeneticAlgorithm::calculate_fitness()
     {
     case ObjectiveBased:
     {
-        calculate_objetive_fitness();
+        calculate_objective_fitness();
         break;
     }
     case RankBased:
@@ -1142,7 +1142,7 @@ void GeneticAlgorithm::calculate_fitness()
 
 /// Calculate the fitness with error based fitness assignment method.
 
-void GeneticAlgorithm::calculate_objetive_fitness()
+void GeneticAlgorithm::calculate_objective_fitness()
 {
 
     fitness.resize(loss.dimension(0));
@@ -1177,16 +1177,16 @@ void GeneticAlgorithm::calculate_rank_fitness()
     {
         for(Index j = 0; j < column_size; j++)
         {
-            for(Index k = 0; k < previous_rank.size(); k++)
-            {
-                if(previous_rank(k) == j) continue;
-            }
+//            for(Index k = 0; k < previous_rank.size(); k++)
+//            {
+//                if(previous_rank(k) == j) continue;
+//            }
 
-            if (static_cast<Index>(sorted_vector(i)) == static_cast<Index>(column(j)))
+            if(fabsf(static_cast<type>(column(i)) - static_cast<type>(sorted_vector(j))) <= static_cast<type>(1e-6))
             {
                 rank(i) = j;
 
-                previous_rank(i) = j;
+//                previous_rank(i) = j;
 
                 break;
             }
@@ -1197,9 +1197,8 @@ void GeneticAlgorithm::calculate_rank_fitness()
 
     for(Index i = 0; i < population_size; i++)
     {
-        fitness[i] = selective_pressure*rank[i];
+        fitness(i) = selective_pressure * rank(i);
     }
-
 }
 
 
