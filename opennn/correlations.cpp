@@ -16,12 +16,12 @@ namespace OpenNN
 /// @param y Vector for computing the linear correlation with the x vector.
 
 type linear_correlation(const ThreadPoolDevice* thread_pool_device,
-                        const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+                        const Tensor<type, 1>& x, const Tensor<type, 1>& y, const bool & scale_vectors)
 {
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_x = scale_minimum_maximum(filter_vectors.first);
-    const Tensor<type, 1> new_y = scale_minimum_maximum(filter_vectors.second);
+    const Tensor<type, 1> new_x = scale_vectors ? scale_minimum_maximum(filter_vectors.first) : filter_vectors.first;
+    const Tensor<type, 1> new_y = scale_vectors ? scale_minimum_maximum(filter_vectors.second) : filter_vectors.second;
 
     const Index x_size = new_x.size();
 
@@ -170,7 +170,7 @@ type exponential_correlation(const ThreadPoolDevice* thread_pool_device, const T
         if(!::isnan(y(i)) && y(i) <= 0) return NAN;
     }
 
-    return linear_correlation(thread_pool_device, x, y.log());
+    return linear_correlation(thread_pool_device, x, y.log(), false);
 }
 
 
@@ -203,7 +203,7 @@ type logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
         if(!::isnan(x(i)) && x(i) <= 0) return NAN;
     }
 
-    return linear_correlation(thread_pool_device, x.log(), y);
+    return linear_correlation(thread_pool_device, x.log(), y, false);
 }
 
 
@@ -250,7 +250,7 @@ type power_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<
         if(!::isnan(y(i)) && y(i) <= 0) return NAN;
     }
 
-    return linear_correlation(thread_pool_device, x.log(), y.log());
+    return linear_correlation(thread_pool_device, x.log(), y.log(), false);
 }
 
 
@@ -911,7 +911,6 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     Tensor<type, 1> coefficients(2);
     coefficients.setRandom();
-    coefficients = static_cast<type>(1e-2)*coefficients;
 
     const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
@@ -966,7 +965,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     const Tensor<type, 1> logistic_y = logistic(regression_results.a,regression_results.b, scaled_x);
 
-    regression_results.correlation = linear_correlation(thread_pool_device, logistic_y, new_y);
+    regression_results.correlation = linear_correlation(thread_pool_device, logistic_y, new_y, false);
 
     if(regression_results.b < 0) regression_results.correlation *= (-1);
 
@@ -1204,15 +1203,15 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     Index counter = 0;
 
-    for(Index i=0; i<scaled_x.dimension(0)-1; i++)
+    for(Index i=0; i< scaled_x.dimension(0)-1; i++)
     {
-        if(y_sorted(i) != y_sorted(i+1))
+        if((y_sorted(i) - y_sorted(i+1)) > std::numeric_limits<type>::min())
         {
             counter++;
         }
     }
 
-    if(counter == 1 && new_y(sorted_index[0]) == 0)
+    if(counter == 1 && (new_y(sorted_index[0]) - 0) < std::numeric_limits<type>::min())
     {
         CorrelationResults logistic_correlations;
 
@@ -1223,7 +1222,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
         return logistic_correlations;
     }
 
-    if(counter == 1 && new_y(sorted_index[0]) == 1)
+    if(counter == 1 && (new_y(sorted_index[0]) - 1) < std::numeric_limits<type>::min())
     {
         CorrelationResults logistic_correlations;
 
@@ -1238,7 +1237,6 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     Tensor<type, 1> coefficients(2);
     coefficients.setRandom();
-//    coefficients = static_cast<type>(1.0e-2)*coefficients;
 
     const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
@@ -1263,14 +1261,14 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
         error.device(*thread_pool_device) = activation - new_y;
 
-        mean_squared_error.device(*thread_pool_device) = error.square().sum();
+        mean_squared_error.device(*thread_pool_device) = error.square().sum()/static_cast<type>(scaled_x.dimension(0));
 
         if(mean_squared_error() < error_goal) break;
 
         Tensor<type, 0> sum_a;
-        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum();
+        sum_a.device(*thread_pool_device) = (2/static_cast<type>(scaled_x.dimension(0))*error*activation*(-1+activation)).sum();
         Tensor<type, 0> sum_b;
-        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(scaled_x)).sum();
+        sum_b.device(*thread_pool_device) = (2/static_cast<type>(scaled_x.dimension(0))*error*activation*(-1+activation)*(scaled_x)).sum();
 
         gradient(0) = sum_a();
         gradient(1) = sum_b();
@@ -1282,15 +1280,13 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
         coefficients += gradient*step_size;
     }
 
-    cout << "Coefficients: " << coefficients << endl;
-
     // Logistic correlation
 
     CorrelationResults logistic_correlations;
 
     const Tensor<type, 1> logistic_y = logistic(coefficients(0), coefficients(1), scaled_x);
 
-    logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y, new_y);
+    logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y, new_y, false);
 
     if(coefficients(1) < 0) logistic_correlations.correlation *= (-1);
 
@@ -1413,7 +1409,7 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
 
     const Tensor<type, 2> logistic_y = logistic(thread_pool_device,bias, weights, scaled_x);
 
-    logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y.chip(0,1), scaled_y.chip(0,1));
+    logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y.chip(0,1), scaled_y.chip(0,1), false);
 
     logistic_correlations.correlation_type = Logistic_correlation;
 
@@ -1659,7 +1655,7 @@ CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device
 
     const Tensor<type, 1> gaussian_y = gaussian(coefficients(0), coefficients(1), scaled_x);
 
-    gaussian_correlations.correlation = abs(linear_correlation(thread_pool_device, gaussian_y, new_y));
+    gaussian_correlations.correlation = abs(linear_correlation(thread_pool_device, gaussian_y, new_y, false));
 
     gaussian_correlations.correlation_type = Gauss_correlation;
 

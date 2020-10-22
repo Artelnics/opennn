@@ -571,7 +571,7 @@ void RecurrentLayer::initialize_recurrent_weights(const type& value)
 
 void RecurrentLayer::initialize_input_weights_Glorot(const type&,const type&)
 {
-    input_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    input_weights.setRandom();
 }
 
 
@@ -597,11 +597,11 @@ void RecurrentLayer::set_parameters_constant(const type& value)
 
 void RecurrentLayer::set_parameters_random()
 {
-    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    biases.setRandom();
 
-    input_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    input_weights.setRandom();
 
-    recurrent_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    recurrent_weights.setRandom();
 }
 
 
