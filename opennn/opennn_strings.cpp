@@ -130,9 +130,10 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
 void get_tokens(const string& str, const char& separator, Tensor<string, 1>& tokens)
 {
 
-//    const Index tokens_number = count_tokens(str, separator);
+    const Index tokens_number = count_tokens(str, separator);
 
-//    Tensor<string, 1> tokens(tokens_number);
+    Tensor<string, 1> aux_tokens(tokens_number);
+
 
     // Skip delimiters at beginning.
 
@@ -153,14 +154,14 @@ void get_tokens(const string& str, const char& separator, Tensor<string, 1>& tok
 //        tokens[index] = str.substr(lastPos, pos - lastPos);
 
         if((lastPos-old_pos != 1) && index!= 0){
-            tokens[index] = "";
+            aux_tokens[index] = "";
             index++;
             old_pos = old_pos+1;
             continue;
         }
         else{
         // Found a token, add it to the vector
-        tokens[index] = str.substr(lastPos, pos - lastPos);
+            aux_tokens[index] = str.substr(lastPos, pos - lastPos);
         }
 
         old_pos = pos;
@@ -173,6 +174,7 @@ void get_tokens(const string& str, const char& separator, Tensor<string, 1>& tok
         // Find next "non-delimiter"
 
         pos = str.find_first_of(separator, lastPos);
+        tokens = aux_tokens;
 
         index++;
     }
