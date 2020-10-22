@@ -220,9 +220,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         {
             if(total_correlations(i) == correlations_descending(j))
             {
-//                correlations_descending_indices(i) = j;
                 correlations_descending_indices(i) = original_input_columns_indices(j);
-//                continue;
+                continue;
             }
         }
     }
@@ -236,6 +235,10 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     const Tensor<Descriptives, 1> original_input_variables_descriptives = neural_network_pointer->get_scaling_layer_pointer()->get_descriptives();
 
     const Tensor<ScalingLayer::ScalingMethod, 1> original_scaling_methods = neural_network_pointer->get_scaling_layer_pointer()->get_scaling_methods();
+
+    Tensor<Layer*, 1> trainable_layers = neural_network_pointer->get_trainable_layers_pointers();
+
+    Index trainable_layers_number = trainable_layers.size();
 
     // Optimization algorithm
 
@@ -280,6 +283,17 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         neural_network_pointer->set_inputs_number(input_variables_number);
 
         neural_network_pointer->get_first_perceptron_layer_pointer()->set_parameters_random();
+
+        #pragma parallel for
+        for(int i = 0; i < trainable_layers_number; i++)
+        {
+            if(trainable_layers[i]->get_type() == Layer::Perceptron)
+            {
+                if(trainable_layers[i]->get_neurons_number() == 1) trainable_layers[i]->set_parameters_random();
+                else trainable_layers[i]->set_synaptic_weights_glorot();
+            }
+            else trainable_layers[i]->set_parameters_random();
+        }
 
         Tensor<type, 1> initial_parameters = neural_network_pointer->get_parameters();
 
