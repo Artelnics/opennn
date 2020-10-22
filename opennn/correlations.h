@@ -161,7 +161,7 @@ struct CorrelationResults
 
     // Regression methods
 
-    RegressionResults linear_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    RegressionResults linear_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&, const bool& = true);
 
     RegressionResults logarithmic_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 

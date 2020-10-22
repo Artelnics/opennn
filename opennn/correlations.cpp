@@ -635,7 +635,7 @@ type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, cons
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,const Tensor<type, 1>& x, const Tensor<type, 1>& y, const bool& scale_data)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -656,8 +656,8 @@ RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,c
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_x = scale_minimum_maximum(filter_vectors.first);
-    const Tensor<type, 1> new_y = scale_minimum_maximum(filter_vectors.second);
+    const Tensor<type, 1> new_x = scale_data ? scale_minimum_maximum(filter_vectors.first) : filter_vectors.first;
+    const Tensor<type, 1> new_y = scale_data ? scale_minimum_maximum(filter_vectors.second) : filter_vectors.second;
 
     const Index new_size = new_x.size();
 
@@ -759,7 +759,7 @@ RegressionResults logarithmic_regression(const ThreadPoolDevice* thread_pool_dev
         }
     }
 
-    logarithmic_regression = linear_regression(thread_pool_device, x.log(), y);
+    logarithmic_regression = linear_regression(thread_pool_device, x.log(), y, false);
 
     logarithmic_regression.regression_type = Logarithmic;
 
@@ -805,7 +805,7 @@ RegressionResults exponential_regression(const ThreadPoolDevice* thread_pool_dev
         }
     }
 
-    exponential_regression = linear_regression(thread_pool_device, x, y.log());
+    exponential_regression = linear_regression(thread_pool_device, x, y.log(), false);
 
     exponential_regression.regression_type = Exponential;
     exponential_regression.a = exp(exponential_regression.a);
@@ -861,7 +861,7 @@ RegressionResults power_regression(const ThreadPoolDevice* thread_pool_device, c
         }
     }
 
-    power_regression = linear_regression(thread_pool_device, x.log(), y.log());
+    power_regression = linear_regression(thread_pool_device, x.log(), y.log(), false);
 
     power_regression.regression_type = Power;
 
@@ -2255,7 +2255,7 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
     const Tensor<type, 1> columns_maximums = OpenNN::columns_maximums(x);
 
     const type min_range = -1;
-    const type max_range = -1;
+    const type max_range = 1;
 
     for(Index j = 0; j < columns_number; j++)
     {
