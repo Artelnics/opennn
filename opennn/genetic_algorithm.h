@@ -208,7 +208,7 @@ public:
 
     void calculate_fitness();
 
-    void calculate_objetive_fitness();
+    void calculate_objective_fitness();
 
     void calculate_rank_fitness();
 

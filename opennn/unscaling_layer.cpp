@@ -763,7 +763,7 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     {
                         const type slope = (descriptives(j).maximum-descriptives(j).minimum)/(max_range-min_range);
 
-                        const type intercept = -((1-(max_range-min_range))*descriptives(j).minimum-descriptives(j).maximum)/(max_range-min_range);
+                        const type intercept = -(min_range*descriptives(j).maximum-max_range*descriptives(j).minimum)/(max_range-min_range);
 
                         outputs(i,j) = inputs(i,j)*slope + intercept;
                     }

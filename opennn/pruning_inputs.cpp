@@ -303,12 +303,13 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
             #pragma parallel for
             for(int i = 0; i < trainable_layers_number; i++)
             {
-                if(trainable_layers[i]->get_type() == Layer::Perceptron) trainable_layers[i]->set_synaptic_weights_glorot();
+                if(trainable_layers[i]->get_type() == Layer::Perceptron)
+                {
+                    if(trainable_layers[i]->get_neurons_number() == 1) trainable_layers[i]->set_parameters_random();
+                    else trainable_layers[i]->set_synaptic_weights_glorot();
+                }
                 else trainable_layers[i]->set_parameters_random();
             }
-
-//            trainable_layers[trainable_layers_number - 2]->set_synaptic_weights_glorot();
-//            trainable_layers[trainable_layers_number - 1]->set_parameters_random();
 
             Tensor<type, 1> initial_parameters = neural_network_pointer->get_parameters();
 
