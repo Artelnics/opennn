@@ -8731,7 +8731,6 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         if(tokens_count != columns_number)
         {
-            cout << "LINE: " << line << endl;
 
             ostringstream buffer;
 
@@ -9903,10 +9902,10 @@ void DataSet::read_csv_1()
     {
         if(has_rows_labels && i == 0) continue;
 
-        if((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-        || (is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
-        || (is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
-        || (is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
+        if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
+        || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
+        || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
+        || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(1)(i).empty()))
         {
             columns(column_index).type = Numeric;
             column_index++;
@@ -9919,12 +9918,13 @@ void DataSet::read_csv_1()
             columns(column_index).type = DateTime;
             column_index++;
         }
-
         else{
             columns(column_index).type = Categorical;
             column_index++;
         }
     }
+
+
 }
 
 
@@ -10015,6 +10015,8 @@ void DataSet::read_csv_2_simple()
     samples_uses.setConstant(Training);
 
     split_samples_random();
+
+
 }
 
 
@@ -10072,6 +10074,7 @@ void DataSet::read_csv_3_simple()
 
     Index sample_index = 0;
     Index column_index = 0;
+
 
     while(file.good())
     {
@@ -10150,7 +10153,6 @@ void DataSet::read_csv_3_simple()
         {
             if(is_constant_numeric(data.chip(variable_index, 1)))
             {
-                cout << column<< endl;
                 columns(column).type = Constant;
                 columns(column).column_use = UnusedVariable;
             }
@@ -10312,6 +10314,7 @@ void DataSet::read_csv_2_complete()
         lines_count++;
     }
 
+
     cout << "Setting types..." << endl;
 
     for(Index j = 0; j < columns_number; j++)
@@ -10361,6 +10364,8 @@ void DataSet::read_csv_3_complete()
         throw logic_error(buffer.str());
     }
 
+
+
     const char separator_char = get_separator_char();
 
     const Index columns_number = columns.size();
@@ -10392,6 +10397,7 @@ void DataSet::read_csv_3_complete()
             break;
         }
     }
+
 
     // Check "[Tt]ime in name"
     cout << "Checking time columns..." << endl;
@@ -10428,6 +10434,7 @@ void DataSet::read_csv_3_complete()
 
         for(Index j = 0; j < raw_columns_number; j++)
         {
+
             trim(tokens(j));
 
             if(has_rows_labels && j ==0)
@@ -10437,6 +10444,7 @@ void DataSet::read_csv_3_complete()
             }
             else if(columns(column_index).type == Numeric)
             {
+
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
                     data(sample_index, variable_index) = static_cast<type>(NAN);
@@ -10446,6 +10454,7 @@ void DataSet::read_csv_3_complete()
                 {
                     try
                     {
+
                         data(sample_index, variable_index) = static_cast<type>(stod(tokens(j)));
                         variable_index++;
                     }
@@ -10535,6 +10544,8 @@ void DataSet::read_csv_3_complete()
 
     for(Index column = 0; column < get_columns_number(); column++)
     {
+
+
         if(columns(column).type == Numeric)
         {
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
