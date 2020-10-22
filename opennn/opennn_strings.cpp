@@ -72,7 +72,6 @@ Index count_tokens(const string& s, const char& c)
 Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
 //    const string new_string = get_trimmed(str);
-
     const Index tokens_number = count_tokens(str, separator);
 
     Tensor<string, 1> tokens(tokens_number);
@@ -84,24 +83,36 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
     // Find first "non-delimiter"
 
     Index index = 0;
+    Index old_pos;
+    Index old_last_pos;
 
     string::size_type pos = str.find_first_of(separator, lastPos);
 
     while(string::npos != pos || string::npos != lastPos)
     {
-        // Found a token, add it to the vector
 
+        if((lastPos-old_pos != 1) && index!= 0){
+            tokens[index] = "";
+            index++;
+            old_pos = old_pos+1;
+            continue;
+        }
+        else{
+        // Found a token, add it to the vector
         tokens[index] = str.substr(lastPos, pos - lastPos);
+        }
+
+        old_pos = pos;
+        old_last_pos = lastPos;
 
         // Skip delimiters. Note the "not_of"
-
         lastPos = str.find_first_not_of(separator, pos);
 
         // Find next "non-delimiter"
-
         pos = str.find_first_of(separator, lastPos);
 
         index++;
+
     }
 
 //    for(Index i = 0; i < tokens.size(); i++)
@@ -130,6 +141,8 @@ void get_tokens(const string& str, const char& separator, Tensor<string, 1>& tok
     // Find first "non-delimiter"
 
     Index index = 0;
+    Index old_pos;
+    Index old_last_pos;
 
     string::size_type pos = str.find_first_of(separator, lastPos);
 
@@ -137,7 +150,21 @@ void get_tokens(const string& str, const char& separator, Tensor<string, 1>& tok
     {
         // Found a token, add it to the vector
 
+//        tokens[index] = str.substr(lastPos, pos - lastPos);
+
+        if((lastPos-old_pos != 1) && index!= 0){
+            tokens[index] = "";
+            index++;
+            old_pos = old_pos+1;
+            continue;
+        }
+        else{
+        // Found a token, add it to the vector
         tokens[index] = str.substr(lastPos, pos - lastPos);
+        }
+
+        old_pos = pos;
+        old_last_pos = lastPos;
 
         // Skip delimiters. Note the "not_of"
 
