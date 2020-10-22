@@ -1265,7 +1265,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-    Tensor<type, 1> errors(3);
+    Tensor<type, 1> errors(4);
 
     // Results
 
