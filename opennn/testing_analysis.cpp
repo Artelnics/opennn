@@ -2239,7 +2239,7 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
     Tensor<Index, 1> sorted_indices(outputs.dimension(0));
     std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
 
-    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
+    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) > outputs(i2,0);});
 
     Tensor<type, 1> sorted_targets(testing_samples_number);
 
@@ -2313,7 +2313,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
     Tensor<Index, 1> sorted_indices(outputs.dimension(0));
     std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
 
-    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
+    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) > outputs(i2,0);});
 
     Tensor<type, 1> sorted_targets(testing_samples_number);
 
@@ -2441,8 +2441,8 @@ Tensor<type, 2> TestingAnalysis::calculate_lift_chart(const Tensor<type, 2>& cum
 
     for(Index i = 1; i < rows_number; i++)
     {
-        lift_chart(i, 0) = cumulative_gain(i, 0);
-        lift_chart(i, 1) = cumulative_gain(i, 1)/cumulative_gain(i, 0);
+        lift_chart(i, 0) = static_cast<type>(cumulative_gain(i, 0));
+        lift_chart(i, 1) = static_cast<type>(cumulative_gain(i, 1))/static_cast<type>(cumulative_gain(i, 0));
     }
 
     return lift_chart;
