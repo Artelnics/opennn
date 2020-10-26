@@ -242,8 +242,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     // Optimization algorithm
 
-    type current_training_error = 0;
-    type current_selection_error = 0;
+    type current_training_error;
+    type current_selection_error;
 
     Tensor<type, 1> current_parameters;
 
@@ -282,8 +282,6 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         neural_network_pointer->set_inputs_number(input_variables_number);
 
-        neural_network_pointer->get_first_perceptron_layer_pointer()->set_parameters_random();
-
         #pragma parallel for
         for(int i = 0; i < trainable_layers_number; i++)
         {
@@ -301,7 +299,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         type optimum_selection_error_trial = numeric_limits<type>::max();
         type optimum_training_error_trial = numeric_limits<type>::max();
-        Tensor<type, 1> optimum_parameters_trial(neural_network_pointer->get_parameters_number());
+        Tensor<type, 1> optimum_parameters_trial;
 
         for(Index i = 0; i < trials_number; i++)
         {
@@ -310,7 +308,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
             type current_training_error_trial = training_results.final_training_error;
             type current_selection_error_trial = training_results.final_selection_error;
-            Tensor<type, 1> current_parameters_trial = training_results.final_parameters;
+            Tensor<type, 1> current_parameters_trial = neural_network_pointer->get_parameters();
 
             if(display)
             {
@@ -332,16 +330,14 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         current_training_error = optimum_training_error_trial;
         current_parameters = optimum_parameters_trial;
 
-//        if(current_selection_error < optimum_selection_error)
         if(iteration == 0
                 ||(optimum_selection_error > current_selection_error
-                   && abs(optimum_selection_error - current_selection_error) > tolerance))
+                   && fabsf(optimum_selection_error - current_selection_error) > tolerance))
         {
             optimal_columns_indices = current_columns_indices;
             optimal_parameters = current_parameters;
             optimum_selection_error = current_selection_error;
             optimum_training_error = current_training_error;
-
         }
         else if (previus_selection_error < current_selection_error)
         {
@@ -498,7 +494,11 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         }
         else if(data_set_pointer->get_column_use(current_column_index) == DataSet::UnusedVariable)
         {
-            unused++;
+            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical) unused ++;
+            else
+            {
+                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++) unused ++;
+            }
         }
     }
 

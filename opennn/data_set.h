@@ -225,6 +225,8 @@ public:
    Tensor<Index, 1> get_samples_uses_numbers() const;
    Tensor<type, 1> get_samples_uses_percentages() const;
 
+   string get_sample_string(const Index&, const string& = ",") const;
+
    // Columns get methods
 
    Tensor<Column, 1> get_columns() const;

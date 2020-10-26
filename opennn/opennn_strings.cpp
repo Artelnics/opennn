@@ -223,7 +223,8 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 
 bool is_numeric_string(const string& str)
 {
-    /*
+    std::string::size_type index;
+
     std::istringstream iss(str.data());
 
     type dTestSink;
@@ -240,18 +241,25 @@ bool is_numeric_string(const string& str)
     // was all the input successfully consumed/converted?
     try
     {
-        stod(str);
+        stod(str, &index);
 
-        return true;
+        if(index == str.size())
+        {
+            return true;
+        }
+        else
+        {
+            return  false;
+        }
     }
     catch (exception)
     {
         return false;
     }
-    */
-    if(!std::isdigit(str[0])) return false;
-    return !str.empty() && std::find_if(str.begin(),
-        str.end(), [](unsigned char c) { return (!std::isdigit(c) && !std::isspace(c) && c != '-' && c != '+' && c != '.' && c != 'e' && c != 'E'/* && c != 'E'*/); }) == str.end();
+
+//    if(!std::isdigit(str[0])) return false;
+//    return !str.empty() && std::find_if(str.begin(),
+//        str.end(), [](unsigned char c) { return (!std::isdigit(c) && !std::isspace(c) && c != '-' && c != '+' && c != '.' && c != 'e' && c != 'E'); }) == str.end();
 }
 
 
@@ -327,8 +335,6 @@ bool is_date_time_string(const string& str)
 time_t date_to_timestamp(const string& date, const Index& gmt)
 {
     struct tm time_structure;
-
-
 
     smatch month;
 
