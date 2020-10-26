@@ -277,9 +277,9 @@ public:
 
    // Multiple classification rates
 
-   Tensor<Index, 2> calculate_multiple_classification_rates() const;
+   Tensor<Tensor<Index,1>, 2> calculate_multiple_classification_rates() const;
 
-   Tensor<Index, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
+   Tensor<Tensor<Index,1>, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
 
    Tensor<string, 2> calculate_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
 
