@@ -1515,16 +1515,27 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
-    const Index rows_number = targets.dimension(0);
-    const Index columns_number = targets.dimension(1);
+    const Index samples_number = targets.dimension(0);
+    const Index targets_number = targets.dimension(1);
 
-    Tensor<Index, 2> confusion(columns_number, columns_number);
+    if(targets_number != outputs.dimension(1))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "Tensor<Index, 2> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const method.\n"
+               << "Number of targets (" << targets_number << ") must be equal to number of outputs (" << outputs.dimension(1) << ").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    Tensor<Index, 2> confusion(targets_number, targets_number);
     confusion.setZero();
 
     Index target_index = 0;
     Index output_index = 0;
 
-    for(Index i = 0; i < rows_number; i++)
+    for(Index i = 0; i < samples_number; i++)
     {
         target_index = maximal_index(targets.chip(i, 0));
         output_index = maximal_index(outputs.chip(i, 0));
@@ -3038,7 +3049,7 @@ void TestingAnalysis::save_multiple_classification_tests(const string& classific
 
 /// Returns a matrix of subvectors which have the rates for a multiple classification problem.
 
-Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates() const
+Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_rates() const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -3100,26 +3111,43 @@ Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates() cons
 /// The number of rows of the matrix is the number targets.
 /// The number of columns of the matrix is the number of columns of the target data.
 
-Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets,
-                                                                          const Tensor<type, 2>& outputs,
-                                                                          const Tensor<Index, 1>& testing_indices) const
+Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets,
+                                                                                    const Tensor<type, 2>& outputs,
+                                                                                    const Tensor<Index, 1>& testing_indices) const
 {
-    const Index rows_number = targets.dimension(0);
-    const Index columns_number = outputs.dimension(1);
-    cout << "Rows number: " << rows_number << endl;
-    cout << "Columns number: " << columns_number << endl;
+    const Index samples_number = targets.dimension(0);
+    const Index targets_number = targets.dimension(1);
 
-    Tensor<Index, 2> multiple_classification_rates(rows_number, columns_number);
+    Tensor< Tensor<Index, 1>, 2> multiple_classification_rates(targets_number, targets_number);
+
+    // Count instances per class
+
+    const Tensor<Index, 2> confusion = calculate_confusion_multiple_classification(targets, outputs);
+
+    for(Index i = 0; i < targets_number; i++)
+    {
+        for(Index j = 0; j < targets_number; j++)
+        {
+            multiple_classification_rates(i,j).resize(confusion(i,j));
+        }
+    }
+
+    // Save indices
 
     Index target_index;
     Index output_index;
 
-    for(Index i = 0; i < rows_number; i++)
+    Tensor<Index, 2> indices(targets_number, targets_number);
+    indices.setZero();
+
+    for(Index i = 0; i < samples_number; i++)
     {
         target_index = maximal_index(targets.chip(i, 0));
         output_index = maximal_index(outputs.chip(i, 0));
 
-       multiple_classification_rates(target_index, output_index) = testing_indices(i);
+        multiple_classification_rates(target_index, output_index)(indices(target_index, output_index)) = testing_indices(i);
+
+        indices(target_index, output_index)++;
     }
 
     return multiple_classification_rates;
