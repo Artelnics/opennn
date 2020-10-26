@@ -44,6 +44,11 @@ int main(void)
     {
         cout << "OpenNN. Blank Application." << endl;
 
+        string test = "12/03/2020";
+
+        if(is_numeric_string(test)) cout << "Is numeric" << endl;
+        else cout << "Is not numeric" << endl;
+
 
         return 0;
     }
