@@ -2096,7 +2096,11 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         }
         else if(data_set_pointer->get_column_use(current_column_index) == DataSet::UnusedVariable)
         {
-            unused++;
+            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical) unused ++;
+            else
+            {
+                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++) unused ++;
+            }
         }
     }
 
