@@ -521,10 +521,13 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         }
         else if(data_set_pointer->get_column_use(current_column_index) == DataSet::UnusedVariable)
         {
-            unused++;
+            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical) unused ++;
+            else
+            {
+                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++) unused ++;
+            }
         }
     }
-
     neural_network_pointer->get_scaling_layer_pointer()->set_descriptives(new_input_descriptives);
     neural_network_pointer->get_scaling_layer_pointer()->set_scaling_methods(new_scaling_methods);
 

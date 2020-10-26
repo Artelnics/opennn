@@ -798,6 +798,76 @@ Tensor<type, 1> DataSet::get_samples_uses_percentages() const
 }
 
 
+/// Returns a string with the values of the sample corresponding to the given index.
+/// The values will be separated by the given separator char.
+/// @param sample_index Index of the sample.
+/// @param separator Separator.
+
+string DataSet::get_sample_string(const Index& sample_index, const string& separator) const
+{
+    const Tensor<type, 1> sample = data.chip(sample_index, 0);
+
+    string sample_string = "";
+
+    const Index columns_number = get_columns_number();
+
+    Index variable_index = 0;
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).type == Numeric)
+        {
+            if(::isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+            else sample_string += std::to_string(data(sample_index, variable_index));
+
+            variable_index++;
+        }
+        else if(columns(i).type == Binary)
+        {
+            if(::isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+            else sample_string += columns(i).categories(static_cast<Index>(data(sample_index, variable_index)));
+
+            variable_index++;
+        }
+        else if(columns(i).type == DateTime)
+        {
+            // @todo do something
+
+            if(::isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+            else sample_string += std::to_string(data(sample_index, variable_index));
+
+            variable_index++;
+        }
+        else if(columns(i).type == Categorical)
+        {
+            if(::isnan(data(sample_index, variable_index)))
+            {
+                sample_string += missing_values_label;
+            }
+            else
+            {
+                const Index categories_number = columns(i).get_categories_number();
+
+                for(Index j = 0; j < categories_number; j++)
+                {
+                    if(abs(data(sample_index, variable_index+j) - static_cast<type>(1)) < std::numeric_limits<type>::min())
+                    {
+                        sample_string += columns(i).categories(j);
+                        break;
+                    }
+                }
+
+                variable_index += categories_number;
+            }
+        }
+
+        if(i != columns_number-1) sample_string += separator + " ";
+    }
+
+    return sample_string;
+}
+
+
 /// Returns the indices of the samples which will be used for training.
 
 Tensor<Index, 1> DataSet::get_training_samples_indices() const
@@ -9906,7 +9976,8 @@ void DataSet::read_csv_1()
             columns(column_index).type = DateTime;
             column_index++;
         }
-        else{
+        else
+        {
             columns(column_index).type = Categorical;
             column_index++;
         }
