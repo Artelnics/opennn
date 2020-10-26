@@ -2508,6 +2508,9 @@ string NeuralNetwork::write_expression_c() const
 
     buffer << "\n\treturn outputs;\n}" << endl;
 
+    buffer << "int main(){return 0;}" << endl;
+
+
     string expression = buffer.str();
 
     replace(expression, "+-", "-");
