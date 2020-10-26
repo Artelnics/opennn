@@ -855,12 +855,10 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-    Tensor<type, 1> errors(5);
+    Tensor<type, 1> errors(6);
 
     // Results
-
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
-
 
     // SSE
     errors(0) = sum_squared_error(0);
@@ -1202,7 +1200,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors(
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-    Tensor<type, 1> errors(5);
+    Tensor<type, 1> errors(6);
 
     // Results
 
