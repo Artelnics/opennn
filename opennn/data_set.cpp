@@ -9976,7 +9976,8 @@ void DataSet::read_csv_1()
             columns(column_index).type = DateTime;
             column_index++;
         }
-        else{
+        else
+        {
             columns(column_index).type = Categorical;
             column_index++;
         }
