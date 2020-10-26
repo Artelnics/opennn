@@ -223,9 +223,7 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 
 bool is_numeric_string(const string& str)
 {
-    // Check date
-
-    if(std::find_if(str.begin(),str.end(), [](unsigned char c) { return (c == ':' || c == '/'); }) != str.end()) return false;
+    std::string::size_type index;
 
     std::istringstream iss(str.data());
 
@@ -243,9 +241,16 @@ bool is_numeric_string(const string& str)
     // was all the input successfully consumed/converted?
     try
     {
-        stod(str);
+        stod(str, &index);
 
-        return true;
+        if(index == str.size())
+        {
+            return true;
+        }
+        else
+        {
+            return  false;
+        }
     }
     catch (exception)
     {
