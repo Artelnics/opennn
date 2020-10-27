@@ -3086,6 +3086,23 @@ void DataSet::binarize_input_data(const type& threshold)
 }
 
 
+Tensor<type,2> DataSet::transform_binary_column(const Tensor<type,1>& column) const
+{
+    const Index rows_number = column.dimension(0);
+
+    Tensor<type, 2> new_column(rows_number , 2);
+    new_column.setZero();
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        if(column(i) - static_cast<type>(1) < std::numeric_limits<type>::min()) new_column(i,1) = static_cast<type>(1);
+        else new_column(i,0) = static_cast<type>(1);
+    }
+
+    return new_column;
+}
+
+
 void DataSet::set_binary_simple_columns()
 {
     bool is_binary = true;
@@ -5530,11 +5547,19 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
             else if(input_type == Binary && target_type == Categorical)
             {
-                correlations(i,j).correlation = 0;
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+
+                Tensor<type, 2> new_input = transform_binary_column(input_column);
+
+                correlations(i,j) = karl_pearson_correlations(thread_pool_device, new_input, target);
             }
             else if(input_type == Categorical && target_type == Binary)
             {
-                correlations(i,j).correlation = 0;
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                Tensor<type, 2> new_target = transform_binary_column(target_column);
+
+                correlations(i,j) = karl_pearson_correlations(thread_pool_device, input, new_target);
             }
             else if(input_type == DateTime || target_type == DateTime)
             {

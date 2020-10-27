@@ -2009,7 +2009,6 @@ Tensor<Index, 2> contingency_table(const Tensor<type, 2>& matrix, const Tensor<I
 
 type chi_square_test(const Tensor<type, 2>& matrix)
 {
-
     // Eigen stuff
 
     Eigen::array<int, 1> rows = {Eigen::array<int, 1>({1})};
