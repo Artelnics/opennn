@@ -1748,10 +1748,15 @@ void DataSet::set_default_columns_uses()
     {
         set_input();
 
-        columns(size-1).set_use(Target);
+        for(Index i = columns.size()-1; i >= 0; i--)
+        {
+            if(columns(i).type == Constant) continue;
+            if(columns(i).type == Binary) continue;
+            if(columns(i).type == Categorical) continue;
 
-//        const Index inputs_number = get_input_variables_number();
-//        const Index targets_number = get_target_variables_number();
+            columns(i).set_use(Target);
+            break;
+        }
 
         input_variables_dimensions.resize(1);
     }
