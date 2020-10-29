@@ -224,7 +224,7 @@ protected:
 
     /// Number of trials for each neural network.
 
-    Index trials_number;
+    Index trials_number = 1;
 
     // Inputs selection results
 
