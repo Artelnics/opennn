@@ -9830,30 +9830,13 @@ void DataSet::read_csv()
     }
     else
     {
+
+    //  categorical data
+
         read_csv_2_complete();
 
         read_csv_3_complete();
     }
-
-            // Fill time series
-
-//            const Index period = static_cast<Index>(data(1, time_index) - data(0,time_index));
-
-//            if(static_cast<Index>((data(data.dimension(0) - 1, time_index) - data(0,time_index))/period) + 1 == data.dimension(0))
-//            {
-//                // Do nothing
-//            }
-//            else
-//            {
-//                fill_time_series(period);
-//            }
-
-//             scrub_missing_values();
-
-            // Transform time series
-
-//            transform_time_series();
-//            split_samples_random(0.75,0,0.25);
 }
 
 
@@ -10144,12 +10127,12 @@ void DataSet::read_csv_3_simple()
         }
     }
 
+
     // Read data
 
     Index j = 0;
 
-    const Index columns_number = get_columns_number();
-//    const Index variables_number = get_variables_number();
+    //???
 
     const Index raw_columns_number = has_rows_labels ? get_columns_number() + 1 : get_columns_number();
 
@@ -10175,8 +10158,7 @@ void DataSet::read_csv_3_simple()
 
         if(line.empty()) continue;
 
-        get_tokens(line, separator_char, tokens);
-
+        fill_tokens(line, separator_char, tokens);
 
         for(j = 0; j < raw_columns_number; j++)
         {
@@ -10212,6 +10194,7 @@ void DataSet::read_csv_3_simple()
     data_file_preview(data_file_preview_index) = tokens;
 
     // Check "[Tt]ime in name"
+
     cout << "Checking time columns..." << endl;
 
     for(Index column_index = 0; column_index < columns.size(); column_index++)
@@ -10289,6 +10272,8 @@ void DataSet::read_csv_3_simple()
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
+
 }
 
 
