@@ -27,7 +27,7 @@ namespace OpenNN
     Index count_tokens(const string&, const char&);
 
     Tensor<string, 1> get_tokens(const string&, const char&);
-    void get_tokens(const string&, const char&, Tensor<string, 1>&);
+    void fill_tokens(const string&, const char&, Tensor<string, 1>&);
 
     Tensor<type, 1> to_type_vector(const string&, const char&);
 
