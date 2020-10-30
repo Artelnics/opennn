@@ -10193,21 +10193,6 @@ void DataSet::read_csv_3_simple()
 
     data_file_preview(data_file_preview_index) = tokens;
 
-    // Check "[Tt]ime in name"
-
-    cout << "Checking time columns..." << endl;
-
-    for(Index column_index = 0; column_index < columns.size(); column_index++)
-    {
-        const regex regular_expression("[Tt]ime");
-
-        smatch match;
-
-        if(regex_search(columns(column_index).name, match, regular_expression)){
-             columns(column_index).type = DateTime;
-         }
-    }
-
     file.close();
 
     cout << "Data read succesfully..." << endl;
@@ -10472,20 +10457,6 @@ void DataSet::read_csv_3_complete()
         }
     }
 
-
-    // Check "[Tt]ime in name"
-    cout << "Checking time columns..." << endl;
-
-    for(Index column_index = 0; column_index < columns.size(); column_index++)
-    {
-        const regex regular_expression("[Tt]ime");
-
-        smatch match;
-
-        if(regex_search(columns(column_index).name, match, regular_expression)){
-             columns(column_index).type = DateTime;
-         }
-    }
 
     // Read data
 
