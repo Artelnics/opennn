@@ -114,14 +114,6 @@ const bool& StochasticGradientDescent::get_reserve_selection_error_history() con
 }
 
 
-/// Returns the hardware used. Default: Multi-core
-
-const string& StochasticGradientDescent::get_hardware_use() const
-{
-    return hardware_use;
-}
-
-
 /// Sets a pointer to a loss index object to be associated to the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -359,12 +351,6 @@ void StochasticGradientDescent::set_reserve_training_error_history(const bool& n
 void StochasticGradientDescent::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
 {
     reserve_selection_error_history = new_reserve_selection_error_history;
-}
-
-
-void StochasticGradientDescent::set_hardware_use(const string& new_hardware_use)
-{
-    hardware_use = new_hardware_use;
 }
 
 

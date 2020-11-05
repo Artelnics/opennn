@@ -587,7 +587,6 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             growing_neurons.from_XML(growing_neurons_document);
         }
 
-        cout << "growing neurons" << endl;
     }
 
     // Inputs Selection
@@ -622,7 +621,6 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
                 growing_inputs.from_XML(growing_inputs_document);
             }
 
-            cout << "growing inputs" << endl;
 
             // Pruning inputs
 
@@ -645,7 +643,6 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
                 pruning_inputs.from_XML(pruning_inputs_document);
             }
 
-            cout << "pruning inputs" << endl;
 
             // Genetic algorithm
 
@@ -668,7 +665,6 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
                 genetic_algorithm.from_XML(genetic_algorithm_document);
             }
 
-            cout << "genetic algorithm" << endl;
         }
     }
 }

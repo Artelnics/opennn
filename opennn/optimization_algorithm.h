@@ -82,6 +82,7 @@ public:
         type initial_learning_rate = 0;
 
 
+
     };
 
    /// This structure contains the optimization algorithm results.    
@@ -183,6 +184,10 @@ public:
 
    LossIndex* get_loss_index_pointer() const;
 
+   /// Hardware use.
+   string get_hardware_use() const;
+   void set_hardware_use(const string&);
+
    bool has_loss_index() const;
 
    // Utilities
@@ -257,6 +262,10 @@ protected:
    Index epochs_number = 10000;
 
    // UTILITIES
+
+   ///Hardware use
+   string hardware_use = "Multi-core";
+
 
    /// Number of iterations between the training showing progress.
 
