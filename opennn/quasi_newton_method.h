@@ -181,8 +181,6 @@ public:
 
    const Index& get_epochs_number() const;
 
-   string get_hardware_use() const;
-
    // Stopping criteria
 
    const type& get_minimum_parameters_increment_norm() const;
@@ -226,8 +224,6 @@ public:
    void set_maximum_time(const type&);
 
    void set_choose_best_selection(const bool&);
-
-   void set_hardware_use(const string&);
 
    // Reserve training history
 
@@ -330,9 +326,7 @@ private:
 
    bool reserve_selection_error_history = true;
 
-   /// Hardware use.
 
-   string hardware_use = "Multi-core";
 
 };
 

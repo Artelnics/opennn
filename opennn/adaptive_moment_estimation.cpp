@@ -113,15 +113,6 @@ const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() cons
     return reserve_selection_error_history;
 }
 
-
-/// Returns the hardware used. Default: Multi-core
-
-const string& AdaptiveMomentEstimation::get_hardware_use() const
-{
-    return hardware_use;
-}
-
-
 /// Sets a pointer to a loss index object to be associated to the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -279,15 +270,6 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
 {
     reserve_selection_error_history = new_reserve_selection_error_history;
 }
-
-
-/// Set hardware to use. Default: Multi-core.
-
-void AdaptiveMomentEstimation::set_hardware_use(const string & new_hardware_use)
-{
-    hardware_use = new_hardware_use;
-}
-
 
 /// Trains a neural network with an associated loss index,
 /// according to the gradient descent method.

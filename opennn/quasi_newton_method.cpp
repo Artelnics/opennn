@@ -97,14 +97,6 @@ const Index& QuasiNewtonMethod::get_epochs_number() const
 }
 
 
-/// Returns the hardware used. Default: Multi-core
-
-string QuasiNewtonMethod::get_hardware_use() const
-{
-    return hardware_use;
-}
-
-
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& QuasiNewtonMethod::get_minimum_parameters_increment_norm() const
@@ -435,14 +427,6 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 void QuasiNewtonMethod::set_choose_best_selection(const bool& new_choose_best_selection)
 {
     choose_best_selection = new_choose_best_selection;
-}
-
-
-/// Set hardware to use. Default: Multi-core.
-
-void QuasiNewtonMethod::set_hardware_use(const string & new_hardware_use)
-{
-    hardware_use = new_hardware_use;
 }
 
 

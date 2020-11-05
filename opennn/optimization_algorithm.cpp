@@ -70,6 +70,21 @@ LossIndex* OptimizationAlgorithm::get_loss_index_pointer() const
 }
 
 
+/// Returns the hardware used. Default: Multi-core
+
+string OptimizationAlgorithm::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
+/// Set hardware to use. Default: Multi-core.
+
+void OptimizationAlgorithm::set_hardware_use(const string& new_hardware_use)
+{
+    hardware_use = new_hardware_use;
+}
+
 /// Returns true if this optimization algorithm object has an associated loss index object,
 /// and false otherwise.
 

@@ -96,8 +96,6 @@ public:
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
 
-   string get_hardware_use() const;
-
    // Training operators
 
    const TrainingDirectionMethod& get_training_direction_method() const;
@@ -127,8 +125,6 @@ public:
    void set_default();
 
    void set_loss_index_pointer(LossIndex*);
-
-   void set_hardware_use(const string&);
 
    // Training operators
 
@@ -250,9 +246,6 @@ private:
 
    bool reserve_selection_error_history;
 
-   /// Hardware use.
-
-   string hardware_use = "Multi-core";
 };
 
 }
