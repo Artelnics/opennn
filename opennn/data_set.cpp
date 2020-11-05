@@ -7405,8 +7405,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    cout << "columns number" << endl;
-
     // Columns items
 
     {
@@ -7423,8 +7421,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
     }
-
-    cout << "columns items" << endl;
 
     // Close columns
 
@@ -7452,8 +7448,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    cout << "rows labels" << endl;
-
     // Samples
 
     file_stream.OpenElement("Samples");
@@ -7469,8 +7463,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
-    cout << "samples" << endl;
 
     // Samples uses
 
@@ -7492,8 +7484,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
-    cout << "samples uses" << endl;
 
     // Close samples
 
@@ -7524,8 +7514,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    cout << "missing method" << endl;
-
     // Missing values number
 
     {
@@ -7538,8 +7526,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
-    cout << "missing values number" << endl;
 
     if(missing_values_number > 0)
     {
@@ -7565,8 +7551,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
 
-        cout << "Columns with missing values" << endl;
-
         // Rows missing values number
 
         {
@@ -7575,17 +7559,11 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             buffer.str("");
             buffer << rows_missing_values_number;
 
-            cout << "Count rows with nan" << endl;
-
             file_stream.PushText(buffer.str().c_str());
 
             file_stream.CloseElement();
         }
-
-        cout << "rows with missing values" << endl;
     }
-
-    cout << "missing values number" << endl;
 
     // Missing values
 
@@ -7622,8 +7600,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
-    cout << "preview data" << endl;
 
     // Close preview data
 

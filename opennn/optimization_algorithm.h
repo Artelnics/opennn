@@ -168,7 +168,7 @@ public:
 
        /// Elapsed time of the training process.
 
-       type elapsed_time;
+       string elapsed_time;
 
        /// Maximum number of training iterations.
 

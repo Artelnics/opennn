@@ -541,7 +541,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             if(has_selection) results.final_selection_error = selection_error;
 
-            results.elapsed_time = elapsed_time;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             results.epochs_number = epoch;
 

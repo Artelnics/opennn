@@ -346,7 +346,7 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
     results->final_selection_error = optimum_selection_error;
     results->final_training_error = optimum_training_error;
     results->iterations_number = iterations;
-    results->elapsed_time = elapsed_time;
+    results->elapsed_time = write_elapsed_time(elapsed_time);
 
     return results;
 }

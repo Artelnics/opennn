@@ -1143,7 +1143,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
             results.final_gradient_norm = gradient_norm;
 
-            results.elapsed_time = elapsed_time;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             results.epochs_number = epoch;
 
@@ -1194,7 +1194,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     results.final_gradient_norm = gradient_norm;
 
-    results.elapsed_time = elapsed_time;
+    results.elapsed_time = write_elapsed_time(elapsed_time);
 
     return results;
 }
