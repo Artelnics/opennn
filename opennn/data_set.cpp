@@ -3148,7 +3148,7 @@ void DataSet::set_binary_simple_columns()
             if(is_binary)
             {
                 columns(column_index).type = Binary;
-
+                scale_minimum_maximum_binary(values(0), values(1), column_index);
                 columns(column_index).categories.resize(2);
                 columns(column_index).categories(0) = "Class_1";// + std::to_string(values(0));
                 columns(column_index).categories(1) = "Class_2";// + std::to_string(values(1));
@@ -6361,6 +6361,28 @@ Tensor<Descriptives, 1> DataSet::scale_data_mean_standard_deviation()
     return data_descriptives;
 }
 
+
+void DataSet::scale_minimum_maximum_binary(const type& value_1, const type& value_2,const Index& column_index)
+{
+    const Index rows_number = data.dimension(0);
+
+    type slope = 0;
+    type intercept = 0;
+
+    if(value_1>value_2){
+        slope = 1/(value_1-value_2);
+        intercept = -value_2/(value_1-value_2);
+    }else{
+        slope = 1/(value_2-value_1);
+        intercept = -value_1/(value_2-value_1);
+    }
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        data(i, column_index) = slope*data(i, column_index)+intercept;
+    }
+
+}
 
 /// Subtracts off the mean to every of the input variables.
 
