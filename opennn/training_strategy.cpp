@@ -1100,10 +1100,9 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             regularization_document.InsertFirstChild(element_clone);
 
-            mean_squared_error.regularization_from_XML(regularization_document);
+            get_loss_index_pointer()->regularization_from_XML(regularization_document);
         }
     }
-
 
     cout << "Loss index loaded" << endl;
 
