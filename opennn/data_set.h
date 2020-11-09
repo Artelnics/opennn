@@ -607,6 +607,7 @@ public:
    Tensor<string, 1> calculate_default_scaling_methods() const;
    Tensor<string, 1> calculate_default_unscaling_methods() const;
    void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
+   void scale_minimum_maximum_binary(const type&, const type&, const Index&);
    void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
    Tensor<Descriptives, 1> scale_data_minimum_maximum();
    Tensor<Descriptives, 1> scale_data_mean_standard_deviation();
