@@ -111,9 +111,10 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
     minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
                                                      .pow(static_cast<type>(1.0)/minkowski_parameter);
 
-    const Index training_samples_number = data_set_pointer->get_training_samples_number();
+//    const Index training_samples_number = data_set_pointer->get_training_samples_number();
+    const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
-    back_propagation.error = minkowski_error(0) /static_cast<type>(training_samples_number);
+    back_propagation.error = minkowski_error(0) / static_cast<type>(batch_samples_number);
 }
 
 
@@ -140,7 +141,7 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
 
      #endif
 
-     const Index training_samples_number = data_set_pointer->get_training_samples_number();
+     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -149,20 +150,18 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
 
      Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
 
-//        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
-//                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_samples_number);
+//    back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
+//                                       - batch.targets_2d, minkowski_parameter)/static_cast<type>(batch_samples_number);
 
      errors.device(*thread_pool_device) = outputs - targets;
-
-     errors = errors.unaryExpr([](type value) { return value<1e-10? value : static_cast<type>(1e-3);});
 
      const Tensor<type, 0> p_norm_derivative = (errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
 
      back_propagation.output_gradient.device(*thread_pool_device)
-             = errors*(errors.abs().pow(minkowski_parameter-2));
+             = errors*(errors.abs().pow(minkowski_parameter - 2));
 
      back_propagation.output_gradient.device(*thread_pool_device) =
-             back_propagation.output_gradient/(static_cast<type>(training_samples_number)*(p_norm_derivative()));
+             back_propagation.output_gradient/(static_cast<type>(batch_samples_number)*(p_norm_derivative()));
 
 }
 
