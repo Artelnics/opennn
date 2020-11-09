@@ -273,7 +273,17 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
 
     synaptic_weights = Tensor<type, 2>(new_inputs_number, new_neurons_number);
 
-    set_synaptic_weights_glorot();
+    type minimum = -1;
+    type maximum = 1;
+
+    for(Index i = 0; i < synaptic_weights.size(); i++)
+    {
+        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+
+        synaptic_weights(i) = minimum +(maximum-minimum)*random;
+    }
+
+//    set_synaptic_weights_glorot();
 
     activation_function = new_activation_function;
 
