@@ -108,8 +108,7 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
 
     errors.device(*thread_pool_device) = outputs - targets;
 
-    minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
-                                                     .pow(static_cast<type>(1.0)/minkowski_parameter);
+    minkowski_error.device(*thread_pool_device) = (errors.abs().pow(minkowski_parameter).sum()).pow(static_cast<type>(1.0)/minkowski_parameter);
 
 //    const Index training_samples_number = data_set_pointer->get_training_samples_number();
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
@@ -155,7 +154,8 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
 
      errors.device(*thread_pool_device) = outputs - targets;
 
-     const Tensor<type, 0> p_norm_derivative = (errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
+     const Tensor<type, 0> p_norm_derivative =
+             (errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
 
      back_propagation.output_gradient.device(*thread_pool_device)
              = errors*(errors.abs().pow(minkowski_parameter - 2));
