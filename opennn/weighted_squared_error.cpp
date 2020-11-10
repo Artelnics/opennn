@@ -126,7 +126,12 @@ void WeightedSquaredError::set_weights()
 
 #endif
 
-    if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
+    if(data_set_pointer->get_target_variables_number() == 0)
+    {
+        positives_weight = 1.0;
+        negatives_weight = 1.0;
+    }
+    else if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
     {
         const Tensor<Index, 1> target_distribution = data_set_pointer->calculate_target_distribution();
 
@@ -148,8 +153,6 @@ void WeightedSquaredError::set_weights()
     {
         positives_weight = 1.0;
         negatives_weight = 1.0;
-
-        return;
     }
 
 }
@@ -167,7 +170,11 @@ void WeightedSquaredError::set_normalization_coefficient()
 
 #endif
 
-    if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
+    if(data_set_pointer->get_target_columns().size()==0)
+    {
+        normalization_coefficient = static_cast<type>(1);
+    }
+    else if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
     {
         const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
