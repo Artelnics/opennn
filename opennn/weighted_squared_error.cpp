@@ -191,9 +191,9 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 {
     data_set_pointer = new_data_set_pointer;
 
-//    set_weights();
+    set_weights();
 
-//    set_normalization_coefficient();
+    set_normalization_coefficient();
 }
 
 
@@ -357,6 +357,10 @@ void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch
 //     cout << f_2;
 //     back_propagation.output_gradient = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
      back_propagation.output_gradient.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
+
+//     cout<<back_propagation.output_gradient<<endl;
+
+//     system("pause");
 
 }
 
