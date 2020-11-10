@@ -4,15 +4,12 @@
 
 [![Build Status](https://travis-ci.org/{ORG-or-USERNAME}/{REPO-NAME}.png?branch=master)](https://travis-ci.org/Artelnics/opennn)
 
-OpenNN is a software library written in C++ for advanced analytics. It implements neural networks, the most successful machine learning method. 
+# Build the most powerful models with C++.
 
-The main advantage of OpenNN is its high performance. 
+OpenNN is an open-source neural networks library for machine learning that outstands in terms of execution speed and memory allocation. It is constantly optimized and parallelized in order to maximize its efficiency.
+OpenNN solves many real-world applications in energy, marketing, health, and more.
 
-This library outstands in terms of execution speed and memory allocation. It is constantly optimized and parallelized in order to maximize its efficiency.
-
-Some typical applications of OpenNN are business intelligence (customer segmentation, churn prevention...), health care (early diagnosis, microarray analysis,...) and engineering (performance optimization, predictive maitenance...).
-
-The documentation is composed by tutorials and examples to offer a complete overview about the library. 
+This library contains sophisticated algorithms and utilities to deal with the following artificial intelligence solutions: Regression, Classification, Forecasting and Association.
 
 The documentation can be found at the official <a href="http://opennn.net" target="_blank">OpenNN site</a>.
 
