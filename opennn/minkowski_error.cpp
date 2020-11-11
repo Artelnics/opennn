@@ -113,7 +113,7 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
 //    const Index training_samples_number = data_set_pointer->get_training_samples_number();
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
-    back_propagation.error = minkowski_error(0) / static_cast<type>(batch_samples_number);
+    back_propagation.error = minkowski_error(0) / pow(static_cast<type>(batch_samples_number), static_cast<type>(1.0)/minkowski_parameter);
 }
 
 
@@ -161,7 +161,7 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
              = errors*(errors.abs().pow(minkowski_parameter - 2));
 
      back_propagation.output_gradient.device(*thread_pool_device) =
-             back_propagation.output_gradient/(static_cast<type>(batch_samples_number)*(p_norm_derivative()));
+             back_propagation.output_gradient/(pow(static_cast<type>(batch_samples_number), static_cast<type>(1.0)/minkowski_parameter)*(p_norm_derivative()));
 
 }
 
