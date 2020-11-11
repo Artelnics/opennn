@@ -7290,6 +7290,29 @@ void DataSet::set_data_random()
     data.setRandom();
 }
 
+
+/// Initializes the data matrix with random values chosen from a uniform distribution
+/// with given minimum and maximum. The targets will be binary randoms.
+
+void DataSet::set_data_binary_random()
+{
+    data.setRandom();
+
+    const Index samples_number = data.dimension(0);
+    const Index variables_number = data.dimension(1);
+
+    const Index input_variables_number = get_input_variables_number();
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        for(Index j = input_variables_number; j < variables_number; j++)
+        {
+            data(i,j) = (1+static_cast<type>(pow((-1),rand())))/2;
+        }
+    }
+}
+
+
 /// Sets max and min scaling range for minmaxscaling.
 /// @param min and max for scaling range.
 

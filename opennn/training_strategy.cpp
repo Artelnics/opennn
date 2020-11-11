@@ -764,6 +764,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
 
     OptimizationAlgorithm::Results results;
+
     // Main
 
     switch(optimization_method)

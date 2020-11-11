@@ -180,13 +180,13 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 {
 
    samples_number = 2;
-   inputs_number = 17;
-   hidden_neurons = 9;
-   outputs_number = 1;
+   inputs_number = 4;
+   hidden_neurons = 3;
+   outputs_number = 10;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-   data_set.set_data_random();
+   data_set.set_data_binary_random();
 
    data_set.set_training();
 
@@ -198,9 +198,9 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    batch.fill(samples_indices, input_indices, target_indices);
 
-   hidden_perceptron_layer->set(inputs_number, outputs_number);
-   output_perceptron_layer->set(hidden_neurons, outputs_number);
-   probabilistic_layer->set(outputs_number, outputs_number);
+   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
+//   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   probabilistic_layer->set(hidden_neurons, outputs_number);
 
    neural_network.add_layer(hidden_perceptron_layer);
 //   neural_network.add_layer(output_perceptron_layer);
@@ -221,9 +221,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    error_gradient = training_back_propagation.gradient;
 
-//   cout << "Before numerical differentiation" << endl;
    numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation(&me);
-//   cout << "After numerical differentiation" << endl;
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
