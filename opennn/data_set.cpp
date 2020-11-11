@@ -8840,7 +8840,6 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         if(tokens_count != columns_number)
         {
-
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
