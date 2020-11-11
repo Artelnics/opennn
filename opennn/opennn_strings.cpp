@@ -90,7 +90,7 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
     while(string::npos != pos || string::npos != lastPos)
     {
 
-        if((lastPos-old_pos != 1) && index!= 0){
+        if(index != 0 && (lastPos-old_pos != 1)){
             tokens[index] = "";
             index++;
             old_pos = old_pos+1;
@@ -142,7 +142,7 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
     {
         // Found a token, add it to the vector
 
-        if((last_position-old_pos != 1) && index!= 0)
+        if(index != 0 && (last_position-old_pos != 1))
         {
             tokens[index] = "";
             index++;
