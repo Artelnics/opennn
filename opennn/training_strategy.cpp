@@ -764,6 +764,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
 
     OptimizationAlgorithm::Results results;
+
     // Main
 
     switch(optimization_method)
@@ -1100,10 +1101,9 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             regularization_document.InsertFirstChild(element_clone);
 
-            mean_squared_error.regularization_from_XML(regularization_document);
+            get_loss_index_pointer()->regularization_from_XML(regularization_document);
         }
     }
-
 
     cout << "Loss index loaded" << endl;
 
@@ -1138,8 +1138,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             gradient_descent.from_XML(gradient_descent_document);
         }
 
-        cout << "GD" << endl;
-
         // Conjugate gradient
 
         const tinyxml2::XMLElement* conjugate_gradient_element = optimization_algorithm_element->FirstChildElement("ConjugateGradient");
@@ -1160,8 +1158,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             conjugate_gradient.from_XML(conjugate_gradient_document);
         }
-
-        cout << "CG" << endl;
 
         // Quasi-Newton method
 
@@ -1184,8 +1180,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             quasi_Newton_method.from_XML(quasi_Newton_document);
         }
 
-        cout << "QN" << endl;
-
         // Levenberg Marquardt
 
         const tinyxml2::XMLElement* Levenberg_Marquardt_element = optimization_algorithm_element->FirstChildElement("LevenbergMarquardt");
@@ -1206,8 +1200,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             Levenberg_Marquardt_algorithm.from_XML(Levenberg_Marquardt_document);
         }
-
-        cout << "LM" << endl;
 
         // Stochastic gradient
 
@@ -1230,8 +1222,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             stochastic_gradient_descent.from_XML(stochastic_gradient_descent_document);
         }
 
-        cout << "SG" << endl;
-
         // Adaptive moment estimation
 
         const tinyxml2::XMLElement* adaptive_moment_estimation_element = optimization_algorithm_element->FirstChildElement("AdaptiveMomentEstimation");
@@ -1252,8 +1242,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             adaptive_moment_estimation.from_XML(adaptive_moment_estimation_document);
         }
-
-        cout << "ADAM" << endl;
     }
 
     // Display

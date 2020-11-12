@@ -103,7 +103,7 @@ public:
 
        /// Elapsed time during the loss of the algortihm.
 
-       type elapsed_time;
+       string elapsed_time;
     };
 
     // Get methods
@@ -206,7 +206,7 @@ protected:
 
     /// Number of trials for each neural network.
 
-    Index trials_number;
+    Index trials_number = 1;
 
     // Neurons selection results
 

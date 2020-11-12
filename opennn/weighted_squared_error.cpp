@@ -126,7 +126,12 @@ void WeightedSquaredError::set_weights()
 
 #endif
 
-    if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
+    if(data_set_pointer->get_target_variables_number() == 0)
+    {
+        positives_weight = 1.0;
+        negatives_weight = 1.0;
+    }
+    else if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
     {
         const Tensor<Index, 1> target_distribution = data_set_pointer->calculate_target_distribution();
 
@@ -148,8 +153,6 @@ void WeightedSquaredError::set_weights()
     {
         positives_weight = 1.0;
         negatives_weight = 1.0;
-
-        return;
     }
 
 }
@@ -167,7 +170,11 @@ void WeightedSquaredError::set_normalization_coefficient()
 
 #endif
 
-    if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
+    if(data_set_pointer->get_target_columns().size()==0)
+    {
+        normalization_coefficient = static_cast<type>(1);
+    }
+    else if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
     {
         const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
@@ -191,9 +198,9 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 {
     data_set_pointer = new_data_set_pointer;
 
-//    set_weights();
+    set_weights();
 
-//    set_normalization_coefficient();
+    set_normalization_coefficient();
 }
 
 
@@ -357,6 +364,10 @@ void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch
 //     cout << f_2;
 //     back_propagation.output_gradient = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
      back_propagation.output_gradient.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
+
+//     cout<<back_propagation.output_gradient<<endl;
+
+//     system("pause");
 
 }
 

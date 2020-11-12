@@ -180,13 +180,13 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 {
 
    samples_number = 2;
-   inputs_number = 1;
-   hidden_neurons = 1;
-   outputs_number = 1;
+   inputs_number = 4;
+   hidden_neurons = 3;
+   outputs_number = 10;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-   data_set.set_data_random();
+   data_set.set_data_binary_random();
 
    data_set.set_training();
 
@@ -198,12 +198,12 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    batch.fill(samples_indices, input_indices, target_indices);
 
-   hidden_perceptron_layer->set(inputs_number, outputs_number);
-   output_perceptron_layer->set(hidden_neurons, outputs_number);
-   probabilistic_layer->set(outputs_number, outputs_number);
+   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
+//   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   probabilistic_layer->set(hidden_neurons, outputs_number);
 
    neural_network.add_layer(hidden_perceptron_layer);
-   neural_network.add_layer(output_perceptron_layer);
+//   neural_network.add_layer(output_perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
    neural_network.set_parameters_random();
@@ -213,26 +213,26 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
    NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
    LossIndex::BackPropagation training_back_propagation(samples_number, &me);
 
+   me.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
    neural_network.forward_propagate(batch, forward_propagation);
 
    me.back_propagate(batch, forward_propagation, training_back_propagation);
 
    error_gradient = training_back_propagation.gradient;
 
-//   cout << "Before numerical differentiation" << endl;
    numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation(&me);
-//   cout << "After numerical differentiation" << endl;
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
-//   cout << "Error gradient: " << error_gradient << endl;
-//   cout << "Numerical error gradient: " << numerical_error_gradient << endl;
-//   cout << "Difference: " << difference << endl;
+   cout << "Error gradient: " << error_gradient << endl;
+   cout << "Numerical error gradient: " << numerical_error_gradient << endl;
+   cout << "Difference: " << difference << endl;
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
 
-
+/*
    // Test trivial
 {
    samples_number = 10;
@@ -304,7 +304,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
-
+*/
 //   neural_network.set();
 
 //   // Test lstm
@@ -488,8 +488,8 @@ void MinkowskiErrorTest::run_test_case() // @todo
 
    // Constructor and destructor methods
 
-   test_constructor();
-   test_destructor();
+//   test_constructor();
+//   test_destructor();
 
    // Get methods
 
@@ -501,14 +501,14 @@ void MinkowskiErrorTest::run_test_case() // @todo
 
    // Error methods
 
-   test_calculate_error();
-   test_calculate_selection_error();
+//   test_calculate_error();
+//   test_calculate_selection_error();
    test_calculate_error_gradient();
 
    // Serialization methods
 
-   test_to_XML();
-   test_from_XML();
+//   test_to_XML();
+//   test_from_XML();
 
    cout << "End of Minkowski error test case.\n\n";
 }

@@ -109,10 +109,6 @@ public:
    const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
 
-   // Hardware use
-
-   const string& get_hardware_use() const;
-
    // Set methods
 
    void set_loss_index_pointer(LossIndex*);
@@ -142,10 +138,6 @@ public:
 
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
-
-   // Hardware use
-
-   void set_hardware_use(const string&);
 
    // Training methods
 

@@ -1392,7 +1392,7 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
 
         bias_derivative.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum(Eigen::array<Index, 1>({0}));
 
-        weights_derivative.device(*thread_pool_device) = scaled_x.contract((2*error*activation*(-1+activation)), AT_B);
+        weights_derivative = scaled_x.contract((2*error*activation*(-1+activation)), AT_B);
 
         gradient_norm = bias_derivative.square().sum().sqrt() + weights_derivative.square().sum().sqrt();
 

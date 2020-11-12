@@ -297,13 +297,11 @@ void ProbabilisticLayer::set()
 
 void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)
 {
-    biases.resize(1, new_neurons_number);
+    biases = Tensor<type, 2>(1, new_neurons_number);
 
-    biases.setRandom();
+    synaptic_weights = Tensor<type, 2>(new_inputs_number, new_neurons_number);
 
-    synaptic_weights.resize(new_inputs_number, new_neurons_number);
-
-    synaptic_weights.setRandom();
+    set_parameters_random();
 
     set_default();
 }
@@ -599,9 +597,22 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 
 void ProbabilisticLayer::set_parameters_random()
 {
-    biases.setRandom();
+    const type minimum = -1;
+    const type maximum = 1;
 
-    synaptic_weights.setRandom();
+    for(Index i = 0; i < biases.size(); i++)
+    {
+        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+
+        biases(i) = minimum +(maximum-minimum)*random;
+    }
+
+    for(Index i = 0; i < synaptic_weights.size(); i++)
+    {
+        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+
+        synaptic_weights(i) = minimum +(maximum-minimum)*random;
+    }
 }
 
 /// Initializes the synaptic weights with glorot uniform distribution.
