@@ -211,15 +211,6 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
     reserve_selection_error_history = new_reserve_all_training_history;
 }
 
-
-/// Set hardware to use. Default: Multi-core.
-
-void GradientDescent::set_hardware_use(const string & new_hardware_use)
-{
-    hardware_use = new_hardware_use;
-}
-
-
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
 
@@ -770,7 +761,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
             results.final_gradient_norm = gradient_norm;
 
-            results.elapsed_time = elapsed_time;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             results.epochs_number = epoch;
 

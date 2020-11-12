@@ -107,13 +107,6 @@ const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
     return choose_best_selection;
 }
 
-/// Returns the hardware used. Default: Multi-core
-
-string LevenbergMarquardtAlgorithm::get_hardware_use() const
-{
-    return hardware_use;
-}
-
 
 /// Returns true if the error history vector is to be reserved, and false otherwise.
 
@@ -305,13 +298,6 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 #endif
 
     maximum_damping_parameter = new_maximum_damping_parameter;
-}
-
-/// Set hardware to use. Default: Multi-core.
-
-void LevenbergMarquardtAlgorithm::set_hardware_use(const string & new_hardware_use)
-{
-    hardware_use = new_hardware_use;
 }
 
 
@@ -802,7 +788,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
             results.final_gradient_norm = gradient_norm;
 
-            results.elapsed_time = elapsed_time;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             results.epochs_number = epoch;
 

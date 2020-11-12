@@ -82,6 +82,7 @@ public:
         type initial_learning_rate = 0;
 
 
+
     };
 
    /// This structure contains the optimization algorithm results.    
@@ -167,7 +168,7 @@ public:
 
        /// Elapsed time of the training process.
 
-       type elapsed_time;
+       string elapsed_time;
 
        /// Maximum number of training iterations.
 
@@ -182,6 +183,10 @@ public:
    // Get methods
 
    LossIndex* get_loss_index_pointer() const;
+
+   /// Hardware use.
+   string get_hardware_use() const;
+   void set_hardware_use(const string&);
 
    bool has_loss_index() const;
 
@@ -257,6 +262,10 @@ protected:
    Index epochs_number = 10000;
 
    // UTILITIES
+
+   ///Hardware use
+   string hardware_use = "Multi-core";
+
 
    /// Number of iterations between the training showing progress.
 

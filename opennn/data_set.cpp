@@ -3148,7 +3148,7 @@ void DataSet::set_binary_simple_columns()
             if(is_binary)
             {
                 columns(column_index).type = Binary;
-
+                scale_minimum_maximum_binary(values(0), values(1), column_index);
                 columns(column_index).categories.resize(2);
                 columns(column_index).categories(0) = "Class_1";// + std::to_string(values(0));
                 columns(column_index).categories(1) = "Class_2";// + std::to_string(values(1));
@@ -6362,6 +6362,28 @@ Tensor<Descriptives, 1> DataSet::scale_data_mean_standard_deviation()
 }
 
 
+void DataSet::scale_minimum_maximum_binary(const type& value_1, const type& value_2,const Index& column_index)
+{
+    const Index rows_number = data.dimension(0);
+
+    type slope = 0;
+    type intercept = 0;
+
+    if(value_1>value_2){
+        slope = 1/(value_1-value_2);
+        intercept = -value_2/(value_1-value_2);
+    }else{
+        slope = 1/(value_2-value_1);
+        intercept = -value_1/(value_2-value_1);
+    }
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        data(i, column_index) = slope*data(i, column_index)+intercept;
+    }
+
+}
+
 /// Subtracts off the mean to every of the input variables.
 
 void DataSet::subtract_inputs_mean()
@@ -7268,6 +7290,29 @@ void DataSet::set_data_random()
     data.setRandom();
 }
 
+
+/// Initializes the data matrix with random values chosen from a uniform distribution
+/// with given minimum and maximum. The targets will be binary randoms.
+
+void DataSet::set_data_binary_random()
+{
+    data.setRandom();
+
+    const Index samples_number = data.dimension(0);
+    const Index variables_number = data.dimension(1);
+
+    const Index input_variables_number = get_input_variables_number();
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        for(Index j = input_variables_number; j < variables_number; j++)
+        {
+            data(i,j) = (1+static_cast<type>(pow((-1),rand())))/2;
+        }
+    }
+}
+
+
 /// Sets max and min scaling range for minmaxscaling.
 /// @param min and max for scaling range.
 
@@ -7405,8 +7450,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    cout << "columns number" << endl;
-
     // Columns items
 
     {
@@ -7423,8 +7466,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
     }
-
-    cout << "columns items" << endl;
 
     // Close columns
 
@@ -7452,8 +7493,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    cout << "rows labels" << endl;
-
     // Samples
 
     file_stream.OpenElement("Samples");
@@ -7469,8 +7508,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
-    cout << "samples" << endl;
 
     // Samples uses
 
@@ -7492,8 +7529,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
-    cout << "samples uses" << endl;
 
     // Close samples
 
@@ -7524,8 +7559,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    cout << "missing method" << endl;
-
     // Missing values number
 
     {
@@ -7538,8 +7571,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
-    cout << "missing values number" << endl;
 
     if(missing_values_number > 0)
     {
@@ -7565,8 +7596,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
 
-        cout << "Columns with missing values" << endl;
-
         // Rows missing values number
 
         {
@@ -7575,17 +7604,11 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             buffer.str("");
             buffer << rows_missing_values_number;
 
-            cout << "Count rows with nan" << endl;
-
             file_stream.PushText(buffer.str().c_str());
 
             file_stream.CloseElement();
         }
-
-        cout << "rows with missing values" << endl;
     }
-
-    cout << "missing values number" << endl;
 
     // Missing values
 
@@ -7622,8 +7645,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-
-    cout << "preview data" << endl;
 
     // Close preview data
 
@@ -8711,7 +8732,7 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_input_csv() method.\n"
+               << "void check_input_csv() method.\n"
                << "Cannot open input data file: " << input_data_file_name << "\n";
 
         throw logic_error(buffer.str());
@@ -8746,7 +8767,7 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_input_csv() method.\n"
+                   << "void check_input_csv() method.\n"
                    << "Line " << line_number << ": Size of tokens in input file ("
                    << tokens_count << ") is not equal to number of columns("
                    << columns_number << "). \n"
@@ -8763,7 +8784,7 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_input_csv() method.\n"
+               << "void check_input_csv() method.\n"
                << "Input data file is empty. \n";
 
         throw logic_error(buffer.str());
@@ -8819,7 +8840,6 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
         if(tokens_count != columns_number)
         {
-
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
@@ -8881,6 +8901,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     bool is_ID = has_rows_label;
 
     const bool is_float = is_same<type, float>::value;
+    bool has_missing_values = false;
 
     while(file.good())
     {
@@ -8920,6 +8941,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
+                    has_missing_values = true;
                     input_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(is_float)
@@ -8937,6 +8959,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 if(tokens(token_index) == missing_values_label)
                 {
+                    has_missing_values = true;
                     input_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(columns(i).categories.size() > 0 && tokens(token_index) == columns(i).categories(0))
@@ -8956,6 +8979,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 {
                     if(tokens(token_index) == missing_values_label)
                     {
+                        has_missing_values = true;
                         input_data(line_number, variable_index) = static_cast<type>(NAN);
                     }
                     else if(tokens(token_index) == columns(i).categories(k))
@@ -8970,6 +8994,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
+                    has_missing_values = true;
                     input_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else
@@ -8983,6 +9008,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
+                    has_missing_values = true;
                     input_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(is_float)
@@ -9005,7 +9031,59 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
     file.close();
 
-    return input_data;
+    if(!has_missing_values)
+    {
+        return input_data;
+    }
+    else
+    {
+        // Scrub missing values
+
+        const MissingValuesMethod missing_values_method = get_missing_values_method();
+
+        if(missing_values_method == MissingValuesMethod::Unuse || missing_values_method == MissingValuesMethod::Mean)
+        {
+            const Tensor<type, 1> means = mean(input_data);
+
+            const Index samples_number = input_data.dimension(0);
+            const Index variables_number = input_data.dimension(1);
+
+        #pragma omp parallel for schedule(dynamic)
+
+            for(Index j = 0; j < variables_number; j++)
+            {
+                for(Index i = 0; i < samples_number; i++)
+                {
+                    if(::isnan(input_data(i, j)))
+                    {
+                        input_data(i,j) = means(j);
+                    }
+                }
+            }
+        }
+        else
+        {
+            const Tensor<type, 1> medians = median(input_data);
+
+            const Index samples_number = input_data.dimension(0);
+            const Index variables_number = input_data.dimension(1);
+
+        #pragma omp parallel for schedule(dynamic)
+
+            for(Index j = 0; j < variables_number; j++)
+            {
+                for(Index i = 0; i < samples_number; i++)
+                {
+                    if(::isnan(input_data(i, j)))
+                    {
+                        input_data(i,j) = medians(j);
+                    }
+                }
+            }
+        }
+
+        return input_data;
+    }
 }
 
 
@@ -9830,30 +9908,13 @@ void DataSet::read_csv()
     }
     else
     {
+
+    //  categorical data
+
         read_csv_2_complete();
 
         read_csv_3_complete();
     }
-
-            // Fill time series
-
-//            const Index period = static_cast<Index>(data(1, time_index) - data(0,time_index));
-
-//            if(static_cast<Index>((data(data.dimension(0) - 1, time_index) - data(0,time_index))/period) + 1 == data.dimension(0))
-//            {
-//                // Do nothing
-//            }
-//            else
-//            {
-//                fill_time_series(period);
-//            }
-
-//             scrub_missing_values();
-
-            // Transform time series
-
-//            transform_time_series();
-//            split_samples_random(0.75,0,0.25);
 }
 
 
@@ -10144,12 +10205,12 @@ void DataSet::read_csv_3_simple()
         }
     }
 
+
     // Read data
 
     Index j = 0;
 
-    const Index columns_number = get_columns_number();
-//    const Index variables_number = get_variables_number();
+    //???
 
     const Index raw_columns_number = has_rows_labels ? get_columns_number() + 1 : get_columns_number();
 
@@ -10175,8 +10236,7 @@ void DataSet::read_csv_3_simple()
 
         if(line.empty()) continue;
 
-        get_tokens(line, separator_char, tokens);
-
+        fill_tokens(line, separator_char, tokens);
 
         for(j = 0; j < raw_columns_number; j++)
         {
@@ -10210,20 +10270,6 @@ void DataSet::read_csv_3_simple()
     const Index data_file_preview_index = has_columns_names ? 3 : 2;
 
     data_file_preview(data_file_preview_index) = tokens;
-
-    // Check "[Tt]ime in name"
-    cout << "Checking time columns..." << endl;
-
-    for(Index column_index = 0; column_index < columns.size(); column_index++)
-    {
-        const regex regular_expression("[Tt]ime");
-
-        smatch match;
-
-        if(regex_search(columns(column_index).name, match, regular_expression)){
-             columns(column_index).type = DateTime;
-         }
-    }
 
     file.close();
 
@@ -10289,6 +10335,8 @@ void DataSet::read_csv_3_simple()
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
+
 }
 
 
@@ -10487,20 +10535,6 @@ void DataSet::read_csv_3_complete()
         }
     }
 
-
-    // Check "[Tt]ime in name"
-    cout << "Checking time columns..." << endl;
-
-    for(Index column_index = 0; column_index < columns.size(); column_index++)
-    {
-        const regex regular_expression("[Tt]ime");
-
-        smatch match;
-
-        if(regex_search(columns(column_index).name, match, regular_expression)){
-             columns(column_index).type = DateTime;
-         }
-    }
 
     // Read data
 

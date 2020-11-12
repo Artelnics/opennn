@@ -131,8 +131,6 @@ public:
 
    const bool& get_choose_best_selection() const;
 
-   string get_hardware_use() const;
-
    // Reserve training history
 
    const bool& get_reserve_training_error_history() const;
@@ -157,8 +155,6 @@ public:
 
    void set_minimum_damping_parameter(const type&);
    void set_maximum_damping_parameter(const type&);
-
-   void set_hardware_use(const string&);
 
    // Stopping criteria
 
@@ -277,10 +273,6 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
-
-   /// Hardware use.
-
-   string hardware_use = "Multi-core";
 };
 
 }

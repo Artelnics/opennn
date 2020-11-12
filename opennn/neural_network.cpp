@@ -2477,7 +2477,7 @@ string NeuralNetwork::write_expression_c() const
     buffer <<"\tvector<float> outputs = neural_network(sample);"<<endl;
     buffer <<""<<endl;
     buffer <<"Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
-    buffer <<"however you can loop throw neural network function in order to get multiple outputs.\t"<<endl;
+    buffer <<"however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
     buffer <<"*/"<<endl;
     buffer <<""<<endl;
 
@@ -2598,7 +2598,7 @@ string NeuralNetwork::write_expression_python() const
     buffer <<"\t" << get_inputs_names() << endl;
     buffer <<""<<endl;
     buffer <<"Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
-    buffer <<"however you can loop throw neural network function in order to get multiple outputs.\t"<<endl;
+    buffer <<"however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
     buffer <<"'''"<<endl;
     buffer <<""<<endl;
     buffer << "import numpy as np\n" << endl;

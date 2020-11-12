@@ -38,11 +38,13 @@ using namespace std;
 using namespace chrono;
 
 
+
 int main(void)
 {
     try
     {
         cout << "OpenNN. Blank Application." << endl;
+
 
         return 0;
     }

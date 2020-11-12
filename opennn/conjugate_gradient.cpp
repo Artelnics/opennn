@@ -59,13 +59,6 @@ LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
     return &learning_rate_algorithm;
 }
 
-/// Returns the hardware used. Default: Multi-core
-
-string ConjugateGradient::get_hardware_use() const
-{
-    return hardware_use;
-}
-
 
 /// Returns the conjugate gradient training direction method used for training.
 
@@ -183,14 +176,6 @@ void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer
     loss_index_pointer = new_loss_index_pointer;
 
     learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
-}
-
-
-/// Set hardware to use. Default: Multi-core.
-
-void ConjugateGradient::set_hardware_use(const string & new_hardware_use)
-{
-    hardware_use = new_hardware_use;
 }
 
 
@@ -1158,7 +1143,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
             results.final_gradient_norm = gradient_norm;
 
-            results.elapsed_time = elapsed_time;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             results.epochs_number = epoch;
 
@@ -1209,7 +1194,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     results.final_gradient_norm = gradient_norm;
 
-    results.elapsed_time = elapsed_time;
+    results.elapsed_time = write_elapsed_time(elapsed_time);
 
     return results;
 }
