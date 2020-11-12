@@ -96,7 +96,7 @@ string ConjugateGradient::write_training_direction_method() const
 
 const type& ConjugateGradient::get_minimum_parameters_increment_norm() const
 {
-    return minimum_parameters_increment_norm;
+    return minimum_parameters_increment_norm;    
 }
 
 
