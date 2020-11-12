@@ -152,9 +152,6 @@ public:
    string write_expression_python() const;
 
    // Serialization methods
-
-   
-
    
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
