@@ -8732,7 +8732,7 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_input_csv() method.\n"
+               << "void check_input_csv() method.\n"
                << "Cannot open input data file: " << input_data_file_name << "\n";
 
         throw logic_error(buffer.str());
@@ -8767,7 +8767,7 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_input_csv() method.\n"
+                   << "void check_input_csv() method.\n"
                    << "Line " << line_number << ": Size of tokens in input file ("
                    << tokens_count << ") is not equal to number of columns("
                    << columns_number << "). \n"
@@ -8784,7 +8784,7 @@ void DataSet::check_input_csv(const string & input_data_file_name, const char & 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_input_csv() method.\n"
+               << "void check_input_csv() method.\n"
                << "Input data file is empty. \n";
 
         throw logic_error(buffer.str());
@@ -8901,6 +8901,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     bool is_ID = has_rows_label;
 
     const bool is_float = is_same<type, float>::value;
+    bool has_missing_values = false;
 
     while(file.good())
     {
@@ -8940,6 +8941,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
+                    has_missing_values = true;
                     input_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(is_float)
@@ -8957,6 +8959,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 if(tokens(token_index) == missing_values_label)
                 {
+                    has_missing_values = true;
                     input_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(columns(i).categories.size() > 0 && tokens(token_index) == columns(i).categories(0))
@@ -8976,6 +8979,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 {
                     if(tokens(token_index) == missing_values_label)
                     {
+                        has_missing_values = true;
                         input_data(line_number, variable_index) = static_cast<type>(NAN);
                     }
                     else if(tokens(token_index) == columns(i).categories(k))
@@ -8990,6 +8994,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
+                    has_missing_values = true;
                     input_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else
@@ -9003,6 +9008,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
+                    has_missing_values = true;
                     input_data(line_number, variable_index) = static_cast<type>(NAN);
                 }
                 else if(is_float)
@@ -9025,7 +9031,59 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
     file.close();
 
-    return input_data;
+    if(!has_missing_values)
+    {
+        return input_data;
+    }
+    else
+    {
+        // Scrub missing values
+
+        const MissingValuesMethod missing_values_method = get_missing_values_method();
+
+        if(missing_values_method == MissingValuesMethod::Unuse || missing_values_method == MissingValuesMethod::Mean)
+        {
+            const Tensor<type, 1> means = mean(input_data);
+
+            const Index samples_number = input_data.dimension(0);
+            const Index variables_number = input_data.dimension(1);
+
+        #pragma omp parallel for schedule(dynamic)
+
+            for(Index j = 0; j < variables_number; j++)
+            {
+                for(Index i = 0; i < samples_number; i++)
+                {
+                    if(::isnan(input_data(i, j)))
+                    {
+                        input_data(i,j) = means(j);
+                    }
+                }
+            }
+        }
+        else
+        {
+            const Tensor<type, 1> medians = median(input_data);
+
+            const Index samples_number = input_data.dimension(0);
+            const Index variables_number = input_data.dimension(1);
+
+        #pragma omp parallel for schedule(dynamic)
+
+            for(Index j = 0; j < variables_number; j++)
+            {
+                for(Index i = 0; i < samples_number; i++)
+                {
+                    if(::isnan(input_data(i, j)))
+                    {
+                        input_data(i,j) = medians(j);
+                    }
+                }
+            }
+        }
+
+        return input_data;
+    }
 }
 
 
