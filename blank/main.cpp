@@ -45,7 +45,6 @@ int main(void)
     {
         cout << "OpenNN. Blank Application." << endl;
 
-
         return 0;
     }
     catch(exception& e)
