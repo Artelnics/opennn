@@ -803,7 +803,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                  << "Damping parameter: " << damping_parameter << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-            if(abs(selection_back_propagation.error - 0) < numeric_limits<type>::epsilon())
+            if(has_selection)
             {
                 cout << "Selection error: " << selection_back_propagation.error << endl;
             }
