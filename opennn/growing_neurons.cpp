@@ -65,7 +65,7 @@ void GrowingNeurons::set_default()
 
     step = 1;
 
-    maximum_selection_failures = 10;
+    maximum_selection_failures = 100;
 
     maximum_time = 3600;
 }
@@ -166,7 +166,6 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
     type current_training_loss = 0;
     type current_selection_error = 0;
 
-
     Tensor<type, 1> current_parameters;
 
     // Optimization algorithm
@@ -191,10 +190,10 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
         // Set new neurons number
 
         trainable_layers_pointers(trainable_layers_number-2)->set_neurons_number(neurons_number);
-        trainable_layers_pointers(trainable_layers_number-2)->set_synaptic_weights_glorot();
+//        trainable_layers_pointers(trainable_layers_number-2)->set_parameters_random();
 
         trainable_layers_pointers(trainable_layers_number-1)->set_inputs_number(neurons_number);
-        trainable_layers_pointers(trainable_layers_number-1)->set_parameters_random();
+//        trainable_layers_pointers(trainable_layers_number-1)->set_parameters_random();
 
         results->neurons_data = insert_index_result(neurons_number, results->neurons_data);
 
@@ -206,6 +205,8 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
 
         for(Index i = 0; i < trials_number; i++)
         {
+            neural_network->set_parameters_random();
+
             const OptimizationAlgorithm::Results optimization_algorithm_results
                     = training_strategy_pointer->perform_training();
 

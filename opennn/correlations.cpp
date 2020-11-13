@@ -1315,7 +1315,7 @@ vector<int> get_indices_sorted(Tensor<type,1>& x)
 
 CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread_pool_device,
                                                   const Tensor<type, 2>& x,
-                                                  const Tensor<type, 1>& y)
+                                                  const Tensor<type, 2>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -2144,10 +2144,11 @@ pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type
 }
 
 
-pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>& x, const Tensor<type, 1>& y)
+pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     Index rows_number = x.dimension(0);
-    Index columns_number = x.dimension(1);
+    Index x_columns_number = x.dimension(1);
+    Index y_columns_number = y.dimension(1);
 
     Index new_rows_number = 0;
 
@@ -2163,7 +2164,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 
         }
         else
         {
-            for(Index j = 0; j < columns_number; j++)
+            for(Index j = 0; j < x_columns_number; j++)
             {
                 if(isnan(x(i,j)))
                 {
@@ -2181,9 +2182,9 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 
         return make_pair(x, Tensor<type, 2>(y));
     }*/
 
-    Tensor<type, 2> new_x(new_rows_number, columns_number);
+    Tensor<type, 2> new_x(new_rows_number, x_columns_number);
 
-    Tensor<type, 2> new_y(new_rows_number,1);
+    Tensor<type, 2> new_y(new_rows_number,y_columns_number);
 
     Index index = 0;
 
@@ -2191,9 +2192,12 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 
     {
         if(not_NAN_row(i))
         {
-            new_y(index, 0) = y(i);
+            for(Index j = 0; j < y_columns_number; j++)
+            {
+                new_y(index, j) = y(i,j);
+            }
 
-            for(Index j = 0; j < columns_number; j++)
+            for(Index j = 0; j < x_columns_number; j++)
             {
                 new_x(index, j) = x(i, j);
             }
