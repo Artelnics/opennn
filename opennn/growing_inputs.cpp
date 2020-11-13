@@ -65,7 +65,7 @@ const Index& GrowingInputs::get_maximum_selection_failures() const
 
 void GrowingInputs::set_default()
 {
-    maximum_selection_failures = 3;
+    maximum_selection_failures = 100;
 
     if(training_strategy_pointer == nullptr || !training_strategy_pointer->has_neural_network())
     {
@@ -77,7 +77,7 @@ void GrowingInputs::set_default()
 
         const Index inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
 
-        maximum_selection_failures = static_cast<Index>(max(3.,inputs_number/5.));
+        maximum_selection_failures = 100;//static_cast<Index>(max(3.,inputs_number/5.));
 
         maximum_inputs_number = inputs_number;
     }
@@ -389,7 +389,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
             if(end_algorithm == false) cout << "Add input: " << data_set_pointer->get_variable_name(column_index) << endl;
 
             cout << "Current inputs: " <<  data_set_pointer->get_input_variables_names().cast<string>() << endl;
-            cout << "Number of inputs: " << current_columns_indices.size() << endl;
+            cout << "Number of inputs: " << data_set_pointer->get_input_variables_number()/*current_columns_indices.size()*/ << endl;
             cout << "Training error: " << current_training_error << endl;
             cout << "Selection error: " << current_selection_error << endl;
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
@@ -480,7 +480,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     if(display)
     {
         cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << endl;
-        cout << "Optimal number of inputs: " << optimal_columns_indices.size() << endl;
+        cout << "Optimal number of inputs: " << data_set_pointer->get_input_variables_number()/*optimal_columns_indices.size()*/ << endl;
         cout << "Optimum training error: " << optimum_training_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;

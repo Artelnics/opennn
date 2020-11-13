@@ -3095,8 +3095,19 @@ Tensor<type,2> DataSet::transform_binary_column(const Tensor<type,1>& column) co
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(column(i) - static_cast<type>(1) < std::numeric_limits<type>::min()) new_column(i,1) = static_cast<type>(1);
-        else new_column(i,0) = static_cast<type>(1);
+        if(abs(column(i) - static_cast<type>(1)) < std::numeric_limits<type>::min())
+        {
+            new_column(i,1) = static_cast<type>(1);
+        }
+        else if(abs(column(i) - static_cast<type>(0)) < std::numeric_limits<type>::min())
+        {
+            new_column(i,0) = static_cast<type>(1);
+        }
+        else
+        {
+            new_column(i,0) = NAN;
+            new_column(i,1) = NAN;
+        }
     }
 
     return new_column;
@@ -5517,7 +5528,9 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
-                correlations(i,j) = karl_pearson_correlations(thread_pool_device, input, target);
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
+
+//                correlations(i,j) = karl_pearson_correlations(thread_pool_device, input, target);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
@@ -5537,29 +5550,33 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             {
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target_column);
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target/*target_column*/);
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input_column);
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target/*input_column*/);
             }
             else if(input_type == Binary && target_type == Categorical)
             {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
 
-                Tensor<type, 2> new_input = transform_binary_column(input_column);
+//                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
-                correlations(i,j) = karl_pearson_correlations(thread_pool_device, new_input, target);
+//                Tensor<type, 2> new_input = transform_binary_column(input_column);
+
+//                correlations(i,j) = karl_pearson_correlations(thread_pool_device, new_input, target);
             }
             else if(input_type == Categorical && target_type == Binary)
             {
-                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
 
-                Tensor<type, 2> new_target = transform_binary_column(target_column);
+//                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = karl_pearson_correlations(thread_pool_device, input, new_target);
+//                Tensor<type, 2> new_target = transform_binary_column(target_column);
+
+//                correlations(i,j) = karl_pearson_correlations(thread_pool_device, input, new_target);
             }
             else if(input_type == DateTime || target_type == DateTime)
             {
@@ -5942,25 +5959,25 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
             {
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, current_input_j).correlation;
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, input_j/*current_input_j*/).correlation;
             }
             else if(type_i == Numeric && type_j == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, current_input_i).correlation;
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, input_i/*current_input_i*/).correlation;
             }
             else if(type_i == Categorical && type_j == Binary)
             {
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, current_input_j).correlation;
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, input_j/*current_input_j*/).correlation;
             }
             else if(type_i == Binary && type_j == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, current_input_i).correlation;
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, input_i/*current_input_i*/).correlation;
             }
             else
             {
@@ -6721,8 +6738,14 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables(const Tensor<string, 1>& 
 
     const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
 
+//    Index column_index ;
+
     for(Index i = 0; i < scaling_unscaling_methods.dimension(0); i++)
     {
+//        column_index = get_column_index(input_variables_indices(i));
+
+//        if(columns(column_index).type == Binary || columns(column_index).type == Categorical) continue;
+
         switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
         {
         case NoScaling:
@@ -7047,8 +7070,14 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables(const Tensor<string, 1>&
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
     const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
+//    Index column_index;
+
     for (Index i = 0; i < scaling_unscaling_methods.size(); i++)
     {
+//        column_index = get_column_index(target_variables_indices(i));
+
+//        if(columns(column_index).type == Binary || columns(column_index).type == Categorical) continue;
+
         switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
         {
         case NoUnscaling:
@@ -10667,8 +10696,6 @@ void DataSet::read_csv_3_complete()
 
     for(Index column = 0; column < get_columns_number(); column++)
     {
-
-
         if(columns(column).type == Numeric)
         {
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
