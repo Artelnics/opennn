@@ -161,19 +161,21 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    // Test perceptron and probabilistic
 {
    samples_number = 2;
-   inputs_number = 1;
+   inputs_number = 10;
    outputs_number = 1;
-   hidden_neurons = 1;
+   hidden_neurons = 3;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-   Tensor<type, 2> data(samples_number, inputs_number+outputs_number);
-   data.setRandom();
+//   Tensor<type, 2> data(samples_number, inputs_number+outputs_number);
+//   data.setRandom();
 
-   data(0, 1) = 1;
-   data(1, 1) = 0;
+//   data(0, 1) = 1;
+//   data(1, 1) = 0;
 
-   data_set.set_data(data);
+//   data_set.set_data(data);
+
+   data_set.set_data_binary_random();
 
    data_set.set_training();
 
@@ -203,6 +205,10 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation(&cee);
 
    const Tensor<type, 1> difference = training_back_propagation.gradient-numerical_error_gradient;
+
+   cout << "Gradient: " << endl << training_back_propagation.gradient << endl;
+   cout << "Numerical gradient: " << endl << numerical_error_gradient << endl;
+   cout << "Difference: " << endl << difference << endl;
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
