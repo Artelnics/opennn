@@ -101,6 +101,7 @@ struct CorrelationResults
             case Power_correlation: return "Power";
             case KarlPearson_correlation: return "Karl-Pearson";
             case OneWayAnova_correlation: return "One-way Anova";
+            case Gauss_correlation: return "Gauss";
         }
 
         return "";

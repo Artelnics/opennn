@@ -1253,7 +1253,22 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     Tensor<type, 1> activation(new_size);
     Tensor<type, 1> error(new_size);
 
-    for(Index i = 0; i < epochs_number; i++)
+//    type initial_learning_rate = static_cast<type>(0.001);
+//    type beta_1 = static_cast<type>(0.9);
+//    type beta_2 = static_cast<type>(0.999);
+//    type epsilon =static_cast<type>(1.e-7);
+
+//    type learning_rate;
+//    Tensor<type,1> gradient_exponential_decay(2);
+//    gradient_exponential_decay.setZero();
+//    Tensor<type,1> previous_gradient_exponential_decay(2);
+//    previous_gradient_exponential_decay.setZero();
+//    Tensor<type, 1> square_gradient_exponential_decay(2);
+//    square_gradient_exponential_decay.setZero();
+//    Tensor<type, 1> previous_square_gradient_exponential_decay(2);
+//    previous_square_gradient_exponential_decay.setZero();
+
+    for(Index iteration = 0; iteration < epochs_number; iteration++)
     {
         combination.device(*thread_pool_device) = (coefficients(1)*scaled_x + coefficients(0));
 
@@ -1276,6 +1291,24 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
         gradient_norm = gradient.square().sum().sqrt();
 
         if(gradient_norm() < gradient_norm_goal) break;
+
+//        learning_rate =
+//                    initial_learning_rate*
+//                    sqrt(1 - pow(beta_2, static_cast<type>(iteration)))/
+//                    (1 - pow(beta_1, static_cast<type>(iteration)));
+
+//        gradient_exponential_decay.device(*thread_pool_device)
+//                    = previous_gradient_exponential_decay*beta_1
+//                    + gradient*(1 - beta_1);
+
+//        square_gradient_exponential_decay.device(*thread_pool_device)
+//                = previous_square_gradient_exponential_decay*beta_2
+//                + gradient*gradient*(1 - beta_2);
+
+//        previous_square_gradient_exponential_decay = square_gradient_exponential_decay;
+
+//        coefficients.device(*thread_pool_device) -=
+//                gradient_exponential_decay*learning_rate/(square_gradient_exponential_decay.sqrt() + epsilon);
 
         coefficients += gradient*step_size;
     }
