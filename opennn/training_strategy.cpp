@@ -953,7 +953,14 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
     cross_entropy_error.write_XML(file_stream);
     weighted_squared_error.write_XML(file_stream);
 
-    mean_squared_error.write_regularization_XML(file_stream);
+    switch(loss_method)
+    {
+    case MEAN_SQUARED_ERROR : mean_squared_error.write_regularization_XML(file_stream);
+    case NORMALIZED_SQUARED_ERROR : normalized_squared_error.write_regularization_XML(file_stream);
+    case MINKOWSKI_ERROR : Minkowski_error.write_regularization_XML(file_stream);
+    case CROSS_ENTROPY_ERROR : cross_entropy_error.write_regularization_XML(file_stream);
+    case WEIGHTED_SQUARED_ERROR : weighted_squared_error.write_regularization_XML(file_stream);
+    }
 
     file_stream.CloseElement();
 
