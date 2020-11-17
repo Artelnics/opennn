@@ -1195,7 +1195,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     Tensor<type,1> x_sorted(x.dimension(0));
     Tensor<type,1> y_sorted(y.dimension(0));
 
-    for(Index i =0; i<scaled_x.dimension(0); i++)
+    for(Index i = 0; i < scaled_x.dimension(0); i++)
     {
         x_sorted(i) = scaled_x(sorted_index[i]);
         y_sorted(i) = new_y(sorted_index[i]);
@@ -1236,7 +1236,14 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
-    coefficients.setRandom();
+
+    type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+    coefficients(0) = -1 + 2*random;
+
+    random = static_cast<type>(rand()/(RAND_MAX+1.0));
+    coefficients(1) = -1 + 2*random;
+
+    cout<< "Coefficients: " << coefficients << endl;
 
     const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
@@ -1253,20 +1260,20 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     Tensor<type, 1> activation(new_size);
     Tensor<type, 1> error(new_size);
 
-//    type initial_learning_rate = static_cast<type>(0.001);
-//    type beta_1 = static_cast<type>(0.9);
-//    type beta_2 = static_cast<type>(0.999);
-//    type epsilon =static_cast<type>(1.e-7);
+    type initial_learning_rate = static_cast<type>(0.001);
+    type beta_1 = static_cast<type>(0.9);
+    type beta_2 = static_cast<type>(0.999);
+    type epsilon =static_cast<type>(1.e-7);
 
-//    type learning_rate;
-//    Tensor<type,1> gradient_exponential_decay(2);
-//    gradient_exponential_decay.setZero();
-//    Tensor<type,1> previous_gradient_exponential_decay(2);
-//    previous_gradient_exponential_decay.setZero();
-//    Tensor<type, 1> square_gradient_exponential_decay(2);
-//    square_gradient_exponential_decay.setZero();
-//    Tensor<type, 1> previous_square_gradient_exponential_decay(2);
-//    previous_square_gradient_exponential_decay.setZero();
+    type learning_rate;
+    Tensor<type,1> gradient_exponential_decay(2);
+    gradient_exponential_decay.setZero();
+    Tensor<type,1> previous_gradient_exponential_decay(2);
+    previous_gradient_exponential_decay.setZero();
+    Tensor<type, 1> square_gradient_exponential_decay(2);
+    square_gradient_exponential_decay.setZero();
+    Tensor<type, 1> previous_square_gradient_exponential_decay(2);
+    previous_square_gradient_exponential_decay.setZero();
 
     for(Index iteration = 0; iteration < epochs_number; iteration++)
     {
@@ -1292,25 +1299,25 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
         if(gradient_norm() < gradient_norm_goal) break;
 
-//        learning_rate =
-//                    initial_learning_rate*
-//                    sqrt(1 - pow(beta_2, static_cast<type>(iteration)))/
-//                    (1 - pow(beta_1, static_cast<type>(iteration)));
+        learning_rate = iteration == 0 ?
+                    initial_learning_rate
+                    : initial_learning_rate*
+                    sqrt(1 - pow(beta_2, static_cast<type>(iteration)))/
+                    (1 - pow(beta_1, static_cast<type>(iteration)));
 
-//        gradient_exponential_decay.device(*thread_pool_device)
-//                    = previous_gradient_exponential_decay*beta_1
-//                    + gradient*(1 - beta_1);
+        gradient_exponential_decay.device(*thread_pool_device)
+                    = previous_gradient_exponential_decay*beta_1
+                    + gradient*(1 - beta_1);
 
-//        square_gradient_exponential_decay.device(*thread_pool_device)
-//                = previous_square_gradient_exponential_decay*beta_2
-//                + gradient*gradient*(1 - beta_2);
+        square_gradient_exponential_decay.device(*thread_pool_device)
+                = previous_square_gradient_exponential_decay*beta_2
+                + gradient*gradient*(1 - beta_2);
 
-//        previous_square_gradient_exponential_decay = square_gradient_exponential_decay;
+        previous_square_gradient_exponential_decay = square_gradient_exponential_decay;
 
-//        coefficients.device(*thread_pool_device) -=
-//                gradient_exponential_decay*learning_rate/(square_gradient_exponential_decay.sqrt() + epsilon);
-
-        coefficients += gradient*step_size;
+        coefficients.device(*thread_pool_device) -=
+                gradient_exponential_decay*learning_rate/(square_gradient_exponential_decay.sqrt() + epsilon);
+//        coefficients += gradient*step_size;
     }
 
     // Logistic correlation
@@ -1383,10 +1390,22 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
     // Calculate coefficients
 
     Tensor<type, 2> weights(new_columns, 1);
-    weights.setRandom();
+
+    type random;
+
+    for(Index i = 0; i < weights.size(); i++)
+    {
+        random = static_cast<type>(rand()/(RAND_MAX+1.0));
+        weights(i) = -1 + 2*random;
+    }
 
     Tensor<type, 1> bias(1);
-    bias.setRandom();
+
+    for(Index i = 0; i < bias.size(); i++)
+    {
+        random = static_cast<type>(rand()/(RAND_MAX+1.0));
+        bias(i) = -1 + 2*random;
+    }
 
     const Index epochs_number = 10000;
     const type step_size = static_cast<type>(0.01);
