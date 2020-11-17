@@ -5528,6 +5528,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
+                // @todo
                 correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
 
 //                correlations(i,j) = karl_pearson_correlations(thread_pool_device, input, target);

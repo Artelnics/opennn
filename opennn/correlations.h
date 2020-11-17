@@ -24,6 +24,10 @@
 
 // OpenNN includes
 
+//#include "data_set.h"
+//#include "neural_network.h"
+//#include "training_strategy.h"
+
 #include "statistics.h"
 #include "config.h"
 
