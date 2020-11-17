@@ -593,7 +593,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
 
         optimization_data.epoch = epoch;
@@ -736,7 +736,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        else if(epoch == maximum_epochs_number-1)
+        else if(epoch == maximum_epochs_number)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached." << endl;
 
