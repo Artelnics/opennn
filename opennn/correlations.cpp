@@ -7,6 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "correlations.h"
+#include "data_set.h"
+#include "neural_network.h"
+#include "training_strategy.h"
 
 namespace OpenNN
 {
@@ -905,56 +908,110 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     const Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
 
-    const Index samples_number = scaled_x.dimension(0);
+//    const Index samples_number = scaled_x.dimension(0);
 
     // Calculate coefficients
 
-    Tensor<type, 1> coefficients(2);
-    coefficients.setRandom();
+//    Tensor<type, 1> coefficients(2);
+//    coefficients.setRandom();
 
-    const Index epochs_number = 10000;
-    const type step_size = static_cast<type>(0.01);
+//    const Index epochs_number = 10000;
+//    const type step_size = static_cast<type>(0.01);
 
-    const type error_goal = static_cast<type>(1.0e-3);
-    const type gradient_norm_goal = 0;
+//    const type error_goal = static_cast<type>(1.0e-3);
+//    const type gradient_norm_goal = 0;
 
-    Tensor<type, 0> mean_squared_error;
-    Tensor<type, 0> gradient_norm;
-    Tensor<type, 0> parameters_increment_norm;
+//    Tensor<type, 0> mean_squared_error;
+//    Tensor<type, 0> gradient_norm;
+//    Tensor<type, 0> parameters_increment_norm;
 
-    Tensor<type, 1> gradient(2);
+//    Tensor<type, 1> gradient(2);
 
-    Tensor<type, 1> combination(new_size);
-    Tensor<type, 1> activation(new_size);
-    Tensor<type, 1> error(new_size);
+//    Tensor<type, 1> combination(new_size);
+//    Tensor<type, 1> activation(new_size);
+//    Tensor<type, 1> error(new_size);
 
-    for(Index i = 0; i < epochs_number; i++)
+//    for(Index i = 0; i < epochs_number; i++)
+//    {
+//        combination.device(*thread_pool_device) = (coefficients(1)*scaled_x + coefficients(0));
+
+//        activation.device(*thread_pool_device) = (1 + combination.exp().inverse()).inverse();
+
+//        error.device(*thread_pool_device) = activation - new_y;
+
+//        mean_squared_error.device(*thread_pool_device) = error.square().sum()/static_cast<type>(samples_number);
+
+//        if(mean_squared_error() < error_goal) break;
+
+//        Tensor<type, 0> sum_a;
+//        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum();
+//        Tensor<type, 0> sum_b;
+//        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(scaled_x)).sum();
+
+//        gradient(0) = sum_a()/static_cast<type>(samples_number);
+//        gradient(1) = sum_b()/static_cast<type>(samples_number);
+
+//        gradient_norm.device(*thread_pool_device) = gradient.square().sum().sqrt();
+//        parameters_increment_norm.device(*thread_pool_device) = (gradient*step_size).square().sum().sqrt();
+
+//        if(gradient_norm() < gradient_norm_goal) break;
+
+//        coefficients += gradient*step_size;
+//    }
+
+    // Inputs: scaled_x; Targets: sorted_y
+
+    const Index input_variables_number = 1;
+    const Index target_variables_number = 1;
+    const Index samples_number = scaled_x.dimension(0);
+
+    Tensor<type, 2> data(samples_number, input_variables_number+target_variables_number);
+
+    for(Index j = 0; j <input_variables_number+target_variables_number; j++)
     {
-        combination.device(*thread_pool_device) = (coefficients(1)*scaled_x + coefficients(0));
-
-        activation.device(*thread_pool_device) = (1 + combination.exp().inverse()).inverse();
-
-        error.device(*thread_pool_device) = activation - new_y;
-
-        mean_squared_error.device(*thread_pool_device) = error.square().sum()/static_cast<type>(samples_number);
-
-        if(mean_squared_error() < error_goal) break;
-
-        Tensor<type, 0> sum_a;
-        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum();
-        Tensor<type, 0> sum_b;
-        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(scaled_x)).sum();
-
-        gradient(0) = sum_a()/static_cast<type>(samples_number);
-        gradient(1) = sum_b()/static_cast<type>(samples_number);
-
-        gradient_norm.device(*thread_pool_device) = gradient.square().sum().sqrt();
-        parameters_increment_norm.device(*thread_pool_device) = (gradient*step_size).square().sum().sqrt();
-
-        if(gradient_norm() < gradient_norm_goal) break;
-
-        coefficients += gradient*step_size;
+        if(j < input_variables_number)
+        {
+            for(Index i = 0; i < samples_number; i++)
+            {
+                data(i,j) = scaled_x(i);
+            }
+        }
+        else
+        {
+            for(Index i = 0; i < samples_number; i++)
+            {
+                data(i,j) = new_y(i);
+            }
+        }
     }
+
+    DataSet data_set(data);
+    data_set.set_training();
+
+    NeuralNetwork neural_network;
+
+    PerceptronLayer perceptron_layer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+
+    neural_network.add_layer(&perceptron_layer);
+
+    neural_network.set_parameters_random();
+
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+    training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+
+    training_strategy.get_loss_index_pointer()->set_regularization_method("L2_NORM");
+    training_strategy.get_loss_index_pointer()->set_regularization_weight(static_cast<type>(0.01));
+
+    training_strategy.set_display(false);
+    training_strategy.get_optimization_algorithm_pointer()->set_display(false);
+    training_strategy.perform_training();
+
+    // Logistic correlation
+
+    const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
     // Regression results
 
@@ -1180,7 +1237,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1>& new_x = filter_vectors.first;
-    const Tensor<type, 1>& new_y = filter_vectors.second;
+    Tensor<type, 1>& new_y = filter_vectors.second;
 
     const Index new_size = new_x.size();
 
@@ -1233,96 +1290,62 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
         return logistic_correlations;
     }
 
-    // Calculate coefficients
 
-    Tensor<type, 1> coefficients(2);
+    // Inputs: scaled_x; Targets: sorted_y
 
-    type random = static_cast<type>(rand()/(RAND_MAX+1.0));
-    coefficients(0) = -1 + 2*random;
+    const Index input_variables_number = 1;
+    const Index target_variables_number = 1;
+    const Index samples_number = scaled_x.dimension(0);
 
-    random = static_cast<type>(rand()/(RAND_MAX+1.0));
-    coefficients(1) = -1 + 2*random;
+    Tensor<type, 2> data(samples_number, input_variables_number+target_variables_number);
 
-    cout<< "Coefficients: " << coefficients << endl;
-
-    const Index epochs_number = 10000;
-    const type step_size = static_cast<type>(0.01);
-
-    const type error_goal = static_cast<type>(1.0e-3);
-    const type gradient_norm_goal = 0;
-
-    Tensor<type, 0> mean_squared_error;
-    Tensor<type, 0> gradient_norm;
-
-    Tensor<type, 1> gradient(2);
-
-    Tensor<type, 1> combination(new_size);
-    Tensor<type, 1> activation(new_size);
-    Tensor<type, 1> error(new_size);
-
-    type initial_learning_rate = static_cast<type>(0.001);
-    type beta_1 = static_cast<type>(0.9);
-    type beta_2 = static_cast<type>(0.999);
-    type epsilon =static_cast<type>(1.e-7);
-
-    type learning_rate;
-    Tensor<type,1> gradient_exponential_decay(2);
-    gradient_exponential_decay.setZero();
-    Tensor<type,1> previous_gradient_exponential_decay(2);
-    previous_gradient_exponential_decay.setZero();
-    Tensor<type, 1> square_gradient_exponential_decay(2);
-    square_gradient_exponential_decay.setZero();
-    Tensor<type, 1> previous_square_gradient_exponential_decay(2);
-    previous_square_gradient_exponential_decay.setZero();
-
-    for(Index iteration = 0; iteration < epochs_number; iteration++)
+    for(Index j = 0; j <input_variables_number+target_variables_number; j++)
     {
-        combination.device(*thread_pool_device) = (coefficients(1)*scaled_x + coefficients(0));
-
-        activation.device(*thread_pool_device) = (1 + combination.exp().inverse()).inverse();
-
-        error.device(*thread_pool_device) = activation - new_y;
-
-        mean_squared_error.device(*thread_pool_device) = error.square().sum()/static_cast<type>(scaled_x.dimension(0));
-
-        if(mean_squared_error() < error_goal) break;
-
-        Tensor<type, 0> sum_a;
-        sum_a.device(*thread_pool_device) = (2/static_cast<type>(scaled_x.dimension(0))*error*activation*(-1+activation)).sum();
-        Tensor<type, 0> sum_b;
-        sum_b.device(*thread_pool_device) = (2/static_cast<type>(scaled_x.dimension(0))*error*activation*(-1+activation)*(scaled_x)).sum();
-
-        gradient(0) = sum_a();
-        gradient(1) = sum_b();
-
-        gradient_norm = gradient.square().sum().sqrt();
-
-        if(gradient_norm() < gradient_norm_goal) break;
-
-        learning_rate = iteration == 0 ?
-                    initial_learning_rate
-                    : initial_learning_rate*
-                    sqrt(1 - pow(beta_2, static_cast<type>(iteration)))/
-                    (1 - pow(beta_1, static_cast<type>(iteration)));
-
-        gradient_exponential_decay.device(*thread_pool_device)
-                    = previous_gradient_exponential_decay*beta_1
-                    + gradient*(1 - beta_1);
-
-        square_gradient_exponential_decay.device(*thread_pool_device)
-                = previous_square_gradient_exponential_decay*beta_2
-                + gradient*gradient*(1 - beta_2);
-
-        previous_square_gradient_exponential_decay = square_gradient_exponential_decay;
-
-        coefficients.device(*thread_pool_device) -=
-                gradient_exponential_decay*learning_rate/(square_gradient_exponential_decay.sqrt() + epsilon);
-//        coefficients += gradient*step_size;
+        if(j < input_variables_number)
+        {
+            for(Index i = 0; i < samples_number; i++)
+            {
+                data(i,j) = scaled_x(i);
+            }
+        }
+        else
+        {
+            for(Index i = 0; i < samples_number; i++)
+            {
+                data(i,j) = new_y(i);
+            }
+        }
     }
+
+    DataSet data_set(data);
+    data_set.set_training();
+
+    NeuralNetwork neural_network;
+
+    PerceptronLayer perceptron_layer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+
+    neural_network.add_layer(&perceptron_layer);
+
+    neural_network.set_parameters_random();
+
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+    training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+
+    training_strategy.get_loss_index_pointer()->set_regularization_method("L2_NORM");
+    training_strategy.get_loss_index_pointer()->set_regularization_weight(static_cast<type>(0.01));
+
+    training_strategy.set_display(false);
+    training_strategy.get_optimization_algorithm_pointer()->set_display(false);
+    training_strategy.perform_training();
 
     // Logistic correlation
 
     CorrelationResults logistic_correlations;
+
+    const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
     const Tensor<type, 1> logistic_y = logistic(coefficients(0), coefficients(1), scaled_x);
 
