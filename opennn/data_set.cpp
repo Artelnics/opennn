@@ -10833,6 +10833,15 @@ void DataSet::check_special_characters(const string & line) const
 
         throw logic_error(message);
     }
+
+#ifdef __unix__
+    if(line.find("\r") != std::string::npos)
+    {
+        const string message =
+                "Error: mixed break line characters in line: " + line + ". Please, review the document.";
+        throw logic_error(message);
+    }
+#endif
 }
 
 
