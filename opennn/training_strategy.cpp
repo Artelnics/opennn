@@ -1167,48 +1167,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             conjugate_gradient.from_XML(conjugate_gradient_document);
         }
 
-        // Quasi-Newton method
-
-        const tinyxml2::XMLElement* quasi_Newton_method_element = optimization_algorithm_element->FirstChildElement("QuasiNewtonMethod");
-
-        if(quasi_Newton_method_element)
-        {
-            tinyxml2::XMLDocument quasi_Newton_document;
-
-            tinyxml2::XMLElement* quasi_newton_method_element_copy = quasi_Newton_document.NewElement("QuasiNewtonMethod");
-
-            for(const tinyxml2::XMLNode* nodeFor=quasi_Newton_method_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&quasi_Newton_document );
-                quasi_newton_method_element_copy->InsertEndChild(copy );
-            }
-
-            quasi_Newton_document.InsertEndChild(quasi_newton_method_element_copy);
-
-            quasi_Newton_method.from_XML(quasi_Newton_document);
-        }
-
-        // Levenberg Marquardt
-
-        const tinyxml2::XMLElement* Levenberg_Marquardt_element = optimization_algorithm_element->FirstChildElement("LevenbergMarquardt");
-
-        if(Levenberg_Marquardt_element)
-        {
-            tinyxml2::XMLDocument Levenberg_Marquardt_document;
-
-            tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = Levenberg_Marquardt_document.NewElement("LevenbergMarquardt");
-
-            for(const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&Levenberg_Marquardt_document );
-                levenberg_marquardt_algorithm_element_copy->InsertEndChild(copy );
-            }
-
-            Levenberg_Marquardt_document.InsertEndChild(levenberg_marquardt_algorithm_element_copy);
-
-            Levenberg_Marquardt_algorithm.from_XML(Levenberg_Marquardt_document);
-        }
-
         // Stochastic gradient
 
         const tinyxml2::XMLElement* stochastic_gradient_descent_element = optimization_algorithm_element->FirstChildElement("StochasticGradientDescent");
@@ -1249,6 +1207,48 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             adaptive_moment_estimation_document.InsertEndChild(adaptive_moment_estimation_element_copy);
 
             adaptive_moment_estimation.from_XML(adaptive_moment_estimation_document);
+        }
+
+        // Quasi-Newton method
+
+        const tinyxml2::XMLElement* quasi_Newton_method_element = optimization_algorithm_element->FirstChildElement("QuasiNewtonMethod");
+
+        if(quasi_Newton_method_element)
+        {
+            tinyxml2::XMLDocument quasi_Newton_document;
+
+            tinyxml2::XMLElement* quasi_newton_method_element_copy = quasi_Newton_document.NewElement("QuasiNewtonMethod");
+
+            for(const tinyxml2::XMLNode* nodeFor=quasi_Newton_method_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            {
+                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&quasi_Newton_document );
+                quasi_newton_method_element_copy->InsertEndChild(copy );
+            }
+
+            quasi_Newton_document.InsertEndChild(quasi_newton_method_element_copy);
+
+            quasi_Newton_method.from_XML(quasi_Newton_document);
+        }
+
+        // Levenberg Marquardt
+
+        const tinyxml2::XMLElement* Levenberg_Marquardt_element = optimization_algorithm_element->FirstChildElement("LevenbergMarquardt");
+
+        if(Levenberg_Marquardt_element)
+        {
+            tinyxml2::XMLDocument Levenberg_Marquardt_document;
+
+            tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = Levenberg_Marquardt_document.NewElement("LevenbergMarquardt");
+
+            for(const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            {
+                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&Levenberg_Marquardt_document );
+                levenberg_marquardt_algorithm_element_copy->InsertEndChild(copy );
+            }
+
+            Levenberg_Marquardt_document.InsertEndChild(levenberg_marquardt_algorithm_element_copy);
+
+            Levenberg_Marquardt_algorithm.from_XML(Levenberg_Marquardt_document);
         }
     }
 
