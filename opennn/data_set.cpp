@@ -3161,8 +3161,22 @@ void DataSet::set_binary_simple_columns()
                 columns(column_index).type = Binary;
                 scale_minimum_maximum_binary(values(0), values(1), column_index);
                 columns(column_index).categories.resize(2);
-                columns(column_index).categories(0) = "Class_1";// + std::to_string(values(0));
-                columns(column_index).categories(1) = "Class_2";// + std::to_string(values(1));
+
+                if(values(0) == 0 && values(1) == 1)
+                {
+                    columns(column_index).categories(0) = "Negative (0)";
+                    columns(column_index).categories(1) = "Positive (1)";
+                }
+                else if(values(0) == 1 && values(1) == 0)
+                {
+                    columns(column_index).categories(0) = "Positive (1)";
+                    columns(column_index).categories(1) = "Negative (0)";
+                }
+                else
+                {
+                    columns(column_index).categories(0) = "Class_1";// + std::to_string(values(0));
+                    columns(column_index).categories(1) = "Class_2";// + std::to_string(values(1));
+                }
 
                 const VariableUse column_use = columns(column_index).column_use;
                 columns(column_index).categories_uses.resize(2);
