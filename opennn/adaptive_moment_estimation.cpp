@@ -788,7 +788,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.OpenElement("HardwareUse");
 
     buffer.str("");
-    buffer << hardware_use;
+    buffer << this->get_hardware_use();
 
     file_stream.PushText(buffer.str().c_str());
 
