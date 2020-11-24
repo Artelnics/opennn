@@ -914,7 +914,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     Tensor<type, 2> data(samples_number, input_variables_number+target_variables_number);
 
-    for(Index j = 0; j <input_variables_number+target_variables_number; j++)
+    for(Index j = 0; j < input_variables_number+target_variables_number; j++)
     {
         if(j < input_variables_number)
         {
@@ -937,9 +937,9 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     NeuralNetwork neural_network;
 
-    PerceptronLayer perceptron_layer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
 
-    neural_network.add_layer(&perceptron_layer);
+    neural_network.add_layer(perceptron_layer);
 
     neural_network.set_parameters_random();
 
@@ -954,6 +954,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     training_strategy.set_display(false);
     training_strategy.get_optimization_algorithm_pointer()->set_display(false);
+
     training_strategy.perform_training();
 
     // Logistic correlation
@@ -1269,9 +1270,9 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     NeuralNetwork neural_network;
 
-    PerceptronLayer perceptron_layer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
 
-    neural_network.add_layer(&perceptron_layer);
+    neural_network.add_layer(perceptron_layer);
 
     neural_network.set_parameters_random();
 
@@ -1385,9 +1386,9 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
 
     NeuralNetwork neural_network;
 
-    PerceptronLayer perceptron_layer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
 
-    neural_network.add_layer(&perceptron_layer);
+    neural_network.add_layer(perceptron_layer);
 
     neural_network.set_parameters_random();
 
@@ -1408,8 +1409,8 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
 
     CorrelationResults logistic_correlations;
 
-    const Tensor<type, 1> bias = perceptron_layer.get_biases().chip(0,1);
-    const Tensor<type, 2> weights = perceptron_layer.get_synaptic_weights();
+    const Tensor<type, 1> bias = perceptron_layer->get_biases().chip(0,1);
+    const Tensor<type, 2> weights = perceptron_layer->get_synaptic_weights();
 
     const Tensor<type, 2> logistic_y = logistic(thread_pool_device,bias, weights, scaled_x);
 

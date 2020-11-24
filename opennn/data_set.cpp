@@ -5786,7 +5786,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
         const ColumnType input_type = columns(input_index).type;
 
-        cout << "Calculating " << columns(input_columns_indices(i)).name;
+        cout << "Calculating " << columns(input_index).name;
 
         for(Index j = 0; j < target_columns_number; j++)
         {
