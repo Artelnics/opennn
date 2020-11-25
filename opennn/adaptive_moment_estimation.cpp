@@ -988,16 +988,12 @@ void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation
             (1 - pow(beta_1, static_cast<type>(optimization_data.iteration)));
 
     optimization_data.gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.last_gradient_exponential_decay*beta_1
+            = optimization_data.gradient_exponential_decay*beta_1
             + back_propagation.gradient*(1 - beta_1);
 
-    optimization_data.last_gradient_exponential_decay = optimization_data.gradient_exponential_decay;
-
     optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.last_square_gradient_exponential_decay*beta_2
+            = optimization_data.square_gradient_exponential_decay*beta_2
             + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
-
-    optimization_data.last_square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
 
     // Update parameters
 
