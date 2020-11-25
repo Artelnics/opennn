@@ -21,6 +21,10 @@ OptimizationAlgorithm::OptimizationAlgorithm()
     NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
+#ifdef OPENNN_MKL
+    mkl_set_num_threads(n);
+#endif
+
     set_default();
 }
 
@@ -34,6 +38,10 @@ OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
     const int n = omp_get_max_threads();
     NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+#ifdef OPENNN_MKL
+    mkl_set_num_threads(n);
+#endif
 
     set_default();
 }
