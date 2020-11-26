@@ -109,6 +109,8 @@ public:
 
            output_gradient.resize(batch_samples_number, outputs_number);
 
+           errors.resize(batch_samples_number, outputs_number);
+
            gradient.resize(parameters_number);
        }
 
@@ -139,6 +141,8 @@ public:
        type loss;
 
        Tensor<type, 2> output_gradient;
+
+       Tensor<type, 2> errors;
 
        Tensor<type, 1> gradient;
    };
