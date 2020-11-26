@@ -58,11 +58,9 @@ void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
     const Tensor<type, 2>& targets = batch.targets_2d;
 
-    Tensor<type, 2> errors(batch_samples_number, outputs.dimension(1));
+    back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
-    errors.device(*thread_pool_device) = outputs - targets;
-
-    sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
+    sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
     back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_samples_number);
 }
@@ -111,11 +109,9 @@ void MeanSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
      const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
      const Tensor<type, 2>& targets = batch.targets_2d;
 
-     Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
-     errors.device(*thread_pool_device) = outputs - targets;
-
-     back_propagation.output_gradient.device(*thread_pool_device) = coefficient*errors;
+     back_propagation.output_gradient.device(*thread_pool_device) = coefficient*back_propagation.errors;
 }
 
 

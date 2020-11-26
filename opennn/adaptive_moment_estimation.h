@@ -76,8 +76,7 @@ public:
         Tensor<type, 1> gradient_exponential_decay;
         Tensor<type, 1> square_gradient_exponential_decay;
 
-        Tensor<type, 1> last_gradient_exponential_decay;
-        Tensor<type, 1> last_square_gradient_exponential_decay;
+        Tensor<type, 1> aux;
 
         Index iteration;
     };

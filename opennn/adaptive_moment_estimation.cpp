@@ -1040,11 +1040,8 @@ void AdaptiveMomentEstimation::OptimizationData::set(AdaptiveMomentEstimation* n
     square_gradient_exponential_decay.resize(parameters_number);
     square_gradient_exponential_decay.setZero();
 
-    last_gradient_exponential_decay.resize(parameters_number);
-    last_gradient_exponential_decay.setZero();
-
-    last_square_gradient_exponential_decay.resize(parameters_number);
-    last_square_gradient_exponential_decay.setZero();
+    aux.resize(parameters_number);
+    aux.setZero();
 }
 
 
