@@ -75,6 +75,9 @@ public:
 
             const Index neurons_number = layer_pointer->get_neurons_number();
 
+            ones_2d.resize(batch_samples_number, neurons_number);
+            ones_2d.setConstant(1);
+
             combinations_2d.resize(batch_samples_number, neurons_number);
 
             activations_2d.resize(batch_samples_number, neurons_number);
@@ -137,6 +140,8 @@ public:
         Tensor<type, 2> combinations_2d;
         Tensor<type, 2> activations_2d;
         Tensor<type, 2> activations_derivatives_2d;
+
+        Tensor<type, 2> ones_2d;
 
         Tensor<type, 3> activations_derivatives_3d;
 
