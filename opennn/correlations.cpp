@@ -1403,6 +1403,7 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
 
     training_strategy.set_display(false);
     training_strategy.get_optimization_algorithm_pointer()->set_display(false);
+
     training_strategy.perform_training();
 
     // Logistic correlation
