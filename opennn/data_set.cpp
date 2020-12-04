@@ -5499,6 +5499,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
     for(Index i = 0; i < input_columns_number; i++)
     {
+
         const Index input_index = input_columns_indices(i);
 
         Tensor<type, 2> input = get_column_data(input_index);
@@ -5571,11 +5572,17 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target/*input_column*/);
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input/*input_column*/);
+
+
             }
             else if(input_type == Binary && target_type == Categorical)
             {
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
+                const TensorMap<Tensor<type, 1>> input_column(input.data(), input.dimension(0));
+
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input/*input_column*/);
+
+//                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
 
 //                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
@@ -5609,6 +5616,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
 
             cout << "Correlation: " << correlations(i,j).correlation << endl;
+
         }
     }
 
