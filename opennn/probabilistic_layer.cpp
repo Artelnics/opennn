@@ -297,9 +297,9 @@ void ProbabilisticLayer::set()
 
 void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)
 {
-    biases = Tensor<type, 2>(1, new_neurons_number);
+    biases.resize(1, new_neurons_number);
 
-    synaptic_weights = Tensor<type, 2>(new_inputs_number, new_neurons_number);
+    synaptic_weights.resize(new_inputs_number, new_neurons_number);
 
     set_parameters_random();
 

@@ -1888,20 +1888,16 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
         {
             column_index = columns_indices(j);
 
-            if(isnan((matrix(row_index,column_index)))) continue;
+            const type value = matrix(row_index,column_index);
 
-            if(matrix(row_index,column_index) < minimums(j))
-            {
-                minimums(j) = matrix(row_index,column_index);
-            }
+            if(isnan(value)) continue;
 
-            if(matrix(row_index,column_index) > maximums(j))
-            {
-                maximums(j) = matrix(row_index,column_index);
-            }
+            if(value < minimums(j)) minimums(j) = value;
 
-            sums(j) += matrix(row_index,column_index);
-            squared_sums(j) += matrix(row_index,column_index)*matrix(row_index,column_index);
+            if(value > maximums(j)) maximums(j) = value;
+
+            sums(j) += value;
+            squared_sums(j) += value*value;
             count(j)++;
         }
     }
@@ -1912,17 +1908,14 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
 
     if(row_indices_size > 1)
     {
+        #pragma omp parallel for
+
         for(Index i = 0; i < columns_indices_size; i++)
         {
-            const double variance = squared_sums(i)/static_cast<double>(count(i)-1) -(sums(i)/static_cast<double>(count(i)))*(sums(i)/static_cast<double>(count(i)))*static_cast<double>(count(i))/static_cast<double>((count(i)-1));
+            const double variance = squared_sums(i)/static_cast<double>(count(i)-1)
+                    - (sums(i)/static_cast<double>(count(i)))*(sums(i)/static_cast<double>(count(i)))*static_cast<double>(count(i))/static_cast<double>(count(i)-1);
 
-            standard_deviation(i) = variance;
-
-//            if(standard_deviation(i)<static_cast<double>(5e-3)){
-//                standard_deviation(i) = static_cast<double>(0);
-//            }else{
-                standard_deviation(i) = sqrt(standard_deviation(i));
-//            }
+            standard_deviation(i) = sqrt(variance);
         }
     }
 

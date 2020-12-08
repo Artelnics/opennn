@@ -192,8 +192,8 @@ void BoundingLayer::set()
 {
     bounding_method = Bounding;
 
-    lower_bounds = Tensor<type, 1>();
-    upper_bounds = Tensor<type, 1>();
+    lower_bounds.resize(0);
+    upper_bounds.resize(0);
 
     set_default();
 }

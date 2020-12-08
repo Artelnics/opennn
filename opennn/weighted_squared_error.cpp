@@ -186,7 +186,6 @@ void WeightedSquaredError::set_normalization_coefficient()
     {
         normalization_coefficient = static_cast<type>(1);
     }
-
 }
 
 

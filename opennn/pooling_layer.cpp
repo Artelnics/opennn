@@ -527,7 +527,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
                                     {
                                         max_value = activations_current_submatrix(submatrix_row_index, submatrix_column_index);
 
-                                        multiply_not_multiply = Tensor<type, 2>(next_layers_pool_rows, next_layers_pool_columns, 0.0);
+                                        multiply_not_multiply.resize(next_layers_pool_rows, next_layers_pool_columns, 0.0);
                                         multiply_not_multiply(submatrix_row_index, submatrix_column_index) = 1.0;
                                     }
                                 }

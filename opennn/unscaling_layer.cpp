@@ -734,7 +734,7 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 #endif
         const Index points_number = inputs.dimension(0);
 
-        outputs = Tensor<type, 2>(points_number, neurons_number);
+        outputs.resize(points_number, neurons_number);
 
         for(Index i = 0; i < points_number; i++)
         {
