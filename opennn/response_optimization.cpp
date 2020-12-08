@@ -389,14 +389,14 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
         {
         case Minimum:
 
-            values_conditions[i] = Tensor<type, 1>();
+            values_conditions[i].resize(0);
 
             index++;
             break;
 
         case Maximum:
 
-            values_conditions[i] = Tensor<type, 1>();
+            values_conditions[i].resize(0);
 
             index++;
             break;

@@ -162,10 +162,10 @@ public:
        SecondOrderLoss(const Index& parameters_number, const Index& samples_number)
        {
            loss = 0;           
-           gradient = Tensor<type, 1>(parameters_number);
-           error_terms_Jacobian = Tensor<type, 2>(samples_number, parameters_number);
-           hessian = Tensor<type, 2>(parameters_number, parameters_number);
-           error_terms = Tensor<type, 1>(samples_number);
+           gradient.resize(parameters_number);
+           error_terms_Jacobian.resize(samples_number, parameters_number);
+           hessian.resize(parameters_number, parameters_number);
+           error_terms.resize(samples_number);
        }
 
        void sum_hessian_diagonal(const type& value)
