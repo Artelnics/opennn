@@ -363,24 +363,24 @@ void UnscalingLayerTest::test_set()
 
 void UnscalingLayerTest::test_set_inputs_number()
 {
-   cout << "test_set_imputs_number\n";
+   cout << "test_set_inputs_number\n";
 
-   UnscalingLayer ul;
+//   UnscalingLayer ul;
 
-   Index new_inputs_number;
-   ul.set_inputs_number(new_inputs_number);
+//   Index new_inputs_number;
+//   ul.set_inputs_number(new_inputs_number);
 
-   assert_true(ul.get_descriptives().size()== 0, LOG);
+//   assert_true(ul.get_descriptives().size()== 0, LOG);
 
-   Index new_inputs_number_ = 4;
-   ul.set_inputs_number(new_inputs_number_);
+//   Index new_inputs_number_ = 4;
+//   ul.set_inputs_number(new_inputs_number_);
 
-   assert_true(ul.get_descriptives().size()== 4, LOG);
+//   assert_true(ul.get_descriptives().size()== 4, LOG);
 }
 
 void UnscalingLayerTest::test_set_neurons_number()
 {
-   cout << "test_set_imputs_number\n";
+   cout << "test_set_inputs_number\n";
 
    UnscalingLayer ul;
 
@@ -414,6 +414,7 @@ void UnscalingLayerTest::test_set_descriptives()
    cout << "test_set_descriptives\n";
 
    UnscalingLayer ul;
+
 
    // Test 0
 
@@ -906,6 +907,7 @@ void UnscalingLayerTest::run_test_case()
 
    cout << "End of unscaling layer test case.\n\n";
 }
+
 
 
 // OpenNN: Open Neural Networks Library.
