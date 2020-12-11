@@ -1378,25 +1378,33 @@ void StatisticsTest::test_percentiles()
 {
     cout << "test_percentiles\n";
 
+    //Test trivial
+
+    Tensor<type, 1> empty_vector;
+    Tensor<type, 1> percentiles_empty = OpenNN::percentiles(empty_vector);
+    assert_true(::isnan(percentiles_empty[0]), LOG);
+
     //Test 1
+
     Tensor<type, 1> vector(10);
+
     vector.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
 
     Tensor<type, 1> percentiles = OpenNN::percentiles(vector);
 
     Tensor<type, 1> solution(10);
-    solution.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}); //@todo
+    solution.setValues({0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9});
 
-    assert_true(static_cast<Index>(percentiles[0]) == static_cast<Index>(solution[0]), LOG);
-    assert_true(static_cast<Index>(percentiles[1]) == static_cast<Index>(solution[1]), LOG);
-    assert_true(static_cast<Index>(percentiles[2]) == static_cast<Index>(solution[2]), LOG);
-    assert_true(static_cast<Index>(percentiles[3]) == static_cast<Index>(solution[3]), LOG);
-    assert_true(static_cast<Index>(percentiles[4]) == static_cast<Index>(solution[4]), LOG);
-    assert_true(static_cast<Index>(percentiles[5]) == static_cast<Index>(solution[5]), LOG);
-    assert_true(static_cast<Index>(percentiles[6]) == static_cast<Index>(solution[6]), LOG);
-    assert_true(static_cast<Index>(percentiles[7]) == static_cast<Index>(solution[7]), LOG);
-    assert_true(static_cast<Index>(percentiles[8]) == static_cast<Index>(solution[8]), LOG);
-    assert_true(static_cast<Index>(percentiles[9]) == static_cast<Index>(solution[9]), LOG);
+    assert_true((percentiles[0] - solution[0]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[1] - solution[1]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[2] - solution[2]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[3] - solution[3]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[4] - solution[4]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[5] - solution[5]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[6] - solution[6]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[7] - solution[7]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[8] - solution[8]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[9] - solution[9]) < static_cast<type>(1.0e-7), LOG);
 
     //Test 2
 
@@ -1419,6 +1427,28 @@ void StatisticsTest::test_percentiles()
     assert_true((percentiles_2[7] - solution_2[7]) < static_cast<type>(1.0e-7), LOG);
     assert_true((percentiles_2[8] - solution_2[8]) < static_cast<type>(1.0e-7), LOG);
     assert_true((percentiles_2[9] - solution_2[9]) < static_cast<type>(1.0e-7), LOG);
+
+    //Test 3
+
+    Tensor<type, 1> vector_3(14);
+
+    vector_3.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 15, 19, 32});
+
+    Tensor<type, 1> percentiles_3 = OpenNN::percentiles(vector_3);
+
+    Tensor<type, 1> solution_3(10);
+    solution_3.setValues({1, 2, 4, 5, 6.5, 8, 9, 15, 19, 32});
+
+    assert_true((percentiles_3[0] - solution_3[0]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles_3[1] - solution_3[1]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles_3[2] - solution_3[2]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles_3[3] - solution_3[3]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles_3[4] - solution_3[4]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles_3[5] - solution_3[5]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles_3[6] - solution_3[6]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles_3[7] - solution_3[7]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles_3[8] - solution_3[8]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles_3[9] - solution_3[9]) < static_cast<type>(1.0e-7), LOG);
 
 }
 

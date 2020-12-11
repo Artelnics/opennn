@@ -3576,6 +3576,13 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
           }
       }
 
+      if(new_size == 0)
+      {
+          Tensor<type, 1> nan(1);
+          nan.setValues({static_cast<type>(NAN)});
+          return nan;
+      }
+
       Index index = 0;
       Tensor<type, 1> new_vector(new_size);
 
@@ -3592,34 +3599,19 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
       sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
 
+
+      /// Aempirical method
       Tensor<type, 1> percentiles(10);
 
-      if(new_size % 2 == 0)
+      for(Index i = 0; i < 9; i++)
       {
-        percentiles[0] = (sorted_vector[new_size * 1 / 10] + sorted_vector[new_size * 1 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[1] = (sorted_vector[new_size * 2 / 10] + sorted_vector[new_size * 2 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[2] = (sorted_vector[new_size * 3 / 10] + sorted_vector[new_size * 3 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[3] = (sorted_vector[new_size * 4 / 10] + sorted_vector[new_size * 4 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[4] = (sorted_vector[new_size * 5 / 10] + sorted_vector[new_size * 5 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[5] = (sorted_vector[new_size * 6 / 10] + sorted_vector[new_size * 6 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[6] = (sorted_vector[new_size * 7 / 10] + sorted_vector[new_size * 7 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[7] = (sorted_vector[new_size * 8 / 10] + sorted_vector[new_size * 8 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[8] = (sorted_vector[new_size * 9 / 10] + sorted_vector[new_size * 9 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[9] = maximum(new_vector);
+          if(new_size * (i + 1) % 10 == 0)
+              percentiles[i] = (sorted_vector[new_size * (i + 1) / 10 - 1] + sorted_vector[new_size * (i + 1) / 10]) / static_cast<type>(2.0);
+
+          else
+              percentiles[i] = static_cast<type>(sorted_vector[new_size * (i + 1) / 10]);
       }
-      else
-      {
-        percentiles[0] = static_cast<type>(sorted_vector[new_size * 1 / 10]);
-        percentiles[1] = static_cast<type>(sorted_vector[new_size * 2 / 10]);
-        percentiles[2] = static_cast<type>(sorted_vector[new_size * 3 / 10]);
-        percentiles[3] = static_cast<type>(sorted_vector[new_size * 4 / 10]);
-        percentiles[4] = static_cast<type>(sorted_vector[new_size * 5 / 10]);
-        percentiles[5] = static_cast<type>(sorted_vector[new_size * 6 / 10]);
-        percentiles[6] = static_cast<type>(sorted_vector[new_size * 7 / 10]);
-        percentiles[7] = static_cast<type>(sorted_vector[new_size * 8 / 10]);
-        percentiles[8] = static_cast<type>(sorted_vector[new_size * 9 / 10]);
-        percentiles[9] = maximum(new_vector);
-      }
+      percentiles[9] = maximum(new_vector);
 
       return percentiles;
 }
