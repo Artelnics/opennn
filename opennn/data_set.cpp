@@ -64,7 +64,21 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 {
     set(new_samples_number, new_inputs_number, new_targets_number);
 
-    set_default();
+    //set_default();
+
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+    has_columns_names = false;
+
+    separator = Comma;
+
+    missing_values_label = "NA";
+
+    lags_number = 0;
+
+    steps_ahead = 0;
 }
 
 
