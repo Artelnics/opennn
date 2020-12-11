@@ -1,0 +1,70 @@
+<DataSet>
+   <DataFile>
+      <FileType>csv</FileType>
+      <DataFileName>../data/bankruptcy.csv</DataFileName>
+      <Separator>Semicolon</Separator>
+      <ColumnsNames>1</ColumnsNames>
+      <RowsLabels>0</RowsLabels>
+      <MissingValuesLabel>NA</MissingValuesLabel>
+      <LagsNumber>0</LagsNumber>
+      <StepsAhead>0</StepsAhead>
+      <TimeIndex>140720541191568</TimeIndex>
+   </DataFile>
+   <Columns>
+      <ColumnsNumber>7</ColumnsNumber>
+      <Column Item="1">
+         <Name>industrial_risk</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="2">
+         <Name> management_risk</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="3">
+         <Name> financial_flexibility</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="4">
+         <Name> credibility</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="5">
+         <Name> competitiveness</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="6">
+         <Name> operating_risk</Name>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="7">
+         <Name> class</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Binary</Type>
+         <Categories>bankruptcy;non-bankruptcy</Categories>
+         <CategoriesUses>Input;Input</CategoriesUses>
+      </Column>
+   </Columns>
+   <Samples>
+      <SamplesNumber>250</SamplesNumber>
+      <SamplesUses>1 1 2 0 2 0 0 1 0 1 2 0 0 0 0 2 0 2 0 1 2 1 0 2 2 0 2 0 1 0 1 0 0 0 1 0 0 1 0 0 0 2 1 2 0 1 0 0 0 1 0 0 2 2 2 0 0 0 1 0 2 1 0 0 2 0 0 0 0 2 0 0 2 2 0 1 0 0 1 2 2 0 0 0 0 1 0 0 0 0 1 0 1 2 1 2 0 0 0 0 0 1 0 1 0 2 2 0 0 1 0 1 2 0 0 0 0 0 1 0 0 2 1 0 0 0 0 2 1 1 0 1 0 0 0 0 2 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 2 0 0 1 0 0 2 1 2 2 0 0 1 0 1 1 0 0 1 0 0 0 2 2 0 0 1 2 0 0 0 0 0 0 1 2 0 0 0 1 0 0 0 0 0 2 2 0 0 1 0 2 0 1 0 0 0 0 0 1 2 0 2 0 2 0 2 0 1 2 0 0 1 0 1 0 2 0 2 0 0 0 2 0 0 1 0 0 1 0 1 0 0 0 2 0 2 0</SamplesUses>
+   </Samples>
+   <MissingValues>
+      <MissingValuesMethod>Unuse</MissingValuesMethod>
+      <MissingValuesNumber>140720541150216</MissingValuesNumber>
+      <ColumnsMissingValuesNumber></ColumnsMissingValuesNumber>
+      <RowsMissingValuesNumber>1081305200144</RowsMissingValuesNumber>
+   </MissingValues>
+   <PreviewData>
+      <PreviewSize>4</PreviewSize>
+      <Row Item="1">industrial_risk, management_risk, financial_flexibility, credibility, competitiveness, operating_risk, class</Row>
+      <Row Item="2">0.5,0,0,0,0,0.5,bankruptcy</Row>
+      <Row Item="3">1,0,0,0,0,0,bankruptcy</Row>
+      <Row Item="4">0,1,0.5,0.5,1,0,non-bankruptcy</Row>
+   </PreviewData>
+</DataSet>

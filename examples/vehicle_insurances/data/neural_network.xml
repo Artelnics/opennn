@@ -1,0 +1,85 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>7</InputsNumber>
+      <Input Index="1">gender</Input>
+      <Input Index="2">age</Input>
+      <Input Index="3">previously_insured</Input>
+      <Input Index="4">vehicle_age</Input>
+      <Input Index="5">vehicle_damage</Input>
+      <Input Index="6">annual_premium</Input>
+      <Input Index="7">response</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>7</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.540761</Mean>
+            <StandardDeviation>0.498336</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Minimum>20</Minimum>
+            <Maximum>85</Maximum>
+            <Mean>38.8226</Mean>
+            <StandardDeviation>15.5116</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="3">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.54179</Mean>
+            <StandardDeviation>0.498251</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="4">
+            <Minimum>1</Minimum>
+            <Maximum>3</Maximum>
+            <Mean>1.60962</Mean>
+            <StandardDeviation>0.567439</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="5">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.504877</Mean>
+            <StandardDeviation>0.499977</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="6">
+            <Minimum>2630</Minimum>
+            <Maximum>540165</Maximum>
+            <Mean>30564.4</Mean>
+            <StandardDeviation>17213.2</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="7">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.122563</Mean>
+            <StandardDeviation>0.327936</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer_0</LayerName>
+         <InputsNumber>7</InputsNumber>
+         <NeuronsNumber>3</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>-0.253737 -0.253737 0.253737 -0.0181308 0.0920939 -0.0306402 0.079996 -0.0154782 0.226648 0.159774 -0.0181308 0.0920939 -0.0306402 0.079996 -0.0154782 0.226648 0.159774 0.0181308 -0.0920939 0.0306402 -0.079996 0.0154782 -0.226648 -0.159774</Parameters>
+      </PerceptronLayer>
+      <ProbabilisticLayer>
+         <InputsNumber>3</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Logistic</ActivationFunction>
+         <Parameters>0.820045 -0.458604 -0.458604 0.458604</Parameters>
+         <DecisionThreshold>0.5</DecisionThreshold>
+      </ProbabilisticLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1">vintage</Output>
+   </Outputs>
+</NeuralNetwork>
