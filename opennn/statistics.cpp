@@ -357,6 +357,13 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
 
     Index minimal_indices_size = 0;
 
+    if (frequencies.size() == 0)
+    {
+        Tensor<type, 1> nan(1);
+        nan.setValues({static_cast<type>(NAN)});
+        return nan;
+    }
+
     for(Index i = 0; i < frequencies.size(); i++)
     {
         if(frequencies(i) == minimum_frequency)
@@ -391,6 +398,13 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
 
     Index maximal_indices_size = 0;
 
+    if (frequencies.size() == 0)
+    {
+        Tensor<type, 1> nan(1);
+        nan.setValues({static_cast<type>(NAN)});
+        return nan;
+    }
+
     for(Index i = 0; i < frequencies.size(); i++)
     {
         if(frequencies(i) == maximum_frequency)
@@ -423,6 +437,8 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
 Index Histogram::calculate_bin(const type&value) const
 {
     const Index bins_number = get_bins_number();
+
+    if(bins_number == 0) return 0;
 
     const type minimum_center = centers[0];
     const type maximum_center = centers[bins_number - 1];
@@ -470,6 +486,10 @@ Index Histogram::calculate_bin(const type&value) const
 
 Index Histogram::calculate_frequency(const type&value) const
 {
+    const Index bins_number = get_bins_number();
+
+    if(bins_number == 0) return 0;
+
     const Index bin_number = calculate_bin(value);
 
     const Index frequency = frequencies[bin_number];
@@ -932,6 +952,8 @@ type standard_deviation(const Tensor<type, 1>& vector)
     }
 
 #endif
+    if(vector.size() == 0) return 0;
+
     if(variance(vector)<static_cast<double>(1e-9)){
         return static_cast<double>(0);
     }else{
@@ -1210,7 +1232,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < new_size/2; i++)
     {
-        last_sorted_vector(i) = sorted_vector[i + new_size - new_size/2];
+        last_sorted_vector(i) = sorted_vector[i + new_size/2];
     }
 
     Tensor<type, 1> quartiles(3);
@@ -1235,14 +1257,29 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
     }
     else if(new_size % 2 == 0)
     {
+        quartiles(1) = (sorted_vector(new_size/2-1) + sorted_vector(new_size/2)) / static_cast<type>(2.0);
+
         Index median_index = static_cast<Index>(first_sorted_vector.size() / 2);
-        quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / static_cast<type>(2.0);
 
-        median_index = static_cast<Index>(new_size / 2);
-        quartiles(1) = (sorted_vector(median_index-1) + sorted_vector(median_index)) / static_cast<type>(2.0);
+        if (new_size/2 % 2 == 0)
+        {
+            quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / static_cast<type>(2.0);
+            quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / static_cast<type>(2.0);
+        }
 
-        median_index = static_cast<Index>(last_sorted_vector.size() / 2);
-        quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / static_cast<type>(2.0);
+        else
+        {
+            quartiles(0) = first_sorted_vector(median_index);
+            quartiles(2) = last_sorted_vector(median_index);
+        }
+
+//        quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / static_cast<type>(2.0);
+
+//        median_index = static_cast<Index>(new_size / 2);
+//        quartiles(1) = (sorted_vector(median_index-1) + sorted_vector(median_index)) / static_cast<type>(2.0);
+
+//        median_index = static_cast<Index>(last_sorted_vector.size() / 2);
+//        quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / static_cast<type>(2.0);
     }
     else
     {
