@@ -122,7 +122,7 @@ void WeightedSquaredError::set_weights()
 
 #ifdef __OPENNN_DEBUG__
 
-    check();
+//    check();
 
 #endif
 
