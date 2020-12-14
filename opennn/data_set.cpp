@@ -9508,16 +9508,15 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 
         for(Index j = 0; j < inputs_number-1; j++)
         {
-            rosenbrock +=
-                (1 - data(i,j))*(1 - data(i,j))
-                + 100*(data(i,j+1)-data(i,j)*data(i,j))*
-                (data(i,j+1)-data(i,j)*data(i,j));
+            const type value = data(i,j);
+            const type next_value = data(i,j+1);
+
+            rosenbrock += (1 - value)*(1 - value)
+                + 100*(next_value-value*value)*(next_value-value*value);
         }
 
         data(i, inputs_number) = rosenbrock;
     }
-
-//    scale_range(data, -1.0, 1.0);
 
     set_default_columns_uses();
 }
