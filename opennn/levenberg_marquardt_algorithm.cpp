@@ -593,7 +593,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
 
         optimization_data.epoch = epoch;
