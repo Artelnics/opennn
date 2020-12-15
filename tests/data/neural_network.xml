@@ -1,1 +1,11 @@
-<NeuralNetwork/>
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>0</InputsNumber>
+   </Inputs>
+   <Layers>
+      <LayersTypes></LayersTypes>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>0</OutputsNumber>
+   </Outputs>
+</NeuralNetwork>
