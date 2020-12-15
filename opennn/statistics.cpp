@@ -1199,7 +1199,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
-        if(!isnan(vector(i)))
+        if(!::isnan(vector(i)))
         {
             new_size++;
         }
@@ -1212,28 +1212,38 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
-        if(!isnan(vector(i)))
+        if(!::isnan(vector(i)))
         {
             sorted_vector(sorted_index) = vector(i);
 
             sorted_index++;
-        }
+        }   
     }
+
+    sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
 
     // Calculate quartiles
 
     Tensor<type, 1> first_sorted_vector(new_size/2);
     Tensor<type, 1> last_sorted_vector(new_size/2);
 
-    for(Index i = 0; i < new_size/2 ; i++)
+    if (new_size % 2 == 0)
     {
-        first_sorted_vector(i) = sorted_vector(i);
+        for(Index i = 0; i < new_size/2 ; i++)
+        {
+            first_sorted_vector(i) = sorted_vector(i);
+            last_sorted_vector(i) = sorted_vector[i + new_size/2];
+        }
+    }
+    else
+    {
+        for(Index i = 0; i < new_size/2 ; i++)
+        {
+            first_sorted_vector(i) = sorted_vector(i);
+            last_sorted_vector(i) = sorted_vector[i + new_size/2 + 1];
+        }
     }
 
-    for(Index i = 0; i < new_size/2; i++)
-    {
-        last_sorted_vector(i) = sorted_vector[i + new_size/2];
-    }
 
     Tensor<type, 1> quartiles(3);
 
@@ -1255,39 +1265,12 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
         quartiles(1) = sorted_vector(1);
         quartiles(2) = (sorted_vector(2)+sorted_vector(1))/2;
     }
-    else if(new_size % 2 == 0)
-    {
-        quartiles(1) = (sorted_vector(new_size/2-1) + sorted_vector(new_size/2)) / static_cast<type>(2.0);
-
-        Index median_index = static_cast<Index>(first_sorted_vector.size() / 2);
-
-        if (new_size/2 % 2 == 0)
-        {
-            quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / static_cast<type>(2.0);
-            quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / static_cast<type>(2.0);
-        }
-
-        else
-        {
-            quartiles(0) = first_sorted_vector(median_index);
-            quartiles(2) = last_sorted_vector(median_index);
-        }
-
-//        quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / static_cast<type>(2.0);
-
-//        median_index = static_cast<Index>(new_size / 2);
-//        quartiles(1) = (sorted_vector(median_index-1) + sorted_vector(median_index)) / static_cast<type>(2.0);
-
-//        median_index = static_cast<Index>(last_sorted_vector.size() / 2);
-//        quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / static_cast<type>(2.0);
-    }
     else
     {
-        quartiles(0) = sorted_vector(new_size/4);
-        quartiles(1) = sorted_vector(new_size/2);
-        quartiles(2) = sorted_vector(new_size*3/4);
+        quartiles(0)=median(first_sorted_vector);
+        quartiles(1)=median(sorted_vector);
+        quartiles(2)=median(last_sorted_vector);
     }
-
     return quartiles;
 }
 

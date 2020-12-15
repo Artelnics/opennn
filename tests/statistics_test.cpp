@@ -860,35 +860,76 @@ void StatisticsTest::test_quartiles()    //<--- ERROR @todo
    assert_true(quartiles3(1) == 1.5, LOG);
    assert_true(quartiles3(2) == 2.5, LOG);
 
+   //Test 5
    vector.resize(5);
    vector.setValues({0,1,2,3,4});
 
-   //Test 5
    Tensor<type, 1> quartiles4 = OpenNN::quartiles(vector);
 
-   assert_true(quartiles4[0] == 1.0, LOG);
+   assert_true(quartiles4[0] == 0.5, LOG);
    assert_true(quartiles4[1] == 2.0, LOG);
-   assert_true(quartiles4[2] == 3.0, LOG);
+   assert_true(quartiles4[2] == 3.5, LOG);
 
+   //Test 6
    vector.resize(6);
    vector.setValues({0,1,2,3,4,5});
 
-   //Test 6
    Tensor<type, 1> quartiles5 = OpenNN::quartiles(vector);
 
    assert_true(quartiles5[0] == 1, LOG);
    assert_true(quartiles5[1] == 2.5, LOG);
    assert_true(quartiles5[2] == 4, LOG);
 
+   //Test 7
    vector.resize(7);
    vector.setValues({0,1,2,3,4,5,6});
 
-   //Test 7
    Tensor<type, 1> quartiles6 = OpenNN::quartiles(vector);
 
    assert_true(quartiles6[0] == 1, LOG);
    assert_true(quartiles6[1] == 3, LOG);
    assert_true(quartiles6[2] == 5, LOG);
+
+   //Test 8
+   vector.resize(8);
+   vector.setValues({0,1,2,3,4,5,6,7});
+
+   Tensor<type, 1> quartiles7 = OpenNN::quartiles(vector);
+
+   assert_true(quartiles7[0] == 1.5, LOG);
+   assert_true(quartiles7[1] == 3.5, LOG);
+   assert_true(quartiles7[2] == 5.5, LOG);
+
+   //Test 9
+   vector.resize(9);
+   vector.setValues({0,1,2,3,4,5,6,7,8});
+
+   Tensor<type, 1> quartiles8 = OpenNN::quartiles(vector);
+
+   assert_true(quartiles8[0] == 1.5, LOG);
+   assert_true(quartiles8[1] == 4, LOG);
+   assert_true(quartiles8[2] == 6.5, LOG);
+
+   //Test 10
+   vector.resize(9);
+   vector.setValues({1,4,6,2,0,3,4,7,10});
+
+   Tensor<type, 1> quartiles9 = OpenNN::quartiles(vector);
+
+   assert_true(quartiles9[0] == 1.5, LOG);
+   assert_true(quartiles9[1] == 4, LOG);
+   assert_true(quartiles9[2] == 6.5, LOG);
+
+   //Test 11
+   vector.resize(20);
+   vector.setValues({12,14,50,76,12,34,56,74,89,60,96,24,53,25,67,84,92,45,62,86});
+
+   Tensor<type, 1> quartiles10 = OpenNN::quartiles(vector);
+
+   assert_true(quartiles10[0] == 29.5, LOG);
+   assert_true(quartiles10[1] == 58, LOG);
+   assert_true(quartiles10[2] == 80, LOG);
+
 }
 
 void StatisticsTest::test_calculate_histogram()    //<---
@@ -1154,27 +1195,35 @@ void StatisticsTest::test_calculate_quartiles_missing_values() // @todo
 {
     cout << "test_calculate_quartiles_missing_values\n";
 
-//    Tensor<type, 1> vector;
-//    vector.resize(5);
-//    vector[0] = 1;
-//    vector[1] = 2;
-//    vector[2] = 3;
-//    vector[3] = static_cast<type>(NAN);
-//    vector[4] = 4;
-//    Tensor<type, 1> solution({1.5, 2.5, 3.5});
+    //Test 1
+    Tensor<type, 1> vector;
+    vector.resize(5);
+    vector[0] = 1;
+    vector[1] = 2;
+    vector[2] = 3;
+    vector[3] = static_cast<type>(NAN);
+    vector[4] = 4;
 
-//    assert_true(quartiles_missing_values(vector) == solution , LOG);
+    Tensor<type, 1> quartiles_missing_values = OpenNN::quartiles(vector);
 
-//    Tensor<type, 1> solution_2({2.0, 3.0, 4.0});
-//    vector.resize(6);
-//    vector[0] = 1;
-//    vector[1] = 2;
-//    vector[2] = 3;
-//    vector[3] = static_cast<type>(NAN);
-//    vector[4] = 4;
-//    vector[5] = 5;
+    assert_true(quartiles_missing_values(0) == 1.5 , LOG);
+    assert_true(quartiles_missing_values(1) == 2.5 , LOG);
+    assert_true(quartiles_missing_values(2) == 3.5 , LOG);
 
-//    assert_true(quartiles_missing_values(vector) == solution_2, LOG);
+    //Test 2
+    vector.resize(6);
+    vector[0] = 1;
+    vector[1] = 2;
+    vector[2] = 3;
+    vector[3] = static_cast<type>(NAN);
+    vector[4] = 4;
+    vector[5] = 5;
+
+    Tensor<type, 1> quartiles_missing_values2 = OpenNN::quartiles(vector);
+
+    assert_true(quartiles_missing_values2(0) == 1.5, LOG);
+    assert_true(quartiles_missing_values2(1) == 3.0, LOG);
+    assert_true(quartiles_missing_values2(2) == 4.5, LOG);
 }
 
 
