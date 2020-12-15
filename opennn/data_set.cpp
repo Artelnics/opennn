@@ -8572,6 +8572,27 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     type value;
 
+    for(int i = 0; i < columns_number; i++)
+    {
+        for(int j = 0; j < rows_number; j++)
+        {
+            value = data(j,i);
+
+            file.write(reinterpret_cast<char*>(&value), size);
+        }
+    }
+
+    file.close();
+
+
+/*
+    file.write(reinterpret_cast<char*>(&columns_number), size);
+    file.write(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
     for(int i = 0; i < columns_number*rows_number; i++)
     {
 //        for(int j = 0; j < rows_number; j++)
@@ -8583,6 +8604,8 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     }
 
     file.close();
+*/
+
 
     cout << "Binary data file saved." << endl;
 }
