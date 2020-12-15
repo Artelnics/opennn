@@ -546,7 +546,7 @@ Index minimum(const Tensor<Index, 1>& vector)
 {
     const Index size = vector.size();
 
-    if(size == 0) return 0;
+    if(size == 0) return NAN;
 
     Index minimum = numeric_limits<Index>::max();
 
@@ -569,6 +569,8 @@ Index minimum(const Tensor<Index, 1>& vector)
 type minimum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
     const Index size = indices.dimension(0);
+
+    if(size == 0) return NAN;
 
     type minimum = numeric_limits<type>::max();
 
@@ -607,6 +609,8 @@ type maximum(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
+    if(size == 0) return NAN;
+
     type maximum = -numeric_limits<type>::max();
 
     for(Index i = 0; i < size; i++)
@@ -628,6 +632,8 @@ type maximum(const Tensor<type, 1>& vector)
 type maximum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
     const Index size = indices.dimension(0);
+
+    if(size == 0) return NAN;
 
     type maximum = -numeric_limits<type>::max();
 
@@ -653,7 +659,7 @@ Index maximum(const Tensor<Index, 1>& vector)
 {
     const Index size = vector.size();
 
-    if(size == 0) return 0;
+    if(size == 0) return NAN;
 
     Index maximum = -numeric_limits<Index>::max();
 
@@ -789,8 +795,9 @@ type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
 
 type mean(const Tensor<type, 1>& vector)
 {
-
     const Index size = vector.dimension(0);
+
+    if (size == 0) return 0;
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1049,7 +1056,7 @@ type asymmetry(const Tensor<type, 1>& vector)
 
 #endif
 
-    if(size == 1)
+    if(size == 0 || 1)
     {
         return 0.0;
     }
@@ -1267,9 +1274,9 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
     }
     else
     {
-        quartiles(0)=median(first_sorted_vector);
-        quartiles(1)=median(sorted_vector);
-        quartiles(2)=median(last_sorted_vector);
+        quartiles(0) = median(first_sorted_vector);
+        quartiles(1) = median(sorted_vector);
+        quartiles(2) = median(last_sorted_vector);
     }
     return quartiles;
 }
@@ -2516,6 +2523,8 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
     const Index row_indices_size = row_indices.size();
     const Index columns_indices_size = columns_indices.size();
 
+    if (row_indices_size == 0 && columns_indices_size == 0) return NAN;
+
 #ifdef __OPENNN_DEBUG__
 
     const Index rows_number = matrix.dimension(0);
@@ -2633,10 +2642,11 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 {
     const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    if (rows_number == 0 && columns_number == 0) return NAN;
 
 #ifdef __OPENNN_DEBUG__
-
-    const Index columns_number = matrix.dimension(1);
 
     if(rows_number == 0)
     {
@@ -2661,6 +2671,8 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
     }
 
 #endif
+
+    if (rows_number == 0 && columns_number == 0) return NAN;
 
     // Mean
 
