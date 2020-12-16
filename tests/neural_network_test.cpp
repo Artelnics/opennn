@@ -30,7 +30,7 @@ void NeuralNetworkTest::test_constructor()
   assert_true(neural_network_0.is_empty(), LOG);
   assert_true(neural_network_0.get_layers_number() == 0, LOG);
 
-  // Test 1 / Model type constructorr
+  // Test 1 / Model type constructor
 
   Tensor<Index, 1> architecture(3);
 
@@ -111,19 +111,20 @@ void NeuralNetworkTest::test_constructor()
   Tensor<Layer*, 1> layers_3(7);
 
   layers_3.setValues({new ScalingLayer, new PerceptronLayer,
-                          new PoolingLayer, new ProbabilisticLayer, new UnscalingLayer,
-                          new PrincipalComponentsLayer, new BoundingLayer});
+                          new PoolingLayer, new ProbabilisticLayer, new UnscalingLayer, new PrincipalComponentsLayer,
+             new BoundingLayer});
 
   NeuralNetwork neural_network_3_2(layers_3);
 
   assert_true(!neural_network_3_2.is_empty(), LOG);
-  assert_true(neural_network_3_2.get_layers_number() == 10, LOG);
+  assert_true(neural_network_3_2.get_layers_number() == 7, LOG);
   assert_true(neural_network_3_2.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
   assert_true(neural_network_3_2.get_layer_pointer(1)->get_type() == Layer::Perceptron, LOG);
   assert_true(neural_network_3_2.get_layer_pointer(2)->get_type() == Layer::Pooling, LOG);
   assert_true(neural_network_3_2.get_layer_pointer(3)->get_type() == Layer::Probabilistic, LOG);
   assert_true(neural_network_3_2.get_layer_pointer(4)->get_type() == Layer::Unscaling, LOG);
-  assert_true(neural_network_3_2.get_layer_pointer(5)->get_type() == Layer::Bounding, LOG);
+  assert_true(neural_network_3_2.get_layer_pointer(5)->get_type() == Layer::PrincipalComponents, LOG);
+  assert_true(neural_network_3_2.get_layer_pointer(6)->get_type() == Layer::Bounding, LOG);
 
    // File constructor @todo
 
