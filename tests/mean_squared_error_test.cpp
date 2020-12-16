@@ -387,15 +387,15 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
 }
 
-
+/*
 void MeanSquaredErrorTest::test_calculate_error_terms()
 {
    cout << "test_calculate_error_terms\n";
 
    NeuralNetwork neural_network;
    Tensor<Index, 1> hidden_layers_size;
-   Tensor<type, 1> parameters;
 
+   Index parameters;
    DataSet data_set;
    
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
@@ -405,8 +405,6 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
 
    Index batch_samples_number = batch.get_samples_number();
 
-   type error;
-
    Tensor<type, 1> error_terms;
 
    // Test
@@ -414,56 +412,57 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
    Tensor<Index, 1> architecture(3);
    architecture.setValues({1,1});
 
+
    neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
 
    data_set.set(1, 1, 1);
    data_set.set_data_random();
 
-   const Tensor<type, 2> inputs = data_set.get_training_input_data();
-   const Tensor<type, 2> targets = data_set.get_training_target_data();
-   const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);   
+   NeuralNetwork::ForwardPropagation forward_propagation(batch_samples_number, &neural_network);
+   LossIndex::SecondOrderLoss second_order_loss(parameters,batch_samples_number);
 
-   //error = mean_squared_error.calculate_error();
+   neural_network.forward_propagate(batch, forward_propagation);
 
-   //error_terms = mean_squared_error.calculate_training_error_terms(outputs, targets);
+   mean_squared_error.calculate_error_terms(batch, forward_propagation, second_order_loss);
+   error_terms=second_order_loss.error_terms;
 
-//  Eigen::array<int, 2> vector_times_vector = {Eigen::array<int, 2> ({1,1})};
+//   Eigen::array<int, 2> vector_times_vector = {Eigen::array<int, 2> ({1,1})};
 
 //   const Tensor<type, 0> product_result = error_terms.contract(error_terms, vector_times_vector);
 
 //   assert_true(abs(product_result(0) - error) < 1.0e-3, LOG);
 }
-
+*/
 
 void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 {
    cout << "test_calculate_error_terms_Jacobian\n";
 
-//   NumericalDifferentiation nd;
+//  NumericalDifferentiation nd;
 
-//   NeuralNetwork neural_network;
-//   Tensor<Index, 1> architecture;
-//   Tensor<type, 1> parameters;
+//  NeuralNetwork neural_network;
+//  Tensor<Index, 1> architecture;
+//  Tensor<type, 1> parameters;
 
-//   DataSet data_set;
+//  DataSet data_set;
 
-//   MeanSquaredError mean_squared_error(&neural_network, &data_set);
+//  MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-//   Tensor<type, 1> error_gradient;
+//  Tensor<type, 1> error_gradient;
 
-//   Tensor<type, 1> error_terms;
-//   Tensor<type, 2> terms_Jacobian;
-//   Tensor<type, 2> numerical_Jacobian_terms;
+//  Tensor<type, 1> error_terms;
+//  Tensor<type, 2> terms_Jacobian;
+//  Tensor<type, 2> numerical_Jacobian_terms;
 
-//   Tensor<type, 2> inputs;
-//   Tensor<type, 2> targets;
-//   Tensor<type, 2> outputs;
+//  Tensor<type, 2> inputs;
+//  Tensor<type, 2> targets;
+//  Tensor<type, 2> outputs;
 
-//   Tensor<type, 2> output_gradient;
-//   Tensor<Tensor<type, 2>, 1> layers_delta;
+//  Tensor<type, 2> output_gradient;
+//  Tensor<Tensor<type, 2>, 1> layers_delta;
 
-//   // Test
+   // Test
 
 //   architecture.setValues({1,1});
 
@@ -472,11 +471,10 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 //   neural_network.set_parameters_constant(0.0);
 
 //   data_set.set(1, 1, 1);
+//  data_set.initialize_data(0.0);
 
-//   data_set.initialize_data(0.0);
-
-//   inputs = data_set.get_training_input_data();
-//   targets = data_set.get_training_target_data();
+//  inputs = data_set.get_training_input_data();
+// targets = data_set.get_training_target_data();
 //   outputs = neural_network.calculate_outputs(inputs);
 
 //   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
@@ -649,8 +647,8 @@ void MeanSquaredErrorTest::run_test_case()
 
 //   // Error terms methods
 
-   test_calculate_error_terms();
-//   test_calculate_error_terms_Jacobian();
+   //test_calculate_error_terms();
+   //test_calculate_error_terms_Jacobian();
 
 //   // Serialization methods
 
