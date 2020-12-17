@@ -21,7 +21,7 @@ PrincipalComponentsLayer::PrincipalComponentsLayer() : Layer()
 
 
 /// Principal components neurons number constructor.
-/// This constructor creates a principal components layer layer with a given size.
+/// This constructor creates a principal components layer with a given size.
 /// The members of this object are initialized with the default values.
 /// @param new_inputs_number Number of original inputs.
 /// @param new_principal_components_number Number of principal components neurons in the layer.
