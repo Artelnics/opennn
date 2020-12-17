@@ -3432,6 +3432,25 @@ type strongest(const Tensor<type, 1>& vector)
 }
 
 
+/// Returns the l2 norm of a vector
+
+type l2_norm(const Tensor<type, 1>& vector)
+{
+    const Index size = vector.dimension(0);
+
+    if(size == 0) return 0.0;
+
+    type square_sum = 0;
+
+    for(Index i = 0; i < size; i++)
+    {
+        square_sum = square_sum + vector[i]*vector[i];
+    }
+
+    return sqrt(square_sum);
+}
+
+
 /// Returns a vector containing the means of the subsets which correspond
 /// to each of the given integers. The matrix must have 2 columns, the first
 /// one containing the integers and the second one the corresponding values.

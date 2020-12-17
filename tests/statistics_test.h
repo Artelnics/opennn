@@ -118,7 +118,7 @@ public:
    void test_calculate_maximal_indices();
 
    // Normality
-   void test_calculate_norm();
+   void test_calculate_l2_norm();
 
    // Percentiles
    void test_percentiles();

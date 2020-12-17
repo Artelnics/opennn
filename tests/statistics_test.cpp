@@ -1239,18 +1239,26 @@ void StatisticsTest::test_calculate_maximal_indices()
 }
 
 
-void StatisticsTest::test_calculate_norm()  //<--- Doesnt exist @todo
+void StatisticsTest::test_calculate_l2_norm()
 {
    cout << "test_calculate_norm\n";
 
-//   Tensor<type, 1> vector;
+   // Test 0
+   Tensor<type, 1> vector;
 
-//   assert_true(l2_norm(vector) == 0.0, LOG);
+   assert_true(l2_norm(vector) - sqrt(static_cast<type>(0.0)) < static_cast<type>(1.0e-6), LOG);
 
-//   vector.resize(2);
-//   vector.setConstant(1);
+   // Test 1
+   vector.resize(2);
+   vector.setConstant(1);
 
-//   assert_true(abs(l2_norm(vector) - sqrt(2.0)) < 1.0e-6, LOG);
+   assert_true(abs(l2_norm(vector) - sqrt(static_cast<type>(2.0))) < static_cast<type>(1.0e-6), LOG);
+
+   //Test 2
+   Tensor<type, 1> vector_1(4);
+   vector_1.setValues({1,2,3,4});
+
+   assert_true(abs(l2_norm(vector_1) - sqrt(static_cast<type>(30.0))) < static_cast<type>(1.0e-6), LOG);
 }
 
 
@@ -1263,11 +1271,12 @@ void StatisticsTest::test_calculate_box_plot()
 
     BoxPlot boxplot_0 = box_plot(vector_0);
 
-    assert_true(static_cast<Index>(boxplot_0.minimum) == 0, LOG);
-    assert_true(static_cast<Index>(boxplot_0.first_quartile) == 0, LOG);
-    assert_true(static_cast<Index>(boxplot_0.median) == 0, LOG);
-    assert_true(static_cast<Index>(boxplot_0.third_quartile) == 0, LOG);
-    assert_true(static_cast<Index>(boxplot_0.maximum) == 0, LOG);
+    assert_true(boxplot_0.minimum - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    assert_true(boxplot_0.first_quartile - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    assert_true(boxplot_0.median - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    assert_true(boxplot_0.third_quartile - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    assert_true(boxplot_0.maximum - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    cout << boxplot_0.minimum << "--" << boxplot_0.first_quartile <<"--" << boxplot_0.median << "--" << boxplot_0.third_quartile << "--" <<boxplot_0.maximum << endl;
 
     //Test 1
     Tensor<type, 1> vector(8);
@@ -1572,6 +1581,8 @@ void StatisticsTest::test_means_by_categories() //<---
 {
     cout << "test_means_by_categories\n";
 
+    // Test 1
+
     Tensor<type, 2> matrix(6, 6);
     matrix.setValues({{1,2,3,1,2,3}, {6,2,3,12,2,3}});
 
@@ -1582,18 +1593,14 @@ void StatisticsTest::test_means_by_categories() //<---
 //    assert_true(means_by_categories(matrix)(1) == solution(1), LOG);
 //    assert_true(means_by_categories(matrix)(2) == solution(2), LOG);
 
-}
-
-
-void StatisticsTest::test_means_by_categories_missing_values() // @todo
-{
-    cout << "test_means_by_categories_missing_values\n";
+//    //Test missing vaues
 
 //    Tensor<type, 2> matrix({Tensor<type, 1>({1,1,1,2,2,2}),Tensor<type, 1>({1,1,1,2,6,static_cast<type>(NAN)})});
 
 //    Tensor<type, 1> solution({1.0, 4.0});
 
 //    assert_true(means_by_categories_missing_values(matrix) == solution, LOG);
+
 }
 
 
@@ -1693,7 +1700,7 @@ void StatisticsTest::run_test_case()
 
 
    // Normality
-   test_calculate_norm();
+   test_calculate_l2_norm();
 
 
    // Percentiles
@@ -1702,7 +1709,6 @@ void StatisticsTest::run_test_case()
 
    // Means by categories
    test_means_by_categories();
-   test_means_by_categories_missing_values();
 
 
    cout << "End of descriptives test case.\n\n";
