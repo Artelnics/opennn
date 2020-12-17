@@ -1197,12 +1197,10 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     vector<int> sorted_index = get_indices_sorted(scaled_x);
 
-    Tensor<type,1> x_sorted(x.dimension(0));
     Tensor<type,1> y_sorted(y.dimension(0));
 
     for(Index i = 0; i < scaled_x.dimension(0); i++)
     {
-        x_sorted(i) = scaled_x(sorted_index[i]);
         y_sorted(i) = new_y(sorted_index[i]);
     }
 
@@ -1237,7 +1235,6 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
         return logistic_correlations;
     }
-
 
     // Inputs: scaled_x; Targets: sorted_y
 
@@ -1304,6 +1301,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     logistic_correlations.correlation_type = Logistic_correlation;
 
     return logistic_correlations;
+
 }
 
 vector<int> get_indices_sorted(Tensor<type,1>& x)
