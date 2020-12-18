@@ -618,13 +618,17 @@ void NeuralNetworkTest::test_set_number()
 
    NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
 
+
    // Test 0_0
 
-   Index inputs_number;
+   Index inputs_number = 0;
+
    neural_network.set_inputs_number(inputs_number);
 
    assert_true(neural_network.get_inputs_number() == 0, LOG);
    assert_true(neural_network.get_layer_pointer(0)->get_inputs_number() == 0, LOG); //CC -> Scaling layer nmb assert
+
+
 
    // Test 0_1
 
@@ -649,15 +653,15 @@ void NeuralNetworkTest::test_set_number()
 
    neural_network.set_inputs_number(inputs_names_1_1);
    assert_true(neural_network.get_inputs_number() == 1, LOG);
-/*
-  // Test 1_2
+
+ // Test 1_2
 
    Tensor<bool, 1> inputs_names_1_2(2);
-   inputs_names_1_2.setValues({false,false});
+   inputs_names_1_2.setValues({true,true});
 
    neural_network.set_inputs_number(inputs_names_1_2);
-   assert_true(neural_network.get_inputs_number() == 0, LOG);
-*/
+   assert_true(neural_network.get_inputs_number() ==2 , LOG);
+
 }
 
 void NeuralNetworkTest::test_set_default()
@@ -683,7 +687,7 @@ void NeuralNetworkTest::test_set_pointers()
    // Test 1 // Device
 
    assert_true(neural_network.get_layers_number() == 3, LOG);
-//   assert_true(neural_network.get_layer_pointer(0)->device_pointer->get_type() == Device::EigenThreadPool, LOG);
+   //assert_true(neural_network.get_layer_pointer(0)->device_pointer->get_type() == Device::EigenThreadPool, LOG);
    // Need get_device_pointer method?
 
    // Test 2 // Layers
@@ -729,7 +733,7 @@ void NeuralNetworkTest::test_get_layers_number()
    assert_true(neural_network.get_trainable_layers_number() == 0, LOG);
    assert_true(neural_network.get_perceptron_layers_number() == 0, LOG);
    assert_true(neural_network.get_probabilistic_layers_number() == 0, LOG);
-   //assert_true(neural_network.get_layers_neurons_numbers() == 0, LOG);
+   assert_true(neural_network.get_inputs_number() == 0, LOG);
 
    // Test 1
 
@@ -745,7 +749,7 @@ void NeuralNetworkTest::test_get_layers_number()
    assert_true(neural_network_1.get_trainable_layers_number() == 6, LOG);
    assert_true(neural_network_1.get_perceptron_layers_number() == 1, LOG);
    assert_true(neural_network_1.get_probabilistic_layers_number() == 1, LOG);
-//   assert_true(neural_network.get_layers_neurons_numbers()(0) == 0, LOG);
+   assert_true(neural_network_1.get_layers_neurons_numbers()(0) == 0, LOG);
 }
 
 void NeuralNetworkTest::test_inputs_outputs_number()
@@ -763,7 +767,7 @@ void NeuralNetworkTest::test_inputs_outputs_number()
 
    // Test 1
 
-   Tensor<Layer*, 1> layers_tensor_1(2);
+   Tensor<Layer*, 1> layers_tensor_1(3);
    layers_tensor_1.setValues({new ScalingLayer(5),new PerceptronLayer(5,2), new UnscalingLayer(2)});
 
    NeuralNetwork neural_network_1(layers_tensor_1);
@@ -799,6 +803,7 @@ void NeuralNetworkTest::test_get_architecture()
    assert_true(neural_network_1_1.get_architecture()(2) == 2, LOG);
    assert_true(neural_network_1_1.get_architecture()(3) == 2, LOG);
    assert_true(neural_network_1_1.get_architecture()(4) == 2, LOG);
+
 }
 
 void NeuralNetworkTest::test_get_parameters()
