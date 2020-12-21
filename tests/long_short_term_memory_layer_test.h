@@ -56,10 +56,6 @@ public:
 
    // Parameters
 
-   void test_get_biases();
-   void test_get_weights();
-   void test_get_recurrent_weights();
-
    void test_get_parameters_number();
 
    void test_get_parameters();
