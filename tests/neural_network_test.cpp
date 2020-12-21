@@ -774,6 +774,18 @@ void NeuralNetworkTest::test_inputs_outputs_number()
 
    assert_true(neural_network_1.get_inputs_number() == 5, LOG);
    assert_true(neural_network_1.get_outputs_number() == 2, LOG);
+
+   //Test 2
+
+   Tensor<Layer*, 1> layers_tensor_2(4);
+   layers_tensor_1.setValues({new ScalingLayer(1),new PerceptronLayer(1,2), new UnscalingLayer(2), new BoundingLayer(2)});
+
+   NeuralNetwork neural_network_2(layers_tensor_2);
+
+   assert_true(neural_network_2.get_inputs_number() == 1, LOG);
+   assert_true(neural_network_2.get_outputs_number() == 2, LOG);
+
+
 }
 
 void NeuralNetworkTest::test_get_architecture()
