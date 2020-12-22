@@ -778,13 +778,12 @@ void NeuralNetworkTest::test_inputs_outputs_number()
    //Test 2
 
    Tensor<Layer*, 1> layers_tensor_2(4);
-   layers_tensor_1.setValues({new ScalingLayer(1),new PerceptronLayer(1,2), new UnscalingLayer(2), new BoundingLayer(2)});
+   layers_tensor_2.setValues({new ScalingLayer(1),new PerceptronLayer(1,2), new UnscalingLayer(2), new BoundingLayer(2)});
 
    NeuralNetwork neural_network_2(layers_tensor_2);
 
    assert_true(neural_network_2.get_inputs_number() == 1, LOG);
    assert_true(neural_network_2.get_outputs_number() == 2, LOG);
-
 
 }
 
@@ -886,6 +885,10 @@ void NeuralNetworkTest::test_get_parameters()
    assert_true(abs(parameters(3) - 3) < static_cast<type>(1e-5), LOG);
    assert_true(abs(parameters(4) - 4) < static_cast<type>(1e-5), LOG);
    assert_true(abs(parameters(5) - 5) < static_cast<type>(1e-5), LOG);
+
+   // Test 3
+
+
 }
 
 void NeuralNetworkTest::test_get_trainable_layers_parameters()
