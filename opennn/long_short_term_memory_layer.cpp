@@ -2100,7 +2100,19 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_lay
 
 void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, ForwardPropagation &forward_propagation)
 {
+    Tensor<type, 1> forget_combinations;
+    Tensor<type, 1> input_combinations;
+    Tensor<type, 1> state_combinations;
+    Tensor<type, 1> output_combinations;
 
+    calculate_forget_combinations(inputs, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations);
+    calculate_input_combinations(inputs, input_weights, input_recurrent_weights, input_biases, input_combinations);
+    calculate_state_combinations(inputs, state_weights, state_recurrent_weights, state_biases, state_combinations);
+    calculate_output_combinations(inputs, output_weights, output_recurrent_weights, output_biases, output_combinations);
+
+    memcpy(forward_propagation.combinations_1d.data(),
+           forget_combinations.data(),
+           static_cast<size_t>(forget_combinations.size())*sizeof(type));
 }
 
 
