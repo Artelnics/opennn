@@ -888,6 +888,43 @@ void NeuralNetworkTest::test_get_parameters()
 
    // Test 3
 
+   architecture.resize(5);
+
+   architecture.setConstant(1);
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+
+   PerceptronLayer* pl20 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+   pl20->set_biases_constant(0);
+   pl20->set_synaptic_weights_constant(1);
+
+   PerceptronLayer* pl21 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
+   pl21->set_biases_constant(2);
+   pl21->set_synaptic_weights_constant(3);
+
+   PerceptronLayer* pl22 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
+   pl22->set_biases_constant(4);
+   pl22->set_synaptic_weights_constant(5);
+
+   PerceptronLayer* pl23 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(4));
+   pl23->set_biases_constant(6);
+   pl23->set_synaptic_weights_constant(7);
+
+
+   parameters = neural_network.get_parameters();
+
+   assert_true(parameters.size() == 8, LOG);
+   assert_true(neural_network.get_parameters_number() == parameters.size(), LOG);
+   assert_true(abs(parameters(0) - 0) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(1) - 1) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(2) - 2) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(3) - 3) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(4) - 4) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(5) - 5) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(6) - 6) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(7) - 7) < static_cast<type>(1e-5), LOG);
+
+
 
 }
 
