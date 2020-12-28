@@ -1589,8 +1589,8 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
 
     switch(recurrent_activation_function)
     {
-        /*case Linear:  linear(combinations_2d, activations_2d);
-
+        case Linear:  linear(combinations_2d, activations_2d);
+/*
         case Logistic:  logistic(combinations_2d, activations_2d);
 
         case HyperbolicTangent:  hyperbolic_tangent(combinations_2d, activations_2d);
