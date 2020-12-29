@@ -1441,27 +1441,38 @@ void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& comb
 
     switch(activation_function)
     {
-        /*case Linear:  linear(combinations_2d, activations_2d);
+        case Linear:  linear(combinations_2d, activations_2d);
+        break;
 
         case Logistic:  logistic(combinations_2d, activations_2d);
+        break;
 
         case HyperbolicTangent:  hyperbolic_tangent(combinations_2d, activations_2d);
+        break;
 
         case Threshold:  threshold(combinations_2d, activations_2d);
+        break;
 
         case SymmetricThreshold:  symmetric_threshold(combinations_2d, activations_2d);
+        break;
 
         case RectifiedLinear:  rectified_linear(combinations_2d, activations_2d);
+        break;
 
         case ScaledExponentialLinear:  scaled_exponential_linear(combinations_2d, activations_2d);
+        break;
 
         case SoftPlus:  soft_plus(combinations_2d, activations_2d);
+        break;
 
         case SoftSign:  soft_sign(combinations_2d, activations_2d);
+        break;
 
         case HardSigmoid:  hard_sigmoid(combinations_2d, activations_2d);
+        break;
 
-        case ExponentialLinear:  exponential_linear(combinations_2d, activations_2d);*/
+        case ExponentialLinear:  exponential_linear(combinations_2d, activations_2d);
+        break;
     }
 }
 
@@ -1490,26 +1501,37 @@ void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& comb
     switch(activation_function)
     {
         case Linear:  linear(combinations_1d, activations_1d);
+        break;
 
         case Logistic:  logistic(combinations_1d, activations_1d);
+        break;
 
         case HyperbolicTangent:  hyperbolic_tangent(combinations_1d, activations_1d);
+        break;
 
         case Threshold:  threshold(combinations_1d, activations_1d);
+        break;
 
         case SymmetricThreshold:  symmetric_threshold(combinations_1d, activations_1d);
+        break;
 
         case RectifiedLinear:  rectified_linear(combinations_1d, activations_1d);
+        break;
 
         case ScaledExponentialLinear:  scaled_exponential_linear(combinations_1d, activations_1d);
+        break;
 
         case SoftPlus:  soft_plus(combinations_1d, activations_1d);
+        break;
 
         case SoftSign:  soft_sign(combinations_1d, activations_1d);
+        break;
 
         case HardSigmoid:  hard_sigmoid(combinations_1d, activations_1d);
+        break;
 
         case ExponentialLinear:  exponential_linear(combinations_1d, activations_1d);
+        break;
     }
 }
 
@@ -1540,26 +1562,37 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
     switch(activation_function)
     {
         case Linear:  linear(combinations_1d, activations_1d);
+        break;
 
         case Logistic:  logistic(combinations_1d, activations_1d);
+        break;
 
         case HyperbolicTangent:  hyperbolic_tangent(combinations_1d, activations_1d);
+        break;
 
         case Threshold:  threshold(combinations_1d, activations_1d);
+        break;
 
         case SymmetricThreshold:  symmetric_threshold(combinations_1d, activations_1d);
+        break;
 
         case RectifiedLinear:  rectified_linear(combinations_1d, activations_1d);
+        break;
 
         case ScaledExponentialLinear:  scaled_exponential_linear(combinations_1d, activations_1d);
+        break;
 
         case SoftPlus:  soft_plus(combinations_1d, activations_1d);
+        break;
 
         case SoftSign:  soft_sign(combinations_1d, activations_1d);
+        break;
 
         case HardSigmoid:  hard_sigmoid(combinations_1d, activations_1d);
+        break;
 
         case ExponentialLinear:  exponential_linear(combinations_1d, activations_1d);
+        break;
     }
 
     return activations_1d;
@@ -1590,26 +1623,37 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
     switch(recurrent_activation_function)
     {
         case Linear:  linear(combinations_2d, activations_2d);
-/*
+        break;
+
         case Logistic:  logistic(combinations_2d, activations_2d);
+        break;
 
         case HyperbolicTangent:  hyperbolic_tangent(combinations_2d, activations_2d);
+        break;
 
         case Threshold:  threshold(combinations_2d, activations_2d);
+        break;
 
         case SymmetricThreshold:  symmetric_threshold(combinations_2d, activations_2d);
+        break;
 
         case RectifiedLinear:  rectified_linear(combinations_2d, activations_2d);
+        break;
 
         case ScaledExponentialLinear:  scaled_exponential_linear(combinations_2d, activations_2d);
+        break;
 
         case SoftPlus:  soft_plus(combinations_2d, activations_2d);
+        break;
 
         case SoftSign:  soft_sign(combinations_2d, activations_2d);
+        break;
 
         case HardSigmoid:  hard_sigmoid(combinations_2d, activations_2d);
+        break;
 
-        case ExponentialLinear:  exponential_linear(combinations_2d, activations_2d);*/
+        case ExponentialLinear:  exponential_linear(combinations_2d, activations_2d);
+        break;
     }
 }
 
@@ -1639,26 +1683,37 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
     switch(recurrent_activation_function)
     {
         case Linear:  linear(combinations_1d, recurrent_activations_1d);
+        break;
 
         case Logistic:  logistic(combinations_1d, recurrent_activations_1d);
+        break;
 
         case HyperbolicTangent:  hyperbolic_tangent(combinations_1d, recurrent_activations_1d);
+        break;
 
         case Threshold:  threshold(combinations_1d, recurrent_activations_1d);
+        break;
 
         case SymmetricThreshold:  symmetric_threshold(combinations_1d, recurrent_activations_1d);
+        break;
 
         case RectifiedLinear:  rectified_linear(combinations_1d, recurrent_activations_1d);
+        break;
 
         case ScaledExponentialLinear:  scaled_exponential_linear(combinations_1d, recurrent_activations_1d);
+        break;
 
         case SoftPlus:  soft_plus(combinations_1d, recurrent_activations_1d);
+        break;
 
         case SoftSign:  soft_sign(combinations_1d, recurrent_activations_1d);
+        break;
 
         case HardSigmoid:  hard_sigmoid(combinations_1d, recurrent_activations_1d);
+        break;
 
         case ExponentialLinear:  exponential_linear(combinations_1d, recurrent_activations_1d);
+        break;
     }
 }
 
@@ -2106,15 +2161,39 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, 
     Tensor<type, 1> input_combinations(neurons_number);
     Tensor<type, 1> state_combinations(neurons_number);
     Tensor<type, 1> output_combinations(neurons_number);
-/*
-    calculate_forget_combinations(inputs, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations);
-    calculate_input_combinations(inputs, input_weights, input_recurrent_weights, input_biases, input_combinations);
-    calculate_state_combinations(inputs, state_weights, state_recurrent_weights, state_biases, state_combinations);
-    calculate_output_combinations(inputs, output_weights, output_recurrent_weights, output_biases, output_combinations);
-*/
+
+    const Index samples_number = inputs.dimension(0);
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        const Tensor<type, 1> current_inputs = inputs.chip(i,0);
+
+        calculate_forget_combinations(current_inputs, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations);
+        calculate_forget_combinations(current_inputs, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations);
+        calculate_forget_combinations(current_inputs, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations);
+        calculate_forget_combinations(current_inputs, forget_weights, forget_recurrent_weights, forget_biases, forget_combinations);
+
+    }
+
+//    calculate_input_combinations(inputs, input_weights, input_recurrent_weights, input_biases, input_combinations);
+//    calculate_state_combinations(inputs, state_weights, state_recurrent_weights, state_biases, state_combinations);
+//    calculate_output_combinations(inputs, output_weights, output_recurrent_weights, output_biases, output_combinations);
+
     memcpy(forward_propagation.combinations_1d.data(),
            forget_combinations.data(),
            static_cast<size_t>(forget_combinations.size())*sizeof(type));
+
+    memcpy(forward_propagation.combinations_1d.data() + neurons_number,
+           input_combinations.data(),
+           static_cast<size_t>(input_combinations.size())*sizeof(type));
+
+    memcpy(forward_propagation.combinations_1d.data() + 2*neurons_number,
+           state_combinations.data(),
+           static_cast<size_t>(state_combinations.size())*sizeof(type));
+
+    memcpy(forward_propagation.combinations_1d.data() + 3*neurons_number,
+           output_combinations.data(),
+           static_cast<size_t>(output_combinations.size())*sizeof(type));
 }
 
 
