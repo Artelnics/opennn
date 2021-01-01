@@ -924,8 +924,6 @@ void NeuralNetworkTest::test_get_parameters()
    assert_true(abs(parameters(6) - 6) < static_cast<type>(1e-5), LOG);
    assert_true(abs(parameters(7) - 7) < static_cast<type>(1e-5), LOG);
 
-
-
 }
 
 void NeuralNetworkTest::test_get_trainable_layers_parameters()
@@ -1168,6 +1166,8 @@ void NeuralNetworkTest::test_perturbate_parameters()
 {
    cout << "test_perturbate_parameters\n";
 
+   //Test 1
+
    Tensor<Index, 1> architecture(3);
    NeuralNetwork neural_network;
 
@@ -1192,6 +1192,22 @@ void NeuralNetworkTest::test_perturbate_parameters()
    assert_true(parameters.size() == parameters_number, LOG);
    assert_true(abs(parameters(0) - static_cast<type>(1.5)) < static_cast<type>(1e-5), LOG);
    assert_true(abs(parameters(3) - static_cast<type>(1.5)) < static_cast<type>(1e-5), LOG);
+
+   // Test 2
+
+   Tensor<Index, 1> architecture1;
+   NeuralNetwork neural_network1;
+   Tensor<type, 1> parameters1;
+
+   parameters1.setConstant(0);
+
+   neural_network1.set_parameters(parameters1);
+   parameters1 = neural_network1.get_parameters();
+
+   neural_network1.perturbate_parameters(0.5);
+   parameters1 = neural_network1.get_parameters();
+
+   assert_true(parameters1.size() == 0, LOG);
 }
 
 void NeuralNetworkTest::test_calculate_outputs() // @todo
@@ -1264,16 +1280,17 @@ void NeuralNetworkTest::test_calculate_outputs() // @todo
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
+
+   neural_network.set_parameters_constant(1);
+
    inputs.resize(1, 1);
 
    inputs.setConstant(2);
 
-   neural_network.set_parameters_constant(1);
-
    outputs = neural_network.calculate_outputs(inputs);
 
    assert_true(outputs.size() == 2, LOG);
-//   assert_true(abs(outputs(0,0) - tanh(3)) < static_cast<type>(1e-5), LOG);
+ // assert_true(abs(outputs(0,0) - 2) < static_cast<type>(1e-5), LOG);
 //   assert_true(abs(outputs(0,1) - tanh(3)) < static_cast<type>(1e-5), LOG);
 
    // Test 4
