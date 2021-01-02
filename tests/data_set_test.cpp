@@ -42,6 +42,8 @@ void DataSetTest::test_constructor()
 
    assert_true(ds3.get_variables_number() == 2, LOG);
    assert_true(ds3.get_samples_number() == 1, LOG);
+   assert_true(ds3.get_target_variables_number() == 1,LOG);
+   assert_true(ds3.get_input_variables_number() == 1,LOG);
 
    // XML constructor
 
@@ -89,6 +91,16 @@ void DataSetTest::test_assignment_operator()
 
    assert_true(ds2.get_samples_number() == 1, LOG);
    assert_true(ds2.get_variables_number() == 2, LOG);
+   assert_true(ds2.get_target_variables_number() == 1,LOG);
+   assert_true(ds2.get_input_variables_number() == 1,LOG);
+
+   DataSet ds3;
+   DataSet ds4=ds3;
+
+   assert_true(ds4.get_samples_number() == 0, LOG);
+   assert_true(ds4.get_variables_number() == 0, LOG);
+   assert_true(ds4.get_target_variables_number() == 0,LOG);
+   assert_true(ds4.get_input_variables_number() == 0,LOG);
 }
 
 void DataSetTest::test_get_samples_number()
@@ -98,6 +110,8 @@ void DataSetTest::test_get_samples_number()
    DataSet data_set;
 
    assert_true(data_set.get_samples_number() == 0, LOG);
+
+
 }
 
 void DataSetTest::test_get_variables_number() 
@@ -118,6 +132,8 @@ void DataSetTest::test_get_variables()
 
    assert_true(data_set.get_input_variables_number() == 3, LOG);
    assert_true(data_set.get_target_variables_number() == 2, LOG);
+   assert_true(data_set.get_unused_variables_number() == 0, LOG);
+   assert_true(data_set.get_used_variables_number() == 5, LOG);
 }
 
 void DataSetTest::test_get_display() 
@@ -149,6 +165,15 @@ void DataSetTest::test_get_data()
    assert_true(data.dimension(0) == 1, LOG);
    assert_true(data.dimension(1) == 2, LOG);
 //   assert_true(data == 0.0, LOG);
+
+   DataSet data_set1(2,3,2);
+
+   data_set1.initialize_data(1.0);
+
+   const Tensor<type, 2>& data1 = data_set1.get_data();
+
+   assert_true(data1.dimension(0) == 2, LOG);
+   assert_true(data1.dimension(1) == 5, LOG);
 }
 
 void DataSetTest::test_get_training_data()
