@@ -487,8 +487,6 @@ void TrainingStrategy::set_loss_method(const string& new_loss_method)
 
 void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
 {
-    LossIndex::RegularizationMethod regularization_method;
-
     loss_method = new_loss_method;
 
     set_loss_index_pointer(get_loss_index_pointer());

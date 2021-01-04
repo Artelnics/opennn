@@ -205,13 +205,14 @@ public:
     explicit Layer()   
     {
         const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+        non_blocking_thread_pool = new NonBlockingThreadPool(n);
         thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
     }
 
+
     // Destructor
 
-    virtual ~Layer() {}
+    virtual ~Layer();
 
     string get_name() const
     {
@@ -301,6 +302,7 @@ public:
 
 protected:
 
+    NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
     ThreadPoolDevice* thread_pool_device = nullptr;
 
     /// Layer name.

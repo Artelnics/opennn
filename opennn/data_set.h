@@ -794,6 +794,7 @@ public:
 
 private:
 
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Data file name.

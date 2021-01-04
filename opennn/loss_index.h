@@ -370,6 +370,7 @@ public:
 
 protected:
 
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Pointer to a neural network object.

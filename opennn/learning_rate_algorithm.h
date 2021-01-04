@@ -325,6 +325,7 @@ protected:
 
    const type golden_ratio = static_cast<type>(1.618);
 
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
 
    bool is_zero(const Tensor<type, 1>& tensor) const

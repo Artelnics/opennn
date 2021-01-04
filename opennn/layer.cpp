@@ -11,6 +11,13 @@
 namespace OpenNN
 {
 
+Layer::~Layer()
+{
+    delete non_blocking_thread_pool;
+    delete thread_pool_device;
+}
+
+
 /// Default constructor.
 /// It creates a layer object with zero parameters.
 /// It also initializes the rest of class members to their default values.
@@ -65,7 +72,8 @@ string Layer::get_type_string() const
 
 void Layer::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    if(thread_pool_device != nullptr) thread_pool_device = nullptr;
+    delete non_blocking_thread_pool;
+    delete thread_pool_device;
 
     thread_pool_device = new_thread_pool_device;
 }
