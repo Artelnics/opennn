@@ -1468,11 +1468,11 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         string new_method = scaling_method_element->GetText();
 
-        if(new_method == "MinimumMaximum")
+        if(new_method == "MinimumMaximum" || new_method == "Minimum - Maximum")
         {
             scaling_methods[i] = MinimumMaximum;
         }
-        else if(new_method == "MeanStandardDeviation")
+        else if(new_method == "MeanStandardDeviation" || new_method == "Mean - Standard deviation")
         {
             scaling_methods[i] = MeanStandardDeviation;
         }
