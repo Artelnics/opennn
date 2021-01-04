@@ -1196,7 +1196,7 @@ string PerceptronLayer::write_activation_function_expression() const
         return "symmetric_threshold";
 
     case Logistic:
-        return "sigma";
+        return "logistic";
 
     case HyperbolicTangent:
         return "tanh";
