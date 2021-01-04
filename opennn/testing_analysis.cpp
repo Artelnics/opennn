@@ -44,6 +44,8 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network_pointer, Data
 
 TestingAnalysis::~TestingAnalysis()
 {
+    delete non_blocking_thread_pool;
+    delete thread_pool_device;
 }
 
 
@@ -110,13 +112,16 @@ const bool& TestingAnalysis::get_display() const
 void TestingAnalysis::set_default()
 {
     const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 }
 
 
 void TestingAnalysis::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
+    delete non_blocking_thread_pool;
+    delete thread_pool_device;
+
     thread_pool_device = new_thread_pool_device;
 }
 

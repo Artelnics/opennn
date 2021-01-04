@@ -64,21 +64,7 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 {
     set(new_samples_number, new_inputs_number, new_targets_number);
 
-    //set_default();
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-    has_columns_names = false;
-
-    separator = Comma;
-
-    missing_values_label = "NA";
-
-    lags_number = 0;
-
-    steps_ahead = 0;
+    set_default();
 }
 
 
@@ -108,6 +94,8 @@ DataSet::DataSet(const string& data_file_name, const char& separator, const bool
 
 DataSet::~DataSet()
 {
+    delete non_blocking_thread_pool;
+    delete thread_pool_device;
 }
 
 
@@ -4375,7 +4363,7 @@ void DataSet::set_display(const bool& new_display)
 void DataSet::set_default()
 {
     const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     has_columns_names = false;
@@ -4617,8 +4605,8 @@ void DataSet::set_time_index(const Index& new_time_index)
 
 void DataSet::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-//    //if(thread_pool_device != nullptr) delete thread_pool_device;
-    if(thread_pool_device != nullptr) thread_pool_device = nullptr;
+    delete non_blocking_thread_pool;
+    delete thread_pool_device;
 
     thread_pool_device = new_thread_pool_device;
 }

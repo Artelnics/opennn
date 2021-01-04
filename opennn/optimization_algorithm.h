@@ -255,6 +255,7 @@ protected:
 
    /// Pointer to a loss index for a neural network object.
 
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    LossIndex* loss_index_pointer = nullptr;
 
    /// Number of training epochs in the neural network.
