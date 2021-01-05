@@ -169,6 +169,8 @@ public:
 
    explicit QuasiNewtonMethod(LossIndex*);
 
+   // Destructor
+
    virtual ~QuasiNewtonMethod();
 
    // Get methods
@@ -268,6 +270,7 @@ public:
    
    Tensor<string, 2> to_string_matrix() const;
 
+
 private: 
 
    /// Learning rate algorithm object.
@@ -325,8 +328,6 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history = true;
-
-
 
 };
 

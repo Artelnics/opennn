@@ -4362,6 +4362,9 @@ void DataSet::set_display(const bool& new_display)
 
 void DataSet::set_default()
 {
+    delete non_blocking_thread_pool;
+    delete thread_pool_device;
+
     const int n = omp_get_max_threads();
     non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
@@ -4603,12 +4606,13 @@ void DataSet::set_time_index(const Index& new_time_index)
 }
 
 
-void DataSet::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
-{
-    delete non_blocking_thread_pool;
-    delete thread_pool_device;
+void DataSet::set_threads_number(const int& new_threads_number)
+{        
+    if(non_blocking_thread_pool != nullptr) delete non_blocking_thread_pool;
+    if(thread_pool_device != nullptr) delete thread_pool_device;
 
-    thread_pool_device = new_thread_pool_device;
+    non_blocking_thread_pool = new NonBlockingThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, new_threads_number);
 }
 
 
@@ -5501,7 +5505,6 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
     for(Index i = 0; i < input_columns_number; i++)
     {
-
         const Index input_index = input_columns_indices(i);
 
         Tensor<type, 2> input = get_column_data(input_index);
@@ -5575,8 +5578,6 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
                 correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input/*input_column*/);
-
-
             }
             else if(input_type == Binary && target_type == Categorical)
             {

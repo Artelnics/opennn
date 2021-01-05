@@ -1265,26 +1265,21 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     DataSet data_set(data);
     data_set.set_training();
 
-    NeuralNetwork neural_network;
+    Tensor<Index, 1> architecture(2);
+    architecture.setValues({1, 1});
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
-
-    neural_network.add_layer(perceptron_layer);
+    NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
 
     neural_network.set_parameters_random();
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
+    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
+    normalized_squared_error.set_normalization_coefficient();
+    normalized_squared_error.set_regularization_method("L2_NORM");
+    normalized_squared_error.set_regularization_weight(static_cast<type>(0.01));
 
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-    training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
-    training_strategy.get_loss_index_pointer()->set_regularization_method("L2_NORM");
-    training_strategy.get_loss_index_pointer()->set_regularization_weight(static_cast<type>(0.01));
-
-    training_strategy.set_display(false);
-    training_strategy.get_optimization_algorithm_pointer()->set_display(false);
-    training_strategy.perform_training();
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&normalized_squared_error);
+    levenberg_marquardt_algorithm.set_display(false);
+    levenberg_marquardt_algorithm.perform_training();
 
     // Logistic correlation
 
@@ -1300,9 +1295,9 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     logistic_correlations.correlation_type = Logistic_correlation;
 
-    return logistic_correlations;
-
+    return logistic_correlations;    
 }
+
 
 vector<int> get_indices_sorted(Tensor<type,1>& x)
 {

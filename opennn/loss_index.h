@@ -252,7 +252,7 @@ public:
 
    void set(const LossIndex&);
 
-   void set_thread_pool_device(ThreadPoolDevice*);
+   void set_threads_number(const int&);
 
    void set_neural_network_pointer(NeuralNetwork*);
 

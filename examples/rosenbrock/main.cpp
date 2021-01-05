@@ -52,11 +52,11 @@ int main(void)
 
         const Index outputs_number = data_set.get_target_variables_number();
 
-        Tensor<Index, 1> arquitecture(3);
+        Tensor<Index, 1> architecture(3);
 
-        arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
+        architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 

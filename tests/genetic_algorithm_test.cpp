@@ -60,10 +60,10 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     DataSet data_set;
 
-    Tensor<Index, 1> arquitecture(3);
-    arquitecture.setValues({3,2,1});
+    Tensor<Index, 1> architecture(3);
+    architecture.setValues({3,2,1});
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
     SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -96,10 +96,10 @@ void GeneticAlgorithmTest::test_calculate_fitness() // @todo
 
 //    DataSet data_set;
 
-//    Tensor<Index, 1> arquitecture(3);
-//    arquitecture.setValues({3,2,1});
+//    Tensor<Index, 1> architecture(3);
+//    architecture.setValues({3,2,1});
 
-//    NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+//    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
 //    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -146,10 +146,10 @@ void GeneticAlgorithmTest::test_perform_selection() // @todo
 
 //    DataSet data_set;
 
-//    Tensor<Index, 1> arquitecture(3);
-//    arquitecture.setValues({3,2,1});
+//    Tensor<Index, 1> architecture(3);
+//    architecture.setValues({3,2,1});
 
-//    NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+//    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
 //    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -204,10 +204,10 @@ void GeneticAlgorithmTest::test_perform_crossover() // @todo
 
     DataSet data_set;
 
-    Tensor<Index, 1> arquitecture(3);
-    arquitecture.setValues({2,2,1});
+    Tensor<Index, 1> architecture(3);
+    architecture.setValues({2,2,1});
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
     SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -292,10 +292,10 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     DataSet data_set;
 
-    Tensor<Index, 1> arquitecture(3);
-    arquitecture.setValues({1,2,1});
+    Tensor<Index, 1> architecture(3);
+    architecture.setValues({1,2,1});
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
     SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -373,10 +373,10 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 
 //    data_set.set(data);
 
-//    Tensor<Index, 1> arquitecture(3);
-//    arquitecture.setValues({2,6,1});
+//    Tensor<Index, 1> architecture(3);
+//    architecture.setValues({2,6,1});
 
-//    neural_network.set(NeuralNetwork::Approximation, arquitecture);
+//    neural_network.set(NeuralNetwork::Approximation, architecture);
 
 //    TrainingStrategy ts(&neural_network, &data_set);
 
@@ -425,7 +425,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 
 //    data_set.set_default_columns_uses();
 
-//    neural_network.set(NeuralNetwork::Approximation, arquitecture);
+//    neural_network.set(NeuralNetwork::Approximation, architecture);
 
 //    TrainingStrategy ts1(&neural_network, &data_set);
 

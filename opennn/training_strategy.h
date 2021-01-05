@@ -133,13 +133,13 @@ public:
    void set();
    void set_default();
 
-   void set_thread_pool_device(ThreadPoolDevice*);
+   void set_threads_number(const int&);
 
    void set_data_set_pointer(DataSet*);
    void set_neural_network_pointer(NeuralNetwork*);
 
-   void set_loss_index_thread_pool_device(ThreadPoolDevice*);
-   void set_optimization_algorithm_thread_pool_device(ThreadPoolDevice*);
+   void set_loss_index_threads_number(const int&);
+   void set_optimization_algorithm_threads_number(const int&);
 
    void set_loss_index_pointer(LossIndex*);
    void set_loss_index_data_set_pointer(DataSet*);

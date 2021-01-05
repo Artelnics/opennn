@@ -21,7 +21,7 @@ SUBDIRS += rosenbrock
 #SUBDIRS += urinary_inflammations_diagnosis
 #SUBDIRS += yacht_hydrodynamics_design
 #SUBDIRS += yacht_hydrodynamics_production
-#SUBDIRS += leukemia
+SUBDIRS += leukemia
 #SUBDIRS += mnist
 
 # OpenMP library

@@ -523,10 +523,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
 {
    cout << "test_calculate_error_terms\n";
 
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
    NeuralNetwork neural_network;
    Tensor<Index, 1> architecture;
 
@@ -538,10 +534,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
    Index inputs_number;
    Index hidden_neurons_number;
    Index outputs_number;
-
-   data_set.set_thread_pool_device(thread_pool_device);
-   neural_network.set_thread_pool_device(thread_pool_device);
-   nse.set_thread_pool_device(thread_pool_device);
 
    // Test
 
@@ -592,10 +584,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
 {
    cout << "test_calculate_error_terms_Jacobian\n";
 
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
    NeuralNetwork neural_network;
    Tensor<Index, 1> architecture;
 
@@ -607,10 +595,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
    Index inputs_number;
    Index hidden_neurons_number;
    Index outputs_number;
-
-   data_set.set_thread_pool_device(thread_pool_device);
-   neural_network.set_thread_pool_device(thread_pool_device);
-   nse.set_thread_pool_device(thread_pool_device);
 
    // Test
 
