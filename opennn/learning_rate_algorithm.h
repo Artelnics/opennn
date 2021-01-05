@@ -258,7 +258,7 @@ public:
    void set(LossIndex*);
 
    void set_loss_index_pointer(LossIndex*);
-   void set_thread_pool_device(ThreadPoolDevice*);
+   void set_threads_number(const int&);
 
    // Training operators
 

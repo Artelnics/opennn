@@ -234,7 +234,7 @@ public:
 
    virtual void set_default();
 
-   void set_thread_pool_device(ThreadPoolDevice*);
+   void set_threads_number(const int&);
 
    void set_layers_pointers(Tensor<Layer*, 1>&);
 

@@ -40,7 +40,6 @@ LearningRateAlgorithm::~LearningRateAlgorithm()
 {
     delete non_blocking_thread_pool;
     delete thread_pool_device;
-
 }
 
 
@@ -151,7 +150,10 @@ void LearningRateAlgorithm::set(LossIndex* new_loss_index_pointer)
 /// Sets the members of the learning rate algorithm to their default values.
 
 void LearningRateAlgorithm::set_default()
-{       
+{
+    delete non_blocking_thread_pool;
+    delete thread_pool_device;
+
     const int n = omp_get_max_threads();
     non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
@@ -164,7 +166,6 @@ void LearningRateAlgorithm::set_default()
 
     learning_rate_tolerance = static_cast<type>(1.0e-3);
     loss_tolerance = static_cast<type>(1.0e-3);
-
 }
 
 
@@ -177,12 +178,13 @@ void LearningRateAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_poi
 }
 
 
-void LearningRateAlgorithm::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
+void LearningRateAlgorithm::set_threads_number(const int& new_threads_number)
 {
-    delete non_blocking_thread_pool;
-    delete thread_pool_device;
+    if(non_blocking_thread_pool != nullptr) delete this->non_blocking_thread_pool;
+    if(thread_pool_device != nullptr) delete this->thread_pool_device;
 
-    thread_pool_device = new_thread_pool_device;
+    non_blocking_thread_pool = new NonBlockingThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, new_threads_number);
 }
 
 
