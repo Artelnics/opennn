@@ -227,5 +227,11 @@ Makefile*
 ![Ee]xamples/yacht_hydrodynamics_production
 ![Ee]xamples/rosenbrock
 
+#CMake
+CMakeFiles/*
+examples/*/CMakeFiles/*
+examples/*/*.dir/*
+*.cmake
+*.vcxproj.user
 
 # Created by .ignore support plugin (hsz.mobi)
