@@ -21,6 +21,6 @@ include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 add_executable(pima_indians_diabetes main.cpp)
 
-target_link_libraries(pima_indians_diabetes ${PROJECT_LINK_LIBS})
+target_link_libraries(pima_indians_diabetes PUBLIC opennn)
 
 
