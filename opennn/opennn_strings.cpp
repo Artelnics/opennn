@@ -228,7 +228,7 @@ bool is_numeric_string(const string& str)
     {
         stod(str, &index);
 
-        if(index == str.size())
+        if(index == str.size() || (str.find("%") != std::string::npos && index+1 == str.size()))
         {
             return true;
         }
