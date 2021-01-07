@@ -21,5 +21,5 @@ include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 add_executable(urinary_inflammations_diagnosis main.cpp)
 
-target_link_libraries(urinary_inflammations_diagnosis ${PROJECT_LINK_LIBS})
+target_link_libraries(urinary_inflammations_diagnosis PUBLIC opennn)
 
