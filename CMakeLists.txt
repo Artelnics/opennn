@@ -1,10 +1,13 @@
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.12)
 
 project(opennn)
 
 set (CMAKE_CXX_STANDARD 11)
 SET(CPACK_GENERATOR "TGZ")
+
+set(CMAKE_SUPPRESS_REGENERATION true)
+set(VS_STARTUP_PROJECT opennn)
 
 #if(__OPENNN_OMP__)
 #    message("Using OpenMP")
