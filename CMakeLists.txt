@@ -1,10 +1,9 @@
-
 cmake_minimum_required(VERSION 2.8.12)
 
 project(opennn)
 
-set (CMAKE_CXX_STANDARD 11)
-SET(CPACK_GENERATOR "TGZ")
+set(CMAKE_CXX_STANDARD 11)
+set(CPACK_GENERATOR "TGZ")
 
 set(CMAKE_SUPPRESS_REGENERATION true)
 set(VS_STARTUP_PROJECT opennn)
@@ -25,15 +24,20 @@ include_directories(opennn)
 
 option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
 
-#option(OpenNN_BUILD_TESTS    "Build OpenNN tests"    OFF)
+option(OpenNN_BUILD_BLANK "Build OpenNN blank" ON)
 
-
-#if(OpenNN_BUILD_TESTS)
-#    add_subdirectory(tests)
-#endif(OpenNN_BUILD_TESTS)
+option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)
 
 if(OpenNN_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif(OpenNN_BUILD_EXAMPLES)
+
+if(OpenNN_BUILD_BLANK)
+    add_subdirectory(blank)
+endif(OpenNN_BUILD_BLANK)
+
+if(OpenNN_BUILD_TESTS)
+    add_subdirectory(tests)
+endif(OpenNN_BUILD_TESTS)
 
 include(CPack)
