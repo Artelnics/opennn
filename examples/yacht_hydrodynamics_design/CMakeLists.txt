@@ -21,5 +21,5 @@ include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 add_executable(yacht_hydrodynamics_design main.cpp)
 
-target_link_libraries(yacht_hydrodynamics_design ${PROJECT_LINK_LIBS})
+target_link_libraries(yacht_hydrodynamics_design PUBLIC opennn)
 

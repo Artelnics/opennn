@@ -22,5 +22,5 @@ include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 add_executable(logical_operations main.cpp)
 
-target_link_libraries(logical_operations ${PROJECT_LINK_LIBS})
+target_link_libraries(logical_operations PUBLIC opennn)
 

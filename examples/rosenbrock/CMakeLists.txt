@@ -17,12 +17,10 @@ set (PROJECT_LINK_LIBS ../../opennn/Release/opennn)
 endif()
 
 
-link_directories(${CMAKE_SOURCE_DIR}/opennn)
-
-include_directories(${CMAKE_SOURCE_DIR}/opennn)
+#link_directories(${CMAKE_SOURCE_DIR}/opennn)
+#
+#include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 add_executable(rosenbrock main.cpp)
 
-target_link_libraries(rosenbrock ${PROJECT_LINK_LIBS})
-
-
+target_link_libraries(rosenbrock PUBLIC opennn)

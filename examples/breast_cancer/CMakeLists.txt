@@ -23,6 +23,6 @@ include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 add_executable(breast_cancer main.cpp)
 
-target_link_libraries(breast_cancer ${PROJECT_LINK_LIBS})
+target_link_libraries(breast_cancer PUBLIC opennn)
 
 
