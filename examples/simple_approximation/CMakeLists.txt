@@ -21,5 +21,5 @@ include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 add_executable(simple_function_regression main.cpp)
 
-target_link_libraries(simple_function_regression ${PROJECT_LINK_LIBS})
+target_link_libraries(simple_function_regression PUBLIC opennn)
 

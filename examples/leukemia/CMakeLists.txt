@@ -23,5 +23,5 @@ include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 add_executable(leukemia main.cpp)
 
-target_link_libraries(leukemia ${PROJECT_LINK_LIBS})
+target_link_libraries(leukemia PUBLIC opennn)
 

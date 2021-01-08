@@ -18,5 +18,7 @@ endif()
 link_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 include_directories(${CMAKE_SOURCE_DIR}/opennn)
+
 add_executable(airfoil_self_noise main.cpp)
-target_link_libraries(airfoil_self_noise ${PROJECT_LINK_LIBS})
+
+target_link_libraries(airfoil_self_noise PUBLIC opennn)

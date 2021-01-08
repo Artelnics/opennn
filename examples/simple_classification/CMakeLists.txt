@@ -21,5 +21,5 @@ include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 add_executable(simple_pattern_recognition main.cpp)
 
-target_link_libraries(simple_pattern_recognition ${PROJECT_LINK_LIBS})
+target_link_libraries(simple_pattern_recognition PUBLIC opennn)
 
