@@ -677,6 +677,15 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     }
     else if(is_numeric_string(date)){
     }
+	else if (date.length() == 4)  // yyyy
+	{
+	    time_structure.tm_year = stoi(date) - 1900;
+	    time_structure.tm_mon = 0;
+	    time_structure.tm_mday = 1;
+	    time_structure.tm_hour = 0;
+	    time_structure.tm_min = 0;
+	    time_structure.tm_sec = 0;
+	}
     else
     {
         ostringstream buffer;
