@@ -2168,26 +2168,24 @@ Tensor<Index, 1> DataSet::get_unused_columns_indices() const
 
 Tensor<Index, 1> DataSet::get_used_columns_indices() const
 {
-    const Index variables_number = get_variables_number();
+    const Index used_columns_number = get_used_columns_number();
 
-    const Index used_variables_number = get_used_variables_number();
-
-    Tensor<Index, 1> used_indices(used_variables_number);
+    Tensor<Index, 1> used_columns_indices(used_columns_number);
 
     Index index = 0;
 
-    for(Index i = 0; i < variables_number; i++)
+    for(Index i = 0; i < columns.size(); i++)
     {
         if(columns(i).column_use  == Input
                 || columns(i).column_use  == Target
                 || columns(i).column_use  == Time)
         {
-            used_indices(index) = i;
+            used_columns_indices(index) = i;
             index++;
         }
     }
 
-    return used_indices;
+    return used_columns_indices;
 }
 
 
@@ -2682,46 +2680,26 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
 
 Tensor<Index, 1> DataSet::get_input_variables_indices() const
 {
-    const Index inputs_number = get_input_variables_number();
+    const size_t variables_number = get_variables_number();
 
-    const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
+    const size_t input_variables_number = get_input_variables_number();
 
-    Tensor<Index, 1> input_variables_indices(inputs_number);
+    Tensor<Index, 1> input_indices(input_variables_number);
 
-    Index input_index = 0;
-    Index input_variable_index = 0;
+    Index index = 0;
 
-    for(Index i = 0; i < columns.size(); i++)
+    Tensor<VariableUse, 1> variable_uses = get_variables_uses();
+
+    for (Index i = 0; i < variables_number; i++)
     {
-
-        if(columns(i).type == Categorical)
+        if (variable_uses[i] == Input)
         {
-            const Index current_categories_number = columns(i).get_categories_number();
-
-            for(Index j = 0; j < current_categories_number; j++)
-            {
-                if(columns(i).categories_uses(j) == Input)
-                {
-                    input_variables_indices(input_index) = input_variable_index;
-                    input_index++;
-                }
-
-                input_variable_index++;
-            }
-        }
-        else if(columns(i).column_use == Input) // Binary, numeric
-        {
-            input_variables_indices(input_index) = input_variable_index;
-            input_index++;
-            input_variable_index++;
-        }
-        else
-        {
-            input_variable_index++;
+            input_indices(index) = i;
+            index++;
         }
     }
 
-    return input_variables_indices;
+    return input_indices;
 }
 
 
@@ -2729,45 +2707,26 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
 
 Tensor<Index, 1> DataSet::get_target_variables_indices() const
 {
-    const Index targets_number = get_target_variables_number();
+    const size_t variables_number = get_variables_number();
 
-    const Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
+    const size_t target_variables_number = get_target_variables_number();
 
-    Tensor<Index, 1> target_variables_indices(targets_number);
+    Tensor<Index, 1> target_indices(target_variables_number);
 
-    Index target_index = 0;
-    Index target_variable_index = 0;
+    Index index = 0;
 
-    for(Index i = 0; i < columns.size(); i++)
+    Tensor<VariableUse, 1> variable_uses = get_variables_uses();
+
+    for (Index i = 0; i < variables_number; i++)
     {
-        if(columns(i).type == Categorical)
+        if (variable_uses[i] == Target)
         {
-            const Index current_categories_number = columns(i).get_categories_number();
-
-            for(Index j = 0; j < current_categories_number; j++)
-            {
-                if(columns(i).categories_uses(j) == Target)
-                {
-                    target_variables_indices(target_index) = target_variable_index;
-                    target_index++;
-                }
-
-                target_variable_index++;
-            }
-        }
-        else if(columns(i).column_use == Target) // Binary, numeric
-        {
-            target_variables_indices(target_index) = target_variable_index;
-            target_index++;
-            target_variable_index++;
-        }
-        else
-        {
-            target_variable_index++;
+            target_indices(index) = i;
+            index++;
         }
     }
 
-    return target_variables_indices;
+    return target_indices;
 }
 
 
