@@ -9856,23 +9856,32 @@ void DataSet::numeric_to_categorical(const Index& variable_index)
 
 void DataSet::impute_missing_values_unuse()
 {
+    std::cout << "Imputing missing values by removing instance. Missing value label is: " << missing_values_label << std::endl;
+
     const Index samples_number = get_samples_number();
 
     #pragma omp parallel for
+
+    Index count = 0;
 
     for(Index i = 0; i <samples_number; i++)
     {
         if(has_nan_row(i))
         {
             set_sample_use(i, "Unused");
+            count++;
         }
     }
+
+    std::cout << "Removed " << count << " samples." << std::endl;
 }
 
 /// Substitutes all the missing values by the mean of the corresponding variable.
 
 void DataSet::impute_missing_values_mean()
 {
+    std::cout << "Imputing missing values with mean value of column. Missing value label is: " << missing_values_label << std::endl;
+
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
 
@@ -9886,6 +9895,8 @@ void DataSet::impute_missing_values_mean()
 
 #pragma omp parallel for schedule(dynamic)
 
+    Index count = 0;
+
     for(Index j = 0; j < variables_number; j++)
     {
         current_variable = used_variables_indices(j);
@@ -9897,9 +9908,12 @@ void DataSet::impute_missing_values_mean()
             if(::isnan(data(current_sample, current_variable)))
             {
                 data(current_sample,current_variable) = means(j);
+                count++;
             }
         }
     }
+
+    std::cout << "Imputed " << count << " cells." << std::endl;
 }
 
 
@@ -9907,6 +9921,8 @@ void DataSet::impute_missing_values_mean()
 
 void DataSet::impute_missing_values_median()
 {
+    std::cout << "Imputing missing values with median value of column. Missing value label is: " << missing_values_label << std::endl;
+
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_columns_indices();
 
@@ -9917,13 +9933,18 @@ void DataSet::impute_missing_values_median()
 
 #pragma omp parallel for schedule(dynamic)
 
+    Index count = 0;
+
     for(Index j = 0; j < variables_number; j++)
     {
         for(Index i = 0 ; i < samples_number ; i++)
         {
             if(::isnan(data(used_samples_indices(i),used_variables_indices(j)))) data(used_samples_indices(i),used_variables_indices(j)) = medians(j);
+            count++;
         }
     }
+
+    std::cout << "Imputed " << count << " cells." << std::endl;
 }
 
 
