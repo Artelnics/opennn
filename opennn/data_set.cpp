@@ -5521,7 +5521,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
             cout << "Calculating " << columns(input_index).name << " - " << columns(target_index).name << " correlations. \n" ;
 
-            if(input_type == Numeric && target_type == Numeric)
+            if((input_type == Numeric || input_type == DateTime) && target_type == Numeric)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
@@ -5553,7 +5553,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
 //                correlations(i,j) = karl_pearson_correlations(thread_pool_device, input, target);
             }
-            else if(input_type == Numeric && target_type == Binary)
+            else if((input_type == Numeric || input_type == DateTime) && target_type == Binary)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
@@ -5573,7 +5573,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
                 correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target/*target_column*/);
             }
-            else if(input_type == Numeric && target_type == Categorical)
+            else if((input_type == Numeric || input_type == DateTime) && target_type == Categorical)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
