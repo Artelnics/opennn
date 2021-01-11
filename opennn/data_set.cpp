@@ -1852,6 +1852,19 @@ void DataSet::set_column_name(const Index& column_index, const string& new_name)
     columns(column_index).name = new_name;
 }
 
+Tensor<DataSet::ColumnType, 1> DataSet::get_columns_types() const
+{
+    const Index columns_number = get_columns_number();
+
+    Tensor<DataSet::ColumnType, 1> columns_types(columns_number);
+
+    for (size_t i = 0; i < columns_number; i++)
+    {
+        columns_types[i] = columns[i].type;
+    }
+
+    return columns_types;
+}
 
 /// Returns the use of a single variable.
 /// @param index Index of variable.
@@ -4322,6 +4335,8 @@ void DataSet::set(const DataSet& other_data_set)
     columns = other_data_set.columns;
 
     display = other_data_set.display;
+
+    samples_uses = other_data_set.samples_uses;
 }
 
 
@@ -10680,7 +10695,10 @@ void DataSet::read_csv_3_complete()
                 }
                 else
                 {
-                    data(sample_index, variable_index) = static_cast<type>(date_to_timestamp(tokens(j), gmt));
+                    double date = static_cast<type>(date_to_timestamp(tokens[j], gmt));
+                    if (date == -1.0) // TODO: need new solution, currently changes dates before 1970 to 0.
+                        date = 0.0;
+                    data(sample_index, variable_index) = date;
                     variable_index++;
                 }
             }

@@ -258,6 +258,7 @@ public:
    Tensor<string, 1> get_used_columns_names() const;
 
    ColumnType get_column_type(const Index& index) const {return columns[index].type;}
+   Tensor<ColumnType, 1> get_columns_types() const;
 
    VariableUse get_column_use(const Index &) const;
    Tensor<VariableUse, 1> get_columns_uses() const;
