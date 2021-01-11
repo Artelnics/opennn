@@ -546,7 +546,7 @@ Index minimum(const Tensor<Index, 1>& vector)
 {
     const Index size = vector.size();
 
-    if(size == 0) return static_cast<Index>(NAN);
+    if(size == 0) return NAN;
 
     Index minimum = numeric_limits<Index>::max();
 
@@ -659,7 +659,7 @@ Index maximum(const Tensor<Index, 1>& vector)
 {
     const Index size = vector.size();
 
-    if(size == 0) return static_cast<Index>(NAN);
+    if(size == 0) return NAN;
 
     Index maximum = -numeric_limits<Index>::max();
 
@@ -2523,7 +2523,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
     const Index row_indices_size = row_indices.size();
     const Index columns_indices_size = columns_indices.size();
 
-    if (row_indices_size == 0 && columns_indices_size == 0) return Tensor<type, 1>().setValues({NAN});
+    if (row_indices_size == 0 && columns_indices_size == 0) return NAN;
 
 #ifdef __OPENNN_DEBUG__
 
