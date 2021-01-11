@@ -717,6 +717,7 @@ public:
    void print_data_file_preview() const;
 
    void save_data() const;
+   void save_data_to_file(const string&, const char&) const;
 
    void save_data_binary(const string&) const;
 

@@ -8540,6 +8540,71 @@ void DataSet::save_data() const
 }
 
 
+/// Saves to the data file the values of the data matrix.
+
+void DataSet::save_data_to_file(const string& fileName, const char& fileSeperator) const
+{
+    ofstream file(fileName.c_str(), std::ofstream::out | std::ofstream::trunc);
+
+    if (!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix template." << endl
+            << "void save_csv(const string&, const char&, const Vector<string>&, const Vector<string>&) method." << endl
+            << "Cannot open matrix data file: " << fileName << endl;
+
+        throw logic_error(buffer.str());
+    }
+
+    file.precision(20);
+
+    const Index samples_number = get_samples_number();
+    const Index variables_number = get_variables_number();
+
+    const Tensor<string, 1> variables_names = get_variables_names();
+
+    char separator_char = fileSeperator;
+
+    if (this->has_rows_labels)
+    {
+        file << "id" << separator_char;
+    }
+    for (Index j = 0; j < variables_number; j++)
+    {
+        file << variables_names[j];
+
+        if (j != variables_number - 1)
+        {
+            file << separator_char;
+        }
+    }
+
+    file << endl;
+
+    for (Index i = 0; i < samples_number; i++)
+    {
+        if (this->has_rows_labels)
+        {
+            file << rows_labels(i) << separator_char;
+        }
+        for (Index j = 0; j < variables_number; j++)
+        {
+            file << data(i, j);
+
+            if (j != variables_number - 1)
+            {
+                file << separator_char;
+            }
+        }
+
+        file << endl;
+    }
+
+    file.close();
+}
+
+
 /// Saves to the data file the values of the data matrix in binary format.
 
 void DataSet::save_data_binary(const string& binary_data_file_name) const
