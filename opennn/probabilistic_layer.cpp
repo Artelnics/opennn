@@ -575,7 +575,7 @@ void ProbabilisticLayer::set_synaptic_weights_constant(const type& value)
 }
 
 
-void ProbabilisticLayer::set_synaptic_weights_constant_Glorot(const type& minimum, const type& maximum)
+void ProbabilisticLayer::set_synaptic_weights_constant_Glorot()
 {
     synaptic_weights.setRandom();
 }
