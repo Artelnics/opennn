@@ -1,4 +1,4 @@
-// This file is part of Eigen, a lightweight C++ template library
+ // This file is part of Eigen, a lightweight C++ template library
 // for linear algebra.
 //
 // Copyright (C) 2016 Benoit Steiner <benoit.steiner.goog@gmail.com>
@@ -62,4 +62,3 @@
 //#include <Eigen/src/Core/util/ReenableStupidWarnings.h>
 
 #endif // EIGEN_CXX11_THREADPOOL_MODULE
-

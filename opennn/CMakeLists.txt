@@ -1,8 +1,4 @@
-# Specify the minimum version for CMake
-
-cmake_minimum_required(VERSION 2.8.10)
-
-# Project's name
+cmake_minimum_required(VERSION 2.8.12)
 
 project(opennn)
 
@@ -53,6 +49,3 @@ unit_testing.cpp
 unscaling_layer.cpp
 weighted_squared_error.cpp
 )
-
-
-

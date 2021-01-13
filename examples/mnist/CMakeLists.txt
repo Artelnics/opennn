@@ -1,16 +1,17 @@
-cmake_minimum_required(VERSION 2.8.10)
+cmake_minimum_required(VERSION 2.8.12)
 
-# Project's name
+project(mnist)
 
-project(simple_function_regression)
+if(UNIX)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+	set(PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/Release/opennn/libopennn.a)
+endif()
 
-set (PROJECT_LINK_LIBS ../../opennn/Release/opennn)
+if(WIN32)
+	set(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
+endif()
 
-link_directories(${CMAKE_SOURCE_DIR}/opennn)
+add_executable(mnist main.cpp)
 
-include_directories(${CMAKE_SOURCE_DIR}/opennn)
-
-add_executable(simple_function_regression main.cpp)
-
-target_link_libraries(simple_function_regression ${PROJECT_LINK_LIBS})
-
+target_link_libraries(mnist PUBLIC opennn)

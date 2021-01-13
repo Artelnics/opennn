@@ -152,7 +152,7 @@ public:
 
    void set_default();
 
-   void set_thread_pool_device(ThreadPoolDevice* );
+   void set_threads_number(const int&);
 
    // Checking methods
 
@@ -309,11 +309,8 @@ public:
 
    // Serialization methods
 
-   
-
    void print() const;
 
-//   virtual
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
@@ -327,6 +324,7 @@ public:
 
 private: 
 
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Pointer to the neural network object to be tested. 

@@ -49,7 +49,7 @@ public:
    explicit LongShortTermMemoryLayer(const Index&, const Index&);
 
    // Destructor
-   
+
    virtual ~LongShortTermMemoryLayer();
 
    // Get methods
@@ -75,10 +75,6 @@ public:
    Tensor<type, 2> get_forget_recurrent_weights() const;
    Tensor<type, 2> get_state_recurrent_weights() const;
    Tensor<type, 2> get_output_recurrent_weights() const;
-
-   Tensor<type, 2> get_biases() const;
-   Tensor<type, 3> get_weights() const;
-   Tensor<type, 3> get_recurrent_weights() const;
 
    Index get_timesteps() const;
 
@@ -128,6 +124,7 @@ public:
    void set_output_recurrent_weights(const Tensor<type, 2>&);
 
    void set_parameters(const Tensor<type, 1>&);
+   void set_parameters(const Tensor<type, 1>&, const Index&);
 
    // Activation functions
 
@@ -176,6 +173,12 @@ public:
    void set_parameters_random();
 
    // Long short term memory layer combinations_2d
+
+   void calculate_combinations(const Tensor<type, 1>& ,
+                               const Tensor<type, 2>& ,
+                               const Tensor<type, 2>& ,
+                               const Tensor<type, 1>& ,
+                               Tensor<type, 1>&) const;
 
    void calculate_forget_combinations(const Tensor<type, 1>& ,
                                       const Tensor<type, 2>& ,
@@ -228,8 +231,8 @@ public:
 
    // Long short term memory layer forward_propagate
 
-   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
-   {/*
+   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation);
+/*   {
        const Index samples_number = inputs.dimension(0);
        const Index neurons_number = get_neurons_number();
 
@@ -327,8 +330,8 @@ public:
 //       return layers;
 
 //       return Layer::ForwardPropagation();
-*/
-   }
+
+   }*/
 
    // Long short term memory layer error gradient
 
@@ -404,7 +407,7 @@ public:
 
    Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
 
-   
+
 
    // Serialization methods
 
@@ -442,7 +445,7 @@ protected:
    Tensor<type, 1> hidden_states;
    Tensor<type, 1> cell_states;
 
-   /// Display messages to screen. 
+   /// Display messages to screen.
 
    bool display = true;
 

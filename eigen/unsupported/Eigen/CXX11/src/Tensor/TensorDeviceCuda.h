@@ -7,11 +7,6 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Roberto
-
-#include <chrono>
-#include <thread>
-
 #if defined(EIGEN_USE_GPU) && !defined(EIGEN_CXX11_TENSOR_TENSOR_DEVICE_CUDA_H)
 #define EIGEN_CXX11_TENSOR_TENSOR_DEVICE_CUDA_H
 
@@ -93,9 +88,7 @@ static void initializeDeviceProp() {
 #if __cplusplus >= 201103L
         std::atomic_thread_fence(std::memory_order_acquire);
 #endif
-        // Roberto
-        // sleep(1);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        sleep(1);
       }
     }
   }

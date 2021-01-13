@@ -115,7 +115,7 @@ public:
 
    void set_biases_constant(const type&);
    void set_synaptic_weights_constant(const type&);
-   void set_synaptic_weights_constant_Glorot(const type&,const type&);
+   void set_synaptic_weights_constant_Glorot();
 
    void set_parameters_constant(const type&);
 

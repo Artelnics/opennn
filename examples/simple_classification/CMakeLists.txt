@@ -1,16 +1,18 @@
-cmake_minimum_required(VERSION 2.8.10)
+cmake_minimum_required(VERSION 2.8.12)
 
-# Project's name
+project(simple_classification)
 
-project(simple_pattern_recognition)
+if(UNIX)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+	set(PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/Release/opennn/libopennn.a)
+endif()
 
-set (PROJECT_LINK_LIBS ../../opennn/Release/opennn)
+if(WIN32)
+	set(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
+endif()
 
-link_directories(${CMAKE_SOURCE_DIR}/opennn)
+add_executable(simple_classification main.cpp)
 
-include_directories(${CMAKE_SOURCE_DIR}/opennn)
-
-add_executable(simple_pattern_recognition main.cpp)
-
-target_link_libraries(simple_pattern_recognition ${PROJECT_LINK_LIBS})
+target_link_libraries(simple_classification PUBLIC opennn)
 

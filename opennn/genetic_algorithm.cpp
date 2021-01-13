@@ -298,6 +298,11 @@ void GeneticAlgorithm::set_default()
     reserve_generation_minimum_selection = true;
 
     reserve_generation_optimum_loss = true;
+
+    //trials number
+
+    trials_number = 1;
+
 }
 
 
@@ -2022,7 +2027,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             results->final_selection_error = optimum_selection_error;
             results->final_training_error = optimum_training_error;
             results->iterations_number = iteration + 1;
-            results->elapsed_time = elapsed_time;
+            results->elapsed_time = write_elapsed_time(elapsed_time);
             results->minimal_parameters = optimal_parameters;            
             break;
         }

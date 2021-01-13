@@ -32,15 +32,12 @@ int main(void)
 
         // Device
 
-        const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
         DataSet data_set("../data/leukemia.csv",';',false);
 
-        data_set.set_thread_pool_device(thread_pool_device);
         data_set.set_training();
 
+        data_set.calculate_input_target_columns_correlations();
+/*
         Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
         Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
@@ -78,7 +75,7 @@ int main(void)
                    <<"% dataset evaluated"<<endl;
             }
         }
-
+*/
         return 0;
     }
     catch(exception& e)
