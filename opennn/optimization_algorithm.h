@@ -211,7 +211,7 @@ public:
 
    virtual void set_default();
 
-   virtual void set_thread_pool_device(ThreadPoolDevice*);
+   virtual void set_threads_number(const int&);
 
    virtual void set_loss_index_pointer(LossIndex*);
 
@@ -241,7 +241,6 @@ public:
 
    virtual Tensor<string, 2> to_string_matrix() const;
 
-//   virtual
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
@@ -251,9 +250,11 @@ public:
 
 protected:
 
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device;
 
    /// Pointer to a loss index for a neural network object.
+
 
    LossIndex* loss_index_pointer = nullptr;
 

@@ -258,7 +258,7 @@ public:
    void set(LossIndex*);
 
    void set_loss_index_pointer(LossIndex*);
-   void set_thread_pool_device(ThreadPoolDevice*);
+   void set_threads_number(const int&);
 
    // Training operators
 
@@ -325,6 +325,7 @@ protected:
 
    const type golden_ratio = static_cast<type>(1.618);
 
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
 
    bool is_zero(const Tensor<type, 1>& tensor) const

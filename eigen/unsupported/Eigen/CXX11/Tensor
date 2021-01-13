@@ -76,10 +76,10 @@ typedef unsigned __int64 uint64_t;
 
 #ifdef EIGEN_USE_GPU
 #include <iostream>
-#include "cuda_runtime.h"
+#include <cuda_runtime.h>
 #if __cplusplus >= 201103L
 #include <atomic>
-//#include <unistd.h>
+#include <unistd.h>
 #endif
 #endif
 
@@ -90,7 +90,7 @@ typedef unsigned __int64 uint64_t;
 #include "src/Tensor/TensorCostModel.h"
 #include "src/Tensor/TensorDeviceDefault.h"
 #include "src/Tensor/TensorDeviceThreadPool.h"
-//#include "src/Tensor/TensorDeviceCuda.h"
+#include "src/Tensor/TensorDeviceCuda.h"
 #include "src/Tensor/TensorDeviceSycl.h"
 #include "src/Tensor/TensorIndexList.h"
 #include "src/Tensor/TensorDimensionList.h"

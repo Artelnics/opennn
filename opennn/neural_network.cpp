@@ -873,13 +873,13 @@ void NeuralNetwork::set_default()
 }
 
 
-void NeuralNetwork::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
+void NeuralNetwork::set_threads_number(const int& new_threads_number)
 {
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
     {
-        layers_pointers(i)->set_thread_pool_device(new_thread_pool_device);
+        layers_pointers(i)->set_threads_number(new_threads_number);
     }
 }
 

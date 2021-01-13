@@ -18,7 +18,7 @@ OptimizationAlgorithm::OptimizationAlgorithm()
     : loss_index_pointer(nullptr)
 {
     const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     set_default();
@@ -32,7 +32,7 @@ OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
     : loss_index_pointer(new_loss_index_pointer)
 {
     const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     set_default();
@@ -43,6 +43,8 @@ OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
 
 OptimizationAlgorithm::~OptimizationAlgorithm()
 {
+    delete non_blocking_thread_pool;
+    delete thread_pool_device;
 }
 
 
@@ -157,11 +159,13 @@ void OptimizationAlgorithm::set(LossIndex* new_loss_index_pointer)
 }
 
 
-void OptimizationAlgorithm::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
+void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool_device != nullptr) thread_pool_device = nullptr;
+    if(non_blocking_thread_pool != nullptr) delete this->non_blocking_thread_pool;
+    if(thread_pool_device != nullptr) delete this->thread_pool_device;
 
-    thread_pool_device = new_thread_pool_device;
+    non_blocking_thread_pool = new NonBlockingThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, new_threads_number);
 }
 
 

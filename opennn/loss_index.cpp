@@ -43,6 +43,8 @@ LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer, DataSet* new_dat
 
 LossIndex::~LossIndex()
 {
+    delete non_blocking_thread_pool;
+    delete thread_pool_device;
 }
 
 
@@ -171,11 +173,13 @@ void LossIndex::set(const LossIndex& other_error_term)
 }
 
 
-void LossIndex::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
+void LossIndex::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool_device != nullptr) thread_pool_device = nullptr;
+    if(non_blocking_thread_pool != nullptr) delete this->non_blocking_thread_pool;
+    if(thread_pool_device != nullptr) delete this->thread_pool_device;
 
-    thread_pool_device = new_thread_pool_device;
+    non_blocking_thread_pool = new NonBlockingThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, new_threads_number);
 }
 
 
@@ -200,8 +204,12 @@ void LossIndex::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 void LossIndex::set_default()
 {
+    delete non_blocking_thread_pool;
+    delete thread_pool_device;
+
     const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+
+    non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     regularization_method = L2;
