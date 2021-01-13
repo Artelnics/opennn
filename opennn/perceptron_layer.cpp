@@ -668,9 +668,9 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
 
 Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
-    const Index inputs_dimensions_number = inputs.rank();
 
 #ifdef __OPENNN_DEBUG__
+    const Index inputs_dimensions_number = inputs.rank();
 
     if(inputs_dimensions_number != 2)
     {

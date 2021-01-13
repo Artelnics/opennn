@@ -2104,13 +2104,11 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, 
         calculate_output_combinations(current_inputs, output_weights, output_recurrent_weights, output_biases, output_combinations);
         calculate_recurrent_activations_derivatives(output_combinations, output_activations, output_activations_derivatives);
 
-
         cell_states = forget_activations * cell_states + input_activations * state_activations;
         calculate_activations_derivatives(cell_states, hidden_states, hidden_states_derivatives);
         hidden_states *= output_activations;
 
-
-
+        // For memcpy, try with RowMajor
     }
 
 //    memcpy(forward_propagation.combinations_1d.data(),

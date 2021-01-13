@@ -268,7 +268,7 @@ Histogram::Histogram(const Tensor<type, 1>& probability_data)
 
 
     Tensor<type, 1> new_centers(number_of_bins);
-    for(Index i = 0; i < number_of_bins; i++)
+    for(size_t i = 0; i < number_of_bins; i++)
     {
         new_centers(i) = data_minimum + (0.5 * step) + (step * i);
     }
@@ -1389,7 +1389,15 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
 {
     BoxPlot boxplot;
 
-    if(vector.dimension(0) == 0) return boxplot;
+    if(vector.dimension(0) == 0) {
+        boxplot.minimum = NAN;
+        boxplot.first_quartile = NAN;
+        boxplot.median = NAN;
+        boxplot.third_quartile = NAN;
+        boxplot.maximum = NAN;
+        return boxplot;
+    }
+
 
     const Tensor<type, 1> quartiles = OpenNN::quartiles(vector);
 
@@ -3438,13 +3446,13 @@ type l2_norm(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
-    if(size == 0) return 0.0;
+    if(size == 0) return NAN;
 
     type square_sum = 0;
 
     for(Index i = 0; i < size; i++)
     {
-        square_sum = square_sum + vector[i]*vector[i];
+        square_sum = square_sum + vector[i] * vector[i];
     }
 
     return sqrt(square_sum);

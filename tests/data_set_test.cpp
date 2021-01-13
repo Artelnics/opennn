@@ -103,6 +103,7 @@ void DataSetTest::test_assignment_operator()
    assert_true(ds4.get_input_variables_number() == 0,LOG);
 }
 
+
 void DataSetTest::test_get_samples_number()
 {
    cout << "test_get_samples_number\n";
@@ -113,6 +114,7 @@ void DataSetTest::test_get_samples_number()
 
 
 }
+
 
 void DataSetTest::test_get_variables_number() 
 {
@@ -135,6 +137,7 @@ void DataSetTest::test_get_variables()
    assert_true(data_set.get_unused_variables_number() == 0, LOG);
    assert_true(data_set.get_used_variables_number() == 5, LOG);
 }
+
 
 void DataSetTest::test_get_display() 
 {
@@ -164,7 +167,8 @@ void DataSetTest::test_get_data()
 
    assert_true(data.dimension(0) == 1, LOG);
    assert_true(data.dimension(1) == 2, LOG);
-//   assert_true(data == 0.0, LOG);
+   assert_true(data(0) - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+
 
    DataSet data_set1(2,3,2);
 
@@ -175,6 +179,7 @@ void DataSetTest::test_get_data()
    assert_true(data1.dimension(0) == 2, LOG);
    assert_true(data1.dimension(1) == 5, LOG);
 }
+
 
 void DataSetTest::test_get_training_data()
 {
@@ -192,12 +197,12 @@ void DataSetTest::test_get_training_data()
    Tensor<type, 2> training_data = data_set.get_training_data();
    Tensor<type, 2> solution(2, 3);
    solution.setValues({{1,4,6},{4,3,6}});
-   assert_true(training_data(0,0) == solution(0,0), LOG);
-   assert_true(training_data(0,1) == solution(0,1), LOG);
-   assert_true(training_data(0,2) == solution(0,2), LOG);
-   assert_true(training_data(1,0) == solution(1,0), LOG);
-   assert_true(training_data(1,1) == solution(1,1), LOG);
-   assert_true(training_data(1,2) == solution(1,2), LOG);
+   assert_true(training_data(0,0) - solution(0,0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(training_data(0,1) - solution(0,1) < static_cast<type>(1.0e-6), LOG);
+   assert_true(training_data(0,2) - solution(0,2) < static_cast<type>(1.0e-6), LOG);
+   assert_true(training_data(1,0) - solution(1,0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(training_data(1,1) - solution(1,1) < static_cast<type>(1.0e-6), LOG);
+   assert_true(training_data(1,2) - solution(1,2) < static_cast<type>(1.0e-6), LOG);
 }
 
 
@@ -220,12 +225,12 @@ void DataSetTest::test_get_selection_data()
    Tensor<type, 2> selection_data = data_set.get_selection_data();
    Tensor<type, 2> solution(2, 3);
    solution.setValues({{1,4,6},{4,3,6}});
-   assert_true(selection_data(0,0) == solution(0,0), LOG);
-   assert_true(selection_data(0,1) == solution(0,1), LOG);
-   assert_true(selection_data(0,2) == solution(0,2), LOG);
-   assert_true(selection_data(1,0) == solution(1,0), LOG);
-   assert_true(selection_data(1,1) == solution(1,1), LOG);
-   assert_true(selection_data(1,2) == solution(1,2), LOG);
+   assert_true(selection_data(0,0) - solution(0,0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(selection_data(0,1) - solution(0,1) < static_cast<type>(1.0e-6), LOG);
+   assert_true(selection_data(0,2) - solution(0,2) < static_cast<type>(1.0e-6), LOG);
+   assert_true(selection_data(1,0) - solution(1,0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(selection_data(1,1) - solution(1,1) < static_cast<type>(1.0e-6), LOG);
+   assert_true(selection_data(1,2) - solution(1,2) < static_cast<type>(1.0e-6), LOG);
 }
 
 
@@ -247,12 +252,12 @@ void DataSetTest::test_get_testing_data()
    Tensor<type, 2> testing_data = data_set.get_testing_data();
    Tensor<type, 2> solution(2, 3);
    solution.setValues({{1,4,6},{4,3,6}});
-   assert_true(testing_data(0,0) == solution(0,0), LOG);
-   assert_true(testing_data(0,1) == solution(0,1), LOG);
-   assert_true(testing_data(0,2) == solution(0,2), LOG);
-   assert_true(testing_data(1,0) == solution(1,0), LOG);
-   assert_true(testing_data(1,1) == solution(1,1), LOG);
-   assert_true(testing_data(1,2) == solution(1,2), LOG);
+   assert_true(testing_data(0,0) - solution(0,0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(testing_data(0,1) - solution(0,1) < static_cast<type>(1.0e-6), LOG);
+   assert_true(testing_data(0,2) - solution(0,2) < static_cast<type>(1.0e-6), LOG);
+   assert_true(testing_data(1,0) - solution(1,0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(testing_data(1,1) - solution(1,1) < static_cast<type>(1.0e-6), LOG);
+   assert_true(testing_data(1,2) - solution(1,2) < static_cast<type>(1.0e-6), LOG);
 
 }
 
@@ -294,6 +299,7 @@ void DataSetTest::test_get_targets()
    assert_true(targets_number == columns_number, LOG);
 }
 
+
 void DataSetTest::test_get_sample()
 {
    cout << "test_get_sample\n";
@@ -309,7 +315,7 @@ void DataSetTest::test_get_sample()
    sample = data_set.get_sample_data(0);
 
    assert_true(sample.size() == 2, LOG);
-   assert_true(sample(0) == 1.0, LOG);
+   assert_true(sample(0) - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
 
    // Test several variables
 
@@ -321,7 +327,7 @@ void DataSetTest::test_get_sample()
    Tensor<type, 1> sample_0 = data_set.get_sample_data(0, indices_variables);
    Tensor<type, 1> sample_1 = data_set.get_sample_data(1, indices_variables);
 
-   assert_true(sample_0(0) == sample_1(0) && sample_0(1) == sample_1(1), LOG);
+   assert_true(sample_0(0) - sample_1(0) < static_cast<type>(1.0e-6) && sample_0(1) - sample_1(1) < static_cast<type>(1.0e-6), LOG);
 }
 
 
@@ -346,6 +352,7 @@ void DataSetTest::test_set()
    assert_true(data.dimension(0) == 1, LOG);
    assert_true(data.dimension(1) == 5, LOG);
 }
+
 
 void DataSetTest::test_set_samples_number() 
 {
@@ -389,10 +396,13 @@ void DataSetTest::test_set_data() // @todo
 
    Tensor<type, 2> data = data_set.get_data();
 
-   //assert_true(data == new_data, LOG);
+//   assert_true(data(0) - new_data(0) < static_cast<type>(1.0e-6), LOG);
+//   assert_true(data(1) - new_data(1) < static_cast<type>(1.0e-6), LOG);
+//   assert_true(data(2) - new_data(2) < static_cast<type>(1.0e-6), LOG);
 }
 
-void DataSetTest::test_set_sample()
+
+void DataSetTest::test_set_sample() // @todo
 {
    cout << "test_set_sample\n";
 
@@ -427,10 +437,10 @@ void DataSetTest::test_calculate_data_descriptives()
 
    assert_true(descriptives.size() == 1, LOG);
 
-   assert_true(descriptives[0].minimum == 0.0, LOG);
-   assert_true(descriptives[0].maximum == 0.0, LOG);
-   assert_true(descriptives[0].mean == 0.0, LOG);
-   assert_true(descriptives[0].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[0].minimum < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[0].maximum < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[0].mean < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[0].standard_deviation < static_cast<type>(1.0e-6), LOG);
 
    // Test
 
@@ -442,25 +452,25 @@ void DataSetTest::test_calculate_data_descriptives()
 
    assert_true(descriptives.size() == 4, LOG);
 
-   assert_true(descriptives[0].minimum == 0.0, LOG);
-   assert_true(descriptives[0].maximum == 0.0, LOG);
-   assert_true(descriptives[0].mean == 0.0, LOG);
-   assert_true(descriptives[0].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[0].minimum < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[0].maximum < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[0].mean < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[0].standard_deviation < static_cast<type>(1.0e-6), LOG);
 
-   assert_true(descriptives[1].minimum == 0.0, LOG);
-   assert_true(descriptives[1].maximum == 0.0, LOG);
-   assert_true(descriptives[1].mean == 0.0, LOG);
-   assert_true(descriptives[1].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[1].minimum < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[1].maximum < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[1].mean < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[1].standard_deviation < static_cast<type>(1.0e-6), LOG);
 
-   assert_true(descriptives[2].minimum == 0.0, LOG);
-   assert_true(descriptives[2].maximum == 0.0, LOG);
-   assert_true(descriptives[2].mean == 0.0, LOG);
-   assert_true(descriptives[2].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[2].minimum < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[2].maximum < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[2].mean < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[2].standard_deviation < static_cast<type>(1.0e-6), LOG);
 
-   assert_true(descriptives[3].minimum == 0.0, LOG);
-   assert_true(descriptives[3].maximum == 0.0, LOG);
-   assert_true(descriptives[3].mean == 0.0, LOG);
-   assert_true(descriptives[3].standard_deviation == 0.0, LOG);
+   assert_true(descriptives[3].minimum < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[3].maximum < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[3].mean < static_cast<type>(1.0e-6), LOG);
+   assert_true(descriptives[3].standard_deviation < static_cast<type>(1.0e-6), LOG);
 }
 
 
@@ -557,7 +567,7 @@ void DataSetTest::test_calculate_testing_samples_descriptives()
 }
 
 
-void DataSetTest::test_calculate_inputs_descriptives()
+void DataSetTest::test_calculate_inputs_descriptives() //@todo
 {
    cout << "test_calculate_inputs_descriptives\n";
 

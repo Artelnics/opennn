@@ -388,15 +388,15 @@ void ScalingLayer::set(const ScalingLayer& new_scaling_layer)
 }
 
 
-void ScalingLayer::set(const Tensor<bool, 1>& new_uses)
-{
-    /*
-        const Tensor<Index, 1> indices = new_uses.get_indices_equal_to(true);
-    */
-//    descriptives = descriptives.get_subvector(indices);
+//void ScalingLayer::set(const Tensor<bool, 1>& new_uses)
+//{
+//    /*
+//        const Tensor<Index, 1> indices = new_uses.get_indices_equal_to(true);
+//    */
+////    descriptives = descriptives.get_subvector(indices);
 
-//    scaling_methods = scaling_methods.get_subvector(indices);
-}
+////    scaling_methods = scaling_methods.get_subvector(indices);
+//}
 
 
 void ScalingLayer::set_inputs_number(const Index& new_inputs_number)

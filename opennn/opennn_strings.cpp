@@ -84,7 +84,6 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
 
     Index index = 0;
     Index old_pos;
-    Index old_last_pos;
 
     string::size_type pos = str.find_first_of(separator, lastPos);
 
@@ -103,7 +102,6 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
         }
 
         old_pos = pos;
-        old_last_pos = lastPos;
 
         // Skip delimiters. Note the "not_of"
         lastPos = str.find_first_not_of(separator, pos);
@@ -137,7 +135,6 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
 
     Index index = 0;
     Index old_pos;
-    Index old_last_pos;
 
     while(string::npos != position || string::npos != last_position)
     {
@@ -158,7 +155,6 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
         }
 
         old_pos = position;
-        old_last_pos = last_position;
 
         // Skip delimiters. Note the "not_of"
 

@@ -96,7 +96,9 @@ public:
 
                 activations_1d.resize(neurons_number);
 
-                activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
+                activations_3d.resize(batch_samples_number, neurons_number, 6);
+
+                activations_derivatives_3d.resize(batch_samples_number, neurons_number, 6);
             }
             else if(layer_pointer->get_type() == Probabilistic) // Probabilistic
             {
@@ -143,6 +145,7 @@ public:
 
         Tensor<type, 2> ones_2d;
 
+        Tensor<type, 3> activations_3d;
         Tensor<type, 3> activations_derivatives_3d;
 
         Tensor<type, 4> combinations_4d;
