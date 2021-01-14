@@ -335,10 +335,10 @@ public:
 
    // Long short term memory layer error gradient
 
-   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
    Tensor<type, 1> calculate_forget_weights_error_gradient(const Tensor<type, 2>&,
-                                                           const Layer::ForwardPropagation&,
+                                                           /*const */Layer::ForwardPropagation&,
                                                            const Tensor<type, 2>&,
                                                            const Tensor<type, 3>&);
 
