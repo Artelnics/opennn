@@ -483,7 +483,10 @@ void CorrelationsTest::test_exponential_correlation()
     {
         y[i] = exp(static_cast<type>(2.5)*x[i] + static_cast<type>(1.4));
     }
-    const ThreadPoolDevice* thread_pool_device = thread_pool_device;
+
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     type correlation = exponential_correlation(thread_pool_device,x,y);
     //@todo(assert_true(correlation > static_cast<type>(0.999999), LOG);)
