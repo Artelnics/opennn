@@ -38,21 +38,31 @@ void ProbabilisticLayerTest::test_constructor()
 
    // Probabilistic neurons number constructor
 
-   ProbabilisticLayer probabilistic_layer_l2;
+   ProbabilisticLayer probabilistic_layer_l21;
+   ProbabilisticLayer probabilistic_layer_l22;
 
-   probabilistic_layer_l2.set_neurons_number(3);
+   probabilistic_layer_l21.set_neurons_number(0);
 
-   assert_true(probabilistic_layer_l2.get_inputs_number() == 0, LOG);
-   assert_true(probabilistic_layer_l2.get_neurons_number() == 3, LOG);
-   assert_true(probabilistic_layer_l2.get_biases_number() == 3, LOG);
-   assert_true(probabilistic_layer_l2.get_synaptic_weights_number() == 0, LOG);
-   assert_true(probabilistic_layer_l2.get_parameters_number() == 3, LOG);
+   assert_true(probabilistic_layer_l21.get_inputs_number() == 0, LOG);
+   assert_true(probabilistic_layer_l21.get_neurons_number() == 0, LOG);
+   assert_true(probabilistic_layer_l21.get_biases_number() == 0, LOG);
+   assert_true(probabilistic_layer_l21.get_synaptic_weights_number() == 0, LOG);
+   assert_true(probabilistic_layer_l21.get_parameters_number() == 0, LOG);
+
+
+   probabilistic_layer_l22.set_neurons_number(3);
+
+   assert_true(probabilistic_layer_l22.get_inputs_number() == 0, LOG);
+   assert_true(probabilistic_layer_l22.get_neurons_number() == 3, LOG);
+   assert_true(probabilistic_layer_l22.get_biases_number() == 3, LOG);
+   assert_true(probabilistic_layer_l22.get_synaptic_weights_number() == 0, LOG);
+   assert_true(probabilistic_layer_l22.get_parameters_number() == 3, LOG);
 
    // Copy constructor
 
-   ProbabilisticLayer probabilistic_layer_l3(probabilistic_layer_l2);
+   ProbabilisticLayer probabilistic_layer_l3(probabilistic_layer_l22);
 
-   probabilistic_layer_l3.set_neurons_number(probabilistic_layer_l2.get_neurons_number());
+   probabilistic_layer_l3.set_neurons_number(probabilistic_layer_l22.get_neurons_number());
 
    assert_true(probabilistic_layer_l3.get_inputs_number() == 0, LOG);
    assert_true(probabilistic_layer_l3.get_neurons_number() == 3, LOG);
@@ -72,15 +82,23 @@ void ProbabilisticLayerTest::test_assignment_operator()
 
    ProbabilisticLayer probabilistic_layer_l1;
    ProbabilisticLayer probabilistic_layer_l2;
+   ProbabilisticLayer probabilistic_layer_l3;
 
    probabilistic_layer_l1.set_neurons_number(2);
    probabilistic_layer_l2.set_neurons_number(probabilistic_layer_l1.get_neurons_number());
+   probabilistic_layer_l3.set_neurons_number(probabilistic_layer_l2.get_neurons_number());
 
    assert_true(probabilistic_layer_l2.get_inputs_number() == 0, LOG);
    assert_true(probabilistic_layer_l2.get_neurons_number() == 2, LOG);
    assert_true(probabilistic_layer_l2.get_biases_number() == 2, LOG);
    assert_true(probabilistic_layer_l2.get_synaptic_weights_number() == 0, LOG);
    assert_true(probabilistic_layer_l2.get_parameters_number() == 2, LOG);
+
+   assert_true(probabilistic_layer_l3.get_inputs_number() == 0, LOG);
+   assert_true(probabilistic_layer_l3.get_neurons_number() == 2, LOG);
+   assert_true(probabilistic_layer_l3.get_biases_number() == 2, LOG);
+   assert_true(probabilistic_layer_l3.get_synaptic_weights_number() == 0, LOG);
+   assert_true(probabilistic_layer_l3.get_parameters_number() == 2, LOG);
 }
 
 void ProbabilisticLayerTest::test_get_inputs_number()
