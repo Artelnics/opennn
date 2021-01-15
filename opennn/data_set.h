@@ -251,6 +251,7 @@ public:
    Tensor<Index, 1> get_unused_columns_indices() const;
    Tensor<Index, 1> get_used_columns_indices() const;
 
+   string get_column_name(const Index& index) const {return columns[index].name;}
    Tensor<string, 1> get_columns_names() const;
 
    Tensor<string, 1> get_input_columns_names() const;
