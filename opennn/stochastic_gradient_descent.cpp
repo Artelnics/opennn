@@ -479,8 +479,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     bool is_forecasting = false;
 
-    results.resize_training_history(maximum_epochs_number+1);
-    if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
+    results.resize_training_history(maximum_epochs_number);
+    if(has_selection) results.resize_selection_history(maximum_epochs_number);
 
     if(neural_network_pointer->has_long_short_term_memory_layer()
     || neural_network_pointer->has_recurrent_layer())
@@ -585,13 +585,14 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
-        if(epoch == maximum_epochs_number)
+        if(epoch + 1 == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
+            if(display) cout << "Epoch " << epoch+1<< ": Maximum number of epochs reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = MaximumEpochsNumber;
+
         }
 
         else if(elapsed_time >= maximum_time)
@@ -634,7 +635,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        if(epoch != 0 && epoch % save_period == 0)
+        if(epoch != 0 && epoch + 1 % save_period == 0)
         {
             neural_network_pointer->save(neural_network_file_name);
         }
@@ -651,9 +652,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
             }
 
-            results.resize_training_error_history(epoch+1);
+            results.resize_training_error_history(epoch + 1);
 
-            if(has_selection) results.resize_selection_error_history(epoch+1);
+            if(has_selection) results.resize_selection_error_history(epoch + 1);
 
             results.final_parameters = optimization_data.parameters;
 
@@ -669,11 +670,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             break;
         }
-        else if(epoch == 0 || (epoch+1)%display_period == 0)
+        else if(epoch == 0 || (epoch + 1)%display_period == 0)
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ";\n"
+                cout << "Epoch " << epoch + 1 << ";\n"
                      << "Training error: " << training_error << "\n"
                      << "Batch size: " << batch_samples_number << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
