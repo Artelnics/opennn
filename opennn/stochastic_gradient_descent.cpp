@@ -652,9 +652,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
             }
 
-            results.resize_training_error_history(epoch + 1);
+//            results.resize_training_error_history(epoch + 1);
 
-            if(has_selection) results.resize_selection_error_history(epoch + 1);
+//            if(has_selection) results.resize_selection_error_history(epoch + 1);
 
             results.final_parameters = optimization_data.parameters;
 
