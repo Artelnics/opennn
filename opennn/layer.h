@@ -181,9 +181,29 @@ public:
             const Index neurons_number = layer_pointer->get_neurons_number();
             const Index inputs_number = layer_pointer->get_inputs_number();
 
-            biases_derivatives.resize(neurons_number);
+            if(layer_pointer->get_type() == LongShortTermMemory)
+            {
+                forget_weights_derivatives.resize(inputs_number*neurons_number);
+                input_weights_derivatives.resize(inputs_number*neurons_number);
+                state_weights_derivatives.resize(inputs_number*neurons_number);
+                output_weights_derivatives.resize(inputs_number*neurons_number);
 
-            synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+                forget_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+                input_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+                state_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+                output_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+
+                forget_biases_derivatives.resize(neurons_number);
+                input_biases_derivatives.resize(neurons_number);
+                state_biases_derivatives.resize(neurons_number);
+                output_biases_derivatives.resize(neurons_number);
+            }
+            else
+            {
+                biases_derivatives.resize(neurons_number);
+
+                synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+            }
 
             delta.resize(batch_samples_number, neurons_number);
         }
@@ -201,6 +221,23 @@ public:
         Tensor<type, 1> biases_derivatives;
 
         Tensor<type, 2> synaptic_weights_derivatives;
+
+        // LSTM
+
+        Tensor<type, 1> forget_weights_derivatives;
+        Tensor<type, 1> input_weights_derivatives;
+        Tensor<type, 1> state_weights_derivatives;
+        Tensor<type, 1> output_weights_derivatives;
+
+        Tensor<type, 1> forget_recurrent_weights_derivatives;
+        Tensor<type, 1> input_recurrent_weights_derivatives;
+        Tensor<type, 1> state_recurrent_weights_derivatives;
+        Tensor<type, 1> output_recurrent_weights_derivatives;
+
+        Tensor<type, 1> forget_biases_derivatives;
+        Tensor<type, 1> input_biases_derivatives;
+        Tensor<type, 1> state_biases_derivatives;
+        Tensor<type, 1> output_biases_derivatives;
 
         Tensor<type, 4> synaptic_weights_derivatives_4d;
     };
