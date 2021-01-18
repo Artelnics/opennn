@@ -959,7 +959,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
-        else if(epoch == maximum_epochs_number)
+        else if(epoch + 1 == maximum_epochs_number)
         {
             if(display)
             {
