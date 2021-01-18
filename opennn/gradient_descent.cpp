@@ -730,7 +730,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             results.stopping_condition = MaximumTime;
         }
 
-        if(epoch != 0 && epoch % save_period == 0)
+        if(epoch != 1 && epoch % save_period == 0)
         {
             neural_network_pointer->save(neural_network_file_name);
         }
@@ -763,7 +763,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
-            results.epochs_number = epoch;
+            results.epochs_number = epoch-1;
 
             break;
         }
