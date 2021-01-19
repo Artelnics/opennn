@@ -3524,10 +3524,7 @@ Tensor<type, 2> DataSet::get_selection_data() const
 {
     const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
 
-    const Index variables_number = get_variables_number();
-
-    Tensor<Index, 1> variables_indices;
-    initialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
+    const Tensor<Index, 1> variables_indices = get_used_variables_indices();
 
     return get_subtensor_data(selection_indices, variables_indices);
 }
@@ -3539,10 +3536,7 @@ Tensor<type, 2> DataSet::get_selection_data() const
 
 Tensor<type, 2> DataSet::get_testing_data() const
 {
-    const Index variables_number = get_variables_number();
-
-    Tensor<Index, 1> variables_indices;
-    initialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
+    const Tensor<Index, 1> variables_indices = get_used_variables_indices();
 
     const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
 
@@ -3556,10 +3550,7 @@ Tensor<type, 2> DataSet::get_testing_data() const
 
 Tensor<type, 2> DataSet::get_input_data() const
 {
-    const Index samples_number = get_samples_number();
-
-    Tensor<Index, 1> indices;
-    initialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
+    const Tensor<Index, 1> indices = get_used_samples_indices();
 
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
