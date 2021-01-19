@@ -96,7 +96,7 @@ public:
 
                 activations_1d.resize(neurons_number); // needed?
 
-                row_major_activations_3d.resize(batch_samples_number, neurons_number, 5);
+                row_major_activations_3d.resize(batch_samples_number, neurons_number, 6);
 
                 row_major_activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
             }
