@@ -781,7 +781,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 }
 
 
-void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const
+void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
 {
     calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
     calculate_activations_derivatives(forward_propagation.combinations_2d,
