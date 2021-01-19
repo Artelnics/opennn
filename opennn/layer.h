@@ -284,7 +284,7 @@ public:
 
     // Outputs
 
-    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&); // Cannot be const becauuse
 
     virtual Tensor<type, 2> calculate_outputs_from4D(const Tensor<type, 4>&) {return Tensor<type, 2>();}
 
@@ -293,7 +293,7 @@ public:
     virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
     virtual void calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
-    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const {}
+    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&)  {} // Cannot be const because of Recurrent and LSTM layers
     virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation&) const {}

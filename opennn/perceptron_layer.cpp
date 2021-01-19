@@ -714,8 +714,8 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
 
 void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
-                                   ForwardPropagation& forward_propagation) const
- {
+                                   ForwardPropagation& forward_propagation)
+{
 #ifdef __OPENNN_DEBUG__
 
     const Index inputs_number = get_inputs_number();

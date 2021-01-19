@@ -229,55 +229,55 @@ public:
 
    // Long short term memory layer error gradient
 
-   void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&);
+   void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
 
    void calculate_forget_weights_error_gradient(const Tensor<type, 2>&,
                                                 const Layer::ForwardPropagation&,
-                                                Layer::BackPropagation&);
+                                                Layer::BackPropagation&) const;
 
-   Tensor<type, 1> calculate_input_weights_error_gradient(const Tensor<type, 2>&,
+   void calculate_input_weights_error_gradient(const Tensor<type, 2>&,
+                                               const Layer::ForwardPropagation&,
+                                               Layer::BackPropagation&) const;
+
+   void calculate_state_weights_error_gradient(const Tensor<type, 2>&,
+                                               const Layer::ForwardPropagation&,
+                                               Layer::BackPropagation&) const;
+
+   void calculate_output_weights_error_gradient(const Tensor<type, 2>&,
+                                                const Layer::ForwardPropagation&,
+                                                Layer::BackPropagation&) const;
+
+   void calculate_forget_recurrent_weights_error_gradient(const Tensor<type, 2>&,
                                                           const Layer::ForwardPropagation&,
-                                                          Layer::BackPropagation&);
+                                                          Layer::BackPropagation&) const;
 
-   Tensor<type, 1> calculate_state_weights_error_gradient(const Tensor<type, 2>&,
-                                                          const Layer::ForwardPropagation&,
-                                                          Layer::BackPropagation&);
-
-   Tensor<type, 1> calculate_output_weights_error_gradient(const Tensor<type, 2>&,
-                                                           const Layer::ForwardPropagation&,
-                                                           Layer::BackPropagation&);
-
-   Tensor<type, 1> calculate_forget_recurrent_weights_error_gradient(const Tensor<type, 2>&,
-                                                                     const Layer::ForwardPropagation&,
-                                                                     Layer::BackPropagation&);
-
-   Tensor<type, 1> calculate_input_recurrent_weights_error_gradient(const Tensor<type, 2>&,
-                                                                    const Layer::ForwardPropagation&,
-                                                                    Layer::BackPropagation&);
-
-   Tensor<type, 1> calculate_state_recurrent_weights_error_gradient(const Tensor<type, 2>&,
-                                                                    const Layer::ForwardPropagation&,
-                                                                    Layer::BackPropagation&);
-
-   Tensor<type, 1> calculate_output_recurrent_weights_error_gradient(const Tensor<type, 2>&,
-                                                                     const Layer::ForwardPropagation&,
-                                                                     Layer::BackPropagation&);
-
-   Tensor<type, 1> calculate_forget_biases_error_gradient(const Tensor<type, 2>&,
-                                                          const Layer::ForwardPropagation&,
-                                                          Layer::BackPropagation&);
-
-   Tensor<type, 1> calculate_input_biases_error_gradient(const Tensor<type, 2>&,
+   void calculate_input_recurrent_weights_error_gradient(const Tensor<type, 2>&,
                                                          const Layer::ForwardPropagation&,
-                                                         Layer::BackPropagation&);
+                                                         Layer::BackPropagation&) const;
 
-   Tensor<type, 1> calculate_state_biases_error_gradient(const Tensor<type, 2>&,
+   void calculate_state_recurrent_weights_error_gradient(const Tensor<type, 2>&,
                                                          const Layer::ForwardPropagation&,
-                                                         Layer::BackPropagation&);
+                                                         Layer::BackPropagation&) const;
 
-   Tensor<type, 1> calculate_output_biases_error_gradient(const Tensor<type, 2>&,
+   void calculate_output_recurrent_weights_error_gradient(const Tensor<type, 2>&,
                                                           const Layer::ForwardPropagation&,
-                                                          Layer::BackPropagation&);
+                                                          Layer::BackPropagation&) const;
+
+   void calculate_forget_biases_error_gradient(const Tensor<type, 2>&,
+                                               const Layer::ForwardPropagation&,
+                                               Layer::BackPropagation&) const;
+
+   void calculate_input_biases_error_gradient(const Tensor<type, 2>&,
+                                              const Layer::ForwardPropagation&,
+                                              Layer::BackPropagation&) const;
+
+   void calculate_state_biases_error_gradient(const Tensor<type, 2>&,
+                                              const Layer::ForwardPropagation&,
+                                              Layer::BackPropagation&) const;
+
+   void calculate_output_biases_error_gradient(const Tensor<type, 2>&,
+                                               const Layer::ForwardPropagation&,
+                                               Layer::BackPropagation&) const;
 
    // Expression methods
 

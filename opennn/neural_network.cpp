@@ -1376,7 +1376,7 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
     if(trainable_layers_pointers(0)->get_type() == Layer::Convolutional)
     {
 
-        trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, forward_propagation.layers(0));
+        //trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, forward_propagation.layers(0));
     }
     else
     {

@@ -143,7 +143,7 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
 
-   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const;
+   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation);
 
    void forward_propagate(const Tensor<type, 2>& inputs, Tensor<type, 1> potential_parameters, ForwardPropagation& forward_propagation) const;
 
