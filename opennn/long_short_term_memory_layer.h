@@ -221,7 +221,22 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   void calculate_hidden_delta(Layer*,
+                               const Tensor<type, 2>&,
+                               ForwardPropagation&,
+                               const Tensor<type, 2>&,
+                               Tensor<type, 2>&) const;
+
+   void calculate_hidden_delta_perceptron(Layer* ,
+                                          const Tensor<type, 2>& ,
+                                          const Tensor<type, 2>& ,
+                                          Tensor<type, 2>& ) const;
+
+   void calculate_hidden_delta_probabilistic(Layer* ,
+                                          const Tensor<type, 2>& ,
+                                          const Tensor<type, 2>& ,
+                                          Tensor<type, 2>& ) const;
+
 
    // Long short term memory layer forward_propagate
 
