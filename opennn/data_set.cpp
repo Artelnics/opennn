@@ -1903,9 +1903,9 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
     {
         if(columns(i).type == Categorical)
         {
-            for(Index i = 0; i < (columns(i).categories_uses).size(); i++)
+            for(Index j = 0; j < columns(i).categories_uses.size(); j++)
             {
-                variables_uses(i + index) = (columns(i).categories_uses)(i);
+                variables_uses(j + index) = (columns(i).categories_uses)(j);
             }
             index += columns(i).categories.size();
         }
