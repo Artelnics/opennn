@@ -268,8 +268,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set_columns_uses(columns_uses);
 
-   cout << "Data: " << data_set.get_data() << endl;
-
    data_set.set_training();
 
    DataSet::Batch batch(samples_number, &data_set);
@@ -321,12 +319,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    probabilistic_layer->set_synaptic_weights(probabilistic_weights);
    probabilistic_layer->set_biases(probabilistic_biases);
-
-   cout << "perceptron w: " << hidden_perceptron_layer->get_synaptic_weights() << endl;
-   cout << "perceptron b: " << hidden_perceptron_layer->get_biases() << endl;
-
-   cout << "probabilistic w: " << probabilistic_layer->get_synaptic_weights() << endl;
-   cout << "probabilistic b: " << probabilistic_layer->get_biases() << endl;
 
    nse.set_normalization_coefficient();
 
