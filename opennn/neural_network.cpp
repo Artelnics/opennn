@@ -103,7 +103,7 @@ NeuralNetwork::~NeuralNetwork()
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
 
-    if(layer_pointer->get_type_string() == "Recurrent" || layer_pointer->get_type_string() == "LongShortTermMemory"){
+    if(layer_pointer->get_type_string() == "Recurrent"/* || layer_pointer->get_type_string() == "LongShortTermMemory"*/){
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"

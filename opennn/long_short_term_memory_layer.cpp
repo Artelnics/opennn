@@ -2012,6 +2012,14 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 }
 
 
+void LongShortTermMemoryLayer::calculate_output_delta(ForwardPropagation& forward_propagation,
+                                                      const Tensor<type, 2>& output_gradient,
+                                                      Tensor<type, 2>& output_delta) const
+{
+    output_delta.device(*thread_pool_device) = output_gradient;
+}
+
+
 void LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                       const Tensor<type, 2>&,
                                                       ForwardPropagation& forward_propagation,
@@ -2037,30 +2045,6 @@ void LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_layer_pointer,
         default:
         return;
     }
-
-//    const Index neurons_number = next_layer_pointer->get_neurons_number();
-//    const Index inputs_number = next_layer_pointer->get_inputs_number();
-
-//    Tensor<type, 2> synaptic_weights(inputs_number, neurons_number);
-
-//    if(layer_type == Perceptron)
-//    {
-//        const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
-
-//        synaptic_weights = perceptron_layer->get_synaptic_weights();
-//    }
-//    else if(layer_type == Probabilistic)
-//    {
-//        const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-
-//        synaptic_weights = probabilistic_layer->get_synaptic_weights();
-//    }
-
-//    Tensor<type, 2> hidden_delta(next_layer_delta.dimension(0), synaptic_weights.dimension(1));
-
-//    hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(synaptic_weights, A_BT);
-
-    //return hidden_delta;
 }
 
 
@@ -2069,7 +2053,13 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_perceptron(Layer* next_lay
                                                                  const Tensor<type, 2>& next_layer_delta,
                                                                  Tensor<type, 2>& hidden_delta) const
 {
+    const PerceptronLayer* next_perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
+    const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
+
+    hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
+
+    hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 }
 
 
@@ -2078,7 +2068,13 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(Layer* next_
                                                                     const Tensor<type, 2>& next_layer_delta,
                                                                     Tensor<type, 2>& hidden_delta) const
 {
+    const ProbabilisticLayer* next_probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
+    const Tensor<type, 2>& next_synaptic_weights = next_probabilistic_layer->get_synaptic_weights();
+
+    hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
+
+    hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 }
 
 
