@@ -464,13 +464,13 @@ void LossIndex::back_propagate(const DataSet::Batch& batch,
     // Loss index
 
     calculate_error(batch, forward_propagation, back_propagation);
-cout << "Error" << endl;
+
     calculate_output_gradient(batch, forward_propagation, back_propagation);
-cout << "Output gradient" << endl;
+
     calculate_layers_delta(forward_propagation, back_propagation);
-cout << "layers delta" << endl;
+
     calculate_error_gradient(batch, forward_propagation, back_propagation);
-cout << "error gradient" << endl;
+
     // Loss
 
     back_propagation.loss = back_propagation.error;
@@ -733,12 +733,9 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
     }
     else
     {
-        cout << "Gradient 0" << endl;
-
         trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_2d,
                                                                forward_propagation.layers(0),
                                                                back_propagation.neural_network.layers(0));
-        cout << "After Gradient 0" << endl;
     }
 
     Index index = 0;
