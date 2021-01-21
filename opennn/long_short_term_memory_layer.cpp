@@ -2204,8 +2204,23 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, 
 }
 
 
-void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 1>& inputs, const Tensor<type, 1>& potential_parameters, ForwardPropagation& forward_propagation)
+void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 1>& inputs, Tensor<type, 1>& parameters, ForwardPropagation& forward_propagation)
 {
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    const TensorMap<Tensor<type, 2>> forget_biases(parameters.data(), neurons_number, 1);
+    const TensorMap<Tensor<type, 2>> input_biases(parameters.data()+neurons_number, neurons_number, 1);
+    const TensorMap<Tensor<type, 2>> state_biases(parameters.data()+2*neurons_number, neurons_number, 1);
+    const TensorMap<Tensor<type, 2>> output_biases(parameters.data()+3*neurons_number, neurons_number, 1);
+
+
+//    const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), neurons_number, 1);
+
+//    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number,
+//                                                                inputs_number, neurons_number);
+
 
 }
 
