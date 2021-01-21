@@ -246,7 +246,7 @@ public:
 
    void forward_propagate(const Tensor<type, 2>& , ForwardPropagation&);
 
-   void forward_propagate(const Tensor<type, 1>& , const Tensor<type, 1>&, ForwardPropagation&);
+   void forward_propagate(const Tensor<type, 1>& , Tensor<type, 1>&, ForwardPropagation&);
 
    // Eror gradient
 
