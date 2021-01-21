@@ -166,7 +166,7 @@ public:
    void initialize_hidden_states(const type&);
    void initialize_cell_states(const type&);
 
-   void set_synaptic_weights_glorot(const type&, const type&);
+   void set_synaptic_weights_glorot();
 
    void set_parameters_constant(const type&);
 
@@ -242,11 +242,15 @@ public:
                                           Tensor<type, 2>& ) const;
 
 
-   // Long short term memory layer forward_propagate
+   // Forward_propagate
 
-   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation);
+   void forward_propagate(const Tensor<type, 2>& , ForwardPropagation&);
 
-   // Long short term memory layer error gradient
+   void forward_propagate(const Tensor<type, 1>& , const Tensor<type, 1>&, ForwardPropagation&);
+
+   // Eror gradient
+
+   void insert_gradient(const BackPropagation&, const Index& , Tensor<type, 1>&) const;
 
    void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
 
@@ -307,8 +311,6 @@ public:
    // Utilities
 
    Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
-
-
 
    // Serialization methods
 

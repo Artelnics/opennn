@@ -297,7 +297,7 @@ public:
     virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation&) const {}
-    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) const {}
+    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&)  {} // Cannot be const because of Recurrent and LSTM layers
 
     // Deltas
 
