@@ -380,7 +380,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
 
 void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                            Tensor<type, 1> potential_parameters,
-                                           ForwardPropagation& forward_propagation) const
+                                           ForwardPropagation& forward_propagation)
 {
     const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
                                                      input_variables_dimensions(2), // rows number
@@ -391,7 +391,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
     const Tensor<type, 4> inputs_4d = inputs.shuffle(shuffle_dims_2D).reshape(four_dims).shuffle(shuffle_dims_4D);
 
-    forward_propagate(inputs_4d, potential_parameters, forward_propagation);
+//    forward_propagate(inputs_4d, potential_parameters, forward_propagation); @todo
 }
 
 

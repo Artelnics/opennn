@@ -1068,7 +1068,7 @@ void LongShortTermMemoryLayer::initialize_cell_states(const type& value)
 }
 
 
-void LongShortTermMemoryLayer::set_synaptic_weights_glorot(const type& minimum,const type& maximum)
+void LongShortTermMemoryLayer::set_synaptic_weights_glorot()
 {
     /*
     get_weights().setRandom(minimum, maximum);
@@ -2200,9 +2200,74 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, 
 
         activations_copy_index += neurons_number;
         derivatives_copy_index += neurons_number;
-
-
     }
+}
+
+
+void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 1>& inputs, const Tensor<type, 1>& potential_parameters, ForwardPropagation& forward_propagation)
+{
+
+}
+
+
+void LongShortTermMemoryLayer::insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const
+{
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    // Biases
+
+    memcpy(gradient.data() + index,
+           back_propagation.forget_biases_derivatives.data(),
+           static_cast<size_t>(neurons_number)*sizeof(type));
+
+    memcpy(gradient.data() + index + neurons_number,
+           back_propagation.input_biases_derivatives.data(),
+           static_cast<size_t>(neurons_number)*sizeof(type));
+
+    memcpy(gradient.data() + index + 2*neurons_number,
+           back_propagation.state_biases_derivatives.data(),
+           static_cast<size_t>(neurons_number)*sizeof(type));
+
+    memcpy(gradient.data() + index + 3*neurons_number,
+           back_propagation.output_biases_derivatives.data(),
+           static_cast<size_t>(neurons_number)*sizeof(type));
+
+    // Weights
+
+    memcpy(gradient.data() + index + 4*neurons_number,
+           back_propagation.forget_weights_derivatives.data(),
+           static_cast<size_t>(inputs_number*neurons_number)*sizeof(type));
+
+    memcpy(gradient.data() + index + 4*neurons_number + inputs_number*neurons_number,
+           back_propagation.input_weights_derivatives.data(),
+           static_cast<size_t>(inputs_number*neurons_number)*sizeof(type));
+
+    memcpy(gradient.data() + index + 4*neurons_number + 2*inputs_number*neurons_number,
+           back_propagation.state_weights_derivatives.data(),
+           static_cast<size_t>(inputs_number*neurons_number)*sizeof(type));
+
+    memcpy(gradient.data() + index + 4*neurons_number + 3*inputs_number*neurons_number,
+           back_propagation.output_weights_derivatives.data(),
+           static_cast<size_t>(inputs_number*neurons_number)*sizeof(type));
+
+    // Recurrent weights
+
+    memcpy(gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number,
+           back_propagation.forget_recurrent_weights_derivatives.data(),
+           static_cast<size_t>(neurons_number*neurons_number)*sizeof(type));
+
+    memcpy(gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number + neurons_number*neurons_number,
+           back_propagation.input_recurrent_weights_derivatives.data(),
+           static_cast<size_t>(neurons_number*neurons_number)*sizeof(type));
+
+    memcpy(gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number + 2*neurons_number*neurons_number,
+           back_propagation.state_recurrent_weights_derivatives.data(),
+           static_cast<size_t>(neurons_number*neurons_number)*sizeof(type));
+
+    memcpy(gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number + 3*neurons_number*neurons_number,
+           back_propagation.output_recurrent_weights_derivatives.data(),
+           static_cast<size_t>(neurons_number*neurons_number)*sizeof(type));
 }
 
 
@@ -2224,7 +2289,9 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2> & 
 
     Tensor<type, 1> error_gradient(parameters_number);
 
-#pragma omp parallel
+    cout << "Calculating LSTM error gradient" << endl;
+
+//#pragma omp parallel
     {
         // Weights
 
