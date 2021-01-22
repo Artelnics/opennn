@@ -242,11 +242,11 @@ public:
                                           Tensor<type, 2>& ) const;
 
 
-   // Forward_propagate
+   // Forward propagate
 
    void forward_propagate(const Tensor<type, 2>& , ForwardPropagation&);
 
-   void forward_propagate(const Tensor<type, 1>& , Tensor<type, 1>&, ForwardPropagation&);
+   void forward_propagate(const Tensor<type, 2>& , Tensor<type, 1>, ForwardPropagation&);
 
    // Eror gradient
 

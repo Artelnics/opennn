@@ -92,10 +92,6 @@ public:
             }
             else if(layer_pointer->get_type() == LongShortTermMemory) // LSTM
             {
-                combinations_1d.resize(neurons_number); // needed?
-
-                activations_1d.resize(neurons_number); // needed?
-
                 row_major_activations_3d.resize(batch_samples_number, neurons_number, 6);
 
                 row_major_activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
@@ -110,7 +106,6 @@ public:
                 activations_derivatives_4d.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);// @todo
             }
         }
-
 
         void print() const
         {
@@ -135,9 +130,6 @@ public:
         Index batch_samples_number = 0;
 
         Layer* layer_pointer;
-
-        Tensor<type, 1> combinations_1d;
-        Tensor<type, 1> activations_1d;
 
         Tensor<type, 2> combinations_2d;
         Tensor<type, 2> activations_2d;

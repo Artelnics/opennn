@@ -243,6 +243,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
+//   data_set.set_data_random();
+
    Tensor<type,2> data(3,4);
 
    data(0,0) = static_cast<type>(0.2);
@@ -278,7 +280,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    batch.fill(samples_indices, input_indices, target_indices);
 
-   hidden_perceptron_layer->set(inputs_number, outputs_number);
+   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
    output_perceptron_layer->set(hidden_neurons, outputs_number);
    probabilistic_layer->set(outputs_number, outputs_number);
 
@@ -312,7 +314,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    probabilistic_biases(0,1) = static_cast<type>(0.68821);
    probabilistic_biases(0,2) = static_cast<type>(1.75451);
 
-   neural_network.set_parameters_random();
+//   neural_network.set_parameters_random();
 
    hidden_perceptron_layer->set_synaptic_weights(perceptron_weights);
    hidden_perceptron_layer->set_biases(perceptron_biases);
@@ -321,6 +323,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    probabilistic_layer->set_biases(probabilistic_biases);
 
    nse.set_normalization_coefficient();
+   nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
    LossIndex::BackPropagation training_back_propagation(samples_number, &nse);
@@ -342,18 +345,28 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    // Test lstm
 {
-   samples_number = 10;
-   inputs_number = 3;
-   outputs_number = 2;
-   hidden_neurons = 2;
+   samples_number = 2;
+   inputs_number = 1;
+   outputs_number = 1;
+   hidden_neurons = 1;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
 
+   cout << "Data: " << data_set.get_data() << endl;
+
    data_set.set_training();
 
    DataSet::Batch batch(samples_number, &data_set);
+
+   Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
+   const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
+   const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
+
+   batch.fill(samples_indices, input_indices, target_indices);
+
+   cout << "batch.inputs_2d: " << batch.inputs_2d << endl;
 
    long_short_term_memory_layer->set(inputs_number, hidden_neurons);
    output_perceptron_layer->set(hidden_neurons, outputs_number);
@@ -363,35 +376,39 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    neural_network.set_parameters_random();
 
+   cout << "Parameters: " << neural_network.get_parameters() << endl;
+
    nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    nse.set_normalization_coefficient();
 
-   cout << "normalization coefficient" << endl;
+   cout << "normalization coeff: " << nse.get_normalization_coefficient() << endl;
+
+   long_short_term_memory_layer->set_timesteps(20);
 
    NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
 
+
    LossIndex::BackPropagation back_propagation(samples_number, &nse);
 
-   neural_network.forward_propagate(batch, forward_propagation);
 
-   cout << "forward propagate" << endl;
+   neural_network.forward_propagate(batch, forward_propagation);
 
    nse.back_propagate(batch, forward_propagation, back_propagation);
 
    cout << "backward propagate" << endl;
 
-//   error_gradient = back_propagation.gradient;
+   error_gradient = back_propagation.gradient;
 
-   cout << "Error gradient" << endl;
+   cout << "Error gradient: " << error_gradient << endl;
 
    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 
    cout << "Numerical error gradient: " << numerical_error_gradient << endl;
 
-//   const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
+   const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
-//   cout << "Difference: " << difference << endl;
+   cout << "Difference: " << difference << endl;
 
 //   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 
