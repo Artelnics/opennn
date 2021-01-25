@@ -352,7 +352,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-   data_set.set_data_random();
+//   data_set.set_data_random();
+
+   data_set.initialize_data(1);
 
    cout << "Data: " << data_set.get_data() << endl;
 
@@ -371,16 +373,22 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    long_short_term_memory_layer->set(inputs_number, hidden_neurons);
    output_perceptron_layer->set(hidden_neurons, outputs_number);
 
-   neural_network.add_layer(long_short_term_memory_layer);
-   neural_network.add_layer(output_perceptron_layer);
+   long_short_term_memory_layer->set_recurrent_activation_function(LongShortTermMemoryLayer::HyperbolicTangent);
 
-   neural_network.set_parameters_random();
+   neural_network.add_layer(long_short_term_memory_layer);
+//   neural_network.add_layer(output_perceptron_layer);
+
+//   neural_network.set_parameters_random();
+
+   neural_network.set_parameters_constant(0.5);
 
    cout << "Parameters: " << neural_network.get_parameters() << endl;
 
    nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-   nse.set_normalization_coefficient();
+//   nse.set_normalization_coefficient();
+
+   nse.set_normalization_coefficient(1);
 
    cout << "normalization coeff: " << nse.get_normalization_coefficient() << endl;
 
@@ -388,11 +396,11 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
 
-
    LossIndex::BackPropagation back_propagation(samples_number, &nse);
 
-
    neural_network.forward_propagate(batch, forward_propagation);
+
+   cout << "Forward propagation: " << endl << forward_propagation.layers(0).row_major_activations_3d << endl;
 
    nse.back_propagate(batch, forward_propagation, back_propagation);
 
