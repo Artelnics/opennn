@@ -967,9 +967,20 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         results.resize_selection_history(maximum_epochs_number + 1);
     }
 
+    // Calculate error before training
+    parameters_norm = l2_norm(optimization_data.parameters);
+    neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+    loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
+    results.training_error_history(0)  = training_back_propagation.error;
+
+    parameters_norm = l2_norm(optimization_data.parameters);
+    neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+    loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+    results.selection_error_history(0)  = selection_back_propagation.error;
+
     // Main loop
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -1026,7 +1037,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
         // Stopping Criteria       
 
-        if(epoch != 0) training_loss_decrease = training_back_propagation.loss - old_training_loss;
+        if(epoch != 1) training_loss_decrease = training_back_propagation.loss - old_training_loss;
         old_training_loss = training_back_propagation.loss;
 
         time(&current_time);
@@ -1036,7 +1047,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ": Minimum parameters increment norm reached.\n";
+                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n";
                 cout << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
             }
 
@@ -1045,11 +1056,11 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        else if(epoch != 0 && abs(training_loss_decrease) <= minimum_loss_decrease)
+        else if(epoch != 1 && abs(training_loss_decrease) <= minimum_loss_decrease)
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
+                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
                      << "Loss decrease: " << training_loss_decrease << endl;
             }
 
@@ -1060,7 +1071,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
         else if(training_back_propagation.loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
+            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
 
             stop_training = true;
 
@@ -1069,7 +1080,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch+1 << ": Gradient norm goal reached.\n";
+            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached.\n";
 
             stop_training = true;
 
@@ -1081,7 +1092,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ": Maximum selection error increases reached.\n"
+                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
                      << "Selection error increases: " << selection_error_increases << endl;
             }
 
@@ -1094,7 +1105,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
+                cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
             }
 
             stop_training = true;
@@ -1106,7 +1117,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ": Maximum training time reached.\n";
+                cout << "Epoch " << epoch << ": Maximum training time reached.\n";
             }
 
             stop_training = true;
@@ -1114,7 +1125,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.stopping_condition = MaximumTime;
         }
 
-        if(epoch != 0 && epoch % save_period == 0)
+        if(epoch != 1 && epoch % save_period == 0)
         {
             neural_network_pointer->save(neural_network_file_name);
         }
@@ -1151,10 +1162,10 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         }
 
         if(display)
-        if(epoch == 0
-        ||((epoch+1) % display_period) == 0)
+        if(epoch == 1
+        ||((epoch) % display_period) == 0)
         {
-            cout << "Epoch " << epoch+1 << ";\n"
+            cout << "Epoch " << epoch << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
@@ -1853,7 +1864,7 @@ void ConjugateGradient::update_epoch(
 {      
     const Index parameters_number = optimization_data.parameters.dimension(0);
 
-    if(optimization_data.epoch == 0 || optimization_data.epoch % parameters_number == 0)
+    if(optimization_data.epoch == 1 || optimization_data.epoch % parameters_number == 0)
     {
         calculate_gradient_descent_training_direction(
                     back_propagation.gradient,
@@ -1884,7 +1895,7 @@ void ConjugateGradient::update_epoch(
 
     optimization_data.initial_learning_rate = 0;
 
-    optimization_data.epoch == 0
+    optimization_data.epoch == 1
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
