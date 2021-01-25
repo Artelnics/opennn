@@ -1,3 +1,8 @@
+#ifdef OPENNN_MKL
+    #include "mkl.h"
+    #define EIGEN_USE_MKL_ALL
+#endif
+
 //Eigen includes
 
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
@@ -17,10 +22,6 @@
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
 #pragma warning(pop)
-
-#ifdef OPENNN_MKL
-    #include "mkl.h"
-#endif
 
 #ifdef OPENNN_CUDA
 
