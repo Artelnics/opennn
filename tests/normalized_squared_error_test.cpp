@@ -346,15 +346,15 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    // Test lstm
 {
    samples_number = 2;
-   inputs_number = 1;
+   inputs_number = 2;
    outputs_number = 1;
-   hidden_neurons = 1;
+   hidden_neurons = 2;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
 //   data_set.set_data_random();
 
-   data_set.initialize_data(1);
+   data_set.initialize_data(0.5);
 
    cout << "Data: " << data_set.get_data() << endl;
 
@@ -382,7 +382,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    neural_network.set_parameters_constant(0.5);
 
-   cout << "Parameters: " << neural_network.get_parameters() << endl;
+//   cout << "Parameters: " << neural_network.get_parameters() << endl;
 
    nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
@@ -403,6 +403,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    cout << "Forward propagation: " << endl << forward_propagation.layers(0).row_major_activations_3d << endl;
 
    nse.back_propagate(batch, forward_propagation, back_propagation);
+
+   cout << "Output gradient: " << back_propagation.output_gradient << endl;
 
    cout << "backward propagate" << endl;
 
