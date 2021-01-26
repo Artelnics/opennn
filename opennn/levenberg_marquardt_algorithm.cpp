@@ -598,9 +598,12 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     results.training_error_history(0)  = training_back_propagation.error;
 
     parameters_norm = l2_norm(optimization_data.parameters);
-    neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-    loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
-    results.selection_error_history(0)  = selection_back_propagation.error;
+    if(has_selection)
+    {
+        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+        loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+        results.selection_error_history(0)  = selection_back_propagation.error;
+    }
 
     // Main loop
 
