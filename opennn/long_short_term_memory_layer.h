@@ -142,7 +142,7 @@ public:
 
    // Parameters initialization methods
 
-   void set_biases_constant(const type&);
+   void initialize_biases(const type&);
 
    void initialize_forget_biases(const type&);
    void initialize_input_biases(const type&);
@@ -198,8 +198,6 @@ public:
                                       const Tensor<type, 1>& ,
                                       Tensor<type, 1>&) const;
 
-   Tensor<type, 3> calculate_activations_states(const Tensor<type, 2>&);
-
    // Long short term memory layer activations_2d
 
    void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
@@ -215,9 +213,6 @@ public:
    void calculate_recurrent_activations_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    // Long short term memory layer outputs
-
-   void update_cell_states(const Tensor<type, 1>&);
-   void update_hidden_states(const Tensor<type, 1>&);
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
