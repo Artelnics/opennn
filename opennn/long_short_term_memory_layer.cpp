@@ -3662,13 +3662,6 @@ void LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tenso
 
         for(Index row = 0; row < parameters_number; row++) input_combinations_biases_derivatives(row, row) += static_cast<type>(1.0);
 
-        cout << "-----------------------------------" << endl;
-
-        cout << "multiply_rows(cell_state_biases_derivatives, current_forget_activations): " << multiply_rows(cell_state_biases_derivatives, current_forget_activations) << endl;
-        cout << "multiply_rows(forget_combinations_biases_derivatives, previous_cell_state_activations): " << multiply_rows(forget_combinations_biases_derivatives, previous_cell_state_activations) << endl;
-        cout << "multiply_rows(state_combinations_biases_derivatives, current_input_activations): " << multiply_rows(state_combinations_biases_derivatives, current_input_activations) << endl;
-        cout << "multiply_rows(input_combinations_biases_derivatives, current_input_derivatives*current_state_activations): " << multiply_rows(input_combinations_biases_derivatives, current_input_derivatives*current_state_activations) << endl;
-
         cell_state_biases_derivatives = multiply_rows(cell_state_biases_derivatives, current_forget_activations);
         cell_state_biases_derivatives += multiply_rows(forget_combinations_biases_derivatives, previous_cell_state_activations);
         cell_state_biases_derivatives += multiply_rows(state_combinations_biases_derivatives, current_input_activations);
@@ -3678,29 +3671,6 @@ void LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tenso
         hidden_states_biases_derivatives += multiply_rows(cell_state_biases_derivatives, current_output_activations*current_hidden_derivatives);
 
         back_propagation.input_biases_derivatives += hidden_states_biases_derivatives.contract(current_layer_deltas, A_B);
-
-        cout << "Current layer deltas: " << current_layer_deltas << endl;
-
-        cout << "previous_cell_state_activations: " << previous_cell_state_activations << endl;
-
-        cout << "current_forget_activations: " << current_forget_activations << endl;
-        cout << "current_input_activations: " << current_input_activations << endl;
-        cout << "current_input_derivatives: " << current_input_derivatives << endl;
-        cout << "current_state_activations: " << current_state_activations << endl;
-        cout << "current_output_activations: " << current_output_activations << endl;
-
-        cout << "forget_combinations_biases_derivatives: " << forget_combinations_biases_derivatives << endl;
-        cout << "input_combinations_biases_derivatives: " << input_combinations_biases_derivatives << endl;
-        cout << "state_combinations_biases_derivatives: " << state_combinations_biases_derivatives << endl;
-        cout << "output_combinations_biases_derivatives: " << output_combinations_biases_derivatives << endl;
-
-        cout << "cell_state_biases_derivatives: " << cell_state_biases_derivatives << endl;
-        cout << "hidden_states_biases_derivatives: " << hidden_states_biases_derivatives << endl;
-
-        cout << "hidden_states_biases_derivatives.contract(current_layer_deltas, A_B): " << hidden_states_biases_derivatives.contract(current_layer_deltas, A_B) << endl;
-
-        cout << "sum " << sample << " biases derivatives: " << back_propagation.input_biases_derivatives << endl;
-        cout << "-----------------------------------" << endl;
     }
 }
 

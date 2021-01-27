@@ -198,7 +198,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set(samples_number, inputs_number, outputs_number);
    data_set.initialize_data(0.0);
-   data_set.set_training();
+   data_set.set_training();º
 
    DataSet::Batch batch(samples_number, &data_set);
 
@@ -345,18 +345,14 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    // Test lstm
 {
-   samples_number = 2;
+   samples_number = 4;
    inputs_number = 2;
-   outputs_number = 1;
-   hidden_neurons = 2;
+   outputs_number = 3;
+   hidden_neurons = 4;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-//   data_set.set_data_random();
-
-   data_set.initialize_data(0.5);
-
-   cout << "Data: " << data_set.get_data() << endl;
+   data_set.set_data_random();
 
    data_set.set_training();
 
@@ -368,31 +364,17 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    batch.fill(samples_indices, input_indices, target_indices);
 
-   cout << "batch.inputs_2d: " << batch.inputs_2d << endl;
-
    long_short_term_memory_layer->set(inputs_number, hidden_neurons);
-   output_perceptron_layer->set(hidden_neurons, outputs_number);
-
-   long_short_term_memory_layer->set_recurrent_activation_function(LongShortTermMemoryLayer::HyperbolicTangent);
 
    neural_network.add_layer(long_short_term_memory_layer);
-//   neural_network.add_layer(output_perceptron_layer);
 
-//   neural_network.set_parameters_random();
-
-   neural_network.set_parameters_constant(0.5);
-
-//   cout << "Parameters: " << neural_network.get_parameters() << endl;
+   neural_network.set_parameters_random();
 
    nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-//   nse.set_normalization_coefficient();
+   nse.set_normalization_coefficient();
 
-   nse.set_normalization_coefficient(1);
-
-   cout << "normalization coeff: " << nse.get_normalization_coefficient() << endl;
-
-   long_short_term_memory_layer->set_timesteps(20);
+   long_short_term_memory_layer->set_timesteps(2);
 
    NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
 
@@ -400,28 +382,15 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    neural_network.forward_propagate(batch, forward_propagation);
 
-   cout << "Forward propagation: " << endl << forward_propagation.layers(0).row_major_activations_3d << endl;
-
    nse.back_propagate(batch, forward_propagation, back_propagation);
-
-   cout << "Output gradient: " << back_propagation.output_gradient << endl;
-
-   cout << "backward propagate" << endl;
 
    error_gradient = back_propagation.gradient;
 
-   cout << "Error gradient: " << error_gradient << endl;
-
    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
-
-   cout << "Numerical error gradient: " << numerical_error_gradient << endl;
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
-   cout << "Difference: " << difference << endl;
-
-//   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
-
+   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
 
    neural_network.set();
@@ -685,21 +654,15 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
 
    nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
 
-   cout << "Jacobian: " << second_order_loss.error_terms_Jacobian << endl;
-
-   cout << "Num Jacobian: " << nse.calculate_Jacobian_numerical_differentiation(&nse) << endl;
-
    nse.calculate_error(batch, forward_propagation, back_propagation);
 
    nse.calculate_error_terms(batch, forward_propagation, second_order_loss);
-   cout << second_order_loss.error << endl;
-   cout << back_propagation.error << endl;
 
    assert_true(abs(second_order_loss.error - back_propagation.error) < 1.0e-3, LOG);
 
-  nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
+   nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
 
-  Tensor<type, 2> numerical_Jacobian_terms;
+   Tensor<type, 2> numerical_Jacobian_terms;
 
    forward_propagation.print();
    numerical_Jacobian_terms = nse.calculate_Jacobian_numerical_differentiation(&nse);
@@ -707,8 +670,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
    const Tensor<type, 2> difference = second_order_loss.error_terms_Jacobian-numerical_Jacobian_terms;
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
-
-
 }
 
 
@@ -757,9 +718,10 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
    cout << "Running normalized squared error test case...\n";
 
    // Constructor and destructor methods
-//   test_constructor();
-//   test_destructor();
-//   test_calculate_normalization_coefficient();
+
+   test_constructor();
+   test_destructor();
+   test_calculate_normalization_coefficient();
 
    // Get methods
 
@@ -767,13 +729,13 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Error methods
 
-//   test_calculate_error();
+   test_calculate_error();
    test_calculate_error_gradient();
 
    // Error terms methods
 
-//   test_calculate_error_terms();
-/*
+   test_calculate_error_terms();
+
    test_calculate_error_terms_Jacobian();
 
    // Squared errors methods
@@ -784,7 +746,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    test_to_XML();
    test_from_XML();
-*/
+
    cout << "End of normalized squared error test case.\n\n";
 }
 

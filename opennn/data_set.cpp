@@ -4297,7 +4297,7 @@ void DataSet::set(const Index& new_samples_number,
         }
     }
 
-    input_variables_dimensions.resize(new_inputs_number);
+    input_variables_dimensions.resize(/*new_inputs_number*/1);
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
