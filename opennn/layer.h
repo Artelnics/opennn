@@ -160,9 +160,7 @@ public:
             set(new_batch_samples_number, new_layer_pointer);
         }
 
-
         virtual ~BackPropagation() {}
-
 
         void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         {
@@ -334,7 +332,6 @@ public:
     virtual string write_expression_c() const {return string();}
 
     virtual string write_expression_python() const {return string();}
-
 
 protected:
 
