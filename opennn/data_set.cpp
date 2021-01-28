@@ -641,6 +641,10 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
 void DataSet::transform_time_series_columns()
 {
+    // Categorical columns?
+
+    time_series_columns = columns;
+
     const Index columns_number = get_columns_number();
 
     Tensor<Column, 1> new_columns;
@@ -702,6 +706,32 @@ void DataSet::transform_time_series_columns()
     }
 
     columns = new_columns;
+}
+
+
+void DataSet::transform_time_series_data()
+{
+    // Categorical columns?
+
+    const Index old_samples_number = data.dimension(0);
+    const Index old_variables_number = data.dimension(1);
+
+    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
+    const Index new_variables_number = old_variables_number * (lags_number + steps_ahead);
+
+    time_series_data = data;
+
+    data.resize(new_samples_number, new_variables_number);
+
+    for(Index j = 0; j < old_variables_number; j++)
+    {
+        for(Index i = 0; i < lags_number+steps_ahead; i++)
+        {
+            memcpy(data.data() + i*old_variables_number*new_samples_number + j*new_samples_number,
+                   time_series_data.data() + i + j*old_samples_number,
+                   static_cast<size_t>(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
+        }
+    }
 }
 
 
@@ -4398,7 +4428,6 @@ void DataSet::set_default()
 
 void DataSet::set_data(const Tensor<type, 2>& new_data)
 {
-
     const Index samples_number = new_data.dimension(0);
     const Index variables_number = new_data.dimension(1);
 
@@ -8604,66 +8633,16 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 void DataSet::transform_time_series()
 {
-    if(lags_number == 0) return;
-
-    const Index variables_number = get_variables_number();
-    const Index samples_number = get_samples_number();
-
-    time_series_data = data;
-
-    time_series_columns = columns;
+    if(lags_number == 0 || steps_ahead == 0) return;
 
     transform_time_series_columns();
 
-    const Index time_series_samples_number = get_samples_number()-(lags_number-1+steps_ahead);
-    const Index time_series_variables_number = get_columns_number();
+    transform_time_series_data();
 
-    data.resize(time_series_samples_number, time_series_variables_number);
+    const Index time_series_samples_number = get_samples_number();
 
-    Tensor<type, 2> new_data(time_series_samples_number, time_series_variables_number);
-    Tensor<type, 1> variable_data;
-
-    Index new_data_variable = 0;
-
-    Index time_series_variable= 0;
-
-
-// lags
-
-    for(Index lag = lags_number; lag > 0; lag--)
-    {
-
-        for(Index variable = 0; variable < variables_number; variable++)
-            {
-
-            variable_data = time_series_data.chip(variable, 1);
-
-            for(Index j = 0; j <= time_series_samples_number; j++)
-            {
-
-                new_data(j, time_series_variable) = variable_data(j+lags_number-lag);
-            }
-            time_series_variable++;
-        }
-    }
-
-// steps ahead
-    for(Index ahead = 1; ahead <= steps_ahead; ahead++)
-    {
-        for(Index variable = 0; variable < variables_number; variable++)
-            {
-            variable_data = time_series_data.chip(variable, 1);
-
-            for(Index j = 0; j < time_series_samples_number; j++)
-            {
-                new_data(j, time_series_variable) = variable_data(j+ahead+lags_number-1);
-            }
-
-            time_series_variable++;
-        }
-    }
-
-    set_data(new_data);
+    samples_uses.resize(time_series_samples_number);
+    split_samples_sequential();
 }
 
 
