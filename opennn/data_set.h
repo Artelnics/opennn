@@ -673,6 +673,8 @@ public:
 
    // Time series methods
 
+   void transform_time_series();
+
    void transform_time_series_columns();
    void transform_time_series_data();
    void get_time_series_columns_number(const Index&);
@@ -732,7 +734,6 @@ public:
 
    // Trasform methods
 
-   void transform_time_series();
    void transform_association();
 
    void fill_time_series(const Index&);
@@ -829,7 +830,7 @@ private:
    Tensor<type, 2> data;
 
    /// Time series data matrix.
-   /// The number of rows is the number of samples before time series transfomration.
+   /// The number of rows is the number of samples before time series transformation.
    /// The number of columns is the number of variables before time series transformation.
 
    Tensor<type, 2> time_series_data;
