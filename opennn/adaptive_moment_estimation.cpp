@@ -18,7 +18,7 @@ namespace OpenNN
 AdaptiveMomentEstimation::AdaptiveMomentEstimation()
     :OptimizationAlgorithm()
 {
-    set_default();
+     set_default();
 }
 
 
