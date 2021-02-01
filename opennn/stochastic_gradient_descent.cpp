@@ -477,18 +477,18 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    bool is_forecasting = false;
+    bool shuffle = true;
 
     results.resize_training_history(maximum_epochs_number+1);
     if(has_selection) results.resize_selection_history(maximum_epochs_number+1);
 
     if(neural_network_pointer->has_long_short_term_memory_layer()
     || neural_network_pointer->has_recurrent_layer())
-        is_forecasting = true;
+        shuffle = false;
 
     // Calculate error before training
     parameters_norm = l2_norm(optimization_data.parameters);
-    training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, is_forecasting);
+    training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
     batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
     neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
     loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
@@ -496,7 +496,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     if(has_selection)
     {
-        selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, is_forecasting);
+        selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
         batch_selection.fill(selection_batches.chip(0,0), input_variables_indices, target_variables_indices);
         neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
         loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
@@ -507,7 +507,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, is_forecasting);
+        const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -553,7 +553,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(has_selection)
         {
-            selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, is_forecasting);
+            selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
 
             selection_error = 0;
 
