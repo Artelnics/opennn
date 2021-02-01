@@ -366,7 +366,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Calculate error before training
     parameters_norm = l2_norm(optimization_data.parameters);
-    training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, is_forecasting);
+    training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, !is_forecasting);
     batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
     neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
     loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
@@ -374,7 +374,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     if(has_selection)
     {
-        selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, is_forecasting);
+        selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, !is_forecasting);
         batch_selection.fill(selection_batches.chip(0,0), input_variables_indices, target_variables_indices);
         neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
         loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);

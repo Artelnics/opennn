@@ -382,7 +382,6 @@ void LongShortTermMemoryLayer::set()
 
 void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)
 {
-
     input_biases.resize(new_neurons_number);
     forget_biases.resize(new_neurons_number);
     state_biases.resize(new_neurons_number);
@@ -403,6 +402,8 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
 
     cell_states.resize(new_neurons_number); // carry
     cell_states.setZero();
+
+    set_parameters_random();
 
     set_default();
 }
@@ -430,6 +431,8 @@ void LongShortTermMemoryLayer::set(const LongShortTermMemoryLayer& other_neuron_
 
 void LongShortTermMemoryLayer::set_default()
 {
+    layer_name = "long_short_term_memory_layer";
+    layer_type = LongShortTermMemory;
 }
 
 
