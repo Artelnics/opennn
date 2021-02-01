@@ -740,6 +740,8 @@ void DataSet::transform_time_series_data()
                    static_cast<size_t>(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
         }
     }
+
+    samples_uses.resize(new_samples_number);
 }
 
 
@@ -1052,7 +1054,6 @@ const Tensor<DataSet::SampleUse,1 >& DataSet::get_samples_uses() const
 /// Returns a vector, where each element is a vector that contains the indices of the different batches of the training samples.
 /// @param shuffle Is a boleean.
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
-/// @todo In forecasting must be false.
 
 Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                                       const Index& batch_samples_number,
@@ -8647,9 +8648,6 @@ void DataSet::transform_time_series()
 
     transform_time_series_columns();
 
-    const Index time_series_samples_number = get_samples_number();
-
-    samples_uses.resize(time_series_samples_number);
     split_samples_sequential();
 }
 
