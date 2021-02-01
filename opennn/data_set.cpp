@@ -711,23 +711,31 @@ void DataSet::transform_time_series_columns()
 
 void DataSet::transform_time_series_data()
 {
-    // Categorical columns?
+    // Categorical / Time columns?
 
     const Index old_samples_number = data.dimension(0);
     const Index old_variables_number = data.dimension(1);
 
     const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
-    const Index new_variables_number = old_variables_number * (lags_number + steps_ahead);
+    const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
 
     time_series_data = data;
 
     data.resize(new_samples_number, new_variables_number);
 
+    Index index = 0;
+
     for(Index j = 0; j < old_variables_number; j++)
     {
+        if(columns(get_column_index(j)).type == DateTime)
+        {
+            index++;
+            continue;
+        }
+
         for(Index i = 0; i < lags_number+steps_ahead; i++)
         {
-            memcpy(data.data() + i*old_variables_number*new_samples_number + j*new_samples_number,
+            memcpy(data.data() + i*(old_variables_number-index)*new_samples_number + (j-index)*new_samples_number,
                    time_series_data.data() + i + j*old_samples_number,
                    static_cast<size_t>(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
         }
@@ -8635,9 +8643,9 @@ void DataSet::transform_time_series()
 {
     if(lags_number == 0 || steps_ahead == 0) return;
 
-    transform_time_series_columns();
-
     transform_time_series_data();
+
+    transform_time_series_columns();
 
     const Index time_series_samples_number = get_samples_number();
 
