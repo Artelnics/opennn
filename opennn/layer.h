@@ -274,7 +274,7 @@ public:
 
     // Outputs
 
-    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&); // Cannot be const becauuse
+    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&); // Cannot be const because of Recurrent and LSTM layers
 
     virtual Tensor<type, 2> calculate_outputs_from4D(const Tensor<type, 4>&) {return Tensor<type, 2>();}
 
