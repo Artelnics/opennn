@@ -69,6 +69,7 @@ void NormalizedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
     set_normalization_coefficient();
 }
 
+
 /// Sets the normalization coefficient from training samples.
 /// This method calculates the normalization coefficient of the dataset.
 
@@ -85,8 +86,8 @@ void NormalizedSquaredError::set_normalization_coefficient()
     //Normalization coefficient
 
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
-
 }
+
 
 /// Sets the normalization coefficient.
 /// @param new_normalization_coefficient New normalization coefficient to be set.

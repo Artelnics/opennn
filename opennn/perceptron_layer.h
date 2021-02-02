@@ -146,12 +146,12 @@ public:
 
 
    void forward_propagate(const Tensor<type, 2>& inputs,
-                                      ForwardPropagation& forward_propagation);
+                          ForwardPropagation& forward_propagation);
 
 
    void forward_propagate(const Tensor<type, 2>& inputs,
-                                      Tensor<type, 1> potential_parameters,
-                                      ForwardPropagation& forward_propagation);
+                          Tensor<type, 1> potential_parameters,
+                          ForwardPropagation& forward_propagation);
 
    // Delta methods
 

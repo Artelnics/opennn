@@ -171,7 +171,9 @@ public:
             const Index neurons_number = layer_pointer->get_neurons_number();
             const Index inputs_number = layer_pointer->get_inputs_number();
 
-            if(layer_pointer->get_type() == LongShortTermMemory)
+            const Layer::Type layer_type = layer_pointer->get_type();
+
+            if(layer_type == LongShortTermMemory)
             {
                 forget_weights_derivatives.resize(inputs_number*neurons_number);
                 input_weights_derivatives.resize(inputs_number*neurons_number);
@@ -187,6 +189,14 @@ public:
                 input_biases_derivatives.resize(neurons_number);
                 state_biases_derivatives.resize(neurons_number);
                 output_biases_derivatives.resize(neurons_number);
+            }
+            else if(layer_type == Recurrent)
+            {
+                biases_derivatives.resize(neurons_number);
+
+                input_weights_derivatives.resize(inputs_number*neurons_number);
+
+                recurrent_weights_derivatives.resize(neurons_number*neurons_number);
             }
             else
             {
@@ -229,7 +239,14 @@ public:
         Tensor<type, 1> state_biases_derivatives;
         Tensor<type, 1> output_biases_derivatives;
 
+        // Recurrent
+
+        Tensor<type, 1> recurrent_weights_derivatives;
+
+        // Convolutional
+
         Tensor<type, 4> synaptic_weights_derivatives_4d;
+
     };
 
 
