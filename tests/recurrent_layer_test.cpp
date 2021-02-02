@@ -145,7 +145,7 @@ void RecurrentLayerTest::test_get_biases()
    neurons_number = 3;
    inputs_number = 2;
 
-   Tensor<type, 2> biases(1, neurons_number);
+   Tensor<type, 1> biases(neurons_number);
 
    recurrent_layer.set(inputs_number, neurons_number);
 
@@ -271,13 +271,13 @@ void RecurrentLayerTest::test_get_parameters()
 
    //Test
 
-   Tensor<type, 2> biases(1,2);
+   Tensor<type, 1> biases(2);
    Tensor<type, 2> input_weights(3, 2);
    Tensor<type, 2> recurrent_weights(2,2);
 
    recurrent_layer.set(3,  2);
-   biases(0,0) = 0.41;
-   biases(0,1) = -0.70;
+   biases(0) = 0.41;
+   biases(1) = -0.70;
    recurrent_layer.set_biases(biases);
 
 //   input_weights.set_column(0,Tensor<type, 1> );
@@ -463,7 +463,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 
    Tensor<type, 2> new_weights;
    Tensor<type, 2> new_recurrent_weights;
-   Tensor<type, 2> new_biases;
+   Tensor<type, 1> new_biases;
 
    //Test
 
@@ -480,7 +480,7 @@ void RecurrentLayerTest::test_calculate_outputs()
    new_weights.setConstant(1.0);
    new_recurrent_weights.resize(2,2);
    new_recurrent_weights.setConstant(1.0);
-   new_biases.resize(1, 2);
+   new_biases.resize(2);
    new_biases.setConstant(1.0);
 
    recurrent_layer.set_biases(new_biases);

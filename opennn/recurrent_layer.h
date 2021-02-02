@@ -38,7 +38,9 @@ public:
 
     /// Enumeration of the available activation functions for the recurrent layer.
 
-    enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
+    enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent,
+                            Linear, RectifiedLinear, ExponentialLinear,
+                            ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
    // Constructors
 
@@ -63,7 +65,7 @@ public:
 
    Index get_timesteps() const;
 
-   Tensor<type, 2> get_biases() const;
+   Tensor<type, 1> get_biases() const;
    const Tensor<type, 2>& get_input_weights() const;
    const Tensor<type, 2>& get_recurrent_weights() const;
 
@@ -106,13 +108,13 @@ public:
 
    void set_timesteps(const Index&);
 
-   void set_biases(const Tensor<type, 2>&);
+   void set_biases(const Tensor<type, 1>&);
 
    void set_input_weights(const Tensor<type, 2>&);
 
    void set_recurrent_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index& index=0);
+   void set_parameters(const Tensor<type, 1>&, const Index& = 0);
 
    // Activation functions
 
@@ -139,22 +141,31 @@ public:
 
    // neuron layer combinations_2d
 
-   void calculate_current_combinations(const Tensor<type, 1>& current_inputs,
-                               Tensor<type, 1>& current_combinations);
+   void calculate_combinations(const Tensor<type, 1>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 1>&,
+                               Tensor<type, 1>& ) const;
 
+   void calculate_activations(const Tensor<type, 1>&,
+                              Tensor<type, 1>&) const;
 
-   void calculate_current_activations(const Tensor<type, 1>& current_combinations, Tensor<type, 1>& current_activations) const;
-
-   void calculate_current_activations_derivatives(const Tensor<type, 1>& current_combinations,
-                                          Tensor<type, 1>& current_activations,
-                                          Tensor<type, 1>& current_activations_derivatives) const;
+   void calculate_activations_derivatives(const Tensor<type, 1>& ,
+                                          Tensor<type, 1>& ,
+                                          Tensor<type, 1>& ) const;
 
 
    // neuron layer outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation);
+   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation& );
+
+   void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, ForwardPropagation&);
+
+   void calculate_output_delta(ForwardPropagation&,
+                               const Tensor<type, 2>&,
+                               Tensor<type, 2>&) const;
 
    void calculate_hidden_delta(Layer* next_layer_pointer,
                                const Tensor<type, 2>&,
@@ -162,14 +173,25 @@ public:
                                const Tensor<type, 2>& next_layer_delta,
                                Tensor<type, 2>& hidden_delta) const;
 
+   void calculate_hidden_delta_perceptron(Layer* ,
+                                          const Tensor<type, 2>& ,
+                                          const Tensor<type, 2>& ,
+                                          Tensor<type, 2>& ) const;
+
+   void calculate_hidden_delta_probabilistic(Layer* ,
+                                          const Tensor<type, 2>& ,
+                                          const Tensor<type, 2>& ,
+                                          Tensor<type, 2>& ) const;
 
    // Gradient
 
-   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
+   void insert_gradient(const BackPropagation&, const Index& , Tensor<type, 1>&) const;
 
-   Tensor<type, 1> calculate_input_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
-   Tensor<type, 1> calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
-   Tensor<type, 1> calculate_biases_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
+   void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
+
+   void calculate_biases_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
+   void calculate_input_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
+   void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
 
    // Expression methods
 
@@ -191,7 +213,7 @@ protected:
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.
 
-   Tensor<type, 2> biases;
+   Tensor<type, 1> biases;
 
    Tensor<type, 2> input_weights;
 
