@@ -724,7 +724,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
 #endif
 
-    if(/*neural_network_pointer->has_long_short_term_memory_layer() ||*/ neural_network_pointer->has_recurrent_layer())
+    /*if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
 
         ostringstream buffer;
@@ -746,7 +746,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
             throw logic_error(buffer.str());
         }
-    }
+    }*/
 
     if(neural_network_pointer->has_convolutional_layer())
     {
