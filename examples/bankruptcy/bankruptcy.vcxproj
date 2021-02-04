@@ -119,8 +119,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/bankruptcy/Debug/bankruptcy.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/bankruptcy/Debug/bankruptcy.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/bankruptcy/Debug/bankruptcy.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/bankruptcy/Debug/bankruptcy.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -163,8 +163,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/bankruptcy/Release/bankruptcy.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/bankruptcy/Release/bankruptcy.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/bankruptcy/Release/bankruptcy.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/bankruptcy/Release/bankruptcy.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -206,8 +206,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/bankruptcy/MinSizeRel/bankruptcy.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/bankruptcy/MinSizeRel/bankruptcy.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/bankruptcy/MinSizeRel/bankruptcy.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/bankruptcy/MinSizeRel/bankruptcy.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -248,8 +248,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/bankruptcy/RelWithDebInfo/bankruptcy.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/bankruptcy/RelWithDebInfo/bankruptcy.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/bankruptcy/RelWithDebInfo/bankruptcy.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/bankruptcy/RelWithDebInfo/bankruptcy.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
