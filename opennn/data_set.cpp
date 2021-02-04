@@ -8587,9 +8587,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     Index columns_number = data.dimension(1);
     Index rows_number = data.dimension(0);
 
-    cout << "Rows number: " << rows_number << endl;
-    cout << "Columns number: " << columns_number << endl;
-
     cout << "Saving binary data file..." << endl;
 
     file.write(reinterpret_cast<char*>(&columns_number), size);
@@ -8611,8 +8608,36 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     file.close();
 
+    cout << "Binary data file saved." << endl;
+}
 
-/*
+
+/// Saves to the data file the values of the time series data matrix in binary format.
+
+void DataSet::save_time_series_data_binary(const string& binary_data_file_name) const
+{
+    ofstream file(binary_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet template." << endl
+               << "void save_time_series_data_binary(const string) method." << endl
+               << "Cannot open data binary file." << endl;
+
+        throw logic_error(buffer.str());
+    }
+
+    // Write data
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number = time_series_data.dimension(1);
+    Index rows_number = time_series_data.dimension(0);
+
+    cout << "Saving binary data file..." << endl;
+
     file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
 
@@ -8620,22 +8645,21 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     type value;
 
-    for(int i = 0; i < columns_number*rows_number; i++)
+    for(int i = 0; i < columns_number; i++)
     {
-//        for(int j = 0; j < rows_number; j++)
-//        {
-            value = data(i);
+        for(int j = 0; j < rows_number; j++)
+        {
+            value = time_series_data(j,i);
 
             file.write(reinterpret_cast<char*>(&value), size);
-//        }
+        }
     }
 
     file.close();
-*/
-
 
     cout << "Binary data file saved." << endl;
 }
+
 
 
 /// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
@@ -8735,37 +8759,58 @@ void DataSet::load_data_binary()
 
     data.resize(rows_number, columns_number);
 
-//    Index row_index = 0;
-//    Index column_index = 0;
-
     for(Index i = 0; i < rows_number*columns_number; i++)
     {
         file.read(reinterpret_cast<char*>(&value), size);
 
         data(i) = value;
-/*
-        data(row_index, column_index) = value;
-
-        row_index++;
-
-        if((i+1)%rows_number == 0)
-        {
-            row_index = 0;
-            column_index++;
-        }
-*/
     }
 
     file.close();
 }
 
 
-/// This method loads data from a binary data file for time series prediction methodata_set.
-/// @todo
+/// This method loads time series data from a binary data.
 
-void DataSet::load_time_series_data_binary()
+void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
-//    time_series_data.load_binary(data_file_name);
+    ifstream file;
+
+    file.open(time_series_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet template.\n"
+               << "void load_time_series_data_binary(const string&) method.\n"
+               << "Cannot open binary file: " << time_series_data_file_name << "\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number;
+    Index rows_number;
+
+    file.read(reinterpret_cast<char*>(&columns_number), size);
+    file.read(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    time_series_data.resize(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number*columns_number; i++)
+    {
+        file.read(reinterpret_cast<char*>(&value), size);
+
+        time_series_data(i) = value;
+    }
+
+    file.close();
 }
 
 
