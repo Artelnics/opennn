@@ -119,8 +119,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/airfoil_self_noise/Debug/airfoil_self_noise.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/airfoil_self_noise/Debug/airfoil_self_noise.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/airfoil_self_noise/Debug/airfoil_self_noise.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/airfoil_self_noise/Debug/airfoil_self_noise.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -163,8 +163,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/airfoil_self_noise/Release/airfoil_self_noise.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/airfoil_self_noise/Release/airfoil_self_noise.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/airfoil_self_noise/Release/airfoil_self_noise.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/airfoil_self_noise/Release/airfoil_self_noise.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -206,8 +206,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/airfoil_self_noise/MinSizeRel/airfoil_self_noise.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/airfoil_self_noise/MinSizeRel/airfoil_self_noise.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/airfoil_self_noise/MinSizeRel/airfoil_self_noise.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/airfoil_self_noise/MinSizeRel/airfoil_self_noise.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -248,8 +248,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/airfoil_self_noise/RelWithDebInfo/airfoil_self_noise.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/airfoil_self_noise/RelWithDebInfo/airfoil_self_noise.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/airfoil_self_noise/RelWithDebInfo/airfoil_self_noise.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/airfoil_self_noise/RelWithDebInfo/airfoil_self_noise.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>

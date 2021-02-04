@@ -119,8 +119,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/urinary_inflammations_diagnosis/Debug/urinary_inflammations_diagnosis.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/urinary_inflammations_diagnosis/Debug/urinary_inflammations_diagnosis.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/urinary_inflammations_diagnosis/Debug/urinary_inflammations_diagnosis.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/urinary_inflammations_diagnosis/Debug/urinary_inflammations_diagnosis.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -163,8 +163,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/urinary_inflammations_diagnosis/Release/urinary_inflammations_diagnosis.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/urinary_inflammations_diagnosis/Release/urinary_inflammations_diagnosis.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/urinary_inflammations_diagnosis/Release/urinary_inflammations_diagnosis.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/urinary_inflammations_diagnosis/Release/urinary_inflammations_diagnosis.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -206,8 +206,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/urinary_inflammations_diagnosis/MinSizeRel/urinary_inflammations_diagnosis.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/urinary_inflammations_diagnosis/MinSizeRel/urinary_inflammations_diagnosis.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/urinary_inflammations_diagnosis/MinSizeRel/urinary_inflammations_diagnosis.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/urinary_inflammations_diagnosis/MinSizeRel/urinary_inflammations_diagnosis.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -248,8 +248,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/urinary_inflammations_diagnosis/RelWithDebInfo/urinary_inflammations_diagnosis.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/urinary_inflammations_diagnosis/RelWithDebInfo/urinary_inflammations_diagnosis.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/urinary_inflammations_diagnosis/RelWithDebInfo/urinary_inflammations_diagnosis.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/urinary_inflammations_diagnosis/RelWithDebInfo/urinary_inflammations_diagnosis.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
