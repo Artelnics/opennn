@@ -71,8 +71,6 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
                 padded_output = inputs.pad(paddings);
                 return;
         }
-
-        default: return;
     }
 }
 
