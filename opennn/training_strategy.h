@@ -170,7 +170,7 @@ public:
 
    // Check methods
 
-   bool check_forecasting() const;
+   void fix_forecasting();
 
    // Serialization methods
 
