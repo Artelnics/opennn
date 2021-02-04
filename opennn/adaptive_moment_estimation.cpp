@@ -994,6 +994,12 @@ void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_s
 }
 
 
+Index AdaptiveMomentEstimation::get_batch_samples_number() const
+{
+    return batch_samples_number;
+}
+
+
 /// Update iteration parameters
 
 void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation& back_propagation,
