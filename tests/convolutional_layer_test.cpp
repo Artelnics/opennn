@@ -342,10 +342,10 @@ void ConvolutionalLayerTest::test_set() // @todo
                 convolutional_layer.get_inputs_channels_number() == 3 &&
                 convolutional_layer.get_inputs_rows_number() == 256 &&
                 convolutional_layer.get_inputs_columns_number() == 128 &&
-                convolutional_layer.get_filters_number() == 2 &&
-                convolutional_layer.get_filters_channels_number() == 3 &&
-                convolutional_layer.get_filters_rows_number() == 2 &&
-                convolutional_layer.get_filters_columns_number() == 2, LOG);
+                convolutional_layer.get_kernels_number() == 2 &&
+                convolutional_layer.get_kernels_channels_number() == 3 &&
+                convolutional_layer.get_kernels_rows_number() == 2 &&
+                convolutional_layer.get_kernels_columns_number() == 2, LOG);
 }
 
 
