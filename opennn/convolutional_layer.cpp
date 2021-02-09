@@ -689,7 +689,6 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(const PerceptronLayer
                                                            const Tensor<type, 2>& next_layer_delta,
                                                            Tensor<type, 2>& hidden_delta) const
 {
-
         // Current layer's values
 
         const Index images_number = next_layer_delta.dimension(0);
@@ -1257,8 +1256,8 @@ Index ConvolutionalLayer::get_parameters_number() const
 
 /// Sets and initializes the layer's parameters in accordance with the dimensions taken as input.
 /// The initialization values are random values from a normal distribution.
-/// @param new_inputs_dimensions A vector containing the desired inputs' dimensions (rows number, columns number, number of channels, number of images).
-/// @param new_kernels_dimensions A vector containing the desired kernels' dimensions (rows number, columns number, number of channels, number of kernels).
+/// @param new_inputs_dimensions A vector containing the desired inputs' dimensions (number of images, number of channels, rows number, columns number).
+/// @param new_kernels_dimensions A vector containing the desired kernels' dimensions (number of kernels, number of channels, rows number, columns number).
 
 void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, const Tensor<Index, 1>& new_kernels_dimensions)
 {
