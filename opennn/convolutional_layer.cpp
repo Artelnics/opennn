@@ -283,7 +283,6 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, Forwar
     to_2d(forward_propagation.combinations_4d, forward_propagation.combinations_2d);
     to_2d(forward_propagation.activations_4d, forward_propagation.activations_2d);
     to_2d(forward_propagation.activations_derivatives_4d, forward_propagation.activations_derivatives_2d);
-
 }
 
 
@@ -1204,7 +1203,6 @@ Index ConvolutionalLayer::get_inputs_number() const
 
 Index ConvolutionalLayer::get_neurons_number() const
 {
-//    return get_kernels_number() * get_outputs_rows_number() * get_outputs_columns_number();
     return get_kernels_number();
 }
 
