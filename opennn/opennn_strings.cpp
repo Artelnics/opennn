@@ -134,7 +134,7 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
     // Find first "non-delimiter"
 
     Index index = 0;
-    Index old_pos;
+    Index old_pos = 0;
 
     while(string::npos != position || string::npos != last_position)
     {
