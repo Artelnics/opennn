@@ -47,8 +47,8 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
     set_optimization_method(QUASI_NEWTON_METHOD);
     set_loss_method(NORMALIZED_SQUARED_ERROR);
 
-    set_loss_index_data_set_pointer(data_set_pointer);
     set_loss_index_neural_network_pointer(neural_network_pointer);
+    set_loss_index_data_set_pointer(data_set_pointer);
 
     LossIndex* loss_index_pointer = get_loss_index_pointer();
     set_loss_index_pointer(loss_index_pointer);
