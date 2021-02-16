@@ -47,7 +47,7 @@ int main(void)
 
         // Data set
 
-        DataSet ds("C:/Users/Usuario/Documents/AirPassengers.csv", ';', true);
+//        DataSet ds("C:/Users/Usuario/Documents/AirPassengers.csv", ';', true);
 //        ds.set_min_max_range(0,1);
 
         ds.set_lags_number(1);
