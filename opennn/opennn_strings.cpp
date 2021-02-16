@@ -71,10 +71,12 @@ Index count_tokens(const string& s, const char& c)
 
 Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
+
 //    const string new_string = get_trimmed(str);
     const Index tokens_number = count_tokens(str, separator);
 
     Tensor<string, 1> tokens(tokens_number);
+
 
     // Skip delimiters at beginning.
 
@@ -99,6 +101,7 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
         else{
         // Found a token, add it to the vector
         tokens[index] = str.substr(lastPos, pos - lastPos);
+
         }
 
         old_pos = pos;

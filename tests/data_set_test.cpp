@@ -2210,18 +2210,18 @@ void DataSetTest::test_read_airline_passengers_csv() // @todo
 {
     cout << "test_read_airline_passengers_csv\n";
 
-//    try
-//    {
-//        DataSet data_set("../../datasets/adult.data",',',true);
+    try
+    {
+        DataSet data_set("../../datasets/adult.data",',',true);
 
-//        assert_true(data_set.get_column_type(0) == DataSet::DateTime, LOG);
-//        assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
-//    }
-//    catch (exception&)
-//    {
-//        assert_true(true, LOG);
-//        cout << "Exception, date below 1970" << endl;
-//    }
+        assert_true(data_set.get_column_type(0) == DataSet::DateTime, LOG);
+        assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
+    }
+    catch (exception&)
+    {
+        assert_true(true, LOG);
+        cout << "Exception, date below 1970" << endl;
+    }
 }
 
 
@@ -3008,167 +3008,167 @@ void DataSetTest::run_test_case()
    cout << "Running data set test case...\n";
    // Constructor and destructor methods
 
-   test_constructor();
-   test_destructor();
+//   test_constructor();
+//   test_destructor();
 
 
-   // Assignment operators methods
+//   // Assignment operators methods
 
-   test_assignment_operator();
+//   test_assignment_operator();
 
 
-   // Get methods
+//   // Get methods
 
-   test_get_samples_number();
-   test_get_variables_number();
-   test_get_variables();
-   test_get_display();
-   test_is_binary_classification();
-   test_is_multiple_classification();
+//   test_get_samples_number();
+//   test_get_variables_number();
+//   test_get_variables();
+//   test_get_display();
+//   test_is_binary_classification();
+//   test_is_multiple_classification();
 
 
-   // Data methods
+//   // Data methods
 
-   test_empty();
-   test_get_data();
-   test_get_training_data();
-   test_get_selection_data();
-   test_get_inputs();
-   test_get_targets();
-   test_get_testing_data();
+//   test_empty();
+//   test_get_data();
+//   test_get_training_data();
+//   test_get_selection_data();
+//   test_get_inputs();
+//   test_get_targets();
+//   test_get_testing_data();
 
 
-   // Sample methods
+//   // Sample methods
 
-   test_get_sample();
+//   test_get_sample();
 
 
-   // Set methods
+//   // Set methods
 
-   test_set();
-   test_set_display();
+//   test_set();
+//   test_set_display();
 
 
-   // Data methods
+//   // Data methods
 
-   test_set_data();
-   test_set_samples_number();
-   test_set_columns_number();
+//   test_set_data();
+//   test_set_samples_number();
+//   test_set_columns_number();
 
 
-   // Sample methods
+//   // Sample methods
 
-   test_set_sample();
+//   test_set_sample();
 
 
-   // Data resizing methods
+//   // Data resizing methods
 
-   test_unuse_constant_columns();
-   test_unuse_repeated_samples();
-   test_unuse_non_significant_inputs();
-   test_unuse_columns_missing_values();
+//   test_unuse_constant_columns();
+//   test_unuse_repeated_samples();
+//   test_unuse_non_significant_inputs();
+//   test_unuse_columns_missing_values();
 
 
-   // Initialization methods
+//   // Initialization methods
 
-   test_initialize_data();
+//   test_initialize_data();
 
 
-   // Statistics methods
+//   // Statistics methods
 
-   test_calculate_data_descriptives();
-   test_calculate_data_descriptives_missing_values();
-   test_calculate_training_samples_descriptives();
-   test_calculate_selection_samples_descriptives();
-   test_calculate_testing_samples_descriptives();
-   test_calculate_inputs_descriptives();
-   test_calculate_training_targets_mean();
-   test_calculate_selection_targets_mean();
-   test_calculate_testing_targets_mean();
+//   test_calculate_data_descriptives();
+//   test_calculate_data_descriptives_missing_values();
+//   test_calculate_training_samples_descriptives();
+//   test_calculate_selection_samples_descriptives();
+//   test_calculate_testing_samples_descriptives();
+//   test_calculate_inputs_descriptives();
+//   test_calculate_training_targets_mean();
+//   test_calculate_selection_targets_mean();
+//   test_calculate_testing_targets_mean();
 
 
-   // Histrogram methods
+//   // Histrogram methods
 
-   test_calculate_data_distributions();
+//   test_calculate_data_distributions();
 
 
-   // Filtering methods
+//   // Filtering methods
 
-   test_filter_data();
-   test_filter_column();
+//   test_filter_data();
+//   test_filter_column();
 
 
-   // Data scaling
+//   // Data scaling
 
-   test_scale_data_mean_standard_deviation();
-   test_scale_data_minimum_maximum();
+//   test_scale_data_mean_standard_deviation();
+//   test_scale_data_minimum_maximum();
 
 
-   // Input variables scaling
+//   // Input variables scaling
 
-   test_scale_inputs_mean_standard_deviation();
-   test_scale_inputs_minimum_maximum();
+//   test_scale_inputs_mean_standard_deviation();
+//   test_scale_inputs_minimum_maximum();
 
 
-   // Target variables scaling
+//   // Target variables scaling
 
-   test_scale_targets_mean_standard_deviation();
-   test_scale_targets_minimum_maximum();
+//   test_scale_targets_mean_standard_deviation();
+//   test_scale_targets_minimum_maximum();
 
 
-   // Data unscaling
+//   // Data unscaling
 
-   test_unscale_data_mean_standard_deviation();
-   test_unscale_data_minimum_maximum();
+//   test_unscale_data_mean_standard_deviation();
+//   test_unscale_data_minimum_maximum();
 
 
-   // Input variables unscaling
+//   // Input variables unscaling
 
-   test_unscale_inputs_mean_standard_deviation();
-   test_unscale_inputs_minimum_maximum();
+//   test_unscale_inputs_mean_standard_deviation();
+//   test_unscale_inputs_minimum_maximum();
 
 
-   // Target variables unscaling
+//   // Target variables unscaling
 
-   test_unscale_targets_mean_standard_deviation();
-   test_unscale_targets_minimum_maximum();
+//   test_unscale_targets_mean_standard_deviation();
+//   test_unscale_targets_minimum_maximum();
 
 
-   // Classificatios methods
+//   // Classificatios methods
 
-   test_balance_binary_targets_distribution();
+//   test_balance_binary_targets_distribution();
 
 
-   // Correlations
+//   // Correlations
 
-   test_calculate_input_target_correlations();
-   test_calculate_total_input_correlations();
+//   test_calculate_input_target_correlations();
+//   test_calculate_total_input_correlations();
 
 
-   // Pattern recognition methods
+//   // Pattern recognition methods
 
-//   test_calculate_target_columns_distribution();
-   test_unuse_most_populated_target();
-   test_balance_multiple_targets_distribution();
-   test_balance_function_regression_targets_distribution();
+////   test_calculate_target_columns_distribution();
+//   test_unuse_most_populated_target();
+//   test_balance_multiple_targets_distribution();
+//   test_balance_function_regression_targets_distribution();
 
 
-   // Outlier detection
+//   // Outlier detection
 
-   test_clean_Tukey_outliers();
+//   test_clean_Tukey_outliers();
 
 
-   // Data generation
+//   // Data generation
 
-   test_generate_data_binary_classification();
-   test_generate_data_multiple_classification();
+//   test_generate_data_binary_classification();
+//   test_generate_data_multiple_classification();
 
 
-   // Serialization methods
+//   // Serialization methods
 
-   test_to_XML();
-   test_from_XML();
-   test_read_csv();
+//   test_to_XML();
+//   test_from_XML();
+//   test_read_csv();
    test_read_adult_csv();
    test_read_airline_passengers_csv();
    test_read_car_csv();
