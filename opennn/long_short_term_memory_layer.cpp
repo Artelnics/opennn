@@ -279,220 +279,11 @@ const LongShortTermMemoryLayer::ActivationFunction& LongShortTermMemoryLayer::ge
 }
 
 
-
 /// Returns the recurrent activation function of the layer.
 
 const LongShortTermMemoryLayer::ActivationFunction& LongShortTermMemoryLayer::get_recurrent_activation_function() const
 {
     return recurrent_activation_function;
-}
-
-void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
-{
-    ostringstream buffer;
-
-    // LSTM layer
-
-    const tinyxml2::XMLElement* LSTM_layer_element = document.FirstChildElement("LongShortTermMemoryLayer");
-
-    if(!LSTM_layer_element)
-    {
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "PerceptronLayer element is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-
-    // Layer name
-
-    const tinyxml2::XMLElement* layer_name_element = LSTM_layer_element->FirstChildElement("LayerName");
-
-    if(!layer_name_element)
-    {
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "LayerName element is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(layer_name_element->GetText())
-    {
-        set_layer_name(layer_name_element->GetText());
-    }
-
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = LSTM_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-    {
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "InputsNumber element is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(inputs_number_element->GetText())
-    {
-        set_inputs_number(static_cast<Index>(stoi(inputs_number_element->GetText())));
-    }
-
-    // Neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = LSTM_layer_element->FirstChildElement("NeuronsNumber");
-
-    if(!neurons_number_element)
-    {
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "NeuronsNumber element is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(neurons_number_element->GetText())
-    {
-        set_neurons_number(static_cast<Index>(stoi(neurons_number_element->GetText())));
-    }
-
-    // Activation function
-
-    const tinyxml2::XMLElement* activation_function_element = LSTM_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-    {
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "ActivationFunction element is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(activation_function_element->GetText())
-    {
-        set_activation_function(activation_function_element->GetText());
-    }
-
-    // Recurrent activation function
-
-    const tinyxml2::XMLElement* recurrent_activation_function_element = LSTM_layer_element->FirstChildElement("RecurrentActivationFunction");
-
-
-    if(!recurrent_activation_function_element)
-    {
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "RecurrentActivationFunction element is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(recurrent_activation_function_element->GetText())
-    {
-        set_activation_function(recurrent_activation_function_element->GetText());
-    }
-
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = LSTM_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-    {
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Parameters element is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(parameters_element->GetText())
-    {
-        const string parameters_string = parameters_element->GetText();
-
-        set_parameters(to_type_vector(parameters_string, ' '));
-    }
-}
-
-
-void LongShortTermMemoryLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
-{
-    ostringstream buffer;
-
-    // LSTM Layer
-
-    file_stream.OpenElement("LongShortTermMemoryLayer");
-
-    // Layer name
-    file_stream.OpenElement("LayerName");
-    buffer.str("");
-    buffer << layer_name;
-    file_stream.PushText(buffer.str().c_str());
-    file_stream.CloseElement();
-
-    // Inputs number
-    file_stream.OpenElement("InputsNumber");
-
-    buffer.str("");
-    buffer << get_inputs_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Outputs number
-
-    file_stream.OpenElement("NeuronsNumber");
-
-    buffer.str("");
-    buffer << get_neurons_number();
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-
-    file_stream.PushText(write_activation_function().c_str());
-
-    file_stream.CloseElement();
-
-    // Recurrent activation function
-
-    file_stream.OpenElement("RecurrentActivationFunction");
-
-    file_stream.PushText(write_recurrent_activation_function().c_str());
-
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-
-    buffer.str("");
-
-    const Tensor<type, 1> parameters = get_parameters();
-    const Index parameters_size = parameters.size();
-
-    for(Index i = 0; i < parameters_size; i++)
-    {
-        buffer << parameters(i);
-
-        if(i != (parameters_size-1)) buffer << " ";
-    }
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // LSTM layer (end tag)
-
-    file_stream.CloseElement();
 }
 
 
@@ -529,6 +320,7 @@ string LongShortTermMemoryLayer::write_activation_function() const
 
     return string();
 }
+
 
 
 /// Returns a string with the name of the layer recurrent activation function.
@@ -580,12 +372,6 @@ const bool& LongShortTermMemoryLayer::get_display() const
 void LongShortTermMemoryLayer::set()
 {
     set_default();
-}
-
-
-void LongShortTermMemoryLayer::set_layer_name(const string& new_layer_name)
-{
-    layer_name = new_layer_name;
 }
 
 
@@ -647,6 +433,11 @@ void LongShortTermMemoryLayer::set_default()
 {
     layer_name = "long_short_term_memory_layer";
     layer_type = LongShortTermMemory;
+}
+
+void LongShortTermMemoryLayer::set_layer_name(const string& new_layer_name)
+{
+    layer_name = new_layer_name;
 }
 
 
@@ -859,132 +650,6 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 #endif
 
     Index current_index = index;
-
-    // Biases
-
-    Index size = neurons_number;
-
-    memcpy(forget_biases.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    memcpy(input_biases.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    memcpy(state_biases.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    memcpy(output_biases.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    // Weights
-
-    size = inputs_number*neurons_number;
-
-    memcpy(forget_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    memcpy(input_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    memcpy(state_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    memcpy(output_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    // Recurrent weights
-
-    size = neurons_number*neurons_number;
-
-    memcpy(forget_recurrent_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    memcpy(input_recurrent_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    memcpy(state_recurrent_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    memcpy(output_recurrent_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
-
-    current_index += size;
-
-    //       set_forget_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-    //       set_input_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-    //       set_state_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({2*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-    //       set_input_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({3*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-
-    //       set_forget_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-    //       set_input_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-    //       set_state_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 2 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-    //       set_output_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 3 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-
-    //       set_forget_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number)}), Eigen::array<Eigen::Index, 1>({neurons_number})));
-    //       set_input_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number})));
-    //       set_state_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number})));
-    //       set_output_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number})));
-}
-
-void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters)
-{
-    const Index neurons_number = get_neurons_number();
-    const Index inputs_number = get_inputs_number();
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index parameters_number = get_parameters_number();
-
-    const Index new_parameters_size = new_parameters.size();
-
-    if(new_parameters_size != parameters_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void set_parameters(const Tensor<type, 1>&) method.\n"
-               << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters (" << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Index current_index = 0;
 
     // Biases
 
@@ -4245,6 +3910,212 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
     return string();
 }
 
+void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    // Perceptron layer
+
+    const tinyxml2::XMLElement* long_short_term_memory_layer_element = document.FirstChildElement("LongShortTermMemoryLayer");
+
+    if(!long_short_term_memory_layer_element)
+    {
+        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "PerceptronLayer element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+
+    // Layer name
+
+    const tinyxml2::XMLElement* layer_name_element = long_short_term_memory_layer_element->FirstChildElement("LayerName");
+
+    if(!layer_name_element)
+    {
+        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "LayerName element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(layer_name_element->GetText())
+    {
+        set_layer_name(layer_name_element->GetText());
+    }
+
+    // Inputs number
+
+    const tinyxml2::XMLElement* inputs_number_element = long_short_term_memory_layer_element->FirstChildElement("InputsNumber");
+
+    if(!inputs_number_element)
+    {
+        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "InputsNumber element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(inputs_number_element->GetText())
+    {
+        set_inputs_number(static_cast<Index>(stoi(inputs_number_element->GetText())));
+    }
+
+    // Neurons number
+
+    const tinyxml2::XMLElement* neurons_number_element = long_short_term_memory_layer_element->FirstChildElement("NeuronsNumber");
+
+    if(!neurons_number_element)
+    {
+        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "NeuronsNumber element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(neurons_number_element->GetText())
+    {
+        set_neurons_number(static_cast<Index>(stoi(neurons_number_element->GetText())));
+    }
+
+    // Activation function
+
+    const tinyxml2::XMLElement* activation_function_element = long_short_term_memory_layer_element->FirstChildElement("ActivationFunction");
+
+    if(!activation_function_element)
+    {
+        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "ActivationFunction element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(activation_function_element->GetText())
+    {
+        set_activation_function(activation_function_element->GetText());
+    }
+
+    // Recurrent activation function
+
+    const tinyxml2::XMLElement* recurrent_activation_function_element = long_short_term_memory_layer_element->FirstChildElement("RecurrentActivationFunction");
+
+    if(!recurrent_activation_function_element)
+    {
+        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "ActivationFunction element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(recurrent_activation_function_element->GetText())
+    {
+        set_recurrent_activation_function(recurrent_activation_function_element->GetText());
+    }
+
+    // Parameters
+
+    const tinyxml2::XMLElement* parameters_element = long_short_term_memory_layer_element->FirstChildElement("Parameters");
+
+    if(!parameters_element)
+    {
+        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Parameters element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(parameters_element->GetText())
+    {
+        const string parameters_string = parameters_element->GetText();
+
+        set_parameters(to_type_vector(parameters_string, ' '));
+    }
+}
+
+
+void LongShortTermMemoryLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    // Long short term memory layer
+
+    file_stream.OpenElement("LongShortTermMemoryLayer");
+
+    // Layer name
+    file_stream.OpenElement("LayerName");
+    buffer.str("");
+    buffer << layer_name;
+    file_stream.PushText(buffer.str().c_str());
+    file_stream.CloseElement();
+
+    // Inputs number
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Outputs number
+
+    file_stream.OpenElement("NeuronsNumber");
+
+    buffer.str("");
+    buffer << get_neurons_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Activation function
+
+    file_stream.OpenElement("ActivationFunction");
+
+    file_stream.PushText(write_activation_function().c_str());
+
+    file_stream.CloseElement();
+
+    // Recurrent activation function
+
+    file_stream.OpenElement("RecurrentActivationFunction");
+
+    file_stream.PushText(write_recurrent_activation_function().c_str());
+
+    file_stream.CloseElement();
+
+    // Parameters
+
+    file_stream.OpenElement("Parameters");
+
+    buffer.str("");
+
+    const Tensor<type, 1> parameters = get_parameters();
+    const Index parameters_size = parameters.size();
+
+    for(Index i = 0; i < parameters_size; i++)
+    {
+        buffer << parameters(i);
+
+        if(i != (parameters_size-1)) buffer << " ";
+    }
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Long short term memory layer (end tag)
+
+    file_stream.CloseElement();
+}
 
 string LongShortTermMemoryLayer::write_recurrent_activation_function_expression() const
 {

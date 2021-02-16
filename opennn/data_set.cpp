@@ -645,7 +645,6 @@ void DataSet::transform_time_series_columns()
 
     time_series_columns = columns;
 
-
     const Index columns_number = get_columns_number();
 
     Tensor<Column, 1> new_columns;
@@ -707,8 +706,6 @@ void DataSet::transform_time_series_columns()
     }
 
     columns = new_columns;
-
-
 }
 
 
@@ -721,8 +718,6 @@ void DataSet::transform_time_series_data()
 
     const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
     const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
-
-
 
     time_series_data = data;
 
@@ -1683,7 +1678,6 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 
     if(used_samples_number == 0) return;
 
-
     const type total_ratio = training_samples_ratio + selection_samples_ratio + testing_samples_ratio;
 
     // Get number of samples for training, selection and testing
@@ -1750,7 +1744,6 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
         }
         i++;
     }
-
 }
 
 
@@ -3174,7 +3167,6 @@ void DataSet::set_binary_simple_columns()
     {
         if(columns(column_index).type == Numeric)
         {
-
             Tensor<type, 1> values(3);
             values.setRandom();
             different_values = 0;
@@ -3216,13 +3208,11 @@ void DataSet::set_binary_simple_columns()
                     columns(column_index).categories(0) = "Negative (0)";
                     columns(column_index).categories(1) = "Positive (1)";
                 }
-
                 else if(values(0) == 1 && values(1) == 0)
                 {
                     columns(column_index).categories(0) = "Positive (1)";
                     columns(column_index).categories(1) = "Negative (0)";
                 }
-
                 else
                 {
                     columns(column_index).categories(0) = "Class_1";// + std::to_string(values(0));
@@ -3234,6 +3224,7 @@ void DataSet::set_binary_simple_columns()
                 columns(column_index).categories_uses(0) = column_use;
                 columns(column_index).categories_uses(1) = column_use;
             }
+
             variable_index++;
         }
         else if(columns(column_index).type == Categorical)
@@ -7556,43 +7547,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-//    // Time series columns
-
-//    file_stream.OpenElement("TimeSeriesColumns");
-
-//    // Time series columns number
-//    {
-//        file_stream.OpenElement("TimeSeriesColumnsNumber");
-
-//        buffer.str("");
-//        buffer << get_columns_number();
-
-//        file_stream.PushText(buffer.str().c_str());
-
-//        file_stream.CloseElement();
-//    }
-
-//    // Time series columns items
-
-//    {
-//        const Index columns_number = get_columns_number();
-
-//        for(Index i = 0; i < columns_number; i++)
-//        {
-//            file_stream.OpenElement("Column");
-
-//            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-//            time_series_columns(i).write_XML(file_stream);
-
-//            file_stream.CloseElement();
-//        }
-//    }
-
-//    // Close time series columns
-
-//    file_stream.CloseElement();
-
     // Rows labels
 
     if(has_rows_labels)
@@ -8706,55 +8660,6 @@ void DataSet::save_time_series_data_binary(const string& binary_data_file_name) 
     cout << "Binary data file saved." << endl;
 }
 
-void DataSet::save_time_series_data_binary(const string& binary_time_series_data_file_name) const
-{
-    ofstream file(binary_time_series_data_file_name.c_str(), ios::binary);
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet template." << endl
-               << "void save_time_series_data_binary(const string) method." << endl
-               << "Cannot open time series data binary file." << endl;
-
-        throw logic_error(buffer.str());
-    }
-
-    // Write data
-
-    streamsize size = sizeof(Index);
-
-    Index columns_number = time_series_data.dimension(1);
-    Index rows_number = time_series_data.dimension(0);
-
-    cout << "Rows number: " << rows_number << endl;
-    cout << "Columns number: " << columns_number << endl;
-
-    cout << "Saving binary time series data file..." << endl;
-
-    file.write(reinterpret_cast<char*>(&columns_number), size);
-    file.write(reinterpret_cast<char*>(&rows_number), size);
-
-    size = sizeof(type);
-
-    type value;
-
-    for(int i = 0; i < columns_number; i++)
-    {
-        for(int j = 0; j < rows_number; j++)
-        {
-            value = time_series_data(j,i);
-
-            file.write(reinterpret_cast<char*>(&value), size);
-        }
-    }
-
-    file.close();
-
-
-    cout << "Binary tiem series data file saved." << endl;
-}
 
 
 /// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
@@ -8871,24 +8776,15 @@ void DataSet::load_time_series_data_binary(const string& time_series_data_file_n
 {
     ifstream file;
 
-<<<<<<< HEAD
-    file.open(data_file_name.c_str(), ios::binary);
-=======
     file.open(time_series_data_file_name.c_str(), ios::binary);
->>>>>>> 9f90f37b5bd3959133914ee28cf2c013bae8b07b
 
     if(!file.is_open())
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet template.\n"
-<<<<<<< HEAD
-               << "void load_binary(const string&) method.\n"
-               << "Cannot open binary file: " << data_file_name << "\n";
-=======
                << "void load_time_series_data_binary(const string&) method.\n"
                << "Cannot open binary file: " << time_series_data_file_name << "\n";
->>>>>>> 9f90f37b5bd3959133914ee28cf2c013bae8b07b
 
         throw logic_error(buffer.str());
     }
@@ -8907,21 +8803,11 @@ void DataSet::load_time_series_data_binary(const string& time_series_data_file_n
 
     time_series_data.resize(rows_number, columns_number);
 
-<<<<<<< HEAD
-//    Index row_index = 0;
-//    Index column_index = 0;
-
-=======
->>>>>>> 9f90f37b5bd3959133914ee28cf2c013bae8b07b
     for(Index i = 0; i < rows_number*columns_number; i++)
     {
         file.read(reinterpret_cast<char*>(&value), size);
 
         time_series_data(i) = value;
-<<<<<<< HEAD
-
-=======
->>>>>>> 9f90f37b5bd3959133914ee28cf2c013bae8b07b
     }
 
     file.close();
@@ -10115,7 +10001,7 @@ void DataSet::read_csv()
     else
     {
 
-        //  categorical data
+    //  categorical data
 
         read_csv_2_complete();
 
@@ -10174,7 +10060,6 @@ void DataSet::read_csv_1()
 
         trim(line);
 
-
         erase(line, '"');
 
         if(line.empty()) continue;
@@ -10184,7 +10069,6 @@ void DataSet::read_csv_1()
         check_special_characters(line);
 
         data_file_preview(lines_count) = get_tokens(line, separator_char);
-
 
         lines_count++;
 
@@ -10281,6 +10165,7 @@ void DataSet::read_csv_1()
             column_index++;
         }
     }
+
 
 }
 
@@ -10555,7 +10440,7 @@ void DataSet::read_csv_3_simple()
     }
     // Check Binary
 
-    cout << "Checking binary columns...3" << endl;
+    cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
 
@@ -10881,7 +10766,6 @@ void DataSet::read_csv_3_complete()
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
-
 
     // Check Constant and DateTime to unused
 
@@ -11269,7 +11153,6 @@ void DataSet::fix_repeated_names()
 
         set_variables_names(variables_names);
     }
-
 }
 
 
