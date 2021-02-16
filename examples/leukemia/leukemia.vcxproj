@@ -119,8 +119,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/leukemia/Debug/leukemia.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/leukemia/Debug/leukemia.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/leukemia/Debug/leukemia.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/leukemia/Debug/leukemia.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -163,8 +163,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/leukemia/Release/leukemia.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/leukemia/Release/leukemia.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/leukemia/Release/leukemia.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/leukemia/Release/leukemia.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -206,8 +206,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/leukemia/MinSizeRel/leukemia.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/leukemia/MinSizeRel/leukemia.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/leukemia/MinSizeRel/leukemia.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/leukemia/MinSizeRel/leukemia.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -248,8 +248,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/leukemia/RelWithDebInfo/leukemia.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/leukemia/RelWithDebInfo/leukemia.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/leukemia/RelWithDebInfo/leukemia.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/leukemia/RelWithDebInfo/leukemia.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>

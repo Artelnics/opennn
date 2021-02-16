@@ -152,6 +152,12 @@ void StochasticGradientDescent::set_default()
 }
 
 
+Index StochasticGradientDescent::get_batch_samples_number() const
+{
+    return batch_samples_number;
+}
+
+
 /// Set the initial value for the learning rate. If dacay is not active learning rate will be constant
 /// otherwise learning rate will decay over each update.
 /// @param new_initial_learning_rate initial learning rate value.

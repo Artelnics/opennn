@@ -280,7 +280,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 {
     Results results;
 
-    check();
+//    check();
 
     // Start training
 
@@ -355,7 +355,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    bool shuffle = true;
+    bool shuffle = false;
 
     results.resize_training_history(maximum_epochs_number+1);
     if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
@@ -365,6 +365,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         shuffle = false;
 
     // Calculate error before training
+
     parameters_norm = l2_norm(optimization_data.parameters);
     training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
     batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
@@ -991,6 +992,12 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_samples_number)
 {
     batch_samples_number = new_batch_samples_number;
+}
+
+
+Index AdaptiveMomentEstimation::get_batch_samples_number() const
+{
+    return batch_samples_number;
 }
 
 

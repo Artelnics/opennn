@@ -334,9 +334,9 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
 
     // Next layer's values
 
-    const Index next_layers_filters_number = next_layer_pointer->get_filters_number();
-    const Index next_layers_filter_rows = next_layer_pointer->get_filters_rows_number();
-    const Index next_layers_filter_columns = next_layer_pointer->get_filters_columns_number();
+    const Index next_layers_filters_number = next_layer_pointer->get_kernels_number();
+    const Index next_layers_filter_rows = next_layer_pointer->get_kernels_rows_number();
+    const Index next_layers_filter_columns = next_layer_pointer->get_kernels_columns_number();
     const Index next_layers_output_rows = next_layer_pointer->get_outputs_rows_number();
     const Index next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
     const Index next_layers_row_stride = next_layer_pointer->get_row_stride();
