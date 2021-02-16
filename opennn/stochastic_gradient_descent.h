@@ -148,11 +148,14 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
-
    void set_batch_samples_number(const Index& new_batch_samples_number)
    {
        batch_samples_number = new_batch_samples_number;
    }
+
+   // Get methods
+
+   Index get_batch_samples_number() const;
 
    //Training operators
 

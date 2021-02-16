@@ -77,10 +77,10 @@ public:
 
     Index get_row_stride() const;
 
-    Index get_filters_number() const;
-    Index get_filters_channels_number() const;
-    Index get_filters_rows_number() const;
-    Index get_filters_columns_number() const;
+    Index get_kernels_number() const;
+    Index get_kernels_channels_number() const;
+    Index get_kernels_rows_number() const;
+    Index get_kernels_columns_number() const;
 
     Index get_padding_width() const;
     Index get_padding_height() const;
@@ -151,12 +151,11 @@ public:
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 2>&);
 //   void calculate_outputs_2d(const Tensor<type, 2>&, Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const;
+   void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) ;
    void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) ;
 
-   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation&) const;
+   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation&) ;
    void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) ;
-
 
    // Delta methods
 

@@ -119,8 +119,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/rosenbrock/Debug/rosenbrock.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/rosenbrock/Debug/rosenbrock.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/rosenbrock/Debug/rosenbrock.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/rosenbrock/Debug/rosenbrock.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -163,8 +163,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/rosenbrock/Release/rosenbrock.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/rosenbrock/Release/rosenbrock.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/rosenbrock/Release/rosenbrock.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/rosenbrock/Release/rosenbrock.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -206,8 +206,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/rosenbrock/MinSizeRel/rosenbrock.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/rosenbrock/MinSizeRel/rosenbrock.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/rosenbrock/MinSizeRel/rosenbrock.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/rosenbrock/MinSizeRel/rosenbrock.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -248,8 +248,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/rosenbrock/RelWithDebInfo/rosenbrock.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/rosenbrock/RelWithDebInfo/rosenbrock.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/rosenbrock/RelWithDebInfo/rosenbrock.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/rosenbrock/RelWithDebInfo/rosenbrock.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
