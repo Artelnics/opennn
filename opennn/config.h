@@ -36,7 +36,7 @@
 
 namespace OpenNN
 {
-    typedef double type;
+    typedef float type;
 }
 
 //#define align 64;
