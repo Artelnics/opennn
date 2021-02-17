@@ -11295,21 +11295,26 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
 
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
+
     if(input_variables_dimensions.size() == 1)
     {
         data_set_pointer->fill_submatrix(data, samples, inputs, inputs_2d.data());
     }
-    else if(input_variables_dimensions.size() == 3)
+    else if(input_variables_dimensions.size() == 4)
     {
-/*
-        const Index channels_number = input_variables_dimensions(0);
-        const Index rows_number = input_variables_dimensions(1);
-        const Index columns_number = input_variables_dimensions(2);
+        const Index samples_number = input_variables_dimensions(0);
+        const Index channels_number = input_variables_dimensions(1);
+        const Index rows_number = input_variables_dimensions(2);
+        const Index columns_number = input_variables_dimensions(3);
+
         inputs_4d.resize(samples_number, channels_number, rows_number, columns_number);
+
         Index index = 0;
+
         for(Index image = 0; image < samples_number; image++)
         {
             index = 0;
+
             for(Index channel = 0; channel < channels_number; channel++)
             {
                 for(Index row = 0; row < rows_number; row++)
@@ -11322,8 +11327,8 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
                 }
             }
         }
-*/
     }
+
     data_set_pointer->fill_submatrix(data, samples, targets, targets_2d.data());
 }
 

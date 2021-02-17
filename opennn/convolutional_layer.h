@@ -169,7 +169,7 @@ public:
 
    void calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 2>&) const;
    void calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
-   void calculate_hidden_delta_perceptron(const PerceptronLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
+   void calculate_hidden_delta_perceptron(const PerceptronLayer*, const Tensor<type, 4>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
    void calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
    // Gradient methods
@@ -182,7 +182,7 @@ public:
 
    void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) const;
 
-   void to_2d(const Tensor<type, 4>&, Tensor<type, 2>) const;
+   void to_2d(const Tensor<type, 4>&, Tensor<type, 2>&) const;
 
 protected:
 
