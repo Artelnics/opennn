@@ -283,7 +283,6 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, Forwar
     to_2d(forward_propagation.combinations_4d, forward_propagation.combinations_2d);
     to_2d(forward_propagation.activations_4d, forward_propagation.activations_2d);
     to_2d(forward_propagation.activations_derivatives_4d, forward_propagation.activations_derivatives_2d);
-
 }
 
 
@@ -690,7 +689,6 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(const PerceptronLayer
                                                            const Tensor<type, 2>& next_layer_delta,
                                                            Tensor<type, 2>& hidden_delta) const
 {
-
         // Current layer's values
 
         const Index images_number = next_layer_delta.dimension(0);
@@ -1204,7 +1202,6 @@ Index ConvolutionalLayer::get_inputs_number() const
 
 Index ConvolutionalLayer::get_neurons_number() const
 {
-//    return get_kernels_number() * get_outputs_rows_number() * get_outputs_columns_number();
     return get_kernels_number();
 }
 
@@ -1259,8 +1256,8 @@ Index ConvolutionalLayer::get_parameters_number() const
 
 /// Sets and initializes the layer's parameters in accordance with the dimensions taken as input.
 /// The initialization values are random values from a normal distribution.
-/// @param new_inputs_dimensions A vector containing the desired inputs' dimensions (rows number, columns number, number of channels, number of images).
-/// @param new_kernels_dimensions A vector containing the desired kernels' dimensions (rows number, columns number, number of channels, number of kernels).
+/// @param new_inputs_dimensions A vector containing the desired inputs' dimensions (number of images, number of channels, rows number, columns number).
+/// @param new_kernels_dimensions A vector containing the desired kernels' dimensions (number of kernels, number of channels, rows number, columns number).
 
 void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, const Tensor<Index, 1>& new_kernels_dimensions)
 {
