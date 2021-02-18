@@ -40,12 +40,6 @@ int main(void)
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
 
-//        data_set.set_data_file_name("D://datasets//Rosenbrock_1000000_1000.csv");
-
-//        data_set.save_data();
-
-        data_set.set_training();
-
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables_minimum_maximum();
 
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables_minimum_maximum();
@@ -79,26 +73,9 @@ int main(void)
         training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(1);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1);
 
-
-        const int number_of_epochs = 10;
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(number_of_epochs);
-
-#include <chrono>
-
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         training_strategy.perform_training();
-        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-
-        std::cout << "Time total = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-        std::cout << "Time average = " << std::chrono::duration_cast<std::chrono::milliseconds> (end - begin).count()/number_of_epochs << "[ms]" << std::endl;
-
-
-
-
-        cout << "End Rosenbrock" << endl;
-
 
         cout << "End Rosenbrock" << endl;
 
