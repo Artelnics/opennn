@@ -119,8 +119,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/blank/Debug/blank.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/blank/Debug/blank.pdb</ProgramDataBaseFile>
+      <ImportLibrary>%(SolutionDir)opennn/blank/Debug/blank.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(SolutionDir)opennn/blank/Debug/blank.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -163,8 +163,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/blank/Release/blank.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/blank/Release/blank.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(SolutionDir)opennn/blank/Release/blank.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(SolutionDir)opennn/blank/Release/blank.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -206,8 +206,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/blank/MinSizeRel/blank.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/blank/MinSizeRel/blank.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(SolutionDir)opennn/blank/MinSizeRel/blank.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(SolutionDir)opennn/blank/MinSizeRel/blank.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -248,8 +248,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/blank/RelWithDebInfo/blank.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/blank/RelWithDebInfo/blank.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(SolutionDir)opennn/blank/RelWithDebInfo/blank.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(SolutionDir)opennn/blank/RelWithDebInfo/blank.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
