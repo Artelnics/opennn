@@ -159,6 +159,10 @@ public:
 
    // Delta methods
 
+   void calculate_output_delta(ForwardPropagation& forward_propagation,
+                                  const Tensor<type, 2>& output_gradient,
+                                  Tensor<type, 2>& output_delta) const;
+
 //   void calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
    void calculate_hidden_delta(Layer* next_layer_pointer,
                                const Tensor<type, 2>&,

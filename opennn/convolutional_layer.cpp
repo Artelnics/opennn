@@ -361,6 +361,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
         }
     }
 
+
     calculate_combinations(inputs,
                            potential_biases,
                            potential_synaptic_weights,
@@ -380,17 +381,29 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                            Tensor<type, 1> potential_parameters,
                                            ForwardPropagation& forward_propagation)
 {
-    const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
-                                                     input_variables_dimensions(2), // rows number
-                                                     input_variables_dimensions(1), // channels number
-                                                     inputs.dimension(0)}; // images number
+    const Eigen::array<Eigen::Index, 4> four_dims = {
+        input_variables_dimensions(0),
+        input_variables_dimensions(1),
+        input_variables_dimensions(2),
+        input_variables_dimensions(3)};
+
     const Eigen::array<Eigen::Index, 2> shuffle_dims_2D = {1, 0};
     const Eigen::array<Eigen::Index, 4> shuffle_dims_4D = {3, 2, 1, 0};
 
     const Tensor<type, 4> inputs_4d = inputs.shuffle(shuffle_dims_2D).reshape(four_dims).shuffle(shuffle_dims_4D);
+//    const Tensor<type, 4> inputs_4d = inputs.reshape(four_dims);
 
-//    forward_propagate(inputs_4d, potential_parameters, forward_propagation); @todo
+    forward_propagate(inputs_4d, potential_parameters, forward_propagation);
 }
+
+
+void ConvolutionalLayer::calculate_output_delta(ForwardPropagation& forward_propagation,
+                                                const Tensor<type, 2>& output_gradient,
+                                                Tensor<type, 2>& output_delta) const
+{
+    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
+}
+
 
 
 void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
@@ -857,6 +870,8 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& previou
 
         // hidden_delta: images_number, kernels_number*output_rows_number*output_columns_number
 
+        cout << "hidden delta: " << layer_deltas << endl;
+
         for(Index i = 0; i < images_number; i++)
         {
             for(Index j = 0; j < kernels_number; j++)
@@ -972,21 +987,41 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
 
         case OpenNN::ConvolutionalLayer::ConvolutionType::Same:
         {
-            layers_inputs.resize(inputs.dimension(0) + get_padding_height(),
-                                 inputs.dimension(1) + get_padding_width(),
-                                 inputs.dimension(2),
-                                 inputs.dimension(3));
+            layers_inputs = inputs;
 
-            for(Index image_number = 0; image_number < inputs.dimension(0); image_number++)
-            {
+//            layers_inputs.resize(inputs.dimension(0) + get_padding_height(),
+//                                 inputs.dimension(1) + get_padding_width(),
+//                                 inputs.dimension(2),
+//                                 inputs.dimension(3));
+
+//            for(Index image_number = 0; image_number < inputs.dimension(0); image_number++)
+//            {
 //                    layers_inputs.set_tensor(image_number, insert_padding(previous_layers_outputs.get_tensor(image_number)));
-            }
+//            }
         }
         break;
     }
 
-    // Gradient declaration and values used
+    const Index images_number = inputs.dimension(0);
+    const Index kernels_number = get_kernels_number();
 
+    // hidden_delta: images_number, kernels_number*output_rows_number*output_columns_number
+
+    cout << "hidden delta: " << back_propagation.delta << endl;
+
+    for(Index i = 0; i < images_number; i++)
+    {
+        for(Index j = 0; j < kernels_number; j++)
+        {
+            // Extract needed hidden_delta
+
+            // Convolve layer_inputs and hidden_delta
+        }
+    }
+
+
+    // Gradient declaration and values used
+/*
     const Index parameters_number = get_parameters_number();
 
     back_propagation.synaptic_weights_derivatives.resize(1, parameters_number);
@@ -1056,6 +1091,7 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
 
         back_propagation.synaptic_weights_derivatives(gradient_index) = sum;
     }
+*/
 }
 
 void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
@@ -1255,7 +1291,11 @@ Index ConvolutionalLayer::get_inputs_number() const
 
 Index ConvolutionalLayer::get_neurons_number() const
 {
-    return get_kernels_number();
+    const Index kernels_number = get_kernels_number();
+    const Index kernels_rows_number = get_kernels_rows_number();
+    const Index kernels_columns_number = get_kernels_columns_number();
+
+    return kernels_number*kernels_rows_number*kernels_columns_number;
 }
 
 
