@@ -99,6 +99,7 @@ public:
    void set(const LongShortTermMemoryLayer&);
 
    void set_default();
+   void set_layer_name(const string&);
 
    // Architecture
 
@@ -123,8 +124,8 @@ public:
    void set_state_recurrent_weights(const Tensor<type, 2>&);
    void set_output_recurrent_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Tensor<type, 1>&);
-   void set_parameters(const Tensor<type, 1>&, const Index&);
+
+   void set_parameters(const Tensor<type, 1>&, const Index& = 0);
 
    // Activation functions
 
@@ -309,9 +310,9 @@ public:
 
    // Serialization methods
 
-   void from_XML(const tinyxml2::XMLDocument&) {}
+   void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const {}
+   void write_XML(tinyxml2::XMLPrinter&) const;
 
 protected:
 

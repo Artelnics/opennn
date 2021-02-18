@@ -55,6 +55,8 @@ public:
    void test_get_testing_data();
    void test_get_inputs();
    void test_get_targets();
+   void test_get_time_series_columns_number();
+   void test_get_time_series_data();
   
    // Sample methods
 
