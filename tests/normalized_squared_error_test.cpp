@@ -464,8 +464,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set(samples_number, inputs_number, outputs_number);
    data_set.set_input_variables_dimensions(input_variables_dimensions);
-   data_set.set_data_random();
-//   data_set.initialize_data(1);
+//   data_set.set_data_random();
+   data_set.initialize_data(0.5);
    data_set.set_training();
 
    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
@@ -488,17 +488,24 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    kernels_dimensions(3) = kernels_columns_number;
 
    ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer(input_variables_dimensions, kernels_dimensions);
-   convolutional_layer_1->set_parameters_constant(0.5);
+   convolutional_layer_1->set_parameters_constant(static_cast<type>(0.7));
    convolutional_layer_1->set_activation_function(ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
 
    neural_network.set();
    neural_network.add_layer(convolutional_layer_1);
 
-   neural_network.set_parameters_random();
+   nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+   nse.set_normalization_coefficient(1);
 
    NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
 
+   LossIndex::BackPropagation back_propagation(samples_number, &nse);
+
    neural_network.forward_propagate(batch, forward_propagation);
+
+   nse.back_propagate(batch, forward_propagation, back_propagation);
+
+
 
    cout << "Combinations4d: " << forward_propagation.layers(0).combinations_4d << endl;
    cout << "Combinations2d: " << forward_propagation.layers(0).combinations_2d << endl;
@@ -509,12 +516,11 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    cout << "ActivationsDerivatives4d:  " << forward_propagation.layers(0).activations_derivatives_4d << endl;
    cout << "ActivationsDerivatives2d:  " << forward_propagation.layers(0).activations_derivatives_2d << endl;
 
-   nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-   nse.set_normalization_coefficient(1);
+   cout << "Error: " << back_propagation.error << endl;
 
-   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
+//   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 
-   cout << "numerical error gradient: " << numerical_error_gradient << endl;
+//   cout << "numerical error gradient: " << numerical_error_gradient << endl;
 
 
 
