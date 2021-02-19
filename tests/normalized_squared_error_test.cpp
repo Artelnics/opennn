@@ -518,9 +518,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    cout << "Error: " << back_propagation.error << endl;
 
-//   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
+   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 
-//   cout << "numerical error gradient: " << numerical_error_gradient << endl;
+   cout << "numerical error gradient: " << numerical_error_gradient << endl;
 
 
 
