@@ -1,6 +1,7 @@
+#define OPENNN_MKL
 #ifdef OPENNN_MKL
-    #include "mkl.h"
     #define EIGEN_USE_MKL_ALL
+    #include "mkl.h"
 #endif
 
 //Eigen includes
