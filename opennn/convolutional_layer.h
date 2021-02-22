@@ -178,9 +178,6 @@ public:
 
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, const Tensor<type, 4>&, Tensor<type, 1>&);
-   void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 4>&, Tensor<type, 1>&);
-
    void calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
    void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
 

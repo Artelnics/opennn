@@ -448,7 +448,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 */
    // Test convolutional
 {
-   samples_number = 1;
+   samples_number = 2;
    Index channels_number = 1;
    Index rows_number = 3;
    Index columns_number = 3;
@@ -477,7 +477,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    cout << "Inputs4d: " << batch.inputs_4d << endl;
 
-   Index kernels_number = 1;
+   Index kernels_number = 2;
    Index kernels_rows_number = 2;
    Index kernels_columns_number = 2;
 

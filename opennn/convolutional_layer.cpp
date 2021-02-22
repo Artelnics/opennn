@@ -78,25 +78,55 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 /// Calculate combinations
 void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& inputs, Tensor<type, 4> & combinations) const
 {
-    const Index number_of_kernels = synaptic_weights.dimension(0);
-    const Index number_of_images = inputs.dimension(0);
+    const Index images_number = inputs.dimension(0);
+    const Index kernels_number = synaptic_weights.dimension(0);
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
     Tensor<type, 3> kernel;
 
+    const Eigen::array<ptrdiff_t, 4> dims_2 = {0, 1, 2, 3};
+
+    cout << "raw convolve: " << inputs.convolve(synaptic_weights, dims_2) << endl;
+
+    Tensor<type, 3> image0 = inputs.chip(0,0);
+    Tensor<type, 3> image1 = inputs.chip(1,0);
+
+    cout << "image0.dimension(0): " << image0.dimension(0) << endl;
+    cout << "image0.dimension(1): " << image0.dimension(1) << endl;
+    cout << "image0.dimension(2): " << image0.dimension(2) << endl;
+
+    cout << "image1.dimension(0): " << image1.dimension(0) << endl;
+    cout << "image1.dimension(1): " << image1.dimension(1) << endl;
+    cout << "image1.dimension(2): " << image1.dimension(2) << endl;
+
+//    TensorMap<Tensor<type, 3>> current_image(inputs.data(),
+//                                             )
+
+    Tensor<type, 3> kernel0 = synaptic_weights.chip(0,0);
+    Tensor<type, 3> kernel1 = synaptic_weights.chip(1,0);
+
+    cout << "kernel0.dimension(0): " << kernel0.dimension(0) << endl;
+    cout << "kernel0.dimension(1): " << kernel0.dimension(1) << endl;
+    cout << "kernel0.dimension(2): " << kernel0.dimension(2) << endl;
+
+    cout << "kernel1.dimension(0): " << kernel1.dimension(0) << endl;
+    cout << "kernel1.dimension(1): " << kernel1.dimension(1) << endl;
+    cout << "kernel1.dimension(2): " << kernel1.dimension(2) << endl;
+
 //    #pragma omp parallel for
-    for(Index i = 0; i < number_of_images; i++)
+    for(Index i = 0; i < images_number; i++)
     {
-        for(Index j = 0; j < number_of_kernels; j++)
+        for(Index j = 0; j < kernels_number; j++)
         {
             kernel = synaptic_weights.chip(j, 0);
-
-            Tensor<type, 3> sub_inputs = inputs.chip(i,0);
 
             combinations.chip(i, 0).chip(j, 0) = inputs.chip(i, 0).convolve(kernel, dims) + biases(j);
         }
     }
+
+    cout << "combinations: " << combinations << endl;
+    system("pause");
 }
 
 
@@ -834,146 +864,6 @@ void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer
 }
 
 
-void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& previous_layers_outputs,
-                                                  const Layer::ForwardPropagation& forward_propagation,
-                                                  const Tensor<type, 4>& layer_deltas,
-                                                  Tensor<type, 1>& layer_error_gradient)
-{
-        Tensor<type, 4> layer_inputs;
-
-        switch(convolution_type) {
-
-            case OpenNN::ConvolutionalLayer::ConvolutionType::Valid:
-            {
-                layer_inputs = previous_layers_outputs;
-            }
-            break;
-
-            case OpenNN::ConvolutionalLayer::ConvolutionType::Same:
-            {
-//                layers_inputs.resize(previous_layers_outputs.dimension(0) + get_padding_height(),
-//                                     previous_layers_outputs.dimension(1) + get_padding_width(),
-//                                     previous_layers_outputs.dimension(2),
-//                                     previous_layers_outputs.dimension(3));
-
-                layer_inputs = previous_layers_outputs;
-
-                // padding?
-
-//                for(Index image_number = 0; image_number < previous_layers_outputs.dimension(0); image_number++)
-//                {
-//                    layers_inputs.set_tensor(image_number, insert_padding(previous_layers_outputs.get_tensor(image_number)));
-//                }
-            }
-            break;
-        }
-
-        const Index images_number = layer_inputs.dimension(0);
-        const Index kernels_number = get_kernels_number();
-
-        // hidden_delta: images_number, kernels_number*output_rows_number*output_columns_number
-
-
-
-        for(Index i = 0; i < images_number; i++)
-        {
-            for(Index j = 0; j < kernels_number; j++)
-            {
-                // Extract needed hidden_delta
-
-                // Convolve layer_inputs and hidden_delta
-            }
-        }
-
-//        for(Index i = 0; i < number_of_images; i++)
-//        {
-//            for(Index j = 0; j < number_of_kernels; j++)
-//            {
-//                kernel = synaptic_weights.chip(j, 0);
-//                combinations.chip(i, 0).chip(j, 0) = inputs.chip(i, 0).convolve(kernel, dims) + biases(j);
-//            }
-//        }
-
-
-
-
-
-
-
-
-/*
-        // Gradient declaration and values used
-
-        const Index parameters_number = get_parameters_number();
-
-        layer_error_gradient.resize(parameters_number);
-        layer_error_gradient.setZero();
-
-        const Index images_number = layer_deltas.dimension(0);
-        const Index kernels_number = get_kernels_number();
-        const Index kernels_channels_number = get_kernels_channels_number();
-        const Index kernels_rows_number = get_kernels_rows_number();
-        const Index kernels_columns_number = get_kernels_columns_number();
-        const Index output_rows_number = get_outputs_rows_number();
-        const Index output_columns_number = get_outputs_columns_number();
-
-        // Synaptic weights
-
-        const Index synaptic_weights_number = get_synaptic_weights_number();
-
-        for(Index gradient_index = 0; gradient_index < synaptic_weights_number; gradient_index++)
-        {
-
-            Index kernel_index = gradient_index % kernels_number;
-            Index channel_index = (gradient_index / kernels_number) % kernels_channels_number;
-            Index row_index = (gradient_index / (kernels_number * kernels_channels_number)) % kernels_rows_number;
-            Index column_index = (gradient_index / (kernels_number * kernels_channels_number * kernels_rows_number)) % kernels_columns_number;
-
-            type sum = 0;
-
-            for(Index i = 0; i < output_rows_number; i++)
-            {
-                for(Index j = 0; j < output_columns_number; j++)
-                {
-                    for(Index k = 0; k < images_number; k++)
-                    {
-                        const type delta_element = layer_deltas(i, kernel_index, j, k);
-
-                        const type input_element = layers_inputs(i * row_stride + row_index, j * column_stride + column_index, channel_index, k);
-
-                        sum += delta_element * input_element;
-                    }
-                }
-            }
-
-            layer_error_gradient(gradient_index) = sum;
-        }
-
-        // Biases
-
-        for(Index gradient_index = synaptic_weights_number; gradient_index < parameters_number; gradient_index++) // Start after the synaptic weights
-        {
-            Index bias_index = gradient_index - synaptic_weights_number;  // Increment 1
-
-            type sum = 0;
-
-            for(Index i = 0; i < images_number; i++)
-            {
-                for(Index j = 0; j < output_rows_number; j++)
-                {
-                    for(Index k = 0; k < output_columns_number; k++)
-                    {
-                        sum += layer_deltas(i, bias_index, j, k);
-                    }
-                }
-            }
-
-            layer_error_gradient(gradient_index) = sum;
-        }
-*/
-}
-
-
 void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
                                                   const Layer::ForwardPropagation& forward_propagation,
                                                   Layer::BackPropagation& back_propagation) const
@@ -1011,13 +901,12 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
 
-    // hidden_delta: images_number, kernels_number*output_rows_number*output_columns_number
-
-    Tensor<type, 3> reshape_delta = back_propagation.delta.reshape(Eigen::array<Index,3>({1, kernels_rows_number, kernels_columns_number}));
+    const TensorMap<Tensor<type, 3>> delta_map(back_propagation.delta.data(),
+                                               Eigen::array<Index,3>({1, kernels_rows_number, kernels_columns_number}));
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
-    cout << "Gradient: " << inputs.chip(0,0).convolve(reshape_delta, dims) << endl;
+    cout << "Gradient: " << inputs.chip(0,0).convolve(delta_map, dims) << endl;
 
     for(Index i = 0; i < images_number; i++)
     {
