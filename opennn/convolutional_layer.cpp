@@ -85,35 +85,6 @@ void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& inputs, T
 
     Tensor<type, 3> kernel;
 
-    const Eigen::array<ptrdiff_t, 4> dims_2 = {0, 1, 2, 3};
-
-    cout << "raw convolve: " << inputs.convolve(synaptic_weights, dims_2) << endl;
-
-    Tensor<type, 3> image0 = inputs.chip(0,0);
-    Tensor<type, 3> image1 = inputs.chip(1,0);
-
-    cout << "image0.dimension(0): " << image0.dimension(0) << endl;
-    cout << "image0.dimension(1): " << image0.dimension(1) << endl;
-    cout << "image0.dimension(2): " << image0.dimension(2) << endl;
-
-    cout << "image1.dimension(0): " << image1.dimension(0) << endl;
-    cout << "image1.dimension(1): " << image1.dimension(1) << endl;
-    cout << "image1.dimension(2): " << image1.dimension(2) << endl;
-
-//    TensorMap<Tensor<type, 3>> current_image(inputs.data(),
-//                                             )
-
-    Tensor<type, 3> kernel0 = synaptic_weights.chip(0,0);
-    Tensor<type, 3> kernel1 = synaptic_weights.chip(1,0);
-
-    cout << "kernel0.dimension(0): " << kernel0.dimension(0) << endl;
-    cout << "kernel0.dimension(1): " << kernel0.dimension(1) << endl;
-    cout << "kernel0.dimension(2): " << kernel0.dimension(2) << endl;
-
-    cout << "kernel1.dimension(0): " << kernel1.dimension(0) << endl;
-    cout << "kernel1.dimension(1): " << kernel1.dimension(1) << endl;
-    cout << "kernel1.dimension(2): " << kernel1.dimension(2) << endl;
-
 //    #pragma omp parallel for
     for(Index i = 0; i < images_number; i++)
     {
@@ -124,9 +95,6 @@ void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& inputs, T
             combinations.chip(i, 0).chip(j, 0) = inputs.chip(i, 0).convolve(kernel, dims) + biases(j);
         }
     }
-
-    cout << "combinations: " << combinations << endl;
-    system("pause");
 }
 
 
@@ -898,23 +866,39 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
     const Index images_number = inputs.dimension(0);
     const Index kernels_number = get_kernels_number();
 
+    const Index kernel_channels_number = get_kernels_channels_number();
+
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
 
-    const TensorMap<Tensor<type, 3>> delta_map(back_propagation.delta.data(),
-                                               Eigen::array<Index,3>({1, kernels_rows_number, kernels_columns_number}));
+    cout  << "Delta: " << endl << back_propagation.delta << endl;
+    cout  << "Delta rows: " << endl << back_propagation.delta.dimension(0) << endl;
+    cout  << "Delta columns: " << endl << back_propagation.delta.dimension(1) << endl;
+    cout  << "kernel_channels_number: " << endl << kernel_channels_number << endl;
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
-    cout << "Gradient: " << inputs.chip(0,0).convolve(delta_map, dims) << endl;
+    Index image_index = 0;
+    Index kernel_index = 0;
+
 
     for(Index i = 0; i < images_number; i++)
     {
+        image_index = i*kernels_number*(kernels_rows_number*kernels_columns_number);
+
         for(Index j = 0; j < kernels_number; j++)
         {
             // Extract needed hidden_delta
-
             // Convolve layer_inputs and hidden_delta
+
+            kernel_index = j*kernels_rows_number*kernels_columns_number;
+
+            const TensorMap<Tensor<type, 3>> delta_map(back_propagation.delta.data() + image_index + kernel_index,
+                                                       Eigen::array<Index,3>({kernel_channels_number, kernels_rows_number, kernels_columns_number}));
+
+            cout << "Delta map: " << endl << delta_map << endl;
+
+            cout << "Gradient " << i  << ": " << endl << inputs.chip(i,0).convolve(delta_map, dims) << endl;
         }
     }
 }

@@ -448,6 +448,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 */
    // Test convolutional
 {
+       neural_network.set();
+
    samples_number = 2;
    Index channels_number = 1;
    Index rows_number = 3;
@@ -491,7 +493,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    convolutional_layer_1->set_parameters_constant(static_cast<type>(0.7));
    convolutional_layer_1->set_activation_function(ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
 
-   neural_network.set();
+
    neural_network.add_layer(convolutional_layer_1);
 
    nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
@@ -507,16 +509,16 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
 
 
-   cout << "Combinations4d: " << forward_propagation.layers(0).combinations_4d << endl;
-   cout << "Combinations2d: " << forward_propagation.layers(0).combinations_2d << endl;
+//   cout << "Combinations4d: " << forward_propagation.layers(0).combinations_4d << endl;
+//   cout << "Combinations2d: " << forward_propagation.layers(0).combinations_2d << endl;
 
-   cout << "Activations4d:  " << forward_propagation.layers(0).activations_4d << endl;
-   cout << "Activations2d:  " << forward_propagation.layers(0).activations_2d << endl;
+//   cout << "Activations4d:  " << forward_propagation.layers(0).activations_4d << endl;
+//   cout << "Activations2d:  " << forward_propagation.layers(0).activations_2d << endl;
 
-   cout << "ActivationsDerivatives4d:  " << forward_propagation.layers(0).activations_derivatives_4d << endl;
-   cout << "ActivationsDerivatives2d:  " << forward_propagation.layers(0).activations_derivatives_2d << endl;
+//   cout << "ActivationsDerivatives4d:  " << forward_propagation.layers(0).activations_derivatives_4d << endl;
+//   cout << "ActivationsDerivatives2d:  " << forward_propagation.layers(0).activations_derivatives_2d << endl;
 
-   cout << "Error: " << back_propagation.error << endl;
+//   cout << "Error: " << back_propagation.error << endl;
 
    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 
