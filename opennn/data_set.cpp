@@ -2156,6 +2156,26 @@ Tensor<Index, 1> DataSet::get_input_columns_indices() const
 }
 
 
+Tensor<Index, 1> DataSet::get_input_time_series_columns_indices() const
+{
+    const Index input_columns_number = get_input_time_series_columns_number();
+
+    Tensor<Index, 1> input_columns_indices(input_columns_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < time_series_columns.size(); i++)
+    {
+        if(time_series_columns(i).column_use == Input)
+        {
+            input_columns_indices(index) = i;
+            index++;
+        }
+    }
+
+    return input_columns_indices;
+}
+
 /// Returns a indices vector with the positions of the targets.
 
 Tensor<Index, 1> DataSet::get_target_columns_indices() const
@@ -2178,6 +2198,26 @@ Tensor<Index, 1> DataSet::get_target_columns_indices() const
     return target_columns_indices;
 }
 
+
+Tensor<Index, 1> DataSet::get_target_time_series_columns_indices() const
+{
+    const Index target_columns_number = get_target_time_series_columns_number();
+
+    Tensor<Index, 1> target_columns_indices(target_columns_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < time_series_columns.size(); i++)
+    {
+        if(time_series_columns(i).column_use == Target)
+        {
+            target_columns_indices(index) = i;
+            index++;
+        }
+    }
+
+    return target_columns_indices;
+}
 
 /// Returns a indices vector with the positions of the unused columns.
 
@@ -2350,6 +2390,21 @@ Index DataSet::get_input_columns_number() const
 }
 
 
+Index DataSet::get_input_time_series_columns_number() const
+{
+    Index input_columns_number = 0;
+
+    for(Index i = 0; i < time_series_columns.size(); i++)
+    {
+        if(time_series_columns(i).column_use == Input)
+        {
+            input_columns_number++;
+        }
+    }
+
+    return input_columns_number;
+}
+
 /// Returns the number of columns whose uses are Target.
 
 Index DataSet::get_target_columns_number() const
@@ -2359,6 +2414,22 @@ Index DataSet::get_target_columns_number() const
     for(Index i = 0; i < columns.size(); i++)
     {
         if(columns(i).column_use == Target)
+        {
+            target_columns_number++;
+        }
+    }
+
+    return target_columns_number;
+}
+
+
+Index DataSet::get_target_time_series_columns_number() const
+{
+    Index target_columns_number = 0;
+
+    for(Index i = 0; i < time_series_columns.size(); i++)
+    {
+        if(time_series_columns(i).column_use == Target)
         {
             target_columns_number++;
         }
@@ -2922,6 +2993,10 @@ void DataSet::set_column_use(const string& name, const VariableUse& new_use)
     set_column_use(index, new_use);
 }
 
+void DataSet::set_column_type(const Index& index, const ColumnType& new_type)
+{
+   columns[index].type = new_type;
+}
 
 /// This method set the name of a single variable.
 /// @param index Index of variable.
@@ -3948,7 +4023,8 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
 Tensor<type, 2> DataSet::get_time_series_column_data(const Index& column_index) const
 {
     Index columns_number = 1;
-    const Index rows_number = data.dimension(0);
+
+    const Index rows_number = time_series_data.dimension(0);
 
     if(time_series_columns(column_index).type == Categorical)
     {
@@ -8697,7 +8773,7 @@ void DataSet::fill_time_series(const Index& period )
 
     Index j = 1;
 
-//    new_data.set_row(0, data.chip(0, 0));
+    //new_data.set_row(0, data.chip(0, 0));
 
     cout.precision(20);
 
@@ -9377,27 +9453,118 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& maximum_lags_nu
 
 /// Calculates the cross-correlation between all the variables in the data set.
 
-Tensor<Tensor<type, 1>, 2> DataSet::calculate_cross_correlations(const Index& lags_number) const
+//Tensor<Tensor<type, 1>, 2> DataSet::calculate_cross_correlations(const Index& lags_number) const
+//{
+//    const Index variables_number = get_variables_number();
+
+//    Tensor<Tensor<type, 1>, 2> cross_correlations(variables_number, variables_number);
+
+//    Tensor<type, 1> actual_column;
+
+//    for(Index i = 0; i < variables_number; i++)
+//    {
+//        actual_column = data.chip(i,1);
+
+//        for(Index j = 0; j < variables_number; j++)
+//        {
+//            cross_correlations(i,j) = OpenNN::cross_correlations(actual_column, data.chip(j,1), lags_number);
+//        }
+//    }
+
+//    return cross_correlations;
+//}
+
+Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) const
 {
-    const Index variables_number = get_variables_number();
+//    const Index input_columns_number = get_input_columns_number();
+//    const Index target_columns_number = get_target_columns_number();
+    const Index input_columns_number = get_input_time_series_columns_number();
+    const Index target_columns_number = get_target_time_series_columns_number();
 
-    Tensor<Tensor<type, 1>, 2> cross_correlations(variables_number, variables_number);
+    const Index input_target_columns_number = input_columns_number + target_columns_number;
 
-    Tensor<type, 1> actual_column;
+//    const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
+//    const Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
+    const Tensor<Index, 1> input_columns_indices = get_input_time_series_columns_indices();
+    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();
 
-    for(Index i = 0; i < variables_number; i++)
+    const Index inputs_targets_number = input_columns_indices.size() + target_columns_indices.size();
+
+    Tensor<Index, 1> input_target_columns_indices(inputs_targets_number);
+
+    int counter = 0;
+    for(Index i = 0; i < inputs_targets_number; i++)
     {
-        actual_column = data.chip(i,1);
-
-        for(Index j = 0; j < variables_number; j++)
+        if (i < input_columns_number)
         {
-            cross_correlations(i,j) = OpenNN::cross_correlations(actual_column, data.chip(j,1), lags_number);
+            input_target_columns_indices(i) = input_columns_indices(i);
+        }
+        else
+        {
+            input_target_columns_indices(i) = target_columns_indices(counter);
+            counter++;
+        }
+    }
+
+    Tensor<type,3> cross_correlations(input_target_columns_number, input_target_columns_number, lags_number);
+
+    for (Index i = 0; i < input_target_columns_number; i++)
+    {
+        const Index current_input_target_index_i = input_target_columns_indices(i);
+
+//        const ColumnType type_i = columns(current_input_target_index_i).type;
+//        Tensor<type, 2> input_i = get_column_data(current_input_target_index_i);
+//        cout << "Calculating " << columns(current_input_target_index_i).name << " cross correlations." << endl;
+
+        const ColumnType type_i = time_series_columns(current_input_target_index_i).type;
+
+        Tensor<type, 2> input_i = get_time_series_column_data(current_input_target_index_i);
+
+        cout << "Calculating " << time_series_columns(current_input_target_index_i).name << " cross correlations." << endl;
+
+
+        for(Index j = 0; j < input_target_columns_number; j++)
+        {
+            const Index current_input_target_index_j = input_target_columns_indices(j);
+
+//            const ColumnType type_j = columns(current_input_target_index_j).type;
+//            Tensor<type, 2> input_j = get_column_data(current_input_target_index_j);
+
+            const ColumnType type_j = time_series_columns(current_input_target_index_j).type;
+
+            Tensor<type, 2> input_j = get_time_series_column_data(current_input_target_index_j);
+
+            if(current_input_target_index_i == current_input_target_index_j)
+            {
+                for(Index k = 0; k < lags_number; k++)
+                {
+                cross_correlations(i,j,k) = 1;
+                }
+                continue;
+            }
+
+            if(type_i == Numeric && type_j == Numeric)
+            {
+                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
+
+                cross_correlations = OpenNN::cross_correlations(actual_column, data.chip(j,1), lags_number);
+            }
+            else
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "Tensor<type, 2> calculate_inputs_correlations() const method.\n"
+                       << "Case not found: Column " << columns(input_columns_indices(i)).name << " and Column " << columns(input_columns_indices(j)).name << ".\n";
+
+                throw logic_error(buffer.str());
+            }
         }
     }
 
     return cross_correlations;
 }
-
 
 /// @todo
 

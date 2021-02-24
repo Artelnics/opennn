@@ -592,17 +592,20 @@ void DataSetTest::test_calculate_autocorrelations()
 
 void DataSetTest::test_calculate_cross_correlations() // @todo
 {
-    cout << "test_calculate_cross_correlations";
+    cout << "test_calculate_cross_correlations\n";
 
     DataSet data_set;
-
-    Tensor<type, 2> cross_correlations;
-
-    data_set.set(20, 5, 1);
-
+    data_set.set(10, 2, 1);
     data_set.set_data_random();
+    data_set.set_lags_number(2);
+    data_set.set_steps_ahead_number(1);
+    data_set.transform_time_series();
 
-//    cross_correlations = data_set.calculate_cross_correlations();
+    Tensor<type, 3> cross_correlations;
+
+    cross_correlations = data_set.calculate_cross_correlations();
+
+    cout << "cross correlation: " << endl << cross_correlations.chip(0,2) << endl;
 
 //    assert_true(cross_correlations.dimension(1) == 6, LOG);
 //    assert_true(cross_correlations.dimension(0) == 6, LOG);
@@ -2425,13 +2428,28 @@ void DataSetTest::test_transform_time_series()
 
     data_set.set_data(new_data);
 
+    data_set.set_variable_name(0, "x");
+    data_set.set_variable_name(1, "y");
+
     data_set.set_lags_number(2);
     data_set.set_steps_ahead_number(1);
 
     data_set.transform_time_series();
 
+    // tests for transform_time_series, transform_time_series_data, transform_time_series_colums
     assert_true(data_set.get_columns_number() == 6, LOG);
+    assert_true(data_set.get_variables_number() == 6, LOG );
     assert_true(data_set.get_samples_number() == 7, LOG );
+
+    assert_true(data_set.get_input_variables_number() == 4, LOG);
+    assert_true(data_set.get_target_variables_number() == 2, LOG);
+
+    assert_true(data_set.get_target_columns_number() == 2, LOG);
+
+    assert_true(data_set.get_variable_name(0) == "x_lag_1", LOG);
+    assert_true(data_set.get_variable_name(1) == "y_lag_1", LOG);
+    assert_true(data_set.get_variable_name(2) == "x_lag_0", LOG);
+    assert_true(data_set.get_variable_name(3) == "y_lag_0", LOG);
 
 }
 
@@ -2457,6 +2475,26 @@ void DataSetTest::test_get_time_series_data()
 }
 
 
+void DataSetTest::test_get_time_series_columns()
+{
+    cout << "test_get_time_series_columns\n";
+
+    Tensor<type,2> new_data(5,2);
+    new_data.setValues({{1,10}, {2,20}, {3,30}, {4,40}, {5,50}});
+
+    DataSet data_set;
+    data_set.set_data(new_data);
+
+    data_set.set_lags_number(2);
+    data_set.set_steps_ahead_number(1);
+
+    data_set.transform_time_series();
+
+    assert_true(data_set.get_time_series_columns()(0).name == "column_1", LOG);
+    assert_true(data_set.get_time_series_columns()(0).column_use == 1, LOG);
+    assert_true(data_set.get_time_series_columns()(0).type == 0, LOG);
+}
+
 void DataSetTest::test_get_time_series_columns_number()
 {
     cout << "test_get_time_series_columns_number\n";
@@ -2475,48 +2513,179 @@ void DataSetTest::test_get_time_series_columns_number()
     assert_true(data_set.get_time_series_columns_number() == 2, LOG);
 }
 
-/*
-void DataSetTest::test_transform_time_series()
+void DataSetTest::test_get_time_series_column_data()
 {
-    //@todo
-   cout << "test_convert_time_series\n";
+    cout << "test_get_time_series_column_data\n";
 
-   DataSet data_set;
+    Tensor<type,2> new_data(4,2);
+    new_data.setValues({{1,10},{2,20},{3,30},{4,40}});
 
-   Tensor<type, 1> data(3);
+    DataSet old_data_set;
+    old_data_set.set_data(new_data);
 
-   // Test
+    DataSet data_set;
+    data_set.set_data(new_data);
 
-   data.setValues({2, 2, 3.1416});
+    data_set.set_lags_number(2);
+    data_set.set_steps_ahead_number(2);
 
-//   data_set.set_data(data);
+    data_set.transform_time_series();
 
-//   data_set.set_variable_name(0, "x");
-//   data_set.set_variable_name(1, "y");
-
-//   data_set.set_lags_number(1);
-
-//   data_set.transform_time_series();
-
-//   data = data_set.get_data();
-
-//   assert_true(data.dimension(0) == 1, LOG);
-//   assert_true(data.dimension(1) == 4, LOG);
-
-//   assert_true(data_set.get_samples_number() == 1, LOG);
-//   assert_true(data_set.get_variables_number() == 4, LOG);
-
-//   assert_true(data_set.get_input_variables_number() == 2, LOG);
-//   assert_true(data_set.get_target_variables_number() == 2, LOG);
-
-//   assert_true(data_set.get_variable_name(0) == "x", LOG);
-//   assert_true(data_set.get_variable_name(1) == "y", LOG);
-//   assert_true(data_set.get_variable_name(2) == "lag_1_x", LOG);
-//   assert_true(data_set.get_variable_name(3) == "lag_1_y", LOG);
-
+    assert_true(data_set.get_time_series_column_data(1)(1) == old_data_set.get_column_data(1)(1), LOG);
 }
-*/
 
+void DataSetTest::test_get_time_series_columns_names()
+{
+    cout << "test_get_time_series_columns_names\n";
+
+    Tensor<type,2> new_data(4,2);
+    new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
+
+    DataSet data_set;
+    data_set.set_data(new_data);
+
+    data_set.set_lags_number(2);
+    data_set.set_steps_ahead_number(2);
+
+    data_set.transform_time_series();
+
+    assert_true(data_set.get_time_series_columns_names()(0) == "column_1", LOG);
+}
+
+void DataSetTest::test_set_time_series_data()
+{
+    cout << "test_set_time_series_data\n";
+
+    Tensor<type,2> new_data(4,2);
+    new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
+
+    DataSet data_set;
+    data_set.set_data(new_data);
+
+    data_set.set_lags_number(2);
+    data_set.set_steps_ahead_number(2);
+
+    data_set.transform_time_series();
+
+    Tensor<type,2> new_data2(5,3);
+    new_data2.setValues({{15,14,13},{12,11,10},{9,8,7},{6,5,4},{3,2,1}});
+
+    data_set.set_time_series_data(new_data2);
+
+    assert_true(data_set.get_time_series_data()(0) == 15, LOG);
+    assert_true(data_set.get_time_series_data()(1) == 12, LOG);
+    assert_true(data_set.get_time_series_data()(2) == 9, LOG);
+}
+
+void DataSetTest::test_set_time_index()
+{
+    cout << "test_set_time_index\n";
+
+    Tensor<type,2> new_data(4,2);
+    new_data.setValues({{1,10},{2,20},{3,30},{4,40}});
+
+    DataSet data_set;
+    data_set.set_data(new_data);
+
+    data_set.set_lags_number(2);
+    data_set.set_steps_ahead_number(1);
+
+    data_set.transform_time_series();
+
+    Index old_time_index;
+    old_time_index = data_set.get_time_index();
+
+    data_set.set_time_index(1000);
+
+    Index new_time_index;
+    new_time_index = data_set.get_time_index();
+
+    // set_time_index and get_time_index tests
+    assert_true(old_time_index != new_time_index,LOG);
+    assert_true(new_time_index == 1000,LOG);
+}
+
+void DataSetTest::test_has_time_columns()
+{
+    cout << "test_has_time_columns\n";
+
+    Tensor<type,2> new_data(4,2);
+    new_data.setValues({{1,10},{2,20},{3,30},{4,40}});
+
+    DataSet data_set;
+    data_set.set_data(new_data);
+
+    data_set.set_column_type(0,DataSet::ColumnType::DateTime);
+    data_set.set_column_type(1,DataSet::ColumnType::DateTime);
+
+    assert_true(data_set.has_time_columns() == true, LOG);
+}
+
+void DataSetTest::test_save_time_series_data_binary()
+{
+    cout << "test:_save_time_series_data_binary";
+
+    Tensor<type,2> new_data(4,2);
+    new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
+
+    DataSet data_set;
+    data_set.set_data(new_data);
+
+    data_set.set_lags_number(2);
+    data_set.set_steps_ahead_number(2);
+
+    data_set.transform_time_series();
+
+    const string dataFileName = "D:/prueba";
+    data_set.set_data_file_name("dataFileName");
+    data_set.save_time_series_data_binary(dataFileName);
+
+    DataSet new_data_set;
+    new_data_set.load_time_series_data_binary(dataFileName);
+
+    // test_save_time_series_data_binary test_load_time_series_binary
+    assert_true(data_set.get_time_series_data()(0) == 0, LOG);
+    assert_true(data_set.get_time_series_data()(1) == 1, LOG);
+    assert_true(data_set.get_time_series_data()(2) == 2, LOG);
+}
+
+void DataSetTest::test_set_steps_ahead_number()
+{
+    cout << "test_set_steps_ahead_nuber\n";
+
+    Tensor<type,2> new_data(4,2);
+    new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
+
+    DataSet data_set;
+    data_set.set_data(new_data);
+
+    data_set.set_lags_number(2);
+    data_set.set_steps_ahead_number(2);
+
+    data_set.transform_time_series();
+
+    // set_lags_number and get_lags_number test
+    assert_true(data_set.get_lags_number() == 2, LOG);
+}
+
+void DataSetTest::test_set_lags_number()
+{
+    cout << "test_set_lags_number\n";
+
+    Tensor<type,2> new_data(4,2);
+    new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
+
+    DataSet data_set;
+    data_set.set_data(new_data);
+
+    data_set.set_lags_number(2);
+    data_set.set_steps_ahead_number(2);
+
+    data_set.transform_time_series();
+
+    // set_steps_ahead and get_steps_ahead test
+    assert_true(data_set.get_steps_ahead() == 2, LOG);
+}
 
 void DataSetTest::test_convert_autoassociation() // @todo
 {
@@ -3005,6 +3174,8 @@ void DataSetTest::test_is_multiple_classification()
 void DataSetTest::run_test_case()
 {
    cout << "Running data set test case...\n";
+
+   /*
    // Constructor and destructor methods
 
 //   test_constructor();
@@ -3070,12 +3241,8 @@ void DataSetTest::run_test_case()
 //   test_unuse_columns_missing_values();
 
 
-/*
-   // Initialization methods
-=======
 
-//   // Initialization methods
->>>>>>> f79b9765448aea7b80d38ebbb05f169440c95c12
+   // Initialization methods
 
 //   test_initialize_data();
 
@@ -3153,17 +3320,10 @@ void DataSetTest::run_test_case()
 
 //   // Pattern recognition methods
 
-<<<<<<< HEAD
-   test_calculate_target_columns_distribution();
-   test_unuse_most_populated_target();
-   test_balance_multiple_targets_distribution();
-   test_balance_function_regression_targets_distribution();
-=======
-////   test_calculate_target_columns_distribution();
+//   test_calculate_target_columns_distribution();
 //   test_unuse_most_populated_target();
 //   test_balance_multiple_targets_distribution();
 //   test_balance_function_regression_targets_distribution();
->>>>>>> f79b9765448aea7b80d38ebbb05f169440c95c12
 
 
 //   // Outlier detection
@@ -3198,16 +3358,23 @@ void DataSetTest::run_test_case()
    test_calculate_training_negatives();
    test_calculate_selection_negatives();
    test_scrub_missing_values();
-*/
+
 
    // Time series
 
    test_transform_time_series();
-//   test_transform_columns_time_series();
    test_get_time_series_data();
+   test_get_time_series_columns();
    test_get_time_series_columns_number();
+   test_get_time_series_column_data();
+   test_get_time_series_columns_names();
+   test_set_lags_number();
+   test_set_steps_ahead_number();
+   test_set_time_series_data();
+   test_set_time_index();
+//   test_save_time_series_data_binary();
+   test_has_time_columns();
 
-/*
    // Principal components mehtod
 
    test_perform_principal_components_analysis();
@@ -3218,6 +3385,7 @@ void DataSetTest::run_test_case()
    // test print data preview
    test_print_data_preview();
 */
+test_calculate_cross_correlations();
    cout << "End of data set test case.\n\n";
 }
 
