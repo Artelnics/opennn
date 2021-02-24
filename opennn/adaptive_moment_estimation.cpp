@@ -355,7 +355,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     results.resize_training_history(maximum_epochs_number+1);
     if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
