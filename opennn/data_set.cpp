@@ -9548,7 +9548,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                cross_correlations = OpenNN::cross_correlations(actual_column, data.chip(j,1), lags_number);
+//                cross_correlations = OpenNN::cross_correlations(actual_column, data.chip(j,1), lags_number);
             }
             else
             {
