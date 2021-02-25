@@ -185,11 +185,6 @@ public:
 
        void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
 
-//       void fill_submatrix(const Tensor<type, 2>& matrix,
-//                 const Tensor<Index, 1>& rows_indices,
-//                 const Tensor<Index, 1>& columns_indices, Tensor<type, 2>& submatrix);
-
-
        Index samples_number = 0;
 
        DataSet* data_set_pointer = nullptr;
