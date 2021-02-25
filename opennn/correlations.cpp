@@ -445,7 +445,116 @@ Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const Index &lags_num
 /// @param y Vector for computing the linear correlation with this vector.
 /// @param maximum_lags_number Maximum lags for which cross-correlation is calculated.
 
-Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index &maximum_lags_number)
+//Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index &maximum_lags_number)
+//{
+//    if(y.size() != x.size())
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: Correlations.\n"
+//               << "Tensor<type, 1> calculate_cross_correlation(const Tensor<type, 1>&) method.\n"
+//               << "Both vectors must have the same size.\n";
+
+//        throw logic_error(buffer.str());
+//    }
+
+//    Tensor<type, 1> cross_correlation(maximum_lags_number);
+
+//    const Tensor<type, 0> this_mean = x.mean();
+//    const Tensor<type, 0> y_mean = y.mean();
+
+//    const Index this_size = x.size();
+
+//    type numerator = 0;
+
+//    type this_denominator = 0;
+//    type y_denominator = 0;
+//    type denominator = 0;
+
+//    for(Index i = 0; i < maximum_lags_number; i++)
+//    {
+//        numerator = 0;
+//        this_denominator = 0;
+//        y_denominator = 0;
+
+//        for(Index j = 0; j < this_size - i; j++)
+//        {
+//            numerator += (x[j] - this_mean(0)) *(y[j + i] - y_mean(0));
+//        }
+
+//        for(Index j = 0; j < this_size; j++)
+//        {
+//            this_denominator += (x[j] - this_mean(0)) *(x[j] - this_mean(0));
+//            y_denominator += (y[j] - y_mean(0)) *(y[j] - y_mean(0));
+//        }
+
+//        denominator = sqrt(this_denominator * y_denominator);
+
+//        if(abs(denominator) < numeric_limits<type>::min())
+//        {
+//            cross_correlation[i] = 0;
+//        }
+//        else
+//        {
+//            cross_correlation[i] = numerator / denominator;
+//        }
+//    }
+
+//    return cross_correlation;
+//}
+
+//type cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index& lag_index)
+//{
+//    if(y.size() != x.size())
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: Correlations.\n"
+//               << "Tensor<type, 1> calculate_cross_correlation(const Tensor<type, 1>&) method.\n"
+//               << "Both vectors must have the same size.\n";
+
+//        throw logic_error(buffer.str());
+//    }
+
+//    const Tensor<type, 0> this_mean = x.mean();
+//    const Tensor<type, 0> y_mean = y.mean();
+
+//    const Index this_size = x.size();
+
+//    type cross_correlation = 0;
+
+//    type numerator = 0;
+//    type this_denominator = 0;
+//    type y_denominator = 0;
+//    type denominator = 0;
+
+//    for(Index j = 0; j < this_size - lag_index; j++)
+//    {
+//        numerator += (x[j] - this_mean(0)) *(y[j + lag_index] - y_mean(0));
+//    }
+
+//    for(Index j = 0; j < this_size; j++)
+//    {
+//        this_denominator += (x[j] - this_mean(0)) *(x[j] - this_mean(0));
+//        y_denominator += (y[j] - y_mean(0)) *(y[j] - y_mean(0));
+//    }
+
+//    denominator = sqrt(this_denominator * y_denominator);
+
+//    if(abs(denominator) < numeric_limits<type>::min())
+//    {
+//        cross_correlation = 0;
+//    }
+//    else
+//    {
+//        cross_correlation = numerator / denominator;
+//    }
+
+//    return cross_correlation;
+//}
+
+
+Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index &maximum_lags_number)
 {
     if(y.size() != x.size())
     {
@@ -466,43 +575,57 @@ Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 
     const Index this_size = x.size();
 
     type numerator = 0;
-
     type this_denominator = 0;
     type y_denominator = 0;
     type denominator = 0;
 
-    for(Index i = 0; i < maximum_lags_number; i++)
+
+
+    for (Index i = 0; i < maximum_lags_number; i++)
     {
-        numerator = 0;
-        this_denominator = 0;
-        y_denominator = 0;
+        Tensor<type, 1> column_x(this_size-i);
+        Tensor<type, 1> column_y(this_size-i);
 
         for(Index j = 0; j < this_size - i; j++)
         {
-            numerator += (x[j] - this_mean(0)) *(y[j + i] - y_mean(0));
+            column_x[j] = x(j);
+            column_y[j] = y[j + i];
         }
 
-        for(Index j = 0; j < this_size; j++)
-        {
-            this_denominator += (x[j] - this_mean(0)) *(x[j] - this_mean(0));
-            y_denominator += (y[j] - y_mean(0)) *(y[j] - y_mean(0));
-        }
+        cross_correlation[i] = linear_correlation(thread_pool_device, column_x, column_y, false);
+        cout << "cross correlation (i): " << cross_correlation[i] << endl;
 
-        denominator = sqrt(this_denominator * y_denominator);
+//        numerator = 0;
+//        this_denominator = 0;
+//        y_denominator = 0;
 
-        if(abs(denominator) < numeric_limits<type>::min())
-        {
-            cross_correlation[i] = 0;
-        }
-        else
-        {
-            cross_correlation[i] = numerator / denominator;
-        }
+//        for(Index j = 0; j < this_size - i; j++)
+//        {
+//            numerator += (x[j] - this_mean(0)) *(y[j + i] - y_mean(0));
+//        }
+
+//        for(Index j = 0; j < this_size; j++)
+//        {
+//            this_denominator += (x[j] - this_mean(0)) *(x[j] - this_mean(0));
+//            y_denominator += (y[j] - y_mean(0)) *(y[j] - y_mean(0));
+//        }
+
+//        denominator = sqrt(this_denominator * y_denominator);
+
+//        if(abs(denominator) < numeric_limits<type>::min())
+//        {
+//            cross_correlation[i] = 0;
+//        }
+//        else
+//        {
+//            cross_correlation[i] = numerator / denominator;
+//            cout << "cross correlation (i): " << cross_correlation[i] << endl;
+//        }
+
     }
 
     return cross_correlation;
 }
-
 
 /// Returns a vector with the logistic error gradient.
 /// @param coeffients.
