@@ -415,7 +415,7 @@ void CorrelationsTest::test_cross_correlations()
 
     Tensor<type, 1> cros_correlations;
 
-    cros_correlations = cross_correlations(x, y, 10);
+//    cros_correlations = cross_correlations(x, y, 10);
     //@todo(assert_true(cros_correlations(0) < 5.0, LOG);)
     //@todo(assert_true(cros_correlations(1) > 0.9, LOG);)
 }

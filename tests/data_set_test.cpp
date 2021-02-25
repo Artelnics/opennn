@@ -594,18 +594,22 @@ void DataSetTest::test_calculate_cross_correlations() // @todo
 {
     cout << "test_calculate_cross_correlations\n";
 
+    Tensor<type, 2> new_data(4,2);
+    new_data.setValues({{5,2}, {7, 8}, {3, 6}, {8,1}});
+//    Tensor<type, 2> new_data(3,2);
+//    new_data.setValues({{5,8}, {7, 6}, {3, 1}});
+
     DataSet data_set;
-    data_set.set(10, 2, 1);
-    data_set.set_data_random();
+    data_set.set_data(new_data);
     data_set.set_lags_number(2);
     data_set.set_steps_ahead_number(1);
     data_set.transform_time_series();
 
     Tensor<type, 3> cross_correlations;
 
-    cross_correlations = data_set.calculate_cross_correlations();
+    cross_correlations = data_set.calculate_cross_correlations(data_set.get_lags_number());
 
-    cout << "cross correlation: " << endl << cross_correlations.chip(0,2) << endl;
+    cout << "cross correlation (0): " << endl << cross_correlations.chip(0,2) << endl;
 
 //    assert_true(cross_correlations.dimension(1) == 6, LOG);
 //    assert_true(cross_correlations.dimension(0) == 6, LOG);
