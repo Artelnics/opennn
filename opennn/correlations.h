@@ -149,7 +149,6 @@ struct CorrelationResults
 
     Tensor<type, 1> autocorrelations(const Tensor<type, 1>&, const Index & = 10);
 //    Tensor<type, 1> cross_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Index & = 10);
-//    type cross_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Index& = 10);
     Tensor<type ,1> cross_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index &maximum_lags_number);
 
     // Logistic error methods
