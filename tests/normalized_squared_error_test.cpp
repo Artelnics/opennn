@@ -451,12 +451,17 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
        neural_network.set();
 
    samples_number = 2;
+
    Index channels_number = 1;
    Index rows_number = 3;
    Index columns_number = 3;
 
-   inputs_number = 9;
-   outputs_number = 4;
+   Index kernels_number = 2;
+   Index kernels_rows_number = 2;
+   Index kernels_columns_number = 2;
+
+   inputs_number = channels_number*rows_number*columns_number;
+   outputs_number = kernels_number*kernels_rows_number*kernels_columns_number;
 
    Tensor<Index, 1> input_variables_dimensions(4);
    input_variables_dimensions[0] = samples_number;
@@ -478,10 +483,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    batch.fill(samples_indices, input_indices, target_indices);
 
    cout << "Inputs4d: " << batch.inputs_4d << endl;
-
-   Index kernels_number = 2;
-   Index kernels_rows_number = 2;
-   Index kernels_columns_number = 2;
 
    Tensor<Index, 1> kernels_dimensions(4);
    kernels_dimensions(0) = kernels_number;
