@@ -3567,7 +3567,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
 
     for(Index i = 0; i < targets_number; i++)
     {
-        inputs_errors_cross_correlation[i] = cross_correlations(inputs.chip(i,1), errors.chip(i,1), lags_number);
+//        inputs_errors_cross_correlation[i] = cross_correlations(inputs.chip(i,1), errors.chip(i,1), lags_number);
     }
 
     return inputs_errors_cross_correlation;

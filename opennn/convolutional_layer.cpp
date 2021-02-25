@@ -1366,9 +1366,12 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
     synaptic_weights.resize(kernels_number, kernels_channels_number, kernels_rows_number, kernels_columns_number);
     biases.resize(kernels_number);
 
-    const Index synaptic_weights_number = synaptic_weights.size();
+    memcpy(biases.data(),
+           new_parameters.data(),
+           static_cast<size_t>(kernels_number)*sizeof(type));
 
-    Index element_index = 0;
+    Index element_index = kernels_number;
+
 #pragma omp for
     for(Index i = 0; i < kernels_number; i++)
     {
@@ -1378,16 +1381,11 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
             {
                 for(Index l = 0; l < kernels_columns_number; l++)
                 {
-                    synaptic_weights(i ,j, k, l) = new_parameters(kernels_number + element_index);
+                    synaptic_weights(i ,j, k, l) = new_parameters(element_index);
                     element_index ++;
                 }
             }
         }
-    }
-
-    for(Index i = 0; i < kernels_number; i ++)
-    {
-        biases(i) = new_parameters(i);
     }
 }
 
