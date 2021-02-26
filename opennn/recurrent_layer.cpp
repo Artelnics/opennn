@@ -1109,7 +1109,7 @@ Tensor<type, 2> RecurrentLayer::multiply_rows(const Tensor<type, 2>& matrix, con
     const Index rows_number = matrix.dimension(0);
 
     Tensor<type, 2> new_matrix(rows_number, columns_number);
-#pragma omp paralell for
+//#pragma omp paralell for
     for(Index i = 0; i < rows_number; i++)
     {
         for(Index j = 0; j < columns_number; j++)

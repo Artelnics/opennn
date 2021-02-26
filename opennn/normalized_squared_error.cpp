@@ -94,7 +94,6 @@ void NormalizedSquaredError::set_normalization_coefficient()
 void NormalizedSquaredError::set_time_series_normalization_coefficient()
 {
     //Targets matrix
-    cout<<"timeseries normalization coefficient";
 
     const Tensor<type, 2> targets = data_set_pointer->get_target_data();
 
