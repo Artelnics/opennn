@@ -18,7 +18,7 @@ namespace OpenNN
 AdaptiveMomentEstimation::AdaptiveMomentEstimation()
     :OptimizationAlgorithm()
 {
-    set_default();
+     set_default();
 }
 
 
@@ -280,7 +280,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 {
     Results results;
 
-    check();
+//    check();
 
     // Start training
 
@@ -355,20 +355,38 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    bool is_forecasting = false;
+    bool shuffle = true;
 
     results.resize_training_history(maximum_epochs_number+1);
     if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
 
     if(neural_network_pointer->has_long_short_term_memory_layer()
     || neural_network_pointer->has_recurrent_layer())
-        is_forecasting = true;
+        shuffle = false;
+
+    // Calculate error before training
+
+    parameters_norm = l2_norm(optimization_data.parameters);
+    training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
+    batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
+    neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
+    loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
+    results.training_error_history(0)  = training_back_propagation.error;
+
+    if(has_selection)
+    {
+        selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
+        batch_selection.fill(selection_batches.chip(0,0), input_variables_indices, target_variables_indices);
+        neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
+        loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
+        results.selection_error_history(0)  = selection_back_propagation.error;
+    }
 
     // Main loop
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
-        training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, is_forecasting);
+        training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -414,7 +432,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         if(has_selection)
         {
-            selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, is_forecasting);
+            selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
 
             selection_error = 0;
 
@@ -465,7 +483,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
+            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
 
             stop_training = true;
 
@@ -474,7 +492,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch+1 << ": Maximum training time reached.\n";
+            if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
 
             stop_training = true;
 
@@ -483,7 +501,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         else if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
+            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
 
             stop_training = true;
 
@@ -492,7 +510,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch+1 << ": Gradient norm goal reached.\n";
+            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached.\n";
 
             stop_training = true;
 
@@ -503,7 +521,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ": Maximum selection error increases reached.\n"
+                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
                      << "Selection error increases: " << selection_error_increases << endl;
             }
 
@@ -547,11 +565,11 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             break;
         }
-        else if(epoch == 0 || (epoch+1)%display_period == 0)
+        else if(epoch == 0 || (epoch)%display_period == 0)
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ";\n"
+                cout << "Epoch " << epoch << ";\n"
                      << "Training error: " << training_error << "\n"
                      << "Batch size: " << batch_samples_number << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
@@ -974,6 +992,12 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_samples_number)
 {
     batch_samples_number = new_batch_samples_number;
+}
+
+
+Index AdaptiveMomentEstimation::get_batch_samples_number() const
+{
+    return batch_samples_number;
 }
 
 

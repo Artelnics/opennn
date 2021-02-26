@@ -524,8 +524,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     Results results;
 
-    results.resize_training_history(maximum_epochs_number);
-    results.resize_selection_history(maximum_epochs_number);
+    results.resize_training_history(maximum_epochs_number+1);
+    results.resize_selection_history(maximum_epochs_number+1);
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
@@ -591,9 +591,23 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     LMOptimizationData optimization_data(this);
 
+    // Calculate error before training
+    parameters_norm = l2_norm(optimization_data.parameters);
+    neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+    loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
+    results.training_error_history(0)  = training_back_propagation.error;
+
+    parameters_norm = l2_norm(optimization_data.parameters);
+    if(has_selection)
+    {
+        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+        loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+        results.selection_error_history(0)  = selection_back_propagation.error;
+    }
+
     // Main loop
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
 
         optimization_data.epoch = epoch;
@@ -627,7 +641,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
-        if(epoch == 0)
+        if(epoch == 1)
         {
             training_loss_decrease = 0;
         }
@@ -643,13 +657,13 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
           loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
         }
 
-        if(epoch == 0)
+        if(epoch == 1)
         {
             minimum_selection_error = selection_back_propagation.error;
 
             minimal_selection_parameters = optimization_data.parameters;
         }
-        else if(epoch != 0 && selection_back_propagation.error > old_selection_error)
+        else if(epoch != 1 && selection_back_propagation.error > old_selection_error)
         {
             selection_failures++;
         }
@@ -683,7 +697,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ": Minimum parameters increment norm reached.\n"
+                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
                      << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
             }
 
@@ -694,18 +708,18 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(terms_second_order_loss.loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
+            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = LossGoal;
         }
 
-        else if(epoch != 0 && training_loss_decrease >= minimum_loss_decrease)
+        else if(epoch != 1 && training_loss_decrease >= minimum_loss_decrease)
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
+                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
                      << "Loss decrease: " << training_loss_decrease << endl;
             }
 
@@ -716,7 +730,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch+1 << ": Gradient norm goal reached." << endl;
+            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached." << endl;
 
             stop_training = true;
 
@@ -727,7 +741,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ": Maximum selection error increases reached.\n"
+                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
                      << "Selection loss increases: "<< selection_failures << endl;
             }
 
@@ -738,7 +752,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached." << endl;
+            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached." << endl;
 
             stop_training = true;
 
@@ -749,7 +763,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch+1 << ": Maximum training time reached." << endl;
+                cout << "Epoch " << epoch << ": Maximum training time reached." << endl;
             }
 
             stop_training = true;
@@ -757,7 +771,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = MaximumTime;
         }
 
-        if(epoch != 0 && epoch % save_period == 0)
+        if(epoch != 1 && epoch % save_period == 0)
         {
             neural_network_pointer->save(neural_network_file_name);
         }
@@ -778,8 +792,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                 }
             }
 
-            results.resize_training_error_history(1+epoch);
-            results.resize_selection_error_history(1+epoch);
+            results.resize_training_error_history(epoch+1);
+            results.resize_selection_error_history(epoch+1);
 
             results.final_parameters = optimization_data.parameters;
             results.final_parameters_norm = parameters_norm;
@@ -794,9 +808,9 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
             break;
         }
-        else if((display && epoch == 0) || (display && (epoch+1) % display_period == 0))
+        else if((display && epoch == 0) || (display && (epoch) % display_period == 0))
         {
-            cout << "Epoch " << epoch+1 << ";\n"
+            cout << "Epoch " << epoch << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << terms_second_order_loss.loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"

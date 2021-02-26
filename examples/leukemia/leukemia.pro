@@ -32,6 +32,11 @@ QMAKE_LFLAGS += -static
 QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
 QMAKE_LFLAGS += -fopenmp -pthread -lgomp
 LIBS += -fopenmp -pthread -lgomp
+
+win32:!win32-g++{
+QMAKE_CXXFLAGS+= -arch:AVX
+QMAKE_CFLAGS+= -arch:AVX
+}
 }
 
 # OpenNN library

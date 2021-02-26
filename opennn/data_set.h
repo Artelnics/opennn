@@ -185,11 +185,6 @@ public:
 
        void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
 
-//       void fill_submatrix(const Tensor<type, 2>& matrix,
-//                 const Tensor<Index, 1>& rows_indices,
-//                 const Tensor<Index, 1>& columns_indices, Tensor<type, 2>& submatrix);
-
-
        Index samples_number = 0;
 
        DataSet* data_set_pointer = nullptr;
@@ -238,7 +233,9 @@ public:
    Index get_columns_number() const;
 
    Index get_input_columns_number() const;
+   Index get_input_time_series_columns_number() const;
    Index get_target_columns_number() const;
+   Index get_target_time_series_columns_number() const;
    Index get_time_columns_number() const;
    Index get_unused_columns_number() const;
    Index get_used_columns_number() const;
@@ -247,7 +244,9 @@ public:
    Index get_column_index(const Index&) const;
 
    Tensor<Index, 1> get_input_columns_indices() const;
+   Tensor<Index, 1> get_input_time_series_columns_indices() const;
    Tensor<Index, 1> get_target_columns_indices() const;
+   Tensor<Index, 1> get_target_time_series_columns_indices() const;
    Tensor<Index, 1> get_unused_columns_indices() const;
    Tensor<Index, 1> get_used_columns_indices() const;
 
@@ -426,6 +425,8 @@ public:
 
    void set_column_use(const Index&, const VariableUse&);
    void set_column_use(const string&, const VariableUse&);
+
+   void set_column_type(const Index&, const ColumnType&);
 
    void set_columns_names(const Tensor<string, 1>&);
 
@@ -673,6 +674,8 @@ public:
 
    // Time series methods
 
+   void transform_time_series();
+
    void transform_time_series_columns();
    void transform_time_series_data();
    void get_time_series_columns_number(const Index&);
@@ -680,7 +683,8 @@ public:
 
    Tensor<type, 2> get_time_series_column_data(const Index&) const;
    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
-   Tensor<Tensor<type, 1>, 2> calculate_cross_correlations(const Index& = 10) const;
+//   Tensor<Tensor<type, 1>, 2> calculate_cross_correlations(const Index& = 10) const;
+   Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
    Tensor<type, 2> calculate_lag_plot() const;
    Tensor<type, 2> calculate_lag_plot(const Index&);
 
@@ -718,21 +722,21 @@ public:
    void save_data() const;
 
    void save_data_binary(const string&) const;
+   void save_time_series_data_binary(const string&) const;
+
 
    // Data load methods
 
    void read_csv();
 
    void load_data_binary();
-
-   void load_time_series_data_binary();
+   void load_time_series_data_binary(const string&);
 
    void check_input_csv(const string&, const char&) const;
    Tensor<type, 2> read_input_csv(const string&, const char&, const string&, const bool&, const bool&) const;
 
    // Trasform methods
 
-   void transform_time_series();
    void transform_association();
 
    void fill_time_series(const Index&);
@@ -829,7 +833,7 @@ private:
    Tensor<type, 2> data;
 
    /// Time series data matrix.
-   /// The number of rows is the number of samples before time series transfomration.
+   /// The number of rows is the number of samples before time series transformation.
    /// The number of columns is the number of variables before time series transformation.
 
    Tensor<type, 2> time_series_data;
@@ -840,7 +844,7 @@ private:
 
    bool display = true;
 
-   /// Index where time variable is located for forecasting applications.
+   /// Index where  variable is located for forecasting applications.
 
    Index time_index;
 

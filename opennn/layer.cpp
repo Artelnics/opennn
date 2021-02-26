@@ -28,7 +28,6 @@ Layer::Type Layer::get_type () const
 }
 
 
-
 /// Takes the type of layer used by the model.
 
 string Layer::get_type_string() const

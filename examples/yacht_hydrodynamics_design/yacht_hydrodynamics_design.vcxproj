@@ -119,8 +119,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/yacht_hydrodynamics_design/Debug/yacht_hydrodynamics_design.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/yacht_hydrodynamics_design/Debug/yacht_hydrodynamics_design.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/yacht_hydrodynamics_design/Debug/yacht_hydrodynamics_design.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/yacht_hydrodynamics_design/Debug/yacht_hydrodynamics_design.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -143,6 +143,7 @@
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -162,8 +163,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/yacht_hydrodynamics_design/Release/yacht_hydrodynamics_design.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/yacht_hydrodynamics_design/Release/yacht_hydrodynamics_design.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/yacht_hydrodynamics_design/Release/yacht_hydrodynamics_design.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/yacht_hydrodynamics_design/Release/yacht_hydrodynamics_design.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -205,8 +206,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/yacht_hydrodynamics_design/MinSizeRel/yacht_hydrodynamics_design.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/yacht_hydrodynamics_design/MinSizeRel/yacht_hydrodynamics_design.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/yacht_hydrodynamics_design/MinSizeRel/yacht_hydrodynamics_design.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/yacht_hydrodynamics_design/MinSizeRel/yacht_hydrodynamics_design.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -247,8 +248,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/yacht_hydrodynamics_design/RelWithDebInfo/yacht_hydrodynamics_design.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/yacht_hydrodynamics_design/RelWithDebInfo/yacht_hydrodynamics_design.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/yacht_hydrodynamics_design/RelWithDebInfo/yacht_hydrodynamics_design.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/yacht_hydrodynamics_design/RelWithDebInfo/yacht_hydrodynamics_design.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>

@@ -119,8 +119,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/breast_cancer/Debug/breast_cancer.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/breast_cancer/Debug/breast_cancer.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/breast_cancer/Debug/breast_cancer.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/breast_cancer/Debug/breast_cancer.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -143,6 +143,7 @@
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -162,8 +163,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/breast_cancer/Release/breast_cancer.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/breast_cancer/Release/breast_cancer.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/breast_cancer/Release/breast_cancer.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/breast_cancer/Release/breast_cancer.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -205,8 +206,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/breast_cancer/MinSizeRel/breast_cancer.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/breast_cancer/MinSizeRel/breast_cancer.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/breast_cancer/MinSizeRel/breast_cancer.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/breast_cancer/MinSizeRel/breast_cancer.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -247,8 +248,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/examples/breast_cancer/RelWithDebInfo/breast_cancer.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/examples/breast_cancer/RelWithDebInfo/breast_cancer.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(solutionDir)examples/breast_cancer/RelWithDebInfo/breast_cancer.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(solutionDir)examples/breast_cancer/RelWithDebInfo/breast_cancer.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>

@@ -66,8 +66,11 @@ void NormalizedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 {
     data_set_pointer = new_data_set_pointer;
 
+    if(neural_network_pointer->has_recurrent_layer()) set_time_series_normalization_coefficient();
+
     set_normalization_coefficient();
 }
+
 
 /// Sets the normalization coefficient from training samples.
 /// This method calculates the normalization coefficient of the dataset.
@@ -85,8 +88,34 @@ void NormalizedSquaredError::set_normalization_coefficient()
     //Normalization coefficient
 
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
-
 }
+
+
+void NormalizedSquaredError::set_time_series_normalization_coefficient()
+{
+    //Targets matrix
+
+    const Tensor<type, 2> targets = data_set_pointer->get_target_data();
+
+    const Index rows = targets.dimension(0)-1;
+    const Index cols = targets.dimension(1);
+
+    Tensor<type, 2> targets_t(rows, cols);
+    Tensor<type, 1> targets_t_1(rows);
+
+    memcpy(targets_t.data(),
+           targets.data()+1,
+           static_cast<size_t>(rows*cols)*sizeof(type));
+
+    memcpy(targets_t_1.data(),
+           targets.data(),
+           static_cast<size_t>(rows*cols)*sizeof(type));
+
+    //Normalization coefficient
+
+    normalization_coefficient = calculate_normalization_coefficient(targets_t, targets_t_1);
+}
+
 
 /// Sets the normalization coefficient.
 /// @param new_normalization_coefficient New normalization coefficient to be set.

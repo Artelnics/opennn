@@ -641,6 +641,10 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
 void DataSet::transform_time_series_columns()
 {
+    // Categorical columns?
+
+    time_series_columns = columns;
+
     const Index columns_number = get_columns_number();
 
     Tensor<Column, 1> new_columns;
@@ -702,6 +706,42 @@ void DataSet::transform_time_series_columns()
     }
 
     columns = new_columns;
+}
+
+
+void DataSet::transform_time_series_data()
+{
+    // Categorical / Time columns?
+
+    const Index old_samples_number = data.dimension(0);
+    const Index old_variables_number = data.dimension(1);
+
+    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
+    const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
+
+    time_series_data = data;
+
+    data.resize(new_samples_number, new_variables_number);
+
+    Index index = 0;
+
+    for(Index j = 0; j < old_variables_number; j++)
+    {
+        if(columns(get_column_index(j)).type == DateTime)
+        {
+            index++;
+            continue;
+        }
+
+        for(Index i = 0; i < lags_number+steps_ahead; i++)
+        {
+            memcpy(data.data() + i*(old_variables_number-index)*new_samples_number + (j-index)*new_samples_number,
+                   time_series_data.data() + i + j*old_samples_number,
+                   static_cast<size_t>(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
+        }
+    }
+
+    samples_uses.resize(new_samples_number);
 }
 
 
@@ -1014,7 +1054,6 @@ const Tensor<DataSet::SampleUse,1 >& DataSet::get_samples_uses() const
 /// Returns a vector, where each element is a vector that contains the indices of the different batches of the training samples.
 /// @param shuffle Is a boleean.
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
-/// @todo In forecasting must be false.
 
 Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                                       const Index& batch_samples_number,
@@ -2117,6 +2156,26 @@ Tensor<Index, 1> DataSet::get_input_columns_indices() const
 }
 
 
+Tensor<Index, 1> DataSet::get_input_time_series_columns_indices() const
+{
+    const Index input_columns_number = get_input_time_series_columns_number();
+
+    Tensor<Index, 1> input_columns_indices(input_columns_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < time_series_columns.size(); i++)
+    {
+        if(time_series_columns(i).column_use == Input)
+        {
+            input_columns_indices(index) = i;
+            index++;
+        }
+    }
+
+    return input_columns_indices;
+}
+
 /// Returns a indices vector with the positions of the targets.
 
 Tensor<Index, 1> DataSet::get_target_columns_indices() const
@@ -2139,6 +2198,26 @@ Tensor<Index, 1> DataSet::get_target_columns_indices() const
     return target_columns_indices;
 }
 
+
+Tensor<Index, 1> DataSet::get_target_time_series_columns_indices() const
+{
+    const Index target_columns_number = get_target_time_series_columns_number();
+
+    Tensor<Index, 1> target_columns_indices(target_columns_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < time_series_columns.size(); i++)
+    {
+        if(time_series_columns(i).column_use == Target)
+        {
+            target_columns_indices(index) = i;
+            index++;
+        }
+    }
+
+    return target_columns_indices;
+}
 
 /// Returns a indices vector with the positions of the unused columns.
 
@@ -2311,6 +2390,21 @@ Index DataSet::get_input_columns_number() const
 }
 
 
+Index DataSet::get_input_time_series_columns_number() const
+{
+    Index input_columns_number = 0;
+
+    for(Index i = 0; i < time_series_columns.size(); i++)
+    {
+        if(time_series_columns(i).column_use == Input)
+        {
+            input_columns_number++;
+        }
+    }
+
+    return input_columns_number;
+}
+
 /// Returns the number of columns whose uses are Target.
 
 Index DataSet::get_target_columns_number() const
@@ -2320,6 +2414,22 @@ Index DataSet::get_target_columns_number() const
     for(Index i = 0; i < columns.size(); i++)
     {
         if(columns(i).column_use == Target)
+        {
+            target_columns_number++;
+        }
+    }
+
+    return target_columns_number;
+}
+
+
+Index DataSet::get_target_time_series_columns_number() const
+{
+    Index target_columns_number = 0;
+
+    for(Index i = 0; i < time_series_columns.size(); i++)
+    {
+        if(time_series_columns(i).column_use == Target)
         {
             target_columns_number++;
         }
@@ -2883,6 +2993,10 @@ void DataSet::set_column_use(const string& name, const VariableUse& new_use)
     set_column_use(index, new_use);
 }
 
+void DataSet::set_column_type(const Index& index, const ColumnType& new_type)
+{
+   columns[index].type = new_type;
+}
 
 /// This method set the name of a single variable.
 /// @param index Index of variable.
@@ -3909,7 +4023,8 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
 Tensor<type, 2> DataSet::get_time_series_column_data(const Index& column_index) const
 {
     Index columns_number = 1;
-    const Index rows_number = data.dimension(0);
+
+    const Index rows_number = time_series_data.dimension(0);
 
     if(time_series_columns(column_index).type == Categorical)
     {
@@ -4297,7 +4412,7 @@ void DataSet::set(const Index& new_samples_number,
         }
     }
 
-    input_variables_dimensions.resize(new_inputs_number);
+    input_variables_dimensions.resize(/*new_inputs_number*/1);
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
@@ -4398,7 +4513,6 @@ void DataSet::set_default()
 
 void DataSet::set_data(const Tensor<type, 2>& new_data)
 {
-
     const Index samples_number = new_data.dimension(0);
     const Index variables_number = new_data.dimension(1);
 
@@ -8549,9 +8663,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     Index columns_number = data.dimension(1);
     Index rows_number = data.dimension(0);
 
-    cout << "Rows number: " << rows_number << endl;
-    cout << "Columns number: " << columns_number << endl;
-
     cout << "Saving binary data file..." << endl;
 
     file.write(reinterpret_cast<char*>(&columns_number), size);
@@ -8573,8 +8684,36 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     file.close();
 
+    cout << "Binary data file saved." << endl;
+}
 
-/*
+
+/// Saves to the data file the values of the time series data matrix in binary format.
+
+void DataSet::save_time_series_data_binary(const string& binary_data_file_name) const
+{
+    ofstream file(binary_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet template." << endl
+               << "void save_time_series_data_binary(const string) method." << endl
+               << "Cannot open data binary file." << endl;
+
+        throw logic_error(buffer.str());
+    }
+
+    // Write data
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number = time_series_data.dimension(1);
+    Index rows_number = time_series_data.dimension(0);
+
+    cout << "Saving binary data file..." << endl;
+
     file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
 
@@ -8582,88 +8721,34 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     type value;
 
-    for(int i = 0; i < columns_number*rows_number; i++)
+    for(int i = 0; i < columns_number; i++)
     {
-//        for(int j = 0; j < rows_number; j++)
-//        {
-            value = data(i);
+        for(int j = 0; j < rows_number; j++)
+        {
+            value = time_series_data(j,i);
 
             file.write(reinterpret_cast<char*>(&value), size);
-//        }
+        }
     }
 
     file.close();
-*/
-
 
     cout << "Binary data file saved." << endl;
 }
+
 
 
 /// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
 
 void DataSet::transform_time_series()
 {
-    if(lags_number == 0) return;
+    if(lags_number == 0 || steps_ahead == 0) return;
 
-    const Index variables_number = get_variables_number();
-    const Index samples_number = get_samples_number();
-
-    time_series_data = data;
-
-    time_series_columns = columns;
+    transform_time_series_data();
 
     transform_time_series_columns();
 
-    const Index time_series_samples_number = get_samples_number()-(lags_number-1+steps_ahead);
-    const Index time_series_variables_number = get_columns_number();
-
-    data.resize(time_series_samples_number, time_series_variables_number);
-
-    Tensor<type, 2> new_data(time_series_samples_number, time_series_variables_number);
-    Tensor<type, 1> variable_data;
-
-    Index new_data_variable = 0;
-
-    Index time_series_variable= 0;
-
-
-// lags
-
-    for(Index lag = lags_number; lag > 0; lag--)
-    {
-
-        for(Index variable = 0; variable < variables_number; variable++)
-            {
-
-            variable_data = time_series_data.chip(variable, 1);
-
-            for(Index j = 0; j <= time_series_samples_number; j++)
-            {
-
-                new_data(j, time_series_variable) = variable_data(j+lags_number-lag);
-            }
-            time_series_variable++;
-        }
-    }
-
-// steps ahead
-    for(Index ahead = 1; ahead <= steps_ahead; ahead++)
-    {
-        for(Index variable = 0; variable < variables_number; variable++)
-            {
-            variable_data = time_series_data.chip(variable, 1);
-
-            for(Index j = 0; j < time_series_samples_number; j++)
-            {
-                new_data(j, time_series_variable) = variable_data(j+ahead+lags_number-1);
-            }
-
-            time_series_variable++;
-        }
-    }
-
-    set_data(new_data);
+    split_samples_sequential();
 }
 
 
@@ -8688,7 +8773,7 @@ void DataSet::fill_time_series(const Index& period )
 
     Index j = 1;
 
-//    new_data.set_row(0, data.chip(0, 0));
+    //new_data.set_row(0, data.chip(0, 0));
 
     cout.precision(20);
 
@@ -8750,37 +8835,58 @@ void DataSet::load_data_binary()
 
     data.resize(rows_number, columns_number);
 
-//    Index row_index = 0;
-//    Index column_index = 0;
-
     for(Index i = 0; i < rows_number*columns_number; i++)
     {
         file.read(reinterpret_cast<char*>(&value), size);
 
         data(i) = value;
-/*
-        data(row_index, column_index) = value;
-
-        row_index++;
-
-        if((i+1)%rows_number == 0)
-        {
-            row_index = 0;
-            column_index++;
-        }
-*/
     }
 
     file.close();
 }
 
 
-/// This method loads data from a binary data file for time series prediction methodata_set.
-/// @todo
+/// This method loads time series data from a binary data.
 
-void DataSet::load_time_series_data_binary()
+void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
-//    time_series_data.load_binary(data_file_name);
+    ifstream file;
+
+    file.open(time_series_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet template.\n"
+               << "void load_time_series_data_binary(const string&) method.\n"
+               << "Cannot open binary file: " << time_series_data_file_name << "\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number;
+    Index rows_number;
+
+    file.read(reinterpret_cast<char*>(&columns_number), size);
+    file.read(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    time_series_data.resize(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number*columns_number; i++)
+    {
+        file.read(reinterpret_cast<char*>(&value), size);
+
+        time_series_data(i) = value;
+    }
+
+    file.close();
 }
 
 
@@ -9318,53 +9424,249 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 /// @param maximum_lags_number Maximum lags number for which autocorrelation is calculated.
 /// @todo
 
-Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& maximum_lags_number) const
+//Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& maximum_lags_number) const
+//{
+//    if(maximum_lags_number > get_used_samples_number())
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: DataSet class.\n"
+//               << "Tensor<type, 2> autocorrelations(const Index&) method.\n"
+//               << "Maximum lags number(" << maximum_lags_number << ") is greater than the number of samples("
+//               << get_used_samples_number() <<") \n";
+
+//        throw logic_error(buffer.str());
+//    }
+
+//    const Index variables_number = data.dimension(1);
+
+//    Tensor<type, 2> autocorrelations(variables_number, maximum_lags_number);
+
+//    for(Index j = 0; j < variables_number; j++)
+//    {
+////        autocorrelations.set_row(j, OpenNN::autocorrelations(data.chip(j,1), maximum_lags_number));
+//    }
+
+//    return autocorrelations;
+//}
+
+Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) const
 {
-    if(maximum_lags_number > get_used_samples_number())
+    const Index samples_number = time_series_data.dimension(0);
+
+        if(lags_number > samples_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "Tensor<type, 3> calculate_cross_correlations(const Index& lags_number) const method.\n"
+                   << "Lags number(" << lags_number
+                   << ") is greater than the number of samples("
+                   << samples_number << ") \n";
+
+            throw logic_error(buffer.str());
+        }
+
+    const Index input_columns_number = get_input_time_series_columns_number();
+    const Index target_columns_number = get_target_time_series_columns_number();
+
+    const Index input_target_columns_number = input_columns_number + target_columns_number;
+
+    const Tensor<Index, 1> input_columns_indices = get_input_time_series_columns_indices();
+    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();
+
+    const Index inputs_targets_indices_number = input_columns_indices.size() + target_columns_indices.size();
+
+    Tensor<Index, 1> input_target_columns_indices(inputs_targets_indices_number);
+
+    int counter = 0;
+
+    for(Index i = 0; i < inputs_targets_indices_number; i++)
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 2> autocorrelations(const Index&) method.\n"
-               << "Maximum lags number(" << maximum_lags_number << ") is greater than the number of samples("
-               << get_used_samples_number() <<") \n";
-
-        throw logic_error(buffer.str());
+        if (i < input_columns_number)
+        {
+            input_target_columns_indices(i) = input_columns_indices(i);
+        }
+        else
+        {
+            input_target_columns_indices(i) = target_columns_indices(counter);
+            counter++;
+        }
     }
 
-    const Index variables_number = data.dimension(1);
+    Index new_lags_number;
 
-    Tensor<type, 2> autocorrelations(variables_number, maximum_lags_number);
-
-    for(Index j = 0; j < variables_number; j++)
+    if(samples_number == lags_number)
     {
-//        autocorrelations.set_row(j, OpenNN::autocorrelations(data.chip(j,1), maximum_lags_number));
+        new_lags_number = lags_number - 2;
+    }
+    else if (samples_number == lags_number + 1)
+    {
+        new_lags_number = lags_number - 1;
+    }
+    else
+    {
+        new_lags_number = lags_number;
+    }
+
+    Tensor<type, 2> autocorrelations(input_target_columns_number, new_lags_number);
+    Tensor<type, 1> autocorrelations_vector(new_lags_number);
+
+    for(Index i = 0; i < input_target_columns_number; i++)
+    {
+        const Index current_input_target_index_i = input_target_columns_indices(i);
+
+        const ColumnType type_i = time_series_columns(current_input_target_index_i).type;
+
+        Tensor<type, 2> input_i = get_time_series_column_data(current_input_target_index_i);
+
+        cout << "Calculating " << time_series_columns(current_input_target_index_i).name << " autocorrelations." << endl;
+
+        if(type_i == Numeric)
+        {
+            const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+
+            autocorrelations_vector = OpenNN::autocorrelations(thread_pool_device, current_input_i, new_lags_number);
+
+            for (Index j = 0; j < new_lags_number; j++)
+            {
+                autocorrelations (i, j) = autocorrelations_vector(j) ;
+            }
+        }
     }
 
     return autocorrelations;
 }
 
 
+
 /// Calculates the cross-correlation between all the variables in the data set.
 
-Tensor<Tensor<type, 1>, 2> DataSet::calculate_cross_correlations(const Index& lags_number) const
+//Tensor<Tensor<type, 1>, 2> DataSet::calculate_cross_correlations(const Index& lags_number) const
+//{
+//    const Index variables_number = get_variables_number();
+
+//    Tensor<Tensor<type, 1>, 2> cross_correlations(variables_number, variables_number);
+
+//    Tensor<type, 1> actual_column;
+
+//    for(Index i = 0; i < variables_number; i++)
+//    {
+//        actual_column = data.chip(i,1);
+
+//        for(Index j = 0; j < variables_number; j++)
+//        {
+//            cross_correlations(i,j) = OpenNN::cross_correlations(actual_column, data.chip(j,1), lags_number);
+//        }
+//    }
+
+//    return cross_correlations;
+//}
+
+Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) const
 {
-    const Index variables_number = get_variables_number();
+    const Index samples_number = time_series_data.dimension(0);
 
-    Tensor<Tensor<type, 1>, 2> cross_correlations(variables_number, variables_number);
-
-    Tensor<type, 1> actual_column;
-
-    for(Index i = 0; i < variables_number; i++)
-    {
-        actual_column = data.chip(i,1);
-
-        for(Index j = 0; j < variables_number; j++)
+        if(lags_number > samples_number)
         {
-            cross_correlations(i,j) = OpenNN::cross_correlations(actual_column, data.chip(j,1), lags_number);
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "Tensor<type, 3> calculate_cross_correlations(const Index& lags_number) const method.\n"
+                   << "Lags number(" << lags_number
+                   << ") is greater than the number of samples("
+                   << samples_number << ") \n";
+
+            throw logic_error(buffer.str());
+        }
+
+    const Index input_columns_number = get_input_time_series_columns_number();
+    const Index target_columns_number = get_target_time_series_columns_number();
+
+    const Index input_target_columns_number = input_columns_number + target_columns_number;
+
+    const Tensor<Index, 1> input_columns_indices = get_input_time_series_columns_indices();
+    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();
+
+    const Index inputs_targets_indices_number = input_columns_indices.size() + target_columns_indices.size();
+
+    Tensor<Index, 1> input_target_columns_indices(inputs_targets_indices_number);
+
+    int counter = 0;
+
+    for(Index i = 0; i < inputs_targets_indices_number; i++)
+    {
+        if (i < input_columns_number)
+        {
+            input_target_columns_indices(i) = input_columns_indices(i);
+        }
+        else
+        {
+            input_target_columns_indices(i) = target_columns_indices(counter);
+            counter++;
         }
     }
 
+    Index new_lags_number;
+
+    if(samples_number == lags_number)
+    {
+        new_lags_number = lags_number - 2;
+    }
+    else if (samples_number == lags_number + 1)
+    {
+        new_lags_number = lags_number - 1;
+    }
+    else
+    {
+        new_lags_number = lags_number;
+    }
+
+    Tensor<type,3> cross_correlations(input_target_columns_number, input_target_columns_number, new_lags_number);
+    Tensor<type, 1> cross_correlations_vector(new_lags_number);
+
+    for (Index i = 0; i < input_target_columns_number; i++)
+    {
+        const Index current_input_target_index_i = input_target_columns_indices(i);
+
+        const ColumnType type_i = time_series_columns(current_input_target_index_i).type;
+
+        Tensor<type, 2> input_i = get_time_series_column_data(current_input_target_index_i);
+
+        cout << "Calculating " << time_series_columns(current_input_target_index_i).name << " cross correlations." << endl;
+
+        for(Index j = 0; j < input_target_columns_number; j++)
+        {
+            const Index current_input_target_index_j = input_target_columns_indices(j);
+
+            const ColumnType type_j = time_series_columns(current_input_target_index_j).type;
+
+            Tensor<type, 2> input_j = get_time_series_column_data(current_input_target_index_j);
+
+            if(type_i == Numeric && type_j == Numeric)
+            {
+                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
+
+                cross_correlations_vector = OpenNN::cross_correlations(thread_pool_device, current_input_i, current_input_j, new_lags_number);
+
+                for (Index k = 0; k < new_lags_number; k++)
+                {
+                    cross_correlations (i, j, k) = cross_correlations_vector(k) ;
+                }
+            }
+            else
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "Tensor<type, 2> calculate_inputs_correlations() const method.\n"
+                       << "Case not found: Column " << columns(input_columns_indices(i)).name << " and Column " << columns(input_columns_indices(j)).name << ".\n";
+
+                throw logic_error(buffer.str());
+            }
+        }
+    }
     return cross_correlations;
 }
 
@@ -10023,6 +10325,7 @@ void DataSet::read_csv_1()
     string line;
 
     Index lines_count = 0;
+                cout << "here" << endl;
 
     while(file.good())
     {
@@ -11265,21 +11568,26 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
 
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
+
     if(input_variables_dimensions.size() == 1)
     {
         data_set_pointer->fill_submatrix(data, samples, inputs, inputs_2d.data());
     }
-    else if(input_variables_dimensions.size() == 3)
+    else if(input_variables_dimensions.size() == 4)
     {
-/*
-        const Index channels_number = input_variables_dimensions(0);
-        const Index rows_number = input_variables_dimensions(1);
-        const Index columns_number = input_variables_dimensions(2);
+        const Index samples_number = input_variables_dimensions(0);
+        const Index channels_number = input_variables_dimensions(1);
+        const Index rows_number = input_variables_dimensions(2);
+        const Index columns_number = input_variables_dimensions(3);
+
         inputs_4d.resize(samples_number, channels_number, rows_number, columns_number);
+
         Index index = 0;
+
         for(Index image = 0; image < samples_number; image++)
         {
             index = 0;
+
             for(Index channel = 0; channel < channels_number; channel++)
             {
                 for(Index row = 0; row < rows_number; row++)
@@ -11292,8 +11600,8 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
                 }
             }
         }
-*/
     }
+
     data_set_pointer->fill_submatrix(data, samples, targets, targets_2d.data());
 }
 

@@ -47,8 +47,8 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
     set_optimization_method(QUASI_NEWTON_METHOD);
     set_loss_method(NORMALIZED_SQUARED_ERROR);
 
-    set_loss_index_data_set_pointer(data_set_pointer);
     set_loss_index_neural_network_pointer(neural_network_pointer);
+    set_loss_index_data_set_pointer(data_set_pointer);
 
     LossIndex* loss_index_pointer = get_loss_index_pointer();
     set_loss_index_pointer(loss_index_pointer);
@@ -726,26 +726,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
-
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
-               << "Long Short Term Memory Layer and Recurrent Layer are not available yet. Both of them will be included in future versions.\n";
-
-        throw logic_error(buffer.str());
-
-        if(!check_forecasting())
-        {
-
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                   << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
-                   << "The batch size must be multiple of timesteps.\n";
-
-            throw logic_error(buffer.str());
-        }
+        fix_forecasting();
     }
 
     if(neural_network_pointer->has_convolutional_layer())
@@ -888,12 +869,11 @@ void TrainingStrategy::perform_training_void()
 }
 
 
-/// Check the time steps and the batch size in forecasting problems
-/// @todo
+/// Check the time steps and the batch size in forecasting problems. The batch size must be multiple of the time step.
+/// If they are not multiples, then the batch size is changed to a multiple (the first multiple that is lower than the batch size).
 
-bool TrainingStrategy::check_forecasting() const
+void TrainingStrategy::fix_forecasting()
 {
-
     Index timesteps = 0;
 
     if(neural_network_pointer->has_recurrent_layer())
@@ -904,20 +884,45 @@ bool TrainingStrategy::check_forecasting() const
     {
         timesteps = neural_network_pointer->get_long_short_term_memory_layer_pointer()->get_timesteps();
     }
+    else
+    {
+        return;
+    }
 
+    Index batch_samples_number = 0;
 
-//    const Index batch_samples_number = data_set.get_batch_samples_number();
+    if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
+    {
+        batch_samples_number = adaptive_moment_estimation.get_batch_samples_number();
+    }
+    else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
+    {
+        batch_samples_number = stochastic_gradient_descent.get_batch_samples_number();
+    }
+    else
+    {
+        return;
+    }
 
-//    if(batch_samples_number%timesteps == 0)
-//    {
-//        return true;
-//    }
-//    else
-//    {
-//        return false;
-//    }
+    if(batch_samples_number%timesteps == 0)
+    {
+        return;
+    }
+    else
+    {
+        const Index constant = static_cast<Index>(batch_samples_number/timesteps);
 
-    return true;
+        if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
+        {
+            adaptive_moment_estimation.set_batch_samples_number(constant*timesteps);
+        }
+        else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
+        {
+            stochastic_gradient_descent.set_batch_samples_number(constant*timesteps);
+        }
+    }
+
+    return;
 }
 
 

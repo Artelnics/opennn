@@ -59,6 +59,8 @@ public:
     void set_normalization_coefficient();
     void set_normalization_coefficient(const type&);
 
+    void set_time_series_normalization_coefficient();
+
     void set_selection_normalization_coefficient();
     void set_selection_normalization_coefficient(const type&);
 
