@@ -9424,31 +9424,120 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 /// @param maximum_lags_number Maximum lags number for which autocorrelation is calculated.
 /// @todo
 
-Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& maximum_lags_number) const
+//Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& maximum_lags_number) const
+//{
+//    if(maximum_lags_number > get_used_samples_number())
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: DataSet class.\n"
+//               << "Tensor<type, 2> autocorrelations(const Index&) method.\n"
+//               << "Maximum lags number(" << maximum_lags_number << ") is greater than the number of samples("
+//               << get_used_samples_number() <<") \n";
+
+//        throw logic_error(buffer.str());
+//    }
+
+//    const Index variables_number = data.dimension(1);
+
+//    Tensor<type, 2> autocorrelations(variables_number, maximum_lags_number);
+
+//    for(Index j = 0; j < variables_number; j++)
+//    {
+////        autocorrelations.set_row(j, OpenNN::autocorrelations(data.chip(j,1), maximum_lags_number));
+//    }
+
+//    return autocorrelations;
+//}
+
+Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) const
 {
-    if(maximum_lags_number > get_used_samples_number())
+    const Index samples_number = time_series_data.dimension(0);
+
+        if(lags_number > samples_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "Tensor<type, 3> calculate_cross_correlations(const Index& lags_number) const method.\n"
+                   << "Lags number(" << lags_number
+                   << ") is greater than the number of samples("
+                   << samples_number << ") \n";
+
+            throw logic_error(buffer.str());
+        }
+
+    const Index input_columns_number = get_input_time_series_columns_number();
+    const Index target_columns_number = get_target_time_series_columns_number();
+
+    const Index input_target_columns_number = input_columns_number + target_columns_number;
+
+    const Tensor<Index, 1> input_columns_indices = get_input_time_series_columns_indices();
+    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();
+
+    const Index inputs_targets_indices_number = input_columns_indices.size() + target_columns_indices.size();
+
+    Tensor<Index, 1> input_target_columns_indices(inputs_targets_indices_number);
+
+    int counter = 0;
+
+    for(Index i = 0; i < inputs_targets_indices_number; i++)
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 2> autocorrelations(const Index&) method.\n"
-               << "Maximum lags number(" << maximum_lags_number << ") is greater than the number of samples("
-               << get_used_samples_number() <<") \n";
-
-        throw logic_error(buffer.str());
+        if (i < input_columns_number)
+        {
+            input_target_columns_indices(i) = input_columns_indices(i);
+        }
+        else
+        {
+            input_target_columns_indices(i) = target_columns_indices(counter);
+            counter++;
+        }
     }
 
-    const Index variables_number = data.dimension(1);
+    Index new_lags_number;
 
-    Tensor<type, 2> autocorrelations(variables_number, maximum_lags_number);
-
-    for(Index j = 0; j < variables_number; j++)
+    if(samples_number == lags_number)
     {
-//        autocorrelations.set_row(j, OpenNN::autocorrelations(data.chip(j,1), maximum_lags_number));
+        new_lags_number = lags_number - 2;
+    }
+    else if (samples_number == lags_number + 1)
+    {
+        new_lags_number = lags_number - 1;
+    }
+    else
+    {
+        new_lags_number = lags_number;
+    }
+
+    Tensor<type, 2> autocorrelations(input_target_columns_number, new_lags_number);
+    Tensor<type, 1> autocorrelations_vector(new_lags_number);
+
+    for(Index i = 0; i < input_target_columns_number; i++)
+    {
+        const Index current_input_target_index_i = input_target_columns_indices(i);
+
+        const ColumnType type_i = time_series_columns(current_input_target_index_i).type;
+
+        Tensor<type, 2> input_i = get_time_series_column_data(current_input_target_index_i);
+
+        cout << "Calculating " << time_series_columns(current_input_target_index_i).name << " autocorrelations." << endl;
+
+        if(type_i == Numeric)
+        {
+            const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+
+            autocorrelations_vector = OpenNN::autocorrelations(thread_pool_device, current_input_i, new_lags_number);
+
+            for (Index j = 0; j < new_lags_number; j++)
+            {
+                autocorrelations (i, j) = autocorrelations_vector(j) ;
+            }
+        }
     }
 
     return autocorrelations;
 }
+
 
 
 /// Calculates the cross-correlation between all the variables in the data set.
@@ -9536,10 +9625,6 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     Tensor<type,3> cross_correlations(input_target_columns_number, input_target_columns_number, new_lags_number);
     Tensor<type, 1> cross_correlations_vector(new_lags_number);
 
-    // Variables to extract a vector:
-    Tensor<type, 2> cross_correlation_matrix;
-    Tensor<type, 1> cross_vector;
-
     for (Index i = 0; i < input_target_columns_number; i++)
     {
         const Index current_input_target_index_i = input_target_columns_indices(i);
@@ -9563,18 +9648,12 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                cross_correlations_vector = OpenNN::cross_correlations(this->thread_pool_device, current_input_i, current_input_j, new_lags_number);
+                cross_correlations_vector = OpenNN::cross_correlations(thread_pool_device, current_input_i, current_input_j, new_lags_number);
 
                 for (Index k = 0; k < new_lags_number; k++)
                 {
                     cross_correlations (i, j, k) = cross_correlations_vector(k) ;
                 }
-
-                // how to extract a lag vector:
-                // select the column of vectors
-                cross_correlation_matrix = cross_correlations.chip(0,1);
-                // select the vector from the column of vectors
-                cross_vector = cross_correlation_matrix.chip(0,0);
             }
             else
             {

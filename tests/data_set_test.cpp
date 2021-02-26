@@ -575,18 +575,23 @@ void DataSetTest::test_calculate_autocorrelations()
 {
     cout << "test_calculate_autocorrelations\n";
 
+    Tensor<type, 2> new_data(4,3);
+    new_data.setValues({{5,2,8}, {7,8,7}, {3,6,4}, {8,1,6}});
+
     DataSet data_set;
+    data_set.set_data(new_data);
+    data_set.set_lags_number(4);
+    data_set.set_steps_ahead_number(1);
+    data_set.transform_time_series();
 
     Tensor<type, 2> autocorrelations;
 
-    data_set.set(20, 1, 1);
+    autocorrelations = data_set.calculate_autocorrelations(data_set.get_lags_number());
 
-    data_set.set_data_random();
+    cout << "autocorrelation: " << endl <<  autocorrelations << endl;
 
-    autocorrelations = data_set.calculate_autocorrelations();
-
-    assert_true(autocorrelations.dimension(1) == 10, LOG);
-    assert_true(autocorrelations.dimension(0) == 2, LOG);
+//    assert_true(autocorrelations.dimension(1) == 10, LOG);
+//    assert_true(autocorrelations.dimension(0) == 2, LOG);
 }
 
 
@@ -612,9 +617,15 @@ void DataSetTest::test_calculate_cross_correlations()
 //    cout << "cross correlation (2): " << endl << cross_correlations.chip(2,2) << endl;
 //    cout << "cross correlation (3): " << endl << cross_correlations.chip(3,2) << endl;
 //    cout << "cross correlation (4): " << endl << cross_correlations.chip(4,2) << endl;
-    cout << "cross correlation: " << endl <<  cross_correlations << endl;
+//    cout << "cross correlation: " << endl <<  cross_correlations << endl;
 
-//    assert_true(cross_correlations.dimension(1) == 6, LOG);
+
+    //How to extract a lag vector:
+    Tensor<type, 2> cross_correlation_matrix;
+    Tensor<type, 1> cross_correlation_lag_vector;
+    cross_correlation_matrix = cross_correlations.chip(0,1);
+    cross_correlation_lag_vector = cross_correlation_matrix.chip(0,0);
+
 //    assert_true(cross_correlations.dimension(0) == 6, LOG);
 }
 
@@ -3392,7 +3403,8 @@ void DataSetTest::run_test_case()
    // test print data preview
    test_print_data_preview();
 */
-test_calculate_cross_correlations();
+   test_calculate_cross_correlations();
+   test_calculate_autocorrelations();
    cout << "End of data set test case.\n\n";
 }
 
