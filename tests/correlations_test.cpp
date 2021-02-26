@@ -397,7 +397,7 @@ void CorrelationsTest::test_autocorrelation()
 //    x.initialize_sequential();
     Tensor<type, 1> correlations;
 
-    correlations = autocorrelations(x, size/100);
+//    correlations = autocorrelations(x, size/100);
     //@todo(assert_true(minimum(correlations) > static_cast<type>(0.9), LOG);)
 }
 

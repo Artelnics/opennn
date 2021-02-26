@@ -401,7 +401,45 @@ type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>& x, 
 /// @param x Vector containing the data.
 /// @param lags_number Maximum lags number.
 
-Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const Index &lags_number)
+//Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const Index &lags_number)
+//{
+//    Tensor<type, 1> autocorrelation(lags_number);
+
+//    const Tensor<type, 0> mean = x.mean();
+
+//    const Index this_size = x.size();
+
+//    type numerator = 0;
+//    type denominator = 0;
+
+//    for(Index i = 0; i < lags_number; i++)
+//    {
+//        for(Index j = 0; j < this_size - i; j++)
+//        {
+//            numerator += ((x[j] - mean(0)) *(x[j + i] - mean(0))) /static_cast<type>(this_size - i);
+//        }
+//        for(Index j = 0; j < this_size; j++)
+//        {
+//            denominator += ((x[j] - mean(0)) *(x[j] - mean(0))) /static_cast<type>(this_size);
+//        }
+
+//        if(abs(denominator) < numeric_limits<type>::min())
+//        {
+//            autocorrelation[i] = 1.0;
+//        }
+//        else
+//        {
+//            autocorrelation[i] = numerator / denominator;
+//        }
+
+//        numerator = 0;
+//        denominator = 0;
+//    }
+
+//    return autocorrelation;
+//}
+
+Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Index &lags_number)
 {
     Tensor<type, 1> autocorrelation(lags_number);
 
@@ -409,31 +447,18 @@ Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const Index &lags_num
 
     const Index this_size = x.size();
 
-    type numerator = 0;
-    type denominator = 0;
-
-    for(Index i = 0; i < lags_number; i++)
+    for (Index i = 0; i < lags_number; i++)
     {
+        Tensor<type, 1> column_x(this_size-i);
+        Tensor<type, 1> column_y(this_size-i);
+
         for(Index j = 0; j < this_size - i; j++)
         {
-            numerator += ((x[j] - mean(0)) *(x[j + i] - mean(0))) /static_cast<type>(this_size - i);
-        }
-        for(Index j = 0; j < this_size; j++)
-        {
-            denominator += ((x[j] - mean(0)) *(x[j] - mean(0))) /static_cast<type>(this_size);
+            column_x[j] = x(j);
+            column_y[j] = x[j + i];
         }
 
-        if(abs(denominator) < numeric_limits<type>::min())
-        {
-            autocorrelation[i] = 1.0;
-        }
-        else
-        {
-            autocorrelation[i] = numerator / denominator;
-        }
-
-        numerator = 0;
-        denominator = 0;
+        autocorrelation[i] = linear_correlation(thread_pool_device, column_x, column_y, false);
     }
 
     return autocorrelation;
