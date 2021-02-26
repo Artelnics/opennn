@@ -30,6 +30,11 @@ QMAKE_LFLAGS += -static-libstdc++
 QMAKE_LFLAGS += -static
 }
 
+win32:!win32-g++{
+QMAKE_CXXFLAGS+= -arch:AVX
+QMAKE_CFLAGS+= -arch:AVX
+}
+
 # OpenNN library
 
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../opennn/release/ -lopennn

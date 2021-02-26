@@ -502,33 +502,33 @@ void SumSquaredErrorTest::test_calculate_error_gradient()
 
    // Test recurrent
 {
-    samples_number = 5;
-    inputs_number = 3;
-    hidden_neurons = 7;
-    outputs_number = 3;
+//    samples_number = 5;
+//    inputs_number = 3;
+//    hidden_neurons = 7;
+//    outputs_number = 3;
 
-    data_set.set(samples_number, inputs_number, outputs_number);
+//    data_set.set(samples_number, inputs_number, outputs_number);
 
-    data_set.set_data_random();
+//    data_set.set_data_random();
 
-    data_set.set_training();
+//    data_set.set_training();
 
-    neural_network.set();
+//    neural_network.set();
 
-    RecurrentLayer* recurrent_layer = new RecurrentLayer(inputs_number, hidden_neurons);
+//    RecurrentLayer* recurrent_layer = new RecurrentLayer(inputs_number, hidden_neurons);
 
-    recurrent_layer->initialize_hidden_states(0.0);
-    recurrent_layer->set_timesteps(10);
+//    recurrent_layer->initialize_hidden_states(0.0);
+//    recurrent_layer->set_timesteps(10);
 
-    neural_network.add_layer(recurrent_layer);
+//    neural_network.add_layer(recurrent_layer);
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(hidden_neurons,outputs_number);
+//    PerceptronLayer* perceptron_layer = new PerceptronLayer(hidden_neurons,outputs_number);
 
-    neural_network.add_layer(perceptron_layer);
+//    neural_network.add_layer(perceptron_layer);
 
-    neural_network.set_parameters_random();
+//    neural_network.set_parameters_random();
 
-    parameters = neural_network.get_parameters();
+//    parameters = neural_network.get_parameters();
 
 //    numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
@@ -914,15 +914,15 @@ void SumSquaredErrorTest::run_test_case()
 
    test_calculate_output_gradient();
 
-   test_calculate_Jacobian_gradient();
+   test_calculate_error_gradient();
 
+   test_calculate_Jacobian_gradient();
 
    // Error terms methods
 
    test_calculate_error_terms();
 
    test_calculate_error_terms_Jacobian();
-
 
    //Serialization methods
 

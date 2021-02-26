@@ -116,6 +116,10 @@ public:
 
    void set_batch_samples_number(const Index& new_batch_samples_number);
 
+   // Get methods
+
+   Index get_batch_samples_number() const;
+
    // Training operators
 
    void set_initial_learning_rate(const type&);

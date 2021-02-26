@@ -92,13 +92,9 @@ public:
             }
             else if(layer_pointer->get_type() == LongShortTermMemory) // LSTM
             {
-                combinations_1d.resize(neurons_number);
+                row_major_activations_3d.resize(batch_samples_number, neurons_number, 6);
 
-                activations_1d.resize(neurons_number);
-
-                activations_3d.resize(batch_samples_number, neurons_number, 6);
-
-                activations_derivatives_3d.resize(batch_samples_number, neurons_number, 6);
+                row_major_activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
             }
             else if(layer_pointer->get_type() == Probabilistic) // Probabilistic
             {
@@ -110,7 +106,6 @@ public:
                 activations_derivatives_4d.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);// @todo
             }
         }
-
 
         void print() const
         {
@@ -136,9 +131,6 @@ public:
 
         Layer* layer_pointer;
 
-        Tensor<type, 1> combinations_1d;
-        Tensor<type, 1> activations_1d;
-
         Tensor<type, 2> combinations_2d;
         Tensor<type, 2> activations_2d;
         Tensor<type, 2> activations_derivatives_2d;
@@ -147,6 +139,9 @@ public:
 
         Tensor<type, 3> activations_3d;
         Tensor<type, 3> activations_derivatives_3d;
+
+        Tensor<type, 3, RowMajor> row_major_activations_3d;
+        Tensor<type, 3, RowMajor> row_major_activations_derivatives_3d;
 
         Tensor<type, 4> combinations_4d;
         Tensor<type, 4> activations_4d;
@@ -165,9 +160,7 @@ public:
             set(new_batch_samples_number, new_layer_pointer);
         }
 
-
         virtual ~BackPropagation() {}
-
 
         void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         {
@@ -178,9 +171,39 @@ public:
             const Index neurons_number = layer_pointer->get_neurons_number();
             const Index inputs_number = layer_pointer->get_inputs_number();
 
-            biases_derivatives.resize(neurons_number);
+            const Layer::Type layer_type = layer_pointer->get_type();
 
-            synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+            if(layer_type == LongShortTermMemory)
+            {
+                forget_weights_derivatives.resize(inputs_number*neurons_number);
+                input_weights_derivatives.resize(inputs_number*neurons_number);
+                state_weights_derivatives.resize(inputs_number*neurons_number);
+                output_weights_derivatives.resize(inputs_number*neurons_number);
+
+                forget_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+                input_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+                state_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+                output_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+
+                forget_biases_derivatives.resize(neurons_number);
+                input_biases_derivatives.resize(neurons_number);
+                state_biases_derivatives.resize(neurons_number);
+                output_biases_derivatives.resize(neurons_number);
+            }
+            else if(layer_type == Recurrent)
+            {
+                biases_derivatives.resize(neurons_number);
+
+                input_weights_derivatives.resize(inputs_number*neurons_number);
+
+                recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+            }
+            else
+            {
+                biases_derivatives.resize(neurons_number);
+
+                synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+            }
 
             delta.resize(batch_samples_number, neurons_number);
         }
@@ -199,7 +222,31 @@ public:
 
         Tensor<type, 2> synaptic_weights_derivatives;
 
+        // LSTM
+
+        Tensor<type, 1> forget_weights_derivatives;
+        Tensor<type, 1> input_weights_derivatives;
+        Tensor<type, 1> state_weights_derivatives;
+        Tensor<type, 1> output_weights_derivatives;
+
+        Tensor<type, 1> forget_recurrent_weights_derivatives;
+        Tensor<type, 1> input_recurrent_weights_derivatives;
+        Tensor<type, 1> state_recurrent_weights_derivatives;
+        Tensor<type, 1> output_recurrent_weights_derivatives;
+
+        Tensor<type, 1> forget_biases_derivatives;
+        Tensor<type, 1> input_biases_derivatives;
+        Tensor<type, 1> state_biases_derivatives;
+        Tensor<type, 1> output_biases_derivatives;
+
+        // Recurrent
+
+        Tensor<type, 1> recurrent_weights_derivatives;
+
+        // Convolutional
+
         Tensor<type, 4> synaptic_weights_derivatives_4d;
+
     };
 
 
@@ -244,7 +291,7 @@ public:
 
     // Outputs
 
-    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&); // Cannot be const because of Recurrent and LSTM layers
 
     virtual Tensor<type, 2> calculate_outputs_from4D(const Tensor<type, 4>&) {return Tensor<type, 2>();}
 
@@ -253,11 +300,11 @@ public:
     virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
     virtual void calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
-    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const {}
-    virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const {}
+    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&)  {} // Cannot be const because of Recurrent and LSTM layers
+    virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&)  {}
 
-    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation&) const {}
-    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) const {}
+    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation&)  {}
+    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&)  {} // Cannot be const because of Recurrent and LSTM layers
 
     // Deltas
 
@@ -302,7 +349,6 @@ public:
     virtual string write_expression_c() const {return string();}
 
     virtual string write_expression_python() const {return string();}
-
 
 protected:
 

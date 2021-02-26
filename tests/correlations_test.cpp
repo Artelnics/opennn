@@ -397,7 +397,7 @@ void CorrelationsTest::test_autocorrelation()
 //    x.initialize_sequential();
     Tensor<type, 1> correlations;
 
-    correlations = autocorrelations(x, size/100);
+//    correlations = autocorrelations(x, size/100);
     //@todo(assert_true(minimum(correlations) > static_cast<type>(0.9), LOG);)
 }
 
@@ -415,7 +415,7 @@ void CorrelationsTest::test_cross_correlations()
 
     Tensor<type, 1> cros_correlations;
 
-    cros_correlations = cross_correlations(x, y, 10);
+//    cros_correlations = cross_correlations(x, y, 10);
     //@todo(assert_true(cros_correlations(0) < 5.0, LOG);)
     //@todo(assert_true(cros_correlations(1) > 0.9, LOG);)
 }

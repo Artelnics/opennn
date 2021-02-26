@@ -103,25 +103,16 @@ NeuralNetwork::~NeuralNetwork()
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
 
-    if(layer_pointer->get_type_string() == "Recurrent" || layer_pointer->get_type_string() == "LongShortTermMemory"){
-        ostringstream buffer;
+//    if(layer_pointer->get_type_string() == "Convolutional")
+//    {
+//        ostringstream buffer;
 
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "NeuralNetwork::add_layer() method.\n"
-               << "Long Short Term Memory Layer and Recurrent Layer are not available yet. Both of them will be included in future versions.\n";
+//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+//               << "NeuralNetwork::add_layer() method.\n"
+//               << "Convolutional Layer is not available yet. It will be included in future versions.!!\n";
 
-        throw logic_error(buffer.str());
-
-    }
-    if(layer_pointer->get_type_string() == "Convolutional"){
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "NeuralNetwork::add_layer() method.\n"
-               << "Convolutional Layer is not available yet. It will be included in future versions.!!\n";
-
-        throw logic_error(buffer.str());
-    }
+//        throw logic_error(buffer.str());
+//    }
 
     const Layer::Type layer_type = layer_pointer->get_type();
 
@@ -686,7 +677,6 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
 //        this->add_layer(long_short_term_memory_layer_pointer);
 
-
         RecurrentLayer* recurrent_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
         this->add_layer(recurrent_layer_pointer);
@@ -696,6 +686,8 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1], i);
 
             this->add_layer(perceptron_layer_pointer);
+
+            if(i == size-1) perceptron_layer_pointer->set_activation_function(PerceptronLayer::Linear);
         }
 
         UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(architecture[size-1]);
@@ -1375,14 +1367,12 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
     if(trainable_layers_pointers(0)->get_type() == Layer::Convolutional)
     {
-
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, forward_propagation.layers(0));
     }
     else
     {
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
     }
-
     for(Index i = 1; i < trainable_layers_number; i++)
     {
          trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
@@ -1428,7 +1418,6 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
         trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
                                                         potential_parameters,
                                                         forward_propagation.layers(i));
-
         index += parameters_number;
     }
 }

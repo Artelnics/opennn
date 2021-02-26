@@ -59,7 +59,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\opennn\opennn\Debug\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)opennn\Debug\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">opennn.dir\Debug\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">opennn</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
@@ -67,11 +67,11 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">opennn.dir\Release\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">opennn</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\opennn\opennn\MinSizeRel\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(SolutionDir)opennn\MinSizeRel\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">opennn.dir\MinSizeRel\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">opennn</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\opennn\opennn\RelWithDebInfo\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(SolutionDir)opennn\RelWithDebInfo\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">opennn.dir\RelWithDebInfo\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">opennn</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
@@ -122,6 +122,7 @@
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -200,50 +201,50 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="D:\opennn\opennn\adaptive_moment_estimation.cpp" />
-    <ClCompile Include="D:\opennn\opennn\bounding_layer.cpp" />
-    <ClCompile Include="D:\opennn\opennn\conjugate_gradient.cpp" />
-    <ClCompile Include="D:\opennn\opennn\convolutional_layer.cpp" />
-    <ClCompile Include="D:\opennn\opennn\correlations.cpp" />
-    <ClCompile Include="D:\opennn\opennn\cross_entropy_error.cpp" />
-    <ClCompile Include="D:\opennn\opennn\data_set.cpp" />
-    <ClCompile Include="D:\opennn\opennn\genetic_algorithm.cpp" />
-    <ClCompile Include="D:\opennn\opennn\gradient_descent.cpp" />
-    <ClCompile Include="D:\opennn\opennn\growing_inputs.cpp" />
-    <ClCompile Include="D:\opennn\opennn\growing_neurons.cpp" />
-    <ClCompile Include="D:\opennn\opennn\inputs_selection.cpp" />
-    <ClCompile Include="D:\opennn\opennn\layer.cpp" />
-    <ClCompile Include="D:\opennn\opennn\learning_rate_algorithm.cpp" />
-    <ClCompile Include="D:\opennn\opennn\levenberg_marquardt_algorithm.cpp" />
-    <ClCompile Include="D:\opennn\opennn\long_short_term_memory_layer.cpp" />
-    <ClCompile Include="D:\opennn\opennn\loss_index.cpp" />
-    <ClCompile Include="D:\opennn\opennn\mean_squared_error.cpp" />
-    <ClCompile Include="D:\opennn\opennn\minkowski_error.cpp" />
-    <ClCompile Include="D:\opennn\opennn\model_selection.cpp" />
-    <ClCompile Include="D:\opennn\opennn\neural_network.cpp" />
-    <ClCompile Include="D:\opennn\opennn\neurons_selection.cpp" />
-    <ClCompile Include="D:\opennn\opennn\normalized_squared_error.cpp" />
-    <ClCompile Include="D:\opennn\opennn\numerical_differentiation.cpp" />
-    <ClCompile Include="D:\opennn\opennn\opennn_strings.cpp" />
-    <ClCompile Include="D:\opennn\opennn\optimization_algorithm.cpp" />
-    <ClCompile Include="D:\opennn\opennn\perceptron_layer.cpp" />
-    <ClCompile Include="D:\opennn\opennn\pooling_layer.cpp" />
-    <ClCompile Include="D:\opennn\opennn\principal_components_layer.cpp" />
-    <ClCompile Include="D:\opennn\opennn\probabilistic_layer.cpp" />
-    <ClCompile Include="D:\opennn\opennn\pruning_inputs.cpp" />
-    <ClCompile Include="D:\opennn\opennn\quasi_newton_method.cpp" />
-    <ClCompile Include="D:\opennn\opennn\recurrent_layer.cpp" />
-    <ClCompile Include="D:\opennn\opennn\response_optimization.cpp" />
-    <ClCompile Include="D:\opennn\opennn\scaling_layer.cpp" />
-    <ClCompile Include="D:\opennn\opennn\statistics.cpp" />
-    <ClCompile Include="D:\opennn\opennn\stochastic_gradient_descent.cpp" />
-    <ClCompile Include="D:\opennn\opennn\sum_squared_error.cpp" />
-    <ClCompile Include="D:\opennn\opennn\testing_analysis.cpp" />
-    <ClCompile Include="D:\opennn\opennn\tinyxml2.cpp" />
-    <ClCompile Include="D:\opennn\opennn\training_strategy.cpp" />
-    <ClCompile Include="D:\opennn\opennn\unit_testing.cpp" />
-    <ClCompile Include="D:\opennn\opennn\unscaling_layer.cpp" />
-    <ClCompile Include="D:\opennn\opennn\weighted_squared_error.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\adaptive_moment_estimation.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\bounding_layer.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\conjugate_gradient.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\convolutional_layer.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\correlations.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\cross_entropy_error.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\data_set.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\genetic_algorithm.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\gradient_descent.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\growing_inputs.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\growing_neurons.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\inputs_selection.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\layer.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\learning_rate_algorithm.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\levenberg_marquardt_algorithm.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\long_short_term_memory_layer.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\loss_index.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\mean_squared_error.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\minkowski_error.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\model_selection.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\neural_network.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\neurons_selection.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\normalized_squared_error.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\numerical_differentiation.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\opennn_strings.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\optimization_algorithm.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\perceptron_layer.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\pooling_layer.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\principal_components_layer.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\probabilistic_layer.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\pruning_inputs.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\quasi_newton_method.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\recurrent_layer.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\response_optimization.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\scaling_layer.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\statistics.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\stochastic_gradient_descent.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\sum_squared_error.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\testing_analysis.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\tinyxml2.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\training_strategy.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\unit_testing.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\unscaling_layer.cpp" />
+    <ClCompile Include="$(SolutionDir)opennn\weighted_squared_error.cpp" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

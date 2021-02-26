@@ -46,6 +46,7 @@ public:
    void test_write_first_cell();
    void test_is_binary_classification();
    void test_is_multiple_classification();
+   void test_has_time_columns();
 
    // Data methods
 
@@ -55,6 +56,11 @@ public:
    void test_get_testing_data();
    void test_get_inputs();
    void test_get_targets();
+   void test_get_time_series_columns();
+   void test_get_time_series_columns_number();
+   void test_get_time_series_column_data();
+   void test_get_time_series_columns_names();
+   void test_get_time_series_data();
   
    // Sample methods
 
@@ -65,6 +71,11 @@ public:
    void test_set_samples_number();
    void test_set_columns_number();
    void test_set_display();
+   void test_set_lags_number();
+   void test_set_steps_ahead_number();
+   void test_set_time_series_data();
+   void test_save_time_series_data_binary();
+   void test_set_time_index();
 
    // Data methods
    void test_set_data();
@@ -204,7 +215,6 @@ public:
 
    //Trasform methods
 
-   void test_transform_columns_time_series();
    void test_transform_time_series();
    void test_convert_autoassociation();
 

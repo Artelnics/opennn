@@ -59,7 +59,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\opennn\tests\Debug\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)tests\Debug\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">tests.dir\Debug\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">tests</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
@@ -71,13 +71,13 @@
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\opennn\tests\MinSizeRel\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(SolutionDir)tests\MinSizeRel\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">tests.dir\MinSizeRel\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">tests</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\opennn\tests\RelWithDebInfo\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(SolutionDir)tests\RelWithDebInfo\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">tests.dir\RelWithDebInfo\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">tests</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
@@ -86,7 +86,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -103,10 +103,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -119,8 +119,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/tests/Debug/tests.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/tests/Debug/tests.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(SolutionDir)opennn/tests/Debug/tests.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(SolutionDir)opennn/tests/Debug/tests.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -129,7 +129,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ExceptionHandling>Sync</ExceptionHandling>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -143,13 +143,14 @@
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -162,8 +163,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/tests/Release/tests.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/tests/Release/tests.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(SolutionDir)opennn/tests/Release/tests.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(SolutionDir)opennn/tests/Release/tests.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -172,7 +173,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ExceptionHandling>Sync</ExceptionHandling>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
@@ -189,10 +190,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -205,8 +206,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/tests/MinSizeRel/tests.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/tests/MinSizeRel/tests.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(SolutionDir)opennn/tests/MinSizeRel/tests.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(SolutionDir)opennn/tests/MinSizeRel/tests.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -215,7 +216,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -231,10 +232,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\opennn\opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -247,8 +248,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>D:/opennn/tests/RelWithDebInfo/tests.lib</ImportLibrary>
-      <ProgramDataBaseFile>D:/opennn/tests/RelWithDebInfo/tests.pdb</ProgramDataBaseFile>
+      <ImportLibrary>$(SolutionDir)opennn/tests/RelWithDebInfo/tests.lib</ImportLibrary>
+      <ProgramDataBaseFile>$(SolutionDir)opennn/tests/RelWithDebInfo/tests.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -256,45 +257,45 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="D:\opennn\tests\bounding_layer_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\conjugate_gradient_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\convolutional_layer_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\correlations_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\cross_entropy_error_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\data_set_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\genetic_algorithm_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\gradient_descent_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\growing_inputs_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\growing_neurons_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\inputs_selection_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\learning_rate_algorithm_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\levenberg_marquardt_algorithm_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\long_short_term_memory_layer_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\main.cpp" />
-    <ClCompile Include="D:\opennn\tests\mean_squared_error_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\minkowski_error_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\model_selection_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\neural_network_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\neurons_selection_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\normalized_squared_error_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\numerical_differentiation_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\perceptron_layer_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\pooling_layer_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\probabilistic_layer_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\pruning_inputs_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\quasi_newton_method_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\recurrent_layer_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\scaling_layer_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\statistics_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\stochastic_gradient_descent_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\sum_squared_error_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\testing_analysis_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\training_strategy_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\unscaling_layer_test.cpp" />
-    <ClCompile Include="D:\opennn\tests\weighted_squared_error_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\bounding_layer_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\conjugate_gradient_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\convolutional_layer_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\correlations_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\cross_entropy_error_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\data_set_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\genetic_algorithm_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\gradient_descent_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\growing_inputs_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\growing_neurons_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\inputs_selection_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\learning_rate_algorithm_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\levenberg_marquardt_algorithm_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\long_short_term_memory_layer_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\main.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\mean_squared_error_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\minkowski_error_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\model_selection_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\neural_network_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\neurons_selection_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\normalized_squared_error_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\numerical_differentiation_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\perceptron_layer_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\pooling_layer_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\probabilistic_layer_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\pruning_inputs_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\quasi_newton_method_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\recurrent_layer_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\scaling_layer_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\statistics_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\stochastic_gradient_descent_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\sum_squared_error_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\testing_analysis_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\training_strategy_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\unscaling_layer_test.cpp" />
+    <ClCompile Include="$(SolutionDir)tests\weighted_squared_error_test.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="D:\opennn\opennn\opennn.vcxproj">
+    <ProjectReference Include="$(SolutionDir)opennn\opennn.vcxproj">
       <Project>{A5934342-EC2A-3802-9EB9-E4FEE67B54F2}</Project>
       <Name>opennn</Name>
     </ProjectReference>
