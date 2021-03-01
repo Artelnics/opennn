@@ -26,7 +26,7 @@
 namespace OpenNN
 {
 
-/// This class is used to optimize model response identify the combinations_2d of variable settings jointly optimize a set of responses.
+/// This class is used to optimize model response identify the combinations of variable settings jointly optimize a set of responses.
 
 ///
 /// This tool is adequate when you need to know the behaviour of a multiple variables on a response
