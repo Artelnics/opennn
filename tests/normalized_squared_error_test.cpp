@@ -189,7 +189,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-/*
+
    // Test trivial
 {
    samples_number = 10;
@@ -198,7 +198,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set(samples_number, inputs_number, outputs_number);
    data_set.initialize_data(0.0);
-   data_set.set_training();º
+   data_set.set_training();
 
    DataSet::Batch batch(samples_number, &data_set);
 
@@ -232,7 +232,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 }
 
    neural_network.set();
-
+/*
    // Test perceptron and probabilistic
 {
 

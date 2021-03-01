@@ -150,25 +150,8 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 
 Tensor<type, 1> PerceptronLayer:: get_parameters() const
 {
-//    Eigen::array<Index, 1> one_dim_weight{{synaptic_weights.dimension(0)*synaptic_weights.dimension(1)}};
-
-//    Eigen::array<Index, 1> one_dim_bias{{biases.dimension(0)*biases.dimension(1)}};
-
-//    Tensor<type, 1> synaptic_weights_vector = synaptic_weights.reshape(one_dim_weight);
-
-//    Tensor<type, 1> biases_vector = biases.reshape(one_dim_bias);
-
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
-/*
-    for(Index i = 0; i < biases_vector.size(); i++)
-    {
-        fill_n(parameters.data()+i, 1, biases_vector(i));
-    }
-    for(Index i = 0; i < synaptic_weights_vector.size(); i++)
-    {
-        fill_n(parameters.data()+ biases_vector.size() +i, 1, synaptic_weights_vector(i));
-    }
-*/
+
     for(Index i = 0; i < biases.size(); i++)
     {
         fill_n(parameters.data()+i, 1, biases(i));
@@ -713,20 +696,6 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 }
 
 
-
-void PerceptronLayer::forward_propagate(const DataSet::Batch&,
-                      ForwardPropagation*)
-{
-
-}
-
-void PerceptronLayer::forward_propagate(const ForwardPropagation*,
-                       ForwardPropagation*)
-{
-
-}
-
-
 void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                         ForwardPropagation* forward_propagation)
 {
@@ -876,33 +845,34 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(Layer* next_layer_poi
 
 void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                                ForwardPropagation*,
-                                               Layer::BackPropagation& back_propagation) const
+                                               Layer::BackPropagation* back_propagation) const
 {
-    /*
-    back_propagation.biases_derivatives.device(*thread_pool_device)
-            = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
+    PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
+            static_cast<PerceptronLayerBackPropagation*>(back_propagation);
 
-    back_propagation.synaptic_weights_derivatives.device(*thread_pool_device)
-            = inputs.contract(back_propagation.delta, AT_B);
-            */
+    perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device)
+            = perceptron_layer_back_propagation->delta.sum(Eigen::array<Index, 1>({0}));
 
+    perceptron_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device)
+            = inputs.contract(perceptron_layer_back_propagation->delta, AT_B);
 }
 
 
-void PerceptronLayer::insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const
+void PerceptronLayer::insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {
-    /*
+    PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
+            static_cast<PerceptronLayerBackPropagation*>(back_propagation);
+
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
     memcpy(gradient.data() + index,
-           back_propagation.biases_derivatives.data(),
+           perceptron_layer_back_propagation->biases_derivatives.data(),
            static_cast<size_t>(biases_number)*sizeof(type));
 
     memcpy(gradient.data() + index + biases_number,
-           back_propagation.synaptic_weights_derivatives.data(),
+           perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-           */
 }
 
 

@@ -141,7 +141,7 @@ public:
 
     void set_threads_number(const int&);
 
-    virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) const {}
+    virtual void insert_gradient(BackPropagation*, const Index&, Tensor<type, 1>&) const {}
 
     // Outputs
 
@@ -151,11 +151,8 @@ public:
 
     virtual Tensor<type, 4> calculate_outputs_4D(const Tensor<type, 4>&) {return Tensor<type, 4>();}
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation&) const {}
-    virtual void calculate_error_gradient(const Tensor<type, 4>&, ForwardPropagation*, Layer::BackPropagation&) const {}
-
-    virtual void forward_propagate(const DataSet::Batch&, ForwardPropagation*) {}
-    virtual void forward_propagate(const ForwardPropagation*, ForwardPropagation*) {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation*) const {}
+    virtual void calculate_error_gradient(const Tensor<type, 4>&, ForwardPropagation*, Layer::BackPropagation*) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*)  {} // Cannot be const because of Recurrent and LSTM layers
     virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation*)  {}

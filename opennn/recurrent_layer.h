@@ -243,13 +243,13 @@ public:
 
    // Gradient
 
-   void insert_gradient(const BackPropagation&, const Index& , Tensor<type, 1>&) const;
+   void insert_gradient(BackPropagation*, const Index& , Tensor<type, 1>&) const;
 
-   void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation&) const;
+   void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation*) const;
 
-   void calculate_biases_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation&) const;
-   void calculate_input_weights_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation&) const;
-   void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation&) const;
+   void calculate_biases_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, RecurrentLayerBackPropagation*) const;
+   void calculate_input_weights_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, RecurrentLayerBackPropagation*) const;
+   void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, RecurrentLayerBackPropagation*) const;
 
    // Expression methods
 

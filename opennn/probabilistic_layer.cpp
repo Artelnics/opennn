@@ -186,18 +186,7 @@ const Tensor<type, 2>& ProbabilisticLayer::get_synaptic_weights() const
 Tensor<type, 2> ProbabilisticLayer::get_biases(Tensor<type, 1>& parameters) const
 {
     const Index neurons_number = get_neurons_number();
-/*
-    Tensor<type, 2> bias_tensor(1, biases_number);
 
-    Index index = parameters.size()-1;
-
-    for(Index i = 0; i < biases_number; i++)
-    {
-        bias_tensor(0, i) = parameters(index);
-
-        index--;
-    }
-    */
     const TensorMap < Tensor<type, 2> > bias_tensor(parameters.data(),  1, neurons_number);
 
     return bias_tensor;
@@ -212,16 +201,7 @@ Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(Tensor<type, 1>& parame
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
     const Index biases_number = get_biases_number();
-/*
-    const Index synaptic_weights_number = synaptic_weights.size();
 
-    Tensor<type, 2> synaptic_weights_tensor(inputs_number, neurons_number);
-
-    for(Index i = 0; i < synaptic_weights_number; i++)
-    {
-        synaptic_weights_tensor(i) = parameters(i);
-    }
-*/
     const TensorMap< Tensor<type, 2> > synaptic_weights_tensor(parameters.data()+biases_number, inputs_number, neurons_number);
 
     return  synaptic_weights_tensor;
@@ -242,27 +222,8 @@ Index ProbabilisticLayer::get_parameters_number() const
 
 Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 {
-
-//    Eigen::array<Index, 1> one_dim_weight{{synaptic_weights.dimension(0)*synaptic_weights.dimension(1)}};
-
-//    Eigen::array<Index, 1> one_dim_bias{{biases.dimension(0)*biases.dimension(1)}};
-
-//    Tensor<type, 1> synaptic_weights_vector = synaptic_weights.reshape(one_dim_weight);
-
-//    Tensor<type, 1> biases_vector = biases.reshape(one_dim_bias);
-
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
-/*
-    for(Index i = 0; i < biases_vector.size(); i++)
-    {
-        fill_n(parameters.data()+i, 1, biases_vector(i));
-    }
 
-    for(Index i = 0; i < synaptic_weights_vector.size(); i++)
-    {
-        fill_n(parameters.data()+ biases_vector.size() +i, 1, synaptic_weights_vector(i));
-    }
-*/
     for(Index i = 0; i < biases.size(); i++)
     {
         fill_n(parameters.data()+i, 1, biases(i));
@@ -355,31 +316,7 @@ void ProbabilisticLayer::set_synaptic_weights(const Tensor<type, 2>& new_synapti
 
 
 void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
-{/*
-    const Index neurons_number = get_neurons_number();
-    const Index inputs_number = get_inputs_number();
-
-    const Index parameters_number = get_parameters_number();
-
-#ifdef __OPENNN_DEBUG__
-
-    const Index new_parameters_size = new_parameters.size();
-
-    if(new_parameters_size != parameters_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void set_parameters(const Tensor<type, 1>&) method.\n"
-               << "Size of new parameters ("
-               << new_parameters_size << ") must be equal to number of parameters ("
-               << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-*/
+{
     const Index biases_number = biases.size();
     const Index synaptic_weights_number = synaptic_weights.size();
 
@@ -631,7 +568,6 @@ void ProbabilisticLayer::set_synaptic_weights_glorot()
     scale /= ((fan_in + fan_out) / static_cast<type>(2.0));
     limit = sqrt(static_cast<type>(3.0) * scale);
 
-//    biases.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
     biases.setZero();
 
     synaptic_weights.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
@@ -640,7 +576,7 @@ void ProbabilisticLayer::set_synaptic_weights_glorot()
     Eigen::Tensor<type, 0> max_weight = synaptic_weights.maximum();
 
     synaptic_weights = (synaptic_weights - synaptic_weights.constant(min_weight(0))) / (synaptic_weights.constant(max_weight(0))- synaptic_weights.constant(min_weight(0)));
-    synaptic_weights = (synaptic_weights * synaptic_weights.constant(2. * limit)) - synaptic_weights.constant(limit);
+    synaptic_weights = (synaptic_weights * synaptic_weights.constant(static_cast<type>(2) * limit)) - synaptic_weights.constant(limit);
 }
 
 void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, const Index& )
@@ -914,30 +850,35 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation* forward_prop
 
 void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                                   Layer::ForwardPropagation*,
-                                                  Layer::BackPropagation& back_propagation) const
+                                                  Layer::BackPropagation* back_propagation) const
 {
-    /*
-    back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
+    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+            static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
 
-    back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, AT_B);
-    */
+
+    probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
+            probabilistic_layer_back_propagation->delta.sum(Eigen::array<Index, 1>({0}));
+
+    probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
+            inputs.contract(probabilistic_layer_back_propagation->delta, AT_B);
 }
 
 
-void ProbabilisticLayer::insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const
+void ProbabilisticLayer::insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
-/*
+
+    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+            static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
+
     memcpy(gradient.data() + index,
-           back_propagation.biases_derivatives.data(),
+           probabilistic_layer_back_propagation->biases_derivatives.data(),
            static_cast<size_t>(biases_number)*sizeof(type));
 
     memcpy(gradient.data() + index + biases_number,
-           back_propagation.synaptic_weights_derivatives.data(),
+           probabilistic_layer_back_propagation->synaptic_weights_derivatives.data(),
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-
-    */
 }
 
 
