@@ -199,12 +199,6 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   void forward_propagate(const DataSet::Batch&,
-                          ForwardPropagation*);
-
-   void forward_propagate(const ForwardPropagation*,
-                          ForwardPropagation*);
-
    void forward_propagate(const Tensor<type, 2>& inputs,
                           ForwardPropagation* forward_propagation);
 
@@ -238,9 +232,9 @@ public:
 
    void calculate_error_gradient(const Tensor<type, 2>& inputs,
                                  ForwardPropagation*,
-                                 BackPropagation& back_propagation) const;
+                                 BackPropagation* back_propagation) const;
 
-   void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
+   void insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
    // Expression methods   
 

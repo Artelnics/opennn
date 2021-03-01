@@ -1678,9 +1678,9 @@ void NeuralNetworkTest::test_forward_propagate()
 
     neural_network.forward_propagate(batch, forward_propagation);
 
-    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0].combinations_2d;
+    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0]->combinations_2d;
 
-    Tensor<type, 2>perceptron_activations = forward_propagation.layers[0].activations_2d;
+    Tensor<type, 2>perceptron_activations = forward_propagation.layers[0]->activations_2d;
 
     assert_true(perceptron_combinations.dimension(0) == 5, LOG);
     assert_true(abs(perceptron_combinations(0,0) - 3) < static_cast<type>(1e-3)
