@@ -46,8 +46,8 @@ void SumSquaredError::calculate_error(const DataSet::Batch& batch,
     Tensor<type, 0> sum_squared_error;
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+/*
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
     const Tensor<type, 2>& targets = batch.targets_2d;
 
     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
@@ -55,7 +55,7 @@ void SumSquaredError::calculate_error(const DataSet::Batch& batch,
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
     back_propagation.error = sum_squared_error(0);
-
+*/
     return;
 }
 
@@ -65,8 +65,8 @@ void SumSquaredError::calculate_error_terms(const DataSet::Batch& batch,
                                             SecondOrderLoss& second_order_loss) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+/*
+    const Tensor<type, 2>& outputs;// = forward_propagation.layers(trainable_layers_number-1)->activations;
     const Tensor<type, 2>& targets = batch.targets_2d;
 
     second_order_loss.error_terms.resize(outputs.dimension(0));
@@ -78,6 +78,7 @@ void SumSquaredError::calculate_error_terms(const DataSet::Batch& batch,
     error.device(*thread_pool_device) = second_order_loss.error_terms.contract(second_order_loss.error_terms, AT_B);
 
     second_order_loss.error = error();
+    */
 }
 
 
@@ -90,18 +91,18 @@ void SumSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
      check();
 
      #endif
-
+/*
      const type coefficient = static_cast<type>(2.0);
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
      const Tensor<type, 2>& targets = batch.targets_2d;
 
      back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
      back_propagation.output_gradient.device(*thread_pool_device) = coefficient*back_propagation.errors;
-
+*/
 }
 
 void SumSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& ,

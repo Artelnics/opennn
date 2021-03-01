@@ -80,9 +80,6 @@ public:
         Tensor<type, 1> potential_parameters;
         Tensor<type, 1> training_direction;
         type initial_learning_rate = 0;
-
-
-
     };
 
    /// This structure contains the optimization algorithm results.    

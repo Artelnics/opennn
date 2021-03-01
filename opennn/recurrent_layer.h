@@ -36,6 +36,65 @@ class RecurrentLayer : public Layer
 
 public:
 
+    struct RecurrentLayerForwardPropagation : Layer::ForwardPropagation
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        explicit RecurrentLayerForwardPropagation(Layer* new_layer_pointer) : ForwardPropagation(new_layer_pointer)
+        {
+        }
+
+        void set(const Index& new_batch_samples_number)
+        {
+            batch_samples_number = new_batch_samples_number;
+
+            const Index neurons_number = layer_pointer->get_neurons_number();
+
+            combinations.resize(batch_samples_number, neurons_number);
+
+            activations.resize(batch_samples_number, neurons_number);
+
+            activations_derivatives.resize(batch_samples_number, neurons_number);
+        }
+
+        Tensor<type, 2> combinations;
+        Tensor<type, 2> activations;
+        Tensor<type, 2> activations_derivatives;
+    };
+
+    struct RecurrentLayerBackPropagation : Layer::BackPropagation
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
+
+        explicit RecurrentLayerBackPropagation(Layer* new_layer_pointer) : BackPropagation(new_layer_pointer)
+        {
+
+        }
+
+        void set(const Index& new_batch_samples_number)
+        {
+            batch_samples_number = new_batch_samples_number;
+
+            biases_derivatives.resize(neurons_number);
+
+            input_weights_derivatives.resize(inputs_number*neurons_number);
+
+            recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+
+            delta.resize(batch_samples_number, neurons_number);
+        }
+
+
+        Tensor<type, 1> biases_derivatives;
+
+        Tensor<type, 1> input_weights_derivatives;
+
+        Tensor<type, 1> recurrent_weights_derivatives;
+
+        Tensor<type, 2> delta;
+    };
+
     /// Enumeration of the available activation functions for the recurrent layer.
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent,
@@ -139,7 +198,7 @@ public:
 
    void set_parameters_random();
 
-   // neuron layer combinations_2d
+   // neuron layer combinations
 
    void calculate_combinations(const Tensor<type, 1>&,
                                const Tensor<type, 2>&,
@@ -159,17 +218,16 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation& );
+   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation* );
 
-   void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, ForwardPropagation&);
+   void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, ForwardPropagation*);
 
-   void calculate_output_delta(ForwardPropagation&,
+   void calculate_output_delta(ForwardPropagation*,
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
    void calculate_hidden_delta(Layer* next_layer_pointer,
-                               const Tensor<type, 2>&,
-                               ForwardPropagation& forward_propagation,
+                               ForwardPropagation* forward_propagation,
                                const Tensor<type, 2>& next_layer_delta,
                                Tensor<type, 2>& hidden_delta) const;
 
@@ -187,11 +245,11 @@ public:
 
    void insert_gradient(const BackPropagation&, const Index& , Tensor<type, 1>&) const;
 
-   void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
+   void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation&) const;
 
-   void calculate_biases_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
-   void calculate_input_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
-   void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
+   void calculate_biases_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation&) const;
+   void calculate_input_weights_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation&) const;
+   void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation&) const;
 
    // Expression methods
 

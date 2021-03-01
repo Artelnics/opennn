@@ -36,6 +36,80 @@ class LongShortTermMemoryLayer : public Layer
 
 public:
 
+    struct LongShortTermMemoryLayerForwardPropagation : Layer::ForwardPropagation
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        explicit LongShortTermMemoryLayerForwardPropagation(Layer* new_layer_pointer) : ForwardPropagation(new_layer_pointer)
+        {
+        }
+
+        void set(const Index& new_batch_samples_number)
+        {
+            batch_samples_number = new_batch_samples_number;
+
+            combinations.resize(batch_samples_number, neurons_number);
+
+            activations.resize(batch_samples_number, neurons_number);
+
+            row_major_activations_3d.resize(batch_samples_number, neurons_number, 6);
+
+            row_major_activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
+        }
+
+        Tensor<type, 2> combinations;
+        Tensor<type, 2> activations;
+
+        Tensor<type, 3, RowMajor> row_major_activations_3d;
+        Tensor<type, 3, RowMajor> row_major_activations_derivatives_3d;
+    };
+
+
+    struct LongShortTermMemoryLayerBackPropagation : Layer::BackPropagation
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
+
+        explicit LongShortTermMemoryLayerBackPropagation(Layer* new_layer_pointer) : BackPropagation(new_layer_pointer)
+        {
+        }
+
+        void set(const Index& new_batch_samples_number)
+        {
+            batch_samples_number = new_batch_samples_number;
+
+            forget_weights_derivatives.resize(inputs_number*neurons_number);
+            input_weights_derivatives.resize(inputs_number*neurons_number);
+            state_weights_derivatives.resize(inputs_number*neurons_number);
+            output_weights_derivatives.resize(inputs_number*neurons_number);
+
+            forget_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+            input_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+            state_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+            output_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+
+            forget_biases_derivatives.resize(neurons_number);
+            input_biases_derivatives.resize(neurons_number);
+            state_biases_derivatives.resize(neurons_number);
+            output_biases_derivatives.resize(neurons_number);
+        }
+
+        Tensor<type, 1> forget_weights_derivatives;
+        Tensor<type, 1> input_weights_derivatives;
+        Tensor<type, 1> state_weights_derivatives;
+        Tensor<type, 1> output_weights_derivatives;
+
+        Tensor<type, 1> forget_recurrent_weights_derivatives;
+        Tensor<type, 1> input_recurrent_weights_derivatives;
+        Tensor<type, 1> state_recurrent_weights_derivatives;
+        Tensor<type, 1> output_recurrent_weights_derivatives;
+
+        Tensor<type, 1> forget_biases_derivatives;
+        Tensor<type, 1> input_biases_derivatives;
+        Tensor<type, 1> state_biases_derivatives;
+        Tensor<type, 1> output_biases_derivatives;
+    };
+
     /// Enumeration of available activation functions for the long-short term memory layer.
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent,
@@ -173,7 +247,7 @@ public:
 
    void set_parameters_random();
 
-   // Long short term memory layer combinations_2d
+   // Long short term memory layer combinations
 
    void calculate_forget_combinations(const Tensor<type, 1>& ,
                                       const Tensor<type, 2>& ,
@@ -217,85 +291,82 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   void calculate_output_delta(ForwardPropagation&,
+   void calculate_output_delta(ForwardPropagation*,
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
    void calculate_hidden_delta(Layer*,
-                               const Tensor<type, 2>&,
-                               ForwardPropagation&,
+                               ForwardPropagation*,
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
    void calculate_hidden_delta_perceptron(Layer* ,
                                           const Tensor<type, 2>& ,
-                                          const Tensor<type, 2>& ,
                                           Tensor<type, 2>& ) const;
 
    void calculate_hidden_delta_probabilistic(Layer* ,
-                                          const Tensor<type, 2>& ,
                                           const Tensor<type, 2>& ,
                                           Tensor<type, 2>& ) const;
 
 
    // Forward propagate
 
-   void forward_propagate(const Tensor<type, 2>& , ForwardPropagation&);
+   void forward_propagate(const Tensor<type, 2>& , ForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 2>& , Tensor<type, 1>, ForwardPropagation&);
+   void forward_propagate(const Tensor<type, 2>& , Tensor<type, 1>, ForwardPropagation*);
 
    // Eror gradient
 
    void insert_gradient(const BackPropagation&, const Index& , Tensor<type, 1>&) const;
 
-   void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const;
+   void calculate_error_gradient(const Tensor<type, 2>&, Layer::ForwardPropagation*, Layer::BackPropagation&) const;
 
    void calculate_forget_weights_error_gradient(const Tensor<type, 2>&,
-                                                const Layer::ForwardPropagation&,
+                                                ForwardPropagation*,
                                                 Layer::BackPropagation&) const;
 
    void calculate_input_weights_error_gradient(const Tensor<type, 2>&,
-                                               const Layer::ForwardPropagation&,
+                                               ForwardPropagation*,
                                                Layer::BackPropagation&) const;
 
    void calculate_state_weights_error_gradient(const Tensor<type, 2>&,
-                                               const Layer::ForwardPropagation&,
+                                               ForwardPropagation*,
                                                Layer::BackPropagation&) const;
 
    void calculate_output_weights_error_gradient(const Tensor<type, 2>&,
-                                                const Layer::ForwardPropagation&,
+                                                ForwardPropagation*,
                                                 Layer::BackPropagation&) const;
 
    void calculate_forget_recurrent_weights_error_gradient(const Tensor<type, 2>&,
-                                                          const Layer::ForwardPropagation&,
+                                                          ForwardPropagation*,
                                                           Layer::BackPropagation&) const;
 
    void calculate_input_recurrent_weights_error_gradient(const Tensor<type, 2>&,
-                                                         const Layer::ForwardPropagation&,
+                                                         ForwardPropagation*,
                                                          Layer::BackPropagation&) const;
 
    void calculate_state_recurrent_weights_error_gradient(const Tensor<type, 2>&,
-                                                         const Layer::ForwardPropagation&,
+                                                         ForwardPropagation*,
                                                          Layer::BackPropagation&) const;
 
    void calculate_output_recurrent_weights_error_gradient(const Tensor<type, 2>&,
-                                                          const Layer::ForwardPropagation&,
+                                                          ForwardPropagation*,
                                                           Layer::BackPropagation&) const;
 
    void calculate_forget_biases_error_gradient(const Tensor<type, 2>&,
-                                               const Layer::ForwardPropagation&,
+                                               ForwardPropagation*,
                                                Layer::BackPropagation&) const;
 
    void calculate_input_biases_error_gradient(const Tensor<type, 2>&,
-                                              const Layer::ForwardPropagation&,
+                                              ForwardPropagation*,
                                               Layer::BackPropagation&) const;
 
    void calculate_state_biases_error_gradient(const Tensor<type, 2>&,
-                                              const Layer::ForwardPropagation&,
+                                              ForwardPropagation*,
                                               Layer::BackPropagation&) const;
 
    void calculate_output_biases_error_gradient(const Tensor<type, 2>&,
-                                               const Layer::ForwardPropagation&,
+                                               ForwardPropagation*,
                                                Layer::BackPropagation&) const;
 
    // Expression methods
