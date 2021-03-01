@@ -393,7 +393,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
     error_terms_Jacobian.setZero();
 
     Index index = 0;
-
+/*
     const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs);
 
     memcpy(error_terms_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
@@ -401,13 +401,14 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
     index += layers_parameters_number[0]*samples_number;
 
     for(Index i = 1; i < layers_number; i++)
-    {
+    {/*
         const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(i).delta,
-                                                                                 forward_propagation.layers(i-1).activations_2d);
+                                                                                 forward_propagation.layers(i-1)->activations);
         memcpy(error_terms_Jacobian.data() + index, error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
         index += layers_parameters_number[i]*samples_number;
-    }
+        */
+//    }
 
     second_order_loss.error_terms_Jacobian = error_terms_Jacobian;
 }
@@ -537,22 +538,22 @@ void LossIndex::calculate_error_terms_output_gradient(const DataSet::Batch& batc
 {
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+/*
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
 
     const Tensor<type, 2>& targets = batch.targets_2d;
-
+*/
     // Gives Eigen error in debug
 
 #ifndef __OPENNN_DEBUG__
 
 //     back_propagation.output_gradient.device(*thread_pool_device) = (outputs-targets)/second_order_loss.error_terms;
-
+/*
     back_propagation.output_gradient = (outputs-targets);
 
     for(Index i = 0; i < back_propagation.output_gradient.dimension(0); i++)
         back_propagation.output_gradient(i) /= second_order_loss.error_terms(i);
-
+*/
 #else
 
     back_propagation.output_gradient = (outputs-targets);
@@ -684,11 +685,66 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
 
      // Output layer
 
-     trainable_layers_pointers(trainable_layers_number-1)
-     ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-                              back_propagation.output_gradient,
-                              back_propagation.neural_network.layers(trainable_layers_number-1).delta);
+     switch(back_propagation.neural_network.layers(trainable_layers_number-1)->layer_pointer->get_type())
+     {
+     case Layer::Perceptron:
+     {
+         trainable_layers_pointers(trainable_layers_number-1)
+         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
+                                  back_propagation.output_gradient,
+                                  static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
+     }
+         break;
+     case Layer::Probabilistic:
+     {
+         trainable_layers_pointers(trainable_layers_number-1)
+         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
+                                  back_propagation.output_gradient,
+                                  static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
+     }
+         break;
+     case Layer::Recurrent:
+     {
+         trainable_layers_pointers(trainable_layers_number-1)
+         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
+                                  back_propagation.output_gradient,
+                                  static_cast<RecurrentLayer::RecurrentLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
+     }
+         break;
+     case Layer::LongShortTermMemory:
+     {
+         trainable_layers_pointers(trainable_layers_number-1)
+         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
+                                  back_propagation.output_gradient,
+                                  static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
 
+     }
+         break;
+     case Layer::Convolutional:
+     {
+//         trainable_layers_pointers(trainable_layers_number-1)
+//         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
+//                                  back_propagation.output_gradient,
+//                                  static_cast<ConvolutionalLayer::ConvolutionalLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
+     }
+         break;
+     case Layer::Pooling:
+     {
+
+     }
+         break;
+
+     default: break;
+     }
+
+
+//     trainable_layers_pointers(trainable_layers_number-1)
+//     ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
+//                              back_propagation.output_gradient,
+//                              back_propagation.neural_network.layers(trainable_layers_number-1).delta);
+
+
+/*
      // Hidden layers
 
    for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
@@ -697,14 +753,12 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
 
        trainable_layers_pointers(i)
        ->calculate_hidden_delta(previous_layer_pointer,
-                                forward_propagation.layers(i).activations_2d,
                                 forward_propagation.layers(i),
                                 back_propagation.neural_network.layers(i+1).delta,
                                 back_propagation.neural_network.layers(i).delta);
 
    }
-
-
+   */
 }
 
 
@@ -724,7 +778,7 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
     const Tensor<Index, 1> trainable_layers_parameters_number
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
-
+/*
     if(trainable_layers_pointers(0)->get_type() == Layer::Convolutional)
     {
         trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_4d,
@@ -745,10 +799,10 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
                                                   back_propagation.gradient);
 
     index += trainable_layers_parameters_number(0);
-
+*/
     for(Index i = 1; i < trainable_layers_number; i++)
-    {
-        trainable_layers_pointers(i)->calculate_error_gradient(forward_propagation.layers(i-1).activations_2d,
+    {/*
+        trainable_layers_pointers(i)->calculate_error_gradient(forward_propagation.layers(i-1)->activations,
                                                                forward_propagation.layers(i-1),
                                                                back_propagation.neural_network.layers(i));
 
@@ -757,7 +811,9 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
                                                       back_propagation.gradient);
 
         index += trainable_layers_parameters_number(i);
+        */
     }
+
 }
 
 

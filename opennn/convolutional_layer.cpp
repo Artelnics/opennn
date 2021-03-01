@@ -255,39 +255,41 @@ void ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs, Tensor
 }
 
 
-void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, ForwardPropagation &forward_propagation)
+void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, ForwardPropagation* forward_propagation)
 {
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+
     const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
 
-    forward_propagation.combinations_4d.resize(outputs_dimensions(0),
+    convolutional_layer_forward_propagation->combinations_4d.resize(outputs_dimensions(0),
                                                outputs_dimensions(1),
                                                outputs_dimensions(2),
                                                outputs_dimensions(3));
 
-    forward_propagation.activations_4d.resize(outputs_dimensions(0),
+    convolutional_layer_forward_propagation->activations_4d.resize(outputs_dimensions(0),
                                               outputs_dimensions(1),
                                               outputs_dimensions(2),
                                               outputs_dimensions(3));
 
-    forward_propagation.activations_derivatives_4d.resize(outputs_dimensions(0),
+    convolutional_layer_forward_propagation->activations_derivatives_4d.resize(outputs_dimensions(0),
                                                           outputs_dimensions(1),
                                                           outputs_dimensions(2),
                                                           outputs_dimensions(3));
 
     calculate_combinations(inputs,
-                           forward_propagation.combinations_4d);
+                           convolutional_layer_forward_propagation->combinations_4d);
 
-    calculate_activations_derivatives(forward_propagation.combinations_4d,
-                                      forward_propagation.activations_4d,
-                                      forward_propagation.activations_derivatives_4d);
+    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations_4d,
+                                      convolutional_layer_forward_propagation->activations_4d,
+                                      convolutional_layer_forward_propagation->activations_derivatives_4d);
 
-    to_2d(forward_propagation.combinations_4d, forward_propagation.combinations_2d);
-    to_2d(forward_propagation.activations_4d, forward_propagation.activations_2d);
-    to_2d(forward_propagation.activations_derivatives_4d, forward_propagation.activations_derivatives_2d);
+    to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);
+    to_2d(convolutional_layer_forward_propagation->activations_4d, convolutional_layer_forward_propagation->activations);
+//    to_2d(convolutional_layer_forward_propagation->activations_derivatives_4d, convolutional_layer_forward_propagation->activations_derivatives_2d);
 }
 
 
-void ConvolutionalLayer::forward_propagate(const Tensor<type, 2> &inputs, ForwardPropagation &forward_propagation)
+void ConvolutionalLayer::forward_propagate(const Tensor<type, 2> &inputs, ForwardPropagation* forward_propagation)
 {
     const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
                                                      input_variables_dimensions(2), // rows number
@@ -304,24 +306,26 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 2> &inputs, Forwar
 
 void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
                                            Tensor<type, 1> potential_parameters,
-                                           ForwardPropagation& forward_propagation)
+                                           ForwardPropagation* forward_propagation)
 {
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+
     const Tensor<Index, 1> output_dimensions = get_outputs_dimensions();
 
-    forward_propagation.combinations_4d.resize(output_dimensions(0),
-                                               output_dimensions(1),
-                                               output_dimensions(2),
-                                               output_dimensions(3));
+    convolutional_layer_forward_propagation->combinations_4d.resize(output_dimensions(0),
+                                                                    output_dimensions(1),
+                                                                    output_dimensions(2),
+                                                                    output_dimensions(3));
 
-    forward_propagation.activations_4d.resize(output_dimensions(0),
-                                              output_dimensions(1),
-                                              output_dimensions(2),
-                                              output_dimensions(3));
+    convolutional_layer_forward_propagation->activations_4d.resize(output_dimensions(0),
+                                                                   output_dimensions(1),
+                                                                   output_dimensions(2),
+                                                                   output_dimensions(3));
 
-    forward_propagation.activations_derivatives_4d.resize(output_dimensions(0),
-                                                          output_dimensions(1),
-                                                          output_dimensions(2),
-                                                          output_dimensions(3));
+    convolutional_layer_forward_propagation->activations_derivatives_4d.resize(output_dimensions(0),
+                                                                               output_dimensions(1),
+                                                                               output_dimensions(2),
+                                                                               output_dimensions(3));
 
     const Index kernels_number = synaptic_weights.dimension(0);
 
@@ -329,11 +333,11 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
                                                       kernels_number,
                                                       1);
 
-//    TensorMap<Tensor<type, 4>> potential_synaptic_weights(potential_parameters.data() + kernels_number,
-//                                                          synaptic_weights.dimension(3),
-//                                                          synaptic_weights.dimension(2),
-//                                                          synaptic_weights.dimension(1),
-//                                                          kernels_number);
+    //    TensorMap<Tensor<type, 4>> potential_synaptic_weights(potential_parameters.data() + kernels_number,
+    //                                                          synaptic_weights.dimension(3),
+    //                                                          synaptic_weights.dimension(2),
+    //                                                          synaptic_weights.dimension(1),
+    //                                                          kernels_number);
 
 
     const Index kernels_channels_number = get_kernels_channels_number();
@@ -346,7 +350,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
                                                kernels_columns_number);
     Index element_index = 0;
 
-//#pragma omp for
+    //#pragma omp for
     for(Index i = 0; i < kernels_number; i++)
     {
         for(Index j = 0; j < kernels_channels_number; j++)
@@ -366,21 +370,21 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
     calculate_combinations(inputs,
                            potential_biases,
                            potential_synaptic_weights,
-                           forward_propagation.combinations_4d);
+                           convolutional_layer_forward_propagation->combinations_4d);
 
-    calculate_activations_derivatives(forward_propagation.combinations_4d,
-                                      forward_propagation.activations_4d,
-                                      forward_propagation.activations_derivatives_4d);
+    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations_4d,
+                                      convolutional_layer_forward_propagation->activations_4d,
+                                      convolutional_layer_forward_propagation->activations_derivatives_4d);
 
-    to_2d(forward_propagation.combinations_4d, forward_propagation.combinations_2d);
-    to_2d(forward_propagation.activations_4d, forward_propagation.activations_2d);
-    to_2d(forward_propagation.activations_derivatives_4d, forward_propagation.activations_derivatives_2d);
+    to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);
+    to_2d(convolutional_layer_forward_propagation->activations_4d, convolutional_layer_forward_propagation->activations);
+    //    to_2d(convolutional_layer_forward_propagation->activations_derivatives_4d, convolutional_layer_forward_propagation->activations_derivatives_2d);
 }
 
 
 void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                            Tensor<type, 1> potential_parameters,
-                                           ForwardPropagation& forward_propagation)
+                                           ForwardPropagation* forward_propagation)
 {
     const Eigen::array<Eigen::Index, 4> four_dims = {
         input_variables_dimensions(0),
@@ -398,21 +402,22 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
 }
 
 
-void ConvolutionalLayer::calculate_output_delta(ForwardPropagation& forward_propagation,
+void ConvolutionalLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
                                                 const Tensor<type, 2>& output_gradient,
                                                 Tensor<type, 2>& output_delta) const
 {
-    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
+//    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
 }
 
 
 
 void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-                                                const Tensor<type, 2>&,
-                                                ForwardPropagation& forward_propagation,
+                                                ForwardPropagation* forward_propagation,
                                                 const Tensor<type, 2>& next_layer_delta,
                                                 Tensor<type, 2>& hidden_delta) const
 {
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+
     const Type next_layer_type = next_layer_pointer->get_type();
 
     if(next_layer_type == Convolutional)
@@ -430,28 +435,29 @@ void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
         PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(next_layer_pointer);
 
         calculate_hidden_delta_pooling(pooling_layer,
-                                       forward_propagation.activations_4d,
-                                       forward_propagation.activations_derivatives_4d,
+                                       convolutional_layer_forward_propagation->activations_4d,
+                                       convolutional_layer_forward_propagation->activations_derivatives_4d,
                                        next_layer_delta,
                                        hidden_delta);
     }
     else if(next_layer_type == Perceptron)
     {
         PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
-
+/*
         calculate_hidden_delta_perceptron(perceptron_layer,
-                                          forward_propagation.activations_4d,
-                                          forward_propagation.activations_derivatives_2d,
+                                          convolutional_layer_forward_propagation->activations_4d,
+                                          convolutional_layer_forward_propagation->activations_derivatives_2d,
                                           next_layer_delta,
                                           hidden_delta);
+*/
     }
     else if(next_layer_type == Probabilistic)
     {
         ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
         calculate_hidden_delta_probabilistic(probabilistic_layer,
-                                             forward_propagation.activations_4d,
-                                             forward_propagation.activations_derivatives_4d,
+                                             convolutional_layer_forward_propagation->activations_4d,
+                                             convolutional_layer_forward_propagation->activations_derivatives_4d,
                                              next_layer_delta,
                                              hidden_delta);
     }
@@ -833,7 +839,7 @@ void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer
 
 
 void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
-                                                  const Layer::ForwardPropagation& forward_propagation,
+                                                  ForwardPropagation* forward_propagation,
                                                   Layer::BackPropagation& back_propagation) const
 {
     Tensor<type, 4> layers_inputs;
@@ -867,7 +873,7 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
     const Index kernels_number = get_kernels_number();
 
     const Index kernel_channels_number = get_kernels_channels_number();
-
+/*
     const Index kernels_rows_number = get_kernels_rows_number();
     const Index kernels_columns_number = get_kernels_columns_number();
 
@@ -901,11 +907,13 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
             cout << "Gradient " << i  << ": " << endl << inputs.chip(i,0).convolve(delta_map, dims) << endl;
         }
     }
+
+    */
 }
 
 void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                                  const Layer::ForwardPropagation& forward_propagation,
-                                                  Layer::BackPropagation& back_propagation) const
+                                                  ForwardPropagation* forward_propagation,
+                                                  BackPropagation& back_propagation) const
 {
     const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
                                                      input_variables_dimensions(2), // rows number
@@ -924,7 +932,7 @@ void ConvolutionalLayer::insert_gradient(const BackPropagation& back_propagation
 {
     const Index biases_number = biases.size();
     const Index synaptic_weights_number = synaptic_weights.size();
-
+/*
     memcpy(gradient.data() + index,
            back_propagation.biases_derivatives.data(),
            static_cast<size_t>(biases_number)*sizeof(type));
@@ -932,6 +940,7 @@ void ConvolutionalLayer::insert_gradient(const BackPropagation& back_propagation
     memcpy(gradient.data() + index + biases_number,
            back_propagation.synaptic_weights_derivatives.data(),
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+           */
 }
 
 
