@@ -41,6 +41,58 @@ class ProbabilisticLayer : public Layer
 
 public:
 
+    struct ProbabilisticLayerForwardPropagation : Layer::ForwardPropagation
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        explicit ProbabilisticLayerForwardPropagation(Layer* new_layer_pointer) : ForwardPropagation(new_layer_pointer)
+        {
+        }
+
+        void set(const Index& new_batch_samples_number)
+        {
+            batch_samples_number = new_batch_samples_number;
+
+            const Index neurons_number = layer_pointer->get_neurons_number();
+
+            combinations.resize(batch_samples_number, neurons_number);
+
+            activations.resize(batch_samples_number, neurons_number);
+
+            activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
+        }
+
+        Tensor<type, 2> combinations;
+        Tensor<type, 2> activations;
+        Tensor<type, 3> activations_derivatives;
+    };
+
+    struct ProbabilisticLayerBackPropagation : Layer::BackPropagation
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
+
+        explicit ProbabilisticLayerBackPropagation(Layer* new_layer_pointer) : BackPropagation(new_layer_pointer)
+        {
+
+        }
+
+        void set(const Index& new_batch_samples_number)
+        {
+            batch_samples_number = new_batch_samples_number;
+
+            biases_derivatives.resize(neurons_number);
+
+            synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+
+            delta.resize(batch_samples_number, neurons_number);
+        }
+
+        Tensor<type, 2> delta;
+        Tensor<type, 2> synaptic_weights_derivatives;
+        Tensor<type, 1> biases_derivatives;
+    };
+
    // Constructors
 
    explicit ProbabilisticLayer();
@@ -58,8 +110,6 @@ public:
    enum ActivationFunction{Binary, Logistic, Competitive, Softmax};
 
    // Get methods
-
-   
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -128,13 +178,13 @@ public:
    void calculate_combinations(const Tensor<type, 2>& inputs,
                                const Tensor<type, 2>& biases,
                                const Tensor<type, 2>& synaptic_weights,
-                               Tensor<type, 2>& combinations_2d) const;
+                               Tensor<type, 2>& combinations) const;
 
    // Activations
 
-   void calculate_activations(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_2d) const;
+   void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_2d) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
+   void calculate_activations_derivatives(const Tensor<type, 2>& combinations,
                                           Tensor<type, 2>& activations,
                                           Tensor<type, 3>& activations_derivatives) const;
 
@@ -143,11 +193,11 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
 
-   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation);
+   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation* forward_propagation);
 
-   void forward_propagate(const Tensor<type, 2>& inputs, Tensor<type, 1> potential_parameters, ForwardPropagation& forward_propagation);
+   void forward_propagate(const Tensor<type, 2>& inputs, Tensor<type, 1> potential_parameters, ForwardPropagation* forward_propagation);
 
-   void calculate_output_delta(ForwardPropagation& forward_propagation,
+   void calculate_output_delta(ForwardPropagation* forward_propagation,
                                const Tensor<type, 2>& output_gradient,
                                Tensor<type, 2>& output_delta) const;
 
@@ -155,8 +205,8 @@ public:
    // Gradient methods
 
    void calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                 const Layer::ForwardPropagation&,
-                                 Layer::BackPropagation& back_propagation) const;
+                                 ForwardPropagation*,
+                                 BackPropagation& back_propagation) const;
 
    void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 

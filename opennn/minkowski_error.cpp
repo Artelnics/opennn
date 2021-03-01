@@ -96,12 +96,12 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 void MinkowskiError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
                      LossIndex::BackPropagation& back_propagation) const
-{
+{/*
     Tensor<type, 0> minkowski_error;
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
     const Tensor<type, 2>& targets = batch.targets_2d;
 
     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
@@ -109,6 +109,7 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
     minkowski_error.device(*thread_pool_device) = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(static_cast<type>(1.0)/minkowski_parameter);
 
     back_propagation.error = minkowski_error(0);
+    */
 }
 
 
@@ -134,10 +135,10 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
      }
 
      #endif
-
+/*
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
      const Tensor<type, 2>& targets = batch.targets_2d;
 
      back_propagation.errors.device(*thread_pool_device) = outputs - targets;
@@ -150,7 +151,7 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
 
      back_propagation.output_gradient.device(*thread_pool_device) =
              back_propagation.output_gradient/(p_norm_derivative());
-
+*/
 }
 
 
