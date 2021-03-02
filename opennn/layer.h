@@ -26,6 +26,7 @@
 
 #include "config.h"
 #include "statistics.h"
+#include "data_set.h"
 
 using namespace std;
 using namespace Eigen;
@@ -59,93 +60,24 @@ public:
         {
         }
 
-        explicit ForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        {
-            set(new_batch_samples_number, new_layer_pointer);
-        }
 
+        explicit ForwardPropagation(Layer* new_layer_pointer)
+        {
+            layer_pointer = new_layer_pointer;
+        }
 
         virtual ~ForwardPropagation() {}
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        {
-            batch_samples_number = new_batch_samples_number;
-
-            layer_pointer = new_layer_pointer;
-
-            const Index neurons_number = layer_pointer->get_neurons_number();
-
-            ones_2d.resize(batch_samples_number, neurons_number);
-            ones_2d.setConstant(1);
-
-            combinations_2d.resize(batch_samples_number, neurons_number);
-
-            activations_2d.resize(batch_samples_number, neurons_number);
-
-            if(layer_pointer->get_type() == Perceptron) // Perceptron
-            {
-                activations_derivatives_2d.resize(batch_samples_number, neurons_number);
-            }
-            else if(layer_pointer->get_type() == Recurrent ) // Recurrent
-            {
-                activations_derivatives_2d.resize(batch_samples_number, neurons_number);
-            }
-            else if(layer_pointer->get_type() == LongShortTermMemory) // LSTM
-            {
-                row_major_activations_3d.resize(batch_samples_number, neurons_number, 6);
-
-                row_major_activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
-            }
-            else if(layer_pointer->get_type() == Probabilistic) // Probabilistic
-            {
-                activations_derivatives_3d.resize(batch_samples_number, neurons_number, neurons_number);
-            }
-            else // Convolutional
-            {
-                activations_4d.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);
-                activations_derivatives_4d.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);// @todo
-            }
-        }
+        virtual void set(const Index&) {}
 
         void print() const
         {
-            cout << "Combinations: " << endl;
-            cout << combinations_2d << endl;
 
-            cout << "Activations: " << endl;
-            cout << activations_2d << endl;
-
-            if(layer_pointer->get_type() == Perceptron)
-            {
-                cout << "Activations derivatives: " << endl;
-                cout << activations_derivatives_2d << endl;
-            }
-            else
-            {
-                cout << "Activations derivatives 3d:" << endl;
-                cout << activations_derivatives_3d << endl;
-            }
         }
 
         Index batch_samples_number = 0;
 
-        Layer* layer_pointer;
-
-        Tensor<type, 2> combinations_2d;
-        Tensor<type, 2> activations_2d;
-        Tensor<type, 2> activations_derivatives_2d;
-
-        Tensor<type, 2> ones_2d;
-
-        Tensor<type, 3> activations_3d;
-        Tensor<type, 3> activations_derivatives_3d;
-
-        Tensor<type, 3, RowMajor> row_major_activations_3d;
-        Tensor<type, 3, RowMajor> row_major_activations_derivatives_3d;
-
-        Tensor<type, 4> combinations_4d;
-        Tensor<type, 4> activations_4d;
-        Tensor<type, 4> activations_derivatives_4d;
+        Layer* layer_pointer = nullptr;
     };
 
 
@@ -155,98 +87,20 @@ public:
 
         explicit BackPropagation() {}
 
-        explicit BackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        explicit BackPropagation(Layer* new_layer_pointer)
         {
-            set(new_batch_samples_number, new_layer_pointer);
+            layer_pointer = new_layer_pointer;
         }
 
         virtual ~BackPropagation() {}
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        {
-            batch_samples_number = new_batch_samples_number;
-
-            layer_pointer = new_layer_pointer;
-
-            const Index neurons_number = layer_pointer->get_neurons_number();
-            const Index inputs_number = layer_pointer->get_inputs_number();
-
-            const Layer::Type layer_type = layer_pointer->get_type();
-
-            if(layer_type == LongShortTermMemory)
-            {
-                forget_weights_derivatives.resize(inputs_number*neurons_number);
-                input_weights_derivatives.resize(inputs_number*neurons_number);
-                state_weights_derivatives.resize(inputs_number*neurons_number);
-                output_weights_derivatives.resize(inputs_number*neurons_number);
-
-                forget_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-                input_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-                state_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-                output_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-
-                forget_biases_derivatives.resize(neurons_number);
-                input_biases_derivatives.resize(neurons_number);
-                state_biases_derivatives.resize(neurons_number);
-                output_biases_derivatives.resize(neurons_number);
-            }
-            else if(layer_type == Recurrent)
-            {
-                biases_derivatives.resize(neurons_number);
-
-                input_weights_derivatives.resize(inputs_number*neurons_number);
-
-                recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-            }
-            else
-            {
-                biases_derivatives.resize(neurons_number);
-
-                synaptic_weights_derivatives.resize(inputs_number, neurons_number);
-            }
-
-            delta.resize(batch_samples_number, neurons_number);
-        }
+        virtual void set(const Index&) {}
 
         virtual void print() const {}
 
         Index batch_samples_number = 0;
 
         Layer* layer_pointer = nullptr;
-
-        Tensor<type, 2> delta;
-
-        Tensor<type, 4> delta_4d;
-
-        Tensor<type, 1> biases_derivatives;
-
-        Tensor<type, 2> synaptic_weights_derivatives;
-
-        // LSTM
-
-        Tensor<type, 1> forget_weights_derivatives;
-        Tensor<type, 1> input_weights_derivatives;
-        Tensor<type, 1> state_weights_derivatives;
-        Tensor<type, 1> output_weights_derivatives;
-
-        Tensor<type, 1> forget_recurrent_weights_derivatives;
-        Tensor<type, 1> input_recurrent_weights_derivatives;
-        Tensor<type, 1> state_recurrent_weights_derivatives;
-        Tensor<type, 1> output_recurrent_weights_derivatives;
-
-        Tensor<type, 1> forget_biases_derivatives;
-        Tensor<type, 1> input_biases_derivatives;
-        Tensor<type, 1> state_biases_derivatives;
-        Tensor<type, 1> output_biases_derivatives;
-
-        // Recurrent
-
-        Tensor<type, 1> recurrent_weights_derivatives;
-
-        // Convolutional
-
-        Tensor<type, 4> synaptic_weights_derivatives_4d;
-
     };
 
 
@@ -287,7 +141,7 @@ public:
 
     void set_threads_number(const int&);
 
-    virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) const {}
+    virtual void insert_gradient(BackPropagation*, const Index&, Tensor<type, 1>&) const {}
 
     // Outputs
 
@@ -297,24 +151,23 @@ public:
 
     virtual Tensor<type, 4> calculate_outputs_4D(const Tensor<type, 4>&) {return Tensor<type, 4>();}
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
-    virtual void calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation*) const {}
+    virtual void calculate_error_gradient(const Tensor<type, 4>&, ForwardPropagation*, Layer::BackPropagation*) const {}
 
-    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&)  {} // Cannot be const because of Recurrent and LSTM layers
-    virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&)  {}
+    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*)  {} // Cannot be const because of Recurrent and LSTM layers
+    virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation*)  {}
 
-    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation&)  {}
-    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&)  {} // Cannot be const because of Recurrent and LSTM layers
+    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation*)  {}
+    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*)  {} // Cannot be const because of Recurrent and LSTM layers
 
     // Deltas
 
-    virtual void calculate_output_delta(ForwardPropagation&,
+    virtual void calculate_output_delta(ForwardPropagation*,
                                 const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const {}
 
     virtual void calculate_hidden_delta(Layer*,
-                                        const Tensor<type, 2>&,
-                                        ForwardPropagation&,
+                                        ForwardPropagation*,
                                         const Tensor<type, 2>&,
                                         Tensor<type, 2>&) const {}
 
