@@ -107,7 +107,7 @@ public:
 
            loss = 0;
 
-           output_gradient.resize(batch_samples_number, outputs_number);
+           output_jacobian.resize(batch_samples_number, outputs_number);
 
            errors.resize(batch_samples_number, outputs_number);
 
@@ -124,7 +124,7 @@ public:
            cout << loss << endl;
 
            cout << "Output gradient:" << endl;
-           cout << output_gradient << endl;
+           cout << output_jacobian << endl;
 
            cout << "Gradient:" << endl;
            cout << gradient << endl; 
@@ -140,7 +140,7 @@ public:
 
        type loss;
 
-       Tensor<type, 2> output_gradient;
+       Tensor<type, 2> output_jacobian;
 
        Tensor<type, 2> errors;
 
@@ -270,7 +270,7 @@ public:
 
    // GRADIENT METHODS
 
-   virtual void calculate_output_gradient(const DataSet::Batch&,
+   virtual void calculate_output_jacobian(const DataSet::Batch&,
                                           const NeuralNetwork::ForwardPropagation&,
                                           BackPropagation&) const = 0;
 
@@ -306,7 +306,7 @@ public:
                                           BackPropagation& back_propagation,
                                           SecondOrderLoss& second_order_loss) const;
 
-   void calculate_error_terms_output_gradient(const DataSet::Batch& batch,
+   void calculate_error_terms_output_jacobian(const DataSet::Batch& batch,
                                               NeuralNetwork::ForwardPropagation& forward_propagation,
                                               BackPropagation& back_propagation,
                                               SecondOrderLoss& second_order_loss) const;

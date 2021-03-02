@@ -192,13 +192,15 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
+   void forward_propagate(const Tensor<type, 2>& inputs,
+                          ForwardPropagation* forward_propagation);
 
-   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation* forward_propagation);
-
-   void forward_propagate(const Tensor<type, 2>& inputs, Tensor<type, 1> potential_parameters, ForwardPropagation* forward_propagation);
+   void forward_propagate(const Tensor<type, 2>& inputs,
+                          Tensor<type, 1> potential_parameters,
+                          ForwardPropagation* forward_propagation);
 
    void calculate_output_delta(ForwardPropagation* forward_propagation,
-                               const Tensor<type, 2>& output_gradient,
+                               const Tensor<type, 2>& output_jacobian,
                                Tensor<type, 2>& output_delta) const;
 
 
