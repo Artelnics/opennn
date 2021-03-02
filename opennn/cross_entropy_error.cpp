@@ -66,16 +66,17 @@ void CrossEntropyError::calculate_binary_error(const DataSet::Batch& batch,
                                                LossIndex::BackPropagation& back_propagation) const
 {
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
-
+/*
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
+    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1]->activations;
     const Tensor<type, 2>& targets = batch.targets_2d;
 
     Tensor<type, 0> cross_entropy_error;
     cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs.log())).sum() - ((1-targets)*((1-outputs).log())).sum();
 
     back_propagation.error = cross_entropy_error()/static_cast<type>(batch_samples_number);
+    */
 }
 
 
@@ -83,17 +84,19 @@ void CrossEntropyError::calculate_multiple_error(const DataSet::Batch& batch,
                                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                                  LossIndex::BackPropagation& back_propagation) const
 {
+    /*
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
+    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1]->activations;
     const Tensor<type, 2>& targets = batch.targets_2d;
 
     Tensor<type, 0> cross_entropy_error;
     cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs.log())).sum();
 
     back_propagation.error = cross_entropy_error()/static_cast<type>(batch_samples_number);
+    */
 }
 
 
@@ -123,31 +126,33 @@ void CrossEntropyError::calculate_output_gradient(const DataSet::Batch& batch,
 void CrossEntropyError::calculate_binary_output_gradient(const DataSet::Batch& batch,
                                                          const NeuralNetwork::ForwardPropagation& forward_propagation,
                                                          BackPropagation& back_propagation) const
-{
+{/*
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     const Tensor<type, 2>& targets = batch.targets_2d;
-    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
+    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1]->activations;
 
     back_propagation.output_gradient.device(*thread_pool_device) = static_cast<type>(1)/static_cast<type>(batch_samples_number) *
             (static_cast<type>(-1)*(targets/outputs) + (static_cast<type>(1) - targets)/(static_cast<type>(1) - outputs));
+            */
 }
 
 
 void CrossEntropyError::calculate_multiple_output_gradient(const DataSet::Batch& batch,
                                                            const NeuralNetwork::ForwardPropagation& forward_propagation,
                                                            BackPropagation& back_propagation) const
-{
+{/*
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     const Tensor<type, 2>& targets = batch.targets_2d;
-    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
+    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1]->activations;
 
     back_propagation.output_gradient.device(*thread_pool_device) = static_cast<type>(1)/static_cast<type>(batch_samples_number) *(-targets/outputs);
+    */
 }
 
 /// Returns a string with the name of the cross entropy error loss type, "CROSS_ENTROPY_ERROR".

@@ -90,7 +90,42 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               layers(i).set(new_batch_samples_number, trainable_layers_pointers(i));
+               switch (trainable_layers_pointers(i)->get_type())
+               {
+               case Layer::Perceptron:
+               {
+                   layers(i) = new PerceptronLayer::PerceptronLayerForwardPropagation(trainable_layers_pointers(i));
+               }
+                   break;
+
+               case Layer::Probabilistic:
+               {
+                   layers(i) = new ProbabilisticLayer::ProbabilisticLayerForwardPropagation(trainable_layers_pointers(i));
+               }
+                   break;
+
+               case Layer::Recurrent:
+               {
+                   layers(i) = new RecurrentLayer::RecurrentLayerForwardPropagation(trainable_layers_pointers(i));
+               }
+                   break;
+
+               case Layer::LongShortTermMemory:
+               {
+                   layers(i) = new LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation(trainable_layers_pointers(i));
+               }
+                   break;
+
+               case Layer::Convolutional:
+               {
+                   layers(i) = new ConvolutionalLayer::ConvolutionalLayerForwardPropagation(trainable_layers_pointers(i));
+               }
+                   break;
+
+               default: break;
+               }
+
+               layers(i)->set(new_batch_samples_number);
            }
        }
 
@@ -108,7 +143,7 @@ public:
            {
                cout << "Layer " << i+1 << endl;
 
-               layers(i).print();
+               layers(i)->print();
            }
        }
 
@@ -116,7 +151,7 @@ public:
 
        NeuralNetwork* neural_network_pointer = nullptr;
 
-       Tensor<Layer::ForwardPropagation, 1> layers;
+       Tensor<Layer::ForwardPropagation*, 1> layers;
    };
 
 
@@ -130,7 +165,6 @@ public:
 
            neural_network_pointer = new_neural_network_pointer;
        }
-
 
        void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
        {
@@ -146,7 +180,44 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               layers(i).set(batch_samples_number, trainable_layers_pointers(i));
+               //layers(i).set(batch_samples_number, trainable_layers_pointers(i));
+
+               switch (trainable_layers_pointers(i)->get_type())
+               {
+               case Layer::Perceptron:
+               {
+                   layers(i) = new PerceptronLayer::PerceptronLayerBackPropagation(trainable_layers_pointers(i));
+               }
+                   break;
+
+               case Layer::Probabilistic:
+               {
+                   layers(i) = new ProbabilisticLayer::ProbabilisticLayerBackPropagation(trainable_layers_pointers(i));
+               }
+                   break;
+
+               case Layer::Recurrent:
+               {
+                   layers(i) = new RecurrentLayer::RecurrentLayerBackPropagation(trainable_layers_pointers(i));
+               }
+                   break;
+
+               case Layer::LongShortTermMemory:
+               {
+                   layers(i) = new LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation(trainable_layers_pointers(i));
+               }
+                   break;
+
+               case Layer::Convolutional:
+               {
+                   layers(i) = new ConvolutionalLayer::ConvolutionalLayerBackPropagation(trainable_layers_pointers(i));
+               }
+                   break;
+
+               default: break;
+               }
+
+               layers(i)->set(new_batch_samples_number);
            }
        }
 
@@ -160,7 +231,7 @@ public:
            {
                cout << "Layer " << i+1 << endl;
 
-               layers(i).print();
+//               layers(i).print();
            }
        }
 
@@ -168,7 +239,7 @@ public:
 
        NeuralNetwork* neural_network_pointer = nullptr;
 
-       Tensor<Layer::BackPropagation, 1> layers;
+       Tensor<Layer::BackPropagation*, 1> layers;
    };
 
 
