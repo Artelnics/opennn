@@ -355,7 +355,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    bool shuffle = true;
+    bool shuffle = false;
 
     results.resize_training_history(maximum_epochs_number+1);
     if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
@@ -365,6 +365,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         shuffle = false;
 
     // Calculate error before training
+
+
 
     parameters_norm = l2_norm(optimization_data.parameters);
     training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);

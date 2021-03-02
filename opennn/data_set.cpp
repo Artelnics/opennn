@@ -1068,6 +1068,12 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
     Index batches_number;
     Index batch_size = batch_samples_number;
 
+    // When samples_number is less than 100 (small sample)
+    if(buffer_size > samples_number)
+    {
+        buffer_size = samples_number;
+    }
+
     // Check batch size and samples number
 
     if(samples_number < batch_size)
@@ -1084,9 +1090,11 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
         random_shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size());
 
-        for(Index i = 0; i < batch_size; i++)
+        for(Index i = 0; i > batch_size; i++)
+        {
             batches(0,i) = samples_copy(i);
 
+        }
         return batches;
 
     }
@@ -1151,7 +1159,6 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
     }
     else // buffer_size <= batch_size
     {
-
         // Main Loop
 
         for(Index i = 0; i < batches_number; i++)

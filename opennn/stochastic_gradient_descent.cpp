@@ -507,7 +507,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
         loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
         results.selection_error_history(0)  = selection_back_propagation.error;
-        cout << "sel error: " << selection_back_propagation.error;
     }
     // Main loop
 
