@@ -403,10 +403,10 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
 
 void ConvolutionalLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
-                                                const Tensor<type, 2>& output_gradient,
+                                                const Tensor<type, 2>& output_jacobian,
                                                 Tensor<type, 2>& output_delta) const
 {
-//    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
+//    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_jacobian;
 }
 
 
@@ -1400,11 +1400,11 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 
 
 /// Returns the layer's biases.
+
 const Tensor<type, 1>& ConvolutionalLayer::get_biases() const
 {
     return biases;
 }
-
 
 
 /// Returns the layer's synaptic weights.

@@ -220,7 +220,7 @@ public:
    // Delta methods
 
    void calculate_output_delta(ForwardPropagation* forward_propagation,
-                                  const Tensor<type, 2>& output_gradient,
+                                  const Tensor<type, 2>& output_jacobian,
                                   Tensor<type, 2>& output_delta) const;
 
 //   void calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;

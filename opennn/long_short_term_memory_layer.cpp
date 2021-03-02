@@ -1870,13 +1870,76 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
 
 void LongShortTermMemoryLayer::calculate_output_delta(ForwardPropagation* ,
-                                                      const Tensor<type, 2>& output_gradient,
+                                                      const Tensor<type, 2>& output_jacobian,
                                                       Tensor<type, 2>& output_delta) const
 {
-    output_delta.device(*thread_pool_device) = output_gradient;
+    output_delta.device(*thread_pool_device) = output_jacobian;
 }
 
 
+
+void LongShortTermMemoryLayer::calculate_hidden_delta(ForwardPropagation* forward_propagation,
+                                                      BackPropagation* next_back_propagation,
+                                                      BackPropagation* back_propagation) const
+{
+    LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
+            static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
+
+    LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
+            static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);
+
+    switch(next_back_propagation->layer_pointer->get_type())
+    {
+    case Perceptron:
+    {
+        PerceptronLayer::PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
+                static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(next_back_propagation);
+
+        calculate_hidden_delta_perceptron(long_short_term_memory_layer_forward_propagation,
+                                          next_perceptron_layer_back_propagation,
+                                          long_short_term_memory_layer_back_propagation);
+
+    }
+        break;
+
+    case Probabilistic:
+    {
+        ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
+                static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(next_back_propagation);
+
+        calculate_hidden_delta_probabilistic(long_short_term_memory_layer_forward_propagation,
+                                             next_probabilistic_layer_back_propagation,
+                                             long_short_term_memory_layer_back_propagation);
+
+    }
+        break;
+
+    default: return;
+    }
+}
+
+
+void LongShortTermMemoryLayer::calculate_hidden_delta_perceptron(LongShortTermMemoryLayerForwardPropagation* ,
+                                                                 PerceptronLayer::PerceptronLayerBackPropagation* next_back_propagation,
+                                                                 LongShortTermMemoryLayerBackPropagation* back_propagation) const
+{
+    const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
+
+    back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta.contract(next_synaptic_weights, A_BT);
+}
+
+
+void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(LongShortTermMemoryLayerForwardPropagation* ,
+                                                                    ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_back_propagation,
+                                                                    LongShortTermMemoryLayerBackPropagation* back_propagation) const
+{
+    const Tensor<type, 2>& next_synaptic_weights = static_cast<ProbabilisticLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
+
+    back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta.contract(next_synaptic_weights, A_BT);
+}
+
+
+/*
 void LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                       ForwardPropagation* ,
                                                       const Tensor<type, 2>& next_layer_delta,
@@ -1926,7 +1989,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(Layer* next_
 
     hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
 }
-
+*/
 
 void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, ForwardPropagation* forward_propagation)
 {

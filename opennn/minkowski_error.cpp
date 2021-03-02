@@ -113,19 +113,19 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
 }
 
 
-void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
+void MinkowskiError::calculate_output_jacobian(const DataSet::Batch& batch,
                                const NeuralNetwork::ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation) const
 {
      #ifdef __OPENNN_DEBUG__
 
      check();
-     for (Index i=1; i<back_propagation.output_gradient.dimension(0); i++) {
-         if(::isnan(back_propagation.output_gradient(i))){
+     for (Index i=1; i<back_propagation.output_jacobian.dimension(0); i++) {
+         if(::isnan(back_propagation.output_jacobian(i))){
              ostringstream buffer;
 
              buffer << "OpenNN Exception: MinkowskiError class.\n"
-                    << "void calculate_output_gradient method (const DataSet::Batch& batch, \n"
+                    << "void calculate_output_jacobian method (const DataSet::Batch& batch, \n"
                     << "const NeuralNetwork::ForwardPropagation& forward_propagation, \n"
                     << "BackPropagation& back_propagation) \n"
                     << "Output gradient is NAN. Modify Minkowski Parameter.\n";
@@ -146,11 +146,11 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
      const Tensor<type, 0> p_norm_derivative =
              (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
 
-     back_propagation.output_gradient.device(*thread_pool_device)
+     back_propagation.output_jacobian.device(*thread_pool_device)
              = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
 
-     back_propagation.output_gradient.device(*thread_pool_device) =
-             back_propagation.output_gradient/(p_norm_derivative());
+     back_propagation.output_jacobian.device(*thread_pool_device) =
+             back_propagation.output_jacobian/(p_norm_derivative());
 */
 }
 

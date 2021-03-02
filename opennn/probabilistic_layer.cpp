@@ -769,7 +769,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
 
 void ProbabilisticLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
-                            const Tensor<type, 2>& output_gradient,
+                            const Tensor<type, 2>& output_jacobian,
                             Tensor<type, 2>& output_delta) const
 {
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
@@ -781,11 +781,11 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation* forward_prop
     {
         TensorMap< Tensor<type, 2> > activations_derivatives(probabilistic_layer_forward_propagation->activations_derivatives.data(), batch_samples_number, neurons_number);
 
-        output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
+        output_delta.device(*thread_pool_device) = activations_derivatives*output_jacobian;
     }
     else
     {
-        const Index outputs_number = output_gradient.dimension(1); // outputs_number = neurons_number and activations.dimension(1)
+        const Index outputs_number = output_jacobian.dimension(1); // outputs_number = neurons_number and activations.dimension(1)
 
         if(outputs_number != neurons_number)
         {
@@ -820,7 +820,7 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation* forward_prop
             throw logic_error(buffer.str());
         }
 
-        Tensor<type, 1> output_gradient_row(neurons_number);
+        Tensor<type, 1> output_jacobian_row(neurons_number);
         Tensor<type, 1> output_delta_row(neurons_number);
 
         Index index = 0;
@@ -828,12 +828,12 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation* forward_prop
 
         for(Index i = 0; i < batch_samples_number; i++)
         {
-            output_gradient_row = output_gradient.chip(i,0);
+            output_jacobian_row = output_jacobian.chip(i,0);
 
             TensorMap< Tensor<type, 2> > activations_derivatives_matrix(probabilistic_layer_forward_propagation->activations_derivatives.data() + index,
                                                                         neurons_number, neurons_number);
 
-            output_delta_row.device(*thread_pool_device) = output_gradient_row.contract(activations_derivatives_matrix, AT_B);
+            output_delta_row.device(*thread_pool_device) = output_jacobian_row.contract(activations_derivatives_matrix, AT_B);
 
             for(Index j = 0; j < neurons_number; j++)
             {

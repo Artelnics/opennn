@@ -171,6 +171,10 @@ public:
                                         const Tensor<type, 2>&,
                                         Tensor<type, 2>&) const {}
 
+    virtual void calculate_hidden_delta(ForwardPropagation*,
+                                        BackPropagation*,
+                                        BackPropagation*) const {}
+
     // Get neurons number
 
     virtual Index get_inputs_number() const;
