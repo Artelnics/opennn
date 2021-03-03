@@ -151,8 +151,8 @@ public:
 
     virtual Tensor<type, 4> calculate_outputs_4D(const Tensor<type, 4>&) {return Tensor<type, 4>();}
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation*) const {}
-    virtual void calculate_error_gradient(const Tensor<type, 4>&, ForwardPropagation*, Layer::BackPropagation*) const {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, BackPropagation*) const {}
+    virtual void calculate_error_gradient(const Tensor<type, 4>&, ForwardPropagation*, BackPropagation*) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*)  {} // Cannot be const because of Recurrent and LSTM layers
     virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation*)  {}
@@ -162,14 +162,18 @@ public:
 
     // Deltas
 
-    virtual void calculate_output_delta(ForwardPropagation*,
-                                const Tensor<type, 2>&,
-                                Tensor<type, 2>&) const {}
+//    virtual void calculate_output_delta(ForwardPropagation*,
+//                                const Tensor<type, 2>&,
+//                                Tensor<type, 2>&) const {}
 
-    virtual void calculate_hidden_delta(Layer*,
-                                        ForwardPropagation*,
+    virtual void calculate_output_delta(ForwardPropagation*,
                                         const Tensor<type, 2>&,
-                                        Tensor<type, 2>&) const {}
+                                        BackPropagation*) const {}
+
+//    virtual void calculate_hidden_delta(Layer*,
+//                                        ForwardPropagation*,
+//                                        const Tensor<type, 2>&,
+//                                        Tensor<type, 2>&) const {}
 
     virtual void calculate_hidden_delta(ForwardPropagation*,
                                         BackPropagation*,

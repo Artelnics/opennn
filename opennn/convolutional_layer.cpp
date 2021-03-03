@@ -402,13 +402,23 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
 }
 
 
+//void ConvolutionalLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
+//                                                const Tensor<type, 2>& output_jacobian,
+//                                                Tensor<type, 2>& output_delta) const
+//{
+//    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_jacobian;
+//}
+
+
 void ConvolutionalLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
                                                 const Tensor<type, 2>& output_jacobian,
-                                                Tensor<type, 2>& output_delta) const
+                                                BackPropagation* back_propagation) const
 {
+//    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+//    ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation = static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
+
 //    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_jacobian;
 }
-
 
 
 void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
