@@ -210,23 +210,35 @@ public:
    // Delta methods
 
    void calculate_output_delta(ForwardPropagation* forward_propagation,
-                                  const Tensor<type, 2>& output_gradient,
+                                  const Tensor<type, 2>& output_jacobian,
                                   Tensor<type, 2>& output_delta) const;
 
-   void calculate_hidden_delta(Layer* next_layer_pointer,
-                               ForwardPropagation* forward_propagation,
-                               const Tensor<type, 2>& next_layer_delta,
-                               Tensor<type, 2>& hidden_delta) const;
+//   void calculate_hidden_delta(Layer* next_layer_pointer,
+//                               ForwardPropagation* forward_propagation,
+//                               const Tensor<type, 2>& next_layer_delta,
+//                               Tensor<type, 2>& hidden_delta) const;
 
-   void calculate_hidden_delta_perceptron(Layer* next_layer_pointer,
-                                          const Tensor<type, 2>& activations_derivatives,
-                                          const Tensor<type, 2>& next_layer_delta,
-                                          Tensor<type, 2>& hidden_delta) const;
+   void calculate_hidden_delta(ForwardPropagation*,
+                               BackPropagation*,
+                               BackPropagation*) const;
 
-   void calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
-                                             const Tensor<type, 2>& activations_derivatives,
-                                             const Tensor<type, 2>& next_layer_delta,
-                                             Tensor<type, 2>& hidden_delta) const;
+   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
+                                          PerceptronLayerBackPropagation*,
+                                          PerceptronLayerBackPropagation*) const;
+
+   void calculate_hidden_delta_probabilistic(PerceptronLayerForwardPropagation*,
+                                             ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
+                                             PerceptronLayerBackPropagation*) const;
+
+//   void calculate_hidden_delta_perceptron(Layer* next_layer_pointer,
+//                                          const Tensor<type, 2>& activations_derivatives,
+//                                          const Tensor<type, 2>& next_layer_delta,
+//                                          Tensor<type, 2>& hidden_delta) const;
+
+//   void calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
+//                                             const Tensor<type, 2>& activations_derivatives,
+//                                             const Tensor<type, 2>& next_layer_delta,
+//                                             Tensor<type, 2>& hidden_delta) const;
 
    // Gradient methods
 

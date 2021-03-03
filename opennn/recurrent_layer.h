@@ -226,6 +226,18 @@ public:
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
+   void calculate_hidden_delta(ForwardPropagation*,
+                               BackPropagation*,
+                               BackPropagation*) const;
+
+   void calculate_hidden_delta_perceptron(RecurrentLayerForwardPropagation*,
+                                          PerceptronLayer::PerceptronLayerBackPropagation*,
+                                          RecurrentLayerBackPropagation*) const;
+
+   void calculate_hidden_delta_probabilistic(RecurrentLayerForwardPropagation*,
+                                             ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
+                                             RecurrentLayerBackPropagation*) const;
+/*
    void calculate_hidden_delta(Layer* next_layer_pointer,
                                ForwardPropagation* forward_propagation,
                                const Tensor<type, 2>& next_layer_delta,
@@ -240,6 +252,7 @@ public:
                                           const Tensor<type, 2>& ,
                                           const Tensor<type, 2>& ,
                                           Tensor<type, 2>& ) const;
+*/
 
    // Gradient
 

@@ -64,7 +64,7 @@ public:
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const;
 
-   void calculate_output_gradient(const DataSet::Batch& batch,
+   void calculate_output_jacobian(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const;
 

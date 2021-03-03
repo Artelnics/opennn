@@ -61,7 +61,7 @@ public:
 
    // Gradient methods
 
-   void calculate_output_gradient(const DataSet::Batch&,
+   void calculate_output_jacobian(const DataSet::Batch&,
                                   const NeuralNetwork::ForwardPropagation&,
                                   BackPropagation&) const;
 

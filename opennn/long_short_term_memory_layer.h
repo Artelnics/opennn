@@ -202,7 +202,6 @@ public:
    void set_state_recurrent_weights(const Tensor<type, 2>&);
    void set_output_recurrent_weights(const Tensor<type, 2>&);
 
-
    void set_parameters(const Tensor<type, 1>&, const Index& = 0);
 
    // Activation functions
@@ -299,6 +298,22 @@ public:
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
+
+   void calculate_hidden_delta(ForwardPropagation*,
+                               BackPropagation*,
+                               BackPropagation*) const;
+
+
+   void calculate_hidden_delta_perceptron(LongShortTermMemoryLayerForwardPropagation*,
+                                          PerceptronLayer::PerceptronLayerBackPropagation*,
+                                          LongShortTermMemoryLayerBackPropagation*) const;
+
+
+   void calculate_hidden_delta_probabilistic(LongShortTermMemoryLayerForwardPropagation*,
+                                             ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
+                                             LongShortTermMemoryLayerBackPropagation*) const;
+
+/*
    void calculate_hidden_delta(Layer*,
                                ForwardPropagation*,
                                const Tensor<type, 2>&,
@@ -311,7 +326,7 @@ public:
    void calculate_hidden_delta_probabilistic(Layer* ,
                                           const Tensor<type, 2>& ,
                                           Tensor<type, 2>& ) const;
-
+*/
 
    // Forward propagate
 
