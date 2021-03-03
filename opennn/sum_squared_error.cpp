@@ -82,7 +82,7 @@ void SumSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 }
 
 
-void SumSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
+void SumSquaredError::calculate_output_jacobian(const DataSet::Batch& batch,
                                const NeuralNetwork::ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation) const
 {
@@ -101,7 +101,7 @@ void SumSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
 
      back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
-     back_propagation.output_gradient.device(*thread_pool_device) = coefficient*back_propagation.errors;
+     back_propagation.output_jacobian.device(*thread_pool_device) = coefficient*back_propagation.errors;
 */
 }
 

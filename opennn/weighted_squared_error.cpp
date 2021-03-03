@@ -315,7 +315,7 @@ void WeightedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 
 // Gradient methods
 
-void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
+void WeightedSquaredError::calculate_output_jacobian(const DataSet::Batch& batch,
                                const NeuralNetwork::ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation) const
 {
@@ -352,10 +352,10 @@ void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch
      f_3 = outputs.constant(0);
 
 //     cout << f_2;
-//     back_propagation.output_gradient = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
-     back_propagation.output_gradient.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
+//     back_propagation.output_jacobian = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
+     back_propagation.output_jacobian.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
 
-//     cout<<back_propagation.output_gradient<<endl;
+//     cout<<back_propagation.output_jacobian<<endl;
 
 //     system("pause");
 */

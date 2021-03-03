@@ -466,7 +466,7 @@ void LossIndex::back_propagate(const DataSet::Batch& batch,
 
     calculate_error(batch, forward_propagation, back_propagation);
 
-    calculate_output_gradient(batch, forward_propagation, back_propagation);
+    calculate_output_jacobian(batch, forward_propagation, back_propagation);
 
     calculate_layers_delta(forward_propagation, back_propagation);
 
@@ -501,7 +501,7 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
     // First Order
     calculate_error_terms(batch, forward_propagation, second_order_loss);
 
-    calculate_error_terms_output_gradient(batch, forward_propagation, back_propagation, second_order_loss);
+    calculate_error_terms_output_jacobian(batch, forward_propagation, back_propagation, second_order_loss);
 
     calculate_layers_delta(forward_propagation, back_propagation);
 
@@ -531,7 +531,7 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 }
 
 
-void LossIndex::calculate_error_terms_output_gradient(const DataSet::Batch& batch,
+void LossIndex::calculate_error_terms_output_jacobian(const DataSet::Batch& batch,
                                            NeuralNetwork::ForwardPropagation& forward_propagation,
                                            BackPropagation& back_propagation,
                                            SecondOrderLoss& second_order_loss) const
@@ -547,19 +547,19 @@ void LossIndex::calculate_error_terms_output_gradient(const DataSet::Batch& batc
 
 #ifndef __OPENNN_DEBUG__
 
-//     back_propagation.output_gradient.device(*thread_pool_device) = (outputs-targets)/second_order_loss.error_terms;
+//     back_propagation.output_jacobian.device(*thread_pool_device) = (outputs-targets)/second_order_loss.error_terms;
 /*
-    back_propagation.output_gradient = (outputs-targets);
+    back_propagation.output_jacobian = (outputs-targets);
 
-    for(Index i = 0; i < back_propagation.output_gradient.dimension(0); i++)
-        back_propagation.output_gradient(i) /= second_order_loss.error_terms(i);
+    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
+        back_propagation.output_jacobian(i) /= second_order_loss.error_terms(i);
 */
 #else
 
-    back_propagation.output_gradient = (outputs-targets);
+    back_propagation.output_jacobian = (outputs-targets);
 
-    for(Index i = 0; i < back_propagation.output_gradient.dimension(0); i++)
-        back_propagation.output_gradient(i) /= second_order_loss.error_terms(i);
+    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
+        back_propagation.output_jacobian(i) /= second_order_loss.error_terms(i);
 
 #endif
 
@@ -688,10 +688,10 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
      switch(back_propagation.neural_network.layers(trainable_layers_number-1)->layer_pointer->get_type())
      {
      case Layer::Perceptron:
-     {
+     {        
          trainable_layers_pointers(trainable_layers_number-1)
          ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-                                  back_propagation.output_gradient,
+                                  back_propagation.output_jacobian,
                                   static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
      }
          break;
@@ -699,7 +699,7 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
      {
          trainable_layers_pointers(trainable_layers_number-1)
          ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-                                  back_propagation.output_gradient,
+                                  back_propagation.output_jacobian,
                                   static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
      }
          break;
@@ -707,7 +707,7 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
      {
          trainable_layers_pointers(trainable_layers_number-1)
          ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-                                  back_propagation.output_gradient,
+                                  back_propagation.output_jacobian,
                                   static_cast<RecurrentLayer::RecurrentLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
      }
          break;
@@ -715,7 +715,7 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
      {
          trainable_layers_pointers(trainable_layers_number-1)
          ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-                                  back_propagation.output_gradient,
+                                  back_propagation.output_jacobian,
                                   static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
 
      }
@@ -724,7 +724,7 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
      {
 //         trainable_layers_pointers(trainable_layers_number-1)
 //         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-//                                  back_propagation.output_gradient,
+//                                  back_propagation.output_jacobian,
 //                                  static_cast<ConvolutionalLayer::ConvolutionalLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
      }
          break;
@@ -740,25 +740,28 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
 
 //     trainable_layers_pointers(trainable_layers_number-1)
 //     ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-//                              back_propagation.output_gradient,
+//                              back_propagation.output_jacobian,
 //                              back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
 
-/*
+
      // Hidden layers
 
    for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
    {
-       Layer* previous_layer_pointer = trainable_layers_pointers(static_cast<Index>(i+1));
-
        trainable_layers_pointers(i)
-       ->calculate_hidden_delta(previous_layer_pointer,
-                                forward_propagation.layers(i),
-                                back_propagation.neural_network.layers(i+1).delta,
-                                back_propagation.neural_network.layers(i).delta);
+               ->calculate_hidden_delta(forward_propagation.layers(i),
+                                        back_propagation.neural_network.layers(i+1),
+                                        back_propagation.neural_network.layers(i));
+
+//       Layer* previous_layer_pointer = trainable_layers_pointers(static_cast<Index>(i+1));
+//       trainable_layers_pointers(i)
+//       ->calculate_hidden_delta(previous_layer_pointer,
+//                                forward_propagation.layers(i),
+//                                back_propagation.neural_network.layers(i+1).delta,
+//                                back_propagation.neural_network.layers(i).delta);
 
    }
-   */
 }
 
 
