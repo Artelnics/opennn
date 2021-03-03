@@ -23,6 +23,7 @@
 #include "config.h"
 #include "layer.h"
 
+#include "probabilistic_layer.h"
 #include "perceptron_layer.h"
 
 namespace OpenNN
@@ -294,10 +295,13 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
+//   void calculate_output_delta(ForwardPropagation*,
+//                               const Tensor<type, 2>&,
+//                               Tensor<type, 2>&) const;
+
    void calculate_output_delta(ForwardPropagation*,
                                const Tensor<type, 2>&,
-                               Tensor<type, 2>&) const;
-
+                               BackPropagation*) const;
 
    void calculate_hidden_delta(ForwardPropagation*,
                                BackPropagation*,

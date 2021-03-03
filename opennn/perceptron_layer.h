@@ -23,6 +23,7 @@
 #include "config.h"
 #include "layer.h"
 #include "probabilistic_layer.h"
+
 #include "opennn_strings.h"
 
 namespace OpenNN
@@ -209,9 +210,14 @@ public:
 
    // Delta methods
 
-   void calculate_output_delta(ForwardPropagation* forward_propagation,
-                                  const Tensor<type, 2>& output_jacobian,
-                                  Tensor<type, 2>& output_delta) const;
+//   void calculate_output_delta(ForwardPropagation* forward_propagation,
+//                                  const Tensor<type, 2>& output_jacobian,
+//                                  Tensor<type, 2>& output_delta) const;
+
+   void calculate_output_delta(ForwardPropagation*,
+                               const Tensor<type, 2>&,
+                               BackPropagation*) const;
+
 
 //   void calculate_hidden_delta(Layer* next_layer_pointer,
 //                               ForwardPropagation* forward_propagation,

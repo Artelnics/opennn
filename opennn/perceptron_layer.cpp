@@ -767,13 +767,24 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 }
 
 
+//void PerceptronLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
+//                                             const Tensor<type, 2>& output_jacobian,
+//                                             Tensor<type, 2>& output_delta) const
+//{
+//    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
+
+//    output_delta.device(*thread_pool_device) = perceptron_layer_forward_propagation->activations_derivatives*output_jacobian;
+//}
+
+
 void PerceptronLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
                                              const Tensor<type, 2>& output_jacobian,
-                                             Tensor<type, 2>& output_delta) const
+                                             BackPropagation* back_propagation) const
 {
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
+    PerceptronLayerBackPropagation* perceptron_layer_back_propagation = static_cast<PerceptronLayerBackPropagation*>(back_propagation);
 
-    output_delta.device(*thread_pool_device) = perceptron_layer_forward_propagation->activations_derivatives*output_jacobian;
+    perceptron_layer_back_propagation->delta.device(*thread_pool_device) = perceptron_layer_forward_propagation->activations_derivatives*output_jacobian;
 }
 
 
@@ -903,24 +914,25 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(Layer* next_layer_poi
 }
 */
 
-// Gradient methods
 
 void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                                ForwardPropagation*,
-                                               Layer::BackPropagation* back_propagation) const
+                                               BackPropagation* back_propagation) const
 {
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(back_propagation);
 
-    perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device)
-            = perceptron_layer_back_propagation->delta.sum(Eigen::array<Index, 1>({0}));
+    perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
+            perceptron_layer_back_propagation->delta.sum(Eigen::array<Index, 1>({0}));
 
-    perceptron_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device)
-            = inputs.contract(perceptron_layer_back_propagation->delta, AT_B);
+    perceptron_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
+            inputs.contract(perceptron_layer_back_propagation->delta, AT_B);
 }
 
 
-void PerceptronLayer::insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
+void PerceptronLayer::insert_gradient(BackPropagation* back_propagation,
+                                      const Index& index,
+                                      Tensor<type, 1>& gradient) const
 {
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(back_propagation);
