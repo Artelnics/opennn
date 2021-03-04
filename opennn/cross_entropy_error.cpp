@@ -78,7 +78,6 @@ void CrossEntropyError::calculate_binary_error(const DataSet::Batch& batch,
     cross_entropy_error.device(*thread_pool_device) = -(targets*(outputs.log())).sum() - ((1-targets)*((1-outputs).log())).sum();
 
     back_propagation.error = cross_entropy_error()/static_cast<type>(batch_samples_number);
-
 }
 
 

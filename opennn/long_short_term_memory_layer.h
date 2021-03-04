@@ -61,6 +61,37 @@ public:
         Tensor<type, 2> combinations;
         Tensor<type, 2> activations;
 
+        Tensor<type, 1> current_forget_combinations;
+        Tensor<type, 1> current_input_combinations;
+        Tensor<type, 1> current_state_combinations;
+        Tensor<type, 1> current_output_combinations;
+
+        Tensor<type, 1> current_forget_activations;
+        Tensor<type, 1> current_input_activations;
+        Tensor<type, 1> current_state_activations;
+        Tensor<type, 1> current_output_activations;
+
+        Tensor<type, 1> current_forget_activations_derivatives;
+        Tensor<type, 1> current_input_activations_derivatives;
+        Tensor<type, 1> current_state_activations_derivatives;
+        Tensor<type, 1> current_output_activations_derivatives;
+
+        Tensor<type, 1> current_hidden_states_derivatives;
+
+        Tensor<type, 2> forget_combinations;
+        Tensor<type, 2> input_combinations;
+        Tensor<type, 2> state_combinations;
+        Tensor<type, 2> output_combinations;
+
+        Tensor<type, 2> forget_activations;
+        Tensor<type, 2> input_activations;
+        Tensor<type, 2> state_activations;
+        Tensor<type, 2> output_activations;
+
+
+
+
+
         Tensor<type, 3, RowMajor> row_major_activations_3d;
         Tensor<type, 3, RowMajor> row_major_activations_derivatives_3d;
     };
