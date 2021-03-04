@@ -685,65 +685,15 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
 
      // Output layer
 
-     switch(back_propagation.neural_network.layers(trainable_layers_number-1)->layer_pointer->get_type())
-     {
-     case Layer::Perceptron:
-     {        
-         trainable_layers_pointers(trainable_layers_number-1)
-         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-                                  back_propagation.output_jacobian,
-                                  static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
-     }
-         break;
-     case Layer::Probabilistic:
-     {
-         trainable_layers_pointers(trainable_layers_number-1)
-         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-                                  back_propagation.output_jacobian,
-                                  static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
-     }
-         break;
-     case Layer::Recurrent:
-     {
-         trainable_layers_pointers(trainable_layers_number-1)
-         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-                                  back_propagation.output_jacobian,
-                                  static_cast<RecurrentLayer::RecurrentLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
-     }
-         break;
-     case Layer::LongShortTermMemory:
-     {
-         trainable_layers_pointers(trainable_layers_number-1)
-         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-                                  back_propagation.output_jacobian,
-                                  static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
-
-     }
-         break;
-     case Layer::Convolutional:
-     {
-//         trainable_layers_pointers(trainable_layers_number-1)
-//         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
-//                                  back_propagation.output_jacobian,
-//                                  static_cast<ConvolutionalLayer::ConvolutionalLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1))->delta);
-     }
-         break;
-     case Layer::Pooling:
-     {
-
-     }
-         break;
-
-     default: break;
-     }
-
+     trainable_layers_pointers(trainable_layers_number-1)->
+             calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
+                                    back_propagation.output_jacobian,
+                                    back_propagation.neural_network.layers(trainable_layers_number-1));
 
 //     trainable_layers_pointers(trainable_layers_number-1)
 //     ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
 //                              back_propagation.output_jacobian,
 //                              back_propagation.neural_network.layers(trainable_layers_number-1).delta);
-
-
 
      // Hidden layers
 
@@ -781,7 +731,7 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
     const Tensor<Index, 1> trainable_layers_parameters_number
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
-/*
+
     if(trainable_layers_pointers(0)->get_type() == Layer::Convolutional)
     {
         trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_4d,
@@ -802,19 +752,76 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
                                                   back_propagation.gradient);
 
     index += trainable_layers_parameters_number(0);
-*/
+
     for(Index i = 1; i < trainable_layers_number; i++)
-    {/*
-        trainable_layers_pointers(i)->calculate_error_gradient(forward_propagation.layers(i-1)->activations,
-                                                               forward_propagation.layers(i-1),
-                                                               back_propagation.neural_network.layers(i));
+    {
+//        trainable_layers_pointers(i)->calculate_error_gradient(forward_propagation.layers(i-1)->activations,
+//                                                               forward_propagation.layers(i-1),
+//                                                               back_propagation.neural_network.layers(i));
+
+        switch (forward_propagation.layers(i-1)->layer_pointer->get_type())
+        {
+        case Layer::Perceptron:
+        {
+            trainable_layers_pointers(i)->
+                    calculate_error_gradient(static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                             forward_propagation.layers(i-1),
+                                             back_propagation.neural_network.layers(i));
+        }
+            break;
+
+        case Layer::Probabilistic:
+        {
+            trainable_layers_pointers(i)->
+                    calculate_error_gradient(static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                             forward_propagation.layers(i-1),
+                                             back_propagation.neural_network.layers(i));
+        }
+            break;
+
+        case Layer::Recurrent:
+        {
+            trainable_layers_pointers(i)->
+                    calculate_error_gradient(static_cast<RecurrentLayer::RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                             forward_propagation.layers(i-1),
+                                             back_propagation.neural_network.layers(i));
+
+        }
+            break;
+
+        case Layer::LongShortTermMemory:
+        {
+            trainable_layers_pointers(i)->
+                    calculate_error_gradient(static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                             forward_propagation.layers(i-1),
+                                             back_propagation.neural_network.layers(i));
+        }
+            break;
+
+        case Layer::Convolutional:
+        {
+            trainable_layers_pointers(i)->
+                    calculate_error_gradient(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                             forward_propagation.layers(i-1),
+                                             back_propagation.neural_network.layers(i));
+        }
+            break;
+
+        case Layer::Pooling:
+        {
+
+        }
+            break;
+
+        default: break;
+
+        }
 
         trainable_layers_pointers(i)->insert_gradient(back_propagation.neural_network.layers(i),
                                                       index,
                                                       back_propagation.gradient);
 
         index += trainable_layers_parameters_number(i);
-        */
     }
 
 }
