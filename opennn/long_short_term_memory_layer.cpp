@@ -1869,13 +1869,23 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 }
 
 
+//void LongShortTermMemoryLayer::calculate_output_delta(ForwardPropagation* ,
+//                                                      const Tensor<type, 2>& output_jacobian,
+//                                                      Tensor<type, 2>& output_delta) const
+//{
+//    output_delta.device(*thread_pool_device) = output_jacobian;
+//}
+
+
 void LongShortTermMemoryLayer::calculate_output_delta(ForwardPropagation* ,
                                                       const Tensor<type, 2>& output_jacobian,
-                                                      Tensor<type, 2>& output_delta) const
+                                                      BackPropagation* back_propagation) const
 {
-    output_delta.device(*thread_pool_device) = output_jacobian;
-}
+    LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
+            static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);
 
+    long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) = output_jacobian;
+}
 
 
 void LongShortTermMemoryLayer::calculate_hidden_delta(ForwardPropagation* forward_propagation,
