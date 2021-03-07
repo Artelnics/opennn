@@ -271,9 +271,9 @@ void NormalizedSquaredError::calculate_error(const DataSet::Batch& batch,
 
     case Layer::Convolutional:
     {
-        back_propagation.errors.device(*thread_pool_device) =
-                static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
-                batch.targets_2d;
+        //back_propagation.errors.device(*thread_pool_device) =
+        //        static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
+        //        batch.targets_2d;
     }
         break;
 
@@ -379,9 +379,9 @@ void NormalizedSquaredError::calculate_output_jacobian(const DataSet::Batch& bat
 
      case Layer::Convolutional:
      {
-         back_propagation.errors.device(*thread_pool_device) =
-                 static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
-                 batch.targets_2d;
+         //back_propagation.errors.device(*thread_pool_device) =
+         //        static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
+         //        batch.targets_2d;
      }
          break;
 
