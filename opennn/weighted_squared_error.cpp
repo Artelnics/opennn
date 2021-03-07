@@ -315,8 +315,9 @@ void WeightedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 
 // Gradient methods
 
-void WeightedSquaredError::calculate_output_jacobian(const DataSet::Batch& batch,
-                               const NeuralNetwork::ForwardPropagation& forward_propagation,
+void WeightedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
+                                                  Layer::ForwardPropagation* layer_forward_propagation,
+                                                  Layer::BackPropagation* layer_back_propagation,
                                BackPropagation& back_propagation) const
 {
      #ifdef __OPENNN_DEBUG__

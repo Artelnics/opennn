@@ -466,7 +466,7 @@ void LossIndex::back_propagate(const DataSet::Batch& batch,
 
     calculate_error(batch, forward_propagation, back_propagation);
 
-    calculate_output_jacobian(batch, forward_propagation, back_propagation);
+//    calculate_output_delta(batch, forward_propagation, back_propagation);
 
     calculate_layers_delta(forward_propagation, back_propagation);
 
@@ -684,12 +684,12 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
      const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
      // Output layer
-
+/*
      trainable_layers_pointers(trainable_layers_number-1)->
              calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
                                     back_propagation.output_jacobian,
                                     back_propagation.neural_network.layers(trainable_layers_number-1));
-
+*/
 //     trainable_layers_pointers(trainable_layers_number-1)
 //     ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
 //                              back_propagation.output_jacobian,

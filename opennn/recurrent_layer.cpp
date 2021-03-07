@@ -862,7 +862,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     return outputs;
 }
 
-
+/*
 void RecurrentLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
                                             const Tensor<type, 2>& output_jacobian,
                                             BackPropagation* back_propagation) const
@@ -872,7 +872,7 @@ void RecurrentLayer::calculate_output_delta(ForwardPropagation* forward_propagat
 
     recurrent_layer_back_propagation->delta.device(*thread_pool_device) = recurrent_layer_forward_propagation->activations_derivatives*output_jacobian;
 }
-
+*/
 
 //void RecurrentLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
 //                                            const Tensor<type, 2>& output_jacobian,
