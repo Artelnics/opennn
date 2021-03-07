@@ -766,7 +766,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
 }
 
 
-
+/*
 void ProbabilisticLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
                                                 const Tensor<type, 2>& output_jacobian,
                                                 BackPropagation* back_propagation) const
@@ -844,7 +844,7 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation* forward_prop
         }
     }
 }
-
+*/
 
 
 //void ProbabilisticLayer::calculate_output_delta(ForwardPropagation* forward_propagation,

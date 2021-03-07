@@ -213,11 +213,11 @@ public:
 //   void calculate_output_delta(ForwardPropagation* forward_propagation,
 //                                  const Tensor<type, 2>& output_jacobian,
 //                                  Tensor<type, 2>& output_delta) const;
-
+/*
    void calculate_output_delta(ForwardPropagation*,
                                const Tensor<type, 2>&,
                                BackPropagation*) const;
-
+*/
 
 //   void calculate_hidden_delta(Layer* next_layer_pointer,
 //                               ForwardPropagation* forward_propagation,
@@ -253,10 +253,6 @@ public:
                                  BackPropagation* back_propagation) const;
 
    void insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
-
-   void calculate_outputs_derivatives();
-   void calculate_biases_derivatives();
-   void calculate_synaptic_weights_derivatives();
 
    // Expression methods   
 

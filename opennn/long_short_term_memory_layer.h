@@ -329,11 +329,11 @@ public:
 //   void calculate_output_delta(ForwardPropagation*,
 //                               const Tensor<type, 2>&,
 //                               Tensor<type, 2>&) const;
-
+/*
    void calculate_output_delta(ForwardPropagation*,
                                const Tensor<type, 2>&,
                                BackPropagation*) const;
-
+*/
    void calculate_hidden_delta(ForwardPropagation*,
                                BackPropagation*,
                                BackPropagation*) const;

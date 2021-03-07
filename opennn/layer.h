@@ -165,11 +165,11 @@ public:
 //    virtual void calculate_output_delta(ForwardPropagation*,
 //                                const Tensor<type, 2>&,
 //                                Tensor<type, 2>&) const {}
-
+/*
     virtual void calculate_output_delta(ForwardPropagation*,
                                         const Tensor<type, 2>&,
                                         BackPropagation*) const {}
-
+*/
 //    virtual void calculate_hidden_delta(Layer*,
 //                                        ForwardPropagation*,
 //                                        const Tensor<type, 2>&,

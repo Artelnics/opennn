@@ -409,7 +409,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
 //    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_jacobian;
 //}
 
-
+/*
 void ConvolutionalLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
                                                 const Tensor<type, 2>& output_jacobian,
                                                 BackPropagation* back_propagation) const
@@ -419,7 +419,7 @@ void ConvolutionalLayer::calculate_output_delta(ForwardPropagation* forward_prop
 
 //    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_jacobian;
 }
-
+*/
 
 void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                 ForwardPropagation* forward_propagation,

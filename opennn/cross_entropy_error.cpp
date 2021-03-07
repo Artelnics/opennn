@@ -101,8 +101,9 @@ void CrossEntropyError::calculate_multiple_error(const DataSet::Batch& batch,
 }
 
 
-void CrossEntropyError::calculate_output_jacobian(const DataSet::Batch& batch,
-                               const NeuralNetwork::ForwardPropagation& forward_propagation,
+void CrossEntropyError::calculate_output_delta(const DataSet::Batch& batch,
+                                               Layer::ForwardPropagation* layer_forward_propagation,
+                                               Layer::BackPropagation* layer_back_propagation,
                                BackPropagation& back_propagation) const
 {
      #ifdef __OPENNN_DEBUG__
@@ -115,11 +116,11 @@ void CrossEntropyError::calculate_output_jacobian(const DataSet::Batch& batch,
 
      if(outputs_number == 1)
      {
-         calculate_binary_output_jacobian(batch, forward_propagation, back_propagation);
+//         calculate_binary_output_jacobian(batch, forward_propagation, back_propagation);
      }
      else
      {
-         calculate_multiple_output_jacobian(batch, forward_propagation, back_propagation);
+//         calculate_multiple_output_jacobian(batch, forward_propagation, back_propagation);
      }
 }
 
@@ -137,8 +138,8 @@ void CrossEntropyError::calculate_binary_output_jacobian(const DataSet::Batch& b
     const Tensor<type, 2>& outputs =
             static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations;
 
-    back_propagation.output_jacobian.device(*thread_pool_device) = static_cast<type>(1)/static_cast<type>(batch_samples_number) *
-            (static_cast<type>(-1)*(targets/outputs) + (static_cast<type>(1) - targets)/(static_cast<type>(1) - outputs));
+//    back_propagation.output_jacobian.device(*thread_pool_device) = static_cast<type>(1)/static_cast<type>(batch_samples_number) *
+//            (static_cast<type>(-1)*(targets/outputs) + (static_cast<type>(1) - targets)/(static_cast<type>(1) - outputs));
 }
 
 
@@ -155,7 +156,7 @@ void CrossEntropyError::calculate_multiple_output_jacobian(const DataSet::Batch&
     const Tensor<type, 2>& outputs =
             static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations;
 
-    back_propagation.output_jacobian.device(*thread_pool_device) = static_cast<type>(1)/static_cast<type>(batch_samples_number) *(-targets/outputs);
+//    back_propagation.output_jacobian.device(*thread_pool_device) = static_cast<type>(1)/static_cast<type>(batch_samples_number) *(-targets/outputs);
 }
 
 /// Returns a string with the name of the cross entropy error loss type, "CROSS_ENTROPY_ERROR".
