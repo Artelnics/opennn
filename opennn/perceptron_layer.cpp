@@ -950,6 +950,24 @@ void PerceptronLayer::insert_gradient(BackPropagation* back_propagation,
 }
 
 
+void PerceptronLayer::calculate_outputs_derivatives()
+{
+
+}
+
+
+void PerceptronLayer::calculate_biases_derivatives()
+{
+
+}
+
+
+void PerceptronLayer::calculate_synaptic_weights_derivatives()
+{
+
+}
+
+
 /// Returns a string with the expression of the inputs-outputs relationship of the layer.
 /// @param inputs_names vector of strings with the name of the layer inputs.
 /// @param outputs_names vector of strings with the name of the layer outputs.

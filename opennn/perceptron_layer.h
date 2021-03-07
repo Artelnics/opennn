@@ -254,6 +254,10 @@ public:
 
    void insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
+   void calculate_outputs_derivatives();
+   void calculate_biases_derivatives();
+   void calculate_synaptic_weights_derivatives();
+
    // Expression methods   
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
