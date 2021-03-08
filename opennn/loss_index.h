@@ -32,7 +32,7 @@ namespace OpenNN
 /// This abstract class represents the concept of loss index composed of an error term and a regularization term.
 
 ///
-/// The error terms could be:
+/// The error term could be:
 /// <ul>
 /// <li> Cross Entropy Error.
 /// <li> Mean Squared Error.
@@ -174,6 +174,8 @@ public:
        {
            const Index parameters_number = hessian.dimension(0);
 
+            #pragma omp parallel for
+
            for(Index i = 0; i < parameters_number; i++)
                hessian(i,i) += value;
        }
@@ -298,7 +300,7 @@ public:
 
    virtual void calculate_error_terms(const DataSet::Batch&,
                                       const NeuralNetwork::ForwardPropagation&,
-                                      SecondOrderLoss&) const {return;}
+                                      SecondOrderLoss&) const {}
 
    void back_propagate(const DataSet::Batch&,
                        NeuralNetwork::ForwardPropagation&,
