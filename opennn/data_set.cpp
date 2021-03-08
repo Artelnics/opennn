@@ -431,11 +431,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("Input");
     }
-    else if (column_use == Target)
+    else if(column_use == Target)
     {
         file_stream.PushText("Target");
     }
-    else if (column_use == UnusedVariable)
+    else if(column_use == UnusedVariable)
     {
         file_stream.PushText("Unused");
     }
@@ -454,11 +454,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("Numeric");
     }
-    else if (type == Binary)
+    else if(type == Binary)
     {
         file_stream.PushText("Binary");
     }
-    else if (type == Categorical)
+    else if(type == Categorical)
     {
         file_stream.PushText("Categorical");
     }
@@ -503,11 +503,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
             {
                 file_stream.PushText("Input");
             }
-            else if (categories_uses(i) == Target)
+            else if(categories_uses(i) == Target)
             {
                 file_stream.PushText("Target");
             }
-            else if (categories_uses(i) == Time)
+            else if(categories_uses(i) == Time)
             {
                 file_stream.PushText("Time");
             }
@@ -544,11 +544,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
             {
                 file_stream.PushText("Input");
             }
-            else if (categories_uses(0) == Target)
+            else if(categories_uses(0) == Target)
             {
                 file_stream.PushText("Target");
             }
-            else if (categories_uses(0) == Time)
+            else if(categories_uses(0) == Time)
             {
                 file_stream.PushText("Time");
             }
@@ -563,11 +563,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
             {
                 file_stream.PushText("Input");
             }
-            else if (categories_uses(1) == Target)
+            else if(categories_uses(1) == Target)
             {
                 file_stream.PushText("Target");
             }
-            else if (categories_uses(1) == Time)
+            else if(categories_uses(1) == Time)
             {
                 file_stream.PushText("Time");
             }
@@ -1924,7 +1924,7 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_columns_uses() const
 
     Tensor<DataSet::VariableUse, 1> columns_uses(columns_number);
 
-    for (Index i = 0; i < columns_number; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
         columns_uses(i) = columns(i).column_use;
     }
@@ -3975,7 +3975,7 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& column_index) const
     {
         Tensor<Index, 1> variable_indices(columns(column_index).categories.size());
 
-        for (Index j = 0; j<columns(column_index).categories.size(); j++)
+        for(Index j = 0; j<columns(column_index).categories.size(); j++)
         {
             variable_indices(j) = index+j;
         }
@@ -5284,7 +5284,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples
 
     Index positive_samples_number = 0;
 
-    for (Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < samples_number; i++)
     {
         Index sample_index = used_samples_indices(i);
 
@@ -5343,7 +5343,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_samples
 
     Index negative_samples_number = 0;
 
-    for (Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < samples_number; i++)
     {
         Index sample_index = used_samples_indices(i);
 
@@ -5385,7 +5385,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_categories(const
 
     Index class_samples_number = 0;
 
-    for (Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < samples_number; i++)
     {
         Index sample_index = used_samples_indices(i);
 
@@ -7202,7 +7202,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables(const Tensor<string, 1>&
 
 //    Index column_index;
 
-    for (Index i = 0; i < scaling_unscaling_methods.size(); i++)
+    for(Index i = 0; i < scaling_unscaling_methods.size(); i++)
     {
 //        column_index = get_column_index(target_variables_indices(i));
 
@@ -7396,7 +7396,7 @@ void DataSet::unscale_target_variables(const Tensor<string, 1>& scaling_unscalin
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    for (Index i = 0; i < scaling_unscaling_methods.size(); i++)
+    for(Index i = 0; i < scaling_unscaling_methods.size(); i++)
     {
         switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
         {
@@ -7743,7 +7743,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             buffer.str("");
 
-            for (Index i = 0; i < columns_number; i++)
+            for(Index i = 0; i < columns_number; i++)
             {
                 buffer << columns_missing_values_number(i);
 
@@ -8784,7 +8784,7 @@ void DataSet::fill_time_series(const Index& period )
 
     cout.precision(20);
 
-    for (Index i = 1; i < rows ; i++)
+    for(Index i = 1; i < rows ; i++)
     {
       if(static_cast<Index>(data(j, 0)) == static_cast<Index>(data(j - 1, 0)))
       {
@@ -9490,7 +9490,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 
     for(Index i = 0; i < inputs_targets_indices_number; i++)
     {
-        if (i < input_columns_number)
+        if(i < input_columns_number)
         {
             input_target_columns_indices(i) = input_columns_indices(i);
         }
@@ -9507,7 +9507,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
     {
         new_lags_number = lags_number - 2;
     }
-    else if (samples_number == lags_number + 1)
+    else if(samples_number == lags_number + 1)
     {
         new_lags_number = lags_number - 1;
     }
@@ -9535,7 +9535,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 
             autocorrelations_vector = OpenNN::autocorrelations(thread_pool_device, current_input_i, new_lags_number);
 
-            for (Index j = 0; j < new_lags_number; j++)
+            for(Index j = 0; j < new_lags_number; j++)
             {
                 autocorrelations (i, j) = autocorrelations_vector(j) ;
             }
@@ -9603,7 +9603,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
     for(Index i = 0; i < inputs_targets_indices_number; i++)
     {
-        if (i < input_columns_number)
+        if(i < input_columns_number)
         {
             input_target_columns_indices(i) = input_columns_indices(i);
         }
@@ -9620,7 +9620,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     {
         new_lags_number = lags_number - 2;
     }
-    else if (samples_number == lags_number + 1)
+    else if(samples_number == lags_number + 1)
     {
         new_lags_number = lags_number - 1;
     }
@@ -9632,7 +9632,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     Tensor<type,3> cross_correlations(input_target_columns_number, input_target_columns_number, new_lags_number);
     Tensor<type, 1> cross_correlations_vector(new_lags_number);
 
-    for (Index i = 0; i < input_target_columns_number; i++)
+    for(Index i = 0; i < input_target_columns_number; i++)
     {
         const Index current_input_target_index_i = input_target_columns_indices(i);
 
@@ -9657,7 +9657,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
                 cross_correlations_vector = OpenNN::cross_correlations(thread_pool_device, current_input_i, current_input_j, new_lags_number);
 
-                for (Index k = 0; k < new_lags_number; k++)
+                for(Index k = 0; k < new_lags_number; k++)
                 {
                     cross_correlations (i, j, k) = cross_correlations_vector(k) ;
                 }
@@ -10670,7 +10670,7 @@ void DataSet::read_csv_3_simple()
 
             for (int i = 1; i < data.dimension(0); i++)
             {
-                if (abs(data(i, variable_index)-a) > 1e-3 || ::isnan(data(i, variable_index)) || ::isnan(a))
+                if(abs(data(i, variable_index)-a) > 1e-3 || ::isnan(data(i, variable_index)) || ::isnan(a))
                     constant = false;
             }
 
@@ -11373,7 +11373,7 @@ void DataSet::fix_repeated_names()
     {
         auto result = columns_count_map.insert(std::pair<std::string, Index>(columns(i).name, 1));
 
-        if (!result.second) result.first->second++;
+        if(!result.second) result.first->second++;
     }
 
     for (auto & element : columns_count_map)
@@ -11408,7 +11408,7 @@ void DataSet::fix_repeated_names()
         {
             auto result = variables_count_map.insert(std::pair<std::string, Index>(variables_names(i), 1));
 
-            if (!result.second) result.first->second++;
+            if(!result.second) result.first->second++;
         }
 
         for (auto & element : variables_count_map)

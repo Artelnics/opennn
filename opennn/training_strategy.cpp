@@ -78,7 +78,7 @@ NeuralNetwork* TrainingStrategy::get_neural_network_pointer() const
 
 LossIndex* TrainingStrategy::get_loss_index_pointer()
 {
-    switch (loss_method)
+    switch(loss_method)
     {
         case SUM_SQUARED_ERROR: return &sum_squared_error;
 
@@ -101,7 +101,7 @@ LossIndex* TrainingStrategy::get_loss_index_pointer()
 
 OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
 {
-    switch (optimization_method)
+    switch(optimization_method)
     {
         case GRADIENT_DESCENT: return &gradient_descent;
 

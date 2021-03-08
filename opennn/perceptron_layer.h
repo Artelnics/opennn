@@ -184,7 +184,7 @@ public:
 
    // Perceptron layer combinations
 
-   void calculate_combinations(const Tensor<type, 2>& inputs,
+   void calculate_combinations(const Tensor<type, 2>&,
                                const Tensor<type, 2>& biases,
                                const Tensor<type, 2>& synaptic_weights,
                                Tensor<type, 2>& combinations) const;
@@ -211,20 +211,6 @@ public:
 
    // Delta methods
 
-//   void calculate_output_delta(ForwardPropagation* forward_propagation,
-//                                  const Tensor<type, 2>& output_jacobian,
-//                                  Tensor<type, 2>& output_delta) const;
-/*
-   void calculate_output_delta(ForwardPropagation*,
-                               const Tensor<type, 2>&,
-                               BackPropagation*) const;
-*/
-
-//   void calculate_hidden_delta(Layer* next_layer_pointer,
-//                               ForwardPropagation* forward_propagation,
-//                               const Tensor<type, 2>& next_layer_delta,
-//                               Tensor<type, 2>& hidden_delta) const;
-
    void calculate_hidden_delta(ForwardPropagation*,
                                BackPropagation*,
                                BackPropagation*) const;
@@ -236,16 +222,6 @@ public:
    void calculate_hidden_delta_probabilistic(ProbabilisticLayer::ProbabilisticLayerForwardPropagation*,
                                              ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
                                              PerceptronLayerBackPropagation*) const;
-
-//   void calculate_hidden_delta_perceptron(Layer* next_layer_pointer,
-//                                          const Tensor<type, 2>& activations_derivatives,
-//                                          const Tensor<type, 2>& next_layer_delta,
-//                                          Tensor<type, 2>& hidden_delta) const;
-
-//   void calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
-//                                             const Tensor<type, 2>& activations_derivatives,
-//                                             const Tensor<type, 2>& next_layer_delta,
-//                                             Tensor<type, 2>& hidden_delta) const;
 
    // Gradient methods
 

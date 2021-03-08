@@ -200,14 +200,6 @@ public:
                           Tensor<type, 1> potential_parameters,
                           ForwardPropagation* forward_propagation);
 
-//   void calculate_output_delta(ForwardPropagation* forward_propagation,
-//                               const Tensor<type, 2>& output_jacobian,
-//                               Tensor<type, 2>& output_delta) const;
-/*
-   void calculate_output_delta(ForwardPropagation*,
-                               const Tensor<type, 2>&,
-                               BackPropagation*) const;
-*/
    // Gradient methods
 
    void calculate_error_gradient(const Tensor<type, 2>& inputs,

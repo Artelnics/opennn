@@ -805,9 +805,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     NeuralNetwork::ForwardPropagation neural_network_forward_propagation_training(training_samples_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation neural_network_forward_propagation_selection(selection_samples_number, neural_network_pointer);
 
-    NeuralNetwork::BackPropagation neural_network_back_propagation_training(training_samples_number, neural_network_pointer);
-    NeuralNetwork::BackPropagation neural_network_back_propagation_selection(selection_samples_number, neural_network_pointer);
-
     // Loss index
 
     type gradient_norm = 0;

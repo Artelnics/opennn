@@ -447,7 +447,7 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, con
 
     const Index this_size = x.size();
 
-    for (Index i = 0; i < lags_number; i++)
+    for(Index i = 0; i < lags_number; i++)
     {
         Tensor<type, 1> column_x(this_size-i);
         Tensor<type, 1> column_y(this_size-i);
@@ -549,7 +549,7 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device, c
 
     const Index this_size = x.size();
 
-    for (Index i = 0; i < maximum_lags_number; i++)
+    for(Index i = 0; i < maximum_lags_number; i++)
     {
         Tensor<type, 1> column_x(this_size-i);
         Tensor<type, 1> column_y(this_size-i);

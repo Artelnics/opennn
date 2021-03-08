@@ -1205,11 +1205,11 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
      type delta = 0;
      Index index= 0;
 
-     for (Index row = 0; row < rows_number; row++)
+     for(Index row = 0; row < rows_number; row++)
      {
-         for (Index i = 0; i < dim; i++)
+         for(Index i = 0; i < dim; i++)
          {
-             for (Index j = 0; j < dim; j++)
+             for(Index j = 0; j < dim; j++)
              {
                  (i == j) ? delta = 1 : delta = 0;
 
