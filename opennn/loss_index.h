@@ -289,9 +289,10 @@ public:
                                       const NeuralNetwork::ForwardPropagation&,
                                       SecondOrderLoss&) const {return;}
 
-   void back_propagate(const DataSet::Batch& batch,
-                       NeuralNetwork::ForwardPropagation& forward_propagation,
-                       BackPropagation& back_propagation) const;
+   void back_propagate(const DataSet::Batch&,
+                       NeuralNetwork::ForwardPropagation&,
+                       NeuralNetwork::BackPropagation&,
+                       BackPropagation&) const;
 
    // Second Order loss
 

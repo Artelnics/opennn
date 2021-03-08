@@ -459,18 +459,24 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
 
 
 void LossIndex::back_propagate(const DataSet::Batch& batch,
-                    NeuralNetwork::ForwardPropagation& forward_propagation,
-                    BackPropagation& back_propagation) const
+                               NeuralNetwork::ForwardPropagation& neural_network_forward_propagation,
+                               NeuralNetwork::BackPropagation& neural_network_propagation,
+                               BackPropagation& back_propagation) const
 {
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+//    Tensor<Layer*, 1> trainable_layers = neural_network_pointer->get_trainable_layers_pointers();
+
+
     // Loss index
 
-    calculate_error(batch, forward_propagation, back_propagation);
+    calculate_error(batch, neural_network_forward_propagation, back_propagation);
 
-//    calculate_output_delta(batch, forward_propagation, back_propagation);
+//    calculate_output_delta(batch, forward_propagation.layers(trainable_layers_number-1), back_propagation);
 
-    calculate_layers_delta(forward_propagation, back_propagation);
+    calculate_layers_delta(neural_network_forward_propagation, back_propagation);
 
-    calculate_error_gradient(batch, forward_propagation, back_propagation);
+    calculate_error_gradient(batch, neural_network_forward_propagation, back_propagation);
 
     // Loss
 

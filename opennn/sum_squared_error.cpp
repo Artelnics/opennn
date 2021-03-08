@@ -102,8 +102,6 @@ void SumSquaredError::calculate_error(const DataSet::Batch& batch,
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
     back_propagation.error = sum_squared_error(0);
-
-    return;
 }
 
 
@@ -153,9 +151,14 @@ void SumSquaredError::calculate_output_delta(const DataSet::Batch& batch,
      {
      case Layer::Perceptron:
      {
-         back_propagation.errors.device(*thread_pool_device) =
-                 static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(layer_forward_propagation)->activations -
-                 batch.targets_2d;
+         PerceptronLayer::PerceptronLayerBackPropagation* perceptron_layer_back_propagation
+         = static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(layer_back_propagation);
+
+         perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+
+//         back_propagation.errors.device(*thread_pool_device) =
+//                 static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(layer_forward_propagation)->activations -
+//                 batch.targets_2d;
      }
          break;
 
