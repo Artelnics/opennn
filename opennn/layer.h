@@ -151,20 +151,27 @@ public:
 
     virtual Tensor<type, 4> calculate_outputs_4D(const Tensor<type, 4>&) {return Tensor<type, 4>();}
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, BackPropagation*) const {}
-    virtual void calculate_error_gradient(const Tensor<type, 4>&, ForwardPropagation*, BackPropagation*) const {}
+    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
+    virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation*) {}
 
-    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*)  {} // Cannot be const because of Recurrent and LSTM layers
-    virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation*)  {}
-
-    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation*)  {}
-    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*)  {} // Cannot be const because of Recurrent and LSTM layers
+    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation*) {}
+    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
 
     // Deltas
 
     virtual void calculate_hidden_delta(ForwardPropagation*,
                                         BackPropagation*,
                                         BackPropagation*) const {}
+
+    // Error gradient
+
+    virtual void calculate_error_gradient(const Tensor<type, 2>&,
+                                          ForwardPropagation*,
+                                          BackPropagation*) const {}
+
+    virtual void calculate_error_gradient(const Tensor<type, 4>&,
+                                          ForwardPropagation*,
+                                          BackPropagation*) const {}
 
     // Get neurons number
 
@@ -192,7 +199,7 @@ public:
 
     // Expression methods
 
-    virtual string write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const {return string();}
+    virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const {return string();}
 
     virtual string write_expression_c() const {return string();}
 

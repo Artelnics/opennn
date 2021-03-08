@@ -783,16 +783,15 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
-//        trainable_layers_pointers(i)->calculate_error_gradient(forward_propagation.layers(i-1)->activations,
-//                                                               forward_propagation.layers(i-1),
-//                                                               back_propagation.neural_network.layers(i));
-
         switch(forward_propagation.layers(i-1)->layer_pointer->get_type())
         {
         case Layer::Perceptron:
         {
+            PerceptronLayer::PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+                    = static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1));
+
             trainable_layers_pointers(i)->
-                    calculate_error_gradient(static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                    calculate_error_gradient(perceptron_layer_forward_propagation->activations,
                                              forward_propagation.layers(i-1),
                                              back_propagation.neural_network.layers(i));
         }
@@ -800,8 +799,11 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
         case Layer::Probabilistic:
         {
+            ProbabilisticLayer::ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
+                    = static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1));
+
             trainable_layers_pointers(i)->
-                    calculate_error_gradient(static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                    calculate_error_gradient(probabilistic_layer_forward_propagation->activations,
                                              forward_propagation.layers(i-1),
                                              back_propagation.neural_network.layers(i));
         }
@@ -809,8 +811,11 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
         case Layer::Recurrent:
         {
+            RecurrentLayer::RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
+                    = static_cast<RecurrentLayer::RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1));
+
             trainable_layers_pointers(i)->
-                    calculate_error_gradient(static_cast<RecurrentLayer::RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                    calculate_error_gradient(recurrent_layer_forward_propagation->activations,
                                              forward_propagation.layers(i-1),
                                              back_propagation.neural_network.layers(i));
 
@@ -819,8 +824,11 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
         case Layer::LongShortTermMemory:
         {
+            LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
+                    = static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1));
+
             trainable_layers_pointers(i)->
-                    calculate_error_gradient(static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                    calculate_error_gradient(long_short_term_memory_layer_forward_propagation->activations,
                                              forward_propagation.layers(i-1),
                                              back_propagation.neural_network.layers(i));
         }

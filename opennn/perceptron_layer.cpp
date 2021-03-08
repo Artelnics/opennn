@@ -847,7 +847,6 @@ void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
 
     perceptron_layer_forward_propagation->activations_derivatives;
 
-
     perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
             perceptron_layer_back_propagation->delta.sum(Eigen::array<Index, 1>({0}));
 
@@ -919,7 +918,6 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
     }
 
 #endif
-
 
     switch(perceptron_layer_type)
     {
@@ -1224,6 +1222,7 @@ string PerceptronLayer::write_activation_function_expression() const
         return "hard_sigmoid";
     }
 }
+
 
 string PerceptronLayer::write_combinations_c() const
 {

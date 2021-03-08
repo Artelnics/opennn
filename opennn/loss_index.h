@@ -114,6 +114,7 @@ public:
            gradient.resize(parameters_number);
 
            regularization_gradient.resize(parameters_number);
+           regularization_gradient.setConstant(0);
        }
 
 
@@ -286,8 +287,6 @@ public:
 
    // ERROR TERMS METHODS
 
-   virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
-
    void calculate_errors(const DataSet::Batch&,
                          const NeuralNetwork::ForwardPropagation&,
                          BackPropagation&) const;
@@ -408,7 +407,6 @@ protected:
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/loss_index_cuda.h"
 #endif
-
 
 #ifdef OPENNN_MKL
     #include "../../opennn-mkl/opennn_mkl/loss_index_mkl.h"

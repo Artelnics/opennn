@@ -9537,7 +9537,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 
             for(Index j = 0; j < new_lags_number; j++)
             {
-                autocorrelations (i, j) = autocorrelations_vector(j) ;
+                autocorrelations (i, j) = autocorrelations_vector(j);
             }
         }
     }
@@ -9659,7 +9659,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
                 for(Index k = 0; k < new_lags_number; k++)
                 {
-                    cross_correlations (i, j, k) = cross_correlations_vector(k) ;
+                    cross_correlations (i, j, k) = cross_correlations_vector(k);
                 }
             }
             else

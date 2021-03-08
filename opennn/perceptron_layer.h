@@ -185,29 +185,30 @@ public:
    // Perceptron layer combinations
 
    void calculate_combinations(const Tensor<type, 2>&,
-                               const Tensor<type, 2>& biases,
-                               const Tensor<type, 2>& synaptic_weights,
-                               Tensor<type, 2>& combinations) const;
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               Tensor<type, 2>&) const;
 
    // Perceptron layer activations_2d
 
-   void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_2d) const;
+   void calculate_activations(const Tensor<type, 2>&,
+                              Tensor<type, 2>&) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations,
-                                          Tensor<type, 2>& activations,
-                                          Tensor<type, 2>& activations_derivatives) const;
+   void calculate_activations_derivatives(const Tensor<type, 2>&,
+                                          Tensor<type, 2>&,
+                                          Tensor<type, 2>&) const;
 
    // Perceptron layer outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 2>& inputs,
-                          ForwardPropagation* forward_propagation);
+   void forward_propagate(const Tensor<type, 2>&,
+                          ForwardPropagation*);
 
 
-   void forward_propagate(const Tensor<type, 2>& inputs,
-                          Tensor<type, 1> potential_parameters,
-                          ForwardPropagation* forward_propagation);
+   void forward_propagate(const Tensor<type, 2>&,
+                          Tensor<type, 1>,
+                          ForwardPropagation*);
 
    // Delta methods
 
@@ -225,11 +226,13 @@ public:
 
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<type, 2>& inputs,
+   void calculate_error_gradient(const Tensor<type, 2>&,
                                  ForwardPropagation*,
-                                 BackPropagation* back_propagation) const;
+                                 BackPropagation*) const;
 
-   void insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
+   void insert_gradient(BackPropagation*,
+                        const Index&,
+                        Tensor<type, 1>&) const;
 
    // Expression methods   
 
