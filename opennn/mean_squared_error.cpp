@@ -151,63 +151,41 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
 
-     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-//     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
-//     const Tensor<type, 2>& targets = batch.targets_2d;
-
-//     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
-
      switch (layer_forward_propagation->layer_pointer->get_type())
      {
      case Layer::Perceptron:
      {
-         const PerceptronLayer::PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-         = static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(layer_forward_propagation);
+         PerceptronLayer::PerceptronLayerBackPropagation* perceptron_layer_back_propagation
+         = static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(layer_back_propagation);
 
-         back_propagation.errors.device(*thread_pool_device) =
-                 perceptron_layer_forward_propagation->activations - batch.targets_2d;
-
-//         perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-
+         perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
          break;
 
      case Layer::Probabilistic:
      {
-         const ProbabilisticLayer::ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-         = static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(layer_forward_propagation);
+         ProbabilisticLayer::ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+         = static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(layer_back_propagation);
 
-         back_propagation.errors.device(*thread_pool_device) =
-                 probabilistic_layer_forward_propagation->activations - batch.targets_2d;
+         probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
          break;
 
      case Layer::Recurrent:
      {
-         const RecurrentLayer::RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
-         = static_cast<RecurrentLayer::RecurrentLayerForwardPropagation*>(layer_forward_propagation);
+         RecurrentLayer::RecurrentLayerBackPropagation* recurrent_layer_back_propagation
+         = static_cast<RecurrentLayer::RecurrentLayerBackPropagation*>(layer_back_propagation);
 
-         back_propagation.errors.device(*thread_pool_device) =
-                 recurrent_layer_forward_propagation->activations - batch.targets_2d;
+         recurrent_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
          break;
 
      case Layer::LongShortTermMemory:
      {
-         const LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
-         = static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation*>(layer_forward_propagation);
+         LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
+         = static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation*>(layer_back_propagation);
 
-         back_propagation.errors.device(*thread_pool_device) =
-                 long_short_term_memory_layer_forward_propagation->activations - batch.targets_2d;
-     }
-         break;
-
-     case Layer::Convolutional:
-     {
-         //back_propagation.errors.device(*thread_pool_device) =
-         //        static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
-         //        batch.targets_2d;
+         long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
          break;
 

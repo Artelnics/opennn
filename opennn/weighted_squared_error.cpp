@@ -326,8 +326,50 @@ void WeightedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      #endif
 
-
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+     switch (layer_forward_propagation->layer_pointer->get_type())
+     {
+     case Layer::Perceptron:
+     {
+         PerceptronLayer::PerceptronLayerBackPropagation* perceptron_layer_back_propagation
+         = static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(layer_back_propagation);
+
+//         perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+     }
+         break;
+
+     case Layer::Probabilistic:
+     {
+         ProbabilisticLayer::ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+         = static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(layer_back_propagation);
+
+//         probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+     }
+         break;
+
+     case Layer::Recurrent:
+     {
+         RecurrentLayer::RecurrentLayerBackPropagation* recurrent_layer_back_propagation
+         = static_cast<RecurrentLayer::RecurrentLayerBackPropagation*>(layer_back_propagation);
+
+//         recurrent_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+     }
+         break;
+
+     case Layer::LongShortTermMemory:
+     {
+         LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
+         = static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation*>(layer_back_propagation);
+
+//         long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+     }
+         break;
+
+     default: break;
+     }
+
+
 /*
      const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
      const Tensor<type, 2>& targets = batch.targets_2d;

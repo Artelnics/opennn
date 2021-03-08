@@ -237,10 +237,54 @@ void MinkowskiError::calculate_output_delta(const DataSet::Batch& batch,
              (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
 
 //     back_propagation.output_jacobian.device(*thread_pool_device)
-//             = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
 
 //     back_propagation.output_jacobian.device(*thread_pool_device) =
 //             back_propagation.output_jacobian/(p_norm_derivative());
+
+     switch (layer_forward_propagation->layer_pointer->get_type())
+     {
+     case Layer::Perceptron:
+     {
+         PerceptronLayer::PerceptronLayerBackPropagation* perceptron_layer_back_propagation
+         = static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(layer_back_propagation);
+
+         perceptron_layer_back_propagation->delta.device(*thread_pool_device)
+         = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+     }
+         break;
+
+     case Layer::Probabilistic:
+     {
+         ProbabilisticLayer::ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+         = static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(layer_back_propagation);
+
+         probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
+                 = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+     }
+         break;
+
+     case Layer::Recurrent:
+     {
+         RecurrentLayer::RecurrentLayerBackPropagation* recurrent_layer_back_propagation
+         = static_cast<RecurrentLayer::RecurrentLayerBackPropagation*>(layer_back_propagation);
+
+         recurrent_layer_back_propagation->delta.device(*thread_pool_device)
+                 = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+     }
+         break;
+
+     case Layer::LongShortTermMemory:
+     {
+         LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
+         = static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation*>(layer_back_propagation);
+
+         long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device)
+                 = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+     }
+         break;
+
+     default: break;
+     }
 }
 
 

@@ -856,7 +856,6 @@ void PerceptronLayer::calculate_hidden_delta(ForwardPropagation* forward_propaga
 
     default: return;
     }
-
 }
 
 
