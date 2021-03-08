@@ -49,8 +49,37 @@ public:
         {
             batch_samples_number = new_batch_samples_number;
 
-            combinations.resize(batch_samples_number, neurons_number);
+            current_forget_combinations.resize(neurons_number);
+            current_input_combinations.resize(neurons_number);
+            current_state_combinations.resize(neurons_number);
+            current_output_combinations.resize(neurons_number);
 
+            current_forget_activations.resize(neurons_number);
+            current_input_activations.resize(neurons_number);
+            current_state_activations.resize(neurons_number);
+            current_output_activations.resize(neurons_number);
+
+            current_forget_activations_derivatives.resize(neurons_number);
+            current_input_activations_derivatives.resize(neurons_number);
+            current_state_activations_derivatives.resize(neurons_number);
+            current_output_activations_derivatives.resize(neurons_number);
+            current_hidden_states_derivatives.resize(neurons_number);
+
+
+            forget_activations.resize(batch_samples_number, neurons_number);
+            input_activations.resize(batch_samples_number, neurons_number);
+            state_activations.resize(batch_samples_number, neurons_number);
+            output_activations.resize(batch_samples_number, neurons_number);
+            cell_states.resize(batch_samples_number, neurons_number);
+
+            forget_activations_derivatives.resize(batch_samples_number, neurons_number);
+            input_activations_derivatives.resize(batch_samples_number, neurons_number);
+            state_activations_derivatives.resize(batch_samples_number, neurons_number);
+            output_activations_derivatives.resize(batch_samples_number, neurons_number);
+            cell_states_activations_derivatives.resize(batch_samples_number, neurons_number);
+            hidden_states_activations_derivatives.resize(batch_samples_number, neurons_number);
+
+            combinations.resize(batch_samples_number, neurons_number);
             activations.resize(batch_samples_number, neurons_number);
 
             row_major_activations_3d.resize(batch_samples_number, neurons_number, 6);
@@ -78,19 +107,23 @@ public:
 
         Tensor<type, 1> current_hidden_states_derivatives;
 
-        Tensor<type, 2> forget_combinations;
-        Tensor<type, 2> input_combinations;
-        Tensor<type, 2> state_combinations;
-        Tensor<type, 2> output_combinations;
+//        Tensor<type, 2> forget_combinations;
+//        Tensor<type, 2> input_combinations;
+//        Tensor<type, 2> state_combinations;
+//        Tensor<type, 2> output_combinations;
 
-        Tensor<type, 2> forget_activations;
-        Tensor<type, 2> input_activations;
-        Tensor<type, 2> state_activations;
-        Tensor<type, 2> output_activations;
+        Tensor<type, 2, RowMajor> forget_activations;
+        Tensor<type, 2, RowMajor> input_activations;
+        Tensor<type, 2, RowMajor> state_activations;
+        Tensor<type, 2, RowMajor> output_activations;
+        Tensor<type, 2, RowMajor> cell_states;
 
-
-
-
+        Tensor<type, 2, RowMajor> forget_activations_derivatives;
+        Tensor<type, 2, RowMajor> input_activations_derivatives;
+        Tensor<type, 2, RowMajor> state_activations_derivatives;
+        Tensor<type, 2, RowMajor> output_activations_derivatives;
+        Tensor<type, 2, RowMajor> cell_states_activations_derivatives;
+        Tensor<type, 2, RowMajor> hidden_states_activations_derivatives;
 
         Tensor<type, 3, RowMajor> row_major_activations_3d;
         Tensor<type, 3, RowMajor> row_major_activations_derivatives_3d;

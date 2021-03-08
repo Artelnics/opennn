@@ -326,7 +326,7 @@ void NormalizedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 void NormalizedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
                                                     Layer::ForwardPropagation* layer_forward_propagation,
                                                     Layer::BackPropagation* layer_back_propagation,
-                               BackPropagation& back_propagation) const
+                                                    BackPropagation& back_propagation) const
 {
      #ifdef __OPENNN_DEBUG__
 
