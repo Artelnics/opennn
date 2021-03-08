@@ -930,8 +930,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     type parameters_norm = 0;
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation neural_network_forward_propagation_training(training_samples_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation neural_network_forward_propagation_selection(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
@@ -969,13 +969,13 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     // Calculate error before training
     parameters_norm = l2_norm(optimization_data.parameters);
-    neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-    loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
+    neural_network_pointer->forward_propagate(training_batch, neural_network_forward_propagation_training);
+    loss_index_pointer->calculate_error(training_batch, neural_network_forward_propagation_training, training_back_propagation);
     results.training_error_history(0)  = training_back_propagation.error;
 
     parameters_norm = l2_norm(optimization_data.parameters);
-    neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-    loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+    neural_network_pointer->forward_propagate(selection_batch, neural_network_forward_propagation_selection);
+    loss_index_pointer->calculate_error(selection_batch, neural_network_forward_propagation_selection, selection_back_propagation);
     results.selection_error_history(0)  = selection_back_propagation.error;
 
     // Main loop
@@ -988,19 +988,19 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
         parameters_norm = l2_norm(optimization_data.parameters);
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(training_batch, neural_network_forward_propagation_training);
 
         // Loss index
-
-        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
+/*
+        loss_index_pointer->back_propagate(training_batch, neural_network_forward_propagation_training, training_back_propagation);
+*/
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+            neural_network_pointer->forward_propagate(selection_batch, neural_network_forward_propagation_selection);
 
-            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+            loss_index_pointer->calculate_error(selection_batch, neural_network_forward_propagation_selection, selection_back_propagation);
 
             selection_error = selection_back_propagation.error;
 
@@ -1021,7 +1021,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
         // Optimization algorithm
 
-        update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+        update_epoch(training_batch, neural_network_forward_propagation_training, training_back_propagation, optimization_data);
 
         // Training history
 
@@ -1188,9 +1188,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     {
         neural_network_pointer->set_parameters(minimal_selection_parameters);
 
-//        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+//        neural_network_pointer->forward_propagate(training_batch, neural_network_forward_propagation_training);
 
-//        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+//        loss_index_pointer->back_propagate(training_batch, neural_network_forward_propagation_training, training_back_propagation);
 
 //        training_loss = training_back_propagation.loss;
 

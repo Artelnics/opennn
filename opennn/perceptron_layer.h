@@ -91,6 +91,7 @@ public:
         }
 
         Tensor<type, 2> delta;
+
         Tensor<type, 1> biases_derivatives;
         Tensor<type, 2> synaptic_weights_derivatives;
     };

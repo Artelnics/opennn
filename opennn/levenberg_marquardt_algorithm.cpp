@@ -557,8 +557,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation neural_network_forward_propagation_training(training_samples_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation neural_network_forward_propagation_selection(selection_samples_number, neural_network_pointer);
 
     type parameters_norm = 0;
 
@@ -593,15 +593,15 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     // Calculate error before training
     parameters_norm = l2_norm(optimization_data.parameters);
-    neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-    loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
+    neural_network_pointer->forward_propagate(training_batch, neural_network_forward_propagation_training);
+    loss_index_pointer->calculate_error(training_batch, neural_network_forward_propagation_training, training_back_propagation);
     results.training_error_history(0)  = training_back_propagation.error;
 
     parameters_norm = l2_norm(optimization_data.parameters);
     if(has_selection)
     {
-        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-        loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+        neural_network_pointer->forward_propagate(selection_batch, neural_network_forward_propagation_selection);
+        loss_index_pointer->calculate_error(selection_batch, neural_network_forward_propagation_selection, selection_back_propagation);
         results.selection_error_history(0)  = selection_back_propagation.error;
     }
 
@@ -618,12 +618,12 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         // Neural Network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(training_batch, neural_network_forward_propagation_training);
 
         // Loss index
 
         loss_index_pointer->calculate_terms_second_order_loss(training_batch,
-                                                              training_forward_propagation,
+                                                              neural_network_forward_propagation_training,
                                                               training_back_propagation,
                                                               terms_second_order_loss);
 
@@ -634,7 +634,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         // Optimization data
 
         update_epoch(training_batch,
-                     training_forward_propagation,
+                     neural_network_forward_propagation_training,
                      training_back_propagation,
                      terms_second_order_loss,
                      optimization_data);
@@ -652,9 +652,9 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         if(has_selection)
         {
-          neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+          neural_network_pointer->forward_propagate(selection_batch, neural_network_forward_propagation_selection);
 
-          loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+          loss_index_pointer->calculate_error(selection_batch, neural_network_forward_propagation_selection, selection_back_propagation);
         }
 
         if(epoch == 1)
@@ -836,9 +836,9 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         neural_network_pointer->set_parameters(minimal_selection_parameters);
 
-//        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+//        neural_network_pointer->forward_propagate(training_batch, neural_network_forward_propagation_training);
 
-//        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+//        loss_index_pointer->back_propagate(training_batch, neural_network_forward_propagation_training, training_back_propagation);
 
 //        selection_back_propagation.error = minimum_selection_error;
     }
