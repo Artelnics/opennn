@@ -46,38 +46,36 @@ public:
 
    // Error methods
 
-   void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+   void calculate_error(const DataSet::Batch&,
+                        const NeuralNetwork::ForwardPropagation&,
+                        LossIndex::BackPropagation&) const;
 
-   void calculate_binary_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+   void calculate_binary_error(const DataSet::Batch&,
+                        const NeuralNetwork::ForwardPropagation&,
+                        LossIndex::BackPropagation&) const;
 
    void calculate_multiple_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+                        const NeuralNetwork::ForwardPropagation&,
+                        LossIndex::BackPropagation&) const;
 
    // Gradient methods
 
    void calculate_output_delta(const DataSet::Batch&,
-                               Layer::ForwardPropagation*,
-                               Layer::BackPropagation*,
+                               NeuralNetwork::ForwardPropagation&,
                                BackPropagation&) const;
 
-   void calculate_binary_output_jacobian(const DataSet::Batch& batch,
-                                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                         BackPropagation& back_propagation) const;
+   void calculate_binary_output_delta(const DataSet::Batch&,
+                                      NeuralNetwork::ForwardPropagation&,
+                                      BackPropagation&) const;
 
-   void calculate_multiple_output_jacobian(const DataSet::Batch& batch,
-                                           const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                           BackPropagation& back_propagation) const;
+   void calculate_multiple_output_delta(const DataSet::Batch&,
+                                        NeuralNetwork::ForwardPropagation&,
+                                        BackPropagation&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
 
    // Serialization methods
-
       
    void from_XML(const tinyxml2::XMLDocument&);
 

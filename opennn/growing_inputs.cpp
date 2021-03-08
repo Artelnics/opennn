@@ -310,7 +310,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
             optimum_selection_error = current_selection_error;
             optimum_training_error = current_training_error;
         }
-        else if (previus_selection_error < current_selection_error)
+        else if(previus_selection_error < current_selection_error)
         {
             selection_failures++;
         }

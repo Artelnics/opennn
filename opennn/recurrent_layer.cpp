@@ -957,7 +957,7 @@ void RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
 
     const Type next_layer_type = next_layer_pointer->get_type();
 
-    switch (next_layer_type)
+    switch(next_layer_type)
     {
     case Perceptron:
         calculate_hidden_delta_perceptron(next_layer_pointer, recurrent_layer_forward_propagation->activations_derivatives, next_layer_delta, hidden_delta);
