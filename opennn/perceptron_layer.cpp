@@ -776,7 +776,7 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 //    output_delta.device(*thread_pool_device) = perceptron_layer_forward_propagation->activations_derivatives*output_jacobian;
 //}
 
-
+/*
 void PerceptronLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
                                              const Tensor<type, 2>& output_jacobian,
                                              BackPropagation* back_propagation) const
@@ -786,7 +786,7 @@ void PerceptronLayer::calculate_output_delta(ForwardPropagation* forward_propaga
 
     perceptron_layer_back_propagation->delta.device(*thread_pool_device) = perceptron_layer_forward_propagation->activations_derivatives*output_jacobian;
 }
-
+*/
 
 /*void PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                              ForwardPropagation* forward_propagation,
@@ -868,7 +868,7 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPr
 
     back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta.contract(next_synaptic_weights, A_BT);
 
-    back_propagation->delta.device(*thread_pool_device) = back_propagation->delta*forward_propagation->activations_derivatives;
+//    back_propagation->delta.device(*thread_pool_device) = back_propagation->delta*forward_propagation->activations_derivatives;
 }
 
 void PerceptronLayer::calculate_hidden_delta_probabilistic(PerceptronLayerForwardPropagation* forward_propagation,
@@ -879,7 +879,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(PerceptronLayerForwar
 
     back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta.contract(next_synaptic_weights, A_BT);
 
-    back_propagation->delta.device(*thread_pool_device) = back_propagation->delta*forward_propagation->activations_derivatives;
+//    back_propagation->delta.device(*thread_pool_device) = back_propagation->delta*forward_propagation->activations_derivatives;
 }
 
 
@@ -947,6 +947,24 @@ void PerceptronLayer::insert_gradient(BackPropagation* back_propagation,
     memcpy(gradient.data() + index + biases_number,
            perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+}
+
+
+void PerceptronLayer::calculate_outputs_derivatives()
+{
+
+}
+
+
+void PerceptronLayer::calculate_biases_derivatives()
+{
+
+}
+
+
+void PerceptronLayer::calculate_synaptic_weights_derivatives()
+{
+
 }
 
 

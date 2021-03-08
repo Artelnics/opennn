@@ -142,9 +142,9 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
 
     case Layer::Convolutional:
     {
-        back_propagation.errors.device(*thread_pool_device) =
-                static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
-                batch.targets_2d;
+        //back_propagation.errors.device(*thread_pool_device) =
+        //        static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
+        //        batch.targets_2d;
     }
         break;
 
@@ -157,8 +157,9 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
 }
 
 
-void MinkowskiError::calculate_output_jacobian(const DataSet::Batch& batch,
-                               const NeuralNetwork::ForwardPropagation& forward_propagation,
+void MinkowskiError::calculate_output_delta(const DataSet::Batch& batch,
+                                            Layer::ForwardPropagation* layer_forward_propagation,
+                                            Layer::BackPropagation* layer_back_propagation,
                                BackPropagation& back_propagation) const
 {
      #ifdef __OPENNN_DEBUG__
@@ -169,7 +170,7 @@ void MinkowskiError::calculate_output_jacobian(const DataSet::Batch& batch,
              ostringstream buffer;
 
              buffer << "OpenNN Exception: MinkowskiError class.\n"
-                    << "void calculate_output_jacobian method (const DataSet::Batch& batch, \n"
+                    << "void calculate_output_delta method (const DataSet::Batch& batch, \n"
                     << "const NeuralNetwork::ForwardPropagation& forward_propagation, \n"
                     << "BackPropagation& back_propagation) \n"
                     << "Output gradient is NAN. Modify Minkowski Parameter.\n";
@@ -187,12 +188,12 @@ void MinkowskiError::calculate_output_jacobian(const DataSet::Batch& batch,
 
 //     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
-     switch (forward_propagation.layers(trainable_layers_number-1)->layer_pointer->get_type())
+     switch (layer_forward_propagation->layer_pointer->get_type())
      {
      case Layer::Perceptron:
      {
          back_propagation.errors.device(*thread_pool_device) =
-                 static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
+                 static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(layer_forward_propagation)->activations -
                  batch.targets_2d;
      }
          break;
@@ -200,7 +201,7 @@ void MinkowskiError::calculate_output_jacobian(const DataSet::Batch& batch,
      case Layer::Probabilistic:
      {
          back_propagation.errors.device(*thread_pool_device) =
-                 static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
+                 static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(layer_forward_propagation)->activations -
                  batch.targets_2d;
      }
          break;
@@ -208,7 +209,7 @@ void MinkowskiError::calculate_output_jacobian(const DataSet::Batch& batch,
      case Layer::Recurrent:
      {
          back_propagation.errors.device(*thread_pool_device) =
-                 static_cast<RecurrentLayer::RecurrentLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
+                 static_cast<RecurrentLayer::RecurrentLayerForwardPropagation*>(layer_forward_propagation)->activations -
                  batch.targets_2d;
      }
          break;
@@ -216,16 +217,16 @@ void MinkowskiError::calculate_output_jacobian(const DataSet::Batch& batch,
      case Layer::LongShortTermMemory:
      {
          back_propagation.errors.device(*thread_pool_device) =
-                 static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
+                 static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation*>(layer_forward_propagation)->activations -
                  batch.targets_2d;
      }
          break;
 
      case Layer::Convolutional:
      {
-         back_propagation.errors.device(*thread_pool_device) =
-                 static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
-                 batch.targets_2d;
+         //back_propagation.errors.device(*thread_pool_device) =
+         //        static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
+         //        batch.targets_2d;
      }
          break;
 
@@ -235,11 +236,11 @@ void MinkowskiError::calculate_output_jacobian(const DataSet::Batch& batch,
      const Tensor<type, 0> p_norm_derivative =
              (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
 
-     back_propagation.output_jacobian.device(*thread_pool_device)
-             = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+//     back_propagation.output_jacobian.device(*thread_pool_device)
+//             = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
 
-     back_propagation.output_jacobian.device(*thread_pool_device) =
-             back_propagation.output_jacobian/(p_norm_derivative());
+//     back_propagation.output_jacobian.device(*thread_pool_device) =
+//             back_propagation.output_jacobian/(p_norm_derivative());
 }
 
 

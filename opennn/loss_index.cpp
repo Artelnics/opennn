@@ -466,7 +466,7 @@ void LossIndex::back_propagate(const DataSet::Batch& batch,
 
     calculate_error(batch, forward_propagation, back_propagation);
 
-    calculate_output_jacobian(batch, forward_propagation, back_propagation);
+//    calculate_output_delta(batch, forward_propagation, back_propagation);
 
     calculate_layers_delta(forward_propagation, back_propagation);
 
@@ -684,12 +684,12 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
      const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
      // Output layer
-
+/*
      trainable_layers_pointers(trainable_layers_number-1)->
              calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
                                     back_propagation.output_jacobian,
                                     back_propagation.neural_network.layers(trainable_layers_number-1));
-
+*/
 //     trainable_layers_pointers(trainable_layers_number-1)
 //     ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
 //                              back_propagation.output_jacobian,
@@ -710,7 +710,6 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
 //                                forward_propagation.layers(i),
 //                                back_propagation.neural_network.layers(i+1).delta,
 //                                back_propagation.neural_network.layers(i).delta);
-
    }
 }
 
@@ -800,10 +799,10 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
         case Layer::Convolutional:
         {
-            trainable_layers_pointers(i)->
-                    calculate_error_gradient(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                             forward_propagation.layers(i-1),
-                                             back_propagation.neural_network.layers(i));
+            //trainable_layers_pointers(i)->
+            //        calculate_error_gradient(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+            //                                 forward_propagation.layers(i-1),
+            //                                 back_propagation.neural_network.layers(i));
         }
             break;
 
