@@ -63,9 +63,6 @@ public:
 
         void print() const
         {
-            cout << "Parameters:" << endl;
-            cout << parameters << endl;
-
             cout << "Potential parameters:" << endl;
             cout << potential_parameters << endl;
 
@@ -76,7 +73,6 @@ public:
             cout << initial_learning_rate << endl;
         }
 
-        Tensor<type, 1> parameters;
         Tensor<type, 1> potential_parameters;
         Tensor<type, 1> training_direction;
         type initial_learning_rate = 0;

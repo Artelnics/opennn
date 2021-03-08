@@ -366,7 +366,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         // Calculate loss for V
 
         optimization_data.potential_parameters.device(*thread_pool_device)
-                = optimization_data.parameters + optimization_data.training_direction*V.first;
+                = back_propagation.parameters + optimization_data.training_direction*V.first;
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
@@ -568,7 +568,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         triplet.B.first = optimization_data.initial_learning_rate*count;
 
         optimization_data.potential_parameters.device(*thread_pool_device)
-                = optimization_data.parameters + optimization_data.training_direction*triplet.B.first;
+                = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
@@ -588,7 +588,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         triplet.B.first *= golden_ratio;
 
         optimization_data.potential_parameters.device(*thread_pool_device)
-                = optimization_data.parameters + optimization_data.training_direction*triplet.B.first;
+                = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
@@ -605,7 +605,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             triplet.B.first *= golden_ratio;
 
-            optimization_data.potential_parameters.device(*thread_pool_device) = optimization_data.parameters + optimization_data.training_direction*triplet.B.first;
+            optimization_data.potential_parameters.device(*thread_pool_device) = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
 
             neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
@@ -620,7 +620,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     {
         triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*static_cast<type>(0.382);
 
-        optimization_data.potential_parameters.device(*thread_pool_device) = optimization_data.parameters + optimization_data.training_direction*triplet.U.first;
+        optimization_data.potential_parameters.device(*thread_pool_device) = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
@@ -637,7 +637,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
             triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*static_cast<type>(0.382);
 
             optimization_data.potential_parameters.device(*thread_pool_device)
-                    = optimization_data.parameters + optimization_data.training_direction*triplet.U.first;
+                    = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
 
             neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
