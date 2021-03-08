@@ -233,7 +233,7 @@ public:
                                           PerceptronLayerBackPropagation*,
                                           PerceptronLayerBackPropagation*) const;
 
-   void calculate_hidden_delta_probabilistic(PerceptronLayerForwardPropagation*,
+   void calculate_hidden_delta_probabilistic(ProbabilisticLayer::ProbabilisticLayerForwardPropagation*,
                                              ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
                                              PerceptronLayerBackPropagation*) const;
 
