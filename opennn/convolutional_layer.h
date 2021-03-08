@@ -55,22 +55,15 @@ public:
 
             const Index neurons_number = layer_pointer->get_neurons_number();
 
-            combinations.resize(batch_samples_number, neurons_number); // ?
+            combinations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
+            activations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
 
-            activations.resize(batch_samples_number, neurons_number); // ?
-
-            combinations_4d.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
-            activations_4d.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
-
-            activations_derivatives_4d.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);// @todo
+            activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);// @todo
         }
 
-        Tensor<type, 2> combinations;
-        Tensor<type, 2> activations;
-
-        Tensor<type, 4> combinations_4d;
-        Tensor<type, 4> activations_4d;
-        Tensor<type, 4> activations_derivatives_4d;
+        Tensor<type, 4> combinations;
+        Tensor<type, 4> activations;
+        Tensor<type, 4> activations_derivatives;
     };
 
     struct ConvolutionalLayerBackPropagation : Layer::BackPropagation
@@ -88,12 +81,9 @@ public:
             // @todo delta_4d, synaptic_weights_derivatives_4d
         }
 
-        Tensor<type, 4> delta_4d;
+        Tensor<type, 4> delta;
 
-        Tensor<type, 4> synaptic_weights_derivatives_4d;
-
-
-
+        Tensor<type, 4> synaptic_weights_derivatives;
 
     };
 
@@ -222,11 +212,11 @@ public:
 //   void calculate_output_delta(ForwardPropagation* forward_propagation,
 //                                  const Tensor<type, 2>& output_jacobian,
 //                                  Tensor<type, 2>& output_delta) const;
-
+/*
    void calculate_output_delta(ForwardPropagation*,
                                const Tensor<type, 2>&,
                                BackPropagation*) const;
-
+*/
 //   void calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
    void calculate_hidden_delta(Layer* next_layer_pointer,
                                ForwardPropagation* forward_propagation,

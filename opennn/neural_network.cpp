@@ -1408,8 +1408,8 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
         case Layer::Convolutional:
         {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                            forward_propagation.layers(i));
+            //trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+            //                                                forward_propagation.layers(i));
         }
             break;
 
@@ -1491,9 +1491,9 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
         case Layer::Convolutional:
         {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                            potential_parameters,
-                                                            forward_propagation.layers(i));
+            //trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+            //                                                potential_parameters,
+            //                                                forward_propagation.layers(i));
         }
             break;
 

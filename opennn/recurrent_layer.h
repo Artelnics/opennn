@@ -222,11 +222,11 @@ public:
    void forward_propagate(const Tensor<type, 2>&, ForwardPropagation* );
 
    void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, ForwardPropagation*);
-
+/*
    void calculate_output_delta(ForwardPropagation*,
                                const Tensor<type, 2>&,
                                BackPropagation*) const;
-
+*/
 //   void calculate_output_delta(ForwardPropagation*,
 //                               const Tensor<type, 2>&,
 //                               Tensor<type, 2>&) const;

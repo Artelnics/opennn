@@ -261,30 +261,30 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, Forwar
 
     const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
 
-    convolutional_layer_forward_propagation->combinations_4d.resize(outputs_dimensions(0),
+    convolutional_layer_forward_propagation->combinations.resize(outputs_dimensions(0),
                                                outputs_dimensions(1),
                                                outputs_dimensions(2),
                                                outputs_dimensions(3));
 
-    convolutional_layer_forward_propagation->activations_4d.resize(outputs_dimensions(0),
+    convolutional_layer_forward_propagation->activations.resize(outputs_dimensions(0),
                                               outputs_dimensions(1),
                                               outputs_dimensions(2),
                                               outputs_dimensions(3));
 
-    convolutional_layer_forward_propagation->activations_derivatives_4d.resize(outputs_dimensions(0),
+    convolutional_layer_forward_propagation->activations_derivatives.resize(outputs_dimensions(0),
                                                           outputs_dimensions(1),
                                                           outputs_dimensions(2),
                                                           outputs_dimensions(3));
 
     calculate_combinations(inputs,
-                           convolutional_layer_forward_propagation->combinations_4d);
+                           convolutional_layer_forward_propagation->combinations);
 
-    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations_4d,
-                                      convolutional_layer_forward_propagation->activations_4d,
-                                      convolutional_layer_forward_propagation->activations_derivatives_4d);
+    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
+                                      convolutional_layer_forward_propagation->activations,
+                                      convolutional_layer_forward_propagation->activations_derivatives);
 
-    to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);
-    to_2d(convolutional_layer_forward_propagation->activations_4d, convolutional_layer_forward_propagation->activations);
+//    to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);
+//    to_2d(convolutional_layer_forward_propagation->activations_4d, convolutional_layer_forward_propagation->activations);
 //    to_2d(convolutional_layer_forward_propagation->activations_derivatives_4d, convolutional_layer_forward_propagation->activations_derivatives_2d);
 }
 
@@ -312,17 +312,17 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
 
     const Tensor<Index, 1> output_dimensions = get_outputs_dimensions();
 
-    convolutional_layer_forward_propagation->combinations_4d.resize(output_dimensions(0),
+    convolutional_layer_forward_propagation->combinations.resize(output_dimensions(0),
                                                                     output_dimensions(1),
                                                                     output_dimensions(2),
                                                                     output_dimensions(3));
 
-    convolutional_layer_forward_propagation->activations_4d.resize(output_dimensions(0),
+    convolutional_layer_forward_propagation->activations.resize(output_dimensions(0),
                                                                    output_dimensions(1),
                                                                    output_dimensions(2),
                                                                    output_dimensions(3));
 
-    convolutional_layer_forward_propagation->activations_derivatives_4d.resize(output_dimensions(0),
+    convolutional_layer_forward_propagation->activations_derivatives.resize(output_dimensions(0),
                                                                                output_dimensions(1),
                                                                                output_dimensions(2),
                                                                                output_dimensions(3));
@@ -370,15 +370,15 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
     calculate_combinations(inputs,
                            potential_biases,
                            potential_synaptic_weights,
-                           convolutional_layer_forward_propagation->combinations_4d);
+                           convolutional_layer_forward_propagation->combinations);
 
-    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations_4d,
-                                      convolutional_layer_forward_propagation->activations_4d,
-                                      convolutional_layer_forward_propagation->activations_derivatives_4d);
+    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
+                                      convolutional_layer_forward_propagation->activations,
+                                      convolutional_layer_forward_propagation->activations_derivatives);
 
-    to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);
-    to_2d(convolutional_layer_forward_propagation->activations_4d, convolutional_layer_forward_propagation->activations);
-    //    to_2d(convolutional_layer_forward_propagation->activations_derivatives_4d, convolutional_layer_forward_propagation->activations_derivatives_2d);
+    //to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);
+    //to_2d(convolutional_layer_forward_propagation->activations_4d, convolutional_layer_forward_propagation->activations);
+    //to_2d(convolutional_layer_forward_propagation->activations_derivatives_4d, convolutional_layer_forward_propagation->activations_derivatives_2d);
 }
 
 
@@ -409,7 +409,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
 //    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_jacobian;
 //}
 
-
+/*
 void ConvolutionalLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
                                                 const Tensor<type, 2>& output_jacobian,
                                                 BackPropagation* back_propagation) const
@@ -419,7 +419,7 @@ void ConvolutionalLayer::calculate_output_delta(ForwardPropagation* forward_prop
 
 //    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_jacobian;
 }
-
+*/
 
 void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                 ForwardPropagation* forward_propagation,
@@ -445,8 +445,8 @@ void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
         PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(next_layer_pointer);
 
         calculate_hidden_delta_pooling(pooling_layer,
-                                       convolutional_layer_forward_propagation->activations_4d,
-                                       convolutional_layer_forward_propagation->activations_derivatives_4d,
+                                       convolutional_layer_forward_propagation->activations,
+                                       convolutional_layer_forward_propagation->activations_derivatives,
                                        next_layer_delta,
                                        hidden_delta);
     }
@@ -466,8 +466,8 @@ void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
         ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
         calculate_hidden_delta_probabilistic(probabilistic_layer,
-                                             convolutional_layer_forward_propagation->activations_4d,
-                                             convolutional_layer_forward_propagation->activations_derivatives_4d,
+                                             convolutional_layer_forward_propagation->activations,
+                                             convolutional_layer_forward_propagation->activations_derivatives,
                                              next_layer_delta,
                                              hidden_delta);
     }
