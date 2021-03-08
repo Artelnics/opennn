@@ -65,7 +65,6 @@ public:
             current_output_activations_derivatives.resize(neurons_number);
             current_hidden_states_derivatives.resize(neurons_number);
 
-
             forget_activations.resize(batch_samples_number, neurons_number);
             input_activations.resize(batch_samples_number, neurons_number);
             state_activations.resize(batch_samples_number, neurons_number);
@@ -106,11 +105,6 @@ public:
         Tensor<type, 1> current_output_activations_derivatives;
 
         Tensor<type, 1> current_hidden_states_derivatives;
-
-//        Tensor<type, 2> forget_combinations;
-//        Tensor<type, 2> input_combinations;
-//        Tensor<type, 2> state_combinations;
-//        Tensor<type, 2> output_combinations;
 
         Tensor<type, 2, RowMajor> forget_activations;
         Tensor<type, 2, RowMajor> input_activations;
@@ -317,28 +311,28 @@ public:
 
    // Long short term memory layer combinations
 
-   void calculate_forget_combinations(const Tensor<type, 1>& ,
-                                      const Tensor<type, 2>& ,
-                                      const Tensor<type, 2>& ,
-                                      const Tensor<type, 1>& ,
+   void calculate_forget_combinations(const Tensor<type, 1>&,
+                                      const Tensor<type, 2>&,
+                                      const Tensor<type, 2>&,
+                                      const Tensor<type, 1>&,
                                       Tensor<type, 1>&) const;
 
-   void calculate_input_combinations(const Tensor<type, 1>& ,
-                                     const Tensor<type, 2>& ,
-                                     const Tensor<type, 2>& ,
-                                     const Tensor<type, 1>& ,
+   void calculate_input_combinations(const Tensor<type, 1>&,
+                                     const Tensor<type, 2>&,
+                                     const Tensor<type, 2>&,
+                                     const Tensor<type, 1>&,
                                      Tensor<type, 1>&) const;
 
-   void calculate_state_combinations(const Tensor<type, 1>& ,
-                                     const Tensor<type, 2>& ,
-                                     const Tensor<type, 2>& ,
-                                     const Tensor<type, 1>& ,
+   void calculate_state_combinations(const Tensor<type, 1>&,
+                                     const Tensor<type, 2>&,
+                                     const Tensor<type, 2>&,
+                                     const Tensor<type, 1>&,
                                      Tensor<type, 1>&) const;
 
-   void calculate_output_combinations(const Tensor<type, 1>& ,
-                                      const Tensor<type, 2>& ,
-                                      const Tensor<type, 2>& ,
-                                      const Tensor<type, 1>& ,
+   void calculate_output_combinations(const Tensor<type, 1>&,
+                                      const Tensor<type, 2>&,
+                                      const Tensor<type, 2>&,
+                                      const Tensor<type, 1>&,
                                       Tensor<type, 1>&) const;
 
    // Long short term memory layer activations_2d
@@ -373,26 +367,11 @@ public:
                                              ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
                                              LongShortTermMemoryLayerBackPropagation*) const;
 
-/*
-   void calculate_hidden_delta(Layer*,
-                               ForwardPropagation*,
-                               const Tensor<type, 2>&,
-                               Tensor<type, 2>&) const;
-
-   void calculate_hidden_delta_perceptron(Layer* ,
-                                          const Tensor<type, 2>& ,
-                                          Tensor<type, 2>& ) const;
-
-   void calculate_hidden_delta_probabilistic(Layer* ,
-                                          const Tensor<type, 2>& ,
-                                          Tensor<type, 2>& ) const;
-*/
-
    // Forward propagate
 
-   void forward_propagate(const Tensor<type, 2>& , ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 2>& , Tensor<type, 1>, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*);
 
    // Eror gradient
 
@@ -501,7 +480,6 @@ protected:
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/long_short_term_memory_layer_cuda.h"
 #endif
-
 
 };
 
