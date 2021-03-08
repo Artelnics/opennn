@@ -535,10 +535,10 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
-    Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
-    Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
     DataSet::Batch training_batch(training_samples_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
@@ -546,10 +546,10 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     training_batch.fill(training_samples_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
 
-    training_samples_indices.resize(0);
-    selection_samples_indices.resize(0);
-    inputs_indices.resize(0);
-    target_indices.resize(0);
+//    training_samples_indices.resize(0);
+//    selection_samples_indices.resize(0);
+//    inputs_indices.resize(0);
+//    target_indices.resize(0);
 
     // Neural network
 
@@ -560,7 +560,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
-    type parameters_norm = 0;
+
 
     // Loss index
 
@@ -593,12 +593,10 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     // Calculate error before training
 
-    parameters_norm = l2_norm(training_back_propagation.parameters);
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
     results.training_error_history(0)  = training_back_propagation.error;
 
-    parameters_norm = l2_norm(training_back_propagation.parameters);
     if(has_selection)
     {
         neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
@@ -610,14 +608,9 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
-
         optimization_data.epoch = epoch;
 
         // Neural network
-
-        parameters_norm = l2_norm(training_back_propagation.parameters);
-
-        // Neural Network
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
@@ -781,8 +774,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << terms_second_order_loss.error << "\n"
+                cout << "Training error: " << terms_second_order_loss.error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << "Damping parameter: " << damping_parameter << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
@@ -797,7 +789,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.resize_selection_error_history(epoch+1);
 
             results.final_parameters = training_back_propagation.parameters;
-            results.final_parameters_norm = parameters_norm;
             results.final_training_error = terms_second_order_loss.error;
             results.final_selection_error = selection_back_propagation.error;
 
@@ -812,7 +803,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         else if((display && epoch == 0) || (display && (epoch) % display_period == 0))
         {
             cout << "Epoch " << epoch << ";\n"
-                 << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << terms_second_order_loss.loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << "Damping parameter: " << damping_parameter << "\n"

@@ -449,7 +449,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
-    type parameters_norm = 0;
+    
 
     NeuralNetwork::ForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
@@ -493,7 +493,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         shuffle = false;
 
     // Calculate error before training
-    parameters_norm = l2_norm(optimization_data.parameters);
+
     training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
     batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
     neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
@@ -515,8 +515,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
-
-        parameters_norm = l2_norm(optimization_data.parameters);
 
         training_loss = 0;
         training_error = 0;
@@ -666,8 +664,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << training_error << "\n"
+                cout << "Training error: " << training_error << "\n"
                      << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
@@ -679,8 +676,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             if(has_selection) results.resize_selection_error_history(epoch + 1);
 
             results.final_parameters = optimization_data.parameters;
-
-            results.final_parameters_norm = parameters_norm;
 
             results.final_training_error = training_error;
 
@@ -715,7 +710,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     if(choose_best_selection)
     {
         optimization_data.parameters = optimization_data.minimal_selection_parameters;
-        parameters_norm = l2_norm(optimization_data.parameters);
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 

@@ -61,14 +61,13 @@ void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
 
 
 void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
-                                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                                   SecondOrderLoss& second_order_loss) const
+                                             const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                             SecondOrderLoss& second_order_loss) const
 {
-/*
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     const Index batch_samples_number = batch.get_samples_number();
-
+/*
     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
     const Tensor<type, 2>& targets = batch.targets_2d;
 
@@ -81,7 +80,7 @@ void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
     error.device(*thread_pool_device) = second_order_loss.error_terms.contract(second_order_loss.error_terms, AT_B);
 
     second_order_loss.error = error()/static_cast<type>(batch_samples_number);
-    */
+*/
 }
 
 
