@@ -140,13 +140,6 @@ void SumSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      const type coefficient = static_cast<type>(2.0);
 
-     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-//     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
-//     const Tensor<type, 2>& targets = batch.targets_2d;
-
-//     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
-
      switch (layer_forward_propagation->layer_pointer->get_type())
      {
      case Layer::Perceptron:
@@ -155,49 +148,38 @@ void SumSquaredError::calculate_output_delta(const DataSet::Batch& batch,
          = static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(layer_back_propagation);
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-
-//         back_propagation.errors.device(*thread_pool_device) =
-//                 static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(layer_forward_propagation)->activations -
-//                 batch.targets_2d;
      }
          break;
 
      case Layer::Probabilistic:
      {
-         back_propagation.errors.device(*thread_pool_device) =
-                 static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(layer_forward_propagation)->activations -
-                 batch.targets_2d;
+         ProbabilisticLayer::ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+         = static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(layer_back_propagation);
+
+         probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
          break;
 
      case Layer::Recurrent:
      {
-         back_propagation.errors.device(*thread_pool_device) =
-                 static_cast<RecurrentLayer::RecurrentLayerForwardPropagation*>(layer_forward_propagation)->activations -
-                 batch.targets_2d;
+         RecurrentLayer::RecurrentLayerBackPropagation* recurrent_layer_back_propagation
+         = static_cast<RecurrentLayer::RecurrentLayerBackPropagation*>(layer_back_propagation);
+
+         recurrent_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
          break;
 
      case Layer::LongShortTermMemory:
      {
-         back_propagation.errors.device(*thread_pool_device) =
-                 static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation*>(layer_forward_propagation)->activations -
-                 batch.targets_2d;
-     }
-         break;
+         LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
+         = static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation*>(layer_back_propagation);
 
-     case Layer::Convolutional:
-     {
-         //back_propagation.errors.device(*thread_pool_device) =
-         //        static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
-         //        batch.targets_2d;
+         long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
          break;
 
      default: break;
      }
-
-     //back_propagation.output_jacobian.device(*thread_pool_device) = coefficient*back_propagation.errors;
 }
 
 
