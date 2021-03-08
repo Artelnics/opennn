@@ -867,13 +867,11 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPr
 
     back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta.contract(next_synaptic_weights, A_BT);
 
-    // Falta multiplicar por next layer activation derivatives
-
-//    back_propagation->delta.device(*thread_pool_device) = back_propagation->delta*forward_propagation->activations_derivatives;
+    back_propagation->delta.device(*thread_pool_device) = back_propagation->delta*next_forward_propagation->activations_derivatives;
 }
 
 
-void PerceptronLayer::calculate_hidden_delta_probabilistic(PerceptronLayerForwardPropagation* forward_propagation,
+void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer::ProbabilisticLayerForwardPropagation* next_forward_propagation,
                                                            ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_back_propagation,
                                                            PerceptronLayerBackPropagation* back_propagation) const
 {
@@ -881,7 +879,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(PerceptronLayerForwar
 
     back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta.contract(next_synaptic_weights, A_BT);
 
-    back_propagation->delta.device(*thread_pool_device) = back_propagation->delta*forward_propagation->activations_derivatives;
+    back_propagation->delta.device(*thread_pool_device) = back_propagation->delta*next_forward_propagation->activations_derivatives;
 }
 
 
