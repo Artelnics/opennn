@@ -815,11 +815,10 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPr
                                                         PerceptronLayerBackPropagation* next_back_propagation,
                                                         PerceptronLayerBackPropagation* back_propagation) const
 {
-    const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
+    const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
-    back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta*next_forward_propagation->activations_derivatives;
-
-    back_propagation->delta.device(*thread_pool_device) = back_propagation->delta.contract(next_synaptic_weights, A_BT);
+    back_propagation->delta.device(*thread_pool_device) =
+            (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
 }
 
 
@@ -827,11 +826,10 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer::P
                                                            ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_back_propagation,
                                                            PerceptronLayerBackPropagation* back_propagation) const
 {
-    const Tensor<type, 2>& next_synaptic_weights = static_cast<ProbabilisticLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
+    const Tensor<type, 2>& next_synaptic_weights = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
-    back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta*next_forward_propagation->activations_derivatives;
-
-    back_propagation->delta.device(*thread_pool_device) = back_propagation->delta.contract(next_synaptic_weights, A_BT);
+    back_propagation->delta.device(*thread_pool_device) =
+            (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
 }
 
 

@@ -98,13 +98,11 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      Layer::BackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-     Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
-
      const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
      const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
 
-     switch(output_layer_pointer->get_type())
+     switch(output_layer_back_propagation->layer_pointer->get_type())
      {
      case Layer::Perceptron:
      {
