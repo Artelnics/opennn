@@ -65,9 +65,8 @@ public:
                         LossIndex::BackPropagation& back_propagation) const;
 
    void calculate_output_delta(const DataSet::Batch&,
-                               Layer::ForwardPropagation*,
-                               Layer::BackPropagation*,
-                               BackPropagation& back_propagation) const;
+                               NeuralNetwork::ForwardPropagation&,
+                               BackPropagation&) const;
 
    // Serialization methods
 

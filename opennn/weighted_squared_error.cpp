@@ -154,7 +154,6 @@ void WeightedSquaredError::set_weights()
         positives_weight = 1.0;
         negatives_weight = 1.0;
     }
-
 }
 
 
@@ -189,7 +188,7 @@ void WeightedSquaredError::set_normalization_coefficient()
 }
 
 
-///
+
 /// \brief set_data_set_pointer
 /// \param new_data_set_pointer
 
@@ -263,8 +262,9 @@ void WeightedSquaredError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
                      LossIndex::BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 /*
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
     const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1]->activations,
                                                                  batch.targets_2d);
 
@@ -273,7 +273,6 @@ void WeightedSquaredError::calculate_error(const DataSet::Batch& batch,
 
     back_propagation.error = error/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 */
-    return;
 }
 
 
@@ -316,9 +315,8 @@ void WeightedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 // Gradient methods
 
 void WeightedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
-                                                  Layer::ForwardPropagation* layer_forward_propagation,
-                                                  Layer::BackPropagation* layer_back_propagation,
-                               BackPropagation& back_propagation) const
+                                                  NeuralNetwork::ForwardPropagation& forward_propagation,
+                                                  BackPropagation& back_propagation) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -326,10 +324,13 @@ void WeightedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      #endif
 
-
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-/*
-     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
+
+     Layer::BackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+
+     ProbabilisticLayer::ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+     = static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
+
      const Tensor<type, 2>& targets = batch.targets_2d;
 
      const Index batch_samples_number = batch.targets_2d.size();
@@ -340,26 +341,20 @@ void WeightedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
      const Tensor<bool, 2> if_sentence = targets == targets.constant(1);
      const Tensor<bool, 2> else_sentence = targets == targets.constant(0);
 
-     Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
+     Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
 
-     Tensor<type, 2> f_2(outputs.dimension(0), outputs.dimension(1));
+     Tensor<type, 2> f_2(targets.dimension(0), targets.dimension(1));
 
-     Tensor<type, 2> f_3(outputs.dimension(0), outputs.dimension(1));
+     Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
 
-     f_1 = coefficient*(outputs - targets)*positives_weight;
+     f_1 = (coefficient*positives_weight)*back_propagation.errors;
 
-     f_2 = coefficient*(outputs - targets)*negatives_weight;
+     f_2 = coefficient*negatives_weight*back_propagation.errors;
 
-     f_3 = outputs.constant(0);
+     f_3 = targets.constant(0);
 
-//     cout << f_2;
-//     back_propagation.output_jacobian = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
-     back_propagation.output_jacobian.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
-
-//     cout<<back_propagation.output_jacobian<<endl;
-
-//     system("pause");
-*/
+     probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
+             = if_sentence.select(f_1, else_sentence.select(f_2, f_3));
 }
 
 
@@ -381,6 +376,7 @@ void WeightedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& bat
 
     second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
 }
+
 
 // Hessian method
 

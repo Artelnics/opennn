@@ -258,7 +258,7 @@ bool is_constant_string(const Tensor<string, 1>& str)
     for (int i = 1; i < str.size(); i++)
     {
         str1 = str[i];
-        if (str1.compare(str0) != 0)
+        if(str1.compare(str0) != 0)
             return false;
     }
     return true;
@@ -273,7 +273,7 @@ bool is_constant_numeric(const Tensor<type, 1>& str)
 
     for (int i = 1; i < str.size(); i++)
     {
-        if (abs(str[i]-a0)>1e-3 || ::isnan(str[i]) || ::isnan(a0))
+        if(abs(str[i]-a0)>1e-3 || ::isnan(str[i]) || ::isnan(a0))
             return false;
     }
     return true;
@@ -384,7 +384,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
         }
     }
-    else if (matchs[7] != "") // yyyy/mm/dd hh:mm
+    else if(matchs[7] != "") // yyyy/mm/dd hh:mm
     {
         if(stoi(matchs[7].str()) < 1970)
         {
@@ -406,7 +406,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = 0;
         }
     }
-    else if (matchs[12] != "") // yyyy/mm/dd
+    else if(matchs[12] != "") // yyyy/mm/dd
     {
         if(stoi(matchs[12].str()) < 1970)
         {
@@ -429,7 +429,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
         }
     }
-    else if (matchs[15] != "") // dd/mm/yyyy hh:mm:ss
+    else if(matchs[15] != "") // dd/mm/yyyy hh:mm:ss
     {
         if(stoi(matchs[17].str()) < 1970)
         {
@@ -451,7 +451,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = stoi(matchs[20].str());
         }
     }
-    else if (matchs[21] != "") // dd/mm/yyyy hh:mm
+    else if(matchs[21] != "") // dd/mm/yyyy hh:mm
     {
         if(stoi(matchs[23].str()) < 1970)
         {
@@ -473,7 +473,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = 0;
         }
     }
-    else if (matchs[26] != "") // dd/mm/yyyy
+    else if(matchs[26] != "") // dd/mm/yyyy
     {
         if(stoi(matchs[28].str()) < 1970)
         {
@@ -495,7 +495,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = 0;
         }
     }
-    else if (matchs[29] != "") // yyyy/mmm|mmmm/dd hh:mm:ss
+    else if(matchs[29] != "") // yyyy/mmm|mmmm/dd hh:mm:ss
     {
         if(stoi(matchs[29].str()) < 1970)
         {
@@ -529,7 +529,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = stoi(matchs[34].str());
         }
     }
-    else if (matchs[35] != "") // yyyy/mmm|mmmm/dd hh:mm
+    else if(matchs[35] != "") // yyyy/mmm|mmmm/dd hh:mm
     {
         if(stoi(matchs[35].str()) < 1970)
         {
@@ -595,7 +595,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = 0;
         }
     }
-    else if (matchs[43] != "") // mmm dd, yyyy
+    else if(matchs[43] != "") // mmm dd, yyyy
     {
         if(stoi(matchs[45].str()) < 1970)
         {

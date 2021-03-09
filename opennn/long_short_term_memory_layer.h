@@ -49,8 +49,36 @@ public:
         {
             batch_samples_number = new_batch_samples_number;
 
-            combinations.resize(batch_samples_number, neurons_number);
+            current_forget_combinations.resize(neurons_number);
+            current_input_combinations.resize(neurons_number);
+            current_state_combinations.resize(neurons_number);
+            current_output_combinations.resize(neurons_number);
 
+            current_forget_activations.resize(neurons_number);
+            current_input_activations.resize(neurons_number);
+            current_state_activations.resize(neurons_number);
+            current_output_activations.resize(neurons_number);
+
+            current_forget_activations_derivatives.resize(neurons_number);
+            current_input_activations_derivatives.resize(neurons_number);
+            current_state_activations_derivatives.resize(neurons_number);
+            current_output_activations_derivatives.resize(neurons_number);
+            current_hidden_states_derivatives.resize(neurons_number);
+
+            forget_activations.resize(batch_samples_number, neurons_number);
+            input_activations.resize(batch_samples_number, neurons_number);
+            state_activations.resize(batch_samples_number, neurons_number);
+            output_activations.resize(batch_samples_number, neurons_number);
+            cell_states.resize(batch_samples_number, neurons_number);
+
+            forget_activations_derivatives.resize(batch_samples_number, neurons_number);
+            input_activations_derivatives.resize(batch_samples_number, neurons_number);
+            state_activations_derivatives.resize(batch_samples_number, neurons_number);
+            output_activations_derivatives.resize(batch_samples_number, neurons_number);
+            cell_states_activations_derivatives.resize(batch_samples_number, neurons_number);
+            hidden_states_activations_derivatives.resize(batch_samples_number, neurons_number);
+
+            combinations.resize(batch_samples_number, neurons_number);
             activations.resize(batch_samples_number, neurons_number);
 
             row_major_activations_3d.resize(batch_samples_number, neurons_number, 6);
@@ -78,19 +106,18 @@ public:
 
         Tensor<type, 1> current_hidden_states_derivatives;
 
-        Tensor<type, 2> forget_combinations;
-        Tensor<type, 2> input_combinations;
-        Tensor<type, 2> state_combinations;
-        Tensor<type, 2> output_combinations;
+        Tensor<type, 2, RowMajor> forget_activations;
+        Tensor<type, 2, RowMajor> input_activations;
+        Tensor<type, 2, RowMajor> state_activations;
+        Tensor<type, 2, RowMajor> output_activations;
+        Tensor<type, 2, RowMajor> cell_states;
 
-        Tensor<type, 2> forget_activations;
-        Tensor<type, 2> input_activations;
-        Tensor<type, 2> state_activations;
-        Tensor<type, 2> output_activations;
-
-
-
-
+        Tensor<type, 2, RowMajor> forget_activations_derivatives;
+        Tensor<type, 2, RowMajor> input_activations_derivatives;
+        Tensor<type, 2, RowMajor> state_activations_derivatives;
+        Tensor<type, 2, RowMajor> output_activations_derivatives;
+        Tensor<type, 2, RowMajor> cell_states_activations_derivatives;
+        Tensor<type, 2, RowMajor> hidden_states_activations_derivatives;
 
         Tensor<type, 3, RowMajor> row_major_activations_3d;
         Tensor<type, 3, RowMajor> row_major_activations_derivatives_3d;
@@ -284,28 +311,28 @@ public:
 
    // Long short term memory layer combinations
 
-   void calculate_forget_combinations(const Tensor<type, 1>& ,
-                                      const Tensor<type, 2>& ,
-                                      const Tensor<type, 2>& ,
-                                      const Tensor<type, 1>& ,
+   void calculate_forget_combinations(const Tensor<type, 1>&,
+                                      const Tensor<type, 2>&,
+                                      const Tensor<type, 2>&,
+                                      const Tensor<type, 1>&,
                                       Tensor<type, 1>&) const;
 
-   void calculate_input_combinations(const Tensor<type, 1>& ,
-                                     const Tensor<type, 2>& ,
-                                     const Tensor<type, 2>& ,
-                                     const Tensor<type, 1>& ,
+   void calculate_input_combinations(const Tensor<type, 1>&,
+                                     const Tensor<type, 2>&,
+                                     const Tensor<type, 2>&,
+                                     const Tensor<type, 1>&,
                                      Tensor<type, 1>&) const;
 
-   void calculate_state_combinations(const Tensor<type, 1>& ,
-                                     const Tensor<type, 2>& ,
-                                     const Tensor<type, 2>& ,
-                                     const Tensor<type, 1>& ,
+   void calculate_state_combinations(const Tensor<type, 1>&,
+                                     const Tensor<type, 2>&,
+                                     const Tensor<type, 2>&,
+                                     const Tensor<type, 1>&,
                                      Tensor<type, 1>&) const;
 
-   void calculate_output_combinations(const Tensor<type, 1>& ,
-                                      const Tensor<type, 2>& ,
-                                      const Tensor<type, 2>& ,
-                                      const Tensor<type, 1>& ,
+   void calculate_output_combinations(const Tensor<type, 1>&,
+                                      const Tensor<type, 2>&,
+                                      const Tensor<type, 2>&,
+                                      const Tensor<type, 1>&,
                                       Tensor<type, 1>&) const;
 
    // Long short term memory layer activations_2d
@@ -326,14 +353,6 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-//   void calculate_output_delta(ForwardPropagation*,
-//                               const Tensor<type, 2>&,
-//                               Tensor<type, 2>&) const;
-/*
-   void calculate_output_delta(ForwardPropagation*,
-                               const Tensor<type, 2>&,
-                               BackPropagation*) const;
-*/
    void calculate_hidden_delta(ForwardPropagation*,
                                BackPropagation*,
                                BackPropagation*) const;
@@ -348,26 +367,11 @@ public:
                                              ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
                                              LongShortTermMemoryLayerBackPropagation*) const;
 
-/*
-   void calculate_hidden_delta(Layer*,
-                               ForwardPropagation*,
-                               const Tensor<type, 2>&,
-                               Tensor<type, 2>&) const;
-
-   void calculate_hidden_delta_perceptron(Layer* ,
-                                          const Tensor<type, 2>& ,
-                                          Tensor<type, 2>& ) const;
-
-   void calculate_hidden_delta_probabilistic(Layer* ,
-                                          const Tensor<type, 2>& ,
-                                          Tensor<type, 2>& ) const;
-*/
-
    // Forward propagate
 
-   void forward_propagate(const Tensor<type, 2>& , ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 2>& , Tensor<type, 1>, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*);
 
    // Eror gradient
 
@@ -476,7 +480,6 @@ protected:
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/long_short_term_memory_layer_cuda.h"
 #endif
-
 
 };
 

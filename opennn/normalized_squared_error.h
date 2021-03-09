@@ -85,10 +85,8 @@ public:
    // Gradient methods
 
    void calculate_output_delta(const DataSet::Batch&,
-                               Layer::ForwardPropagation*,
-                               Layer::BackPropagation*,
+                               NeuralNetwork::ForwardPropagation&,
                                BackPropagation&) const;
-
 
    void calculate_Jacobian_gradient(const DataSet::Batch& batch,
                                        LossIndex::SecondOrderLoss& second_order_loss) const;

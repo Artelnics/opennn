@@ -672,7 +672,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
 string ModelSelection::write_neurons_selection_method() const
 {
-    switch (neurons_selection_method)
+    switch(neurons_selection_method)
     {
     case NO_NEURONS_SELECTION:
         return "NO_NEURONS_SELECTION";
@@ -685,7 +685,7 @@ string ModelSelection::write_neurons_selection_method() const
 
 string ModelSelection::write_inputs_selection_method() const
 {
-    switch (inputs_selection_method)
+    switch(inputs_selection_method)
     {
     case NO_INPUTS_SELECTION:
         return "NO_INPUTS_SELECTION";
