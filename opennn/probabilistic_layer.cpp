@@ -770,18 +770,20 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
 // Gradient methods
 
 void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                                  Layer::ForwardPropagation*,
+                                                  Layer::ForwardPropagation* forward_propagation,
                                                   Layer::BackPropagation* back_propagation) const
 {
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
+
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
             static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
 
-
     probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
-            probabilistic_layer_back_propagation->delta.sum(Eigen::array<Index, 1>({0}));
+            probabilistic_layer_back_propagation->delta*probabilistic_layer_forward_propagation->activations_derivatives.sum(Eigen::array<Index, 1>({0}));
 
     probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
-            inputs.contract(probabilistic_layer_back_propagation->delta, AT_B);
+            inputs.contract(probabilistic_layer_back_propagation->delta*probabilistic_layer_forward_propagation->activations_derivatives, AT_B);
 }
 
 

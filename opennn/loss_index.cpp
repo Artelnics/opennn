@@ -708,7 +708,7 @@ void LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& paramete
     {
     case L1: l1_norm_hessian(parameters, regularization_hessian); return;
 
-    case L2: l2_norm_hessian(parameters, regularization_hessian);
+    case L2: l2_norm_hessian(parameters, regularization_hessian); return;
 
     default: return;
     }
@@ -719,27 +719,27 @@ void LossIndex::calculate_layers_delta(const DataSet::Batch& batch,
                                        NeuralNetwork::ForwardPropagation& forward_propagation,
                                        BackPropagation& back_propagation) const
 {
-     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     if(trainable_layers_number == 0) return;
+    if(trainable_layers_number == 0) return;
 
-     const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
-     // Output layer
+    // Output layer
 
-     calculate_output_delta(batch,
-                            forward_propagation,
-                            back_propagation);
+    calculate_output_delta(batch,
+                           forward_propagation,
+                           back_propagation);
 
-     // Hidden layers
+    // Hidden layers
 
-   for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
-   {
-       trainable_layers_pointers(i)
-               ->calculate_hidden_delta(forward_propagation.layers(i+1),
-                                        back_propagation.neural_network.layers(i+1),
-                                        back_propagation.neural_network.layers(i));
-   }
+    for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
+    {
+        trainable_layers_pointers(i)
+                ->calculate_hidden_delta(forward_propagation.layers(i+1),
+                                         back_propagation.neural_network.layers(i+1),
+                                         back_propagation.neural_network.layers(i));
+    }
 }
 
 
