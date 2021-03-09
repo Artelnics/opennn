@@ -66,6 +66,7 @@ public:
         Tensor<type, 4> activations_derivatives;
     };
 
+
     struct ConvolutionalLayerBackPropagation : Layer::BackPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
@@ -82,6 +83,8 @@ public:
         }
 
         Tensor<type, 4> delta;
+
+        Tensor<type, 4> biases_derivatives;
 
         Tensor<type, 4> synaptic_weights_derivatives;
 
@@ -247,7 +250,7 @@ public:
                                  ForwardPropagation*,
                                  Layer::BackPropagation&) const;
 
-   void insert_gradient(const BackPropagation&,
+   void insert_gradient(BackPropagation*,
                         const Index&,
                         Tensor<type, 1>&) const;
 
