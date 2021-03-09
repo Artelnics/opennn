@@ -33,6 +33,39 @@ using namespace Eigen;
 
 namespace OpenNN {
 
+class Layer;
+
+/// This structure represents the first order activaions of layers.
+
+struct LayerForwardPropagation
+{
+    /// Default constructor.
+
+    explicit LayerForwardPropagation()
+    {
+    }
+
+
+    explicit LayerForwardPropagation(Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+    }
+
+    virtual ~LayerForwardPropagation() {}
+
+    virtual void set(const Index&) {}
+
+    void print() const
+    {
+
+    }
+
+    Index batch_samples_number = 0;
+
+    Layer* layer_pointer = nullptr;
+};
+
+
 /// This abstract class represents the concept of layer of neurons in OpenNN.
 
 /// Layer is a group of neurons having connections to the same inputs and sending outputs to the same destinations.
@@ -50,35 +83,6 @@ public:
     enum Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
               LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
 
-    /// This structure represents the first order activaions of layers.
-
-    struct ForwardPropagation
-    {
-        /// Default constructor.
-
-        explicit ForwardPropagation()
-        {
-        }
-
-
-        explicit ForwardPropagation(Layer* new_layer_pointer)
-        {
-            layer_pointer = new_layer_pointer;
-        }
-
-        virtual ~ForwardPropagation() {}
-
-        virtual void set(const Index&) {}
-
-        void print() const
-        {
-
-        }
-
-        Index batch_samples_number = 0;
-
-        Layer* layer_pointer = nullptr;
-    };
 
 
     struct BackPropagation
@@ -151,26 +155,26 @@ public:
 
     virtual Tensor<type, 4> calculate_outputs_4D(const Tensor<type, 4>&) {return Tensor<type, 4>();}
 
-    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
-    virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation*) {}
+    virtual void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
+    virtual void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*) {}
 
-    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation*) {}
-    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
+    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*) {}
+    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
 
     // Deltas
 
-    virtual void calculate_hidden_delta(ForwardPropagation*,
+    virtual void calculate_hidden_delta(LayerForwardPropagation*,
                                         BackPropagation*,
                                         BackPropagation*) const {}
 
     // Error gradient
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&,
-                                          ForwardPropagation*,
+                                          LayerForwardPropagation*,
                                           BackPropagation*) const {}
 
     virtual void calculate_error_gradient(const Tensor<type, 4>&,
-                                          ForwardPropagation*,
+                                          LayerForwardPropagation*,
                                           BackPropagation*) const {}
 
     // Get neurons number

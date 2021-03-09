@@ -576,7 +576,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilistic
 
 
 Tensor<type, 1> PoolingLayer::calculate_error_gradient(const Tensor<type, 2>&,
-        const Layer::ForwardPropagation&,
+        const LayerForwardPropagation&,
         const Tensor<type, 2>&)
 {
     return Tensor<type, 1>();

@@ -679,7 +679,7 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
 
 void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
-                                        ForwardPropagation* forward_propagation)
+                                        LayerForwardPropagation* forward_propagation)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -699,7 +699,8 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
 #endif
 
-    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
+    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+            = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
     calculate_combinations(inputs,
                            biases,
@@ -714,7 +715,7 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
 void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                         Tensor<type, 1> potential_parameters,
-                                        ForwardPropagation* forward_propagation)
+                                        LayerForwardPropagation* forward_propagation)
    {
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -750,11 +751,10 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
     calculate_activations_derivatives(perceptron_layer_forward_propagation->combinations,
                                       perceptron_layer_forward_propagation->activations,
                                       perceptron_layer_forward_propagation->activations_derivatives);
-
 }
 
 
-void PerceptronLayer::calculate_hidden_delta(ForwardPropagation* next_layer_forward_propagation,
+void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
                                              BackPropagation* next_layer_back_propagation,
                                              BackPropagation* layer_back_propagation) const
 {
@@ -819,7 +819,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer::P
 
 
 void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                               ForwardPropagation* forward_propagation,
+                                               LayerForwardPropagation* forward_propagation,
                                                BackPropagation* back_propagation) const
 {
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =

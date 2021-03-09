@@ -1854,7 +1854,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 }
 
 
-void LongShortTermMemoryLayer::calculate_hidden_delta(ForwardPropagation* forward_propagation,
+void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* forward_propagation,
                                                       BackPropagation* next_back_propagation,
                                                       BackPropagation* back_propagation) const
 {
@@ -1920,9 +1920,10 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(LongShortTer
 }
 
 
-void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, ForwardPropagation* forward_propagation)
+void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, LayerForwardPropagation* forward_propagation)
 {
-    LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
+    LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
+            = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
 
     const Index samples_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
@@ -2066,7 +2067,7 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, 
 
 void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                                  Tensor<type, 1> parameters,
-                                                 ForwardPropagation* forward_propagation)
+                                                 LayerForwardPropagation* forward_propagation)
 {
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
             = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
@@ -2283,7 +2284,7 @@ void LongShortTermMemoryLayer::insert_gradient(BackPropagation* back_propagation
 
 
 void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2> &  inputs,
-                                                        ForwardPropagation* forward_propagation,
+                                                        LayerForwardPropagation* forward_propagation,
                                                         BackPropagation* back_propagation) const
 {
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =

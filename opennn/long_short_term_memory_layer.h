@@ -37,11 +37,11 @@ class LongShortTermMemoryLayer : public Layer
 
 public:
 
-    struct LongShortTermMemoryLayerForwardPropagation : Layer::ForwardPropagation
+    struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        explicit LongShortTermMemoryLayerForwardPropagation(Layer* new_layer_pointer) : ForwardPropagation(new_layer_pointer)
+        explicit LongShortTermMemoryLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
         {
         }
 
@@ -353,7 +353,7 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   void calculate_hidden_delta(ForwardPropagation*,
+   void calculate_hidden_delta(LayerForwardPropagation*,
                                BackPropagation*,
                                BackPropagation*) const;
 
@@ -369,15 +369,15 @@ public:
 
    // Forward propagate
 
-   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*);
 
    // Eror gradient
 
    void insert_gradient(BackPropagation*, const Index& , Tensor<type, 1>&) const;
 
-   void calculate_error_gradient(const Tensor<type, 2>&, Layer::ForwardPropagation*, Layer::BackPropagation*) const;
+   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, Layer::BackPropagation*) const;
 
    void calculate_forget_weights_error_gradient(const Tensor<type, 2>&,
                                                 LongShortTermMemoryLayerForwardPropagation*,

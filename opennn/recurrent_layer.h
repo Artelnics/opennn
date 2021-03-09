@@ -37,11 +37,11 @@ class RecurrentLayer : public Layer
 
 public:
 
-    struct RecurrentLayerForwardPropagation : Layer::ForwardPropagation
+    struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        explicit RecurrentLayerForwardPropagation(Layer* new_layer_pointer) : ForwardPropagation(new_layer_pointer)
+        explicit RecurrentLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
         {
         }
 
@@ -219,11 +219,11 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation* );
+   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, LayerForwardPropagation*);
 
-   void calculate_hidden_delta(ForwardPropagation*,
+   void calculate_hidden_delta(LayerForwardPropagation*,
                                BackPropagation*,
                                BackPropagation*) const;
 
@@ -239,18 +239,18 @@ public:
 
    void insert_gradient(BackPropagation*, const Index& , Tensor<type, 1>&) const;
 
-   void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation*) const;
+   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, Layer::BackPropagation*) const;
 
    void calculate_biases_error_gradient(const Tensor<type, 2>&,
-                                        ForwardPropagation*,
+                                        LayerForwardPropagation*,
                                         RecurrentLayerBackPropagation*) const;
 
    void calculate_input_weights_error_gradient(const Tensor<type, 2>&,
-                                               ForwardPropagation*,
+                                               LayerForwardPropagation*,
                                                RecurrentLayerBackPropagation*) const;
 
    void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&,
-                                                   ForwardPropagation*,
+                                                   LayerForwardPropagation*,
                                                    RecurrentLayerBackPropagation*) const;
 
    // Expression methods

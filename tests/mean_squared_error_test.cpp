@@ -477,7 +477,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 // targets = data_set.get_training_target_data();
 //   outputs = neural_network.calculate_outputs(inputs);
 
-//   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
+//   Tensor<LayerForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
 
 //   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
 

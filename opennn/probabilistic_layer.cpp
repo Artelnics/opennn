@@ -718,7 +718,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 }
 
 
-void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation* forward_propagation)
+void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, LayerForwardPropagation* forward_propagation)
 {
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
@@ -731,7 +731,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, Forwar
 
 void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                            Tensor<type, 1> potential_parameters,
-                                           ForwardPropagation* forward_propagation)
+                                           LayerForwardPropagation* forward_propagation)
 {
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -770,7 +770,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
 // Gradient methods
 
 void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                                  Layer::ForwardPropagation* forward_propagation,
+                                                  LayerForwardPropagation* forward_propagation,
                                                   Layer::BackPropagation* back_propagation) const
 {
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =

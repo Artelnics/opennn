@@ -133,7 +133,7 @@ public:
 
     // First order activations
 
-    void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*)
+    void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*)
     {
     }
 
@@ -148,7 +148,7 @@ public:
 
     // Gradient methods
 
-    Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
+    Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const LayerForwardPropagation&, const Tensor<type, 2>&);
 
 protected:
 
