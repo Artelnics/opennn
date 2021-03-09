@@ -792,7 +792,7 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
             trainable_layers_pointers(i)->
                     calculate_error_gradient(perceptron_layer_forward_propagation->activations,
-                                             forward_propagation.layers(i-1),
+                                             forward_propagation.layers(i),
                                              back_propagation.neural_network.layers(i));
         }
             break;
@@ -804,7 +804,7 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
             trainable_layers_pointers(i)->
                     calculate_error_gradient(probabilistic_layer_forward_propagation->activations,
-                                             forward_propagation.layers(i-1),
+                                             forward_propagation.layers(i),
                                              back_propagation.neural_network.layers(i));
         }
             break;
@@ -816,9 +816,8 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
             trainable_layers_pointers(i)->
                     calculate_error_gradient(recurrent_layer_forward_propagation->activations,
-                                             forward_propagation.layers(i-1),
+                                             forward_propagation.layers(i),
                                              back_propagation.neural_network.layers(i));
-
         }
             break;
 
@@ -829,7 +828,7 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
             trainable_layers_pointers(i)->
                     calculate_error_gradient(long_short_term_memory_layer_forward_propagation->activations,
-                                             forward_propagation.layers(i-1),
+                                             forward_propagation.layers(i),
                                              back_propagation.neural_network.layers(i));
         }
             break;
@@ -838,7 +837,7 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
         {
             //trainable_layers_pointers(i)->
             //        calculate_error_gradient(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-            //                                 forward_propagation.layers(i-1),
+            //                                 forward_propagation.layers(i),
             //                                 back_propagation.neural_network.layers(i));
         }
             break;
@@ -1037,6 +1036,7 @@ Tensor<type, 1> LossIndex:: calculate_error_gradient_numerical_differentiation(L
        parameters_forward(i) += h;
 
        neural_network_pointer->forward_propagate(batch, parameters_forward, forward_propagation);
+       loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
        loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
        error_forward = back_propagation.error;
 
@@ -1045,6 +1045,7 @@ Tensor<type, 1> LossIndex:: calculate_error_gradient_numerical_differentiation(L
        parameters_backward(i) -= h;
 
        neural_network_pointer->forward_propagate(batch, parameters_backward, forward_propagation);
+       loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
        loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
        error_backward = back_propagation.error;
 
