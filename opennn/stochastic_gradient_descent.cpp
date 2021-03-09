@@ -534,9 +534,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
 
             // Loss index
-/*
+
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
-*/
+
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 

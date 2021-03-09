@@ -708,7 +708,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
     //    result(1,1,1,0) = 1;
     //    result(1,1,1,1) = 1;
 
-    //    assert_true(activations_2d == result, LOG);
+    //    assert_true(activations == result, LOG);
 
     assert_true(activations_4d(0,0,0,0) == -1 &&
                 activations_4d(0,0,0,1) == -1 &&

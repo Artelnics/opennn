@@ -3193,7 +3193,6 @@ void DataSetTest::run_test_case()
 {
    cout << "Running data set test case...\n";
 
-   /*
    // Constructor and destructor methods
 
 //   test_constructor();
@@ -3223,19 +3222,14 @@ void DataSetTest::run_test_case()
 //   test_get_targets();
 //   test_get_testing_data();
 
-
    // Sample methods
-
 
 //   test_get_sample();
 
-
    // Set methods
-
 
 //   test_set();
 //   test_set_display();
-
 
 //   // Data methods
 
@@ -3243,10 +3237,7 @@ void DataSetTest::run_test_case()
 //   test_set_samples_number();
 //   test_set_columns_number();
 
-
    // Sample methods
-
-
 
 //   test_set_sample();
 
@@ -3258,12 +3249,9 @@ void DataSetTest::run_test_case()
 //   test_unuse_non_significant_inputs();
 //   test_unuse_columns_missing_values();
 
-
-
    // Initialization methods
 
 //   test_initialize_data();
-
 
 //   // Statistics methods
 
@@ -3402,9 +3390,10 @@ void DataSetTest::run_test_case()
 
    // test print data preview
    test_print_data_preview();
-*/
+
    test_calculate_cross_correlations();
    test_calculate_autocorrelations();
+
    cout << "End of data set test case.\n\n";
 }
 

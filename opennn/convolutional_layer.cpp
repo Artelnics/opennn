@@ -416,7 +416,7 @@ void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
         ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
 
 //        calculate_hidden_delta_convolutional(convolutional_layer,
-//                                             activations_2d,
+//                                             activations,
 //                                             activations_derivatives,
 //                                             next_layer_delta,
 //                                             hidden_delta);
@@ -533,7 +533,7 @@ void ConvolutionalLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer
 
 
 void ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
-                                                        const Tensor<type, 4>& activations_2d,
+                                                        const Tensor<type, 4>& activations,
                                                         const Tensor<type, 4>& activations_derivatives,
                                                         const Tensor<type, 2>& next_layer_delta,
                                                         Tensor<type, 2>& hidden_delta) const
@@ -656,7 +656,7 @@ void ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer
                                 for(Index submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
                                 {
 //                                    activations_current_submatrix(submatrix_row_index, submatrix_column_index) =
-//                                            activations_2d(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
+//                                            activations(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
                                 }
                             }
 

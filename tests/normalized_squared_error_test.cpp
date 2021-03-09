@@ -191,7 +191,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
 
    // Test trivial
-/*{
+{
    samples_number = 10;
    inputs_number = 1;
    outputs_number = 1;
@@ -230,7 +230,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
    assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
                            [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
-}*/
+}
 
    neural_network.set();
 
@@ -563,10 +563,10 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
 
 //   cout << "Combinations4d: " << forward_propagation.layers(0).combinations_4d << endl;
-//   cout << "Combinations2d: " << forward_propagation.layers(0).combinations_2d << endl;
+//   cout << "Combinations2d: " << forward_propagation.layers(0).combinations << endl;
 
 //   cout << "Activations4d:  " << forward_propagation.layers(0).activations_4d << endl;
-//   cout << "Activations2d:  " << forward_propagation.layers(0).activations_2d << endl;
+//   cout << "Activations2d:  " << forward_propagation.layers(0).activations << endl;
 
 //   cout << "ActivationsDerivatives4d:  " << forward_propagation.layers(0).activations_derivatives_4d << endl;
 //   cout << "ActivationsDerivatives2d:  " << forward_propagation.layers(0).activations_derivatives_2d << endl;

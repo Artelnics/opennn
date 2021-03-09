@@ -410,7 +410,7 @@ void LossIndex::calculate_errors(const DataSet::Batch& batch,
 /// The number of rows in the Jacobian matrix are the number of parameters, and the number of columns
 /// the number of terms composing the objective.
 /// @param inputs Tensor with inputs.
-/// @param layers_activations vector of tensors with layers activations_2d.
+/// @param layers_activations vector of tensors with layers activations.
 /// @param layers_delta vector of tensors with layers delta.
 
 void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
@@ -433,27 +433,27 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
     const Tensor<type, 2>& inputs = batch.inputs_2d;
 
-    Tensor<type, 2> error_terms_Jacobian(samples_number, parameters_number);
-    error_terms_Jacobian.setZero();
+    second_order_loss.error_terms_Jacobian.setZero();
 
     Index index = 0;
-/*
-    const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs);
 
-    memcpy(error_terms_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
+    /// @todo
+
+//    const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs);
+
+//    memcpy(error_terms_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
     index += layers_parameters_number[0]*samples_number;
 
     for(Index i = 1; i < layers_number; i++)
     {
-        const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(i).delta,
-                                                                                 forward_propagation.layers(i-1)->activations);
-        memcpy(error_terms_Jacobian.data() + index, error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
+//        const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(i).delta,
+//                                                                                 forward_propagation.layers(i-1)->activations);
+
+//        memcpy(error_terms_Jacobian.data() + index, error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
         index += layers_parameters_number[i]*samples_number;
     }
-*/
-    second_order_loss.error_terms_Jacobian = error_terms_Jacobian;
 }
 
 
@@ -578,22 +578,25 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
         second_order_loss.gradient.device(*thread_pool_device) += regularization_weight*back_propagation.regularization_gradient;
 
         /// @todo
-/*
-        second_order_loss.hessian += regularization_weight*calculate_regularization_hessian(back_propagation.parameters);
-*/
+
+//        calculate_regularization_hessian(back_propagation.parameters, second_order_loss.regularization_hessian);
+
+//        second_order_loss.hessian += regularization_weight*calculate_regularization_hessian(back_propagation.parameters);
     }
 }
 
+
+/// @todo Complete method.
 
 void LossIndex::calculate_error_terms_output_jacobian(const DataSet::Batch& batch,
                                            NeuralNetwork::ForwardPropagation& forward_propagation,
                                            BackPropagation& back_propagation,
                                            SecondOrderLoss& second_order_loss) const
 {
-/*
+
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
+//    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
 
     const Tensor<type, 2>& targets = batch.targets_2d;
 
@@ -603,20 +606,20 @@ void LossIndex::calculate_error_terms_output_jacobian(const DataSet::Batch& batc
 
 //     back_propagation.output_jacobian.device(*thread_pool_device) = (outputs-targets)/second_order_loss.error_terms;
 
-    back_propagation.output_jacobian = (outputs-targets);
+//    back_propagation.output_jacobian = (outputs-targets);
 
-    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
-        back_propagation.output_jacobian(i) /= second_order_loss.error_terms(i);
+//    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
+//        back_propagation.output_jacobian(i) /= second_order_loss.error_terms(i);
 
 #else
 
-    back_propagation.output_jacobian = (outputs-targets);
+//    back_propagation.output_jacobian = (outputs-targets);
 
-    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
-        back_propagation.output_jacobian(i) /= second_order_loss.error_terms(i);
+//    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
+//        back_propagation.output_jacobian(i) /= second_order_loss.error_terms(i);
 
 #endif
-*/
+
 }
 
 

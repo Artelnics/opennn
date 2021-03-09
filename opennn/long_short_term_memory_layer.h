@@ -335,7 +335,7 @@ public:
                                       const Tensor<type, 1>&,
                                       Tensor<type, 1>&) const;
 
-   // Long short term memory layer activations_2d
+   // Long short term memory layer activations
 
    void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
    void calculate_activations(const Tensor<type, 1>&, Tensor<type, 1>&) const;

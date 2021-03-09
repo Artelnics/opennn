@@ -335,24 +335,9 @@ void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_w
 
 
 /// Sets the parameters of this layer.
-/// @param new_parameters Parameters vector for that layer.
 
 void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
-{
-    /*
-#ifdef __OPENNN_DEBUG__
-    const Index new_parameters_size = new_parameters.size();
-    const Index parameters_number = get_parameters_number();
-    if(new_parameters_size != parameters_number)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void set_parameters(const Tensor<type, 1>&) method.\n"
-               << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters (" << parameters_number << ").\n";
-        throw logic_error(buffer.str());
-    }
-#endif
-*/
+{   
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
@@ -547,7 +532,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 }
 
 
-void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_2d) const
+void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -571,27 +556,27 @@ void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations,
 
      switch(activation_function)
      {
-         case Linear: linear(combinations, activations_2d); return;
+         case Linear: linear(combinations, activations); return;
 
-         case Logistic: logistic(combinations, activations_2d); return;
+         case Logistic: logistic(combinations, activations); return;
 
-         case HyperbolicTangent: hyperbolic_tangent(combinations, activations_2d); return;
+         case HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
 
-         case Threshold: threshold(combinations, activations_2d); return;
+         case Threshold: threshold(combinations, activations); return;
 
-         case SymmetricThreshold: symmetric_threshold(combinations, activations_2d); return;
+         case SymmetricThreshold: symmetric_threshold(combinations, activations); return;
 
-         case RectifiedLinear: rectified_linear(combinations, activations_2d); return;
+         case RectifiedLinear: rectified_linear(combinations, activations); return;
 
-         case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations_2d); return;
+         case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
 
-         case SoftPlus: soft_plus(combinations, activations_2d); return;
+         case SoftPlus: soft_plus(combinations, activations); return;
 
-         case SoftSign: soft_sign(combinations, activations_2d); return;
+         case SoftSign: soft_sign(combinations, activations); return;
 
-         case HardSigmoid: hard_sigmoid(combinations, activations_2d); return;
+         case HardSigmoid: hard_sigmoid(combinations, activations); return;
 
-         case ExponentialLinear: exponential_linear(combinations, activations_2d); return;
+         case ExponentialLinear: exponential_linear(combinations, activations); return;
      }
 }
 
