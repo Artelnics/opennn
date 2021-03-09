@@ -795,9 +795,9 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
 
 
 ///
-//// \brief ConjugateGradient::calculate_gradient_descent_training_direction
-//// \param gradient
-//// \param training_direction
+// \brief ConjugateGradient::calculate_gradient_descent_training_direction
+// \param gradient
+// \param training_direction
 
 void ConjugateGradient::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient,
                                                                       Tensor<type, 1>& training_direction) const
@@ -1844,11 +1844,11 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-//// \brief ConjugateGradient::update_epoch
-//// \param batch
-//// \param forward_propagation
-//// \param back_propagation
-//// \param optimization_data
+// \brief ConjugateGradient::update_epoch
+// \param batch
+// \param forward_propagation
+// \param back_propagation
+// \param optimization_data
 void ConjugateGradient::update_epoch(
         const DataSet::Batch& batch,
         NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -1963,7 +1963,7 @@ void ConjugateGradient::GGOptimizationData::print() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
