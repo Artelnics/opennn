@@ -115,8 +115,8 @@ void MinkowskiErrorTest::test_calculate_error()
    neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(0);
 
-   NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
-   LossIndex::BackPropagation training_back_propagation(data_set.get_training_samples_number(), &minkowski_error);
+   NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
+   BackPropagation training_back_propagation(data_set.get_training_samples_number(), &minkowski_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
    minkowski_error.back_propagate(batch, forward_propagation, training_back_propagation);
@@ -129,8 +129,8 @@ void MinkowskiErrorTest::test_calculate_error()
 
    neural_network.set_parameters_constant(1);
 
-   NeuralNetwork::ForwardPropagation forward_propagation_2(data_set.get_training_samples_number(), &neural_network);
-   LossIndex::BackPropagation training_back_propagation_2(data_set.get_training_samples_number(), &minkowski_error);
+   NeuralNetworkForwardPropagation forward_propagation_2(data_set.get_training_samples_number(), &neural_network);
+   BackPropagation training_back_propagation_2(data_set.get_training_samples_number(), &minkowski_error);
 
    neural_network.forward_propagate(batch, forward_propagation_2);
    minkowski_error.back_propagate(batch, forward_propagation_2, training_back_propagation_2);
@@ -210,8 +210,8 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    me.set_Minkowski_parameter(1.5);
 
-   NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
-   LossIndex::BackPropagation training_back_propagation(samples_number, &me);
+   NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+   BackPropagation training_back_propagation(samples_number, &me);
 
    me.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
@@ -256,8 +256,8 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    neural_network.set_parameters_constant(0.0);
 
-   NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
-   LossIndex::BackPropagation training_back_propagation(samples_number, &me);
+   NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+   BackPropagation training_back_propagation(samples_number, &me);
    me.back_propagate(batch, forward_propagation, training_back_propagation);
 
    neural_network.forward_propagate(batch, forward_propagation);

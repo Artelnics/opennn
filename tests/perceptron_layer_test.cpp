@@ -1583,7 +1583,7 @@ void PerceptronLayerTest::test_forward_propagate()
     perceptron_layer.set_parameters_constant(1);
     inputs.setConstant(1);
 
-    PerceptronLayer::PerceptronLayerForwardPropagation perceptron_layer_forward_propagation(&perceptron_layer);
+    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation(&perceptron_layer);
     perceptron_layer_forward_propagation.set(1);
 
     perceptron_layer.forward_propagate(inputs, &perceptron_layer_forward_propagation);
@@ -1611,7 +1611,7 @@ void PerceptronLayerTest::test_forward_propagate()
 
     potential_parameters = parameters;
 
-    PerceptronLayer::PerceptronLayerForwardPropagation perceptron_layer_forward_propagation_2(&perceptron_layer_2);
+    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation_2(&perceptron_layer_2);
     perceptron_layer_forward_propagation_2.set(1);
 
     perceptron_layer_2.forward_propagate(inputs, potential_parameters, &perceptron_layer_forward_propagation_2);
@@ -1650,10 +1650,10 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
     perceptron_layer_1.set_parameters_constant(1);
     inputs_1.setValues({{3,3}});
 
-    PerceptronLayer::PerceptronLayerForwardPropagation perceptron_layer_forward_propagation_0(&perceptron_layer_0);
+    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation_0(&perceptron_layer_0);
     perceptron_layer_forward_propagation_0.set(0);
 
-    PerceptronLayer::PerceptronLayerForwardPropagation perceptron_layer_forward_propagation_1(&perceptron_layer_1);
+    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation_1(&perceptron_layer_1);
     perceptron_layer_forward_propagation_1.set(0);
 
     perceptron_layer_0.forward_propagate(inputs_0, &perceptron_layer_forward_propagation_0);
@@ -1721,7 +1721,7 @@ void PerceptronLayerTest::test_calculate_error_gradient()
     LayerForwardPropagation forward_propagation(1, &perceptron_layer);
     perceptron_layer.forward_propagate(inputs, forward_propagation);
 
-    Layer::BackPropagation back_propagation(1, &perceptron_layer);
+    LayerBackPropagation back_propagation(1, &perceptron_layer);
 
     output_delta.setValues({{2,-2}});
 

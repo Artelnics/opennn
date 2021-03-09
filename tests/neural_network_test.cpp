@@ -1675,12 +1675,12 @@ void NeuralNetworkTest::test_forward_propagate()
     synaptic_weights_perceptron.setConstant(1);
     perceptron_layer->set_synaptic_weights(synaptic_weights_perceptron);
 
-    NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_training_samples_number(), &neural_network);
+    NeuralNetworkForwardPropagation forward_propagation(dataset.get_training_samples_number(), &neural_network);
 
     neural_network.forward_propagate(batch, forward_propagation);
 
-    PerceptronLayer::PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-        = static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(forward_propagation.layers[0]);
+    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+        = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[0]);
 
     Tensor<type, 2>perceptron_combinations = perceptron_layer_forward_propagation->combinations;
 
@@ -1755,7 +1755,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     layers_tensor.setValues({perceptron_layer_3, probabilistic_layer_3});
     neural_network_2.set_layers_pointers(layers_tensor);
-    NeuralNetwork::ForwardPropagation forward_propagation_3(dataset.get_training_samples_number(), &neural_network_2);
+    NeuralNetworkForwardPropagation forward_propagation_3(dataset.get_training_samples_number(), &neural_network_2);
 
     neural_network_2.forward_propagate(batch_3, forward_propagation_3);
 /*
