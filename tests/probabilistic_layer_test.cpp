@@ -765,7 +765,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     probabilistic_layer.set_parameters_constant(1);
     inputs.setConstant(1);
 
-    ProbabilisticLayer::ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(&probabilistic_layer);
+    ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(&probabilistic_layer);
     probabilistic_layer_forward_propagation.set(1);
 
     probabilistic_layer.forward_propagate(inputs, &probabilistic_layer_forward_propagation);
@@ -802,12 +802,12 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
 
     inputs.setValues({{0,1}});
 
-    ProbabilisticLayer::ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(&probabilistic_layer);
+    ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(&probabilistic_layer);
     probabilistic_layer_forward_propagation.set(1);
 
     probabilistic_layer.forward_propagate(inputs, &probabilistic_layer_forward_propagation);
 /*
-    ProbabilisticLayer::ProbabilisticLayerBackPropagation probabilistic_layer_back_propagation(1, &probabilistic_layer);
+    ProbabilisticLayerBackPropagation probabilistic_layer_back_propagation(1, &probabilistic_layer);
 
     output_delta.setValues({{1,-7}});
 

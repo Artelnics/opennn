@@ -78,9 +78,9 @@ void MeanSquaredErrorTest::test_calculate_error()
    data_set.initialize_data(0.0);
    data_set.set_training();
 
-   NeuralNetwork::ForwardPropagation forward_propagation(batch_samples_number, &neural_network);
+   NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
 
-   LossIndex::BackPropagation back_propagation(batch_samples_number, &mean_squared_error);
+   BackPropagation back_propagation(batch_samples_number, &mean_squared_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
@@ -108,9 +108,9 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    neural_network.set_parameters_constant(1);
 
-   NeuralNetwork::ForwardPropagation forward_propagation_2(batch_samples_number, &neural_network);
+   NeuralNetworkForwardPropagation forward_propagation_2(batch_samples_number, &neural_network);
 
-   LossIndex::BackPropagation back_propagation_2(batch_samples_number, &mean_squared_error);
+   BackPropagation back_propagation_2(batch_samples_number, &mean_squared_error);
 
    neural_network.forward_propagate(batch, forward_propagation_2);
 
@@ -179,8 +179,8 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
       mse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-      NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
-      LossIndex::BackPropagation training_back_propagation(samples_number, &mse);
+      NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+      BackPropagation training_back_propagation(samples_number, &mse);
 
       neural_network.forward_propagate(batch, forward_propagation);
 
@@ -226,8 +226,8 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
         mse_1.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-        NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network_1);
-        LossIndex::BackPropagation training_back_propagation(samples_number, &mse_1);
+        NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network_1);
+        BackPropagation training_back_propagation(samples_number, &mse_1);
 
         neural_network_1.forward_propagate(batch_1, forward_propagation);
 
@@ -419,7 +419,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
    data_set.set(1, 1, 1);
    data_set.set_data_random();
 
-   NeuralNetwork::ForwardPropagation forward_propagation(batch_samples_number, &neural_network);
+   NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
    LossIndex::SecondOrderLoss second_order_loss(parameters,batch_samples_number);
 
    neural_network.forward_propagate(batch, forward_propagation);

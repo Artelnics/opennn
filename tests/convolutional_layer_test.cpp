@@ -1698,7 +1698,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
 //    LayerForwardPropagation forward_propagation(1, &convolutional_layer);
 //    convolutional_layer.forward_propagate(inputs_4d, forward_propagation);
-//    Layer::BackPropagation back_propagation(1, &convolutional_layer);
+//    LayerBackPropagation back_propagation(1, &convolutional_layer);
 
 //    /*
 //    PerceptronLayer perceptron_layer(2,2, 0,PerceptronLayer::Linear);
@@ -1720,7 +1720,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 //    LayerForwardPropagation forward_propagation(1, &perceptron_layer);
 //    perceptron_layer.forward_propagate(inputs, forward_propagation);
 
-//    Layer::BackPropagation back_propagation(1, &perceptron_layer);
+//    LayerBackPropagation back_propagation(1, &perceptron_layer);
 
 //    output_delta.setValues({{2,-2}});
 
