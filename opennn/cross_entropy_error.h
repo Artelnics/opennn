@@ -47,29 +47,29 @@ public:
    // Error methods
 
    void calculate_error(const DataSet::Batch&,
-                        const NeuralNetwork::ForwardPropagation&,
-                        LossIndex::BackPropagation&) const;
+                        const NeuralNetworkForwardPropagation&,
+                        BackPropagation&) const;
 
    void calculate_binary_error(const DataSet::Batch&,
-                        const NeuralNetwork::ForwardPropagation&,
-                        LossIndex::BackPropagation&) const;
+                        const NeuralNetworkForwardPropagation&,
+                        BackPropagation&) const;
 
    void calculate_multiple_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation&,
-                        LossIndex::BackPropagation&) const;
+                        const NeuralNetworkForwardPropagation&,
+                        BackPropagation&) const;
 
    // Gradient methods
 
    void calculate_output_delta(const DataSet::Batch&,
-                               NeuralNetwork::ForwardPropagation&,
+                               NeuralNetworkForwardPropagation&,
                                BackPropagation&) const;
 
    void calculate_binary_output_delta(const DataSet::Batch&,
-                                      NeuralNetwork::ForwardPropagation&,
+                                      NeuralNetworkForwardPropagation&,
                                       BackPropagation&) const;
 
    void calculate_multiple_output_delta(const DataSet::Batch&,
-                                        NeuralNetwork::ForwardPropagation&,
+                                        NeuralNetworkForwardPropagation&,
                                         BackPropagation&) const;
 
    string get_error_type() const;

@@ -1351,7 +1351,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 /// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
-                                      ForwardPropagation& forward_propagation) const
+                                      NeuralNetworkForwardPropagation& forward_propagation) const
 {
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
@@ -1372,28 +1372,28 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
         {
         case Layer::Perceptron:
         {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+            trainable_layers_pointers(i)->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             forward_propagation.layers(i));
         }
             break;
 
         case Layer::Probabilistic:
         {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+            trainable_layers_pointers(i)->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             forward_propagation.layers(i));
         }
             break;
 
         case Layer::Recurrent:
         {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<RecurrentLayer::RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+            trainable_layers_pointers(i)->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             forward_propagation.layers(i));
         }
             break;
 
         case Layer::LongShortTermMemory:
         {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+            trainable_layers_pointers(i)->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             forward_propagation.layers(i));
         }
             break;
@@ -1406,7 +1406,6 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
             break;
 
         default: break;
-
         }
     }
 }
@@ -1419,7 +1418,7 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
 void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
                                       Tensor<type, 1>& parameters,
-                                      ForwardPropagation& forward_propagation) const
+    NeuralNetworkForwardPropagation& forward_propagation) const
 {
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
@@ -1450,7 +1449,7 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
         {
         case Layer::Perceptron:
         {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+            trainable_layers_pointers(i)->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
                                                             forward_propagation.layers(i));
         }
@@ -1458,7 +1457,7 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
         case Layer::Probabilistic:
         {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+            trainable_layers_pointers(i)->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
                                                             forward_propagation.layers(i));
         }
@@ -1466,7 +1465,7 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
         case Layer::Recurrent:
         {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<RecurrentLayer::RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+            trainable_layers_pointers(i)->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
                                                             forward_propagation.layers(i));
         }
@@ -1474,7 +1473,7 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
         case Layer::LongShortTermMemory:
         {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+            trainable_layers_pointers(i)->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             potential_parameters,
                                                             forward_propagation.layers(i));
         }

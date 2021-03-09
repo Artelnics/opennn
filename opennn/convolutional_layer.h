@@ -27,24 +27,18 @@
 
 namespace OpenNN
 {
+    class ConvolutionalLayer;
 
-class PoolingLayer;
-class PerceptronLayer;
-class ProbabilisticLayer;
-
-class ConvolutionalLayer : public Layer
-{
-
-public:
 
     struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
     {
+/*
         const Index neurons_number = layer_pointer->get_neurons_number();
 
         const Index kernels_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_number();
         const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
         const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
-
+*/
         explicit ConvolutionalLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
         {
         }
@@ -54,6 +48,8 @@ public:
             batch_samples_number = new_batch_samples_number;
 
             const Index neurons_number = layer_pointer->get_neurons_number();
+
+            Index kernels_number, outputs_rows_number, outputs_columns_number;
 
             combinations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
             activations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
@@ -67,12 +63,12 @@ public:
     };
 
 
-    struct ConvolutionalLayerBackPropagation : Layer::BackPropagation
+    struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_nmumber = layer_pointer->get_inputs_number();
 
-        explicit ConvolutionalLayerBackPropagation(Layer* new_layer_pointer) : BackPropagation(new_layer_pointer)
+        explicit ConvolutionalLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
         {
 
         }
@@ -89,6 +85,15 @@ public:
         Tensor<type, 4> synaptic_weights_derivatives;
 
     };
+
+class PoolingLayer;
+class PerceptronLayer;
+class ProbabilisticLayer;
+
+class ConvolutionalLayer : public Layer
+{
+
+public:
 
     /// Enumeration of available activation functions for the convolutional layer.
 
@@ -244,13 +249,13 @@ public:
 
    void calculate_error_gradient(const Tensor<type, 4>&,
                                  LayerForwardPropagation*,
-                                 Layer::BackPropagation&) const;
+                                 LayerBackPropagation&) const;
 
    void calculate_error_gradient(const Tensor<type, 2>&,
                                  LayerForwardPropagation*,
-                                 Layer::BackPropagation&) const;
+                                 LayerBackPropagation&) const;
 
-   void insert_gradient(BackPropagation*,
+   void insert_gradient(LayerBackPropagation*,
                         const Index&,
                         Tensor<type, 1>&) const;
 

@@ -1,0 +1,29 @@
+﻿  adaptive_moment_estimation.cpp
+  conjugate_gradient.cpp
+  correlations.cpp
+  cross_entropy_error.cpp
+  genetic_algorithm.cpp
+  gradient_descent.cpp
+  growing_neurons.cpp
+  inputs_selection.cpp
+  learning_rate_algorithm.cpp
+  levenberg_marquardt_algorithm.cpp
+  loss_index.cpp
+  mean_squared_error.cpp
+  minkowski_error.cpp
+  model_selection.cpp
+  neurons_selection.cpp
+  normalized_squared_error.cpp
+  pruning_inputs.cpp
+  quasi_newton_method.cpp
+  stochastic_gradient_descent.cpp
+  sum_squared_error.cpp
+  Generando código...
+C:\opennn\opennn\model_selection.cpp(683): warning C4715: 'OpenNN::ModelSelection::write_neurons_selection_method': no todas las rutas de acceso de control devuelven un valor
+C:\opennn\opennn\model_selection.cpp(702): warning C4715: 'OpenNN::ModelSelection::write_inputs_selection_method': no todas las rutas de acceso de control devuelven un valor
+  Compilando...
+  training_strategy.cpp
+  unit_testing.cpp
+  weighted_squared_error.cpp
+  Generando código...
+  opennn.vcxproj -> C:\opennn\opennn\Debug\opennn.lib

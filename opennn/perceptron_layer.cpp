@@ -755,8 +755,8 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
 
 void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
-                                             BackPropagation* next_layer_back_propagation,
-                                             BackPropagation* layer_back_propagation) const
+    LayerBackPropagation* next_layer_back_propagation,
+    LayerBackPropagation* layer_back_propagation) const
 {
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(layer_back_propagation);
@@ -779,11 +779,11 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
 
     case Probabilistic:
     {
-        ProbabilisticLayer::ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
-                static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(next_layer_forward_propagation);
+        ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
+                static_cast<ProbabilisticLayerForwardPropagation*>(next_layer_forward_propagation);
 
-        ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
-                static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(next_layer_back_propagation);
+        ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
+                static_cast<ProbabilisticLayerBackPropagation*>(next_layer_back_propagation);
 
         calculate_hidden_delta_probabilistic(next_probabilistic_layer_forward_propagation,
                                              next_probabilistic_layer_back_propagation,
@@ -807,8 +807,8 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPr
 }
 
 
-void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer::ProbabilisticLayerForwardPropagation* next_forward_propagation,
-                                                           ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_back_propagation,
+void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation* next_forward_propagation,
+                                                           ProbabilisticLayerBackPropagation* next_back_propagation,
                                                            PerceptronLayerBackPropagation* back_propagation) const
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
@@ -820,7 +820,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer::P
 
 void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                                LayerForwardPropagation* forward_propagation,
-                                               BackPropagation* back_propagation) const
+                                               LayerBackPropagation* back_propagation) const
 {
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
@@ -836,7 +836,7 @@ void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
 }
 
 
-void PerceptronLayer::insert_gradient(BackPropagation* back_propagation,
+void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
                                       const Index& index,
                                       Tensor<type, 1>& gradient) const
 {

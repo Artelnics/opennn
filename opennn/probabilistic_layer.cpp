@@ -771,7 +771,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
 void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                                   LayerForwardPropagation* forward_propagation,
-                                                  Layer::BackPropagation* back_propagation) const
+                                                  LayerBackPropagation* back_propagation) const
 {
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
             static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
@@ -787,7 +787,7 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
 }
 
 
-void ProbabilisticLayer::insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
+void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();

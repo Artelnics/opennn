@@ -203,8 +203,8 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 
 void WeightedSquaredError::calculate_error(const DataSet::Batch& batch,
-                     const NeuralNetwork::ForwardPropagation& forward_propagation,
-                     LossIndex::BackPropagation& back_propagation) const
+                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     BackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -237,7 +237,7 @@ void WeightedSquaredError::calculate_error(const DataSet::Batch& batch,
 
 
 void WeightedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
-                                                 const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                                 const NeuralNetworkForwardPropagation& forward_propagation,
                                                  SecondOrderLoss& second_order_loss) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -275,7 +275,7 @@ void WeightedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 // Gradient methods
 
 void WeightedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
-                                                  NeuralNetwork::ForwardPropagation& forward_propagation,
+                                                  NeuralNetworkForwardPropagation& forward_propagation,
                                                   BackPropagation& back_propagation) const
 {
      #ifdef __OPENNN_DEBUG__
@@ -286,10 +286,10 @@ void WeightedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     Layer::BackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-     ProbabilisticLayer::ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-     = static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
+     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+     = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
      const Tensor<type, 2>& targets = batch.targets_2d;
 

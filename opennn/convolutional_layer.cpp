@@ -826,7 +826,7 @@ void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer
 
 void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
                                                   LayerForwardPropagation* forward_propagation,
-                                                  Layer::BackPropagation& back_propagation) const
+                                                  LayerBackPropagation& back_propagation) const
 {
     Tensor<type, 4> layers_inputs;
 
@@ -889,7 +889,7 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
 
 void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                                   LayerForwardPropagation* forward_propagation,
-                                                  BackPropagation& back_propagation) const
+    LayerBackPropagation& back_propagation) const
 {
     const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
                                                      input_variables_dimensions(2), // rows number
@@ -905,7 +905,7 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
 }
 
 
-void ConvolutionalLayer::insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
+void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {
     ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
             static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);

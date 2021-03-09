@@ -362,7 +362,7 @@ void StochasticGradientDescent::set_reserve_selection_error_history(const bool& 
 
 /// Set hardware to use. Default: Multi-core.
 
-void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
+void StochasticGradientDescent::update_iteration(const BackPropagation& back_propagation,
                       SGDOptimizationData& optimization_data)
 {
 
@@ -451,13 +451,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const Index parameters_number = neural_network_pointer->get_parameters_number();
     
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
     // Loss index
 
-    LossIndex::BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
+    BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
+    BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
     type training_error = 0;
     type training_loss = 0;

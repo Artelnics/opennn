@@ -186,8 +186,8 @@ public:
 
    void update_epoch(
            const DataSet::Batch& batch,
-           NeuralNetwork::ForwardPropagation& forward_propagation,
-           LossIndex::BackPropagation& back_propagation,
+           NeuralNetworkForwardPropagation& forward_propagation,
+           BackPropagation& back_propagation,
            LossIndex::SecondOrderLoss& second_order_loss_terms,
            LMOptimizationData& optimization_data);
 

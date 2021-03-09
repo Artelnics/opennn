@@ -29,14 +29,6 @@
 namespace OpenNN
 {
 
-/// This class represents a layer of neurons.
-/// Layers of neurons will be used to construct multilayer neurons.
-
-class LongShortTermMemoryLayer : public Layer
-{
-
-public:
-
     struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
@@ -124,12 +116,12 @@ public:
     };
 
 
-    struct LongShortTermMemoryLayerBackPropagation : Layer::BackPropagation
+    struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
 
-        explicit LongShortTermMemoryLayerBackPropagation(Layer* new_layer_pointer) : BackPropagation(new_layer_pointer)
+        explicit LongShortTermMemoryLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
         {
         }
 
@@ -137,15 +129,15 @@ public:
         {
             batch_samples_number = new_batch_samples_number;
 
-            forget_weights_derivatives.resize(inputs_number*neurons_number);
-            input_weights_derivatives.resize(inputs_number*neurons_number);
-            state_weights_derivatives.resize(inputs_number*neurons_number);
-            output_weights_derivatives.resize(inputs_number*neurons_number);
+            forget_weights_derivatives.resize(inputs_number * neurons_number);
+            input_weights_derivatives.resize(inputs_number * neurons_number);
+            state_weights_derivatives.resize(inputs_number * neurons_number);
+            output_weights_derivatives.resize(inputs_number * neurons_number);
 
-            forget_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-            input_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-            state_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-            output_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+            forget_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
+            input_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
+            state_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
+            output_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
 
             forget_biases_derivatives.resize(neurons_number);
             input_biases_derivatives.resize(neurons_number);
@@ -172,6 +164,14 @@ public:
         Tensor<type, 1> state_biases_derivatives;
         Tensor<type, 1> output_biases_derivatives;
     };
+
+/// This class represents a layer of neurons.
+/// Layers of neurons will be used to construct multilayer neurons.
+
+class LongShortTermMemoryLayer : public Layer
+{
+
+public:
 
     /// Enumeration of available activation functions for the long-short term memory layer.
 
@@ -354,17 +354,17 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
    void calculate_hidden_delta(LayerForwardPropagation*,
-                               BackPropagation*,
-                               BackPropagation*) const;
+       LayerBackPropagation*,
+       LayerBackPropagation*) const;
 
 
    void calculate_hidden_delta_perceptron(LongShortTermMemoryLayerForwardPropagation*,
-                                          PerceptronLayer::PerceptronLayerBackPropagation*,
+                                          PerceptronLayerBackPropagation*,
                                           LongShortTermMemoryLayerBackPropagation*) const;
 
 
    void calculate_hidden_delta_probabilistic(LongShortTermMemoryLayerForwardPropagation*,
-                                             ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
+                                             ProbabilisticLayerBackPropagation*,
                                              LongShortTermMemoryLayerBackPropagation*) const;
 
    // Forward propagate
@@ -375,9 +375,9 @@ public:
 
    // Eror gradient
 
-   void insert_gradient(BackPropagation*, const Index& , Tensor<type, 1>&) const;
+   void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const;
 
-   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, Layer::BackPropagation*) const;
+   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, LayerBackPropagation*) const;
 
    void calculate_forget_weights_error_gradient(const Tensor<type, 2>&,
                                                 LongShortTermMemoryLayerForwardPropagation*,
