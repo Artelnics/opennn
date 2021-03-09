@@ -202,40 +202,14 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 }
 
 
-type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x, const Tensor<type, 2> & y) const
+void WeightedSquaredError::calculate_error(const DataSet::Batch& batch,
+                     const NeuralNetwork::ForwardPropagation& forward_propagation,
+                     LossIndex::BackPropagation& back_propagation) const
 {
-#ifdef __OPENNN_DEBUG__
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1);
-
-    const Index other_rows_number = y.dimension(0);
-
-    if(other_rows_number != rows_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Metrics functions.\n"
-               << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
-               << "Other number of rows must be equal to this number of rows.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index other_columns_number = y.dimension(1);
-
-    if(other_columns_number != columns_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Metrics functions.\n"
-               << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
-               << "Other number of columns must be equal to this number of columns.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
+/*
+    const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1]->activations, batch.targets_2d);
 
     const Tensor<bool, 2> if_sentence = y == y.constant(1);
     const Tensor<bool, 2> else_sentence = y == y.constant(0);
@@ -252,21 +226,7 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x,
 
     f_3 = x.constant(0);
 
-    Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
-
-    return weighted_sum_squared_error(0);
-}
-
-
-void WeightedSquaredError::calculate_error(const DataSet::Batch& batch,
-                     const NeuralNetwork::ForwardPropagation& forward_propagation,
-                     LossIndex::BackPropagation& back_propagation) const
-{
-/*
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1]->activations,
-                                                                 batch.targets_2d);
+    const Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
     const Index batch_samples_number = batch.samples_number;
     const Index total_samples_number = data_set_pointer->get_samples_number();

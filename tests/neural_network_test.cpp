@@ -1678,9 +1678,9 @@ void NeuralNetworkTest::test_forward_propagate()
 
     neural_network.forward_propagate(batch, forward_propagation);
 /*
-    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0]->combinations_2d;
+    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0]->combinations;
 
-    Tensor<type, 2>perceptron_activations = forward_propagation.layers[0]->activations_2d;
+    Tensor<type, 2>perceptron_activations = forward_propagation.layers[0]->activations;
 
     assert_true(perceptron_combinations.dimension(0) == 5, LOG);
     assert_true(abs(perceptron_combinations(0,0) - 3) < static_cast<type>(1e-3)
@@ -1755,10 +1755,10 @@ void NeuralNetworkTest::test_forward_propagate()
 
     neural_network_2.forward_propagate(batch_3, forward_propagation_3);
 
-    Tensor<type, 2>perceptron_combinations_3_0 = forward_propagation_3.layers[0].combinations_2d;
-    Tensor<type, 2>perceptron_activations_3_0 = forward_propagation_3.layers[0].activations_2d;
-    Tensor<type, 2>probabilistic_combinations_3_1 = forward_propagation_3.layers[1].combinations_2d;
-    Tensor<type, 2>probabilistic_activations_3_1= forward_propagation_3.layers[1].activations_2d;
+    Tensor<type, 2>perceptron_combinations_3_0 = forward_propagation_3.layers[0].combinations;
+    Tensor<type, 2>perceptron_activations_3_0 = forward_propagation_3.layers[0].activations;
+    Tensor<type, 2>probabilistic_combinations_3_1 = forward_propagation_3.layers[1].combinations;
+    Tensor<type, 2>probabilistic_activations_3_1= forward_propagation_3.layers[1].activations;
 
     assert_true(perceptron_combinations_3_0.dimension(0) == 3, LOG);
 

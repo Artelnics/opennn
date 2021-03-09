@@ -114,15 +114,15 @@ public:
 
     // Outputs
 
-    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
 
-    void calculate_activations(const Tensor<type, 2>&,  Tensor<type, 2>&) {}
+    void calculate_activations(const Tensor<type, 4>&,  Tensor<type, 4>&) {}
 
-    Tensor<type, 2> calculate_no_pooling_outputs(const Tensor<type, 2>&) const;
+    Tensor<type, 4> calculate_no_pooling_outputs(const Tensor<type, 4>&) const;
 
-    Tensor<type, 2> calculate_max_pooling_outputs(const Tensor<type, 2>&) const;
+    Tensor<type, 4> calculate_max_pooling_outputs(const Tensor<type, 4>&) const;
 
-    Tensor<type, 2> calculate_average_pooling_outputs(const Tensor<type, 2>&) const;    
+    Tensor<type, 4> calculate_average_pooling_outputs(const Tensor<type, 4>&) const;
 
     // Activations derivatives
 
@@ -139,17 +139,10 @@ public:
 
     Tensor<type, 2> calculate_max_pooling_activations_derivatives(const Tensor<type, 2>&) const;
 
-    // First order activations_2d
-/*
-    ForwardPropagation forward_propagate(const Tensor<type, 2>&);
-*/
-    void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&)
-    {
-/*
-        calculate_activations(inputs, forward_propagation.activations_2d);
+    // First order activations
 
-        calculate_activations_derivatives(forward_propagation.activations_2d, forward_propagation.activations_derivatives);
-*/
+    void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*)
+    {
     }
 
     // Delta methods

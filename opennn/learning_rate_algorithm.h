@@ -116,22 +116,6 @@ public:
            else return B;
        }
 
-       /// Returns true if the interval(A,B) is constant,
-       /// and false otherwise.
-
-       inline bool is_constant() const
-       {
-           /*if(abs(A.second - B.second) < numeric_limits<type>::min())
-           {
-              return true;
-           }
-           else
-           {
-              return false;
-           }*/
-           return false;
-       }
-
        /// Writes a string with the values of A, U and B.
 
        inline string struct_to_string() const
@@ -329,7 +313,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -924,61 +924,6 @@ void RecurrentLayer::calculate_hidden_delta_probabilistic(RecurrentLayerForwardP
     back_propagation->delta.device(*thread_pool_device) = back_propagation->delta*forward_propagation->activations_derivatives;
 }
 
-/*
-void RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-                                            ForwardPropagation* forward_propagation,
-                                            const Tensor<type, 2>& next_layer_delta,
-                                            Tensor<type, 2>& hidden_delta) const
-{
-
-    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
-
-    const Type next_layer_type = next_layer_pointer->get_type();
-
-    switch(next_layer_type)
-    {
-    case Perceptron:
-        calculate_hidden_delta_perceptron(next_layer_pointer, recurrent_layer_forward_propagation->activations_derivatives, next_layer_delta, hidden_delta);
-
-        return;
-
-    case Probabilistic:
-        calculate_hidden_delta_probabilistic(next_layer_pointer, recurrent_layer_forward_propagation->activations, next_layer_delta, hidden_delta);
-
-        return;
-
-    default:
-        return;
-    }
-
-}
-
-
-void RecurrentLayer::calculate_hidden_delta_perceptron(Layer* next_layer_pointer,
-                                                       const Tensor<type, 2>&,
-                                                       const Tensor<type, 2>& next_layer_delta,
-                                                       Tensor<type, 2>& hidden_delta) const
-{
-    const PerceptronLayer* next_perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
-
-    hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
-}
-
-
-void RecurrentLayer::calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
-                                                          const Tensor<type, 2>&,
-                                                          const Tensor<type, 2>& next_layer_delta,
-                                                          Tensor<type, 2>& hidden_delta) const
-{
-    const ProbabilisticLayer* next_probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_probabilistic_layer->get_synaptic_weights();
-
-    hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
-}
-*/
 
 void RecurrentLayer::insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {

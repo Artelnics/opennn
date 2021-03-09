@@ -189,7 +189,7 @@ public:
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
-   // Perceptron layer activations_2d
+   // Perceptron layer activations
 
    void calculate_activations(const Tensor<type, 2>&,
                               Tensor<type, 2>&) const;

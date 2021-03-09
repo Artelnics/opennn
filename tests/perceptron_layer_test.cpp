@@ -521,9 +521,9 @@ void PerceptronLayerTest::test_get_parameters()
    assert_true(parameters_3(2) == -0.75, LOG);
    assert_true(parameters_3(3) == 0.25, LOG);
 
-   Tensor<type, 2> combinations_2d(1, 1);
+   Tensor<type, 2> combinations(1, 1);
 
-   perceptron_layer_3.calculate_combinations(inputs, biases_3, synaptic_weights_3, combinations_2d);
+   perceptron_layer_3.calculate_combinations(inputs, biases_3, synaptic_weights_3, combinations);
    }
 
 void PerceptronLayerTest::test_set_biases()
@@ -949,7 +949,7 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 //   Tensor<type, 1> parameters(1);
 
 //   Tensor<type, 2> inputs(1,1);
-//   Tensor<type, 2> combinations_2d(1,1);
+//   Tensor<type, 2> combinations(1,1);
 
 //   perceptron_layer.set_thread_pool_device(thread_pool_device);
 
@@ -961,17 +961,17 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 //   perceptron_layer.set(1,1);
 //   inputs.setConstant(3.0);
 
-//   perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations_2d);
+//   perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
 
-//   assert_true(combinations_2d.rank() == 2, LOG);
-//   assert_true(combinations_2d.dimension(0) == 1, LOG);
-//   assert_true(combinations_2d.dimension(1) == 1, LOG);
-//   assert_true(abs(combinations_2d(0,0) - 7) < static_cast<type>(1e-5) , LOG);
+//   assert_true(combinations.rank() == 2, LOG);
+//   assert_true(combinations.dimension(0) == 1, LOG);
+//   assert_true(combinations.dimension(1) == 1, LOG);
+//   assert_true(abs(combinations(0,0) - 7) < static_cast<type>(1e-5) , LOG);
 
 //    // Test 1
 
-//   combinations_2d.resize(1, 2);
-//   combinations_2d.setZero();
+//   combinations.resize(1, 2);
+//   combinations.setZero();
 
 //   perceptron_layer.set(2, 2);
 //   perceptron_layer.set_parameters_constant(1);
@@ -979,17 +979,17 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 //   inputs.resize(1,2);
 //   inputs.setConstant(1.0);
 
-//   perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations_2d);
+//   perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations);
 
-//   assert_true(combinations_2d.rank() == 2, LOG);
-//   assert_true(combinations_2d.dimension(0) == 1, LOG);
-//   assert_true(combinations_2d.dimension(1) == 2, LOG);
-//   assert_true(abs(combinations_2d(0,0) - 3) < static_cast<type>(1e-5), LOG);
+//   assert_true(combinations.rank() == 2, LOG);
+//   assert_true(combinations.dimension(0) == 1, LOG);
+//   assert_true(combinations.dimension(1) == 2, LOG);
+//   assert_true(abs(combinations(0,0) - 3) < static_cast<type>(1e-5), LOG);
 
 //   //Test 2
 
-//   combinations_2d.resize(2, 4);
-//   combinations_2d.setZero();
+//   combinations.resize(2, 4);
+//   combinations.setZero();
 
 //   perceptron_layer.set(3,4);
 
@@ -1004,17 +1004,17 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 //   perceptron_layer.set_synaptic_weights(synaptic_weights);
 //   perceptron_layer.set_biases(biases);
 
-//   perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations_2d);
+//   perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations);
 
-//   assert_true(combinations_2d.rank() == 2, LOG);
-//   assert_true(combinations_2d.dimension(0) == 2, LOG);
-//   assert_true(combinations_2d.dimension(1) == 4, LOG);
-//   assert_true(abs(combinations_2d(0,0) - static_cast<type>(3.5)) < static_cast<type>(1e-5), LOG);
+//   assert_true(combinations.rank() == 2, LOG);
+//   assert_true(combinations.dimension(0) == 2, LOG);
+//   assert_true(combinations.dimension(1) == 4, LOG);
+//   assert_true(abs(combinations(0,0) - static_cast<type>(3.5)) < static_cast<type>(1e-5), LOG);
 
 //   // Test 3
 
-//   combinations_2d.resize(1, 4);
-//   combinations_2d.setZero();
+//   combinations.resize(1, 4);
+//   combinations.setZero();
 
 //   perceptron_layer.set(2, 4);
 
@@ -1029,12 +1029,12 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 //   inputs.resize(1,2);
 //   inputs.setValues({{0.5, 0.5}});
 
-//   perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations_2d);
+//   perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations);
 
-//   assert_true(combinations_2d.rank() == 2, LOG);
-//   assert_true(combinations_2d.dimension(0) == 1, LOG);
-//   assert_true(combinations_2d.dimension(1) == 4, LOG);
-//   assert_true(static_cast<Index>(combinations_2d(0,0)) == 2, LOG);
+//   assert_true(combinations.rank() == 2, LOG);
+//   assert_true(combinations.dimension(0) == 1, LOG);
+//   assert_true(combinations.dimension(1) == 4, LOG);
+//   assert_true(static_cast<Index>(combinations(0,0)) == 2, LOG);
 
   //Test 4
 
@@ -1078,16 +1078,16 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
    assert_true(parameters(2) == -0.75, LOG);
    assert_true(parameters(3) == 0.25, LOG);
 
-   Tensor<type, 2> combinations_2d(1, 1);
+   Tensor<type, 2> combinations(1, 1);
 
-   perceptron_layer_2.calculate_combinations(inputs, biases, synaptic_weights_1, combinations_2d);
+   perceptron_layer_2.calculate_combinations(inputs, biases, synaptic_weights_1, combinations);
 
-  assert_true(combinations_2d.rank() == 2, LOG);
-  assert_true(combinations_2d.dimension(0) == 1, LOG);
+  assert_true(combinations.rank() == 2, LOG);
+  assert_true(combinations.dimension(0) == 1, LOG);
 
-  assert_true(combinations_2d.dimension(1) == 1, LOG);
+  assert_true(combinations.dimension(1) == 1, LOG);
 
-  assert_true(static_cast<type>(combinations_2d(0,0)) - static_cast<type>(-1.55) < static_cast<type>(1e-5), LOG);
+  assert_true(static_cast<type>(combinations(0,0)) - static_cast<type>(-1.55) < static_cast<type>(1e-5), LOG);
 
 }
 
@@ -1102,8 +1102,8 @@ void PerceptronLayerTest::test_calculate_activations()
    Tensor<type, 1> parameters(1);
 
    Tensor<type, 2> inputs(1,1);
-   Tensor<type, 2> combinations_2d(1,1);
-   Tensor<type, 2> activations_2d(1,1);
+   Tensor<type, 2> combinations(1,1);
+   Tensor<type, 2> activations(1,1);
 
    // Test 1
 
@@ -1114,39 +1114,39 @@ void PerceptronLayerTest::test_calculate_activations()
 
    inputs.setConstant(1);
 
-   perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations_2d);
+   perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
-   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
+   perceptron_layer.calculate_activations(combinations, activations);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 1, LOG);
-   assert_true(activations_2d.dimension(1) == 1, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 2 , LOG);
+   assert_true(activations.rank() == 2, LOG);
+   assert_true(activations.dimension(0) == 1, LOG);
+   assert_true(activations.dimension(1) == 1, LOG);
+   assert_true(static_cast<Index>(activations(0,0)) == 2 , LOG);
 
    // Test 2
 
    perceptron_layer.set(2, 2);
    perceptron_layer.set_parameters_constant(2);
 
-   combinations_2d.resize(1,2);
-   combinations_2d.setZero();
+   combinations.resize(1,2);
+   combinations.setZero();
 
-   activations_2d.resize(1,2);
-   activations_2d.setZero();
+   activations.resize(1,2);
+   activations.setZero();
 
    inputs.resize(1,2);
    inputs.setConstant(2);
 
-   perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations_2d);
+   perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
-   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
+   perceptron_layer.calculate_activations(combinations, activations);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 1, LOG);
-   assert_true(activations_2d.dimension(1) == 2, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 10, LOG);
+   assert_true(activations.rank() == 2, LOG);
+   assert_true(activations.dimension(0) == 1, LOG);
+   assert_true(activations.dimension(1) == 2, LOG);
+   assert_true(static_cast<Index>(activations(0,0)) == 10, LOG);
 
    // Test 3
 
@@ -1155,16 +1155,16 @@ void PerceptronLayerTest::test_calculate_activations()
 
    parameters.setConstant(0.0);
 
-   combinations_2d.resize(1,2);
-   combinations_2d.setConstant(0.0);
+   combinations.resize(1,2);
+   combinations.setConstant(0.0);
 
    perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
-   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
+   perceptron_layer.calculate_activations(combinations, activations);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 1, LOG);
-   assert_true(activations_2d.dimension(1) == 2, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 0, LOG);
+   assert_true(activations.rank() == 2, LOG);
+   assert_true(activations.dimension(0) == 1, LOG);
+   assert_true(activations.dimension(1) == 2, LOG);
+   assert_true(static_cast<Index>(activations(0,0)) == 0, LOG);
 
    // Test 4
 
@@ -1173,16 +1173,16 @@ void PerceptronLayerTest::test_calculate_activations()
 
    parameters.setConstant(0.0);
 
-   combinations_2d.resize(1,2);
-   combinations_2d.setConstant(0.0);
+   combinations.resize(1,2);
+   combinations.setConstant(0.0);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
-   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
+   perceptron_layer.calculate_activations(combinations, activations);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 1, LOG);
-   assert_true(activations_2d.dimension(1) == 2, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 1 , LOG);
+   assert_true(activations.rank() == 2, LOG);
+   assert_true(activations.dimension(0) == 1, LOG);
+   assert_true(activations.dimension(1) == 2, LOG);
+   assert_true(static_cast<Index>(activations(0,0)) == 1 , LOG);
 
    // Test 5
 
@@ -1191,35 +1191,35 @@ void PerceptronLayerTest::test_calculate_activations()
 
    parameters.setConstant(0.0);
 
-   combinations_2d.resize(1,2);
-   combinations_2d.setConstant(-2.0);
+   combinations.resize(1,2);
+   combinations.setConstant(-2.0);
 
    perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
-   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
+   perceptron_layer.calculate_activations(combinations, activations);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 1, LOG);
-   assert_true(activations_2d.dimension(1) == 2, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0))  == -1, LOG);
+   assert_true(activations.rank() == 2, LOG);
+   assert_true(activations.dimension(0) == 1, LOG);
+   assert_true(activations.dimension(1) == 2, LOG);
+   assert_true(static_cast<Index>(activations(0,0))  == -1, LOG);
 
    // Test 6
 
    perceptron_layer.set(1, 2);
    perceptron_layer.set_parameters_constant(0.0);
 
-   combinations_2d.resize(2,2);
-   combinations_2d.setConstant(4.0);
+   combinations.resize(2,2);
+   combinations.setConstant(4.0);
 
-   activations_2d.resize(2,2);
-   activations_2d.setZero();
+   activations.resize(2,2);
+   activations.setZero();
 
    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
-   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
+   perceptron_layer.calculate_activations(combinations, activations);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 2, LOG);
-   assert_true(activations_2d.dimension(1) == 2, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 4.0, LOG);
+   assert_true(activations.rank() == 2, LOG);
+   assert_true(activations.dimension(0) == 2, LOG);
+   assert_true(activations.dimension(1) == 2, LOG);
+   assert_true(static_cast<Index>(activations(0,0)) == 4.0, LOG);
 
    // Test 7
 
@@ -1229,37 +1229,37 @@ void PerceptronLayerTest::test_calculate_activations()
    inputs.resize(1,3);
    inputs.setConstant(0.5);
 
-   combinations_2d.resize(1,2);
-   activations_2d.resize(1,2);
+   combinations.resize(1,2);
+   activations.resize(1,2);
 
-   perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations_2d);
-   assert_true(combinations_2d.rank() == 2, LOG);
-   assert_true(combinations_2d.dimension(0) == 1, LOG);
-   assert_true(combinations_2d.dimension(1) == 2, LOG);
-   assert_true(abs(combinations_2d(0,0) - static_cast<type>(2.5)) < static_cast<type>(1e-5), LOG);
+   perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations);
+   assert_true(combinations.rank() == 2, LOG);
+   assert_true(combinations.dimension(0) == 1, LOG);
+   assert_true(combinations.dimension(1) == 2, LOG);
+   assert_true(abs(combinations(0,0) - static_cast<type>(2.5)) < static_cast<type>(1e-5), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
-   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 1, LOG);
-   assert_true(activations_2d.dimension(1) == 2, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 1, LOG);
+   perceptron_layer.calculate_activations(combinations, activations);
+   assert_true(activations.rank() == 2, LOG);
+   assert_true(activations.dimension(0) == 1, LOG);
+   assert_true(activations.dimension(1) == 2, LOG);
+   assert_true(static_cast<Index>(activations(0,0)) == 1, LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
-   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 1, LOG);
+   perceptron_layer.calculate_activations(combinations, activations);
+   assert_true(static_cast<Index>(activations(0,0)) == 1, LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Logistic);
-   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(1.0/(1.0+exp(-2.5)))) < static_cast<type>(1e-5), LOG);
+   perceptron_layer.calculate_activations(combinations, activations);
+   assert_true(abs(activations(0,0) - static_cast<type>(1.0/(1.0+exp(-2.5)))) < static_cast<type>(1e-5), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
-   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(tanh(2.5))) < static_cast<type>(1e-5), LOG);
+   perceptron_layer.calculate_activations(combinations, activations);
+   assert_true(abs(activations(0,0) - static_cast<type>(tanh(2.5))) < static_cast<type>(1e-5), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
-   perceptron_layer.calculate_activations(combinations_2d, activations_2d);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(2.5)) < static_cast<type>(1e-5), LOG);
+   perceptron_layer.calculate_activations(combinations, activations);
+   assert_true(abs(activations(0,0) - static_cast<type>(2.5)) < static_cast<type>(1e-5), LOG);
 }
 
 void PerceptronLayerTest::test_calculate_activations_derivatives()
@@ -1271,8 +1271,8 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
    Tensor<type, 1> parameters(1);
    Tensor<type, 2> inputs(1,1);
-   Tensor<type, 2> combinations_2d(1,1);
-   Tensor<type, 2> activations_2d(1,1);
+   Tensor<type, 2> combinations(1,1);
+   Tensor<type, 2> activations(1,1);
    Tensor<type, 2> activations_derivatives(1,1);
 
    // Test 1
@@ -1282,67 +1282,67 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
    inputs.setConstant(1);
 
-   combinations_2d.setConstant(1);
+   combinations.setConstant(1);
 
    activations_derivatives.setZero();
 
    perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
-   assert_true(abs(activations_2d(0,0) - 1) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(activations(0,0) - 1) < static_cast<type>(1e-5), LOG);
    assert_true(abs(activations_derivatives(0,0) - 0) < static_cast<type>(1e-5), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
-   assert_true(abs(activations_2d(0,0) - 1) < static_cast<type>(1e-3), LOG);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+   assert_true(abs(activations(0,0) - 1) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - 0) < static_cast<type>(1e-3), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Logistic);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3), LOG);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+   assert_true(abs(activations(0,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.196)) < static_cast<type>(1e-3), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(0.761)) < static_cast<type>(1e-3), LOG);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+   assert_true(abs(activations(0,0) - static_cast<type>(0.761)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.41997)) < static_cast<type>(1e-3), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
-   assert_true(abs(activations_2d(0,0) - 1) < static_cast<type>(1e-5), LOG);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+   assert_true(abs(activations(0,0) - 1) < static_cast<type>(1e-5), LOG);
    assert_true(abs(activations_derivatives(0,0) - 1) < static_cast<type>(1e-5), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::RectifiedLinear);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+   assert_true(abs(activations(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::ExponentialLinear);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+   assert_true(abs(activations(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::ScaledExponentialLinear);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(1.05)) < static_cast<type>(1e-3), LOG);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+   assert_true(abs(activations(0,0) - static_cast<type>(1.05)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(1.05)) < static_cast<type>(1e-3), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::SoftPlus);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(1.313)) < static_cast<type>(1e-3), LOG);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+   assert_true(abs(activations(0,0) - static_cast<type>(1.313)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::SoftSign);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+   assert_true(abs(activations(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::HardSigmoid);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(0.7)) < static_cast<type>(1e-3), LOG);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+   assert_true(abs(activations(0,0) - static_cast<type>(0.7)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.2)) < static_cast<type>(1e-3), LOG);
 
 //   // Test 2
@@ -1350,101 +1350,101 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    perceptron_layer.set(2, 4);
    perceptron_layer.set_parameters_constant(1);
 
-   combinations_2d.resize(1,4);
-   combinations_2d.setValues({{1.56f, -0.68f, 0.91f, -1.99f}});
+   combinations.resize(1,4);
+   combinations.setValues({{1.56f, -0.68f, 0.91f, -1.99f}});
 
-   activations_2d.resize(1,4);
+   activations.resize(1,4);
 
    activations_derivatives.resize(1,4);
    activations_derivatives.setZero();
 
    // Test 2_1
    perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
    Tensor<type, 2> numerical_activation_derivative(1,4);
-   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations_2d);
+   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test 2_2
    perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations_2d);
+   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test 2_3
    perceptron_layer.set_activation_function(PerceptronLayer::Logistic);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations_2d);
+   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test 2_4
    perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations_2d);
+   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test 2_5
    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations_2d);
+   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test 2_6
    perceptron_layer.set_activation_function(PerceptronLayer::RectifiedLinear);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations_2d);
+   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test 2_7
    perceptron_layer.set_activation_function(PerceptronLayer::ExponentialLinear);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations_2d);
+   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test 2_8
    perceptron_layer.set_activation_function(PerceptronLayer::ScaledExponentialLinear);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations_2d);
+   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test 2_9
    perceptron_layer.set_activation_function(PerceptronLayer::SoftPlus);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations_2d);
+   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test 2_10
    perceptron_layer.set_activation_function(PerceptronLayer::SoftSign);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations_2d);
+   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test 2_11
    perceptron_layer.set_activation_function(PerceptronLayer::HardSigmoid);
-   perceptron_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations_2d);
+   numerical_activation_derivative = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 }
@@ -1587,13 +1587,13 @@ void PerceptronLayerTest::test_forward_propagate()
 
     perceptron_layer.forward_propagate(inputs, forward_propagation);
 
-    assert_true(forward_propagation.combinations_2d.rank() == 2, LOG);
-    assert_true(forward_propagation.combinations_2d.dimension(0) == 1, LOG);
-    assert_true(forward_propagation.combinations_2d.dimension(1) == 2, LOG);
-    assert_true(abs(forward_propagation.combinations_2d(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.combinations_2d(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_2d(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_2d(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(forward_propagation.combinations.rank() == 2, LOG);
+    assert_true(forward_propagation.combinations.dimension(0) == 1, LOG);
+    assert_true(forward_propagation.combinations.dimension(1) == 2, LOG);
+    assert_true(abs(forward_propagation.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(forward_propagation.activations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(forward_propagation.activations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(forward_propagation.activations_derivatives_2d(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(forward_propagation.activations_derivatives_2d(0,1) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
 
@@ -1614,13 +1614,13 @@ void PerceptronLayerTest::test_forward_propagate()
 
     perceptron_layer_2.forward_propagate(inputs, potential_parameters, forward_propagation_2);
 
-    assert_true(forward_propagation_2.combinations_2d.rank() == 2, LOG);
-    assert_true(forward_propagation_2.combinations_2d.dimension(0) == 1, LOG);
-    assert_true(forward_propagation_2.combinations_2d.dimension(1) == 2, LOG);
-    assert_true(abs(forward_propagation_2.combinations_2d(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation_2.combinations_2d(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation_2.activations_2d(0,0) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation_2.activations_2d(0,1) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
+    assert_true(forward_propagation_2.combinations.rank() == 2, LOG);
+    assert_true(forward_propagation_2.combinations.dimension(0) == 1, LOG);
+    assert_true(forward_propagation_2.combinations.dimension(1) == 2, LOG);
+    assert_true(abs(forward_propagation_2.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(forward_propagation_2.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(forward_propagation_2.activations(0,0) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(forward_propagation_2.activations(0,1) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(forward_propagation_2.activations_derivatives_2d(0,0) - static_cast<type>(0.00986)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(forward_propagation_2.activations_derivatives_2d(0,1) - static_cast<type>(0.00986)) < static_cast<type>(1e-3), LOG);
 */

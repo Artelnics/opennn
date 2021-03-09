@@ -854,9 +854,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         // Neural network
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-/*
+
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-*/
+
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         // Selection error
@@ -866,6 +866,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
             // Loss Index
+
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             if(selection_back_propagation.error > old_selection_error)

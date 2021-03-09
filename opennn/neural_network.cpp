@@ -2446,37 +2446,6 @@ void NeuralNetwork::load(const string& file_name)
 /// Loads the neural network parameters from a data file.
 /// The format of this file is just a sequence of numbers.
 /// @param file_name Name of parameters data file.
-/// @todo
-void NeuralNetwork::load_parameters(const string& file_name)
-{
-    ifstream file(file_name.c_str());
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void load_parameters(const string&) method.\n"
-               << "Cannot open parameters data file.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index parameters_number = get_parameters_number();
-
-    Tensor<type, 1> new_parameters(parameters_number);
-    /*
-        new_parameters.load(file_name);
-    */
-    set_parameters(new_parameters);
-
-    file.close();
-}
-
-
-/// Loads the neural network parameters from a data file.
-/// The format of this file is just a sequence of numbers.
-/// @param file_name Name of parameters data file.
 
 void NeuralNetwork::load_parameters_binary(const string& file_name)
 {
@@ -2525,25 +2494,22 @@ string NeuralNetwork::write_expression_c() const
 
     ostringstream buffer;
 
-    buffer <<"/*"<<endl;
-    buffer <<"Artificial Intelligence Techniques SL\t"<<endl;
-    buffer <<"artelnics@artelnics.com\t"<<endl;
+    buffer <<"// Artificial Intelligence Techniques SL\t"<<endl;
+    buffer <<"// artelnics@artelnics.com\t"<<endl;
+    buffer <<"// "<<endl;
+    buffer <<"// Your model has been exported to this file." <<endl;
+    buffer <<"// You can manage it with the 'neural network' method.\t"<<endl;
+    buffer <<"// Example:"<<endl;
+    buffer <<"// "<<endl;
+    buffer <<"// \tvector<float> sample(n);\t"<<endl;
+    buffer <<"// \tsample[0] = 1;\t"<<endl;
+    buffer <<"// \tsample[1] = 2;\t"<<endl;
+    buffer <<"// \tsample[n] = 10;\t"<<endl;
+    buffer <<"// \tvector<float> outputs = neural_network(sample);"<<endl;
+    buffer <<"// "<<endl;
+    buffer <<"// Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
+    buffer <<"// however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
     buffer <<""<<endl;
-    buffer <<"Your model has been exported to this file." <<endl;
-    buffer <<"You can manage it with the 'neural network' method.\t"<<endl;
-    buffer <<"Example:"<<endl;
-    buffer <<""<<endl;
-    buffer <<"\tvector<float> sample(n);\t"<<endl;
-    buffer <<"\tsample[0] = 1;\t"<<endl;
-    buffer <<"\tsample[1] = 2;\t"<<endl;
-    buffer <<"\tsample[n] = 10;\t"<<endl;
-    buffer <<"\tvector<float> outputs = neural_network(sample);"<<endl;
-    buffer <<""<<endl;
-    buffer <<"Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
-    buffer <<"however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
-    buffer <<"*/"<<endl;
-    buffer <<""<<endl;
-
 
     buffer << "#include <vector>\n" << endl;
 

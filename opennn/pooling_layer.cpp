@@ -54,7 +54,7 @@ PoolingLayer::~PoolingLayer()
 /// Returns the output of the pooling layer applied to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<type, 2> PoolingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
+Tensor<type, 4> PoolingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -85,68 +85,65 @@ Tensor<type, 2> PoolingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
         return calculate_average_pooling_outputs(inputs);
     }
 
-    return Tensor<type, 2>();
+    return Tensor<type, 4>();
 }
 
 
 /// Returns the result of applying average pooling to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<type, 2> PoolingLayer::calculate_average_pooling_outputs(const Tensor<type, 2>& inputs) const
+Tensor<type, 4> PoolingLayer::calculate_average_pooling_outputs(const Tensor<type, 4>& inputs) const
 {
-    /*
-        const Index images_number = inputs.dimension(0);
+    const Index images_number = inputs.dimension(0);
 
-        const Index channels_number = inputs.dimension(1);
+    const Index channels_number = inputs.dimension(1);
 
-        const Index inputs_rows_number = inputs.dimension(2);
+    const Index inputs_rows_number = inputs.dimension(2);
 
-        const Index inputs_columns_number = inputs.dimension(3);
+    const Index inputs_columns_number = inputs.dimension(3);
 
-        const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
+    const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
 
-        const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
+    const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
-        Tensor<type, 2> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
+    Tensor<type, 4> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
 
-        for(Index image_index = 0; image_index < images_number; image_index ++)
+    for(Index image_index = 0; image_index < images_number; image_index ++)
+    {
+        for(Index channel_index = 0; channel_index < channels_number; channel_index ++)
         {
-            for(Index channel_index = 0; channel_index < channels_number; channel_index ++)
+            for(Index row_index = 0; row_index < outputs_rows_number; row_index ++)
             {
-                for(Index row_index = 0; row_index < outputs_rows_number; row_index ++)
+                for(Index column_index = 0; column_index < outputs_columns_number; column_index ++)
                 {
-                    for(Index column_index = 0; column_index < outputs_columns_number; column_index ++)
+                    outputs(image_index, channel_index, row_index, column_index) = 0;
+
+                    for(Index window_row = 0; window_row < pool_rows_number; window_row ++)
                     {
-                        outputs(image_index, channel_index, row_index, column_index) = 0;
+                        const Index row = row_index*row_stride + window_row;
 
-                        for(Index window_row = 0; window_row < pool_rows_number; window_row ++)
+                        for(Index window_column = 0; window_column < pool_columns_number; window_column ++)
                         {
-                            const Index row = row_index*row_stride + window_row;
+                            const Index column = column_index*column_stride + window_column;
 
-                            for(Index window_column = 0; window_column < pool_columns_number; window_column ++)
-                            {
-                                const Index column = column_index*column_stride + window_column;
-
-                                outputs(image_index, channel_index, row_index, column_index) += inputs(image_index, channel_index, row, column);
-                            }
+                            outputs(image_index, channel_index, row_index, column_index) += inputs(image_index, channel_index, row, column);
                         }
-
-                        outputs(image_index, channel_index, row_index, column_index) /= pool_rows_number*pool_columns_number;
                     }
+
+                    outputs(image_index, channel_index, row_index, column_index) /= pool_rows_number*pool_columns_number;
                 }
             }
         }
+    }
 
-        return outputs;
-    */
-    return Tensor<type, 2>();
+    return outputs;
 }
 
 
 /// Returns the result of applying no pooling to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<type, 2> PoolingLayer::calculate_no_pooling_outputs(const Tensor<type, 2>& inputs) const
+Tensor<type, 4> PoolingLayer::calculate_no_pooling_outputs(const Tensor<type, 4>& inputs) const
 {
     return inputs;
 }
@@ -155,58 +152,54 @@ Tensor<type, 2> PoolingLayer::calculate_no_pooling_outputs(const Tensor<type, 2>
 /// Returns the result of applying max pooling to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<type, 2> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 2>& inputs) const
+Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4>& inputs) const
 {
-    /*
-        const Index images_number = inputs.dimension(0);
+    const Index images_number = inputs.dimension(0);
 
-        const Index channels_number = inputs.dimension(1);
+    const Index channels_number = inputs.dimension(1);
 
-        const Index inputs_rows_number = inputs.dimension(2);
+    const Index inputs_rows_number = inputs.dimension(2);
 
-        const Index inputs_columns_number = inputs.dimension(3);
+    const Index inputs_columns_number = inputs.dimension(3);
 
-        const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
+    const Index outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
 
-        const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
+    const Index outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
-        Tensor<type, 2> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
+    Tensor<type, 4> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
 
-        for(Index image_index = 0; image_index < images_number; image_index ++)
+    for(Index image_index = 0; image_index < images_number; image_index ++)
+    {
+        for(Index channel_index = 0; channel_index < channels_number; channel_index ++)
         {
-            for(Index channel_index = 0; channel_index < channels_number; channel_index ++)
+            for(Index row_index = 0; row_index < outputs_rows_number; row_index ++)
             {
-                for(Index row_index = 0; row_index < outputs_rows_number; row_index ++)
+                for(Index column_index = 0; column_index < outputs_columns_number; column_index ++)
                 {
-                    for(Index column_index = 0; column_index < outputs_columns_number; column_index ++)
+                    outputs(image_index, channel_index, row_index, column_index) =
+                            inputs(image_index, channel_index, row_index*row_stride, column_index*column_stride);
+
+                    for(Index window_row = 0; window_row < pool_rows_number; window_row ++)
                     {
-                        outputs(image_index, channel_index, row_index, column_index) =
-                                inputs(image_index, channel_index, row_index*row_stride, column_index*column_stride);
+                        const Index row = row_index*row_stride + window_row;
 
-                        for(Index window_row = 0; window_row < pool_rows_number; window_row ++)
+                        for(Index window_column = 0; window_column < pool_columns_number; window_column ++)
                         {
-                            const Index row = row_index*row_stride + window_row;
+                            const Index column = column_index*column_stride + window_column;
 
-                            for(Index window_column = 0; window_column < pool_columns_number; window_column ++)
+                            if(inputs(image_index, channel_index, row, column) > outputs(image_index, channel_index, row_index, column_index))
                             {
-                                const Index column = column_index*column_stride + window_column;
-
-                                if(inputs(image_index, channel_index, row, column) > outputs(image_index, channel_index, row_index, column_index))
-                                {
-                                    outputs(image_index, channel_index, row_index, column_index) = inputs(image_index, channel_index, row, column);
-                                }
-
+                                outputs(image_index, channel_index, row_index, column_index) = inputs(image_index, channel_index, row, column);
                             }
+
                         }
                     }
                 }
             }
         }
+    }
 
-        return outputs;
-    */
-    return Tensor<type, 2>();
-
+    return outputs;
 }
 
 /*
@@ -214,9 +207,9 @@ Layer::ForwardPropagation PoolingLayer::forward_propagate(const Tensor<type, 2>&
 {
     ForwardPropagation layers;
 
-    layers.activations_2d = calculate_outputs(inputs);
+    layers.activations = calculate_outputs(inputs);
 
-    layers.activations_derivatives = calculate_activations_derivatives(layers.activations_2d);
+    layers.activations_derivatives = calculate_activations_derivatives(layers.activations);
 
     return layers;
 }
@@ -281,7 +274,7 @@ Tensor<type, 2> PoolingLayer::calculate_max_pooling_activations_derivatives(cons
 
 
 Tensor<type, 2> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-        const Tensor<type, 2>& activations_2d,
+        const Tensor<type, 2>& activations,
         const Tensor<type, 2>& activations_derivatives,
         const Tensor<type, 2>& next_layer_delta) const
 {
@@ -294,25 +287,25 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
         {
             ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
 
-            return calculate_hidden_delta_convolutional(convolutional_layer, activations_2d, activations_derivatives, next_layer_delta);
+            return calculate_hidden_delta_convolutional(convolutional_layer, activations, activations_derivatives, next_layer_delta);
         }
         else if(layer_type == Pooling)
         {
             PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(next_layer_pointer);
 
-            return calculate_hidden_delta_pooling(pooling_layer, activations_2d, activations_derivatives, next_layer_delta);
+            return calculate_hidden_delta_pooling(pooling_layer, activations, activations_derivatives, next_layer_delta);
         }
         else if(layer_type == Perceptron)
         {
             PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
-            return calculate_hidden_delta_perceptron(perceptron_layer, activations_2d, activations_derivatives, next_layer_delta);
+            return calculate_hidden_delta_perceptron(perceptron_layer, activations, activations_derivatives, next_layer_delta);
         }
         else if(layer_type == Probabilistic)
         {
             ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
-            return calculate_hidden_delta_probabilistic(probabilistic_layer, activations_2d, activations_derivatives, next_layer_delta);
+            return calculate_hidden_delta_probabilistic(probabilistic_layer, activations, activations_derivatives, next_layer_delta);
         }
     }
 
@@ -392,7 +385,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
 
 
 Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
-        const Tensor<type, 2>& activations_2d,
+        const Tensor<type, 2>& activations,
         const Tensor<type, 2>&,
         const Tensor<type, 2>& next_layer_delta) const
 {
@@ -511,7 +504,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
                                 for(Index submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
                                 {
                                     activations_current_submatrix(submatrix_row_index, submatrix_column_index) =
-                                            activations_2d(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
+                                            activations(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
                                 }
                             }
 

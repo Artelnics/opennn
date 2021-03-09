@@ -1070,10 +1070,7 @@ void LongShortTermMemoryLayer::initialize_cell_states(const type& value)
 /// @todo
 
 void LongShortTermMemoryLayer::set_synaptic_weights_glorot()
-{
-    /*
-    get_weights().setRandom(minimum, maximum);
-    */
+{   
 }
 
 
@@ -1329,7 +1326,7 @@ void LongShortTermMemoryLayer::calculate_output_combinations(const Tensor<type, 
 }
 
 
-void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_2d) const
+void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1352,37 +1349,37 @@ void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& comb
 
     switch(activation_function)
     {
-    case Linear: linear(combinations, activations_2d);
+    case Linear: linear(combinations, activations);
         break;
 
-    case Logistic: logistic(combinations, activations_2d);
+    case Logistic: logistic(combinations, activations);
         break;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations, activations_2d);
+    case HyperbolicTangent: hyperbolic_tangent(combinations, activations);
         break;
 
-    case Threshold: threshold(combinations, activations_2d);
+    case Threshold: threshold(combinations, activations);
         break;
 
-    case SymmetricThreshold: symmetric_threshold(combinations, activations_2d);
+    case SymmetricThreshold: symmetric_threshold(combinations, activations);
         break;
 
-    case RectifiedLinear: rectified_linear(combinations, activations_2d);
+    case RectifiedLinear: rectified_linear(combinations, activations);
         break;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations_2d);
+    case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations);
         break;
 
-    case SoftPlus: soft_plus(combinations, activations_2d);
+    case SoftPlus: soft_plus(combinations, activations);
         break;
 
-    case SoftSign: soft_sign(combinations, activations_2d);
+    case SoftSign: soft_sign(combinations, activations);
         break;
 
-    case HardSigmoid: hard_sigmoid(combinations, activations_2d);
+    case HardSigmoid: hard_sigmoid(combinations, activations);
         break;
 
-    case ExponentialLinear: exponential_linear(combinations, activations_2d);
+    case ExponentialLinear: exponential_linear(combinations, activations);
         break;
     }
 }
@@ -1510,7 +1507,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
 }
 
 
-void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_2d) const
+void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1533,37 +1530,37 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
 
     switch(recurrent_activation_function)
     {
-    case Linear: linear(combinations, activations_2d);
+    case Linear: linear(combinations, activations);
         break;
 
-    case Logistic: logistic(combinations, activations_2d);
+    case Logistic: logistic(combinations, activations);
         break;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations, activations_2d);
+    case HyperbolicTangent: hyperbolic_tangent(combinations, activations);
         break;
 
-    case Threshold: threshold(combinations, activations_2d);
+    case Threshold: threshold(combinations, activations);
         break;
 
-    case SymmetricThreshold: symmetric_threshold(combinations, activations_2d);
+    case SymmetricThreshold: symmetric_threshold(combinations, activations);
         break;
 
-    case RectifiedLinear: rectified_linear(combinations, activations_2d);
+    case RectifiedLinear: rectified_linear(combinations, activations);
         break;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations_2d);
+    case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations);
         break;
 
-    case SoftPlus: soft_plus(combinations, activations_2d);
+    case SoftPlus: soft_plus(combinations, activations);
         break;
 
-    case SoftSign: soft_sign(combinations, activations_2d);
+    case SoftSign: soft_sign(combinations, activations);
         break;
 
-    case HardSigmoid: hard_sigmoid(combinations, activations_2d);
+    case HardSigmoid: hard_sigmoid(combinations, activations);
         break;
 
-    case ExponentialLinear: exponential_linear(combinations, activations_2d);
+    case ExponentialLinear: exponential_linear(combinations, activations);
         break;
     }
 }
@@ -1630,7 +1627,7 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
 
 
 void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations,
-                                                                 Tensor<type, 2>& activations_2d,
+                                                                 Tensor<type, 2>& activations,
                                                                  Tensor<type, 2>& activations_derivatives_2d) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -1654,27 +1651,27 @@ void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<ty
 
     switch(activation_function)
     {
-    case Linear: return linear_derivatives(combinations, activations_2d, activations_derivatives_2d);
+    case Linear: return linear_derivatives(combinations, activations, activations_derivatives_2d);
 
-    case Logistic: return logistic_derivatives(combinations, activations_2d, activations_derivatives_2d);
+    case Logistic: return logistic_derivatives(combinations, activations, activations_derivatives_2d);
 
-    case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations, activations_2d, activations_derivatives_2d);
+    case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations, activations, activations_derivatives_2d);
 
-    case Threshold: return threshold_derivatives(combinations, activations_2d, activations_derivatives_2d);
+    case Threshold: return threshold_derivatives(combinations, activations, activations_derivatives_2d);
 
-    case SymmetricThreshold: return symmetric_threshold_derivatives(combinations, activations_2d, activations_derivatives_2d);
+    case SymmetricThreshold: return symmetric_threshold_derivatives(combinations, activations, activations_derivatives_2d);
 
-    case RectifiedLinear: return rectified_linear_derivatives(combinations, activations_2d, activations_derivatives_2d);
+    case RectifiedLinear: return rectified_linear_derivatives(combinations, activations, activations_derivatives_2d);
 
-    case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations, activations_2d, activations_derivatives_2d);
+    case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations, activations, activations_derivatives_2d);
 
-    case SoftPlus: return soft_plus_derivatives(combinations, activations_2d, activations_derivatives_2d);
+    case SoftPlus: return soft_plus_derivatives(combinations, activations, activations_derivatives_2d);
 
-    case SoftSign: return soft_sign_derivatives(combinations, activations_2d, activations_derivatives_2d);
+    case SoftSign: return soft_sign_derivatives(combinations, activations, activations_derivatives_2d);
 
-    case HardSigmoid: return hard_sigmoid_derivatives(combinations, activations_2d, activations_derivatives_2d);
+    case HardSigmoid: return hard_sigmoid_derivatives(combinations, activations, activations_derivatives_2d);
 
-    case ExponentialLinear: return exponential_linear_derivatives(combinations, activations_2d, activations_derivatives_2d);
+    case ExponentialLinear: return exponential_linear_derivatives(combinations, activations, activations_derivatives_2d);
     }
 }
 
@@ -3841,6 +3838,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::multiply_rows(const Tensor<type, 2>& m
 /// Returns a string with the expression of the inputs-outputs relationship of the layer.
 /// @param inputs_names Vector of strings with the name of the layer inputs.
 /// @param outputs_names Vector of strings with the name of the layer outputs.
+/// @todo Update this method.
 
 string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {

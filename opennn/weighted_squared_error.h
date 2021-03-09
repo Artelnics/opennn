@@ -73,8 +73,6 @@ public:
 
    // Error methods
 
-   type weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>& ) const;
-
    void calculate_error(const DataSet::Batch&,
                         const NeuralNetwork::ForwardPropagation&,
                         LossIndex::BackPropagation&) const;

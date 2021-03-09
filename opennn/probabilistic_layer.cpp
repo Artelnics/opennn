@@ -609,7 +609,7 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 // Activations
 
-void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_2d) const
+void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -645,13 +645,13 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
 
      switch(activation_function)
      {
-         case Binary: binary(combinations, activations_2d); return;
+         case Binary: binary(combinations, activations); return;
 
-         case Logistic: logistic(combinations, activations_2d); return;
+         case Logistic: logistic(combinations, activations); return;
 
-         case Competitive: competitive(combinations, activations_2d); return;
+         case Competitive: competitive(combinations, activations); return;
 
-         case Softmax: softmax(combinations, activations_2d); return;
+         case Softmax: softmax(combinations, activations); return;
      }
 
      ostringstream buffer;
@@ -911,7 +911,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Inputs number element is nullptr.\n" /* << inputs_number_element->GetText()*/;
+               << "Inputs number element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
