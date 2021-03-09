@@ -1,2 +1,0 @@
-C:\opennn\opennn\Debug\opennn.pdb
-C:\opennn\opennn\opennn.dir\Debug\opennn.pdb
