@@ -443,11 +443,11 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 
 
 
-//// \brief GradientDescent::update_epoch
-//// \param batch
-//// \param forward_propagation
-//// \param back_propagation
-//// \param optimization_data
+// \brief GradientDescent::update_epoch
+// \param batch
+// \param forward_propagation
+// \param back_propagation
+// \param optimization_data
 void GradientDescent::update_epoch(
         const DataSet::Batch& batch,
         NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -1293,7 +1293,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -40,10 +40,10 @@ CrossEntropyError::~CrossEntropyError()
 }
 
 
-//// \brief CrossEntropyError::calculate_error.
-//// \param batch
-//// \param forward_propagation
-//// \param back_propagation
+// \brief CrossEntropyError::calculate_error.
+// \param batch
+// \param forward_propagation
+// \param back_propagation
 
 void CrossEntropyError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -238,7 +238,7 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
