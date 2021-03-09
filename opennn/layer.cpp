@@ -1315,8 +1315,10 @@ void Layer::soft_sign(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 }
 
 
-void Layer::hard_sigmoid(const Tensor<type, 4>& x, Tensor<type, 4>& y) const // TODO review
+void Layer::hard_sigmoid(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
+    // @todo Test this method
+
     const Tensor<bool, 4> if_lower = x < x.constant(-2.5);
     const Tensor<bool, 4> if_greater = x > x.constant(2.5);
     const Tensor<bool, 4> if_middle = x < x.constant(-2.5) && x > x.constant(2.5);
@@ -1331,33 +1333,9 @@ void Layer::hard_sigmoid(const Tensor<type, 4>& x, Tensor<type, 4>& y) const // 
     f_middle = static_cast<type>(0.2) * x + static_cast<type>(0.5);
     f_equal = x;
 
-
     y.device(*thread_pool_device) = if_lower.select(f_lower, f_equal);
     y.device(*thread_pool_device) = if_greater.select(f_greater, f_equal);
     y.device(*thread_pool_device) = if_middle.select(f_middle, f_equal);
-
-
-    /*
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        if(x(i) < static_cast<type>(-2.5))
-        {
-            y(i) = 0;
-        }
-        else if(x(i) > static_cast<type>(2.5))
-        {
-            y(i) = 1;
-        }
-        else
-        {
-            y(i) = static_cast<type>(0.2) * x(i) + static_cast<type>(0.5);
-        }
-    }
-    */
 }
 
 

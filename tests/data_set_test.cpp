@@ -2038,7 +2038,7 @@ void DataSetTest::test_read_csv()
 //   assert_true((data(3,5) - 0) < 1.0e-4, LOG);
 //   assert_true((data(3,6) - 1) < 1.0e-4, LOG);
 
-////   // Test
+//   // Test
 
 //   data_set.set_has_columns_names(true);
 //   data_set.set_separator(',');
@@ -2779,7 +2779,7 @@ void DataSetTest::test_scrub_missing_values() // @todo
 
 //    data_set.scrub_missing_values();
 
-////    samples = data_set.get_samples();
+//    samples = data_set.get_samples();
 
 //    assert_true(samples.get_use(1) == Samples::Unused, LOG);
 
@@ -2801,7 +2801,7 @@ void DataSetTest::test_scrub_missing_values() // @todo
 
 //    data_set.scrub_missing_values();
 
-////    samples = data_set.get_samples();
+//    samples = data_set.get_samples();
 
 //    data = data_set.get_data();
 

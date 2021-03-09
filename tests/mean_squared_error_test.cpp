@@ -551,11 +551,11 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 //   neural_network.set(NeuralNetwork::Approximation, architecture);
 //   neural_network.set_parameters_constant(0.0);
 //   //nn.set_layer_activation_function(0, PerceptronLayer::Linear);
-////   nn.set_parameters_random();
+//   nn.set_parameters_random();
 //   parameters = neural_network.get_parameters();
 
 //   data_set.set(1, 1, 1);
-////   data_set.set_data_random();
+//   data_set.set_data_random();
 //   data_set.initialize_data(1.0);
 
 //   inputs = data_set.get_training_input_data();

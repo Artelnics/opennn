@@ -89,10 +89,10 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 }
 
 
-////// \brief MinkowskiError::calculate_error
-////// \param batch
-////// \param forward_propagation
-////// \param back_propagation
+// \brief MinkowskiError::calculate_error
+// \param batch
+// \param forward_propagation
+// \param back_propagation
 void MinkowskiError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
                      LossIndex::BackPropagation& back_propagation) const

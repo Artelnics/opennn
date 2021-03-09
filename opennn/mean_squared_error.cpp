@@ -66,21 +66,70 @@ void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Index batch_samples_number = batch.get_samples_number();
-/*
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
-    const Tensor<type, 2>& targets = batch.targets_2d;
+    const Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
 
-    second_order_loss.error_terms.resize(outputs.dimension(0));
+    Layer::ForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
+
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
-    second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+    const Tensor<type, 2>& targets = batch.targets_2d;
+
+
+    switch(output_layer_pointer->get_type())
+    {
+    case Layer::Perceptron:
+    {
+        PerceptronLayer::PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+        = static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(output_layer_forward_propagation);
+
+        const Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->activations;
+
+        second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+    }
+        break;
+
+    case Layer::Probabilistic:
+    {
+        ProbabilisticLayer::ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
+        = static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
+
+        const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
+
+        second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+    }
+        break;
+
+    case Layer::Recurrent:
+    {
+        RecurrentLayer::RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
+        = static_cast<RecurrentLayer::RecurrentLayerForwardPropagation*>(output_layer_forward_propagation);
+
+        const Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->activations;
+
+        second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+    }
+        break;
+
+    case Layer::LongShortTermMemory:
+    {
+        LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
+        = static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation*>(output_layer_forward_propagation);
+
+        const Tensor<type, 2>& outputs = long_short_term_memory_layer_forward_propagation->activations;
+
+        second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+    }
+        break;
+
+    default: break;
+    }
+
+    const Index batch_samples_number = batch.get_samples_number();
 
     Tensor<type, 0> error;
     error.device(*thread_pool_device) = second_order_loss.error_terms.contract(second_order_loss.error_terms, AT_B);
 
     second_order_loss.error = error()/static_cast<type>(batch_samples_number);
-*/
 }
 
 

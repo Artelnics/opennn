@@ -705,8 +705,8 @@ bool UnscalingLayer::is_empty() const
 }
 
 
-///// Calculates the outputs from the unscaling layer for a given set of inputs to that layer.
-///// @param inputs Set of inputs to the unscaling layer.
+/// Calculates the outputs from the unscaling layer for a given set of inputs to that layer.
+/// @param inputs Set of inputs to the unscaling layer.
 
 Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
