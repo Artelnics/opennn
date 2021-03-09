@@ -59,7 +59,7 @@ void SumSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 
     const Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
 
-    Layer::ForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
+    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
 
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 

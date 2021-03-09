@@ -745,7 +745,7 @@ void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 1>& co
 }
 
 
-void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation* forward_propagation)
+void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, LayerForwardPropagation* forward_propagation)
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
@@ -778,7 +778,7 @@ void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPro
 }
 
 
-void RecurrentLayer::forward_propagate(const Tensor<type, 2> &inputs, Tensor<type, 1> parameters, ForwardPropagation* forward_propagation)
+void RecurrentLayer::forward_propagate(const Tensor<type, 2> &inputs, Tensor<type, 1> parameters, LayerForwardPropagation* forward_propagation)
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
@@ -862,7 +862,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 }
 
 
-void RecurrentLayer::calculate_hidden_delta(ForwardPropagation* forward_propagation,
+void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* forward_propagation,
                                             BackPropagation* next_layer_back_propagation,
                                             BackPropagation* current_layer_back_propagation) const
 {
@@ -954,7 +954,7 @@ void RecurrentLayer::insert_gradient(BackPropagation* back_propagation, const In
 
 
 void RecurrentLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                              ForwardPropagation* forward_propagation,
+                                              LayerForwardPropagation* forward_propagation,
                                               BackPropagation* back_propagation) const
 {
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
@@ -972,7 +972,7 @@ void RecurrentLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
 
 
 void RecurrentLayer::calculate_biases_error_gradient(const Tensor<type, 2>& inputs,
-                                                     ForwardPropagation* forward_propagation,
+                                                     LayerForwardPropagation* forward_propagation,
                                                      RecurrentLayerBackPropagation* back_propagation) const
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
@@ -1008,7 +1008,7 @@ void RecurrentLayer::calculate_biases_error_gradient(const Tensor<type, 2>& inpu
 
 
 void RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<type, 2>& inputs,
-                                                            ForwardPropagation* forward_propagation,
+                                                            LayerForwardPropagation* forward_propagation,
                                                             RecurrentLayerBackPropagation* back_propagation) const
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
@@ -1065,7 +1065,7 @@ void RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<type, 2
 
 
 void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<type, 2>& inputs,
-                                                                ForwardPropagation* forward_propagation,
+                                                                LayerForwardPropagation* forward_propagation,
                                                                 RecurrentLayerBackPropagation* back_propagation) const
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);

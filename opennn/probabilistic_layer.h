@@ -42,11 +42,11 @@ class ProbabilisticLayer : public Layer
 
 public:
 
-    struct ProbabilisticLayerForwardPropagation : Layer::ForwardPropagation
+    struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        explicit ProbabilisticLayerForwardPropagation(Layer* new_layer_pointer) : ForwardPropagation(new_layer_pointer)
+        explicit ProbabilisticLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
         {
         }
 
@@ -194,16 +194,16 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
    void forward_propagate(const Tensor<type, 2>&,
-                          ForwardPropagation*);
+                          LayerForwardPropagation*);
 
    void forward_propagate(const Tensor<type, 2>&,
                           Tensor<type, 1>,
-                          ForwardPropagation*);
+                          LayerForwardPropagation*);
 
    // Gradient methods
 
    void calculate_error_gradient(const Tensor<type, 2>&,
-                                 ForwardPropagation*,
+                                 LayerForwardPropagation*,
                                  BackPropagation*) const;
 
    void insert_gradient(BackPropagation*, const Index&, Tensor<type, 1>&) const;

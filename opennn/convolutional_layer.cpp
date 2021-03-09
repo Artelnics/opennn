@@ -255,9 +255,10 @@ void ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs, Tensor
 }
 
 
-void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, ForwardPropagation* forward_propagation)
+void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForwardPropagation* forward_propagation)
 {
-    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
+    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
+            = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
 
     const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
 
@@ -289,7 +290,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, Forwar
 }
 
 
-void ConvolutionalLayer::forward_propagate(const Tensor<type, 2> &inputs, ForwardPropagation* forward_propagation)
+void ConvolutionalLayer::forward_propagate(const Tensor<type, 2> &inputs, LayerForwardPropagation* forward_propagation)
 {
     const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
                                                      input_variables_dimensions(2), // rows number
@@ -306,7 +307,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 2> &inputs, Forwar
 
 void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
                                            Tensor<type, 1> potential_parameters,
-                                           ForwardPropagation* forward_propagation)
+                                           LayerForwardPropagation* forward_propagation)
 {
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
 
@@ -384,7 +385,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
 
 void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                            Tensor<type, 1> potential_parameters,
-                                           ForwardPropagation* forward_propagation)
+                                           LayerForwardPropagation* forward_propagation)
 {
     const Eigen::array<Eigen::Index, 4> four_dims = {
         input_variables_dimensions(0),
@@ -403,7 +404,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
 
 void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-                                                ForwardPropagation* forward_propagation,
+                                                LayerForwardPropagation* forward_propagation,
                                                 const Tensor<type, 2>& next_layer_delta,
                                                 Tensor<type, 2>& hidden_delta) const
 {
@@ -824,7 +825,7 @@ void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer
 
 
 void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
-                                                  ForwardPropagation* forward_propagation,
+                                                  LayerForwardPropagation* forward_propagation,
                                                   Layer::BackPropagation& back_propagation) const
 {
     Tensor<type, 4> layers_inputs;
@@ -887,13 +888,14 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
 
 
 void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                                  ForwardPropagation* forward_propagation,
+                                                  LayerForwardPropagation* forward_propagation,
                                                   BackPropagation& back_propagation) const
 {
     const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
                                                      input_variables_dimensions(2), // rows number
                                                      input_variables_dimensions(1), // channels number
                                                      inputs.dimension(0)}; // images number
+
     const Eigen::array<Eigen::Index, 2> shuffle_dims_2D = {1, 0};
     const Eigen::array<Eigen::Index, 4> shuffle_dims_4D = {3, 2, 1, 0};
 

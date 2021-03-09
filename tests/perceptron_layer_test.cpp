@@ -1682,8 +1682,8 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
     perceptron_layer_2_1.set_parameters_constant(1);
     inputs_1.setValues({{3,3}});
 
-    Layer::ForwardPropagation forward_propagation_2_0(1, &perceptron_layer_2_0);
-    Layer::ForwardPropagation forward_propagation_2_1(1, &perceptron_layer_2_1);
+    LayerForwardPropagation forward_propagation_2_0(1, &perceptron_layer_2_0);
+    LayerForwardPropagation forward_propagation_2_1(1, &perceptron_layer_2_1);
 
     perceptron_layer_2_0.forward_propagate(inputs_0, forward_propagation_2_0);
     perceptron_layer_2_1.forward_propagate(inputs_1, forward_propagation_2_1);
@@ -1718,7 +1718,7 @@ void PerceptronLayerTest::test_calculate_error_gradient()
 
     inputs.setValues({{0,1}});
 /*
-    Layer::ForwardPropagation forward_propagation(1, &perceptron_layer);
+    LayerForwardPropagation forward_propagation(1, &perceptron_layer);
     perceptron_layer.forward_propagate(inputs, forward_propagation);
 
     Layer::BackPropagation back_propagation(1, &perceptron_layer);

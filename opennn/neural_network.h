@@ -151,7 +151,7 @@ public:
 
        NeuralNetwork* neural_network_pointer = nullptr;
 
-       Tensor<Layer::ForwardPropagation*, 1> layers;
+       Tensor<LayerForwardPropagation*, 1> layers;
    };
 
 

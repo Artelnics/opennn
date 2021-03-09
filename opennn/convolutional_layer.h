@@ -37,7 +37,7 @@ class ConvolutionalLayer : public Layer
 
 public:
 
-    struct ConvolutionalLayerForwardPropagation : Layer::ForwardPropagation
+    struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
 
@@ -45,7 +45,7 @@ public:
         const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
         const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
 
-        explicit ConvolutionalLayerForwardPropagation(Layer* new_layer_pointer) : ForwardPropagation(new_layer_pointer)
+        explicit ConvolutionalLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
         {
         }
 
@@ -202,16 +202,16 @@ public:
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 4>&);
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 4>&, ForwardPropagation*);
-   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation*);
-   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*);
 
    // Delta methods
 
    void calculate_hidden_delta(Layer*,
-                               ForwardPropagation*,
+                               LayerForwardPropagation*,
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
@@ -243,11 +243,11 @@ public:
    // Gradient methods
 
    void calculate_error_gradient(const Tensor<type, 4>&,
-                                 ForwardPropagation*,
+                                 LayerForwardPropagation*,
                                  Layer::BackPropagation&) const;
 
    void calculate_error_gradient(const Tensor<type, 2>&,
-                                 ForwardPropagation*,
+                                 LayerForwardPropagation*,
                                  Layer::BackPropagation&) const;
 
    void insert_gradient(BackPropagation*,
