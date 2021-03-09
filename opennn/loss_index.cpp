@@ -859,7 +859,6 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 
         index += trainable_layers_parameters_number(i);
     }
-
 }
 
 
