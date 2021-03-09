@@ -988,9 +988,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         // Loss index
-/*
+
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-*/
+
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         if(has_selection)
