@@ -953,7 +953,7 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 
 //   perceptron_layer.set_thread_pool_device(thread_pool_device);
 
-//   // Test 0
+   // Test 0
 
 //   biases.setConstant(1.0);
 //   synaptic_weights.setConstant(2.0);
@@ -1011,7 +1011,7 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 //   assert_true(combinations.dimension(1) == 4, LOG);
 //   assert_true(abs(combinations(0,0) - static_cast<type>(3.5)) < static_cast<type>(1e-5), LOG);
 
-//   // Test 3
+   // Test 3
 
 //   combinations.resize(1, 4);
 //   combinations.setZero();
@@ -1345,7 +1345,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    assert_true(abs(activations(0,0) - static_cast<type>(0.7)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.2)) < static_cast<type>(1e-3), LOG);
 
-//   // Test 2
+   // Test 2
 
    perceptron_layer.set(2, 4);
    perceptron_layer.set_parameters_constant(1);
@@ -1582,20 +1582,21 @@ void PerceptronLayerTest::test_forward_propagate()
 
     perceptron_layer.set_parameters_constant(1);
     inputs.setConstant(1);
-/*
-    Layer::ForwardPropagation forward_propagation(1, &perceptron_layer);
 
-    perceptron_layer.forward_propagate(inputs, forward_propagation);
+    PerceptronLayer::PerceptronLayerForwardPropagation perceptron_layer_forward_propagation(&perceptron_layer);
+    perceptron_layer_forward_propagation.set(1);
 
-    assert_true(forward_propagation.combinations.rank() == 2, LOG);
-    assert_true(forward_propagation.combinations.dimension(0) == 1, LOG);
-    assert_true(forward_propagation.combinations.dimension(1) == 2, LOG);
-    assert_true(abs(forward_propagation.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_derivatives_2d(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_derivatives_2d(0,1) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
+    perceptron_layer.forward_propagate(inputs, &perceptron_layer_forward_propagation);
+
+    assert_true(perceptron_layer_forward_propagation.combinations.rank() == 2, LOG);
+    assert_true(perceptron_layer_forward_propagation.combinations.dimension(0) == 1, LOG);
+    assert_true(perceptron_layer_forward_propagation.combinations.dimension(1) == 2, LOG);
+    assert_true(abs(perceptron_layer_forward_propagation.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation.activations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation.activations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation.activations_derivatives(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation.activations_derivatives(0,1) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
 
     // Test 2
 
@@ -1610,75 +1611,22 @@ void PerceptronLayerTest::test_forward_propagate()
 
     potential_parameters = parameters;
 
-    Layer::ForwardPropagation forward_propagation_2(1, &perceptron_layer_2);
+    PerceptronLayer::PerceptronLayerForwardPropagation perceptron_layer_forward_propagation_2(&perceptron_layer_2);
+    perceptron_layer_forward_propagation_2.set(1);
 
-    perceptron_layer_2.forward_propagate(inputs, potential_parameters, forward_propagation_2);
+    perceptron_layer_2.forward_propagate(inputs, potential_parameters, &perceptron_layer_forward_propagation_2);
 
-    assert_true(forward_propagation_2.combinations.rank() == 2, LOG);
-    assert_true(forward_propagation_2.combinations.dimension(0) == 1, LOG);
-    assert_true(forward_propagation_2.combinations.dimension(1) == 2, LOG);
-    assert_true(abs(forward_propagation_2.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation_2.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation_2.activations(0,0) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation_2.activations(0,1) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation_2.activations_derivatives_2d(0,0) - static_cast<type>(0.00986)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation_2.activations_derivatives_2d(0,1) - static_cast<type>(0.00986)) < static_cast<type>(1e-3), LOG);
-*/
+    assert_true(perceptron_layer_forward_propagation_2.combinations.rank() == 2, LOG);
+    assert_true(perceptron_layer_forward_propagation_2.combinations.dimension(0) == 1, LOG);
+    assert_true(perceptron_layer_forward_propagation_2.combinations.dimension(1) == 2, LOG);
+    assert_true(abs(perceptron_layer_forward_propagation_2.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation_2.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation_2.activations(0,0) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation_2.activations(0,1) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation_2.activations_derivatives(0,0) - static_cast<type>(0.00986)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation_2.activations_derivatives(0,1) - static_cast<type>(0.00986)) < static_cast<type>(1e-3), LOG);
 }
 
-void PerceptronLayerTest::test_calculate_output_delta()
-{
-    cout << "test_calculate_output_delta\n";
-
-    PerceptronLayer perceptron_layer(2,2, 0, PerceptronLayer::Linear);
-
-    Tensor<type, 1> parameters(6);
-    Tensor<type, 2> inputs(1,2);
-
-    Tensor<type, 2> output_gradient(1,2);
-    Tensor<type, 2> output_delta(1,2);
-
-    // Test 1
-
-    perceptron_layer.set_parameters_constant(1);
-    inputs.setConstant(1);
-/*
-    Layer::ForwardPropagation forward_propagation(1, &perceptron_layer);
-
-    perceptron_layer.forward_propagate(inputs, forward_propagation);
-
-    output_gradient.setValues({{2,-2}});
-
-    perceptron_layer.calculate_output_delta(forward_propagation,output_gradient, output_delta);
-
-    assert_true(output_delta.rank() == 2, LOG);
-    assert_true(output_delta.dimension(0) == 1, LOG);
-    assert_true(output_delta.dimension(1) == 2, LOG);
-    assert_true(abs(output_delta(0,0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(output_delta(0,1) - static_cast<type>(-2)) < static_cast<type>(1e-3), LOG);
-
-    // Test 2
-
-    PerceptronLayer perceptron_layer_2(2,2, PerceptronLayer::HyperbolicTangent);
-
-    perceptron_layer_2.set_parameters_constant(1);
-    inputs.setConstant(1);
-
-    Layer::ForwardPropagation forward_propagation_2(1, &perceptron_layer_2);
-
-    perceptron_layer_2.forward_propagate(inputs, forward_propagation_2);
-
-    output_gradient.setValues({{2,-2}});
-
-    perceptron_layer_2.calculate_output_delta(forward_propagation_2,output_gradient, output_delta);
-
-    assert_true(output_delta.rank() == 2, LOG);
-    assert_true(output_delta.dimension(0) == 1, LOG);
-    assert_true(output_delta.dimension(1) == 2, LOG);
-    assert_true(abs(output_delta(0,0) - static_cast<type>(0.0197)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(output_delta(0,1) - static_cast<type>(-0.0197)) < static_cast<type>(1e-3), LOG);
-*/
-}
 
 void PerceptronLayerTest::test_calculate_hidden_delta()
 {
@@ -1708,10 +1656,10 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
     perceptron_layer_0.forward_propagate(inputs_0, forward_propagation_0);
     perceptron_layer_1.forward_propagate(inputs_1, forward_propagation_1);
 
-    Tensor<type,2> output_gradient(1,2);
-    output_gradient.setValues({{1,3}});
+    Tensor<type,2> output_delta(1,2);
+    output_delta.setValues({{1,3}});
 
-    perceptron_layer_1.calculate_output_delta(forward_propagation_1, output_gradient, output_delta);
+    perceptron_layer_1.calculate_output_delta(forward_propagation_1, output_delta, output_delta);
 
     perceptron_layer_0.calculate_hidden_delta(&perceptron_layer_1, {0,0} ,forward_propagation_0, output_delta, hidden_delta);
 
@@ -1738,7 +1686,7 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
     perceptron_layer_2_0.forward_propagate(inputs_0, forward_propagation_2_0);
     perceptron_layer_2_1.forward_propagate(inputs_1, forward_propagation_2_1);
 
-    perceptron_layer_2_1.calculate_output_delta(forward_propagation_2_1, output_gradient, output_delta);
+    perceptron_layer_2_1.calculate_output_delta(forward_propagation_2_1, output_delta, output_delta);
 
     perceptron_layer_2_0.calculate_hidden_delta(&perceptron_layer_2_1, {0,0}, forward_propagation_2_0, output_delta, hidden_delta);
 
@@ -1759,8 +1707,6 @@ void PerceptronLayerTest::test_calculate_error_gradient()
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs(1,2);
 
-    Tensor<type, 2> output_gradient(1,2);
-
     Tensor<type, 2> output_delta(1,2);
 
     // Test 1
@@ -1775,9 +1721,9 @@ void PerceptronLayerTest::test_calculate_error_gradient()
 
     Layer::BackPropagation back_propagation(1, &perceptron_layer);
 
-    output_gradient.setValues({{2,-2}});
+    output_delta.setValues({{2,-2}});
 
-    perceptron_layer.calculate_output_delta(forward_propagation,output_gradient, output_delta);
+    perceptron_layer.calculate_output_delta(forward_propagation,output_delta, output_delta);
 
     back_propagation.delta = output_delta;
 
@@ -1922,7 +1868,6 @@ void PerceptronLayerTest::run_test_case()
 
    // Delta methods
 
-   test_calculate_output_delta();
    test_calculate_hidden_delta();
 
 
@@ -1931,7 +1876,7 @@ void PerceptronLayerTest::run_test_case()
    test_calculate_error_gradient();
 
 
-//   // Expression methods
+   // Expression methods
 
    test_write_expression();
 

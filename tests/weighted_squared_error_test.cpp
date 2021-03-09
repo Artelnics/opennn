@@ -694,9 +694,9 @@ void WeightedSquaredErrorTest::run_test_case()
 //   test_calculate_error_terms_Jacobian();
 
 
-//   // Loss hessian methods
+   // Loss hessian methods
 
-//   // Serialization methods
+   // Serialization methods
 
 //   test_to_XML();
 //   test_from_XML();

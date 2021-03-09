@@ -25,12 +25,12 @@ void StochasticGradientDescentTest::test_constructor() // @todo
 
 //   SumSquaredError sum_squared_error;
 
-//   // Default constructor
+   // Default constructor
 
 //   StochasticGradientDescent sgd1;
 //   assert_true(sgd1.has_loss_index() == false, LOG);
 
-//   // Loss index constructor
+   // Loss index constructor
 
 //   StochasticGradientDescent sgd2(&sum_squared_error);
 //   assert_true(sgd2.has_loss_index() == true, LOG);
@@ -70,7 +70,7 @@ void StochasticGradientDescentTest::test_perform_training() // @todo
 
 //   StochasticGradientDescent sgd(&sum_squared_error);
 
-//   // Test
+   // Test
 
 //   //type old_loss = sum_squared_error.calculate_error({0});
 
@@ -83,7 +83,7 @@ void StochasticGradientDescentTest::test_perform_training() // @todo
 
 //   //assert_true(loss < old_loss, LOG);
 
-//   // Minimum parameters increment norm
+   // Minimum parameters increment norm
 
 //   neural_network.set_parameters_constant(-1.0);
 
@@ -98,7 +98,7 @@ void StochasticGradientDescentTest::test_perform_training() // @todo
 
 //   sgd.perform_training();
 
-//   // Loss goal
+   // Loss goal
 
 //   neural_network.set_parameters_constant(-1.0);
 
@@ -114,7 +114,7 @@ void StochasticGradientDescentTest::test_perform_training() // @todo
 
 //   //loss = sum_squared_error.calculate_error({0});
 
-//   // Minimum loss increase
+   // Minimum loss increase
 
 //   neural_network.set_parameters_constant(-1.0);
 
@@ -126,7 +126,7 @@ void StochasticGradientDescentTest::test_perform_training() // @todo
 
 //   sgd.perform_training();
 
-//   // Gradient norm goal
+   // Gradient norm goal
 
 //   neural_network.set_parameters_constant(-1.0);
 
@@ -171,7 +171,7 @@ void StochasticGradientDescentTest::test_to_XML() // @todo
 
 //   tinyxml2::XMLDocument* document;
 
-//   // Test
+   // Test
 
 //   document = sgd.to_XML();
 //   assert_true(document != nullptr, LOG);

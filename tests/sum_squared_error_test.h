@@ -43,7 +43,7 @@ public:
    
    // Gradient methods
 
-   void test_calculate_output_gradient();
+   void test_calculate_output_delta();
    void test_calculate_error_gradient();
    void test_calculate_Jacobian_gradient();
 

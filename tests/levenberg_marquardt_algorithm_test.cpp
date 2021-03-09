@@ -149,7 +149,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   LevenbergMarquardtAlgorithm lma(&sum_squared_error);
 
-//   // Test
+   // Test
 
 //   MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
@@ -170,7 +170,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   terms_Jacobian = mse.calculate_error_terms_Jacobian(inputs,
 //                                                       neural_network.forward_propagate(inputs),
-//                                                       mean_squared_error.calculate_output_gradient(outputs,targets)));
+//                                                       mean_squared_error.calculate_output_delta(outputs,targets)));
 
 //   gradient = dot(terms_Jacobian.calculate_transpose(), terms);
 //   mse_gradient = mean_squared_error.calculate_error_gradient();
@@ -181,7 +181,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //    assert_true(absolute_value(gradient-mse_gradient) < 1.0e-3, LOG);
 
-//   // Test
+   // Test
 
 //   data_set.set(1, 1, 2);
 //   data_set.set_data_random();
@@ -199,7 +199,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   assert_true(absolute_value(gradient-sum_squared_error.calculate_gradient()) < 1.0e-3, LOG);
 
-//   // Test
+   // Test
 
 //   architecture.setValues({1,1});
 

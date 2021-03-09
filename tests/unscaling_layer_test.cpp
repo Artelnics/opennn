@@ -69,7 +69,7 @@ void UnscalingLayerTest::test_get_dimensions()
 
    assert_true(ul1.get_neurons_number() == 1, LOG);
 
-//   // Test 1
+   // Test 1
 
    ul1.set(3);
 

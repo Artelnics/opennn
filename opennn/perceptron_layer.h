@@ -67,6 +67,7 @@ public:
         Tensor<type, 2> activations_derivatives;
     };
 
+
     struct PerceptronLayerBackPropagation : Layer::BackPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();

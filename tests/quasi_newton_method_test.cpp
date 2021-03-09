@@ -90,7 +90,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation() /
 //   SumSquaredError sum_squared_error(&neural_network, &data_set);
 //   QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
 
-//   // Test
+   // Test
 
 //   neural_network.set_parameters_constant(1.0);
 
@@ -109,7 +109,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation() /
 
 //   assert_true(DFP_inverse_hessian == inverse_hessian, LOG);
 
-//   // Test
+   // Test
 
 //   neural_network.set_parameters_constant(1.0e-3);
 
@@ -127,7 +127,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation() /
 
 //   assert_true(DFP_inverse_hessian == inverse_hessian, LOG);
 
-//   // Test
+   // Test
 
 //   neural_network.set_parameters_constant(1.0e-6);
 
@@ -145,7 +145,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation() /
 
 //   assert_true(DFP_inverse_hessian == inverse_hessian, LOG);
 
-//   // Test
+   // Test
 
 //   old_parameters.setConstant(1.0e-3);
 //   parameters.setConstant(1.0e-6);
@@ -250,7 +250,7 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation() // @t
 
 //   assert_true(inverse_hessian_approximation == inverse_hessian, LOG);
 
-//   // Test
+   // Test
 
 //   old_parameters.setConstant(1.0e-3);
 //   parameters.setConstant(1.0e-6);
@@ -302,7 +302,7 @@ void QuasiNewtonMethodTest::test_perform_training() // @todo
 
 //   assert_true(loss < old_loss, LOG);
 
-//   // Minimum parameters increment norm
+   // Minimum parameters increment norm
 
 //   neural_network.set_parameters_constant(3.1415927);
 
@@ -317,7 +317,7 @@ void QuasiNewtonMethodTest::test_perform_training() // @todo
 
 //   quasi_newton_method.perform_training();
 
-//   // Performance goal
+   // Performance goal
 
 //   neural_network.set_parameters_constant(3.1415927);
 
@@ -336,7 +336,7 @@ void QuasiNewtonMethodTest::test_perform_training() // @todo
 
 //   assert_true(loss < training_loss_goal, LOG);
 
-//   // Minimum evaluation improvement
+   // Minimum evaluation improvement
 
 //   neural_network.set_parameters_constant(3.1415927);
 
@@ -351,7 +351,7 @@ void QuasiNewtonMethodTest::test_perform_training() // @todo
 
 //   quasi_newton_method.perform_training();
 
-//   // Gradient norm goal
+   // Gradient norm goal
 
 //   neural_network.set_parameters_constant(3.1415927);
 
