@@ -1764,7 +1764,6 @@ void PerceptronLayerTest::test_write_expression()
 }
 
 
-
 void PerceptronLayerTest::run_test_case()
 {
    cout << "Running perceptron layer test case...\n";

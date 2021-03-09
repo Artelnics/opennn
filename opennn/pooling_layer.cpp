@@ -202,83 +202,14 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
     return outputs;
 }
 
-/*
-Layer::ForwardPropagation PoolingLayer::forward_propagate(const Tensor<type, 2>& inputs)
-{
-    ForwardPropagation layers;
 
-    layers.activations = calculate_outputs(inputs);
-
-    layers.activations_derivatives = calculate_activations_derivatives(layers.activations);
-
-    return layers;
-}
-*/
-
-/// Returns the result of applying the derivative of the previously set activation method to a batch of images.
-/// @param inputs The batch of images.
-
-Tensor<type, 2> PoolingLayer::calculate_activations_derivatives(const Tensor<type, 2>& inputs) const
-{
-    switch(pooling_method)
-    {
-    case NoPooling:
-    {
-        return calculate_no_pooling_activations_derivatives(inputs);
-    }
-    case AveragePooling:
-    {
-        return calculate_average_pooling_activations_derivatives(inputs);
-    }
-    case MaxPooling:
-    {
-        return calculate_max_pooling_activations_derivatives(inputs);
-    }
-    }
-
-    return Tensor<type, 2>();
-}
-
-
-/// Returns the result of applying the no pooling activation method derivative to a batch of images.
-/// @param inputs The batch of images.
-
-Tensor<type, 2> PoolingLayer::calculate_no_pooling_activations_derivatives(const Tensor<type, 2>& inputs) const
-{
-    /*
-        return Tensor<type, 2>(inputs.dimensions(), 1.0);
-    */
-    return Tensor<type, 2>();
-}
-
-
-/// Returns the result of applying the no pooling activation method derivative to a batch of images.
-/// @param inputs The batch of images.
-
-Tensor<type, 2> PoolingLayer::calculate_average_pooling_activations_derivatives(const Tensor<type, 2>& inputs) const
-{
-    /*
-        return Tensor<type, 2>(inputs.dimensions(), 1.0);
-    */
-    return Tensor<type, 2>();
-}
-
-
-Tensor<type, 2> PoolingLayer::calculate_max_pooling_activations_derivatives(const Tensor<type, 2>& inputs) const
-{
-    /*
-        return Tensor<type, 2>(inputs.dimensions(), 1.0);
-    */
-    return Tensor<type, 2>();
-}
-
-
-Tensor<type, 2> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-        const Tensor<type, 2>& activations,
-        const Tensor<type, 2>& activations_derivatives,
-        const Tensor<type, 2>& next_layer_delta) const
+Tensor<type, 4> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
+        const Tensor<type, 4>& activations,
+        const Tensor<type, 4>& activations_derivatives,
+        const Tensor<type, 4>& next_layer_delta) const
 {
     if(pooling_method == NoPooling) return next_layer_delta;
+
     else
     {
         const Type layer_type = next_layer_pointer->get_type();
@@ -309,14 +240,14 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
         }
     }
 
-    return Tensor<type, 2>();
+    return Tensor<type, 4>();
 }
 
 
-Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer* next_layer_pointer,
-        const Tensor<type, 2>&,
-        const Tensor<type, 2>&,
-        const Tensor<type, 2>& next_layer_delta) const
+Tensor<type, 4> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer* next_layer_pointer,
+        const Tensor<type, 4>&,
+        const Tensor<type, 4>&,
+        const Tensor<type, 4>& next_layer_delta) const
 {
     // Current layer's values
 
@@ -338,8 +269,8 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
     const Tensor<type, 4> next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
     // Hidden delta calculation
-    /*
-        Tensor<type, 2> hidden_delta(Tensor<Index, 1>({images_number, channels_number, output_rows_number, output_columns_number}));
+
+        Tensor<type, 4> hidden_delta(images_number, channels_number, output_rows_number, output_columns_number);
 
         const Index size = hidden_delta.size();
 
@@ -378,16 +309,13 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
         }
 
         return hidden_delta;
-    */
-    return Tensor<type, 2>();
-
 }
 
 
-Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
-        const Tensor<type, 2>& activations,
-        const Tensor<type, 2>&,
-        const Tensor<type, 2>& next_layer_delta) const
+Tensor<type, 4> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
+        const Tensor<type, 4>& activations,
+        const Tensor<type, 4>&,
+        const Tensor<type, 4>& next_layer_delta) const
 {
     /*
         switch(next_layer_pointer->get_pooling_method())
@@ -541,14 +469,14 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
             }
         }
     */
-    return Tensor<type, 2>();
+    return Tensor<type, 4>();
 }
 
 
-Tensor<type, 2> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer* next_layer_pointer,
-        const Tensor<type, 2>&,
-        const Tensor<type, 2>&,
-        const Tensor<type, 2>& next_layer_delta) const
+Tensor<type, 4> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer* next_layer_pointer,
+        const Tensor<type, 4>&,
+        const Tensor<type, 4>&,
+        const Tensor<type, 4>& next_layer_delta) const
 {
     /*
         // Current layer's values
@@ -595,15 +523,14 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer*
 
         return hidden_delta;
      */
-    return Tensor<type, 2>();
-
+    return Tensor<type, 4>();
 }
 
 
-Tensor<type, 2> PoolingLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer* next_layer_pointer,
-        const Tensor<type, 2>&,
-        const Tensor<type, 2>&,
-        const Tensor<type, 2>& next_layer_delta) const
+Tensor<type, 4> PoolingLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer* next_layer_pointer,
+        const Tensor<type, 4>&,
+        const Tensor<type, 4>&,
+        const Tensor<type, 4>& next_layer_delta) const
 {
     /*
         // Current layer's values
@@ -650,7 +577,7 @@ Tensor<type, 2> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilistic
 
         return hidden_delta;
     */
-    return Tensor<type, 2>();
+    return Tensor<type, 4>();
 
 }
 
