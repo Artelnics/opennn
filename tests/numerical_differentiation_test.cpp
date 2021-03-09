@@ -341,7 +341,7 @@ void NumericalDifferentiationTest::test_calculate_derivatives()
 //   assert_true(abs(d5(0) - 6) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d5(1) - 12) < static_cast<type>(1e-2), LOG);
 
-//   // Test 5_1
+   // Test 5_1
 
 //   nd.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 

@@ -24,14 +24,14 @@ void MinkowskiErrorTest::test_constructor() // @todo
 {
    cout << "test_constructor\n";
 
-//   // Default
+   // Default
 
 //   MinkowskiError me1;
 
 //   assert_true(me1.has_neural_network() == false, LOG);
 //   assert_true(me1.has_data_set() == false, LOG);
 
-//   // Neural network
+   // Neural network
 
 //   NeuralNetwork nn2;
 //   MinkowskiError me2(&nn2);
@@ -39,7 +39,7 @@ void MinkowskiErrorTest::test_constructor() // @todo
 //   assert_true(me2.has_neural_network() == true, LOG);
 //   assert_true(me2.has_data_set() == false, LOG);
 
-//   // Neural network and data set
+   // Neural network and data set
 
 //   NeuralNetwork nn3;
 //   DataSet ds3;
@@ -307,7 +307,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 */
 //   neural_network.set();
 
-//   // Test lstm
+   // Test lstm
 //{
 //   samples_number = 10;
 //   inputs_number = 3;
@@ -336,7 +336,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
 //   neural_network.set();
 
-//   // Test recurrent
+   // Test recurrent
 //{
 //   samples_number = 10;
 //   inputs_number = 3;
@@ -364,7 +364,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 //}
 
-//   // Test convolutional
+   // Test convolutional
 //{
 //   samples_number = 5;
 //   inputs_number = 147;
@@ -446,7 +446,7 @@ void MinkowskiErrorTest::test_to_XML()    // @todo
 
 //   tinyxml2::XMLDocument* document;
 
-//   // Test
+   // Test
 
 //   document = me.to_XML();
 

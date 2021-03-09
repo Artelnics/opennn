@@ -679,7 +679,7 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-//   // Display
+   // Display
 
 //   {
 //      file_stream.OpenElement("Display");

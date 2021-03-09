@@ -1683,7 +1683,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 //    kernels.setConstant(1.f/27);
 //    biases.setZero();
 
-//    Tensor<type, 2> output_gradient;
+//    Tensor<type, 2> output_delta;
 
 //    Tensor<type, 2> output_delta;
 
@@ -1706,7 +1706,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 //    Tensor<type, 1> parameters(6);
 //    Tensor<type, 2> inputs(1,2);
 
-//    Tensor<type, 2> output_gradient(1,2);
+//    Tensor<type, 2> output_delta(1,2);
 
 //    Tensor<type, 2> output_delta(1,2);
 
@@ -1722,9 +1722,9 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
 //    Layer::BackPropagation back_propagation(1, &perceptron_layer);
 
-//    output_gradient.setValues({{2,-2}});
+//    output_delta.setValues({{2,-2}});
 
-//    perceptron_layer.calculate_output_delta(forward_propagation,output_gradient, output_delta);
+//    perceptron_layer.calculate_output_delta(forward_propagation,output_delta, output_delta);
 
 //    back_propagation.delta = output_delta;
 
@@ -1750,7 +1750,7 @@ void ConvolutionalLayerTest::run_test_case() // @todo
 {
    cout << "Running convolutional layer test case...\n";
 
-//   // Constructor and destructor
+   // Constructor and destructor
 
    test_constructor();
    test_destructor();

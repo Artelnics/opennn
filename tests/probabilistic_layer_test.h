@@ -101,7 +101,6 @@ public:
    // Hidden delta
 
    void test_calculate_hidden_delta();
-   void test_calculate_output_delta();
 
    void test_calculate_error_gradient();
 

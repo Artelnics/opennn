@@ -158,7 +158,7 @@ void LearningRateAlgorithmTest::test_calculate_fixed_directional_point()
 
 //   pair<type,type> directional_point;
 
-//   // Test
+   // Test
 
 //   architecture.setValues({1,1});
 
@@ -185,7 +185,7 @@ void LearningRateAlgorithmTest::test_calculate_fixed_directional_point()
 
 //   assert_true(abs(directional_point.second - sum_squared_error.calculate_training_loss()) <= numeric_limits<type>::min(), LOG);
 
-//   // Test
+   // Test
 
 //   architecture.setValues({1,1});
 

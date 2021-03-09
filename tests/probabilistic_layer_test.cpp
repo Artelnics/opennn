@@ -780,39 +780,6 @@ void ProbabilisticLayerTest::test_forward_propagate()
 */
 }
 
-void ProbabilisticLayerTest::test_calculate_output_delta()
-{
-    cout << "test_calculate_output_delta\n";
-
-    ProbabilisticLayer probabilistic_layer(2,2);
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
-
-    Tensor<type,2> output_delta(1,2);
-
-    Tensor<type, 1> parameters(6);
-    Tensor<type, 2> inputs(1,2);
-
-    probabilistic_layer.set_parameters_constant(1);
-    inputs.setConstant(1);
-    Tensor<type,2> activations(1,2);
-/*
-    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
-    probabilistic_layer.forward_propagate(inputs, forward_propagation);
-
-    Tensor<type,2> output_gradient(1,2);
-    output_gradient.setValues({{1,0}});
-
-    probabilistic_layer.calculate_output_delta(forward_propagation, output_gradient, output_delta);
-
-    assert_true(output_delta.rank() == 2, LOG);
-    assert_true(output_delta.dimension(0) == 1, LOG);
-    assert_true(output_delta.dimension(1) == 2, LOG);
-    assert_true(abs(output_delta(0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(output_delta(0,1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-*/
-}
-
 void ProbabilisticLayerTest::test_calculate_error_gradient()
 {
     cout << "test_calculate_error_gradient\n";
@@ -823,8 +790,6 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs(1,2);
-
-    Tensor<type, 2> output_gradient(1,2);
 
     Tensor<type, 2> output_delta(1,2);
 
@@ -841,9 +806,9 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
 
     Layer::BackPropagation back_propagation(1, &probabilistic_layer);
 
-    output_gradient.setValues({{1,-7}});
+    output_delta.setValues({{1,-7}});
 
-    probabilistic_layer.calculate_output_delta(forward_propagation,output_gradient, output_delta);
+    probabilistic_layer.calculate_output_delta(forward_propagation,output_delta, output_delta);
 
     back_propagation.delta = output_delta;
 
@@ -952,15 +917,9 @@ void ProbabilisticLayerTest::run_test_case()
    test_calculate_activations_derivatives();
    test_calculate_outputs();
 
-
    // Forward propagate
 
    test_forward_propagate();
-
-
-   // Hidden delta
-
-   test_calculate_output_delta();
 
    // Gradient
 

@@ -459,7 +459,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 //  Tensor<type, 2> targets;
 //  Tensor<type, 2> outputs;
 
-//  Tensor<type, 2> output_gradient;
+//  Tensor<type, 2> output_delta;
 //  Tensor<Tensor<type, 2>, 1> layers_delta;
 
    // Test
@@ -479,9 +479,9 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
 
-//   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
+//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
 
-//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
+//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
 
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
@@ -504,9 +504,9 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
    //forward_propagation = nn.forward_propagate(inputs);
 
-//   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
+//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
 
-//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
+//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
 
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
@@ -534,9 +534,9 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   forward_propagation = neural_network.forward_propagate(inputs);
 
-//   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
+//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
 
-//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
+//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
 
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
@@ -564,9 +564,9 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   forward_propagation = nn.forward_propagate(inputs);
 
-//   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
+//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
 
-//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
+//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
 
 //   cout << "layers delta: " << layers_delta << endl;
 
@@ -645,12 +645,12 @@ void MeanSquaredErrorTest::run_test_case()
 
    test_calculate_error_gradient();
 
-//   // Error terms methods
+   // Error terms methods
 
    //test_calculate_error_terms();
    //test_calculate_error_terms_Jacobian();
 
-//   // Serialization methods
+   // Serialization methods
 
 //   test_to_XML();
 //   test_from_XML();
