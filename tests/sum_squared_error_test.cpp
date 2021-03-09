@@ -263,7 +263,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 
    neural_network.forward_propagate(batch, forward_propagation);
    sum_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
-
+/*
    sum_squared_error.calculate_output_gradient(batch, forward_propagation, training_back_propagation);
 
    assert_true(training_back_propagation.output_gradient(0) == 0.0, LOG);
@@ -318,7 +318,6 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
    data_set.set(data);
    data_set.set(samples_number, inputs_number, outputs_number);
    data_set.set_training();
-
 
    DataSet::Batch batch_2(3, &data_set);
 
@@ -378,7 +377,7 @@ void SumSquaredErrorTest::test_calculate_output_gradient()
 //   assert_true(abs(training_back_propagation_2_2.output_gradient(0,1) + 6) < static_cast<type>(1e-3), LOG);
 //   assert_true(abs(training_back_propagation_2_2.output_gradient(1,0) + 0) < static_cast<type>(1e-3), LOG);
 //   assert_true(abs(training_back_propagation_2_2.output_gradient(2,1) + 4) < static_cast<type>(1e-3), LOG);
-
+*/
 }
 
 
