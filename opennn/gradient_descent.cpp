@@ -450,8 +450,8 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 // \param optimization_data
 void GradientDescent::update_epoch(
         const DataSet::Batch& batch,
-        NeuralNetwork::ForwardPropagation& forward_propagation,
-        LossIndex::BackPropagation& back_propagation,
+        NeuralNetworkForwardPropagation& forward_propagation,
+        BackPropagation& back_propagation,
         GDOptimizationData& optimization_data)
 {
 
@@ -555,8 +555,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
 
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
@@ -566,8 +566,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     type gradient_norm = 0;
 
-    LossIndex::BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Learning rate
 

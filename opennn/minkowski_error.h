@@ -61,11 +61,11 @@ public:
    // loss methods
 
    void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+                        const NeuralNetworkForwardPropagation& forward_propagation,
+                        BackPropagation& back_propagation) const;
 
    void calculate_output_delta(const DataSet::Batch&,
-                               NeuralNetwork::ForwardPropagation&,
+                               NeuralNetworkForwardPropagation&,
                                BackPropagation&) const;
 
    // Serialization methods

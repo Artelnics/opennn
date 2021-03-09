@@ -30,18 +30,6 @@
 namespace OpenNN
 {
 
-/// This class represents a layer of probabilistic neurons.
-
-///
-/// The neural network defined in OpenNN includes a probabilistic layer for those problems
-/// when the outptus are to be interpreted as probabilities.
-/// It does not has Synaptic weights or Biases
-
-class ProbabilisticLayer : public Layer
-{
-
-public:
-
     struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
@@ -68,12 +56,12 @@ public:
         Tensor<type, 3> activations_derivatives;
     };
 
-    struct ProbabilisticLayerBackPropagation : Layer::BackPropagation
+    struct ProbabilisticLayerBackPropagation : LayerBackPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
 
-        explicit ProbabilisticLayerBackPropagation(Layer* new_layer_pointer) : BackPropagation(new_layer_pointer)
+        explicit ProbabilisticLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
         {
 
         }
@@ -93,6 +81,19 @@ public:
         Tensor<type, 2> synaptic_weights_derivatives;
         Tensor<type, 1> biases_derivatives;
     };
+
+
+/// This class represents a layer of probabilistic neurons.
+
+///
+/// The neural network defined in OpenNN includes a probabilistic layer for those problems
+/// when the outptus are to be interpreted as probabilities.
+/// It does not has Synaptic weights or Biases
+
+class ProbabilisticLayer : public Layer
+{
+
+public:
 
    // Constructors
 
@@ -204,9 +205,9 @@ public:
 
    void calculate_error_gradient(const Tensor<type, 2>&,
                                  LayerForwardPropagation*,
-                                 BackPropagation*) const;
+       LayerBackPropagation*) const;
 
-   void insert_gradient(BackPropagation*, const Index&, Tensor<type, 1>&) const;
+   void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const;
 
    // Expression methods
 

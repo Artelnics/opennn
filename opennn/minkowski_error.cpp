@@ -94,8 +94,8 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 // \param forward_propagation
 // \param back_propagation
 void MinkowskiError::calculate_error(const DataSet::Batch& batch,
-                     const NeuralNetwork::ForwardPropagation& forward_propagation,
-                     LossIndex::BackPropagation& back_propagation) const
+                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     BackPropagation& back_propagation) const
 {
     Tensor<type, 0> minkowski_error;
 
@@ -106,14 +106,14 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
 
 
 void MinkowskiError::calculate_output_delta(const DataSet::Batch& batch,
-                                            NeuralNetwork::ForwardPropagation& forward_propagation,
+                                            NeuralNetworkForwardPropagation& forward_propagation,
                                             BackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
 
-    Layer::BackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+    LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
 //     const Tensor<type, 0> p_norm_derivative
 //             =(back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
@@ -122,8 +122,8 @@ void MinkowskiError::calculate_output_delta(const DataSet::Batch& batch,
      {
      case Layer::Perceptron:
      {
-         PerceptronLayer::PerceptronLayerBackPropagation* perceptron_layer_back_propagation
-         = static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(output_layer_back_propagation);
+         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
+         = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device)
          = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
@@ -132,8 +132,8 @@ void MinkowskiError::calculate_output_delta(const DataSet::Batch& batch,
 
      case Layer::Probabilistic:
      {
-         ProbabilisticLayer::ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-         = static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
+         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+         = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
          probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
                  = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
@@ -142,8 +142,8 @@ void MinkowskiError::calculate_output_delta(const DataSet::Batch& batch,
 
      case Layer::Recurrent:
      {
-         RecurrentLayer::RecurrentLayerBackPropagation* recurrent_layer_back_propagation
-         = static_cast<RecurrentLayer::RecurrentLayerBackPropagation*>(output_layer_back_propagation);
+         RecurrentLayerBackPropagation* recurrent_layer_back_propagation
+         = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
 
          recurrent_layer_back_propagation->delta.device(*thread_pool_device)
                  = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
@@ -152,8 +152,8 @@ void MinkowskiError::calculate_output_delta(const DataSet::Batch& batch,
 
      case Layer::LongShortTermMemory:
      {
-         LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
-         = static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
+         LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
+         = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
 
          long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device)
                  = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));

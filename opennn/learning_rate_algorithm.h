@@ -247,13 +247,13 @@ public:
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
    Triplet calculate_bracketing_triplet(const DataSet::Batch&,
-                                        NeuralNetwork::ForwardPropagation&,
-                                        LossIndex::BackPropagation&,
+                                        NeuralNetworkForwardPropagation&,
+                                        BackPropagation&,
                                         OptimizationAlgorithm::OptimizationData&) const;
 
    pair<type, type> calculate_directional_point(const DataSet::Batch&,
-                                                NeuralNetwork::ForwardPropagation&,
-                                                LossIndex::BackPropagation&,
+                                                NeuralNetworkForwardPropagation&,
+                                                BackPropagation&,
                                                 OptimizationAlgorithm::OptimizationData&) const;
 
    // Serialization methods

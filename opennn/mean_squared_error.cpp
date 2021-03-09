@@ -47,8 +47,8 @@ MeanSquaredError::~MeanSquaredError()
 /// \param back_propagation
 
 void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
-                     const NeuralNetwork::ForwardPropagation& forward_propagation,
-                     LossIndex::BackPropagation& back_propagation) const
+                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     BackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
 
@@ -61,7 +61,7 @@ void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
 
 
 void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
-                                             const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                             const NeuralNetworkForwardPropagation& forward_propagation,
                                              SecondOrderLoss& second_order_loss) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -79,8 +79,8 @@ void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
     {
     case Layer::Perceptron:
     {
-        PerceptronLayer::PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-        = static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(output_layer_forward_propagation);
+        PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+        = static_cast<PerceptronLayerForwardPropagation*>(output_layer_forward_propagation);
 
         const Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->activations;
 
@@ -90,8 +90,8 @@ void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 
     case Layer::Probabilistic:
     {
-        ProbabilisticLayer::ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-        = static_cast<ProbabilisticLayer::ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
+        ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
+        = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
         const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
 
@@ -101,8 +101,8 @@ void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 
     case Layer::Recurrent:
     {
-        RecurrentLayer::RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
-        = static_cast<RecurrentLayer::RecurrentLayerForwardPropagation*>(output_layer_forward_propagation);
+        RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
+        = static_cast<RecurrentLayerForwardPropagation*>(output_layer_forward_propagation);
 
         const Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->activations;
 
@@ -112,8 +112,8 @@ void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 
     case Layer::LongShortTermMemory:
     {
-        LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
-        = static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerForwardPropagation*>(output_layer_forward_propagation);
+        LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
+        = static_cast<LongShortTermMemoryLayerForwardPropagation*>(output_layer_forward_propagation);
 
         const Tensor<type, 2>& outputs = long_short_term_memory_layer_forward_propagation->activations;
 
@@ -134,7 +134,7 @@ void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 
 
 void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
-                                              NeuralNetwork::ForwardPropagation& forward_propagation,
+                                              NeuralNetworkForwardPropagation& forward_propagation,
                                               BackPropagation& back_propagation) const
 {
      #ifdef __OPENNN_DEBUG__
@@ -145,7 +145,7 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     Layer::BackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
      const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
@@ -155,8 +155,8 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
      {
      case Layer::Perceptron:
      {
-         PerceptronLayer::PerceptronLayerBackPropagation* perceptron_layer_back_propagation
-         = static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(output_layer_back_propagation);
+         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
+         = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
@@ -164,8 +164,8 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      case Layer::Probabilistic:
      {
-         ProbabilisticLayer::ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-         = static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
+         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+         = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
          probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
@@ -173,8 +173,8 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      case Layer::Recurrent:
      {
-         RecurrentLayer::RecurrentLayerBackPropagation* recurrent_layer_back_propagation
-         = static_cast<RecurrentLayer::RecurrentLayerBackPropagation*>(output_layer_back_propagation);
+         RecurrentLayerBackPropagation* recurrent_layer_back_propagation
+         = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
 
          recurrent_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
@@ -182,8 +182,8 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      case Layer::LongShortTermMemory:
      {
-         LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
-         = static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
+         LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
+         = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
 
          long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }

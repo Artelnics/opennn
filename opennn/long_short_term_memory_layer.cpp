@@ -1855,8 +1855,8 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
 
 void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* forward_propagation,
-                                                      BackPropagation* next_back_propagation,
-                                                      BackPropagation* back_propagation) const
+    LayerBackPropagation* next_back_propagation,
+    LayerBackPropagation* back_propagation) const
 {
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
             static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
@@ -1868,8 +1868,8 @@ void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* f
     {
     case Perceptron:
     {
-        PerceptronLayer::PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
-                static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(next_back_propagation);
+        PerceptronLayerBackPropagation* next_perceptron_layer_back_propagation =
+                static_cast<PerceptronLayerBackPropagation*>(next_back_propagation);
 
         calculate_hidden_delta_perceptron(long_short_term_memory_layer_forward_propagation,
                                           next_perceptron_layer_back_propagation,
@@ -1880,8 +1880,8 @@ void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* f
 
     case Probabilistic:
     {
-        ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
-                static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(next_back_propagation);
+        ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
+                static_cast<ProbabilisticLayerBackPropagation*>(next_back_propagation);
 
         calculate_hidden_delta_probabilistic(long_short_term_memory_layer_forward_propagation,
                                              next_probabilistic_layer_back_propagation,
@@ -1896,7 +1896,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* f
 
 
 void LongShortTermMemoryLayer::calculate_hidden_delta_perceptron(LongShortTermMemoryLayerForwardPropagation* ,
-                                                                 PerceptronLayer::PerceptronLayerBackPropagation* next_back_propagation,
+                                                                 PerceptronLayerBackPropagation* next_back_propagation,
                                                                  LongShortTermMemoryLayerBackPropagation* back_propagation) const
 {
 // @todo
@@ -1909,7 +1909,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_perceptron(LongShortTermMe
 
 
 void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(LongShortTermMemoryLayerForwardPropagation* ,
-                                                                    ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_back_propagation,
+                                                                    ProbabilisticLayerBackPropagation* next_back_propagation,
                                                                     LongShortTermMemoryLayerBackPropagation* back_propagation) const
 {   
 // @todo
@@ -2217,7 +2217,7 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2>& inputs,
 }
 
 
-void LongShortTermMemoryLayer::insert_gradient(BackPropagation* back_propagation,
+void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propagation,
                                                const Index& index,
                                                Tensor<type, 1>& gradient) const
 {
@@ -2285,7 +2285,7 @@ void LongShortTermMemoryLayer::insert_gradient(BackPropagation* back_propagation
 
 void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2> &  inputs,
                                                         LayerForwardPropagation* forward_propagation,
-                                                        BackPropagation* back_propagation) const
+    LayerBackPropagation* back_propagation) const
 {
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
             static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);

@@ -50,18 +50,17 @@ public:
    // Error methods
 
    void calculate_error(const DataSet::Batch&,
-                        const NeuralNetwork::ForwardPropagation&,
-                        LossIndex::BackPropagation&) const;
-
+                        const NeuralNetworkForwardPropagation&,
+                        BackPropagation&) const;
 
    void calculate_error_terms(const DataSet::Batch&,
-                              const NeuralNetwork::ForwardPropagation&,
+                              const NeuralNetworkForwardPropagation&,
                               SecondOrderLoss&) const;
 
    // Gradient methods
 
    void calculate_output_delta(const DataSet::Batch&,
-                               NeuralNetwork::ForwardPropagation&,
+                               NeuralNetworkForwardPropagation&,
                                BackPropagation&) const;
 
    void calculate_Jacobian_gradient(const DataSet::Batch&,

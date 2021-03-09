@@ -65,6 +65,28 @@ struct LayerForwardPropagation
     Layer* layer_pointer = nullptr;
 };
 
+struct LayerBackPropagation
+{
+    /// Default constructor.
+
+    explicit LayerBackPropagation() {}
+
+    explicit LayerBackPropagation(Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+    }
+
+    virtual ~LayerBackPropagation() {}
+
+    virtual void set(const Index&) {}
+
+    virtual void print() const {}
+
+    Index batch_samples_number = 0;
+
+    Layer* layer_pointer = nullptr;
+};
+
 
 /// This abstract class represents the concept of layer of neurons in OpenNN.
 
@@ -82,31 +104,6 @@ public:
 
     enum Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
               LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
-
-
-
-    struct BackPropagation
-    {
-        /// Default constructor.
-
-        explicit BackPropagation() {}
-
-        explicit BackPropagation(Layer* new_layer_pointer)
-        {
-            layer_pointer = new_layer_pointer;
-        }
-
-        virtual ~BackPropagation() {}
-
-        virtual void set(const Index&) {}
-
-        virtual void print() const {}
-
-        Index batch_samples_number = 0;
-
-        Layer* layer_pointer = nullptr;
-    };
-
 
     // Constructor
 
@@ -145,7 +142,7 @@ public:
 
     void set_threads_number(const int&);
 
-    virtual void insert_gradient(BackPropagation*, const Index&, Tensor<type, 1>&) const {}
+    virtual void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const {}
 
     // Outputs
 
@@ -164,18 +161,18 @@ public:
     // Deltas
 
     virtual void calculate_hidden_delta(LayerForwardPropagation*,
-                                        BackPropagation*,
-                                        BackPropagation*) const {}
+        LayerBackPropagation*,
+        LayerBackPropagation*) const {}
 
     // Error gradient
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&,
                                           LayerForwardPropagation*,
-                                          BackPropagation*) const {}
+        LayerBackPropagation*) const {}
 
     virtual void calculate_error_gradient(const Tensor<type, 4>&,
                                           LayerForwardPropagation*,
-                                          BackPropagation*) const {}
+        LayerBackPropagation*) const {}
 
     // Get neurons number
 

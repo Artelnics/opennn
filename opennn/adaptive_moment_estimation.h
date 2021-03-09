@@ -162,7 +162,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_iteration(const LossIndex::BackPropagation& back_propagation,
+   void update_iteration(const BackPropagation& back_propagation,
                                  OptimizationData& optimization_data);
 
 private:

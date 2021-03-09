@@ -28,15 +28,6 @@
 
 namespace OpenNN
 {
-
-/// This class represents a layer of neurons.
-/// Layers of neurons will be used to construct multilayer neurons.
-
-class RecurrentLayer : public Layer
-{
-
-public:
-
     struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
@@ -63,12 +54,12 @@ public:
         Tensor<type, 2> activations_derivatives;
     };
 
-    struct RecurrentLayerBackPropagation : Layer::BackPropagation
+    struct RecurrentLayerBackPropagation : LayerBackPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
 
-        explicit RecurrentLayerBackPropagation(Layer* new_layer_pointer) : BackPropagation(new_layer_pointer)
+        explicit RecurrentLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
         {
 
         }
@@ -79,13 +70,12 @@ public:
 
             biases_derivatives.resize(neurons_number);
 
-            input_weights_derivatives.resize(inputs_number*neurons_number);
+            input_weights_derivatives.resize(inputs_number * neurons_number);
 
-            recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+            recurrent_weights_derivatives.resize(neurons_number * neurons_number);
 
             delta.resize(batch_samples_number, neurons_number);
         }
-
 
         Tensor<type, 1> biases_derivatives;
 
@@ -95,6 +85,15 @@ public:
 
         Tensor<type, 2> delta;
     };
+
+
+/// This class represents a layer of neurons.
+/// Layers of neurons will be used to construct multilayer neurons.
+
+class RecurrentLayer : public Layer
+{
+
+public:
 
     /// Enumeration of the available activation functions for the recurrent layer.
 
@@ -224,22 +223,22 @@ public:
    void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, LayerForwardPropagation*);
 
    void calculate_hidden_delta(LayerForwardPropagation*,
-                               BackPropagation*,
-                               BackPropagation*) const;
+       LayerBackPropagation*,
+       LayerBackPropagation*) const;
 
    void calculate_hidden_delta_perceptron(RecurrentLayerForwardPropagation*,
-                                          PerceptronLayer::PerceptronLayerBackPropagation*,
+                                          PerceptronLayerBackPropagation*,
                                           RecurrentLayerBackPropagation*) const;
 
    void calculate_hidden_delta_probabilistic(RecurrentLayerForwardPropagation*,
-                                             ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
+                                             ProbabilisticLayerBackPropagation*,
                                              RecurrentLayerBackPropagation*) const;
 
    // Gradient
 
-   void insert_gradient(BackPropagation*, const Index& , Tensor<type, 1>&) const;
+   void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const;
 
-   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, Layer::BackPropagation*) const;
+   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, LayerBackPropagation*) const;
 
    void calculate_biases_error_gradient(const Tensor<type, 2>&,
                                         LayerForwardPropagation*,

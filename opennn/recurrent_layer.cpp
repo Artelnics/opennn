@@ -863,8 +863,8 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
 
 void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* forward_propagation,
-                                            BackPropagation* next_layer_back_propagation,
-                                            BackPropagation* current_layer_back_propagation) const
+    LayerBackPropagation* next_layer_back_propagation,
+    LayerBackPropagation* current_layer_back_propagation) const
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
             static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
@@ -876,8 +876,8 @@ void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* forward_pro
     {
     case Perceptron:
     {
-        PerceptronLayer::PerceptronLayerBackPropagation* next_layer_back_propagation =
-                static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(current_layer_back_propagation);
+        PerceptronLayerBackPropagation* next_layer_back_propagation =
+                static_cast<PerceptronLayerBackPropagation*>(current_layer_back_propagation);
 
         calculate_hidden_delta_perceptron(recurrent_layer_forward_propagation,
                                           next_layer_back_propagation,
@@ -887,8 +887,8 @@ void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* forward_pro
 
     case Probabilistic:
     {
-        ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
-                static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(current_layer_back_propagation);
+        ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
+                static_cast<ProbabilisticLayerBackPropagation*>(current_layer_back_propagation);
 
         calculate_hidden_delta_probabilistic(recurrent_layer_forward_propagation,
                                              next_probabilistic_layer_back_propagation,
@@ -902,7 +902,7 @@ void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* forward_pro
 
 
 void RecurrentLayer::calculate_hidden_delta_perceptron(RecurrentLayerForwardPropagation* forward_propagation,
-                                                       PerceptronLayer::PerceptronLayerBackPropagation* next_back_propagation,
+                                                       PerceptronLayerBackPropagation* next_back_propagation,
                                                        RecurrentLayerBackPropagation* back_propagation) const
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
@@ -914,7 +914,7 @@ void RecurrentLayer::calculate_hidden_delta_perceptron(RecurrentLayerForwardProp
 
 
 void RecurrentLayer::calculate_hidden_delta_probabilistic(RecurrentLayerForwardPropagation* forward_propagation,
-                                                          ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_back_propagation,
+                                                          ProbabilisticLayerBackPropagation* next_back_propagation,
                                                           RecurrentLayerBackPropagation* back_propagation) const
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<ProbabilisticLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
@@ -925,7 +925,7 @@ void RecurrentLayer::calculate_hidden_delta_probabilistic(RecurrentLayerForwardP
 }
 
 
-void RecurrentLayer::insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
+void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
@@ -955,7 +955,7 @@ void RecurrentLayer::insert_gradient(BackPropagation* back_propagation, const In
 
 void RecurrentLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                               LayerForwardPropagation* forward_propagation,
-                                              BackPropagation* back_propagation) const
+    LayerBackPropagation* back_propagation) const
 {
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
             static_cast<RecurrentLayerBackPropagation*>(back_propagation);

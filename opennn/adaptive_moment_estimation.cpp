@@ -271,6 +271,7 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
     reserve_selection_error_history = new_reserve_selection_error_history;
 }
 
+
 /// Trains a neural network with an associated loss index,
 /// according to the gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
@@ -322,13 +323,13 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
     // Loss index
 
-    LossIndex::BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
+    BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
+    BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
     type training_error = 0;
     type training_loss = 0;
@@ -996,7 +997,7 @@ Index AdaptiveMomentEstimation::get_batch_samples_number() const
 
 /// Update iteration parameters
 
-void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation& back_propagation,
+void AdaptiveMomentEstimation::update_iteration(const BackPropagation& back_propagation,
                               OptimizationData& optimization_data)
 {
     const type learning_rate =
