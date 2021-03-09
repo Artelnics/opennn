@@ -617,9 +617,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         // Loss index
-/*
+
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-*/
+
         if(has_selection)
         {
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);

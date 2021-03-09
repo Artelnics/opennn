@@ -810,7 +810,6 @@ void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
     y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 }
 
-/// @todo Ternary operator
 
 void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
@@ -825,17 +824,6 @@ void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     f_2 = x.constant(true);
 
     y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-/*
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        x(i) < static_cast<type>(0.5) ? y(i) = false : y (i) = true;
-    }
-*/
 }
 
 
@@ -1164,7 +1152,6 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
     derivatives_2d.device(*thread_pool_device) = activations*(1-activations);
 
     memcpy(activations_derivatives.data(), derivatives_2d.data(), static_cast<size_t>(derivatives_2d.size())*sizeof(type));
-
 }
 
 
@@ -1172,6 +1159,8 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                                  Tensor<type, 2>& activations,
                                  Tensor<type, 3>& activations_derivatives) const
 {
+    /// @todo Add #pragma parallel for in loops.
+
      const Index dim = combinations.dimension(1);
 
      const Index rows_number = activations.dimension(0);
@@ -1200,7 +1189,7 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
          }
      }
 
-     //Activations derivatives
+     // Activations derivatives
 
      type delta = 0;
      Index index= 0;
@@ -1213,13 +1202,13 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
              {
                  (i == j) ? delta = 1 : delta = 0;
 
-                 activations_derivatives(/*row, i, j*/index) = activations(row,i) * (delta - activations(row,j));
+                 // row, i, j
+
+                 activations_derivatives(index) = activations(row,i) * (delta - activations(row,j));
                  index++;
              }
          }
      }
-
-     return;
 }
 
 
