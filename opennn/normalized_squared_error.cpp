@@ -301,8 +301,6 @@ void NormalizedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
          = static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-
-         cout << "Delta: " << perceptron_layer_back_propagation->delta << endl;
      }
          break;
 
