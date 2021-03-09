@@ -89,8 +89,6 @@ public:
 
      Tensor<type, 1> get_parameters() const;
 
-     Tensor<Index, 1> get_inputs_indices(const Index&) const;
-
      PoolingMethod get_pooling_method() const;
 
      // Set methods

@@ -1649,16 +1649,18 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
 
     perceptron_layer_1.set_parameters_constant(1);
     inputs_1.setValues({{3,3}});
-/*
-    Layer::ForwardPropagation forward_propagation_0(1, &perceptron_layer_0);
-    Layer::ForwardPropagation forward_propagation_1(1, &perceptron_layer_1);
 
-    perceptron_layer_0.forward_propagate(inputs_0, forward_propagation_0);
-    perceptron_layer_1.forward_propagate(inputs_1, forward_propagation_1);
+    PerceptronLayer::PerceptronLayerForwardPropagation perceptron_layer_forward_propagation_0(&perceptron_layer_0);
+    perceptron_layer_forward_propagation_0.set(0);
 
-    Tensor<type,2> output_delta(1,2);
+    PerceptronLayer::PerceptronLayerForwardPropagation perceptron_layer_forward_propagation_1(&perceptron_layer_1);
+    perceptron_layer_forward_propagation_1.set(0);
+
+    perceptron_layer_0.forward_propagate(inputs_0, &perceptron_layer_forward_propagation_0);
+    perceptron_layer_1.forward_propagate(inputs_1, &perceptron_layer_forward_propagation_1);
+
     output_delta.setValues({{1,3}});
-
+/*
     perceptron_layer_1.calculate_output_delta(forward_propagation_1, output_delta, output_delta);
 
     perceptron_layer_0.calculate_hidden_delta(&perceptron_layer_1, {0,0} ,forward_propagation_0, output_delta, hidden_delta);

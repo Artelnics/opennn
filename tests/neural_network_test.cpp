@@ -1670,6 +1670,7 @@ void NeuralNetworkTest::test_forward_propagate()
     Tensor<type,2 > biases_perceptron(neurons_number, 1);
     biases_perceptron.setConstant(1);
     perceptron_layer->set_biases(biases_perceptron);
+
     Tensor<type,2 > synaptic_weights_perceptron(inputs_number, neurons_number);
     synaptic_weights_perceptron.setConstant(1);
     perceptron_layer->set_synaptic_weights(synaptic_weights_perceptron);
@@ -1677,10 +1678,13 @@ void NeuralNetworkTest::test_forward_propagate()
     NeuralNetwork::ForwardPropagation forward_propagation(dataset.get_training_samples_number(), &neural_network);
 
     neural_network.forward_propagate(batch, forward_propagation);
-/*
-    Tensor<type, 2>perceptron_combinations = forward_propagation.layers[0]->combinations;
 
-    Tensor<type, 2>perceptron_activations = forward_propagation.layers[0]->activations;
+    PerceptronLayer::PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+        = static_cast<PerceptronLayer::PerceptronLayerForwardPropagation*>(forward_propagation.layers[0]);
+
+    Tensor<type, 2>perceptron_combinations = perceptron_layer_forward_propagation->combinations;
+
+    Tensor<type, 2>perceptron_activations = perceptron_layer_forward_propagation->activations;
 
     assert_true(perceptron_combinations.dimension(0) == 5, LOG);
     assert_true(abs(perceptron_combinations(0,0) - 3) < static_cast<type>(1e-3)
@@ -1754,7 +1758,7 @@ void NeuralNetworkTest::test_forward_propagate()
     NeuralNetwork::ForwardPropagation forward_propagation_3(dataset.get_training_samples_number(), &neural_network_2);
 
     neural_network_2.forward_propagate(batch_3, forward_propagation_3);
-
+/*
     Tensor<type, 2>perceptron_combinations_3_0 = forward_propagation_3.layers[0].combinations;
     Tensor<type, 2>perceptron_activations_3_0 = forward_propagation_3.layers[0].activations;
     Tensor<type, 2>probabilistic_combinations_3_1 = forward_propagation_3.layers[1].combinations;
