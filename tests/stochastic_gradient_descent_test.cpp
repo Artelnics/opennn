@@ -91,7 +91,7 @@ void StochasticGradientDescentTest::test_perform_training() // @todo
 
 //   sgd.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
 //   sgd.set_loss_goal(0.0);
-////   sgd.set_learning_rate(0.01);
+//   sgd.set_learning_rate(0.01);
 //   sgd.set_gradient_norm_goal(0.0);
 //   sgd.set_maximum_epochs_number(1000);
 //   sgd.set_maximum_time(1000.0);
@@ -140,8 +140,8 @@ void StochasticGradientDescentTest::test_perform_training() // @todo
 
 //   sgd.perform_training();
 
-////   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
-////   assert_true(gradient_norm < gradient_norm_goal, LOG);
+//   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
+//   assert_true(gradient_norm < gradient_norm_goal, LOG);
 
 }
 

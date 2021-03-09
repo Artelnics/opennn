@@ -238,25 +238,25 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 //   inputs.setRandom();
 
 
-////   Tensor<type, 1> outputs(samples_number, outputs_number);
-////   outputs[0] = 1.0;
-////   outputs[1] = 0.0;
+//   Tensor<type, 1> outputs(samples_number, outputs_number);
+//   outputs[0] = 1.0;
+//   outputs[1] = 0.0;
 
 //   for(Index i = 2; i < samples_number; i++)
 //   {
-////        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
-////        {
-////            outputs[i] = 0.0;
-////        }
-////        else
-////        {
-////            outputs[i] = 1.0;
-////        }
+//        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
+//        {
+//            outputs[i] = 0.0;
+//        }
+//        else
+//        {
+//            outputs[i] = 1.0;
+//        }
 //   }
 
-////   const Tensor<type, 2> data = inputs.append_column(outputs);
+//   const Tensor<type, 2> data = inputs.append_column(outputs);
 
-////   data_set.set_data(data);
+//   data_set.set_data(data);
 
 //   data_set.set_training();
 
@@ -270,11 +270,11 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   neural_network.set_parameters_random();
 
-////   error_gradient = wse.calculate_error_gradient();
+//   error_gradient = wse.calculate_error_gradient();
 
-////   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
 
-////   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
 
 //   neural_network.set();
@@ -292,25 +292,25 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   inputs.setRandom();
 
-////   Tensor<type, 1> outputs(samples_number, outputs_number);
-////   outputs[0] = 1.0;
-////   outputs[1] = 0.0;
+//   Tensor<type, 1> outputs(samples_number, outputs_number);
+//   outputs[0] = 1.0;
+//   outputs[1] = 0.0;
 
 //   for(Index i = 2; i < samples_number; i++)
 //   {
-////        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
-////        {
-////            outputs[i] = 0.0;
-////        }
-////        else
-////        {
-////            outputs[i] = 1.0;
-////        }
+//        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
+//        {
+//            outputs[i] = 0.0;
+//        }
+//        else
+//        {
+//            outputs[i] = 1.0;
+//        }
 //   }
 
-////   const Tensor<type, 2> data = inputs.append_column(outputs);
+//   const Tensor<type, 2> data = inputs.append_column(outputs);
 
-////   data_set.set_data(data);
+//   data_set.set_data(data);
 
 //   data_set.set_training();
 
@@ -322,11 +322,11 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   neural_network.set_parameters_random();
 
-////   error_gradient = wse.calculate_error_gradient();
+//   error_gradient = wse.calculate_error_gradient();
 
-////   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
 
-////   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
 
 //   neural_network.set();
@@ -344,25 +344,25 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   inputs.setRandom();
 
-////   Tensor<type, 1> outputs(samples_number, outputs_number);
-////   outputs[0] = 1.0;
-////   outputs[1] = 0.0;
+//   Tensor<type, 1> outputs(samples_number, outputs_number);
+//   outputs[0] = 1.0;
+//   outputs[1] = 0.0;
 
 //   for(Index i = 2; i < samples_number; i++)
 //   {
-////        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
-////        {
-////            outputs[i] = 0.0;
-////        }
-////        else
-////        {
-////            outputs[i] = 1.0;
-////        }
+//        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
+//        {
+//            outputs[i] = 0.0;
+//        }
+//        else
+//        {
+//            outputs[i] = 1.0;
+//        }
 //   }
 
-////   const Tensor<type, 2> data = inputs.append_column(outputs);
+//   const Tensor<type, 2> data = inputs.append_column(outputs);
 
-////   data_set.set_data(data);
+//   data_set.set_data(data);
 
 //   data_set.set_training();
 
@@ -374,11 +374,11 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   neural_network.set_parameters_random();
 
-////   error_gradient = wse.calculate_error_gradient();
+//   error_gradient = wse.calculate_error_gradient();
 
-////   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
 
-////   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
 
    // Test convolutional
@@ -392,87 +392,87 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 //   Tensor<type, 2> inputs(samples_number,inputs_number);
 //   inputs.setRandom();
 
-////   Tensor<type, 1> outputs(samples_number, outputs_number);
-////   outputs[0] = 1.0;
-////   outputs[1] = 0.0;
+//   Tensor<type, 1> outputs(samples_number, outputs_number);
+//   outputs[0] = 1.0;
+//   outputs[1] = 0.0;
 
 //   for(Index i = 2; i < samples_number; i++)
 //   {
-////        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
-////        {
-////            outputs[i] = 0.0;
-////        }
-////        else
-////        {
-////            outputs[i] = 1.0;
-////        }
+//        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
+//        {
+//            outputs[i] = 0.0;
+//        }
+//        else
+//        {
+//            outputs[i] = 1.0;
+//        }
 //   }
 
-////   const Tensor<type, 2> data = inputs.append_column(outputs);
+//   const Tensor<type, 2> data = inputs.append_column(outputs);
 
-////   data_set.set_data(data);
-////   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
-////   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
-////   data_set.set_training();
+//   data_set.set_data(data);
+//   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
+//   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
+//   data_set.set_training();
 
 //   const type parameters_minimum = -100.0;
 //   const type parameters_maximum = 100.0;
 
-////   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
-////   Tensor<type, 2> filters_1({2,3,2,2}, 0);
-////   filters_1.setRandom(parameters_minimum,parameters_maximum);
-////   convolutional_layer_1->set_synaptic_weights(filters_1);
-////   Tensor<type, 1> biases_1(2, 0);
-////   biases_1.setRandom(parameters_minimum, parameters_maximum);
-////   convolutional_layer_1->set_biases(biases_1);
+//   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
+//   Tensor<type, 2> filters_1({2,3,2,2}, 0);
+//   filters_1.setRandom(parameters_minimum,parameters_maximum);
+//   convolutional_layer_1->set_synaptic_weights(filters_1);
+//   Tensor<type, 1> biases_1(2, 0);
+//   biases_1.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_1->set_biases(biases_1);
 
-////   ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
-////   convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-////   Tensor<type, 2> filters_2({2,2,2,2}, 0);
-////   filters_2.setRandom(parameters_minimum, parameters_maximum);
-////   convolutional_layer_2->set_synaptic_weights(filters_2);
-////   Tensor<type, 1> biases_2(2, 0);
-////   biases_2.setRandom(parameters_minimum, parameters_maximum);
-////   convolutional_layer_2->set_biases(biases_2);
+//   ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
+//   convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
+//   Tensor<type, 2> filters_2({2,2,2,2}, 0);
+//   filters_2.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_2->set_synaptic_weights(filters_2);
+//   Tensor<type, 1> biases_2(2, 0);
+//   biases_2.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_2->set_biases(biases_2);
 
-////   PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
+//   PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
 
-////   ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
-////   convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-////   Tensor<type, 2> filters_3({1,2,2,2}, 0);
-////   filters_3.setRandom(parameters_minimum, parameters_maximum);
-////   convolutional_layer_3->set_synaptic_weights(filters_3);
-////   Tensor<type, 1> biases_3(1, 0);
-////   biases_3.setRandom(parameters_minimum, parameters_maximum);
-////   convolutional_layer_3->set_biases(biases_3);
+//   ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
+//   convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
+//   Tensor<type, 2> filters_3({1,2,2,2}, 0);
+//   filters_3.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_3->set_synaptic_weights(filters_3);
+//   Tensor<type, 1> biases_3(1, 0);
+//   biases_3.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_3->set_biases(biases_3);
 
-////   PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_3->get_outputs_dimensions(), {2,2});
-////   pooling_layer_2->set_pooling_method(PoolingLayer::MaxPooling);
+//   PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_3->get_outputs_dimensions(), {2,2});
+//   pooling_layer_2->set_pooling_method(PoolingLayer::MaxPooling);
 
-////   PoolingLayer* pooling_layer_3 = new PoolingLayer(pooling_layer_2->get_outputs_dimensions(), {2,2});
-////   pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
+//   PoolingLayer* pooling_layer_3 = new PoolingLayer(pooling_layer_2->get_outputs_dimensions(), {2,2});
+//   pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
 
-////   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
-////   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+//   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
+//   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
-////   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
-////   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+//   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
+//   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
-////   neural_network.set();
-////   neural_network.add_layer(convolutional_layer_1);
-////   neural_network.add_layer(convolutional_layer_2);
-////   neural_network.add_layer(pooling_layer_1);
-////   neural_network.add_layer(convolutional_layer_3);
-////   neural_network.add_layer(pooling_layer_2);
-////   neural_network.add_layer(pooling_layer_3);
-////   neural_network.add_layer(perceptron_layer);
-////   neural_network.add_layer(probabilistic_layer);
+//   neural_network.set();
+//   neural_network.add_layer(convolutional_layer_1);
+//   neural_network.add_layer(convolutional_layer_2);
+//   neural_network.add_layer(pooling_layer_1);
+//   neural_network.add_layer(convolutional_layer_3);
+//   neural_network.add_layer(pooling_layer_2);
+//   neural_network.add_layer(pooling_layer_3);
+//   neural_network.add_layer(perceptron_layer);
+//   neural_network.add_layer(probabilistic_layer);
 
-////   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
 
-////   error_gradient = wse.calculate_error_gradient();
+//   error_gradient = wse.calculate_error_gradient();
 
-////   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
+//   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
 }
 

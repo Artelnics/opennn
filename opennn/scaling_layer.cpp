@@ -393,9 +393,9 @@ void ScalingLayer::set(const ScalingLayer& new_scaling_layer)
 //    /*
 //        const Tensor<Index, 1> indices = new_uses.get_indices_equal_to(true);
 //    */
-////    descriptives = descriptives.get_subvector(indices);
+//    descriptives = descriptives.get_subvector(indices);
 
-////    scaling_methods = scaling_methods.get_subvector(indices);
+//    scaling_methods = scaling_methods.get_subvector(indices);
 //}
 
 

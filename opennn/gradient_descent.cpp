@@ -443,11 +443,11 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 
 
 
-////// \brief GradientDescent::update_epoch
-////// \param batch
-////// \param forward_propagation
-////// \param back_propagation
-////// \param optimization_data
+//// \brief GradientDescent::update_epoch
+//// \param batch
+//// \param forward_propagation
+//// \param back_propagation
+//// \param optimization_data
 void GradientDescent::update_epoch(
         const DataSet::Batch& batch,
         NeuralNetwork::ForwardPropagation& forward_propagation,

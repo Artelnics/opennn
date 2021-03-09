@@ -116,24 +116,6 @@ public:
            else return B;
        }
 
-       /// Returns true if the length of the interval(A,B) is zero,
-       /// and false otherwise.
-
-       inline bool has_length_zero() const
-       {
-           /*
-           if(abs(A.first - B.first) < numeric_limits<type>::min())
-           {
-              return true;
-           }
-           else
-           {
-              return false;
-           }
-           */
-           return false;
-       }
-
        /// Returns true if the interval(A,B) is constant,
        /// and false otherwise.
 

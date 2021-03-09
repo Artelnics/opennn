@@ -219,10 +219,10 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
 
 ///
-////// \brief NormalizedSquaredError::calculate_error
-////// \param batch
-////// \param forward_propagation
-////// \param back_propagation
+// \brief NormalizedSquaredError::calculate_error
+// \param batch
+// \param forward_propagation
+// \param back_propagation
 
 void NormalizedSquaredError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -240,10 +240,10 @@ void NormalizedSquaredError::calculate_error(const DataSet::Batch& batch,
 
 
 
-////// \brief NormalizedSquaredError::calculate_error_terms
-////// \param batch
-////// \param forward_propagation
-////// \param second_order_loss
+// \brief NormalizedSquaredError::calculate_error_terms
+// \param batch
+// \param forward_propagation
+// \param second_order_loss
 void NormalizedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
                                                    const NeuralNetwork::ForwardPropagation& forward_propagation,
                                                    SecondOrderLoss& second_order_loss) const

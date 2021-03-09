@@ -1691,10 +1691,10 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
 //    NumericalDifferentiation numerical_differentiation;
 //    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
-////    Tensor<type, 4> numerical_activations = numerical_differentiation.calculate_derivatives(convolutional_layer,
-////                                                                                            &ConvolutionalLayer::calculate_error_gradient,
-////                                                                                            0,
-////                                                                                            kernels);
+//    Tensor<type, 4> numerical_activations = numerical_differentiation.calculate_derivatives(convolutional_layer,
+//                                                                                            &ConvolutionalLayer::calculate_error_gradient,
+//                                                                                            0,
+//                                                                                            kernels);
 
 //    Layer::ForwardPropagation forward_propagation(1, &convolutional_layer);
 //    convolutional_layer.forward_propagate(inputs_4d, forward_propagation);

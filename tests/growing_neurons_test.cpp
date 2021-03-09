@@ -94,17 +94,17 @@ void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
 //            "0.9 0\n"
 //            "1 0\n";
 
-////    data.parse(str);
+//    data.parse(str);
 //    data.setValues({{-1,0},{-0.9f,0},{-0.9f,0},{-0.7f,0},{-0.6f,0},{-0.5,0},{-0.4f,0},
 //                    {-0.3f,0},{-0.2f,0},{-0.1f,0},{0.0,0},{0.1f,0},{0.2f,0},{0.3f,0},{0.4f,0},
 //                   {0.5f,0},{0.6f,0},{0.7f,0},{0.8f,0},{0.9f,0},{1,0}});
 
 //    data_set.set(data);
 
-////    Tensor<DataSet::VariableUse, 1> uses(2);
-////    uses.setValues({DataSet::Input, DataSet::Target});
+//    Tensor<DataSet::VariableUse, 1> uses(2);
+//    uses.setValues({DataSet::Input, DataSet::Target});
 
-////    data_set.set_columns_uses(uses);
+//    data_set.set_columns_uses(uses);
 
 //    Tensor<Index, 1 > architecture(3);
 //    architecture.setValues({1,3,1});
@@ -119,7 +119,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
 //    ts.set_display(false);
 
 //    io.set_trials_number(1);
-////    io.set_maximum_order(7);
+//    io.set_maximum_order(7);
 //    io.set_selection_error_goal(1.0e-3f);
 //    io.set_display(false);
 
@@ -154,7 +154,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
 //            "0.9 0.9\n"
 //            "1 1\n";
 
-////    data.parse(str);
+//    data.parse(str);
 //    data.setValues({{-1,1},{-0.9f, -0.9f},{-0.9f,-0.8f},{-0.7f,-0.7f},{-0.6f,-0.6f},{-0.5,-0.5},{-0.4f, -0.4f},
 //                    {-0.3f,-0.3f},{-0.2f,-0.2f},{-0.1f,-0.1f},{0.0,0.0},{0.1f,0.1f},{0.2f,0.2f},{0.3f,0.3f},{0.4f,0.4f},
 //                   {0.5,0.5},{0.6f,0.6f},{0.7f,0.7f},{0.8f,0.8f},{0.9f,0.9f},{1,1}});
@@ -171,7 +171,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
 //    ts.set_display(false);
 
 //    io.set_trials_number(1);
-////    io.set_maximum_order(7);
+//    io.set_maximum_order(7);
 //    io.set_selection_error_goal(0.0);
 //    io.set_maximum_selection_failures(1);
 //    io.set_display(false);

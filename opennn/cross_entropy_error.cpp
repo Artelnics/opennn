@@ -40,10 +40,10 @@ CrossEntropyError::~CrossEntropyError()
 }
 
 
-////// \brief CrossEntropyError::calculate_error.
-////// \param batch
-////// \param forward_propagation
-////// \param back_propagation
+//// \brief CrossEntropyError::calculate_error.
+//// \param batch
+//// \param forward_propagation
+//// \param back_propagation
 
 void CrossEntropyError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
