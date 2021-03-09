@@ -363,7 +363,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
             optimum_selection_error = optimum_selection_error_trial;
             optimum_training_error = optimum_training_error_trial;
         }
-        else if (previus_selection_error < optimum_selection_error_trial)
+        else if(previus_selection_error < optimum_selection_error_trial)
         {
             selection_failures++;
         }

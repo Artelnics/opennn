@@ -102,7 +102,6 @@ NeuralNetwork::~NeuralNetwork()
 
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
-
 //    if(layer_pointer->get_type_string() == "Convolutional")
 //    {
 //        ostringstream buffer;
@@ -226,6 +225,7 @@ bool NeuralNetwork::has_convolutional_layer() const
 
     return false;
 }
+
 
 /// Returns true if the neural network object has a recurrent layer object inside,
 /// and false otherwise.
@@ -967,7 +967,6 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_inputs_numbers() const
 
             count++;
         }
-
     }
 
     return layers_neurons_number;
@@ -998,6 +997,7 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_synaptic_weight_numbers() c
     return layers_neurons_number;
 }
 
+
 /// Returns a vector with the architecture of the neural network.
 /// The elements of this vector are as follows;
 /// <UL>
@@ -1018,20 +1018,13 @@ Tensor<Index, 1> NeuralNetwork::get_architecture() const
 
     const Index inputs_number = get_inputs_number();
 
-    if(inputs_number == 0)
-    {
-        return architecture;
-    }
-
-    //    architecture.push_back(inputs_number);
-
-    //    architecture(0) = inputs_number;
+    if(inputs_number == 0) return architecture;
 
     if(layers_number > 0)
     {
         for(Index i = 0; i < layers_number; i++)
         {
-            architecture(i) = layers_pointers(i)->get_neurons_number(); //.push_back(layers_pointers[i]->get_neurons_number());
+            architecture(i) = layers_pointers(i)->get_neurons_number();
         }
     }
 
@@ -1280,7 +1273,6 @@ Index NeuralNetwork::get_probabilistic_layers_number() const
 }
 
 
-
 /// Initializes all the neural and the independent parameters with a given value.
 
 void NeuralNetwork::set_parameters_constant(const type& value)
@@ -1429,7 +1421,6 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
                                       Tensor<type, 1>& parameters,
                                       ForwardPropagation& forward_propagation) const
 {
-
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
@@ -1503,7 +1494,6 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
         index += parameters_number;
     }
-
 }
 
 
@@ -1555,8 +1545,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 }
 
 
-
-
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 {
 #ifdef __OPENNN_DEBUG__
@@ -1584,6 +1572,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
     if(layers_number == 0) return inputs_2d;
 
     // First layer output
+
     if(layers_pointers(1)->get_type() == Layer::Convolutional)
     {
         outputs_4d = layers_pointers(0)->calculate_outputs_4D(inputs);
@@ -1665,7 +1654,6 @@ Tensor<string, 2> NeuralNetwork::get_information() const
     {
         information(i,0) = std::to_string(trainable_layers_pointers(i)->get_inputs_number());
         information(i,1) = std::to_string(trainable_layers_pointers(i)->get_neurons_number());
-//        information(i,2) = trainable_layers_pointers(i)->get_type_string();
 
         const string layer_type = trainable_layers_pointers(i)->get_type_string();
 
@@ -2020,11 +2008,12 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
                 throw logic_error(buffer.str());
             }
 
-//            inputs_names(i) = input_element->GetText();
-            if(!input_element->GetText()){
+            if(!input_element->GetText())
+            {
                 inputs_names(i) = "";
             }
-            else{
+            else
+            {
                 inputs_names(i) = input_element->GetText();
             }
 
@@ -2345,12 +2334,13 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
                 throw logic_error(buffer.str());
             }
 
-            if(!output_element->GetText()){
+            if(!output_element->GetText())
+            {
                 outputs_names(i) = "";
-            }else{
+            }else
+            {
                 outputs_names(i) = output_element->GetText();
             }
-
         }
     }
 }
@@ -2384,11 +2374,11 @@ void NeuralNetwork::print_summary() const
 
 void NeuralNetwork::save(const string& file_name) const
 {
-
     FILE *pFile;
 //    errno_t err;
 
 //    err = fopen_s(&pFile, file_name.c_str(), "w");
+
     pFile = fopen(file_name.c_str(), "w");
 
     tinyxml2::XMLPrinter document(pFile);

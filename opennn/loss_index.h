@@ -32,7 +32,7 @@ namespace OpenNN
 /// This abstract class represents the concept of loss index composed of an error term and a regularization term.
 
 ///
-/// The error terms could be:
+/// The error term could be:
 /// <ul>
 /// <li> Cross Entropy Error.
 /// <li> Mean Squared Error.
@@ -109,7 +109,12 @@ public:
 
            errors.resize(batch_samples_number, outputs_number);
 
+           parameters = neural_network_pointer->get_parameters();
+
            gradient.resize(parameters_number);
+
+           regularization_gradient.resize(parameters_number);
+           regularization_gradient.setConstant(0);
        }
 
 
@@ -137,7 +142,11 @@ public:
 
        Tensor<type, 2> errors;
 
+       Tensor<type, 1> parameters;
+
        Tensor<type, 1> gradient;
+
+       Tensor<type, 1> regularization_gradient;
    };
 
 
@@ -164,6 +173,8 @@ public:
        void sum_hessian_diagonal(const type& value)
        {
            const Index parameters_number = hessian.dimension(0);
+
+            #pragma omp parallel for
 
            for(Index i = 0; i < parameters_number; i++)
                hessian(i,i) += value;
@@ -264,8 +275,7 @@ public:
    // GRADIENT METHODS
 
    virtual void calculate_output_delta(const DataSet::Batch&,
-                                       Layer::ForwardPropagation*,
-                                       Layer::BackPropagation*,
+                                       NeuralNetwork::ForwardPropagation&,
                                        BackPropagation&) const = 0;
 
    // Numerical differentiation
@@ -279,7 +289,10 @@ public:
 
    // ERROR TERMS METHODS
 
-   virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
+   void calculate_errors(const DataSet::Batch&,
+                         const NeuralNetwork::ForwardPropagation&,
+                         BackPropagation&) const;
+
 
    virtual void calculate_error(const DataSet::Batch&,
                                 const NeuralNetwork::ForwardPropagation&,
@@ -287,23 +300,23 @@ public:
 
    virtual void calculate_error_terms(const DataSet::Batch&,
                                       const NeuralNetwork::ForwardPropagation&,
-                                      SecondOrderLoss&) const {return;}
+                                      SecondOrderLoss&) const {}
 
-   void back_propagate(const DataSet::Batch& batch,
-                       NeuralNetwork::ForwardPropagation& forward_propagation,
-                       BackPropagation& back_propagation) const;
+   void back_propagate(const DataSet::Batch&,
+                       NeuralNetwork::ForwardPropagation&,
+                       BackPropagation&) const;
 
    // Second Order loss
 
-   void calculate_terms_second_order_loss(const DataSet::Batch& batch,
-                                          NeuralNetwork::ForwardPropagation& forward_propagation,
-                                          BackPropagation& back_propagation,
-                                          SecondOrderLoss& second_order_loss) const;
+   void calculate_terms_second_order_loss(const DataSet::Batch&,
+                                          NeuralNetwork::ForwardPropagation&,
+                                          BackPropagation&,
+                                          SecondOrderLoss&) const;
 
-   void calculate_error_terms_output_jacobian(const DataSet::Batch& batch,
-                                              NeuralNetwork::ForwardPropagation& forward_propagation,
-                                              BackPropagation& back_propagation,
-                                              SecondOrderLoss& second_order_loss) const;
+   void calculate_error_terms_output_jacobian(const DataSet::Batch&,
+                                              NeuralNetwork::ForwardPropagation&,
+                                              BackPropagation&,
+                                              SecondOrderLoss&) const;
 
    virtual void calculate_Jacobian_gradient(const DataSet::Batch&, SecondOrderLoss&) const {}
 
@@ -312,17 +325,19 @@ public:
    // Regularization methods
 
    type calculate_regularization(const Tensor<type, 1>&) const;
-   Tensor<type, 1> calculate_regularization_gradient(const Tensor<type, 1>&) const;
-   Tensor<type, 2> calculate_regularization_hessian(const Tensor<type, 1>&) const;
+
+   void calculate_regularization_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+   void calculate_regularization_hessian(const Tensor<type, 1>&, Tensor<type, 2>&) const;
 
    // Delta methods
 
-   void calculate_layers_delta(NeuralNetwork::ForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation) const;
+   void calculate_layers_delta(const DataSet::Batch&,
+                               NeuralNetwork::ForwardPropagation&,
+                               BackPropagation&) const;
 
-   void calculate_error_gradient(const DataSet::Batch& batch,
-                                 const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                 BackPropagation& back_propagation) const;
+   void calculate_error_gradient(const DataSet::Batch&,
+                                 const NeuralNetwork::ForwardPropagation&,
+                                 BackPropagation&) const;
 
    Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
@@ -354,13 +369,12 @@ public:
    Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
    type l1_norm(const Tensor<type, 1>& parameters) const;
-   Tensor<type, 1> l1_norm_gradient(const Tensor<type, 1>& parameters) const;
-   Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& parameters) const;
+   void l1_norm_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+   void l1_norm_hessian(const Tensor<type, 1>&, Tensor<type, 2>&) const;
 
    type l2_norm(const Tensor<type, 1>& parameters) const;
-   Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& parameters) const;
-   Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>& parameters) const;
-
+   void l2_norm_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+   void l2_norm_hessian(const Tensor<type, 1>&, Tensor<type, 2>&) const;
 
 protected:
 
@@ -395,7 +409,6 @@ protected:
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/loss_index_cuda.h"
 #endif
-
 
 #ifdef OPENNN_MKL
     #include "../../opennn-mkl/opennn_mkl/loss_index_mkl.h"

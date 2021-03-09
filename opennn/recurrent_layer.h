@@ -210,7 +210,7 @@ public:
    void calculate_activations(const Tensor<type, 1>&,
                               Tensor<type, 1>&) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 1>& ,
+   void calculate_activations_derivatives(const Tensor<type, 1>&,
                                           Tensor<type, 1>& ,
                                           Tensor<type, 1>& ) const;
 
@@ -222,14 +222,6 @@ public:
    void forward_propagate(const Tensor<type, 2>&, ForwardPropagation* );
 
    void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, ForwardPropagation*);
-/*
-   void calculate_output_delta(ForwardPropagation*,
-                               const Tensor<type, 2>&,
-                               BackPropagation*) const;
-*/
-//   void calculate_output_delta(ForwardPropagation*,
-//                               const Tensor<type, 2>&,
-//                               Tensor<type, 2>&) const;
 
    void calculate_hidden_delta(ForwardPropagation*,
                                BackPropagation*,
@@ -242,22 +234,6 @@ public:
    void calculate_hidden_delta_probabilistic(RecurrentLayerForwardPropagation*,
                                              ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
                                              RecurrentLayerBackPropagation*) const;
-/*
-   void calculate_hidden_delta(Layer* next_layer_pointer,
-                               ForwardPropagation* forward_propagation,
-                               const Tensor<type, 2>& next_layer_delta,
-                               Tensor<type, 2>& hidden_delta) const;
-
-   void calculate_hidden_delta_perceptron(Layer* ,
-                                          const Tensor<type, 2>& ,
-                                          const Tensor<type, 2>& ,
-                                          Tensor<type, 2>& ) const;
-
-   void calculate_hidden_delta_probabilistic(Layer* ,
-                                          const Tensor<type, 2>& ,
-                                          const Tensor<type, 2>& ,
-                                          Tensor<type, 2>& ) const;
-*/
 
    // Gradient
 
@@ -265,13 +241,22 @@ public:
 
    void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation*) const;
 
-   void calculate_biases_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, RecurrentLayerBackPropagation*) const;
-   void calculate_input_weights_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, RecurrentLayerBackPropagation*) const;
-   void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, RecurrentLayerBackPropagation*) const;
+   void calculate_biases_error_gradient(const Tensor<type, 2>&,
+                                        ForwardPropagation*,
+                                        RecurrentLayerBackPropagation*) const;
+
+   void calculate_input_weights_error_gradient(const Tensor<type, 2>&,
+                                               ForwardPropagation*,
+                                               RecurrentLayerBackPropagation*) const;
+
+   void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&,
+                                                   ForwardPropagation*,
+                                                   RecurrentLayerBackPropagation*) const;
 
    // Expression methods
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
    string write_activation_function_expression() const;
 
    // Utilities
@@ -279,7 +264,9 @@ public:
    Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
 
    // Serialization methods
+
    void from_XML(const tinyxml2::XMLDocument&);
+
    void write_XML(tinyxml2::XMLPrinter&) const;
 
 protected:

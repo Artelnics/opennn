@@ -647,7 +647,6 @@ void RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs,
 void RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations_1d,
                                            Tensor<type, 1>& activations_1d) const
 {
-
 #ifdef __OPENNN_DEBUG__
 
 const Index neurons_number = get_neurons_number();
@@ -862,27 +861,6 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     return outputs;
 }
 
-/*
-void RecurrentLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
-                                            const Tensor<type, 2>& output_jacobian,
-                                            BackPropagation* back_propagation) const
-{
-    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
-    RecurrentLayerBackPropagation* recurrent_layer_back_propagation = static_cast<RecurrentLayerBackPropagation*>(back_propagation);
-
-    recurrent_layer_back_propagation->delta.device(*thread_pool_device) = recurrent_layer_forward_propagation->activations_derivatives*output_jacobian;
-}
-*/
-
-//void RecurrentLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
-//                                            const Tensor<type, 2>& output_jacobian,
-//                                            Tensor<type, 2>& output_delta) const
-//{
-//    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
-
-//    output_delta.device(*thread_pool_device) = recurrent_layer_forward_propagation->activations_derivatives*output_jacobian;
-//}
-
 
 void RecurrentLayer::calculate_hidden_delta(ForwardPropagation* forward_propagation,
                                             BackPropagation* next_layer_back_propagation,
@@ -957,7 +935,7 @@ void RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
 
     const Type next_layer_type = next_layer_pointer->get_type();
 
-    switch (next_layer_type)
+    switch(next_layer_type)
     {
     case Perceptron:
         calculate_hidden_delta_perceptron(next_layer_pointer, recurrent_layer_forward_propagation->activations_derivatives, next_layer_delta, hidden_delta);
@@ -977,7 +955,7 @@ void RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
 
 
 void RecurrentLayer::calculate_hidden_delta_perceptron(Layer* next_layer_pointer,
-                                                       const Tensor<type, 2>& ,
+                                                       const Tensor<type, 2>&,
                                                        const Tensor<type, 2>& next_layer_delta,
                                                        Tensor<type, 2>& hidden_delta) const
 {
@@ -990,7 +968,7 @@ void RecurrentLayer::calculate_hidden_delta_perceptron(Layer* next_layer_pointer
 
 
 void RecurrentLayer::calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
-                                                          const Tensor<type, 2>& ,
+                                                          const Tensor<type, 2>&,
                                                           const Tensor<type, 2>& next_layer_delta,
                                                           Tensor<type, 2>& hidden_delta) const
 {
@@ -1291,7 +1269,6 @@ string RecurrentLayer::write_activation_function_expression() const
         default: return write_activation_function();
     }
 }
-
 
 
 void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)

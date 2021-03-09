@@ -73,9 +73,6 @@ public:
 
            // Neural network data
 
-           parameters.resize(parameters_number);
-           parameters = neural_network_pointer->get_parameters();
-
            old_parameters.resize(parameters_number);
 
            parameters_difference.resize(parameters_number);

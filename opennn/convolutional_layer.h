@@ -183,10 +183,10 @@ public:
 
     void calculate_combinations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-    void calculate_combinations(const Tensor<type, 4>& inputs,
-                                const Tensor<type, 2>& biases,
-                                const Tensor<type, 4>& synaptic_weights,
-                                Tensor<type, 4>& combinations_4d) const;
+    void calculate_combinations(const Tensor<type, 4>&,
+                                const Tensor<type, 2>&,
+                                const Tensor<type, 4>&,
+                                Tensor<type, 4>&) const;
 
     // Activation
 
@@ -197,44 +197,59 @@ public:
    // Outputs
 
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 4>&);
-//   void calculate_outputs(const Tensor<type, 2>&, Tensor<type, 2>&);
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 2>&);
-//   void calculate_outputs_2d(const Tensor<type, 2>&, Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 4>&, ForwardPropagation*) ;
-   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*) ;
+   void forward_propagate(const Tensor<type, 4>&, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation*) ;
-   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*) ;
+   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*);
 
    // Delta methods
 
-//   void calculate_output_delta(ForwardPropagation* forward_propagation,
-//                                  const Tensor<type, 2>& output_jacobian,
-//                                  Tensor<type, 2>& output_delta) const;
-/*
-   void calculate_output_delta(ForwardPropagation*,
+   void calculate_hidden_delta(Layer*,
+                               ForwardPropagation*,
                                const Tensor<type, 2>&,
-                               BackPropagation*) const;
-*/
-//   void calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 4>&) const;
-   void calculate_hidden_delta(Layer* next_layer_pointer,
-                               ForwardPropagation* forward_propagation,
-                               const Tensor<type, 2>& next_layer_delta,
-                               Tensor<type, 2>& hidden_delta) const;
+                               Tensor<type, 2>&) const;
 
 
-   void calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 2>&) const;
-   void calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
-   void calculate_hidden_delta_perceptron(const PerceptronLayer*, const Tensor<type, 4>&, const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
+   void calculate_hidden_delta_convolutional(ConvolutionalLayer*,
+                                             const Tensor<type, 4>&,
+                                             const Tensor<type, 4>&,
+                                             const Tensor<type, 4>&,
+                                             Tensor<type, 2>&) const;
+
+   void calculate_hidden_delta_pooling(PoolingLayer*,
+                                       const Tensor<type, 4>&,
+                                       const Tensor<type, 4>&,
+                                       const Tensor<type, 2>&,
+                                       Tensor<type, 2>&) const;
+
+   void calculate_hidden_delta_perceptron(const PerceptronLayer*,
+                                          const Tensor<type, 4>&,
+                                          const Tensor<type, 2>&,
+                                          const Tensor<type, 2>&,
+                                          Tensor<type, 2>&) const;
+
+   void calculate_hidden_delta_probabilistic(ProbabilisticLayer*,
+                                             const Tensor<type, 4>&,
+                                             const Tensor<type, 4>&,
+                                             const Tensor<type, 2>&,
+                                             Tensor<type, 2>&) const;
 
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<type, 4>&, ForwardPropagation*, Layer::BackPropagation&) const;
-   void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation&) const;
+   void calculate_error_gradient(const Tensor<type, 4>&,
+                                 ForwardPropagation*,
+                                 Layer::BackPropagation&) const;
 
-   void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) const;
+   void calculate_error_gradient(const Tensor<type, 2>&,
+                                 ForwardPropagation*,
+                                 Layer::BackPropagation&) const;
+
+   void insert_gradient(const BackPropagation&,
+                        const Index&,
+                        Tensor<type, 1>&) const;
 
    void to_2d(const Tensor<type, 4>&, Tensor<type, 2>&) const;
 
@@ -262,7 +277,6 @@ protected:
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/convolutional_layer_cuda.h"
 #endif
-
 
 };
 }

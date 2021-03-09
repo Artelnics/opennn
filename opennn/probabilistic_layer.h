@@ -172,49 +172,41 @@ public:
 
    void set_parameters_random();
 
-   void insert_parameters(const Tensor<type, 1>& parameters, const Index& );
+   void insert_parameters(const Tensor<type, 1>&, const Index& );
 
    // Combinations
 
-   void calculate_combinations(const Tensor<type, 2>& inputs,
-                               const Tensor<type, 2>& biases,
-                               const Tensor<type, 2>& synaptic_weights,
-                               Tensor<type, 2>& combinations) const;
+   void calculate_combinations(const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               Tensor<type, 2>&) const;
 
    // Activations
 
-   void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_2d) const;
+   void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations,
-                                          Tensor<type, 2>& activations,
-                                          Tensor<type, 3>& activations_derivatives) const;
+   void calculate_activations_derivatives(const Tensor<type, 2>&,
+                                          Tensor<type, 2>&,
+                                          Tensor<type, 3>&) const;
 
    // Outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 2>& inputs,
-                          ForwardPropagation* forward_propagation);
+   void forward_propagate(const Tensor<type, 2>&,
+                          ForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 2>& inputs,
-                          Tensor<type, 1> potential_parameters,
-                          ForwardPropagation* forward_propagation);
+   void forward_propagate(const Tensor<type, 2>&,
+                          Tensor<type, 1>,
+                          ForwardPropagation*);
 
-//   void calculate_output_delta(ForwardPropagation* forward_propagation,
-//                               const Tensor<type, 2>& output_jacobian,
-//                               Tensor<type, 2>& output_delta) const;
-/*
-   void calculate_output_delta(ForwardPropagation*,
-                               const Tensor<type, 2>&,
-                               BackPropagation*) const;
-*/
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<type, 2>& inputs,
+   void calculate_error_gradient(const Tensor<type, 2>&,
                                  ForwardPropagation*,
                                  BackPropagation*) const;
 
-   void insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
+   void insert_gradient(BackPropagation*, const Index&, Tensor<type, 1>&) const;
 
    // Expression methods
 
@@ -224,10 +216,9 @@ public:
    string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_no_probabilistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-//   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const;
-   string write_combinations(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const;
-   string write_activations(const Tensor<string, 1>& outputs_names) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_combinations(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_activations(const Tensor<string, 1>&) const;
 
    string write_expression_c() const;
    string write_combinations_c() const;
