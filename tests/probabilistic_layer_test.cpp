@@ -764,21 +764,23 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer.set_parameters_constant(1);
     inputs.setConstant(1);
-/*
-    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
-    probabilistic_layer.forward_propagate(inputs, forward_propagation);
 
-    assert_true(forward_propagation.combinations.rank() == 2, LOG);
-    assert_true(forward_propagation.combinations.dimension(0) == 1, LOG);
-    assert_true(forward_propagation.combinations.dimension(1) == 2, LOG);
-    assert_true(abs(forward_propagation.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations(0,1) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_derivatives_3d(0,0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_derivatives_3d(0,1,0) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-*/
+    ProbabilisticLayer::ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(&probabilistic_layer);
+    probabilistic_layer_forward_propagation.set(1);
+
+    probabilistic_layer.forward_propagate(inputs, &probabilistic_layer_forward_propagation);
+
+    assert_true(probabilistic_layer_forward_propagation.combinations.rank() == 2, LOG);
+    assert_true(probabilistic_layer_forward_propagation.combinations.dimension(0) == 1, LOG);
+    assert_true(probabilistic_layer_forward_propagation.combinations.dimension(1) == 2, LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.activations(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.activations(0,1) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.activations_derivatives(0,0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.activations_derivatives(0,1,0) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 }
+
 
 void ProbabilisticLayerTest::test_calculate_error_gradient()
 {
@@ -799,16 +801,17 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
     probabilistic_layer.set_parameters(parameters);
 
     inputs.setValues({{0,1}});
+
+    ProbabilisticLayer::ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(&probabilistic_layer);
+    probabilistic_layer_forward_propagation.set(1);
+
+    probabilistic_layer.forward_propagate(inputs, &probabilistic_layer_forward_propagation);
 /*
-    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
-
-    probabilistic_layer.forward_propagate(inputs, forward_propagation);
-
-    Layer::BackPropagation back_propagation(1, &probabilistic_layer);
+    ProbabilisticLayer::ProbabilisticLayerBackPropagation probabilistic_layer_back_propagation(1, &probabilistic_layer);
 
     output_delta.setValues({{1,-7}});
 
-    probabilistic_layer.calculate_output_delta(forward_propagation,output_delta, output_delta);
+//    probabilistic_layer.calculate_output_delta(forward_propagation,output_delta, output_delta);
 
     back_propagation.delta = output_delta;
 

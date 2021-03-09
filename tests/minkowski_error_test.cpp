@@ -232,7 +232,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
 
-/*
+
    // Test trivial
 {
    samples_number = 10;
@@ -304,7 +304,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
-*/
+
 //   neural_network.set();
 
    // Test lstm

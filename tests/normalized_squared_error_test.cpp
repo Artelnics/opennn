@@ -283,7 +283,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    }
 
 
-/*
+
    // Test perceptron and probabilistic
 {
 
@@ -391,11 +391,11 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
-*/
+
    neural_network.set();
 
    // Test lstm
-/*
+
 {
    samples_number = 4;
    inputs_number = 2;
@@ -444,9 +444,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
-*/
+
    neural_network.set();
-/*
+
    // Test recurrent
 {
    samples_number = 4;
@@ -496,10 +496,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
-*/
+
    // Test convolutional
 {
-       /*
     neural_network.set();
 
    samples_number = 2;
@@ -560,77 +559,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    nse.back_propagate(batch, forward_propagation, back_propagation);
 
-
-
-//   cout << "Combinations4d: " << forward_propagation.layers(0).combinations_4d << endl;
-//   cout << "Combinations2d: " << forward_propagation.layers(0).combinations << endl;
-
-//   cout << "Activations4d:  " << forward_propagation.layers(0).activations_4d << endl;
-//   cout << "Activations2d:  " << forward_propagation.layers(0).activations << endl;
-
-//   cout << "ActivationsDerivatives4d:  " << forward_propagation.layers(0).activations_derivatives_4d << endl;
-//   cout << "ActivationsDerivatives2d:  " << forward_propagation.layers(0).activations_derivatives_2d << endl;
-
-//   cout << "Error: " << back_propagation.error << endl;
-
    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
-
-   cout << "numerical error gradient: " << numerical_error_gradient << endl;
-
-
-
-
-
-
-   /*
-   ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
-   convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<type, 2> filters_2({2,2,2,2}, 0);
-   filters_2.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_2->set_synaptic_weights(filters_2);
-   Tensor<type, 1> biases_2(2, 0);
-   biases_2.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_2->set_biases(biases_2);
-
-   PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
-
-   ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
-   convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<type, 2> filters_3({1,2,2,2}, 0);
-   filters_3.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_3->set_synaptic_weights(filters_3);
-   Tensor<type, 1> biases_3(1, 0);
-   biases_3.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_3->set_biases(biases_3);
-
-   PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_3->get_outputs_dimensions(), {2,2});
-   pooling_layer_2->set_pooling_method(PoolingLayer::MaxPooling);
-
-   PoolingLayer* pooling_layer_3 = new PoolingLayer(pooling_layer_2->get_outputs_dimensions(), {2,2});
-   pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
-
-   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
-   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
-
-   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
-   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
-
-   neural_network.set();
-   neural_network.add_layer(convolutional_layer_1);
-   neural_network.add_layer(convolutional_layer_2);
-   neural_network.add_layer(pooling_layer_1);
-   neural_network.add_layer(convolutional_layer_3);
-   neural_network.add_layer(pooling_layer_2);
-   neural_network.add_layer(pooling_layer_3);
-   neural_network.add_layer(perceptron_layer);
-   neural_network.add_layer(probabilistic_layer);
-
-   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation();
-
-   error_gradient = nse.calculate_error_gradient();
-
-   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
-*/
 }
 }
 
@@ -818,7 +747,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Constructor and destructor methods
 
- /*  test_constructor();
+   test_constructor();
    test_destructor();
    test_calculate_normalization_coefficient();
 
@@ -828,11 +757,11 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Error methods
 
-   test_calculate_error();*/
+   test_calculate_error();
    test_calculate_error_gradient();
 
    // Error terms methods
-/*
+
    test_calculate_error_terms();
 
    test_calculate_error_terms_Jacobian();
@@ -845,7 +774,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    test_to_XML();
    test_from_XML();
-*/
+
    cout << "End of normalized squared error test case.\n\n";
 }
 
