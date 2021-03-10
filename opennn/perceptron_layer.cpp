@@ -755,8 +755,8 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
 
 void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
-    LayerBackPropagation* next_layer_back_propagation,
-    LayerBackPropagation* layer_back_propagation) const
+                                             LayerBackPropagation* next_layer_back_propagation,
+                                             LayerBackPropagation* layer_back_propagation) const
 {
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(layer_back_propagation);

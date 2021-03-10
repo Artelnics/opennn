@@ -42,12 +42,18 @@ namespace OpenNN
 
             const Index neurons_number = layer_pointer->get_neurons_number();
 
+            current_combinations.resize(neurons_number);
+            current_activations_derivatives.resize(neurons_number);
+
             combinations.resize(batch_samples_number, neurons_number);
 
             activations.resize(batch_samples_number, neurons_number);
 
             activations_derivatives.resize(batch_samples_number, neurons_number);
         }
+
+        Tensor<type, 1> current_combinations;
+        Tensor<type, 1> current_activations_derivatives;
 
         Tensor<type, 2> combinations;
         Tensor<type, 2> activations;
@@ -226,11 +232,11 @@ public:
        LayerBackPropagation*,
        LayerBackPropagation*) const;
 
-   void calculate_hidden_delta_perceptron(RecurrentLayerForwardPropagation*,
+   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,
                                           RecurrentLayerBackPropagation*) const;
 
-   void calculate_hidden_delta_probabilistic(RecurrentLayerForwardPropagation*,
+   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
                                              ProbabilisticLayerBackPropagation*,
                                              RecurrentLayerBackPropagation*) const;
 
