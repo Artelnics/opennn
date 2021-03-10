@@ -168,29 +168,29 @@ public:
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&,
                                           LayerForwardPropagation*,
-        LayerBackPropagation*) const {}
+                                          LayerBackPropagation*) const {}
 
     virtual void calculate_error_gradient(const Tensor<type, 4>&,
                                           LayerForwardPropagation*,
-        LayerBackPropagation*) const {}
+                                          LayerBackPropagation*) const {}
 
     // Get neurons number
 
     virtual Index get_inputs_number() const;
     virtual Index get_neurons_number() const;
     virtual Index get_synaptic_weights_number() const;
-
-
     virtual void set_inputs_number(const Index&);
     virtual void set_neurons_number(const Index&);
-
-    virtual 
 
     // Layer type
 
     Type get_type() const;
 
     string get_type_string() const;
+
+    // Utilities
+
+    void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
     // Serialization methods
 
