@@ -266,7 +266,7 @@ public:
 
    // Utilities
 
-   Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
+//   Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
 
    // Serialization methods
 

@@ -189,7 +189,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-
+/*
    // Test trivial
 {
    samples_number = 10;
@@ -444,7 +444,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
-
+*/
    neural_network.set();
 
    // Test recurrent
@@ -494,9 +494,14 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
+   cout << "numerical gradient: " << numerical_error_gradient << endl;
+   cout << "gradient: " << error_gradient << endl;
+   cout << "difference: " << difference << endl;
+
+
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
-
+/*
    // Test convolutional
 {
     neural_network.set();
@@ -561,6 +566,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 }
+*/
 }
 
 
@@ -747,7 +753,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Constructor and destructor methods
 
-   test_constructor();
+   /*test_constructor();
    test_destructor();
    test_calculate_normalization_coefficient();
 
@@ -757,12 +763,12 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Error methods
 
-   test_calculate_error();
+   test_calculate_error();*/
    test_calculate_error_gradient();
 
    // Error terms methods
 
-   test_calculate_error_terms();
+/*   test_calculate_error_terms();
 
    test_calculate_error_terms_Jacobian();
 
@@ -773,7 +779,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
    // Serialization methods
 
    test_to_XML();
-   test_from_XML();
+   test_from_XML();*/
 
    cout << "End of normalized squared error test case.\n\n";
 }

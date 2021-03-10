@@ -996,7 +996,8 @@ void RecurrentLayer::calculate_biases_error_gradient(const Tensor<type, 2>& inpu
         }
         else
         {
-            combinations_biases_derivatives = multiply_rows(combinations_biases_derivatives, activations_derivatives).contract(recurrent_weights, A_B);
+            multiply_rows(combinations_biases_derivatives, activations_derivatives);
+            combinations_biases_derivatives = combinations_biases_derivatives.contract(recurrent_weights, A_B);
         }
 
         activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives.chip(sample, 0);
@@ -1044,8 +1045,8 @@ void RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<type, 2
         }
         else
         {
-            combinations_weights_derivatives =
-                    multiply_rows(combinations_weights_derivatives, activations_derivatives).contract(recurrent_weights,A_B);
+            multiply_rows(combinations_weights_derivatives, activations_derivatives);
+            combinations_weights_derivatives = combinations_weights_derivatives.contract(recurrent_weights, A_B);
         }
 
         activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives.chip(sample, 0);
@@ -1108,8 +1109,8 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
         {
             previous_activations = recurrent_layer_forward_propagation->activations.chip(sample-1, 0);
 
-            combinations_recurrent_weights_derivatives =
-                    multiply_rows(combinations_recurrent_weights_derivatives, activations_derivatives).contract(recurrent_weights,A_B);
+            multiply_rows(combinations_recurrent_weights_derivatives, activations_derivatives);
+            combinations_recurrent_weights_derivatives = combinations_recurrent_weights_derivatives.contract(recurrent_weights,A_B);
 
             column_index = 0;
             activation_index = 0;
@@ -1137,23 +1138,23 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 
 
 
-Tensor<type, 2> RecurrentLayer::multiply_rows(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector) const
-{
-    const Index columns_number = matrix.dimension(1);
-    const Index rows_number = matrix.dimension(0);
+//Tensor<type, 2> RecurrentLayer::multiply_rows(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector) const
+//{
+//    const Index columns_number = matrix.dimension(1);
+//    const Index rows_number = matrix.dimension(0);
 
-    Tensor<type, 2> new_matrix(rows_number, columns_number);
-//#pragma omp paralell for
-    for(Index i = 0; i < rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-           new_matrix(i,j) = matrix(i,j) * vector(j);
-        }
-    }
+//    Tensor<type, 2> new_matrix(rows_number, columns_number);
+////#pragma omp paralell for
+//    for(Index i = 0; i < rows_number; i++)
+//    {
+//        for(Index j = 0; j < columns_number; j++)
+//        {
+//           new_matrix(i,j) = matrix(i,j) * vector(j);
+//        }
+//    }
 
-    return new_matrix;
-}
+//    return new_matrix;
+//}
 
 
 /// Returns a string with the expression of the inputs-outputs relationship of the layer.
