@@ -71,6 +71,7 @@ public:
    // Normalization coefficients 
 
    type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
+   type calculate_time_series_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Error methods
      

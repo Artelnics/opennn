@@ -66,9 +66,14 @@ void NormalizedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 {
     data_set_pointer = new_data_set_pointer;
 
-    if(neural_network_pointer->has_recurrent_layer()) set_time_series_normalization_coefficient();
-
-    set_normalization_coefficient();
+    if(neural_network_pointer->has_recurrent_layer() || neural_network_pointer->has_long_short_term_memory_layer())
+    {
+        set_time_series_normalization_coefficient();
+    }
+    else
+    {
+        set_normalization_coefficient();
+    }
 }
 
 
@@ -94,26 +99,72 @@ void NormalizedSquaredError::set_normalization_coefficient()
 void NormalizedSquaredError::set_time_series_normalization_coefficient()
 {
     //Targets matrix
-
     const Tensor<type, 2> targets = data_set_pointer->get_target_data();
 
     const Index rows = targets.dimension(0)-1;
-    const Index cols = targets.dimension(1);
+    const Index columns = targets.dimension(1);
 
-    Tensor<type, 2> targets_t(rows, cols);
-    Tensor<type, 1> targets_t_1(rows);
+    Tensor<type, 2> targets_t(rows, columns);
+    Tensor<type, 2> targets_t_1(rows, columns);
 
-    memcpy(targets_t.data(),
-           targets.data()+1,
-           static_cast<size_t>(rows*cols)*sizeof(type));
+    for (Index i = 0; i < columns; i++)
+    {
+        memcpy(targets_t_1.data() + targets_t_1.dimension(0) * i,
+               targets.data() + targets.dimension(0) * i,
+               static_cast<size_t>(rows)*sizeof(type));
+    }
 
-    memcpy(targets_t_1.data(),
-           targets.data(),
-           static_cast<size_t>(rows*cols)*sizeof(type));
+    for (Index i = 0; i < columns; i++)
+    {
+        memcpy(targets_t.data() + targets_t.dimension(0) * i,
+               targets.data() + targets.dimension(0) * i + 1,
+               static_cast<size_t>(rows)*sizeof(type));
+    }
 
-    // Normalization coefficient
+    //Normalization coefficient
 
-    normalization_coefficient = calculate_normalization_coefficient(targets_t, targets_t_1);
+    normalization_coefficient = calculate_time_series_normalization_coefficient(targets_t_1, targets_t);
+
+}
+
+type NormalizedSquaredError::calculate_time_series_normalization_coefficient(const Tensor<type, 2>& targets_t_1, const Tensor<type, 2>& targets_t) const
+{
+#ifdef __OPENNN_DEBUG__
+
+//    check();
+
+    const Index target_t_1_samples_number = targets_t_1.dimension(0);
+    const Index target_t_1_varaibles_number = targets_t_1.dimension(1);
+    const Index target_t_samples_number = targets_t.dimension(0);
+    const Index target_t_varaibles_number = targets_t.dimension(1);
+
+    if(target_t_1_samples_number != target_t_samples_number || target_t_1_varaibles_number != target_t_varaibles_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NormalizedquaredError function.\n"
+               << "type calculate_time_series_normalization_coefficient(const Tensor<type, 2>& targets_t_1, const Tensor<type, 2>& targets_t) function.\n"
+               << " The columns number of targets("<< target_t_varaibles_number <<") must be equal("<< target_t_1_varaibles_number<<").\n";
+               << " The samples number of targets("<< target_t_1_samples_number <<") must be equal("<< target_t_samples_number<<").\n";
+
+        throw logic_error(buffer.str());
+    }
+#endif
+
+    const Index target_samples_number = targets_t_1.dimension(0);
+    const Index target_varaibles_number = targets_t_1.dimension(1);
+
+    type normalization_coefficient = 0;
+
+    for(Index i = 0; i < target_samples_number; i++)
+    {
+        for (Index j = 0; j < target_varaibles_number; j++)
+        {
+            normalization_coefficient += (targets_t_1(i,j) - targets_t(i,j)) * (targets_t_1(i,j) - targets_t(i,j));
+        }
+    }
+
+    return normalization_coefficient;
 }
 
 
