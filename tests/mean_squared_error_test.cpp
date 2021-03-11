@@ -66,7 +66,7 @@ void MeanSquaredErrorTest::test_calculate_error()
    data_set.initialize_data(0.0);
 
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
 
    Index batch_samples_number = batch.get_samples_number();
@@ -162,7 +162,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
       data_set.initialize_data(0.0);
       data_set.set_training();
 
-      DataSet::Batch batch(samples_number, &data_set);
+      DataSetBatch batch(samples_number, &data_set);
 
       Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
       const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
@@ -207,7 +207,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
         data_set_2.set_training();
         data_set_2.set_data_binary_random();
 
-        DataSet::Batch batch_1(samples_number, &data_set_2);
+        DataSetBatch batch_1(samples_number, &data_set_2);
 
         Tensor<Index, 1> samples_indices_1 = data_set_2.get_training_samples_indices();
         const Tensor<Index, 1> input_indices_1 = data_set_2.get_input_variables_indices();
@@ -256,7 +256,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        data_set_3.set_data_random();
        data_set_3.set_training();
 
-       DataSet::Batch batch(samples_number, &data_set_3);
+       DataSetBatch batch(samples_number, &data_set_3);
 
        Tensor<Index, 1> samples_indices = data_set_3.get_training_samples_indices();
        const Tensor<Index, 1> input_indices = data_set_3.get_input_variables_indices();
@@ -400,7 +400,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
    
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
 
    Index batch_samples_number = batch.get_samples_number();

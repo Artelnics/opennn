@@ -40,7 +40,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    data_set.initialize_data(0);
    data_set.set_training();
 
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
    Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -101,7 +101,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    data_set_2.initialize_data(0);
    data_set_2.set_training();
 
-   DataSet::Batch batch_1(1, &data_set_2);
+   DataSetBatch batch_1(1, &data_set_2);
 
    Tensor<Index,1> training_samples_indices_2 = data_set_2.get_training_samples_indices();
    Tensor<Index,1> inputs_indices_2 = data_set_2.get_input_variables_indices();
@@ -179,7 +179,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    data_set.set_training();
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();

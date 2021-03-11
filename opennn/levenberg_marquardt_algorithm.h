@@ -185,7 +185,7 @@ public:
    void perform_training_void();
 
    void update_epoch(
-           const DataSet::Batch& batch,
+           const DataSetBatch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
            BackPropagation& back_propagation,
            LossIndexBackPropagationLM& second_order_loss_terms,

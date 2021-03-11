@@ -247,8 +247,8 @@ public:
 
    /// Calculate de forward propagation in the neural network
 
-   void forward_propagate(const DataSet::Batch&, NeuralNetworkForwardPropagation&) const;
-   void forward_propagate(const DataSet::Batch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
+   void forward_propagate(const DataSetBatch&, NeuralNetworkForwardPropagation&) const;
+   void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
 
 protected:
 

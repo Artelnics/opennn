@@ -1347,10 +1347,10 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
 
 /// Calculates the forward propagation in the neural network.
-/// @param batch Batch of data set that contains the inputs and targets to be trained.
+/// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
 /// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
 
-void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
+void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
 {
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
@@ -1412,11 +1412,11 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 
 
 /// Calculates the forward propagation in the neural network.
-/// @param batch Batch of data set that contains the inputs and targets to be trained.
+/// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
 /// @param paramters Parameters of neural network.
 /// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
 
-void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
+void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       Tensor<type, 1>& parameters,
     NeuralNetworkForwardPropagation& forward_propagation) const
 {
@@ -2506,7 +2506,7 @@ string NeuralNetwork::write_expression_c() const
     buffer <<"// \tsample[n] = 10;\t"<<endl;
     buffer <<"// \tvector<float> outputs = neural_network(sample);"<<endl;
     buffer <<"// "<<endl;
-    buffer <<"// Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
+    buffer <<"// Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,\t"<<endl;
     buffer <<"// however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
     buffer <<""<<endl;
 
@@ -2625,7 +2625,7 @@ string NeuralNetwork::write_expression_python() const
     buffer <<"\tInputs Names: \t"<<endl;
     buffer <<"\t" << get_inputs_names() << endl;
     buffer <<""<<endl;
-    buffer <<"Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
+    buffer <<"Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,\t"<<endl;
     buffer <<"however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
     buffer <<"'''"<<endl;
     buffer <<""<<endl;

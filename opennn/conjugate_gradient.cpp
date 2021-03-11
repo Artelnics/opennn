@@ -913,8 +913,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    DataSet::Batch training_batch(training_samples_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
     training_batch.fill(training_samples_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
@@ -1850,7 +1850,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 // \param back_propagation
 // \param optimization_data
 void ConjugateGradient::update_epoch(
-        const DataSet::Batch& batch,
+        const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
         BackPropagation& back_propagation,
         GGOptimizationData& optimization_data)

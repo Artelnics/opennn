@@ -118,7 +118,7 @@ void NormalizedSquaredErrorTest::test_calculate_error(void) // @todo
    data_set.set_training();
 
    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
    Tensor<Index,1> batch_samples_indices = data_set.get_used_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -200,7 +200,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    data_set.initialize_data(0.0);
    data_set.set_training();
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
@@ -247,7 +247,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
        data_set.set_data_random();
        data_set.set_training();
 
-       DataSet::Batch batch(samples_number, &data_set);
+       DataSetBatch batch(samples_number, &data_set);
 
        Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
        const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
@@ -323,7 +323,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set_training();
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
@@ -408,7 +408,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set_training();
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
@@ -460,7 +460,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set_training();
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
@@ -535,7 +535,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
    const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
    batch.fill(samples_indices, input_indices, target_indices);
 
    cout << "Inputs4d: " << batch.inputs_4d << endl;
@@ -597,7 +597,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
    data_set.set_data_random();
    data_set.set_training();
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
@@ -658,7 +658,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
    data_set.set_data_random();
    data_set.set_training();
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();

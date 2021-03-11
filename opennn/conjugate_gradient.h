@@ -184,7 +184,7 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const;
 
    void update_epoch(
-           const DataSet::Batch& batch,
+           const DataSetBatch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
            BackPropagation& back_propagation,
            GGOptimizationData& optimization_data);

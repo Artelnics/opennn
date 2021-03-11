@@ -72,7 +72,7 @@ void SumSquaredErrorTest::test_calculate_error()
    data_set.initialize_data(0.0);
    data_set.set_training();
 
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
    Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -109,7 +109,7 @@ void SumSquaredErrorTest::test_calculate_error()
    data_set.initialize_data(1.0);
    data_set.set_training();
 
-   DataSet::Batch batch_1(1, &data_set);
+   DataSetBatch batch_1(1, &data_set);
 
    training_samples_indices = data_set.get_training_samples_indices();
    inputs_indices = data_set.get_input_variables_indices();
@@ -139,7 +139,7 @@ void SumSquaredErrorTest::test_calculate_error()
    data_set.initialize_data(0.0);
    data_set.set_training();
 
-   DataSet::Batch batch_2(1, &data_set);
+   DataSetBatch batch_2(1, &data_set);
 
    training_samples_indices = data_set.get_training_samples_indices();
    inputs_indices = data_set.get_input_variables_indices();
@@ -187,7 +187,7 @@ void SumSquaredErrorTest::test_calculate_error()
 //   data_set.set(9, 3, 2);
 //   data_set.set_training();
 
-//   DataSet::Batch batch_3(9, &data_set);
+//   DataSetBatch batch_3(9, &data_set);
 
 //   training_samples_indices = data_set.get_training_samples_indices();
 //   inputs_indices = data_set.get_input_variables_indices();
@@ -239,7 +239,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    data_set.initialize_data(0.0);
    data_set.set_training();
 
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
    Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -277,7 +277,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    data_set.initialize_data(1.0);
    data_set.set_training();
 
-   DataSet::Batch batch_1(1, &data_set);
+   DataSetBatch batch_1(1, &data_set);
 
    training_samples_indices = data_set.get_training_samples_indices();
    inputs_indices = data_set.get_input_variables_indices();
@@ -319,7 +319,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    data_set.set(samples_number, inputs_number, outputs_number);
    data_set.set_training();
 
-   DataSet::Batch batch_2(3, &data_set);
+   DataSetBatch batch_2(3, &data_set);
 
    training_samples_indices = data_set.get_training_samples_indices();
    inputs_indices = data_set.get_input_variables_indices();
@@ -405,7 +405,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient() // @todo
 //   data_set.initialize_data(0.0);
 //   data_set.set_training();
 
-//   DataSet::Batch batch(1, &data_set);
+//   DataSetBatch batch(1, &data_set);
 
 //   Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
 //   Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();

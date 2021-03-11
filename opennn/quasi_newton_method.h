@@ -239,7 +239,7 @@ public:
    const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void update_epoch(
-           const DataSet::Batch& batch,
+           const DataSetBatch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
            BackPropagation& back_propagation,
            QNMOptimizationData& optimization_data);

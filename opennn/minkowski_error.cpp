@@ -93,7 +93,7 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 // \param batch
 // \param forward_propagation
 // \param back_propagation
-void MinkowskiError::calculate_error(const DataSet::Batch& batch,
+void MinkowskiError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
                      BackPropagation& back_propagation) const
 {
@@ -105,7 +105,7 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
 }
 
 
-void MinkowskiError::calculate_output_delta(const DataSet::Batch& batch,
+void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                                             NeuralNetworkForwardPropagation& forward_propagation,
                                             BackPropagation& back_propagation) const
 {

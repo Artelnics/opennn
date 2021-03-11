@@ -358,7 +358,7 @@ void LossIndex::check() const
 }
 
 
-void LossIndex::calculate_errors(const DataSet::Batch& batch,
+void LossIndex::calculate_errors(const DataSetBatch& batch,
                                  const NeuralNetworkForwardPropagation& forward_propagation,
                                  BackPropagation& back_propagation) const
 {
@@ -413,7 +413,7 @@ void LossIndex::calculate_errors(const DataSet::Batch& batch,
 /// @param layers_activations vector of tensors with layers activations.
 /// @param layers_delta vector of tensors with layers delta.
 
-void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
+void LossIndex::calculate_error_terms_Jacobian(const DataSetBatch& batch,
                                                const NeuralNetworkForwardPropagation& forward_propagation,
                                                const BackPropagation& back_propagation,
                                                LossIndexBackPropagationLM& second_order_loss) const
@@ -503,7 +503,7 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
 }
 
 
-void LossIndex::back_propagate(const DataSet::Batch& batch,
+void LossIndex::back_propagate(const DataSetBatch& batch,
                                NeuralNetworkForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation) const
 {
@@ -540,7 +540,7 @@ void LossIndex::back_propagate(const DataSet::Batch& batch,
 /// It is used for optimization of parameters during training.
 /// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
 
-void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
+void LossIndex::calculate_terms_second_order_loss(const DataSetBatch& batch,
                                                   NeuralNetworkForwardPropagation& forward_propagation,
                                                   BackPropagation& back_propagation,
                                                   LossIndexBackPropagationLM& second_order_loss) const
@@ -588,7 +588,7 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 
 /// @todo Complete method.
 
-void LossIndex::calculate_error_terms_output_jacobian(const DataSet::Batch& batch,
+void LossIndex::calculate_error_terms_output_jacobian(const DataSetBatch& batch,
                                            NeuralNetworkForwardPropagation& forward_propagation,
                                            BackPropagation& back_propagation,
                                            LossIndexBackPropagationLM& second_order_loss) const
@@ -718,7 +718,7 @@ void LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& paramete
 }
 
 
-void LossIndex::calculate_layers_delta(const DataSet::Batch& batch,
+void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
                                        NeuralNetworkForwardPropagation& forward_propagation,
                                        BackPropagation& back_propagation) const
 {
@@ -746,7 +746,7 @@ void LossIndex::calculate_layers_delta(const DataSet::Batch& batch,
 }
 
 
-void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
+void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
                                          const NeuralNetworkForwardPropagation& forward_propagation,
                                          BackPropagation& back_propagation) const
 {
@@ -1007,7 +1007,7 @@ Tensor<type, 1> LossIndex:: calculate_error_gradient_numerical_differentiation(L
 {
     const Index samples_number = data_set_pointer->get_training_samples_number();
 
-    DataSet::Batch batch(samples_number, data_set_pointer);
+    DataSetBatch batch(samples_number, data_set_pointer);
 
     Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> input_indices = data_set_pointer->get_input_variables_indices();
@@ -1065,7 +1065,7 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation(LossInde
 {
     const Index samples_number = data_set_pointer->get_training_samples_number();
 
-    DataSet::Batch batch(samples_number, data_set_pointer);
+    DataSetBatch batch(samples_number, data_set_pointer);
 
     Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> input_indices = data_set_pointer->get_input_variables_indices();
