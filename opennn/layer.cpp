@@ -810,7 +810,6 @@ void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
     y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 }
 
-/// @todo Ternary operator
 
 void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
@@ -825,17 +824,6 @@ void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     f_2 = x.constant(true);
 
     y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-/*
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        x(i) < static_cast<type>(0.5) ? y(i) = false : y (i) = true;
-    }
-*/
 }
 
 
@@ -1164,7 +1152,6 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
     derivatives_2d.device(*thread_pool_device) = activations*(1-activations);
 
     memcpy(activations_derivatives.data(), derivatives_2d.data(), static_cast<size_t>(derivatives_2d.size())*sizeof(type));
-
 }
 
 
@@ -1172,6 +1159,8 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                                  Tensor<type, 2>& activations,
                                  Tensor<type, 3>& activations_derivatives) const
 {
+    /// @todo Add #pragma parallel for in loops.
+
      const Index dim = combinations.dimension(1);
 
      const Index rows_number = activations.dimension(0);
@@ -1200,26 +1189,26 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
          }
      }
 
-     //Activations derivatives
+     // Activations derivatives
 
      type delta = 0;
      Index index= 0;
 
-     for (Index row = 0; row < rows_number; row++)
+     for(Index row = 0; row < rows_number; row++)
      {
-         for (Index i = 0; i < dim; i++)
+         for(Index i = 0; i < dim; i++)
          {
-             for (Index j = 0; j < dim; j++)
+             for(Index j = 0; j < dim; j++)
              {
                  (i == j) ? delta = 1 : delta = 0;
 
-                 activations_derivatives(/*row, i, j*/index) = activations(row,i) * (delta - activations(row,j));
+                 // row, i, j
+
+                 activations_derivatives(index) = activations(row,i) * (delta - activations(row,j));
                  index++;
              }
          }
      }
-
-     return;
 }
 
 
@@ -1326,8 +1315,10 @@ void Layer::soft_sign(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 }
 
 
-void Layer::hard_sigmoid(const Tensor<type, 4>& x, Tensor<type, 4>& y) const // TODO review
+void Layer::hard_sigmoid(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
+    // @todo Test this method
+
     const Tensor<bool, 4> if_lower = x < x.constant(-2.5);
     const Tensor<bool, 4> if_greater = x > x.constant(2.5);
     const Tensor<bool, 4> if_middle = x < x.constant(-2.5) && x > x.constant(2.5);
@@ -1342,33 +1333,9 @@ void Layer::hard_sigmoid(const Tensor<type, 4>& x, Tensor<type, 4>& y) const // 
     f_middle = static_cast<type>(0.2) * x + static_cast<type>(0.5);
     f_equal = x;
 
-
     y.device(*thread_pool_device) = if_lower.select(f_lower, f_equal);
     y.device(*thread_pool_device) = if_greater.select(f_greater, f_equal);
     y.device(*thread_pool_device) = if_middle.select(f_middle, f_equal);
-
-
-    /*
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        if(x(i) < static_cast<type>(-2.5))
-        {
-            y(i) = 0;
-        }
-        else if(x(i) > static_cast<type>(2.5))
-        {
-            y(i) = 1;
-        }
-        else
-        {
-            y(i) = static_cast<type>(0.2) * x(i) + static_cast<type>(0.5);
-        }
-    }
-    */
 }
 
 
@@ -1644,10 +1611,26 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 4>& combinations,
     activations_derivatives.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 }
 
+
+void Layer::multiply_rows(Tensor<type, 2> & matrix, const Tensor<type, 1> & vector) const
+{
+    const Index columns_number = matrix.dimension(1);
+    const Index rows_number = matrix.dimension(0);
+
+//#pragma omp paralell for
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+           matrix(i,j) = matrix(i,j) * vector(j);
+        }
+    }
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1743,13 +1743,13 @@ void DataSetTest::test_from_XML()
 
 //   tinyxml2::XMLDocument* document;
    
-//   // Test
+   // Test
 
 //   document = data_set.to_XML();
 
 //   data_set.from_XML(*document);
 
-//   // Test
+   // Test
 
 //   data_set.set(2, 2);
 
@@ -1823,7 +1823,7 @@ void DataSetTest::test_read_csv()
 
 //   string data_string;
 
-//   // Test
+   // Test
 
 //   data_set.set();
 //   data_set.set_data_file_name(data_file_name);
@@ -1880,7 +1880,7 @@ void DataSetTest::test_read_csv()
 //   assert_true(data_set.get_samples_number() == 2, LOG);
 //   assert_true(data_set.get_variables_number() == 2, LOG);
 
-//   // Test
+   // Test
 
 //   data_set.set_separator('\t');
 
@@ -1899,7 +1899,7 @@ void DataSetTest::test_read_csv()
 //   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
 //   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
 
-//   // Test
+   // Test
 
 //   data_set.set_has_columns_names(true);
 //   data_set.set_separator(' ');
@@ -1930,7 +1930,7 @@ void DataSetTest::test_read_csv()
 //   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
 //   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
 
-//   // Test
+   // Test
 
 //   data_set.set_has_columns_names(true);
 //   data_set.set_separator(',');
@@ -1955,7 +1955,7 @@ void DataSetTest::test_read_csv()
 //   assert_true((data(1,0) - 3.0) < 1.0e-4, LOG);
 //   assert_true((data(1,1) - 4.0) < 1.0e-4, LOG);
 
-//   // Test
+   // Test
 
 //   data_set.set_has_columns_names(true);
 //   data_set.set_separator(',');
@@ -1980,7 +1980,7 @@ void DataSetTest::test_read_csv()
 //   assert_true((data(1,0) - 3.0 ) < 1.0e-4, LOG);
 //   assert_true((data(1,1) - 4.0 ) < 1.0e-4, LOG);
 
-//   // Test
+   // Test
 
 //   data_set.set_has_columns_names(false);
 //   data_set.set_separator(',');
@@ -2000,7 +2000,7 @@ void DataSetTest::test_read_csv()
 //   assert_true(data_set.get_samples_number() == 4, LOG);
 //   assert_true(data_set.get_variables_number() == 7, LOG);
 
-//   // Test
+   // Test
 
 //   data_set.set_has_columns_names(false);
 //   data_set.set_separator(',');
@@ -2038,7 +2038,7 @@ void DataSetTest::test_read_csv()
 //   assert_true((data(3,5) - 0) < 1.0e-4, LOG);
 //   assert_true((data(3,6) - 1) < 1.0e-4, LOG);
 
-////   // Test
+   // Test
 
 //   data_set.set_has_columns_names(true);
 //   data_set.set_separator(',');
@@ -2084,7 +2084,7 @@ void DataSetTest::test_read_csv()
 //   assert_true(data(2,5) == 1.0, LOG);
 //   assert_true(data(2,6) == 0.0, LOG);
 
-//   // Test
+   // Test
 
 //   data_set.set_has_columns_names(false);
 //   data_set.set_separator(',');
@@ -2101,7 +2101,7 @@ void DataSetTest::test_read_csv()
 
 //   data_set.read_csv();
 
-//   // Test
+   // Test
 
 //   data_set.set_separator(' ');
 
@@ -2123,7 +2123,7 @@ void DataSetTest::test_read_csv()
 //   assert_true(data_set.get_variable_name(0) == "x", LOG);
 //   assert_true(data_set.get_variable_name(1) == "y", LOG);
 
-//   // Test
+   // Test
 
 //   data_set.set_has_columns_names(false);
 //   data_set.set_separator(' ');
@@ -2779,7 +2779,7 @@ void DataSetTest::test_scrub_missing_values() // @todo
 
 //    data_set.scrub_missing_values();
 
-////    samples = data_set.get_samples();
+//    samples = data_set.get_samples();
 
 //    assert_true(samples.get_use(1) == Samples::Unused, LOG);
 
@@ -2801,7 +2801,7 @@ void DataSetTest::test_scrub_missing_values() // @todo
 
 //    data_set.scrub_missing_values();
 
-////    samples = data_set.get_samples();
+//    samples = data_set.get_samples();
 
 //    data = data_set.get_data();
 
@@ -3193,7 +3193,6 @@ void DataSetTest::run_test_case()
 {
    cout << "Running data set test case...\n";
 
-   /*
    // Constructor and destructor methods
 
 //   test_constructor();
@@ -3204,7 +3203,7 @@ void DataSetTest::run_test_case()
 //   test_assignment_operator();
 
 
-//   // Get methods
+   // Get methods
 
 //   test_get_samples_number();
 //   test_get_variables_number();
@@ -3223,49 +3222,38 @@ void DataSetTest::run_test_case()
 //   test_get_targets();
 //   test_get_testing_data();
 
-
    // Sample methods
-
 
 //   test_get_sample();
 
-
    // Set methods
-
 
 //   test_set();
 //   test_set_display();
 
-
-//   // Data methods
+   // Data methods
 
 //   test_set_data();
 //   test_set_samples_number();
 //   test_set_columns_number();
 
-
    // Sample methods
-
-
 
 //   test_set_sample();
 
 
-//   // Data resizing methods
+   // Data resizing methods
 
 //   test_unuse_constant_columns();
 //   test_unuse_repeated_samples();
 //   test_unuse_non_significant_inputs();
 //   test_unuse_columns_missing_values();
 
-
-
    // Initialization methods
 
 //   test_initialize_data();
 
-
-//   // Statistics methods
+   // Statistics methods
 
 //   test_calculate_data_descriptives();
 //   test_calculate_data_descriptives_missing_values();
@@ -3278,65 +3266,65 @@ void DataSetTest::run_test_case()
 //   test_calculate_testing_targets_mean();
 
 
-//   // Histrogram methods
+   // Histrogram methods
 
 //   test_calculate_data_distributions();
 
 
-//   // Filtering methods
+   // Filtering methods
 
 //   test_filter_data();
 //   test_filter_column();
 
 
-//   // Data scaling
+   // Data scaling
 
 //   test_scale_data_mean_standard_deviation();
 //   test_scale_data_minimum_maximum();
 
 
-//   // Input variables scaling
+   // Input variables scaling
 
 //   test_scale_inputs_mean_standard_deviation();
 //   test_scale_inputs_minimum_maximum();
 
 
-//   // Target variables scaling
+   // Target variables scaling
 
 //   test_scale_targets_mean_standard_deviation();
 //   test_scale_targets_minimum_maximum();
 
 
-//   // Data unscaling
+   // Data unscaling
 
 //   test_unscale_data_mean_standard_deviation();
 //   test_unscale_data_minimum_maximum();
 
 
-//   // Input variables unscaling
+   // Input variables unscaling
 
 //   test_unscale_inputs_mean_standard_deviation();
 //   test_unscale_inputs_minimum_maximum();
 
 
-//   // Target variables unscaling
+   // Target variables unscaling
 
 //   test_unscale_targets_mean_standard_deviation();
 //   test_unscale_targets_minimum_maximum();
 
 
-//   // Classificatios methods
+   // Classificatios methods
 
 //   test_balance_binary_targets_distribution();
 
 
-//   // Correlations
+   // Correlations
 
 //   test_calculate_input_target_correlations();
 //   test_calculate_total_input_correlations();
 
 
-//   // Pattern recognition methods
+   // Pattern recognition methods
 
 //   test_calculate_target_columns_distribution();
 //   test_unuse_most_populated_target();
@@ -3344,18 +3332,18 @@ void DataSetTest::run_test_case()
 //   test_balance_function_regression_targets_distribution();
 
 
-//   // Outlier detection
+   // Outlier detection
 
 //   test_clean_Tukey_outliers();
 
 
-//   // Data generation
+   // Data generation
 
 //   test_generate_data_binary_classification();
 //   test_generate_data_multiple_classification();
 
 
-//   // Serialization methods
+   // Serialization methods
 
 //   test_to_XML();
 //   test_from_XML();
@@ -3402,15 +3390,16 @@ void DataSetTest::run_test_case()
 
    // test print data preview
    test_print_data_preview();
-*/
+
    test_calculate_cross_correlations();
    test_calculate_autocorrelations();
+
    cout << "End of data set test case.\n\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

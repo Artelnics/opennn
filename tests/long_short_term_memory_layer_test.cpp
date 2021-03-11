@@ -683,11 +683,11 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   recurrent_weights.resize(2,2,4);
 //   biases.resize(2,4);
 
-////   weights.initialize_sequential();
-////   recurrent_weights.initialize_sequential();
-////   biases.initialize_sequential();
+//   weights.initialize_sequential();
+//   recurrent_weights.initialize_sequential();
+//   biases.initialize_sequential();
 
-////   parameters = weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases.to_vector());
+//   parameters = weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases.to_vector());
 
 //   long_short_term_memory_layer.set_parameters_random();
 
@@ -710,9 +710,9 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   long_short_term_memory_layer.set_state_biases(biases.chip(2, 1));
 //   long_short_term_memory_layer.set_output_biases(biases.chip(3, 1));
 
-////   const Tensor<type, 2> outputs = long_short_term_memory_layer.calculate_outputs(inputs);
-////   const Tensor<type, 2> outputs_parameters = long_short_term_memory_layer.calculate_outputs(inputs, parameters);
-////   const Tensor<type, 2> outputs_2 = long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights);
+//   const Tensor<type, 2> outputs = long_short_term_memory_layer.calculate_outputs(inputs);
+//   const Tensor<type, 2> outputs_parameters = long_short_term_memory_layer.calculate_outputs(inputs, parameters);
+//   const Tensor<type, 2> outputs_2 = long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights);
 
 //   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(0) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(0), LOG);
 //   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(1) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(1), LOG);
@@ -819,7 +819,7 @@ void LongShortTermMemoryLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

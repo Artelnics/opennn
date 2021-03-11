@@ -271,6 +271,7 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
     reserve_selection_error_history = new_reserve_selection_error_history;
 }
 
+
 /// Trains a neural network with an associated loss index,
 /// according to the gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
@@ -307,8 +308,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     training_samples_number < batch_samples_number ? batch_size_training = training_samples_number : batch_size_training = batch_samples_number;
     selection_samples_number < batch_samples_number && selection_samples_number != 0 ? batch_size_selection = selection_samples_number : batch_size_selection = batch_samples_number;
 
-    DataSet::Batch batch_training(batch_size_training, data_set_pointer);
-    DataSet::Batch batch_selection(batch_size_selection, data_set_pointer);
+    DataSetBatch batch_training(batch_size_training, data_set_pointer);
+    DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
 
     const Index training_batches_number = training_samples_number/batch_size_training;
     const Index selection_batches_number = selection_samples_number/batch_size_selection;
@@ -321,15 +322,14 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
-    type parameters_norm = 0;
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
     // Loss index
 
-    LossIndex::BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
     type training_error = 0;
     type training_loss = 0;
@@ -366,9 +366,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Calculate error before training
 
-
-
-    parameters_norm = l2_norm(optimization_data.parameters);
     training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
     batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
     neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
@@ -391,8 +388,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
-
-        parameters_norm = l2_norm(optimization_data.parameters);
 
         training_loss = 0;
         training_error = 0;
@@ -449,6 +444,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
                 neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
 
                 // Loss
+
+                loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
 
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
@@ -541,8 +538,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         {
             if(display)
             {
-                cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << training_error << "\n"
+                cout << "Training error: " << training_error << "\n"
                      << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
@@ -554,8 +550,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
             results.final_parameters = optimization_data.parameters;
-
-            results.final_parameters_norm = parameters_norm;
 
             results.final_training_error = training_error;
 
@@ -573,7 +567,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             {
                 cout << "Epoch " << epoch << ";\n"
                      << "Training error: " << training_error << "\n"
-                     << "Batch size: " << batch_samples_number << "\n"
+                     << "DataSetBatch size: " << batch_samples_number << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
                 if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
@@ -590,8 +584,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     if(choose_best_selection)
     {
         neural_network_pointer->set_parameters(minimal_selection_parameters);
-
-        parameters_norm = l2_norm(optimization_data.parameters);
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
@@ -678,9 +670,9 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 
     row_index++;
 
-    // Batch samples number
+    // DataSetBatch samples number
 
-    labels_values(row_index,0) = "Batch samples number";
+    labels_values(row_index,0) = "DataSetBatch samples number";
     labels_values(row_index,1) = std::to_string(batch_samples_number);
 
     row_index++;
@@ -726,7 +718,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("AdaptiveMomentEstimation");
 
-    // Batch size
+    // DataSetBatch size
 
     file_stream.OpenElement("BatchSize");
 
@@ -835,7 +827,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    // Batch size
+    // DataSetBatch size
 
     const tinyxml2::XMLElement* batch_size_element = root_element->FirstChildElement("BatchSize");
 
@@ -1005,7 +997,7 @@ Index AdaptiveMomentEstimation::get_batch_samples_number() const
 
 /// Update iteration parameters
 
-void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation& back_propagation,
+void AdaptiveMomentEstimation::update_iteration(const LossIndexBackPropagation& back_propagation,
                               OptimizationData& optimization_data)
 {
     const type learning_rate =
@@ -1083,7 +1075,7 @@ void AdaptiveMomentEstimation::OptimizationData::print() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

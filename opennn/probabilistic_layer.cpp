@@ -609,7 +609,7 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 // Activations
 
-void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_2d) const
+void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -645,13 +645,13 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
 
      switch(activation_function)
      {
-         case Binary: binary(combinations, activations_2d); return;
+         case Binary: binary(combinations, activations); return;
 
-         case Logistic: logistic(combinations, activations_2d); return;
+         case Logistic: logistic(combinations, activations); return;
 
-         case Competitive: competitive(combinations, activations_2d); return;
+         case Competitive: competitive(combinations, activations); return;
 
-         case Softmax: softmax(combinations, activations_2d); return;
+         case Softmax: softmax(combinations, activations); return;
      }
 
      ostringstream buffer;
@@ -697,6 +697,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
     }
 }
 
+
 /// This method processes the input to the probabilistic layer in order to obtain a set of outputs which
 /// can be interpreted as probabilities.
 /// This posprocessing is performed according to the probabilistic method to be used.
@@ -717,7 +718,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 }
 
 
-void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation* forward_propagation)
+void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, LayerForwardPropagation* forward_propagation)
 {
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
@@ -730,7 +731,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, Forwar
 
 void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                            Tensor<type, 1> potential_parameters,
-                                           ForwardPropagation* forward_propagation)
+                                           LayerForwardPropagation* forward_propagation)
 {
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -766,184 +767,27 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
 }
 
 
-
-void ProbabilisticLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
-                                                const Tensor<type, 2>& output_jacobian,
-                                                BackPropagation* back_propagation) const
-{
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
-    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
-
-    const Index neurons_number = get_neurons_number();
-    const Index batch_samples_number = probabilistic_layer_forward_propagation->activations_derivatives.dimension(0);
-
-    if(neurons_number == 1)
-    {
-        TensorMap< Tensor<type, 2> > activations_derivatives(probabilistic_layer_forward_propagation->activations_derivatives.data(), batch_samples_number, neurons_number);
-
-        probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = activations_derivatives*output_jacobian;
-    }
-    else
-    {
-        const Index outputs_number = output_jacobian.dimension(1); // outputs_number = neurons_number and activations.dimension(1)
-
-        if(outputs_number != neurons_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                   << "void calculate_output_delta(ForwardPropagation& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const.\n"
-                   << "Number of columns in output gradient (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        if(probabilistic_layer_forward_propagation->activations_derivatives.dimension(1) != neurons_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                   << "void calculate_output_delta(ForwardPropagation& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const.\n"
-                   << "Dimension 1 of activations derivatives 3d (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        if(probabilistic_layer_forward_propagation->activations_derivatives.dimension(2) != neurons_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                   << "void calculate_output_delta(ForwardPropagation& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const.\n"
-                   << "Dimension 2 of activations derivatives 3d (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        Tensor<type, 1> output_jacobian_row(neurons_number);
-        Tensor<type, 1> output_delta_row(neurons_number);
-
-        Index index = 0;
-        Index step = neurons_number*neurons_number;
-
-        for(Index i = 0; i < batch_samples_number; i++)
-        {
-            output_jacobian_row = output_jacobian.chip(i,0);
-
-            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(probabilistic_layer_forward_propagation->activations_derivatives.data() + index,
-                                                                        neurons_number, neurons_number);
-
-            output_delta_row.device(*thread_pool_device) = output_jacobian_row.contract(activations_derivatives_matrix, AT_B);
-
-            for(Index j = 0; j < neurons_number; j++)
-            {
-                probabilistic_layer_back_propagation->delta(i,j) = output_delta_row(j);
-            }
-
-            index += step;
-        }
-    }
-}
-
-
-
-//void ProbabilisticLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
-//                            const Tensor<type, 2>& output_jacobian,
-//                            Tensor<type, 2>& output_delta) const
-//{
-//    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
-
-//    const Index neurons_number = get_neurons_number();
-//    const Index batch_samples_number = probabilistic_layer_forward_propagation->activations_derivatives.dimension(0);
-
-//    if(neurons_number == 1)
-//    {
-//        TensorMap< Tensor<type, 2> > activations_derivatives(probabilistic_layer_forward_propagation->activations_derivatives.data(), batch_samples_number, neurons_number);
-
-//        output_delta.device(*thread_pool_device) = activations_derivatives*output_jacobian;
-//    }
-//    else
-//    {
-//        const Index outputs_number = output_jacobian.dimension(1); // outputs_number = neurons_number and activations.dimension(1)
-
-//        if(outputs_number != neurons_number)
-//        {
-//            ostringstream buffer;
-
-//            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-//                   << "void calculate_output_delta(ForwardPropagation& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const.\n"
-//                   << "Number of columns in output gradient (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
-
-//            throw logic_error(buffer.str());
-//        }
-
-//        if(probabilistic_layer_forward_propagation->activations_derivatives.dimension(1) != neurons_number)
-//        {
-//            ostringstream buffer;
-
-//            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-//                   << "void calculate_output_delta(ForwardPropagation& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const.\n"
-//                   << "Dimension 1 of activations derivatives 3d (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
-
-//            throw logic_error(buffer.str());
-//        }
-
-//        if(probabilistic_layer_forward_propagation->activations_derivatives.dimension(2) != neurons_number)
-//        {
-//            ostringstream buffer;
-
-//            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-//                   << "void calculate_output_delta(ForwardPropagation& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const.\n"
-//                   << "Dimension 2 of activations derivatives 3d (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
-
-//            throw logic_error(buffer.str());
-//        }
-
-//        Tensor<type, 1> output_jacobian_row(neurons_number);
-//        Tensor<type, 1> output_delta_row(neurons_number);
-
-//        Index index = 0;
-//        Index step = neurons_number*neurons_number;
-
-//        for(Index i = 0; i < batch_samples_number; i++)
-//        {
-//            output_jacobian_row = output_jacobian.chip(i,0);
-
-//            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(probabilistic_layer_forward_propagation->activations_derivatives.data() + index,
-//                                                                        neurons_number, neurons_number);
-
-//            output_delta_row.device(*thread_pool_device) = output_jacobian_row.contract(activations_derivatives_matrix, AT_B);
-
-//            for(Index j = 0; j < neurons_number; j++)
-//            {
-//                output_delta(i,j) = output_delta_row(j);
-//            }
-
-//            index += step;
-//        }
-//    }
-//}
-
-
 // Gradient methods
 
 void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                                  Layer::ForwardPropagation*,
-                                                  Layer::BackPropagation* back_propagation) const
+                                                  LayerForwardPropagation* forward_propagation,
+                                                  LayerBackPropagation* back_propagation) const
 {
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
+
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
             static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
 
-
     probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
-            probabilistic_layer_back_propagation->delta.sum(Eigen::array<Index, 1>({0}));
+            probabilistic_layer_back_propagation->delta*probabilistic_layer_forward_propagation->activations_derivatives.sum(Eigen::array<Index, 1>({0}));
 
     probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
-            inputs.contract(probabilistic_layer_back_propagation->delta, AT_B);
+            inputs.contract(probabilistic_layer_back_propagation->delta*probabilistic_layer_forward_propagation->activations_derivatives, AT_B);
 }
 
 
-void ProbabilisticLayer::insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
+void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
@@ -959,7 +803,6 @@ void ProbabilisticLayer::insert_gradient(BackPropagation* back_propagation, cons
            probabilistic_layer_back_propagation->synaptic_weights_derivatives.data(),
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
 }
-
 
 
 /// Serializes the probabilistic layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
@@ -1068,7 +911,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Inputs number element is nullptr.\n" /* << inputs_number_element->GetText()*/;
+               << "Inputs number element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1431,9 +1274,6 @@ string ProbabilisticLayer::write_activations_python() const
 
             }
             break;
-
-
-
         }
     }
 
@@ -1526,9 +1366,6 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& outputs_na
 
             }
             break;
-
-
-
         }
     }
 
@@ -1587,7 +1424,7 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_name
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

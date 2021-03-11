@@ -80,9 +80,6 @@ public:
 
             // Neural network data
 
-            parameters.resize(parameters_number);
-            parameters = neural_network_pointer->get_parameters();
-
             old_parameters.resize(parameters_number);
 
             parameters_difference.resize(parameters_number);
@@ -118,9 +115,6 @@ public:
 
             cout << "Learning rate:" << endl;
             cout << learning_rate << endl;
-
-            cout << "Parameters:" << endl;
-            cout << parameters << endl;
         }
 
         QuasiNewtonMethod* quasi_newton_method_pointer = nullptr;
@@ -234,20 +228,20 @@ public:
 
    // Training methods
 
-   void calculate_DFP_inverse_hessian(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
+   void calculate_DFP_inverse_hessian(const LossIndexBackPropagation&, QNMOptimizationData&) const;
 
-   void calculate_BFGS_inverse_hessian(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
+   void calculate_BFGS_inverse_hessian(const LossIndexBackPropagation&, QNMOptimizationData&) const;
 
    void initialize_inverse_hessian_approximation(QNMOptimizationData&) const;
-   void calculate_inverse_hessian_approximation(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
+   void calculate_inverse_hessian_approximation(const LossIndexBackPropagation&, QNMOptimizationData&) const;
 
    const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
    const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void update_epoch(
-           const DataSet::Batch& batch,
-           NeuralNetwork::ForwardPropagation& forward_propagation,
-           LossIndex::BackPropagation& back_propagation,
+           const DataSetBatch& batch,
+           NeuralNetworkForwardPropagation& forward_propagation,
+           LossIndexBackPropagation& back_propagation,
            QNMOptimizationData& optimization_data);
 
    Results perform_training();
@@ -337,7 +331,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

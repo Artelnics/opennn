@@ -28,20 +28,11 @@
 
 namespace OpenNN
 {
-
-/// This class represents a layer of neurons.
-/// Layers of neurons will be used to construct multilayer neurons.
-
-class RecurrentLayer : public Layer
-{
-
-public:
-
-    struct RecurrentLayerForwardPropagation : Layer::ForwardPropagation
+    struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        explicit RecurrentLayerForwardPropagation(Layer* new_layer_pointer) : ForwardPropagation(new_layer_pointer)
+        explicit RecurrentLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
         {
         }
 
@@ -51,6 +42,9 @@ public:
 
             const Index neurons_number = layer_pointer->get_neurons_number();
 
+            current_combinations.resize(neurons_number);
+            current_activations_derivatives.resize(neurons_number);
+
             combinations.resize(batch_samples_number, neurons_number);
 
             activations.resize(batch_samples_number, neurons_number);
@@ -58,17 +52,20 @@ public:
             activations_derivatives.resize(batch_samples_number, neurons_number);
         }
 
+        Tensor<type, 1> current_combinations;
+        Tensor<type, 1> current_activations_derivatives;
+
         Tensor<type, 2> combinations;
         Tensor<type, 2> activations;
         Tensor<type, 2> activations_derivatives;
     };
 
-    struct RecurrentLayerBackPropagation : Layer::BackPropagation
+    struct RecurrentLayerBackPropagation : LayerBackPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
 
-        explicit RecurrentLayerBackPropagation(Layer* new_layer_pointer) : BackPropagation(new_layer_pointer)
+        explicit RecurrentLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
         {
 
         }
@@ -79,13 +76,12 @@ public:
 
             biases_derivatives.resize(neurons_number);
 
-            input_weights_derivatives.resize(inputs_number*neurons_number);
+            input_weights_derivatives.resize(inputs_number * neurons_number);
 
-            recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+            recurrent_weights_derivatives.resize(neurons_number * neurons_number);
 
             delta.resize(batch_samples_number, neurons_number);
         }
-
 
         Tensor<type, 1> biases_derivatives;
 
@@ -95,6 +91,15 @@ public:
 
         Tensor<type, 2> delta;
     };
+
+
+/// This class represents a layer of neurons.
+/// Layers of neurons will be used to construct multilayer neurons.
+
+class RecurrentLayer : public Layer
+{
+
+public:
 
     /// Enumeration of the available activation functions for the recurrent layer.
 
@@ -210,7 +215,7 @@ public:
    void calculate_activations(const Tensor<type, 1>&,
                               Tensor<type, 1>&) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 1>& ,
+   void calculate_activations_derivatives(const Tensor<type, 1>&,
                                           Tensor<type, 1>& ,
                                           Tensor<type, 1>& ) const;
 
@@ -219,67 +224,54 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation* );
+   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, LayerForwardPropagation*);
 
-   void calculate_output_delta(ForwardPropagation*,
-                               const Tensor<type, 2>&,
-                               BackPropagation*) const;
+   void calculate_hidden_delta(LayerForwardPropagation*,
+       LayerBackPropagation*,
+       LayerBackPropagation*) const;
 
-//   void calculate_output_delta(ForwardPropagation*,
-//                               const Tensor<type, 2>&,
-//                               Tensor<type, 2>&) const;
-
-   void calculate_hidden_delta(ForwardPropagation*,
-                               BackPropagation*,
-                               BackPropagation*) const;
-
-   void calculate_hidden_delta_perceptron(RecurrentLayerForwardPropagation*,
-                                          PerceptronLayer::PerceptronLayerBackPropagation*,
+   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
+                                          PerceptronLayerBackPropagation*,
                                           RecurrentLayerBackPropagation*) const;
 
-   void calculate_hidden_delta_probabilistic(RecurrentLayerForwardPropagation*,
-                                             ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
+   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
+                                             ProbabilisticLayerBackPropagation*,
                                              RecurrentLayerBackPropagation*) const;
-/*
-   void calculate_hidden_delta(Layer* next_layer_pointer,
-                               ForwardPropagation* forward_propagation,
-                               const Tensor<type, 2>& next_layer_delta,
-                               Tensor<type, 2>& hidden_delta) const;
-
-   void calculate_hidden_delta_perceptron(Layer* ,
-                                          const Tensor<type, 2>& ,
-                                          const Tensor<type, 2>& ,
-                                          Tensor<type, 2>& ) const;
-
-   void calculate_hidden_delta_probabilistic(Layer* ,
-                                          const Tensor<type, 2>& ,
-                                          const Tensor<type, 2>& ,
-                                          Tensor<type, 2>& ) const;
-*/
 
    // Gradient
 
-   void insert_gradient(BackPropagation*, const Index& , Tensor<type, 1>&) const;
+   void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const;
 
-   void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, Layer::BackPropagation*) const;
+   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, LayerBackPropagation*) const;
 
-   void calculate_biases_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, RecurrentLayerBackPropagation*) const;
-   void calculate_input_weights_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, RecurrentLayerBackPropagation*) const;
-   void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, RecurrentLayerBackPropagation*) const;
+   void calculate_biases_error_gradient(const Tensor<type, 2>&,
+                                        LayerForwardPropagation*,
+                                        RecurrentLayerBackPropagation*) const;
+
+   void calculate_input_weights_error_gradient(const Tensor<type, 2>&,
+                                               LayerForwardPropagation*,
+                                               RecurrentLayerBackPropagation*) const;
+
+   void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&,
+                                                   LayerForwardPropagation*,
+                                                   RecurrentLayerBackPropagation*) const;
 
    // Expression methods
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
    string write_activation_function_expression() const;
 
    // Utilities
 
-   Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
+//   Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
 
    // Serialization methods
+
    void from_XML(const tinyxml2::XMLDocument&);
+
    void write_XML(tinyxml2::XMLPrinter&) const;
 
 protected:
@@ -318,7 +310,7 @@ protected:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

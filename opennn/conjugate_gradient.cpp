@@ -795,9 +795,9 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
 
 
 ///
-////// \brief ConjugateGradient::calculate_gradient_descent_training_direction
-////// \param gradient
-////// \param training_direction
+// \brief ConjugateGradient::calculate_gradient_descent_training_direction
+// \param gradient
+// \param training_direction
 
 void ConjugateGradient::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient,
                                                                       Tensor<type, 1>& training_direction) const
@@ -913,8 +913,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    DataSet::Batch training_batch(training_samples_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
     training_batch.fill(training_samples_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
@@ -928,17 +928,17 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    type parameters_norm = 0;
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+
+    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
     string information;
 
-    LossIndex::BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Optimization algorithm
 
@@ -963,17 +963,16 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     if(has_selection)
     {
-        minimal_selection_parameters = optimization_data.parameters;
+        minimal_selection_parameters = training_back_propagation.parameters;
         results.resize_selection_history(maximum_epochs_number + 1);
     }
 
     // Calculate error before training
-    parameters_norm = l2_norm(optimization_data.parameters);
+
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
     results.training_error_history(0)  = training_back_propagation.error;
 
-    parameters_norm = l2_norm(optimization_data.parameters);
     neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
     loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
     results.selection_error_history(0)  = selection_back_propagation.error;
@@ -985,8 +984,6 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-
-        parameters_norm = l2_norm(optimization_data.parameters);
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
@@ -1015,7 +1012,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             else if(selection_error <= minimum_selection_error)
             {
                 minimum_selection_error = selection_error;
-                minimal_selection_parameters = optimization_data.parameters;
+                minimal_selection_parameters = training_back_propagation.parameters;
             }
         }
 
@@ -1134,8 +1131,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         {
             if(display)
             {
-                cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << training_back_propagation.error << "\n"
+                cout << "Training error: " << training_back_propagation.error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
@@ -1146,8 +1142,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.resize_training_error_history(epoch+1);
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            results.final_parameters = optimization_data.parameters;
-            results.final_parameters_norm = parameters_norm;
+            results.final_parameters = training_back_propagation.parameters;
 
             results.final_training_error = training_back_propagation.error;
             if(has_selection) results.final_selection_error = selection_error;
@@ -1166,7 +1161,6 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         ||((epoch) % display_period) == 0)
         {
             cout << "Epoch " << epoch << ";\n"
-                 << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << "Learning rate: " << optimization_data.learning_rate << "\n"
@@ -1177,7 +1171,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
         // Set new parameters
 
-        neural_network_pointer->set_parameters(optimization_data.parameters);
+        neural_network_pointer->set_parameters(training_back_propagation.parameters);
 
         // Update stuff
 
@@ -1197,8 +1191,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 //        selection_error = minimum_selection_error;
     }
 
-    results.final_parameters = optimization_data.parameters;
-    results.final_parameters_norm = parameters_norm;
+    results.final_parameters = training_back_propagation.parameters;
 
     results.final_training_error = training_back_propagation.error;
     if(has_selection) results.final_selection_error = selection_error;
@@ -1851,18 +1844,18 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-////// \brief ConjugateGradient::update_epoch
-////// \param batch
-////// \param forward_propagation
-////// \param back_propagation
-////// \param optimization_data
+// \brief ConjugateGradient::update_epoch
+// \param batch
+// \param forward_propagation
+// \param back_propagation
+// \param optimization_data
 void ConjugateGradient::update_epoch(
-        const DataSet::Batch& batch,
-        NeuralNetwork::ForwardPropagation& forward_propagation,
-        LossIndex::BackPropagation& back_propagation,
+        const DataSetBatch& batch,
+        NeuralNetworkForwardPropagation& forward_propagation,
+        LossIndexBackPropagation& back_propagation,
         GGOptimizationData& optimization_data)
 {      
-    const Index parameters_number = optimization_data.parameters.dimension(0);
+    const Index parameters_number = back_propagation.parameters.dimension(0);
 
     if(optimization_data.epoch == 1 || optimization_data.epoch % parameters_number == 0)
     {
@@ -1912,7 +1905,7 @@ void ConjugateGradient::update_epoch(
 
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
-    optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+    back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
 
     // Update stuff
 
@@ -1951,9 +1944,6 @@ void ConjugateGradient::GGOptimizationData::set(ConjugateGradient* new_conjugate
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-    parameters.resize(parameters_number);
-    parameters = neural_network_pointer->get_parameters();
-
     potential_parameters.resize(parameters_number);
 
     parameters_increment.resize(parameters_number);
@@ -1973,7 +1963,7 @@ void ConjugateGradient::GGOptimizationData::print() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

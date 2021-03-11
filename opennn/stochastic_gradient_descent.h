@@ -180,7 +180,7 @@ public:
 
    // Training methods
 
-   void update_iteration(const LossIndex::BackPropagation& back_propagation,
+   void update_iteration(const LossIndexBackPropagation& back_propagation,
                          SGDOptimizationData& optimization_data);
 
    Results perform_training();

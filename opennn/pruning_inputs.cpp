@@ -363,7 +363,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
             optimum_selection_error = optimum_selection_error_trial;
             optimum_training_error = optimum_training_error_trial;
         }
-        else if (previus_selection_error < optimum_selection_error_trial)
+        else if(previus_selection_error < optimum_selection_error_trial)
         {
             selection_failures++;
         }
@@ -1175,7 +1175,7 @@ void PruningInputs::load(const string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
