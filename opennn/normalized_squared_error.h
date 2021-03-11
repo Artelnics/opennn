@@ -71,13 +71,18 @@ public:
    // Normalization coefficients 
 
    type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
+
    type calculate_time_series_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Error methods
      
-   void calculate_error(const DataSetBatch& batch,
-                        const NeuralNetworkForwardPropagation& forward_propagation,
-                        LossIndexBackPropagation& back_propagation) const;
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagation&) const;
+
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagationLM&) const;
 
    // Gradient methods
 
@@ -86,7 +91,7 @@ public:
                                LossIndexBackPropagation&) const;
 
    void calculate_gradient(const DataSetBatch& batch,
-                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const;
+                           LossIndexBackPropagationLM&) const;
 
    // Hessian method
 

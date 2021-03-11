@@ -268,12 +268,10 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 }
 
 
-
-///
-// \brief NormalizedSquaredError::calculate_error
-// \param batch
-// \param forward_propagation
-// \param back_propagation
+/// \brief NormalizedSquaredError::calculate_error
+/// \param batch
+/// \param forward_propagation
+/// \param back_propagation
 
 void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
@@ -282,6 +280,21 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
     Tensor<type, 0> sum_squared_error;
 
     sum_squared_error.device(*thread_pool_device) =  back_propagation.errors.contract(back_propagation.errors, SSE);
+
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
+
+    back_propagation.error = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+}
+
+
+void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
+                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     LossIndexBackPropagationLM& back_propagation) const
+{
+    Tensor<type, 0> sum_squared_error;
+
+    sum_squared_error.device(*thread_pool_device) = back_propagation.squared_errors.sum();
 
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
