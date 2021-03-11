@@ -11497,6 +11497,7 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
     return batches;
 }
 
+
 void DataSet::fill_submatrix(const Tensor<type, 2>& matrix,
           const Tensor<Index, 1>& rows_indices,
           const Tensor<Index, 1>& columns_indices, type* submatrix_pointer)
@@ -11526,7 +11527,7 @@ void DataSet::fill_submatrix(const Tensor<type, 2>& matrix,
 }
 
 
-void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
+void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                           const Tensor<Index, 1>& inputs,
                           const Tensor<Index, 1>& targets)
 {
@@ -11572,7 +11573,7 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
 }
 
 
-DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_pointer)
+DataSetBatch::DataSetBatch(const Index& new_samples_number, DataSet* new_data_set_pointer)
 {
     samples_number = new_samples_number;
 
@@ -11601,13 +11602,13 @@ DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_poi
 }
 
 
-Index DataSet::Batch::get_samples_number() const
+Index DataSetBatch::get_samples_number() const
 {
     return samples_number;
 }
 
 
-void DataSet::Batch::print()
+void DataSetBatch::print()
 {
     cout << "Batch structure" << endl;
 
