@@ -63,9 +63,6 @@ public:
 
         void print() const
         {
-            cout << "Parameters:" << endl;
-            cout << parameters << endl;
-
             cout << "Potential parameters:" << endl;
             cout << potential_parameters << endl;
 
@@ -76,7 +73,6 @@ public:
             cout << initial_learning_rate << endl;
         }
 
-        Tensor<type, 1> parameters;
         Tensor<type, 1> potential_parameters;
         Tensor<type, 1> training_direction;
         type initial_learning_rate = 0;
@@ -86,13 +82,9 @@ public:
 
    struct Results
    {
-       explicit Results()
-       {
-       }
+       explicit Results() {}
 
-       virtual ~Results()
-       {
-       }
+       virtual ~Results() {}
 
        string write_stopping_condition() const;
 
@@ -100,13 +92,11 @@ public:
 
        StoppingCondition stopping_condition;
 
-       /// Returns a string representation of the results structure.
-
-       
+       /// Returns a string representation of the results structure.       
 
        void save(const string&) const;
 
-       /// Returns a default(empty) string matrix with the final results from training.
+       /// Writes final results of the training.
 
        Tensor<string, 2> write_final_results(const Index& = 3) const;
 
@@ -125,11 +115,6 @@ public:
        /// Resizes the selection error history keeping the values.
 
        void resize_selection_error_history(const Index&);
-
-       /// Writes final results of the training.
-/*
-       Tensor<string, 2> write_final_results(const Index& precision = 3) const;
-*/       
 
        // Training history
 
@@ -326,7 +311,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

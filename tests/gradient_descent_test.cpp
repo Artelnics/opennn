@@ -25,12 +25,12 @@ void GradientDescentTest::test_constructor() // @todo
 
 //   SumSquaredError sum_squared_error;
 
-//   // Default constructor
+   // Default constructor
 
 //   GradientDescent gd1;
 //   assert_true(gd1.has_loss_index() == false, LOG);
 
-//   // Loss index constructor
+   // Loss index constructor
 
 //   GradientDescent gd2(&sum_squared_error);
 //   assert_true(gd2.has_loss_index() == true, LOG);
@@ -70,7 +70,7 @@ void GradientDescentTest::test_perform_training() // @todo
 
 //   GradientDescent gd(&sum_squared_error);
 
-//   // Test
+   // Test
 
 //   //type old_loss = sum_squared_error.calculate_error({0});
 
@@ -83,7 +83,7 @@ void GradientDescentTest::test_perform_training() // @todo
 
 //   //assert_true(loss < old_loss, LOG);
 
-//   // Minimum parameters increment norm
+   // Minimum parameters increment norm
 
 //   neural_network.set_parameters_constant(-1.0);
 
@@ -98,7 +98,7 @@ void GradientDescentTest::test_perform_training() // @todo
 
 //   gd.perform_training();
 
-//   // Performance goal
+   // Performance goal
 
 //   neural_network.set_parameters_constant(-1.0);
 
@@ -115,7 +115,7 @@ void GradientDescentTest::test_perform_training() // @todo
 
 //   //loss = sum_squared_error.calculate_error({0});
 
-//   // Minimum loss increase
+   // Minimum loss increase
 
 //   neural_network.set_parameters_constant(-1.0);
 
@@ -130,7 +130,7 @@ void GradientDescentTest::test_perform_training() // @todo
 
 //   gd.perform_training();
 
-//   // Gradient norm goal
+   // Gradient norm goal
 
 //   neural_network.set_parameters_constant(-1.0);
 
@@ -178,7 +178,7 @@ void GradientDescentTest::test_to_XML() // @todo
 
 //   tinyxml2::XMLDocument* document;
 
-//   // Test
+   // Test
 
 //   document = gd.to_XML();
 //   assert_true(document != nullptr, LOG);
@@ -203,7 +203,7 @@ void GradientDescentTest::run_test_case() // @todo
    test_constructor();
    test_destructor();
 
-//   // Set methods
+   // Set methods
 
    test_set_reserve_all_training_history();
 
@@ -225,7 +225,7 @@ void GradientDescentTest::run_test_case() // @todo
 
 
  // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

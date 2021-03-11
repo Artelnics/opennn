@@ -75,9 +75,6 @@ public:
 
             // Neural network data
 
-            parameters.resize(parameters_number);
-            parameters = neural_network_pointer->get_parameters();
-
             old_parameters.resize(parameters_number);
             potential_parameters.resize(parameters_number);
 
@@ -99,9 +96,6 @@ public:
 
             cout << "Learning rate:" << endl;
             cout << learning_rate << endl;
-
-            cout << "Parameters:" << endl;
-            cout << parameters << endl;
         }
 
         GradientDescent* gradient_descent_pointer = nullptr;
@@ -202,9 +196,9 @@ public:
    void calculate_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void update_epoch(
-           const DataSet::Batch& batch,
-           NeuralNetwork::ForwardPropagation& forward_propagation,
-           LossIndex::BackPropagation& back_propagation,
+           const DataSetBatch& batch,
+           NeuralNetworkForwardPropagation& forward_propagation,
+           LossIndexBackPropagation& back_propagation,
            GDOptimizationData& optimization_data);
 
    Results perform_training();

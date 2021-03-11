@@ -33,6 +33,61 @@ using namespace Eigen;
 
 namespace OpenNN {
 
+class Layer;
+
+/// This structure represents the first order activaions of layers.
+
+struct LayerForwardPropagation
+{
+    /// Default constructor.
+
+    explicit LayerForwardPropagation()
+    {
+    }
+
+
+    explicit LayerForwardPropagation(Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+    }
+
+    virtual ~LayerForwardPropagation() {}
+
+    virtual void set(const Index&) {}
+
+    void print() const
+    {
+
+    }
+
+    Index batch_samples_number = 0;
+
+    Layer* layer_pointer = nullptr;
+};
+
+struct LayerBackPropagation
+{
+    /// Default constructor.
+
+    explicit LayerBackPropagation() {}
+
+    explicit LayerBackPropagation(Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+    }
+
+    virtual ~LayerBackPropagation() {}
+
+    virtual void set(const Index&) {}
+
+    virtual void print() const {}
+
+    Index batch_samples_number = 0;
+
+    Layer* layer_pointer = nullptr;
+};
+
+
 /// This abstract class represents the concept of layer of neurons in OpenNN.
 
 /// Layer is a group of neurons having connections to the same inputs and sending outputs to the same destinations.
@@ -49,60 +104,6 @@ public:
 
     enum Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
               LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
-
-    /// This structure represents the first order activaions of layers.
-
-    struct ForwardPropagation
-    {
-        /// Default constructor.
-
-        explicit ForwardPropagation()
-        {
-        }
-
-
-        explicit ForwardPropagation(Layer* new_layer_pointer)
-        {
-            layer_pointer = new_layer_pointer;
-        }
-
-        virtual ~ForwardPropagation() {}
-
-        virtual void set(const Index&) {}
-
-        void print() const
-        {
-
-        }
-
-        Index batch_samples_number = 0;
-
-        Layer* layer_pointer = nullptr;
-    };
-
-
-    struct BackPropagation
-    {
-        /// Default constructor.
-
-        explicit BackPropagation() {}
-
-        explicit BackPropagation(Layer* new_layer_pointer)
-        {
-            layer_pointer = new_layer_pointer;
-        }
-
-        virtual ~BackPropagation() {}
-
-        virtual void set(const Index&) {}
-
-        virtual void print() const {}
-
-        Index batch_samples_number = 0;
-
-        Layer* layer_pointer = nullptr;
-    };
-
 
     // Constructor
 
@@ -141,7 +142,7 @@ public:
 
     void set_threads_number(const int&);
 
-    virtual void insert_gradient(BackPropagation*, const Index&, Tensor<type, 1>&) const {}
+    virtual void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const {}
 
     // Outputs
 
@@ -151,51 +152,45 @@ public:
 
     virtual Tensor<type, 4> calculate_outputs_4D(const Tensor<type, 4>&) {return Tensor<type, 4>();}
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&, ForwardPropagation*, BackPropagation*) const {}
-    virtual void calculate_error_gradient(const Tensor<type, 4>&, ForwardPropagation*, BackPropagation*) const {}
+    virtual void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
+    virtual void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*) {}
 
-    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*)  {} // Cannot be const because of Recurrent and LSTM layers
-    virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation*)  {}
-
-    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation*)  {}
-    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*)  {} // Cannot be const because of Recurrent and LSTM layers
+    virtual void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*) {}
+    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
 
     // Deltas
 
-//    virtual void calculate_output_delta(ForwardPropagation*,
-//                                const Tensor<type, 2>&,
-//                                Tensor<type, 2>&) const {}
+    virtual void calculate_hidden_delta(LayerForwardPropagation*,
+        LayerBackPropagation*,
+        LayerBackPropagation*) const {}
 
-    virtual void calculate_output_delta(ForwardPropagation*,
-                                        const Tensor<type, 2>&,
-                                        BackPropagation*) const {}
+    // Error gradient
 
-//    virtual void calculate_hidden_delta(Layer*,
-//                                        ForwardPropagation*,
-//                                        const Tensor<type, 2>&,
-//                                        Tensor<type, 2>&) const {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&,
+                                          LayerForwardPropagation*,
+                                          LayerBackPropagation*) const {}
 
-    virtual void calculate_hidden_delta(ForwardPropagation*,
-                                        BackPropagation*,
-                                        BackPropagation*) const {}
+    virtual void calculate_error_gradient(const Tensor<type, 4>&,
+                                          LayerForwardPropagation*,
+                                          LayerBackPropagation*) const {}
 
     // Get neurons number
 
     virtual Index get_inputs_number() const;
     virtual Index get_neurons_number() const;
     virtual Index get_synaptic_weights_number() const;
-
-
     virtual void set_inputs_number(const Index&);
     virtual void set_neurons_number(const Index&);
-
-    virtual 
 
     // Layer type
 
     Type get_type() const;
 
     string get_type_string() const;
+
+    // Utilities
+
+    void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
     // Serialization methods
 
@@ -205,7 +200,7 @@ public:
 
     // Expression methods
 
-    virtual string write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const {return string();}
+    virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const {return string();}
 
     virtual string write_expression_c() const {return string();}
 

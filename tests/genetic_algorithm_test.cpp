@@ -191,7 +191,7 @@ void GeneticAlgorithmTest::test_perform_selection() // @todo
 
 //    ga.perform_selection();
 
-////    selected_population = ga.get_population();
+//    selected_population = ga.get_population();
 
 //    assert_true(selected_population[0] == population[3], LOG);
 //    assert_true(selected_population[1] == population[2], LOG);
@@ -246,7 +246,7 @@ void GeneticAlgorithmTest::test_perform_crossover() // @todo
 
 //    ga.set_population_size(4);
 
-////    ga.set_population(population);
+//    ga.set_population(population);
 
 //    ga.set_fitness(fitness);
 
@@ -260,11 +260,11 @@ void GeneticAlgorithmTest::test_perform_crossover() // @todo
 
 //    ga.perform_crossover();
 
-////    crossover_population = ga.get_population();
+//    crossover_population = ga.get_population();
 
 //    assert_true(crossover_population(2,1) == true, LOG);
 
-////    ga.set_population(population);
+//    ga.set_population(population);
 
 //    ga.set_fitness(fitness);
 
@@ -403,23 +403,23 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 
 //    // Test
 
-////    Index j = -10;
+//    Index j = -10;
 
-////    for(Index i = 0; i < 10; i++)
-////    {
-////        data(i,0) = (type)j;
-////        data(i,1) = rand();
-////        data(i,2) = 1.0;
-////        j+=1;
-////    }
-////    for(Index i = 10; i < 20; i++)
-////    {
-////        data(i,0) = (type)i;
-////        data(i,1) = rand();
-////        data(i,2) = 0.0;
-////    }
+//    for(Index i = 0; i < 10; i++)
+//    {
+//        data(i,0) = (type)j;
+//        data(i,1) = rand();
+//        data(i,2) = 1.0;
+//        j+=1;
+//    }
+//    for(Index i = 10; i < 20; i++)
+//    {
+//        data(i,0) = (type)i;
+//        data(i,1) = rand();
+//        data(i,2) = 0.0;
+//    }
 
-////    data_set.set(data);
+//    data_set.set(data);
 
 //    data_set.generate_inputs_selection_data(20,3);
 
@@ -444,7 +444,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 
 //    ga1_results = ga1.perform_inputs_selection();
 
-////    assert_true(ga1_results->iterations_number == 1, LOG);
+//    assert_true(ga1_results->iterations_number == 1, LOG);
 //    assert_true(ga1_results->final_selection_error < 1, LOG);
 //    assert_true(ga_results->stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
 

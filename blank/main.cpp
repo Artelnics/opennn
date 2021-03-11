@@ -33,8 +33,8 @@ int main(void)
 
         // Data Set
 
-        const Index samples = 10000;
-        const Index variables = 10;
+        const Index samples = 10;
+        const Index variables = 3;
 
         DataSet data_set;
 
@@ -73,7 +73,7 @@ int main(void)
         training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(1);
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10);
 
         training_strategy.perform_training();
 

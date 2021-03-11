@@ -78,7 +78,7 @@ NeuralNetwork* TrainingStrategy::get_neural_network_pointer() const
 
 LossIndex* TrainingStrategy::get_loss_index_pointer()
 {
-    switch (loss_method)
+    switch(loss_method)
     {
         case SUM_SQUARED_ERROR: return &sum_squared_error;
 
@@ -101,7 +101,7 @@ LossIndex* TrainingStrategy::get_loss_index_pointer()
 
 OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
 {
-    switch (optimization_method)
+    switch(optimization_method)
     {
         case GRADIENT_DESCENT: return &gradient_descent;
 
@@ -1323,7 +1323,7 @@ void TrainingStrategy::load(const string& file_name)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

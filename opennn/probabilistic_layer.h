@@ -30,23 +30,11 @@
 namespace OpenNN
 {
 
-/// This class represents a layer of probabilistic neurons.
-
-///
-/// The neural network defined in OpenNN includes a probabilistic layer for those problems
-/// when the outptus are to be interpreted as probabilities.
-/// It does not has Synaptic weights or Biases
-
-class ProbabilisticLayer : public Layer
-{
-
-public:
-
-    struct ProbabilisticLayerForwardPropagation : Layer::ForwardPropagation
+    struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        explicit ProbabilisticLayerForwardPropagation(Layer* new_layer_pointer) : ForwardPropagation(new_layer_pointer)
+        explicit ProbabilisticLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
         {
         }
 
@@ -68,12 +56,12 @@ public:
         Tensor<type, 3> activations_derivatives;
     };
 
-    struct ProbabilisticLayerBackPropagation : Layer::BackPropagation
+    struct ProbabilisticLayerBackPropagation : LayerBackPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
 
-        explicit ProbabilisticLayerBackPropagation(Layer* new_layer_pointer) : BackPropagation(new_layer_pointer)
+        explicit ProbabilisticLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
         {
 
         }
@@ -93,6 +81,19 @@ public:
         Tensor<type, 2> synaptic_weights_derivatives;
         Tensor<type, 1> biases_derivatives;
     };
+
+
+/// This class represents a layer of probabilistic neurons.
+
+///
+/// The neural network defined in OpenNN includes a probabilistic layer for those problems
+/// when the outptus are to be interpreted as probabilities.
+/// It does not has Synaptic weights or Biases
+
+class ProbabilisticLayer : public Layer
+{
+
+public:
 
    // Constructors
 
@@ -172,49 +173,41 @@ public:
 
    void set_parameters_random();
 
-   void insert_parameters(const Tensor<type, 1>& parameters, const Index& );
+   void insert_parameters(const Tensor<type, 1>&, const Index& );
 
    // Combinations
 
-   void calculate_combinations(const Tensor<type, 2>& inputs,
-                               const Tensor<type, 2>& biases,
-                               const Tensor<type, 2>& synaptic_weights,
-                               Tensor<type, 2>& combinations) const;
+   void calculate_combinations(const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               Tensor<type, 2>&) const;
 
    // Activations
 
-   void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_2d) const;
+   void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations,
-                                          Tensor<type, 2>& activations,
-                                          Tensor<type, 3>& activations_derivatives) const;
+   void calculate_activations_derivatives(const Tensor<type, 2>&,
+                                          Tensor<type, 2>&,
+                                          Tensor<type, 3>&) const;
 
    // Outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 2>& inputs,
-                          ForwardPropagation* forward_propagation);
+   void forward_propagate(const Tensor<type, 2>&,
+                          LayerForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 2>& inputs,
-                          Tensor<type, 1> potential_parameters,
-                          ForwardPropagation* forward_propagation);
-
-//   void calculate_output_delta(ForwardPropagation* forward_propagation,
-//                               const Tensor<type, 2>& output_jacobian,
-//                               Tensor<type, 2>& output_delta) const;
-
-   void calculate_output_delta(ForwardPropagation*,
-                               const Tensor<type, 2>&,
-                               BackPropagation*) const;
+   void forward_propagate(const Tensor<type, 2>&,
+                          Tensor<type, 1>,
+                          LayerForwardPropagation*);
 
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                 ForwardPropagation*,
-                                 BackPropagation*) const;
+   void calculate_error_gradient(const Tensor<type, 2>&,
+                                 LayerForwardPropagation*,
+       LayerBackPropagation*) const;
 
-   void insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
+   void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const;
 
    // Expression methods
 
@@ -224,10 +217,9 @@ public:
    string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_no_probabilistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-//   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const;
-   string write_combinations(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const;
-   string write_activations(const Tensor<string, 1>& outputs_names) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_combinations(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_activations(const Tensor<string, 1>&) const;
 
    string write_expression_c() const;
    string write_combinations_c() const;
@@ -280,7 +272,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -310,7 +310,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
             optimum_selection_error = current_selection_error;
             optimum_training_error = current_training_error;
         }
-        else if (previus_selection_error < current_selection_error)
+        else if(previus_selection_error < current_selection_error)
         {
             selection_failures++;
         }
@@ -1141,7 +1141,7 @@ void GrowingInputs::load(const string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

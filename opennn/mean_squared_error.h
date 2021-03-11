@@ -51,26 +51,22 @@ public:
 
    // Error methods
 
-   void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
-
-   void calculate_error_terms(const DataSet::Batch&,
-                              const NeuralNetwork::ForwardPropagation&,
-                              SecondOrderLoss&) const;
+   void calculate_error(const DataSetBatch& batch,
+                        const NeuralNetworkForwardPropagation& forward_propagation,
+                        LossIndexBackPropagation& back_propagation) const;
 
    // Gradient methods
 
-   void calculate_output_jacobian(const DataSet::Batch&,
-                                  const NeuralNetwork::ForwardPropagation&,
-                                  BackPropagation&) const;
+   void calculate_output_delta(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagation&) const;
 
-   void calculate_Jacobian_gradient(const DataSet::Batch&,
-                                    LossIndex::SecondOrderLoss&) const;
+   void calculate_gradient(const DataSetBatch&,
+                                    LossIndexBackPropagationLM&) const;
 
    // Hessian method
 
-   void calculate_hessian_approximation(const DataSet::Batch& batch, LossIndex::SecondOrderLoss& second_order_loss) const;
+   void calculate_hessian_approximation(const DataSetBatch& batch, LossIndexBackPropagationLM& loss_index_back_propagation_lm) const;
 
    // Serialization methods
 
@@ -96,7 +92,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

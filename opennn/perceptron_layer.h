@@ -29,23 +29,11 @@
 namespace OpenNN
 {
 
-/// This class represents a layer of perceptrons.
-
-/// PerceptronLayer is a single-layer network with a hard-limit trabsfer function.
-/// This network is often trained with the perceptron learning rule.
-///
-/// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
-
-class PerceptronLayer : public Layer
-{
-
-public:
-
-    struct PerceptronLayerForwardPropagation : Layer::ForwardPropagation
+    struct PerceptronLayerForwardPropagation : LayerForwardPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
 
-        explicit PerceptronLayerForwardPropagation(Layer* new_layer_pointer) : ForwardPropagation(new_layer_pointer)
+        explicit PerceptronLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
         {
         }
 
@@ -60,19 +48,20 @@ public:
             activations.resize(batch_samples_number, neurons_number);
 
             activations_derivatives.resize(batch_samples_number, neurons_number);
-       }
+        }
 
         Tensor<type, 2> combinations;
         Tensor<type, 2> activations;
         Tensor<type, 2> activations_derivatives;
     };
 
-    struct PerceptronLayerBackPropagation : Layer::BackPropagation
+
+    struct PerceptronLayerBackPropagation : LayerBackPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
 
-        explicit PerceptronLayerBackPropagation(Layer* new_layer_pointer) : BackPropagation(new_layer_pointer)
+        explicit PerceptronLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
         {
 
         }
@@ -91,10 +80,22 @@ public:
         }
 
         Tensor<type, 2> delta;
+
         Tensor<type, 1> biases_derivatives;
         Tensor<type, 2> synaptic_weights_derivatives;
     };
 
+/// This class represents a layer of perceptrons.
+
+/// PerceptronLayer is a single-layer network with a hard-limit trabsfer function.
+/// This network is often trained with the perceptron learning rule.
+///
+/// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
+
+class PerceptronLayer : public Layer
+{
+
+public:
 
     /// Enumeration of available activation functions for the perceptron neuron model.
 
@@ -183,76 +184,55 @@ public:
 
    // Perceptron layer combinations
 
-   void calculate_combinations(const Tensor<type, 2>& inputs,
-                               const Tensor<type, 2>& biases,
-                               const Tensor<type, 2>& synaptic_weights,
-                               Tensor<type, 2>& combinations) const;
+   void calculate_combinations(const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               Tensor<type, 2>&) const;
 
-   // Perceptron layer activations_2d
+   // Perceptron layer activations
 
-   void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_2d) const;
+   void calculate_activations(const Tensor<type, 2>&,
+                              Tensor<type, 2>&) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations,
-                                          Tensor<type, 2>& activations,
-                                          Tensor<type, 2>& activations_derivatives) const;
+   void calculate_activations_derivatives(const Tensor<type, 2>&,
+                                          Tensor<type, 2>&,
+                                          Tensor<type, 2>&) const;
 
    // Perceptron layer outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 2>& inputs,
-                          ForwardPropagation* forward_propagation);
+   void forward_propagate(const Tensor<type, 2>&,
+                          LayerForwardPropagation*);
 
 
-   void forward_propagate(const Tensor<type, 2>& inputs,
-                          Tensor<type, 1> potential_parameters,
-                          ForwardPropagation* forward_propagation);
+   void forward_propagate(const Tensor<type, 2>&,
+                          Tensor<type, 1>,
+                          LayerForwardPropagation*);
 
    // Delta methods
 
-//   void calculate_output_delta(ForwardPropagation* forward_propagation,
-//                                  const Tensor<type, 2>& output_jacobian,
-//                                  Tensor<type, 2>& output_delta) const;
-
-   void calculate_output_delta(ForwardPropagation*,
-                               const Tensor<type, 2>&,
-                               BackPropagation*) const;
-
-
-//   void calculate_hidden_delta(Layer* next_layer_pointer,
-//                               ForwardPropagation* forward_propagation,
-//                               const Tensor<type, 2>& next_layer_delta,
-//                               Tensor<type, 2>& hidden_delta) const;
-
-   void calculate_hidden_delta(ForwardPropagation*,
-                               BackPropagation*,
-                               BackPropagation*) const;
+   void calculate_hidden_delta(LayerForwardPropagation*,
+       LayerBackPropagation*,
+       LayerBackPropagation*) const;
 
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,
                                           PerceptronLayerBackPropagation*) const;
 
-   void calculate_hidden_delta_probabilistic(PerceptronLayerForwardPropagation*,
-                                             ProbabilisticLayer::ProbabilisticLayerBackPropagation*,
+   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
+                                             ProbabilisticLayerBackPropagation*,
                                              PerceptronLayerBackPropagation*) const;
-
-//   void calculate_hidden_delta_perceptron(Layer* next_layer_pointer,
-//                                          const Tensor<type, 2>& activations_derivatives,
-//                                          const Tensor<type, 2>& next_layer_delta,
-//                                          Tensor<type, 2>& hidden_delta) const;
-
-//   void calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
-//                                             const Tensor<type, 2>& activations_derivatives,
-//                                             const Tensor<type, 2>& next_layer_delta,
-//                                             Tensor<type, 2>& hidden_delta) const;
 
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                 ForwardPropagation*,
-                                 BackPropagation* back_propagation) const;
+   void calculate_error_gradient(const Tensor<type, 2>&,
+                                 LayerForwardPropagation*,
+       LayerBackPropagation*) const;
 
-   void insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
+   void insert_gradient(LayerBackPropagation*,
+                        const Index&,
+                        Tensor<type, 1>&) const;
 
    // Expression methods   
 
@@ -316,7 +296,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

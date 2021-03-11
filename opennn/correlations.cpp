@@ -447,7 +447,7 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, con
 
     const Index this_size = x.size();
 
-    for (Index i = 0; i < lags_number; i++)
+    for(Index i = 0; i < lags_number; i++)
     {
         Tensor<type, 1> column_x(this_size-i);
         Tensor<type, 1> column_y(this_size-i);
@@ -549,7 +549,7 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device, c
 
     const Index this_size = x.size();
 
-    for (Index i = 0; i < maximum_lags_number; i++)
+    for(Index i = 0; i < maximum_lags_number; i++)
     {
         Tensor<type, 1> column_x(this_size-i);
         Tensor<type, 1> column_y(this_size-i);
@@ -1942,29 +1942,29 @@ Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
 
 Tensor<Index, 2> contingency_table(const Tensor<string, 1>& vector1, const Tensor<string, 1>& vector2)
 {
-    /*
-        Tensor<string, 2> data_set = {vector1, vector2};
+/*
+    Tensor<string, 2> data_set = {vector1, vector2};
 
-        data_set.set_header(Tensor<string, 1>({"variable1","variable2"}));
+    data_set.set_header(Tensor<string, 1>({"variable1","variable2"}));
 
-        const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
-        const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
+    const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
+    const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
 
-        const Index rows_number = categories_vector1.size();
-        const Index columns_number = categories_vector2.size();
+    const Index rows_number = categories_vector1.size();
+    const Index columns_number = categories_vector2.size();
 
-        Tensor<Index, 2> contingency_table(rows_number,columns_number);
+    Tensor<Index, 2> contingency_table(rows_number,columns_number);
 
-        for(Index i = 0 ; i < rows_number; i ++)
+    for(Index i = 0 ; i < rows_number; i ++)
+    {
+        for(Index j = 0 ; j < columns_number; j ++)
         {
-            for(Index j = 0 ; j < columns_number; j ++)
-            {
-                contingency_table(i,j) = data_set.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
-            }
+            contingency_table(i,j) = data_set.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
         }
+    }
 
-        return contingency_table;
-    */
+    return contingency_table;
+*/
     return Tensor<Index, 2>();
 }
 
@@ -2342,7 +2342,7 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

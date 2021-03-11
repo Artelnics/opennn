@@ -705,8 +705,8 @@ bool UnscalingLayer::is_empty() const
 }
 
 
-///// Calculates the outputs from the unscaling layer for a given set of inputs to that layer.
-///// @param inputs Set of inputs to the unscaling layer.
+/// Calculates the outputs from the unscaling layer for a given set of inputs to that layer.
+/// @param inputs Set of inputs to the unscaling layer.
 
 Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
@@ -1224,7 +1224,7 @@ string UnscalingLayer::write_expression_python() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -456,7 +456,7 @@ void ProbabilisticLayerTest::test_calculate_combinations()
    Tensor<type, 1> parameters(1);
 
    Tensor<type, 2> inputs(1,1);
-   Tensor<type, 2> combinations_2d(1,1);
+   Tensor<type, 2> combinations(1,1);
 
    biases.setConstant(1.0);
    synaptic_weights.setConstant(2.0);
@@ -464,12 +464,12 @@ void ProbabilisticLayerTest::test_calculate_combinations()
    probabilistic_layer.set(1,1);
    inputs.setConstant(3.0);
 
-   probabilistic_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations_2d);
+   probabilistic_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
 
-   assert_true(combinations_2d.rank() == 2, LOG);
-   assert_true(combinations_2d.dimension(0) == 1, LOG);
-   assert_true(combinations_2d.dimension(1) == 1, LOG);
-   assert_true(abs(combinations_2d(0,0) - 7) < static_cast<type>(1e-5) , LOG);
+   assert_true(combinations.rank() == 2, LOG);
+   assert_true(combinations.dimension(0) == 1, LOG);
+   assert_true(combinations.dimension(1) == 1, LOG);
+   assert_true(abs(combinations(0,0) - 7) < static_cast<type>(1e-5) , LOG);
 
 }
 
@@ -484,8 +484,8 @@ void ProbabilisticLayerTest::test_calculate_activations()
    Tensor<type, 1> parameters(1);
 
    Tensor<type, 2> inputs(1,1);
-   Tensor<type, 2> combinations_2d(1,1);
-   Tensor<type, 2> activations_2d(1,1);
+   Tensor<type, 2> combinations(1,1);
+   Tensor<type, 2> activations(1,1);
 
    // Test 1
 
@@ -496,79 +496,79 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
    inputs.setConstant(-1);
 
-   probabilistic_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations_2d);
+   probabilistic_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Binary);
 
-   probabilistic_layer.calculate_activations(combinations_2d, activations_2d);
+   probabilistic_layer.calculate_activations(combinations, activations);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 1, LOG);
-   assert_true(activations_2d.dimension(1) == 1, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 1 , LOG);
+   assert_true(activations.rank() == 2, LOG);
+   assert_true(activations.dimension(0) == 1, LOG);
+   assert_true(activations.dimension(1) == 1, LOG);
+   assert_true(static_cast<Index>(activations(0,0)) == 1 , LOG);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
 
-   probabilistic_layer.calculate_activations(combinations_2d, activations_2d);
+   probabilistic_layer.calculate_activations(combinations, activations);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 1, LOG);
-   assert_true(activations_2d.dimension(1) == 1, LOG);
-   assert_true(activations_2d(0,0) - static_cast<type>(0.5) < static_cast<type>(1e-5), LOG);
+   assert_true(activations.rank() == 2, LOG);
+   assert_true(activations.dimension(0) == 1, LOG);
+   assert_true(activations.dimension(1) == 1, LOG);
+   assert_true(activations(0,0) - static_cast<type>(0.5) < static_cast<type>(1e-5), LOG);
 
    // Test 2
 
    probabilistic_layer.set(2, 2);
    probabilistic_layer.set_parameters_constant(2);
 
-   combinations_2d.resize(1,2);
-   combinations_2d.setZero();
+   combinations.resize(1,2);
+   combinations.setZero();
 
-   activations_2d.resize(1,2);
-   activations_2d.setZero();
+   activations.resize(1,2);
+   activations.setZero();
 
    inputs.resize(1,2);
    inputs.setConstant(2);
 
-   probabilistic_layer.calculate_combinations(inputs, probabilistic_layer.get_biases(), probabilistic_layer.get_synaptic_weights(), combinations_2d);
+   probabilistic_layer.calculate_combinations(inputs, probabilistic_layer.get_biases(), probabilistic_layer.get_synaptic_weights(), combinations);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
 
-   probabilistic_layer.calculate_activations(combinations_2d, activations_2d);
+   probabilistic_layer.calculate_activations(combinations, activations);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 1, LOG);
-   assert_true(activations_2d.dimension(1) == 2, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 1, LOG);
+   assert_true(activations.rank() == 2, LOG);
+   assert_true(activations.dimension(0) == 1, LOG);
+   assert_true(activations.dimension(1) == 2, LOG);
+   assert_true(static_cast<Index>(activations(0,0)) == 1, LOG);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
-   probabilistic_layer.calculate_activations(combinations_2d, activations_2d);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+   probabilistic_layer.calculate_activations(combinations, activations);
+   assert_true(abs(activations(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
 
    // Test 3
 
    probabilistic_layer.set(3, 3);
 
-   combinations_2d.resize(1,3);
-   combinations_2d.setValues({{1,0,-1}});
+   combinations.resize(1,3);
+   combinations.setValues({{1,0,-1}});
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
 
-   activations_2d.resize(1,3);
-   probabilistic_layer.calculate_activations(combinations_2d, activations_2d);
+   activations.resize(1,3);
+   probabilistic_layer.calculate_activations(combinations, activations);
 
-   assert_true(activations_2d.rank() == 2, LOG);
-   assert_true(activations_2d.dimension(0) == 1, LOG);
-   assert_true(activations_2d.dimension(1) == 3, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 1, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,1)) == 0, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,2)) == 0, LOG);
+   assert_true(activations.rank() == 2, LOG);
+   assert_true(activations.dimension(0) == 1, LOG);
+   assert_true(activations.dimension(1) == 3, LOG);
+   assert_true(static_cast<Index>(activations(0,0)) == 1, LOG);
+   assert_true(static_cast<Index>(activations(0,1)) == 0, LOG);
+   assert_true(static_cast<Index>(activations(0,2)) == 0, LOG);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
-   probabilistic_layer.calculate_activations(combinations_2d, activations_2d);
-   assert_true(abs(activations_2d(0,0) - static_cast<type>(0.6652)) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(activations_2d(0,1) - static_cast<type>(0.2447)) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(activations_2d(0,2) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
+   probabilistic_layer.calculate_activations(combinations, activations);
+   assert_true(abs(activations(0,0) - static_cast<type>(0.6652)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(activations(0,1) - static_cast<type>(0.2447)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(activations(0,2) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
 
 }
 
@@ -579,28 +579,28 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     NumericalDifferentiation numerical_differentiation;
     ProbabilisticLayer probabilistic_layer;
 
-    Tensor<type, 2> combinations_2d;
-    Tensor<type, 2> activations_2d;
+    Tensor<type, 2> combinations;
+    Tensor<type, 2> activations;
     Tensor<type, 3> activations_derivatives;
 
     // Test 1
 
     probabilistic_layer.set(1,3);
 
-    combinations_2d.resize(1,3);
-    combinations_2d.setValues({{1, 2, 3}});
-    activations_2d.resize(1,3);
+    combinations.resize(1,3);
+    combinations.setValues({{1, 2, 3}});
+    activations.resize(1,3);
     activations_derivatives.resize(3,3,1);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
-    probabilistic_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+    probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
     assert_true(activations_derivatives.rank() == 3, LOG);
     assert_true(activations_derivatives.dimension(0) == 3, LOG);
     assert_true(activations_derivatives.dimension(1) == 3, LOG);
     assert_true(activations_derivatives.dimension(2) == 1, LOG);
 
-    assert_true(abs(activations_2d(0,0) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations(0,0) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
 
     assert_true(abs(activations_derivatives(0,0,0) - static_cast<type>(0.0819)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(1,1,0) - static_cast<type>(0.1848)) < static_cast<type>(1e-3), LOG);
@@ -610,12 +610,12 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 
     probabilistic_layer.set(1,4);
 
-    combinations_2d.resize(1,4);
-    combinations_2d.setValues({{-1, 2, -3, -4}});
-    activations_2d.resize(1,4);
+    combinations.resize(1,4);
+    combinations.setValues({{-1, 2, -3, -4}});
+    activations.resize(1,4);
     activations_derivatives.resize(4,4,1);
 
-    probabilistic_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+    probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
     assert_true(abs(activations_derivatives(3,0,0) + static_cast<type>(0.00011)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(3,1,0) + static_cast<type>(0.00221)) < static_cast<type>(1e-3), LOG);
@@ -626,15 +626,15 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 
     probabilistic_layer.set(1,1);
 
-    combinations_2d.resize(1,1);
-    combinations_2d.setValues({{-1.55f}});
-    activations_2d.resize(1,1);
+    combinations.resize(1,1);
+    combinations.setValues({{-1.55f}});
+    activations.resize(1,1);
     activations_derivatives.resize(1,1,1);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
-    probabilistic_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
+    probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-    assert_true(abs(activations_2d(0,0) - static_cast<type>(0.175)) < static_cast<type>(1e-2), LOG);
+    assert_true(abs(activations(0,0) - static_cast<type>(0.175)) < static_cast<type>(1e-2), LOG);
 
     assert_true(activations_derivatives.rank() == 3, LOG);
     assert_true(activations_derivatives.dimension(0) == 1, LOG);
@@ -765,51 +765,22 @@ void ProbabilisticLayerTest::test_forward_propagate()
     probabilistic_layer.set_parameters_constant(1);
     inputs.setConstant(1);
 
-    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
-    probabilistic_layer.forward_propagate(inputs, forward_propagation);
+    ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(&probabilistic_layer);
+    probabilistic_layer_forward_propagation.set(1);
 
-    assert_true(forward_propagation.combinations_2d.rank() == 2, LOG);
-    assert_true(forward_propagation.combinations_2d.dimension(0) == 1, LOG);
-    assert_true(forward_propagation.combinations_2d.dimension(1) == 2, LOG);
-    assert_true(abs(forward_propagation.combinations_2d(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.combinations_2d(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_2d(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_2d(0,1) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_derivatives_3d(0,0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_derivatives_3d(0,1,0) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+    probabilistic_layer.forward_propagate(inputs, &probabilistic_layer_forward_propagation);
+
+    assert_true(probabilistic_layer_forward_propagation.combinations.rank() == 2, LOG);
+    assert_true(probabilistic_layer_forward_propagation.combinations.dimension(0) == 1, LOG);
+    assert_true(probabilistic_layer_forward_propagation.combinations.dimension(1) == 2, LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.activations(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.activations(0,1) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.activations_derivatives(0,0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(probabilistic_layer_forward_propagation.activations_derivatives(0,1,0) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 }
 
-void ProbabilisticLayerTest::test_calculate_output_delta()
-{
-    cout << "test_calculate_output_delta\n";
-
-    ProbabilisticLayer probabilistic_layer(2,2);
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
-
-    Tensor<type,2> output_delta(1,2);
-
-    Tensor<type, 1> parameters(6);
-    Tensor<type, 2> inputs(1,2);
-
-    probabilistic_layer.set_parameters_constant(1);
-    inputs.setConstant(1);
-    Tensor<type,2> activations_2d(1,2);
-
-    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
-    probabilistic_layer.forward_propagate(inputs, forward_propagation);
-
-    Tensor<type,2> output_gradient(1,2);
-    output_gradient.setValues({{1,0}});
-
-    probabilistic_layer.calculate_output_delta(forward_propagation, output_gradient, output_delta);
-
-    assert_true(output_delta.rank() == 2, LOG);
-    assert_true(output_delta.dimension(0) == 1, LOG);
-    assert_true(output_delta.dimension(1) == 2, LOG);
-    assert_true(abs(output_delta(0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(output_delta(0,1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-}
 
 void ProbabilisticLayerTest::test_calculate_error_gradient()
 {
@@ -822,8 +793,6 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs(1,2);
 
-    Tensor<type, 2> output_gradient(1,2);
-
     Tensor<type, 2> output_delta(1,2);
 
     // Test 1
@@ -833,15 +802,16 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
 
     inputs.setValues({{0,1}});
 
-    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
+    ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(&probabilistic_layer);
+    probabilistic_layer_forward_propagation.set(1);
 
-    probabilistic_layer.forward_propagate(inputs, forward_propagation);
+    probabilistic_layer.forward_propagate(inputs, &probabilistic_layer_forward_propagation);
+/*
+    ProbabilisticLayerBackPropagation probabilistic_layer_back_propagation(1, &probabilistic_layer);
 
-    Layer::BackPropagation back_propagation(1, &probabilistic_layer);
+    output_delta.setValues({{1,-7}});
 
-    output_gradient.setValues({{1,-7}});
-
-    probabilistic_layer.calculate_output_delta(forward_propagation,output_gradient, output_delta);
+//    probabilistic_layer.calculate_output_delta(forward_propagation,output_delta, output_delta);
 
     back_propagation.delta = output_delta;
 
@@ -859,7 +829,7 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
     assert_true(abs(back_propagation.synaptic_weights_derivatives(0,1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(back_propagation.synaptic_weights_derivatives(1,0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(back_propagation.synaptic_weights_derivatives(1,1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-
+*/
 }
 
 
@@ -950,15 +920,9 @@ void ProbabilisticLayerTest::run_test_case()
    test_calculate_activations_derivatives();
    test_calculate_outputs();
 
-
    // Forward propagate
 
    test_forward_propagate();
-
-
-   // Hidden delta
-
-   test_calculate_output_delta();
 
    // Gradient
 
@@ -974,7 +938,7 @@ void ProbabilisticLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
