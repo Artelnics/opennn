@@ -714,7 +714,7 @@ void TrainingStrategy::set_default()
 /// It optimizes the loss index of a neural network.
 /// This method also returns a structure with the results from training.
 
-OptimizationAlgorithm::Results TrainingStrategy::perform_training()
+OptimizationAlgorithmResults TrainingStrategy::perform_training()
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -734,7 +734,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+               << "OptimizationAlgorithmResults TrainingStrategy::perform_training() const method.\n"
                << "Convolutional Layer is not available yet. It will be included in future versions.\n";
 
         throw logic_error(buffer.str());
@@ -742,7 +742,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
 
 
-    OptimizationAlgorithm::Results results;
+    OptimizationAlgorithmResults results;
 
     // Main
 

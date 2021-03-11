@@ -28,6 +28,7 @@
 
 namespace OpenNN
 {
+struct PruningInputsResults;
 
 /// This concrete class represents a pruning inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
 
@@ -45,30 +46,6 @@ public:
     explicit PruningInputs(TrainingStrategy*); 
 
     virtual ~PruningInputs();
-
-
-    // STRUCTURES
-
-    ///
-    /// This structure contains the training results for the pruning inputs method.
-    ///
-
-    struct PruningInputsResults : public InputsSelection::Results
-    {
-        /// Default constructor.
-
-        explicit PruningInputsResults() : InputsSelection::Results()
-        {
-        }
-
-        /// Destructor.
-
-        virtual ~PruningInputsResults()
-        {
-        }
-
-    };
-
 
     // Get methods
 
@@ -96,12 +73,10 @@ public:
 
     Tensor<string, 2> to_string_matrix() const;
 
-    
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
     
-
     void save(const string&) const;
     void load(const string&);
 
@@ -120,6 +95,26 @@ private:
     /// Maximum number of epochs at which the selection error increases.
 
     Index maximum_selection_failures;
+};
+
+///
+/// This structure contains the training results for the pruning inputs method.
+///
+
+struct PruningInputsResults : public InputsSelectionResults
+{
+    /// Default constructor.
+
+    explicit PruningInputsResults() : InputsSelectionResults()
+    {
+    }
+
+    /// Destructor.
+
+    virtual ~PruningInputsResults()
+    {
+    }
+
 };
 
 }

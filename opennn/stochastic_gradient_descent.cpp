@@ -404,9 +404,9 @@ void StochasticGradientDescent::update_iteration(const LossIndexBackPropagation&
 /// Training occurs according to the training parameters and stopping criteria.
 /// It returns a results structure with the history and the final values of the reserved variables.
 
-OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
+OptimizationAlgorithmResults StochasticGradientDescent::perform_training()
 {
-    Results results;
+    OptimizationAlgorithmResults results;
 
     check();
 

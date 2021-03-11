@@ -78,7 +78,7 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
+        const OptimizationAlgorithmResults optimization_algorithm_results = training_strategy.perform_training();
 
         // Testing analysis
 

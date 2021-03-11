@@ -883,7 +883,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
 /// Trains a neural network with an associated loss index according to the conjugate gradient algorithm.
 /// Training occurs according to the training operators, training parameters and stopping criteria.
 
-OptimizationAlgorithm::Results ConjugateGradient::perform_training()
+OptimizationAlgorithmResults ConjugateGradient::perform_training()
 {
     check();
 
@@ -891,7 +891,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     if(display) cout << "Training with conjugate gradient...\n";
 
-    Results results;
+    OptimizationAlgorithmResults results;
+
     results.resize_training_history(maximum_epochs_number+1);
 
     // Elapsed time
@@ -927,8 +928,6 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-
 
     NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);

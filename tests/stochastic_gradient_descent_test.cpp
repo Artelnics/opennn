@@ -154,7 +154,7 @@ void StochasticGradientDescentTest::test_resize_training_history() // @todo
 
 //   sgd.set_reserve_all_training_history(true);
 
-//   OptimizationAlgorithm::Results sgdtr;//(&sgd);
+//   OptimizationAlgorithmResults sgdtr;//(&sgd);
 
 //   sgdtr.resize_training_history(1);
 

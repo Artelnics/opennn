@@ -27,6 +27,7 @@
 
 namespace OpenNN
 {
+struct GeneticAlgorithmResults;
 
 /// This concrete class represents a genetic algorithm, inspired by the process of natural selection[1] such as mutation,
 /// crossover and selection.
@@ -41,6 +42,7 @@ namespace OpenNN
 
 class GeneticAlgorithm : public InputsSelection
 {
+
 public:
 
     // Constructors
@@ -66,51 +68,6 @@ public:
     /// Enumeration of available methods for the fitness assignement of the population.
 
     enum FitnessAssignment{ObjectiveBased, RankBased};
-
-    // Structures
-
-    /// This structure contains the training results for the genetic algorithm method.    
-
-    struct GeneticAlgorithmResults : public InputsSelection::Results
-    {
-        /// Default constructor.
-
-        explicit GeneticAlgorithmResults() : InputsSelection::Results()
-        {
-        }
-
-        /// Destructor.
-
-        virtual ~GeneticAlgorithmResults()
-        {
-        }
-
-        
-
-        inline void resize_history(const Index& new_size)
-        {
-            generation_optimum_training_error_history.resize(new_size);
-            generation_minimum_selection_error_history.resize(new_size);
-            generation_selection_error_mean_history.resize(new_size);
-            generation_selection_error_standard_deviation_history.resize(new_size);
-        }
-
-        /// Values of the minimum training error in each generation.
-
-        Tensor<type, 1> generation_optimum_training_error_history;
-
-        /// Values of the minimum selection error in each generation.
-
-        Tensor<type, 1> generation_minimum_selection_error_history;
-
-        /// Mean of the selection error in each generation.
-
-        Tensor<type, 1> generation_selection_error_mean_history;
-
-        /// Standard deviation of the selection error in each generation.
-
-        Tensor<type, 1> generation_selection_error_standard_deviation_history;
-    };
 
     // Get methods
 
@@ -348,6 +305,49 @@ private:
     bool reserve_generation_optimum_loss;
 
 };
+
+
+/// This structure contains the training results for the genetic algorithm method.
+
+struct GeneticAlgorithmResults : public InputsSelectionResults
+{
+    /// Default constructor.
+
+    explicit GeneticAlgorithmResults() : InputsSelectionResults()
+    {
+    }
+
+    /// Destructor.
+
+    virtual ~GeneticAlgorithmResults()
+    {
+    }
+
+    inline void resize_history(const Index& new_size)
+    {
+        generation_optimum_training_error_history.resize(new_size);
+        generation_minimum_selection_error_history.resize(new_size);
+        generation_selection_error_mean_history.resize(new_size);
+        generation_selection_error_standard_deviation_history.resize(new_size);
+    }
+
+    /// Values of the minimum training error in each generation.
+
+    Tensor<type, 1> generation_optimum_training_error_history;
+
+    /// Values of the minimum selection error in each generation.
+
+    Tensor<type, 1> generation_minimum_selection_error_history;
+
+    /// Mean of the selection error in each generation.
+
+    Tensor<type, 1> generation_selection_error_mean_history;
+
+    /// Standard deviation of the selection error in each generation.
+
+    Tensor<type, 1> generation_selection_error_standard_deviation_history;
+};
+
 
 }
 

@@ -30,6 +30,9 @@
 namespace OpenNN
 {
 
+struct ModelSelectionResults;
+
+
 /// This class represents the concept of model selection[1] algorithm in OpenNN.
 
 ///
@@ -60,35 +63,6 @@ public:
 
     enum InputsSelectionMethod{NO_INPUTS_SELECTION, GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM};
 
-    /// This structure contains the results from the model selection process.
-
-    struct Results
-    {
-        /// Default constructor.
-
-        explicit Results();
-
-        /// Pointer to a structure with the results from the growing neurons selection algorithm.
-
-        GrowingNeurons::GrowingNeuronsResults* growing_neurons_results_pointer = nullptr;
-
-
-        /// Pointer to a structure with the results from the growing inputs selection algorithm.
-
-        GrowingInputs::GrowingInputsResults* growing_inputs_results_pointer = nullptr;
-
-
-        /// Pointer to a structure with the results from the pruning inputs selection algorithm.
-
-        PruningInputs::PruningInputsResults* pruning_inputs_results_pointer = nullptr;
-
-
-        /// Pointer to a structure with the results from the genetic inputs selection algorithm.
-
-        GeneticAlgorithm::GeneticAlgorithmResults* genetic_algorithm_results_pointer = nullptr;
-    };
-
-    
     // Get methods
 
     TrainingStrategy* get_training_strategy_pointer() const;
@@ -123,12 +97,12 @@ public:
 
     void check() const;
 
-    Results perform_neurons_selection();
+    ModelSelectionResults perform_neurons_selection();
 
-    Results perform_inputs_selection();
-
-    Results perform_model_selection();
-
+    ModelSelectionResults perform_inputs_selection();
+/*
+    ModelSelectionResults perform_model_selection();
+*/
     // Serialization methods
     
     void from_XML(const tinyxml2::XMLDocument&);
@@ -175,6 +149,36 @@ private:
     /// Display messages to screen.
 
     bool display = true;
+};
+
+
+/// This structure contains the results from the model selection process.
+
+struct ModelSelectionResults
+{
+    /// Default constructor.
+
+    explicit ModelSelectionResults();
+
+    // Neurons selection
+
+    /// Pointer to a structure with the results from the growing neurons selection algorithm.
+
+    GrowingNeuronsResults* growing_neurons_results_pointer = nullptr;
+
+    // Inputs selection
+
+    /// Pointer to a structure with the results from the growing inputs selection algorithm.
+
+    GrowingInputsResults* growing_inputs_results_pointer = nullptr;
+
+    /// Pointer to a structure with the results from the pruning inputs selection algorithm.
+
+    PruningInputsResults* pruning_inputs_results_pointer = nullptr;
+
+    /// Pointer to a structure with the results from the genetic inputs selection algorithm.
+
+    GeneticAlgorithmResults* genetic_algorithm_results_pointer = nullptr;
 };
 
 }

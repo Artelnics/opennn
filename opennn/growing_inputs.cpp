@@ -169,7 +169,7 @@ void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_loss
 
 /// Perform the inputs selection with the growing inputs method.
 
-GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
+GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -275,7 +275,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         {
             neural_network_pointer->set_parameters_random();
 
-            OptimizationAlgorithm::Results training_results = training_strategy_pointer->perform_training();
+            OptimizationAlgorithmResults training_results = training_strategy_pointer->perform_training();
 
             type current_training_error_trial = training_results.final_training_error;
             type current_selection_error_trial = training_results.final_selection_error;

@@ -70,7 +70,7 @@ int main(void)
 
         training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-        const OptimizationAlgorithm::Results training_strategy_results = training_strategy.perform_training();
+        const OptimizationAlgorithmResults training_strategy_results = training_strategy.perform_training();
 
         // Testing analysis
 

@@ -359,8 +359,8 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 
 //    SumSquaredError sum_squared_error(&neural_network,& data_set);
 
-//    GeneticAlgorithm::GeneticAlgorithmResults* ga_results;
-//    GeneticAlgorithm::GeneticAlgorithmResults* ga1_results;
+//    GeneticAlgorithmResults* ga_results;
+//    GeneticAlgorithmResults* ga1_results;
 
 //    // Test
 

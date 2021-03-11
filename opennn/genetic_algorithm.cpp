@@ -1811,7 +1811,7 @@ Index GeneticAlgorithm::get_optimal_individual_index() const
 
 /// Select the inputs with best generalization properties using the genetic algorithm.
 
-GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
+GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
 {
 #ifdef __OPENNN_DEBUG__
 

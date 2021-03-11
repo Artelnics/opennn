@@ -397,7 +397,7 @@ void QuasiNewtonMethodTest::test_resize_training_history() // @todo
 
 //    QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
 
-//    OptimizationAlgorithm::Results results;
+//    OptimizationAlgorithmResults results;
 
 //    quasi_newton_method.set_reserve_all_training_history(true);
 

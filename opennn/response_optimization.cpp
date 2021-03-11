@@ -487,9 +487,9 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
 }
 
 
-ResponseOptimization::Results* ResponseOptimization::perform_optimization() const
+ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 {
-    Results* results = new Results(neural_network_pointer);
+    ResponseOptimizationResults* results = new ResponseOptimizationResults(neural_network_pointer);
 
     const Tensor<type, 2> inputs = calculate_inputs();
 
