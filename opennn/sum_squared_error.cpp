@@ -41,7 +41,7 @@ SumSquaredError::~SumSquaredError()
 
 void SumSquaredError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
-                     BackPropagation& back_propagation) const
+                     LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
 
@@ -53,7 +53,7 @@ void SumSquaredError::calculate_error(const DataSetBatch& batch,
 
 void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                              NeuralNetworkForwardPropagation& forward_propagation,
-                                             BackPropagation& back_propagation) const
+                                             LossIndexBackPropagation& back_propagation) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -112,7 +112,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
 }
 
 
-void SumSquaredError::calculate_Jacobian_gradient(const DataSetBatch& ,
+void SumSquaredError::calculate_gradient(const DataSetBatch& ,
                                     LossIndexBackPropagationLM& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__

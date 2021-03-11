@@ -248,12 +248,12 @@ public:
 
    Triplet calculate_bracketing_triplet(const DataSetBatch&,
                                         NeuralNetworkForwardPropagation&,
-                                        BackPropagation&,
+                                        LossIndexBackPropagation&,
                                         OptimizationAlgorithm::OptimizationData&) const;
 
    pair<type, type> calculate_directional_point(const DataSetBatch&,
                                                 NeuralNetworkForwardPropagation&,
-                                                BackPropagation&,
+                                                LossIndexBackPropagation&,
                                                 OptimizationAlgorithm::OptimizationData&) const;
 
    // Serialization methods

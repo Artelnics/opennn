@@ -60,7 +60,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    neural_network.set_parameters_constant(0);
 
    NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
-   BackPropagation training_back_propagation(data_set.get_training_samples_number(), &cee);
+   LossIndexBackPropagation training_back_propagation(data_set.get_training_samples_number(), &cee);
 
    neural_network.forward_propagate(batch, forward_propagation);
    cee.back_propagate(batch, forward_propagation, training_back_propagation);
@@ -82,7 +82,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    neural_network.set_parameters_constant(1);
 
    NeuralNetworkForwardPropagation forward_propagation_1(data_set.get_training_samples_number(), &neural_network);
-   BackPropagation training_back_propagation_1(data_set.get_training_samples_number(), &cee);
+   LossIndexBackPropagation training_back_propagation_1(data_set.get_training_samples_number(), &cee);
 
    neural_network.forward_propagate(batch, forward_propagation_1);
    cee.back_propagate(batch, forward_propagation_1, training_back_propagation_1);
@@ -120,7 +120,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    CrossEntropyError cee_2(&neural_network_2, &data_set_2);
 
    NeuralNetworkForwardPropagation forward_propagation_2(data_set_2.get_training_samples_number(), &neural_network_2);
-   BackPropagation training_back_propagation_2(data_set_2.get_training_samples_number(), &cee_2);
+   LossIndexBackPropagation training_back_propagation_2(data_set_2.get_training_samples_number(), &cee_2);
 
    neural_network_2.forward_propagate(batch_1, forward_propagation_2);
    cee_2.back_propagate(batch_1, forward_propagation_2, training_back_propagation_2);
@@ -195,7 +195,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    neural_network.set_parameters_random();
 
    NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
-   BackPropagation training_back_propagation(data_set.get_training_samples_number(), &cee);
+   LossIndexBackPropagation training_back_propagation(data_set.get_training_samples_number(), &cee);
    cee.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    neural_network.forward_propagate(batch, forward_propagation);

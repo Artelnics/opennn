@@ -80,7 +80,7 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
 
-   BackPropagation back_propagation(batch_samples_number, &mean_squared_error);
+   LossIndexBackPropagation back_propagation(batch_samples_number, &mean_squared_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
@@ -110,7 +110,7 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    NeuralNetworkForwardPropagation forward_propagation_2(batch_samples_number, &neural_network);
 
-   BackPropagation back_propagation_2(batch_samples_number, &mean_squared_error);
+   LossIndexBackPropagation back_propagation_2(batch_samples_number, &mean_squared_error);
 
    neural_network.forward_propagate(batch, forward_propagation_2);
 
@@ -180,7 +180,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
       mse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-      BackPropagation training_back_propagation(samples_number, &mse);
+      LossIndexBackPropagation training_back_propagation(samples_number, &mse);
 
       neural_network.forward_propagate(batch, forward_propagation);
 
@@ -227,7 +227,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
         mse_1.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
         NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network_1);
-        BackPropagation training_back_propagation(samples_number, &mse_1);
+        LossIndexBackPropagation training_back_propagation(samples_number, &mse_1);
 
         neural_network_1.forward_propagate(batch_1, forward_propagation);
 

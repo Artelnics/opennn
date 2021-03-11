@@ -204,7 +204,7 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
-                     BackPropagation& back_propagation) const
+                     LossIndexBackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -239,7 +239,7 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 
 void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                                   NeuralNetworkForwardPropagation& forward_propagation,
-                                                  BackPropagation& back_propagation) const
+                                                  LossIndexBackPropagation& back_propagation) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -281,7 +281,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 }
 
 
-void WeightedSquaredError::calculate_Jacobian_gradient(const DataSetBatch& batch,
+void WeightedSquaredError::calculate_gradient(const DataSetBatch& batch,
                                     LossIndexBackPropagationLM& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__

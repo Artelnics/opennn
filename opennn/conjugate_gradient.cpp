@@ -937,8 +937,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     string information;
 
-    BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Optimization algorithm
 
@@ -1852,7 +1852,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 void ConjugateGradient::update_epoch(
         const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
-        BackPropagation& back_propagation,
+        LossIndexBackPropagation& back_propagation,
         GGOptimizationData& optimization_data)
 {      
     const Index parameters_number = back_propagation.parameters.dimension(0);

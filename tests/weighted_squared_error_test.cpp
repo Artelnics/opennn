@@ -92,7 +92,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
    NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
 
-   BackPropagation back_propagation(batch_samples_number, &wse);
+   LossIndexBackPropagation back_propagation(batch_samples_number, &wse);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
@@ -207,7 +207,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
        NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
 
-       BackPropagation back_propagation(batch_samples_number, &wse);
+       LossIndexBackPropagation back_propagation(batch_samples_number, &wse);
 
        neural_network.forward_propagate(batch, forward_propagation);
         forward_propagation.print();

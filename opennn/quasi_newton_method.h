@@ -228,12 +228,12 @@ public:
 
    // Training methods
 
-   void calculate_DFP_inverse_hessian(const BackPropagation&, QNMOptimizationData&) const;
+   void calculate_DFP_inverse_hessian(const LossIndexBackPropagation&, QNMOptimizationData&) const;
 
-   void calculate_BFGS_inverse_hessian(const BackPropagation&, QNMOptimizationData&) const;
+   void calculate_BFGS_inverse_hessian(const LossIndexBackPropagation&, QNMOptimizationData&) const;
 
    void initialize_inverse_hessian_approximation(QNMOptimizationData&) const;
-   void calculate_inverse_hessian_approximation(const BackPropagation&, QNMOptimizationData&) const;
+   void calculate_inverse_hessian_approximation(const LossIndexBackPropagation&, QNMOptimizationData&) const;
 
    const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
    const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
@@ -241,7 +241,7 @@ public:
    void update_epoch(
            const DataSetBatch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
-           BackPropagation& back_propagation,
+           LossIndexBackPropagation& back_propagation,
            QNMOptimizationData& optimization_data);
 
    Results perform_training();
