@@ -452,7 +452,7 @@ void GradientDescent::update_epoch(
         const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,
-        GDOptimizationData& optimization_data)
+        GradientDescentData& optimization_data)
 {
 
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
@@ -575,7 +575,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     // Optimization algorithm
 
-    GDOptimizationData optimization_data(this);
+    GradientDescentData optimization_data(this);
 
     Index selection_error_increases = 0;
 

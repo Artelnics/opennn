@@ -34,6 +34,8 @@
 namespace OpenNN
 {
 
+struct GradientDescentData;
+
 /// The process of making changes to weights and biases,
 /// where the changes are propotyional to derivatives of network error with respect to those weights and biases.
 /// This is done to minimize network error.
@@ -47,85 +49,6 @@ class GradientDescent : public OptimizationAlgorithm
 {
 
 public:
-
-    struct GDOptimizationData : public OptimizationData
-    {
-        /// Default constructor.
-
-        explicit GDOptimizationData()
-        {
-        }
-
-        explicit GDOptimizationData(GradientDescent* new_gradient_descent_pointer)
-        {
-            set(new_gradient_descent_pointer);
-        }
-
-        virtual ~GDOptimizationData() {}
-
-        void set(GradientDescent* new_gradient_descent_pointer)
-        {
-            gradient_descent_pointer = new_gradient_descent_pointer;
-
-            LossIndex* loss_index_pointer = gradient_descent_pointer->get_loss_index_pointer();
-
-            NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-            const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-            // Neural network data
-
-            old_parameters.resize(parameters_number);
-            potential_parameters.resize(parameters_number);
-
-            parameters_increment.resize(parameters_number);
-
-            // Loss index data
-
-            old_gradient.resize(parameters_number);
-
-            // Optimization algorithm data
-
-            training_direction.resize(parameters_number);
-        }
-
-        void print() const
-        {
-            cout << "Training Direction:" << endl;
-            cout << training_direction << endl;
-
-            cout << "Learning rate:" << endl;
-            cout << learning_rate << endl;
-        }
-
-        GradientDescent* gradient_descent_pointer = nullptr;
-
-        // Neural network data
-
-        Tensor<type, 1> old_parameters;
-
-        Tensor<type, 1> parameters_increment;
-
-        type parameters_increment_norm = 0;
-
-        // Loss index data
-
-        type old_training_loss = 0;
-
-        Tensor<type, 1> old_gradient;
-
-        Tensor<type, 2> inverse_hessian;
-        Tensor<type, 2> old_inverse_hessian;
-
-        // Optimization algorithm data
-
-        Index epoch = 0;
-
-        Tensor<type, 0> training_slope;
-
-        type learning_rate = 0;
-        type old_learning_rate = 0;
-    };
 
    // Constructors
 
@@ -199,7 +122,7 @@ public:
            const DataSetBatch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
            LossIndexBackPropagation& back_propagation,
-           GDOptimizationData& optimization_data);
+           GradientDescentData& optimization_data);
 
    Results perform_training();
 
@@ -271,6 +194,87 @@ private:
    bool reserve_selection_error_history;
 
 };
+
+
+struct GradientDescentData : public OptimizationAlgorithmData
+{
+    /// Default constructor.
+
+    explicit GradientDescentData()
+    {
+    }
+
+    explicit GradientDescentData(GradientDescent* new_gradient_descent_pointer)
+    {
+        set(new_gradient_descent_pointer);
+    }
+
+    virtual ~GradientDescentData() {}
+
+    void set(GradientDescent* new_gradient_descent_pointer)
+    {
+        gradient_descent_pointer = new_gradient_descent_pointer;
+
+        LossIndex* loss_index_pointer = gradient_descent_pointer->get_loss_index_pointer();
+
+        NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+        // Neural network data
+
+        old_parameters.resize(parameters_number);
+        potential_parameters.resize(parameters_number);
+
+        parameters_increment.resize(parameters_number);
+
+        // Loss index data
+
+        old_gradient.resize(parameters_number);
+
+        // Optimization algorithm data
+
+        training_direction.resize(parameters_number);
+    }
+
+    void print() const
+    {
+        cout << "Training Direction:" << endl;
+        cout << training_direction << endl;
+
+        cout << "Learning rate:" << endl;
+        cout << learning_rate << endl;
+    }
+
+    GradientDescent* gradient_descent_pointer = nullptr;
+
+    // Neural network data
+
+    Tensor<type, 1> old_parameters;
+
+    Tensor<type, 1> parameters_increment;
+
+    type parameters_increment_norm = 0;
+
+    // Loss index data
+
+    type old_training_loss = 0;
+
+    Tensor<type, 1> old_gradient;
+
+    Tensor<type, 2> inverse_hessian;
+    Tensor<type, 2> old_inverse_hessian;
+
+    // Optimization algorithm data
+
+    Index epoch = 0;
+
+    Tensor<type, 0> training_slope;
+
+    type learning_rate = 0;
+    type old_learning_rate = 0;
+};
+
 
 }
 

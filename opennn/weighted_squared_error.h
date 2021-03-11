@@ -69,7 +69,7 @@ public:
 
    void set_normalization_coefficient();
 
-   void set_data_set_pointer(DataSet* new_data_set_pointer);
+   void set_data_set_pointer(DataSet*);
 
    // Error methods
 
@@ -78,6 +78,7 @@ public:
                         LossIndexBackPropagation&) const;
 
    string get_error_type() const;
+
    string get_error_type_text() const;
 
    // Gradient methods
@@ -87,7 +88,7 @@ public:
                                LossIndexBackPropagation&) const;
 
    void calculate_gradient(const DataSetBatch&,
-                                    LossIndexBackPropagationLM&) const;
+                           LossIndexBackPropagationLM&) const;
 
    // Hessian method
 

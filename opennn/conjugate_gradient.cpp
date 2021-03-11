@@ -959,7 +959,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     Index selection_error_increases = 0;
 
-    GGOptimizationData optimization_data(this);
+    ConjugateGradientData optimization_data(this);
 
     if(has_selection)
     {
@@ -1853,7 +1853,7 @@ void ConjugateGradient::update_epoch(
         const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,
-        GGOptimizationData& optimization_data)
+        ConjugateGradientData& optimization_data)
 {      
     const Index parameters_number = back_propagation.parameters.dimension(0);
 
@@ -1916,25 +1916,24 @@ void ConjugateGradient::update_epoch(
 }
 
 
-
-ConjugateGradient::GGOptimizationData::GGOptimizationData(): OptimizationData()
+ConjugateGradientData::ConjugateGradientData(): OptimizationAlgorithmData()
 {
 }
 
 
-ConjugateGradient::GGOptimizationData::GGOptimizationData(ConjugateGradient* new_conjugate_gradient_pointer) : OptimizationData()
+ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient_pointer) : OptimizationAlgorithmData()
 {
     set(new_conjugate_gradient_pointer);
 }
 
 
-ConjugateGradient::GGOptimizationData::~GGOptimizationData()
+ConjugateGradientData::~ConjugateGradientData()
 {
 
 }
 
 
-void ConjugateGradient::GGOptimizationData::set(ConjugateGradient* new_conjugate_gradient_pointer)
+void ConjugateGradientData::set(ConjugateGradient* new_conjugate_gradient_pointer)
 {
     conjugate_gradient_pointer = new_conjugate_gradient_pointer;
 
@@ -1955,12 +1954,11 @@ void ConjugateGradient::GGOptimizationData::set(ConjugateGradient* new_conjugate
 }
 
 
-void ConjugateGradient::GGOptimizationData::print() const
+void ConjugateGradientData::print() const
 {
 }
 
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.

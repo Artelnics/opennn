@@ -51,33 +51,6 @@ public:
     enum StoppingCondition{MinimumParametersIncrementNorm, MinimumLossDecrease, LossGoal, GradientNormGoal,
                            MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
 
-    struct OptimizationData
-    {
-        explicit OptimizationData()
-        {
-        }
-
-        virtual ~OptimizationData()
-        {
-        }
-
-        void print() const
-        {
-            cout << "Potential parameters:" << endl;
-            cout << potential_parameters << endl;
-
-            cout << "Training direction:" << endl;
-            cout << training_direction << endl;
-
-            cout << "Initial learning rate:" << endl;
-            cout << initial_learning_rate << endl;
-        }
-
-        Tensor<type, 1> potential_parameters;
-        Tensor<type, 1> training_direction;
-        type initial_learning_rate = 0;
-    };
-
    /// This structure contains the optimization algorithm results.    
 
    struct Results
@@ -304,6 +277,35 @@ protected:
 #endif
 
 };
+
+
+struct OptimizationAlgorithmData
+{
+    explicit OptimizationAlgorithmData()
+    {
+    }
+
+    virtual ~OptimizationAlgorithmData()
+    {
+    }
+
+    void print() const
+    {
+        cout << "Potential parameters:" << endl;
+        cout << potential_parameters << endl;
+
+        cout << "Training direction:" << endl;
+        cout << training_direction << endl;
+
+        cout << "Initial learning rate:" << endl;
+        cout << initial_learning_rate << endl;
+    }
+
+    Tensor<type, 1> potential_parameters;
+    Tensor<type, 1> training_direction;
+    type initial_learning_rate = 0;
+};
+
 
 }
 

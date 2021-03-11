@@ -580,7 +580,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    LMOptimizationData optimization_data(this);
+    LevenbergMarquardtAlgorithmData optimization_data(this);
 
     // Calculate error before training
 
@@ -846,7 +846,7 @@ void LevenbergMarquardtAlgorithm::perform_training_void()
 void LevenbergMarquardtAlgorithm::update_epoch(const DataSetBatch& batch,
                                                NeuralNetworkForwardPropagation& forward_propagation,
                                                LossIndexBackPropagationLM& loss_index_back_propagation_lm,
-                                               LMOptimizationData& optimization_data)
+                                               LevenbergMarquardtAlgorithmData& optimization_data)
 {
 
     const type regularization_weight = loss_index_pointer->get_regularization_weight();

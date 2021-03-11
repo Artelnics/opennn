@@ -36,6 +36,8 @@
 namespace OpenNN
 {
 
+struct AdaptiveMomentEstimationData;
+
 /// This concrete class represents the adaptive moment estimation(Adam) training algorithm,
 /// based on adaptive estimates of lower-order moments.
 
@@ -51,36 +53,6 @@ class AdaptiveMomentEstimation : public OptimizationAlgorithm
 {
 
 public:
-
-    struct OptimizationData
-    {
-        /// Default constructor.
-
-        explicit OptimizationData();
-
-        explicit OptimizationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer);
-
-        virtual ~OptimizationData();
-
-        void set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer);
-
-        void print() const;
-
-        AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
-
-        Index learning_rate_iteration = 0;
-
-        Tensor<type, 1> parameters;
-        Tensor<type, 1> minimal_selection_parameters;
-
-        Tensor<type, 1> gradient_exponential_decay;
-        Tensor<type, 1> square_gradient_exponential_decay;
-
-        Tensor<type, 1> aux;
-
-        Index iteration;
-    };
-
 
    // Constructors
 
@@ -162,8 +134,8 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_iteration(const LossIndexBackPropagation& back_propagation,
-                                 OptimizationData& optimization_data);
+   void update_iteration(const LossIndexBackPropagation& ,
+                         AdaptiveMomentEstimationData& );
 
 private:
 
@@ -241,6 +213,36 @@ private:
     #include "../../opennn-mkl/opennn_mkl/adaptive_moment_estimation_mkl.h"
 #endif
 
+};
+
+
+struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
+{
+    /// Default constructor.
+
+    explicit AdaptiveMomentEstimationData();
+
+    explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer);
+
+    virtual ~AdaptiveMomentEstimationData();
+
+    void set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer);
+
+    void print() const;
+
+    AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
+
+    Index learning_rate_iteration = 0;
+
+    Tensor<type, 1> parameters;
+    Tensor<type, 1> minimal_selection_parameters;
+
+    Tensor<type, 1> gradient_exponential_decay;
+    Tensor<type, 1> square_gradient_exponential_decay;
+
+    Tensor<type, 1> aux;
+
+    Index iteration;
 };
 
 }

@@ -249,15 +249,14 @@ public:
    Triplet calculate_bracketing_triplet(const DataSetBatch&,
                                         NeuralNetworkForwardPropagation&,
                                         LossIndexBackPropagation&,
-                                        OptimizationAlgorithm::OptimizationData&) const;
+                                        OptimizationAlgorithmData&) const;
 
    pair<type, type> calculate_directional_point(const DataSetBatch&,
                                                 NeuralNetworkForwardPropagation&,
                                                 LossIndexBackPropagation&,
-                                                OptimizationAlgorithm::OptimizationData&) const;
+                                                OptimizationAlgorithmData&) const;
 
    // Serialization methods
-
       
    void from_XML(const tinyxml2::XMLDocument&);   
 
