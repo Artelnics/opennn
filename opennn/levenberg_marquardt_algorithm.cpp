@@ -567,7 +567,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     type gradient_norm = 0;
 
     LossIndexBackPropagationLM training_loss_index_back_propagation_lm(parameters_number, training_samples_number);
-    LossIndexBackPropagationLM loss_index_back_propagation_lm_selection(parameters_number, training_samples_number);
+    LossIndexBackPropagationLM selection_loss_index_back_propagation_lm(parameters_number, training_samples_number);
 
     // Training strategy stuff
 
@@ -591,8 +591,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     if(has_selection)
     {
         neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-        loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, loss_index_back_propagation_lm_selection);
-        results.selection_error_history(0)  = loss_index_back_propagation_lm_selection.error;
+        loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_loss_index_back_propagation_lm);
+        results.selection_error_history(0)  = selection_loss_index_back_propagation_lm.error;
     }
 
     // Main loop
@@ -622,8 +622,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                      training_forward_propagation,
                      training_loss_index_back_propagation_lm,
                      optimization_data);
-/*
-        neural_network_pointer->set_parameters(training_back_propagation.parameters);
+
+        neural_network_pointer->set_parameters(training_loss_index_back_propagation_lm.parameters);
 
         if(epoch == 1)
         {
@@ -631,31 +631,31 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         }
         else
         {
-            training_loss_decrease = loss_index_back_propagation_lm.loss - old_training_loss;
+            training_loss_decrease = training_loss_index_back_propagation_lm.loss - old_training_loss;
         }
 
         if(has_selection)
         {
           neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
-          loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+          loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, training_loss_index_back_propagation_lm);
         }
 
         if(epoch == 1)
         {
-            minimum_selection_error = selection_back_propagation.error;
+            minimum_selection_error = training_loss_index_back_propagation_lm.error;
 
-            minimal_selection_parameters = training_back_propagation.parameters;
+            minimal_selection_parameters = training_loss_index_back_propagation_lm.parameters;
         }
-        else if(epoch != 1 && selection_back_propagation.error > old_selection_error)
+        else if(epoch != 1 && training_loss_index_back_propagation_lm.error > old_selection_error)
         {
             selection_failures++;
         }
-        else if(selection_back_propagation.error <= minimum_selection_error)
+        else if(training_loss_index_back_propagation_lm.error <= minimum_selection_error)
         {
-            minimum_selection_error = selection_back_propagation.error;
+            minimum_selection_error = training_loss_index_back_propagation_lm.error;
 
-            minimal_selection_parameters = training_back_propagation.parameters;
+            minimal_selection_parameters = training_loss_index_back_propagation_lm.parameters;
         }
 
         // Elapsed time
@@ -667,14 +667,14 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         if(reserve_training_error_history)
         {
-            results.training_error_history(epoch) = loss_index_back_propagation_lm.error;
+            results.training_error_history(epoch) = training_loss_index_back_propagation_lm.error;
         }
 
         if(reserve_selection_error_history)
         {
-            results.selection_error_history(epoch) = selection_back_propagation.error;
+            results.selection_error_history(epoch) = selection_loss_index_back_propagation_lm.error;
         }
-
+/*
         // Stopping Criteria
 
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
