@@ -405,7 +405,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
 
    Index batch_samples_number = batch.get_samples_number();
 
-   Tensor<type, 1> error_terms;
+   Tensor<type, 1> squared_errors;
 
    // Test
 
@@ -425,11 +425,11 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
    neural_network.forward_propagate(batch, forward_propagation);
 
    mean_squared_error.calculate_error_terms(batch, forward_propagation, second_order_loss);
-   error_terms=second_order_loss.error_terms;
+   squared_errors=second_order_loss.squared_errors;
 
 //   Eigen::array<int, 2> vector_times_vector = {Eigen::array<int, 2> ({1,1})};
 
-//   const Tensor<type, 0> product_result = error_terms.contract(error_terms, vector_times_vector);
+//   const Tensor<type, 0> product_result = squared_errors.contract(squared_errors, vector_times_vector);
 
 //   assert_true(abs(product_result(0) - error) < 1.0e-3, LOG);
 }
@@ -451,7 +451,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //  Tensor<type, 1> error_gradient;
 
-//  Tensor<type, 1> error_terms;
+//  Tensor<type, 1> squared_errors;
 //  Tensor<type, 2> terms_Jacobian;
 //  Tensor<type, 2> numerical_Jacobian_terms;
 
@@ -607,10 +607,10 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
    
 //   error_gradient = mean_squared_error.calculate_error_gradient({0, 1});
 
-//   error_terms = mean_squared_error.calculate_training_error_terms();
+//   squared_errors = mean_squared_error.calculate_training_error_terms();
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian();
 
-//   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(error_terms)*2.0 - error_gradient) < 1.0e-3, LOG);
+//   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(squared_errors)*2.0 - error_gradient) < 1.0e-3, LOG);
 }
 
 

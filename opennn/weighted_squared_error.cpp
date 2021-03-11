@@ -260,10 +260,10 @@ void WeightedSquaredError::calculate_error_terms(const DataSetBatch& batch,
 
     f_2 = ((outputs - targets))*negatives_weight;
 
-    second_order_loss.error_terms = ((if_sentence.select(f_1, f_2)).sum(rows_sum).square()).sqrt();
+    second_order_loss.squared_errors = ((if_sentence.select(f_1, f_2)).sum(rows_sum).square()).sqrt();
 
     Tensor<type, 0> error;
-    error.device(*thread_pool_device) = second_order_loss.error_terms.contract(second_order_loss.error_terms, AT_B);
+    error.device(*thread_pool_device) = second_order_loss.squared_errors.contract(second_order_loss.squared_errors, AT_B);
 
     const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
@@ -332,7 +332,7 @@ void WeightedSquaredError::calculate_Jacobian_gradient(const DataSetBatch& batch
 
     const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_terms_Jacobian.contract(second_order_loss.error_terms, AT_B);
+    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.squared_errors_Jacobian.contract(second_order_loss.squared_errors, AT_B);
 
     second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
 }
@@ -354,7 +354,7 @@ void WeightedSquaredError::calculate_hessian_approximation(const DataSetBatch& b
 
     const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-    second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_terms_Jacobian.contract(second_order_loss.error_terms_Jacobian, AT_B);
+    second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.squared_errors_Jacobian.contract(second_order_loss.squared_errors_Jacobian, AT_B);
 
     second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
 }
