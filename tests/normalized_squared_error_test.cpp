@@ -129,7 +129,7 @@ void NormalizedSquaredErrorTest::test_calculate_error(void) // @todo
 
    NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
 
-   BackPropagation back_propagation(batch_samples_number, &normalized_squared_error);
+   LossIndexBackPropagation back_propagation(batch_samples_number, &normalized_squared_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
@@ -218,7 +218,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-   BackPropagation training_back_propagation(samples_number, &nse);
+   LossIndexBackPropagation training_back_propagation(samples_number, &nse);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
@@ -268,7 +268,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
        nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-       BackPropagation training_back_propagation(samples_number, &nse);
+       LossIndexBackPropagation training_back_propagation(samples_number, &nse);
 
        neural_network.forward_propagate(batch, forward_propagation);
 
@@ -377,7 +377,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-   BackPropagation training_back_propagation(samples_number, &nse);
+   LossIndexBackPropagation training_back_propagation(samples_number, &nse);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
@@ -430,7 +430,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
 
-   BackPropagation back_propagation(samples_number, &nse);
+   LossIndexBackPropagation back_propagation(samples_number, &nse);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
@@ -482,7 +482,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
 
-   BackPropagation back_propagation(samples_number, &nse);
+   LossIndexBackPropagation back_propagation(samples_number, &nse);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
@@ -558,7 +558,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
 
-   BackPropagation back_propagation(samples_number, &nse);
+   LossIndexBackPropagation back_propagation(samples_number, &nse);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
@@ -618,7 +618,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
    nse.set_normalization_coefficient();
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-   BackPropagation back_propagation(samples_number, &nse);
+   LossIndexBackPropagation back_propagation(samples_number, &nse);
    LossIndexBackPropagationLM second_order_loss(parameters_number, samples_number);
 
    neural_network.forward_propagate(batch, forward_propagation);
@@ -680,7 +680,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
    nse.set_normalization_coefficient();
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-   BackPropagation back_propagation(samples_number, &nse);
+   LossIndexBackPropagation back_propagation(samples_number, &nse);
    LossIndexBackPropagationLM second_order_loss(parameters_number, samples_number);
 
    neural_network.forward_propagate(batch, forward_propagation);

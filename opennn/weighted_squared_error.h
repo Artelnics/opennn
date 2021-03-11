@@ -75,7 +75,7 @@ public:
 
    void calculate_error(const DataSetBatch&,
                         const NeuralNetworkForwardPropagation&,
-                        BackPropagation&) const;
+                        LossIndexBackPropagation&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
@@ -84,9 +84,9 @@ public:
 
    void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               BackPropagation&) const;
+                               LossIndexBackPropagation&) const;
 
-   void calculate_Jacobian_gradient(const DataSetBatch&,
+   void calculate_gradient(const DataSetBatch&,
                                     LossIndexBackPropagationLM&) const;
 
    // Hessian method

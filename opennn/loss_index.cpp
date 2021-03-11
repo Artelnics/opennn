@@ -360,7 +360,7 @@ void LossIndex::check() const
 
 void LossIndex::calculate_errors(const DataSetBatch& batch,
                                  const NeuralNetworkForwardPropagation& forward_propagation,
-                                 BackPropagation& back_propagation) const
+                                 LossIndexBackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -485,7 +485,7 @@ void LossIndex::calculate_squared_errors(const DataSetBatch& batch,
 
 void LossIndex::calculate_error_terms_Jacobian(const DataSetBatch& batch,
                                                const NeuralNetworkForwardPropagation& forward_propagation,
-                                               const BackPropagation& back_propagation,
+                                               const LossIndexBackPropagation& back_propagation,
                                                LossIndexBackPropagationLM& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -575,7 +575,7 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
 
 void LossIndex::back_propagate(const DataSetBatch& batch,
                                NeuralNetworkForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation) const
+                               LossIndexBackPropagation& back_propagation) const
 {
     // Loss index
 
@@ -627,7 +627,7 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
 
-    calculate_Jacobian_gradient(batch, second_order_loss);
+    calculate_gradient(batch, second_order_loss);
 
     calculate_hessian_approximation(batch, second_order_loss);
 
@@ -661,7 +661,7 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
 void LossIndex::calculate_error_terms_output_jacobian(const DataSetBatch& batch,
                                            NeuralNetworkForwardPropagation& forward_propagation,
-                                           BackPropagation& back_propagation,
+                                           LossIndexBackPropagation& back_propagation,
                                            LossIndexBackPropagationLM& second_order_loss) const
 {
 
@@ -791,7 +791,7 @@ void LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& paramete
 
 void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
                                        NeuralNetworkForwardPropagation& forward_propagation,
-                                       BackPropagation& back_propagation) const
+                                       LossIndexBackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -819,7 +819,7 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
 
 void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
                                          const NeuralNetworkForwardPropagation& forward_propagation,
-                                         BackPropagation& back_propagation) const
+                                         LossIndexBackPropagation& back_propagation) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1069,7 +1069,7 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
 /// Destructor.
 
-BackPropagation::~BackPropagation()
+LossIndexBackPropagation::~LossIndexBackPropagation()
 {
 }
 
@@ -1088,7 +1088,7 @@ Tensor<type, 1> LossIndex:: calculate_error_gradient_numerical_differentiation(L
 
     NeuralNetworkForwardPropagation forward_propagation(samples_number, neural_network_pointer);
 
-    BackPropagation back_propagation(samples_number, loss_index_pointer);
+    LossIndexBackPropagation back_propagation(samples_number, loss_index_pointer);
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
@@ -1146,7 +1146,7 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation(LossInde
 
     NeuralNetworkForwardPropagation forward_propagation(samples_number, neural_network_pointer);
 
-    BackPropagation back_propagation(samples_number, loss_index_pointer);
+    LossIndexBackPropagation back_propagation(samples_number, loss_index_pointer);
 
     Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 

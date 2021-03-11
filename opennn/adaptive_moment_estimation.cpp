@@ -328,8 +328,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Loss index
 
-    BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
-    BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
     type training_error = 0;
     type training_loss = 0;
@@ -997,7 +997,7 @@ Index AdaptiveMomentEstimation::get_batch_samples_number() const
 
 /// Update iteration parameters
 
-void AdaptiveMomentEstimation::update_iteration(const BackPropagation& back_propagation,
+void AdaptiveMomentEstimation::update_iteration(const LossIndexBackPropagation& back_propagation,
                               OptimizationData& optimization_data)
 {
     const type learning_rate =

@@ -29,7 +29,7 @@
 namespace OpenNN
 {
 
-struct BackPropagation;
+struct LossIndexBackPropagation;
 struct LossIndexBackPropagationLM;
 
 /// This abstract class represents the concept of loss index composed of an error term and a regularization term.
@@ -152,7 +152,7 @@ public:
 
    virtual void calculate_output_delta(const DataSetBatch&,
                                        NeuralNetworkForwardPropagation&,
-                                       BackPropagation&) const = 0;
+                                       LossIndexBackPropagation&) const = 0;
 
    // Numerical differentiation
 
@@ -167,7 +167,7 @@ public:
 
    void calculate_errors(const DataSetBatch&,
                          const NeuralNetworkForwardPropagation&,
-                         BackPropagation&) const;
+                         LossIndexBackPropagation&) const;
 
    void calculate_squared_errors(const DataSetBatch&,
                                  const NeuralNetworkForwardPropagation&,
@@ -175,7 +175,7 @@ public:
 
    virtual void calculate_error(const DataSetBatch&,
                                 const NeuralNetworkForwardPropagation&,
-                                BackPropagation&) const = 0;
+                                LossIndexBackPropagation&) const = 0;
 
 
    virtual void calculate_error(const DataSetBatch&,
@@ -184,7 +184,7 @@ public:
 
    void back_propagate(const DataSetBatch&,
                        NeuralNetworkForwardPropagation&,
-                       BackPropagation&) const;
+                       LossIndexBackPropagation&) const;
 
    void back_propagate(const DataSetBatch&,
                        NeuralNetworkForwardPropagation&,
@@ -192,10 +192,10 @@ public:
 
    void calculate_error_terms_output_jacobian(const DataSetBatch&,
                                               NeuralNetworkForwardPropagation&,
-                                              BackPropagation&,
+                                              LossIndexBackPropagation&,
                                               LossIndexBackPropagationLM&) const;
 
-   virtual void calculate_Jacobian_gradient(const DataSetBatch&, LossIndexBackPropagationLM&) const {}
+   virtual void calculate_gradient(const DataSetBatch&, LossIndexBackPropagationLM&) const {}
 
    virtual void calculate_hessian_approximation(const DataSetBatch&, LossIndexBackPropagationLM&) const {}
 
@@ -210,17 +210,17 @@ public:
 
    void calculate_layers_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               BackPropagation&) const;
+                               LossIndexBackPropagation&) const;
 
    void calculate_error_gradient(const DataSetBatch&,
                                  const NeuralNetworkForwardPropagation&,
-                                 BackPropagation&) const;
+                                 LossIndexBackPropagation&) const;
 
    Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_error_terms_Jacobian(const DataSetBatch&,
                                        const NeuralNetworkForwardPropagation&,
-                                       const BackPropagation&,
+                                       const LossIndexBackPropagation&,
                                        LossIndexBackPropagationLM&) const;
 
    // Serialization methods
@@ -297,20 +297,20 @@ protected:
 /// Set of loss value and gradient vector of the loss index.
 /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
-struct BackPropagation
+struct LossIndexBackPropagation
 {
     /// Default constructor.
 
-    explicit BackPropagation() {}
+    explicit LossIndexBackPropagation() {}
 
-    explicit BackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
+    explicit LossIndexBackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
     {
         if (new_batch_samples_number == 0) return;
 
         set(new_batch_samples_number, new_loss_index_pointer);
     }
 
-    virtual ~BackPropagation();
+    virtual ~LossIndexBackPropagation();
 
     void set(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
     {

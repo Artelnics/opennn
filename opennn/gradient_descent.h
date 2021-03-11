@@ -198,7 +198,7 @@ public:
    void update_epoch(
            const DataSetBatch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
-           BackPropagation& back_propagation,
+           LossIndexBackPropagation& back_propagation,
            GDOptimizationData& optimization_data);
 
    Results perform_training();
