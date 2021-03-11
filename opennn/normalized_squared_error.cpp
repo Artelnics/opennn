@@ -298,7 +298,7 @@ void NormalizedSquaredError::calculate_error(const DataSet::Batch& batch,
 
 void NormalizedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
                                                    const NeuralNetworkForwardPropagation& forward_propagation,
-                                                   SecondOrderLoss& second_order_loss) const
+                                                   LossIndexBackPropagationLM& second_order_loss) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -437,7 +437,7 @@ void NormalizedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
 
 void NormalizedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
-                                    LossIndex::SecondOrderLoss& second_order_loss) const
+                                    LossIndexBackPropagationLM& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -457,7 +457,7 @@ void NormalizedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& b
 
 
 void NormalizedSquaredError::calculate_hessian_approximation(const DataSet::Batch& batch,
-                                                             LossIndex::SecondOrderLoss& second_order_loss) const
+                                                             LossIndexBackPropagationLM& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
 

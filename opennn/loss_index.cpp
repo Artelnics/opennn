@@ -416,7 +416,7 @@ void LossIndex::calculate_errors(const DataSet::Batch& batch,
 void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
                                                const NeuralNetworkForwardPropagation& forward_propagation,
                                                const BackPropagation& back_propagation,
-                                               SecondOrderLoss& second_order_loss) const
+                                               LossIndexBackPropagationLM& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -543,7 +543,7 @@ void LossIndex::back_propagate(const DataSet::Batch& batch,
 void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
                                                   NeuralNetworkForwardPropagation& forward_propagation,
                                                   BackPropagation& back_propagation,
-                                                  SecondOrderLoss& second_order_loss) const
+                                                  LossIndexBackPropagationLM& second_order_loss) const
 {
     // First Order
 
@@ -591,7 +591,7 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 void LossIndex::calculate_error_terms_output_jacobian(const DataSet::Batch& batch,
                                            NeuralNetworkForwardPropagation& forward_propagation,
                                            BackPropagation& back_propagation,
-                                           SecondOrderLoss& second_order_loss) const
+                                           LossIndexBackPropagationLM& second_order_loss) const
 {
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -1081,7 +1081,7 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation(LossInde
 
     const Index parameters_number = parameters.size();
 
-    LossIndex::SecondOrderLoss second_order_loss(parameters_number, samples_number);
+    LossIndexBackPropagationLM second_order_loss(parameters_number, samples_number);
 
     neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
     loss_index_pointer->calculate_error_terms(batch, forward_propagation, second_order_loss);

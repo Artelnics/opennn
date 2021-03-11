@@ -574,7 +574,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
     BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
-    LossIndex::SecondOrderLoss terms_second_order_loss(parameters_number, training_samples_number);
+    LossIndexBackPropagationLM terms_second_order_loss(parameters_number, training_samples_number);
 
     // Training strategy stuff
 
@@ -855,7 +855,7 @@ void LevenbergMarquardtAlgorithm::perform_training_void()
 void LevenbergMarquardtAlgorithm::update_epoch(const DataSet::Batch& batch,
                                                NeuralNetworkForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation,
-                                               LossIndex::SecondOrderLoss& terms_second_order_loss,
+                                               LossIndexBackPropagationLM& terms_second_order_loss,
                                                LMOptimizationData& optimization_data)
 {
     const type regularization_weight = loss_index_pointer->get_regularization_weight();

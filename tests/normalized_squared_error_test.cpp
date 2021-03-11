@@ -619,7 +619,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
    BackPropagation back_propagation(samples_number, &nse);
-   LossIndex::SecondOrderLoss second_order_loss(parameters_number, samples_number);
+   LossIndexBackPropagationLM second_order_loss(parameters_number, samples_number);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
@@ -681,7 +681,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
    BackPropagation back_propagation(samples_number, &nse);
-   LossIndex::SecondOrderLoss second_order_loss(parameters_number, samples_number);
+   LossIndexBackPropagationLM second_order_loss(parameters_number, samples_number);
 
    neural_network.forward_propagate(batch, forward_propagation);
    nse.back_propagate(batch, forward_propagation, back_propagation);
