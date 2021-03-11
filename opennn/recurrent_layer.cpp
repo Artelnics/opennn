@@ -980,7 +980,6 @@ void RecurrentLayer::calculate_biases_error_gradient(const Tensor<type, 2>& inpu
 
     Tensor<type, 1> current_layer_deltas(neurons_number);
     Tensor<type, 1> activations_derivatives(neurons_number);
-    Tensor<type, 1> previous_activation_derivatives(neurons_number);
     Tensor<type, 2> combinations_biases_derivatives(parameters_number, neurons_number);
 
     combinations_biases_derivatives.setZero();
@@ -996,8 +995,25 @@ void RecurrentLayer::calculate_biases_error_gradient(const Tensor<type, 2>& inpu
         }
         else
         {
+            cout << "combinations_biases_derivatives: " << endl << combinations_biases_derivatives << endl;
+            cout << "activations_derivatives: " << endl << activations_derivatives << endl;
+
+
             multiply_rows(combinations_biases_derivatives, activations_derivatives);
+
+            cout << "combinations_biases_derivatives: " << endl << combinations_biases_derivatives << endl;
+
+            cout << "recurrent_weights: " << endl << recurrent_weights << endl;
+
+            cout << "contract: " << endl << combinations_biases_derivatives.contract(recurrent_weights, A_B) << endl;
+
+            cout << "combinations_biases_derivatives: " << endl << combinations_biases_derivatives << endl;
+
             combinations_biases_derivatives = combinations_biases_derivatives.contract(recurrent_weights, A_B);
+
+            cout << "combinations_biases_derivatives: " << endl << combinations_biases_derivatives << endl;
+
+            system("pause");
         }
 
         activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives.chip(sample, 0);
