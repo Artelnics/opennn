@@ -68,7 +68,7 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 
 //    SumSquaredError sum_squared_error(&neural_network ,&ds);
 
-//    GrowingInputs::GrowingInputsResults* gir;
+//    GrowingInputsResults* gir;
 
 //    // Test
 

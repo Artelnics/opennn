@@ -456,7 +456,7 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
 
     // Optimization algorithm
 
-    OptimizationAlgorithm::Results results;
+    OptimizationAlgorithmResults results;
 
     type optimum_selection_error = numeric_limits<type>::max();
     type optimum_training_error = numeric_limits<type>::max();
@@ -695,7 +695,7 @@ Tensor<type, 1> InputsSelection::get_parameters_inputs(const Tensor<bool, 1>& in
 /// Return a string with the stopping condition of the training depending on the training method.
 /// @param results Results of the perform_training method.
 
-string InputsSelection::write_stopping_condition(const OptimizationAlgorithm::Results& results) const
+string InputsSelection::write_stopping_condition(const OptimizationAlgorithmResults& results) const
 {
     return results.write_stopping_condition();
 }
@@ -787,8 +787,6 @@ void InputsSelection::check() const
 
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-
-
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
     if(selection_samples_number == 0)
@@ -799,48 +797,38 @@ void InputsSelection::check() const
 
         throw logic_error(buffer.str());
     }
-
 }
 
 
 /// Return a string with the stopping condition of the Results
 
-string InputsSelection::Results::write_stopping_condition() const
+string InputsSelectionResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-    case MaximumTime:
-    {
+    case InputsSelection::MaximumTime:
         return "MaximumTime";
-    }
-    case SelectionErrorGoal:
-    {
+
+    case InputsSelection::SelectionErrorGoal:
         return "SelectionErrorGoal";
-    }
-    case MaximumInputs:
-    {
+
+    case InputsSelection::MaximumInputs:
         return "MaximumInputs";
-    }
-    case MinimumInputs:
-    {
+
+    case InputsSelection::MinimumInputs:
         return "MinimumInputs";
-    }
-    case MaximumEpochs:
-    {
+
+    case InputsSelection::MaximumEpochs:
         return "MaximumEpochs";
-    }
-    case MaximumSelectionFailures:
-    {
+
+    case InputsSelection::MaximumSelectionFailures:
         return "MaximumSelectionFailures";
-    }
-    case CorrelationGoal:
-    {
+
+    case InputsSelection::CorrelationGoal:
         return "CorrelationGoal";
-    }
-    case AlgorithmFinished:
-    {
+
+    case InputsSelection::AlgorithmFinished:
         return "AlgorithmFinished";
-    }
     }
 
     return string();

@@ -437,7 +437,7 @@ void LevenbergMarquardtAlgorithmTest::test_resize_training_history()
 
    lma.set_reserve_all_training_history(true);
 
-   OptimizationAlgorithm::Results lmatr;//(&lma);
+   OptimizationAlgorithmResults lmatr;//(&lma);
 
    lmatr.resize_training_history(1);
 

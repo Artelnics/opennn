@@ -277,9 +277,9 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
 /// Training occurs according to the training parameters and stopping criteria.
 /// It returns a results structure with the history and the final values of the reserved variables.
 
-OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
+OptimizationAlgorithmResults AdaptiveMomentEstimation::perform_training()
 {
-    Results results;
+    OptimizationAlgorithmResults results;
 
 //    check();
 

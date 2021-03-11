@@ -510,9 +510,9 @@ void GradientDescent::update_epoch(
 /// Training occurs according to the training parameters and stopping criteria.
 /// It returns a results structure with the history and the final values of the reserved variables.
 
-OptimizationAlgorithm::Results GradientDescent::perform_training()
+OptimizationAlgorithmResults GradientDescent::perform_training()
 {
-    Results results;
+    OptimizationAlgorithmResults results;
 
 #ifdef __OPENNN_DEBUG__
 

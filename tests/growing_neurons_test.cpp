@@ -68,7 +68,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
 
 //    GrowingNeurons io(&ts);
 
-//    GrowingNeurons::GrowingNeuronsResults* results = nullptr;
+//    GrowingNeuronsResults* results = nullptr;
 
 //    // Test
 

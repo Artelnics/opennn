@@ -27,6 +27,8 @@
 namespace OpenNN
 {
 
+struct InputsSelectionResults;
+
 /// This abstract class represents the concept of inputs selection algorithm for a ModelSelection[1].
 
 ///
@@ -55,63 +57,6 @@ public:
 
     enum StoppingCondition{MaximumTime,SelectionErrorGoal,MaximumInputs,MinimumInputs,MaximumEpochs,
                            MaximumSelectionFailures,CorrelationGoal,AlgorithmFinished};
-
-    // STRUCTURES
-
-    /// This structure contains the results from the inputs selection.
-
-    struct Results
-    {
-       explicit Results() {}
-
-       virtual ~Results() {}
-
-       string write_stopping_condition() const;
-
-       /// Inputs of the different neural networks.
-
-       Tensor<bool, 2> inputs_data;
-       
-       /// Performance of the different neural networks.
-
-       Tensor<type, 1> training_error_data;
-
-       /// Selection loss of the different neural networks.
-
-       Tensor<type, 1> selection_error_data;
-
-       /// Vector of parameters for the neural network with minimum selection error.
-
-       Tensor<type, 1> minimal_parameters;
-
-       /// Value of minimum selection error.
-
-       type final_selection_error;
-
-       /// Value of loss for the neural network with minimum selection error.
-
-       type final_training_error;
-
-       /// Inputs of the neural network with minimum selection error.
-
-       Tensor<Index, 1> optimal_inputs_indices;
-
-       /// Inputs of the neural network with minimum selection error.
-
-       Tensor<bool, 1> optimal_inputs;
-
-       /// Number of iterations to perform the inputs selection.
-
-       Index iterations_number;
-
-       /// Stopping condition of the algorithm.
-
-       StoppingCondition stopping_condition;
-
-       /// Elapsed time during the loss of the algortihm.
-
-       string elapsed_time;
-    };
 
     // Get methods
 
@@ -165,7 +110,7 @@ public:
 
     Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) const;
 
-    string write_stopping_condition(const OptimizationAlgorithm::Results&) const;
+    string write_stopping_condition(const OptimizationAlgorithmResults&) const;
 
     // inputs selection methods
 
@@ -186,7 +131,7 @@ public:
 
     /// Performs the inputs selection for a neural network.
 
-    virtual Results* perform_inputs_selection() = 0;
+//    virtual InputsSelectionResults* perform_inputs_selection() = 0;
 
     /// Writes the time from seconds in format HH:mm:ss.
 
@@ -266,6 +211,63 @@ protected:
 
     type tolerance;
 };
+
+
+/// This structure contains the results from the inputs selection.
+
+struct InputsSelectionResults
+{
+   explicit InputsSelectionResults() {}
+
+   virtual ~InputsSelectionResults() {}
+
+   string write_stopping_condition() const;
+
+   /// Inputs of the different neural networks.
+
+   Tensor<bool, 2> inputs_data;
+
+   /// Performance of the different neural networks.
+
+   Tensor<type, 1> training_error_data;
+
+   /// Selection loss of the different neural networks.
+
+   Tensor<type, 1> selection_error_data;
+
+   /// Vector of parameters for the neural network with minimum selection error.
+
+   Tensor<type, 1> minimal_parameters;
+
+   /// Value of minimum selection error.
+
+   type final_selection_error;
+
+   /// Value of loss for the neural network with minimum selection error.
+
+   type final_training_error;
+
+   /// Inputs of the neural network with minimum selection error.
+
+   Tensor<Index, 1> optimal_inputs_indices;
+
+   /// Inputs of the neural network with minimum selection error.
+
+   Tensor<bool, 1> optimal_inputs;
+
+   /// Number of iterations to perform the inputs selection.
+
+   Index iterations_number;
+
+   /// Stopping condition of the algorithm.
+
+   InputsSelection::StoppingCondition stopping_condition;
+
+   /// Elapsed time during the loss of the algortihm.
+
+   string elapsed_time;
+};
+
 }
 
 #endif

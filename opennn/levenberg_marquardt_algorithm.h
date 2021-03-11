@@ -126,7 +126,7 @@ public:
 
    void check() const;
 
-   Results perform_training();
+   OptimizationAlgorithmResults perform_training();
 
    void perform_training_void();
 
