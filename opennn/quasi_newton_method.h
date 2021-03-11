@@ -40,6 +40,8 @@ using Eigen::MatrixXd;
 namespace OpenNN
 {
 
+struct QuasiNewtonMehtodData;
+
 /// Class of optimization algorithm based on Newton's method.
 /// An approximate Hessian matrix is computed at each iteration of the algorithm based on the gradients.
 
@@ -52,104 +54,6 @@ class QuasiNewtonMethod : public OptimizationAlgorithm
 {
 
 public:
-
-    struct QNMOptimizationData : public OptimizationData
-    {
-        /// Default constructor.
-
-        explicit QNMOptimizationData()
-        {
-        }
-
-        explicit QNMOptimizationData(QuasiNewtonMethod* new_quasi_newton_method_pointer)
-        {
-            set(new_quasi_newton_method_pointer);
-        }
-
-        virtual ~QNMOptimizationData() {}
-
-        void set(QuasiNewtonMethod* new_quasi_newton_method_pointer)
-        {
-            quasi_newton_method_pointer = new_quasi_newton_method_pointer;
-
-            LossIndex* loss_index_pointer = quasi_newton_method_pointer->get_loss_index_pointer();
-
-            NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-            const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-            // Neural network data
-
-            old_parameters.resize(parameters_number);
-
-            parameters_difference.resize(parameters_number);
-
-            potential_parameters.resize(parameters_number);
-            parameters_increment.resize(parameters_number);
-
-            // Loss index data
-
-            old_gradient.resize(parameters_number);
-            old_gradient.setZero();
-
-            gradient_difference.resize(parameters_number);
-
-            inverse_hessian.resize(parameters_number, parameters_number);
-            inverse_hessian.setZero();
-
-            old_inverse_hessian.resize(parameters_number, parameters_number);
-            old_inverse_hessian.setZero();
-
-            // Optimization algorithm data
-
-            training_direction.resize(parameters_number);
-
-            old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
-
-        }
-
-        void print() const
-        {
-            cout << "Training Direction:" << endl;
-            cout << training_direction << endl;
-
-            cout << "Learning rate:" << endl;
-            cout << learning_rate << endl;
-        }
-
-        QuasiNewtonMethod* quasi_newton_method_pointer = nullptr;
-
-        // Neural network data
-
-        Tensor<type, 1> old_parameters;
-        Tensor<type, 1> parameters_difference;
-
-        Tensor<type, 1> parameters_increment;
-
-        type parameters_increment_norm = 0;
-
-        // Loss index data
-
-        type old_training_loss = 0;
-
-        Tensor<type, 1> old_gradient;
-        Tensor<type, 1> gradient_difference;
-
-        Tensor<type, 2> inverse_hessian;
-        Tensor<type, 2> old_inverse_hessian;
-
-        Tensor<type, 1> old_inverse_hessian_dot_gradient_difference;
-
-        // Optimization algorithm data
-
-        Index epoch = 0;
-
-        Tensor<type, 0> training_slope;
-
-        type learning_rate = 0;
-        type old_learning_rate = 0;
-    };
-
 
    // Enumerations
 
@@ -228,12 +132,12 @@ public:
 
    // Training methods
 
-   void calculate_DFP_inverse_hessian(const LossIndexBackPropagation&, QNMOptimizationData&) const;
+   void calculate_DFP_inverse_hessian(const LossIndexBackPropagation&, QuasiNewtonMehtodData&) const;
 
-   void calculate_BFGS_inverse_hessian(const LossIndexBackPropagation&, QNMOptimizationData&) const;
+   void calculate_BFGS_inverse_hessian(const LossIndexBackPropagation&, QuasiNewtonMehtodData&) const;
 
-   void initialize_inverse_hessian_approximation(QNMOptimizationData&) const;
-   void calculate_inverse_hessian_approximation(const LossIndexBackPropagation&, QNMOptimizationData&) const;
+   void initialize_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
+   void calculate_inverse_hessian_approximation(const LossIndexBackPropagation&, QuasiNewtonMehtodData&) const;
 
    const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
    const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
@@ -242,7 +146,7 @@ public:
            const DataSetBatch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
            LossIndexBackPropagation& back_propagation,
-           QNMOptimizationData& optimization_data);
+           QuasiNewtonMehtodData& optimization_data);
 
    Results perform_training();
 
@@ -323,6 +227,104 @@ private:
 
    bool reserve_selection_error_history = true;
 
+};
+
+
+struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
+{
+    /// Default constructor.
+
+    explicit QuasiNewtonMehtodData()
+    {
+    }
+
+    explicit QuasiNewtonMehtodData(QuasiNewtonMethod* new_quasi_newton_method_pointer)
+    {
+        set(new_quasi_newton_method_pointer);
+    }
+
+    virtual ~QuasiNewtonMehtodData() {}
+
+    void set(QuasiNewtonMethod* new_quasi_newton_method_pointer)
+    {
+        quasi_newton_method_pointer = new_quasi_newton_method_pointer;
+
+        LossIndex* loss_index_pointer = quasi_newton_method_pointer->get_loss_index_pointer();
+
+        NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+        // Neural network data
+
+        old_parameters.resize(parameters_number);
+
+        parameters_difference.resize(parameters_number);
+
+        potential_parameters.resize(parameters_number);
+        parameters_increment.resize(parameters_number);
+
+        // Loss index data
+
+        old_gradient.resize(parameters_number);
+        old_gradient.setZero();
+
+        gradient_difference.resize(parameters_number);
+
+        inverse_hessian.resize(parameters_number, parameters_number);
+        inverse_hessian.setZero();
+
+        old_inverse_hessian.resize(parameters_number, parameters_number);
+        old_inverse_hessian.setZero();
+
+        // Optimization algorithm data
+
+        training_direction.resize(parameters_number);
+
+        old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
+
+    }
+
+    void print() const
+    {
+        cout << "Training Direction:" << endl;
+        cout << training_direction << endl;
+
+        cout << "Learning rate:" << endl;
+        cout << learning_rate << endl;
+    }
+
+    QuasiNewtonMethod* quasi_newton_method_pointer = nullptr;
+
+    // Neural network data
+
+    Tensor<type, 1> old_parameters;
+    Tensor<type, 1> parameters_difference;
+
+    Tensor<type, 1> parameters_increment;
+
+    type parameters_increment_norm = 0;
+
+    // Loss index data
+
+    type old_training_loss = 0;
+
+    Tensor<type, 1> old_gradient;
+    Tensor<type, 1> gradient_difference;
+
+    Tensor<type, 2> inverse_hessian;
+    Tensor<type, 2> old_inverse_hessian;
+
+    Tensor<type, 1> old_inverse_hessian_dot_gradient_difference;
+
+    // Optimization algorithm data
+
+    Index epoch = 0;
+
+    Tensor<type, 0> training_slope;
+
+    type learning_rate = 0;
+    type old_learning_rate = 0;
 };
 
 }

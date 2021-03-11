@@ -272,7 +272,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
     const DataSetBatch& batch,
     NeuralNetworkForwardPropagation& forward_propagation,
     LossIndexBackPropagation& back_propagation,
-    OptimizationAlgorithm::OptimizationData& optimization_data) const
+    OptimizationAlgorithmData& optimization_data) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -445,7 +445,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     const DataSetBatch& batch,
     NeuralNetworkForwardPropagation& forward_propagation,
     LossIndexBackPropagation& back_propagation,
-    OptimizationAlgorithm::OptimizationData& optimization_data) const
+    OptimizationAlgorithmData& optimization_data) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 

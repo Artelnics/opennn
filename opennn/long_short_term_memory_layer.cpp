@@ -2032,7 +2032,7 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, 
                static_cast<size_t>(neurons_number)*sizeof(type));
 
         // Cell states (activations)
-
+/*
         memcpy(long_short_term_memory_layer_forward_propagation->cell_states_activations.data() + copy_index,
                cell_states.data(),
                static_cast<size_t>(neurons_number)*sizeof(type));
@@ -2046,7 +2046,7 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, 
         memcpy(long_short_term_memory_layer_forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
                long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data(),
                static_cast<size_t>(neurons_number)*sizeof (type));
-
+*/
         copy_index += neurons_number;
     }
 }
@@ -3419,9 +3419,9 @@ void LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tens
 
         memcpy(current_output_activations.data(), forward_propagation->output_activations.data()+copy_index, static_cast<size_t>(neurons_number)*sizeof(type));
         memcpy(current_output_derivatives.data(), forward_propagation->output_activations_derivatives.data()+copy_index, static_cast<size_t>(neurons_number)*sizeof(type));
-
+/*
         memcpy(current_cell_state_activations.data(), forward_propagation->cell_states_activations.data()+copy_index, static_cast<size_t>(neurons_number)*sizeof(type));
-
+*/
         memcpy(current_hidden_derivatives.data(), forward_propagation->hidden_states_activations_derivatives.data()+copy_index, static_cast<size_t>(neurons_number)*sizeof(type));
 
         copy_index += neurons_number;
@@ -3439,10 +3439,11 @@ void LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tens
         }
         else
         {
+/*
             memcpy(previous_cell_state_activations.data(),
                    forward_propagation->cell_states_activations.data() + (copy_index-2*neurons_number),
                    static_cast<size_t>(neurons_number)*sizeof(type));
-
+*/
             forget_combinations_biases_derivatives = hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B);
 
             input_combinations_biases_derivatives = hidden_states_biases_derivatives.contract(input_recurrent_weights, A_B);

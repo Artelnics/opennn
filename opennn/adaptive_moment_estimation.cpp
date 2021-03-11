@@ -342,7 +342,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Optimization algorithm
 
-    OptimizationData optimization_data(this);
+    AdaptiveMomentEstimationData optimization_data(this);
 
     type learning_rate = 0;
 
@@ -998,7 +998,7 @@ Index AdaptiveMomentEstimation::get_batch_samples_number() const
 /// Update iteration parameters
 
 void AdaptiveMomentEstimation::update_iteration(const LossIndexBackPropagation& back_propagation,
-                              OptimizationData& optimization_data)
+                              AdaptiveMomentEstimationData& optimization_data)
 {
     const type learning_rate =
             initial_learning_rate*
@@ -1021,23 +1021,23 @@ void AdaptiveMomentEstimation::update_iteration(const LossIndexBackPropagation& 
 }
 
 
-AdaptiveMomentEstimation::OptimizationData::OptimizationData()
+AdaptiveMomentEstimationData::AdaptiveMomentEstimationData()
 {
 }
 
 
-AdaptiveMomentEstimation::OptimizationData::OptimizationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer)
+AdaptiveMomentEstimationData::AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer)
 {
     set(new_stochastic_gradient_descent_pointer);
 }
 
 
-AdaptiveMomentEstimation::OptimizationData::~OptimizationData()
+AdaptiveMomentEstimationData::~AdaptiveMomentEstimationData()
 {
 }
 
 
-void AdaptiveMomentEstimation::OptimizationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
+void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
 {
     adaptive_moment_estimation_pointer = new_adaptive_moment_estimation_pointer;
 
@@ -1063,7 +1063,7 @@ void AdaptiveMomentEstimation::OptimizationData::set(AdaptiveMomentEstimation* n
 }
 
 
-void AdaptiveMomentEstimation::OptimizationData::print() const
+void AdaptiveMomentEstimationData::print() const
 {
     cout << "Gradien exponential decay:" << endl <<gradient_exponential_decay << endl;
 
