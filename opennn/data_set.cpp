@@ -8768,46 +8768,6 @@ void DataSet::transform_association()
 }
 
 
-/// @todo
-
-void DataSet::fill_time_series(const Index& period )
-{
-    Index rows = static_cast<Index>((data(data.dimension(0)- 1, 0)- data(0,0)) / period) + 1 ;
-
-    Tensor<type, 2> new_data(rows, data.dimension(1));
-
-    new_data.setConstant(static_cast<type>(NAN));
-
-    Index j = 1;
-
-    //new_data.set_row(0, data.chip(0, 0));
-
-    cout.precision(20);
-
-    for (Index i = 1; i < rows ; i++)
-    {
-      if(static_cast<Index>(data(j, 0)) == static_cast<Index>(data(j - 1, 0)))
-      {
-
-          j = j + 1;
-      }
-      if(static_cast<Index>(data(j, 0)) == static_cast<Index>(data(0,0) + i * period))
-      {
-//          new_data.set_row(i, data.chip(j, 0));
-
-          j = j + 1;
-      }
-      else
-      {
-          new_data(i,0) = data(0,0) + i * period;
-      }
-    }
-
-    time_series_data = new_data;
-
-    data = new_data;
-}
-
 
 /// This method loads the data from a binary data file.
 
@@ -10332,7 +10292,6 @@ void DataSet::read_csv_1()
     string line;
 
     Index lines_count = 0;
-                cout << "here" << endl;
 
     while(file.good())
     {
