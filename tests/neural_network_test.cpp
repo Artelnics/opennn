@@ -1651,7 +1651,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     dataset.set_training();
 
-    DataSet::Batch batch(5, &dataset);
+    DataSetBatch batch(5, &dataset);
 
     Tensor<Index,1> training_samples_indices = dataset.get_training_samples_indices();
     Tensor<Index,1> inputs_indices = dataset.get_input_variables_indices();
@@ -1715,7 +1715,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     dataset.set_training();
 
-    DataSet::Batch batch_3(3, &dataset);
+    DataSetBatch batch_3(3, &dataset);
 
     training_samples_indices = dataset.get_training_samples_indices();
     inputs_indices = dataset.get_input_variables_indices();

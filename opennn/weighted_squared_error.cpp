@@ -202,7 +202,7 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 }
 
 
-void WeightedSquaredError::calculate_error(const DataSet::Batch& batch,
+void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
                      BackPropagation& back_propagation) const
 {
@@ -236,7 +236,7 @@ void WeightedSquaredError::calculate_error(const DataSet::Batch& batch,
 }
 
 
-void WeightedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
+void WeightedSquaredError::calculate_error_terms(const DataSetBatch& batch,
                                                  const NeuralNetworkForwardPropagation& forward_propagation,
                                                  LossIndexBackPropagationLM& second_order_loss) const
 {
@@ -274,7 +274,7 @@ void WeightedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 
 // Gradient methods
 
-void WeightedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
+void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                                   NeuralNetworkForwardPropagation& forward_propagation,
                                                   BackPropagation& back_propagation) const
 {
@@ -318,7 +318,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 }
 
 
-void WeightedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
+void WeightedSquaredError::calculate_Jacobian_gradient(const DataSetBatch& batch,
                                     LossIndexBackPropagationLM& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -340,7 +340,7 @@ void WeightedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& bat
 
 // Hessian method
 
-void WeightedSquaredError::calculate_hessian_approximation(const DataSet::Batch& batch,
+void WeightedSquaredError::calculate_hessian_approximation(const DataSetBatch& batch,
                                                            LossIndexBackPropagationLM& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__

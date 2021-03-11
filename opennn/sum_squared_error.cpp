@@ -39,7 +39,7 @@ SumSquaredError::~SumSquaredError()
 }
 
 
-void SumSquaredError::calculate_error(const DataSet::Batch& batch,
+void SumSquaredError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
                      BackPropagation& back_propagation) const
 {
@@ -51,7 +51,7 @@ void SumSquaredError::calculate_error(const DataSet::Batch& batch,
 }
 
 
-void SumSquaredError::calculate_error_terms(const DataSet::Batch& batch,
+void SumSquaredError::calculate_error_terms(const DataSetBatch& batch,
                                             const NeuralNetworkForwardPropagation& forward_propagation,
                                             LossIndexBackPropagationLM& second_order_loss) const
 {
@@ -122,7 +122,7 @@ void SumSquaredError::calculate_error_terms(const DataSet::Batch& batch,
 }
 
 
-void SumSquaredError::calculate_output_delta(const DataSet::Batch& batch,
+void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                              NeuralNetworkForwardPropagation& forward_propagation,
                                              BackPropagation& back_propagation) const
 {
@@ -183,7 +183,7 @@ void SumSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 }
 
 
-void SumSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& ,
+void SumSquaredError::calculate_Jacobian_gradient(const DataSetBatch& ,
                                     LossIndexBackPropagationLM& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -202,7 +202,7 @@ void SumSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& ,
 
 // Hessian method
 
-void SumSquaredError::calculate_hessian_approximation(const DataSet::Batch&, LossIndexBackPropagationLM& second_order_loss) const
+void SumSquaredError::calculate_hessian_approximation(const DataSetBatch&, LossIndexBackPropagationLM& second_order_loss) const
 {
      #ifdef __OPENNN_DEBUG__
 

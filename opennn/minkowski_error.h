@@ -60,11 +60,11 @@ public:
 
    // loss methods
 
-   void calculate_error(const DataSet::Batch& batch,
+   void calculate_error(const DataSetBatch& batch,
                         const NeuralNetworkForwardPropagation& forward_propagation,
                         BackPropagation& back_propagation) const;
 
-   void calculate_output_delta(const DataSet::Batch&,
+   void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
                                BackPropagation&) const;
 

@@ -435,8 +435,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     training_samples_number < batch_samples_number ? batch_size_training = training_samples_number : batch_size_training = batch_samples_number;
     selection_samples_number < batch_samples_number && selection_samples_number != 0 ? batch_size_selection = selection_samples_number : batch_size_selection = batch_samples_number;
 
-    DataSet::Batch batch_training(batch_size_training, data_set_pointer);
-    DataSet::Batch batch_selection(batch_size_selection, data_set_pointer);
+    DataSetBatch batch_training(batch_size_training, data_set_pointer);
+    DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
 
     const Index training_batches_number = training_samples_number/batch_size_training;
     const Index selection_batches_number = selection_samples_number/batch_size_selection;
@@ -693,7 +693,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             {
                 cout << "Epoch " << epoch << ";\n"
                      << "Training error: " << training_error << "\n"
-                     << "Batch size: " << batch_samples_number << "\n"
+                     << "DataSetBatch size: " << batch_samples_number << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
                 if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
@@ -781,9 +781,9 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 
     labels_values(5,1) = std::to_string(maximum_time);
 
-    // Batch samples number
+    // DataSetBatch samples number
 
-    labels_values(6,0) = "Batch samples number";
+    labels_values(6,0) = "DataSetBatch samples number";
 
     labels_values(6,1) = std::to_string(batch_samples_number);
 
@@ -826,7 +826,7 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 
     file_stream.OpenElement("StochasticGradientDescent");
 
-    // Batch size
+    // DataSetBatch size
 
     file_stream.OpenElement("BatchSize");
 
@@ -946,7 +946,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    // Batch size
+    // DataSetBatch size
 
     const tinyxml2::XMLElement* batch_size_element = root_element->FirstChildElement("BatchSize");
 

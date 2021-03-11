@@ -101,7 +101,7 @@ void MinkowskiErrorTest::test_calculate_error()
    inputs_number = 1;
    target_number = 1;
 
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
    Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -190,7 +190,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    data_set.set_training();
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
@@ -243,7 +243,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    data_set.initialize_data(0.0);
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();

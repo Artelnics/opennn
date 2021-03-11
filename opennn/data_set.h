@@ -166,36 +166,6 @@ public:
        void write_XML(tinyxml2::XMLPrinter&) const;
    };
 
-
-   struct Batch
-   {
-       /// Default constructor.
-
-       Batch() {}
-
-       Batch(const Index& new_samples_number, DataSet* new_data_set_pointer);
-
-       /// Destructor.
-
-       virtual ~Batch() {}
-
-       Index get_samples_number() const;
-
-       void print();
-
-       void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
-
-       Index samples_number = 0;
-
-       DataSet* data_set_pointer = nullptr;
-
-       Tensor<type, 2> inputs_2d;
-       Tensor<type, 4> inputs_4d;
-
-       Tensor<type, 2> targets_2d;
-   };
-
-
    // Samples get methods
 
    inline Index get_samples_number() const {return samples_uses.size();}
@@ -905,6 +875,36 @@ private:
 #endif
 
 };
+
+
+struct DataSetBatch
+{
+    /// Default constructor.
+
+    DataSetBatch() {}
+
+    DataSetBatch(const Index& new_samples_number, DataSet* new_data_set_pointer);
+
+    /// Destructor.
+
+    virtual ~DataSetBatch() {}
+
+    Index get_samples_number() const;
+
+    void print();
+
+    void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+
+    Index samples_number = 0;
+
+    DataSet* data_set_pointer = nullptr;
+
+    Tensor<type, 2> inputs_2d;
+    Tensor<type, 4> inputs_4d;
+
+    Tensor<type, 2> targets_2d;
+};
+
 
 }
 

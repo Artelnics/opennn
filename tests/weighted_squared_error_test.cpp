@@ -81,7 +81,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
    wse.set_weights();
 
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
    Tensor<Index,1> batch_samples_indices = data_set.get_used_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -194,7 +194,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
        wse.set_weights();
 
-       DataSet::Batch batch(1, &data_set);
+       DataSetBatch batch(1, &data_set);
 
        Tensor<Index,1> batch_samples_indices = data_set.get_used_samples_indices();
        Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
