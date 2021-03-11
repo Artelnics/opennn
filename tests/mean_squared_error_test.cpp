@@ -420,12 +420,12 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
    data_set.set_data_random();
 
    NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
-   LossIndexBackPropagationLM second_order_loss(parameters,batch_samples_number);
+   LossIndexBackPropagationLM loss_index_back_propagation_lm(parameters,batch_samples_number);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
-   mean_squared_error.calculate_squared_errors(batch, forward_propagation, second_order_loss);
-   squared_errors=second_order_loss.squared_errors;
+   mean_squared_error.calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
+   squared_errors=loss_index_back_propagation_lm.squared_errors;
 
 //   Eigen::array<int, 2> vector_times_vector = {Eigen::array<int, 2> ({1,1})};
 

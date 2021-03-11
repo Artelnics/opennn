@@ -86,7 +86,7 @@ public:
                                LossIndexBackPropagation&) const;
 
    void calculate_gradient(const DataSetBatch& batch,
-                                       LossIndexBackPropagationLM& second_order_loss) const;
+                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const;
 
    // Hessian method
 

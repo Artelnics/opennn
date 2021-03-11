@@ -428,14 +428,14 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient() // @todo
 //   LossIndexBackPropagation training_back_propagation(data_set.get_training_samples_number(), &sum_squared_error);
 //   sum_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
 
-//   LossIndexBackPropagationLM second_order_loss(neural_network.get_parameters_number(), training_samples_indices.size());
-//   sum_squared_error.calculate_error_terms_Jacobian(batch, forward_propagation, training_back_propagation, second_order_loss);
-//   sum_squared_error.calculate_gradient(batch, forward_propagation, second_order_loss);
+//   LossIndexBackPropagationLM loss_index_back_propagation_lm(neural_network.get_parameters_number(), training_samples_indices.size());
+//   sum_squared_error.calculate_error_terms_Jacobian(batch, forward_propagation, training_back_propagation, loss_index_back_propagation_lm);
+//   sum_squared_error.calculate_gradient(batch, forward_propagation, loss_index_back_propagation_lm);
 
-//   cout << second_order_loss.gradient << endl;
+//   cout << loss_index_back_propagation_lm.gradient << endl;
 
-//   assert_true(second_order_loss.gradient(0) == 0.0, LOG);
-//   assert_true(second_order_loss.gradient(1) == 0.0, LOG);
+//   assert_true(loss_index_back_propagation_lm.gradient(0) == 0.0, LOG);
+//   assert_true(loss_index_back_propagation_lm.gradient(1) == 0.0, LOG);
 
 }
 
