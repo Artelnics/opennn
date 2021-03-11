@@ -950,7 +950,7 @@ void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation, con
 
 void RecurrentLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                               LayerForwardPropagation* forward_propagation,
-    LayerBackPropagation* back_propagation) const
+                                              LayerBackPropagation* back_propagation) const
 {
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
             static_cast<RecurrentLayerBackPropagation*>(back_propagation);
