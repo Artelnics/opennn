@@ -450,9 +450,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    // Test recurrent
 {
    samples_number = 4;
-   inputs_number = 2;
-   outputs_number = 3;
-   hidden_neurons = 4;
+   inputs_number = 1;
+   outputs_number = 1;
+   hidden_neurons = 2;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
