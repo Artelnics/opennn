@@ -84,7 +84,7 @@ void MeanSquaredError::calculate_error_terms(const DataSetBatch& batch,
 
         const Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->activations;
 
-        second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+        second_order_loss.squared_errors.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
     }
         break;
 
@@ -95,7 +95,7 @@ void MeanSquaredError::calculate_error_terms(const DataSetBatch& batch,
 
         const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
 
-        second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+        second_order_loss.squared_errors.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
     }
         break;
 
@@ -106,7 +106,7 @@ void MeanSquaredError::calculate_error_terms(const DataSetBatch& batch,
 
         const Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->activations;
 
-        second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+        second_order_loss.squared_errors.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
     }
         break;
 
@@ -117,7 +117,7 @@ void MeanSquaredError::calculate_error_terms(const DataSetBatch& batch,
 
         const Tensor<type, 2>& outputs = long_short_term_memory_layer_forward_propagation->activations;
 
-        second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+        second_order_loss.squared_errors.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
     }
         break;
 
@@ -127,7 +127,7 @@ void MeanSquaredError::calculate_error_terms(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_samples_number();
 
     Tensor<type, 0> error;
-    error.device(*thread_pool_device) = second_order_loss.error_terms.contract(second_order_loss.error_terms, AT_B);
+    error.device(*thread_pool_device) = second_order_loss.squared_errors.contract(second_order_loss.squared_errors, AT_B);
 
     second_order_loss.error = error()/static_cast<type>(batch_samples_number);
 }
@@ -207,7 +207,7 @@ void MeanSquaredError::calculate_Jacobian_gradient(const DataSetBatch& batch,
 
     const type coefficient = static_cast<type>(2)/static_cast<type>(batch_samples_number);
 
-    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_terms_Jacobian.contract(second_order_loss.error_terms, AT_B);
+    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.squared_errors_Jacobian.contract(second_order_loss.squared_errors, AT_B);
 
     second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
 }
@@ -226,7 +226,7 @@ void MeanSquaredError::calculate_hessian_approximation(const DataSetBatch& batch
 
      const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_samples_number));
 
-     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_terms_Jacobian.contract(second_order_loss.error_terms_Jacobian, AT_B);
+     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.squared_errors_Jacobian.contract(second_order_loss.squared_errors_Jacobian, AT_B);
 
      second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
 }

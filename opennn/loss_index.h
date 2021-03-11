@@ -391,9 +391,9 @@ struct LossIndexBackPropagationLM
     {
         loss = 0;
         gradient.resize(parameters_number);
-        error_terms_Jacobian.resize(samples_number, parameters_number);
+        squared_errors_Jacobian.resize(samples_number, parameters_number);
         hessian.resize(parameters_number, parameters_number);
-        error_terms.resize(samples_number);
+        squared_errors.resize(samples_number);
     }
 
     void sum_hessian_diagonal(const type& value)
@@ -409,8 +409,8 @@ struct LossIndexBackPropagationLM
     type error;
     type loss;
 
-    Tensor<type, 1> error_terms;
-    Tensor<type, 2> error_terms_Jacobian;
+    Tensor<type, 1> squared_errors;
+    Tensor<type, 2> squared_errors_Jacobian;
 
     Tensor<type, 1> gradient;
     Tensor<type, 2> hessian;

@@ -491,7 +491,7 @@ void WeightedSquaredErrorTest::test_calculate_error_terms()
 
 //   type error;
 
-//   Tensor<type, 1> error_terms;
+//   Tensor<type, 1> squared_errors;
 
    // Test
 
@@ -506,9 +506,9 @@ void WeightedSquaredErrorTest::test_calculate_error_terms()
 
 //   error = wse.calculate_error();
 
-//   error_terms = wse.calculate_training_error_terms();
+//   squared_errors = wse.calculate_training_error_terms();
 
-//   assert_true(abs((error_terms*error_terms).sum() - error) < 1.0e-3, LOG);
+//   assert_true(abs((squared_errors*squared_errors).sum() - error) < 1.0e-3, LOG);
 
    // Test
 
@@ -522,9 +522,9 @@ void WeightedSquaredErrorTest::test_calculate_error_terms()
 
 //   error = wse.calculate_error();
 
-//   error_terms = wse.calculate_training_error_terms();
+//   squared_errors = wse.calculate_training_error_terms();
 
-//   assert_true(abs((error_terms*error_terms).sum() - error) < 1.0e-3, LOG);
+//   assert_true(abs((squared_errors*squared_errors).sum() - error) < 1.0e-3, LOG);
 }
 
 
@@ -544,7 +544,7 @@ void WeightedSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   Tensor<type, 1> error_gradient;
 
-//   Tensor<type, 1> error_terms;
+//   Tensor<type, 1> squared_errors;
 //   Tensor<type, 2> terms_Jacobian;
 //   Tensor<type, 2> numerical_Jacobian_terms;
 
@@ -645,13 +645,13 @@ void WeightedSquaredErrorTest::test_calculate_error_terms_Jacobian()
    
 //   error_gradient = wse.calculate_gradient();
 
-//   error_terms = wse.calculate_training_error_terms();
+//   squared_errors = wse.calculate_training_error_terms();
 //   terms_Jacobian = wse.calculate_error_terms_Jacobian();
 
-//   cout << (terms_Jacobian.calculate_transpose()).dot(error_terms)*2.0 << endl;
+//   cout << (terms_Jacobian.calculate_transpose()).dot(squared_errors)*2.0 << endl;
 //   cout << error_gradient << endl;
 
-//   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(error_terms)*2.0 - error_gradient) < 1.0e-3, LOG);
+//   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(squared_errors)*2.0 - error_gradient) < 1.0e-3, LOG);
 }
 
 

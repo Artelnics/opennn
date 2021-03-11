@@ -433,7 +433,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSetBatch& batch,
 
     const Tensor<type, 2>& inputs = batch.inputs_2d;
 
-    second_order_loss.error_terms_Jacobian.setZero();
+    second_order_loss.squared_errors_Jacobian.setZero();
 
     Index index = 0;
 
@@ -441,7 +441,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSetBatch& batch,
 
 //    const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs);
 
-//    memcpy(error_terms_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
+//    memcpy(squared_errors_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
     index += layers_parameters_number[0]*samples_number;
 
@@ -450,7 +450,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSetBatch& batch,
 //        const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(i).delta,
 //                                                                                 forward_propagation.layers(i-1)->activations);
 
-//        memcpy(error_terms_Jacobian.data() + index, error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
+//        memcpy(squared_errors_Jacobian.data() + index, error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
         index += layers_parameters_number[i]*samples_number;
     }
@@ -604,19 +604,19 @@ void LossIndex::calculate_error_terms_output_jacobian(const DataSetBatch& batch,
 
 #ifndef __OPENNN_DEBUG__
 
-//     back_propagation.output_jacobian.device(*thread_pool_device) = (outputs-targets)/second_order_loss.error_terms;
+//     back_propagation.output_jacobian.device(*thread_pool_device) = (outputs-targets)/second_order_loss.squared_errors;
 
 //    back_propagation.output_jacobian = (outputs-targets);
 
 //    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
-//        back_propagation.output_jacobian(i) /= second_order_loss.error_terms(i);
+//        back_propagation.output_jacobian(i) /= second_order_loss.squared_errors(i);
 
 #else
 
 //    back_propagation.output_jacobian = (outputs-targets);
 
 //    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
-//        back_propagation.output_jacobian(i) /= second_order_loss.error_terms(i);
+//        back_propagation.output_jacobian(i) /= second_order_loss.squared_errors(i);
 
 #endif
 
@@ -1103,13 +1103,13 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation(LossInde
         parameters_backward(j) -= h;
         neural_network_pointer->forward_propagate(batch, parameters_backward, forward_propagation);
         loss_index_pointer->calculate_error_terms(batch, forward_propagation, second_order_loss);
-        error_terms_backward = second_order_loss.error_terms;
+        error_terms_backward = second_order_loss.squared_errors;
         parameters_backward(j) += h;
 
         parameters_forward(j) += h;
         neural_network_pointer->forward_propagate(batch, parameters_forward, forward_propagation);
         loss_index_pointer->calculate_error_terms(batch, forward_propagation, second_order_loss);
-        error_terms_forward = second_order_loss.error_terms;
+        error_terms_forward = second_order_loss.squared_errors;
         parameters_forward(j) -= h;
 
         for(Index i = 0; i < samples_number; i++)

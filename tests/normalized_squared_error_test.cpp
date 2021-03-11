@@ -701,7 +701,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
    forward_propagation.print();
    numerical_Jacobian_terms = nse.calculate_Jacobian_numerical_differentiation(&nse);
 
-   const Tensor<type, 2> difference = second_order_loss.error_terms_Jacobian-numerical_Jacobian_terms;
+   const Tensor<type, 2> difference = second_order_loss.squared_errors_Jacobian-numerical_Jacobian_terms;
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
