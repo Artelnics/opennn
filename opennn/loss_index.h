@@ -412,6 +412,8 @@ struct LossIndexBackPropagationLM
     type error;
     type loss;
 
+    Tensor<type, 1> parameters;
+
     Tensor<type, 1> squared_errors;
     Tensor<type, 2> squared_errors_Jacobian;
 
