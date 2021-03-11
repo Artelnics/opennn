@@ -51,9 +51,13 @@ public:
 
    // Error methods
 
-   void calculate_error(const DataSetBatch& batch,
-                        const NeuralNetworkForwardPropagation& forward_propagation,
-                        LossIndexBackPropagation& back_propagation) const;
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagation&) const;
+
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagationLM&) const;
 
    // Gradient methods
 
@@ -62,11 +66,12 @@ public:
                                LossIndexBackPropagation&) const;
 
    void calculate_gradient(const DataSetBatch&,
-                                    LossIndexBackPropagationLM&) const;
+                           LossIndexBackPropagationLM&) const;
 
    // Hessian method
 
-   void calculate_hessian_approximation(const DataSetBatch& batch, LossIndexBackPropagationLM& loss_index_back_propagation_lm) const;
+   void calculate_hessian_approximation(const DataSetBatch&,
+                                        LossIndexBackPropagationLM&) const;
 
    // Serialization methods
 

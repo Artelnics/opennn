@@ -51,6 +51,18 @@ void SumSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
+void SumSquaredError::calculate_error(const DataSetBatch& batch,
+                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     LossIndexBackPropagationLM& back_propagation) const
+{
+    Tensor<type, 0> sum_squared_error;
+
+    sum_squared_error.device(*thread_pool_device) = back_propagation.squared_errors.sum();
+
+    back_propagation.error = sum_squared_error(0);
+}
+
+
 void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                              NeuralNetworkForwardPropagation& forward_propagation,
                                              LossIndexBackPropagation& back_propagation) const

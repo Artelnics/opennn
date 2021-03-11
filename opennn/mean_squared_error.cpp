@@ -60,6 +60,21 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
+void MeanSquaredError::calculate_error(const DataSetBatch& batch,
+                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     LossIndexBackPropagationLM& back_propagation) const
+{
+    Tensor<type, 0> sum_squared_error;
+
+    const Index batch_samples_number = batch.inputs_2d.dimension(0);
+
+    sum_squared_error.device(*thread_pool_device)
+            = back_propagation.squared_errors.sum();
+
+    back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_samples_number);
+}
+
+
 void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                               NeuralNetworkForwardPropagation& forward_propagation,
                                               LossIndexBackPropagation& back_propagation) const
@@ -134,14 +149,17 @@ void MeanSquaredError::calculate_gradient(const DataSetBatch& batch,
 
     const type coefficient = static_cast<type>(2)/static_cast<type>(batch_samples_number);
 
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device) = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
+            = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
 
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device) = coefficient*loss_index_back_propagation_lm.gradient;
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
+            = coefficient*loss_index_back_propagation_lm.gradient;
 }
 
 
 
-void MeanSquaredError::calculate_hessian_approximation(const DataSetBatch& batch, LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+void MeanSquaredError::calculate_hessian_approximation(const DataSetBatch& batch,
+                                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -153,9 +171,11 @@ void MeanSquaredError::calculate_hessian_approximation(const DataSetBatch& batch
 
      const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_samples_number));
 
-     loss_index_back_propagation_lm.hessian.device(*thread_pool_device) = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors_Jacobian, AT_B);
+     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
+             = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors_Jacobian, AT_B);
 
-     loss_index_back_propagation_lm.hessian.device(*thread_pool_device) = coefficient*loss_index_back_propagation_lm.hessian;
+     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
+             = coefficient*loss_index_back_propagation_lm.hessian;
 }
 
 
