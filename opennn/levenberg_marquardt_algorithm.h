@@ -185,12 +185,10 @@ public:
    void perform_training_void();
 
    void update_epoch(
-           const DataSetBatch& batch,
-           NeuralNetworkForwardPropagation& forward_propagation,
-           BackPropagation& back_propagation,
-           LossIndexBackPropagationLM& second_order_loss_terms,
-           LMOptimizationData& optimization_data);
-
+           const DataSetBatch&,
+           NeuralNetworkForwardPropagation&,
+           LossIndexBackPropagationLM&,
+           LMOptimizationData&);
 
    string write_optimization_algorithm_type() const;
 
@@ -259,7 +257,6 @@ private:
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
    bool choose_best_selection = false;
-
 
    // TRAINING HISTORY
 

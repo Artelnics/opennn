@@ -178,16 +178,17 @@ public:
                                 BackPropagation&) const = 0;
 
 
+   virtual void calculate_error(const DataSetBatch&,
+                                const NeuralNetworkForwardPropagation&,
+                                LossIndexBackPropagationLM&) {}
+
    void back_propagate(const DataSetBatch&,
                        NeuralNetworkForwardPropagation&,
                        BackPropagation&) const;
 
-   // Second Order loss
-
-   void calculate_terms_second_order_loss(const DataSetBatch&,
-                                          NeuralNetworkForwardPropagation&,
-                                          BackPropagation&,
-                                          LossIndexBackPropagationLM&) const;
+   void back_propagate(const DataSetBatch&,
+                       NeuralNetworkForwardPropagation&,
+                       LossIndexBackPropagationLM&) const;
 
    void calculate_error_terms_output_jacobian(const DataSetBatch&,
                                               NeuralNetworkForwardPropagation&,
