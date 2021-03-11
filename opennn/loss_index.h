@@ -28,7 +28,9 @@
 
 namespace OpenNN
 {
-    struct BackPropagation;
+
+struct BackPropagation;
+struct LossIndexBackPropagationLM;
 
 /// This abstract class represents the concept of loss index composed of an error term and a regularization term.
 
@@ -64,49 +66,6 @@ public:
    /// Enumeration of available regularization methods.
 
    enum RegularizationMethod{L1, L2, NoRegularization};
-
-   /// A loss index composed of several terms, this structure represent the First Order for this function.
-
-   /// This structure contains second order information about the loss function (loss, gradient and Hessian).
-   /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
-   /// A method returning this structure might be implemented more efficiently than the loss,
-   /// gradient and <i>Hessian</i> methods separately.
-
-   struct SecondOrderLoss
-   {
-       /// Default constructor.
-
-       SecondOrderLoss() {}
-
-       SecondOrderLoss(const Index& parameters_number, const Index& samples_number)
-       {
-           loss = 0;           
-           gradient.resize(parameters_number);
-           error_terms_Jacobian.resize(samples_number, parameters_number);
-           hessian.resize(parameters_number, parameters_number);
-           error_terms.resize(samples_number);
-       }
-
-       void sum_hessian_diagonal(const type& value)
-       {
-           const Index parameters_number = hessian.dimension(0);
-
-            #pragma omp parallel for
-
-           for(Index i = 0; i < parameters_number; i++)
-               hessian(i,i) += value;
-       }
-
-       type error;
-       type loss;
-
-       Tensor<type, 1> error_terms;
-       Tensor<type, 2> error_terms_Jacobian;
-
-       Tensor<type, 1> gradient;
-       Tensor<type, 2> hessian;
-   };
-
 
    /// Returns a pointer to the neural network object associated to the error term.
 
@@ -216,7 +175,7 @@ public:
 
    virtual void calculate_error_terms(const DataSet::Batch&,
                                       const NeuralNetworkForwardPropagation&,
-                                      SecondOrderLoss&) const {}
+                                      LossIndexBackPropagationLM&) const {}
 
    void back_propagate(const DataSet::Batch&,
                        NeuralNetworkForwardPropagation&,
@@ -227,16 +186,16 @@ public:
    void calculate_terms_second_order_loss(const DataSet::Batch&,
                                           NeuralNetworkForwardPropagation&,
                                           BackPropagation&,
-                                          SecondOrderLoss&) const;
+                                          LossIndexBackPropagationLM&) const;
 
    void calculate_error_terms_output_jacobian(const DataSet::Batch&,
                                               NeuralNetworkForwardPropagation&,
                                               BackPropagation&,
-                                              SecondOrderLoss&) const;
+                                              LossIndexBackPropagationLM&) const;
 
-   virtual void calculate_Jacobian_gradient(const DataSet::Batch&, SecondOrderLoss&) const {}
+   virtual void calculate_Jacobian_gradient(const DataSet::Batch&, LossIndexBackPropagationLM&) const {}
 
-   virtual void calculate_hessian_approximation(const DataSet::Batch&, SecondOrderLoss&) const {}
+   virtual void calculate_hessian_approximation(const DataSet::Batch&, LossIndexBackPropagationLM&) const {}
 
    // Regularization methods
 
@@ -260,7 +219,7 @@ public:
    void calculate_error_terms_Jacobian(const DataSet::Batch&,
                                        const NeuralNetworkForwardPropagation&,
                                        const BackPropagation&,
-                                       SecondOrderLoss&) const;
+                                       LossIndexBackPropagationLM&) const;
 
    // Serialization methods
 
@@ -412,6 +371,49 @@ struct BackPropagation
     Tensor<type, 1> gradient;
 
     Tensor<type, 1> regularization_gradient;
+};
+
+
+/// A loss index composed of several terms, this structure represent the First Order for this function.
+
+/// This structure contains second order information about the loss function (loss, gradient and Hessian).
+/// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
+/// A method returning this structure might be implemented more efficiently than the loss,
+/// gradient and <i>Hessian</i> methods separately.
+
+struct LossIndexBackPropagationLM
+{
+    /// Default constructor.
+
+    LossIndexBackPropagationLM() {}
+
+    LossIndexBackPropagationLM(const Index& parameters_number, const Index& samples_number)
+    {
+        loss = 0;
+        gradient.resize(parameters_number);
+        error_terms_Jacobian.resize(samples_number, parameters_number);
+        hessian.resize(parameters_number, parameters_number);
+        error_terms.resize(samples_number);
+    }
+
+    void sum_hessian_diagonal(const type& value)
+    {
+        const Index parameters_number = hessian.dimension(0);
+
+         #pragma omp parallel for
+
+        for(Index i = 0; i < parameters_number; i++)
+            hessian(i,i) += value;
+    }
+
+    type error;
+    type loss;
+
+    Tensor<type, 1> error_terms;
+    Tensor<type, 2> error_terms_Jacobian;
+
+    Tensor<type, 1> gradient;
+    Tensor<type, 2> hessian;
 };
 
 

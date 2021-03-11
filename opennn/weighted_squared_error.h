@@ -79,7 +79,7 @@ public:
 
    void calculate_error_terms(const DataSet::Batch&,
                               const NeuralNetworkForwardPropagation&,
-                              SecondOrderLoss&) const;
+                              LossIndexBackPropagationLM&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
@@ -91,12 +91,12 @@ public:
                                BackPropagation&) const;
 
    void calculate_Jacobian_gradient(const DataSet::Batch&,
-                                    LossIndex::SecondOrderLoss&) const;
+                                    LossIndexBackPropagationLM&) const;
 
    // Hessian method
 
    void calculate_hessian_approximation(const DataSet::Batch&,
-                                        LossIndex::SecondOrderLoss&) const;
+                                        LossIndexBackPropagationLM&) const;
 
    // Serialization methods
 

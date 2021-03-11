@@ -53,7 +53,7 @@ void SumSquaredError::calculate_error(const DataSet::Batch& batch,
 
 void SumSquaredError::calculate_error_terms(const DataSet::Batch& batch,
                                             const NeuralNetworkForwardPropagation& forward_propagation,
-                                            SecondOrderLoss& second_order_loss) const
+                                            LossIndexBackPropagationLM& second_order_loss) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -184,7 +184,7 @@ void SumSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
 
 void SumSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& ,
-                                    LossIndex::SecondOrderLoss& second_order_loss) const
+                                    LossIndexBackPropagationLM& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -202,7 +202,7 @@ void SumSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& ,
 
 // Hessian method
 
-void SumSquaredError::calculate_hessian_approximation(const DataSet::Batch&, LossIndex::SecondOrderLoss& second_order_loss) const
+void SumSquaredError::calculate_hessian_approximation(const DataSet::Batch&, LossIndexBackPropagationLM& second_order_loss) const
 {
      #ifdef __OPENNN_DEBUG__
 

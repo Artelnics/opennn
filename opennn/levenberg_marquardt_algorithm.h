@@ -188,7 +188,7 @@ public:
            const DataSet::Batch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
            BackPropagation& back_propagation,
-           LossIndex::SecondOrderLoss& second_order_loss_terms,
+           LossIndexBackPropagationLM& second_order_loss_terms,
            LMOptimizationData& optimization_data);
 
 
