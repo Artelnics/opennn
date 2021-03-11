@@ -113,7 +113,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
 
 void SumSquaredError::calculate_gradient(const DataSetBatch& ,
-                                    LossIndexBackPropagationLM& second_order_loss) const
+                                    LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -123,15 +123,16 @@ void SumSquaredError::calculate_gradient(const DataSetBatch& ,
 
     const type coefficient = (static_cast<type>(2.0));
 
-    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.squared_errors_Jacobian.contract(second_order_loss.squared_errors, AT_B);
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
+            = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
 
-    second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
+            = coefficient*loss_index_back_propagation_lm.gradient;
 }
 
 
-// Hessian method
-
-void SumSquaredError::calculate_hessian_approximation(const DataSetBatch&, LossIndexBackPropagationLM& second_order_loss) const
+void SumSquaredError::calculate_hessian_approximation(const DataSetBatch&,
+                                                      LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -141,9 +142,11 @@ void SumSquaredError::calculate_hessian_approximation(const DataSetBatch&, LossI
 
      const type coefficient = (static_cast<type>(2.0));
 
-     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.squared_errors_Jacobian.contract(second_order_loss.squared_errors_Jacobian, AT_B);
+     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
+             = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors_Jacobian, AT_B);
 
-     second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
+     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
+             = coefficient*loss_index_back_propagation_lm.hessian;
 }
 
 

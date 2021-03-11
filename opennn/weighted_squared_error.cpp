@@ -282,7 +282,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
 
 void WeightedSquaredError::calculate_gradient(const DataSetBatch& batch,
-                                    LossIndexBackPropagationLM& second_order_loss) const
+                                    LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -295,16 +295,16 @@ void WeightedSquaredError::calculate_gradient(const DataSetBatch& batch,
 
     const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.squared_errors_Jacobian.contract(second_order_loss.squared_errors, AT_B);
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device) = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
 
-    second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device) = coefficient*loss_index_back_propagation_lm.gradient;
 }
 
 
 // Hessian method
 
 void WeightedSquaredError::calculate_hessian_approximation(const DataSetBatch& batch,
-                                                           LossIndexBackPropagationLM& second_order_loss) const
+                                                           LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -317,9 +317,9 @@ void WeightedSquaredError::calculate_hessian_approximation(const DataSetBatch& b
 
     const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-    second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.squared_errors_Jacobian.contract(second_order_loss.squared_errors_Jacobian, AT_B);
+    loss_index_back_propagation_lm.hessian.device(*thread_pool_device) = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors_Jacobian, AT_B);
 
-    second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
+    loss_index_back_propagation_lm.hessian.device(*thread_pool_device) = coefficient*loss_index_back_propagation_lm.hessian;
 }
 
 

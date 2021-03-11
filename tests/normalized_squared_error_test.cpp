@@ -619,15 +619,15 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
    LossIndexBackPropagation back_propagation(samples_number, &nse);
-   LossIndexBackPropagationLM second_order_loss(parameters_number, samples_number);
+   LossIndexBackPropagationLM loss_index_back_propagation_lm(parameters_number, samples_number);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
    nse.calculate_error(batch, forward_propagation, back_propagation);
 
-   nse.calculate_squared_errors(batch, forward_propagation, second_order_loss);
+   nse.calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
 
-   assert_true(abs(second_order_loss.error - back_propagation.error) < 1.0e-3, LOG);
+   assert_true(abs(loss_index_back_propagation_lm.error - back_propagation.error) < 1.0e-3, LOG);
 }
 
 
@@ -681,27 +681,27 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
    LossIndexBackPropagation back_propagation(samples_number, &nse);
-   LossIndexBackPropagationLM second_order_loss(parameters_number, samples_number);
+   LossIndexBackPropagationLM loss_index_back_propagation_lm(parameters_number, samples_number);
 
    neural_network.forward_propagate(batch, forward_propagation);
    nse.back_propagate(batch, forward_propagation, back_propagation);
 
-   nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
+   nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
 
    nse.calculate_error(batch, forward_propagation, back_propagation);
 
-   nse.calculate_squared_errors(batch, forward_propagation, second_order_loss);
+   nse.calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
 
-   assert_true(abs(second_order_loss.error - back_propagation.error) < 1.0e-3, LOG);
+   assert_true(abs(loss_index_back_propagation_lm.error - back_propagation.error) < 1.0e-3, LOG);
 
-   nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
+   nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
 
    Tensor<type, 2> numerical_Jacobian_terms;
 
    forward_propagation.print();
    numerical_Jacobian_terms = nse.calculate_Jacobian_numerical_differentiation(&nse);
 
-   const Tensor<type, 2> difference = second_order_loss.squared_errors_Jacobian-numerical_Jacobian_terms;
+   const Tensor<type, 2> difference = loss_index_back_propagation_lm.squared_errors_Jacobian-numerical_Jacobian_terms;
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
