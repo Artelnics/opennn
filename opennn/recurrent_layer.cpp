@@ -995,25 +995,9 @@ void RecurrentLayer::calculate_biases_error_gradient(const Tensor<type, 2>& inpu
         }
         else
         {
-            cout << "combinations_biases_derivatives: " << endl << combinations_biases_derivatives << endl;
-            cout << "activations_derivatives: " << endl << activations_derivatives << endl;
-
-
             multiply_rows(combinations_biases_derivatives, activations_derivatives);
 
-            cout << "combinations_biases_derivatives: " << endl << combinations_biases_derivatives << endl;
-
-            cout << "recurrent_weights: " << endl << recurrent_weights << endl;
-
-            cout << "contract: " << endl << combinations_biases_derivatives.contract(recurrent_weights, A_B) << endl;
-
-            cout << "combinations_biases_derivatives: " << endl << combinations_biases_derivatives << endl;
-
-            combinations_biases_derivatives = combinations_biases_derivatives.contract(recurrent_weights, A_B);
-
-            cout << "combinations_biases_derivatives: " << endl << combinations_biases_derivatives << endl;
-
-            system("pause");
+            combinations_biases_derivatives = combinations_biases_derivatives.contract(recurrent_weights, A_B).eval();
         }
 
         activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives.chip(sample, 0);
@@ -1062,7 +1046,7 @@ void RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<type, 2
         else
         {
             multiply_rows(combinations_weights_derivatives, activations_derivatives);
-            combinations_weights_derivatives = combinations_weights_derivatives.contract(recurrent_weights, A_B);
+            combinations_weights_derivatives = combinations_weights_derivatives.contract(recurrent_weights, A_B).eval();
         }
 
         activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives.chip(sample, 0);
@@ -1160,7 +1144,7 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 //    const Index rows_number = matrix.dimension(0);
 
 //    Tensor<type, 2> new_matrix(rows_number, columns_number);
-////#pragma omp paralell for
+//#pragma omp paralell for
 //    for(Index i = 0; i < rows_number; i++)
 //    {
 //        for(Index j = 0; j < columns_number; j++)
