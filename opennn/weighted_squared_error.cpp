@@ -236,43 +236,6 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void WeightedSquaredError::calculate_squared_errors(const DataSetBatch& batch,
-                                                 const NeuralNetworkForwardPropagation& forward_propagation,
-                                                 LossIndexBackPropagationLM& second_order_loss) const
-{
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-/*
-    const Index batch_samples_number = batch.get_samples_number();
-    const Index total_samples_number = data_set_pointer->get_samples_number();
-
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
-    const Tensor<type, 2>& targets = batch.targets_2d;
-
-    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
-
-    const Tensor<bool, 2> if_sentence = outputs == outputs.constant(1);
-
-    Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
-
-    Tensor<type, 2> f_2(outputs.dimension(0), outputs.dimension(1));
-
-    f_1 = ((outputs - targets))*positives_weight;
-
-    f_2 = ((outputs - targets))*negatives_weight;
-
-    second_order_loss.squared_errors = ((if_sentence.select(f_1, f_2)).sum(rows_sum).square()).sqrt();
-
-    Tensor<type, 0> error;
-    error.device(*thread_pool_device) = second_order_loss.squared_errors.contract(second_order_loss.squared_errors, AT_B);
-
-    const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
-
-    second_order_loss.error = error()/coefficient;
-    */
-}
-
-
-// Gradient methods
 
 void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                                   NeuralNetworkForwardPropagation& forward_propagation,
