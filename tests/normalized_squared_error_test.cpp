@@ -625,7 +625,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
 
    nse.calculate_error(batch, forward_propagation, back_propagation);
 
-   nse.calculate_error_terms(batch, forward_propagation, second_order_loss);
+   nse.calculate_squared_errors(batch, forward_propagation, second_order_loss);
 
    assert_true(abs(second_order_loss.error - back_propagation.error) < 1.0e-3, LOG);
 }
@@ -690,7 +690,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
 
    nse.calculate_error(batch, forward_propagation, back_propagation);
 
-   nse.calculate_error_terms(batch, forward_propagation, second_order_loss);
+   nse.calculate_squared_errors(batch, forward_propagation, second_order_loss);
 
    assert_true(abs(second_order_loss.error - back_propagation.error) < 1.0e-3, LOG);
 

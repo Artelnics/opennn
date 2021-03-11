@@ -51,7 +51,7 @@ void SumSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void SumSquaredError::calculate_error_terms(const DataSetBatch& batch,
+void SumSquaredError::calculate_squared_errors(const DataSetBatch& batch,
                                             const NeuralNetworkForwardPropagation& forward_propagation,
                                             LossIndexBackPropagationLM& second_order_loss) const
 {
@@ -64,7 +64,6 @@ void SumSquaredError::calculate_error_terms(const DataSetBatch& batch,
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
     const Tensor<type, 2>& targets = batch.targets_2d;
-
 
     switch(output_layer_pointer->get_type())
     {

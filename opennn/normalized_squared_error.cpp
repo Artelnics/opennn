@@ -291,12 +291,12 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 
-// \brief NormalizedSquaredError::calculate_error_terms
+// \brief NormalizedSquaredError::calculate_squared_errors
 // \param batch
 // \param forward_propagation
 // \param second_order_loss
 
-void NormalizedSquaredError::calculate_error_terms(const DataSetBatch& batch,
+void NormalizedSquaredError::calculate_squared_errors(const DataSetBatch& batch,
                                                    const NeuralNetworkForwardPropagation& forward_propagation,
                                                    LossIndexBackPropagationLM& second_order_loss) const
 {

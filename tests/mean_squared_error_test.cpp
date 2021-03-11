@@ -424,7 +424,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
 
    neural_network.forward_propagate(batch, forward_propagation);
 
-   mean_squared_error.calculate_error_terms(batch, forward_propagation, second_order_loss);
+   mean_squared_error.calculate_squared_errors(batch, forward_propagation, second_order_loss);
    squared_errors=second_order_loss.squared_errors;
 
 //   Eigen::array<int, 2> vector_times_vector = {Eigen::array<int, 2> ({1,1})};
