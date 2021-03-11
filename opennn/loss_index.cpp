@@ -404,8 +404,8 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 
 
 void LossIndex::calculate_squared_errors(const DataSetBatch& batch,
-                                            const NeuralNetworkForwardPropagation& forward_propagation,
-                                            LossIndexBackPropagationLM& second_order_loss) const
+                                         const NeuralNetworkForwardPropagation& forward_propagation,
+                                         LossIndexBackPropagationLM& second_order_loss) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -610,11 +610,11 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 /// It is used for optimization of parameters during training.
 /// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
 
-void LossIndex::calculate_terms_second_order_loss(const DataSetBatch& batch,
-                                                  NeuralNetworkForwardPropagation& forward_propagation,
-                                                  BackPropagation& back_propagation,
-                                                  LossIndexBackPropagationLM& second_order_loss) const
+void LossIndex::back_propagate(const DataSetBatch& batch,
+                               NeuralNetworkForwardPropagation& forward_propagation,
+                               LossIndexBackPropagationLM& second_order_loss) const
 {
+/*
     // First Order
 
     calculate_squared_errors(batch, forward_propagation, second_order_loss);
@@ -653,6 +653,7 @@ void LossIndex::calculate_terms_second_order_loss(const DataSetBatch& batch,
 
 //        second_order_loss.hessian += regularization_weight*calculate_regularization_hessian(back_propagation.parameters);
     }
+*/
 }
 
 
