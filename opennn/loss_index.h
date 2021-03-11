@@ -169,13 +169,14 @@ public:
                          const NeuralNetworkForwardPropagation&,
                          BackPropagation&) const;
 
+   void calculate_squared_errors(const DataSetBatch&,
+                                 const NeuralNetworkForwardPropagation&,
+                                 LossIndexBackPropagationLM&) const;
+
    virtual void calculate_error(const DataSetBatch&,
                                 const NeuralNetworkForwardPropagation&,
                                 BackPropagation&) const = 0;
 
-   virtual void calculate_error_terms(const DataSetBatch&,
-                                      const NeuralNetworkForwardPropagation&,
-                                      LossIndexBackPropagationLM&) const {}
 
    void back_propagate(const DataSetBatch&,
                        NeuralNetworkForwardPropagation&,
@@ -290,6 +291,7 @@ protected:
 #endif
 
 };
+
 
 /// Set of loss value and gradient vector of the loss index.
 /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
@@ -420,7 +422,6 @@ struct LossIndexBackPropagationLM
 }
 
 #endif
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.

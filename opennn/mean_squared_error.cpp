@@ -60,7 +60,7 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void MeanSquaredError::calculate_error_terms(const DataSetBatch& batch,
+void MeanSquaredError::calculate_squared_errors(const DataSetBatch& batch,
                                              const NeuralNetworkForwardPropagation& forward_propagation,
                                              LossIndexBackPropagationLM& second_order_loss) const
 {

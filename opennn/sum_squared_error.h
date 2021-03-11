@@ -53,7 +53,7 @@ public:
                         const NeuralNetworkForwardPropagation&,
                         BackPropagation&) const;
 
-   void calculate_error_terms(const DataSetBatch&,
+   void calculate_squared_errors(const DataSetBatch&,
                               const NeuralNetworkForwardPropagation&,
                               LossIndexBackPropagationLM&) const;
 
