@@ -485,7 +485,6 @@ void LossIndex::calculate_squared_errors(const DataSetBatch& batch,
 
 void LossIndex::calculate_error_terms_Jacobian(const DataSetBatch& batch,
                                                const NeuralNetworkForwardPropagation& forward_propagation,
-                                               const LossIndexBackPropagation& back_propagation,
                                                LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -524,52 +523,6 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSetBatch& batch,
 
         index += layers_parameters_number[i]*samples_number;
     }
-}
-
-
-/// Calculates the <i>Jacobian</i> matrix of the error terms of the layer.
-/// Returns the Jacobian of the error terms function, according to the objective type used in the loss index expression.
-/// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
-/// The Jacobian elements are the partial derivatives of a single layer term with respect to a single layer parameter.
-/// The number of rows in the Jacobian matrix are the number of parameters, and the number of columns the number
-/// of terms composing the objective.
-/// @param layer_deltas Tensor with layers delta.
-/// @param layer_inputs Tensor with layers inputs.
-
-Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<type, 2>& layer_deltas,
-                                                                const Tensor<type, 2>& layer_inputs) const
-{
-    const Index samples_number = layer_inputs.dimension(0);
-    const Index inputs_number = layer_inputs.dimension(1);
-    const Index neurons_number = layer_deltas.dimension(1);
-
-    const Index synaptic_weights_number = neurons_number*inputs_number;
-
-    Tensor<type, 2> layer_error_Jacobian(samples_number, neurons_number*(1+inputs_number));
-    layer_error_Jacobian.setConstant(0);
-
-    Index parameter;
-
-    for(Index sample = 0; sample < samples_number; sample++)
-    {
-        parameter = 0;
-
-        for(Index perceptron = 0; perceptron < neurons_number; perceptron++)
-        {
-            const type layer_delta = layer_deltas(sample, perceptron);
-
-            for(Index input = 0; input < inputs_number; input++)
-            {
-                layer_error_Jacobian(sample, neurons_number+parameter) = layer_delta*layer_inputs(sample, input);
-
-                parameter++;
-            }
-
-            layer_error_Jacobian(sample, /*synaptic_weights_number+*/perceptron) = layer_delta;
-        }
-    }
-
-    return layer_error_Jacobian;
 }
 
 

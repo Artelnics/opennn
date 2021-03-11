@@ -686,7 +686,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
    neural_network.forward_propagate(batch, forward_propagation);
    nse.back_propagate(batch, forward_propagation, back_propagation);
 
-   nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
+   nse.calculate_error_terms_Jacobian(batch, forward_propagation, loss_index_back_propagation_lm);
 
    nse.calculate_error(batch, forward_propagation, back_propagation);
 
@@ -694,7 +694,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void) // @t
 
    assert_true(abs(loss_index_back_propagation_lm.error - back_propagation.error) < 1.0e-3, LOG);
 
-   nse.calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
+   nse.calculate_error_terms_Jacobian(batch, forward_propagation, loss_index_back_propagation_lm);
 
    Tensor<type, 2> numerical_Jacobian_terms;
 

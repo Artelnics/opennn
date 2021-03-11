@@ -48,7 +48,6 @@ struct LossIndexBackPropagationLM;
 class LossIndex
 {
 
-
 public:
 
    // Constructors
@@ -163,7 +162,6 @@ public:
 
    Tensor<type, 2> calculate_Jacobian_numerical_differentiation(LossIndex*) const;
 
-   // ERROR TERMS METHODS
 
    void calculate_errors(const DataSetBatch&,
                          const NeuralNetworkForwardPropagation&,
@@ -177,10 +175,9 @@ public:
                                 const NeuralNetworkForwardPropagation&,
                                 LossIndexBackPropagation&) const = 0;
 
-
    virtual void calculate_error(const DataSetBatch&,
                                 const NeuralNetworkForwardPropagation&,
-                                LossIndexBackPropagationLM&) {}
+                                LossIndexBackPropagationLM&) const {}
 
    void back_propagate(const DataSetBatch&,
                        NeuralNetworkForwardPropagation&,
@@ -195,9 +192,11 @@ public:
                                               LossIndexBackPropagation&,
                                               LossIndexBackPropagationLM&) const;
 
-   virtual void calculate_gradient(const DataSetBatch&, LossIndexBackPropagationLM&) const {}
+   virtual void calculate_gradient(const DataSetBatch&,
+                                   LossIndexBackPropagationLM&) const {}
 
-   virtual void calculate_hessian_approximation(const DataSetBatch&, LossIndexBackPropagationLM&) const {}
+   virtual void calculate_hessian_approximation(const DataSetBatch&,
+                                                LossIndexBackPropagationLM&) const {}
 
    // Regularization methods
 
@@ -216,11 +215,8 @@ public:
                                  const NeuralNetworkForwardPropagation&,
                                  LossIndexBackPropagation&) const;
 
-   Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
    void calculate_error_terms_Jacobian(const DataSetBatch&,
                                        const NeuralNetworkForwardPropagation&,
-                                       const LossIndexBackPropagation&,
                                        LossIndexBackPropagationLM&) const;
 
    // Serialization methods
