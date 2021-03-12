@@ -31,15 +31,21 @@ namespace OpenNN
 
     struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
     {
-        const Index neurons_number = layer_pointer->get_neurons_number();
-
         explicit LongShortTermMemoryLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
         {
         }
 
         void set(const Index& new_batch_samples_number)
         {
+            const Index inputs_number = layer_pointer->get_inputs_number();
+            const Index neurons_number = layer_pointer->get_neurons_number();
+
             batch_samples_number = new_batch_samples_number;
+
+            previous_hidden_state_activations.resize(inputs_number);
+            previous_cell_state_activations.resize(inputs_number);
+
+            current_inputs.resize(inputs_number);
 
             current_forget_combinations.resize(neurons_number);
             current_input_combinations.resize(neurons_number);
@@ -50,6 +56,8 @@ namespace OpenNN
             current_input_activations.resize(neurons_number);
             current_state_activations.resize(neurons_number);
             current_output_activations.resize(neurons_number);
+
+            current_cell_state_activations.resize(neurons_number);
 
             current_forget_activations_derivatives.resize(neurons_number);
             current_input_activations_derivatives.resize(neurons_number);
@@ -82,6 +90,11 @@ namespace OpenNN
         Tensor<type, 2> combinations;
         Tensor<type, 2> activations;
 
+        Tensor<type, 1> previous_hidden_state_activations;
+        Tensor<type, 1> previous_cell_state_activations;
+
+        Tensor<type, 1> current_inputs;
+
         Tensor<type, 1> current_forget_combinations;
         Tensor<type, 1> current_input_combinations;
         Tensor<type, 1> current_state_combinations;
@@ -98,6 +111,8 @@ namespace OpenNN
         Tensor<type, 1> current_output_activations_derivatives;
 
         Tensor<type, 1> current_hidden_states_derivatives;
+
+        Tensor<type, 1> current_cell_state_activations;
 
         Tensor<type, 2, RowMajor> forget_activations;
         Tensor<type, 2, RowMajor> input_activations;
@@ -131,15 +146,17 @@ namespace OpenNN
         {
             batch_samples_number = new_batch_samples_number;
 
-            forget_weights_derivatives.resize(inputs_number * neurons_number);
-            input_weights_derivatives.resize(inputs_number * neurons_number);
-            state_weights_derivatives.resize(inputs_number * neurons_number);
-            output_weights_derivatives.resize(inputs_number * neurons_number);
+            current_layer_deltas.resize(neurons_number);
 
-            forget_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
-            input_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
-            state_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
-            output_recurrent_weights_derivatives.resize(neurons_number * neurons_number);
+            forget_weights_derivatives.resize(inputs_number*neurons_number);
+            input_weights_derivatives.resize(inputs_number*neurons_number);
+            state_weights_derivatives.resize(inputs_number*neurons_number);
+            output_weights_derivatives.resize(inputs_number*neurons_number);
+
+            forget_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+            input_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+            state_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+            output_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
 
             forget_biases_derivatives.resize(neurons_number);
             input_biases_derivatives.resize(neurons_number);
@@ -148,6 +165,8 @@ namespace OpenNN
 
             delta.resize(batch_samples_number, neurons_number);
         }
+
+        Tensor<type, 1> current_layer_deltas;
 
         Tensor<type, 2> delta;
 
@@ -434,10 +453,6 @@ public:
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_recurrent_activation_function_expression() const;
    string write_activation_function_expression() const;
-
-   // Utilities
-
-//   Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
 
    // Serialization methods
 

@@ -1790,7 +1790,7 @@ Index GeneticAlgorithm::get_optimal_individual_index() const
             if(current_inputs(j) == true) count_inputs++;
             if(optimal_inputs(j) == true) count_optimal++;
         }
-
+/*
         if((abs(optimum_error-current_error) < tolerance &&
                 count_inputs > count_optimal) ||
                 (abs(optimum_error-current_error) >= tolerance &&
@@ -1801,6 +1801,7 @@ Index GeneticAlgorithm::get_optimal_individual_index() const
 
             index = i;
         }
+*/
     }
 
     return index;
@@ -1911,10 +1912,8 @@ GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
             if(current_inputs(k) == true) count_inputs++;
         }
 
-        if((abs(results->optimum_selection_error - current_selection_error) >= tolerance &&
-                results->optimum_selection_error > current_selection_error) ||
-            (abs(results->optimum_selection_error - current_selection_error) < tolerance &&
-            count_inputs < count_optimal))
+        if(results->optimum_selection_error > current_selection_error
+        || count_inputs < count_optimal)
         {
             optimal_inputs = current_inputs;
             results->optimum_training_error = current_training_error;
@@ -2020,7 +2019,7 @@ GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
         if(end_algortihm == true)
         {
             // Save results
-            results->optimal_inputs = optimal_inputs;
+//            results->optimal_inputs = optimal_inputs;
 //            results->epochs_number = epoch + 1;
             results->elapsed_time = write_elapsed_time(elapsed_time);
             results->optimal_parameters = optimal_parameters;
@@ -2046,13 +2045,13 @@ GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
         }
     }
 
-    // Set Data set results
+    // Set data set results
 
     data_set_pointer->set_columns_uses(optimal_uses);
 
     const Index optimal_inputs_number = data_set_pointer->get_input_variables_number();
 
-    results->optimal_inputs_indices = data_set_pointer->get_input_variables_indices();
+    results->optimal_input_columns = data_set_pointer->get_input_variables_indices();
 
     const Index optimal_input_variables_number = data_set_pointer->get_input_variables_names().size();
 
@@ -2096,10 +2095,10 @@ GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
         }
         else if(data_set_pointer->get_column_use(current_column_index) == DataSet::UnusedVariable)
         {
-            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical) unused ++;
+            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical) unused++;
             else
             {
-                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++) unused ++;
+                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++) unused++;
             }
         }
     }
@@ -2142,16 +2141,6 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
     buffer.str("");
     buffer << trials_number;
     values(0) = buffer.str();
-
-    // Tolerance
-
-    string_matrix(1, 0) = "Tolerance";
-    labels(1) = "Tolerance";
-
-    buffer.str("");
-    buffer << tolerance;
-    values(1) = buffer.str();
-
 
     // Population size
 
@@ -2339,17 +2328,6 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << trials_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Tolerance
-
-    file_stream.OpenElement("Tolerance");
-
-    buffer.str("");
-    buffer << tolerance;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2999,26 +2977,6 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
-
-    // Tolerance
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Tolerance");
-
-        if(element)
-        {
-            const type new_tolerance = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_tolerance(new_tolerance);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
 }
 
 
@@ -3155,5 +3113,3 @@ bool GeneticAlgorithm::contains(const vector<vector<bool>>&values, const vector<
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-

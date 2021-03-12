@@ -150,14 +150,6 @@ const type& NeuronsSelection::get_maximum_time() const
 }
 
 
-/// Return the tolerance of error for the neurons selection algorithm.
-
-const type& NeuronsSelection::get_tolerance() const
-{
-    return tolerance;
-}
-
-
 /// Sets a new training strategy pointer.
 /// @param new_training_strategy_pointer Pointer to a training strategy object.
 
@@ -207,8 +199,6 @@ void NeuronsSelection::set_default()
 
     maximum_epochs_number = 1000;
     maximum_time = 3600;
-
-    tolerance = 0;
 }
 
 
@@ -405,30 +395,6 @@ void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
 }
 
 
-/// Set the tolerance for the errors in the trainings of the algorithm.
-/// @param new_tolerance Value of the tolerance.
-
-void NeuronsSelection::set_tolerance(const type& new_tolerance)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_tolerance < 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_tolerance(const type&) method.\n"
-               << "Tolerance must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    tolerance = new_tolerance;
-}
-
-
 /// Return a string with the stopping condition of the training depending on the training method.
 /// @param results Results of the perform_training method.
 
@@ -450,9 +416,7 @@ void NeuronsSelection::delete_selection_history()
 
 void NeuronsSelection::delete_training_error_history()
 {
-
     training_error_history.resize(0);
-
 }
 
 
