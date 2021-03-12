@@ -55,8 +55,8 @@ public:
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum StoppingCondition{MaximumTime,SelectionErrorGoal,MaximumInputs,MinimumInputs,MaximumEpochs,
-                           MaximumSelectionFailures,CorrelationGoal,AlgorithmFinished};
+    enum StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumInputs, MinimumInputs, MaximumEpochs,
+                           MaximumSelectionFailures, CorrelationGoal};
 
     // Get methods
 
@@ -100,7 +100,6 @@ public:
     void set_maximum_time(const type&);
     void set_maximum_correlation(const type&);
     void set_minimum_correlation(const type&);
-    void set_tolerance(const type&);
 
     // Performances calculation methods
 
@@ -125,7 +124,7 @@ public:
 
     Tensor<Index, 1> delete_result(const Index&, const Tensor<Index, 1>&) const;
 
-    Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index);
+    Index get_input_index(const Tensor<DataSet::VariableUse, 1>&, const Index&);
 
     /// Performs the inputs selection for a neural network.
 
@@ -201,10 +200,6 @@ protected:
 
     type maximum_time;
 
-    /// Tolerance for the error in the trainings of the algorithm.
-
-    type tolerance;
-
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 };
 
@@ -249,11 +244,11 @@ struct InputsSelectionResults
 
    /// Inputs of the neural network with minimum selection error.
 
-   Tensor<Index, 1> optimal_inputs_indices;
+   Tensor<Index, 1> optimal_input_columns;
 
    /// Inputs of the neural network with minimum selection error.
 
-   Tensor<bool, 1> optimal_inputs;
+//   Tensor<bool, 1> optimal_inputs;
 
    // Model selection
 

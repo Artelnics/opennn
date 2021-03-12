@@ -157,14 +157,6 @@ const type& InputsSelection::get_minimum_correlation() const
 }
 
 
-/// Return the tolerance of error for the algorithm.
-
-const type& InputsSelection::get_tolerance() const
-{
-    return tolerance;
-}
-
-
 /// Sets a new regression value.
 /// If it is set to true the problem will be taken as a function regression;
 /// if it is set to false the problem will be taken as a classification.
@@ -206,8 +198,6 @@ void InputsSelection::set_default()
     minimum_correlation = 0;
 
     maximum_time = 3600.0;
-
-    tolerance = 0;
 }
 
 
@@ -365,30 +355,6 @@ void InputsSelection::set_minimum_correlation(const type& new_minimum_correlatio
 #endif
 
     minimum_correlation = new_minimum_correlation;
-}
-
-
-/// Set the tolerance for the errors in the trainings of the algorithm.
-/// @param new_tolerance Value of the tolerance.
-
-void InputsSelection::set_tolerance(const type& new_tolerance)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_tolerance < 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void set_tolerance(const type&) method.\n"
-               << "Tolerance must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    tolerance = new_tolerance;
 }
 
 
@@ -807,9 +773,6 @@ string InputsSelectionResults::write_stopping_condition() const
 
     case InputsSelection::CorrelationGoal:
         return "CorrelationGoal";
-
-    case InputsSelection::AlgorithmFinished:
-        return "AlgorithmFinished";
     }
 
     return string();
@@ -865,7 +828,7 @@ const string InputsSelection::write_elapsed_time(const type& time) const
 /// @param uses Vector of the uses of the variables.
 /// @param input_number Index of the input to find.
 
-Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1> uses, const Index input_number)
+Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& input_number)
 {
 #ifdef __OPENNN_DEBUG__
 

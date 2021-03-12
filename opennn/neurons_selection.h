@@ -73,7 +73,6 @@ public:
     const type& get_selection_error_goal() const;
     const Index& get_maximum_epochs_number() const;
     const type& get_maximum_time() const;
-    const type& get_tolerance() const;
 
     // Set methods
 
@@ -93,7 +92,6 @@ public:
     void set_selection_error_goal(const type&);
     void set_maximum_epochs_number(const Index&);
     void set_maximum_time(const type&);
-    void set_tolerance(const type&);
 
     // Loss calculation methods
 
@@ -174,10 +172,6 @@ protected:
     /// Maximum selection algorithm time. It is used as a stopping criterion.
 
     type maximum_time;
-
-    /// Tolerance for the error in the trainings of the algorithm.
-
-    type tolerance;
 };
 
 

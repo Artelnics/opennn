@@ -301,7 +301,6 @@ private:
     /// True if the optimum of loss are to be reserved in each generation.
 
     bool reserve_generation_optimum_loss;
-
 };
 
 
@@ -345,7 +344,6 @@ struct GeneticAlgorithmResults : public InputsSelectionResults
 
     Tensor<type, 1> generation_selection_error_standard_deviation_history;
 };
-
 
 }
 
