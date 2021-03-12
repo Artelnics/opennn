@@ -26,8 +26,62 @@
 
 #include "opennn_strings.h"
 
+
 namespace OpenNN
 {
+
+    struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        explicit ProbabilisticLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
+        {
+        }
+
+        void set(const Index& new_batch_samples_number)
+        {
+            batch_samples_number = new_batch_samples_number;
+
+            const Index neurons_number = layer_pointer->get_neurons_number();
+
+            combinations.resize(batch_samples_number, neurons_number);
+
+            activations.resize(batch_samples_number, neurons_number);
+
+            activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
+        }
+
+        Tensor<type, 2> combinations;
+        Tensor<type, 2> activations;
+        Tensor<type, 3> activations_derivatives;
+    };
+
+    struct ProbabilisticLayerBackPropagation : LayerBackPropagation
+    {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
+
+        explicit ProbabilisticLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
+        {
+
+        }
+
+        void set(const Index& new_batch_samples_number)
+        {
+            batch_samples_number = new_batch_samples_number;
+
+            biases_derivatives.resize(neurons_number);
+
+            synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+
+            delta.resize(batch_samples_number, neurons_number);
+        }
+
+        Tensor<type, 2> delta;
+        Tensor<type, 2> synaptic_weights_derivatives;
+        Tensor<type, 1> biases_derivatives;
+    };
+
 
 /// This class represents a layer of probabilistic neurons.
 
@@ -58,8 +112,6 @@ public:
    enum ActivationFunction{Binary, Logistic, Competitive, Softmax};
 
    // Get methods
-
-   
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -121,44 +173,41 @@ public:
 
    void set_parameters_random();
 
-   void insert_parameters(const Tensor<type, 1>& parameters, const Index& );
+   void insert_parameters(const Tensor<type, 1>&, const Index& );
 
    // Combinations
 
-   void calculate_combinations(const Tensor<type, 2>& inputs,
-                               const Tensor<type, 2>& biases,
-                               const Tensor<type, 2>& synaptic_weights,
-                               Tensor<type, 2>& combinations_2d) const;
+   void calculate_combinations(const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               Tensor<type, 2>&) const;
 
    // Activations
 
-   void calculate_activations(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_2d) const;
+   void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
-                                          Tensor<type, 2>& activations,
-                                          Tensor<type, 3>& activations_derivatives) const;
+   void calculate_activations_derivatives(const Tensor<type, 2>&,
+                                          Tensor<type, 2>&,
+                                          Tensor<type, 3>&) const;
 
    // Outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
+   void forward_propagate(const Tensor<type, 2>&,
+                          LayerForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation);
-
-   void forward_propagate(const Tensor<type, 2>& inputs, Tensor<type, 1> potential_parameters, ForwardPropagation& forward_propagation);
-
-   void calculate_output_delta(ForwardPropagation& forward_propagation,
-                               const Tensor<type, 2>& output_gradient,
-                               Tensor<type, 2>& output_delta) const;
-
+   void forward_propagate(const Tensor<type, 2>&,
+                          Tensor<type, 1>,
+                          LayerForwardPropagation*);
 
    // Gradient methods
 
-   void calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                 const Layer::ForwardPropagation&,
-                                 Layer::BackPropagation& back_propagation) const;
+   void calculate_error_gradient(const Tensor<type, 2>&,
+                                 LayerForwardPropagation*,
+       LayerBackPropagation*) const;
 
-   void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
+   void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const;
 
    // Expression methods
 
@@ -168,10 +217,9 @@ public:
    string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_no_probabilistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-//   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const;
-   string write_combinations(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const;
-   string write_activations(const Tensor<string, 1>& outputs_names) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_combinations(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_activations(const Tensor<string, 1>&) const;
 
    string write_expression_c() const;
    string write_combinations_c() const;
@@ -224,7 +272,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

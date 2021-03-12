@@ -167,7 +167,7 @@ void PruningInputs::set_maximum_selection_failures(const Index& new_maximum_loss
 
 /// Perform the inputs selection with the pruning inputs method.
 
-PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
+PruningInputsResults* PruningInputs::perform_inputs_selection()
 {
 
 #ifdef __OPENNN_DEBUG__
@@ -275,7 +275,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     for(Index iteration = 0; iteration < maximum_epochs_number; iteration++)
     {
-        OptimizationAlgorithm::Results training_results;
+        OptimizationAlgorithmResults training_results;
 
         Index column_index;
         string column_name;
@@ -363,7 +363,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
             optimum_selection_error = optimum_selection_error_trial;
             optimum_training_error = optimum_training_error_trial;
         }
-        else if (previus_selection_error < optimum_selection_error_trial)
+        else if(previus_selection_error < optimum_selection_error_trial)
         {
             selection_failures++;
         }
@@ -1175,7 +1175,7 @@ void PruningInputs::load(const string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

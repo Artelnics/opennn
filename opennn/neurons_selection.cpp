@@ -492,7 +492,7 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
 
     // Optimization algorithm
 
-    OptimizationAlgorithm::Results results;
+    OptimizationAlgorithmResults results;
 
     Tensor<type, 1> final_losses(2);
 
@@ -535,7 +535,7 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, 
     {
         neural_network.set_parameters_random();
 
-        const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy_pointer->perform_training();
+        const OptimizationAlgorithmResults optimization_algorithm_results = training_strategy_pointer->perform_training();
 
         const type current_training_error = optimization_algorithm_results.final_training_error;
         const type current_selection_error = optimization_algorithm_results.final_selection_error;
@@ -628,7 +628,7 @@ Tensor< Tensor<type, 1>, 1> NeuronsSelection::insert_result(const Tensor<type, 1
 /// Return a string with the stopping condition of the training depending on the training method.
 /// @param results Results of the perform_training method.
 
-string NeuronsSelection::write_stopping_condition(const OptimizationAlgorithm::Results& results) const
+string NeuronsSelection::write_stopping_condition(const OptimizationAlgorithmResults& results) const
 {
     return results.write_stopping_condition();
 }
@@ -787,23 +787,23 @@ const string NeuronsSelection::write_elapsed_time(const type& time) const
 
 /// Return a string with the stopping condition of the Results
 
-string NeuronsSelection::Results::write_stopping_condition() const
+string NeuronsSelectionResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-        case MaximumTime:
+        case NeuronsSelection::MaximumTime:
             return "MaximumTime";
 
-        case SelectionErrorGoal:
+        case NeuronsSelection::SelectionErrorGoal:
             return "SelectionErrorGoal";
 
-        case MaximumEpochs:
+        case NeuronsSelection::MaximumEpochs:
             return "MaximumEpochs";
 
-        case MaximumSelectionFailures:
+        case NeuronsSelection::MaximumSelectionFailures:
             return "MaximumSelectionFailures";
 
-        case AlgorithmFinished:
+        case NeuronsSelection::AlgorithmFinished:
             return "AlgorithmFinished";
     }
 
@@ -813,7 +813,7 @@ string NeuronsSelection::Results::write_stopping_condition() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

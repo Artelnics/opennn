@@ -25,6 +25,11 @@ QMAKE_LFLAGS += -static-libgcc
 QMAKE_LFLAGS += -static-libstdc++
 QMAKE_LFLAGS += -static
 
+win32:!win32-g++{
+QMAKE_CXXFLAGS+= -arch:AVX
+QMAKE_CFLAGS+= -arch:AVX
+}
+
 #QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
 #QMAKE_LFLAGS += -fopenmp -pthread -lgomp
 #LIBS += -fopenmp -pthread -lgomp

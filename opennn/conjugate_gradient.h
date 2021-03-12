@@ -31,6 +31,8 @@
 namespace OpenNN
 {
 
+struct ConjugateGradientData;
+
 /// In the conjugate gradient algorithms a search is performed along conjugate directions,
 /// which produces generally faster convergence than a search along the steepest descent directions.
 
@@ -44,38 +46,6 @@ class ConjugateGradient : public OptimizationAlgorithm
 {
 
 public:
-
-    struct GGOptimizationData : public OptimizationData
-    {
-        /// Default constructor.
-
-        explicit GGOptimizationData();
-
-        explicit GGOptimizationData(ConjugateGradient*);
-
-        virtual ~GGOptimizationData();
-
-        void set(ConjugateGradient*);
-
-        void print() const;
-
-        ConjugateGradient* conjugate_gradient_pointer = nullptr;
-
-        Tensor<type, 1> parameters_increment;
-
-        Tensor<type, 1> old_gradient;
-
-        Tensor<type, 1> old_training_direction;
-
-        Index epoch = 0;
-
-        type learning_rate = 0;
-        type old_learning_rate = 0;
-
-        type parameters_increment_norm = 0;
-
-        Tensor<type, 0> training_slope;
-    };
 
    // Enumerations
 
@@ -169,7 +139,7 @@ public:
 
    // Training methods
 
-   Results perform_training();
+   OptimizationAlgorithmResults perform_training();
 
    void perform_training_void();
 
@@ -184,10 +154,10 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const;
 
    void update_epoch(
-           const DataSet::Batch& batch,
-           NeuralNetwork::ForwardPropagation& forward_propagation,
-           LossIndex::BackPropagation& back_propagation,
-           GGOptimizationData& optimization_data);
+           const DataSetBatch& batch,
+           NeuralNetworkForwardPropagation& forward_propagation,
+           LossIndexBackPropagation& back_propagation,
+           ConjugateGradientData& optimization_data);
 
 private:
 
@@ -245,7 +215,39 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
+};
 
+
+struct ConjugateGradientData : public OptimizationAlgorithmData
+{
+    /// Default constructor.
+
+    explicit ConjugateGradientData();
+
+    explicit ConjugateGradientData(ConjugateGradient*);
+
+    virtual ~ConjugateGradientData();
+
+    void set(ConjugateGradient*);
+
+    void print() const;
+
+    ConjugateGradient* conjugate_gradient_pointer = nullptr;
+
+    Tensor<type, 1> parameters_increment;
+
+    Tensor<type, 1> old_gradient;
+
+    Tensor<type, 1> old_training_direction;
+
+    Index epoch = 0;
+
+    type learning_rate = 0;
+    type old_learning_rate = 0;
+
+    type parameters_increment_norm = 0;
+
+    Tensor<type, 0> training_slope;
 };
 
 }
@@ -254,7 +256,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -269,4 +271,3 @@ private:
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

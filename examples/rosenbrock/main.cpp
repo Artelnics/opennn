@@ -39,6 +39,7 @@ int main(void)
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
+        data_set.set_training();
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables_minimum_maximum();
 
@@ -73,6 +74,7 @@ int main(void)
         training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(1);
+
         training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1);
 
         training_strategy.perform_training();

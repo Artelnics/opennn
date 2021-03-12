@@ -26,7 +26,9 @@
 namespace OpenNN
 {
 
-/// This class is used to optimize model response identify the combinations_2d of variable settings jointly optimize a set of responses.
+struct ResponseOptimizationResults;
+
+/// This class is used to optimize model response identify the combinations of variable settings jointly optimize a set of responses.
 
 ///
 /// This tool is adequate when you need to know the behaviour of a multiple variables on a response
@@ -48,49 +50,6 @@ public:
     ///Enumeration of available conditions for response optimization.
 
    enum Condition{Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};
-
-   ///
-   /// This structure returns the results obtained in the optimization, e.g. optimum inputs number, etc.
-   ///
-
-   struct Results
-   {
-       /// Default constructor.
-
-       explicit Results(NeuralNetwork* new_neural_network_pointer)
-       {
-           neural_network_pointer = new_neural_network_pointer;
-       }
-
-       virtual ~Results(){}
-
-       NeuralNetwork* neural_network_pointer = nullptr;
-
-       Tensor<type, 1> optimal_variables;
-
-       type optimum_objective;
-
-       void print() const
-       {
-           const Index inputs_number = neural_network_pointer->get_inputs_number();
-           const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-           const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
-           const Tensor<string, 1> outputs_names = neural_network_pointer->get_outputs_names();
-
-           for(Index i = 0; i < inputs_number; i++)
-           {
-               cout << inputs_names[i] << ": " << optimal_variables[i] << endl;
-           }
-
-           for(Index i = 0; i < outputs_number; i++)
-           {
-               cout << outputs_names[i] << " " << optimal_variables[inputs_number+i] << endl;
-           }
-
-           cout << "Objective: " << optimum_objective << endl;
-       }
-   };
 
    // Get methods
 
@@ -121,7 +80,7 @@ public:
 
    Tensor<type, 2> calculate_envelope(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Results* perform_optimization() const;
+   ResponseOptimizationResults* perform_optimization() const;
 
 private:
 
@@ -142,13 +101,58 @@ private:
 
 };
 
+
+///
+/// This structure returns the results obtained in the optimization, e.g. optimum inputs number, etc.
+///
+
+struct ResponseOptimizationResults
+{
+    /// Default constructor.
+
+    explicit ResponseOptimizationResults(NeuralNetwork* new_neural_network_pointer)
+    {
+        neural_network_pointer = new_neural_network_pointer;
+    }
+
+    virtual ~ResponseOptimizationResults(){}
+
+    NeuralNetwork* neural_network_pointer = nullptr;
+
+    Tensor<type, 1> optimal_variables;
+
+    type optimum_objective;
+
+    void print() const
+    {
+        const Index inputs_number = neural_network_pointer->get_inputs_number();
+        const Index outputs_number = neural_network_pointer->get_outputs_number();
+
+        const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
+        const Tensor<string, 1> outputs_names = neural_network_pointer->get_outputs_names();
+
+        for(Index i = 0; i < inputs_number; i++)
+        {
+            cout << inputs_names[i] << ": " << optimal_variables[i] << endl;
+        }
+
+        for(Index i = 0; i < outputs_number; i++)
+        {
+            cout << outputs_names[i] << " " << optimal_variables[inputs_number+i] << endl;
+        }
+
+        cout << "Objective: " << optimum_objective << endl;
+    }
+};
+
+
 }
 
 #endif
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

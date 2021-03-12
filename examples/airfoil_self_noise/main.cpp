@@ -87,7 +87,7 @@ int main(void)
         adam->set_maximum_epochs_number(10000);
         adam->set_display_period(1000);
 
-        const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
+        const OptimizationAlgorithmResults optimization_algorithm_results = training_strategy.perform_training();
 
         data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
         data_set.unscale_target_variables(scaling_target_methods, target_descriptives);

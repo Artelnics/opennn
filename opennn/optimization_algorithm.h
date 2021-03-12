@@ -32,6 +32,8 @@ using namespace Eigen;
 namespace OpenNN
 {
 
+struct OptimizationAlgorithmResults;
+
 /// This abstract class represents the concept of optimization algorithm for a neural network in OpenNN library.
 /// Any derived class must implement the perform_training() method.
 
@@ -50,135 +52,6 @@ public:
 
     enum StoppingCondition{MinimumParametersIncrementNorm, MinimumLossDecrease, LossGoal, GradientNormGoal,
                            MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
-
-    struct OptimizationData
-    {
-        explicit OptimizationData()
-        {
-        }
-
-        virtual ~OptimizationData()
-        {
-        }
-
-        void print() const
-        {
-            cout << "Parameters:" << endl;
-            cout << parameters << endl;
-
-            cout << "Potential parameters:" << endl;
-            cout << potential_parameters << endl;
-
-            cout << "Training direction:" << endl;
-            cout << training_direction << endl;
-
-            cout << "Initial learning rate:" << endl;
-            cout << initial_learning_rate << endl;
-        }
-
-        Tensor<type, 1> parameters;
-        Tensor<type, 1> potential_parameters;
-        Tensor<type, 1> training_direction;
-        type initial_learning_rate = 0;
-
-
-
-    };
-
-   /// This structure contains the optimization algorithm results.    
-
-   struct Results
-   {
-       explicit Results()
-       {
-       }
-
-       virtual ~Results()
-       {
-       }
-
-       string write_stopping_condition() const;
-
-       /// Stopping condition of the algorithm.
-
-       StoppingCondition stopping_condition;
-
-       /// Returns a string representation of the results structure.
-
-       
-
-       void save(const string&) const;
-
-       /// Returns a default(empty) string matrix with the final results from training.
-
-       Tensor<string, 2> write_final_results(const Index& = 3) const;
-
-       /// Resizes training history variables.
-
-       void resize_training_history(const Index&);
-
-       /// Resizes selection history variables.
-
-       void resize_selection_history(const Index&);
-
-       /// Resizes the training error history keeping the values.
-
-       void resize_training_error_history(const Index&);
-
-       /// Resizes the selection error history keeping the values.
-
-       void resize_selection_error_history(const Index&);
-
-       /// Writes final results of the training.
-/*
-       Tensor<string, 2> write_final_results(const Index& precision = 3) const;
-*/       
-
-       // Training history
-
-       /// History of the loss function loss over the training iterations.
-
-       Tensor<type, 1> training_error_history;
-
-       /// History of the selection error over the training iterations.
-
-       Tensor<type, 1> selection_error_history;
-
-       // Final values
-
-       /// Final neural network parameters vector.
-
-       Tensor<type, 1> final_parameters;
-
-       /// Final neural network parameters norm.
-
-       type final_parameters_norm;
-
-       /// Final loss function evaluation.
-
-       type final_training_error;
-
-       /// Final selection error.
-
-       type final_selection_error;
-
-       /// Final gradient norm.
-
-       type final_gradient_norm;
-
-       /// Elapsed time of the training process.
-
-       string elapsed_time;
-
-       /// Maximum number of training iterations.
-
-       Index epochs_number;
-
-       /// Stopping criterion.
-
-       string stopping_criterion;
-   };
-
 
    // Get methods
 
@@ -230,7 +103,7 @@ public:
 
    /// Trains a neural network which has a loss index associated. 
 
-   virtual Results perform_training() = 0;
+   virtual OptimizationAlgorithmResults perform_training() = 0;
 
    virtual string write_optimization_algorithm_type() const {return string();}
 
@@ -323,13 +196,125 @@ protected:
 
 };
 
+
+struct OptimizationAlgorithmData
+{
+    explicit OptimizationAlgorithmData()
+    {
+    }
+
+    virtual ~OptimizationAlgorithmData()
+    {
+    }
+
+    void print() const
+    {
+        cout << "Potential parameters:" << endl;
+        cout << potential_parameters << endl;
+
+        cout << "Training direction:" << endl;
+        cout << training_direction << endl;
+
+        cout << "Initial learning rate:" << endl;
+        cout << initial_learning_rate << endl;
+    }
+
+    Tensor<type, 1> potential_parameters;
+    Tensor<type, 1> training_direction;
+    type initial_learning_rate = 0;
+};
+
+
+/// This structure contains the optimization algorithm results.
+
+struct OptimizationAlgorithmResults
+{
+    explicit OptimizationAlgorithmResults() {}
+
+    virtual ~OptimizationAlgorithmResults() {}
+
+    string write_stopping_condition() const;
+
+    /// Stopping condition of the algorithm.
+
+    OptimizationAlgorithm::StoppingCondition stopping_condition;
+
+    /// Returns a string representation of the results structure.
+
+    void save(const string&) const;
+
+    /// Writes final results of the training.
+
+    Tensor<string, 2> write_final_results(const Index& = 3) const;
+
+    /// Resizes training history variables.
+
+    void resize_training_history(const Index&);
+
+    /// Resizes selection history variables.
+
+    void resize_selection_history(const Index&);
+
+    /// Resizes the training error history keeping the values.
+
+    void resize_training_error_history(const Index&);
+
+    /// Resizes the selection error history keeping the values.
+
+    void resize_selection_error_history(const Index&);
+
+    // Training history
+
+    /// History of the loss function loss over the training iterations.
+
+    Tensor<type, 1> training_error_history;
+
+    /// History of the selection error over the training iterations.
+
+    Tensor<type, 1> selection_error_history;
+
+    // Final values
+
+    /// Final neural network parameters vector.
+
+    Tensor<type, 1> final_parameters;
+
+    /// Final neural network parameters norm.
+
+    type final_parameters_norm;
+
+    /// Final loss function evaluation.
+
+    type final_training_error;
+
+    /// Final selection error.
+
+    type final_selection_error;
+
+    /// Final gradient norm.
+
+    type final_gradient_norm;
+
+    /// Elapsed time of the training process.
+
+    string elapsed_time;
+
+    /// Maximum number of training iterations.
+
+    Index epochs_number;
+
+    /// Stopping criterion.
+
+    string stopping_criterion;
+};
+
 }
 
 #endif
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

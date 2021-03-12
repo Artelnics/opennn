@@ -166,41 +166,6 @@ public:
        void write_XML(tinyxml2::XMLPrinter&) const;
    };
 
-
-   struct Batch
-   {
-       /// Default constructor.
-
-       Batch() {}
-
-       Batch(const Index& new_samples_number, DataSet* new_data_set_pointer);
-
-       /// Destructor.
-
-       virtual ~Batch() {}
-
-       Index get_samples_number() const;
-
-       void print();
-
-       void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
-
-//       void fill_submatrix(const Tensor<type, 2>& matrix,
-//                 const Tensor<Index, 1>& rows_indices,
-//                 const Tensor<Index, 1>& columns_indices, Tensor<type, 2>& submatrix);
-
-
-       Index samples_number = 0;
-
-       DataSet* data_set_pointer = nullptr;
-
-       Tensor<type, 2> inputs_2d;
-       Tensor<type, 4> inputs_4d;
-
-       Tensor<type, 2> targets_2d;
-   };
-
-
    // Samples get methods
 
    inline Index get_samples_number() const {return samples_uses.size();}
@@ -238,7 +203,9 @@ public:
    Index get_columns_number() const;
 
    Index get_input_columns_number() const;
+   Index get_input_time_series_columns_number() const;
    Index get_target_columns_number() const;
+   Index get_target_time_series_columns_number() const;
    Index get_time_columns_number() const;
    Index get_unused_columns_number() const;
    Index get_used_columns_number() const;
@@ -247,7 +214,9 @@ public:
    Index get_column_index(const Index&) const;
 
    Tensor<Index, 1> get_input_columns_indices() const;
+   Tensor<Index, 1> get_input_time_series_columns_indices() const;
    Tensor<Index, 1> get_target_columns_indices() const;
+   Tensor<Index, 1> get_target_time_series_columns_indices() const;
    Tensor<Index, 1> get_unused_columns_indices() const;
    Tensor<Index, 1> get_used_columns_indices() const;
 
@@ -426,6 +395,8 @@ public:
 
    void set_column_use(const Index&, const VariableUse&);
    void set_column_use(const string&, const VariableUse&);
+
+   void set_column_type(const Index&, const ColumnType&);
 
    void set_columns_names(const Tensor<string, 1>&);
 
@@ -682,7 +653,8 @@ public:
 
    Tensor<type, 2> get_time_series_column_data(const Index&) const;
    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
-   Tensor<Tensor<type, 1>, 2> calculate_cross_correlations(const Index& = 10) const;
+//   Tensor<Tensor<type, 1>, 2> calculate_cross_correlations(const Index& = 10) const;
+   Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
    Tensor<type, 2> calculate_lag_plot() const;
    Tensor<type, 2> calculate_lag_plot(const Index&);
 
@@ -721,6 +693,7 @@ public:
 
    void save_data_binary(const string&) const;
    void save_time_series_data_binary(const string&) const;
+
 
    // Data load methods
 
@@ -841,7 +814,7 @@ private:
 
    bool display = true;
 
-   /// Index where time variable is located for forecasting applications.
+   /// Index where  variable is located for forecasting applications.
 
    Index time_index;
 
@@ -903,12 +876,42 @@ private:
 
 };
 
+
+struct DataSetBatch
+{
+    /// Default constructor.
+
+    DataSetBatch() {}
+
+    DataSetBatch(const Index& new_samples_number, DataSet* new_data_set_pointer);
+
+    /// Destructor.
+
+    virtual ~DataSetBatch() {}
+
+    Index get_samples_number() const;
+
+    void print();
+
+    void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+
+    Index samples_number = 0;
+
+    DataSet* data_set_pointer = nullptr;
+
+    Tensor<type, 2> inputs_2d;
+    Tensor<type, 4> inputs_4d;
+
+    Tensor<type, 2> targets_2d;
+};
+
+
 }
 
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

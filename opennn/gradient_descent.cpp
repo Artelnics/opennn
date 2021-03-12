@@ -443,16 +443,16 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 
 
 
-////// \brief GradientDescent::update_epoch
-////// \param batch
-////// \param forward_propagation
-////// \param back_propagation
-////// \param optimization_data
+// \brief GradientDescent::update_epoch
+// \param batch
+// \param forward_propagation
+// \param back_propagation
+// \param optimization_data
 void GradientDescent::update_epoch(
-        const DataSet::Batch& batch,
-        NeuralNetwork::ForwardPropagation& forward_propagation,
-        LossIndex::BackPropagation& back_propagation,
-        GDOptimizationData& optimization_data)
+        const DataSetBatch& batch,
+        NeuralNetworkForwardPropagation& forward_propagation,
+        LossIndexBackPropagation& back_propagation,
+        GradientDescentData& optimization_data)
 {
 
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
@@ -491,9 +491,9 @@ void GradientDescent::update_epoch(
     optimization_data.parameters_increment.device(*thread_pool_device)
             = optimization_data.training_direction*optimization_data.learning_rate;
 
-    optimization_data.old_parameters = optimization_data.parameters;
+    optimization_data.old_parameters = back_propagation.parameters;
 
-    optimization_data.parameters += optimization_data.parameters_increment;
+    back_propagation.parameters += optimization_data.parameters_increment;
 
     optimization_data.old_gradient = back_propagation.gradient;
 
@@ -510,9 +510,9 @@ void GradientDescent::update_epoch(
 /// Training occurs according to the training parameters and stopping criteria.
 /// It returns a results structure with the history and the final values of the reserved variables.
 
-OptimizationAlgorithm::Results GradientDescent::perform_training()
+OptimizationAlgorithmResults GradientDescent::perform_training()
 {
-    Results results;
+    OptimizationAlgorithmResults results;
 
 #ifdef __OPENNN_DEBUG__
 
@@ -538,8 +538,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    DataSet::Batch training_batch(training_samples_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
     training_batch.fill(training_samples_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
@@ -553,10 +553,10 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    type parameters_norm = 0;
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+
+    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
@@ -566,8 +566,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     type gradient_norm = 0;
 
-    LossIndex::BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Learning rate
 
@@ -575,7 +575,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     // Optimization algorithm
 
-    GDOptimizationData optimization_data(this);
+    GradientDescentData optimization_data(this);
 
     Index selection_error_increases = 0;
 
@@ -590,12 +590,11 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     if(has_selection) results.resize_selection_history(maximum_epochs_number+1);
 
     // Calculate error before training
-    parameters_norm = l2_norm(optimization_data.parameters);
+
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
     results.training_error_history(0)  = training_back_propagation.error;
 
-    parameters_norm = l2_norm(optimization_data.parameters);
     if(has_selection)
     {
         neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
@@ -614,8 +613,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-
-        parameters_norm = l2_norm(optimization_data.parameters);
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
@@ -640,7 +637,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             else if(selection_back_propagation.error <= minimum_selection_error)
             {
                 minimum_selection_error = selection_back_propagation.error;
-                minimal_selection_parameters = optimization_data.parameters;
+                minimal_selection_parameters = training_back_propagation.parameters;
             }
         }
 
@@ -654,7 +651,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
-        neural_network_pointer->set_parameters(optimization_data.parameters);
+        neural_network_pointer->set_parameters(training_back_propagation.parameters);
 
         // Elapsed time
 
@@ -753,8 +750,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << training_back_propagation.error << "\n"
+                cout << "Training error: " << training_back_propagation.error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << "Learning rate: " << optimization_data.learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
@@ -765,9 +761,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             results.resize_training_error_history(epoch+1);
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            results.final_parameters = optimization_data.parameters;
-
-            results.final_parameters_norm = parameters_norm;
+            results.final_parameters = training_back_propagation.parameters;
 
             results.final_training_error = training_back_propagation.error;
 
@@ -784,7 +778,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         else if((display && epoch ==1) || (display && (epoch) % display_period == 0))
         {
             cout << "Epoch " << epoch << ";\n"
-                 << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << "Learning rate: " << optimization_data.learning_rate << "\n"
@@ -1300,7 +1293,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -405,11 +405,9 @@ void ModelSelection::check() const
 /// Perform the order selection, returns a structure with the results of the order selection.
 /// It also set the neural network of the training strategy pointer with the optimum parameters.
 
-ModelSelection::Results ModelSelection::perform_neurons_selection()
+ModelSelectionResults ModelSelection::perform_neurons_selection()
 {
-    Results results;
-
-    TrainingStrategy* ts = get_training_strategy_pointer();
+    ModelSelectionResults results;
 
     switch(neurons_selection_method)
     {
@@ -419,9 +417,11 @@ ModelSelection::Results ModelSelection::perform_neurons_selection()
     }
     case GROWING_NEURONS:
     {
-        growing_neurons.set_display(display);
+        TrainingStrategy* training_strategy_pointer = get_training_strategy_pointer();
 
-        growing_neurons.set_training_strategy_pointer(ts);
+        growing_neurons.set_training_strategy_pointer(training_strategy_pointer);
+
+        growing_neurons.set_display(display);
 
         results.growing_neurons_results_pointer = growing_neurons.perform_neurons_selection();
 
@@ -436,9 +436,9 @@ ModelSelection::Results ModelSelection::perform_neurons_selection()
 /// Perform the inputs selection, returns a structure with the results of the inputs selection.
 /// It also set the neural network of the training strategy pointer with the optimum parameters.
 
-ModelSelection::Results ModelSelection::perform_inputs_selection()
+ModelSelectionResults ModelSelection::perform_inputs_selection()
 {
-    Results results;
+    ModelSelectionResults results;
 
     TrainingStrategy* ts = get_training_strategy_pointer();
 
@@ -486,14 +486,14 @@ ModelSelection::Results ModelSelection::perform_inputs_selection()
 
 /// Perform inputs selection and order selection.
 /// @todo
-
-ModelSelection::Results ModelSelection::perform_model_selection()
+/*
+ModelSelectionResults ModelSelection::perform_model_selection()
 {
     perform_inputs_selection();
 
     return perform_neurons_selection();
 }
-
+*/
 
 /// Serializes the model selection object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
@@ -664,7 +664,6 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 genetic_algorithm.from_XML(genetic_algorithm_document);
             }
-
         }
     }
 }
@@ -672,7 +671,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
 string ModelSelection::write_neurons_selection_method() const
 {
-    switch (neurons_selection_method)
+    switch(neurons_selection_method)
     {
     case NO_NEURONS_SELECTION:
         return "NO_NEURONS_SELECTION";
@@ -680,12 +679,14 @@ string ModelSelection::write_neurons_selection_method() const
     case GROWING_NEURONS:
         return "GROWING_NEURONS";
     }
+
+    return string();
 }
 
 
 string ModelSelection::write_inputs_selection_method() const
 {
-    switch (inputs_selection_method)
+    switch(inputs_selection_method)
     {
     case NO_INPUTS_SELECTION:
         return "NO_INPUTS_SELECTION";
@@ -699,6 +700,8 @@ string ModelSelection::write_inputs_selection_method() const
     case GENETIC_ALGORITHM:
         return "GENETIC_ALGORITHM";
     }
+
+    return string();
 }
 
 
@@ -750,9 +753,10 @@ void ModelSelection::load(const string& file_name)
     from_XML(document);
 }
 
+
 /// Results constructor.
 
-ModelSelection::Results::Results()
+ModelSelectionResults::ModelSelectionResults()
 {
     growing_neurons_results_pointer = nullptr;
 
@@ -766,7 +770,7 @@ ModelSelection::Results::Results()
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

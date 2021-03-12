@@ -147,8 +147,10 @@ struct CorrelationResults
 
     // Time series correlation methods
 
-    Tensor<type, 1> autocorrelations(const Tensor<type, 1>&, const Index & = 10);
-    Tensor<type, 1> cross_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Index & = 10);
+//    Tensor<type, 1> autocorrelations(const Tensor<type, 1>&, const Index & = 10);
+    Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>&, const Index & = 10);
+//    Tensor<type, 1> cross_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Index & = 10);
+    Tensor<type ,1> cross_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index &maximum_lags_number);
 
     // Logistic error methods
 
@@ -231,7 +233,7 @@ struct CorrelationResults
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

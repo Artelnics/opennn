@@ -60,13 +60,13 @@ public:
 
    // loss methods
 
-   void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+   void calculate_error(const DataSetBatch& batch,
+                        const NeuralNetworkForwardPropagation& forward_propagation,
+                        LossIndexBackPropagation& back_propagation) const;
 
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  BackPropagation& back_propagation) const;
+   void calculate_output_delta(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagation&) const;
 
    // Serialization methods
 
@@ -99,7 +99,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

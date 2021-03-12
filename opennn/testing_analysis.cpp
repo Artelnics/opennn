@@ -3492,7 +3492,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 
     for(Index i = 0; i < targets_number; i++)
     {
-        error_autocorrelations[i] = autocorrelations(error.chip(i,1), maximum_lags_number);
+        error_autocorrelations[i] = autocorrelations(this->thread_pool_device, error.chip(i,1), maximum_lags_number);
     }
 
     return error_autocorrelations;
@@ -3567,7 +3567,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
 
     for(Index i = 0; i < targets_number; i++)
     {
-        inputs_errors_cross_correlation[i] = cross_correlations(inputs.chip(i,1), errors.chip(i,1), lags_number);
+        inputs_errors_cross_correlation[i] = cross_correlations(this->thread_pool_device, inputs.chip(i,1), errors.chip(i,1), lags_number);
     }
 
     return inputs_errors_cross_correlation;
@@ -4129,7 +4129,7 @@ Tensor<type, 2> TestingAnalysis::delete_row(const Tensor<type, 2>& tensor, const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

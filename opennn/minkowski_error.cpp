@@ -89,22 +89,15 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 }
 
 
-////// \brief MinkowskiError::calculate_error
-////// \param batch
-////// \param forward_propagation
-////// \param back_propagation
-void MinkowskiError::calculate_error(const DataSet::Batch& batch,
-                     const NeuralNetwork::ForwardPropagation& forward_propagation,
-                     LossIndex::BackPropagation& back_propagation) const
+// \brief MinkowskiError::calculate_error
+// \param batch
+// \param forward_propagation
+// \param back_propagation
+void MinkowskiError::calculate_error(const DataSetBatch& batch,
+                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> minkowski_error;
-
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
-    const Tensor<type, 2>& targets = batch.targets_2d;
-
-    back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
     minkowski_error.device(*thread_pool_device) = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(static_cast<type>(1.0)/minkowski_parameter);
 
@@ -112,45 +105,63 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
 }
 
 
-void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
-                               const NeuralNetwork::ForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation) const
+void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
+                                            NeuralNetworkForwardPropagation& forward_propagation,
+                                            LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef __OPENNN_DEBUG__
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     check();
-     for (Index i=1; i<back_propagation.output_gradient.dimension(0); i++) {
-         if(::isnan(back_propagation.output_gradient(i))){
-             ostringstream buffer;
+    Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
 
-             buffer << "OpenNN Exception: MinkowskiError class.\n"
-                    << "void calculate_output_gradient method (const DataSet::Batch& batch, \n"
-                    << "const NeuralNetwork::ForwardPropagation& forward_propagation, \n"
-                    << "BackPropagation& back_propagation) \n"
-                    << "Output gradient is NAN. Modify Minkowski Parameter.\n";
+    LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-             throw logic_error(buffer.str());
-         }
+//     const Tensor<type, 0> p_norm_derivative
+//             =(back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
+
+     switch(output_layer_pointer->get_type())
+     {
+     case Layer::Perceptron:
+     {
+         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
+         = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
+
+         perceptron_layer_back_propagation->delta.device(*thread_pool_device)
+         = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
      }
+         break;
 
-     #endif
+     case Layer::Probabilistic:
+     {
+         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+         = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
-     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+         probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
+                 = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+     }
+         break;
 
-     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
-     const Tensor<type, 2>& targets = batch.targets_2d;
+     case Layer::Recurrent:
+     {
+         RecurrentLayerBackPropagation* recurrent_layer_back_propagation
+         = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
 
-     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
+         recurrent_layer_back_propagation->delta.device(*thread_pool_device)
+                 = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+     }
+         break;
 
-     const Tensor<type, 0> p_norm_derivative =
-             (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
+     case Layer::LongShortTermMemory:
+     {
+         LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
+         = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
 
-     back_propagation.output_gradient.device(*thread_pool_device)
-             = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+         long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device)
+                 = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+     }
+         break;
 
-     back_propagation.output_gradient.device(*thread_pool_device) =
-             back_propagation.output_gradient/(p_norm_derivative());
-
+     default: break;
+     }
 }
 
 
@@ -245,7 +256,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

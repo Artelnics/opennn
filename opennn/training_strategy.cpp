@@ -78,7 +78,7 @@ NeuralNetwork* TrainingStrategy::get_neural_network_pointer() const
 
 LossIndex* TrainingStrategy::get_loss_index_pointer()
 {
-    switch (loss_method)
+    switch(loss_method)
     {
         case SUM_SQUARED_ERROR: return &sum_squared_error;
 
@@ -101,7 +101,7 @@ LossIndex* TrainingStrategy::get_loss_index_pointer()
 
 OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
 {
-    switch (optimization_method)
+    switch(optimization_method)
     {
         case GRADIENT_DESCENT: return &gradient_descent;
 
@@ -714,7 +714,7 @@ void TrainingStrategy::set_default()
 /// It optimizes the loss index of a neural network.
 /// This method also returns a structure with the results from training.
 
-OptimizationAlgorithm::Results TrainingStrategy::perform_training()
+OptimizationAlgorithmResults TrainingStrategy::perform_training()
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -734,7 +734,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+               << "OptimizationAlgorithmResults TrainingStrategy::perform_training() const method.\n"
                << "Convolutional Layer is not available yet. It will be included in future versions.\n";
 
         throw logic_error(buffer.str());
@@ -742,7 +742,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
 
 
-    OptimizationAlgorithm::Results results;
+    OptimizationAlgorithmResults results;
 
     // Main
 
@@ -1323,7 +1323,7 @@ void TrainingStrategy::load(const string& file_name)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

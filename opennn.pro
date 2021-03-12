@@ -22,6 +22,11 @@ SUBDIRS += blank
 
 CONFIG += ordered
 
+win32:!win32-g++{
+QMAKE_CXXFLAGS+= -arch:AVX
+QMAKE_CFLAGS+= -arch:AVX
+}
+
 # OpenMP library
 
 win32:!win32-g++{

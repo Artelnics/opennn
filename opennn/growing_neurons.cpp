@@ -122,7 +122,7 @@ void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_los
 
 /// Perform the neurons selection with the growing neurons method.
 
-GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection()
+GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection()
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -207,7 +207,7 @@ GrowingNeurons::GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection
         {
             neural_network->set_parameters_random();
 
-            const OptimizationAlgorithm::Results optimization_algorithm_results
+            const OptimizationAlgorithmResults optimization_algorithm_results
                     = training_strategy_pointer->perform_training();
 
             const type current_training_error_trial = optimization_algorithm_results.final_training_error;
@@ -879,12 +879,10 @@ void GrowingNeurons::load(const string& file_name)
     from_XML(document);
 }
 
-
-
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

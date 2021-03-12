@@ -357,7 +357,7 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
 
     Index minimal_indices_size = 0;
 
-    if (frequencies.size() == 0)
+    if(frequencies.size() == 0)
     {
         Tensor<type, 1> nan(1);
         nan.setValues({static_cast<type>(NAN)});
@@ -398,7 +398,7 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
 
     Index maximal_indices_size = 0;
 
-    if (frequencies.size() == 0)
+    if(frequencies.size() == 0)
     {
         Tensor<type, 1> nan(1);
         nan.setValues({static_cast<type>(NAN)});
@@ -701,7 +701,7 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
     {
         used_columns_indices.resize(columns_number);
 
-        for (Index i = 0; i < columns_number; i++)
+        for(Index i = 0; i < columns_number; i++)
         {
             used_columns_indices(i) = i;
         }
@@ -717,7 +717,7 @@ Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Ind
     {
         used_rows_indices.resize(rows_number);
 
-        for (Index i = 0; i < rows_number; i++)
+        for(Index i = 0; i < rows_number; i++)
         {
             used_rows_indices(i) = i;
         }
@@ -797,7 +797,7 @@ type mean(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
-    if (size == 0) return 0;
+    if(size == 0) return 0;
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1234,7 +1234,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
     Tensor<type, 1> first_sorted_vector(new_size/2);
     Tensor<type, 1> last_sorted_vector(new_size/2);
 
-    if (new_size % 2 == 0)
+    if(new_size % 2 == 0)
     {
         for(Index i = 0; i < new_size/2 ; i++)
         {
@@ -2027,7 +2027,7 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
     {
         used_columns_indices.resize(columns_number);
 
-        for (Index i = 0; i < columns_number; i++)
+        for(Index i = 0; i < columns_number; i++)
         {
             used_columns_indices(i) = i;
         }
@@ -2043,7 +2043,7 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
     {
         used_rows_indices.resize(rows_number);
 
-        for (Index i = 0; i < rows_number; i++)
+        for(Index i = 0; i < rows_number; i++)
         {
             used_rows_indices(i) = i;
         }
@@ -2531,7 +2531,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
     const Index row_indices_size = row_indices.size();
     const Index columns_indices_size = columns_indices.size();
 
-    if (row_indices_size == 0 && columns_indices_size == 0) return NAN;
+    if(row_indices_size == 0 && columns_indices_size == 0) return NAN;
 
 #ifdef __OPENNN_DEBUG__
 
@@ -2652,7 +2652,7 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    if (rows_number == 0 && columns_number == 0) return NAN;
+    if(rows_number == 0 && columns_number == 0) return NAN;
 
 #ifdef __OPENNN_DEBUG__
 
@@ -2680,7 +2680,7 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 
 #endif
 
-    if (rows_number == 0 && columns_number == 0) return NAN;
+    if(rows_number == 0 && columns_number == 0) return NAN;
 
     // Mean
 
@@ -3745,7 +3745,7 @@ Index count_nan(const Tensor<type, 1>& vector)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
