@@ -392,15 +392,15 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
 
-   neural_network.set();
+ */  neural_network.set();
 
    // Test lstm
 
 {
-   samples_number = 4;
-   inputs_number = 2;
-   outputs_number = 3;
-   hidden_neurons = 4;
+   samples_number = 6;
+   inputs_number = 1;
+   outputs_number = 1;
+   hidden_neurons = 2;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
@@ -426,7 +426,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    nse.set_normalization_coefficient();
 
-   long_short_term_memory_layer->set_timesteps(2);
+   long_short_term_memory_layer->set_timesteps(3);
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
 
@@ -442,11 +442,15 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
+   cout << "Error gradient: " << error_gradient << endl;
+   cout << "Numerical error gradient: " << numerical_error_gradient << endl;
+   cout << "Difference: " << difference << endl;
+
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
-*/
-   neural_network.set();
 
+   neural_network.set();
+/*
    // Test recurrent
 {
    samples_number = 4;
@@ -493,11 +497,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
-
-   cout << "numerical gradient: " << numerical_error_gradient << endl;
-   cout << "gradient: " << error_gradient << endl;
-   cout << "difference: " << difference << endl;
-
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
