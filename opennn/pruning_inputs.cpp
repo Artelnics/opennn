@@ -454,7 +454,7 @@ PruningInputsResults* PruningInputs::perform_inputs_selection()
 
             results->epochs_number = epoch + 1;
             results->elapsed_time = write_elapsed_time(elapsed_time);
-            results->minimal_parameters = optimal_parameters;
+            results->optimal_parameters = optimal_parameters;
 
             break;
         }
