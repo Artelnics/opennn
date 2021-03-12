@@ -408,7 +408,7 @@ void ModelSelection::check() const
 ModelSelectionResults ModelSelection::perform_neurons_selection()
 {
     ModelSelectionResults results;
-
+/*
     switch(neurons_selection_method)
     {
     case NO_NEURONS_SELECTION:
@@ -428,7 +428,7 @@ ModelSelectionResults ModelSelection::perform_neurons_selection()
         break;
     }
     }
-
+*/
     return results;
 }
 

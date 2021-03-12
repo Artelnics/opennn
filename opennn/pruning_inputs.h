@@ -97,6 +97,7 @@ private:
     Index maximum_selection_failures;
 };
 
+
 ///
 /// This structure contains the training results for the pruning inputs method.
 ///
@@ -114,7 +115,6 @@ struct PruningInputsResults : public InputsSelectionResults
     virtual ~PruningInputsResults()
     {
     }
-
 };
 
 }

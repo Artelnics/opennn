@@ -68,9 +68,8 @@ public:
 
     const Index& get_trials_number() const;
 
-    const bool& get_reserve_training_error_data() const;
-    const bool& get_reserve_selection_error_data() const;
-    const bool& get_reserve_minimal_parameters() const;
+    const bool& get_reserve_training_errors() const;
+    const bool& get_reserve_selection_errors() const;
 
     const bool& get_display() const;
 
@@ -93,7 +92,6 @@ public:
 
     void set_reserve_training_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
-    void set_reserve_minimal_parameters(const bool&);
 
     void set_display(const bool&);
 
@@ -171,15 +169,11 @@ protected:
 
     /// True if the loss of all neural networks are to be reserved.
 
-    bool reserve_training_error_data;
+    bool reserve_training_errors;
 
     /// True if the selection error of all neural networks are to be reserved.
 
-    bool reserve_selection_error_data;
-
-    /// True if the vector parameters of the neural network presenting minimum selection error is to be reserved.
-
-    bool reserve_minimal_parameters;
+    bool reserve_selection_errors;
 
     /// Display messages to screen.
 
@@ -210,6 +204,8 @@ protected:
     /// Tolerance for the error in the trainings of the algorithm.
 
     type tolerance;
+
+    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 };
 
 
@@ -223,29 +219,33 @@ struct InputsSelectionResults
 
    string write_stopping_condition() const;
 
+   // Neural network
+
    /// Inputs of the different neural networks.
 
    Tensor<bool, 2> inputs_data;
-
-   /// Performance of the different neural networks.
-
-   Tensor<type, 1> training_error_data;
-
-   /// Selection loss of the different neural networks.
-
-   Tensor<type, 1> selection_error_data;
 
    /// Vector of parameters for the neural network with minimum selection error.
 
    Tensor<type, 1> minimal_parameters;
 
-   /// Value of minimum selection error.
+   // Loss index
 
-   type final_selection_error;
+   /// Performance of the different neural networks.
+
+   Tensor<type, 1> training_errors;
+
+   /// Selection loss of the different neural networks.
+
+   Tensor<type, 1> selection_errors;
 
    /// Value of loss for the neural network with minimum selection error.
 
-   type final_training_error;
+   type optimum_training_error;
+
+   /// Value of minimum selection error.
+
+   type optimum_selection_error;
 
    /// Inputs of the neural network with minimum selection error.
 
@@ -255,9 +255,11 @@ struct InputsSelectionResults
 
    Tensor<bool, 1> optimal_inputs;
 
+   // Model selection
+
    /// Number of iterations to perform the inputs selection.
 
-   Index iterations_number;
+   Index epochs_number;
 
    /// Stopping condition of the algorithm.
 

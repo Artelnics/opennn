@@ -94,26 +94,17 @@ const Index& InputsSelection::get_trials_number() const
 
 /// Returns true if the loss index losses are to be reserved, and false otherwise.
 
-const bool& InputsSelection::get_reserve_training_error_data() const
+const bool& InputsSelection::get_reserve_training_errors() const
 {
-    return reserve_training_error_data;
+    return reserve_training_errors;
 }
 
 
 /// Returns true if the selection losses are to be reserved, and false otherwise.
 
-const bool& InputsSelection::get_reserve_selection_error_data() const
+const bool& InputsSelection::get_reserve_selection_errors() const
 {
-    return reserve_selection_error_data;
-}
-
-
-/// Returns true if the parameters vector of the neural network with minimum selection error is to be reserved,
-/// and false otherwise.
-
-const bool& InputsSelection::get_reserve_minimal_parameters() const
-{
-    return reserve_minimal_parameters;
+    return reserve_selection_errors;
 }
 
 
@@ -202,9 +193,8 @@ void InputsSelection::set_default()
 
     // Results
 
-    reserve_training_error_data = true;
-    reserve_selection_error_data = true;
-    reserve_minimal_parameters = true;
+    reserve_training_errors = true;
+    reserve_selection_errors = true;
 
     // Stopping criteria
 
@@ -249,7 +239,7 @@ void InputsSelection::set_trials_number(const Index& new_trials_number)
 
 void InputsSelection::set_reserve_training_error_data(const bool& new_reserve_training_error_data)
 {
-    reserve_training_error_data = new_reserve_training_error_data;
+    reserve_training_errors = new_reserve_training_error_data;
 }
 
 
@@ -258,16 +248,7 @@ void InputsSelection::set_reserve_training_error_data(const bool& new_reserve_tr
 
 void InputsSelection::set_reserve_selection_error_data(const bool& new_reserve_selection_error_data)
 {
-    reserve_selection_error_data = new_reserve_selection_error_data;
-}
-
-
-/// Sets the reserve flag for the minimal parameters.
-/// @param new_reserve_minimal_parameters Flag value.
-
-void InputsSelection::set_reserve_minimal_parameters(const bool& new_reserve_minimal_parameters)
-{
-    reserve_minimal_parameters = new_reserve_minimal_parameters;
+    reserve_selection_errors = new_reserve_selection_error_data;
 }
 
 

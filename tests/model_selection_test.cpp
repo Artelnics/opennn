@@ -112,7 +112,7 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     assert_true(model_selection.get_inputs_selection_method() == ModelSelection::GROWING_INPUTS, LOG);
     assert_true(model_selection.get_neurons_selection_method() == ModelSelection::GROWING_NEURONS, LOG);
-    assert_true(results.growing_neurons_results_pointer->final_selection_error != 0.0, LOG);
+    assert_true(results.growing_neurons_results_pointer->optimum_selection_error != 0.0, LOG);
     assert_true(results.growing_neurons_results_pointer->optimal_neurons_number >= 1 , LOG);
 }
 
