@@ -1825,9 +1825,6 @@ GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    type optimum_selection_error = numeric_limits<type>::max();
-    type optimum_training_error = numeric_limits<type>::max();
-
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
@@ -1914,14 +1911,14 @@ GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
             if(current_inputs(k) == true) count_inputs++;
         }
 
-        if((abs(optimum_selection_error - current_selection_error) >= tolerance &&
-                optimum_selection_error > current_selection_error) ||
-            (abs(optimum_selection_error - current_selection_error) < tolerance &&
+        if((abs(results->optimum_selection_error - current_selection_error) >= tolerance &&
+                results->optimum_selection_error > current_selection_error) ||
+            (abs(results->optimum_selection_error - current_selection_error) < tolerance &&
             count_inputs < count_optimal))
         {
             optimal_inputs = current_inputs;
-            optimum_training_error = current_training_error;
-            optimum_selection_error = current_selection_error;
+            results->optimum_training_error = current_training_error;
+            results->optimum_selection_error = current_selection_error;
             optimal_generation = epoch;
             optimal_parameters = current_parameters;
         }
@@ -2024,11 +2021,9 @@ GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
         {
             // Save results
             results->optimal_inputs = optimal_inputs;
-            results->optimum_selection_error = optimum_selection_error;
-            results->optimum_training_error = optimum_training_error;
 //            results->epochs_number = epoch + 1;
             results->elapsed_time = write_elapsed_time(elapsed_time);
-            results->minimal_parameters = optimal_parameters;            
+            results->optimal_parameters = optimal_parameters;
             break;
         }
     }
@@ -2120,8 +2115,8 @@ GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
         cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << endl;
         cout << "Optimal generation: " << optimal_generation << endl;
         cout << "Optimal number of inputs: " << optimal_inputs_number << endl;
-        cout << "Optimum training error: " << optimum_training_error << endl;
-        cout << "Optimum selection error: " << optimum_selection_error << endl;
+        cout << "Optimum training error: " << results->optimum_training_error << endl;
+        cout << "Optimum selection error: " << results->optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
 

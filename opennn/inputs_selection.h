@@ -227,7 +227,7 @@ struct InputsSelectionResults
 
    /// Vector of parameters for the neural network with minimum selection error.
 
-   Tensor<type, 1> minimal_parameters;
+   Tensor<type, 1> optimal_parameters;
 
    // Loss index
 
