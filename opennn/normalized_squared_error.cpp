@@ -144,7 +144,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 
         buffer << "OpenNN Exception: NormalizedquaredError function.\n"
                << "type calculate_time_series_normalization_coefficient(const Tensor<type, 2>& targets_t_1, const Tensor<type, 2>& targets_t) function.\n"
-               << " The columns number of targets("<< target_t_varaibles_number <<") must be equal("<< target_t_1_varaibles_number<<").\n";
+               << " The columns number of targets("<< target_t_varaibles_number <<") must be equal("<< target_t_1_varaibles_number<<").\n"
                << " The samples number of targets("<< target_t_1_samples_number <<") must be equal("<< target_t_samples_number<<").\n";
 
         throw logic_error(buffer.str());
