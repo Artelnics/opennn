@@ -62,6 +62,7 @@ namespace OpenNN
             state_activations.resize(batch_samples_number, neurons_number);
             output_activations.resize(batch_samples_number, neurons_number);
             cell_states_activations.resize(batch_samples_number, neurons_number);
+            hidden_states_activations.resize(batch_samples_number, neurons_number);
 
             forget_activations_derivatives.resize(batch_samples_number, neurons_number);
             input_activations_derivatives.resize(batch_samples_number, neurons_number);
@@ -103,6 +104,7 @@ namespace OpenNN
         Tensor<type, 2, RowMajor> state_activations;
         Tensor<type, 2, RowMajor> output_activations;
         Tensor<type, 2, RowMajor> cell_states_activations;
+        Tensor<type, 2, RowMajor> hidden_states_activations;
 
         Tensor<type, 2, RowMajor> forget_activations_derivatives;
         Tensor<type, 2, RowMajor> input_activations_derivatives;
