@@ -41,7 +41,7 @@ GrowingNeurons::~GrowingNeurons()
 
 const Index& GrowingNeurons::get_step() const
 {
-    return step;
+    return neurons_increment;
 }
 
 
@@ -63,7 +63,7 @@ void GrowingNeurons::set_default()
 
     trials_number = 3;
 
-    step = 1;
+    neurons_increment = 1;
 
     maximum_selection_failures = 100;
 
@@ -92,7 +92,7 @@ void GrowingNeurons::set_step(const Index& new_step)
 
 #endif
 
-    step = new_step;
+    neurons_increment = new_step;
 }
 
 
@@ -148,32 +148,26 @@ GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection()
     }
 
     // Neural network    
+
     NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
 
     const Index trainable_layers_number = neural_network->get_trainable_layers_number();
 
     const Tensor<Layer*, 1> trainable_layers_pointers = neural_network->get_trainable_layers_pointers();
 
+    Tensor<type, 1> current_parameters;
+
+    Index current_neurons_number;
+
     // Loss index
 
-    type prev_selection_error = numeric_limits<type>::max();
+    type previous_selection_error = numeric_limits<type>::max();
 
-    Tensor<type, 1> optimal_parameters;
-
-    type optimum_training_error = 0;
-    type optimum_selection_error = 0;
-
-    type current_training_loss = 0;
+    type current_training_error = 0;
     type current_selection_error = 0;
-
-    Tensor<type, 1> current_parameters;
 
     // Optimization algorithm
 
-    Index optimal_neurons_number = 0;
-
-    Index neurons_number = minimum_neurons;
-    Index iterations = 0;
     Index selection_failures = 0;
 
     bool end = false;
@@ -181,89 +175,75 @@ GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection()
     time_t beginning_time, current_time;
     type elapsed_time = 0;
 
+    OptimizationAlgorithmResults optimization_algorithm_results;
+
     time(&beginning_time);
 
     // Main loop
 
-    for(Index i = 0; i < maximum_neurons; i++)
-    {
-        // Set new neurons number
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    {               
+        // Neural network
 
-        trainable_layers_pointers(trainable_layers_number-2)->set_neurons_number(neurons_number);
-//        trainable_layers_pointers(trainable_layers_number-2)->set_parameters_random();
+        current_neurons_number = minimum_neurons + epoch*neurons_increment;
 
-        trainable_layers_pointers(trainable_layers_number-1)->set_inputs_number(neurons_number);
-//        trainable_layers_pointers(trainable_layers_number-1)->set_parameters_random();
+        trainable_layers_pointers(trainable_layers_number-2)->set_neurons_number(current_neurons_number);
 
-        results->neurons_data = insert_index_result(neurons_number, results->neurons_data);
+        trainable_layers_pointers(trainable_layers_number-1)->set_inputs_number(current_neurons_number);
+
+        results->neurons_numbers(epoch) = current_neurons_number;
 
         // Loss index
 
-        type optimum_selection_error_trial = numeric_limits<type>::max();
-        type optimum_training_error_trial = numeric_limits<type>::max();
-        Tensor<type, 1> optimum_parameters_trial;
+        current_selection_error = numeric_limits<type>::max();
+        current_training_error = numeric_limits<type>::max();
 
-        for(Index i = 0; i < trials_number; i++)
+        for(Index trial = 0; trial < trials_number; trial++)
         {
             neural_network->set_parameters_random();
 
-            const OptimizationAlgorithmResults optimization_algorithm_results
-                    = training_strategy_pointer->perform_training();
+            optimization_algorithm_results = training_strategy_pointer->perform_training();
 
-            const type current_training_error_trial = optimization_algorithm_results.final_training_error;
-            const type current_selection_error_trial = optimization_algorithm_results.final_selection_error;
-            const Tensor<type, 1> current_parameters_trial = neural_network->get_parameters();
-
-            if(current_selection_error_trial < optimum_selection_error_trial)
+            if(optimization_algorithm_results.final_selection_error < current_selection_error)
             {
-                optimum_training_error_trial = current_training_error_trial;
-                optimum_selection_error_trial = current_selection_error_trial;
-                optimum_parameters_trial = current_parameters_trial;
+                current_parameters = optimization_algorithm_results.final_parameters;
+
+                current_training_error = optimization_algorithm_results.final_training_error;
+                current_selection_error = optimization_algorithm_results.final_selection_error;
             }
 
             if(display)
             {
-                cout << "Trial number: " << i << endl;
-                cout << "Training error: " << current_training_error_trial << endl;
-                cout << "Selection error: " << current_selection_error_trial << endl;
-                cout << "Stopping condition: " << optimization_algorithm_results.write_stopping_condition() << endl;
+                cout << "Trial: " << trial << endl;
+                cout << "Training error: " << current_training_error << endl;
+                cout << "Selection error: " << current_selection_error << endl;
             }
         }
-
-        current_training_loss = optimum_training_error_trial;
-        current_selection_error = optimum_selection_error_trial;
-        current_parameters = optimum_parameters_trial;
 
         time(&current_time);
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        if(reserve_training_error_data)
-        {
-            results->training_error_data = insert_result(current_training_loss, results->training_error_data);
-        }
+        if(reserve_training_errors) results->training_errors(epoch) = current_training_error;
 
-        if(reserve_selection_error_data)
-        {
-            results->selection_error_data = insert_result(current_selection_error, results->selection_error_data);
-        }
+        if(reserve_selection_errors) results->selection_errors(epoch) = current_selection_error;
 
-        if(iterations == 0
-                ||(optimum_selection_error > current_selection_error
-                   && abs(optimum_selection_error - current_selection_error) > tolerance))
+        if(current_selection_error < results->optimum_selection_error
+        && fabs(current_selection_error < results->optimum_selection_error) > tolerance)
         {
-            optimal_neurons_number = neurons_number;
-            optimum_training_error = current_training_loss;
-            optimum_selection_error = current_selection_error;
-            optimal_parameters = current_parameters;
+            results->optimal_neurons_number = current_neurons_number;
+            results->optimal_parameters = current_parameters;
+
+            results->optimum_training_error = current_training_error;
+            results->optimum_selection_error = current_selection_error;
+
         }
-        else if(prev_selection_error < current_selection_error)
+        else if(previous_selection_error < current_selection_error)
         {
             selection_failures++;
         }
 
-        prev_selection_error = current_selection_error;
-        iterations++;
+        previous_selection_error = current_selection_error;
 
         // Stopping criteria
 
@@ -279,11 +259,11 @@ GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Selection loss reached." << endl;
+            if(display) cout << "Selection error goal reached." << endl;
 
             results->stopping_condition = GrowingNeurons::SelectionErrorGoal;
         }
-        else if(iterations >= maximum_epochs_number)
+        else if(epoch >= maximum_epochs_number)
         {
             end = true;
 
@@ -299,54 +279,46 @@ GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection()
 
             results->stopping_condition = GrowingNeurons::MaximumSelectionFailures;
         }
-        else if(neurons_number == maximum_neurons)
+        else if(current_neurons_number >= maximum_neurons)
         {
             end = true;
 
-            if(display) cout << "Algorithm finished." << endl;
+            if(display) cout << "Maximum number of neurons reached." << endl;
 
-            results->stopping_condition = GrowingNeurons::AlgorithmFinished;
+            results->stopping_condition = GrowingNeurons::MaximumNeurons;
         }
 
         if(display)
         {
-            cout << "Iteration: " << iterations << endl
-                 << "Hidden neurons number: " << neurons_number << endl
-                 << "Training error: " << current_training_loss << endl
+            cout << "Epoch: " << epoch << endl
+                 << "Neurons number: " << current_neurons_number << endl
+                 << "Training error: " << current_training_error << endl
                  << "Selection error: " << current_selection_error << endl
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
         if(end) break;
-
-        neurons_number += step;
     }
 
     if(display)
     {
         cout << endl
-             << "Optimal neurons number: " << optimal_neurons_number <<  endl
-             << "Optimum selection error: " << optimum_selection_error << endl
-             << "Corresponding training error: " << optimum_training_error << endl;
+             << "Optimal neurons number: " << results->optimal_neurons_number << endl
+             << "Optimum selection error: " << results->optimum_selection_error << endl
+             << "Optimum training error: " << results->optimum_training_error << endl;
     }
 
     // Save neural network
-    trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(optimal_neurons_number);
-    trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(optimal_neurons_number);
 
-    neural_network->set_parameters(optimal_parameters);
+    trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(results->optimal_neurons_number);
+    trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(results->optimal_neurons_number);
+
+    neural_network->set_parameters(results->optimal_parameters);
 
     // Save results
 
-    if(reserve_minimal_parameters)
-    {
-        results->minimal_parameters = optimal_parameters;
-    }
-
-    results->optimal_neurons_number = optimal_neurons_number;
-    results->final_selection_error = optimum_selection_error;
-    results->final_training_error = optimum_training_error;
-    results->iterations_number = iterations;
+    results->optimal_neurons_number = results->optimal_neurons_number;
+//    results->epochs_number = epoch;
     results->elapsed_time = write_elapsed_time(elapsed_time);
 
     return results;
@@ -365,123 +337,102 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 
     // Minimum neurons number
 
-//    labels.push_back("Minimum neurons");
      labels(0) = "Minimum neurons";
 
     buffer.str("");
     buffer << minimum_neurons;
 
-//    values.push_back(buffer.str());
     values(0) = buffer.str();
 
     // Maximum order
 
-//    labels.push_back("Maximum neurons");
     labels(1) = "Maximum neurons";
 
     buffer.str("");
     buffer << maximum_neurons;
 
-//    values.push_back(buffer.str());
     values(1) = buffer.str();
 
     // Step
 
-//    labels.push_back("Step");
     labels(2) = "Step";
 
     buffer.str("");
-    buffer << step;
+    buffer << neurons_increment;
 
-//    values.push_back(buffer.str());
     values(2) = buffer.str();
 
     // Trials number
 
-//    labels.push_back("Trials number");
     labels(3) = "Trials number";
 
     buffer.str("");
     buffer << trials_number;
 
-//    values.push_back(buffer.str());
     values(3) = buffer.str();
 
     // Tolerance
 
-//    labels.push_back("Tolerance");
     labels(4) = "Tolerance";
 
     buffer.str("");
     buffer << tolerance;
 
-//    values.push_back(buffer.str());
     values(4) = buffer.str();
 
     // Selection loss goal
 
-//    labels.push_back("Selection loss goal");
     labels(5) = "Selection loss goal";
 
     buffer.str("");
     buffer << selection_error_goal;
 
-//    values.push_back(buffer.str());
     values(5) = buffer.str();
 
     // Maximum selection failures
 
-//    labels.push_back("Maximum selection failures");
     labels(6) = "Maximum selection failures";
 
     buffer.str("");
     buffer << maximum_selection_failures;
 
-//    values.push_back(buffer.str());
     values(6) = buffer.str();
 
     // Maximum iterations number
 
-//    labels.push_back("Maximum iterations number");
     labels(7) = "Maximum iterations number";
 
     buffer.str("");
     buffer << maximum_epochs_number;
 
-//    values.push_back(buffer.str());
     values(7) = buffer.str();
 
     // Maximum time
 
-//    labels.push_back("Maximum time");
     labels(8) = "Maximum time";
 
     buffer.str("");
     buffer << maximum_time;
 
-//    values.push_back(buffer.str());
     values(8) = buffer.str();
 
     // Plot training error history
 
-//    labels.push_back("Plot training error history");
     labels(9) = "Plot training error history";
 
     buffer.str("");
 
-    reserve_training_error_data ? buffer << "true" : buffer << "false";
+    reserve_training_errors ? buffer << "true" : buffer << "false";
 
-//    values.push_back(buffer.str());
     values(9) = buffer.str();
 
     // Plot selection error history
 
-//    labels.push_back("Plot selection error history");
     labels(10) = "Plot selection error history";
 
     buffer.str("");
 
-    if(reserve_selection_error_data)
+    if(reserve_selection_errors)
     {
         buffer << "true";
     }
@@ -490,7 +441,6 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
         buffer << "false";
     }
 
-//    values.push_back(buffer.str());
     values(10) = buffer.str();
 
     const Index rows_number = labels.size();
@@ -501,9 +451,7 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;
 
-        return string_matrix;
-
-//    return Tensor<string, 2>();
+    return string_matrix;
 }
 
 
@@ -544,7 +492,7 @@ void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("Step");
 
     buffer.str("");
-    buffer << step;
+    buffer << neurons_increment;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -610,7 +558,7 @@ void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("ReserveTrainingErrorHistory");
 
     buffer.str("");
-    buffer << reserve_training_error_data;
+    buffer << reserve_training_errors;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -621,7 +569,7 @@ void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("ReserveSelectionErrorHistory");
 
     buffer.str("");
-    buffer << reserve_selection_error_data;
+    buffer << reserve_selection_errors;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -839,7 +787,6 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
-
 }
 
 

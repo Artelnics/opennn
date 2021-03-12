@@ -620,10 +620,10 @@ void TestingAnalysis::print_error_data_descriptives() const
         cout << "Mean error: " << error_data_statistics[i][0].mean << " " << endl;
         cout << "Standard deviation error: " << error_data_statistics[i][0].standard_deviation << " " << endl;
 
-        cout << "Minimum percentage error: " << error_data_statistics[i][2].minimum << " %" <<  endl;
-        cout << "Maximum percentage error: " << error_data_statistics[i][2].maximum << " %" <<  endl;
-        cout << "Mean percentage error: " << error_data_statistics[i][2].mean << " %" <<  endl;
-        cout << "Standard deviation percentage error: " << error_data_statistics[i][2].standard_deviation << " %" <<  endl;
+        cout << "Minimum percentage error: " << error_data_statistics[i][2].minimum << " %" << endl;
+        cout << "Maximum percentage error: " << error_data_statistics[i][2].maximum << " %" << endl;
+        cout << "Mean percentage error: " << error_data_statistics[i][2].mean << " %" << endl;
+        cout << "Standard deviation percentage error: " << error_data_statistics[i][2].standard_deviation << " %" << endl;
 
         cout << endl;
     }

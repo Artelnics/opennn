@@ -179,9 +179,9 @@ public:
 
     void perform_crossover();
 
-    void perform_1point_crossover();
+    void perform_1_point_crossover();
 
-    void perform_2point_crossover();
+    void perform_2_point_crossover();
 
     void perform_uniform_crossover();
 
@@ -207,12 +207,10 @@ public:
 
     Tensor<string, 2> to_string_matrix() const;
 
-    
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
     
-
     void save(const string&) const;
     void load(const string&);
 
