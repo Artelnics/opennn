@@ -103,8 +103,6 @@ public:
 
     // Performances calculation methods
 
-    Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) const;
-
     string write_stopping_condition(const OptimizationAlgorithmResults&) const;
 
     // inputs selection methods
@@ -116,11 +114,9 @@ public:
 
     // Utilities
 
-    Tensor<type, 1> insert_result(const type&, const Tensor<type, 1>&) const;
-    Tensor<Index, 1> insert_result(const Index&, const Tensor<Index, 1>&) const;
-    Tensor< Tensor<type, 1>, 1> insert_result(const Tensor<type, 1>&, const Tensor< Tensor<type, 1>, 1>&) const;
+    void push_back(Tensor<type, 1>&, const type&) const;
 
-    Tensor<Index, 1> delete_result(const Index&, const Tensor<Index, 1>&) const;
+    void push_back(Tensor<Index, 1>&, const Index&) const;
 
     Index get_input_index(const Tensor<DataSet::VariableUse, 1>&, const Index&);
 

@@ -358,116 +358,37 @@ void InputsSelection::set_minimum_correlation(const type& new_minimum_correlatio
 }
 
 
-Tensor<type, 1> InputsSelection::insert_result(const type& value, const Tensor<type, 1>& old_tensor) const
+void InputsSelection::push_back(Tensor<type, 1>& tensor, const type& value) const
 {
-    const Index size = old_tensor.size();
+    const Index size = tensor.size();
 
     Tensor<type, 1> new_tensor(size+1);
 
     for(Index i = 0; i < size; i++)
     {
-        new_tensor(i) = old_tensor(i);
+        new_tensor(i) = tensor(i);
     }
 
     new_tensor(size) = value;
 
-    return new_tensor;
+    tensor = new_tensor;
 }
 
-Tensor<Index, 1> InputsSelection::insert_result(const Index& value, const Tensor<Index, 1>& old_tensor) const
+
+void InputsSelection::push_back(Tensor<Index, 1>& tensor, const Index& value) const
 {
-    const Index size = old_tensor.size();
+    const Index size = tensor.size();
 
     Tensor<Index, 1> new_tensor(size+1);
 
     for(Index i = 0; i < size; i++)
     {
-        new_tensor(i) = old_tensor(i);
+        new_tensor(i) = tensor(i);
     }
 
     new_tensor(size) = value;
 
-    return new_tensor;
-}
-
-Tensor<Index, 1> InputsSelection::delete_result(const Index& value, const Tensor<Index, 1>& old_tensor) const
-{
-    const Index size = old_tensor.size();
-
-    Tensor<Index, 1> new_tensor(size-1);
-
-    Index index = 0;
-
-    for(Index i = 0; i < size; i++)
-    {
-        if(old_tensor(i) != value)
-        {
-            new_tensor(index) = old_tensor(i);
-
-            index++;
-        }
-    }
-
-    return new_tensor;
-}
-
-
-Tensor< Tensor<type, 1>, 1> InputsSelection::insert_result(const Tensor<type, 1>& value,
-                                                           const Tensor< Tensor<type, 1>, 1>& old_tensor) const
-{
-    const Index size = old_tensor.size();
-
-    Tensor< Tensor<type, 1>, 1> new_tensor(size+1);
-
-    for(Index i = 0; i < size; i++)
-    {
-        new_tensor(i) = old_tensor(i);
-    }
-
-    new_tensor(size) = value;
-
-    return new_tensor;
-}
-
-
-/// Returns the parameters of the neural network if the inputs is in the history.
-/// @param inputs Vector of inputs to be trained with.
-
-Tensor<type, 1> InputsSelection::get_parameters_inputs(const Tensor<bool, 1>& inputs) const
-{
-    /*
-    #ifdef __OPENNN_DEBUG__
-
-        if(inputs.count_equal_to(true) <= 0)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: InputsSelection class.\n"
-                   << "Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) method.\n"
-                   << "Inputs must be greater than 1.\n";
-
-            throw logic_error(buffer.str());
-        }
-
-    #endif
-
-        Index i;
-
-        Tensor<type, 1> parameters;
-
-        for(i = 0; i < inputs_history.size(); i++)
-        {
-            if(inputs_history[i] == inputs)
-            {
-                parameters = parameters_history[i];
-
-                break;
-            }
-        }
-
-        return parameters;
-    */
-    return Tensor<type, 1>();
+    tensor = new_tensor;
 }
 
 

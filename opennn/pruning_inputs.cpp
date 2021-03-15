@@ -250,7 +250,7 @@ PruningInputsResults* PruningInputs::perform_inputs_selection()
 
             data_set_pointer->set_column_use(column_name, DataSet::UnusedVariable);
 
-            current_input_columns = delete_result(column_index, current_input_columns);
+            //current_input_columns = delete_result(column_index, current_input_columns);
 
             input_variables_number = data_set_pointer->get_input_variables_number();
 
@@ -293,10 +293,10 @@ PruningInputsResults* PruningInputs::perform_inputs_selection()
         previus_selection_error = results->optimum_selection_error;
 
         if(reserve_training_errors)
-            results->training_errors = insert_result(training_results.final_training_error, results->training_errors);
+            push_back(results->training_errors, training_results.final_training_error);
 
         if(reserve_selection_errors)
-            results->selection_errors = insert_result(training_results.final_selection_error, results->selection_errors);
+            push_back(results->selection_errors, training_results.final_selection_error);
 
         time(&current_time);
 
