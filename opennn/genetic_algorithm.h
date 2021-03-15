@@ -73,8 +73,6 @@ public:
 
     const Tensor<bool, 2>& get_population() const;
 
-    const Tensor<type, 2>& get_loss() const;
-
     const Tensor<type, 1>& get_fitness() const;
 
     const InitializationMethod& get_initialization_method() const;
@@ -115,8 +113,6 @@ public:
     void set_default();
 
     void set_population(const Tensor<bool, 2>&);
-
-    void set_loss(const Tensor<type, 2>&);
 
     void set_fitness(const Tensor<type, 1>&);
 
@@ -160,13 +156,11 @@ public:
 
     void evaluate_population();
 
-    void calculate_fitness();
+    void perform_fitness_assignment();
 
-    void calculate_objective_fitness();
+    void perform_loss_based_fitness_assignment();
 
-    void calculate_rank_fitness();
-
-    void evolve_population();
+    void perform_rank_based_fitness_assignment();
 
     // Selection methods
 
@@ -206,10 +200,6 @@ public:
         return true;
     }
 
-    vector<bool> tensor_to_vector(const Tensor<bool, 1>& tensor);
-
-    bool contains(const vector<vector<bool>>&, const vector<bool>&) const;
-
     // Serialization methods
 
     Tensor<string, 2> to_string_matrix() const;
@@ -231,11 +221,14 @@ private:
 
     /// Performance of population.
 
-    Tensor<type, 2> loss;
+    Tensor<type, 1> training_errors;
+    Tensor<type, 1> selection_errors;
 
     /// Fitness of population.
 
     Tensor<type, 1> fitness;
+
+    Tensor<bool, 1> selection;
 
     // Training operators
 
@@ -250,11 +243,6 @@ private:
     /// Fitness assignment method used in the algorithm.
 
     FitnessAssignment fitness_assignment_method;
-
-    /// Incest prevention distance
-    /// Distance between two individuals to prevent the crossover.
-
-//    type incest_prevention_distance;
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.
