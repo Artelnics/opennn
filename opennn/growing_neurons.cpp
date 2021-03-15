@@ -175,7 +175,7 @@ GrowingNeuronsResults* GrowingNeurons::perform_neurons_selection()
     time_t beginning_time, current_time;
     type elapsed_time = 0;
 
-    OptimizationAlgorithmResults training_results;
+    TrainingResults training_results;
 
     time(&beginning_time);
 

@@ -426,7 +426,7 @@ void OptimizationAlgorithm::load(const string& file_name)
 
 /// Return a string with the stopping condition of the Results
 
-string OptimizationAlgorithmResults::write_stopping_condition() const
+string TrainingResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
@@ -459,7 +459,7 @@ string OptimizationAlgorithmResults::write_stopping_condition() const
 /// Resizes all the training history variables.
 /// @param new_size Size of training history variables.
 
-void OptimizationAlgorithmResults::resize_training_history(const Index& new_size)
+void TrainingResults::resize_training_history(const Index& new_size)
 {
     training_error_history.resize(new_size);
 }
@@ -468,7 +468,7 @@ void OptimizationAlgorithmResults::resize_training_history(const Index& new_size
 /// Resizes all the selection history variables.
 /// @param new_size Size of selection history variables.
 
-void OptimizationAlgorithmResults::resize_selection_history(const Index& new_size)
+void TrainingResults::resize_selection_history(const Index& new_size)
 {
     selection_error_history.resize(new_size);
 }
@@ -477,7 +477,7 @@ void OptimizationAlgorithmResults::resize_selection_history(const Index& new_siz
 /// Resizes the training error history keeping the values.
 /// @param new_size Size of training history variables.
 
-void OptimizationAlgorithmResults::resize_training_error_history(const Index& new_size)
+void TrainingResults::resize_training_error_history(const Index& new_size)
 {
     const Tensor<type, 1> old_training_error_history = training_error_history;
 
@@ -493,7 +493,7 @@ void OptimizationAlgorithmResults::resize_training_error_history(const Index& ne
 /// Resizes the training error history keeping the values.
 /// @param new_size Size of training history variables.
 
-void OptimizationAlgorithmResults::resize_selection_error_history(const Index& new_size)
+void TrainingResults::resize_selection_error_history(const Index& new_size)
 {
     const Tensor<type, 1> old_selection_error_history = selection_error_history;
 
@@ -553,14 +553,14 @@ const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
 
 /// @todo
 
-void OptimizationAlgorithmResults::save(const string&) const
+void TrainingResults::save(const string&) const
 {
 
 }
 
 
 
-Tensor<string, 2> OptimizationAlgorithmResults::write_final_results(const Index& precision) const
+Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) const
 {
     ostringstream buffer;
 

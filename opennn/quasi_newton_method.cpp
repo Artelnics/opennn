@@ -755,7 +755,7 @@ void QuasiNewtonMethod::update_epoch(
 /// Trains a neural network with an associated loss index according to the quasi-Newton method.
 /// Training occurs according to the training operators, training parameters and stopping criteria.
 
-OptimizationAlgorithmResults QuasiNewtonMethod::perform_training()
+TrainingResults QuasiNewtonMethod::perform_training()
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -767,7 +767,7 @@ OptimizationAlgorithmResults QuasiNewtonMethod::perform_training()
 
     if(display) cout << "Training with quasi-Newton method...\n";
 
-    OptimizationAlgorithmResults results;
+    TrainingResults results;
 
     results.resize_training_history(maximum_epochs_number+1);
 

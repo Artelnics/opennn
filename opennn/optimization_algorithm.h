@@ -32,7 +32,7 @@ using namespace Eigen;
 namespace OpenNN
 {
 
-struct OptimizationAlgorithmResults;
+struct TrainingResults;
 
 /// This abstract class represents the concept of optimization algorithm for a neural network in OpenNN library.
 /// Any derived class must implement the perform_training() method.
@@ -103,7 +103,7 @@ public:
 
    /// Trains a neural network which has a loss index associated. 
 
-   virtual OptimizationAlgorithmResults perform_training() = 0;
+   virtual TrainingResults perform_training() = 0;
 
    virtual string write_optimization_algorithm_type() const {return string();}
 
@@ -227,11 +227,11 @@ struct OptimizationAlgorithmData
 
 /// This structure contains the optimization algorithm results.
 
-struct OptimizationAlgorithmResults
+struct TrainingResults
 {
-    explicit OptimizationAlgorithmResults() {}
+    explicit TrainingResults() {}
 
-    virtual ~OptimizationAlgorithmResults() {}
+    virtual ~TrainingResults() {}
 
     string write_stopping_condition() const;
 

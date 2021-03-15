@@ -139,7 +139,7 @@ public:
 
    // Training methods
 
-   OptimizationAlgorithmResults perform_training();
+   TrainingResults perform_training();
 
    void perform_training_void();
 

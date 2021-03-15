@@ -130,7 +130,7 @@ public:
    void update_iteration(const LossIndexBackPropagation& back_propagation,
                          StochasticGradientDescentData& optimization_data);
 
-   OptimizationAlgorithmResults perform_training();
+   TrainingResults perform_training();
 
    void perform_training_void();
 

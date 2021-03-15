@@ -398,7 +398,7 @@ void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
 /// Return a string with the stopping condition of the training depending on the training method.
 /// @param results Results of the perform_training method.
 
-string NeuronsSelection::write_stopping_condition(const OptimizationAlgorithmResults& results) const
+string NeuronsSelection::write_stopping_condition(const TrainingResults& results) const
 {
     return results.write_stopping_condition();
 }

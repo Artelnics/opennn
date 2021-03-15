@@ -506,7 +506,7 @@ void LevenbergMarquardtAlgorithm::check() const
 /// Trains a neural network with an associated loss index according to the Levenberg-Marquardt algorithm.
 /// Training occurs according to the training parameters.
 
-OptimizationAlgorithmResults LevenbergMarquardtAlgorithm::perform_training()
+TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
     ostringstream buffer;
 
@@ -522,7 +522,7 @@ OptimizationAlgorithmResults LevenbergMarquardtAlgorithm::perform_training()
 
     if(display) cout << "Training with Levenberg-Marquardt algorithm...\n";
 
-    OptimizationAlgorithmResults results;
+    TrainingResults results;
 
     results.resize_training_history(maximum_epochs_number+1);
     results.resize_selection_history(maximum_epochs_number+1);
