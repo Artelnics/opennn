@@ -620,10 +620,10 @@ void TestingAnalysis::print_error_data_descriptives() const
         cout << "Mean error: " << error_data_statistics[i][0].mean << " " << endl;
         cout << "Standard deviation error: " << error_data_statistics[i][0].standard_deviation << " " << endl;
 
-        cout << "Minimum percentage error: " << error_data_statistics[i][2].minimum << " %" <<  endl;
-        cout << "Maximum percentage error: " << error_data_statistics[i][2].maximum << " %" <<  endl;
-        cout << "Mean percentage error: " << error_data_statistics[i][2].mean << " %" <<  endl;
-        cout << "Standard deviation percentage error: " << error_data_statistics[i][2].standard_deviation << " %" <<  endl;
+        cout << "Minimum percentage error: " << error_data_statistics[i][2].minimum << " %" << endl;
+        cout << "Maximum percentage error: " << error_data_statistics[i][2].maximum << " %" << endl;
+        cout << "Mean percentage error: " << error_data_statistics[i][2].mean << " %" << endl;
+        cout << "Standard deviation percentage error: " << error_data_statistics[i][2].standard_deviation << " %" << endl;
 
         cout << endl;
     }
@@ -4129,7 +4129,7 @@ Tensor<type, 2> TestingAnalysis::delete_row(const Tensor<type, 2>& tensor, const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

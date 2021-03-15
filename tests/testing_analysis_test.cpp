@@ -1381,10 +1381,12 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
 }
 
 
+/// @todo Complete tests
+
 void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 {
     cout << "test_calculate_multiple_classification_rates\n";
-   /*
+
     NeuralNetwork neural_network;
     DataSet data_set;
 
@@ -1421,18 +1423,17 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     Tensor<Index, 1> testing_indices(9);
     testing_indices.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8});
 
-    Tensor<Index, 2> multiple_classification_rates = ta.calculate_multiple_classification_rates(targets, outputs, testing_indices);
+    Tensor<Tensor<Index,1>, 2> multiple_classification_rates = ta.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
-    assert_true(multiple_classification_rates(0,0) == 0, LOG);
-    assert_true(multiple_classification_rates(0,1) == 3, LOG);
-    assert_true(multiple_classification_rates(0,2) == 6, LOG);
-    assert_true(multiple_classification_rates(1,0) == 4, LOG);
-    assert_true(multiple_classification_rates(1,1) == 1, LOG);
-    assert_true(multiple_classification_rates(1,2) == 7, LOG);
-    assert_true(multiple_classification_rates(2,0) == 8, LOG);
-    assert_true(multiple_classification_rates(2,1) == 5, LOG);
-    assert_true(multiple_classification_rates(2,2) == 2, LOG);
-    */
+//    assert_true(multiple_classification_rates(0,0) == 0, LOG);
+//    assert_true(multiple_classification_rates(0,1) == 3, LOG);
+//    assert_true(multiple_classification_rates(0,2) == 6, LOG);
+//    assert_true(multiple_classification_rates(1,0) == 4, LOG);
+//    assert_true(multiple_classification_rates(1,1) == 1, LOG);
+//    assert_true(multiple_classification_rates(1,2) == 7, LOG);
+//    assert_true(multiple_classification_rates(2,0) == 8, LOG);
+//    assert_true(multiple_classification_rates(2,1) == 5, LOG);
+//    assert_true(multiple_classification_rates(2,2) == 2, LOG);
 }
 
 
@@ -1444,7 +1445,6 @@ void TestingAnalysisTest::run_test_case()
 
    test_constructor();
    test_destructor();
-
 
    // Get methods
    
@@ -1530,7 +1530,7 @@ void TestingAnalysisTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

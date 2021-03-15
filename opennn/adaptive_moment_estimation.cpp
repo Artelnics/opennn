@@ -271,14 +271,15 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
     reserve_selection_error_history = new_reserve_selection_error_history;
 }
 
+
 /// Trains a neural network with an associated loss index,
 /// according to the gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
 /// It returns a results structure with the history and the final values of the reserved variables.
 
-OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
+OptimizationAlgorithmResults AdaptiveMomentEstimation::perform_training()
 {
-    Results results;
+    OptimizationAlgorithmResults results;
 
 //    check();
 
@@ -307,8 +308,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     training_samples_number < batch_samples_number ? batch_size_training = training_samples_number : batch_size_training = batch_samples_number;
     selection_samples_number < batch_samples_number && selection_samples_number != 0 ? batch_size_selection = selection_samples_number : batch_size_selection = batch_samples_number;
 
-    DataSet::Batch batch_training(batch_size_training, data_set_pointer);
-    DataSet::Batch batch_selection(batch_size_selection, data_set_pointer);
+    DataSetBatch batch_training(batch_size_training, data_set_pointer);
+    DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
 
     const Index training_batches_number = training_samples_number/batch_size_training;
     const Index selection_batches_number = selection_samples_number/batch_size_selection;
@@ -322,13 +323,13 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
     // Loss index
 
-    LossIndex::BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
     type training_error = 0;
     type training_loss = 0;
@@ -341,7 +342,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Optimization algorithm
 
-    OptimizationData optimization_data(this);
+    AdaptiveMomentEstimationData optimization_data(this);
 
     type learning_rate = 0;
 
@@ -566,7 +567,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
             {
                 cout << "Epoch " << epoch << ";\n"
                      << "Training error: " << training_error << "\n"
-                     << "Batch size: " << batch_samples_number << "\n"
+                     << "DataSetBatch size: " << batch_samples_number << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
                 if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
@@ -669,9 +670,9 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 
     row_index++;
 
-    // Batch samples number
+    // DataSetBatch samples number
 
-    labels_values(row_index,0) = "Batch samples number";
+    labels_values(row_index,0) = "DataSetBatch samples number";
     labels_values(row_index,1) = std::to_string(batch_samples_number);
 
     row_index++;
@@ -717,7 +718,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.OpenElement("AdaptiveMomentEstimation");
 
-    // Batch size
+    // DataSetBatch size
 
     file_stream.OpenElement("BatchSize");
 
@@ -826,7 +827,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    // Batch size
+    // DataSetBatch size
 
     const tinyxml2::XMLElement* batch_size_element = root_element->FirstChildElement("BatchSize");
 
@@ -996,8 +997,8 @@ Index AdaptiveMomentEstimation::get_batch_samples_number() const
 
 /// Update iteration parameters
 
-void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation& back_propagation,
-                              OptimizationData& optimization_data)
+void AdaptiveMomentEstimation::update_iteration(const LossIndexBackPropagation& back_propagation,
+                              AdaptiveMomentEstimationData& optimization_data)
 {
     const type learning_rate =
             initial_learning_rate*
@@ -1020,23 +1021,23 @@ void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation
 }
 
 
-AdaptiveMomentEstimation::OptimizationData::OptimizationData()
+AdaptiveMomentEstimationData::AdaptiveMomentEstimationData()
 {
 }
 
 
-AdaptiveMomentEstimation::OptimizationData::OptimizationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer)
+AdaptiveMomentEstimationData::AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer)
 {
     set(new_stochastic_gradient_descent_pointer);
 }
 
 
-AdaptiveMomentEstimation::OptimizationData::~OptimizationData()
+AdaptiveMomentEstimationData::~AdaptiveMomentEstimationData()
 {
 }
 
 
-void AdaptiveMomentEstimation::OptimizationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
+void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
 {
     adaptive_moment_estimation_pointer = new_adaptive_moment_estimation_pointer;
 
@@ -1062,7 +1063,7 @@ void AdaptiveMomentEstimation::OptimizationData::set(AdaptiveMomentEstimation* n
 }
 
 
-void AdaptiveMomentEstimation::OptimizationData::print() const
+void AdaptiveMomentEstimationData::print() const
 {
     cout << "Gradien exponential decay:" << endl <<gradient_exponential_decay << endl;
 
@@ -1074,7 +1075,7 @@ void AdaptiveMomentEstimation::OptimizationData::print() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

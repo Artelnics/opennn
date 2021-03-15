@@ -103,25 +103,17 @@ const Index& NeuronsSelection::get_trials_number() const
 
 /// Returns true if the loss index losses are to be reserved, and false otherwise.
 
-const bool& NeuronsSelection::get_reserve_training_error_data() const
+const bool& NeuronsSelection::get_reserve_training_errors() const
 {
-    return reserve_training_error_data;
+    return reserve_training_errors;
 }
 
 
 /// Returns true if the loss index selection losses are to be reserved, and false otherwise.
 
-const bool& NeuronsSelection::get_reserve_selection_error_data() const
+const bool& NeuronsSelection::get_reserve_selection_errors() const
 {
-    return reserve_selection_error_data;
-}
-
-
-/// Returns true if the parameters vector of the neural network with minimum selection error is to be reserved, and false otherwise.
-
-const bool& NeuronsSelection::get_reserve_minimal_parameters() const
-{
-    return reserve_minimal_parameters;
+    return reserve_selection_errors;
 }
 
 
@@ -155,14 +147,6 @@ const Index& NeuronsSelection::get_maximum_epochs_number() const
 const type& NeuronsSelection::get_maximum_time() const
 {
     return maximum_time;
-}
-
-
-/// Return the tolerance of error for the neurons selection algorithm.
-
-const type& NeuronsSelection::get_tolerance() const
-{
-    return tolerance;
 }
 
 
@@ -204,9 +188,8 @@ void NeuronsSelection::set_default()
 
     // Neurons selection results
 
-    reserve_training_error_data = true;
-    reserve_selection_error_data = true;
-    reserve_minimal_parameters = true;
+    reserve_training_errors = true;
+    reserve_selection_errors = true;
 
     display = true;
 
@@ -216,8 +199,6 @@ void NeuronsSelection::set_default()
 
     maximum_epochs_number = 1000;
     maximum_time = 3600;
-
-    tolerance = 0;
 }
 
 
@@ -318,7 +299,7 @@ void NeuronsSelection::set_trials_number(const Index& new_trials_number)
 
 void NeuronsSelection::set_reserve_training_error_data(const bool& new_reserve_training_error_data)
 {
-    reserve_training_error_data = new_reserve_training_error_data;
+    reserve_training_errors = new_reserve_training_error_data;
 }
 
 
@@ -327,16 +308,7 @@ void NeuronsSelection::set_reserve_training_error_data(const bool& new_reserve_t
 
 void NeuronsSelection::set_reserve_selection_error_data(const bool& new_reserve_selection_error_data)
 {
-    reserve_selection_error_data = new_reserve_selection_error_data;
-}
-
-
-/// Sets the reserve flag for the minimal parameters.
-/// @param new_reserve_minimal_parameters Flag value.
-
-void NeuronsSelection::set_reserve_minimal_parameters(const bool& new_reserve_minimal_parameters)
-{
-    reserve_minimal_parameters = new_reserve_minimal_parameters;
+    reserve_selection_errors = new_reserve_selection_error_data;
 }
 
 
@@ -423,212 +395,10 @@ void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
 }
 
 
-/// Set the tolerance for the errors in the trainings of the algorithm.
-/// @param new_tolerance Value of the tolerance.
-
-void NeuronsSelection::set_tolerance(const type& new_tolerance)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_tolerance < 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_tolerance(const type&) method.\n"
-               << "Tolerance must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    tolerance = new_tolerance;
-}
-
-
-/// Returns the minimum of the loss and selection error in trials_number trainings.
-/// @param neurons_number Number of neurons in the hidden layer to be trained with.
-
-Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, NeuralNetwork& neural_network)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(neurons_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "Tensor<type, 1> calculate_losses(Index) method.\n"
-               << "Number of hidden neurons must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(trials_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "Tensor<type, 1> calculate_losses(Index) method.\n"
-               << "Number of trials must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Neural network
-
-    const Index trainable_layers_number = neural_network.get_trainable_layers_number();
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network.get_trainable_layers_pointers();
-
-    // Loss index
-
-    type optimum_selection_error = numeric_limits<type>::max();
-    type optimum_training_error = numeric_limits<type>::max();
-    Tensor<type, 1> optimum_parameters;
-
-    // Optimization algorithm
-
-    OptimizationAlgorithm::Results results;
-
-    Tensor<type, 1> final_losses(2);
-
-    final_losses.setConstant(numeric_limits<type>::max());
-
-    Tensor<type, 1> current_loss(2);
-
-    Tensor<type, 1> final_parameters;
-
-    bool flag_training = false;
-    bool flag_selection = false;
-
-    for(Index i = 0; i < neurons_history.size(); i++)
-    {
-        if(neurons_history[i] == neurons_number)
-        {
-            final_losses[0] = training_error_history[i];
-            flag_training = true;
-        }
-    }
-
-    for(Index i = 0; i < neurons_history.size(); i++)
-    {
-        if(neurons_history[i] == neurons_number)
-        {
-            final_losses[1] = selection_error_history[i];
-            flag_selection = true;
-        }
-    }
-
-    if(flag_training && flag_selection)
-    {
-        return final_losses;
-    }
-
-    trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(neurons_number); // Fix
-    trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(neurons_number); // Fix
-
-    for(Index i = 0; i < trials_number; i++)
-    {
-        neural_network.set_parameters_random();
-
-        const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy_pointer->perform_training();
-
-        const type current_training_error = optimization_algorithm_results.final_training_error;
-        const type current_selection_error = optimization_algorithm_results.final_selection_error;
-        const Tensor<type, 1> current_parameters = optimization_algorithm_results.final_parameters;
-
-        if(current_selection_error < optimum_selection_error)
-        {
-            optimum_training_error = current_training_error;
-            optimum_selection_error = current_selection_error;
-            optimum_parameters = current_parameters; // Optimum parameters = final_parameters
-        }
-
-        if(display)
-        {
-            cout << "Trial number: " << i << endl;
-            cout << "Training error: " << current_training_error << endl;
-            cout << "Selection error: " << current_selection_error << endl;
-            cout << "Stopping condition: " << optimization_algorithm_results.write_stopping_condition() << endl << endl;
-        }
-    }
-
-    // Save results
-
-    final_losses[0] = optimum_training_error;
-    final_losses[1] = optimum_selection_error;
-
-    neurons_history = insert_result(neurons_number, neurons_history.cast<type>()).cast<Index>();
-
-    training_error_history = insert_result(final_losses(0), training_error_history);
-
-    selection_error_history = insert_result(final_losses(1), selection_error_history);
-
-    parameters_history = insert_result(optimum_parameters, parameters_history);
-
-    return final_losses;
-}
-
-
-Tensor<Index, 1> NeuronsSelection::insert_index_result(const Index& value, const Tensor<Index, 1>& old_tensor) const
-{
-    const Index size = old_tensor.size();
-
-    Tensor<Index, 1> new_tensor(size+1);
-
-    for(Index i = 0; i < size; i++)
-    {
-        new_tensor(i) = old_tensor(i);
-    }
-
-    new_tensor(size) = value;
-
-    return new_tensor;
-}
-
-
-Tensor<type, 1> NeuronsSelection::insert_result(const type& value, const Tensor<type, 1>& old_tensor) const
-{
-    const Index size = old_tensor.size();
-
-    Tensor<type, 1> new_tensor(size+1);
-
-    for(Index i = 0; i < size; i++)
-    {
-        new_tensor(i) = old_tensor(i);
-    }
-
-    new_tensor(size) = value;
-
-    return new_tensor;
-}
-
-
-Tensor< Tensor<type, 1>, 1> NeuronsSelection::insert_result(const Tensor<type, 1>& value, const Tensor< Tensor<type, 1>, 1>& old_tensor) const
-{
-    const Index size = old_tensor.size();
-
-    Tensor< Tensor<type, 1>, 1> new_tensor(size+1);
-
-    for(Index i = 0; i < size; i++)
-    {
-        new_tensor(i) = old_tensor(i);
-    }
-
-    new_tensor(size) = value;
-
-    return new_tensor;
-}
-
-
 /// Return a string with the stopping condition of the training depending on the training method.
 /// @param results Results of the perform_training method.
 
-string NeuronsSelection::write_stopping_condition(const OptimizationAlgorithm::Results& results) const
+string NeuronsSelection::write_stopping_condition(const OptimizationAlgorithmResults& results) const
 {
     return results.write_stopping_condition();
 }
@@ -646,9 +416,7 @@ void NeuronsSelection::delete_selection_history()
 
 void NeuronsSelection::delete_training_error_history()
 {
-
     training_error_history.resize(0);
-
 }
 
 
@@ -787,24 +555,24 @@ const string NeuronsSelection::write_elapsed_time(const type& time) const
 
 /// Return a string with the stopping condition of the Results
 
-string NeuronsSelection::Results::write_stopping_condition() const
+string NeuronsSelectionResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-        case MaximumTime:
+        case NeuronsSelection::MaximumTime:
             return "MaximumTime";
 
-        case SelectionErrorGoal:
+        case NeuronsSelection::SelectionErrorGoal:
             return "SelectionErrorGoal";
 
-        case MaximumEpochs:
+        case NeuronsSelection::MaximumEpochs:
             return "MaximumEpochs";
 
-        case MaximumSelectionFailures:
+        case NeuronsSelection::MaximumSelectionFailures:
             return "MaximumSelectionFailures";
 
-        case AlgorithmFinished:
-            return "AlgorithmFinished";
+        case NeuronsSelection::MaximumNeurons:
+            return "MaximumNeurons";
     }
 
     return string();
@@ -813,7 +581,7 @@ string NeuronsSelection::Results::write_stopping_condition() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

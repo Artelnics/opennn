@@ -26,11 +26,12 @@
 #include "config.h"
 
 #include "loss_index.h"
-//#include "mean_squared_error.h"
 #include "optimization_algorithm.h"
 
 namespace OpenNN
 {
+
+struct StochasticGradientDescentData;
 
 /// This concrete class represents the stochastic gradient descent optimization algorithm[1] for a loss index of a neural network.
 
@@ -43,60 +44,6 @@ class StochasticGradientDescent : public OptimizationAlgorithm
 {
 
 public:
-
-    struct SGDOptimizationData : public OptimizationData
-    {
-        /// Default constructor.
-
-        explicit SGDOptimizationData()
-        {
-        }
-
-        explicit SGDOptimizationData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
-        {
-            set(new_stochastic_gradient_descent_pointer);
-        }
-
-        virtual ~SGDOptimizationData() {}
-
-        void set(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
-        {
-            stochastic_gradient_descent_pointer = new_stochastic_gradient_descent_pointer;
-
-            LossIndex* loss_index_pointer = stochastic_gradient_descent_pointer->get_loss_index_pointer();
-
-            NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-            const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-            parameters.resize(parameters_number);
-
-            parameters = neural_network_pointer->get_parameters();
-
-            parameters_increment.resize(parameters_number);
-            nesterov_increment.resize(parameters_number);
-            last_parameters_increment.resize(parameters_number);
-
-            parameters_increment.setZero();
-            nesterov_increment.setZero();
-            last_parameters_increment.setZero();
-        }
-
-        void print() const
-        {
-        }
-
-        StochasticGradientDescent* stochastic_gradient_descent_pointer = nullptr;
-
-        Index iteration = 0;
-
-        Tensor<type, 1> parameters;
-        Tensor<type, 1> parameters_increment;
-        Tensor<type, 1> nesterov_increment;
-        Tensor<type, 1> last_parameters_increment;
-
-        Tensor<type, 1> minimal_selection_parameters;
-    };
 
     static vector<Index> tensor_to_vector(const Tensor<Index, 1>& tensor)
     {
@@ -180,10 +127,10 @@ public:
 
    // Training methods
 
-   void update_iteration(const LossIndex::BackPropagation& back_propagation,
-                         SGDOptimizationData& optimization_data);
+   void update_iteration(const LossIndexBackPropagation& back_propagation,
+                         StochasticGradientDescentData& optimization_data);
 
-   Results perform_training();
+   OptimizationAlgorithmResults perform_training();
 
    void perform_training_void();
 
@@ -258,6 +205,8 @@ private:
    Index batch_samples_number = 1000;
 
 
+
+
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
 #endif
@@ -265,6 +214,61 @@ private:
 #ifdef OPENNN_MKL
     #include "../../opennn-mkl/opennn_mkl/stochastic_gradient_descent_mkl.h"
 #endif
+};
+
+
+struct StochasticGradientDescentData : public OptimizationAlgorithmData
+{
+    /// Default constructor.
+
+    explicit StochasticGradientDescentData()
+    {
+    }
+
+    explicit StochasticGradientDescentData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
+    {
+        set(new_stochastic_gradient_descent_pointer);
+    }
+
+    virtual ~StochasticGradientDescentData() {}
+
+    void set(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
+    {
+        stochastic_gradient_descent_pointer = new_stochastic_gradient_descent_pointer;
+
+        LossIndex* loss_index_pointer = stochastic_gradient_descent_pointer->get_loss_index_pointer();
+
+        NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+        parameters.resize(parameters_number);
+
+        parameters = neural_network_pointer->get_parameters();
+
+        parameters_increment.resize(parameters_number);
+        nesterov_increment.resize(parameters_number);
+        last_parameters_increment.resize(parameters_number);
+
+        parameters_increment.setZero();
+        nesterov_increment.setZero();
+        last_parameters_increment.setZero();
+    }
+
+    void print() const
+    {
+    }
+
+    StochasticGradientDescent* stochastic_gradient_descent_pointer = nullptr;
+
+    Index iteration = 0;
+
+    Tensor<type, 1> parameters;
+    Tensor<type, 1> parameters_increment;
+    Tensor<type, 1> nesterov_increment;
+    Tensor<type, 1> last_parameters_increment;
+
+    Tensor<type, 1> minimal_selection_parameters;
 };
 
 }

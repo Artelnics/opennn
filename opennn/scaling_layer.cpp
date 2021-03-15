@@ -393,9 +393,9 @@ void ScalingLayer::set(const ScalingLayer& new_scaling_layer)
 //    /*
 //        const Tensor<Index, 1> indices = new_uses.get_indices_equal_to(true);
 //    */
-////    descriptives = descriptives.get_subvector(indices);
+//    descriptives = descriptives.get_subvector(indices);
 
-////    scaling_methods = scaling_methods.get_subvector(indices);
+//    scaling_methods = scaling_methods.get_subvector(indices);
 //}
 
 
@@ -1511,7 +1511,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -49,27 +49,27 @@ public:
 
    // Error methods
 
-   void calculate_error(const DataSet::Batch&,
-                        const NeuralNetwork::ForwardPropagation&,
-                        LossIndex::BackPropagation&) const;
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagation&) const;
 
-
-   void calculate_error_terms(const DataSet::Batch&,
-                              const NeuralNetwork::ForwardPropagation&,
-                              SecondOrderLoss&) const;
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagationLM&) const;
 
    // Gradient methods
 
-   void calculate_output_delta(const DataSet::Batch&,
-                               NeuralNetwork::ForwardPropagation&,
-                               BackPropagation&) const;
+   void calculate_output_delta(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagation&) const;
 
-   void calculate_Jacobian_gradient(const DataSet::Batch&,
-                                    LossIndex::SecondOrderLoss&) const;
+   void calculate_gradient(const DataSetBatch&,
+                           LossIndexBackPropagationLM&) const;
+
    // Hessian method
 
-   void calculate_hessian_approximation(const DataSet::Batch&,
-                                        LossIndex::SecondOrderLoss&) const;
+   void calculate_hessian_approximation(const DataSetBatch&,
+                                        LossIndexBackPropagationLM&) const;
 
    // Serialization methods
 
@@ -82,10 +82,6 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const;
 
 private:
-
-   // Squared errors methods
-
-   Tensor<type, 1> calculate_squared_errors() const;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/sum_squared_error_cuda.h"
@@ -102,7 +98,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

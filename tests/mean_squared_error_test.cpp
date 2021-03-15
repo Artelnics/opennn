@@ -66,7 +66,7 @@ void MeanSquaredErrorTest::test_calculate_error()
    data_set.initialize_data(0.0);
 
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
 
    Index batch_samples_number = batch.get_samples_number();
@@ -78,9 +78,9 @@ void MeanSquaredErrorTest::test_calculate_error()
    data_set.initialize_data(0.0);
    data_set.set_training();
 
-   NeuralNetwork::ForwardPropagation forward_propagation(batch_samples_number, &neural_network);
+   NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
 
-   LossIndex::BackPropagation back_propagation(batch_samples_number, &mean_squared_error);
+   LossIndexBackPropagation back_propagation(batch_samples_number, &mean_squared_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
@@ -108,9 +108,9 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    neural_network.set_parameters_constant(1);
 
-   NeuralNetwork::ForwardPropagation forward_propagation_2(batch_samples_number, &neural_network);
+   NeuralNetworkForwardPropagation forward_propagation_2(batch_samples_number, &neural_network);
 
-   LossIndex::BackPropagation back_propagation_2(batch_samples_number, &mean_squared_error);
+   LossIndexBackPropagation back_propagation_2(batch_samples_number, &mean_squared_error);
 
    neural_network.forward_propagate(batch, forward_propagation_2);
 
@@ -162,7 +162,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
       data_set.initialize_data(0.0);
       data_set.set_training();
 
-      DataSet::Batch batch(samples_number, &data_set);
+      DataSetBatch batch(samples_number, &data_set);
 
       Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
       const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
@@ -179,8 +179,8 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
       mse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-      NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
-      LossIndex::BackPropagation training_back_propagation(samples_number, &mse);
+      NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+      LossIndexBackPropagation training_back_propagation(samples_number, &mse);
 
       neural_network.forward_propagate(batch, forward_propagation);
 
@@ -207,7 +207,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
         data_set_2.set_training();
         data_set_2.set_data_binary_random();
 
-        DataSet::Batch batch_1(samples_number, &data_set_2);
+        DataSetBatch batch_1(samples_number, &data_set_2);
 
         Tensor<Index, 1> samples_indices_1 = data_set_2.get_training_samples_indices();
         const Tensor<Index, 1> input_indices_1 = data_set_2.get_input_variables_indices();
@@ -226,8 +226,8 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
         mse_1.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-        NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network_1);
-        LossIndex::BackPropagation training_back_propagation(samples_number, &mse_1);
+        NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network_1);
+        LossIndexBackPropagation training_back_propagation(samples_number, &mse_1);
 
         neural_network_1.forward_propagate(batch_1, forward_propagation);
 
@@ -256,7 +256,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        data_set_3.set_data_random();
        data_set_3.set_training();
 
-       DataSet::Batch batch(samples_number, &data_set_3);
+       DataSetBatch batch(samples_number, &data_set_3);
 
        Tensor<Index, 1> samples_indices = data_set_3.get_training_samples_indices();
        const Tensor<Index, 1> input_indices = data_set_3.get_input_variables_indices();
@@ -400,12 +400,12 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
    
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
 
    Index batch_samples_number = batch.get_samples_number();
 
-   Tensor<type, 1> error_terms;
+   Tensor<type, 1> squared_errors;
 
    // Test
 
@@ -419,17 +419,17 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
    data_set.set(1, 1, 1);
    data_set.set_data_random();
 
-   NeuralNetwork::ForwardPropagation forward_propagation(batch_samples_number, &neural_network);
-   LossIndex::SecondOrderLoss second_order_loss(parameters,batch_samples_number);
+   NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
+   LossIndexBackPropagationLM loss_index_back_propagation_lm(parameters,batch_samples_number);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
-   mean_squared_error.calculate_error_terms(batch, forward_propagation, second_order_loss);
-   error_terms=second_order_loss.error_terms;
+   mean_squared_error.calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
+   squared_errors=loss_index_back_propagation_lm.squared_errors;
 
 //   Eigen::array<int, 2> vector_times_vector = {Eigen::array<int, 2> ({1,1})};
 
-//   const Tensor<type, 0> product_result = error_terms.contract(error_terms, vector_times_vector);
+//   const Tensor<type, 0> product_result = squared_errors.contract(squared_errors, vector_times_vector);
 
 //   assert_true(abs(product_result(0) - error) < 1.0e-3, LOG);
 }
@@ -451,7 +451,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //  Tensor<type, 1> error_gradient;
 
-//  Tensor<type, 1> error_terms;
+//  Tensor<type, 1> squared_errors;
 //  Tensor<type, 2> terms_Jacobian;
 //  Tensor<type, 2> numerical_Jacobian_terms;
 
@@ -459,7 +459,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 //  Tensor<type, 2> targets;
 //  Tensor<type, 2> outputs;
 
-//  Tensor<type, 2> output_gradient;
+//  Tensor<type, 2> output_delta;
 //  Tensor<Tensor<type, 2>, 1> layers_delta;
 
    // Test
@@ -477,11 +477,11 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 // targets = data_set.get_training_target_data();
 //   outputs = neural_network.calculate_outputs(inputs);
 
-//   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
+//   Tensor<LayerForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
 
-//   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
+//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
 
-//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
+//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
 
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
@@ -504,9 +504,9 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
    //forward_propagation = nn.forward_propagate(inputs);
 
-//   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
+//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
 
-//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
+//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
 
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
@@ -534,9 +534,9 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   forward_propagation = neural_network.forward_propagate(inputs);
 
-//   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
+//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
 
-//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
+//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
 
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
@@ -551,11 +551,11 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 //   neural_network.set(NeuralNetwork::Approximation, architecture);
 //   neural_network.set_parameters_constant(0.0);
 //   //nn.set_layer_activation_function(0, PerceptronLayer::Linear);
-////   nn.set_parameters_random();
+//   nn.set_parameters_random();
 //   parameters = neural_network.get_parameters();
 
 //   data_set.set(1, 1, 1);
-////   data_set.set_data_random();
+//   data_set.set_data_random();
 //   data_set.initialize_data(1.0);
 
 //   inputs = data_set.get_training_input_data();
@@ -564,9 +564,9 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   forward_propagation = nn.forward_propagate(inputs);
 
-//   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
+//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
 
-//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
+//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
 
 //   cout << "layers delta: " << layers_delta << endl;
 
@@ -607,10 +607,10 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
    
 //   error_gradient = mean_squared_error.calculate_error_gradient({0, 1});
 
-//   error_terms = mean_squared_error.calculate_training_error_terms();
+//   squared_errors = mean_squared_error.calculate_training_error_terms();
 //   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian();
 
-//   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(error_terms)*2.0 - error_gradient) < 1.0e-3, LOG);
+//   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(squared_errors)*2.0 - error_gradient) < 1.0e-3, LOG);
 }
 
 
@@ -645,12 +645,12 @@ void MeanSquaredErrorTest::run_test_case()
 
    test_calculate_error_gradient();
 
-//   // Error terms methods
+   // Error terms methods
 
    //test_calculate_error_terms();
    //test_calculate_error_terms_Jacobian();
 
-//   // Serialization methods
+   // Serialization methods
 
 //   test_to_XML();
 //   test_from_XML();
@@ -660,7 +660,7 @@ void MeanSquaredErrorTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lemser General Public

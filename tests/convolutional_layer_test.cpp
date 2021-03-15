@@ -708,7 +708,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
     //    result(1,1,1,0) = 1;
     //    result(1,1,1,1) = 1;
 
-    //    assert_true(activations_2d == result, LOG);
+    //    assert_true(activations == result, LOG);
 
     assert_true(activations_4d(0,0,0,0) == -1 &&
                 activations_4d(0,0,0,1) == -1 &&
@@ -1683,7 +1683,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 //    kernels.setConstant(1.f/27);
 //    biases.setZero();
 
-//    Tensor<type, 2> output_gradient;
+//    Tensor<type, 2> output_delta;
 
 //    Tensor<type, 2> output_delta;
 
@@ -1691,14 +1691,14 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
 //    NumericalDifferentiation numerical_differentiation;
 //    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
-////    Tensor<type, 4> numerical_activations = numerical_differentiation.calculate_derivatives(convolutional_layer,
-////                                                                                            &ConvolutionalLayer::calculate_error_gradient,
-////                                                                                            0,
-////                                                                                            kernels);
+//    Tensor<type, 4> numerical_activations = numerical_differentiation.calculate_derivatives(convolutional_layer,
+//                                                                                            &ConvolutionalLayer::calculate_error_gradient,
+//                                                                                            0,
+//                                                                                            kernels);
 
-//    Layer::ForwardPropagation forward_propagation(1, &convolutional_layer);
+//    LayerForwardPropagation forward_propagation(1, &convolutional_layer);
 //    convolutional_layer.forward_propagate(inputs_4d, forward_propagation);
-//    Layer::BackPropagation back_propagation(1, &convolutional_layer);
+//    LayerBackPropagation back_propagation(1, &convolutional_layer);
 
 //    /*
 //    PerceptronLayer perceptron_layer(2,2, 0,PerceptronLayer::Linear);
@@ -1706,7 +1706,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 //    Tensor<type, 1> parameters(6);
 //    Tensor<type, 2> inputs(1,2);
 
-//    Tensor<type, 2> output_gradient(1,2);
+//    Tensor<type, 2> output_delta(1,2);
 
 //    Tensor<type, 2> output_delta(1,2);
 
@@ -1717,14 +1717,14 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
 //    inputs.setValues({{0,1}});
 
-//    Layer::ForwardPropagation forward_propagation(1, &perceptron_layer);
+//    LayerForwardPropagation forward_propagation(1, &perceptron_layer);
 //    perceptron_layer.forward_propagate(inputs, forward_propagation);
 
-//    Layer::BackPropagation back_propagation(1, &perceptron_layer);
+//    LayerBackPropagation back_propagation(1, &perceptron_layer);
 
-//    output_gradient.setValues({{2,-2}});
+//    output_delta.setValues({{2,-2}});
 
-//    perceptron_layer.calculate_output_delta(forward_propagation,output_gradient, output_delta);
+//    perceptron_layer.calculate_output_delta(forward_propagation,output_delta, output_delta);
 
 //    back_propagation.delta = output_delta;
 
@@ -1750,7 +1750,7 @@ void ConvolutionalLayerTest::run_test_case() // @todo
 {
    cout << "Running convolutional layer test case...\n";
 
-//   // Constructor and destructor
+   // Constructor and destructor
 
    test_constructor();
    test_destructor();
@@ -1808,7 +1808,7 @@ void ConvolutionalLayerTest::run_test_case() // @todo
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

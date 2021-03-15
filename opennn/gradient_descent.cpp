@@ -443,16 +443,16 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 
 
 
-////// \brief GradientDescent::update_epoch
-////// \param batch
-////// \param forward_propagation
-////// \param back_propagation
-////// \param optimization_data
+// \brief GradientDescent::update_epoch
+// \param batch
+// \param forward_propagation
+// \param back_propagation
+// \param optimization_data
 void GradientDescent::update_epoch(
-        const DataSet::Batch& batch,
-        NeuralNetwork::ForwardPropagation& forward_propagation,
-        LossIndex::BackPropagation& back_propagation,
-        GDOptimizationData& optimization_data)
+        const DataSetBatch& batch,
+        NeuralNetworkForwardPropagation& forward_propagation,
+        LossIndexBackPropagation& back_propagation,
+        GradientDescentData& optimization_data)
 {
 
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
@@ -510,9 +510,9 @@ void GradientDescent::update_epoch(
 /// Training occurs according to the training parameters and stopping criteria.
 /// It returns a results structure with the history and the final values of the reserved variables.
 
-OptimizationAlgorithm::Results GradientDescent::perform_training()
+OptimizationAlgorithmResults GradientDescent::perform_training()
 {
-    Results results;
+    OptimizationAlgorithmResults results;
 
 #ifdef __OPENNN_DEBUG__
 
@@ -538,8 +538,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    DataSet::Batch training_batch(training_samples_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
     training_batch.fill(training_samples_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
@@ -555,8 +555,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
 
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
@@ -566,8 +566,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     type gradient_norm = 0;
 
-    LossIndex::BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Learning rate
 
@@ -575,7 +575,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     // Optimization algorithm
 
-    GDOptimizationData optimization_data(this);
+    GradientDescentData optimization_data(this);
 
     Index selection_error_increases = 0;
 
@@ -617,9 +617,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         // Loss index
-/*
+
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-*/
+
         if(has_selection)
         {
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
@@ -1293,7 +1293,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

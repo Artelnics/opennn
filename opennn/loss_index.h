@@ -29,6 +29,9 @@
 namespace OpenNN
 {
 
+struct LossIndexBackPropagation;
+struct LossIndexBackPropagationLM;
+
 /// This abstract class represents the concept of loss index composed of an error term and a regularization term.
 
 ///
@@ -62,134 +65,6 @@ public:
    /// Enumeration of available regularization methods.
 
    enum RegularizationMethod{L1, L2, NoRegularization};
-
-
-   /// A loss index composed of several terms, this structure represent the First Order for this function.
-
-   ///
-   /// Set of loss value and gradient vector of the loss index.
-   /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
-
-   struct BackPropagation
-   {
-       /// Default constructor.
-
-       explicit BackPropagation() {}
-
-       explicit BackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
-       {
-           if(new_batch_samples_number == 0) return;
-
-           set(new_batch_samples_number, new_loss_index_pointer);
-       }
-
-       virtual ~BackPropagation();
-
-       void set(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
-       {                      
-           batch_samples_number = new_batch_samples_number;
-
-           loss_index_pointer = new_loss_index_pointer;
-
-           // Neural network
-
-           NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-           const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-           const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-           // First order loss
-
-           neural_network.set(batch_samples_number, neural_network_pointer);
-
-           error = 0;
-
-           loss = 0;
-
-           errors.resize(batch_samples_number, outputs_number);
-
-           parameters = neural_network_pointer->get_parameters();
-
-           gradient.resize(parameters_number);
-
-           regularization_gradient.resize(parameters_number);
-           regularization_gradient.setConstant(0);
-       }
-
-
-       void print()
-       {
-           cout << "Error:" << endl;
-           cout << error << endl;
-
-           cout << "Loss:" << endl;
-           cout << loss << endl;
-
-           cout << "Gradient:" << endl;
-           cout << gradient << endl; 
-       }
-
-       LossIndex* loss_index_pointer = nullptr;
-
-       Index batch_samples_number = 0;
-
-       NeuralNetwork::BackPropagation neural_network;
-
-       type error;
-
-       type loss;
-
-       Tensor<type, 2> errors;
-
-       Tensor<type, 1> parameters;
-
-       Tensor<type, 1> gradient;
-
-       Tensor<type, 1> regularization_gradient;
-   };
-
-
-   /// This structure contains second order information about the loss function (loss, gradient and Hessian).
-   /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
-   /// A method returning this structure might be implemented more efficiently than the loss,
-   /// gradient and <i>Hessian</i> methods separately.
-
-   struct SecondOrderLoss
-   {
-       /// Default constructor.
-
-       SecondOrderLoss() {}
-
-       SecondOrderLoss(const Index& parameters_number, const Index& samples_number)
-       {
-           loss = 0;           
-           gradient.resize(parameters_number);
-           error_terms_Jacobian.resize(samples_number, parameters_number);
-           hessian.resize(parameters_number, parameters_number);
-           error_terms.resize(samples_number);
-       }
-
-       void sum_hessian_diagonal(const type& value)
-       {
-           const Index parameters_number = hessian.dimension(0);
-
-            #pragma omp parallel for
-
-           for(Index i = 0; i < parameters_number; i++)
-               hessian(i,i) += value;
-       }
-
-       type error;
-       type loss;
-
-       Tensor<type, 1> error_terms;
-       Tensor<type, 2> error_terms_Jacobian;
-
-       Tensor<type, 1> gradient;
-       Tensor<type, 2> hessian;
-   };
-
 
    /// Returns a pointer to the neural network object associated to the error term.
 
@@ -274,9 +149,9 @@ public:
 
    // GRADIENT METHODS
 
-   virtual void calculate_output_delta(const DataSet::Batch&,
-                                       NeuralNetwork::ForwardPropagation&,
-                                       BackPropagation&) const = 0;
+   virtual void calculate_output_delta(const DataSetBatch&,
+                                       NeuralNetworkForwardPropagation&,
+                                       LossIndexBackPropagation&) const = 0;
 
    // Numerical differentiation
 
@@ -287,40 +162,41 @@ public:
 
    Tensor<type, 2> calculate_Jacobian_numerical_differentiation(LossIndex*) const;
 
-   // ERROR TERMS METHODS
 
-   void calculate_errors(const DataSet::Batch&,
-                         const NeuralNetwork::ForwardPropagation&,
-                         BackPropagation&) const;
+   void calculate_errors(const DataSetBatch&,
+                         const NeuralNetworkForwardPropagation&,
+                         LossIndexBackPropagation&) const;
 
+   void calculate_squared_errors(const DataSetBatch&,
+                                 const NeuralNetworkForwardPropagation&,
+                                 LossIndexBackPropagationLM&) const;
 
-   virtual void calculate_error(const DataSet::Batch&,
-                                const NeuralNetwork::ForwardPropagation&,
-                                BackPropagation&) const = 0;
+   virtual void calculate_error(const DataSetBatch&,
+                                const NeuralNetworkForwardPropagation&,
+                                LossIndexBackPropagation&) const = 0;
 
-   virtual void calculate_error_terms(const DataSet::Batch&,
-                                      const NeuralNetwork::ForwardPropagation&,
-                                      SecondOrderLoss&) const {}
+   virtual void calculate_error(const DataSetBatch&,
+                                const NeuralNetworkForwardPropagation&,
+                                LossIndexBackPropagationLM&) const {}
 
-   void back_propagate(const DataSet::Batch&,
-                       NeuralNetwork::ForwardPropagation&,
-                       BackPropagation&) const;
+   void back_propagate(const DataSetBatch&,
+                       NeuralNetworkForwardPropagation&,
+                       LossIndexBackPropagation&) const;
 
-   // Second Order loss
+   void back_propagate(const DataSetBatch&,
+                       NeuralNetworkForwardPropagation&,
+                       LossIndexBackPropagationLM&) const;
 
-   void calculate_terms_second_order_loss(const DataSet::Batch&,
-                                          NeuralNetwork::ForwardPropagation&,
-                                          BackPropagation&,
-                                          SecondOrderLoss&) const;
+   void calculate_error_terms_output_jacobian(const DataSetBatch&,
+                                              NeuralNetworkForwardPropagation&,
+                                              LossIndexBackPropagation&,
+                                              LossIndexBackPropagationLM&) const;
 
-   void calculate_error_terms_output_jacobian(const DataSet::Batch&,
-                                              NeuralNetwork::ForwardPropagation&,
-                                              BackPropagation&,
-                                              SecondOrderLoss&) const;
+   virtual void calculate_gradient(const DataSetBatch&,
+                                   LossIndexBackPropagationLM&) const {}
 
-   virtual void calculate_Jacobian_gradient(const DataSet::Batch&, SecondOrderLoss&) const {}
-
-   virtual void calculate_hessian_approximation(const DataSet::Batch&, SecondOrderLoss&) const {}
+   virtual void calculate_hessian_approximation(const DataSetBatch&,
+                                                LossIndexBackPropagationLM&) const {}
 
    // Regularization methods
 
@@ -331,20 +207,17 @@ public:
 
    // Delta methods
 
-   void calculate_layers_delta(const DataSet::Batch&,
-                               NeuralNetwork::ForwardPropagation&,
-                               BackPropagation&) const;
+   void calculate_layers_delta(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagation&) const;
 
-   void calculate_error_gradient(const DataSet::Batch&,
-                                 const NeuralNetwork::ForwardPropagation&,
-                                 BackPropagation&) const;
+   void calculate_error_gradient(const DataSetBatch&,
+                                 const NeuralNetworkForwardPropagation&,
+                                 LossIndexBackPropagation&) const;
 
-   Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-   void calculate_error_terms_Jacobian(const DataSet::Batch&,
-                                       const NeuralNetwork::ForwardPropagation&,
-                                       const BackPropagation&,
-                                       SecondOrderLoss&) const;
+   void calculate_error_terms_Jacobian(const DataSetBatch&,
+                                       const NeuralNetworkForwardPropagation&,
+                                       LossIndexBackPropagationLM&) const;
 
    // Serialization methods
 
@@ -416,13 +289,141 @@ protected:
 
 };
 
+
+/// Set of loss value and gradient vector of the loss index.
+/// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
+
+struct LossIndexBackPropagation
+{
+    /// Default constructor.
+
+    explicit LossIndexBackPropagation() {}
+
+    explicit LossIndexBackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
+    {
+        if (new_batch_samples_number == 0) return;
+
+        set(new_batch_samples_number, new_loss_index_pointer);
+    }
+
+    virtual ~LossIndexBackPropagation();
+
+    void set(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
+    {
+        batch_samples_number = new_batch_samples_number;
+
+        loss_index_pointer = new_loss_index_pointer;
+
+        // Neural network
+
+        NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+        const Index outputs_number = neural_network_pointer->get_outputs_number();
+
+        // First order loss
+
+        neural_network.set(batch_samples_number, neural_network_pointer);
+
+        error = 0;
+
+        loss = 0;
+
+        errors.resize(batch_samples_number, outputs_number);
+
+        parameters = neural_network_pointer->get_parameters();
+
+        gradient.resize(parameters_number);
+
+        regularization_gradient.resize(parameters_number);
+        regularization_gradient.setConstant(0);
+    }
+
+
+    void print()
+    {
+        cout << "Error:" << endl;
+        cout << error << endl;
+
+        cout << "Loss:" << endl;
+        cout << loss << endl;
+
+        cout << "Gradient:" << endl;
+        cout << gradient << endl;
+    }
+
+    LossIndex* loss_index_pointer = nullptr;
+
+    Index batch_samples_number = 0;
+
+    NeuralNetworkBackPropagation neural_network;
+
+    type error;
+
+    type loss;
+
+    Tensor<type, 2> errors;
+
+    Tensor<type, 1> parameters;
+
+    Tensor<type, 1> gradient;
+
+    Tensor<type, 1> regularization_gradient;
+};
+
+
+/// A loss index composed of several terms, this structure represent the First Order for this function.
+
+/// This structure contains second order information about the loss function (loss, gradient and Hessian).
+/// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
+/// A method returning this structure might be implemented more efficiently than the loss,
+/// gradient and <i>Hessian</i> methods separately.
+
+struct LossIndexBackPropagationLM
+{
+    /// Default constructor.
+
+    LossIndexBackPropagationLM() {}
+
+    LossIndexBackPropagationLM(const Index& parameters_number, const Index& samples_number)
+    {
+        loss = 0;
+        gradient.resize(parameters_number);
+        squared_errors_Jacobian.resize(samples_number, parameters_number);
+        hessian.resize(parameters_number, parameters_number);
+        squared_errors.resize(samples_number);
+    }
+
+    void sum_hessian_diagonal(const type& value)
+    {
+        const Index parameters_number = hessian.dimension(0);
+
+         #pragma omp parallel for
+
+        for(Index i = 0; i < parameters_number; i++)
+            hessian(i,i) += value;
+    }
+
+    type error;
+    type loss;
+
+    Tensor<type, 1> parameters;
+
+    Tensor<type, 1> squared_errors;
+    Tensor<type, 2> squared_errors_Jacobian;
+
+    Tensor<type, 1> gradient;
+    Tensor<type, 2> hessian;
+};
+
+
 }
 
 #endif
 
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

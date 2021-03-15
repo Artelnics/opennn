@@ -36,46 +36,10 @@ int main(void)
 
         data_set.set_training();
 
-        data_set.calculate_input_target_columns_correlations();
-/*
-        Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
-        Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+        const Tensor<CorrelationResults, 2> correlation_results = data_set.calculate_input_target_columns_correlations();
 
-        #pragma omp parallel for
+        /// @todo Print results
 
-        for(int i=0; i<input_variables_indices.dimension(0); i++)
-        {
-
-            CorrelationResults logistic_correlation = logistic_correlations(thread_pool_device,
-                                                      data_set.get_data().chip(input_variables_indices(i),1),
-                                                      data_set.get_data().chip(target_variables_indices(0),1));
-
-            CorrelationResults gauss_correlation = gauss_correlations(thread_pool_device,
-                                                   data_set.get_data().chip(input_variables_indices(i),1),
-                                                   data_set.get_data().chip(target_variables_indices(0),1));
-
-
-            if(abs(logistic_correlation.correlation) > abs(gauss_correlation.correlation) &&
-                    abs(logistic_correlation.correlation) > 0.9)
-            {
-                cout << "Gen: " << i << endl;
-                cout << "Logistic correlation: " << logistic_correlation.correlation << endl;
-            }
-
-            if(abs(gauss_correlation.correlation) > abs(logistic_correlation.correlation) &&
-                    abs(gauss_correlation.correlation) > 0.9)
-            {
-                cout<<"Gen: "<<i<<endl;
-                cout<<"Gauss correlation: "<<gauss_correlation.correlation<<endl;
-            }
-
-            if(i%250 == 0)
-            {
-                cout<<static_cast<float>(i)/static_cast<float>(input_variables_indices.dimension(0))*100
-                   <<"% dataset evaluated"<<endl;
-            }
-        }
-*/
         return 0;
     }
     catch(exception& e)

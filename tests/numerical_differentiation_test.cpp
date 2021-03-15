@@ -341,7 +341,7 @@ void NumericalDifferentiationTest::test_calculate_derivatives()
 //   assert_true(abs(d5(0) - 6) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d5(1) - 12) < static_cast<type>(1e-2), LOG);
 
-//   // Test 5_1
+   // Test 5_1
 
 //   nd.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 
@@ -1605,7 +1605,7 @@ void NumericalDifferentiationTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
