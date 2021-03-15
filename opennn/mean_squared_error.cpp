@@ -46,9 +46,9 @@ MeanSquaredError::~MeanSquaredError()
 /// \param forward_propagation
 /// \param back_propagation
 
-void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
-                     const NeuralNetwork::ForwardPropagation& forward_propagation,
-                     LossIndex::BackPropagation& back_propagation) const
+void MeanSquaredError::calculate_error(const DataSetBatch& batch,
+                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
 
@@ -60,33 +60,24 @@ void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
 }
 
 
-void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
-                                             const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                             SecondOrderLoss& second_order_loss) const
+void MeanSquaredError::calculate_error(const DataSetBatch& batch,
+                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     LossIndexBackPropagationLM& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+    Tensor<type, 0> sum_squared_error;
 
-    const Index batch_samples_number = batch.get_samples_number();
-/*
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
-    const Tensor<type, 2>& targets = batch.targets_2d;
+    const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
-    second_order_loss.error_terms.resize(outputs.dimension(0));
-    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+    sum_squared_error.device(*thread_pool_device)
+            = back_propagation.squared_errors.sum();
 
-    second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
-
-    Tensor<type, 0> error;
-    error.device(*thread_pool_device) = second_order_loss.error_terms.contract(second_order_loss.error_terms, AT_B);
-
-    second_order_loss.error = error()/static_cast<type>(batch_samples_number);
-*/
+    back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_samples_number);
 }
 
 
-void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
-                                              NeuralNetwork::ForwardPropagation& forward_propagation,
-                                              BackPropagation& back_propagation) const
+void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
+                                              NeuralNetworkForwardPropagation& forward_propagation,
+                                              LossIndexBackPropagation& back_propagation) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -96,20 +87,18 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     Layer::BackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
-
-     Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
+     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
      const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
      const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
 
-     switch(output_layer_pointer->get_type())
+     switch(output_layer_back_propagation->layer_pointer->get_type())
      {
      case Layer::Perceptron:
      {
-         PerceptronLayer::PerceptronLayerBackPropagation* perceptron_layer_back_propagation
-         = static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(output_layer_back_propagation);
+         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
+         = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
@@ -117,8 +106,8 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      case Layer::Probabilistic:
      {
-         ProbabilisticLayer::ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-         = static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
+         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+         = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
          probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
@@ -126,8 +115,8 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      case Layer::Recurrent:
      {
-         RecurrentLayer::RecurrentLayerBackPropagation* recurrent_layer_back_propagation
-         = static_cast<RecurrentLayer::RecurrentLayerBackPropagation*>(output_layer_back_propagation);
+         RecurrentLayerBackPropagation* recurrent_layer_back_propagation
+         = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
 
          recurrent_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
@@ -135,8 +124,8 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 
      case Layer::LongShortTermMemory:
      {
-         LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
-         = static_cast<LongShortTermMemoryLayer::LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
+         LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
+         = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
 
          long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
@@ -147,8 +136,8 @@ void MeanSquaredError::calculate_output_delta(const DataSet::Batch& batch,
 }
 
 
-void MeanSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
-                                                   LossIndex::SecondOrderLoss& second_order_loss) const
+void MeanSquaredError::calculate_gradient(const DataSetBatch& batch,
+                                                   LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -160,14 +149,17 @@ void MeanSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
 
     const type coefficient = static_cast<type>(2)/static_cast<type>(batch_samples_number);
 
-    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_terms_Jacobian.contract(second_order_loss.error_terms, AT_B);
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
+            = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
 
-    second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
+            = coefficient*loss_index_back_propagation_lm.gradient;
 }
 
 
 
-void MeanSquaredError::calculate_hessian_approximation(const DataSet::Batch& batch, LossIndex::SecondOrderLoss& second_order_loss) const
+void MeanSquaredError::calculate_hessian_approximation(const DataSetBatch& batch,
+                                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -179,9 +171,11 @@ void MeanSquaredError::calculate_hessian_approximation(const DataSet::Batch& bat
 
      const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_samples_number));
 
-     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_terms_Jacobian.contract(second_order_loss.error_terms_Jacobian, AT_B);
+     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
+             = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors_Jacobian, AT_B);
 
-     second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
+     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
+             = coefficient*loss_index_back_propagation_lm.hessian;
 }
 
 
@@ -217,7 +211,7 @@ void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

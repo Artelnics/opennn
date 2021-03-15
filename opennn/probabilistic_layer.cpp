@@ -609,7 +609,7 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 // Activations
 
-void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_2d) const
+void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -645,13 +645,13 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
 
      switch(activation_function)
      {
-         case Binary: binary(combinations, activations_2d); return;
+         case Binary: binary(combinations, activations); return;
 
-         case Logistic: logistic(combinations, activations_2d); return;
+         case Logistic: logistic(combinations, activations); return;
 
-         case Competitive: competitive(combinations, activations_2d); return;
+         case Competitive: competitive(combinations, activations); return;
 
-         case Softmax: softmax(combinations, activations_2d); return;
+         case Softmax: softmax(combinations, activations); return;
      }
 
      ostringstream buffer;
@@ -718,7 +718,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 }
 
 
-void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation* forward_propagation)
+void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, LayerForwardPropagation* forward_propagation)
 {
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
 
@@ -731,7 +731,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, Forwar
 
 void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                            Tensor<type, 1> potential_parameters,
-                                           ForwardPropagation* forward_propagation)
+                                           LayerForwardPropagation* forward_propagation)
 {
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
@@ -770,8 +770,8 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
 // Gradient methods
 
 void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                                  Layer::ForwardPropagation* forward_propagation,
-                                                  Layer::BackPropagation* back_propagation) const
+                                                  LayerForwardPropagation* forward_propagation,
+                                                  LayerBackPropagation* back_propagation) const
 {
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
             static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
@@ -787,7 +787,7 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
 }
 
 
-void ProbabilisticLayer::insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
+void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
@@ -911,7 +911,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Inputs number element is nullptr.\n" /* << inputs_number_element->GetText()*/;
+               << "Inputs number element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1424,7 +1424,7 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_name
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

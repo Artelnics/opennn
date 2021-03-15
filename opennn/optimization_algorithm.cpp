@@ -426,29 +426,29 @@ void OptimizationAlgorithm::load(const string& file_name)
 
 /// Return a string with the stopping condition of the Results
 
-string OptimizationAlgorithm::Results::write_stopping_condition() const
+string OptimizationAlgorithmResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-    case MinimumParametersIncrementNorm:
+    case OptimizationAlgorithm::MinimumParametersIncrementNorm:
         return "Minimum parameters increment norm";
 
-    case MinimumLossDecrease:
+    case OptimizationAlgorithm::MinimumLossDecrease:
         return "Minimum loss decrease";
 
-    case LossGoal:
+    case OptimizationAlgorithm::LossGoal:
         return "Loss goal";
 
-    case GradientNormGoal:
+    case OptimizationAlgorithm::GradientNormGoal:
         return "Gradient norm goal";
 
-    case MaximumSelectionErrorIncreases:
+    case OptimizationAlgorithm::MaximumSelectionErrorIncreases:
         return "Maximum selection error increases";
 
-    case MaximumEpochsNumber:
+    case OptimizationAlgorithm::MaximumEpochsNumber:
         return "Maximum number of epochs";
 
-    case MaximumTime:
+    case OptimizationAlgorithm::MaximumTime:
         return "Maximum training time";
     }
 
@@ -459,7 +459,7 @@ string OptimizationAlgorithm::Results::write_stopping_condition() const
 /// Resizes all the training history variables.
 /// @param new_size Size of training history variables.
 
-void OptimizationAlgorithm::Results::resize_training_history(const Index& new_size)
+void OptimizationAlgorithmResults::resize_training_history(const Index& new_size)
 {
     training_error_history.resize(new_size);
 }
@@ -468,7 +468,7 @@ void OptimizationAlgorithm::Results::resize_training_history(const Index& new_si
 /// Resizes all the selection history variables.
 /// @param new_size Size of selection history variables.
 
-void OptimizationAlgorithm::Results::resize_selection_history(const Index& new_size)
+void OptimizationAlgorithmResults::resize_selection_history(const Index& new_size)
 {
     selection_error_history.resize(new_size);
 }
@@ -477,7 +477,7 @@ void OptimizationAlgorithm::Results::resize_selection_history(const Index& new_s
 /// Resizes the training error history keeping the values.
 /// @param new_size Size of training history variables.
 
-void OptimizationAlgorithm::Results::resize_training_error_history(const Index& new_size)
+void OptimizationAlgorithmResults::resize_training_error_history(const Index& new_size)
 {
     const Tensor<type, 1> old_training_error_history = training_error_history;
 
@@ -493,7 +493,7 @@ void OptimizationAlgorithm::Results::resize_training_error_history(const Index& 
 /// Resizes the training error history keeping the values.
 /// @param new_size Size of training history variables.
 
-void OptimizationAlgorithm::Results::resize_selection_error_history(const Index& new_size)
+void OptimizationAlgorithmResults::resize_selection_error_history(const Index& new_size)
 {
     const Tensor<type, 1> old_selection_error_history = selection_error_history;
 
@@ -553,14 +553,14 @@ const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
 
 /// @todo
 
-void OptimizationAlgorithm::Results::save(const string&) const
+void OptimizationAlgorithmResults::save(const string&) const
 {
 
 }
 
 
 
-Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const Index& precision) const
+Tensor<string, 2> OptimizationAlgorithmResults::write_final_results(const Index& precision) const
 {
     ostringstream buffer;
 
@@ -642,7 +642,7 @@ Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const Inde
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

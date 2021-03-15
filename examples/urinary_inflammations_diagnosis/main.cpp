@@ -87,7 +87,7 @@ int main(void)
         conjugate_gradient_pointer->set_minimum_loss_decrease(1.0e-6);
         conjugate_gradient_pointer->set_loss_goal(1.0e-3);
 
-        const OptimizationAlgorithm::Results training_strategy_results = training_strategy.perform_training();
+        const OptimizationAlgorithmResults training_strategy_results = training_strategy.perform_training();
 
         // Testing analysis
 

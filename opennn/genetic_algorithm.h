@@ -27,6 +27,7 @@
 
 namespace OpenNN
 {
+struct GeneticAlgorithmResults;
 
 /// This concrete class represents a genetic algorithm, inspired by the process of natural selection[1] such as mutation,
 /// crossover and selection.
@@ -41,6 +42,7 @@ namespace OpenNN
 
 class GeneticAlgorithm : public InputsSelection
 {
+
 public:
 
     // Constructors
@@ -66,51 +68,6 @@ public:
     /// Enumeration of available methods for the fitness assignement of the population.
 
     enum FitnessAssignment{ObjectiveBased, RankBased};
-
-    // Structures
-
-    /// This structure contains the training results for the genetic algorithm method.    
-
-    struct GeneticAlgorithmResults : public InputsSelection::Results
-    {
-        /// Default constructor.
-
-        explicit GeneticAlgorithmResults() : InputsSelection::Results()
-        {
-        }
-
-        /// Destructor.
-
-        virtual ~GeneticAlgorithmResults()
-        {
-        }
-
-        
-
-        inline void resize_history(const Index& new_size)
-        {
-            generation_optimum_training_error_history.resize(new_size);
-            generation_minimum_selection_error_history.resize(new_size);
-            generation_selection_error_mean_history.resize(new_size);
-            generation_selection_error_standard_deviation_history.resize(new_size);
-        }
-
-        /// Values of the minimum training error in each generation.
-
-        Tensor<type, 1> generation_optimum_training_error_history;
-
-        /// Values of the minimum selection error in each generation.
-
-        Tensor<type, 1> generation_minimum_selection_error_history;
-
-        /// Mean of the selection error in each generation.
-
-        Tensor<type, 1> generation_selection_error_mean_history;
-
-        /// Standard deviation of the selection error in each generation.
-
-        Tensor<type, 1> generation_selection_error_standard_deviation_history;
-    };
 
     // Get methods
 
@@ -222,9 +179,9 @@ public:
 
     void perform_crossover();
 
-    void perform_1point_crossover();
+    void perform_1_point_crossover();
 
-    void perform_2point_crossover();
+    void perform_2_point_crossover();
 
     void perform_uniform_crossover();
 
@@ -250,12 +207,10 @@ public:
 
     Tensor<string, 2> to_string_matrix() const;
 
-    
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
     
-
     void save(const string&) const;
     void load(const string&);
 
@@ -346,7 +301,48 @@ private:
     /// True if the optimum of loss are to be reserved in each generation.
 
     bool reserve_generation_optimum_loss;
+};
 
+
+/// This structure contains the training results for the genetic algorithm method.
+
+struct GeneticAlgorithmResults : public InputsSelectionResults
+{
+    /// Default constructor.
+
+    explicit GeneticAlgorithmResults() : InputsSelectionResults()
+    {
+    }
+
+    /// Destructor.
+
+    virtual ~GeneticAlgorithmResults()
+    {
+    }
+
+    inline void resize_history(const Index& new_size)
+    {
+        generation_optimum_training_error_history.resize(new_size);
+        generation_minimum_selection_error_history.resize(new_size);
+        generation_selection_error_mean_history.resize(new_size);
+        generation_selection_error_standard_deviation_history.resize(new_size);
+    }
+
+    /// Values of the minimum training error in each generation.
+
+    Tensor<type, 1> generation_optimum_training_error_history;
+
+    /// Values of the minimum selection error in each generation.
+
+    Tensor<type, 1> generation_minimum_selection_error_history;
+
+    /// Mean of the selection error in each generation.
+
+    Tensor<type, 1> generation_selection_error_mean_history;
+
+    /// Standard deviation of the selection error in each generation.
+
+    Tensor<type, 1> generation_selection_error_standard_deviation_history;
 };
 
 }

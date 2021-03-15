@@ -94,26 +94,17 @@ const Index& InputsSelection::get_trials_number() const
 
 /// Returns true if the loss index losses are to be reserved, and false otherwise.
 
-const bool& InputsSelection::get_reserve_training_error_data() const
+const bool& InputsSelection::get_reserve_training_errors() const
 {
-    return reserve_training_error_data;
+    return reserve_training_errors;
 }
 
 
 /// Returns true if the selection losses are to be reserved, and false otherwise.
 
-const bool& InputsSelection::get_reserve_selection_error_data() const
+const bool& InputsSelection::get_reserve_selection_errors() const
 {
-    return reserve_selection_error_data;
-}
-
-
-/// Returns true if the parameters vector of the neural network with minimum selection error is to be reserved,
-/// and false otherwise.
-
-const bool& InputsSelection::get_reserve_minimal_parameters() const
-{
-    return reserve_minimal_parameters;
+    return reserve_selection_errors;
 }
 
 
@@ -166,14 +157,6 @@ const type& InputsSelection::get_minimum_correlation() const
 }
 
 
-/// Return the tolerance of error for the algorithm.
-
-const type& InputsSelection::get_tolerance() const
-{
-    return tolerance;
-}
-
-
 /// Sets a new regression value.
 /// If it is set to true the problem will be taken as a function regression;
 /// if it is set to false the problem will be taken as a classification.
@@ -202,9 +185,8 @@ void InputsSelection::set_default()
 
     // Results
 
-    reserve_training_error_data = true;
-    reserve_selection_error_data = true;
-    reserve_minimal_parameters = true;
+    reserve_training_errors = true;
+    reserve_selection_errors = true;
 
     // Stopping criteria
 
@@ -216,8 +198,6 @@ void InputsSelection::set_default()
     minimum_correlation = 0;
 
     maximum_time = 3600.0;
-
-    tolerance = 0;
 }
 
 
@@ -249,7 +229,7 @@ void InputsSelection::set_trials_number(const Index& new_trials_number)
 
 void InputsSelection::set_reserve_training_error_data(const bool& new_reserve_training_error_data)
 {
-    reserve_training_error_data = new_reserve_training_error_data;
+    reserve_training_errors = new_reserve_training_error_data;
 }
 
 
@@ -258,16 +238,7 @@ void InputsSelection::set_reserve_training_error_data(const bool& new_reserve_tr
 
 void InputsSelection::set_reserve_selection_error_data(const bool& new_reserve_selection_error_data)
 {
-    reserve_selection_error_data = new_reserve_selection_error_data;
-}
-
-
-/// Sets the reserve flag for the minimal parameters.
-/// @param new_reserve_minimal_parameters Flag value.
-
-void InputsSelection::set_reserve_minimal_parameters(const bool& new_reserve_minimal_parameters)
-{
-    reserve_minimal_parameters = new_reserve_minimal_parameters;
+    reserve_selection_errors = new_reserve_selection_error_data;
 }
 
 
@@ -387,30 +358,6 @@ void InputsSelection::set_minimum_correlation(const type& new_minimum_correlatio
 }
 
 
-/// Set the tolerance for the errors in the trainings of the algorithm.
-/// @param new_tolerance Value of the tolerance.
-
-void InputsSelection::set_tolerance(const type& new_tolerance)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_tolerance < 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void set_tolerance(const type&) method.\n"
-               << "Tolerance must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    tolerance = new_tolerance;
-}
-
-
 /// Returns the minimum of the loss and selection error in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
@@ -456,7 +403,7 @@ Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs
 
     // Optimization algorithm
 
-    OptimizationAlgorithm::Results results;
+    OptimizationAlgorithmResults results;
 
     type optimum_selection_error = numeric_limits<type>::max();
     type optimum_training_error = numeric_limits<type>::max();
@@ -695,7 +642,7 @@ Tensor<type, 1> InputsSelection::get_parameters_inputs(const Tensor<bool, 1>& in
 /// Return a string with the stopping condition of the training depending on the training method.
 /// @param results Results of the perform_training method.
 
-string InputsSelection::write_stopping_condition(const OptimizationAlgorithm::Results& results) const
+string InputsSelection::write_stopping_condition(const OptimizationAlgorithmResults& results) const
 {
     return results.write_stopping_condition();
 }
@@ -787,8 +734,6 @@ void InputsSelection::check() const
 
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-
-
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
     if(selection_samples_number == 0)
@@ -799,48 +744,35 @@ void InputsSelection::check() const
 
         throw logic_error(buffer.str());
     }
-
 }
 
 
 /// Return a string with the stopping condition of the Results
 
-string InputsSelection::Results::write_stopping_condition() const
+string InputsSelectionResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-    case MaximumTime:
-    {
+    case InputsSelection::MaximumTime:
         return "MaximumTime";
-    }
-    case SelectionErrorGoal:
-    {
+
+    case InputsSelection::SelectionErrorGoal:
         return "SelectionErrorGoal";
-    }
-    case MaximumInputs:
-    {
+
+    case InputsSelection::MaximumInputs:
         return "MaximumInputs";
-    }
-    case MinimumInputs:
-    {
+
+    case InputsSelection::MinimumInputs:
         return "MinimumInputs";
-    }
-    case MaximumEpochs:
-    {
+
+    case InputsSelection::MaximumEpochs:
         return "MaximumEpochs";
-    }
-    case MaximumSelectionFailures:
-    {
+
+    case InputsSelection::MaximumSelectionFailures:
         return "MaximumSelectionFailures";
-    }
-    case CorrelationGoal:
-    {
+
+    case InputsSelection::CorrelationGoal:
         return "CorrelationGoal";
-    }
-    case AlgorithmFinished:
-    {
-        return "AlgorithmFinished";
-    }
     }
 
     return string();
@@ -896,7 +828,7 @@ const string InputsSelection::write_elapsed_time(const type& time) const
 /// @param uses Vector of the uses of the variables.
 /// @param input_number Index of the input to find.
 
-Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1> uses, const Index input_number)
+Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& input_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -940,7 +872,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1> use
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

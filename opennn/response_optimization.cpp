@@ -487,9 +487,9 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
 }
 
 
-ResponseOptimization::Results* ResponseOptimization::perform_optimization() const
+ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 {
-    Results* results = new Results(neural_network_pointer);
+    ResponseOptimizationResults* results = new ResponseOptimizationResults(neural_network_pointer);
 
     const Tensor<type, 2> inputs = calculate_inputs();
 
@@ -553,7 +553,7 @@ type ResponseOptimization::calculate_random_uniform(const type& minimum, const t
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

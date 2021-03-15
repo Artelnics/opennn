@@ -27,25 +27,19 @@
 
 namespace OpenNN
 {
+    class ConvolutionalLayer;
 
-class PoolingLayer;
-class PerceptronLayer;
-class ProbabilisticLayer;
 
-class ConvolutionalLayer : public Layer
-{
-
-public:
-
-    struct ConvolutionalLayerForwardPropagation : Layer::ForwardPropagation
+    struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
     {
+/*
         const Index neurons_number = layer_pointer->get_neurons_number();
 
         const Index kernels_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_number();
         const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
         const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
-
-        explicit ConvolutionalLayerForwardPropagation(Layer* new_layer_pointer) : ForwardPropagation(new_layer_pointer)
+*/
+        explicit ConvolutionalLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
         {
         }
 
@@ -54,6 +48,8 @@ public:
             batch_samples_number = new_batch_samples_number;
 
             const Index neurons_number = layer_pointer->get_neurons_number();
+
+            Index kernels_number, outputs_rows_number, outputs_columns_number;
 
             combinations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
             activations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
@@ -66,12 +62,13 @@ public:
         Tensor<type, 4> activations_derivatives;
     };
 
-    struct ConvolutionalLayerBackPropagation : Layer::BackPropagation
+
+    struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     {
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_nmumber = layer_pointer->get_inputs_number();
 
-        explicit ConvolutionalLayerBackPropagation(Layer* new_layer_pointer) : BackPropagation(new_layer_pointer)
+        explicit ConvolutionalLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
         {
 
         }
@@ -83,9 +80,20 @@ public:
 
         Tensor<type, 4> delta;
 
+        Tensor<type, 4> biases_derivatives;
+
         Tensor<type, 4> synaptic_weights_derivatives;
 
     };
+
+class PoolingLayer;
+class PerceptronLayer;
+class ProbabilisticLayer;
+
+class ConvolutionalLayer : public Layer
+{
+
+public:
 
     /// Enumeration of available activation functions for the convolutional layer.
 
@@ -199,16 +207,16 @@ public:
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 4>&);
    void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 2>&);
 
-   void forward_propagate(const Tensor<type, 4>&, ForwardPropagation*);
-   void forward_propagate(const Tensor<type, 2>&, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, ForwardPropagation*);
-   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation*);
+   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*);
 
    // Delta methods
 
    void calculate_hidden_delta(Layer*,
-                               ForwardPropagation*,
+                               LayerForwardPropagation*,
                                const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
@@ -240,14 +248,14 @@ public:
    // Gradient methods
 
    void calculate_error_gradient(const Tensor<type, 4>&,
-                                 ForwardPropagation*,
-                                 Layer::BackPropagation&) const;
+                                 LayerForwardPropagation*,
+                                 LayerBackPropagation&) const;
 
    void calculate_error_gradient(const Tensor<type, 2>&,
-                                 ForwardPropagation*,
-                                 Layer::BackPropagation&) const;
+                                 LayerForwardPropagation*,
+                                 LayerBackPropagation&) const;
 
-   void insert_gradient(const BackPropagation&,
+   void insert_gradient(LayerBackPropagation*,
                         const Index&,
                         Tensor<type, 1>&) const;
 
@@ -285,7 +293,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

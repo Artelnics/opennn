@@ -362,8 +362,8 @@ void StochasticGradientDescent::set_reserve_selection_error_history(const bool& 
 
 /// Set hardware to use. Default: Multi-core.
 
-void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
-                      SGDOptimizationData& optimization_data)
+void StochasticGradientDescent::update_iteration(const LossIndexBackPropagation& back_propagation,
+                      StochasticGradientDescentData& optimization_data)
 {
 
 
@@ -404,9 +404,9 @@ void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagatio
 /// Training occurs according to the training parameters and stopping criteria.
 /// It returns a results structure with the history and the final values of the reserved variables.
 
-OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
+OptimizationAlgorithmResults StochasticGradientDescent::perform_training()
 {
-    Results results;
+    OptimizationAlgorithmResults results;
 
     check();
 
@@ -435,8 +435,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     training_samples_number < batch_samples_number ? batch_size_training = training_samples_number : batch_size_training = batch_samples_number;
     selection_samples_number < batch_samples_number && selection_samples_number != 0 ? batch_size_selection = selection_samples_number : batch_size_selection = batch_samples_number;
 
-    DataSet::Batch batch_training(batch_size_training, data_set_pointer);
-    DataSet::Batch batch_selection(batch_size_selection, data_set_pointer);
+    DataSetBatch batch_training(batch_size_training, data_set_pointer);
+    DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
 
     const Index training_batches_number = training_samples_number/batch_size_training;
     const Index selection_batches_number = selection_samples_number/batch_size_selection;
@@ -451,13 +451,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const Index parameters_number = neural_network_pointer->get_parameters_number();
     
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
     // Loss index
 
-    LossIndex::BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
     type training_error = 0;
     type training_loss = 0;
@@ -470,7 +470,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     // Optimization algorithm
 
-    SGDOptimizationData optimization_data(this);
+    StochasticGradientDescentData optimization_data(this);
 
     type learning_rate = 0;
 
@@ -534,9 +534,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
 
             // Loss index
-/*
+
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
-*/
+
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
@@ -693,7 +693,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             {
                 cout << "Epoch " << epoch << ";\n"
                      << "Training error: " << training_error << "\n"
-                     << "Batch size: " << batch_samples_number << "\n"
+                     << "DataSetBatch size: " << batch_samples_number << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
                 if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
@@ -781,9 +781,9 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 
     labels_values(5,1) = std::to_string(maximum_time);
 
-    // Batch samples number
+    // DataSetBatch samples number
 
-    labels_values(6,0) = "Batch samples number";
+    labels_values(6,0) = "DataSetBatch samples number";
 
     labels_values(6,1) = std::to_string(batch_samples_number);
 
@@ -826,7 +826,7 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 
     file_stream.OpenElement("StochasticGradientDescent");
 
-    // Batch size
+    // DataSetBatch size
 
     file_stream.OpenElement("BatchSize");
 
@@ -946,7 +946,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    // Batch size
+    // DataSetBatch size
 
     const tinyxml2::XMLElement* batch_size_element = root_element->FirstChildElement("BatchSize");
 
@@ -1137,7 +1137,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -450,7 +450,7 @@ void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_rese
 
 
 
-void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QNMOptimizationData& optimization_data) const
+void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QuasiNewtonMehtodData& optimization_data) const
 {
     optimization_data.inverse_hessian.setZero();
 
@@ -467,8 +467,8 @@ void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QNMOptimization
 /// @param gradient Gradient at the current point.
 /// @param old_inverse_hessian Inverse hessian at the other point of the error function.
 
-void QuasiNewtonMethod::calculate_inverse_hessian_approximation(const LossIndex::BackPropagation& back_propagation,
-                                                                QNMOptimizationData& optimization_data) const
+void QuasiNewtonMethod::calculate_inverse_hessian_approximation(const LossIndexBackPropagation& back_propagation,
+                                                                QuasiNewtonMehtodData& optimization_data) const
 {
     switch(inverse_hessian_approximation_method)
     {
@@ -552,8 +552,8 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const LossIndex::BackPropagation& back_propagation,
-                                                      QNMOptimizationData& optimization_data) const
+void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const LossIndexBackPropagation& back_propagation,
+                                                      QuasiNewtonMehtodData& optimization_data) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -596,8 +596,8 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const LossIndex::BackPropa
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(const LossIndex::BackPropagation& back_propagation,
-                                                       QNMOptimizationData& optimization_data) const
+void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(const LossIndexBackPropagation& back_propagation,
+                                                       QuasiNewtonMehtodData& optimization_data) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -641,16 +641,16 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(const LossIndex::BackProp
 
 
 
-////// \brief QuasiNewtonMethod::update_epoch
-////// \param batch
-////// \param forward_propagation
-////// \param back_propagation
-////// \param optimization_data
+// \brief QuasiNewtonMethod::update_epoch
+// \param batch
+// \param forward_propagation
+// \param back_propagation
+// \param optimization_data
 void QuasiNewtonMethod::update_epoch(
-        const DataSet::Batch& batch,
-        NeuralNetwork::ForwardPropagation& forward_propagation,
-        LossIndex::BackPropagation& back_propagation,
-        QNMOptimizationData& optimization_data)
+        const DataSetBatch& batch,
+        NeuralNetworkForwardPropagation& forward_propagation,
+        LossIndexBackPropagation& back_propagation,
+        QuasiNewtonMehtodData& optimization_data)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -755,7 +755,7 @@ void QuasiNewtonMethod::update_epoch(
 /// Trains a neural network with an associated loss index according to the quasi-Newton method.
 /// Training occurs according to the training operators, training parameters and stopping criteria.
 
-OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
+OptimizationAlgorithmResults QuasiNewtonMethod::perform_training()
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -767,7 +767,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     if(display) cout << "Training with quasi-Newton method...\n";
 
-    Results results;
+    OptimizationAlgorithmResults results;
 
     results.resize_training_history(maximum_epochs_number+1);
 
@@ -785,8 +785,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    DataSet::Batch training_batch(training_samples_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
     training_batch.fill(training_samples_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
@@ -802,8 +802,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
 
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
@@ -811,8 +811,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type old_selection_error = numeric_limits<type>::max();
 
-    LossIndex::BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Optimization algorithm
 
@@ -828,7 +828,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     time(&beginning_time);
     type elapsed_time;
 
-    QNMOptimizationData optimization_data(this);
+    QuasiNewtonMehtodData optimization_data(this);
 
     if(has_selection) results.resize_selection_history(maximum_epochs_number+1);
 
@@ -854,9 +854,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         // Neural network
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-/*
+
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-*/
+
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         // Selection error
@@ -866,6 +866,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
             // Loss Index
+
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             if(selection_back_propagation.error > old_selection_error)
@@ -928,7 +929,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             if(display)
             {
                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                    << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss <<  endl;
+                    << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss << endl;
             }
 
             stop_training = true;
@@ -1588,7 +1589,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

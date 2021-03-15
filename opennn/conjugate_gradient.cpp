@@ -795,9 +795,9 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
 
 
 ///
-////// \brief ConjugateGradient::calculate_gradient_descent_training_direction
-////// \param gradient
-////// \param training_direction
+// \brief ConjugateGradient::calculate_gradient_descent_training_direction
+// \param gradient
+// \param training_direction
 
 void ConjugateGradient::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient,
                                                                       Tensor<type, 1>& training_direction) const
@@ -883,7 +883,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
 /// Trains a neural network with an associated loss index according to the conjugate gradient algorithm.
 /// Training occurs according to the training operators, training parameters and stopping criteria.
 
-OptimizationAlgorithm::Results ConjugateGradient::perform_training()
+OptimizationAlgorithmResults ConjugateGradient::perform_training()
 {
     check();
 
@@ -891,7 +891,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     if(display) cout << "Training with conjugate gradient...\n";
 
-    Results results;
+    OptimizationAlgorithmResults results;
+
     results.resize_training_history(maximum_epochs_number+1);
 
     // Elapsed time
@@ -913,8 +914,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    DataSet::Batch training_batch(training_samples_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
     training_batch.fill(training_samples_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
@@ -928,17 +929,15 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-
-
-    NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
     string information;
 
-    LossIndex::BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Optimization algorithm
 
@@ -959,7 +958,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     Index selection_error_increases = 0;
 
-    GGOptimizationData optimization_data(this);
+    ConjugateGradientData optimization_data(this);
 
     if(has_selection)
     {
@@ -988,9 +987,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         // Loss index
-/*
+
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-*/
+
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         if(has_selection)
@@ -1844,16 +1843,16 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-////// \brief ConjugateGradient::update_epoch
-////// \param batch
-////// \param forward_propagation
-////// \param back_propagation
-////// \param optimization_data
+// \brief ConjugateGradient::update_epoch
+// \param batch
+// \param forward_propagation
+// \param back_propagation
+// \param optimization_data
 void ConjugateGradient::update_epoch(
-        const DataSet::Batch& batch,
-        NeuralNetwork::ForwardPropagation& forward_propagation,
-        LossIndex::BackPropagation& back_propagation,
-        GGOptimizationData& optimization_data)
+        const DataSetBatch& batch,
+        NeuralNetworkForwardPropagation& forward_propagation,
+        LossIndexBackPropagation& back_propagation,
+        ConjugateGradientData& optimization_data)
 {      
     const Index parameters_number = back_propagation.parameters.dimension(0);
 
@@ -1916,25 +1915,24 @@ void ConjugateGradient::update_epoch(
 }
 
 
-
-ConjugateGradient::GGOptimizationData::GGOptimizationData(): OptimizationData()
+ConjugateGradientData::ConjugateGradientData(): OptimizationAlgorithmData()
 {
 }
 
 
-ConjugateGradient::GGOptimizationData::GGOptimizationData(ConjugateGradient* new_conjugate_gradient_pointer) : OptimizationData()
+ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient_pointer) : OptimizationAlgorithmData()
 {
     set(new_conjugate_gradient_pointer);
 }
 
 
-ConjugateGradient::GGOptimizationData::~GGOptimizationData()
+ConjugateGradientData::~ConjugateGradientData()
 {
 
 }
 
 
-void ConjugateGradient::GGOptimizationData::set(ConjugateGradient* new_conjugate_gradient_pointer)
+void ConjugateGradientData::set(ConjugateGradient* new_conjugate_gradient_pointer)
 {
     conjugate_gradient_pointer = new_conjugate_gradient_pointer;
 
@@ -1955,15 +1953,14 @@ void ConjugateGradient::GGOptimizationData::set(ConjugateGradient* new_conjugate
 }
 
 
-void ConjugateGradient::GGOptimizationData::print() const
+void ConjugateGradientData::print() const
 {
 }
 
 }
 
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

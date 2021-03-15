@@ -165,7 +165,7 @@ public:
 
    // This method trains a neural network which has a loss index associated.
 
-   OptimizationAlgorithm::Results perform_training();
+   OptimizationAlgorithmResults perform_training();
    void perform_training_void();
 
    // Check methods
@@ -269,7 +269,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

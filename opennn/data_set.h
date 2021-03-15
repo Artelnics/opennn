@@ -166,36 +166,6 @@ public:
        void write_XML(tinyxml2::XMLPrinter&) const;
    };
 
-
-   struct Batch
-   {
-       /// Default constructor.
-
-       Batch() {}
-
-       Batch(const Index& new_samples_number, DataSet* new_data_set_pointer);
-
-       /// Destructor.
-
-       virtual ~Batch() {}
-
-       Index get_samples_number() const;
-
-       void print();
-
-       void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
-
-       Index samples_number = 0;
-
-       DataSet* data_set_pointer = nullptr;
-
-       Tensor<type, 2> inputs_2d;
-       Tensor<type, 4> inputs_4d;
-
-       Tensor<type, 2> targets_2d;
-   };
-
-
    // Samples get methods
 
    inline Index get_samples_number() const {return samples_uses.size();}
@@ -421,6 +391,7 @@ public:
    void set_columns_uses(const Tensor<string, 1>&);
    void set_columns_uses(const Tensor<VariableUse, 1>&);
    void set_columns_unused();
+   void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
    void set_input_columns_unused();
 
    void set_column_use(const Index&, const VariableUse&);
@@ -906,12 +877,42 @@ private:
 
 };
 
+
+struct DataSetBatch
+{
+    /// Default constructor.
+
+    DataSetBatch() {}
+
+    DataSetBatch(const Index& new_samples_number, DataSet* new_data_set_pointer);
+
+    /// Destructor.
+
+    virtual ~DataSetBatch() {}
+
+    Index get_samples_number() const;
+
+    void print();
+
+    void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+
+    Index samples_number = 0;
+
+    DataSet* data_set_pointer = nullptr;
+
+    Tensor<type, 2> inputs_2d;
+    Tensor<type, 4> inputs_4d;
+
+    Tensor<type, 2> targets_2d;
+};
+
+
 }
 
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
