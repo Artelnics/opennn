@@ -395,7 +395,7 @@ void InputsSelection::push_back(Tensor<Index, 1>& tensor, const Index& value) co
 /// Return a string with the stopping condition of the training depending on the training method.
 /// @param results Results of the perform_training method.
 
-string InputsSelection::write_stopping_condition(const OptimizationAlgorithmResults& results) const
+string InputsSelection::write_stopping_condition(const TrainingResults& results) const
 {
     return results.write_stopping_condition();
 }

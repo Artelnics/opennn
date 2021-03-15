@@ -221,6 +221,8 @@ private:
 
     /// Performance of population.
 
+    Tensor<type, 2> parameters;
+
     Tensor<type, 1> training_errors;
     Tensor<type, 1> selection_errors;
 

@@ -116,7 +116,7 @@ public:
 
    // Training methods
 
-   OptimizationAlgorithmResults perform_training();
+   TrainingResults perform_training();
 
    /// Perform Neural Network training.
 

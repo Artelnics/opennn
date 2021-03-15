@@ -95,7 +95,7 @@ public:
 
     // Loss calculation methods
 
-    string write_stopping_condition(const OptimizationAlgorithmResults&) const;
+    string write_stopping_condition(const TrainingResults&) const;
 
     // Neuron selection methods
 

@@ -159,7 +159,7 @@ void GradientDescentTest::test_resize_training_history() // @todo
 
 //   gd.set_reserve_all_training_history(true);
 
-//   OptimizationAlgorithmResults gdtr;//(&gd);
+//   TrainingResults gdtr;//(&gd);
 
 //   gdtr.resize_training_history(1);
 

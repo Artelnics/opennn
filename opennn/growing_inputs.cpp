@@ -222,7 +222,7 @@ GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     Index selection_failures = 0;
 
-    OptimizationAlgorithmResults training_results;
+    TrainingResults training_results;
 
     // Model selection
 
