@@ -332,29 +332,11 @@ public:
 
    // Long short term memory layer combinations
 
-   void calculate_forget_combinations(const Tensor<type, 1>&,
-                                      const Tensor<type, 2>&,
-                                      const Tensor<type, 2>&,
-                                      const Tensor<type, 1>&,
-                                      Tensor<type, 1>&) const;
-
-   void calculate_input_combinations(const Tensor<type, 1>&,
-                                     const Tensor<type, 2>&,
-                                     const Tensor<type, 2>&,
-                                     const Tensor<type, 1>&,
-                                     Tensor<type, 1>&) const;
-
-   void calculate_state_combinations(const Tensor<type, 1>&,
-                                     const Tensor<type, 2>&,
-                                     const Tensor<type, 2>&,
-                                     const Tensor<type, 1>&,
-                                     Tensor<type, 1>&) const;
-
-   void calculate_output_combinations(const Tensor<type, 1>&,
-                                      const Tensor<type, 2>&,
-                                      const Tensor<type, 2>&,
-                                      const Tensor<type, 1>&,
-                                      Tensor<type, 1>&) const;
+   void calculate_combinations(const Tensor<type, 1>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 1>&,
+                               Tensor<type, 1>&) const;
 
    // Long short term memory layer activations
 
@@ -375,8 +357,8 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
    void calculate_hidden_delta(LayerForwardPropagation*,
-       LayerBackPropagation*,
-       LayerBackPropagation*) const;
+                               LayerBackPropagation*,
+                               LayerBackPropagation*) const;
 
 
    void calculate_hidden_delta_perceptron(LongShortTermMemoryLayerForwardPropagation*,
