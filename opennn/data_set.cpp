@@ -202,8 +202,7 @@ void DataSet::Column::set_type(const string& new_column_type)
     {
         type = Binary;
     }
-    else if(new_column_type != "Numeric" && new_column_type != "Binary" &&
-            new_column_type != "DateTime" && new_column_type != "Constant")
+    else if(new_column_type == "Categorical")
     {
         type = Categorical;
     }
@@ -224,6 +223,7 @@ void DataSet::Column::set_type(const string& new_column_type)
                << "Column type not valid (" << new_column_type << ").\n";
 
         throw logic_error(buffer.str());
+
     }
 }
 
@@ -5263,14 +5263,6 @@ Tensor<Descriptives, 1> DataSet::calculate_used_variables_descriptives() const
     const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
 
     return descriptives(data, used_samples_indices, used_variables_indices);
-}
-
-Tensor<Descriptives, 1> DataSet::calculate_time_series_used_variables_descriptives() const
-{
-    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
-
-    return descriptives(time_series_data, used_samples_indices, used_variables_indices);
 }
 
 
@@ -11620,6 +11612,7 @@ DataSetBatch::DataSetBatch(const Index& new_samples_number, DataSet* new_data_se
 
         inputs_4d.resize(samples_number, channels_number, rows_number, columns_number);
     }
+
 
     targets_2d.resize(samples_number, target_variables_number);
 }
