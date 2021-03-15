@@ -83,7 +83,7 @@ private:
 
    /// Number of neurons added at each iteration.
 
-   Index step;
+   Index neurons_increment;
 
    /// Maximum number of epochs at which the selection error increases.
 
