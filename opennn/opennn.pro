@@ -36,8 +36,8 @@ INCLUDEPATH += /usr/local/opt/libomp/include
 LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 
 win32:!win32-g++{
-QMAKE_CXXFLAGS+= -arch:AVX
-QMAKE_CFLAGS+= -arch:AVX
+#QMAKE_CXXFLAGS+= -arch:AVX
+#QMAKE_CFLAGS+= -arch:AVX
 }
 
 #macx{
