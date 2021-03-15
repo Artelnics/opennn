@@ -397,14 +397,16 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    // Test lstm
 
 {
-   samples_number = 6;
+   samples_number = 4;
    inputs_number = 1;
    outputs_number = 1;
-   hidden_neurons = 2;
+   hidden_neurons = 1;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
+
+   cout << "Data: " << endl << data_set.get_data() << endl;
 
    data_set.set_training();
 
@@ -426,7 +428,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    nse.set_normalization_coefficient();
 
-   long_short_term_memory_layer->set_timesteps(3);
+   long_short_term_memory_layer->set_timesteps(6);
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
 
@@ -442,9 +444,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
-   cout << "Error gradient: " << error_gradient << endl;
-   cout << "Numerical error gradient: " << numerical_error_gradient << endl;
-   cout << "Difference: " << difference << endl;
+   cout << "Error gradient: " << endl << error_gradient << endl;
+   cout << "Numerical error gradient: "  << endl  << numerical_error_gradient << endl;
+   cout << "Difference: " << endl  << difference << endl;
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
