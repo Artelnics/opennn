@@ -134,17 +134,17 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 //    check();
 
     const Index target_t_1_samples_number = targets_t_1.dimension(0);
-    const Index target_t_1_varaibles_number = targets_t_1.dimension(1);
+    const Index target_t_1_variables_number = targets_t_1.dimension(1);
     const Index target_t_samples_number = targets_t.dimension(0);
-    const Index target_t_varaibles_number = targets_t.dimension(1);
+    const Index target_t_variables_number = targets_t.dimension(1);
 
-    if(target_t_1_samples_number != target_t_samples_number || target_t_1_varaibles_number != target_t_varaibles_number)
+    if(target_t_1_samples_number != target_t_samples_number || target_t_1_variables_number != target_t_variables_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NormalizedquaredError function.\n"
                << "type calculate_time_series_normalization_coefficient(const Tensor<type, 2>& targets_t_1, const Tensor<type, 2>& targets_t) function.\n"
-               << " The columns number of targets("<< target_t_varaibles_number <<") must be equal("<< target_t_1_varaibles_number<<").\n";
+               << " The columns number of targets("<< target_t_variables_number <<") must be equal("<< target_t_1_variables_number<<").\n"
                << " The samples number of targets("<< target_t_1_samples_number <<") must be equal("<< target_t_samples_number<<").\n";
 
         throw logic_error(buffer.str());
