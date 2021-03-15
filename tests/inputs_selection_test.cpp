@@ -30,11 +30,11 @@ void InputsSelectionTest::test_constructor() // @todo
 
     GrowingInputs gi1(&training_strategy);
 
-    assert_true(gi1.has_training_strategy() == true, LOG);
+    assert_true(gi1.has_training_strategy(), LOG);
 
     GrowingInputs gi2;
 
-    assert_true(gi2.has_training_strategy() == false, LOG);
+    assert_true(!gi2.has_training_strategy(), LOG);
 
 }
 

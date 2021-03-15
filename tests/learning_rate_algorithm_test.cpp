@@ -27,11 +27,11 @@ void LearningRateAlgorithmTest::test_constructor()
 
    LearningRateAlgorithm tra1(&sum_squared_error);
 
-   assert_true(tra1.has_loss_index() == true, LOG);
+   assert_true(tra1.has_loss_index(), LOG);
 
    LearningRateAlgorithm tra2;
 
-   assert_true(tra2.has_loss_index() == false, LOG);
+   assert_true(!tra2.has_loss_index(), LOG);
 }
 
 
@@ -83,7 +83,7 @@ void LearningRateAlgorithmTest::test_get_display()
 
    tra.set_display(false);
 
-   assert_true(tra.get_display() == false, LOG);
+   assert_true(!tra.get_display(), LOG);
 }
 
 

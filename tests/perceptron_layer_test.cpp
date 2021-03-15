@@ -286,7 +286,7 @@ void PerceptronLayerTest::test_set_default()
 
    perceptron_layer.set_default();
 
-   assert_true(perceptron_layer.get_display() == true, LOG);
+   assert_true(perceptron_layer.get_display(), LOG);
    assert_true(perceptron_layer.get_type() == OpenNN::Layer::Perceptron, LOG);
 }
 
@@ -789,12 +789,13 @@ void PerceptronLayerTest::test_get_display()
 
    perceptron_layer.set_display(true);
 
-   assert_true(perceptron_layer.get_display() == true, LOG);
+   assert_true(perceptron_layer.get_display(), LOG);
 
    perceptron_layer.set_display(false);
 
-   assert_true(perceptron_layer.get_display() == false, LOG);
+   assert_true(!perceptron_layer.get_display(), LOG);
 }
+
 
 void PerceptronLayerTest::test_set_activation_function()
 {
@@ -855,7 +856,7 @@ void PerceptronLayerTest::test_set_display()
 
    perceptron_layer.set_display(false);
 
-   assert_true(perceptron_layer.get_display() == false, LOG);
+   assert_true(!perceptron_layer.get_display(), LOG);
 }
 
 void PerceptronLayerTest::test_set_parameters_constant()
@@ -1762,7 +1763,7 @@ void PerceptronLayerTest::test_write_expression()
 
    expression = perceptron_layer.write_expression(inputs_names,outputs_names);
 
-   assert_true(expression.empty() == false, LOG);
+   assert_true(!expression.empty(), LOG);
 }
 
 
@@ -1774,7 +1775,6 @@ void PerceptronLayerTest::run_test_case()
 
    test_constructor();
    test_destructor();
-
 
    // Assignment operators
 

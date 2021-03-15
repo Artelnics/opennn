@@ -713,10 +713,10 @@ void NeuralNetworkTest::test_set_display()
    NeuralNetwork neural_network;
 
    neural_network.set_display(true);
-   assert_true(neural_network.get_display() == true, LOG);
+   assert_true(neural_network.get_display(), LOG);
 
    neural_network.set_display(false);
-   assert_true(neural_network.get_display() == false, LOG);
+   assert_true(!neural_network.get_display(), LOG);
 }
 
 void NeuralNetworkTest::test_get_layers_number()

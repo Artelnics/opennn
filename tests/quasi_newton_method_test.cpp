@@ -29,12 +29,12 @@ void QuasiNewtonMethodTest::test_constructor() // @todo
    // Default constructor
 
    QuasiNewtonMethod qnm1;
-   assert_true(qnm1.has_loss_index() == false, LOG);
+   assert_true(!qnm1.has_loss_index(), LOG);
 
    // Loss index constructor
 
    QuasiNewtonMethod qnm2(&sum_squared_error);
-   assert_true(qnm2.has_loss_index() == true, LOG);
+   assert_true(qnm2.has_loss_index(), LOG);
 }
 
 

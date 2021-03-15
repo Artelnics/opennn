@@ -103,8 +103,6 @@ public:
 
     // Performances calculation methods
 
-    Tensor<type, 1> calculate_losses(const Tensor<bool, 1>&);
-
     Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) const;
 
     string write_stopping_condition(const OptimizationAlgorithmResults&) const;

@@ -515,7 +515,7 @@ void ScalingLayerTest::test_set_default()
    Tensor<Descriptives, 1> sl_descriptives = sl.get_descriptives();
 
    assert_true( sl.get_scaling_methods()(0) == ScalingLayer::MinimumMaximum, LOG);
-   assert_true( sl.get_display() == true, LOG);
+   assert_true( sl.get_display(), LOG);
    assert_true( sl.get_type() == Layer::Scaling, LOG);
    assert_true( sl.get_type() == 0, LOG);
    assert_true(abs(sl_descriptives(0).minimum + 1) < static_cast<type>(1e-3), LOG);
@@ -815,10 +815,10 @@ void ScalingLayerTest::test_set_display()
    bool display_false = false;
 
    set_display(display_true);
-   assert_true(get_display() == true, LOG);
+   assert_true(get_display(), LOG);
 
    set_display(display_false);
-   assert_true(get_display() == false, LOG);
+   assert_true(!get_display(), LOG);
 }
 
 void ScalingLayerTest::test_is_empty()
@@ -829,8 +829,8 @@ void ScalingLayerTest::test_is_empty()
 
    ScalingLayer sl1(1);
 
-   assert_true(sl.is_empty() == true, LOG);
-   assert_true(sl1.is_empty() == false, LOG);
+   assert_true(sl.is_empty(), LOG);
+   assert_true(!sl1.is_empty(), LOG);
 }
 
 void ScalingLayerTest::test_check_range()
@@ -1006,7 +1006,7 @@ void ScalingLayerTest::test_write_expression()
 
    expression = sl.write_expression(inputs_names, outputs_names);
 
-   assert_true(expression.empty() == false, LOG);
+   assert_true(!expression.empty(), LOG);
    assert_true(expression == "scaled_x = x;\n", LOG);
 
    // Test 0_2
@@ -1016,7 +1016,7 @@ void ScalingLayerTest::test_write_expression()
 
    expression = sl.write_expression(inputs_names, outputs_names);
 
-   assert_true(expression.empty() == false, LOG);
+   assert_true(!expression.empty(), LOG);
    assert_true(expression == "scaled_x = x*(1+1)/(1-(-1))+1*(1+1)/(1+1)-1;\n", LOG);
 
    // Test 0_3
@@ -1026,7 +1026,7 @@ void ScalingLayerTest::test_write_expression()
 
    expression = sl.write_expression(inputs_names, outputs_names);
 
-   assert_true(expression.empty() == false, LOG);
+   assert_true(!expression.empty(), LOG);
    assert_true(expression == "scaled_x = (x-(0))/1;\n", LOG);
 
    // Test 0_4
@@ -1036,7 +1036,7 @@ void ScalingLayerTest::test_write_expression()
 
    expression = sl.write_expression(inputs_names, outputs_names);
 
-   assert_true(expression.empty() == false, LOG);
+   assert_true(!expression.empty(), LOG);
    assert_true(expression == "scaled_x = x/(1);\n", LOG);
 
    // Test 1
@@ -1048,7 +1048,7 @@ void ScalingLayerTest::test_write_expression()
 
    expression = sl.write_no_scaling_expression(inputs_names, outputs_names);
 
-   assert_true(expression.empty() == false, LOG);
+   assert_true(!expression.empty(), LOG);
    assert_true(expression == "y = x;\n", LOG);
 
    // Test 2
@@ -1058,7 +1058,7 @@ void ScalingLayerTest::test_write_expression()
 
    expression = sl.write_minimum_maximum_expression(inputs_names, outputs_names);
 
-   assert_true(expression.empty() == false, LOG);
+   assert_true(!expression.empty(), LOG);
    assert_true(expression == "y = 2*(x-(-1))/(1-(-1))-1;\n", LOG);
 
    // Test 3
@@ -1068,7 +1068,7 @@ void ScalingLayerTest::test_write_expression()
 
    expression = sl.write_mean_standard_deviation_expression(inputs_names, outputs_names);
 
-   assert_true(expression.empty() == false, LOG);
+   assert_true(!expression.empty(), LOG);
    assert_true(expression == "y = (x-(0))/1;\n", LOG);
 
    // Test 4
@@ -1078,7 +1078,7 @@ void ScalingLayerTest::test_write_expression()
 
    expression = sl.write_standard_deviation_expression(inputs_names, outputs_names);
 
-   assert_true(expression.empty() == false, LOG);
+   assert_true(!expression.empty(), LOG);
    assert_true(expression == "y = x/(1);\n", LOG);
 }
 

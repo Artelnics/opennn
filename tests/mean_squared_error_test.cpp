@@ -27,8 +27,8 @@ void MeanSquaredErrorTest::test_constructor()
 
    MeanSquaredError mse1;
 
-   assert_true(mse1.has_neural_network() == false, LOG);
-   assert_true(mse1.has_data_set() == false, LOG);
+   assert_true(!mse1.has_neural_network(), LOG);
+   assert_true(!mse1.has_data_set(), LOG);
 
    // Neural network and data set
 
@@ -36,8 +36,8 @@ void MeanSquaredErrorTest::test_constructor()
    DataSet ds3;
    MeanSquaredError mse3(&nn3, &ds3);
 
-   assert_true(mse3.has_neural_network() == true, LOG);
-   assert_true(mse3.has_data_set() == true, LOG);
+   assert_true(mse3.has_neural_network(), LOG);
+   assert_true(mse3.has_data_set(), LOG);
 }
 
 

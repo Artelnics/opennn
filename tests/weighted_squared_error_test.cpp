@@ -27,8 +27,8 @@ void WeightedSquaredErrorTest::test_constructor()
 
    WeightedSquaredError wse1;
 
-   assert_true(wse1.has_neural_network() == false, LOG);
-   assert_true(wse1.has_data_set() == false, LOG);
+   assert_true(!wse1.has_neural_network(), LOG);
+   assert_true(!wse1.has_data_set(), LOG);
 
    // Neural network and data set
 
@@ -36,8 +36,8 @@ void WeightedSquaredErrorTest::test_constructor()
    DataSet ds3;
    WeightedSquaredError wse3(&nn3, &ds3);
 
-   assert_true(wse3.has_neural_network() == true, LOG);
-   assert_true(wse3.has_data_set() == true, LOG);
+   assert_true(wse3.has_neural_network(), LOG);
+   assert_true(wse3.has_data_set(), LOG);
 }
 
 

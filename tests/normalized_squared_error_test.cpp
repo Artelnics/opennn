@@ -26,8 +26,8 @@ void NormalizedSquaredErrorTest::test_constructor(void) // @todo
 
    NormalizedSquaredError normalized_squared_error_1;
 
-   assert_true(normalized_squared_error_1.has_neural_network() == false, LOG);
-   assert_true(normalized_squared_error_1.has_data_set() == false, LOG);
+   assert_true(!normalized_squared_error_1.has_neural_network(), LOG);
+   assert_true(!normalized_squared_error_1.has_data_set(), LOG);
 
    // Neural network and data set
 
@@ -35,8 +35,8 @@ void NormalizedSquaredErrorTest::test_constructor(void) // @todo
    DataSet data_set_3;
    NormalizedSquaredError nse3(&neural_network_3, &data_set_3);
 
-   assert_true(nse3.has_neural_network() == true, LOG);
-   assert_true(nse3.has_data_set() == true, LOG);
+   assert_true(nse3.has_neural_network(), LOG);
+   assert_true(nse3.has_data_set(), LOG);
 }
 
 

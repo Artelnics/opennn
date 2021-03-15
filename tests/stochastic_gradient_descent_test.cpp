@@ -28,12 +28,12 @@ void StochasticGradientDescentTest::test_constructor() // @todo
    // Default constructor
 
 //   StochasticGradientDescent sgd1;
-//   assert_true(sgd1.has_loss_index() == false, LOG);
+//   assert_true(!sgd1.has_loss_index(), LOG);
 
    // Loss index constructor
 
 //   StochasticGradientDescent sgd2(&sum_squared_error);
-//   assert_true(sgd2.has_loss_index() == true, LOG);
+//   assert_true(sgd2.has_loss_index(), LOG);
 }
 
 
@@ -51,8 +51,8 @@ void StochasticGradientDescentTest::test_set_reserve_all_training_history() // @
 
 //   sgd.set_reserve_all_training_history(true);
 
-//   assert_true(sgd.get_reserve_training_error_history() == true, LOG);
-//   assert_true(sgd.get_reserve_selection_error_history() == true, LOG);
+//   assert_true(sgd.get_reserve_training_error_history(), LOG);
+//   assert_true(sgd.get_reserve_selection_error_history(), LOG);
 }
 
 

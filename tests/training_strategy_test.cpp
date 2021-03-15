@@ -77,7 +77,7 @@ void TrainingStrategyTest::test_get_display()
 
    training_strategy.set_display(false);
 
-   assert_true(training_strategy.get_display() == false, LOG);
+   assert_true(!training_strategy.get_display(), LOG);
 }
 
 

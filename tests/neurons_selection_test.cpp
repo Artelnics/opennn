@@ -30,11 +30,11 @@ void NeuronsSelectionTest::test_constructor()
 
     GrowingNeurons io1(&training_strategy);
 
-    assert_true(io1.has_training_strategy() == true, LOG);
+    assert_true(io1.has_training_strategy(), LOG);
 
     GrowingNeurons io2;
 
-    assert_true(!io2.has_training_strategy() == true, LOG);
+    assert_true(!io2.has_training_strategy(), LOG);
 }
 
 
