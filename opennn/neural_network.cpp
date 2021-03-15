@@ -849,7 +849,7 @@ void NeuralNetwork::set_inputs_number(const Tensor<bool, 1>& inputs)
 
     for(Index i = 0; i < inputs.dimension(0); i++)
     {
-        if(inputs(i) == true) new_inputs_number++;
+        if(inputs(i)) new_inputs_number++;
     }
 
     set_inputs_number(new_inputs_number);

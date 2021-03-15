@@ -262,7 +262,7 @@ void GeneticAlgorithmTest::test_perform_crossover() // @todo
 
 //    crossover_population = ga.get_population();
 
-//    assert_true(crossover_population(2,1) == true, LOG);
+//    assert_true(crossover_population(2,1), LOG);
 
 //    ga.set_population(population);
 
@@ -282,7 +282,7 @@ void GeneticAlgorithmTest::test_perform_crossover() // @todo
 
 //    crossover_population = ga.get_population();
 
-//    assert_true(crossover_population(2,1) == true, LOG);
+//    assert_true(crossover_population(2,1), LOG);
 }
 
 

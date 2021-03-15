@@ -137,7 +137,7 @@ void ConvolutionalLayerTest::test_constructor()
 
     // Test
 
-    assert_true(convolutional_layer.is_empty() == true, LOG);
+    assert_true(convolutional_layer.is_empty(), LOG);
 
     // Test
 
@@ -149,7 +149,6 @@ void ConvolutionalLayerTest::test_constructor()
 //                convolutional_layer.get_filters_number() == 1 &&
 //                convolutional_layer.get_filters_rows_number() == 2 &&
 //                convolutional_layer.get_filters_columns_number() == 3, LOG);
-
 }
 
 
@@ -338,7 +337,7 @@ void ConvolutionalLayerTest::test_set() // @todo
 
     convolutional_layer.set(inputs_dimensions, kernels_dimensions);
 
-    assert_true(convolutional_layer.is_empty() == false &&
+    assert_true(!convolutional_layer.is_empty() &&
                 convolutional_layer.get_inputs_channels_number() == 3 &&
                 convolutional_layer.get_inputs_rows_number() == 256 &&
                 convolutional_layer.get_inputs_columns_number() == 128 &&
@@ -427,7 +426,7 @@ void ConvolutionalLayerTest::test_set_parameters()
                 abs(synaptic_weight(1,1,1,1) - new_synaptic_weights(1,1,1,1)) < 1.e-6f, LOG);
 
 
-//    assert_true(convolutional_layer.is_empty() == false &&
+//    assert_true(!convolutional_layer.is_empty() &&
 //                convolutional_layer.get_parameters_number() == 18 &&
 //                convolutional_layer.get_synaptic_weights() == new_synaptic_weights &&
 //                convolutional_layer.get_biases() == new_biases, LOG);

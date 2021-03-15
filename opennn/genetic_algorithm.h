@@ -83,7 +83,8 @@ public:
 
     const FitnessAssignment& get_fitness_assignment_method() const;
 
-    const Index& get_population_size() const;
+    Index get_individuals_number() const;
+    Index get_genes_number() const;
 
     const type& get_mutation_rate() const;
 
@@ -95,11 +96,9 @@ public:
 
     const type& get_selective_pressure() const;
 
-    const type& get_incest_prevention_distance() const;
+//    const type& get_incest_prevention_distance() const;
 
     const bool& get_reserve_generation_mean() const;
-
-    const bool& get_reserve_generation_standard_deviation() const;
 
     const bool& get_reserve_generation_minimum_selection() const;
 
@@ -141,11 +140,9 @@ public:
 
     void set_selective_pressure(const type&);
 
-    void set_incest_prevention_distance(const type&);
+//    void set_incest_prevention_distance(const type&);
 
     void set_reserve_generation_mean(const bool&);
-
-    void set_reserve_generation_standard_deviation(const bool&);
 
     void set_reserve_generation_minimum_selection(const bool&);
 
@@ -197,7 +194,17 @@ public:
 
     // Utilities
 
-    type euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    bool is_false(const Tensor<bool, 1>& tensor)
+    {
+        const Index size = tensor.size();
+
+        for(Index i = 0; i < size; i++)
+        {
+            if(tensor(i) == true) return false;
+        }
+
+        return true;
+    }
 
     vector<bool> tensor_to_vector(const Tensor<bool, 1>& tensor);
 
@@ -244,18 +251,10 @@ private:
 
     FitnessAssignment fitness_assignment_method;
 
-    /// Initial uses of the variables in the data set.
-
-    Tensor<DataSet::VariableUse, 1> original_uses;
-
-    /// Size of the population.
-
-    Index population_size;
-
     /// Incest prevention distance
     /// Distance between two individuals to prevent the crossover.
 
-    type incest_prevention_distance;
+//    type incest_prevention_distance;
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.
@@ -290,10 +289,6 @@ private:
 
     bool reserve_generation_mean;
 
-    /// True if the standard deviation of selection error are to be reserved in each generation.
-
-    bool reserve_generation_standard_deviation;
-
     /// True if the minimum of selection error are to be reserved in each generation.
 
     bool reserve_generation_minimum_selection;
@@ -325,7 +320,6 @@ struct GeneticAlgorithmResults : public InputsSelectionResults
         generation_optimum_training_error_history.resize(new_size);
         generation_minimum_selection_error_history.resize(new_size);
         generation_selection_error_mean_history.resize(new_size);
-        generation_selection_error_standard_deviation_history.resize(new_size);
     }
 
     /// Values of the minimum training error in each generation.
@@ -339,10 +333,6 @@ struct GeneticAlgorithmResults : public InputsSelectionResults
     /// Mean of the selection error in each generation.
 
     Tensor<type, 1> generation_selection_error_mean_history;
-
-    /// Standard deviation of the selection error in each generation.
-
-    Tensor<type, 1> generation_selection_error_standard_deviation_history;
 };
 
 }

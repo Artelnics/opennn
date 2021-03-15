@@ -122,11 +122,11 @@ void DataSetTest::test_get_display()
 
    data_set.set_display(true);
 
-   assert_true(data_set.get_display() == true, LOG);
+   assert_true(data_set.get_display(), LOG);
 
    data_set.set_display(false);
 
-   assert_true(data_set.get_display() == false, LOG);
+   assert_true(!data_set.get_display(), LOG);
 }
 
 
@@ -1918,7 +1918,7 @@ void DataSetTest::test_read_csv()
 
 //   data = data_set.get_data();
 
-//   assert_true(data_set.get_header_line() == true, LOG);
+//   assert_true(data_set.get_header_line(), LOG);
 //   assert_true(data_set.get_variable_name(0) == "x", LOG);
 //   assert_true(data_set.get_variable_name(1) == "y", LOG);
 
@@ -2636,7 +2636,7 @@ void DataSetTest::test_has_time_columns()
     data_set.set_column_type(0,DataSet::ColumnType::DateTime);
     data_set.set_column_type(1,DataSet::ColumnType::DateTime);
 
-    assert_true(data_set.has_time_columns() == true, LOG);
+    assert_true(data_set.has_time_columns(), LOG);
 }
 
 void DataSetTest::test_save_time_series_data_binary()

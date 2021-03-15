@@ -30,12 +30,12 @@ void ConjugateGradientTest::test_constructor()
    // Default constructor
 
    ConjugateGradient cg1; 
-   assert_true(cg1.has_loss_index() == false, LOG);
+   assert_true(!cg1.has_loss_index(), LOG);
 
    // Loss index constructor
 
 //   ConjugateGradient cg2(&sum_squared_error);
-//   assert_true(cg2.has_loss_index() == true, LOG);
+//   assert_true(cg2.has_loss_index(), LOG);
 }
 
 
@@ -86,8 +86,8 @@ void ConjugateGradientTest::test_set_reserve_all_training_history()
    ConjugateGradient conjugate_gradient;
    conjugate_gradient.set_reserve_all_training_history(true);
 
-   assert_true(conjugate_gradient.get_reserve_training_error_history() == true, LOG);
-   assert_true(conjugate_gradient.get_reserve_selection_error_history() == true, LOG);
+   assert_true(conjugate_gradient.get_reserve_training_error_history(), LOG);
+   assert_true(conjugate_gradient.get_reserve_selection_error_history(), LOG);
 }
 
 

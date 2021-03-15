@@ -28,12 +28,12 @@ void LevenbergMarquardtAlgorithmTest::test_constructor()
    // Default constructor
 
    LevenbergMarquardtAlgorithm lma1; 
-   assert_true(lma1.has_loss_index() == false, LOG);
+   assert_true(!lma1.has_loss_index(), LOG);
 
    // Loss index constructor
 
    LevenbergMarquardtAlgorithm lma2(&sum_squared_error);
-   assert_true(lma2.has_loss_index() == true, LOG);
+   assert_true(lma2.has_loss_index(), LOG);
 }
 
 
@@ -312,8 +312,8 @@ void LevenbergMarquardtAlgorithmTest::test_set_reserve_all_training_history()
    lma.set_reserve_all_training_history(true);
 
 
-   assert_true(lma.get_reserve_training_error_history() == true, LOG);
-   assert_true(lma.get_reserve_selection_error_history() == true, LOG);
+   assert_true(lma.get_reserve_training_error_history(), LOG);
+   assert_true(lma.get_reserve_selection_error_history(), LOG);
 }
 
 

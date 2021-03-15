@@ -28,12 +28,12 @@ void GradientDescentTest::test_constructor() // @todo
    // Default constructor
 
 //   GradientDescent gd1;
-//   assert_true(gd1.has_loss_index() == false, LOG);
+//   assert_true(!gd1.has_loss_index(), LOG);
 
    // Loss index constructor
 
 //   GradientDescent gd2(&sum_squared_error);
-//   assert_true(gd2.has_loss_index() == true, LOG);
+//   assert_true(gd2.has_loss_index(), LOG);
 }
 
 
@@ -51,8 +51,8 @@ void GradientDescentTest::test_set_reserve_all_training_history() // @todo
 
 //   gd.set_reserve_all_training_history(true);
 
-//   assert_true(gd.get_reserve_training_error_history() == true, LOG);
-//   assert_true(gd.get_reserve_selection_error_history() == true, LOG);
+//   assert_true(gd.get_reserve_training_error_history(), LOG);
+//   assert_true(gd.get_reserve_selection_error_history(), LOG);
 }
 
 

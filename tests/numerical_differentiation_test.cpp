@@ -52,7 +52,7 @@ void NumericalDifferentiationTest::test_set_get_methods()
 
    assert_true(nd.get_numerical_differentiation_method() == OpenNN::NumericalDifferentiation::ForwardDifferences, LOG);
    assert_true(nd.get_precision_digits() == 9, LOG);
-   assert_true(nd.get_display() == true, LOG);
+   assert_true(nd.get_display(), LOG);
 
    // Test 2
 
@@ -60,7 +60,7 @@ void NumericalDifferentiationTest::test_set_get_methods()
 
    assert_true(nd_1.get_numerical_differentiation_method() == OpenNN::NumericalDifferentiation::ForwardDifferences, LOG);
    assert_true(nd_1.get_precision_digits() == 9, LOG);
-   assert_true(nd_1.get_display() == true, LOG);
+   assert_true(nd_1.get_display(), LOG);
 
    // Test 3
 
@@ -82,7 +82,7 @@ void NumericalDifferentiationTest::test_set_get_methods()
 
    assert_true(nd.get_numerical_differentiation_method() == OpenNN::NumericalDifferentiation::CentralDifferences, LOG);
    assert_true(nd.get_precision_digits() == 6, LOG);
-   assert_true(nd.get_display() == true, LOG);
+   assert_true(nd.get_display(), LOG);
 }
 
 void NumericalDifferentiationTest::test_calculate_methods()

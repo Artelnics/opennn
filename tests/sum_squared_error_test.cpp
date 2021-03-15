@@ -27,8 +27,8 @@ void SumSquaredErrorTest::test_constructor()
 
    SumSquaredError sum_squared_error_1;
 
-   assert_true(sum_squared_error_1.has_neural_network() == false, LOG);
-   assert_true(sum_squared_error_1.has_data_set() == false, LOG);
+   assert_true(!sum_squared_error_1.has_neural_network(), LOG);
+   assert_true(!sum_squared_error_1.has_data_set(), LOG);
 
    // Neural network and data set
 
@@ -38,9 +38,8 @@ void SumSquaredErrorTest::test_constructor()
    NeuralNetwork neural_network_3;
    SumSquaredError sum_squared_error_4(&neural_network_2, &data_set);
 
-   assert_true(sum_squared_error_4.has_neural_network() == true, LOG);
-   assert_true(sum_squared_error_4.has_data_set() == true, LOG);
-
+   assert_true(sum_squared_error_4.has_neural_network(), LOG);
+   assert_true(sum_squared_error_4.has_data_set(), LOG);
 }
 
 
@@ -888,7 +887,7 @@ void SumSquaredErrorTest::test_from_XML()
 
 //   delete document;
 
-//   assert_true(sum_squared_error2.get_display() == false, LOG);
+//   assert_true(!sum_squared_error2.get_display(), LOG);
 }
 
 

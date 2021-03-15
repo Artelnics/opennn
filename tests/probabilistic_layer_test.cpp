@@ -299,7 +299,7 @@ void ProbabilisticLayerTest::test_set_default()
 
    assert_true(probabilistic_layer.get_activation_function() == OpenNN::ProbabilisticLayer::Softmax, LOG);
    assert_true(abs(probabilistic_layer.get_decision_threshold() - 0.5) < static_cast<type>(1e-5), LOG);
-   assert_true(probabilistic_layer.get_display() == true, LOG);
+   assert_true(probabilistic_layer.get_display(), LOG);
 
    probabilistic_layer.set_neurons_number(1);
 
@@ -437,7 +437,7 @@ void ProbabilisticLayerTest::test_get_display()
 
    probabilistic_layer.set_display(true);
 
-   assert_true(probabilistic_layer.get_display() == true, LOG);
+   assert_true(probabilistic_layer.get_display(), LOG);
 }
 
 void ProbabilisticLayerTest::test_set_display()
@@ -852,9 +852,8 @@ void ProbabilisticLayerTest::test_write_expression()
    expression = probabilistic_layer.write_expression(inputs_names,outputs_names);
 
    cout << expression;
-   assert_true(expression.empty() == false, LOG);
+   assert_true(!expression.empty(), LOG);
 }
-
 
 
 void ProbabilisticLayerTest::run_test_case()

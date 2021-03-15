@@ -80,19 +80,19 @@ void StatisticsTest::test_has_mean_zero_standard_deviation_one()
 
     //Test 0
     Descriptives descriptives(-4.0, 5.0, 0.0, 1.0);
-    assert_true(descriptives.has_mean_zero_standard_deviation_one() == true, LOG);
+    assert_true(descriptives.has_mean_zero_standard_deviation_one(), LOG);
 
     //Test 1
     Descriptives descriptives_1(-4.0 ,5.0 ,1.0 ,1.0);
-    assert_true(descriptives_1.has_mean_zero_standard_deviation_one() == false, LOG);
+    assert_true(!descriptives_1.has_mean_zero_standard_deviation_one(), LOG);
 
     //Test 2
     Descriptives descriptives_2(-4.0 ,5.0 ,0.0 ,2.0);
-    assert_true(descriptives_2.has_mean_zero_standard_deviation_one() == false, LOG);
+    assert_true(!descriptives_2.has_mean_zero_standard_deviation_one(), LOG);
 
     //Test 3
     Descriptives descriptives_3(-4.0 ,5.0 ,2.0 ,2.0);
-    assert_true(descriptives_3.has_mean_zero_standard_deviation_one() == false, LOG);
+    assert_true(!descriptives_3.has_mean_zero_standard_deviation_one(), LOG);
 }
 
 
@@ -102,19 +102,19 @@ void StatisticsTest::test_has_minimum_minus_one_maximum_one()
 
     //Test_0
     Descriptives descriptives(-1.0 ,1.0 ,0.0 ,1.0);
-    assert_true(descriptives.has_minimum_minus_one_maximum_one() == true, LOG);
+    assert_true(descriptives.has_minimum_minus_one_maximum_one(), LOG);
 
     //Test_1
     Descriptives descriptives_1(-2.0 ,1.0 ,0.0 ,1.0);
-    assert_true(descriptives_1.has_minimum_minus_one_maximum_one() == false, LOG);
+    assert_true(!descriptives_1.has_minimum_minus_one_maximum_one(), LOG);
 
     //Test_2
     Descriptives descriptives_2(-1.0 ,2.0 ,0.0 ,1.0);
-    assert_true(descriptives_2.has_minimum_minus_one_maximum_one() == false, LOG);
+    assert_true(!descriptives_2.has_minimum_minus_one_maximum_one(), LOG);
 
     //Test_3
     Descriptives descriptives_3(-2.0 ,2.0 ,0.0 ,1.0);
-    assert_true(descriptives_3.has_minimum_minus_one_maximum_one() == false, LOG);
+    assert_true(!descriptives_3.has_minimum_minus_one_maximum_one(), LOG);
 }
 
 
