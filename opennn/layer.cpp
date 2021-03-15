@@ -1622,7 +1622,7 @@ void Layer::multiply_rows(Tensor<type, 2> & matrix, const Tensor<type, 1> & vect
     {
         for(Index j = 0; j < columns_number; j++)
         {
-           matrix(i,j) = matrix(i,j) * vector(j);
+           matrix(i,j) *= vector(j);
         }
     }
 }

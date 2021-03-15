@@ -929,7 +929,7 @@ OptimizationAlgorithmResults QuasiNewtonMethod::perform_training()
             if(display)
             {
                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                    << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss <<  endl;
+                    << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss << endl;
             }
 
             stop_training = true;

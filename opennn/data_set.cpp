@@ -2961,6 +2961,22 @@ void DataSet::set_columns_unused()
 }
 
 
+void DataSet::set_input_target_columns(const Tensor<Index, 1>& input_columns, const Tensor<Index, 1>& target_columns)
+{
+    set_columns_unused();
+
+    for(Index i = 0; i < input_columns.size(); i++)
+    {
+        set_column_use(i, Input);
+    }
+
+    for(Index i = 0; i < target_columns.size(); i++)
+    {
+        set_column_use(i, Target);
+    }
+}
+
+
 /// Sets all input columns in the dataset as unused columns.
 
 void DataSet::set_input_columns_unused()
