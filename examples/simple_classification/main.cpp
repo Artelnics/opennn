@@ -27,7 +27,7 @@ int main(void)
     try
     {
         cout << "OpenNN. Simple classification example." << endl;
-
+/*
         // Data set
 
         DataSet data_set("../data/simple_pattern_recognition.csv", ';', true);
@@ -92,7 +92,7 @@ int main(void)
         training_strategy.save("../data/training_strategy.xml");
         training_strategy_results.save("../data/training_strategy_results.dat");
 
-
+*/
         cout << "Bye" << endl;
 
         return 0;

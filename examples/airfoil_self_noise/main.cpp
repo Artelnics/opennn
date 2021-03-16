@@ -29,7 +29,7 @@ int main(void)
     try
     {
         cout << "OpenNN. Airfoil Self-Noise Example." << endl;
-
+/*
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
@@ -113,7 +113,7 @@ int main(void)
         optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
 
         linear_regression_analysis.save("../data/linear_regression_analysis.dat");
-
+*/
         return 0;
     }
     catch(exception& e)
