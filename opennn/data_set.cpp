@@ -1784,6 +1784,8 @@ void DataSet::set_default_columns_uses()
 {
     const Index size = columns.size();
 
+    bool target = false;
+
     if(size == 0)
     {
         return;
@@ -1802,8 +1804,20 @@ void DataSet::set_default_columns_uses()
             if(columns(i).type == Binary) continue;
             if(columns(i).type == Categorical) continue;
 
-            columns(i).set_use(Target);
-            break;
+            if(columns(i).type == DateTime)
+            {
+                columns(i).set_use(UnusedVariable);
+                continue;
+            }
+
+            if(!target)
+            {
+                columns(i).set_use(Target);
+
+                target = true;
+
+                continue;
+            }
         }
 
         input_variables_dimensions.resize(1);
@@ -1817,6 +1831,8 @@ void DataSet::set_default_columns_uses()
 void DataSet::set_default_classification_columns_uses()
 {
     const Index size = columns.size();
+
+    bool target = false;
 
     if(size == 0)
     {
@@ -1834,15 +1850,22 @@ void DataSet::set_default_classification_columns_uses()
         {
             if(columns(i).type == Constant) continue;
 
-            if(columns(i).type == Binary)
+            if(columns(i).type == Binary && !target)
             {
                 columns(i).set_use(Target);
-                break;
+                target = true;
+                continue;
             }
-            else if(columns(i).type == Categorical)
+            else if(columns(i).type == Categorical && !target)
             {
                 columns(i).set_use(Target);
-                break;
+                target = true;
+                continue;
+            }
+            else if(columns(i).type == DateTime)
+            {
+                columns(i).set_use(UnusedVariable);
+                continue;
             }
         }
 
@@ -5924,7 +5947,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
         const ColumnType input_type = columns(input_index).type;
 
-        cout << "Calculating " << columns(input_index).name;
+        cout << "Calculating" << columns(input_index).name;
 
         for(Index j = 0; j < target_columns_number; j++)
         {
@@ -10398,20 +10421,22 @@ void DataSet::read_csv_1()
     {
         if(has_rows_labels && i == 0) continue;
 
-        if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-        || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-        || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-        || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(1)(i).empty()))
+        if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label)
+                || data_file_preview(0)(i).find("time") != string::npos)
         {
-            columns(column_index).type = Numeric;
+
+            columns(column_index).type = DateTime;
             column_index++;
         }
-        else if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-             || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
-             || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
-             || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
+        else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
+                || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
+                || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
+                || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(1)(i).empty()))
         {
-            columns(column_index).type = DateTime;
+            columns(column_index).type = Numeric;
             column_index++;
         }
         else
@@ -10633,23 +10658,9 @@ void DataSet::read_csv_3_simple()
         {
             // @todo avoid chip
 
-//            if(is_constant_numeric(data.chip(variable_index, 1)))
-//            {
-//                columns(column).type = Constant;
-//                columns(column).column_use = UnusedVariable;
-//            }
+            const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
-            const type a = data(0, variable_index);
-
-            bool constant = true;
-
-            for (int i = 1; i < data.dimension(0); i++)
-            {
-                if (abs(data(i, variable_index)-a) > 1e-3 || ::isnan(data(i, variable_index)) || ::isnan(a))
-                    constant = false;
-            }
-
-            if(constant)
+            if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
             {
                 columns(column).type = Constant;
                 columns(column).column_use = UnusedVariable;
@@ -11034,9 +11045,8 @@ void DataSet::read_csv_3_complete()
         {
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
-            if(standard_deviation(numeric_column) - static_cast<type>(0) < static_cast<type>(1.0-3))
+            if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
             {
-
                 columns(column).type = Constant;
                 columns(column).column_use = UnusedVariable;
             }
