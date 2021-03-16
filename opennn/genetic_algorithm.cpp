@@ -257,7 +257,7 @@ void GeneticAlgorithm::set_default()
 
     selective_pressure = 1.5;
 
-    // inputs selection results
+    // Inputs selection results
 
     reserve_generation_mean = true;
 
@@ -371,7 +371,7 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 
 #endif
 
-    copy(new_fitness.data(), new_fitness.data() + new_fitness.size(), fitness.data());
+    fitness = new_fitness;
 }
 
 
@@ -506,8 +506,6 @@ void GeneticAlgorithm::set_population_size(const Index& new_population_size)
 #endif
 
 // @todo Set population and other matrices
-
-
 
 }
 
@@ -1015,10 +1013,7 @@ void GeneticAlgorithm::perform_selection()
 
     type pointer;
 
-
-
-
-    // Elitist selection
+    // Elitism selection
 
     for(Index i = 0; i < elitism_size ; i++)
     {
@@ -1039,7 +1034,7 @@ void GeneticAlgorithm::perform_selection()
 
         selected_index = maximal_index(fitness);
 
-        const Tensor<bool, 1> selected_population_row = population.chip(selected_index,0);
+        const Tensor<bool, 1> selected_individual = population.chip(selected_index,0);
 
         Index count = 0;
 /*
@@ -1152,7 +1147,6 @@ void GeneticAlgorithm::perform_selection()
        }
     }
 */
-
 }
 
 
