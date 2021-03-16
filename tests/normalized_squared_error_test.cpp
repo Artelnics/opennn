@@ -406,8 +406,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set_data_random();
 
-   cout << "Data: " << endl << data_set.get_data() << endl;
-
    data_set.set_training();
 
    DataSetBatch batch(samples_number, &data_set);
@@ -428,7 +426,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    nse.set_normalization_coefficient();
 
-   long_short_term_memory_layer->set_timesteps(6);
+   long_short_term_memory_layer->set_timesteps(2);
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
 
@@ -442,6 +440,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 
+   cout << "numerical error gradient " << endl;
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
    cout << "Error gradient: " << endl << error_gradient << endl;

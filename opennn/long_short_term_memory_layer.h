@@ -82,9 +82,9 @@ namespace OpenNN
             combinations.resize(batch_samples_number, neurons_number);
             activations.resize(batch_samples_number, neurons_number);
 
-            row_major_activations_3d.resize(batch_samples_number, neurons_number, 6);
+//            row_major_activations_3d.resize(batch_samples_number, neurons_number, 6);
 
-            row_major_activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
+//            row_major_activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
         }
 
         Tensor<type, 2> combinations;
@@ -128,8 +128,8 @@ namespace OpenNN
         Tensor<type, 2, RowMajor> cell_states_activations_derivatives;
         Tensor<type, 2, RowMajor> hidden_states_activations_derivatives;
 
-        Tensor<type, 3, RowMajor> row_major_activations_3d;
-        Tensor<type, 3, RowMajor> row_major_activations_derivatives_3d;
+//        Tensor<type, 3, RowMajor> row_major_activations_3d;
+//        Tensor<type, 3, RowMajor> row_major_activations_derivatives_3d;
     };
 
 
