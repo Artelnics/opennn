@@ -323,6 +323,10 @@ struct GeneticAlgorithmResults : public InputsSelectionResults
     /// Mean of the selection error in each generation.
 
     Tensor<type, 1> generation_selection_error_mean_history;
+
+    /// Standard deviation of the selection error in each generation.
+
+    Tensor<type, 1> generation_selection_error_standard_deviation_history;
 };
 
 }
