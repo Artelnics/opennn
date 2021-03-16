@@ -2238,11 +2238,6 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 
         if(not_NAN_row(i)) new_rows_number++;
     }
 
-    /*if(new_rows_number == x.dimension(0))
-    {
-        return make_pair(x, Tensor<type, 2>(y));
-    }*/
-
     Tensor<type, 2> new_x(new_rows_number, x_columns_number);
 
     Tensor<type, 2> new_y(new_rows_number,y_columns_number);
@@ -2268,7 +2263,6 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 
     }
 
     return make_pair(new_x, new_y);
-
 }
 
 
@@ -2337,7 +2331,6 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 
     return scaled_x;
 }
-
 
 }
 

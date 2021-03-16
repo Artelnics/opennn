@@ -90,7 +90,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
 /// @todo
 
-void GeneticAlgorithmTest::test_calculate_fitness() // @todo
+void GeneticAlgorithmTest::test_calculate_fitness()
 {
     cout << "test_calculate_fitness\n";
 
