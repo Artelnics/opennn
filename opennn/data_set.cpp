@@ -4573,6 +4573,8 @@ void DataSet::set_time_series_data(const Tensor<type, 2>& new_data)
     time_series_data = new_data;
 }
 
+
+
 /// Sets the name of the data file.
 /// It also loads the data from that file.
 /// Moreover, it sets the variables and samples objects.
@@ -8853,6 +8855,8 @@ void DataSet::load_data_binary()
 }
 
 
+
+
 /// This method loads time series data from a binary data.
 
 void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
@@ -11177,15 +11181,14 @@ void DataSet::check_special_characters(const string & line) const
 
         throw logic_error(message);
     }
-
-#ifdef __unix__
-    if(line.find("\r") != std::string::npos)
-    {
-        const string message =
-                "Error: mixed break line characters in line: " + line + ". Please, review the document.";
-        throw logic_error(message);
-    }
-#endif
+//#ifdef __unix__
+//    if(line.find("\r") != std::string::npos)
+//    {
+//        const string message =
+//                "Error: mixed break line characters in line: " + line + ". Please, review the document.";
+//        throw logic_error(message);
+//    }
+//#endif
 }
 
 
