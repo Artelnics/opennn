@@ -201,6 +201,7 @@ public:
    Tensor<Column, 1> get_columns() const;
    Tensor<Column, 1> get_time_series_columns() const;
    Tensor<Column, 1> get_input_columns() const;
+   Tensor<bool, 1> get_input_columns_binary() const;
    Tensor<Column, 1> get_target_columns() const;
    Tensor<Column, 1> get_used_columns() const;
 
@@ -397,6 +398,8 @@ public:
    void set_columns_unused();
    void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
    void set_input_columns_unused();
+
+   void set_input_columns_binary(const Tensor<bool, 1>&);
 
    void set_column_use(const Index&, const VariableUse&);
    void set_column_use(const string&, const VariableUse&);
