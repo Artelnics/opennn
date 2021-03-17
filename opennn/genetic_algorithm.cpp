@@ -1445,7 +1445,7 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
 
     const Tensor<Index, 1> original_input_columns_indices = data_set_pointer->get_input_columns_indices();
 
-    Tensor<DataSet::VariableUse, 1> original_uses = data_set_pointer->get_columns_uses();
+    const Tensor<DataSet::VariableUse, 1> original_uses = data_set_pointer->get_columns_uses();
 
     // Neural network
 
@@ -1517,20 +1517,14 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        if(reserve_generation_mean)
-        {
-//            push_back(results->generation_selection_error_mean_history, current_mean());
-        }
+//        if(reserve_generation_mean)
+//            results->generation_selection_error_mean_history(epoch) = current_mean();
 
-        if(reserve_generation_minimum_selection)
-        {
-//            push_back(results->generation_minimum_selection_error_history, selection_errors(optimal_individual_index));
-        }
+//        if(reserve_generation_minimum_selection)
+//            results->generation_minimum_selection_error_history(epoch) = selection_errors(optimal_individual_index);
 
-        if(reserve_generation_optimum_loss)
-        {
-//            push_back(results->generation_optimum_training_error_history, training_errors(optimal_individual_index));
-        }
+//        if(reserve_generation_optimum_loss)
+//            results->generation_optimum_training_error_history(epoch) = training_errors(optimal_individual_index);
 
         // Stopping criteria
 
@@ -1599,7 +1593,7 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
             break;
         }
     }
-
+/*
     Index original_index;
 
     Tensor<DataSet::VariableUse, 1> optimal_uses = original_uses;
@@ -1696,7 +1690,7 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
         cout << "Optimum selection error: " << results->optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
-
+*/
     return results;
 }
 
