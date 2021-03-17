@@ -114,15 +114,11 @@ public:
 
     // Utilities
 
-    void push_back(Tensor<type, 1>&, const type&) const;
-
-    void push_back(Tensor<Index, 1>&, const Index&) const;
-
     Index get_input_index(const Tensor<DataSet::VariableUse, 1>&, const Index&);
 
     /// Performs the inputs selection for a neural network.
 
-//    virtual InputsSelectionResults* perform_inputs_selection() = 0;
+    virtual InputsSelectionResults* perform_inputs_selection() = 0;
 
     /// Writes the time from seconds in format HH:mm:ss.
 
@@ -136,7 +132,7 @@ protected:
 
     /// True if this is a function regression problem.
 
-    bool approximation;
+    bool approximation;          
 
     /// Inputs of all the neural networks trained.
 
@@ -204,7 +200,9 @@ struct InputsSelectionResults
 {
    explicit InputsSelectionResults(const Index& maximum_epochs_number)
    {
+        training_errors.resize(maximum_epochs_number);
 
+        selection_errors.resize(maximum_epochs_number);
    }
 
    virtual ~InputsSelectionResults() {}
@@ -215,7 +213,7 @@ struct InputsSelectionResults
 
    /// Inputs of the different neural networks.
 
-   Tensor<bool, 2> inputs_data;
+//   Tensor<bool, 2> inputs_data;
 
    /// Vector of parameters for the neural network with minimum selection error.
 
@@ -238,10 +236,6 @@ struct InputsSelectionResults
    /// Value of minimum selection error.
 
    type optimum_selection_error;
-
-   /// Inputs of the neural network with minimum selection error.
-
-   Tensor<Index, 1> optimal_input_columns;
 
    /// Inputs of the neural network with minimum selection error.
 

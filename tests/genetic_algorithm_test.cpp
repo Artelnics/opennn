@@ -75,8 +75,6 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     ga.set_population_size(10);
 
-    ga.set_inicialization_method(GeneticAlgorithm::Random);
-
     ga.initialize_population();
 
     population = ga.get_population();

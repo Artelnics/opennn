@@ -53,31 +53,11 @@ public:
 
     virtual ~GeneticAlgorithm();
 
-    // Enumerations
-
-    /// Enumeration of available methods for the initialization of the population.
-
-    enum InitializationMethod{Random, Weigthed};
-
-    /// Enumeration of available methods for the crossover of the population.
-
-    enum CrossoverMethod{OnePoint, TwoPoint, Uniform};
-
-    /// Enumeration of available methods for the fitness assignement of the population.
-
-    enum FitnessAssignment{ObjectiveBased, RankBased};
-
     // Get methods
 
     const Tensor<bool, 2>& get_population() const;
 
     const Tensor<type, 1>& get_fitness() const;
-
-    const InitializationMethod& get_initialization_method() const;
-
-    const CrossoverMethod& get_crossover_method() const;
-
-    const FitnessAssignment& get_fitness_assignment_method() const;
 
     Index get_individuals_number() const;
     Index get_genes_number() const;
@@ -86,25 +66,13 @@ public:
 
     const Index& get_elitism_size() const;
 
-    const Index& get_crossover_first_point() const;
-
-    const Index& get_crossover_second_point() const;
-
     const type& get_selective_pressure() const;
-
-//    const type& get_incest_prevention_distance() const;
 
     const bool& get_reserve_generation_mean() const;
 
     const bool& get_reserve_generation_minimum_selection() const;
 
     const bool& get_reserve_generation_optimum_loss() const;
-
-    string write_initialization_method() const;
-
-    string write_crossover_method() const;
-
-    string write_fitness_assignment_method() const;
 
     // Set methods
 
@@ -114,27 +82,13 @@ public:
 
     void set_fitness(const Tensor<type, 1>&);
 
-    void set_inicialization_method(const InitializationMethod&);
-    void set_fitness_assignment_method(const FitnessAssignment&);
-    void set_crossover_method(const CrossoverMethod&);
-
-    void set_inicialization_method(const string&);
-    void set_fitness_assignment_method(const string&);
-    void set_crossover_method(const string&);
-
     void set_population_size(const Index&);
 
     void set_mutation_rate(const type&);
 
     void set_elitism_size(const Index&);
 
-    void set_crossover_first_point(const Index&);
-
-    void set_crossover_second_point(const Index&);
-
     void set_selective_pressure(const type&);
-
-//    void set_incest_prevention_distance(const type&);
 
     void set_reserve_generation_mean(const bool&);
 
@@ -148,17 +102,9 @@ public:
 
     void initialize_population();
 
-    void initialize_random_population();
-
-    void initialize_weighted_population();
-
     void evaluate_population();
 
     void perform_fitness_assignment();
-
-    void perform_loss_based_fitness_assignment();
-
-    void perform_rank_based_fitness_assignment();
 
     // Selection methods
 
@@ -168,19 +114,11 @@ public:
 
     void perform_crossover();
 
-    void perform_1_point_crossover();
-
-    void perform_2_point_crossover();
-
-    void perform_uniform_crossover();
-
     // Mutation methods
 
     void perform_mutation();
 
     // Inputs selection methods
-
-    Index get_optimal_individual_index() const;
 
     InputsSelectionResults* perform_inputs_selection();
 
@@ -219,30 +157,16 @@ private:
 
     /// Performance of population.
 
-    Tensor<type, 2> parameters;
+    Tensor<type, 2> population_parameters;
 
-    Tensor<type, 1> training_errors;
-    Tensor<type, 1> selection_errors;
+    Tensor<type, 1> population_training_errors;
+    Tensor<type, 1> population_selection_errors;
 
     /// Fitness of population.
 
-    Tensor<type, 1> fitness;
+    Tensor<type, 1> population_fitness;
 
-    Tensor<bool, 1> selection;
-
-    // Training operators
-
-    /// Initialization method used in the algorithm.
-
-    InitializationMethod initialization_method;
-
-    /// Crossover method used in the algorithm.
-
-    CrossoverMethod crossover_method;
-
-    /// Fitness assignment method used in the algorithm.
-
-    FitnessAssignment fitness_assignment_method;
+    Tensor<bool, 1> population_selection;
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.
@@ -255,16 +179,6 @@ private:
     /// This is a parameter of the selection operator.
 
     Index elitism_size;
-
-    /// First point used in the OnePoint and TwoPoint crossover method.
-    /// If it is 0 the algorithm selects a random point for each pair of offsprings.
-
-    Index crossover_first_point;
-
-    /// Second point used in the TwoPoint crossover method.
-    /// If it is 0 the algorithm selects a random point for each pair of offsprings.
-
-    Index crossover_second_point;
 
     /// Linear ranking allows values for the selective pressure greater than 0.
     /// This is a parameter of the fitness assignment operator.

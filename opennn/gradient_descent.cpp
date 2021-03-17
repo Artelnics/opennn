@@ -553,8 +553,6 @@ TrainingResults GradientDescent::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-
-
     NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
