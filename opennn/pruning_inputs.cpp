@@ -248,21 +248,21 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
             training_results = training_strategy_pointer->perform_training();
 
-            if(training_results.final_selection_error < results->optimum_selection_error)
+            if(training_results.selection_error < results->optimum_selection_error)
             {
                 results->optimal_inputs = data_set_pointer->get_input_columns_binary();
 
-                results->optimal_parameters = training_results.final_parameters;
+                results->optimal_parameters = training_results.parameters;
 
-                results->optimum_training_error = training_results.final_training_error;
-                results->optimum_selection_error = training_results.final_selection_error;
+                results->optimum_training_error = training_results.training_error;
+                results->optimum_selection_error = training_results.selection_error;
             }
 
             if(display)
             {
                 cout << "Trial number: " << trial+1 << endl;
-                cout << "Training error: " << training_results.final_training_error << endl;
-                cout << "Selection error: " << training_results.final_selection_error << endl;
+                cout << "Training error: " << training_results.training_error << endl;
+                cout << "Selection error: " << training_results.selection_error << endl;
             }
         }
 
@@ -270,9 +270,9 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
         previus_selection_error = results->optimum_selection_error;
 
-        if(reserve_training_errors)results->training_errors(epoch) = training_results.final_training_error;
+        if(reserve_training_errors)results->training_errors(epoch) = training_results.training_error;
 
-        if(reserve_selection_errors) results->selection_errors(epoch) = training_results.final_selection_error;
+        if(reserve_selection_errors) results->selection_errors(epoch) = training_results.selection_error;
 
         time(&current_time);
 

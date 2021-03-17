@@ -778,9 +778,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             results.resize_training_error_history(epoch+1);
             results.resize_selection_error_history(epoch+1);
 
-            results.final_parameters = training_loss_index_back_propagation_lm.parameters;
-            results.final_training_error = training_loss_index_back_propagation_lm.error;
-            results.final_selection_error = selection_loss_index_back_propagation_lm.error;
+            results.parameters = training_loss_index_back_propagation_lm.parameters;
+            results.training_error = training_loss_index_back_propagation_lm.error;
+            results.selection_error = selection_loss_index_back_propagation_lm.error;
 
             results.final_gradient_norm = gradient_norm;
 

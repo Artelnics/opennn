@@ -759,11 +759,11 @@ TrainingResults GradientDescent::perform_training()
             results.resize_training_error_history(epoch+1);
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            results.final_parameters = training_back_propagation.parameters;
+            results.parameters = training_back_propagation.parameters;
 
-            results.final_training_error = training_back_propagation.error;
+            results.training_error = training_back_propagation.error;
 
-            results.final_selection_error = selection_back_propagation.error;
+            results.selection_error = selection_back_propagation.error;
 
             results.final_gradient_norm = gradient_norm;
 

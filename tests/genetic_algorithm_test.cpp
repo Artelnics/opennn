@@ -392,7 +392,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 
 //    ga_results = ga.perform_inputs_selection();
 
-//    assert_true(ga_results->final_selection_error < 1, LOG);
+//    assert_true(ga_results->selection_error < 1, LOG);
 //    assert_true(ga_results->stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
 
 //    ga.delete_selection_history();
@@ -443,7 +443,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 //    ga1_results = ga1.perform_inputs_selection();
 
 //    assert_true(ga1_results->iterations_number == 1, LOG);
-//    assert_true(ga1_results->final_selection_error < 1, LOG);
+//    assert_true(ga1_results->selection_error < 1, LOG);
 //    assert_true(ga_results->stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
 
 //    ga1.delete_selection_history();
