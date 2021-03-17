@@ -202,7 +202,10 @@ protected:
 
 struct InputsSelectionResults
 {
-   explicit InputsSelectionResults() {}
+   explicit InputsSelectionResults(const Index& maximum_epochs_number)
+   {
+
+   }
 
    virtual ~InputsSelectionResults() {}
 
@@ -242,7 +245,7 @@ struct InputsSelectionResults
 
    /// Inputs of the neural network with minimum selection error.
 
-//   Tensor<bool, 1> optimal_inputs;
+   Tensor<bool, 1> optimal_inputs;
 
    // Model selection
 

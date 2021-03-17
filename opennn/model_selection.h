@@ -162,23 +162,15 @@ struct ModelSelectionResults
 
     // Neurons selection
 
-    /// Pointer to a structure with the results from the growing neurons selection algorithm.
+    /// Pointer to a structure with the results from the neurons neurons selection algorithm.
 
-    GrowingNeuronsResults* growing_neurons_results_pointer = nullptr;
+    NeuronsSelectionResults* neurons_selection_results_pointer = nullptr;
 
     // Inputs selection
 
-    /// Pointer to a structure with the results from the growing inputs selection algorithm.
+    /// Pointer to a structure with the results from the inputs selection algorithm.
 
-    GrowingInputsResults* growing_inputs_results_pointer = nullptr;
-
-    /// Pointer to a structure with the results from the pruning inputs selection algorithm.
-
-    PruningInputsResults* pruning_inputs_results_pointer = nullptr;
-
-    /// Pointer to a structure with the results from the genetic inputs selection algorithm.
-
-    GeneticAlgorithmResults* genetic_algorithm_results_pointer = nullptr;
+    InputsSelectionResults* inputs_selection_results_pointer = nullptr;
 };
 
 }

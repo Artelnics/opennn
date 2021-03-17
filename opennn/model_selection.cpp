@@ -454,7 +454,7 @@ ModelSelectionResults ModelSelection::perform_inputs_selection()
 
         growing_inputs.set_training_strategy_pointer(ts);
 
-        results.growing_inputs_results_pointer = growing_inputs.perform_inputs_selection();
+        results.inputs_selection_results_pointer = growing_inputs.perform_inputs_selection();
 
         break;
     }
@@ -464,7 +464,7 @@ ModelSelectionResults ModelSelection::perform_inputs_selection()
 
         pruning_inputs.set_training_strategy_pointer(ts);
 
-        results.pruning_inputs_results_pointer = pruning_inputs.perform_inputs_selection();
+        results.inputs_selection_results_pointer = pruning_inputs.perform_inputs_selection();
 
         break;
     }
@@ -474,7 +474,7 @@ ModelSelectionResults ModelSelection::perform_inputs_selection()
 
         genetic_algorithm.set_training_strategy_pointer(ts);
 
-        results.genetic_algorithm_results_pointer = genetic_algorithm.perform_inputs_selection();
+        results.inputs_selection_results_pointer = genetic_algorithm.perform_inputs_selection();
 
         break;
     }
@@ -758,13 +758,9 @@ void ModelSelection::load(const string& file_name)
 
 ModelSelectionResults::ModelSelectionResults()
 {
-    growing_neurons_results_pointer = nullptr;
+    neurons_selection_results_pointer = nullptr;
 
-    growing_inputs_results_pointer = nullptr;
-
-    pruning_inputs_results_pointer = nullptr;
-
-    genetic_algorithm_results_pointer = nullptr;
+    inputs_selection_results_pointer = nullptr;
 }
 
 }
