@@ -2530,10 +2530,12 @@ Tensor<DataSet::Column, 1> DataSet::get_columns() const
     return columns;
 }
 
+
 Tensor<DataSet::Column, 1> DataSet::get_time_series_columns() const
 {
     return time_series_columns;
 }
+
 
 /// Returns the input columns of the data set.
 
@@ -2554,6 +2556,26 @@ Tensor<DataSet::Column, 1> DataSet::get_input_columns() const
     }
 
     return input_columns;
+}
+
+
+/// Returns the input columns of the data set.
+
+Tensor<bool, 1> DataSet::get_input_columns_binary() const
+{
+    const Index columns_number = get_columns_number();
+
+    Tensor<bool, 1> input_columns_binary(columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).column_use == Input)
+            input_columns_binary(i) = true;
+        else
+            input_columns_binary(i) = false;
+    }
+
+    return input_columns_binary;
 }
 
 
@@ -3009,6 +3031,18 @@ void DataSet::set_input_columns_unused()
     for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).column_use == DataSet::Input) set_column_use(i, UnusedVariable);
+    }
+}
+
+
+
+void DataSet::set_input_columns_binary(const Tensor<bool, 1>& new_input_columns)
+{
+    const Index columns_number = get_columns_number();
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(new_input_columns(i)) set_column_use(i, Input);
     }
 }
 

@@ -169,7 +169,7 @@ void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_loss
 
 /// Perform inputs selection with the growing inputs method.
 
-GrowingInputsResults* GrowingInputs::perform_inputs_selection()
+InputsSelectionResults* GrowingInputs::perform_inputs_selection()
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -177,7 +177,7 @@ GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
 #endif
 
-    GrowingInputsResults* results = new GrowingInputsResults();
+    InputsSelectionResults* results = new InputsSelectionResults(maximum_epochs_number);
 
     if(display) cout << "Performing growing inputs selection..." << endl;
 
@@ -191,6 +191,8 @@ GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+//    const Tensor<bool, 1> input_columns_binary = data_set_pointer->get_input_columns_binary();
+
     const Tensor<Index, 1> input_columns = data_set_pointer->get_input_columns_indices();
 
     const Index input_columns_number = data_set_pointer->get_input_columns_number();
@@ -199,7 +201,7 @@ GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
 
-    const Tensor<type, 1> total_correlations = (correlations.sum(rows_sum)).abs();
+    const Tensor<type, 1> total_correlations = correlations.sum(rows_sum).abs();
 
     Tensor<Index, 1> correlations_rank_descending = input_columns;
 
@@ -207,18 +209,15 @@ GrowingInputsResults* GrowingInputs::perform_inputs_selection()
          correlations_rank_descending.data() + input_columns.size(),
          [&](Index i,Index j){return total_correlations[i]<total_correlations[j];} );
 
-    data_set_pointer->set_input_columns_unused();
-
     // Neural network
 
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_neural_network_pointer();
 
-    // Optimization algorithm
-
-//    type current_training_error;
-//    type current_selection_error;
-
     Tensor<Index, 1> current_input_columns;
+
+    Index input_variables_number;
+
+    // Optimization algorithm
 
     Index selection_failures = 0;
 
@@ -241,11 +240,7 @@ GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         data_set_pointer->set_column_use(column_name, DataSet::Input);
 
-        push_back(current_input_columns, column_index);
-
-        const Index input_variables_number = data_set_pointer->get_input_variables_number();
-
-        data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1>(1).setConstant(input_variables_number));
+        input_variables_number = data_set_pointer->get_input_variables_number();
 
         neural_network_pointer->set_inputs_number(input_variables_number);
 
@@ -266,25 +261,25 @@ GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
             if(training_results.final_selection_error < results->optimum_selection_error)
             {
+                // Neural network
+
+                results->optimal_inputs = data_set_pointer->get_input_columns_binary();
                 results->optimal_parameters = training_results.final_parameters;
+
+                // Loss index
 
                 results->optimum_selection_error = training_results.final_selection_error;
                 results->optimum_training_error = training_results.final_training_error;
             }
         }
 
-        if(previus_selection_error < training_results.final_selection_error)
-        {
-            selection_failures++;
-        }
+        if(previus_selection_error < training_results.final_selection_error) selection_failures++;
 
         previus_selection_error = training_results.final_selection_error;
 
-        if(reserve_training_errors)
-            push_back(results->training_errors, training_results.final_training_error);
+        if(reserve_training_errors) results->training_errors(epoch) = training_results.final_training_error;
 
-        if(reserve_selection_errors)
-            push_back(results->selection_errors, training_results.final_selection_error);
+        if(reserve_selection_errors) results->selection_errors(epoch) = training_results.final_selection_error;
 
         time(&current_time);
 
@@ -362,71 +357,14 @@ GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     // Set data set stuff
 
-    data_set_pointer->set_input_columns_unused();
+    data_set_pointer->set_input_columns_binary(results->optimal_inputs);
 
-    const Index optimal_inputs_number = results->optimal_input_columns.size();
-
-    for(Index i = 0; i < optimal_inputs_number; i++)
-    {
-        const Index optimal_input_index = results->optimal_input_columns[i];
-
-        data_set_pointer->set_column_use(optimal_input_index, DataSet::Input);
-    }
-
-    const Index optimal_input_variables_number = data_set_pointer->get_input_variables_names().size();
-
-    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).constant(optimal_input_variables_number));
-
-    // Set Neural network stuff
-
-    neural_network_pointer->set_inputs_number(optimal_input_variables_number);
-
-    neural_network_pointer->set_parameters(results->optimal_parameters);
+    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-    Tensor<Descriptives, 1> new_input_descriptives(optimal_input_variables_number);
+    neural_network_pointer->set_parameters(results->optimal_parameters);
 
-    Tensor<ScalingLayer::ScalingMethod, 1> new_scaling_methods(optimal_input_variables_number);
-
-    Index descriptive_index = 0;
-    Index unused = 0;
-/*
-    for(Index i = 0; i < original_input_columns_indices.size(); i++)
-    {
-        const Index current_column_index = original_input_columns_indices(i);
-
-        if(data_set_pointer->get_column_use(current_column_index) == DataSet::Input)
-        {
-            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical)
-            {
-                new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
-                new_scaling_methods(descriptive_index) = original_scaling_methods(descriptive_index + unused);
-                descriptive_index++;
-            }
-            else
-            {
-                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++)
-                {
-                    new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
-                    new_scaling_methods(descriptive_index) = original_scaling_methods(descriptive_index + unused);
-                    descriptive_index++;
-                }
-            }
-        }
-        else if(data_set_pointer->get_column_use(current_column_index) == DataSet::UnusedVariable)
-        {
-            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical) unused++;
-            else
-            {
-                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++) unused++;
-            }
-        }
-    }
-
-    neural_network_pointer->get_scaling_layer_pointer()->set_descriptives(new_input_descriptives);
-    neural_network_pointer->get_scaling_layer_pointer()->set_scaling_methods(new_scaling_methods);
-*/
     if(display)
     {
         cout << "Optimal number of inputs: " << data_set_pointer->get_input_variables_number() << endl;

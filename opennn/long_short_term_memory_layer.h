@@ -81,10 +81,6 @@ namespace OpenNN
 
             combinations.resize(batch_samples_number, neurons_number);
             activations.resize(batch_samples_number, neurons_number);
-
-//            row_major_activations_3d.resize(batch_samples_number, neurons_number, 6);
-
-//            row_major_activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
         }
 
         Tensor<type, 2> combinations;
