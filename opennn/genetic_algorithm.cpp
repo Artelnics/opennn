@@ -487,12 +487,6 @@ void GeneticAlgorithm::evaluate_population()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const Index columns_number = data_set_pointer->get_columns_number();
-
-    const Tensor<DataSet::VariableUse, 1> original_columns_uses = data_set_pointer->get_columns_uses();
-
-    Tensor<DataSet::VariableUse, 1> columns_uses(columns_number);
-
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -504,44 +498,25 @@ void GeneticAlgorithm::evaluate_population()
     // Model selection
 
     const Index individuals_number = get_individuals_number();
-    const Index genes_number = get_genes_number();
-
-    Index index = 0;
 
     for(Index i = 0; i < individuals_number; i++)
     {
         individual = population.chip(i,0);
 
-        for(Index j = 0; j < genes_number; j++)
-        {
-//            index = get_input_index(original_uses, j);
-/*
-            Index genes_number = 0;
-
-            if(!current_inputs[j])
-            {
-                current_uses[index] = DataSet::UnusedVariable;
-            }
-            else
-            {
-                current_uses[index] = DataSet::Input;
-                genes_number++;
-            }
-*/
-        }
-
-        data_set_pointer->set_columns_uses(columns_uses);
+        data_set_pointer->set_input_columns_binary(individual);
 
         neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
         training_results = training_strategy_pointer->perform_training();
 
-        population_training_errors(i) = training_results.final_training_error;
-        population_selection_errors(i) = training_results.final_selection_error;
+        // Set
 
-        // @todo
+        //population_inputs()
 
-        population_parameters;
+        population_parameters(i) = training_results.parameters;
+
+        population_training_errors(i) = training_results.training_error;
+        population_selection_errors(i) = training_results.selection_error;
     }
 }
 
@@ -893,14 +868,7 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
 
     Index optimal_individual_index;
 
-//    Tensor<bool, 1> current_inputs;
-//    Tensor<DataSet::VariableUse, 1> current_uses;
-//    Tensor<type, 0> current_mean;
-//    Tensor<type, 1> current_parameters;
-
-//    Index optimal_generation = 0;
-
-    bool end_algortihm = false;
+    bool stop = false;
 
     time_t beginning_time, current_time;
     type elapsed_time = 0;
@@ -915,29 +883,24 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
 
         evaluate_population();
 
-        perform_fitness_assignment();
-
-        perform_selection();
-
-        perform_crossover();
-
-        perform_mutation();
-
         optimal_individual_index = minimal_index(population_selection_errors);
+
+        results->training_errors(epoch) = population_training_errors(optimal_individual_index);
+        results->selection_errors(epoch) = population_training_errors(optimal_individual_index);
 
         if(results->optimum_selection_error < population_selection_errors(optimal_individual_index))
         {
-            //results->optimal_inputs = current_inputs;
+            // Neural network
 
-            // @todo
+            results->optimal_inputs = population.chip(optimal_individual_index,0);
 
-            results->optimal_parameters = parameters_history(individuals_number*epoch + optimal_individual_index);
+            results->optimal_parameters = population_parameters(optimal_individual_index);
+
+            // Loss index
 
             results->optimum_training_error = population_training_errors(optimal_individual_index);
 
             results->optimum_selection_error = population_selection_errors(optimal_individual_index);
-
-            //results->optimal_epoch = epoch;
         }
 
         time(&current_time);
@@ -957,7 +920,7 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
 
         if(elapsed_time >= maximum_time)
         {
-            end_algortihm = true;
+            stop = true;
 
             if(display) cout << "Maximum time reached." << endl;
 
@@ -965,7 +928,7 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
         }
         else if(population_selection_errors(optimal_individual_index) <= selection_error_goal)
         {
-            end_algortihm = true;
+            stop = true;
 
             if(display) cout << "selection error reached." << endl;
 
@@ -973,18 +936,12 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
         }
         else if(epoch >= maximum_epochs_number-1)
         {
-            end_algortihm = true;
+            stop = true;
 
             if(display) cout << "Maximum number of epochs reached." << endl;
 
             results->stopping_condition = InputsSelection::MaximumEpochs;
         }
-
-        // Print results
-
-        //data_set_pointer->set_columns_uses(current_uses);
-
-//        Tensor<type, 0> mean = loss.chip(1,1).mean();
 
         if(display)
         {
@@ -998,11 +955,19 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
             cout << endl;
         }
 
-        if(end_algortihm == true)
+        if(stop == true)
         {
             results->elapsed_time = write_elapsed_time(elapsed_time);
             break;
         }
+
+        perform_fitness_assignment();
+
+        perform_selection();
+
+        perform_crossover();
+
+        perform_mutation();
     }
 
     time(&current_time);

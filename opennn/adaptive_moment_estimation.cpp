@@ -549,11 +549,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            results.final_parameters = optimization_data.parameters;
+            results.parameters = optimization_data.parameters;
 
-            results.final_training_error = training_error;
+            results.training_error = training_error;
 
-            if(has_selection) results.final_selection_error = selection_error;
+            if(has_selection) results.selection_error = selection_error;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 

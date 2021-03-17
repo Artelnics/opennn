@@ -277,7 +277,7 @@ struct TrainingResults
 
     /// Final neural network parameters vector.
 
-    Tensor<type, 1> final_parameters;
+    Tensor<type, 1> parameters;
 
     /// Final neural network parameters norm.
 
@@ -285,11 +285,11 @@ struct TrainingResults
 
     /// Final loss function evaluation.
 
-    type final_training_error;
+    type training_error;
 
     /// Final selection error.
 
-    type final_selection_error;
+    type selection_error;
 
     /// Final gradient norm.
 

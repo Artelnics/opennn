@@ -580,7 +580,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(1,0) = "Final training error";
 
     buffer.str("");
-    buffer << setprecision(precision) << final_training_error;
+    buffer << setprecision(precision) << training_error;
 
     final_results(1,1) = buffer.str();
 
@@ -589,7 +589,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(2,0) = "Final selection error";
 
     buffer.str("");
-    buffer << setprecision(precision) << final_selection_error;
+    buffer << setprecision(precision) << selection_error;
 
     final_results(2,1) = buffer.str();
 

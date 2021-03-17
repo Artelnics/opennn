@@ -1141,10 +1141,10 @@ TrainingResults ConjugateGradient::perform_training()
             results.resize_training_error_history(epoch+1);
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            results.final_parameters = training_back_propagation.parameters;
+            results.parameters = training_back_propagation.parameters;
 
-            results.final_training_error = training_back_propagation.error;
-            if(has_selection) results.final_selection_error = selection_error;
+            results.training_error = training_back_propagation.error;
+            if(has_selection) results.selection_error = selection_error;
 
             results.final_gradient_norm = gradient_norm;
 
@@ -1190,10 +1190,10 @@ TrainingResults ConjugateGradient::perform_training()
 //        selection_error = minimum_selection_error;
     }
 
-    results.final_parameters = training_back_propagation.parameters;
+    results.parameters = training_back_propagation.parameters;
 
-    results.final_training_error = training_back_propagation.error;
-    if(has_selection) results.final_selection_error = selection_error;
+    results.training_error = training_back_propagation.error;
+    if(has_selection) results.selection_error = selection_error;
 
     results.final_gradient_norm = gradient_norm;
 

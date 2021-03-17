@@ -157,7 +157,7 @@ private:
 
     /// Performance of population.
 
-    Tensor<type, 2> population_parameters;
+    Tensor<Tensor<type, 1>, 1> population_parameters;
 
     Tensor<type, 1> population_training_errors;
     Tensor<type, 1> population_selection_errors;
