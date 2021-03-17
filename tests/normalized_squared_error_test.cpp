@@ -189,7 +189,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-/*
+
    // Test trivial
 {
    samples_number = 10;
@@ -392,15 +392,15 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
 
- */  neural_network.set();
+   neural_network.set();
 
    // Test lstm
 
 {
    samples_number = 4;
-   inputs_number = 1;
-   outputs_number = 1;
-   hidden_neurons = 1;
+   inputs_number = 2;
+   outputs_number = 4;
+   hidden_neurons = 3;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
@@ -440,18 +440,13 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 
-   cout << "numerical error gradient " << endl;
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
-
-   cout << "Error gradient: " << endl << error_gradient << endl;
-   cout << "Numerical error gradient: "  << endl  << numerical_error_gradient << endl;
-   cout << "Difference: " << endl  << difference << endl;
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
 
    neural_network.set();
-/*
+
    // Test recurrent
 {
    samples_number = 4;
@@ -501,7 +496,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
-/*
+
    // Test convolutional
 {
     neural_network.set();
@@ -566,7 +561,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 }
-*/
 }
 
 
