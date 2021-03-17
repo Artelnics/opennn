@@ -392,11 +392,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         training_loss = 0;
         training_error = 0;
 
-        optimization_data.iteration = 0;
-
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
-            optimization_data.iteration++;
+            optimization_data.iteration = iteration;
 
             // Data set
 
@@ -1057,9 +1055,6 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 
     square_gradient_exponential_decay.resize(parameters_number);
     square_gradient_exponential_decay.setZero();
-
-    aux.resize(parameters_number);
-    aux.setZero();
 }
 
 

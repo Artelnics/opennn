@@ -78,7 +78,7 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        const OptimizationAlgorithmResults optimization_algorithm_results = training_strategy.perform_training();
+        const TrainingResults training_results = training_strategy.perform_training();
 
         // Testing analysis
 
@@ -96,7 +96,7 @@ int main(void)
 
         training_strategy.save("../data/training_strategy.xml");
 
-        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
+        training_results.save("../data/training_results.dat");
 
         linear_regression_analysis.save("../data/linear_regression_analysis.dat");
 

@@ -70,7 +70,7 @@ int main(void)
 
         training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-        const OptimizationAlgorithmResults training_strategy_results = training_strategy.perform_training();
+        const TrainingResults training_results = training_strategy.perform_training();
 
         // Testing analysis
 
@@ -90,7 +90,7 @@ int main(void)
         neural_network.save_expression_python("../data/expression.py");
 
         training_strategy.save("../data/training_strategy.xml");
-        training_strategy_results.save("../data/training_strategy_results.dat");
+        training_results.save("../data/training_results.dat");
 
 */
         cout << "Bye" << endl;

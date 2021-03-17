@@ -498,20 +498,34 @@ void GeneticAlgorithm::evaluate_population()
     // Model selection
 
     const Index individuals_number = get_individuals_number();
+    const Index genes_number = get_genes_number();
 
     for(Index i = 0; i < individuals_number; i++)
     {
         individual = population.chip(i,0);
 
-        data_set_pointer->set_input_columns_binary(individual);
+        const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
+
+        Tensor<Index, 1> input_columns(input_columns_number(0));
+
+        Index index = 0;
+
+        for(i = 0; i < genes_number; i++)
+        {
+            if(individual(i))
+            {
+                input_columns(index) = original_input_columns_indices(i);
+                index++;
+            }
+        }
+
+        data_set_pointer->set_input_target_columns(input_columns, original_target_columns_indices);
 
         neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
         training_results = training_strategy_pointer->perform_training();
 
-        // Set
-
-        //population_inputs()
+        // Set stuff
 
         population_parameters(i) = training_results.parameters;
 
@@ -529,13 +543,13 @@ void GeneticAlgorithm::perform_fitness_assignment()
 
     Tensor<Index, 1> selection_errors_rank(individuals_number);
 
-    // @todo
-
-    sort(selection_errors_rank.data(), selection_errors_rank.data() + selection_errors_rank.size(), greater<type>());
+    sort(selection_errors_rank.data(),
+         selection_errors_rank.data() + selection_errors_rank.size(),
+         [&](Index i, Index j){return population_selection_errors[i]<population_selection_errors[j];});
 
     for(Index i = 0; i < individuals_number; i++)
     {
-        population_fitness(i) = selective_pressure * selection_errors_rank(i);
+        population_fitness(i) = selective_pressure*selection_errors_rank(i);
     }
 }
 
@@ -574,150 +588,61 @@ void GeneticAlgorithm::perform_selection()
 
     const Index selected_individuals_number = static_cast<Index>(individuals_number/2);
 
-    Index selected_individuals_count = 0;
-
-    Index selected_index = 0;
-
     const Tensor<type, 1> cumulative_fitness = population_fitness.cumsum(0);
 
-    const Tensor<Index, 1> fitness_rank_descending(individuals_number);
+    Tensor<Index, 1> fitness_rank_descending(individuals_number);
+
+    sort(fitness_rank_descending.data(),
+         fitness_rank_descending.data() + fitness_rank_descending.size(),
+         [&](Index i, Index j){return cumulative_fitness[i]<cumulative_fitness[j];});
 
     const Tensor<type, 0> total_fitness = population_fitness.sum();
 
-    type pointer;
+    Index selection_count = 0;
 
     // Elitism selection
 
     population_selection.setConstant(false);
 
+
     for(Index i = 0; i < elitism_size ; i++)
     {
         population_selection[fitness_rank_descending[i]] = true;
 
-        selected_individuals_count++;
-    }
-
-    // Natural selection
-
-    while(selected_individuals_count < selected_individuals_number)
-    {
-        // @todo elitism
-
-        selected_index = maximal_index(population_fitness);
-
-        const Tensor<bool, 1> selected_individual = population.chip(selected_index,0);
-
-        Index count = 0;
-/*
-        for(size_t i = 0; i < individuals_number; i++)
-        {
-            count = 0;
-
-            for(Index j = 0; j < selected_population_row.size(); j++)
-            {
-                if(population_vector_copy[i][static_cast<size_t>(j)] == selected_population_row(j)) count++;
-            }
-        }
-
-        if(count < selected_population_row.size())
-        {
-            selected_individuals[selected_index] = true;
-
-            population_vector_copy.push_back(tensor_to_vector(selected_population_row));
-        }
-*/
-//        fitness_copy[selected_index] = -1;
-
-        selected_individuals_count++;
+        selection_count++;
     }
 
     // Roulette wheel
 
-    while(selected_individuals_count != selected_individuals_number)
+    while(selection_count != selected_individuals_number)
     {
-        pointer = static_cast<type>(rand()/(RAND_MAX+1.0))*total_fitness(0);
+        const type pointer = static_cast<type>(rand()/(RAND_MAX+1.0))*total_fitness(0);
 
-        for(Index k = 0; k < individuals_number; k++)
+        // Perform selection
+
+        if(pointer < cumulative_fitness[0])
         {
-            if(k == 0 && pointer < cumulative_fitness[0])
+           if(!population_selection[0])
+           {
+              population_selection[0] = true;
+              selection_count++;
+           }
+        }
+        else
+        {
+            for(Index i = 1; i < individuals_number; i++)
             {
-                selected_index = k;
-
-                k = cumulative_fitness.size();
-            }
-            else if(pointer < cumulative_fitness[k] && pointer >= cumulative_fitness[k-1])
-            {
-                selected_index = k;
-
-                k = cumulative_fitness.size();
+               if(pointer < cumulative_fitness[i] && pointer >= cumulative_fitness[i-1])
+               {
+                  if(!population_selection[i])
+                  {
+                     population_selection[i] = true;
+                     selection_count++;
+                  }
+               }
             }
         }
     }
-
-
-/*
-    // Set selection vector to false
-
-    const Vector<size_t> elite_individuals = fitness.calculate_maximal_indices(elitism_size);
-
-    for(size_t i = 0; i < elitism_size; i++)
-    {
-        const size_t elite_individual_index = elite_individuals[i];
-
-        selection[elite_individual_index] = true;
-    }
-
-    const size_t selection_target = population_size/2 - elitism_size;
-
-    if(selection_target <= 0)
-    {
-        return;
-    }
-
-    // Cumulative fitness vector
-
-    const Vector<double> cumulative_fitness = fitness.calculate_cumulative();
-
-    const double fitness_sum = fitness.calculate_sum();
-
-    // Select individuals until the desired number of selections is obtained
-
-    size_t selection_count = 0;
-
-    double pointer;
-
-    while(selection_count != selection_target)
-    {
-       // Random number between 0 and total cumulative fitness
-
-       pointer = calculate_random_uniform(0.0, fitness_sum);
-
-       // Perform selection
-
-       if(pointer < cumulative_fitness[0])
-       {
-          if(!selection[0])
-          {
-             selection[0] = true;
-             selection_count++;
-          }
-       }
-       else
-       {
-           for(size_t i = 1; i < population_size; i++)
-           {
-              if(pointer < cumulative_fitness[i] && pointer >= cumulative_fitness[i-1])
-              {
-                 if(!selection[i])
-                 {
-                    selection[i] = true;
-                    selection_count++;
-                 }
-              }
-           }
-       }
-    }
-*/
 }
 
 
@@ -758,12 +683,15 @@ void GeneticAlgorithm::perform_crossover()
 
     Tensor<bool, 2> new_population(individuals_number, genes_number);
 
-    while(offspring_count < individuals_number)
+    for(Index i = 0; i < individuals_number; i++)
     {
+        if(!population_selection(i)) continue;
+
+        parent_1_index = i;
+
         do{
-        parent_1_index = static_cast<Index>(rand())%selected_individuals_number;
-        parent_2_index = static_cast<Index>(rand())%selected_individuals_number;
-        }while(parent_1_index != parent_2_index);
+        parent_2_index = static_cast<Index>(rand())%individuals_number;
+        }while(population_selection(parent_2_index) && parent_1_index != parent_2_index);
 
         parent_1 = population.chip(parent_1_index, 0);
         parent_2 = population.chip(parent_2_index, 0);
@@ -845,9 +773,6 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
 
     InputsSelectionResults* results = new InputsSelectionResults(maximum_epochs_number);
 
-    const Index individuals_number = get_individuals_number();
-    const Index genes_number = get_genes_number();
-
     // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
@@ -855,10 +780,6 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
-
-    const Tensor<Index, 1> original_input_columns_indices = data_set_pointer->get_input_columns_indices();
-
-    Tensor<string, 1> original_input_columns_names = data_set_pointer->get_input_columns_names();
 
     // Neural network
 
@@ -906,15 +827,6 @@ InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
         time(&current_time);
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
-//        if(reserve_generation_mean)
-//            results->generation_selection_error_mean_history(epoch) = current_mean();
-
-//        if(reserve_generation_minimum_selection)
-//            results->generation_minimum_selection_error_history(epoch) = selection_errors(optimal_individual_index);
-
-//        if(reserve_generation_optimum_loss)
-//            results->generation_optimum_training_error_history(epoch) = training_errors(optimal_individual_index);
 
         // Stopping criteria
 
