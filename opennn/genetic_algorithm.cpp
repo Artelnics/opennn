@@ -1420,7 +1420,7 @@ Index GeneticAlgorithm::get_optimal_individual_index() const
 
 /// Select the inputs with best generalization properties using the genetic algorithm.
 
-GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
+InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1430,7 +1430,7 @@ GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
 
     if(display) cout << "Performing genetic inputs selection..." << endl;
 
-    GeneticAlgorithmResults* results = new GeneticAlgorithmResults();
+    InputsSelectionResults* results = new InputsSelectionResults(maximum_epochs_number);
 
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
@@ -1519,17 +1519,17 @@ GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_selection()
 
         if(reserve_generation_mean)
         {
-            push_back(results->generation_selection_error_mean_history, current_mean());
+//            push_back(results->generation_selection_error_mean_history, current_mean());
         }
 
         if(reserve_generation_minimum_selection)
         {
-            push_back(results->generation_minimum_selection_error_history, selection_errors(optimal_individual_index));
+//            push_back(results->generation_minimum_selection_error_history, selection_errors(optimal_individual_index));
         }
 
         if(reserve_generation_optimum_loss)
         {
-            push_back(results->generation_optimum_training_error_history, training_errors(optimal_individual_index));
+//            push_back(results->generation_optimum_training_error_history, training_errors(optimal_individual_index));
         }
 
         // Stopping criteria

@@ -179,8 +179,13 @@ protected:
 
 struct NeuronsSelectionResults
 {
-   explicit NeuronsSelectionResults()
+   explicit NeuronsSelectionResults(const Index& maximum_epochs_number)
    {
+        neurons_numbers.resize(maximum_epochs_number);
+
+        training_errors.resize(maximum_epochs_number);
+        selection_errors.resize(maximum_epochs_number);
+
         optimum_training_error = numeric_limits<type>::max();
         optimum_selection_error = numeric_limits<type>::max();
     }

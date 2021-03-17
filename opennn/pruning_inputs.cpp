@@ -167,7 +167,7 @@ void PruningInputs::set_maximum_selection_failures(const Index& new_maximum_loss
 
 /// Perform the inputs selection with the pruning inputs method.
 
-PruningInputsResults* PruningInputs::perform_inputs_selection()
+InputsSelectionResults* PruningInputs::perform_inputs_selection()
 {
 
 #ifdef __OPENNN_DEBUG__
@@ -176,14 +176,9 @@ PruningInputsResults* PruningInputs::perform_inputs_selection()
 
 #endif
 
-    PruningInputsResults* results = new PruningInputsResults();
+    InputsSelectionResults* results = new InputsSelectionResults(maximum_epochs_number);
 
-    if(display)
-    {
-        cout << "Performing pruning inputs selection..." << endl;
-        cout << endl;
-        cout << "Calculating correlations..." << endl;
-    }
+    if(display) cout << "Performing pruning inputs selection..." << endl;
 
     // Loss index
 
@@ -222,7 +217,6 @@ PruningInputsResults* PruningInputs::perform_inputs_selection()
 //    const Tensor<ScalingLayer::ScalingMethod, 1> original_scaling_methods = neural_network_pointer->get_scaling_layer_pointer()->get_scaling_methods();
 
     // Optimization algorithm
-
 
     Index selection_failures = 0;
 
@@ -285,18 +279,13 @@ PruningInputsResults* PruningInputs::perform_inputs_selection()
             }
         }
 
-        if(results->optimum_selection_error >= previus_selection_error)
-        {
-            selection_failures++;
-        }
+        if(results->optimum_selection_error >= previus_selection_error) selection_failures++;
 
         previus_selection_error = results->optimum_selection_error;
 
-        if(reserve_training_errors)
-            push_back(results->training_errors, training_results.final_training_error);
+        if(reserve_training_errors)results->training_errors(epoch) = training_results.final_training_error;
 
-        if(reserve_selection_errors)
-            push_back(results->selection_errors, training_results.final_selection_error);
+        if(reserve_selection_errors) results->selection_errors(epoch) = training_results.final_selection_error;
 
         time(&current_time);
 
