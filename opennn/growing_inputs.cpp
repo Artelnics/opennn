@@ -207,7 +207,7 @@ InputsSelectionResults* GrowingInputs::perform_inputs_selection()
 
     sort(correlations_rank_descending.data(),
          correlations_rank_descending.data() + input_columns.size(),
-         [&](Index i,Index j){return total_correlations[i]<total_correlations[j];} );
+         [&](Index i, Index j){return total_correlations[i]<total_correlations[j];});
 
     // Neural network
 

@@ -151,6 +151,9 @@ private:
 
     // Population stuff
 
+    Tensor<Index, 1> original_input_columns_indices;
+    Tensor<Index, 1> original_target_columns_indices;
+
     /// Population matrix.
 
     Tensor<bool, 2> population;

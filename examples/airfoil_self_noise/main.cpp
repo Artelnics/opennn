@@ -29,7 +29,7 @@ int main(void)
     try
     {
         cout << "OpenNN. Airfoil Self-Noise Example." << endl;
-/*
+
         srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
@@ -75,20 +75,22 @@ int main(void)
         unscaling_layer_pointer->set_descriptives(target_descriptives);
         unscaling_layer_pointer->set_unscaling_methods(scaling_target_methods);
 
-        // Training strategy object
+        // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
+        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+
         training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::L2);
 
         AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
-
         adam->set_maximum_epochs_number(10000);
         adam->set_display_period(1000);
 
-        const OptimizationAlgorithmResults optimization_algorithm_results = training_strategy.perform_training();
+        const TrainingResults training_results = training_strategy.perform_training();
 
+        cout << "Bye!" << endl;
+/*
         data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
         data_set.unscale_target_variables(scaling_target_methods, target_descriptives);
 
@@ -110,7 +112,7 @@ int main(void)
 
         training_strategy.save("../data/training_strategy.xml");
 
-        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
+        training_results.save("../data/training_results.dat");
 
         linear_regression_analysis.save("../data/linear_regression_analysis.dat");
 */
