@@ -358,40 +358,6 @@ void InputsSelection::set_minimum_correlation(const type& new_minimum_correlatio
 }
 
 
-void InputsSelection::push_back(Tensor<type, 1>& tensor, const type& value) const
-{
-    const Index size = tensor.size();
-
-    Tensor<type, 1> new_tensor(size+1);
-
-    for(Index i = 0; i < size; i++)
-    {
-        new_tensor(i) = tensor(i);
-    }
-
-    new_tensor(size) = value;
-
-    tensor = new_tensor;
-}
-
-
-void InputsSelection::push_back(Tensor<Index, 1>& tensor, const Index& value) const
-{
-    const Index size = tensor.size();
-
-    Tensor<Index, 1> new_tensor(size+1);
-
-    for(Index i = 0; i < size; i++)
-    {
-        new_tensor(i) = tensor(i);
-    }
-
-    new_tensor(size) = value;
-
-    tensor = new_tensor;
-}
-
-
 /// Return a string with the stopping condition of the training depending on the training method.
 /// @param results Results of the perform_training method.
 

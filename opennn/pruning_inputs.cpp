@@ -229,28 +229,15 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
     time(&beginning_time);
 
-    bool end_algorithm = false;
+    bool stop = false;
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
-        Index column_index;
-        string column_name;
-
         if(epoch > 0)
         {
-            column_index = correlations_rank_ascending[epoch-1];
+            data_set_pointer->set_column_use(correlations_rank_ascending[epoch-1], DataSet::UnusedVariable);
 
-            column_name = columns_names[column_index];
-
-            data_set_pointer->set_column_use(column_name, DataSet::UnusedVariable);
-
-            //current_input_columns = delete_result(column_index, current_input_columns);
-
-            input_variables_number = data_set_pointer->get_input_variables_number();
-
-            //data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).constant(input_variables_number));
-
-            neural_network_pointer->set_inputs_number(input_variables_number);
+            neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
         }
 
         // Trial
@@ -263,12 +250,12 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
             if(training_results.final_selection_error < results->optimum_selection_error)
             {
+                results->optimal_inputs = data_set_pointer->get_input_columns_binary();
+
                 results->optimal_parameters = training_results.final_parameters;
 
                 results->optimum_training_error = training_results.final_training_error;
                 results->optimum_selection_error = training_results.final_selection_error;
-
-                results->optimal_input_columns = current_input_columns;
             }
 
             if(display)
@@ -295,7 +282,7 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
         if(elapsed_time >= maximum_time)
         {
-            end_algorithm = true;
+            stop = true;
 
             if(display) cout << "Maximum time reached." << endl;
 
@@ -303,7 +290,7 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
         }
         else if(results->optimum_selection_error <= selection_error_goal)
         {
-            end_algorithm = true;
+            stop = true;
 
             if(display) cout << "Selection loss reached." << endl;
 
@@ -311,7 +298,7 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
         }
         else if(epoch >= maximum_epochs_number)
         {
-            end_algorithm = true;
+            stop = true;
 
             if(display) cout << "Maximum number of epochs reached." << endl;
 
@@ -319,7 +306,7 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
         }
         else if(selection_failures >= maximum_selection_failures)
         {
-            end_algorithm = true;
+            stop = true;
 
             if(display) cout << "Maximum selection failures("<<selection_failures<<") reached." << endl;
 
@@ -328,7 +315,7 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
         else if(current_input_columns.size() <= minimum_inputs_number
              || current_input_columns.size() == 1)
         {
-            end_algorithm = true;
+            stop = true;
 
             if(display) cout << "Minimum inputs (" << minimum_inputs_number << ") reached." << endl;
 
@@ -339,8 +326,8 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
         {
             cout << "Epoch: " << epoch << endl;
 
-            if(end_algorithm == false && epoch != 0)
-                cout << "Pruning input: " << data_set_pointer->get_variable_name(column_index) << endl;
+//            if(stop == false && epoch != 0)
+//                cout << "Pruning input: " << data_set_pointer->get_variable_name(column_index) << endl;
 
             cout << "Number of inputs: " << current_input_columns.size() << endl;
             cout << "Current inputs: " << endl <<  data_set_pointer->get_input_variables_names().cast<string>() << endl << endl;
@@ -353,7 +340,7 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
             cout << endl;
         }
 
-        if(end_algorithm == true)
+        if(stop == true)
         {
             // Save results
 
@@ -364,64 +351,9 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
         }
     }
 
-    // Set data set stuff
-
-    data_set_pointer->set_input_target_columns(results->optimal_input_columns, data_set_pointer->get_target_columns_indices());
-
-    input_variables_number = data_set_pointer->get_input_variables_names().size();
-/*
-    // Set neural network stuff
-
-    neural_network_pointer->set_inputs_number(optimal_input_variables_number);
-
-    neural_network_pointer->set_parameters(results->optimal_parameters);
-
-    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
-
-    Tensor<Descriptives, 1> new_input_descriptives(optimal_input_variables_number);
-    Tensor<ScalingLayer::ScalingMethod, 1> new_scaling_methods(optimal_input_variables_number);
-
-    Index descriptive_index = 0;
-    Index unused = 0;
-
-    for(Index i = 0; i < original_input_columns_indices.size(); i++)
-    {
-        const Index current_column_index = original_input_columns_indices(i);
-
-        if(data_set_pointer->get_column_use(current_column_index) == DataSet::Input)
-        {
-            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical)
-            {
-                new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
-                new_scaling_methods(descriptive_index) = original_scaling_methods(descriptive_index + unused);
-                descriptive_index++;
-            }
-            else
-            {
-                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++)
-                {
-                    new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
-                    new_scaling_methods(descriptive_index) = original_scaling_methods(descriptive_index + unused);
-                    descriptive_index++;
-                }
-            }
-        }
-        else if(data_set_pointer->get_column_use(current_column_index) == DataSet::UnusedVariable)
-        {
-            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical) unused++;
-            else
-            {
-                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++) unused++;
-            }
-        }
-    }
-
-    neural_network_pointer->get_scaling_layer_pointer()->set_descriptives(new_input_descriptives);
-    neural_network_pointer->get_scaling_layer_pointer()->set_scaling_methods(new_scaling_methods);
-
     if(display)
     {
-        cout << "Optimal number of inputs: " << optimal_input_variables_number << endl;
+//        cout << "Optimal number of inputs: " << optimal_input_variables_number << endl;
         cout << "Optimal inputs: " << endl << data_set_pointer->get_input_variables_names().cast<string>() << endl << endl;
 
         cout << "Optimum training error: " << results->optimum_training_error << endl;
@@ -429,7 +361,19 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
-*/
+
+    // Set data set stuff
+
+    data_set_pointer->set_input_columns_binary(results->optimal_inputs);
+
+    // Set neural network stuff
+
+    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+
+    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+
+    neural_network_pointer->set_parameters(results->optimal_parameters);
+
     return results;
 }
 

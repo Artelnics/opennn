@@ -213,10 +213,6 @@ InputsSelectionResults* GrowingInputs::perform_inputs_selection()
 
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_neural_network_pointer();
 
-    Tensor<Index, 1> current_input_columns;
-
-    Index input_variables_number;
-
     // Optimization algorithm
 
     Index selection_failures = 0;
@@ -230,19 +226,13 @@ InputsSelectionResults* GrowingInputs::perform_inputs_selection()
 
     time(&beginning_time);
 
-    bool end_algorithm = false;
+    bool stop = false;
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
-        const Index column_index = correlations_rank_descending[epoch];
+        data_set_pointer->set_column_use(correlations_rank_descending[epoch], DataSet::Input);
 
-        const string column_name = columns_names[column_index];
-
-        data_set_pointer->set_column_use(column_name, DataSet::Input);
-
-        input_variables_number = data_set_pointer->get_input_variables_number();
-
-        neural_network_pointer->set_inputs_number(input_variables_number);
+        neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
         // Trial
 
@@ -289,7 +279,7 @@ InputsSelectionResults* GrowingInputs::perform_inputs_selection()
 
         if(elapsed_time >= maximum_time)
         {
-            end_algorithm = true;
+            stop = true;
 
             if(display) cout << "Maximum time reached." << endl;
 
@@ -297,7 +287,7 @@ InputsSelectionResults* GrowingInputs::perform_inputs_selection()
         }
         else if(training_results.final_selection_error <= selection_error_goal)
         {
-            end_algorithm = true;
+            stop = true;
 
             if(display) cout << "Selection loss reached." << endl;
 
@@ -305,7 +295,7 @@ InputsSelectionResults* GrowingInputs::perform_inputs_selection()
         }
         else if(epoch >= maximum_epochs_number)
         {
-            end_algorithm = true;
+            stop = true;
 
             if(display) cout << "Maximum number of epochs reached." << endl;
 
@@ -313,17 +303,16 @@ InputsSelectionResults* GrowingInputs::perform_inputs_selection()
         }
         else if(selection_failures >= maximum_selection_failures)
         {
-            end_algorithm = true;
+            stop = true;
 
             if(display) cout << "Maximum selection failures ("<<selection_failures<<") reached." << endl;
 
             results->stopping_condition = InputsSelection::MaximumSelectionFailures;
         }
 
-        else if(current_input_columns.size() > maximum_inputs_number
-             || current_input_columns.size() >= input_columns_number)
+        else if(data_set_pointer->get_input_columns_number() > maximum_inputs_number)
         {
-            end_algorithm = true;
+            stop = true;
 
             if(display) cout << "Maximum inputs ("<< maximum_inputs_number <<") reached." << endl;
 
@@ -334,7 +323,8 @@ InputsSelectionResults* GrowingInputs::perform_inputs_selection()
         {
             cout << "Epoch: " << epoch << endl;
 
-            if(end_algorithm == false) cout << "Add input: " << data_set_pointer->get_variable_name(column_index) << endl;
+//            if(stop == false)
+//                cout << "Add input: " << data_set_pointer->get_variable_name(column_index) << endl;
 
             cout << "Current inputs: " <<  data_set_pointer->get_input_variables_names().cast<string>() << endl;
             cout << "Number of inputs: " << data_set_pointer->get_input_variables_number() << endl;
@@ -347,7 +337,7 @@ InputsSelectionResults* GrowingInputs::perform_inputs_selection()
             cout << endl;
         }
 
-        if(end_algorithm == true)
+        if(stop == true)
         {
             results->elapsed_time = write_elapsed_time(elapsed_time);
 
@@ -358,6 +348,8 @@ InputsSelectionResults* GrowingInputs::perform_inputs_selection()
     // Set data set stuff
 
     data_set_pointer->set_input_columns_binary(results->optimal_inputs);
+
+    // Set neural network stuff
 
     neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 

@@ -543,7 +543,7 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 
 type ResponseOptimization::calculate_random_uniform(const type& minimum, const type& maximum) const
 {
-    const type random = static_cast<type>(rand()/(RAND_MAX + 1.0));
+    const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
     const type random_uniform = minimum + (maximum - minimum) * random;
 
