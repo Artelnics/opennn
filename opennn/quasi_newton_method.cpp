@@ -641,12 +641,12 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(const LossIndexBackPropag
 
 
 
-// \brief QuasiNewtonMethod::update_epoch
+// \brief QuasiNewtonMethod::update_parameters
 // \param batch
 // \param forward_propagation
 // \param back_propagation
 // \param optimization_data
-void QuasiNewtonMethod::update_epoch(
+void QuasiNewtonMethod::update_parameters(
         const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,
@@ -885,7 +885,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Optimization data
 
-        update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         #ifdef __OPENNN_DEBUG__
 

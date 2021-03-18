@@ -1017,7 +1017,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Optimization algorithm
 
-        update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         // Training history
 
@@ -1157,7 +1157,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(display)
         if(epoch == 1
-        ||((epoch) % display_period) == 0)
+        || epoch%display_period == 0)
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Training error: " << training_back_propagation.error << "\n"
@@ -1843,12 +1843,13 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-// \brief ConjugateGradient::update_epoch
-// \param batch
-// \param forward_propagation
-// \param back_propagation
-// \param optimization_data
-void ConjugateGradient::update_epoch(
+/// \brief ConjugateGradient::update_parameters
+/// \param batch
+/// \param forward_propagation
+/// \param back_propagation
+/// \param optimization_data
+
+void ConjugateGradient::update_parameters(
         const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,

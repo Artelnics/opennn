@@ -127,7 +127,7 @@ public:
 
    // Training methods
 
-   void update_iteration(const LossIndexBackPropagation& back_propagation,
+   void update_parameters(const LossIndexBackPropagation& back_propagation,
                          StochasticGradientDescentData& optimization_data);
 
    TrainingResults perform_training();

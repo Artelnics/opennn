@@ -153,7 +153,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_epoch(
+   void update_parameters(
            const DataSetBatch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
            LossIndexBackPropagation& back_propagation,

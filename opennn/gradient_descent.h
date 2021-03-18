@@ -118,7 +118,7 @@ public:
 
    void calculate_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
-   void update_epoch(
+   void update_parameters(
            const DataSetBatch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
            LossIndexBackPropagation& back_propagation,

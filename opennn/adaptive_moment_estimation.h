@@ -134,7 +134,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_iteration(const LossIndexBackPropagation& ,
+   void update_parameters(const LossIndexBackPropagation& ,
                          AdaptiveMomentEstimationData& );
 
 private:
@@ -222,11 +222,11 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
     explicit AdaptiveMomentEstimationData();
 
-    explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer);
+    explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation*);
 
     virtual ~AdaptiveMomentEstimationData();
 
-    void set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer);
+    void set(AdaptiveMomentEstimation*);
 
     void print() const;
 

@@ -281,7 +281,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 {
     TrainingResults results;
 
-//    check();
+    check();
 
     // Start training
 
@@ -305,8 +305,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    training_samples_number < batch_samples_number ? batch_size_training = training_samples_number : batch_size_training = batch_samples_number;
-    selection_samples_number < batch_samples_number && selection_samples_number != 0 ? batch_size_selection = selection_samples_number : batch_size_selection = batch_samples_number;
+    training_samples_number < batch_samples_number
+            ? batch_size_training = training_samples_number
+            : batch_size_training = batch_samples_number;
+
+    selection_samples_number < batch_samples_number && selection_samples_number != 0
+            ? batch_size_selection = selection_samples_number
+            : batch_size_selection = batch_samples_number;
 
     DataSetBatch batch_training(batch_size_training, data_set_pointer);
     DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
@@ -413,9 +418,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Gradient
 
-            update_iteration(training_back_propagation, optimization_data);
-
-            neural_network_pointer->set_parameters(optimization_data.parameters);
+            update_parameters(training_back_propagation, optimization_data);
         }
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
@@ -486,7 +489,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.stopping_condition = MaximumEpochsNumber;
         }
-
         else if(elapsed_time >= maximum_time)
         {
             if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
@@ -495,7 +497,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.stopping_condition = MaximumTime;
         }
-
         else if(training_loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
@@ -504,7 +505,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.stopping_condition  = LossGoal;
         }
-
         else if(gradient_norm <= gradient_norm_goal)
         {
             if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached.\n";
@@ -513,7 +513,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.stopping_condition = GradientNormGoal;
         }
-
         else if(selection_error_increases >= maximum_selection_error_increases)
         {
             if(display)
@@ -995,9 +994,9 @@ Index AdaptiveMomentEstimation::get_batch_samples_number() const
 
 /// Update iteration parameters
 
-void AdaptiveMomentEstimation::update_iteration(const LossIndexBackPropagation& back_propagation,
+void AdaptiveMomentEstimation::update_parameters(const LossIndexBackPropagation& back_propagation,
                               AdaptiveMomentEstimationData& optimization_data)
-{
+{  
     const type learning_rate =
             initial_learning_rate*
             sqrt(1 - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
@@ -1011,11 +1010,14 @@ void AdaptiveMomentEstimation::update_iteration(const LossIndexBackPropagation& 
             = optimization_data.square_gradient_exponential_decay*beta_2
             + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
 
+    optimization_data.parameters.device(*thread_pool_device) -=
+            optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);          
+
     // Update parameters
 
-    optimization_data.parameters.device(*thread_pool_device) -=
-            optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
+    NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
 
+    neural_network_pointer->set_parameters(optimization_data.parameters);
 }
 
 
