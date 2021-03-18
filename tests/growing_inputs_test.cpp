@@ -70,7 +70,7 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 
 //    InputsSelectionResults* gir;
 
-//    // Test
+    // Test
 
 //    ds.generate_inputs_selection_data(30,3);
 
@@ -100,7 +100,7 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 //    gi.delete_parameters_history();
 //    gi.delete_loss_history();
 
-//    // Test
+    // Test
 
 //    ds.generate_sum_data(20,3);
 

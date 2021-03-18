@@ -404,11 +404,12 @@ void ModelSelection::check() const
 
 /// Perform the order selection, returns a structure with the results of the order selection.
 /// It also set the neural network of the training strategy pointer with the optimum parameters.
+/// @todo
 
 ModelSelectionResults ModelSelection::perform_neurons_selection()
 {
     ModelSelectionResults results;
-/*
+
     switch(neurons_selection_method)
     {
     case NO_NEURONS_SELECTION:
@@ -423,12 +424,12 @@ ModelSelectionResults ModelSelection::perform_neurons_selection()
 
         growing_neurons.set_display(display);
 
-        results.growing_neurons_results_pointer = growing_neurons.perform_neurons_selection();
+//        results.neurons_selection_results_pointer = growing_neurons.perform_neurons_selection();
 
         break;
     }
     }
-*/
+
     return results;
 }
 
@@ -483,17 +484,6 @@ ModelSelectionResults ModelSelection::perform_inputs_selection()
     return results;
 }
 
-
-/// Perform inputs selection and order selection.
-/// @todo
-/*
-ModelSelectionResults ModelSelection::perform_model_selection()
-{
-    perform_inputs_selection();
-
-    return perform_neurons_selection();
-}
-*/
 
 /// Serializes the model selection object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.

@@ -97,7 +97,7 @@ type linear_correlation(const ThreadPoolDevice* thread_pool_device,
 }
 
 
-/// Calculates the Rank-Order correlation coefficient(Spearman method) between two vectors.
+/// Calculates the Rank-Order correlation coefficient (Spearman method) between two vectors.
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with the x vector.
 

@@ -40,7 +40,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs() // @todo
 //    Tensor<type, 2> inputs;
 //    Tensor<type, 2> outputs;
 
-//    // Test
+    // Test
 
 //    inputs.resize(({6,6,6,6}));
 
@@ -55,7 +55,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs() // @todo
 //                outputs.dimension(2) == 6 &&
 //                outputs.dimension(3) == 6, LOG);
 
-//    // Test
+    // Test
 
 //    inputs.resize(({10,3,20,20}));
 
@@ -70,7 +70,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs() // @todo
 //                outputs.dimension(2) == 19 &&
 //                outputs.dimension(3) == 19, LOG);
 
-//    // Test
+    // Test
 
 //    inputs.resize(({1,1,4,4}));
 //    inputs(0,0,0,0) = 1.0;
@@ -110,7 +110,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs() // @todo
 //                outputs(0,0,2,1) == 33.0 &&
 //                outputs(0,0,2,2) == 27.0, LOG);
 
-//    // Test
+    // Test
 
 //    inputs.resize(({1,1,4,4}));
 //    inputs(0,0,0,0) = 1.0;
@@ -156,7 +156,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs() // @todo
 //    Tensor<type, 2> inputs;
 //    Tensor<type, 2> outputs;
 
-//    // Test
+    // Test
 
 //    inputs.resize(({6,6,6,6}));
 
@@ -171,7 +171,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs() // @todo
 //                outputs.dimension(2) == 6 &&
 //                outputs.dimension(3) == 6, LOG);
 
-//    // Test
+    // Test
 
 //    inputs.resize(({10,3,20,20}));
 
@@ -186,7 +186,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs() // @todo
 //                outputs.dimension(2) == 19 &&
 //                outputs.dimension(3) == 19, LOG);
 
-//    // Test
+    // Test
 
 //    inputs.resize(({1,1,4,4}));
 //    inputs(0,0,0,0) = 1.0;
@@ -226,7 +226,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs() // @todo
 //                outputs(0,0,2,1) == 81.0 &&
 //                outputs(0,0,2,2) == 64.0, LOG);
 
-//    // Test
+    // Test
 
 //    inputs.resize(({1,1,4,4}));
 //    inputs(0,0,0,0) = 1.0;
@@ -272,7 +272,7 @@ void PoolingLayerTest::run_test_case() // @todo
     test_constructor();
     test_destructor();
 
-//    // Outputs
+    // Outputs
 
     test_calculate_average_pooling_outputs();
     test_calculate_max_pooling_outputs();

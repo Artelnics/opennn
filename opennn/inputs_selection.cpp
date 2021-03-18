@@ -367,42 +367,10 @@ string InputsSelection::write_stopping_condition(const TrainingResults& results)
 }
 
 
-/// Delete the history of the selection error values.
-
-void InputsSelection::delete_selection_history()
-{
-    /*
-        selection_error_history.set();
-    */
-}
-
-
-/// Delete the history of the loss values.
-
-void InputsSelection::delete_loss_history()
-{
-    /*
-        training_error_history.set();
-    */
-}
-
-
-/// Delete the history of the parameters of the trained neural networks.
-
-void InputsSelection::delete_parameters_history()
-{
-    /*
-        parameters_history.set();
-    */
-}
-
-
 /// Checks that the different pointers needed for performing the inputs selection are not nullptr.
 
 void InputsSelection::check() const
 {
-    // Optimization algorithm
-
     ostringstream buffer;
 
     if(!training_strategy_pointer)

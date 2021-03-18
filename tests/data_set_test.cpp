@@ -2761,7 +2761,7 @@ void DataSetTest::test_scrub_missing_values() // @todo
 
 //    string data_string;
 
-//    // Test
+    // Test
 
 //    data_set.set_separator(' ');
 //    data_set.set_missing_values_label("NaN");
@@ -2783,7 +2783,7 @@ void DataSetTest::test_scrub_missing_values() // @todo
 
 //    assert_true(samples.get_use(1) == Samples::Unused, LOG);
 
-//    // Test
+    // Test
 
 //    data_set.set_separator(' ');
 //    data_set.set_missing_values_label("NaN");

@@ -620,7 +620,7 @@ void StatisticsTest::test_calculate_median()     //<--- Zero  //<--- Missing val
 {
     cout << "test_calculate_median\n";
 
-//    // Test 0
+    // Test 0
 //    Tensor<type, 1> vector_0;
 //    assert_true(median(vector_0) == 0, LOG);
 

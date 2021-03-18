@@ -805,10 +805,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     // Optimization algorithm
 
-    Tensor<type, 1> minimal_selection_parameters;
-
-    type minimum_selection_error = numeric_limits<type>::max();
-
     bool stop_training = false;
 
     Index selection_failures = 0;
@@ -862,11 +858,11 @@ TrainingResults QuasiNewtonMethod::perform_training()
             {
                 selection_failures++;
             }
-            else if(selection_back_propagation.error < minimum_selection_error)
+            else if(selection_back_propagation.error < results.optimum_selection_error)
             {
-                minimum_selection_error = selection_back_propagation.error;
+                results.optimum_selection_error = selection_back_propagation.error;
 
-                minimal_selection_parameters = training_back_propagation.parameters;
+                results.optimal_parameters = training_back_propagation.parameters;
             }
 
             if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
@@ -1035,7 +1031,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         if(stop_training) break;
     }
 
-    if(choose_best_selection) neural_network_pointer->set_parameters(minimal_selection_parameters);
+    if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
     return results;
 }

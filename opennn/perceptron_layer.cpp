@@ -859,7 +859,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
             throw logic_error(buffer.str());
         }
 
-        Index step = next_layer_neurons_number*next_layer_neurons_number;
+        const Index step = next_layer_neurons_number*next_layer_neurons_number;
 
         next_back_propagation->biases_derivatives.setZero();
 
@@ -970,24 +970,6 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
          }
     }
 
-//    ostringstream buffer;
-
-//    for(Index j = 0; j < outputs_names.size(); j++)
-//    {
-
-//      Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
-
-//               buffer << outputs_names[j] << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
-
-//               for(Index i = 0; i < inputs_names.size() - 1; i++)
-//               {
-
-//                   buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ")+";
-//               }
-
-//               buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
-//    }
-
     return string();
 }
 
@@ -1018,7 +1000,6 @@ string PerceptronLayer::write_hidden_layer_expression(const Tensor<string, 1> & 
 
 string PerceptronLayer::write_output_layer_expression(const Tensor<string, 1> & inputs_names, const Tensor<string, 1> & outputs_names) const
 {
-
     ostringstream buffer;
 
     for(Index j = 0; j < outputs_names.size(); j++)

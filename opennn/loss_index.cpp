@@ -562,23 +562,23 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 /// This method calculates the second order loss.
 /// It is used for optimization of parameters during training.
 /// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
+/// @todo Update method.
 
 void LossIndex::back_propagate(const DataSetBatch& batch,
                                NeuralNetworkForwardPropagation& forward_propagation,
                                LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-/*
     // First Order
 
     calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
 
-    calculate_error_terms_output_jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
+//    calculate_error_terms_output_jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
 
-    calculate_layers_delta(batch, forward_propagation, back_propagation);
+//    calculate_layers_delta(batch, forward_propagation, back_propagation);
 
     // Second Order
 
-    calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
+//    calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
 
     calculate_gradient(batch, loss_index_back_propagation_lm);
 
@@ -592,21 +592,18 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        const type regularization = calculate_regularization(back_propagation.parameters);
+//        const type regularization = calculate_regularization(back_propagation.parameters);
 
-        loss_index_back_propagation_lm.loss += regularization_weight*regularization;
+//        loss_index_back_propagation_lm.loss += regularization_weight*regularization;
 
-        calculate_regularization_gradient(back_propagation.parameters, back_propagation.regularization_gradient);
+//        calculate_regularization_gradient(back_propagation.parameters, back_propagation.regularization_gradient);
 
-        loss_index_back_propagation_lm.gradient.device(*thread_pool_device) += regularization_weight*back_propagation.regularization_gradient;
-
-        /// @todo
+//        loss_index_back_propagation_lm.gradient.device(*thread_pool_device) += regularization_weight*back_propagation.regularization_gradient;
 
 //        calculate_regularization_hessian(back_propagation.parameters, loss_index_back_propagation_lm.regularization_hessian);
 
 //        loss_index_back_propagation_lm.hessian += regularization_weight*calculate_regularization_hessian(back_propagation.parameters);
     }
-*/
 }
 
 

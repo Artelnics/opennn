@@ -580,10 +580,6 @@ TrainingResults GradientDescent::perform_training()
 
     type parameters_increment_norm = 0;
 
-    type minimum_selection_error = numeric_limits<type>::max();
-
-    Tensor<type, 1> minimal_selection_parameters;
-
     results.resize_training_history(maximum_epochs_number+1);
 
     if(has_selection) results.resize_selection_history(maximum_epochs_number+1);
@@ -627,16 +623,16 @@ TrainingResults GradientDescent::perform_training()
 
             if(epoch == 1)
             {
-                minimum_selection_error = selection_back_propagation.error;
+                results.optimum_selection_error = selection_back_propagation.error;
             }
             else if(selection_back_propagation.error > old_selection_error)
             {
                 selection_error_increases++;
             }
-            else if(selection_back_propagation.error <= minimum_selection_error)
+            else if(selection_back_propagation.error <= results.optimum_selection_error)
             {
-                minimum_selection_error = selection_back_propagation.error;
-                minimal_selection_parameters = training_back_propagation.parameters;
+                results.optimum_selection_error = selection_back_propagation.error;
+                results.optimal_parameters = training_back_propagation.parameters;
             }
         }
 
@@ -790,7 +786,7 @@ TrainingResults GradientDescent::perform_training()
         if(stop_training) break;
     }
 
-    if(choose_best_selection) neural_network_pointer->set_parameters(minimal_selection_parameters);
+    if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
     return results;
 }

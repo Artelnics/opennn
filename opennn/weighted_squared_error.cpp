@@ -202,37 +202,38 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 }
 
 
+/// @todo Update this method
+
 void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
                      LossIndexBackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-/*
-    const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1]->activations, batch.targets_2d);
+//    const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1]->activations, batch.targets_2d);
 
-    const Tensor<bool, 2> if_sentence = y == y.constant(1);
-    const Tensor<bool, 2> else_sentence = y == y.constant(0);
+//    const Tensor<bool, 2> if_sentence = y == y.constant(1);
+//    const Tensor<bool, 2> else_sentence = y == y.constant(0);
 
-    Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+//    Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
 
-    Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+//    Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
 
-    Tensor<type, 2> f_3(x.dimension(0), x.dimension(1));
+//    Tensor<type, 2> f_3(x.dimension(0), x.dimension(1));
 
-    f_1 = (x - y).square()*positives_weight;
+//    f_1 = (x - y).square()*positives_weight;
 
-    f_2 = (x - y).square()*negatives_weight;
+//    f_2 = (x - y).square()*negatives_weight;
 
-    f_3 = x.constant(0);
+//    f_3 = x.constant(0);
 
-    const Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
+//    const Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
     const Index batch_samples_number = batch.samples_number;
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    back_propagation.error = error/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
-*/
+//    back_propagation.error
+//    = error/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 }
 
 

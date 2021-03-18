@@ -360,7 +360,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 //    GeneticAlgorithmResults* ga_results;
 //    GeneticAlgorithmResults* ga1_results;
 
-//    // Test
+    // Test
 
 //    for(Index i = 0; i < 20; i++)
 //    {
@@ -399,7 +399,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 //    ga.delete_parameters_history();
 //    ga.delete_loss_history();
 
-//    // Test
+    // Test
 
 //    Index j = -10;
 

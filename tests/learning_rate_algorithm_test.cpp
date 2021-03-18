@@ -229,7 +229,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 
 //    LearningRateAlgorithm::Triplet triplet;
 
-//    // Test
+    // Test
 
 //    sum_squared_error.set_regularization_method(LossIndex::L2);
 
@@ -246,7 +246,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 //    assert_true(triplet.A.second >= triplet.U.second, LOG);
 //    assert_true(triplet.U.second <= triplet.B.second, LOG);
 
-//    // Test
+    // Test
 
 //    neural_network.set_parameters_constant(0.0);
 
@@ -256,7 +256,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 
 //    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-//    // Test
+    // Test
 
 //    neural_network.set_parameters_constant(1.0);
 
@@ -266,7 +266,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 
 //    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-//    // Test
+    // Test
 
 //    data_set.set(1, 1, 1);
 //    data_set.set_data_random();
@@ -291,7 +291,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 //    assert_true(triplet.A.second >= triplet.U.second, LOG);
 //    assert_true(triplet.U.second <= triplet.B.second, LOG);
 
-//    // Test
+    // Test
 
 //    data_set.set(3, 1, 1);
 //    data_set.set_data_random();

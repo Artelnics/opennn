@@ -429,7 +429,7 @@ void CorrelationsTest::test_logarithmic_correlation()
     NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
     ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
-//    // Perfect case
+    // Perfect case
 
     const Tensor<type, 1> vector1;//({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
     const Tensor<type, 1> vector2;//({0, 0.30103, 0.477121, 0.60206, 0.69897, 0.778151, 0.845098, 0.90309, 0.954243, 1});

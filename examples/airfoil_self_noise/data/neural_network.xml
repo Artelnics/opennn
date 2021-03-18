@@ -52,14 +52,14 @@
          <InputsNumber>5</InputsNumber>
          <NeuronsNumber>10</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>1.04968 0.0263378 0.118125 1.20388 -0.797303 0.0370811 -0.289727 -0.955247 -0.442525 1.07145 -0.221784 -1.2052 -0.0178208 0.287355 -0.421388 0.775869 0.682769 -0.6351 0.1102 0.560088 0.639455 0.089273 -0.0776153 -0.270425 1.24296 -0.0886982 -0.393032 1.33663 0.0362818 0.620029 0.638629 0.104066 0.0516957 0.165526 0.52234 -1.17848 -0.626559 1.07791 1.29349 0.376921 0.356786 0.426995 0.139411 -0.198907 0.982049 -0.438967 0.695116 0.0779551 -0.539903 0.951585 0.114752 -0.382426 -1.28078 -1.31191 -0.0207926 -1.35621 -1.14286 0.557652 -0.240382 -1.29246</Parameters>
+         <Parameters>-nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind)</Parameters>
       </PerceptronLayer>
       <PerceptronLayer>
          <LayerName>perceptron_layer_1</LayerName>
          <InputsNumber>10</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <ActivationFunction>Linear</ActivationFunction>
-         <Parameters>-0.0108215 1.45072 -1.58953 -1.22283 1.23892 -0.425719 1.12052 -0.820736 -0.628741 -0.71316 0.615883</Parameters>
+         <Parameters>-nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind) -nan(ind)</Parameters>
       </PerceptronLayer>
       <UnscalingLayer>
          <UnscalingNeuronsNumber>1</UnscalingNeuronsNumber>

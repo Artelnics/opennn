@@ -194,7 +194,7 @@ void SumSquaredErrorTest::test_calculate_error()
 
 //   batch_3.fill(training_samples_indices, inputs_indices, targets_indices);
 
-//    // Neural network
+    // Neural network
 
 //   neural_network.set();
 

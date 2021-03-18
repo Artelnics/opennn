@@ -1477,7 +1477,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
 
     for(Index i = 1; i < size; i++)
     {
-        if(std::find(unique_values.data(), unique_values.data()+unique_values.size(), vector(i)) == unique_values.data()+unique_values.size())
+        if(find(unique_values.data(), unique_values.data()+unique_values.size(), vector(i))
+                == unique_values.data()+unique_values.size())
         {
             unique_values_number++;
 
@@ -1585,7 +1586,6 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
 /// @param vector
 /// @param center
 /// @param bins_number
-
 
 Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const Index & bins_number)
 {
@@ -1706,8 +1706,6 @@ Histogram histogram(const Tensor<bool, 1>& v)
 
     for(Index i = 0; i < size; i++)
     {        
-//        if(isnan(v(i))) continue;
-
         for(Index j = 0; j < 2; j++)
         {
             if(static_cast<Index>(v(i)) == static_cast<Index>(minimums(j)))
@@ -1728,67 +1726,11 @@ Histogram histogram(const Tensor<bool, 1>& v)
 }
 
 
-/// This method bins the elements of the vector into a given number of equally
-/// spaced containers.
-/// It returns a vector of two vectors.
-/// The size of both subvectors is the number of bins.
-/// The first subvector contains the frequency of the bins.
-/// The second subvector contains the center of the bins.
-/// @param vector
-/// @param bins_number
-
-Histogram histogram(const Tensor<Index, 1>& vector, const Index& bins_number)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(bins_number < 1)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics Class.\n"
-               << "Histogram calculate_histogram_integers(const Tensor<Index, 1>&, "
-               "const Index&) const method.\n"
-               << "Number of bins is less than one.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-/*
-    Tensor<Index, 1> centers = vector.get_integer_elements(bins_number);
-    const Index centers_number = centers.size();
-
-    sort(centers.data(), centers.data() + centers.size(), less<Index>());
-
-    Tensor<type, 1> minimums(centers_number);
-    Tensor<type, 1> maximums(centers_number);
-    Tensor<Index, 1> frequencies(centers_number);
-
-    for(Index i = 0; i < centers_number; i++)
-    {
-      minimums(i) = centers(i);
-      maximums(i) = centers(i);
-      frequencies(i) = vector.count_equal_to(centers(i));
-    }
-
-    Histogram histogram(centers_number);
-    histogram.centers = centers.cast<type>();
-    histogram.minimums = minimums;
-    histogram.maximums = maximums;
-    histogram.frequencies = frequencies;
-
-    return histogram;
-    */
-
-    return Histogram();
-}
-
-
 /// Returns a vector containing the sum of the frequencies of the bins to which
 /// this vector belongs.
 /// @param histograms Used histograms.
 
-Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>&histograms)
+Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
 {
     const Index histograms_number = histograms.size();
 
@@ -1809,6 +1751,7 @@ Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>&histograms)
 /// Each subvector contains the frequencies and centers of that colums.
 /// @param matrix Data to calculate histograms
 /// @param bins_number Number of bins for each histogram.
+/// @todo update this method
 
 Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins_number)
 {
@@ -1825,16 +1768,14 @@ Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins
 
         histograms(i) = histogram(column, bins_number);
 
-        /*
-              if(column.is_binary())
-              {
-                  histograms(i) = histogram(column.to_bool_vector());
-              }
-              else
-              {
-                  histograms(i) = histogram(column, bins_number);
-              }
-        */
+//          if(column.is_binary())
+//          {
+//              histograms(i) = histogram(column.to_bool_vector());
+//          }
+//          else
+//          {
+//              histograms(i) = histogram(column, bins_number);
+//          }
     }
 
     return histograms;
@@ -2131,100 +2072,6 @@ type range(const Tensor<type, 1>& vector)
     return abs(max - min);
 }
 
-/*
-/// Calculates the box plots for a set of rows of each of the given columns of this matrix.
-/// @param matrix Used matrix.
-/// @param rows_indices Rows to be used for the box plot.
-/// @param columns_indices Indices of the columns for which box plots are going to be calculated.
-/// @todo remove?
-
-Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>& matrix, const Tensor<Tensor<Index, 1>, 1>& rows_indices, const Tensor<Index, 1>& columns_indices)
-{
-    const Index columns_number = columns_indices.size();
-
-#ifdef __OPENNN_DEBUG__
-
-    if(columns_number == rows_indices.size())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics class."
-               << "void box_plots(const Tensor<type, 2>&, "
-               "const Tensor<Tensor<Index, 1>, 1>&, const Tensor<Index, 1>&) const method.\n"
-               << "Size of row indices must be equal to the number of columns.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Tensor<BoxPlot, 1> box_plots(columns_number);
-
-    for(Index i = 0; i < matrix.dimension(1); i++)
-    {
-
-
-    }
-
-        Tensor<type, 1> column;
-
-         #pragma omp parallel for private(column)
-
-        for(Index i = 0; i < columns_number; i++)
-        {
-            box_plots(i).resize(5);
-
-            const Index rows_number = rows_indices(i).size();
-
-            column = matrix.get_column(columns_indices(i)).get_subvector(rows_indices(i));
-
-            sort(column.begin(), column.end(), less<type>());
-
-            // Minimum
-
-            box_plots(i)[0] = column[0];
-
-            if(rows_number % 2 == 0)
-            {
-                // First quartile
-
-                box_plots(i)[1] = (column[rows_number / 4] + column[rows_number / 4 + 1]) /static_cast<type>(2.0);
-
-                // Second quartile
-
-                box_plots(i)[2] = (column[rows_number * 2 / 4] +
-                               column[rows_number * 2 / 4 + 1]) /
-                              2.0;
-
-                // Third quartile
-
-                box_plots(i)[3] = (column[rows_number * 3 / 4] +
-                               column[rows_number * 3 / 4 + 1]) /
-                              2.0;
-            }
-            else
-            {
-                // First quartile
-
-                box_plots(i)[1] = column[rows_number / 4];
-
-                // Second quartile
-
-                box_plots(i)[2] = column[rows_number * 2 / 4];
-
-                //Third quartile
-
-                box_plots(i)[3] = column[rows_number * 3 / 4];
-            }
-
-            // Maximum
-
-            box_plots(i)[4] = column[rows_number-1];
-        }
-
-    return box_plots;
-}
-*/
 
 /// Returns the minimum, maximum, mean and standard deviation of the elements in the vector.
 /// @param vector Vector to be evaluated.
@@ -2252,27 +2099,19 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
     Descriptives descriptives;
 
     type minimum = numeric_limits<type>::max();
-    type maximum;
+    type maximum = -numeric_limits<type>::max();
 
     type sum = 0;
     type squared_sum = 0;
     Index count = 0;
 
-    maximum = -numeric_limits<type>::max();
-
     for(Index i = 0; i < size; i++)
     {
         if(!::isnan(vector(i)))
         {
-            if(vector(i) < minimum)
-            {
-                minimum = vector(i);
-            }
+            if(vector(i) < minimum) minimum = vector(i);
 
-            if(vector(i) > maximum)
-            {
-                maximum = vector(i);
-            }
+            if(vector(i) > maximum) maximum = vector(i);
 
             sum += vector(i);
             squared_sum += vector(i) *vector(i);
@@ -2400,47 +2239,6 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 }
 
 
-/*
-/// Returns a vector with the mean values of all the matrix columns.
-/// The size is equal to the number of columns in the matrix.
-/// @param matrix Matrix used.
-/// @todo to delete.
-
-Tensor<type, 1> columns_mean(const Tensor<type, 2>& matrix)
-{
-
-    const Index rows_number = matrix.dimension(0);
-
-    const Index columns_number = matrix.dimension(1);
-
-#ifdef __OPENNN_DEBUG__
-
-    if(rows_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Statistics class.\n"
-               << "Tensor<type, 1> mean(const Tensor<type, 2>&) const method.\n"
-               << "Number of rows must be greater than one.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Tensor<type, 1> columns_mean(columns_number);
-
-    for(Index i = 0; i < columns_number; i++)
-    {
-        Tensor<type, 0> mean = matrix.chip(i,1).mean();
-
-        columns_mean(i) = mean(0);
-    }
-
-    return columns_mean;
-}
-
-*/
 /// Returns a vector with the mean values of all the matrix columns.
 /// The size is equal to the number of columns in the matrix.
 /// @param matrix Matrix used.
@@ -3457,71 +3255,6 @@ type l2_norm(const Tensor<type, 1>& vector)
 
     return sqrt(square_sum);
 }
-
-
-/// Returns a vector containing the means of the subsets which correspond
-/// to each of the given integers. The matrix must have 2 columns, the first
-/// one containing the integers and the second one the corresponding values.
-
-Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
-{
-/*
-    const Index integers_number = matrix.size();
-    Tensor<type, 1> elements_uniques = matrix.get_column(0).get_unique_elements();
-    Tensor<type, 1> values = matrix.chip(1,1);
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(integers_number == 0)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: Matrix template.\n"
-              << "Tensor<type, 1> calculate_means_integers(const Tensor<type, 2>& \n"
-              << "Number of integers must be greater than 0.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-
-    const Index rows_number = matrix.dimension(0);
-
-    Tensor<type, 1> means(elements_uniques);
-
-    type sum = 0;
-    Index count = 0;
-
-    for(Index i = 0; i < integers_number; i++)
-    {
-        sum = 0;
-        count = 0;
-
-        for(unsigned j = 0; j < rows_number; j++)
-        {
-            if(matrix(j,0) == elements_uniques(i) && !::isnan(values(j)))
-            {
-                sum += matrix(j,1);
-                count++;
-            }
-        }
-
-        if(count != 0)
-        {
-            means(i) = static_cast<type>(sum)/static_cast<type>(count);
-
-        }
-        else
-        {
-            means(i) = 0;
-        }
-    }
-
-    return means;
-*/
-    return Tensor<type, 1>();
-}
-
 
 
 /// Returns a vector containing the values of the means for the 0s and 1s of a
