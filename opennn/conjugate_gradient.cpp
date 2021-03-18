@@ -909,21 +909,16 @@ TrainingResults ConjugateGradient::perform_training()
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
     const bool has_selection = data_set_pointer->has_selection();
 
-    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
-    Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
-    Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
     DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
     training_batch.fill(training_samples_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
-
-    training_samples_indices.resize(0);
-    selection_samples_indices.resize(0);
-    inputs_indices.resize(0);
-    target_indices.resize(0);
 
     // Neural network
 
@@ -1168,31 +1163,17 @@ TrainingResults ConjugateGradient::perform_training()
             if(has_selection) cout << "Selection error: " << selection_error << endl;
         }
 
-        // Set new parameters
-
-        neural_network_pointer->set_parameters(training_back_propagation.parameters);
-
         // Update stuff
 
         if(has_selection) old_selection_error = selection_error;
     }
 
-    if(has_selection && choose_best_selection)
-    {
-        neural_network_pointer->set_parameters(minimal_selection_parameters);
-
-//        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-
-//        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
-//        training_loss = training_back_propagation.loss;
-
-//        selection_error = minimum_selection_error;
-    }
+    if(has_selection && choose_best_selection) neural_network_pointer->set_parameters(minimal_selection_parameters);
 
     results.parameters = training_back_propagation.parameters;
 
     results.training_error = training_back_propagation.error;
+
     if(has_selection) results.selection_error = selection_error;
 
     results.final_gradient_norm = gradient_norm;
@@ -1913,6 +1894,12 @@ void ConjugateGradient::update_parameters(
 
     optimization_data.old_training_direction = optimization_data.training_direction;
     optimization_data.old_learning_rate = optimization_data.learning_rate;
+
+    // Update parameters
+
+    NeuralNetwork* neural_network_pointer = forward_propagation.neural_network_pointer;
+
+    neural_network_pointer->set_parameters(back_propagation.parameters);
 }
 
 
