@@ -189,7 +189,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-
+/*
    // Test trivial
 {
    samples_number = 10;
@@ -281,7 +281,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
        assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
                                [](type i) { return (i-static_cast<type>(0)) < std::numeric_limits<type>::min(); }), LOG);
    }
-
+*/
 
 
    // Test perceptron and probabilistic
@@ -294,32 +294,33 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-//   data_set.set_data_random();
+   data_set.set_data_binary_random();
 
-   Tensor<type,2> data(3,4);
+   const Index columns_number = inputs_number+1;
 
-   data(0,0) = static_cast<type>(0.2);
-   data(0,1) = 1;
-   data(0,2) = 0;
-   data(0,3) = 0;
-   data(1,0) = static_cast<type>(0.3);
-   data(1,1) = 0;
-   data(1,2) = 1;
-   data(1,3) = 0;
-   data(2,0) = static_cast<type>(0.5);
-   data(2,1) = 0;
-   data(2,2) = 0;
-   data(2,3) = 1;
+   Tensor<DataSet::Column, 1> columns(columns_number);
 
-   data_set.set_data(data);
+   for(Index i = 0; i < columns_number-1; i++)
+   {
+       columns(i).name = "input_" + std::to_string(i+1);
+       columns(i).column_use = DataSet::Input;
+       columns(i).type = DataSet::Numeric;
+   }
 
-   Tensor<string, 1> columns_uses(4);
-   columns_uses(0) = "Input";
-   columns_uses(1) = "Target";
-   columns_uses(2) = "Target";
-   columns_uses(3) = "Target";
+   Tensor<DataSet::VariableUse, 1> categories_uses(outputs_number);
+   categories_uses.setConstant(DataSet::VariableUse::Target);
 
-   data_set.set_columns_uses(columns_uses);
+   Tensor<string, 1> categories(outputs_number);
+
+   for(Index i = 0; i < outputs_number; i++) categories(i) = "category_" + std::to_string(i+1);
+
+   columns(columns_number-1).name = "target";
+   columns(columns_number-1).column_use = DataSet::Target;
+   columns(columns_number-1).type = DataSet::Categorical;
+   columns(columns_number-1).categories = categories;
+   columns(columns_number-1).categories_uses = categories_uses;
+
+   data_set.set_columns(columns);
 
    data_set.set_training();
 
@@ -337,41 +338,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    neural_network.add_layer(hidden_perceptron_layer);
    neural_network.add_layer(output_perceptron_layer);
-  neural_network.add_layer(probabilistic_layer);
+   neural_network.add_layer(probabilistic_layer);
 
-   Tensor<type,2> perceptron_weights(1,3);
-   perceptron_weights(0,0) = static_cast<type>(-0.318137);
-   perceptron_weights(0,1) = static_cast<type>(-0.0745666);
-   perceptron_weights(0,2) = static_cast<type>(-0.0732468);
-
-   Tensor<type,2> perceptron_biases(1,3);
-   perceptron_biases(0,0) = static_cast<type>(1.88443);
-   perceptron_biases(0,1) = static_cast<type>(0.776795);
-   perceptron_biases(0,2) = static_cast<type>(0.0126074);
-
-   Tensor<type,2> probabilistic_weights(3,3);
-   probabilistic_weights(0,0) = static_cast<type>(-0.290916);
-   probabilistic_weights(0,1) = static_cast<type>(2.1764);
-   probabilistic_weights(0,2) = static_cast<type>(-1.71237);
-   probabilistic_weights(1,0) = static_cast<type>(-0.147688);
-   probabilistic_weights(1,1) = static_cast<type>(1.71663);
-   probabilistic_weights(1,2) = static_cast<type>(0.349156);
-   probabilistic_weights(2,0) = static_cast<type>(-0.302181);
-   probabilistic_weights(2,1) = static_cast<type>(1.18804);
-   probabilistic_weights(2,2) = static_cast<type>(0.754033);
-
-   Tensor<type,2> probabilistic_biases(1,3);
-   probabilistic_biases(0,0) = static_cast<type>(1.95245);
-   probabilistic_biases(0,1) = static_cast<type>(0.68821);
-   probabilistic_biases(0,2) = static_cast<type>(1.75451);
-
-//   neural_network.set_parameters_random();
-
-   hidden_perceptron_layer->set_synaptic_weights(perceptron_weights);
-   hidden_perceptron_layer->set_biases(perceptron_biases);
-
-   probabilistic_layer->set_synaptic_weights(probabilistic_weights);
-   probabilistic_layer->set_biases(probabilistic_biases);
+   neural_network.set_parameters_random();
 
    nse.set_normalization_coefficient();
    nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
@@ -389,11 +358,15 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
+   cout << "Error gradient: " << error_gradient << endl;
+   cout << "numerical error gradient: " << numerical_error_gradient << endl;
+   cout << "Difference: " << difference << endl;
+
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
 
    neural_network.set();
-
+/*
    // Test lstm
 
 {
@@ -561,6 +534,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 }
+   */
 }
 
 
@@ -747,7 +721,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Constructor and destructor methods
 
-   test_constructor();
+  /* test_constructor();
    test_destructor();
    test_calculate_normalization_coefficient();
 
@@ -757,11 +731,11 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Error methods
 
-   test_calculate_error();
+   test_calculate_error();*/
    test_calculate_error_gradient();
 
    // Error terms methods
-
+/*
    test_calculate_error_terms();
 
    test_calculate_error_terms_Jacobian();
@@ -774,7 +748,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    test_to_XML();
    test_from_XML();
-
+*/
    cout << "End of normalized squared error test case.\n\n";
 }
 

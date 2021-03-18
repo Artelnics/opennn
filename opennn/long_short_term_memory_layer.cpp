@@ -1806,24 +1806,19 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_perceptron(LongShortTermMe
                                                                  PerceptronLayerBackPropagation* next_back_propagation,
                                                                  LongShortTermMemoryLayerBackPropagation* back_propagation) const
 {
-// @todo
+    const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
 
-//    const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
-
-//    back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta.contract(next_synaptic_weights, A_BT);
-
+    back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta.contract(next_synaptic_weights, A_BT);
 }
 
 
 void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(LongShortTermMemoryLayerForwardPropagation* ,
                                                                     ProbabilisticLayerBackPropagation* next_back_propagation,
                                                                     LongShortTermMemoryLayerBackPropagation* back_propagation) const
-{   
-// @todo
+{
+    const Tensor<type, 2>& next_synaptic_weights = static_cast<ProbabilisticLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
 
-//    const Tensor<type, 2>& next_synaptic_weights = static_cast<ProbabilisticLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
-
-//    back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta.contract(next_synaptic_weights, A_BT);
+    back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta.contract(next_synaptic_weights, A_BT);
 }
 
 

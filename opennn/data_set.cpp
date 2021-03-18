@@ -1777,6 +1777,12 @@ void DataSet::set_k_fold_cross_validation_samples_uses(const Index& k, const Ind
 }
 
 
+void DataSet::set_columns(const Tensor<Column, 1>& new_columns)
+{
+    columns = new_columns;
+}
+
+
 /// This method sets the n columns of the dataset by default,
 /// i.e. until column n-1 are Input and column n is Target.
 
@@ -7538,11 +7544,16 @@ void DataSet::set_data_binary_random()
 
     const Index input_variables_number = get_input_variables_number();
 
+    Index target_variable_index = 0;
+
     for(Index i = 0; i < samples_number; i++)
     {
+
+        target_variable_index = rand()%(variables_number-input_variables_number)+input_variables_number;
+
         for(Index j = input_variables_number; j < variables_number; j++)
         {
-            data(i,j) = (1+static_cast<type>(pow((-1),rand())))/2;
+            data(i,j) = j == target_variable_index ? 1 : 0;
         }
     }
 }
