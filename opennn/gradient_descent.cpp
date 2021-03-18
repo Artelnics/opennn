@@ -442,7 +442,6 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 }
 
 
-
 // \brief GradientDescent::update_parameters
 // \param batch
 // \param forward_propagation
@@ -502,6 +501,12 @@ void GradientDescent::update_parameters(
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     optimization_data.old_training_loss = back_propagation.loss;
+
+    // Update parameters
+
+    NeuralNetwork* neural_network_pointer = forward_propagation.neural_network_pointer;
+
+    neural_network_pointer->set_parameters(back_propagation.parameters);
 }
 
 
@@ -533,21 +538,17 @@ TrainingResults GradientDescent::perform_training()
 
     const bool has_selection = data_set_pointer->has_selection();
 
-    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
-    Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
-    Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
     DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
     training_batch.fill(training_samples_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
-
-    training_samples_indices.resize(0);
-    selection_samples_indices.resize(0);
-    inputs_indices.resize(0);
-    target_indices.resize(0);
 
     // Neural network
 
@@ -648,8 +649,6 @@ TrainingResults GradientDescent::perform_training()
         // Optimization algorithm
 
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
-
-        neural_network_pointer->set_parameters(training_back_propagation.parameters);
 
         // Elapsed time
 
@@ -791,10 +790,7 @@ TrainingResults GradientDescent::perform_training()
         if(stop_training) break;
     }
 
-    if(choose_best_selection)
-    {
-        neural_network_pointer->set_parameters(minimal_selection_parameters);
-    }
+    if(choose_best_selection) neural_network_pointer->set_parameters(minimal_selection_parameters);
 
     return results;
 }

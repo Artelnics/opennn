@@ -306,6 +306,11 @@ struct TrainingResults
     /// Stopping criterion.
 
     string stopping_criterion;
+
+    Tensor<type, 1> optimal_parameters;
+
+    type optimum_selection_error = numeric_limits<type>::max();
+    type optimum_training_error = numeric_limits<type>::max();
 };
 
 }
