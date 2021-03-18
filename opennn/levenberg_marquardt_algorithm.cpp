@@ -618,7 +618,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Optimization data
 
-        update_epoch(training_batch,
+        update_parameters(training_batch,
                      training_forward_propagation,
                      training_loss_index_back_propagation_lm,
                      optimization_data);
@@ -836,14 +836,14 @@ void LevenbergMarquardtAlgorithm::perform_training_void()
 }
 
 
-/// \brief LevenbergMarquardtAlgorithm::update_epoch
+/// \brief LevenbergMarquardtAlgorithm::update_parameters
 /// \param batch
 /// \param forward_propagation
 /// \param back_propagation
 /// \param loss_index_back_propagation_lm
 /// \param optimization_data
 
-void LevenbergMarquardtAlgorithm::update_epoch(const DataSetBatch& batch,
+void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
                                                NeuralNetworkForwardPropagation& forward_propagation,
                                                LossIndexBackPropagationLM& loss_index_back_propagation_lm,
                                                LevenbergMarquardtAlgorithmData& optimization_data)

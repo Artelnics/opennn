@@ -362,11 +362,9 @@ void StochasticGradientDescent::set_reserve_selection_error_history(const bool& 
 
 /// Set hardware to use. Default: Multi-core.
 
-void StochasticGradientDescent::update_iteration(const LossIndexBackPropagation& back_propagation,
+void StochasticGradientDescent::update_parameters(const LossIndexBackPropagation& back_propagation,
                       StochasticGradientDescentData& optimization_data)
 {
-
-
     const type learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay);
 
     optimization_data.parameters_increment.device(*thread_pool_device) = back_propagation.gradient*(-learning_rate);
@@ -395,6 +393,13 @@ void StochasticGradientDescent::update_iteration(const LossIndexBackPropagation&
     optimization_data.last_parameters_increment = optimization_data.parameters_increment;
 
     optimization_data.iteration++;
+
+    // Update parameters
+
+    NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
+
+    neural_network_pointer->set_parameters(optimization_data.parameters);
+
 
 }
 
@@ -542,9 +547,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             // Gradient
 
-            update_iteration(training_back_propagation, optimization_data);
-
-            neural_network_pointer->set_parameters(optimization_data.parameters);
+            update_parameters(training_back_propagation, optimization_data);
         }
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
