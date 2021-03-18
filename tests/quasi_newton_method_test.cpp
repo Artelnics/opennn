@@ -287,7 +287,7 @@ void QuasiNewtonMethodTest::test_perform_training() // @todo
 
 //   quasi_newton_method.set_reserve_all_training_history(true);
 
-//    // Test
+    // Test
 
 //   neural_network.set_parameters_constant(3.1415927);
 
@@ -401,7 +401,7 @@ void QuasiNewtonMethodTest::test_resize_training_history() // @todo
 
 //    quasi_newton_method.set_reserve_all_training_history(true);
 
-//    // Test
+    // Test
 
 //    results.resize_training_history(2);
 

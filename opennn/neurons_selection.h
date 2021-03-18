@@ -106,9 +106,9 @@ public:
     // Utilities
 
     /// Performs the neurons selection for a neural network.
-/*
-    virtual NeuronsSelectionResults* perform_neurons_selection() = 0;
-*/
+
+    virtual NeuronsSelectionResults perform_neurons_selection() = 0;
+
     /// Writes the time from seconds in format HH:mm:ss.
 
     const string write_elapsed_time(const type&) const;

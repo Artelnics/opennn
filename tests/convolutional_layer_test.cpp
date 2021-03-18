@@ -260,7 +260,7 @@ void ConvolutionalLayerTest::test_get_outputs_dimensions() // @todo
 
 //    ConvolutionalLayer convolutional_layer = OpenNN::ConvolutionalLayer({3,500,600}, {10,2,3});
 
-//    // Test
+    // Test
 
 //    convolutional_layer.set_row_stride(1);
 //    convolutional_layer.set_column_stride(1);
@@ -270,7 +270,7 @@ void ConvolutionalLayerTest::test_get_outputs_dimensions() // @todo
 //                convolutional_layer.get_outputs_dimensions()[1] == 499 &&
 //                convolutional_layer.get_outputs_dimensions()[2] == 598, LOG);
 
-//    // Test
+    // Test
 
 //    convolutional_layer.set_row_stride(2);
 //    convolutional_layer.set_column_stride(3);
@@ -280,7 +280,7 @@ void ConvolutionalLayerTest::test_get_outputs_dimensions() // @todo
 //                convolutional_layer.get_outputs_dimensions()[1] == 250 &&
 //                convolutional_layer.get_outputs_dimensions()[2] == 200, LOG);
 
-//    // Test
+    // Test
 
 //    convolutional_layer.set_row_stride(1);
 //    convolutional_layer.set_column_stride(1);
@@ -290,7 +290,7 @@ void ConvolutionalLayerTest::test_get_outputs_dimensions() // @todo
 //                convolutional_layer.get_outputs_dimensions()[1] == 500 &&
 //                convolutional_layer.get_outputs_dimensions()[2] == 600, LOG);
 
-//    // Test
+    // Test
 
 //    convolutional_layer.set_row_stride(2);
 //    convolutional_layer.set_column_stride(3);
@@ -308,13 +308,13 @@ void ConvolutionalLayerTest::test_get_parameters_number() // @todo
 
 //    ConvolutionalLayer convolutional_layer;
 
-//    // Test
+    // Test
 
 //    convolutional_layer = OpenNN::ConvolutionalLayer({3,32,64}, {1,2,3});
 
 //    assert_true(convolutional_layer.get_parameters_number() == 19, LOG);
 
-//    // Test
+    // Test
 
 //    convolutional_layer = OpenNN::ConvolutionalLayer({3,500,600}, {10,2,3});
 
@@ -460,7 +460,7 @@ void ConvolutionalLayerTest::test_calculate_combinations()
 
     convolutional_layer.set_biases(biases);
     convolutional_layer.set_synaptic_weights(kernels);
-    convolutional_layer.calculate_combinations(inputs, combinations);
+    convolutional_layer.calculate_convolutions(inputs, combinations);
 
     assert_true(abs(combinations(0, 0, 0, 0) - 1.f) <= 1e-6f &&
                 abs(combinations(0, 0, 0, 1) - 1.f) <= 1e-6f &&
@@ -524,7 +524,7 @@ void ConvolutionalLayerTest::test_calculate_combinations()
 
     convolutional_layer.set_biases(biases);
     convolutional_layer.set_synaptic_weights(kernels);
-    convolutional_layer.calculate_combinations(inputs, combinations);
+    convolutional_layer.calculate_convolutions(inputs, combinations);
 
     assert_true(combinations(0, 0, 0, 0) == 2.f &&
                 combinations(0, 0, 0, 1) == 2.f &&
@@ -726,7 +726,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
                 activations_4d(1,1,1,0) == 1.f &&
                 activations_4d(1,1,1,1) == 1.f, LOG);
 
-//    // Test
+    // Test
 
 //    inputs.resize(({2,2,2,2}));
     inputs(0,0,0,0) = -1.111f;
@@ -784,7 +784,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
                 abs(activations_4d(1,1,1,0) - 0.976729f) < 1e-6f &&
                 abs(activations_4d(1,1,1,1) - 0.976775f) < 1e-6f, LOG);
 
-//    // Test
+    // Test
 
 
     inputs(0,0,0,0) = -1 * 1.111f;
@@ -903,7 +903,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives() // @todo
     activations.resize(2, 2, 2, 2);
     activations_derivatives.resize(2, 2, 2, 2);
 
-//    // Test
+    // Test
 
     inputs.resize(2, 2, 2, 2);
     inputs(0,0,0,0) = -1.111f;
@@ -1222,6 +1222,7 @@ void ConvolutionalLayerTest::test_calculate_outputs()
                 outputs(3, 3, 0, 0) == 3.f, LOG);
 
     // One image, multiple filters
+
     inputs.resize(5, 5, 3, 1);
     kernels.resize(2, 2, 3, 2);
     biases.resize(2);
@@ -1274,6 +1275,7 @@ void ConvolutionalLayerTest::test_calculate_outputs()
                 outputs(3, 3, 1, 0) == 3.f , LOG);
 
     // Multiple images, multiple filters
+
     inputs.resize(5, 5, 3, 2);
     kernels.resize(2, 2, 3, 2);
     biases.resize(2);
@@ -1363,117 +1365,6 @@ void ConvolutionalLayerTest::test_calculate_outputs()
     inputs.resize(5, 5, 3, 2);
     kernels.resize(3, 3, 3, 2);
     biases.resize(2);
-
-    // 2D inputs and outputs
-
-    Tensor<type, 2> inputs_2d;
-/*
-    inputs_2d.resize(2, 75);
-    inputs_2d.setConstant(1.0f);
-    inputs_2d.chip(1, 0).setConstant(2.0f);
-
-    kernels.setConstant(1.f/27);
-    biases(0) = 0.0f;
-    biases(1) = 1.0f;
-
-    convolutional_layer.set(inputs, kernels, biases);
-
-    Tensor<type, 2> outputs_2d;
-    convolutional_layer.calculate_outputs(inputs_2d, outputs_2d);
-
-    assert_true(outputs_2d(0, 0) - 1.0f <= 1e-6f &&
-                outputs_2d(0, 1) - 1.0f <= 1e-6f &&
-                outputs_2d(0, 2) - 1.0f <= 1e-6f &&
-                outputs_2d(0, 3) - 1.0f <= 1e-6f &&
-                outputs_2d(0, 4) - 1.0f <= 1e-6f &&
-                outputs_2d(0, 5) - 1.0f <= 1e-6f &&
-                outputs_2d(0, 6) - 1.0f <= 1e-6f &&
-                outputs_2d(0, 7) - 1.0f <= 1e-6f &&
-                outputs_2d(0, 8) - 1.0f <= 1e-6f &&
-                outputs_2d(0, 9) - 2.0f <= 1e-6f &&
-                outputs_2d(0, 10) - 2.0f <= 1e-6f &&
-                outputs_2d(0, 11) - 2.0f <= 1e-6f &&
-                outputs_2d(0, 12) - 2.0f <= 1e-6f &&
-                outputs_2d(0, 13) - 2.0f <= 1e-6f &&
-                outputs_2d(0, 14) - 2.0f <= 1e-6f &&
-                outputs_2d(0, 15) - 2.0f <= 1e-6f &&
-                outputs_2d(0, 16) - 2.0f <= 1e-6f &&
-                outputs_2d(0, 17) - 2.0f <= 1e-6f &&
-                outputs_2d(1, 0) - 2.0f <= 1e-6f &&
-                outputs_2d(1, 1) - 2.0f <= 1e-6f &&
-                outputs_2d(1, 2) - 2.0f <= 1e-6f &&
-                outputs_2d(1, 3) - 2.0f <= 1e-6f &&
-                outputs_2d(1, 4) - 2.0f <= 1e-6f &&
-                outputs_2d(1, 5) - 2.0f <= 1e-6f &&
-                outputs_2d(1, 6) - 2.0f <= 1e-6f &&
-                outputs_2d(1, 7) - 2.0f <= 1e-6f &&
-                outputs_2d(1, 8) - 2.0f <= 1e-6f &&
-                outputs_2d(1, 9) - 3.0f <= 1e-6f &&
-                outputs_2d(1, 10) - 3.0f <= 1e-6f &&
-                outputs_2d(1, 11) - 3.0f <= 1e-6f &&
-                outputs_2d(1, 12) - 3.0f <= 1e-6f &&
-                outputs_2d(1, 13) - 3.0f <= 1e-6f &&
-                outputs_2d(1, 14) - 3.0f <= 1e-6f &&
-                outputs_2d(1, 15) - 3.0f <= 1e-6f &&
-                outputs_2d(1, 16) - 3.0f <= 1e-6f &&
-                outputs_2d(1, 17) - 3.0f <= 1e-6f, LOG);
-
-    // 4D inputs and 2D outputs
-
-    inputs.resize(4, 4, 3, 2);
-    kernels.resize(3, 3, 3, 1);
-    outputs_2d.resize(2, 4);
-    biases.resize(1);
-
-    inputs.setConstant(1.0f);
-    kernels.setConstant(1.0f/27);
-    biases.setConstant(0.f);
-
-    convolutional_layer.set(inputs, kernels, biases);
-
-    convolutional_layer.calculate_outputs(inputs, outputs_2d);
-
-    assert_true(abs(outputs_2d(0, 0) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(0, 1) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(0, 2) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(0, 3) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 0) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 1) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 2) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 3) - 1.0f) < 1.e-6f, LOG);
-
-    inputs.resize(4, 4, 3, 2);
-    kernels.resize(3, 3, 3, 2);
-    outputs_2d.resize(2, 8);
-    biases.resize(2);
-
-    inputs.setConstant(1.0f);
-    kernels.setConstant(1.0f/27);
-    biases(0) = 0.f;
-    biases(1) = 1.f;
-
-    convolutional_layer.set(inputs, kernels, biases);
-
-    convolutional_layer.calculate_outputs(inputs, outputs_2d);
-
-    assert_true(abs(outputs_2d(0, 0) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(0, 1) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(0, 2) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(0, 3) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(0, 4) - 2.0f) < 1.e-6f &&
-                abs(outputs_2d(0, 5) - 2.0f) < 1.e-6f &&
-                abs(outputs_2d(0, 6) - 2.0f) < 1.e-6f &&
-                abs(outputs_2d(0, 7) - 2.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 0) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 1) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 2) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 3) - 1.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 4) - 2.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 5) - 2.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 6) - 2.0f) < 1.e-6f &&
-                abs(outputs_2d(1, 7) - 2.0f) < 1.e-6f, LOG);
-
-*/
 }
 
 
@@ -1572,12 +1463,12 @@ void ConvolutionalLayerTest::test_insert_padding() // @todo
 
 void ConvolutionalLayerTest::test_forward_propagate()
 {
-/*
+
     cout << "test_forward_propagate\n";
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations;
     Tensor<type, 4> activations_derivatives;
-    ConvolutionalLayer::ForwardPropagation forward_propagation;
+    ConvolutionalLayerForwardPropagation forward_propagation(nullptr);
 
     Tensor<type, 4> kernels;
     Tensor<type, 1> biases;
@@ -1608,63 +1499,63 @@ void ConvolutionalLayerTest::test_forward_propagate()
     convolutional_layer.set_biases(biases);
     convolutional_layer.set_synaptic_weights(kernels);
 
-    convolutional_layer.forward_propagate(inputs, forward_propagation);
+//    convolutional_layer.forward_propagate(inputs, forward_propagation);
 
-    assert_true(forward_propagation.activations_4d.dimension(0) == 2 &&
-                forward_propagation.activations_4d.dimension(1) == 2 &&
-                forward_propagation.activations_4d.dimension(2) == 2 &&
-                forward_propagation.activations_4d.dimension(3) == 2, LOG);
+    assert_true(forward_propagation.activations.dimension(0) == 2 &&
+                forward_propagation.activations.dimension(1) == 2 &&
+                forward_propagation.activations.dimension(2) == 2 &&
+                forward_propagation.activations.dimension(3) == 2, LOG);
 
-    assert_true(forward_propagation.activations_derivatives_4d.dimension(0) == 2 &&
-                forward_propagation.activations_derivatives_4d.dimension(1) == 2 &&
-                forward_propagation.activations_derivatives_4d.dimension(2) == 2 &&
-                forward_propagation.activations_derivatives_4d.dimension(3) == 2, LOG);
+    assert_true(forward_propagation.activations_derivatives.dimension(0) == 2 &&
+                forward_propagation.activations_derivatives.dimension(1) == 2 &&
+                forward_propagation.activations_derivatives.dimension(2) == 2 &&
+                forward_propagation.activations_derivatives.dimension(3) == 2, LOG);
 
-    assert_true(abs(forward_propagation.activations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(0, 0, 0, 1) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(0, 0, 1, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(0, 0, 1, 1) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(0, 1, 0, 0) - 2.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(0, 1, 0, 1) - 2.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(0, 1, 1, 0) - 2.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(0, 1, 1, 1) - 2.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(1, 0, 0, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(1, 0, 0, 1) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(1, 0, 1, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(1, 0, 1, 1) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(1, 1, 0, 0) - 2.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(1, 1, 0, 1) - 2.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(1, 1, 1, 0) - 2.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(1, 1, 1, 1) - 2.f) < 1.e-6f, LOG);
+    assert_true(abs(forward_propagation.activations(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations(0, 0, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations(0, 0, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations(0, 0, 1, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations(0, 1, 0, 0) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations(0, 1, 0, 1) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations(0, 1, 1, 0) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations(0, 1, 1, 1) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations(1, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations(1, 0, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations(1, 0, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations(1, 0, 1, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations(1, 1, 0, 0) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations(1, 1, 0, 1) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations(1, 1, 1, 0) - 2.f) < 1.e-6f &&
+                abs(forward_propagation.activations(1, 1, 1, 1) - 2.f) < 1.e-6f, LOG);
 
-    assert_true(abs(forward_propagation.activations_derivatives_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(0, 0, 0, 1) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(0, 0, 1, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(0, 0, 1, 1) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(0, 1, 0, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(0, 1, 0, 1) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(0, 1, 1, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(0, 1, 1, 1) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(1, 0, 0, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(1, 0, 0, 1) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(1, 0, 1, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(1, 0, 1, 1) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(1, 1, 0, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(1, 1, 0, 1) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(1, 1, 1, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(1, 1, 1, 1) - 1.f) < 1.e-6f, LOG);
+    assert_true(abs(forward_propagation.activations_derivatives(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(0, 0, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(0, 0, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(0, 0, 1, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(0, 1, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(0, 1, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(0, 1, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(0, 1, 1, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(1, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(1, 0, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(1, 0, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(1, 0, 1, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(1, 1, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(1, 1, 0, 1) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(1, 1, 1, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(1, 1, 1, 1) - 1.f) < 1.e-6f, LOG);
 
-    assert_true(abs(forward_propagation.combinations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
-                forward_propagation.activations_derivatives_4d(0, 0, 0, 0) == 1.f, LOG);
+    assert_true(abs(forward_propagation.combinations(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                forward_propagation.activations_derivatives(0, 0, 0, 0) == 1.f, LOG);
 
     convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::HyperbolicTangent);
-    convolutional_layer.forward_propagate(inputs, forward_propagation);
 
-    assert_true(abs(forward_propagation.combinations_4d(0, 0, 0, 0) - 1.f) < 1.e-6f &&
-                abs(forward_propagation.activations_4d(0, 0, 0, 0) - 0.761594f) < 1.e-6f &&
-                abs(forward_propagation.activations_derivatives_4d(0, 0, 0, 0) - 0.419974f) < 1.e-6f, LOG);
-*/
+//    convolutional_layer.forward_propagate(inputs, forward_propagation);
+
+    assert_true(abs(forward_propagation.combinations(0, 0, 0, 0) - 1.f) < 1.e-6f &&
+                abs(forward_propagation.activations(0, 0, 0, 0) - 0.761594f) < 1.e-6f &&
+                abs(forward_propagation.activations_derivatives(0, 0, 0, 0) - 0.419974f) < 1.e-6f, LOG);
 }
 
 
@@ -1699,7 +1590,6 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 //    convolutional_layer.forward_propagate(inputs_4d, forward_propagation);
 //    LayerBackPropagation back_propagation(1, &convolutional_layer);
 
-//    /*
 //    PerceptronLayer perceptron_layer(2,2, 0,PerceptronLayer::Linear);
 
 //    Tensor<type, 1> parameters(6);
@@ -1709,7 +1599,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
 //    Tensor<type, 2> output_delta(1,2);
 
-//    // Test 1
+    // Test 1
 
 //    parameters.setConstant(1);
 //    perceptron_layer.set_parameters(parameters);
@@ -1741,7 +1631,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 //    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
 //    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
 //    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-//*/
+//
 }
 
 
@@ -1771,17 +1661,16 @@ void ConvolutionalLayerTest::run_test_case() // @todo
 
    // Activation
 
-//   test_calculate_activations(); //
+   test_calculate_activations();
    test_calculate_activations_derivatives();
 
    // Outputs
 
-//   test_calculate_outputs(); //
+   test_calculate_outputs();
 
    // Padding
-//   test_insert_padding(); //
+   test_insert_padding();
 
-/*
    // Get methods
 
    test_get_parameters();
@@ -1789,10 +1678,6 @@ void ConvolutionalLayerTest::run_test_case() // @todo
    test_get_parameters_number();
 
    // Combinations
-
-   test_calculate_image_convolution();
-
-*/
 
    // Forward propagate
 

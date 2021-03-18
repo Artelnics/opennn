@@ -189,8 +189,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-/*
-   // Test trivial
+
+   // Trivial test
 {
    samples_number = 10;
    inputs_number = 1;
@@ -281,8 +281,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
        assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
                                [](type i) { return (i-static_cast<type>(0)) < std::numeric_limits<type>::min(); }), LOG);
    }
-*/
-
 
    // Test perceptron and probabilistic
 {
@@ -366,7 +364,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 }
 
    neural_network.set();
-/*
+
    // Test lstm
 
 {
@@ -534,7 +532,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
 }
-   */
+
 }
 
 
@@ -687,7 +685,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors(void) // @todo
 
 //    Tensor<type, 1> squared_errors;
 
-//    // Test
+    // Test
 
 //    architecture.setValues({1,1});
 
@@ -721,7 +719,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Constructor and destructor methods
 
-  /* test_constructor();
+   test_constructor();
    test_destructor();
    test_calculate_normalization_coefficient();
 
@@ -731,11 +729,11 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Error methods
 
-   test_calculate_error();*/
+   test_calculate_error();
    test_calculate_error_gradient();
 
    // Error terms methods
-/*
+
    test_calculate_error_terms();
 
    test_calculate_error_terms_Jacobian();
@@ -748,7 +746,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    test_to_XML();
    test_from_XML();
-*/
+
    cout << "End of normalized squared error test case.\n\n";
 }
 

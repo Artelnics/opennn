@@ -2820,23 +2820,22 @@ void NeuralNetwork::save_data(const string& file_name) const
 
     for(Index i = 0; i < inputs_number; i++)
     {
-        //        inputs[i] = scaling_layer_descriptives[i].minimum;
-        //        increments[i] = (scaling_layer_descriptives[i].maximum - scaling_layer_descriptives[i].minimum)/static_cast<type>(points_number-1.0);
+//        inputs[i] = scaling_layer_descriptives[i].minimum;
+//        increments[i] = (scaling_layer_descriptives[i].maximum - scaling_layer_descriptives[i].minimum)/static_cast<type>(points_number-1.0);
     }
-    /*
-        for(Index i = 0; i < points_number; i++)
-        {
-    //        outputs = calculate_outputs(inputs.to_column_matrix());
 
-            row = inputs.assemble(outputs);
+    for(Index i = 0; i < points_number; i++)
+    {
+//        outputs = calculate_outputs(inputs.to_column_matrix());
 
-            data.set_row(i, row);
+//        row = inputs.assemble(outputs);
 
-            inputs += increments;
-        }
+//        data.set_row(i, row);
 
-        data.save_csv(file_name);
-    */
+        inputs += increments;
+    }
+
+//    data.save_csv(file_name);
 }
 
 

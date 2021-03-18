@@ -267,8 +267,6 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
     Tensor<type, 1> parameters_increment;
     Tensor<type, 1> nesterov_increment;
     Tensor<type, 1> last_parameters_increment;
-
-    Tensor<type, 1> minimal_selection_parameters;
 };
 
 }

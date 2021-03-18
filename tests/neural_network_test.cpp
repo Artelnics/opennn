@@ -159,7 +159,7 @@ void NeuralNetworkTest::test_add_layer()
 {
    cout << "test_add_layer\n";
 
-//    // LSTM
+    // LSTM
 
 //   NeuralNetwork neural_network_;
 
@@ -168,7 +168,7 @@ void NeuralNetworkTest::test_add_layer()
 //   assert_true(neural_network_.get_layers_number() == 1, LOG);
 //   assert_true(neural_network_.get_layer_pointer(0)->get_type() == Layer::LongShortTermMemory, LOG);
 
-//    // RECURRENT
+    // RECURRENT
 
 //   NeuralNetwork neural_network__;
 
@@ -1645,7 +1645,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     data.setValues({{1,1,1},{2,2,2},{3,3,3},{0,0,0},{0,0,0}});
 
-//    //DataSet
+    //DataSet
 
     DataSet dataset(data);
 
@@ -1758,33 +1758,33 @@ void NeuralNetworkTest::test_forward_propagate()
     NeuralNetworkForwardPropagation forward_propagation_3(dataset.get_training_samples_number(), &neural_network_2);
 
     neural_network_2.forward_propagate(batch_3, forward_propagation_3);
-/*
-    Tensor<type, 2>perceptron_combinations_3_0 = forward_propagation_3.layers[0].combinations;
-    Tensor<type, 2>perceptron_activations_3_0 = forward_propagation_3.layers[0].activations;
-    Tensor<type, 2>probabilistic_combinations_3_1 = forward_propagation_3.layers[1].combinations;
-    Tensor<type, 2>probabilistic_activations_3_1= forward_propagation_3.layers[1].activations;
 
-    assert_true(perceptron_combinations_3_0.dimension(0) == 3, LOG);
+//    Tensor<type, 2> perceptron_combinations_3_0 = forward_propagation_3.layers[0].combinations;
+//    Tensor<type, 2> perceptron_activations_3_0 = forward_propagation_3.layers[0].activations;
+//    Tensor<type, 2> probabilistic_combinations_3_1 = forward_propagation_3.layers[1].combinations;
+//    Tensor<type, 2> probabilistic_activations_3_1= forward_propagation_3.layers[1].activations;
 
-    assert_true(abs(perceptron_combinations_3_0(0,0) - 5) < static_cast<type>(1e-3)
-             && abs(perceptron_combinations_3_0(1,0) - 1) < static_cast<type>(1e-3)
-             && abs(perceptron_combinations_3_0(2,0) + 1) < static_cast<type>(1e-3), LOG);
+//    assert_true(perceptron_combinations_3_0.dimension(0) == 3, LOG);
 
-    assert_true(perceptron_activations_3_0.dimension(0) == 3, LOG);
-    assert_true(abs(perceptron_activations_3_0(0,0) - static_cast<type>(0.993)) < static_cast<type>(1e-3)
-             && abs(perceptron_activations_3_0(1,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3)
-             && abs(perceptron_activations_3_0(2,0) - static_cast<type>(0.268)) < static_cast<type>(1e-3), LOG);
+//    assert_true(abs(perceptron_combinations_3_0(0,0) - 5) < static_cast<type>(1e-3)
+//             && abs(perceptron_combinations_3_0(1,0) - 1) < static_cast<type>(1e-3)
+//             && abs(perceptron_combinations_3_0(2,0) + 1) < static_cast<type>(1e-3), LOG);
 
-    assert_true(probabilistic_combinations_3_1.dimension(0) == 3, LOG);
-    assert_true(abs(probabilistic_combinations_3_1(0,0) - static_cast<type>(3.993)) < static_cast<type>(1e-3)
-             && abs(probabilistic_combinations_3_1(1,0) - static_cast<type>(3.731)) < static_cast<type>(1e-3)
-             && abs(probabilistic_combinations_3_1(2,0) - static_cast<type>(3.268)) < static_cast<type>(1e-3), LOG);
+//    assert_true(perceptron_activations_3_0.dimension(0) == 3, LOG);
+//    assert_true(abs(perceptron_activations_3_0(0,0) - static_cast<type>(0.993)) < static_cast<type>(1e-3)
+//             && abs(perceptron_activations_3_0(1,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3)
+//             && abs(perceptron_activations_3_0(2,0) - static_cast<type>(0.268)) < static_cast<type>(1e-3), LOG);
 
-    assert_true(probabilistic_activations_3_1.dimension(0) == 3, LOG);
-    assert_true(abs(probabilistic_activations_3_1(0,0) - 1) < static_cast<type>(1e-3)
-             && abs(probabilistic_activations_3_1(1,0) - 1) < static_cast<type>(1e-3)
-             && abs(probabilistic_activations_3_1(2,0) - 1) < static_cast<type>(1e-3), LOG);
-*/
+//    assert_true(probabilistic_combinations_3_1.dimension(0) == 3, LOG);
+//    assert_true(abs(probabilistic_combinations_3_1(0,0) - static_cast<type>(3.993)) < static_cast<type>(1e-3)
+//             && abs(probabilistic_combinations_3_1(1,0) - static_cast<type>(3.731)) < static_cast<type>(1e-3)
+//             && abs(probabilistic_combinations_3_1(2,0) - static_cast<type>(3.268)) < static_cast<type>(1e-3), LOG);
+
+//    assert_true(probabilistic_activations_3_1.dimension(0) == 3, LOG);
+//    assert_true(abs(probabilistic_activations_3_1(0,0) - 1) < static_cast<type>(1e-3)
+//             && abs(probabilistic_activations_3_1(1,0) - 1) < static_cast<type>(1e-3)
+//             && abs(probabilistic_activations_3_1(2,0) - 1) < static_cast<type>(1e-3), LOG);
+
 }
 
 

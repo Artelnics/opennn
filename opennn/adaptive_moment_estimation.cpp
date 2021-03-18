@@ -351,9 +351,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type learning_rate = 0;
 
-    Tensor<type, 1> minimal_selection_parameters(parameters_number);
-    type minimum_selection_error = numeric_limits<type>::max();
-
     bool stop_training = false;
 
     time_t beginning_time, current_time;
@@ -457,16 +454,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             if(epoch == 0)
             {
-                minimum_selection_error = selection_error;
+                results.optimum_selection_error = selection_error;
             }
             else if(selection_error > old_selection_error)
             {
                 selection_error_increases++;
             }
-            else if(selection_error <= minimum_selection_error)
+            else if(selection_error <= results.optimum_selection_error)
             {
-                minimum_selection_error = selection_error;
-                minimal_selection_parameters = optimization_data.parameters;
+                results.optimum_selection_error = selection_error;
+                results.optimal_parameters = optimization_data.parameters;
             }
         }
 
@@ -580,11 +577,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     if(choose_best_selection)
     {
-        neural_network_pointer->set_parameters(minimal_selection_parameters);
+        neural_network_pointer->set_parameters(results.optimal_parameters);
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
-        selection_error = minimum_selection_error;
+        selection_error = results.optimum_selection_error;
     }
 
     return results;
@@ -1049,8 +1046,6 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 
     parameters.resize(parameters_number);
     parameters = neural_network_pointer->get_parameters();
-
-    minimal_selection_parameters.resize(parameters_number);
 
     gradient_exponential_decay.resize(parameters_number);
     gradient_exponential_decay.setZero();

@@ -100,9 +100,7 @@ public:
     ModelSelectionResults perform_neurons_selection();
 
     ModelSelectionResults perform_inputs_selection();
-/*
-    ModelSelectionResults perform_model_selection();
-*/
+
     // Serialization methods
     
     void from_XML(const tinyxml2::XMLDocument&);

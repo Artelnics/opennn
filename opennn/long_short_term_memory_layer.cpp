@@ -3931,7 +3931,6 @@ void LongShortTermMemoryLayer::calculate_output_biases_error_gradient(const Tens
 
 string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-
     const Index neurons_number = get_neurons_number();
 
     const Index inputs_number = get_inputs_number();
@@ -3969,22 +3968,22 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
     ostringstream buffer;
 
     // Forget gate
-    /*
+
        for(Index j = 0; j < neurons_number; j++)
        {
            buffer << "forget_gate_" << to_string(j+1) << " = " << write_recurrent_activation_function_expression() << " (" << forget_biases[j] << "+";
 
            for(Index i = 0; i < inputs_number; i++)
            {
-               buffer << inputs_names[i] << "*" << forget_weights.get_column(j)(i) << "+";
+ //              buffer << inputs_names[i] << "*" << forget_weights.get_column(j)(i) << "+";
            }
 
            for(Index k = 0; k < neurons_number-1; k++)
            {
-               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << forget_recurrent_weights.get_column(j)[k] << "+";
+//               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << forget_recurrent_weights.get_column(j)[k] << "+";
            }
 
-           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << forget_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
+//           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << forget_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
        }
 
        // Input gate
@@ -3995,15 +3994,15 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
            for(Index i = 0; i < inputs_number; i++)
            {
-               buffer << inputs_names[i] << "*" << input_weights.get_column(j)(i) << "+";
+//               buffer << inputs_names[i] << "*" << input_weights.get_column(j)(i) << "+";
            }
 
            for(Index k = 0; k < neurons_number-1; k++)
            {
-               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << input_recurrent_weights.get_column(j)[k] << "+";
+//               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << input_recurrent_weights.get_column(j)[k] << "+";
            }
 
-           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << input_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
+//           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << input_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
        }
 
        // State gate
@@ -4014,15 +4013,15 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
            for(Index i = 0; i < inputs_number; i++)
            {
-               buffer << inputs_names[i] << "*" << state_weights.get_column(j)(i) << "+";
+//               buffer << inputs_names[i] << "*" << state_weights.get_column(j)(i) << "+";
            }
 
            for(Index k = 0; k < neurons_number-1; k++)
            {
-               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << state_recurrent_weights.get_column(j)[k] << "+";
+//               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << state_recurrent_weights.get_column(j)[k] << "+";
            }
 
-           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << state_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
+//           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << state_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
        }
 
        // Output gate
@@ -4033,15 +4032,15 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
            for(Index i = 0; i < inputs_number; i++)
            {
-               buffer << inputs_names[i] << "*" << output_weights.get_column(j)(i) << "+";
+//               buffer << inputs_names[i] << "*" << output_weights.get_column(j)(i) << "+";
            }
 
            for(Index k = 0; k < neurons_number-1; k++)
            {
-               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << output_recurrent_weights.get_column(j)[k] << "+";
+//               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << output_recurrent_weights.get_column(j)[k] << "+";
            }
 
-           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << output_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
+//           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << output_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
        }
 
        // Cell state
@@ -4066,8 +4065,6 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
        }
 
        return buffer.str();
-    */
-    return string();
 }
 
 
@@ -4087,7 +4084,6 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         throw logic_error(buffer.str());
     }
-
 
     // Layer name
 

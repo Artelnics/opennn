@@ -571,9 +571,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     // Training strategy stuff
 
-    Tensor<type, 1> minimal_selection_parameters;
-    type minimum_selection_error = numeric_limits<type>::max();
-
     bool stop_training = false;
 
     time_t beginning_time, current_time;
@@ -623,8 +620,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                      training_loss_index_back_propagation_lm,
                      optimization_data);
 
-        neural_network_pointer->set_parameters(training_loss_index_back_propagation_lm.parameters);
-
         if(epoch == 1)
         {
             training_loss_decrease = 0;
@@ -643,19 +638,19 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(epoch == 1)
         {
-            minimum_selection_error = training_loss_index_back_propagation_lm.error;
+            results.optimum_selection_error = training_loss_index_back_propagation_lm.error;
 
-            minimal_selection_parameters = training_loss_index_back_propagation_lm.parameters;
+            results.optimal_parameters = training_loss_index_back_propagation_lm.parameters;
         }
         else if(epoch != 1 && training_loss_index_back_propagation_lm.error > old_selection_error)
         {
             selection_failures++;
         }
-        else if(training_loss_index_back_propagation_lm.error <= minimum_selection_error)
+        else if(training_loss_index_back_propagation_lm.error < results.optimum_selection_error)
         {
-            minimum_selection_error = training_loss_index_back_propagation_lm.error;
+            results.optimum_selection_error = training_loss_index_back_propagation_lm.error;
 
-            minimal_selection_parameters = training_loss_index_back_propagation_lm.parameters;
+            results.optimal_parameters = training_loss_index_back_propagation_lm.parameters;
         }
 
         // Elapsed time
@@ -790,7 +785,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             break;
         }
-        else if((display && epoch == 0) || (display && (epoch) % display_period == 0))
+        else if((display && epoch == 0) || (display && epoch%display_period == 0))
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Training error: " << training_loss_index_back_propagation_lm.loss << "\n"
@@ -810,22 +805,11 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         old_selection_error = selection_loss_index_back_propagation_lm.error;
     }
 
-    if(choose_best_selection)
-    {
-//        parameters = minimal_selection_parameters;
-//        parameters_norm = l2_norm(parameters);
-
-        neural_network_pointer->set_parameters(minimal_selection_parameters);
-
-//        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-
-//        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
-//        selection_back_propagation.error = minimum_selection_error;
-    }
+    if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
     return results;
 }
+
 
 /// Trains a neural network with an associated loss index according to the Levenberg-Marquardt algorithm.
 /// Training occurs according to the training parameters.
@@ -888,6 +872,10 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
     while(damping_parameter < maximum_damping_parameter);
 
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+
+    // Set parameters
+
+    neural_network_pointer->set_parameters(loss_index_back_propagation_lm.parameters);
 }
 
 

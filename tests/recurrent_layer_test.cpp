@@ -291,7 +291,6 @@ void RecurrentLayerTest::test_get_parameters()
 //   recurrent_weights.setValues({{7.9, -2.3},{1.2, -1.5}});
 
    recurrent_layer.set_recurrent_weights(recurrent_weights);
-
 }
 
 
@@ -318,23 +317,23 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
    combinations.setZero();
    activations.resize(1,1);
    activations_derivatives.resize(1,1);
-/*
+
    recurrent_layer.set_activation_function(RecurrentLayer::Logistic);
-   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+//   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
    assert_true(activations_derivatives(0) == 0.25, LOG);
 
    recurrent_layer.set_activation_function(RecurrentLayer::HyperbolicTangent);
-   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+//   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
    assert_true(activations_derivatives(0) == 1.0, LOG);
 
    recurrent_layer.set_activation_function(RecurrentLayer::Linear);
-   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+//   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
@@ -434,7 +433,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 //      assert_true(absolute_value((activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
 
    }
-*/
+
 }
 
 

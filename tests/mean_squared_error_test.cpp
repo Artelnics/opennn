@@ -241,7 +241,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
         assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
   }
 
-  /* // Test lstm
+   // Test lstm
 
 {
        samples_number = 5;
@@ -280,7 +280,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
       // assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
-*/
+
 //   neural_network.set();
 
    // Test recurrent
@@ -387,7 +387,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
 }
 
-/*
+
 void MeanSquaredErrorTest::test_calculate_error_terms()
 {
    cout << "test_calculate_error_terms\n";
@@ -433,7 +433,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
 
 //   assert_true(abs(product_result(0) - error) < 1.0e-3, LOG);
 }
-*/
+
 
 void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 {

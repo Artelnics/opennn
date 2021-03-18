@@ -134,6 +134,7 @@ public:
    void check_range(const Tensor<type, 1>&) const;
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
 
    // Expression methods
 

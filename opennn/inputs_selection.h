@@ -107,9 +107,6 @@ public:
 
     // inputs selection methods
 
-    void delete_selection_history();
-    void delete_loss_history();
-    void delete_parameters_history();
     void check() const;
 
     // Utilities
