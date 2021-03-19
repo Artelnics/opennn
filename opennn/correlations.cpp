@@ -401,7 +401,7 @@ type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>& x, 
 /// @param x Vector containing the data.
 /// @param lags_number Maximum lags number.
 
-//Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const Index &lags_number)
+//Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const Index& lags_number)
 //{
 //    Tensor<type, 1> autocorrelation(lags_number);
 
@@ -439,7 +439,7 @@ type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>& x, 
 //    return autocorrelation;
 //}
 
-Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Index &lags_number)
+Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Index& lags_number)
 {
     Tensor<type, 1> autocorrelation(lags_number);
 
@@ -470,7 +470,7 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, con
 /// @param y Vector for computing the linear correlation with this vector.
 /// @param maximum_lags_number Maximum lags for which cross-correlation is calculated.
 
-//Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index &maximum_lags_number)
+//Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index& maximum_lags_number)
 //{
 //    if(y.size() != x.size())
 //    {
@@ -1372,7 +1372,7 @@ vector<int> get_indices_sorted(Tensor<type,1>& x)
 
     sort(begin(y), end(y), [&](int i1, int i2) { return x[i1] < x[i2]; } );
 
-    for (auto v : y) index.push_back(v);
+    for(auto v : y) index.push_back(v);
 
     return index;
 }

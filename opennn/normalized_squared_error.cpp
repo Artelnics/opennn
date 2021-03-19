@@ -107,14 +107,14 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
     Tensor<type, 2> targets_t(rows, columns);
     Tensor<type, 2> targets_t_1(rows, columns);
 
-    for (Index i = 0; i < columns; i++)
+    for(Index i = 0; i < columns; i++)
     {
         memcpy(targets_t_1.data() + targets_t_1.dimension(0) * i,
                targets.data() + targets.dimension(0) * i,
                static_cast<size_t>(rows)*sizeof(type));
     }
 
-    for (Index i = 0; i < columns; i++)
+    for(Index i = 0; i < columns; i++)
     {
         memcpy(targets_t.data() + targets_t.dimension(0) * i,
                targets.data() + targets.dimension(0) * i + 1,
@@ -158,7 +158,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 
     for(Index i = 0; i < target_samples_number; i++)
     {
-        for (Index j = 0; j < target_varaibles_number; j++)
+        for(Index j = 0; j < target_varaibles_number; j++)
         {
             normalization_coefficient += (targets_t_1(i,j) - targets_t(i,j)) * (targets_t_1(i,j) - targets_t(i,j));
         }

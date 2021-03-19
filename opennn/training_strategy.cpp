@@ -652,7 +652,7 @@ void TrainingStrategy::set_loss_goal(const type & new_loss_goal)
 }
 
 
-void TrainingStrategy::set_maximum_selection_error_increases(const Index & maximum_selection_error_increases)
+void TrainingStrategy::set_maximum_selection_error_increases(const Index&  maximum_selection_error_increases)
 {
     gradient_descent.set_maximum_selection_error_increases(maximum_selection_error_increases);
     conjugate_gradient.set_maximum_selection_error_increases(maximum_selection_error_increases);
