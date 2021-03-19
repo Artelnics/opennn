@@ -1067,7 +1067,7 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
    assert_true(new_synaptic_weights(1, 0) == -0.75, LOG);
    assert_true(new_synaptic_weights(2, 0) == 0.25, LOG);
 
-   // test parameters
+   // Test parameters
    Index parameters_number = perceptron_layer_2.get_parameters_number();
 
    assert_true(parameters_number == 4, LOG);

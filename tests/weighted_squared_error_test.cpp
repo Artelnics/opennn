@@ -214,7 +214,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
        wse.back_propagate(batch, forward_propagation, back_propagation);
 //       wse.calculate_error(batch, forward_propagation, back_propagation);
 
-       numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation(&wse);
+       numerical_error_gradient = wse.calculate_gradient_numerical_differentiation(&wse);
 
        assert_true(back_propagation.gradient(0)-1.1499 < 1e-3, LOG); // @todo 1e-2 precission
        assert_true(back_propagation.gradient(1)-0 < 1e-3, LOG);
@@ -272,7 +272,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   error_gradient = wse.calculate_error_gradient();
 
-//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -324,7 +324,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   error_gradient = wse.calculate_error_gradient();
 
-//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -376,7 +376,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   error_gradient = wse.calculate_error_gradient();
 
-//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -468,7 +468,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 //   neural_network.add_layer(perceptron_layer);
 //   neural_network.add_layer(probabilistic_layer);
 
-//   numerical_error_gradient = wse.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = wse.calculate_gradient_numerical_differentiation();
 
 //   error_gradient = wse.calculate_error_gradient();
 

@@ -187,7 +187,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
       mse.back_propagate(batch, forward_propagation, training_back_propagation);
       error_gradient = training_back_propagation.gradient;
 
-      numerical_error_gradient = mse.calculate_error_gradient_numerical_differentiation(&mse);
+      numerical_error_gradient = mse.calculate_gradient_numerical_differentiation(&mse);
 
       const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
@@ -234,7 +234,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
         mse_1.back_propagate(batch_1, forward_propagation, training_back_propagation);
         error_gradient = training_back_propagation.gradient;
 
-        numerical_error_gradient = mse_1.calculate_error_gradient_numerical_differentiation(&mse_1);
+        numerical_error_gradient = mse_1.calculate_gradient_numerical_differentiation(&mse_1);
 
         const Tensor<type, 1> difference1 = error_gradient-numerical_error_gradient;
 
@@ -276,7 +276,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
       // error_gradient = mean_squared_error.calculate_error_gradient();
 
-      //numerical_error_gradient = mean_squared_error.calculate_error_gradient_numerical_differentiation();
+      //numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
       // assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -308,7 +308,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
 //   error_gradient = mean_squared_error.calculate_error_gradient();
 
-//   numerical_error_gradient = mean_squared_error.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -378,7 +378,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 //   neural_network.add_layer(perceptron_layer);
 //   neural_network.add_layer(probabilistic_layer);
 
-//   numerical_error_gradient = mean_squared_error.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
 //   error_gradient = mean_squared_error.calculate_error_gradient();
 

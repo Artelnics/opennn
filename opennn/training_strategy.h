@@ -163,8 +163,6 @@ public:
 
    // Training methods
 
-   // This method trains a neural network which has a loss index associated.
-
    TrainingResults perform_training();
    void perform_training_void();
 
