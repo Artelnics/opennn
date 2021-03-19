@@ -112,7 +112,7 @@ void PerceptronLayerTest::test_get_inputs_number()
    perceptron_layer.set(1, 1);
    assert_true(perceptron_layer.get_inputs_number() == 1, LOG);
 
-   //Test 2
+   // Test 2
    perceptron_layer.set(4,5);
    assert_true(perceptron_layer.get_inputs_number() == 4, LOG);
 }
@@ -131,7 +131,7 @@ void PerceptronLayerTest::test_get_neurons_number()
    perceptron_layer.set(1, 1);
    assert_true(perceptron_layer.get_neurons_number() == 1, LOG);
 
-   //Test 2
+   // Test 2
    perceptron_layer.set(4,5);
    assert_true(perceptron_layer.get_neurons_number() == 5, LOG);
 }
@@ -632,7 +632,7 @@ void PerceptronLayerTest::test_set_inputs_number()
     Tensor<type, 2> new_biases;
     Tensor<type, 2> new_synaptic_weights;
 
-    //Test 0
+    // Test 0
     Tensor<type, 2> biases;
     Tensor<type, 2> synaptic_weights;
 
@@ -987,7 +987,7 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 //   assert_true(combinations.dimension(1) == 2, LOG);
 //   assert_true(abs(combinations(0,0) - 3) < static_cast<type>(1e-5), LOG);
 
-//   //Test 2
+//   // Test 2
 
 //   combinations.resize(2, 4);
 //   combinations.setZero();
@@ -1037,7 +1037,7 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 //   assert_true(combinations.dimension(1) == 4, LOG);
 //   assert_true(static_cast<Index>(combinations(0,0)) == 2, LOG);
 
-  //Test 4
+  // Test 4
 
    // Test get/set bias/synaptic weights
 

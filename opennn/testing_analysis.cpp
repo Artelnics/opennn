@@ -3889,10 +3889,6 @@ type TestingAnalysis::calculate_logloss() const
 
     check();
 
-#endif
-
-#ifdef __OPENNN_DEBUG__
-
     if(!neural_network_pointer)
     {
         ostringstream buffer;
@@ -3903,10 +3899,6 @@ type TestingAnalysis::calculate_logloss() const
 
         throw logic_error(buffer.str());
     }
-
-#endif
-
-#ifdef __OPENNN_DEBUG__
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 

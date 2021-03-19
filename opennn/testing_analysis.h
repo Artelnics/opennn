@@ -68,9 +68,10 @@ public:
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
+       /// @todo
+
        void save(const string&) const
        {
-        /// @todo
        }
     };
 

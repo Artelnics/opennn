@@ -158,7 +158,7 @@ public:
    type calculate_eta() const;
    type calculate_h(const type&) const;
 
-   Tensor<type, 1> calculate_error_gradient_numerical_differentiation(LossIndex*) const;
+   Tensor<type, 1> calculate_gradient_numerical_differentiation(LossIndex*) const;
 
    Tensor<type, 2> calculate_Jacobian_numerical_differentiation(LossIndex*) const;
 
@@ -187,10 +187,10 @@ public:
                        NeuralNetworkForwardPropagation&,
                        LossIndexBackPropagationLM&) const;
 
-   void calculate_error_terms_output_jacobian(const DataSetBatch&,
-                                              NeuralNetworkForwardPropagation&,
-                                              LossIndexBackPropagation&,
-                                              LossIndexBackPropagationLM&) const;
+   void calculate_error_terms_jacobian(const DataSetBatch&,
+                                       NeuralNetworkForwardPropagation&,
+                                       LossIndexBackPropagation&,
+                                       LossIndexBackPropagationLM&) const;
 
    virtual void calculate_gradient(const DataSetBatch&,
                                    LossIndexBackPropagationLM&) const {}
@@ -214,10 +214,6 @@ public:
    void calculate_error_gradient(const DataSetBatch&,
                                  const NeuralNetworkForwardPropagation&,
                                  LossIndexBackPropagation&) const;
-
-   void calculate_error_terms_Jacobian(const DataSetBatch&,
-                                       const NeuralNetworkForwardPropagation&,
-                                       LossIndexBackPropagationLM&) const;
 
    // Serialization methods
 

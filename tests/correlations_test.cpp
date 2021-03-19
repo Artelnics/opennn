@@ -30,9 +30,6 @@ void CorrelationsTest::test_linear_correlation()
     vector2.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 
     const type solution = 1;
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     assert_true(linear_correlation(thread_pool_device, vector1, vector2) - solution <= 0.000001, LOG);
 
@@ -67,13 +64,11 @@ void CorrelationsTest::test_linear_correlation()
 }
 
 
+/// @todo
+
 void CorrelationsTest::test_spearman_linear_correlation()
 {
     cout << "test_calculate_spearman_linear_correlation\n";
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     Index size = 100;
     Tensor<type, 1> x(size);
@@ -86,8 +81,8 @@ void CorrelationsTest::test_spearman_linear_correlation()
 
     correlation = rank_linear_correlation(thread_pool_device,x,y);
 
-   //@todo(assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
-   //@todo(assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
+   assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+   assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
 
     y = -1.0*x;
 
@@ -96,7 +91,7 @@ void CorrelationsTest::test_spearman_linear_correlation()
 
     y.setConstant(static_cast<type>(0.1));
     correlation = rank_linear_correlation(thread_pool_device,x,y);
-    //@todo(assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
     assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
 }
 
@@ -104,7 +99,7 @@ void CorrelationsTest::test_linear_correlation_missing_values()
 {
     cout << "test_calculate_linear_correlation_missing_values\n";
 
-//Test missing values
+    // Test missing values
 
     Tensor<type, 1> vector;
     vector.resize(5);
@@ -122,19 +117,15 @@ void CorrelationsTest::test_linear_correlation_missing_values()
     target[3] = static_cast<type>(NAN);
     target[4] = 5;
 
-    //@todo(type linear_correlation = linear_correlation_missing_values(thread_pool_device, vector, target);)
+//    type linear_correlation = linear_correlation_missing_values(thread_pool_device, vector, target);
 
-    //@todo(assert_true(abs(linear_correlation - 1.0) < 1.0e-3, LOG );)
+//    assert_true(abs(linear_correlation - 1.0) < 1.0e-3, LOG );
 }
 
 
 void CorrelationsTest::test_rank_linear_correlation()
 {
     cout << "test_calculate_rank_linear_correlation()\n";
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     Index size = 10;
     Tensor<type, 1> x(size);
@@ -259,10 +250,6 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
 {
     cout << "test_calculate_rank_linear_correlation_missing_values\n";
 
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     Index size = 10;
 
     Tensor<type, 1> x(size);
@@ -287,7 +274,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
     //@todo(assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
     assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
 
-    //Test missing values
+    // Test missing values
     Tensor<type, 1> vector;
     vector.resize(5);
     vector[0] = 1;
@@ -425,10 +412,6 @@ void CorrelationsTest::test_logarithmic_correlation()
 {
     cout << "test_calculate_logarithmic_correlation\n";
 
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     // Perfect case
 
     const Tensor<type, 1> vector1;//({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
@@ -451,7 +434,7 @@ void CorrelationsTest::test_logarithmic_correlation_missing_values()
 {
     cout << "test_calculate_logarithmic_correlation_missing_values\n";
 
-       //Test missing values
+       // Test missing values
 
        Tensor<type, 1> vector;
        vector.resize(5);
@@ -494,7 +477,7 @@ void CorrelationsTest::test_exponential_correlation_missing_values()
 {
     cout << "test_calculate_exponential_correlation_missing_values\n";
 
-    //Test missing values
+    // Test missing values
 
        Tensor<type, 1> vector;
        vector.resize(5);
@@ -521,10 +504,6 @@ void CorrelationsTest::test_linear_regression()
 
     // Device
 
-//    const int n = omp_get_max_threads();
-//    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-//    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
 //    Tensor<type, 1> vector1(4);
 //    vector1.setValues({10, 16, 25, 40, 60});
 //    Tensor<type, 1> vector2(5);
@@ -544,11 +523,6 @@ void CorrelationsTest::test_linear_regression()
 void CorrelationsTest::test_linear_regression_missing_values()
 {
     cout << "test_linear_regression_missing_values\n";
-
-    // Device
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     Tensor<type, 1> vector1(6);
     vector1.setValues({10, 16, 25, 40, 60, NAN});
@@ -572,11 +546,6 @@ void CorrelationsTest::test_exponential_regression()
 {
     cout << "test_exponential_regression\n";
 
-    // Device
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     Tensor<type, 1> vector1(5);
     vector1.setValues({10, 16, 25, 40, 60});
     Tensor<type, 1> vector2(5);
@@ -599,11 +568,6 @@ void CorrelationsTest::test_exponential_regression_missing_values()
 {
     cout << "test_exponential_regression_missing_values\n";
 
-    // Device
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     Tensor<type, 1> vector1(6);
     vector1.setValues({10, 16, 25, 40, 60, NAN});
     Tensor<type, 1> vector2(6);
@@ -625,12 +589,6 @@ void CorrelationsTest::test_logarithmic_regression() // @todo
 {
     cout << "test_logarithmic_regression\n";
 
-    // Device
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     Tensor<type, 1> vector1(5);
     vector1.setValues({10, 16, 25, 40, 60});
     Tensor<type, 1> vector2(5);
@@ -651,12 +609,6 @@ void CorrelationsTest::test_logarithmic_regression() // @todo
 void CorrelationsTest::test_logarithmic_regression_missing_values() // @todo
 {
     cout << "test_logarithmic_regression_missing_values\n";
-
-    // Device
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     Tensor<type, 1> vector1(6);
     vector1.setValues({10, 16, 25, 40, 60, NAN});
@@ -680,12 +632,6 @@ void CorrelationsTest::test_power_regression() // @todo
 {
     cout << "test_power_regression\n";
 
-    // Device
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     Tensor<type, 1> vector1(5);
     vector1.setValues({10, 16, 25, 40, 60});
     Tensor<type, 1> vector2(5);
@@ -701,19 +647,12 @@ void CorrelationsTest::test_power_regression() // @todo
     assert_true(pr.a - solution1 <= static_cast<type>(0.01), LOG);
     assert_true(pr.b - solution2 <= static_cast<type>(0.01), LOG);
     assert_true(pr.correlation - solution3 <= static_cast<type>(0.01), LOG);
-
 }
 
 
 void CorrelationsTest::test_power_regression_missing_values()
 {
     cout << "test_power_regression_missing_values\n";
-
-    // Device
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     Tensor<type, 1> vector1(6);
     vector1.setValues({10, 16, 25, 40, 60, NAN});
@@ -749,10 +688,6 @@ void CorrelationsTest::test_logistic_regression() // @todo
         if(i < size/2) y[i] = 0;
         else y[i] = 1;
     }
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
 //    RegressionResults log = logistic_regression(thread_pool_device,x,y);
 

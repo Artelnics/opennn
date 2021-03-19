@@ -998,9 +998,6 @@ type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& i
 }
 
 
-
-/// @todo check
-
 Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& period)
 {
     const Index size = vector.dimension(0);
@@ -1027,7 +1024,6 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& p
         mean_value = 0;
         sum = 0;
     }
-
 
     return std;
 }

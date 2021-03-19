@@ -46,7 +46,7 @@ void RecurrentLayerTest::test_constructor()
 
     assert_true(recurrent_layer.get_biases_number() == 1, LOG);
 
-    //Test
+    // Test
 
     inputs_number = 2;
     neurons_number = 3;
@@ -140,7 +140,7 @@ void RecurrentLayerTest::test_get_biases()
    Index inputs_number;
    Index neurons_number;
 
-   //Test
+   // Test
 
    neurons_number = 3;
    inputs_number = 2;
@@ -166,7 +166,7 @@ void RecurrentLayerTest::test_get_weights()
 
 //   Tensor<type, 2> weights;
 
-   //Test
+   // Test
 
    recurrent_layer.set(3,2);
 
@@ -185,7 +185,7 @@ void RecurrentLayerTest::test_get_recurrent_initializer()
 
 //   Tensor<type, 2> recurrent_weights;
 
-   //Test
+   // Test
 
    recurrent_layer.set(1,2);
 
@@ -269,7 +269,7 @@ void RecurrentLayerTest::test_get_parameters()
    assert_true(abs(parameters(8) - 1.0) < numeric_limits<type>::epsilon(), LOG);
    assert_true(abs(parameters(24) - -0.48) < numeric_limits<type>::epsilon(), LOG);
 
-   //Test
+   // Test
 
    Tensor<type, 1> biases(2);
    Tensor<type, 2> input_weights(3, 2);
@@ -458,7 +458,7 @@ void RecurrentLayerTest::test_calculate_outputs()
    Tensor<type, 2> new_recurrent_weights;
    Tensor<type, 1> new_biases;
 
-   //Test
+   // Test
 
    recurrent_layer.set(2,2);
 

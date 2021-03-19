@@ -829,7 +829,6 @@ RegressionResults logarithmic_regression(const ThreadPoolDevice* thread_pool_dev
     logarithmic_regression.regression_type = Logarithmic;
 
     return logarithmic_regression;
-
 }
 
 
@@ -1892,46 +1891,47 @@ Tensor<type, 2> covariance_matrix(const Tensor<type, 2>& matrix)
 /// size.
 /// That is, small values correspond with small ranks.
 /// Ties are assigned the mean of the ranks.
+/// @todo
 
 Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
 {
-    /*
-        Tensor<type, 1> indices_this = vector.calculate_less_rank().cast<type>();
+//    Tensor<type, 1> indices_this = vector.calculate_less_rank().cast<type>();
 
-        const Tensor<type, 1> this_unique = vector.get_unique_elements();
-        const Tensor<Index, 1> this_unique_frecuency = vector.count_unique();
+//    const Tensor<type, 1> this_unique = vector.get_unique_elements();
+//  const Tensor<Index, 1> this_unique_frecuency = vector.count_unique();
 
-        const Index n = vector.size();
+    const Index n = vector.size();
 
-        for(Index  i = 0; i < static_cast<Index>(this_unique.size()); i++)
+//    for(Index  i = 0; i < static_cast<Index>(this_unique.size()); i++)
+    {
+//        if(this_unique_frecuency[i] > 1)
         {
-            if(this_unique_frecuency[i] > 1)
-            {
-                 const type unique = this_unique[i];
+//             const type unique = this_unique[i];
 
-                 Tensor<type, 1> indices(this_unique_frecuency[i]);
+//             Tensor<type, 1> indices(this_unique_frecuency[i]);
 
-                 for(Index j = 0; j < n; j++)
+             for(Index j = 0; j < n; j++)
+             {
+//                 if(abs(vector[j] - unique) < numeric_limits<type>::min())
                  {
-                     if(abs(vector[j] - unique) < numeric_limits<type>::min())
-                     {
-                         indices.push_back(indices_this[j]);
-                     }
+//                     indices.push_back(indices_this[j]);
                  }
+             }
 
-                 const Tensor<type, 0> mean_index = indices.mean();
+//             const Tensor<type, 0> mean_index = indices.mean();
 
-                 for(Index j = 0; j < n; j++)
+             for(Index j = 0; j < n; j++)
+             {
+//                 if(abs(vector[j] - unique) < numeric_limits<type>::min())
                  {
-                     if(abs(vector[j] - unique) < numeric_limits<type>::min())
-                     {
-                         indices_this[j] = mean_index(0);
-                     }
+//                     indices_this[j] = mean_index(0);
                  }
-            }
+             }
         }
-        return indices_this + 1;
-    */
+    }
+
+//    return indices_this + 1;
+
     return Tensor<type, 1>();
 }
 
@@ -1939,92 +1939,92 @@ Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
 /// Calculate the contingency table of two cualitatives variables given to the function.
 /// @param vector1 First variable.
 /// @param vector2 Second variable.
+/// @todo
 
 Tensor<Index, 2> contingency_table(const Tensor<string, 1>& vector1, const Tensor<string, 1>& vector2)
 {
-/*
-    Tensor<string, 2> data_set = {vector1, vector2};
+//    Tensor<string, 2> data_set = {vector1, vector2};
 
-    data_set.set_header(Tensor<string, 1>({"variable1","variable2"}));
+//    data_set.set_header(Tensor<string, 1>({"variable1","variable2"}));
 
-    const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
-    const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
+//    const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
+//    const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
 
-    const Index rows_number = categories_vector1.size();
-    const Index columns_number = categories_vector2.size();
+//    const Index rows_number = categories_vector1.size();
+//    const Index columns_number = categories_vector2.size();
 
-    Tensor<Index, 2> contingency_table(rows_number,columns_number);
+//    Tensor<Index, 2> contingency_table(rows_number,columns_number);
 
-    for(Index i = 0 ; i < rows_number; i ++)
-    {
-        for(Index j = 0 ; j < columns_number; j ++)
-        {
-            contingency_table(i,j) = data_set.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
-        }
-    }
+//    for(Index i = 0 ; i < rows_number; i ++)
+//    {
+//        for(Index j = 0 ; j < columns_number; j ++)
+//        {
+//            contingency_table(i,j) = data_set.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
+//        }
+//    }
 
-    return contingency_table;
-*/
+//    return contingency_table;
+
     return Tensor<Index, 2>();
 }
 
 
 /// Calculate the contingency table of two cualitatives variables given to the function
 /// @param contingency_table Data set to perform the test.
+/// @todo
 
 Tensor<Index, 2> contingency_table(Tensor<string, 2>& matrix)
-{
-    /*
-        #ifdef __OPENNN_DEBUG__
+{  
+    #ifdef __OPENNN_DEBUG__
 
-        if(matrix.dimension(1) == 0)
-        {
-           ostringstream buffer;
+    if(matrix.dimension(1) == 0)
+    {
+       ostringstream buffer;
 
-           buffer << "OpenNN Exception: Matrix template."
-                  << "Index contingency_table const method.\n"
-                  << "Number of columns("<< matrix.dimension(1) <<") must be greater than zero.\n";
+       buffer << "OpenNN Exception: Matrix template."
+              << "Index contingency_table const method.\n"
+              << "Number of columns("<< matrix.dimension(1) <<") must be greater than zero.\n";
 
-           throw logic_error(buffer.str());
-        }
+       throw logic_error(buffer.str());
+    }
 
-        if(matrix.dimension(1) > 2)
-        {
-           ostringstream buffer;
+    if(matrix.dimension(1) > 2)
+    {
+       ostringstream buffer;
 
-           buffer << "OpenNN Exception: Matrix template."
-                  << "Index contingency_table const method.\n"
-                  << "Number of columns("<< matrix.dimension(1) <<") must be lower than two.\n";
+       buffer << "OpenNN Exception: Matrix template."
+              << "Index contingency_table const method.\n"
+              << "Number of columns("<< matrix.dimension(1) <<") must be lower than two.\n";
 
-           throw logic_error(buffer.str());
-        }
+       throw logic_error(buffer.str());
+    }
 
-        #endif
+    #endif
 
 
-        matrix.set_header({"variable1", "variable2"});
+//    matrix.set_header({"variable1", "variable2"});
 
-        const Tensor<string, 1> vector1 = matrix.chip(0,1);
-        const Tensor<string, 1> vector2 = matrix.chip(1,1);
+    const Tensor<string, 1> vector1 = matrix.chip(0,1);
+    const Tensor<string, 1> vector2 = matrix.chip(1,1);
 
-        const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
-        const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
+//    const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
+//    const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
 
-        const Index rows_number = categories_vector1.size();
-        const Index columns_number = categories_vector2.size();
+//    const Index rows_number = categories_vector1.size();
+//    const Index columns_number = categories_vector2.size();
 
-        Tensor<Index, 2> contingency_table(rows_number,columns_number);
+//    Tensor<Index, 2> contingency_table(rows_number,columns_number);
 
-        for(Index i = 0 ; i < rows_number; i ++)
-        {
-            for(Index j = 0 ; j < columns_number; j ++)
-            {
-                contingency_table(i,j) = matrix.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
-            }
-        }
+//    for(Index i = 0 ; i < rows_number; i ++)
+//    {
+//        for(Index j = 0 ; j < columns_number; j ++)
+//        {
+//            contingency_table(i,j) = matrix.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
+//        }
+//    }
 
-        return contingency_table;
-    */
+//    return contingency_table;
+
     return Tensor<Index, 2>();
 }
 
@@ -2145,23 +2145,22 @@ type chi_square_critical_point(const type& alpha, const type& degrees_of_freedom
 ///Calculate the karl_pearson_coefficient between two cualitative variable. It shows the realtionship between the two varibles.
 /// @param x First variable
 /// @param y Second variable
+/// @todo
 
 type karl_pearson_correlation(const Tensor<string, 1>& x, const Tensor<string, 1>& y)
 {
-    /*
-        const Tensor<Index, 2> contingency_table = OpenNN::contingency_table(x,y);
 
-        const type chi_squared_exp = chi_square_test(contingency_table.cast<type>());
+    const Tensor<Index, 2> contingency_table = OpenNN::contingency_table(x,y);
 
-        Tensor<Index, 1> categories(2);
-        categories[0] = x.get_unique_elements().size();
-        categories[1] = y.get_unique_elements().size();
+    const type chi_squared_exp = chi_square_test(contingency_table.cast<type>());
 
-        const Tensor<Index, 0> k = categories.minimum();
+    Tensor<Index, 1> categories(2);
+//        categories[0] = x.get_unique_elements().size();
+//        categories[1] = y.get_unique_elements().size();
 
-        return sqrt(k(0)/(k(0)-1))*sqrt(chi_squared_exp/(x.size() + chi_squared_exp));
-    */
-    return 0.0;
+    const Tensor<Index, 0> k = categories.minimum();
+
+    return sqrt(k(0)/(k(0)-1))*sqrt(chi_squared_exp/(x.size() + chi_squared_exp));
 }
 
 

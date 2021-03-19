@@ -382,8 +382,6 @@ public:
    void set_samples_uses(const Tensor<SampleUse, 1>&);
    void set_samples_uses(const Tensor<string, 1>&);
 
-   void set_k_fold_cross_validation_samples_uses(const Index&, const Index&);
-
    // Columns set methods
 
    void set_columns(const Tensor<Column, 1>&);

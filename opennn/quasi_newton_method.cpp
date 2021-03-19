@@ -705,9 +705,6 @@ void QuasiNewtonMethod::update_parameters(
 
     optimization_data.learning_rate = directional_point.first;
 
-    /// @todo ?
-    // Reset training direction when learning rate is 0
-
     if(optimization_data.epoch != 1 && abs(optimization_data.learning_rate) < numeric_limits<type>::min())
     {
         optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;

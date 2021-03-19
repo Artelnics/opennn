@@ -1220,6 +1220,9 @@ string ProbabilisticLayer::write_activations_c() const
 
         case Competitive:
             ///@todo
+
+            buffer << "";
+
             break;
 
         case Softmax:
@@ -1243,7 +1246,6 @@ string ProbabilisticLayer::write_activations_c() const
                 {
                     buffer << "\tactivations[" << i << "] = exp(combinations[" << i << "])/sum;\n";
                 }
-
             }
             break;
         }
