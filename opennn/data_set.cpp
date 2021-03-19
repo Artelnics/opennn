@@ -5838,7 +5838,7 @@ void DataSet::print_input_target_columns_correlations() const
 /// This method print on screen the corretaliont between inputs and targets.
 /// @param number Number of variables to be printed.
 
-void DataSet::print_top_input_target_columns_correlations(const Index& number) const
+void DataSet::print_top_input_target_columns_correlations() const
 {
     const Index inputs_number = get_input_columns_number();
     const Index targets_number = get_target_columns_number();
@@ -5864,7 +5864,7 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
 
     map<type,string>::iterator it;
 
-    for(it = top_correlation.begin(); it!=top_correlation.end(); it++)
+    for(it = top_correlation.begin(); it != top_correlation.end(); it++)
     {
         cout << "Correlation:  " << (*it).first << "  between  " << (*it).second << "" << endl;
     }
@@ -5913,16 +5913,28 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                const RegressionResults linear_regression = OpenNN::linear_regression(thread_pool_device, input_column, target_column);
-                const RegressionResults exponential_regression = OpenNN::exponential_regression(thread_pool_device, input_column, target_column);
-                const RegressionResults logarithmic_regression = OpenNN::logarithmic_regression(thread_pool_device, input_column, target_column);
-                const RegressionResults power_regression = OpenNN::power_regression(thread_pool_device, input_column, target_column);
+                const RegressionResults linear_regression
+                        = OpenNN::linear_regression(thread_pool_device, input_column, target_column);
+
+                const RegressionResults exponential_regression
+                        = OpenNN::exponential_regression(thread_pool_device, input_column, target_column);
+
+                const RegressionResults logarithmic_regression
+                        = OpenNN::logarithmic_regression(thread_pool_device, input_column, target_column);
+
+                const RegressionResults power_regression
+                        = OpenNN::power_regression(thread_pool_device, input_column, target_column);
 
                 RegressionResults strongest_regression = linear_regression;
 
-                if(abs(exponential_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = exponential_regression;
-                if(abs(logarithmic_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = logarithmic_regression;
-                if(abs(power_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = power_regression;
+                if(abs(exponential_regression.correlation) > abs(strongest_regression.correlation))
+                    strongest_regression = exponential_regression;
+
+                if(abs(logarithmic_regression.correlation) > abs(strongest_regression.correlation))
+                    strongest_regression = logarithmic_regression;
+
+                if(abs(power_regression.correlation) > abs(strongest_regression.correlation))
+                    strongest_regression = power_regression;
 
                 regressions(i,j) = strongest_regression;
             }
@@ -9301,68 +9313,17 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     return cross_correlations;
 }
 
-/*
-/// @todo
-
-Tensor<type, 2> DataSet::calculate_lag_plot() const
-{
-    const Index samples_number = get_used_samples_number();
-
-    const Index columns_number = data.dimension(1) - 1;
-
-    Tensor<type, 2> lag_plot(samples_number, columns_number);
-
-//    lag_plot = data.get_submatrix_columns(columns_indices);
-
-    return lag_plot;
-}
-
-
-/// @todo, check
-
-Tensor<type, 2> DataSet::calculate_lag_plot(const Index& maximum_lags_number)
-{
-    const Index samples_number = get_used_samples_number();
-
-    if(maximum_lags_number > samples_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 2> calculate_lag_plot(const Index&) method.\n"
-               << "Maximum lags number(" << maximum_lags_number
-               << ") is greater than the number of samples("
-               << samples_number << ") \n";
-
-        throw logic_error(buffer.str());
-    }
-
-    //const Tensor<type, 2> lag_plot = time_series_data.calculate_lag_plot(maximum_lags_number, time_index);
-
-//    return lag_plot;
-
-    return Tensor<type, 2>();
-}
-*/
 
 /// Generates an artificial dataset with a given number of samples and number of variables
 /// by constant data.
 /// @param samples_number Number of samples in the dataset.
 /// @param variables_number Number of variables in the dataset.
-/// @todo
 
-void DataSet::generate_constant_data(const Index& samples_number, const Index& variables_number)
+void DataSet::generate_constant_data(const Index& samples_number, const Index& variables_number, const type& value)
 {
     set(samples_number, variables_number);
 
-//    data.setRandom(-5.12, 5.12);
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        data(i, variables_number-1) = 0;
-    }
-
-    scale_minimum_maximum(data);
+    data.setConstant(value);
 
     set_default_columns_uses();
 }
@@ -9379,9 +9340,6 @@ void DataSet::generate_random_data(const Index& samples_number, const Index& var
     set(samples_number, variables_number);
 
     data.setRandom();
-
-//        data.setRandom(0.0, 1.0);
-
 }
 
 
@@ -9467,26 +9425,6 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 }
 
 
-/// @todo
-
-void DataSet::generate_inputs_selection_data(const Index& samples_number, const Index& variables_number)
-{
-    set(samples_number,variables_number);
-
-    data.setRandom();
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        for(Index j = 0; j < variables_number-2; j++)
-        {
-            data(i,variables_number-1) += data(i,j);
-        }
-    }
-
-    set_default_columns_uses();
-}
-
-
 void DataSet::generate_sum_data(const Index& samples_number, const Index& variables_number)
 {
     set(samples_number,variables_number);
@@ -9504,82 +9442,6 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
     set_default();
 
     scale_data_mean_standard_deviation();
-
-}
-
-
-/// Generate artificial data for a binary classification problem with a given number of samples and inputs.
-/// @param samples_number Number of the samples to generate.
-/// @param inputs_number Number of the variables that the data set will have.
-/// @todo
-
-void DataSet::generate_data_binary_classification(const Index& samples_number, const Index& inputs_number)
-{
-    const Index negatives = samples_number/2;
-    const Index positives = samples_number - negatives;
-
-    // Negatives data
-
-    Tensor<type, 1> target_0(negatives);
-
-    Tensor<type, 2> class_0(negatives, inputs_number+1);
-
-//        class_0.setRandom(-0.5, 1.0);
-
-//        class_0.set_column(inputs_number, target_0, "");
-
-        // Positives data
-
-//        Tensor<type, 1> target_1(positives, 1.0);
-
-//        Tensor<type, 2> class_1(positives, inputs_number+1);
-
-//        class_1.setRandom(0.5, 1.0);
-
-//        class_1.set_column(inputs_number, target_1, "");
-
-        // Assemble
-
-//        set(class_0.assemble_rows(class_1));
-}
-
-
-/// @todo Low priority.
-
-void DataSet::generate_data_multiple_classification(const Index& samples_number, const Index& inputs_number, const Index& outputs_number)
-{
-    Tensor<type, 2> new_data(samples_number, inputs_number);
-
-    new_data.setRandom();
-
-    Tensor<type, 2> targets(samples_number, outputs_number);
-
-    Index target_index = 0;
-
-    for(Index i = 0; i < samples_number; i ++)
-    {
-        target_index = static_cast<unsigned>(rand())%outputs_number;
-
-        targets(i, target_index) = 1.0;
-    }
-
-//        set(new_data.assemble_columns(targets));
-}
-
-
-/// Returns true if the data matrix is not empty(it has not been loaded),
-/// and false otherwise.
-
-bool DataSet::has_data() const
-{
-    if(is_empty())
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
 }
 
 
@@ -9588,7 +9450,7 @@ bool DataSet::has_data() const
 /// The size must be equal to the number of variables.
 /// @param maximums vector of maximum values in the range.
 /// The size must be equal to the number of variables.
-/// @todo Low priority.
+/// @todo
 
 Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type, 1>& maximums)
 {
@@ -9661,6 +9523,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
             static_cast<Index>(std::count_if(filtered_indices.data(), filtered_indices.data()+filtered_indices.size(), [](type value) {return value > static_cast<type>(0.5);}));
 
     Tensor<Index, 1> filtered_samples_indices(filtered_samples_number);
+
     Index index = 0;
 
     for(Index i = 0; i < samples_number; i++)
@@ -9888,8 +9751,6 @@ void DataSet::scrub_missing_values()
     }
 }
 
-
-/// @todo Time series stuff?
 
 void DataSet::read_csv()
 {

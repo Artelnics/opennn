@@ -69,7 +69,7 @@ type WeightedSquaredError::get_normalizaton_coefficient() const
 
 void WeightedSquaredError::set_default()
 {
-    if(has_data_set() && data_set_pointer->has_data())
+    if(has_data_set() && !data_set_pointer->is_empty())
     {
         set_weights();
 
