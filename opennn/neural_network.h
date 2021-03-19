@@ -284,7 +284,7 @@ struct NeuralNetworkForwardPropagation
 
         layers.resize(trainable_layers_number);
 
-        for (Index i = 0; i < trainable_layers_number; i++)
+        for(Index i = 0; i < trainable_layers_number; i++)
         {
             switch (trainable_layers_pointers(i)->get_type())
             {
@@ -335,7 +335,7 @@ struct NeuralNetworkForwardPropagation
 
         cout << "Layers number: " << layers_number << endl;
 
-        for (Index i = 0; i < layers_number; i++)
+        for(Index i = 0; i < layers_number; i++)
         {
             cout << "Layer " << i + 1 << endl;
 
@@ -374,7 +374,7 @@ struct NeuralNetworkBackPropagation
 
         layers.resize(trainable_layers_number);
 
-        for (Index i = 0; i < trainable_layers_number; i++)
+        for(Index i = 0; i < trainable_layers_number; i++)
         {
             //layers(i).set(batch_samples_number, trainable_layers_pointers(i));
 
@@ -423,7 +423,7 @@ struct NeuralNetworkBackPropagation
 
         cout << "Layers number: " << layers_number << endl;
 
-        for (Index i = 0; i < layers_number; i++)
+        for(Index i = 0; i < layers_number; i++)
         {
             cout << "Layer " << i + 1 << endl;
         }

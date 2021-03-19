@@ -190,7 +190,7 @@ Histogram::~Histogram() {}
 /// Bins number constructor.
 /// @param bins_number Number of bins in the histogram.
 
-Histogram::Histogram(const Index &bins_number)
+Histogram::Histogram(const Index& bins_number)
 {
     centers.resize(bins_number);
     frequencies.resize(bins_number);
@@ -1438,7 +1438,7 @@ BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 /// @param vector Vector to obtain the histogram.
 /// @param bins_number Number of bins to split the histogram.
 
-Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
+Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1583,7 +1583,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
 /// @param center
 /// @param bins_number
 
-Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const Index & bins_number)
+Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const Index&  bins_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -3031,10 +3031,11 @@ Index maximal_index(const Tensor<type, 1>& vector)
     return maximal_index;
 }
 
+
 /// Returns the indices of the smallest elements in the vector.
 /// @param number Number of minimal indices to be computed.
 
-Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index &number)
+Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
     Eigen::Tensor<type, 1> vector_ = vector;
 
@@ -3049,7 +3050,7 @@ if(number > size)
    ostringstream buffer;
 
    buffer << "OpenNN Exception: Statistics class.\n"
-          << "Tensor<Index, 1> minimal_indices(Tensor<type, 1>& , const Index &) \n"
+          << "Tensor<Index, 1> minimal_indices(Tensor<type, 1>& , const Index& ) \n"
           << "Number of minimal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
 
    throw logic_error(buffer.str());
@@ -3069,6 +3070,7 @@ if(number > size)
                 minimum = vector_(i);
             }
         }
+
         vector_(minimal_index) = maxim(0)+1;
         minimal_indices(j) = minimal_index;
     }
@@ -3079,7 +3081,7 @@ if(number > size)
 /// Returns the indices of the largest elements in the vector.
 /// @param number Number of maximal indices to be computed.
 
-Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index &number)
+Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
     Eigen::Tensor<type, 1> vector_ = vector;
 
@@ -3094,7 +3096,7 @@ if(number > size)
    ostringstream buffer;
 
    buffer << "OpenNN Exception: Statistics class.\n"
-          << "Tensor<Index, 1> maximal_indices(Tensor<type, 1>& , const Index &) \n"
+          << "Tensor<Index, 1> maximal_indices(Tensor<type, 1>& , const Index& ) \n"
           << "Number of maximal indices to be computed must be lower (or equal) than the size of the imput vector.\n";
 
    throw logic_error(buffer.str());
@@ -3117,8 +3119,10 @@ if(number > size)
         vector_(maximal_index) = minim(0)-1;
         maximal_indices(j) = maximal_index;
     }
-      return maximal_indices;
+
+    return maximal_indices;
 }
+
 
 /// Returns the row and column indices corresponding to the entry with minimum value.
 

@@ -893,7 +893,7 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& n
 /// Sets the timesteps of the layer from a Index.
 /// @param new_timesteps New set of timesteps in the layer.
 
-void LongShortTermMemoryLayer::set_timesteps(const Index & new_timesteps)
+void LongShortTermMemoryLayer::set_timesteps(const Index&  new_timesteps)
 {
     timesteps = new_timesteps;
 }

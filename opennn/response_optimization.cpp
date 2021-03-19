@@ -304,7 +304,9 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
 /// @todo Update method.
 
-void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>& names, const Tensor<string, 1>& conditions_string, const Tensor<type, 1>& values)
+void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>& names,
+                                                         const Tensor<string, 1>& conditions_string,
+                                                         const Tensor<type, 1>& values)
 {
     const Tensor<Condition, 1> conditions = get_conditions(conditions_string);
 

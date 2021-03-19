@@ -389,7 +389,7 @@ void RecurrentLayer::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-void RecurrentLayer::set_timesteps(const Index & new_timesteps)
+void RecurrentLayer::set_timesteps(const Index&  new_timesteps)
 {
     timesteps = new_timesteps;
 }
@@ -1153,7 +1153,8 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 /// @param outputs_names Vector of strings with the name of the layer outputs.
 /// @todo Implement method
 
-string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names,
+                                        const Tensor<string, 1>& outputs_names) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1189,7 +1190,7 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 #endif
 
     ostringstream buffer;
-/*
+
     for(Index j = 0; j < outputs_names.size(); j++)
     {
         const Tensor<type, 1> synaptic_weights_column =  recurrent_weights.chip(j,1);
@@ -1198,13 +1199,12 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 
         for(Index i = 0; i < inputs_names.size() - 1; i++)
         {
-
            buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ")+";
         }
 
         buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
     }
-*/
+
     return buffer.str();
 }
 

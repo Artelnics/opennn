@@ -233,7 +233,7 @@ public:
 
    ColumnType get_column_type(const Index& index) const {return columns[index].type;}
 
-   VariableUse get_column_use(const Index &) const;
+   VariableUse get_column_use(const Index& ) const;
    Tensor<VariableUse, 1> get_columns_uses() const;
 
    // Variables get methods
@@ -412,8 +412,6 @@ public:
 
    void set_binary_simple_columns();
 
-   void binarize_input_data(const type&);
-
    // Columns other methods
 
    Tensor<type,2> transform_binary_column(const Tensor<type,1>&) const;
@@ -457,9 +455,6 @@ public:
    void set_display(const bool&);
 
    // Check methods
-
-   bool is_binary_classification() const;
-   bool is_multiple_classification() const;
 
    bool is_empty() const;
 
@@ -548,7 +543,7 @@ public:
 
    void print_inputs_correlations() const;
 
-   void print_top_inputs_correlations(const Index& = 10) const;
+   void print_top_inputs_correlations() const;
 
    // Inputs-targets correlations
 
@@ -563,18 +558,6 @@ public:
 
    Tensor<RegressionResults, 2> calculate_input_target_columns_regressions() const;
 
-   // Principal components
-
-   Tensor<type, 2> calculate_covariance_matrix() const;
-
-   Tensor<type, 2> perform_principal_components_analysis(const type& = 0.0);
-
-   Tensor<type, 2> perform_principal_components_analysis(const Tensor<type, 2>&, const Tensor<type, 1>&, const type& = 0.0);
-
-   void transform_principal_components_data(const Tensor<type, 2>&);
-
-   void subtract_inputs_mean();
-
    // Filtering methods
 
    Tensor<Index, 1> filter_column(const Index&, const type&, const type&);
@@ -586,6 +569,7 @@ public:
 
    Tensor<string, 1> calculate_default_scaling_methods() const;
    Tensor<string, 1> calculate_default_unscaling_methods() const;
+
    void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
    void scale_minimum_maximum_binary(const type&, const type&, const Index&);
    void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
@@ -661,8 +645,8 @@ public:
 
    Tensor<type, 2> get_time_series_column_data(const Index&) const;
    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
-//   Tensor<Tensor<type, 1>, 2> calculate_cross_correlations(const Index& = 10) const;
    Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
+
    Tensor<type, 2> calculate_lag_plot() const;
    Tensor<type, 2> calculate_lag_plot(const Index&);
 
@@ -714,8 +698,6 @@ public:
    Tensor<type, 2> read_input_csv(const string&, const char&, const string&, const bool&, const bool&) const;
 
    // Trasform methods
-
-   void transform_association();
 
    void fill_time_series(const Index&);
 
