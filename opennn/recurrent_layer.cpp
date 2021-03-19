@@ -1193,7 +1193,7 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 #endif
 
     ostringstream buffer;
-
+/*
     for(Index j = 0; j < outputs_names.size(); j++)
     {
         const Tensor<type, 1> synaptic_weights_column =  recurrent_weights.chip(j,1);
@@ -1208,7 +1208,7 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names, c
 
         buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
     }
-
+*/
     return buffer.str();
 }
 
