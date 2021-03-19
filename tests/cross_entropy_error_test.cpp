@@ -202,7 +202,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    cee.back_propagate(batch, forward_propagation, training_back_propagation);
 
-   numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation(&cee);
+   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation(&cee);
 
    const Tensor<type, 1> difference = training_back_propagation.gradient-numerical_error_gradient;
 
@@ -244,7 +244,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
 //   error_gradient = cee.calculate_error_gradient();
 
-//   numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -276,7 +276,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
 //   error_gradient = cee.calculate_error_gradient();
 
-//   numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -346,7 +346,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 //   neural_network.add_layer(perceptron_layer);
 //   neural_network.add_layer(probabilistic_layer);
 
-//   numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation();
 
 //   error_gradient = cee.calculate_error_gradient();
 

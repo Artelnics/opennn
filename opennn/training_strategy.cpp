@@ -716,14 +716,6 @@ void TrainingStrategy::set_default()
 
 TrainingResults TrainingStrategy::perform_training()
 {
-#ifdef __OPENNN_DEBUG__
-
-    check_loss_index();
-
-    check_optimization_algorithms();
-
-#endif
-
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
         fix_forecasting();
@@ -794,14 +786,6 @@ TrainingResults TrainingStrategy::perform_training()
 
 void TrainingStrategy::perform_training_void()
 {
-#ifdef __OPENNN_DEBUG__
-
-    check_loss_index();
-
-    check_optimization_algorithms();
-
-#endif
-
     switch(optimization_method)
     {
     case GRADIENT_DESCENT:

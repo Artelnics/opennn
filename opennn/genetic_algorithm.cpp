@@ -408,9 +408,9 @@ void GeneticAlgorithm::set_reserve_generation_optimum_loss(const bool& new_reser
 
 void GeneticAlgorithm::initialize_population()
 {
-#ifdef __OPENNN_DEBUG__
-
     const Index individuals_number = get_individuals_number();
+
+#ifdef __OPENNN_DEBUG__
 
     if(individuals_number == 0)
     {
@@ -424,8 +424,6 @@ void GeneticAlgorithm::initialize_population()
     }
 
 #endif
-
-    const Index individuals_number = get_individuals_number();
 
     const Index genes_number = get_genes_number();
 
@@ -571,7 +569,7 @@ void GeneticAlgorithm::perform_selection()
         throw logic_error(buffer.str());
     }
 
-    if(fitness.dimension(0) == 0)
+    if(population_fitness.dimension(0) == 0)
     {
         ostringstream buffer;
 

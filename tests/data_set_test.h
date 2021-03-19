@@ -44,8 +44,6 @@ public:
    void test_get_variables();
    void test_get_display();
    void test_write_first_cell();
-   void test_is_binary_classification();
-   void test_is_multiple_classification();
    void test_has_time_columns();
 
    // Data methods
@@ -78,22 +76,9 @@ public:
    void test_set_time_index();
 
    // Data methods
+
    void test_set_data();
    void test_empty();
-
-   // Sample methods
-   void test_set_sample();
-   void test_set_training_sample();
-   void test_set_selection_sample();
-   void test_set_testing_sample();
-   void test_set_input_sample();
-   void test_set_target_sample();
-   void test_set_training_input_sample();
-   void test_set_training_target_sample();
-   void test_set_selection_input_sample(); 
-   void test_set_selection_target_sample();
-   void test_set_testing_input_sample();
-   void test_set_testing_target_sample();
 
    // Data resizing methods
 
@@ -182,16 +167,12 @@ public:
 
    void test_calculate_target_columns_distribution();
    void test_unuse_most_populated_target();
-   void test_balance_binary_targets_distribution();
-   void test_balance_multiple_targets_distribution();
-   void test_balance_function_regression_targets_distribution();
 
    void test_clean_Tukey_outliers();
 
    // Data generation
+
    void test_generate_constant_data();
-   void test_generate_data_binary_classification();
-   void test_generate_data_multiple_classification();
 
    // Serialization methods
 
@@ -216,12 +197,9 @@ public:
    //Trasform methods
 
    void test_transform_time_series();
-   void test_convert_autoassociation();
 
    //Principal components mehtod
 
-   void test_covariance_matrix();
-   void test_perform_principal_components_analysis();
    void test_calculate_training_negatives();
    void test_calculate_selection_negatives();
    void test_scrub_missing_values();
