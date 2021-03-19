@@ -1057,11 +1057,14 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 
 void AdaptiveMomentEstimationData::print() const
 {
-    cout << "Gradien exponential decay:" << endl <<gradient_exponential_decay << endl;
+    cout << "Gradien exponential decay:" << endl
+         <<gradient_exponential_decay << endl;
 
-    cout << "Square gradient exponential decay:" << endl << square_gradient_exponential_decay << endl;
+    cout << "Square gradient exponential decay:" << endl
+         << square_gradient_exponential_decay << endl;
 
-    cout << "Parameters:" << endl << parameters << endl;
+    cout << "Parameters:" << endl
+         << parameters << endl;
 }
 
 }

@@ -655,12 +655,12 @@ void DataSetTest::test_calculate_data_distributions()
    Tensor<type, 1> centers(2);
    centers.setValues({0,1});
 
-   //Test frequencies
+   // Test frequencies
 //   assert_true(histograms(0).frequencies == sol_2, LOG);
    //assert_true(histograms[1].frequencies == sol_2, LOG);
    //assert_true(histograms[2].frequencies == sol, LOG);
 
-   //Test centers
+   // Test centers
 //   assert_true(histograms[0].centers == centers, LOG);
    //assert_true(histograms[1].centers == centers, LOG);
    //assert_true(histograms[2].centers == centers, LOG);
@@ -1056,7 +1056,7 @@ void DataSetTest::test_calculate_target_columns_distribution() // @todo
 {
     cout << "test_calculate_target_columns_distribution\n";
 
-    //Test two classes
+    // Test two classes
 
     Tensor<type, 2> matrix(5, 4);
     matrix.setValues({{2,5,6,9,8},{2,9,1,9,4},{6,5,6,7,3},{0,static_cast<type>(NAN),1,0,1}});
@@ -1380,7 +1380,7 @@ void DataSetTest::test_balance_binary_targets_distribution()
     //assert_true(ds2.calculate_target_distribution()[0] == 9, LOG);
     }
 
-    //Test
+    // Test
     {
     DataSet data_set(4,1,1);
 
@@ -1416,7 +1416,7 @@ void DataSetTest::test_balance_binary_targets_distribution()
     assert_true(data_set.get_unused_samples_indices().size() == 2, LOG);
     }
 
-    //Test
+    // Test
     {
     DataSet data_set(16,1,1);
 
@@ -2148,7 +2148,7 @@ void DataSetTest::test_read_csv()
 //   assert_true(data(1,1) == 0.0, LOG);
 //   assert_true(data(2,1) == 1.0, LOG);
 
-//   //Test
+//   // Test
 
 //   data_set.set_separator('\t');
 //   data_set.set_missing_values_label("NaN");
@@ -2836,11 +2836,11 @@ void DataSetTest::test_filter_column() // @todo
 //    DataSet data_set;
 //    data_set.set_data(matrix);
 
-//    //Test
+//    // Test
 //    assert_true(data_set.filter_variable(1, 1, 3) == solution, LOG);
 //    assert_true(data_set.filter_variable(0, 4, 5) == solution_1, LOG);
 
-//    //Test
+//    // Test
 //    Tensor<string, 1> header({"a","b","c"});
 //    Tensor<type, 2> matrix_1({{1,2,3},{4,2,8},{7,8,6}}, {"a","b","c"});
 //    DataSet ds_1;
@@ -2973,10 +2973,10 @@ void DataSetTest::test_calculate_input_target_correlations() // @todo
 
 //    Tensor<type, 2> correlations_targets = data_set.calculate_inputs_targets_correlations();
 
-//    //Test linear correlation
+//    // Test linear correlation
 //    assert_true(correlations_targets - 1.0 < 1.0e-3, LOG);
 
-//    //Test logistic correlation
+//    // Test logistic correlation
 
 }
 

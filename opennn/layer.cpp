@@ -367,11 +367,9 @@ void Layer::exponential_linear(const Tensor<type, 1>& x, Tensor<type, 1>& y) con
     y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 }
 
-/// @todo Ternary operator
 
 void Layer::binary(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
-
     const Tensor<bool, 1> if_sentence = x < x.constant(0.5);
 
     Tensor<type, 1> f_1(x.dimension(0));
@@ -392,7 +390,7 @@ void Layer::competitive(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
     y.setZero();
 
-    Index index = maximal_index(x);
+    const Index index = maximal_index(x);
 
     y(index) = 1;
 }
@@ -1315,10 +1313,10 @@ void Layer::soft_sign(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 }
 
 
+/// @todo Test this method.
+
 void Layer::hard_sigmoid(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
-    // @todo Test this method
-
     const Tensor<bool, 4> if_lower = x < x.constant(-2.5);
     const Tensor<bool, 4> if_greater = x > x.constant(2.5);
     const Tensor<bool, 4> if_middle = x < x.constant(-2.5) && x > x.constant(2.5);

@@ -217,22 +217,7 @@ public:
    virtual void load(const string&);
    void load_parameters_binary(const string&);
 
-   void save_data(const string&) const;
-
-   Tensor<string, 1> get_layers_names() const
-   {
-       const Index layers_number = get_layers_number();
-
-       Tensor<string, 1> layers_names(layers_number);
-
-       for(Index i = 0; i < layers_number; i++)
-       {
-           layers_names[i] = layers_pointers[i]->get_name();
-       }
-
-       return layers_names;
-   }
-
+   Tensor<string, 1> get_layers_names() const;
 
    // Expression methods
 

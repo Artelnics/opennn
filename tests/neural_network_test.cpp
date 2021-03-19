@@ -391,7 +391,7 @@ void NeuralNetworkTest::test_get_trainable_layers()
 {
    cout << "test_get_trainable_layers\n";
 
-   //Test 0
+   // Test 0
 
    Tensor<Layer*,1> layer_tensor_0(4);
    layer_tensor_0.setValues({new ScalingLayer, new PerceptronLayer, new UnscalingLayer, new ProbabilisticLayer});
@@ -451,7 +451,7 @@ void NeuralNetworkTest::test_get_layers_type_pointers()
 
    assert_true(neural_network.get_first_perceptron_layer_pointer()->get_type() == Layer::Perceptron, LOG);
 
-   //Test 2
+   // Test 2
 
    Tensor<Layer*,1> layer_tensor_1(3);
    layer_tensor_1.setValues({new ScalingLayer, new PerceptronLayer, new UnscalingLayer});
@@ -775,7 +775,7 @@ void NeuralNetworkTest::test_inputs_outputs_number()
    assert_true(neural_network_1.get_inputs_number() == 5, LOG);
    assert_true(neural_network_1.get_outputs_number() == 2, LOG);
 
-   //Test 2
+   // Test 2
 
    Tensor<Layer*, 1> layers_tensor_2(4);
    layers_tensor_2.setValues({new ScalingLayer(1),new PerceptronLayer(1,2), new UnscalingLayer(2), new BoundingLayer(2)});
@@ -1166,7 +1166,7 @@ void NeuralNetworkTest::test_perturbate_parameters()
 {
    cout << "test_perturbate_parameters\n";
 
-   //Test 1
+   // Test 1
 
    Tensor<Index, 1> architecture(3);
    NeuralNetwork neural_network;
@@ -1576,7 +1576,7 @@ void NeuralNetworkTest::test_write_expression()
 {
    cout << "test_write_expression\n";
 
-   //Test 0
+   // Test 0
 
    NeuralNetwork neural_network;
 
@@ -1601,7 +1601,7 @@ void NeuralNetworkTest::test_write_expression()
 
    cout << neural_network.write_expression(inputs_names, outputs_names);
 
-   //Test 1
+   // Test 1
 
    NeuralNetwork neural_network_2;
 

@@ -47,7 +47,7 @@ void LongShortTermMemoryLayerTest::test_constructor()
 
     assert_true(long_short_term_memory_layer.get_parameters_number() == 12, LOG);
 
-    //Test
+    // Test
 
     inputs_number = 2;
     neurons_number = 3;
@@ -665,7 +665,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 
 //   Index samples = 3;
 
-//    //Test
+//    // Test
 
 //   const Index neurons_number = 2;
 //   const Index inputs_number = 3;
@@ -727,7 +727,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(2) == long_short_term_memory_layer.calculate_outputs(inputs,biases, weights, recurrent_weights)(2), LOG);
 
 
-//   //Test
+//   // Test
 
 //   long_short_term_memory_layer.set(1, 2 );
 

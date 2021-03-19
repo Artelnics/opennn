@@ -1754,29 +1754,6 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 }
 
 
-/// This method separates the dataset into n-groups to validate a model with limited data.
-/// @param k Number of folds that a given data sample is given to be split into.
-/// @param fold_index.
-/// @todo Low priority
-
-void DataSet::set_k_fold_cross_validation_samples_uses(const Index& k, const Index& fold_index)
-{
-    const Index samples_number = get_samples_number();
-
-    const Index fold_size = samples_number/k;
-
-    const Index start = fold_index*fold_size;
-    const Index end = start + fold_size;
-
-    split_samples_random(1, 0, 0);
-
-    for(Index i = start; i < end; i++)
-    {
-        samples_uses(i) = Testing;
-    }
-}
-
-
 void DataSet::set_columns(const Tensor<Column, 1>& new_columns)
 {
     columns = new_columns;
@@ -2608,15 +2585,21 @@ Tensor<DataSet::Column, 1> DataSet::get_target_columns() const
 
 
 /// Returns the used columns of the data set.
-/// @todo
 
 Tensor<DataSet::Column, 1> DataSet::get_used_columns() const
 {
+    const Index used_columns_number = get_used_columns_number();
+
     const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
 
-//    return columns.get_subvector(used_columns_indices);
+    Tensor<DataSet::Column, 1> used_columns(used_columns_number);
 
-    return Tensor<DataSet::Column, 1>();
+    for(Index i = 0; i < used_columns_number; i++)
+    {
+        used_columns(i) = columns(used_columns_indices(i));
+    }
+
+    return used_columns;
 }
 
 
@@ -3434,7 +3417,7 @@ bool DataSet::is_multiple_classification() const
 /// Returns true if the data matrix is empty, and false otherwise.
 
 bool DataSet::is_empty() const
-{
+{  
     if(data.dimension(0) == 0 || data.dimension(1) == 0)
     {
         return true;
@@ -5373,7 +5356,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples
         if(abs(data(sample_index, target_index) - 1) < numeric_limits<type>::min()) positive_samples_number++;
     }
 
-        // Get used positive samples indices
+    // Get used positive samples indices
 
     Tensor<Index, 1> positive_used_samples_indices(positive_samples_number);
     Index positive_sample_index = 0;
@@ -10328,9 +10311,6 @@ void DataSet::read_csv()
     }
     else
     {
-
-    //  categorical data
-
         read_csv_2_complete();
 
         read_csv_3_complete();

@@ -610,9 +610,8 @@ public:
 
       const Tensor<type, 1> y_backward = (t.*f)(x_backward);
       const Tensor<type, 1> y_backward_2 = (t.*f)(x_backward_2);
-//@todo
-//      return (y_forward_2*-1.0 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0);
-      return Tensor<type, 1>();
+
+      return (y_forward_2*-1.0 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0);
    }
 
 
@@ -627,14 +626,10 @@ public:
       switch(numerical_differentiation_method)
       {
          case ForwardDifferences:
-         {
             return calculate_forward_differences_second_derivatives(t, f, x);
-      	 }
 
          case CentralDifferences:
-         {
             return calculate_central_differences_second_derivatives(t, f, x);
-    	 }
       }
 
       return Tensor<type, 1>();
@@ -740,7 +735,9 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<type, 1> calculate_central_differences_second_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_second_derivatives(const T& t,
+                                                                    Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const,
+                                                                    const Index& dummy, const Tensor<type, 1>& x) const
    {      
       const Tensor<type, 1> h = calculate_h(x);
 
@@ -757,9 +754,8 @@ public:
 
       const Tensor<type, 1> y_backward = (t.*f)(dummy, x_backward);
       const Tensor<type, 1> y_backward_2 = (t.*f)(dummy, x_backward_2);
-//@todo
-//      return (y_forward_2*-1.0 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0);
-      return Tensor<type, 1>();
+
+      return (y_forward_2*-1 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0);
    }
 
 
