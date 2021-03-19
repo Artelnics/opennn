@@ -213,7 +213,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient(const type&
 
 void NormalizedSquaredError::set_default()
 {
-    if(has_neural_network() && has_data_set() && data_set_pointer->has_data())
+    if(has_neural_network() && has_data_set() && !data_set_pointer->is_empty())
     {
         set_normalization_coefficient();
         set_selection_normalization_coefficient();

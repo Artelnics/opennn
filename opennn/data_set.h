@@ -463,8 +463,6 @@ public:
    bool is_sample_used(const Index&) const;
    bool is_sample_unused(const Index&) const;
 
-   bool has_data() const;
-
    bool has_binary_columns() const;
    bool has_categorical_columns() const;
    bool has_time_columns() const;
@@ -552,7 +550,7 @@ public:
 
    void print_input_target_columns_correlations() const;
 
-   void print_top_input_target_columns_correlations(const Index& = 10) const;
+   void print_top_input_target_columns_correlations() const;
 
    // Inputs-targets regressions
 
@@ -647,21 +645,14 @@ public:
    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
    Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
 
-   Tensor<type, 2> calculate_lag_plot() const;
-   Tensor<type, 2> calculate_lag_plot(const Index&);
-
    // Data generation
 
-   void generate_constant_data(const Index&, const Index&);
+   void generate_constant_data(const Index&, const Index&, const type&);
    void generate_random_data(const Index&, const Index&);
    void generate_sequential_data(const Index&, const Index&);
    void generate_paraboloid_data(const Index&, const Index&);
    void generate_Rosenbrock_data(const Index&, const Index&);
-   void generate_inputs_selection_data(const Index&, const Index&);
    void generate_sum_data(const Index&, const Index&);
-
-   void generate_data_binary_classification(const Index&, const Index&);
-   void generate_data_multiple_classification(const Index&, const Index&, const Index&);
 
    // Serialization methods
 
