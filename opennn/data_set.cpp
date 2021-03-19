@@ -7526,17 +7526,19 @@ void DataSet::set_data_binary_random()
     const Index variables_number = data.dimension(1);
 
     const Index input_variables_number = get_input_variables_number();
+    const Index target_variables_number = variables_number - input_variables_number;
 
     Index target_variable_index = 0;
 
     for(Index i = 0; i < samples_number; i++)
     {
-
-        target_variable_index = rand()%(variables_number-input_variables_number)+input_variables_number;
+        if(target_variables_number == 1) target_variable_index = rand()%2;
+        else target_variable_index = rand()%(variables_number-input_variables_number)+input_variables_number;
 
         for(Index j = input_variables_number; j < variables_number; j++)
         {
-            data(i,j) = j == target_variable_index ? 1 : 0;
+            if(target_variables_number == 1) data(i,j) = static_cast<type>(target_variable_index);
+            else data(i,j) = j == target_variable_index ? 1 : 0;
         }
     }
 }

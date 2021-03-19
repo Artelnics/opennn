@@ -304,6 +304,10 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
         recurrent_weights_derivatives.resize(neurons_number * neurons_number);
 
         delta.resize(batch_samples_number, neurons_number);
+
+        combinations_biases_derivatives.resize(neurons_number, neurons_number);
+        combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
+        combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
     }
 
     Tensor<type, 1> current_layer_deltas;
@@ -313,6 +317,10 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
     Tensor<type, 1> input_weights_derivatives;
 
     Tensor<type, 1> recurrent_weights_derivatives;
+
+    Tensor<type, 2> combinations_biases_derivatives;
+    Tensor<type, 2> combinations_weights_derivatives;
+    Tensor<type, 2> combinations_recurrent_weights_derivatives;
 
     Tensor<type, 2> delta;
 };
