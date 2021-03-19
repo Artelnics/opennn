@@ -123,9 +123,6 @@ namespace OpenNN
         Tensor<type, 2, RowMajor> output_activations_derivatives;
         Tensor<type, 2, RowMajor> cell_states_activations_derivatives;
         Tensor<type, 2, RowMajor> hidden_states_activations_derivatives;
-
-//        Tensor<type, 3, RowMajor> row_major_activations_3d;
-//        Tensor<type, 3, RowMajor> row_major_activations_derivatives_3d;
     };
 
 
@@ -160,6 +157,30 @@ namespace OpenNN
             output_biases_derivatives.resize(neurons_number);
 
             delta.resize(batch_samples_number, neurons_number);
+
+            input_combinations_biases_derivatives(neurons_number, neurons_number);
+            forget_combinations_biases_derivatives(neurons_number, neurons_number);
+            state_combinations_biases_derivatives(neurons_number, neurons_number);
+            output_combinations_biases_derivatives(neurons_number, neurons_number);
+
+            hidden_states_biases_derivatives(neurons_number, neurons_number);
+            cell_state_biases_derivatives(neurons_number, neurons_number);
+
+            input_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
+            forget_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
+            state_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
+            output_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
+
+            hidden_states_weights_derivatives(inputs_number*neurons_number, neurons_number);
+            cell_state_weights_derivatives(inputs_number*neurons_number, neurons_number);
+
+            input_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+            forget_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+            state_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+            output_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+
+            hidden_states_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+            cell_state_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
         }
 
         Tensor<type, 1> current_layer_deltas;
@@ -180,7 +201,31 @@ namespace OpenNN
         Tensor<type, 1> input_biases_derivatives;
         Tensor<type, 1> state_biases_derivatives;
         Tensor<type, 1> output_biases_derivatives;
-    };
+
+        Tensor<type, 2> input_combinations_biases_derivatives;
+        Tensor<type, 2> forget_combinations_biases_derivatives;
+        Tensor<type, 2> state_combinations_biases_derivatives;
+        Tensor<type, 2> output_combinations_biases_derivatives;
+
+        Tensor<type, 2> hidden_states_biases_derivatives;
+        Tensor<type, 2> cell_state_biases_derivatives;
+
+        Tensor<type, 2> input_combinations_weights_derivatives;
+        Tensor<type, 2> forget_combinations_weights_derivatives;
+        Tensor<type, 2> state_combinations_weights_derivatives;
+        Tensor<type, 2> output_combinations_weights_derivatives;
+
+        Tensor<type, 2> hidden_states_weights_derivatives;
+        Tensor<type, 2> cell_state_weights_derivatives;
+
+        Tensor<type, 2> input_combinations_recurrent_weights_derivatives;
+        Tensor<type, 2> forget_combinations_recurrent_weights_derivatives;
+        Tensor<type, 2> state_combinations_recurrent_weights_derivatives;
+        Tensor<type, 2> output_combinations_recurrent_weights_derivatives;
+
+        Tensor<type, 2> hidden_states_recurrent_weights_derivatives;
+        Tensor<type, 2> cell_state_recurrent_weights_derivatives;
+   };
 
 /// This class represents a layer of neurons.
 /// Layers of neurons will be used to construct multilayer neurons.
