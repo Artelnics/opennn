@@ -402,8 +402,6 @@ void LongShortTermMemoryLayerTest::test_set_parameters()
     LongShortTermMemoryLayer long_short_term_memory_layer(1, 1);
 
     Tensor<type, 1> parameters(12);
-
-//    parameters.initialize_sequential();
     parameters.setRandom();
 
     long_short_term_memory_layer.set_parameters(parameters,0);
@@ -686,7 +684,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   weights.initialize_sequential();
 //   recurrent_weights.initialize_sequential();
 //   biases.initialize_sequential();
-
+//   for(Index i = 0; i < size; i++) x(i) = i;
 //   parameters = weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases.to_vector());
 
 //   long_short_term_memory_layer.set_parameters_random();

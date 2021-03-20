@@ -1594,7 +1594,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     Tensor<Index, 1> indices;
 
-    initialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
+    initialize_sequential(indices, 0, 1, samples_number-1);
 
     random_shuffle(indices.data(), indices.data() + indices.size());
 
@@ -3652,7 +3652,7 @@ Tensor<type, 2> DataSet::get_selection_data() const
     const Index variables_number = get_variables_number();
 
     Tensor<Index, 1> variables_indices;
-    initialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
+    initialize_sequential(variables_indices, 0, 1, variables_number-1);
 
     return get_subtensor_data(selection_indices, variables_indices);
 }
@@ -3667,7 +3667,7 @@ Tensor<type, 2> DataSet::get_testing_data() const
     const Index variables_number = get_variables_number();
 
     Tensor<Index, 1> variables_indices;
-    initialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
+    initialize_sequential(variables_indices, 0, 1, variables_number-1);
 
     const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
 
@@ -3684,7 +3684,7 @@ Tensor<type, 2> DataSet::get_input_data() const
     const Index samples_number = get_samples_number();
 
     Tensor<Index, 1> indices;
-    initialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
+    initialize_sequential(indices, 0, 1, samples_number-1);
 
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
@@ -10933,7 +10933,7 @@ Tensor<string, 1> DataSet::push_back(const Tensor<string, 1>& old_vector, const 
 }
 
 
-void DataSet::initialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
+void DataSet::initialize_sequential(Tensor<Index, 1>& new_tensor,
         const Index& start, const Index& step, const Index& end) const
 {
     const Index new_size = (end-start)/step+1;
@@ -10950,7 +10950,7 @@ void DataSet::initialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
 }
 
 
-void DataSet::intialize_sequential_eigen_type_tensor(Tensor<type, 1>& new_tensor,
+void DataSet::intialize_sequential(Tensor<type, 1>& new_tensor,
         const type& start, const type& step, const type& end) const
 {
     const Index new_size = (end-start)/step+1;
