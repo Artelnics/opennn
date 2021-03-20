@@ -677,7 +677,6 @@ public:
    void save_data_binary(const string&) const;
    void save_time_series_data_binary(const string&) const;
 
-
    // Data load methods
 
    void read_csv();
@@ -734,8 +733,8 @@ public:
    Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&) const;
    Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&) const;
 
-   void initialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
-   void intialize_sequential_eigen_type_tensor(Tensor<type, 1>&, const type&, const type&, const type&) const;
+   void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
+   void intialize_sequential(Tensor<type, 1>&, const type&, const type&, const type&) const;
 
    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
 

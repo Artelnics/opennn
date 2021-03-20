@@ -26,27 +26,19 @@ void MinkowskiErrorTest::test_constructor() // @todo
 
    // Default
 
-//   MinkowskiError me1;
+   MinkowskiError me1;
 
-//   assert_true(!me1.has_neural_network(), LOG);
-//   assert_true(!me1.has_data_set(), LOG);
-
-   // Neural network
-
-//   NeuralNetwork nn2;
-//   MinkowskiError me2(&nn2);
-
-//   assert_true(me2.has_neural_network(), LOG);
-//   assert_true(!me2.has_data_set(), LOG);
+   assert_true(!me1.has_neural_network(), LOG);
+   assert_true(!me1.has_data_set(), LOG);
 
    // Neural network and data set
 
-//   NeuralNetwork nn3;
-//   DataSet ds3;
-//   MinkowskiError me3(&nn3, &ds3);
+   NeuralNetwork nn3;
+   DataSet ds3;
+   MinkowskiError me3(&nn3, &ds3);
 
-//   assert_true(me3.has_neural_network(), LOG);
-//   assert_true(me3.has_data_set(), LOG);
+   assert_true(me3.has_neural_network(), LOG);
+   assert_true(me3.has_data_set(), LOG);
 }
 
 
@@ -60,11 +52,11 @@ void MinkowskiErrorTest::test_get_Minkowski_parameter() // @todo
 {
    cout << "test_get_Minkowski_parameter\n";
 
-//   MinkowskiError me;
+   MinkowskiError me;
 
-//   me.set_Minkowski_parameter(1.0);
+   me.set_Minkowski_parameter(1.0);
    
-//   assert_true(me.get_Minkowski_parameter() == 1.0, LOG);
+   assert_true(me.get_Minkowski_parameter() == 1.0, LOG);
 }
 
 
@@ -143,7 +135,7 @@ void MinkowskiErrorTest::test_calculate_error()
 
 void MinkowskiErrorTest::test_calculate_selection_error() // @todo
 {
-//   cout << "test_calculate_selection_error\n";
+   cout << "test_calculate_selection_error\n";
 }
 
 
@@ -199,11 +191,11 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
    batch.fill(samples_indices, input_indices, target_indices);
 
    hidden_perceptron_layer->set(inputs_number, hidden_neurons);
-//   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
    probabilistic_layer->set(hidden_neurons, outputs_number);
 
    neural_network.add_layer(hidden_perceptron_layer);
-//   neural_network.add_layer(output_perceptron_layer);
+   neural_network.add_layer(output_perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
    neural_network.set_parameters_random();
@@ -229,7 +221,8 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
    cout << "Numerical error gradient: " << numerical_error_gradient << endl;
    cout << "Difference: " << difference << endl;
 
-   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
+   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i)
+               { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
 
 
@@ -269,8 +262,8 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    const Tensor<type, 1> difference = training_back_propagation.gradient;
 
-   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
-
+   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i)
+               { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
 
    neural_network.set();
@@ -288,15 +281,15 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    data_set.set_training();
 
-//   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
-//   output_perceptron_layer->set(hidden_neurons, outputs_number);
-//   probabilistic_layer->set(outputs_number, outputs_number);
+   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   probabilistic_layer->set(outputs_number, outputs_number);
 
-//   neural_network.add_layer(hidden_perceptron_layer);
-//   neural_network.add_layer(output_perceptron_layer);
-//   neural_network.add_layer(probabilistic_layer);
+   neural_network.add_layer(hidden_perceptron_layer);
+   neural_network.add_layer(output_perceptron_layer);
+   neural_network.add_layer(probabilistic_layer);
 
-//   neural_network.set_parameters_random();
+   neural_network.set_parameters_random();
 
 //   error_gradient = me.calculate_error_gradient();
 
@@ -308,73 +301,73 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 //   neural_network.set();
 
    // Test lstm
-//{
-//   samples_number = 10;
-//   inputs_number = 3;
-//   outputs_number = 2;
-//   hidden_neurons = 2;
+{
+   samples_number = 10;
+   inputs_number = 3;
+   outputs_number = 2;
+   hidden_neurons = 2;
 
-//   data_set.set(samples_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
-//   data_set.set_data_random();
+   data_set.set_data_random();
 
-//   data_set.set_training();
+   data_set.set_training();
 
-//   long_short_term_memory_layer->set(inputs_number, hidden_neurons);
-//   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   long_short_term_memory_layer->set(inputs_number, hidden_neurons);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
 
-//   neural_network.add_layer(long_short_term_memory_layer);
-//   neural_network.add_layer(output_perceptron_layer);
+   neural_network.add_layer(long_short_term_memory_layer);
+   neural_network.add_layer(output_perceptron_layer);
 
-//   neural_network.set_parameters_random();
+   neural_network.set_parameters_random();
 //   error_gradient = me.calculate_error_gradient();
 
 //   numerical_error_gradient = me.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
-//}
+}
 
-//   neural_network.set();
+   neural_network.set();
 
    // Test recurrent
-//{
-//   samples_number = 10;
-//   inputs_number = 3;
-//   outputs_number = 2;
-//   hidden_neurons = 2;
+{
+   samples_number = 10;
+   inputs_number = 3;
+   outputs_number = 2;
+   hidden_neurons = 2;
 
-//   data_set.set(samples_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
-//   data_set.set_data_random();
+   data_set.set_data_random();
 
-//   data_set.set_training();
+   data_set.set_training();
 
-//   recurrent_layer->set(inputs_number, hidden_neurons);
-//   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   recurrent_layer->set(inputs_number, hidden_neurons);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
 
-//   neural_network.add_layer(recurrent_layer);
-//   neural_network.add_layer(output_perceptron_layer);
+   neural_network.add_layer(recurrent_layer);
+   neural_network.add_layer(output_perceptron_layer);
 
-//   neural_network.set_parameters_random();
+   neural_network.set_parameters_random();
 
 //   error_gradient = me.calculate_error_gradient();
 
 //   numerical_error_gradient = me.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
-//}
+}
 
    // Test convolutional
-//{
-//   samples_number = 5;
-//   inputs_number = 147;
-//   outputs_number = 1;
+{
+   samples_number = 5;
+   inputs_number = 147;
+   outputs_number = 1;
 
-//   data_set.set(samples_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 //   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
 //   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
-//   data_set.set_data_random();
-//   data_set.set_training();
+   data_set.set_data_random();
+   data_set.set_training();
 
 //   const type parameters_minimum = -100.0;
 //   const type parameters_maximum = 100.0;
@@ -434,7 +427,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 //   error_gradient = me.calculate_error_gradient();
 
 //   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
-//}
+}
 }
 
 

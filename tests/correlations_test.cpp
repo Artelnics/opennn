@@ -42,7 +42,7 @@ void CorrelationsTest::test_linear_correlation()
 
     Index size = 100;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> y(size);
 
     type correlation;
@@ -72,7 +72,7 @@ void CorrelationsTest::test_spearman_linear_correlation()
 
     Index size = 100;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> y(size);
 
     type correlation;
@@ -129,7 +129,7 @@ void CorrelationsTest::test_rank_linear_correlation()
 
     Index size = 10;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> y(size);
 
     type correlation;
@@ -156,7 +156,7 @@ void CorrelationsTest::test_logistic_correlation()
 
     const Index size = 100;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
 
     Tensor<type, 1> y(size);
     type correlation;
@@ -192,7 +192,7 @@ void CorrelationsTest::test_rank_logistic_correlation()
 
     const Index size = 10;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
 
     Tensor<type, 1> y(size);
 
@@ -256,7 +256,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
     Tensor<type, 1> y(size);
     Tensor<Index, 1> z(0);
 
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     z.setRandom();
 
     type correlation;
@@ -335,7 +335,7 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
     size = 100;
 
     x.resize(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
 
     y.resize(size);
 
@@ -381,7 +381,7 @@ void CorrelationsTest::test_autocorrelation()
 
     Index size = 1000;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> correlations;
 
 //    correlations = autocorrelations(x, size/100);
@@ -397,8 +397,8 @@ void CorrelationsTest::test_cross_correlations()
     Tensor<type, 1> x(size);
     Tensor<type, 1> y(size);
 
-//    x.initialize_sequential();
-//    y.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
+    for(Index i = 0; i < size; i++) y(i) = i;
 
     Tensor<type, 1> cros_correlations;
 
@@ -459,7 +459,7 @@ void CorrelationsTest::test_exponential_correlation()
 
     const Index size = 100;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> y(size);
 
     for(Index i = 0; i < size; i++)
@@ -701,9 +701,9 @@ void CorrelationsTest::test_covariance()
 
     Index size = 100;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> y(size);
-//    y.initialize_sequential();
+    for(Index i = 0; i < size; i++) y(i) = i;
 
     type covariance = OpenNN::covariance(x,y);
 
@@ -718,9 +718,9 @@ void CorrelationsTest::test_covariance_missing_values()
 
     Index size = 100;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> y(size);
-//    y.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
 
     type covariance = OpenNN::covariance(x,y);
     type covariance_missing_values = OpenNN::covariance_missing_values(x,y);
