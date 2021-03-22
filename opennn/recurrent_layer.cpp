@@ -889,11 +889,11 @@ void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_
         PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
                 static_cast<PerceptronLayerForwardPropagation*>(next_layer_forward_propagation);
 
-        PerceptronLayerBackPropagation* next_layer_back_propagation =
-                static_cast<PerceptronLayerBackPropagation*>(current_layer_back_propagation);
+        PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
+                static_cast<PerceptronLayerBackPropagation*>(next_layer_back_propagation);
 
         calculate_hidden_delta_perceptron(perceptron_layer_forward_propagation,
-                                          next_layer_back_propagation,
+                                          perceptron_layer_back_propagation,
                                           recurrent_layer_back_propagation);
     }
         break;
@@ -903,11 +903,11 @@ void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_
         ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
                 static_cast<ProbabilisticLayerForwardPropagation*>(next_layer_forward_propagation);
 
-        ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
-                static_cast<ProbabilisticLayerBackPropagation*>(current_layer_back_propagation);
+        ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+                static_cast<ProbabilisticLayerBackPropagation*>(next_layer_back_propagation);
 
         calculate_hidden_delta_probabilistic(probabilistic_layer_forward_propagation,
-                                             next_probabilistic_layer_back_propagation,
+                                             probabilistic_layer_back_propagation,
                                              recurrent_layer_back_propagation);
     }
         break;
@@ -944,6 +944,8 @@ void RecurrentLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerForw
     }
     else // Multiple
     {
+
+
         const Index samples_number = next_back_propagation->delta.dimension(0);
         const Index outputs_number = next_back_propagation->delta.dimension(1);
         const Index next_layer_neurons_number = probabilistic_layer_pointer->get_neurons_number();
