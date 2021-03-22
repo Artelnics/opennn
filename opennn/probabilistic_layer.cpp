@@ -794,57 +794,6 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
     }
     else // Multiple gradient
     {
-/*
-        const Index outputs_number = probabilistic_layer_back_propagation->delta.dimension(1);
-
-        if(outputs_number != neurons_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                   << "void calculate_error_gradient(const Tensor<type, 2>& ,LayerForwardPropagation*, LayerBackPropagation*) const.\n"
-                   << "Number of columns in delta (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        if(probabilistic_layer_forward_propagation->activations_derivatives.dimension(1) != neurons_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                   << "void calculate_error_gradient(const Tensor<type, 2>& ,LayerForwardPropagation*, LayerBackPropagation*) const.\n"
-                   << "Dimension 1 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        if(probabilistic_layer_forward_propagation->activations_derivatives.dimension(2) != neurons_number)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                   << "void calculate_error_gradient(const Tensor<type, 2>& ,LayerForwardPropagation*, LayerBackPropagation*) const.\n"
-                   << "Dimension 2 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << neurons_number << ").\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        Index step = neurons_number*neurons_number;
-
-        probabilistic_layer_back_propagation->biases_derivatives.setZero();
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            probabilistic_layer_back_propagation->delta_row = probabilistic_layer_back_propagation->delta.chip(i,0);
-
-            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(probabilistic_layer_forward_propagation->activations_derivatives.data() + i*step,
-                                                                        neurons_number, neurons_number);
-
-            probabilistic_layer_back_propagation->error_combinations_derivatives.chip(i,0) =
-                    probabilistic_layer_back_propagation->delta_row.contract(activations_derivatives_matrix, AT_B);
-        }
-*/
         probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
                 (probabilistic_layer_back_propagation->error_combinations_derivatives).sum(Eigen::array<Index, 1>({0}));
 
