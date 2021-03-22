@@ -186,7 +186,7 @@ void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 
 void AdaptiveMomentEstimation:: set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_epochs_number < static_cast<type>(0.0))
     {
@@ -222,7 +222,7 @@ void AdaptiveMomentEstimation::set_loss_goal(const type& new_loss_goal)
 
 void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_time < static_cast<type>(0.0))
     {

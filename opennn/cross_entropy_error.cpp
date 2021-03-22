@@ -107,7 +107,7 @@ void CrossEntropyError::calculate_output_delta(const DataSetBatch& batch,
                                                NeuralNetworkForwardPropagation& forward_propagation,
                                                LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      check();
 

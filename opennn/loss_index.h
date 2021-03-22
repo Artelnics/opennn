@@ -70,7 +70,7 @@ public:
 
    inline NeuralNetwork* get_neural_network_pointer() const 
    {
-        #ifdef __OPENNN_DEBUG__
+        #ifdef OPENNN_DEBUG
 
         if(!neural_network_pointer)
         {
@@ -92,7 +92,7 @@ public:
 
    inline DataSet* get_data_set_pointer() const 
    {
-        #ifdef __OPENNN_DEBUG__
+        #ifdef OPENNN_DEBUG
 
         if(!data_set_pointer)
         {

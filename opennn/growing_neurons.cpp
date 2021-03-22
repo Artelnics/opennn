@@ -77,7 +77,7 @@ void GrowingNeurons::set_default()
 
 void GrowingNeurons::set_step(const Index& new_step)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_step <= 0)
     {
@@ -101,7 +101,7 @@ void GrowingNeurons::set_step(const Index& new_step)
 
 void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_loss_failures <= 0)
     {
@@ -124,7 +124,7 @@ void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_los
 
 NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 {
-    #ifdef __OPENNN_DEBUG__
+    #ifdef OPENNN_DEBUG
 
     if(!training_strategy_pointer)
     {

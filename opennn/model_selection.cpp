@@ -41,7 +41,7 @@ ModelSelection::~ModelSelection()
 
 TrainingStrategy* ModelSelection::get_training_strategy_pointer() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!training_strategy_pointer)
     {

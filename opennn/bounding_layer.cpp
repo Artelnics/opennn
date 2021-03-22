@@ -120,7 +120,7 @@ type BoundingLayer::get_lower_bound(const Index& i) const
 {
 
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -154,7 +154,7 @@ const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
 
 type BoundingLayer::get_upper_bound(const Index& i) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -298,7 +298,7 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
 
 void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -330,7 +330,7 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(index >= neurons_number)
     {
@@ -365,7 +365,7 @@ void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 {
 
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -399,7 +399,7 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 
 
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(index >= neurons_number)
     {
@@ -456,7 +456,7 @@ void BoundingLayer::set_default()
 
 Tensor<type, 2> BoundingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_dimensions_number = inputs.rank();
 

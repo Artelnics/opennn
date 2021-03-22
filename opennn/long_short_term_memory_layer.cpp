@@ -624,7 +624,7 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index parameters_number = get_parameters_number();
 
@@ -1211,7 +1211,7 @@ void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1> & in
                                                       const Tensor<type, 1> & biases,
                                                       Tensor<type, 1> & combinations) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_number = get_inputs_number();
 
@@ -1236,7 +1236,7 @@ void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1> & in
 
 void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -1295,7 +1295,7 @@ void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& comb
 
 void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& combinations_1d, Tensor<type, 1>& activations_1d) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -1354,7 +1354,7 @@ void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& comb
 
 Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& combinations_1d) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -1418,7 +1418,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
 void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 2>& combinations,
                                                                Tensor<type, 2>& activations) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -1478,7 +1478,7 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
 void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 1>& combinations_1d, Tensor<type, 1>& recurrent_activations_1d) const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -1539,7 +1539,7 @@ void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<ty
                                                                  Tensor<type, 2>& activations,
                                                                  Tensor<type, 2>& activations_derivatives_2d) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -1590,7 +1590,7 @@ void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<ty
                                                                  Tensor<type, 1>& activations_derivatives_1d) const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -1640,7 +1640,7 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(const
                                                                            Tensor<type, 1>& activations_1d,
                                                                            Tensor<type, 1>& activations_derivatives_1d) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -1688,7 +1688,7 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(const
 
 Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_number = get_inputs_number();
 
@@ -3943,7 +3943,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
     const Index inputs_number = get_inputs_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_name_size = inputs_names.size();
 

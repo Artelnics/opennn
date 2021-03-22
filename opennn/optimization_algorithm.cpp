@@ -53,7 +53,7 @@ OptimizationAlgorithm::~OptimizationAlgorithm()
 
 LossIndex* OptimizationAlgorithm::get_loss_index_pointer() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!loss_index_pointer)
     {
@@ -197,7 +197,7 @@ void OptimizationAlgorithm::set_display_period(const Index& new_display_period)
 {
 
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_display_period <= 0)
     {
@@ -224,7 +224,7 @@ void OptimizationAlgorithm::set_save_period(const Index& new_save_period)
 {
 
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_save_period <= 0)
     {
@@ -274,7 +274,7 @@ void OptimizationAlgorithm::set_default()
 
 void OptimizationAlgorithm::check() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -511,7 +511,7 @@ void TrainingResults::resize_selection_error_history(const Index& new_size)
 const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(time > static_cast<type>(3600e5))
     {

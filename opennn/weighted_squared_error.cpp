@@ -120,7 +120,7 @@ void WeightedSquaredError::set_weights()
 {
     // Control sentence
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
 //    check();
 
@@ -163,7 +163,7 @@ void WeightedSquaredError::set_normalization_coefficient()
 {
     // Control sentence
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -243,7 +243,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                                   NeuralNetworkForwardPropagation& forward_propagation,
                                                   LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      check();
 
@@ -286,7 +286,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 void WeightedSquaredError::calculate_gradient(const DataSetBatch& batch,
                                     LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -308,7 +308,7 @@ void WeightedSquaredError::calculate_gradient(const DataSetBatch& batch,
 void WeightedSquaredError::calculate_hessian_approximation(const DataSetBatch& batch,
                                                            LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 

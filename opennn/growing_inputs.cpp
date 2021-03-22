@@ -100,7 +100,7 @@ void GrowingInputs::set_default()
 
 void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_inputs_number <= 1)
     {
@@ -124,7 +124,7 @@ void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_nu
 
 void GrowingInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_inputs_number == 0)
     {
@@ -148,7 +148,7 @@ void GrowingInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_nu
 
 void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_loss_failures <= 0)
     {
@@ -171,7 +171,7 @@ void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_loss
 
 InputsSelectionResults* GrowingInputs::perform_inputs_selection()
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 

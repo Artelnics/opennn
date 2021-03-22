@@ -238,7 +238,7 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods_text() const
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
     {
@@ -448,7 +448,7 @@ void ScalingLayer::set_min_max_range(const type min, const type max)
 void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index new_descriptives_size = new_descriptives.size();
 
@@ -544,7 +544,7 @@ void ScalingLayer::set_standard_deviation(const Index& i, const type& new_standa
 
 void ScalingLayer::set_scaling_methods(const Tensor<ScalingLayer::ScalingMethod, 1>& new_scaling_methods)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -573,7 +573,7 @@ void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_meth
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
     {
@@ -632,7 +632,7 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
     {
@@ -735,7 +735,7 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 {
     const Index inputs_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index size = inputs.size();
 
@@ -785,7 +785,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
         ostringstream buffer;
 
@@ -875,7 +875,7 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 
         const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
         ostringstream buffer;
 

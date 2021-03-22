@@ -330,7 +330,7 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 
 void ProbabilisticLayer::set_decision_threshold(const type& new_decision_threshold)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_decision_threshold <= 0)
     {
@@ -394,7 +394,7 @@ void ProbabilisticLayer::set_default()
 
 void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_activation_function)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -611,7 +611,7 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      const Index dimensions_number = combinations.rank();
 
@@ -667,7 +667,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
                                        Tensor<type, 2>& activations,
                                        Tensor<type, 3>& activations_derivatives) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      const Index neurons_number = get_neurons_number();
 
@@ -736,7 +736,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(inputs_number != inputs.dimension(1))
     {

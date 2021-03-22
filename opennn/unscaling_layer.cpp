@@ -402,7 +402,7 @@ void UnscalingLayer::set_min_max_range(const type min, const type max)
 
 void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -510,7 +510,7 @@ void UnscalingLayer::set_unscaling_methods(const Tensor<UnscalingLayer::Unscalin
 
 void UnscalingLayer::set_unscaling_methods(const string& new_scaling_methods_string)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -563,7 +563,7 @@ void UnscalingLayer::set_unscaling_methods(const Tensor<string, 1>& new_unscalin
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
     {
@@ -646,7 +646,7 @@ void UnscalingLayer::check_range(const Tensor<type, 1>& outputs) const
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index size = outputs.size();
 
@@ -713,7 +713,7 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 

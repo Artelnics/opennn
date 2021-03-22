@@ -418,7 +418,7 @@ void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_
 void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index parameters_number = get_parameters_number();
 
@@ -650,7 +650,7 @@ void RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs,
 void RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations_1d,
                                            Tensor<type, 1>& activations_1d) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
 const Index neurons_number = get_neurons_number();
 
@@ -701,7 +701,7 @@ void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 1>& co
                                                        Tensor<type, 1>& activations_1d,
                                                        Tensor<type, 1>& activations_derivatives_1d) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      const Index neurons_number = get_neurons_number();
 
@@ -829,7 +829,7 @@ void RecurrentLayer::forward_propagate(const Tensor<type, 2> &inputs,
 
 Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_number = get_inputs_number();
 
@@ -1217,7 +1217,7 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names,
                                         const Tensor<string, 1>& outputs_names) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 

@@ -312,7 +312,7 @@ void ConjugateGradient::set_default()
 
 void ConjugateGradient::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
     {
@@ -338,7 +338,7 @@ void ConjugateGradient::set_minimum_parameters_increment_norm(const type& new_mi
 
 void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_loss_decrease < static_cast<type>(0.0))
     {
@@ -375,7 +375,7 @@ void ConjugateGradient::set_loss_goal(const type& new_loss_goal)
 
 void ConjugateGradient::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_gradient_norm_goal < static_cast<type>(0.0))
     {
@@ -419,7 +419,7 @@ void ConjugateGradient::set_maximum_epochs_number(const Index& new_maximum_epoch
 
 void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_time < static_cast<type>(0.0))
     {
@@ -474,7 +474,7 @@ void ConjugateGradient::set_reserve_selection_error_history(const bool& new_rese
 
 void ConjugateGradient::set_save_period(const Index& new_save_period)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_save_period <= 0)
     {
@@ -499,7 +499,7 @@ void ConjugateGradient::set_save_period(const Index& new_save_period)
 
 type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -581,7 +581,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
 type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -668,7 +668,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                                                         const Tensor<type, 1>& old_training_direction,
                                                         Tensor<type, 1>& training_direction) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -737,7 +737,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                                                         const Tensor<type, 1>& old_training_direction,
                                                         Tensor<type, 1>& training_direction) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -818,7 +818,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                                                                         Tensor<type, 1>& training_direction) const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();

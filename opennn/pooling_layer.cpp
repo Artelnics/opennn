@@ -56,7 +56,7 @@ PoolingLayer::~PoolingLayer()
 
 Tensor<type, 4> PoolingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index input_variables_dimensions_number = inputs.rank();
 

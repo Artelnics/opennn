@@ -69,7 +69,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                              NeuralNetworkForwardPropagation& forward_propagation,
                                              LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      check();
 
@@ -129,7 +129,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
 void SumSquaredError::calculate_gradient(const DataSetBatch& ,
                                     LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -148,7 +148,7 @@ void SumSquaredError::calculate_gradient(const DataSetBatch& ,
 void SumSquaredError::calculate_hessian_approximation(const DataSetBatch&,
                                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      check();
 
