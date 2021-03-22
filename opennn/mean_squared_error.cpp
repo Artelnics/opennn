@@ -50,6 +50,8 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
                      LossIndexBackPropagation& back_propagation) const
 {
+    calculate_errors(batch, forward_propagation, back_propagation);
+
     Tensor<type, 0> sum_squared_error;
 
     const Index batch_samples_number = batch.inputs_2d.dimension(0);

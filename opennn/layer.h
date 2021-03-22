@@ -25,6 +25,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "tensor_utilities.h"
 #include "statistics.h"
 #include "data_set.h"
 
@@ -188,10 +189,6 @@ public:
 
     string get_type_string() const;
 
-    // Utilities
-
-    void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&) const;
-
     // Serialization methods
 
     virtual void from_XML(const tinyxml2::XMLDocument&) {}
@@ -205,6 +202,23 @@ public:
     virtual string write_expression_c() const {return string();}
 
     virtual string write_expression_python() const {return string();}
+
+    void multiply_rows(Tensor<type, 2> & matrix, const Tensor<type, 1> & vector) const
+    {
+        const Index columns_number = matrix.dimension(1);
+        const Index rows_number = matrix.dimension(0);
+
+        #pragma omp parallel for
+
+        for(Index i = 0; i < rows_number; i++)
+        {
+            for(Index j = 0; j < columns_number; j++)
+            {
+               matrix(i,j) *= vector(j);
+            }
+        }
+    }
+
 
 protected:
 

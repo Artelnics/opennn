@@ -6731,25 +6731,6 @@ void DataSet::scale_target_variables_minimum_maximum(const Tensor<Descriptives, 
 
 #endif
 
-//    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-//    const Index target_variables_number = target_variables_indices.size();
-
-//    Index variable_index;
-
-//    for(Index i = 0; i < data.dimension(0); i++)
-//    {
-//        for(Index j = 0; j < target_variables_number; j++)
-//        {
-//            variable_index = target_variables_indices(j);
-
-//            if(!::isnan(data(i,variable_index)))
-//            {
-//                data(i, variable_index) =
-//                        static_cast<type>(2.0)*(data(i, variable_index)-targets_descriptives(j).minimum)/(targets_descriptives(j).maximum-targets_descriptives(j).minimum)-static_cast<type>(1.0);
-//            }
-//        }
-//    }
-
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
     const Index target_variables_number = target_variables_indices.size();
 

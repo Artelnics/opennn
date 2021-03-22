@@ -61,6 +61,7 @@ SOURCES += \
 
 HEADERS += \
     growing_neurons_test.h \
+    growing_neurons_test.h \
     unit_testing.h \
     data_set_test.h \
     unscaling_layer_test.h \

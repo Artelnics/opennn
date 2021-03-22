@@ -479,8 +479,6 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 {
     // Loss index
 
-    calculate_errors(batch, forward_propagation, back_propagation); // @todo move to particular errors due to cross entropy
-
     calculate_error(batch, forward_propagation, back_propagation);
 
     calculate_layers_delta(batch, forward_propagation, back_propagation);
