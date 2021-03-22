@@ -30,65 +30,8 @@
 namespace OpenNN
 {
 
-    struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
-
-        explicit ProbabilisticLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
-        {
-        }
-
-        void set(const Index& new_batch_samples_number)
-        {
-            batch_samples_number = new_batch_samples_number;
-
-            const Index neurons_number = layer_pointer->get_neurons_number();
-
-            combinations.resize(batch_samples_number, neurons_number);
-
-            activations.resize(batch_samples_number, neurons_number);
-
-            activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
-        }
-
-        Tensor<type, 2> combinations;
-        Tensor<type, 2> activations;
-        Tensor<type, 3> activations_derivatives;
-    };
-
-    struct ProbabilisticLayerBackPropagation : LayerBackPropagation
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index inputs_number = layer_pointer->get_inputs_number();
-
-        explicit ProbabilisticLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
-        {
-
-        }
-
-        void set(const Index& new_batch_samples_number)
-        {
-            batch_samples_number = new_batch_samples_number;
-
-            biases_derivatives.resize(neurons_number);
-
-            synaptic_weights_derivatives.resize(inputs_number, neurons_number);
-
-            delta.resize(batch_samples_number, neurons_number);
-            delta_row.resize(neurons_number);
-
-            error_combinations_derivatives.resize(batch_samples_number, neurons_number);
-        }
-
-        Tensor<type, 2> delta;
-        Tensor<type, 1> delta_row;
-
-        Tensor<type, 2> error_combinations_derivatives;
-
-        Tensor<type, 2> synaptic_weights_derivatives;
-        Tensor<type, 1> biases_derivatives;
-    };
-
+struct ProbabilisticLayerForwardPropagation;
+struct ProbabilisticLayerBackPropagation;
 
 /// This class represents a layer of probabilistic neurons.
 
@@ -267,6 +210,92 @@ protected:
     #include "../../opennn-cuda/opennn_cuda/probabilistic_layer_cuda.h"
 #endif
 
+};
+
+struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
+{
+    const Index neurons_number = layer_pointer->get_neurons_number();
+
+    explicit ProbabilisticLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
+    {
+    }
+
+    void set(const Index& new_batch_samples_number)
+    {
+        batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        combinations.resize(batch_samples_number, neurons_number);
+
+        activations.resize(batch_samples_number, neurons_number);
+
+        activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
+    }
+
+
+    void print() const
+    {
+        cout << "Combinations:" << endl;
+        cout << combinations << endl;
+
+        cout << "Activations:" << endl;
+        cout << activations << endl;
+
+        cout << "Activations derivatives:" << endl;
+        cout << activations_derivatives << endl;
+    }
+
+
+    Tensor<type, 2> combinations;
+    Tensor<type, 2> activations;
+    Tensor<type, 3> activations_derivatives;
+};
+
+
+struct ProbabilisticLayerBackPropagation : LayerBackPropagation
+{
+    const Index neurons_number = layer_pointer->get_neurons_number();
+    const Index inputs_number = layer_pointer->get_inputs_number();
+
+    explicit ProbabilisticLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
+    {
+
+    }
+
+    void set(const Index& new_batch_samples_number)
+    {
+        batch_samples_number = new_batch_samples_number;
+
+        biases_derivatives.resize(neurons_number);
+
+        synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+
+        delta.resize(batch_samples_number, neurons_number);
+        delta_row.resize(neurons_number);
+
+        error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+    }
+
+    void print() const
+    {
+        cout << "Delta:" << endl;
+        cout << delta << endl;
+
+        cout << "Biases derivatives:" << endl;
+        cout << biases_derivatives << endl;
+
+        cout << "Synaptic weights derivatives:" << endl;
+        cout << synaptic_weights_derivatives << endl;
+    }
+
+    Tensor<type, 2> delta;
+    Tensor<type, 1> delta_row;
+
+    Tensor<type, 2> error_combinations_derivatives;
+
+    Tensor<type, 2> synaptic_weights_derivatives;
+    Tensor<type, 1> biases_derivatives;
 };
 
 }

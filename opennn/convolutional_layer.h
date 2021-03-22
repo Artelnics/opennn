@@ -232,6 +232,7 @@ protected:
 
 };
 
+
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
     explicit ConvolutionalLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
@@ -242,6 +243,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
         const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
     }
+
 
     void set(const Index& new_batch_samples_number)
     {
@@ -257,6 +259,13 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);
     }
 
+
+    void print() const
+    {
+
+    }
+
+
     Tensor<type, 4> combinations;
     Tensor<type, 4> activations;
     Tensor<type, 4> activations_derivatives;
@@ -270,12 +279,18 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
     explicit ConvolutionalLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
     {
-
     }
+
 
     void set(const Index& new_batch_samples_number)
     {
     }
+
+
+    void print() const
+    {
+    }
+
 
     Tensor<type, 4> delta;
 

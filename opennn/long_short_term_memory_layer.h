@@ -29,203 +29,9 @@
 namespace OpenNN
 {
 
-    struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
-    {
-        explicit LongShortTermMemoryLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
-        {
-        }
+struct LongShortTermMemoryLayerForwardPropagation;
+struct LongShortTermMemoryLayerBackPropagation;
 
-        void set(const Index& new_batch_samples_number)
-        {
-            const Index inputs_number = layer_pointer->get_inputs_number();
-            const Index neurons_number = layer_pointer->get_neurons_number();
-
-            batch_samples_number = new_batch_samples_number;
-
-            previous_hidden_state_activations.resize(inputs_number);
-            previous_cell_state_activations.resize(inputs_number);
-
-            current_inputs.resize(inputs_number);
-
-            current_forget_combinations.resize(neurons_number);
-            current_input_combinations.resize(neurons_number);
-            current_state_combinations.resize(neurons_number);
-            current_output_combinations.resize(neurons_number);
-
-            current_forget_activations.resize(neurons_number);
-            current_input_activations.resize(neurons_number);
-            current_state_activations.resize(neurons_number);
-            current_output_activations.resize(neurons_number);
-
-            current_cell_state_activations.resize(neurons_number);
-
-            current_forget_activations_derivatives.resize(neurons_number);
-            current_input_activations_derivatives.resize(neurons_number);
-            current_state_activations_derivatives.resize(neurons_number);
-            current_output_activations_derivatives.resize(neurons_number);
-            current_hidden_states_derivatives.resize(neurons_number);
-
-            forget_activations.resize(batch_samples_number, neurons_number);
-            input_activations.resize(batch_samples_number, neurons_number);
-            state_activations.resize(batch_samples_number, neurons_number);
-            output_activations.resize(batch_samples_number, neurons_number);
-            cell_states_activations.resize(batch_samples_number, neurons_number);
-            hidden_states_activations.resize(batch_samples_number, neurons_number);
-
-            forget_activations_derivatives.resize(batch_samples_number, neurons_number);
-            input_activations_derivatives.resize(batch_samples_number, neurons_number);
-            state_activations_derivatives.resize(batch_samples_number, neurons_number);
-            output_activations_derivatives.resize(batch_samples_number, neurons_number);
-            cell_states_activations_derivatives.resize(batch_samples_number, neurons_number);
-            hidden_states_activations_derivatives.resize(batch_samples_number, neurons_number);
-
-            combinations.resize(batch_samples_number, neurons_number);
-            activations.resize(batch_samples_number, neurons_number);
-        }
-
-        Tensor<type, 2> combinations;
-        Tensor<type, 2> activations;
-
-        Tensor<type, 1> previous_hidden_state_activations;
-        Tensor<type, 1> previous_cell_state_activations;
-
-        Tensor<type, 1> current_inputs;
-
-        Tensor<type, 1> current_forget_combinations;
-        Tensor<type, 1> current_input_combinations;
-        Tensor<type, 1> current_state_combinations;
-        Tensor<type, 1> current_output_combinations;
-
-        Tensor<type, 1> current_forget_activations;
-        Tensor<type, 1> current_input_activations;
-        Tensor<type, 1> current_state_activations;
-        Tensor<type, 1> current_output_activations;
-
-        Tensor<type, 1> current_forget_activations_derivatives;
-        Tensor<type, 1> current_input_activations_derivatives;
-        Tensor<type, 1> current_state_activations_derivatives;
-        Tensor<type, 1> current_output_activations_derivatives;
-
-        Tensor<type, 1> current_hidden_states_derivatives;
-
-        Tensor<type, 1> current_cell_state_activations;
-
-        Tensor<type, 2, RowMajor> forget_activations;
-        Tensor<type, 2, RowMajor> input_activations;
-        Tensor<type, 2, RowMajor> state_activations;
-        Tensor<type, 2, RowMajor> output_activations;
-        Tensor<type, 2, RowMajor> cell_states_activations;
-        Tensor<type, 2, RowMajor> hidden_states_activations;
-
-        Tensor<type, 2, RowMajor> forget_activations_derivatives;
-        Tensor<type, 2, RowMajor> input_activations_derivatives;
-        Tensor<type, 2, RowMajor> state_activations_derivatives;
-        Tensor<type, 2, RowMajor> output_activations_derivatives;
-        Tensor<type, 2, RowMajor> cell_states_activations_derivatives;
-        Tensor<type, 2, RowMajor> hidden_states_activations_derivatives;
-    };
-
-
-    struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index inputs_number = layer_pointer->get_inputs_number();
-
-        explicit LongShortTermMemoryLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
-        {
-        }
-
-        void set(const Index& new_batch_samples_number)
-        {
-            batch_samples_number = new_batch_samples_number;
-
-            current_layer_deltas.resize(neurons_number);
-
-            forget_weights_derivatives.resize(inputs_number*neurons_number);
-            input_weights_derivatives.resize(inputs_number*neurons_number);
-            state_weights_derivatives.resize(inputs_number*neurons_number);
-            output_weights_derivatives.resize(inputs_number*neurons_number);
-
-            forget_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-            input_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-            state_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-            output_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
-
-            forget_biases_derivatives.resize(neurons_number);
-            input_biases_derivatives.resize(neurons_number);
-            state_biases_derivatives.resize(neurons_number);
-            output_biases_derivatives.resize(neurons_number);
-
-            delta.resize(batch_samples_number, neurons_number);
-
-            input_combinations_biases_derivatives(neurons_number, neurons_number);
-            forget_combinations_biases_derivatives(neurons_number, neurons_number);
-            state_combinations_biases_derivatives(neurons_number, neurons_number);
-            output_combinations_biases_derivatives(neurons_number, neurons_number);
-
-            hidden_states_biases_derivatives(neurons_number, neurons_number);
-            cell_state_biases_derivatives(neurons_number, neurons_number);
-
-            input_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
-            forget_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
-            state_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
-            output_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
-
-            hidden_states_weights_derivatives(inputs_number*neurons_number, neurons_number);
-            cell_state_weights_derivatives(inputs_number*neurons_number, neurons_number);
-
-            input_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
-            forget_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
-            state_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
-            output_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
-
-            hidden_states_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
-            cell_state_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
-        }
-
-        Tensor<type, 1> current_layer_deltas;
-
-        Tensor<type, 2> delta;
-
-        Tensor<type, 1> forget_weights_derivatives;
-        Tensor<type, 1> input_weights_derivatives;
-        Tensor<type, 1> state_weights_derivatives;
-        Tensor<type, 1> output_weights_derivatives;
-
-        Tensor<type, 1> forget_recurrent_weights_derivatives;
-        Tensor<type, 1> input_recurrent_weights_derivatives;
-        Tensor<type, 1> state_recurrent_weights_derivatives;
-        Tensor<type, 1> output_recurrent_weights_derivatives;
-
-        Tensor<type, 1> forget_biases_derivatives;
-        Tensor<type, 1> input_biases_derivatives;
-        Tensor<type, 1> state_biases_derivatives;
-        Tensor<type, 1> output_biases_derivatives;
-
-        Tensor<type, 2> input_combinations_biases_derivatives;
-        Tensor<type, 2> forget_combinations_biases_derivatives;
-        Tensor<type, 2> state_combinations_biases_derivatives;
-        Tensor<type, 2> output_combinations_biases_derivatives;
-
-        Tensor<type, 2> hidden_states_biases_derivatives;
-        Tensor<type, 2> cell_state_biases_derivatives;
-
-        Tensor<type, 2> input_combinations_weights_derivatives;
-        Tensor<type, 2> forget_combinations_weights_derivatives;
-        Tensor<type, 2> state_combinations_weights_derivatives;
-        Tensor<type, 2> output_combinations_weights_derivatives;
-
-        Tensor<type, 2> hidden_states_weights_derivatives;
-        Tensor<type, 2> cell_state_weights_derivatives;
-
-        Tensor<type, 2> input_combinations_recurrent_weights_derivatives;
-        Tensor<type, 2> forget_combinations_recurrent_weights_derivatives;
-        Tensor<type, 2> state_combinations_recurrent_weights_derivatives;
-        Tensor<type, 2> output_combinations_recurrent_weights_derivatives;
-
-        Tensor<type, 2> hidden_states_recurrent_weights_derivatives;
-        Tensor<type, 2> cell_state_recurrent_weights_derivatives;
-   };
 
 /// This class represents a layer of neurons.
 /// Layers of neurons will be used to construct multilayer neurons.
@@ -522,6 +328,216 @@ protected:
 #endif
 
 };
+
+
+struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
+{
+    explicit LongShortTermMemoryLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
+    {
+    }
+
+    void set(const Index& new_batch_samples_number)
+    {
+        const Index inputs_number = layer_pointer->get_inputs_number();
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        batch_samples_number = new_batch_samples_number;
+
+        previous_hidden_state_activations.resize(inputs_number);
+        previous_cell_state_activations.resize(inputs_number);
+
+        current_inputs.resize(inputs_number);
+
+        current_forget_combinations.resize(neurons_number);
+        current_input_combinations.resize(neurons_number);
+        current_state_combinations.resize(neurons_number);
+        current_output_combinations.resize(neurons_number);
+
+        current_forget_activations.resize(neurons_number);
+        current_input_activations.resize(neurons_number);
+        current_state_activations.resize(neurons_number);
+        current_output_activations.resize(neurons_number);
+
+        current_cell_state_activations.resize(neurons_number);
+
+        current_forget_activations_derivatives.resize(neurons_number);
+        current_input_activations_derivatives.resize(neurons_number);
+        current_state_activations_derivatives.resize(neurons_number);
+        current_output_activations_derivatives.resize(neurons_number);
+        current_hidden_states_derivatives.resize(neurons_number);
+
+        forget_activations.resize(batch_samples_number, neurons_number);
+        input_activations.resize(batch_samples_number, neurons_number);
+        state_activations.resize(batch_samples_number, neurons_number);
+        output_activations.resize(batch_samples_number, neurons_number);
+        cell_states_activations.resize(batch_samples_number, neurons_number);
+        hidden_states_activations.resize(batch_samples_number, neurons_number);
+
+        forget_activations_derivatives.resize(batch_samples_number, neurons_number);
+        input_activations_derivatives.resize(batch_samples_number, neurons_number);
+        state_activations_derivatives.resize(batch_samples_number, neurons_number);
+        output_activations_derivatives.resize(batch_samples_number, neurons_number);
+        cell_states_activations_derivatives.resize(batch_samples_number, neurons_number);
+        hidden_states_activations_derivatives.resize(batch_samples_number, neurons_number);
+
+        combinations.resize(batch_samples_number, neurons_number);
+        activations.resize(batch_samples_number, neurons_number);
+    }
+
+    void print() const
+    {
+
+    }
+
+    Tensor<type, 2> combinations;
+    Tensor<type, 2> activations;
+
+    Tensor<type, 1> previous_hidden_state_activations;
+    Tensor<type, 1> previous_cell_state_activations;
+
+    Tensor<type, 1> current_inputs;
+
+    Tensor<type, 1> current_forget_combinations;
+    Tensor<type, 1> current_input_combinations;
+    Tensor<type, 1> current_state_combinations;
+    Tensor<type, 1> current_output_combinations;
+
+    Tensor<type, 1> current_forget_activations;
+    Tensor<type, 1> current_input_activations;
+    Tensor<type, 1> current_state_activations;
+    Tensor<type, 1> current_output_activations;
+
+    Tensor<type, 1> current_forget_activations_derivatives;
+    Tensor<type, 1> current_input_activations_derivatives;
+    Tensor<type, 1> current_state_activations_derivatives;
+    Tensor<type, 1> current_output_activations_derivatives;
+
+    Tensor<type, 1> current_hidden_states_derivatives;
+
+    Tensor<type, 1> current_cell_state_activations;
+
+    Tensor<type, 2, RowMajor> forget_activations;
+    Tensor<type, 2, RowMajor> input_activations;
+    Tensor<type, 2, RowMajor> state_activations;
+    Tensor<type, 2, RowMajor> output_activations;
+    Tensor<type, 2, RowMajor> cell_states_activations;
+    Tensor<type, 2, RowMajor> hidden_states_activations;
+
+    Tensor<type, 2, RowMajor> forget_activations_derivatives;
+    Tensor<type, 2, RowMajor> input_activations_derivatives;
+    Tensor<type, 2, RowMajor> state_activations_derivatives;
+    Tensor<type, 2, RowMajor> output_activations_derivatives;
+    Tensor<type, 2, RowMajor> cell_states_activations_derivatives;
+    Tensor<type, 2, RowMajor> hidden_states_activations_derivatives;
+};
+
+
+struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
+{
+    const Index neurons_number = layer_pointer->get_neurons_number();
+    const Index inputs_number = layer_pointer->get_inputs_number();
+
+    explicit LongShortTermMemoryLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
+    {
+    }
+
+    void set(const Index& new_batch_samples_number)
+    {
+        batch_samples_number = new_batch_samples_number;
+
+        current_layer_deltas.resize(neurons_number);
+
+        forget_weights_derivatives.resize(inputs_number*neurons_number);
+        input_weights_derivatives.resize(inputs_number*neurons_number);
+        state_weights_derivatives.resize(inputs_number*neurons_number);
+        output_weights_derivatives.resize(inputs_number*neurons_number);
+
+        forget_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+        input_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+        state_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+        output_recurrent_weights_derivatives.resize(neurons_number*neurons_number);
+
+        forget_biases_derivatives.resize(neurons_number);
+        input_biases_derivatives.resize(neurons_number);
+        state_biases_derivatives.resize(neurons_number);
+        output_biases_derivatives.resize(neurons_number);
+
+        delta.resize(batch_samples_number, neurons_number);
+
+        input_combinations_biases_derivatives(neurons_number, neurons_number);
+        forget_combinations_biases_derivatives(neurons_number, neurons_number);
+        state_combinations_biases_derivatives(neurons_number, neurons_number);
+        output_combinations_biases_derivatives(neurons_number, neurons_number);
+
+        hidden_states_biases_derivatives(neurons_number, neurons_number);
+        cell_state_biases_derivatives(neurons_number, neurons_number);
+
+        input_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
+        forget_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
+        state_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
+        output_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
+
+        hidden_states_weights_derivatives(inputs_number*neurons_number, neurons_number);
+        cell_state_weights_derivatives(inputs_number*neurons_number, neurons_number);
+
+        input_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+        forget_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+        state_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+        output_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+
+        hidden_states_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+        cell_state_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+    }
+
+    void print() const
+    {
+
+    }
+
+    Tensor<type, 1> current_layer_deltas;
+
+    Tensor<type, 2> delta;
+
+    Tensor<type, 1> forget_weights_derivatives;
+    Tensor<type, 1> input_weights_derivatives;
+    Tensor<type, 1> state_weights_derivatives;
+    Tensor<type, 1> output_weights_derivatives;
+
+    Tensor<type, 1> forget_recurrent_weights_derivatives;
+    Tensor<type, 1> input_recurrent_weights_derivatives;
+    Tensor<type, 1> state_recurrent_weights_derivatives;
+    Tensor<type, 1> output_recurrent_weights_derivatives;
+
+    Tensor<type, 1> forget_biases_derivatives;
+    Tensor<type, 1> input_biases_derivatives;
+    Tensor<type, 1> state_biases_derivatives;
+    Tensor<type, 1> output_biases_derivatives;
+
+    Tensor<type, 2> input_combinations_biases_derivatives;
+    Tensor<type, 2> forget_combinations_biases_derivatives;
+    Tensor<type, 2> state_combinations_biases_derivatives;
+    Tensor<type, 2> output_combinations_biases_derivatives;
+
+    Tensor<type, 2> hidden_states_biases_derivatives;
+    Tensor<type, 2> cell_state_biases_derivatives;
+
+    Tensor<type, 2> input_combinations_weights_derivatives;
+    Tensor<type, 2> forget_combinations_weights_derivatives;
+    Tensor<type, 2> state_combinations_weights_derivatives;
+    Tensor<type, 2> output_combinations_weights_derivatives;
+
+    Tensor<type, 2> hidden_states_weights_derivatives;
+    Tensor<type, 2> cell_state_weights_derivatives;
+
+    Tensor<type, 2> input_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2> forget_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2> state_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2> output_combinations_recurrent_weights_derivatives;
+
+    Tensor<type, 2> hidden_states_recurrent_weights_derivatives;
+    Tensor<type, 2> cell_state_recurrent_weights_derivatives;
+};
+
 
 }
 
