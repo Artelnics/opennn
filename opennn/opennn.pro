@@ -66,7 +66,6 @@ HEADERS += \
     bounding_layer.h \
     long_short_term_memory_layer.h \
     recurrent_layer.h \
-    principal_components_layer.h \
     neural_network.h \
     loss_index.h \
     mean_squared_error.h \
@@ -97,6 +96,7 @@ HEADERS += \
     genetic_algorithm.h \
     testing_analysis.h \
     response_optimization.h \
+    tensor_utilities.h \
     unit_testing.h \
     opennn.h
 
@@ -117,7 +117,6 @@ SOURCES += \
     convolutional_layer.cpp \
     long_short_term_memory_layer.cpp \
     recurrent_layer.cpp \
-    principal_components_layer.cpp \
     neural_network.cpp \
     loss_index.cpp \
     mean_squared_error.cpp \
