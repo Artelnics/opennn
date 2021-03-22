@@ -14,7 +14,6 @@
 #include <sstream>
 #include <time.h>
 #include <stdexcept>
-#include <omp.h>
 
 // OpenNN includes
 

@@ -2380,22 +2380,28 @@ void DataSetTest::test_calculate_input_target_correlations() // @todo
 
 void DataSetTest::test_calculate_total_input_correlations() // @todo
 {
-    cout << "test_calculate_total_input_correlations\n";
+    cout << "test_calculate_total_input_correlations\n";    
 
-//    Tensor<type, 2> matrix({{1, 1, 1, 1},{2, 2, 2, 2},{3, 3, 3, 3}});
+    Tensor<type, 2> matrix(4, 3);
+    matrix.setValues({{1, 1, 1, 1},{2, 2, 2, 2},{3, 3, 3, 3}});
 
-//    DataSet data_set;
-//    data_set.set_data(matrix);
-//    Tensor<Index, 1> input_variables_indices({0, 1});
-//    Tensor<Index, 1> target_variables_indices({2});
-//    Tensor<type, 1> solution({1, 1});
+    DataSet data_set;
+    data_set.set_data(matrix);
+
+    Tensor<Index, 1> input_variables_indices(2);
+    input_variables_indices.setValues({0, 1});
+
+    Tensor<Index, 1> target_variables_indices(1);
+    target_variables_indices.setValues({2});
+
+    Tensor<type, 1> solution(2);
+    solution.setValues({1, 1});
 
 //    data_set.set_input_variables_indices(input_variables_indices);
 
 //    Tensor<type, 1> correlations_inputs = data_set.calculate_total_input_correlations();
 
 //    assert_true(correlations_inputs == solution, LOG);
-
 }
 
 
@@ -2403,64 +2409,45 @@ void DataSetTest::test_unuse_repeated_samples()
 {
     cout << "test_unuse_repeated_samples\n";
 
-//    Tensor<type, 2> matrix(3, 3);
-//    matrix.setValues({{1,2,2},{1,2,2},{1,6,6}});
-//    DataSet data_set;
-//    data_set.set_data(matrix);
-//    Tensor<Index, 1> indices(1);
-//    indices.setValues({2});
+    Tensor<type, 2> matrix(3, 3);
+    matrix.setValues({{1,2,2},{1,2,2},{1,6,6}});
+    DataSet data_set;
+    data_set.set_data(matrix);
+    Tensor<Index, 1> indices(1);
+    indices.setValues({2});
 
 //    assert_true(data_set.unuse_repeated_samples() == indices, LOG);
 
-//    Tensor<type, 2> matrix_1(4, 3);
-//    matrix_1.setValues({{1,2,2,2},{1,2,2,2},{1,6,6,6}});
-//    DataSet ds_1;
-//    ds_1.set_data(matrix_1);
-//    Tensor<Index, 1> indices_1(2);
-//    indices_1.setValues({2, 3});
+    Tensor<type, 2> matrix_1(4, 3);
+    matrix_1.setValues({{1,2,2,2},{1,2,2,2},{1,6,6,6}});
+    DataSet ds_1;
+    ds_1.set_data(matrix_1);
+    Tensor<Index, 1> indices_1(2);
+    indices_1.setValues({2, 3});
 
 //    assert_true(ds_1.unuse_repeated_samples() == indices_1, LOG);
 
-//    Tensor<type, 2> matrix_2(5, 3);
-//    matrix_2.setValues({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
-//    DataSet ds_2;
-//    ds_2.set_data(matrix_2);
-//    Tensor<Index, 1> indices_2(2);
-//    indices_2.setValues({2,4});
+    Tensor<type, 2> matrix_2(5, 3);
+    matrix_2.setValues({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
+    DataSet ds_2;
+    ds_2.set_data(matrix_2);
+    Tensor<Index, 1> indices_2(2);
+    indices_2.setValues({2,4});
 
 //    assert_true(ds_2.unuse_repeated_samples() == indices_2, LOG);
 
 }
 
 
-void DataSetTest::test_unuse_non_significant_inputs()
+void DataSetTest::test_unuse_uncorrelated_columns()
 {
-    cout << "test_unuse_non_significant_inputs\n";
+    cout << "test_unuse_uncorrelated_columns\n";
 
     Tensor<type, 2> matrix(3, 3);
     matrix.setValues({{1,0,0},{1,0,0},{1,0,1}});
-//    DataSet data_set;
 
-//    cout << "unuse: " << data_set.unuse_non_significant_inputs() << endl;
-}
+    DataSet data_set;
 
-
-/// @todo
-
-void DataSetTest::test_unuse_columns_missing_values()
-{
-    cout << "test_unuse_columns_missing_values\n";
-
-//    Tensor<type, 2> matrix(5, 3);
-//    matrix.setValues({{1,2,2,4,4},{1,2,2,4,4},{1,6,6,4,4}});
-//    matrix.set_header(Tensor<string, 1>({"var1","var2","var3","var4"}));
-
-//    DataSet data_set;
-
-//    data_set.set_data(matrix);
-//    data_set.set_variables_names(Tensor<string, 1>({"var1","var2","var3"}));
-
-//    data_set.unuse_variables_missing_values(1);
 }
 
 
@@ -2578,8 +2565,7 @@ void DataSetTest::run_test_case()
 
    test_unuse_constant_columns();
    test_unuse_repeated_samples();
-   test_unuse_non_significant_inputs();
-   test_unuse_columns_missing_values();
+   test_unuse_uncorrelated_columns();
 
    // Initialization methods
 

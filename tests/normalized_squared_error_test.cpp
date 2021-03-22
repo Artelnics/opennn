@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "normalized_squared_error_test.h"
-#include <omp.h>
 
 NormalizedSquaredErrorTest::NormalizedSquaredErrorTest(void) : UnitTesting()
 {
@@ -17,6 +16,7 @@ NormalizedSquaredErrorTest::NormalizedSquaredErrorTest(void) : UnitTesting()
 NormalizedSquaredErrorTest::~NormalizedSquaredErrorTest(void)
 {
 }
+
 
 void NormalizedSquaredErrorTest::test_constructor(void) // @todo
 {
@@ -190,7 +190,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-/*
+
    // Trivial test
    {
        samples_number = 10;
@@ -226,7 +226,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
        nse.back_propagate(batch, forward_propagation, training_back_propagation);
        error_gradient = training_back_propagation.gradient;
 
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation(&nse);
+       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
 
        assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
        assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
@@ -276,7 +276,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
        nse.back_propagate(batch, forward_propagation, training_back_propagation);
        error_gradient = training_back_propagation.gradient;
 
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation(&nse);
+       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
 
        const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
@@ -354,7 +354,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        error_gradient = training_back_propagation.gradient;
 
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation(&nse);
+       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
 
        const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
@@ -433,13 +433,13 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        error_gradient = training_back_propagation.gradient;
 
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation(&nse);
+       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
 
        const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
        assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
    }
-*/
+
    neural_network.set();
 
    // Test lstm
@@ -490,15 +490,16 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        error_gradient = back_propagation.gradient;
 
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation(&nse);
+       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
 
        const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
-       assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
+       assert_true(std::all_of(difference.data(), difference.data()+difference.size(),
+                               [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
    }
 
    neural_network.set();
-/*
+
    // Test LSTM and binary probabilistic
    {
        samples_number = 4;
@@ -570,13 +571,13 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        error_gradient = back_propagation.gradient;
 
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation(&nse);
+       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
 
        const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
        assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
    }
-*/
+
    neural_network.set();
 
    // Test LSTM and multiple probabilistic
@@ -650,14 +651,13 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        error_gradient = back_propagation.gradient;
 
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation(&nse);
+       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
 
        const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
        assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
    }
 
-   /*
    // Test recurrent
    {
        samples_number = 4;
@@ -701,7 +701,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        error_gradient = back_propagation.gradient;
 
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation(&nse);
+       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
 
        const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
@@ -781,7 +781,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        error_gradient = back_propagation.gradient;
 
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation(&nse);
+       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
 
        const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
@@ -861,7 +861,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        error_gradient = back_propagation.gradient;
 
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation(&nse);
+       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
 
        const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
@@ -929,15 +929,14 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        nse.back_propagate(batch, forward_propagation, back_propagation);
 
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation(&nse);
+       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
    }
-   */
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
+void NormalizedSquaredErrorTest::test_calculate_squared_errors(void) // @todo
 {
-   cout << "test_calculate_error_terms\n";
+   cout << "test_calculate_squared_errors\n";
 
    NeuralNetwork neural_network;
    Tensor<Index, 1> architecture;
@@ -998,9 +997,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms(void) // @todo
 
 /// @todo
 
-void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void)
+void NormalizedSquaredErrorTest::test_calculate_squared_errors_Jacobian(void)
 {
-   cout << "test_calculate_error_terms_Jacobian\n";
+   cout << "test_calculate_squared_errors_Jacobian\n";
 
    NeuralNetwork neural_network;
    Tensor<Index, 1> architecture;
@@ -1061,47 +1060,16 @@ void NormalizedSquaredErrorTest::test_calculate_error_terms_Jacobian(void)
 
    assert_true(abs(loss_index_back_propagation_lm.error - back_propagation.error) < 1.0e-3, LOG);
 
-//   nse.calculate_error_terms_Jacobian(batch, forward_propagation, loss_index_back_propagation_lm);
+//   nse.calculate_squared_errors_Jacobian(batch, forward_propagation, loss_index_back_propagation_lm);
 
    Tensor<type, 2> numerical_Jacobian_terms;
 
    forward_propagation.print();
-   numerical_Jacobian_terms = nse.calculate_Jacobian_numerical_differentiation(&nse);
+   numerical_Jacobian_terms = nse.calculate_Jacobian_numerical_differentiation();
 
    const Tensor<type, 2> difference = loss_index_back_propagation_lm.squared_errors_Jacobian-numerical_Jacobian_terms;
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
-}
-
-
-/// @todo
-
-void NormalizedSquaredErrorTest::test_calculate_squared_errors(void)
-{
-    cout << "test_calculate_squared_errors\n";
-
-    NeuralNetwork neural_network;
-
-    DataSet data_set;
-
-    NormalizedSquaredError nse(&neural_network, &data_set);
-
-    Tensor<Index, 1> architecture;
-    Tensor<type, 1> squared_errors;
-
-    // Test
-
-    architecture.setValues({1,1});
-
-    neural_network.set(NeuralNetwork::Approximation, architecture);
-    neural_network.set_parameters_random();
-
-    data_set.set(2, 1, 1);
-    data_set.set_data_random();
-
-//    squared_errors = nse.calculate_squared_errors();
-
-//    assert_true(squared_errors.size() == 2, LOG);
 }
 
 
@@ -1123,7 +1091,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Constructor and destructor methods
 
-  /* test_constructor();
+   test_constructor();
    test_destructor();
    test_calculate_normalization_coefficient();
 
@@ -1133,14 +1101,14 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    // Error methods
 
-   test_calculate_error();*/
+   test_calculate_error();
    test_calculate_error_gradient();
-/*
-   // Error terms methods
 
-   test_calculate_error_terms();
+   // Squared errors methods
 
-   test_calculate_error_terms_Jacobian();
+   test_calculate_squared_errors();
+
+   test_calculate_squared_errors_Jacobian();
 
    // Squared errors methods
 
@@ -1150,7 +1118,7 @@ void NormalizedSquaredErrorTest::run_test_case(void) // @todo
 
    test_to_XML();
    test_from_XML();
-*/
+
    cout << "End of normalized squared error test case.\n\n";
 }
 

@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "minkowski_error_test.h"
-#include <omp.h>
 
 
 MinkowskiErrorTest::MinkowskiErrorTest() : UnitTesting() 
@@ -213,7 +212,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    error_gradient = training_back_propagation.gradient;
 
-   numerical_error_gradient = me.calculate_gradient_numerical_differentiation(&me);
+   numerical_error_gradient = me.calculate_gradient_numerical_differentiation();
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
@@ -254,7 +253,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
    me.back_propagate(batch, forward_propagation, training_back_propagation);
 
    neural_network.forward_propagate(batch, forward_propagation);
-   numerical_error_gradient = me.calculate_gradient_numerical_differentiation(&me);
+   numerical_error_gradient = me.calculate_gradient_numerical_differentiation();
 
    me.calculate_error_gradient(batch, forward_propagation, training_back_propagation);
 
@@ -481,27 +480,27 @@ void MinkowskiErrorTest::run_test_case() // @todo
 
    // Constructor and destructor methods
 
-//   test_constructor();
-//   test_destructor();
+   test_constructor();
+   test_destructor();
 
    // Get methods
 
-//   test_get_Minkowski_parameter();
+   test_get_Minkowski_parameter();
 
    // Set methods
 
-//   test_set_Minkowski_parameter();
+   test_set_Minkowski_parameter();
 
    // Error methods
 
-//   test_calculate_error();
-//   test_calculate_selection_error();
+   test_calculate_error();
+   test_calculate_selection_error();
    test_calculate_error_gradient();
 
    // Serialization methods
 
-//   test_to_XML();
-//   test_from_XML();
+   test_to_XML();
+   test_from_XML();
 
    cout << "End of Minkowski error test case.\n\n";
 }

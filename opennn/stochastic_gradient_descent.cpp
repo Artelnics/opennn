@@ -271,7 +271,7 @@ void StochasticGradientDescent::set_reserve_all_training_history(const bool& new
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
 
-void StochasticGradientDescent:: set_maximum_epochs_number(const Index& new_maximum_epochs_number)
+void StochasticGradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
 
 

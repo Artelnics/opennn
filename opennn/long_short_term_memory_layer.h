@@ -104,7 +104,7 @@ public:
    void set(const LongShortTermMemoryLayer&);
 
    void set_default();
-   void set_layer_name(const string&);
+   void set_name(const string&);
 
    // Architecture
 

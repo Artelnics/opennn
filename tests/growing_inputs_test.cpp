@@ -23,10 +23,10 @@ void GrowingInputsTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GrowingInputs growing_inputs_1(&training_strategy);
 
@@ -43,12 +43,11 @@ void GrowingInputsTest::test_destructor() // @todo
 {
     cout << "test_destructor\n";
 
-//    GrowingInputs* gi = new GrowingInputs;
+    GrowingInputs* gi = new GrowingInputs;
 
-//    delete gi;
+    delete gi;
 }
 
-// Set methods
 
 void GrowingInputsTest::test_set_default() // @todo
 {
@@ -60,15 +59,16 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 {
     cout << "test_perform_inputs_selection\n";
 
-//    DataSet ds;
+    DataSet data_set;
 
-//    Tensor<type, 2> data;
+    Tensor<type, 2> data;
+    Tensor<Index, 1> architecture;
 
-//    NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-//    SumSquaredError sum_squared_error(&neural_network ,&ds);
+    SumSquaredError sum_squared_error(&neural_network ,&data_set);
 
-//    InputsSelectionResults* gir;
+    InputsSelectionResults* gir;
 
     // Test
 
@@ -76,23 +76,26 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 
 //    ds.set_columns_uses({"Input","Input","Target"});
 
-//    ds.split_samples_random();
+    data_set.split_samples_random();
 
-//    neural_network.set(NeuralNetwork::Approximation,{2,1,1});
+    architecture.resize(3);
+    architecture.setValues({2,1,1});
 
-//    TrainingStrategy ts(&neural_network, &ds);
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-//    ModelSelection ms(&ts);
+    TrainingStrategy ts(&neural_network, &data_set);
 
-//    GrowingInputs gi(&ts);
+    ModelSelection ms(&ts);
 
-//    ts.set_display(false);
+    GrowingInputs gi(&ts);
 
-//    gi.set_display(false);
+    ts.set_display(false);
 
-//    gi.set_approximation(true);
+    gi.set_display(false);
 
-//    gir = gi.perform_inputs_selection();
+    gi.set_approximation(true);
+
+    gir = gi.perform_inputs_selection();
 
 //    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
 
@@ -102,25 +105,27 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 
     // Test
 
-//    ds.generate_sum_data(20,3);
+    data_set.generate_sum_data(20,3);
 
-//    neural_network.set();
+    neural_network.set();
 
-//    neural_network.set(NeuralNetwork::Approximation,{2,6,1});
+    architecture.setValues({2,6,1});
 
-//    TrainingStrategy ts1(&neural_network, &ds);
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-//    ModelSelection ms1(&ts);
+    TrainingStrategy ts1(&neural_network, &data_set);
 
-//    GrowingInputs gi1(&ts);
+    ModelSelection ms1(&ts);
 
-//    ts1.set_display(false);
+    GrowingInputs gi1(&ts);
 
-//    gi1.set_display(false);
+    ts1.set_display(false);
 
-//    gi1.set_approximation(false);
+    gi1.set_display(false);
 
-//    gir = gi1.perform_inputs_selection();
+    gi1.set_approximation(false);
+
+    gir = gi1.perform_inputs_selection();
 
 //    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
 
@@ -135,7 +140,7 @@ void GrowingInputsTest::test_to_XML() // @todo
 {
     cout << "test_to_XML\n";
 
-//    GrowingInputs growing_inputs;
+    GrowingInputs growing_inputs;
 
 //    tinyxml2::XMLDocument* document = growing_inputs.to_XML();
 //    assert_true(document != nullptr, LOG);

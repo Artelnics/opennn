@@ -187,7 +187,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
       mse.back_propagate(batch, forward_propagation, training_back_propagation);
       error_gradient = training_back_propagation.gradient;
 
-      numerical_error_gradient = mse.calculate_gradient_numerical_differentiation(&mse);
+      numerical_error_gradient = mse.calculate_gradient_numerical_differentiation();
 
       const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
@@ -234,7 +234,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
         mse_1.back_propagate(batch_1, forward_propagation, training_back_propagation);
         error_gradient = training_back_propagation.gradient;
 
-        numerical_error_gradient = mse_1.calculate_gradient_numerical_differentiation(&mse_1);
+        numerical_error_gradient = mse_1.calculate_gradient_numerical_differentiation();
 
         const Tensor<type, 1> difference1 = error_gradient-numerical_error_gradient;
 
@@ -267,18 +267,15 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        long_short_term_memory_layer->set(inputs_number, hidden_neurons);
        output_perceptron_layer->set(hidden_neurons, outputs_number);
 
-       cout << "hola" <<endl;
-
        neural_network.add_layer(long_short_term_memory_layer);
        neural_network.add_layer(output_perceptron_layer);
 
        neural_network.set_parameters_random();
 
-      // error_gradient = mean_squared_error.calculate_error_gradient();
+       numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
-      //numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
-
-      // assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+//       error_gradient = mean_squared_error.calculate_error_gradient();
+//       assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
 
 //   neural_network.set();
@@ -388,9 +385,9 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 }
 
 
-void MeanSquaredErrorTest::test_calculate_error_terms()
+void MeanSquaredErrorTest::test_calculate_squared_errors()
 {
-   cout << "test_calculate_error_terms\n";
+   cout << "test_calculate_squared_errors\n";
 
    NeuralNetwork neural_network;
    Tensor<Index, 1> hidden_layers_size;
@@ -435,47 +432,47 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
 }
 
 
-void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
+void MeanSquaredErrorTest::test_calculate_squared_errors_Jacobian()
 {
-   cout << "test_calculate_error_terms_Jacobian\n";
+   cout << "test_calculate_squared_errors_Jacobian\n";
 
-//  NumericalDifferentiation nd;
+  NumericalDifferentiation nd;
 
-//  NeuralNetwork neural_network;
-//  Tensor<Index, 1> architecture;
-//  Tensor<type, 1> parameters;
+  NeuralNetwork neural_network;
+  Tensor<Index, 1> architecture;
+  Tensor<type, 1> parameters;
 
-//  DataSet data_set;
+  DataSet data_set;
 
-//  MeanSquaredError mean_squared_error(&neural_network, &data_set);
+  MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-//  Tensor<type, 1> error_gradient;
+  Tensor<type, 1> error_gradient;
 
-//  Tensor<type, 1> squared_errors;
-//  Tensor<type, 2> terms_Jacobian;
-//  Tensor<type, 2> numerical_Jacobian_terms;
+  Tensor<type, 1> squared_errors;
+  Tensor<type, 2> terms_Jacobian;
+  Tensor<type, 2> numerical_Jacobian_terms;
 
-//  Tensor<type, 2> inputs;
-//  Tensor<type, 2> targets;
-//  Tensor<type, 2> outputs;
+  Tensor<type, 2> inputs;
+  Tensor<type, 2> targets;
+  Tensor<type, 2> outputs;
 
-//  Tensor<type, 2> output_delta;
-//  Tensor<Tensor<type, 2>, 1> layers_delta;
+  Tensor<type, 2> output_delta;
+  Tensor<Tensor<type, 2>, 1> layers_delta;
 
    // Test
 
-//   architecture.setValues({1,1});
+    architecture.setValues({1,1});
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-//   neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(0.0);
 
-//   data_set.set(1, 1, 1);
-//  data_set.initialize_data(0.0);
+    data_set.set(1, 1, 1);
+    data_set.initialize_data(0.0);
 
-//  inputs = data_set.get_training_input_data();
-// targets = data_set.get_training_target_data();
-//   outputs = neural_network.calculate_outputs(inputs);
+    inputs = data_set.get_training_input_data();
+    targets = data_set.get_training_target_data();
+    outputs = neural_network.calculate_outputs(inputs);
 
 //   Tensor<LayerForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
 
@@ -483,84 +480,27 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
 
-//   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
+//   terms_Jacobian = mean_squared_error.calculate_squared_errors_Jacobian(inputs, forward_propagation, layers_delta);
 
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
-//   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
+   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
+   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
 //   assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test 
 
-//   neural_network.set(NeuralNetwork::Approximation, {3, 4, 2});
-//   neural_network.set_parameters_constant(0.0);
+   architecture.resize(3);
+   architecture.setValues({3, 4, 2});
 
-//   data_set.set(3, 2, 5);
-//   mean_squared_error.set(&neural_network, &data_set);
-//   data_set.initialize_data(0.0);
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_constant(0.0);
 
-//   inputs = data_set.get_training_input_data();
-//   targets = data_set.get_training_target_data();
-//   outputs = neural_network.calculate_outputs(inputs);
+   data_set.set(3, 2, 5);
+   mean_squared_error.set(&neural_network, &data_set);
+   data_set.initialize_data(0.0);
 
-   //forward_propagation = nn.forward_propagate(inputs);
-
-//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
-
-//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
-
-//   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
-
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
-//   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-//   assert_true(terms_Jacobian == 0.0, LOG);
-
-   // Test
-
-//   architecture.resize(3);
-//   architecture[0] = 2;
-//   architecture[1] = 1;
-//   architecture[2] = 2;
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_constant(0.0);
-
-//   data_set.set(2, 2, 5);
-//   mean_squared_error.set(&neural_network, &data_set);
-//   data_set.initialize_data(0.0);
-
-//   inputs = data_set.get_training_input_data();
-//   targets = data_set.get_training_target_data();
-//   outputs = neural_network.calculate_outputs(inputs);
-
-//   forward_propagation = neural_network.forward_propagate(inputs);
-
-//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
-
-//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
-
-//   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
-
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
-//   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-//   assert_true(terms_Jacobian == 0.0, LOG);
-
-   // Test
-
-//   architecture.setValues({1,1});
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_constant(0.0);
-//   //nn.set_layer_activation_function(0, PerceptronLayer::Linear);
-//   nn.set_parameters_random();
-//   parameters = neural_network.get_parameters();
-
-//   data_set.set(1, 1, 1);
-//   data_set.set_data_random();
-//   data_set.initialize_data(1.0);
-
-//   inputs = data_set.get_training_input_data();
-//   targets = data_set.get_training_target_data();
-//   outputs = neural_network.calculate_outputs(inputs);
+   inputs = data_set.get_training_input_data();
+   targets = data_set.get_training_target_data();
+   outputs = neural_network.calculate_outputs(inputs);
 
 //   forward_propagation = nn.forward_propagate(inputs);
 
@@ -568,14 +508,69 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
 //   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
 
-//   cout << "layers delta: " << layers_delta << endl;
+//   terms_Jacobian = mean_squared_error.calculate_squared_errors_Jacobian(inputs, forward_propagation, layers_delta);
 
-//   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
+   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
+   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
+//   assert_true(terms_Jacobian == 0.0, LOG);
+
+   // Test
+
+   architecture.resize(3);
+   architecture[0] = 2;
+   architecture[1] = 1;
+   architecture[2] = 2;
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_constant(0.0);
+
+   data_set.set(2, 2, 5);
+   mean_squared_error.set(&neural_network, &data_set);
+   data_set.initialize_data(0.0);
+
+   inputs = data_set.get_training_input_data();
+   targets = data_set.get_training_target_data();
+   outputs = neural_network.calculate_outputs(inputs);
+
+//   forward_propagation = neural_network.forward_propagate(inputs);
+
+//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
+
+//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
+
+//   terms_Jacobian = mean_squared_error.calculate_squared_errors_Jacobian(inputs, forward_propagation, layers_delta);
+
+   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
+   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
+//   assert_true(terms_Jacobian == 0.0, LOG);
+
+   // Test
+
+   architecture.setValues({1,1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_constant(0.0);
+   //nn.set_layer_activation_function(0, PerceptronLayer::Linear);
+//   nn.set_parameters_random();
+   parameters = neural_network.get_parameters();
+
+   data_set.set(1, 1, 1);
+   data_set.set_data_random();
+   data_set.initialize_data(1.0);
+
+   inputs = data_set.get_training_input_data();
+   targets = data_set.get_training_target_data();
+   outputs = neural_network.calculate_outputs(inputs);
+
+//   forward_propagation = nn.forward_propagate(inputs);
+
+//   output_delta = mean_squared_error.calculate_output_delta(outputs, targets);
+
+//   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_delta);
+
+//   terms_Jacobian = mean_squared_error.calculate_squared_errors_Jacobian(inputs, forward_propagation, layers_delta);
 
 //   numerical_Jacobian_terms = nd.calculate_Jacobian(mean_squared_error, &MeanSquaredError::calculate_training_error_terms, parameters);
-
-//   cout << "Terms Jacobian: " << terms_Jacobian << endl;
-//   cout << "Numerical: " << numerical_Jacobian_terms << endl;
 
 //   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
 
@@ -590,7 +585,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 //   data_set.set(2, 2, 2);
 //   data_set.set_data_random();
 
-//   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = mean_squared_error.calculate_squared_errors_Jacobian();
 //   numerical_Jacobian_terms = nd.calculate_Jacobian(mean_squared_error, &MeanSquaredError::calculate_training_error_terms, parameters);
 
 //   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
@@ -608,7 +603,7 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
 //   error_gradient = mean_squared_error.calculate_error_gradient({0, 1});
 
 //   squared_errors = mean_squared_error.calculate_training_error_terms();
-//   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = mean_squared_error.calculate_squared_errors_Jacobian();
 
 //   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(squared_errors)*2.0 - error_gradient) < 1.0e-3, LOG);
 }
@@ -645,10 +640,10 @@ void MeanSquaredErrorTest::run_test_case()
 
    test_calculate_error_gradient();
 
-   // Error terms methods
+   // Squared errors methods
 
-   //test_calculate_error_terms();
-   //test_calculate_error_terms_Jacobian();
+   //test_calculate_squared_errors();
+   //test_calculate_squared_errors_Jacobian();
 
    // Serialization methods
 

@@ -1137,27 +1137,27 @@ void ScalingLayerTest::run_test_case()
 
    test_set_descriptives();
    test_set_descriptives_eigen();
-//   test_set_item_descriptives();
-//   test_set_minimum();
-//   test_set_maximum();
-//   test_set_mean();
-//   test_set_standard_deviation();
+   test_set_item_descriptives();
+   test_set_minimum();
+   test_set_maximum();
+   test_set_mean();
+   test_set_standard_deviation();
 
 
    // Variables scaling and unscaling
 
-//   test_set_scaling_method();
+   test_set_scaling_method();
 
 
    // Display messages
 
-//   test_set_display();
+   test_set_display();
 
 
    // Input range
 
-//   test_is_empty();
-//   test_check_range();
+   test_is_empty();
+   test_check_range();
 
 
    // Scaling and unscaling

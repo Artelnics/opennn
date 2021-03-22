@@ -23,10 +23,10 @@ void NeuronsSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GrowingNeurons io1(&training_strategy);
 
@@ -64,10 +64,10 @@ void NeuronsSelectionTest::test_set_training_strategy_pointer()
 {
     cout << "test_set_training_strategy_pointer\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GrowingNeurons in;
 
@@ -107,8 +107,6 @@ void NeuronsSelectionTest::test_get_parameters_order()
 
 }
 
-
-// Unit testing methods
 
 void NeuronsSelectionTest::run_test_case()
 {

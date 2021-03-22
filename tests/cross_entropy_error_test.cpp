@@ -167,13 +167,13 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-//   Tensor<type, 2> data(samples_number, inputs_number+outputs_number);
-//   data.setRandom();
+   Tensor<type, 2> data(samples_number, inputs_number+outputs_number);
+   data.setRandom();
 
-//   data(0, 1) = 1;
-//   data(1, 1) = 0;
+   data(0, 1) = 1;
+   data(1, 1) = 0;
 
-//   data_set.set_data(data);
+   data_set.set_data(data);
 
    data_set.set_data_binary_random();
 
@@ -202,13 +202,9 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    cee.back_propagate(batch, forward_propagation, training_back_propagation);
 
-   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation(&cee);
+   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation();
 
    const Tensor<type, 1> difference = training_back_propagation.gradient-numerical_error_gradient;
-
-   cout << "Gradient: " << endl << training_back_propagation.gradient << endl;
-   cout << "Numerical gradient: " << endl << numerical_error_gradient << endl;
-   cout << "Difference: " << endl << difference << endl;
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
@@ -217,34 +213,34 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    // Test lstm
 {
-//   samples_number = 10;
-//   inputs_number = 3;
-//   outputs_number = 2;
-//   hidden_neurons = 2;
+   samples_number = 10;
+   inputs_number = 3;
+   outputs_number = 2;
+   hidden_neurons = 2;
 
-//   data_set.set(samples_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
-//   data_set.set_data_random();
+   data_set.set_data_random();
 
-//   data_set.set_training();
+   data_set.set_training();
 
-//   Tensor<Index, 1> architecture;
+   Tensor<Index, 1> architecture;
 
-//   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
+   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
 
-//   neural_network.set(NeuralNetwork::Forecasting, architecture);
+   neural_network.set(NeuralNetwork::Forecasting, architecture);
 
-//   long_short_term_memory_layer.set(inputs_number, hidden_neurons);
+   long_short_term_memory_layer.set(inputs_number, hidden_neurons);
 //   output_perceptron_layer.set(hidden_neurons, outputs_number);
 
-//   neural_network.add_layer(&long_short_term_memory_layer);
+   neural_network.add_layer(&long_short_term_memory_layer);
 //   neural_network.add_layer(&output_perceptron_layer);
 
-//   neural_network.set_parameters_random();
+   neural_network.set_parameters_random();
 
 //   error_gradient = cee.calculate_error_gradient();
 
-//   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation();
+   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -254,29 +250,29 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    // Test recurrent
 
 {
-//   samples_number = 10;
-//   inputs_number = 3;
-//   outputs_number = 2;
-//   hidden_neurons = 2;
+   samples_number = 10;
+   inputs_number = 3;
+   outputs_number = 2;
+   hidden_neurons = 2;
 
-//   data_set.set(samples_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
-//   data_set.set_data_random();
+   data_set.set_data_random();
 
-//   data_set.set_training();
+   data_set.set_training();
 
-//   recurrent_layer.set(inputs_number, hidden_neurons);
+   recurrent_layer.set(inputs_number, hidden_neurons);
 //   output_perceptron_layer.set(hidden_neurons, outputs_number);
 
-//   neural_network.add_layer(&scaling_layer);
-//   neural_network.add_layer(&recurrent_layer);
+   neural_network.add_layer(&scaling_layer);
+   neural_network.add_layer(&recurrent_layer);
 //   neural_network.add_layer(&output_perceptron_layer);
 
-//   neural_network.set_parameters_random();
+   neural_network.set_parameters_random();
 
 //   error_gradient = cee.calculate_error_gradient();
 
-//   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation();
+   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -378,13 +374,13 @@ void CrossEntropyErrorTest::run_test_case()
 
    // Error methods
 
-//   test_calculate_error();
+   test_calculate_error();
    test_calculate_error_gradient();
 
    // Serialization methods
 
-//   test_to_XML();
-//   test_from_XML();
+   test_to_XML();
+   test_from_XML();
 
    cout << "End of cross entropy error test case.\n\n";
 }

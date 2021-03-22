@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "data_set.h"
-#include <omp.h>
 
 using namespace  OpenNN;
 
@@ -6196,7 +6195,7 @@ void DataSet::print_top_inputs_correlations() const
          }
      }
 
-    map<type,string> :: iterator it;
+    map<type,string> ::iterator it;
 
     for(it = top_correlation.begin(); it != top_correlation.end(); it++)
     {

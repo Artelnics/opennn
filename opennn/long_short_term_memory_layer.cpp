@@ -440,7 +440,7 @@ void LongShortTermMemoryLayer::set_default()
 }
 
 
-void LongShortTermMemoryLayer::set_layer_name(const string& new_layer_name)
+void LongShortTermMemoryLayer::set_name(const string& new_layer_name)
 {
     layer_name = new_layer_name;
 }
@@ -4111,7 +4111,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(layer_name_element->GetText())
     {
-        set_layer_name(layer_name_element->GetText());
+        set_name(layer_name_element->GetText());
     }
 
     // Inputs number

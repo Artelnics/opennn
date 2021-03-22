@@ -40,10 +40,10 @@ void TrainingStrategyTest::test_destructor()
 {
    cout << "test_destructor\n";
 
-   NeuralNetwork nn;
-   DataSet ds;
+   NeuralNetwork neural_network;
+   DataSet data_set;
 
-   TrainingStrategy* ts = new TrainingStrategy(&nn, &ds);
+   TrainingStrategy* ts = new TrainingStrategy(&neural_network, &data_set);
 
    delete ts;
 }
@@ -70,10 +70,10 @@ void TrainingStrategyTest::test_get_display()
 {
    cout << "test_get_display\n";
 
-   NeuralNetwork nn;
-   DataSet ds;
+   NeuralNetwork neural_network;
+   DataSet data_set;
 
-   TrainingStrategy training_strategy(&nn, &ds);
+   TrainingStrategy training_strategy(&neural_network, &data_set);
 
    training_strategy.set_display(false);
 
@@ -218,10 +218,10 @@ void TrainingStrategyTest::test_load()
 
    string file_name = "../data/training_strategy.xml";
 
-   NeuralNetwork nn;
-   DataSet ds;
+   NeuralNetwork neural_network;
+   DataSet data_set;
 
-   TrainingStrategy training_strategy(&nn, &ds);
+   TrainingStrategy training_strategy(&neural_network, &data_set);
 
    // Test
 
