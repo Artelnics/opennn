@@ -1195,7 +1195,8 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names,
     {
         const Tensor<type, 1> synaptic_weights_column =  recurrent_weights.chip(j,1);
 
-//        buffer << outputs_names(j) << to_string(j) << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
+
+        buffer << outputs_names(j) << to_string(j) << " = " << write_activation_function_expression() << "[ " << biases(j) << " +";
 
         for(Index i = 0; i < inputs_names.size() - 1; i++)
         {
