@@ -2233,8 +2233,10 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2> & 
     LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
             static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);
 
-#pragma omp parallel
+//#pragma omp parallel
     {
+
+
         // Biases
 
         calculate_forget_biases_error_gradient(inputs,
@@ -2252,7 +2254,7 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2> & 
         calculate_output_biases_error_gradient(inputs,
                                                long_short_term_memory_layer_forward_propagation,
                                                long_short_term_memory_layer_back_propagation);
-
+cout << "biases" << endl;
         // Weights
 
         calculate_forget_weights_error_gradient(inputs,
@@ -2270,7 +2272,7 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2> & 
         calculate_output_weights_error_gradient(inputs,
                                                 long_short_term_memory_layer_forward_propagation,
                                                 long_short_term_memory_layer_back_propagation);
-
+cout << "weights" << endl;
         // Recurrent weights
 
         calculate_forget_recurrent_weights_error_gradient(inputs,
@@ -2288,6 +2290,7 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2> & 
         calculate_output_recurrent_weights_error_gradient(inputs,
                                                           long_short_term_memory_layer_forward_propagation,
                                                           long_short_term_memory_layer_back_propagation);
+cout << "recurrent weights" << endl;
     }
 }
 
