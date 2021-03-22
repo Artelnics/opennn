@@ -5,7 +5,6 @@
 #endif
 
 //Eigen includes
-
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
 #define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
@@ -34,6 +33,8 @@
 #include <curand.h>
 
 #endif
+
+#include <omp.h>
 
 namespace OpenNN
 {

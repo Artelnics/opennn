@@ -51,15 +51,13 @@ public:
 
    void test_calculate_error_gradient(void);
 
-   // Error terms methods
-
-   void test_calculate_error_terms(void);
-
-   void test_calculate_error_terms_Jacobian(void);
-
    // Squared errors methods
 
    void test_calculate_squared_errors(void);
+
+   void test_calculate_squared_errors_Jacobian(void);
+
+   // Squared errors methods
 
    void test_calculate_maximal_errors(void);
 

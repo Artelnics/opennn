@@ -24,7 +24,6 @@
 
 #include "data_set.h"
 #include "neural_network.h"
-#include "numerical_differentiation.h"
 
 namespace OpenNN
 {
@@ -158,9 +157,9 @@ public:
    type calculate_eta() const;
    type calculate_h(const type&) const;
 
-   Tensor<type, 1> calculate_gradient_numerical_differentiation(LossIndex*) const;
+   Tensor<type, 1> calculate_gradient_numerical_differentiation();
 
-   Tensor<type, 2> calculate_Jacobian_numerical_differentiation(LossIndex*) const;
+   Tensor<type, 2> calculate_Jacobian_numerical_differentiation();
 
 
    void calculate_errors(const DataSetBatch&,
@@ -187,7 +186,7 @@ public:
                        NeuralNetworkForwardPropagation&,
                        LossIndexBackPropagationLM&) const;
 
-   void calculate_error_terms_jacobian(const DataSetBatch&,
+   void calculate_squared_errors_jacobian(const DataSetBatch&,
                                        NeuralNetworkForwardPropagation&,
                                        LossIndexBackPropagation&,
                                        LossIndexBackPropagationLM&) const;

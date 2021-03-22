@@ -146,7 +146,7 @@ private:
 
    LearningRateAlgorithm learning_rate_algorithm;
 
-   type first_learning_rate = static_cast<type>(0.01);
+   const type first_learning_rate = static_cast<type>(0.01);
 
    // Stopping criteria
 

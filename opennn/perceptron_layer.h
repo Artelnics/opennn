@@ -55,7 +55,7 @@ public:
 
    explicit PerceptronLayer();
 
-   explicit PerceptronLayer(const Index&, const Index&, const Index& = 0 , const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
+   explicit PerceptronLayer(const Index&, const Index&, const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
 
    // Destructor
    
@@ -97,7 +97,7 @@ public:
    void set(const Index&, const Index&, const PerceptronLayer::ActivationFunction& = PerceptronLayer::HyperbolicTangent);
 
    void set_default();
-   void set_layer_name(const string&);
+   void set_name(const string&);
 
    // Architecture
 

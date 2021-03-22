@@ -15,8 +15,6 @@
 #include <time.h>
 #include <stdexcept>
 
-#include <omp.h>
-
 // OpenNN includes
 
 #include "../../opennn/opennn.h"

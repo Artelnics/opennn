@@ -184,7 +184,7 @@ void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
 
-void AdaptiveMomentEstimation:: set_maximum_epochs_number(const Index& new_maximum_epochs_number)
+void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
 #ifdef OPENNN_DEBUG
 

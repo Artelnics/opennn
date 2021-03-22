@@ -20,7 +20,6 @@
 #include <ctype.h>
 #include <iostream>
 #include <vector>
-#include <omp.h>
 
 // OpenNN includes
 

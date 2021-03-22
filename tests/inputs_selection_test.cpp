@@ -23,10 +23,10 @@ void InputsSelectionTest::test_constructor() // @todo
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GrowingInputs gi1(&training_strategy);
 
@@ -37,6 +37,7 @@ void InputsSelectionTest::test_constructor() // @todo
     assert_true(!gi2.has_training_strategy(), LOG);
 
 }
+
 
 void InputsSelectionTest::test_destructor() // @todo
 {
@@ -52,10 +53,10 @@ void InputsSelectionTest::test_get_training_strategy_pointer() // @todo
 {
     cout << "test_get_training_strategy_pointer\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn,&ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GrowingInputs gi(&training_strategy);
 
@@ -67,10 +68,10 @@ void InputsSelectionTest::test_set_training_strategy_pointer() // @todo
 {
     cout << "test_set_training_strategy_pointer\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GrowingInputs growing_inputs;
 
@@ -111,12 +112,9 @@ void InputsSelectionTest::test_get_parameters_order() // @todo
 }
 
 
-// Unit testing methods
-
 void InputsSelectionTest::run_test_case() // @todo
 {
     cout << "Running inputs selection algorithm test case...\n";
-
 
     // Constructor and destructor methods
 

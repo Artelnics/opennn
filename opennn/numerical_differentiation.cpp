@@ -101,7 +101,7 @@ void NumericalDifferentiation::set_numerical_differentiation_method
 /// The argument is a string with the name of the numerical differentiation method.
 /// @param new_numerical_differentiation_method Numerical differentiation method name string.
 
-void NumericalDifferentiation:: set_numerical_differentiation_method(const string& new_numerical_differentiation_method)
+void NumericalDifferentiation::set_numerical_differentiation_method(const string& new_numerical_differentiation_method)
 {
     if(new_numerical_differentiation_method == "ForwardDifferences")
     {

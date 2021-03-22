@@ -827,7 +827,7 @@ void StatisticsTest::test_calculate_kurtosis()
     vector_missing_values[4] = 9.0;
 
     type kurtosis = OpenNN::kurtosis(vector_0);
-    type kurtosis_missing_values = OpenNN:: kurtosis(vector_missing_values);
+    type kurtosis_missing_values = OpenNN::kurtosis(vector_missing_values);
 
     assert_true(abs(kurtosis - kurtosis_missing_values) < static_cast<type>(1.0e-3), LOG);
 }
@@ -1276,7 +1276,6 @@ void StatisticsTest::test_calculate_box_plot()
     assert_true(boxplot_0.median - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
     assert_true(boxplot_0.third_quartile - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
     assert_true(boxplot_0.maximum - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
-    cout << boxplot_0.minimum << "--" << boxplot_0.first_quartile <<"--" << boxplot_0.median << "--" << boxplot_0.third_quartile << "--" <<boxplot_0.maximum << endl;
 
     // Test 1
     Tensor<type, 1> vector(8);

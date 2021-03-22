@@ -60,10 +60,10 @@ void ModelSelectionTest::test_set_training_strategy_pointer()
 {
     cout << "test_set_training_strategy_pointer\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     ModelSelection ms;
 
@@ -83,16 +83,16 @@ void ModelSelectionTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
 
-    DataSet ds;
+    DataSet data_set;
 
-    ds.generate_sum_data(20,2);
+    data_set.generate_sum_data(20,2);
 
     Tensor<Index, 1> architecture(3);
     architecture.setValues({1, 2, 1});
 
     NeuralNetwork nn(NeuralNetwork::Approximation, architecture);
 
-    TrainingStrategy ts(&nn, &ds);
+    TrainingStrategy ts(&nn, &data_set);
 
     ts.set_display(false);
 

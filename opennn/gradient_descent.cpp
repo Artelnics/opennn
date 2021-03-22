@@ -640,8 +640,6 @@ TrainingResults GradientDescent::perform_training()
 
         // Optimization algorithm
 
-        training_forward_propagation.print();system("pause");
-
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         // Elapsed time

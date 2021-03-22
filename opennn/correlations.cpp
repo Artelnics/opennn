@@ -998,7 +998,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     NeuralNetwork neural_network;
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, PerceptronLayer::Logistic);
 
     neural_network.add_layer(perceptron_layer);
 
@@ -1440,7 +1440,7 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
 
     NeuralNetwork neural_network;
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, PerceptronLayer::Logistic);
 
     neural_network.add_layer(perceptron_layer);
 

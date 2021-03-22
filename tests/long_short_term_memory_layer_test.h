@@ -60,8 +60,6 @@ public:
 
    void test_get_parameters();
 
-   void test_calculate_parameters_norm();
-
    void test_get_perceptrons_parameters();
 
    // lstm layer parameters

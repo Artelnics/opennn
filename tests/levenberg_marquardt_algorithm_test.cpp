@@ -168,7 +168,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   terms = mean_squared_error.calculate_training_error_terms(outputs, targets);
 
-//   terms_Jacobian = mse.calculate_error_terms_Jacobian(inputs,
+//   terms_Jacobian = mse.calculate_squared_errors_Jacobian(inputs,
 //                                                       neural_network.forward_propagate(inputs),
 //                                                       mean_squared_error.calculate_output_delta(outputs,targets)));
 
@@ -193,7 +193,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   terms = sum_squared_error.calculate_training_error_terms();
 
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_Jacobian();
 
 //   gradient = lma.calculate_gradient(terms, terms_Jacobian);
 
@@ -209,7 +209,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   terms= sum_squared_error.calculate_training_error_terms();
 
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_Jacobian();
 
 //   gradient = lma.calculate_gradient(terms, terms_Jacobian);
 
@@ -253,7 +253,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 //   data_set.set(1,2,2);
 //   data_set.initialize_data(0.0);
 
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_Jacobian();
 
 //   hessian_approximation = lma.calculate_hessian_approximation(terms_Jacobian);
 
@@ -271,7 +271,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 //   data_set.set(1,2,3);
 //   data_set.set_data_random();
 
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_Jacobian();
 
 //   hessian_approximation = lma.calculate_hessian_approximation(terms_Jacobian);
 
@@ -295,7 +295,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
 //   numerical_hessian = nd.calculate_hessian(pf, &LossIndex::calculate_training_loss, parameters);
 
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_Jacobian();
 
 //   hessian_approximation = lma.calculate_hessian_approximation(terms_Jacobian);
 
