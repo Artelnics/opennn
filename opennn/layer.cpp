@@ -1610,7 +1610,7 @@ void Layer::multiply_rows(Tensor<type, 2> & matrix, const Tensor<type, 1> & vect
     const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
 
-    #pragma omp paralell for
+    #pragma omp parallel for
 
     for(Index i = 0; i < rows_number; i++)
     {
