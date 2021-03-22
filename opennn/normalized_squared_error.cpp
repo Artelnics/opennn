@@ -277,8 +277,6 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
                      LossIndexBackPropagation& back_propagation) const
 {
-    calculate_errors(batch, forward_propagation, back_propagation);
-
     Tensor<type, 0> sum_squared_error;
 
     sum_squared_error.device(*thread_pool_device) =  back_propagation.errors.contract(back_propagation.errors, SSE);
@@ -326,7 +324,8 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
      const Index batch_samples_number = batch.get_samples_number();
      const Index total_samples_number = data_set_pointer->get_samples_number();
 
-     const type coefficient = static_cast<type>(2.0)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
+     const type coefficient
+     = static_cast<type>(2.0)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
 
      switch(output_layer_pointer->get_type())
      {

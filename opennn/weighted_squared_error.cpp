@@ -208,8 +208,6 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
                      LossIndexBackPropagation& back_propagation) const
 {
-    calculate_errors(batch, forward_propagation, back_propagation);
-
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
 //    const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1]->activations, batch.targets_2d);

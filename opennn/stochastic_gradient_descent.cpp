@@ -500,7 +500,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
     neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
     loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
-    results.training_error_history(0)  = training_back_propagation.error;
+    results.training_error_history(0) = training_back_propagation.error;
 
     if(has_selection)
     {
@@ -508,7 +508,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         batch_selection.fill(selection_batches.chip(0,0), input_variables_indices, target_variables_indices);
         neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
         loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
-        results.selection_error_history(0)  = selection_back_propagation.error;
+        results.selection_error_history(0) = selection_back_propagation.error;
     }
     // Main loop
 
