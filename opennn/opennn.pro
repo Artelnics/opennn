@@ -17,7 +17,7 @@ CONFIG += staticlib
 CONFIG += c++11
 
 CONFIG(debug, debug|release) {
-    DEFINES += __OPENNN_DEBUG__
+    DEFINES += OPENNN_DEBUG
 }
 
 #DEFINES += __Cpp11__

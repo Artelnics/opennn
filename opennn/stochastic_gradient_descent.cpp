@@ -164,7 +164,7 @@ Index StochasticGradientDescent::get_batch_samples_number() const
 
 void StochasticGradientDescent::set_initial_learning_rate(const type& new_learning_rate)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_learning_rate <= static_cast<type>(0.0))
     {
@@ -190,7 +190,7 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
 
 void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_dacay < static_cast<type>(0.0))
     {
@@ -217,7 +217,7 @@ void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
 
 void StochasticGradientDescent::set_momentum(const type& new_momentum)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_momentum < static_cast<type>(0.0))
     {
@@ -275,7 +275,7 @@ void StochasticGradientDescent:: set_maximum_epochs_number(const Index& new_maxi
 {
 
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_epochs_number < static_cast<type>(0.0))
     {
@@ -311,7 +311,7 @@ void StochasticGradientDescent::set_loss_goal(const type& new_loss_goal)
 
 void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_time < static_cast<type>(0.0))
     {

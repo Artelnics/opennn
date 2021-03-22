@@ -234,7 +234,7 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter(const type& new_damping_
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_damping_parameter_factor)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_damping_parameter_factor <= static_cast<type>(0.0))
     {
@@ -258,7 +258,7 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_d
 
 void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_minimum_damping_parameter)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_damping_parameter <= static_cast<type>(0.0))
     {
@@ -282,7 +282,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_
 
 void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_maximum_damping_parameter)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_damping_parameter <= static_cast<type>(0.0))
     {
@@ -306,7 +306,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 
 void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
     {
@@ -330,7 +330,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(const ty
 
 void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_loss_decrease < static_cast<type>(0.0))
     {
@@ -365,7 +365,7 @@ void LevenbergMarquardtAlgorithm::set_loss_goal(const type& new_loss_goal)
 
 void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_gradient_norm_goal < static_cast<type>(0.0))
     {
@@ -409,7 +409,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_epochs_number(const Index& new_max
 
 void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_time < static_cast<type>(0.0))
     {
@@ -512,7 +512,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     // Control sentence
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 

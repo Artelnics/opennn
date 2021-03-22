@@ -485,8 +485,6 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     calculate_error_gradient(batch, forward_propagation, back_propagation);
 
-    cout << "error gradient" << endl;
-
     // Loss
 
     back_propagation.loss = back_propagation.error;
@@ -578,7 +576,7 @@ void LossIndex::calculate_error_terms_jacobian(const DataSetBatch& batch,
 
     // Gives Eigen error in debug
 
-#ifndef __OPENNN_DEBUG__
+#ifndef OPENNN_DEBUG
 
 //     back_propagation.output_jacobian.device(*thread_pool_device) = (outputs-targets)/loss_index_back_propagation_lm.squared_errors;
 
@@ -726,7 +724,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
                                          const NeuralNetworkForwardPropagation& forward_propagation,
                                          LossIndexBackPropagation& back_propagation) const
 {
-    #ifdef __OPENNN_DEBUG__
+    #ifdef OPENNN_DEBUG
 
     check();
 

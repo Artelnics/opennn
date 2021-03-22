@@ -534,7 +534,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      const Index neurons_number = get_neurons_number();
 
@@ -584,7 +584,7 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
                                                         Tensor<type, 2>& activations,
                                                         Tensor<type, 2>& activations_derivatives) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      const Index neurons_number = get_neurons_number();
 
@@ -634,7 +634,7 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
 Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
     const Index inputs_dimensions_number = inputs.rank();
 
     if(inputs_dimensions_number != 2)
@@ -681,7 +681,7 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                         LayerForwardPropagation* forward_propagation)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_number = get_inputs_number();
 
@@ -720,7 +720,7 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(inputs_number != inputs.dimension(1))
     {
@@ -924,7 +924,7 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
 string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 

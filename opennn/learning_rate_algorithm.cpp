@@ -49,7 +49,7 @@ LearningRateAlgorithm::~LearningRateAlgorithm()
 
 LossIndex* LearningRateAlgorithm::get_loss_index_pointer() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!loss_index_pointer)
     {
@@ -229,7 +229,7 @@ void LearningRateAlgorithm::set_learning_rate_method(const string& new_learning_
 
 void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning_rate_tolerance)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_learning_rate_tolerance <= static_cast<type>(0.0))
     {
@@ -276,7 +276,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(loss_index_pointer == nullptr)
     {
@@ -449,7 +449,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -632,7 +632,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
         learning_rate = triplet.A.first + static_cast<type>(0.382)*(triplet.B.first - triplet.A.first);
     }
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(learning_rate < triplet.A.first)
     {

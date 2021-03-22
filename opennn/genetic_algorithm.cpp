@@ -172,7 +172,7 @@ void GeneticAlgorithm::set_default()
 
 void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index individuals_number = get_individuals_number();
     const Index new_individuals_number = new_population.dimension(2);
@@ -239,7 +239,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 
 void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index individuals_number = get_individuals_number();
 
@@ -280,7 +280,7 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 
 void GeneticAlgorithm::set_population_size(const Index& new_population_size)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_population_size < 4)
     {
@@ -306,7 +306,7 @@ void GeneticAlgorithm::set_population_size(const Index& new_population_size)
 
 void GeneticAlgorithm::set_mutation_rate(const type& new_mutation_rate)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_mutation_rate < 0 || new_mutation_rate > 1)
     {
@@ -330,7 +330,7 @@ void GeneticAlgorithm::set_mutation_rate(const type& new_mutation_rate)
 
 void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index individuals_number = get_individuals_number();
 
@@ -358,7 +358,7 @@ void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
 
 void GeneticAlgorithm::set_selective_pressure(const type& new_selective_pressure)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_selective_pressure <= static_cast<type>(0.0))
     {
@@ -410,7 +410,7 @@ void GeneticAlgorithm::initialize_population()
 {
     const Index individuals_number = get_individuals_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(individuals_number == 0)
     {
@@ -456,7 +456,7 @@ void GeneticAlgorithm::initialize_population()
 
 void GeneticAlgorithm::evaluate_population()
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -556,7 +556,7 @@ void GeneticAlgorithm::perform_fitness_assignment()
 
 void GeneticAlgorithm::perform_selection()
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(population.size() == 0)
     {
@@ -648,7 +648,7 @@ void GeneticAlgorithm::perform_selection()
 
 void GeneticAlgorithm::perform_crossover()
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(population.size() <= 1)
     {
@@ -761,7 +761,7 @@ void GeneticAlgorithm::perform_mutation()
 
 InputsSelectionResults* GeneticAlgorithm::perform_inputs_selection()
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 

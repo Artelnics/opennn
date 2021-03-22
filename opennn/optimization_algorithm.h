@@ -178,7 +178,7 @@ protected:
        return norm(0);
    }
 
-   bool is_zero(const Tensor<type, 1>& tensor) const
+   static bool is_zero(const Tensor<type, 1>& tensor)
    {
        const Index size = tensor.size();
 

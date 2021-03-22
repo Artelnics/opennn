@@ -760,7 +760,7 @@ void NeuralNetwork::set_outputs_names(const Tensor<string, 1>& new_outputs_names
 
 void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_inputs_number == 0)
     {
@@ -1103,7 +1103,7 @@ Tensor<Tensor<type, 1>, 1> NeuralNetwork::get_trainable_layers_parameters(const 
 
 void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index size = new_parameters.size();
 
@@ -1278,7 +1278,7 @@ type NeuralNetwork::calculate_parameters_norm() const
 
 void NeuralNetwork::perturbate_parameters(const type& perturbation)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(perturbation < 0)
     {
@@ -1465,7 +1465,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_dimensions_number = inputs.rank();
 
@@ -1501,7 +1501,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_dimensions_number = inputs.rank();
 

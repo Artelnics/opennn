@@ -1475,7 +1475,7 @@ void DataSet::set_samples_uses(const Tensor<SampleUse, 1>& new_uses)
 {
     const Index samples_number = get_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index new_uses_size = new_uses.size();
 
@@ -1510,7 +1510,7 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
 
     ostringstream buffer;
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index new_uses_size = new_uses.size();
 
@@ -1977,7 +1977,7 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
 
 string DataSet::get_variable_name(const Index& variable_index) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index variables_number = get_variables_number();
 
@@ -3073,7 +3073,7 @@ void DataSet::set_column_type(const Index& index, const ColumnType& new_type)
 
 void DataSet::set_variable_name(const Index& variable_index, const string& new_variable_name)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index variables_number = get_variables_number();
 
@@ -3133,7 +3133,7 @@ void DataSet::set_variable_name(const Index& variable_index, const string& new_v
 
 void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index variables_number = get_variables_number();
 
@@ -3820,7 +3820,7 @@ Tensor<type, 2> DataSet::get_testing_target_data() const
 Tensor<type, 1> DataSet::get_sample_data(const Index& index) const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index samples_number = get_samples_number();
 
@@ -3849,7 +3849,7 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& index) const
 
 Tensor<type, 1> DataSet::get_sample_data(const Index& sample_index, const Tensor<Index, 1>& variables_indices) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index samples_number = get_samples_number();
 
@@ -4080,7 +4080,7 @@ Tensor<type, 2> DataSet::get_column_data(const string& column_name) const
 Tensor<type, 1> DataSet::get_variable_data(const Index& index) const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index variables_number = get_variables_number();
 
@@ -4130,7 +4130,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
         }
     }
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index variables_size = variable_index.size();
 
@@ -4169,7 +4169,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name) const
 Tensor<type, 1> DataSet::get_variable_data(const Index& variable_index, const Tensor<Index, 1>& samples_indices) const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index variables_number = get_variables_number();
 
@@ -4231,7 +4231,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
         }
     }
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index variables_size = variable_index.size();
 
@@ -4344,7 +4344,7 @@ void DataSet::set(const Tensor<type, 2>& new_data)
 
 void DataSet::set(const Index& new_samples_number, const Index& new_variables_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_samples_number == 0)
     {
@@ -4652,7 +4652,7 @@ void DataSet::set_separator(const string& new_separator_string)
 
 void DataSet::set_missing_values_label(const string& new_missing_values_label)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(get_trimmed(new_missing_values_label).empty())
     {
@@ -4766,7 +4766,7 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 {
     const Index columns_number = get_columns_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(columns_number == 0)
     {
@@ -4848,7 +4848,7 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
 {
     const Index samples_number = get_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(samples_number == 0)
     {
@@ -5264,7 +5264,7 @@ Tensor<Descriptives, 1> DataSet::calculate_used_variables_descriptives() const
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples() const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index targets_number = get_target_variables_number();
 
@@ -5323,7 +5323,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_samples() const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index targets_number = get_target_variables_number();
 
@@ -6214,7 +6214,7 @@ void DataSet::print_top_inputs_correlations() const
 void DataSet::scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>& data_descriptives)
 {
 
-   #ifdef __OPENNN_DEBUG__
+   #ifdef OPENNN_DEBUG
 
    ostringstream buffer;
 
@@ -6381,7 +6381,7 @@ void DataSet::scale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_des
 {
     const Index variables_number = get_variables_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -6443,7 +6443,7 @@ void DataSet::scale_input_mean_standard_deviation(const Descriptives& input_stat
 
 Descriptives DataSet::scale_input_mean_standard_deviation(const Index& input_index)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(is_empty())
     {
@@ -6487,7 +6487,7 @@ void DataSet::scale_input_standard_deviation(const Descriptives& input_statistic
 
 Descriptives DataSet::scale_input_standard_deviation(const Index& input_index)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(is_empty())
     {
@@ -6538,7 +6538,7 @@ void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, 
 
 Descriptives DataSet::scale_input_minimum_maximum(const Index& input_index)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(is_empty())
     {
@@ -6686,7 +6686,7 @@ void DataSet::scale_target_variables_mean_standard_deviation(const Tensor<Descri
 
 Tensor<Descriptives, 1> DataSet::scale_target_variables_mean_standard_deviation()
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(is_empty())
     {
@@ -6716,7 +6716,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables_mean_standard_deviation(
 
 void DataSet::scale_target_variables_minimum_maximum(const Tensor<Descriptives, 1>& targets_descriptives)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(is_empty())
     {
@@ -6762,7 +6762,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables_minimum_maximum()
 
 void DataSet::scale_target_variables_logarithm(const Tensor<Descriptives, 1>& targets_descriptives)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(is_empty())
     {
@@ -9439,7 +9439,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
 
     const Index used_variables_number = used_variables_indices.size();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(minimums.size() != used_variables_number)
     {
@@ -9602,7 +9602,7 @@ Tensor<Index, 1> DataSet::filter_column(const string& variable_name, const type&
 
 void DataSet::numeric_to_categorical(const Index& variable_index)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index variables_number = get_variables_number();
 

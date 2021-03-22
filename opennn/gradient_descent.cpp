@@ -218,7 +218,7 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
 {
 
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_epochs_number < static_cast<type>(0.0))
     {
@@ -246,7 +246,7 @@ void GradientDescent::set_minimum_parameters_increment_norm(const type& new_mini
 {
 
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
     {
@@ -274,7 +274,7 @@ void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_dec
 {
 
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_loss_decrease < static_cast<type>(0.0))
     {
@@ -313,7 +313,7 @@ void GradientDescent::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 {
 
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_gradient_norm_goal < static_cast<type>(0.0))
     {
@@ -351,7 +351,7 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
 {
 
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_time < static_cast<type>(0.0))
     {
@@ -407,7 +407,7 @@ void GradientDescent::set_reserve_selection_error_history(const bool& new_reserv
 
 void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradient, Tensor<type, 1>& training_direction) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -442,18 +442,18 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 }
 
 
-// \brief GradientDescent::update_parameters
-// \param batch
-// \param forward_propagation
-// \param back_propagation
-// \param optimization_data
+/// \brief GradientDescent::update_parameters
+/// \param batch
+/// \param forward_propagation
+/// \param back_propagation
+/// \param optimization_data
+
 void GradientDescent::update_parameters(
         const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,
         GradientDescentData& optimization_data)
 {
-
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
 
     if(is_zero(optimization_data.training_direction))
@@ -519,7 +519,7 @@ TrainingResults GradientDescent::perform_training()
 {
     TrainingResults results;
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -596,6 +596,10 @@ TrainingResults GradientDescent::perform_training()
         loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
         results.selection_error_history(0)  = selection_back_propagation.error;
     }
+
+    cout << training_back_propagation.error << endl;
+    cout << selection_back_propagation.error << endl;
+    system("pause");
 
     // Main loop
 

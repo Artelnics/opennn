@@ -43,7 +43,7 @@ NeuronsSelection::~NeuronsSelection()
 
 TrainingStrategy* NeuronsSelection::get_training_strategy_pointer() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!training_strategy_pointer)
     {
@@ -207,7 +207,7 @@ void NeuronsSelection::set_default()
 
 void NeuronsSelection::set_maximum_neurons(const Index& new_maximum_neurons)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_neurons <= 0)
     {
@@ -242,7 +242,7 @@ void NeuronsSelection::set_maximum_neurons(const Index& new_maximum_neurons)
 
 void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_neurons <= 0)
     {
@@ -276,7 +276,7 @@ void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
 
 void NeuronsSelection::set_trials_number(const Index& new_trials_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_trials_number <= 0)
     {
@@ -328,7 +328,7 @@ void NeuronsSelection::set_display(const bool& new_display)
 
 void NeuronsSelection::set_selection_error_goal(const type& new_selection_error_goal)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_selection_error_goal < 0)
     {
@@ -352,7 +352,7 @@ void NeuronsSelection::set_selection_error_goal(const type& new_selection_error_
 
 void NeuronsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_epochs_number <= 0)
     {
@@ -376,7 +376,7 @@ void NeuronsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs
 
 void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_time < 0)
     {
@@ -513,7 +513,7 @@ void NeuronsSelection::check() const
 const string NeuronsSelection::write_elapsed_time(const type& time) const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(time > static_cast<type>(3600e5))
     {
