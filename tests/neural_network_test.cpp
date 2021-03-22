@@ -255,7 +255,6 @@ void NeuralNetworkTest::check_layer_type()
    assert_true(neural_network.check_layer_type(Layer::Probabilistic), LOG);
    assert_true(neural_network.check_layer_type(Layer::Unscaling), LOG);
    assert_true(neural_network.check_layer_type(Layer::Bounding), LOG);
-   assert_true(neural_network.check_layer_type(Layer::PrincipalComponents), LOG);
 
    // Test 2
 
@@ -287,7 +286,6 @@ void NeuralNetworkTest::check_layer_type()
    assert_true(neural_network_2.check_layer_type(Layer::Probabilistic), LOG);
    assert_true(neural_network_2.check_layer_type(Layer::Unscaling), LOG);
    assert_true(neural_network_2.check_layer_type(Layer::Bounding), LOG);
-   assert_true(neural_network_2.check_layer_type(Layer::PrincipalComponents), LOG);
 
    // Test 4
 
