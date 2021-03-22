@@ -279,10 +279,6 @@ protected:
     #include "../../opennn-cuda/opennn_cuda/loss_index_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/loss_index_mkl.h"
-#endif
-
 };
 
 

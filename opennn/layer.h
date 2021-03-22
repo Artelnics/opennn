@@ -314,10 +314,6 @@ protected:
     #include "../../opennn-cuda/opennn_cuda/layer_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/layer_mkl.h"
-#endif
-
 };
 
 }

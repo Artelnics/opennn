@@ -87,9 +87,6 @@ private:
     #include "../../opennn-cuda/opennn_cuda/sum_squared_error_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/sum_squared_error_mkl.h"
-#endif
 };
 
 }

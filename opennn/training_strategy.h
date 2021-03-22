@@ -251,12 +251,9 @@ private:
 
    bool display = true;
 
+
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/training_strategy_cuda.h"
-#endif
-
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/training_strategy_mkl.h"
 #endif
 
 };

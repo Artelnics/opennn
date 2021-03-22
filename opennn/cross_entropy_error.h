@@ -85,9 +85,6 @@ public:
     #include "../../opennn-cuda/opennn_cuda/cross_entropy_error_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/cross_entropy_error_mkl.h"
-#endif
 };
 
 }

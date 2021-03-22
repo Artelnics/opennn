@@ -209,10 +209,6 @@ private:
     #include "../../opennn-cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/adaptive_moment_estimation_mkl.h"
-#endif
-
 };
 
 
