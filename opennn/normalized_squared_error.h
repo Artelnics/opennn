@@ -121,10 +121,6 @@ private:
     #include "../../opennn-cuda/opennn_cuda/normalized_squared_error_cuda.h"
 #endif
 
-
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/normalized_squared_error_mkl.h"
-#endif
 };
 
 }

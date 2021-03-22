@@ -205,15 +205,10 @@ private:
    Index batch_samples_number = 1000;
 
 
-
-
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/stochastic_gradient_descent_mkl.h"
-#endif
 };
 
 

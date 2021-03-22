@@ -120,9 +120,6 @@ private:
     #include "../../opennn-cuda/opennn_cuda/weighted_squared_error_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/weighted_squared_error_mkl.h"
-#endif
 };
 
 }
