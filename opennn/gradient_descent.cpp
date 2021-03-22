@@ -475,8 +475,7 @@ void GradientDescent::update_parameters(
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
-
-    pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
+    const pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
                             batch,
                             forward_propagation,
                             back_propagation,
@@ -484,8 +483,8 @@ void GradientDescent::update_parameters(
 
     optimization_data.learning_rate = directional_point.first;
 
-//    if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
-//        throw logic_error("Learning rate is zero");
+    if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
+        throw logic_error("Learning rate is zero");
 
     optimization_data.parameters_increment.device(*thread_pool_device)
             = optimization_data.training_direction*optimization_data.learning_rate;
@@ -559,8 +558,6 @@ TrainingResults GradientDescent::perform_training()
 
     // Loss index
 
-    type old_selection_error = 0;
-
     type training_loss_decrease = -numeric_limits<type>::max();
 
     type gradient_norm = 0;
@@ -599,10 +596,6 @@ TrainingResults GradientDescent::perform_training()
         results.selection_error_history(0) = selection_back_propagation.error;
     }
 
-    cout << training_back_propagation.error << endl;
-    cout << selection_back_propagation.error << endl;
-    system("pause");
-
     // Main loop
 
     time_t beginning_time, current_time;
@@ -625,20 +618,17 @@ TrainingResults GradientDescent::perform_training()
         {
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
+            loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            if(epoch == 1)
-            {
-                results.optimum_selection_error = selection_back_propagation.error;
-            }
-            else if(selection_back_propagation.error > old_selection_error)
-            {
-                selection_error_increases++;
-            }
-            else if(selection_back_propagation.error <= results.optimum_selection_error)
+            if(selection_back_propagation.error <= results.optimum_selection_error)
             {
                 results.optimum_selection_error = selection_back_propagation.error;
                 results.optimal_parameters = training_back_propagation.parameters;
+            }
+            else
+            {
+                selection_error_increases++;
             }
         }
 
@@ -649,6 +639,8 @@ TrainingResults GradientDescent::perform_training()
         if(gradient_norm < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
 
         // Optimization algorithm
+
+        training_forward_propagation.print();system("pause");
 
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
@@ -786,8 +778,6 @@ TrainingResults GradientDescent::perform_training()
         }
 
         // Update stuff
-
-        old_selection_error = selection_back_propagation.error;
 
         if(stop_training) break;
     }

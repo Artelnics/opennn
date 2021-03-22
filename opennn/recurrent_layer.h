@@ -269,6 +269,11 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
         activations_derivatives.resize(batch_samples_number, neurons_number);
     }
 
+    void print() const
+    {
+
+    }
+
     Tensor<type, 1> previous_activations;
 
     Tensor<type, 1> current_inputs;
@@ -288,7 +293,6 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
 
     explicit RecurrentLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
     {
-
     }
 
     void set(const Index& new_batch_samples_number)
@@ -309,6 +313,13 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
         combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
         combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
     }
+
+
+    void print() const
+    {
+
+    }
+
 
     Tensor<type, 1> current_layer_deltas;
 

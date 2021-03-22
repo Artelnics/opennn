@@ -56,15 +56,13 @@ struct LayerForwardPropagation
 
     virtual void set(const Index&) {}
 
-    void print() const
-    {
-
-    }
+    virtual void print() const = 0;
 
     Index batch_samples_number = 0;
 
     Layer* layer_pointer = nullptr;
 };
+
 
 struct LayerBackPropagation
 {
