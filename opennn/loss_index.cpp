@@ -487,6 +487,8 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     calculate_error_gradient(batch, forward_propagation, back_propagation);
 
+    cout << "error gradient" << endl;
+
     // Loss
 
     back_propagation.loss = back_propagation.error;

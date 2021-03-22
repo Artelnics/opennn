@@ -402,12 +402,12 @@ public:
                                LayerBackPropagation*) const;
 
 
-   void calculate_hidden_delta_perceptron(LongShortTermMemoryLayerForwardPropagation*,
+   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,
                                           LongShortTermMemoryLayerBackPropagation*) const;
 
 
-   void calculate_hidden_delta_probabilistic(LongShortTermMemoryLayerForwardPropagation*,
+   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
                                              ProbabilisticLayerBackPropagation*,
                                              LongShortTermMemoryLayerBackPropagation*) const;
 
