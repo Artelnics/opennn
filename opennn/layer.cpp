@@ -34,9 +34,6 @@ string Layer::get_type_string() const
 {
     switch(layer_type)
     {
-    case PrincipalComponents:
-        return "PrincipalComponents";
-
     case Convolutional:
         return "Convolutional";
 

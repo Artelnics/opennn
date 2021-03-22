@@ -179,22 +179,6 @@ bool NeuralNetwork::has_scaling_layer() const
 }
 
 
-/// Returns true if the neural network object has a principal components layer object inside,
-/// and false otherwise.
-
-bool NeuralNetwork::has_principal_components_layer() const
-{
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers_pointers[i]->get_type() == Layer::PrincipalComponents) return true;
-    }
-
-    return false;
-}
-
-
 /// Returns true if the neural network object has a long short term memory layer object inside,
 /// and false otherwise.
 
@@ -519,31 +503,6 @@ ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer_pointer() const
 
     throw logic_error(buffer.str());
 }
-
-
-/// Returns a pointer to the main components of the layers object composing this neural network object.
-
-PrincipalComponentsLayer* NeuralNetwork::get_principal_components_layer_pointer() const
-{
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        if(layers_pointers[i]->get_type() == Layer::PrincipalComponents)
-        {
-            return dynamic_cast<PrincipalComponentsLayer*>(layers_pointers[i]);
-        }
-    }
-
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-           << "PrincipalComponentsLayer* get_principal_components_layer_pointer() const method.\n"
-           << "No principal components layer in neural network.\n";
-
-    throw logic_error(buffer.str());
-}
-
 
 /// Returns a pointer to the long short term memory layer of this neural network, if exits.
 
@@ -999,7 +958,6 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_synaptic_weight_numbers() c
 /// The elements of this vector are as follows;
 /// <UL>
 /// <LI> Number of scaling neurons(if there is a scaling layer).</LI>
-/// <LI> Number of principal components neurons(if there is a principal components layer).</LI>
 /// <LI> Multilayer perceptron architecture(if there is a neural network).</LI>
 /// <LI> Number of conditions neurons(if there is a conditions layer).</LI>
 /// <LI> Number of unscaling neurons(if there is an unscaling layer).</LI>
@@ -2248,27 +2206,6 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(bounding_layer);
-        }
-        else if(layers_types(i) == "PrincipalComponents")
-        {
-            PrincipalComponentsLayer* principal_components_layer = new PrincipalComponentsLayer();
-
-            const tinyxml2::XMLElement* principal_components_element = start_element->NextSiblingElement("PrincipalComponentsLayer");
-            start_element = principal_components_element;
-
-            if(principal_components_element)
-            {
-                tinyxml2::XMLDocument principal_components_document;
-                tinyxml2::XMLNode* element_clone;
-
-                element_clone = principal_components_element->DeepClone(&principal_components_document);
-
-                principal_components_document.InsertFirstChild(element_clone);
-
-                principal_components_layer->from_XML(principal_components_document);
-            }
-
-            add_layer(principal_components_layer);
         }
     }
 }
