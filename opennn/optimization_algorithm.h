@@ -168,7 +168,6 @@ protected:
        tensor.device(*thread_pool_device) = tensor/norm;
    }
 
-
    type l2_norm(const Tensor<type, 1>& tensor) const
    {
        Tensor<type, 0> norm;

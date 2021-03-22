@@ -79,7 +79,7 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 
         training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
