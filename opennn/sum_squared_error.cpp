@@ -43,6 +43,8 @@ void SumSquaredError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
                      LossIndexBackPropagation& back_propagation) const
 {
+    calculate_errors(batch, forward_propagation, back_propagation);
+
     Tensor<type, 0> sum_squared_error;
 
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);

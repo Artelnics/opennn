@@ -40,4 +40,3 @@ namespace OpenNN
     typedef float type;
 }
 
-//#define align 64;
