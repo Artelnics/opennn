@@ -244,8 +244,6 @@ protected:
 
 struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {
-    const Index neurons_number = layer_pointer->get_neurons_number();
-
     explicit RecurrentLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
     {
     }

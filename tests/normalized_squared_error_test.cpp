@@ -482,11 +482,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        neural_network.forward_propagate(batch, forward_propagation);
 
-       cout << "Forward propagate" << endl;
-
        nse.back_propagate(batch, forward_propagation, back_propagation);
-
-       cout << "Back propagate" << endl;
 
        error_gradient = back_propagation.gradient;
 
@@ -499,164 +495,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
    }
 
    neural_network.set();
-
-   // Test LSTM and binary probabilistic
-   {
-       samples_number = 4;
-       inputs_number = 3;
-       hidden_neurons = 4;
-       outputs_number = 1;
-
-       data_set.set(samples_number, inputs_number, outputs_number);
-
-       data_set.set_data_binary_random();
-
-       const Index columns_number = inputs_number+1;
-
-       Tensor<DataSet::Column, 1> columns(columns_number);
-
-       for(Index i = 0; i < columns_number-1; i++)
-       {
-           columns(i).name = "input_" + std::to_string(i+1);
-           columns(i).column_use = DataSet::Input;
-           columns(i).type = DataSet::Numeric;
-       }
-
-       Tensor<DataSet::VariableUse, 1> categories_uses(2);
-       categories_uses.setConstant(DataSet::VariableUse::Target);
-
-       Tensor<string, 1> categories(2);
-       categories(0) = "category_0";
-       categories(1) = "category_1";
-
-       columns(columns_number-1).name = "target";
-       columns(columns_number-1).column_use = DataSet::Target;
-       columns(columns_number-1).type = DataSet::Binary;
-       columns(columns_number-1).categories = categories;
-       columns(columns_number-1).categories_uses = categories_uses;
-
-       data_set.set_columns(columns);
-
-       data_set.set_training();
-
-       DataSetBatch batch(samples_number, &data_set);
-
-       Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
-       const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
-       const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
-
-       batch.fill(samples_indices, input_indices, target_indices);
-
-       long_short_term_memory_layer->set(inputs_number, hidden_neurons);
-       probabilistic_layer->set(hidden_neurons, outputs_number);
-
-       neural_network.add_layer(recurrent_layer);
-       neural_network.add_layer(probabilistic_layer);
-
-       neural_network.set_parameters_random();
-
-       nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-       nse.set_normalization_coefficient();
-
-       recurrent_layer->set_timesteps(2);
-
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-
-       LossIndexBackPropagation back_propagation(samples_number, &nse);
-
-       neural_network.forward_propagate(batch, forward_propagation);
-
-       nse.back_propagate(batch, forward_propagation, back_propagation);
-
-       error_gradient = back_propagation.gradient;
-
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
-
-       const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
-
-       assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
-   }
-
-   neural_network.set();
-
-   // Test LSTM and multiple probabilistic
-   {
-       samples_number = 3;
-       inputs_number = 3;
-       hidden_neurons = 2;
-       outputs_number = 3;
-
-       data_set.set(samples_number, inputs_number, outputs_number);
-
-       data_set.set_data_binary_random();
-
-       const Index columns_number = inputs_number+1;
-
-       Tensor<DataSet::Column, 1> columns(columns_number);
-
-       for(Index i = 0; i < columns_number-1; i++)
-       {
-           columns(i).name = "input_" + std::to_string(i+1);
-           columns(i).column_use = DataSet::Input;
-           columns(i).type = DataSet::Numeric;
-       }
-
-       Tensor<DataSet::VariableUse, 1> categories_uses(outputs_number);
-       categories_uses.setConstant(DataSet::VariableUse::Target);
-
-       Tensor<string, 1> categories(outputs_number);
-
-       for(Index i = 0; i < outputs_number; i++) categories(i) = "category_" + std::to_string(i+1);
-
-       columns(columns_number-1).name = "target";
-       columns(columns_number-1).column_use = DataSet::Target;
-       columns(columns_number-1).type = DataSet::Categorical;
-       columns(columns_number-1).categories = categories;
-       columns(columns_number-1).categories_uses = categories_uses;
-
-       data_set.set_columns(columns);
-
-       data_set.set_training();
-
-       DataSetBatch batch(samples_number, &data_set);
-
-       Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
-       const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
-       const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
-
-       batch.fill(samples_indices, input_indices, target_indices);
-
-       long_short_term_memory_layer->set(inputs_number, hidden_neurons);
-       probabilistic_layer->set(hidden_neurons, outputs_number);
-
-       neural_network.add_layer(recurrent_layer);
-       neural_network.add_layer(probabilistic_layer);
-
-       neural_network.set_parameters_random();
-
-       nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-       nse.set_normalization_coefficient();
-
-       recurrent_layer->set_timesteps(2);
-
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-
-       LossIndexBackPropagation back_propagation(samples_number, &nse);
-
-       neural_network.forward_propagate(batch, forward_propagation);
-
-       nse.back_propagate(batch, forward_propagation, back_propagation);
-
-       error_gradient = back_propagation.gradient;
-
-       numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
-
-       const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
-
-       assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
-   }
 
    // Test recurrent
    {
@@ -902,8 +740,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        DataSetBatch batch(samples_number, &data_set);
        batch.fill(samples_indices, input_indices, target_indices);
-
-       cout << "Inputs4d: " << batch.inputs_4d << endl;
 
        Tensor<Index, 1> kernels_dimensions(4);
        kernels_dimensions(0) = kernels_number;
