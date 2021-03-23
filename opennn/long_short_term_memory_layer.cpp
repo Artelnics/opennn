@@ -3475,25 +3475,30 @@ void LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tens
                    forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
                    static_cast<size_t>(neurons_number)*sizeof(type));
 
-            back_propagation->forget_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B);
+            back_propagation->forget_combinations_biases_derivatives
+                    = back_propagation->hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B);
 
-            back_propagation->input_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(input_recurrent_weights, A_B);
+            back_propagation->input_combinations_biases_derivatives
+                    = back_propagation->hidden_states_biases_derivatives.contract(input_recurrent_weights, A_B);
 
             multiply_rows(back_propagation->input_combinations_biases_derivatives,
                           forward_propagation->current_input_activations_derivatives);
 
-            back_propagation->state_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(state_recurrent_weights, A_B);
+            back_propagation->state_combinations_biases_derivatives
+                    = back_propagation->hidden_states_biases_derivatives.contract(state_recurrent_weights, A_B);
 
             multiply_rows(back_propagation->state_combinations_biases_derivatives,
                           forward_propagation->current_state_activations_derivatives);
 
-            back_propagation->output_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(output_recurrent_weights, A_B);
+            back_propagation->output_combinations_biases_derivatives
+                    = back_propagation->hidden_states_biases_derivatives.contract(output_recurrent_weights, A_B);
 
             multiply_rows(back_propagation->output_combinations_biases_derivatives,
                           forward_propagation->current_output_activations_derivatives);
         }
 
-        for(Index row = 0; row < parameters_number; row++) back_propagation->forget_combinations_biases_derivatives(row, row) += static_cast<type>(1.0);
+        for(Index row = 0; row < parameters_number; row++) back_propagation->forget_combinations_biases_derivatives(row, row)
+                += static_cast<type>(1.0);
 
         multiply_rows(back_propagation->cell_state_biases_derivatives,
                       forward_propagation->current_forget_activations);
@@ -3612,25 +3617,30 @@ void LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tenso
                    forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
                    static_cast<size_t>(neurons_number)*sizeof(type));
 
-            back_propagation->forget_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B);
+            back_propagation->forget_combinations_biases_derivatives
+                    = back_propagation->hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B);
 
             multiply_rows(back_propagation->forget_combinations_biases_derivatives,
                           forward_propagation->current_forget_activations_derivatives);
 
-            back_propagation->input_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(input_recurrent_weights, A_B);
+            back_propagation->input_combinations_biases_derivatives
+                    = back_propagation->hidden_states_biases_derivatives.contract(input_recurrent_weights, A_B);
 
-            back_propagation->state_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(state_recurrent_weights, A_B);
+            back_propagation->state_combinations_biases_derivatives
+                    = back_propagation->hidden_states_biases_derivatives.contract(state_recurrent_weights, A_B);
 
             multiply_rows(back_propagation->state_combinations_biases_derivatives,
                           forward_propagation->current_state_activations_derivatives);
 
-            back_propagation->output_combinations_biases_derivatives = back_propagation->hidden_states_biases_derivatives.contract(output_recurrent_weights, A_B);
+            back_propagation->output_combinations_biases_derivatives
+                    = back_propagation->hidden_states_biases_derivatives.contract(output_recurrent_weights, A_B);
 
             multiply_rows(back_propagation->output_combinations_biases_derivatives,
                           forward_propagation->current_output_activations_derivatives);
         }
 
-        for(Index row = 0; row < parameters_number; row++) back_propagation->input_combinations_biases_derivatives(row, row) += static_cast<type>(1.0);
+        for(Index row = 0; row < parameters_number; row++)
+            back_propagation->input_combinations_biases_derivatives(row, row) += static_cast<type>(1.0);
 
         multiply_rows(back_propagation->cell_state_biases_derivatives,
                       forward_propagation->current_forget_activations);

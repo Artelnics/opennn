@@ -422,6 +422,8 @@ void PerceptronLayerTest::test_get_parameters()
    cout << "test_get_parameters\n";
 
    PerceptronLayer perceptron_layer;
+
+   Tensor<type, 2> biases_2;
    Tensor<type, 2> synaptic_weights;
    Tensor<type, 1> parameters;
 
@@ -433,7 +435,7 @@ void PerceptronLayerTest::test_get_parameters()
 
    assert_true(parameters.size() == 2, LOG);
    assert_true(abs(parameters(0) - 2) < numeric_limits<type>::min(), LOG);
-
+/*
    // Test 1
    PerceptronLayer perceptron_layer_2;
 
@@ -498,6 +500,7 @@ void PerceptronLayerTest::test_get_parameters()
    Tensor<type, 2> combinations(1, 1);
 
    perceptron_layer_3.calculate_combinations(inputs, biases_3, synaptic_weights_3, combinations);
+*/
 }
 
 
@@ -841,30 +844,29 @@ void PerceptronLayerTest::test_set_parameters_constant()
    cout << "test_set_parameters_constant\n";
 
    PerceptronLayer perceptron_layer;
+   Tensor<type, 1> parameters;
 
    // Test 0
 
-   Tensor<type, 1> parameters;
-
-   perceptron_layer.set(2,1);
+   perceptron_layer.set(2, 1);
    perceptron_layer.set_parameters_constant(0);
 
    parameters = perceptron_layer.get_parameters();
 
    assert_true(static_cast<Index>(parameters(0)) == 0, LOG);
-   assert_true(static_cast<Index>(parameters(3)) == 0, LOG);
+   assert_true(static_cast<Index>(parameters(2)) == 0, LOG);
 
    // Test 1
-   Tensor<type, 1> parameters_1;
 
    perceptron_layer.set(1, 1);
    perceptron_layer.set_parameters_constant(5);
 
-   parameters_1 = perceptron_layer.get_parameters();
+   parameters = perceptron_layer.get_parameters();
 
-   assert_true(static_cast<Index>(parameters_1(0)) == 5, LOG);
-   assert_true(static_cast<Index>(parameters_1(1)) == 5, LOG);
+   assert_true(static_cast<Index>(parameters(0)) == 5, LOG);
+   assert_true(static_cast<Index>(parameters(1)) == 5, LOG);
 }
+
 
 void PerceptronLayerTest::test_set_synaptic_weights_constant()
 {
@@ -908,6 +910,11 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 
    PerceptronLayer perceptron_layer(1,1);
 
+   Index inputs_number;
+   Index neurons_number;
+
+   Index parameters_number;
+
    Tensor<type, 2> biases(1,1);
    Tensor<type, 2> synaptic_weights(1,1);
    Tensor<type, 1> parameters(1);
@@ -915,6 +922,8 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
    Tensor<type, 2> inputs(1,1);
    Tensor<type, 2> combinations(1,1);
 
+   // Test
+/*
    perceptron_layer.set_parameters_constant(0.0);
 
    inputs.resize(1,1);
@@ -928,7 +937,7 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 
    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
 
-   // Test 0
+   // Test
 
    biases.setConstant(1.0);
    synaptic_weights.setConstant(2.0);
@@ -966,9 +975,9 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
    combinations.resize(2, 4);
    combinations.setZero();
 
-   perceptron_layer.set(3,4);
+   perceptron_layer.set(3, 4);
 
-   synaptic_weights.resize(3,4);
+   synaptic_weights.resize(3, 4);
    synaptic_weights.setConstant(1.0);
    biases.resize(1,4);
    biases.setConstant(2.0);
@@ -1013,11 +1022,6 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 
    // Test 4
 
-   // Test get/set bias/synaptic weights
-
-   Index input_number = 3;
-   Index neuron_number = 1;
-
    Tensor<type, 2> synaptic_weights_1(1, 3);
    synaptic_weights_1.setValues({{1.0, -0.75, 0.25}});
 
@@ -1025,7 +1029,7 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
 
    inputs.setValues({{-0.8, 0.2, -0.4}});
 
-   PerceptronLayer perceptron_layer_2(input_number, neuron_number, PerceptronLayer::HyperbolicTangent);
+   PerceptronLayer perceptron_layer_2(1, 1, PerceptronLayer::HyperbolicTangent);
 
    perceptron_layer_2.set_biases(biases);
    perceptron_layer_2.set_synaptic_weights(synaptic_weights_1);
@@ -1038,8 +1042,9 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
    assert_true(new_synaptic_weights(1, 0) == -0.75, LOG);
    assert_true(new_synaptic_weights(2, 0) == 0.25, LOG);
 
-   // Test parameters
-   Index parameters_number = perceptron_layer_2.get_parameters_number();
+   // Test
+
+   parameters_number = perceptron_layer_2.get_parameters_number();
 
    assert_true(parameters_number == 4, LOG);
 
@@ -1058,7 +1063,7 @@ void PerceptronLayerTest::test_calculate_combinations() // @todo
     assert_true(combinations.dimension(1) == 1, LOG);
 
     assert_true(static_cast<type>(combinations(0,0)) - static_cast<type>(-1.55) < static_cast<type>(1e-5), LOG);
-
+*/
 }
 
 
@@ -1609,32 +1614,27 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
 {
     cout << "test_calculate_hidden_delta\n";
 
-    PerceptronLayer perceptron_layer_0(2, 2, PerceptronLayer::Linear);
-    PerceptronLayer perceptron_layer_1(2, 2, PerceptronLayer::Linear);
+    PerceptronLayer perceptron_layer;
 
-    Tensor<type,2> output_delta(1,2);
-    Tensor<type,2> hidden_delta(1,2);
+    Tensor<type, 1> parameters;
+    Tensor<type, 2> inputs;
 
-    Tensor<type, 1> parameters(6);
-    Tensor<type, 2> inputs_0(1,2);
-    Tensor<type, 2> inputs_1(1,2);
+    Tensor<type,2> output_delta;
+    Tensor<type,2> hidden_delta;
+/*
+//    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation;
 
     // Test 1
 
-    perceptron_layer_0.set_parameters_constant(1);
-    inputs_0.setConstant(1);
+    perceptron_layer.set_parameters_constant(1);
+    inputs.setConstant(1);
 
-    perceptron_layer_1.set_parameters_constant(1);
-    inputs_1.setValues({{3,3}});
+//    perceptron_layer_1.set_parameters_constant(1);
+//    inputs_1.setValues({{3,3}});
 
-    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation_0(&perceptron_layer_0);
-    perceptron_layer_forward_propagation_0.set(0);
+//    perceptron_layer_forward_propagation.set(0);
 
-    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation_1(&perceptron_layer_1);
-    perceptron_layer_forward_propagation_1.set(0);
-
-    perceptron_layer_0.forward_propagate(inputs_0, &perceptron_layer_forward_propagation_0);
-    perceptron_layer_1.forward_propagate(inputs_1, &perceptron_layer_forward_propagation_1);
+//    perceptron_layer_0.forward_propagate(inputs_0, &perceptron_layer_forward_propagation_0);
 
     output_delta.setValues({{1,3}});
 
@@ -1648,14 +1648,12 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
 
     // Test 2
 
-    PerceptronLayer perceptron_layer_2_0(2, 2, PerceptronLayer::Linear);
-    PerceptronLayer perceptron_layer_2_1(2, 2, PerceptronLayer::Logistic);
 
-    perceptron_layer_2_0.set_parameters_constant(1);
-    inputs_0.setConstant(1);
+//    perceptron_layer_2_0.set_parameters_constant(1);
+//    inputs_0.setConstant(1);
 
-    perceptron_layer_2_1.set_parameters_constant(1);
-    inputs_1.setValues({{3,3}});
+//    perceptron_layer_2_1.set_parameters_constant(1);
+//    inputs_1.setValues({{3,3}});
 
 //    LayerForwardPropagation forward_propagation_2_0(1, &perceptron_layer_2_0);
 //    LayerForwardPropagation forward_propagation_2_1(1, &perceptron_layer_2_1);
@@ -1672,7 +1670,7 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
     assert_true(hidden_delta.dimension(1) == 2, LOG);
 //    assert_true(abs(hidden_delta(0,0) - static_cast<type>(0.0036)) < static_cast<type>(1e-3), LOG);
 //    assert_true(abs(hidden_delta(0,1) - static_cast<type>(0.0036)) < static_cast<type>(1e-3), LOG);
-
+*/
 }
 
 
@@ -1682,13 +1680,13 @@ void PerceptronLayerTest::test_calculate_error_gradient()
 {
     cout << "test_calculate_error_gradient\n";
 
-    PerceptronLayer perceptron_layer(2, 2, PerceptronLayer::Linear);
+    PerceptronLayer perceptron_layer;
 
-    Tensor<type, 1> parameters(6);
-    Tensor<type, 2> inputs(1,2);
+    Tensor<type, 1> parameters;
+    Tensor<type, 2> inputs;
 
-    Tensor<type, 2> output_delta(1,2);
-
+    Tensor<type, 2> output_delta;
+/*
     // Test 1
 
     parameters.setConstant(1);
@@ -1721,7 +1719,9 @@ void PerceptronLayerTest::test_calculate_error_gradient()
     assert_true(abs(back_propagation.synaptic_weights_derivatives(0,1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(back_propagation.synaptic_weights_derivatives(1,0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(back_propagation.synaptic_weights_derivatives(1,1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
+*/
 }
+
 
 void PerceptronLayerTest::test_write_expression()
 {

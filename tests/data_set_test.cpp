@@ -1440,7 +1440,7 @@ void DataSetTest::test_read_csv()
    assert_true((data(2,4) - 0) < 1.0e-4, LOG);
    assert_true((data(2,5) - 1) < 1.0e-4, LOG);
    assert_true((data(2,6) - 0) < 1.0e-4, LOG);
-   assert_true((data(3,4) - 0) < 1.0e-4, LOG);
+   assert_true((data(3, 4) - 0) < 1.0e-4, LOG);
    assert_true((data(3,5) - 0) < 1.0e-4, LOG);
    assert_true((data(3,6) - 1) < 1.0e-4, LOG);
 

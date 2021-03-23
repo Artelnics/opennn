@@ -144,12 +144,10 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
    Index hidden_neurons;
    Index outputs_number;
 
-
-   PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer();
-   PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
-   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
-
+   PerceptronLayer hidden_perceptron_layer;
+   PerceptronLayer output_perceptron_layer;
+   ProbabilisticLayer probabilistic_layer;
+   LongShortTermMemoryLayer long_short_term_memory_layer;
 
    // Test trivial
 
@@ -163,15 +161,15 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
       data_set.set_training();
 
       DataSetBatch batch(samples_number, &data_set);
-
+/*
       Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
       const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
       const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
 
       batch.fill(samples_indices, input_indices, target_indices);
 
-      hidden_perceptron_layer->set(inputs_number, outputs_number);
-      neural_network.add_layer(hidden_perceptron_layer);
+      hidden_perceptron_layer.set(inputs_number, outputs_number);
+      neural_network.add_layer(&hidden_perceptron_layer);
 
       neural_network.set_parameters_constant(0.0);
 
@@ -264,11 +262,11 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
        batch.fill(samples_indices, input_indices, target_indices);
 
-       long_short_term_memory_layer->set(inputs_number, hidden_neurons);
-       output_perceptron_layer->set(hidden_neurons, outputs_number);
+       long_short_term_memory_layer.set(inputs_number, hidden_neurons);
+       output_perceptron_layer.set(hidden_neurons, outputs_number);
 
-       neural_network.add_layer(long_short_term_memory_layer);
-       neural_network.add_layer(output_perceptron_layer);
+       neural_network.add_layer(&long_short_term_memory_layer);
+       neural_network.add_layer(&output_perceptron_layer);
 
        neural_network.set_parameters_random();
 
@@ -277,7 +275,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 //       error_gradient = mean_squared_error.calculate_error_gradient();
 //       assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
-
+*/
 //   neural_network.set();
 
    // Test recurrent
