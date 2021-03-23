@@ -54,17 +54,6 @@ void ScalingLayerTest::test_destructor()
 }
 
 
-void ScalingLayerTest::test_assignment_operator()
-{
-   cout << "test_assignment_operator\n";
-
-   ScalingLayer sl_1;
-   ScalingLayer sl_2 = sl_1;
-
-   assert_true(sl_2.get_inputs_number() == 0, LOG);
-   assert_true(sl_2.get_neurons_number() == 0, LOG);
-}
-
 void ScalingLayerTest::test_get_inputs_number()
 {
    cout << "test_get_neurons_number\n";
@@ -1091,11 +1080,6 @@ void ScalingLayerTest::run_test_case()
 
    test_constructor();
    test_destructor();
-
-
-   // Assignment operators methods
-
-   test_assignment_operator();
 
 
    // Scaling layer architecture

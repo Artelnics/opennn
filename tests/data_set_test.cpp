@@ -57,28 +57,6 @@ void DataSetTest::test_destructor()
 }
 
 
-void DataSetTest::test_assignment_operator()
-{
-   cout << "test_assignment_operator\n";
-
-   DataSet ds1(1, 1, 1);
-   DataSet ds2 = ds1;
-
-   assert_true(ds2.get_samples_number() == 1, LOG);
-   assert_true(ds2.get_variables_number() == 2, LOG);
-   assert_true(ds2.get_target_variables_number() == 1,LOG);
-   assert_true(ds2.get_input_variables_number() == 1,LOG);
-
-   DataSet ds3;
-   DataSet ds4=ds3;
-
-   assert_true(ds4.get_samples_number() == 0, LOG);
-   assert_true(ds4.get_variables_number() == 0, LOG);
-   assert_true(ds4.get_target_variables_number() == 0,LOG);
-   assert_true(ds4.get_input_variables_number() == 0,LOG);
-}
-
-
 void DataSetTest::test_get_samples_number()
 {
    cout << "test_get_samples_number\n";
@@ -2524,10 +2502,6 @@ void DataSetTest::run_test_case()
 
    test_constructor();
    test_destructor();
-
-    // Assignment operators methods
-
-   test_assignment_operator();
 
    // Get methods
 
