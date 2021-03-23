@@ -157,7 +157,6 @@ SOURCES += \
 #    include(../../Artelnics/opennn_cuda/cuda_path.pri)
 #}
 
-
 #win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../openblas/lib/ -llibopenblas
 #else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../openblas/lib/ -llibopenblasd
 #else:unix: LIBS += -L$$PWD/../../openblas/lib/ -llibopenblas

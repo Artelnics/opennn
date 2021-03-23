@@ -100,6 +100,7 @@ type linear_correlation(const ThreadPoolDevice* thread_pool_device,
 /// Calculates the Rank-Order correlation coefficient (Spearman method) between two vectors.
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with the x vector.
+/// @todo Missing values
 
 type rank_linear_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
@@ -123,24 +124,6 @@ type rank_linear_correlation(const ThreadPoolDevice* thread_pool_device, const T
 
     return linear_correlation(thread_pool_device, ranks_x, ranks_y);
 
-}
-
-
-/// Calculates the Rank-Order correlation coefficient(Spearman method)(R-value) between two vectors.
-/// Takes into account possible missing values.
-/// @param x Vector containing input values.
-/// @param y Vector for computing the linear correlation with the x vector.
-/// @param missing Vector with the missing samples idices.
-
-type rank_linear_correlation_missing_values(const ThreadPoolDevice* thread_pool_device,
-                                            const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
-
-    const Tensor<type, 1> new_x = filter_vectors.first;
-    const Tensor<type, 1> new_y = filter_vectors.second;
-
-    return rank_linear_correlation(thread_pool_device, new_x, new_y);
 }
 
 
