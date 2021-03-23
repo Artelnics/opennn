@@ -29,13 +29,6 @@ void BoundingLayerTest::test_constructor()
 
    assert_true(bounding_layer_1.get_neurons_number() == 0, LOG);
 
-   // Copy constructor
-
-   bounding_layer_1.set(2);
-
-   BoundingLayer bounding_layer2(bounding_layer_1);
-
-   assert_true(bounding_layer2.get_neurons_number() == 2, LOG);
 }
 
 

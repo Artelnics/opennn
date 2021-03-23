@@ -206,7 +206,6 @@ void SumSquaredErrorTest::test_calculate_error()
    neural_network.forward_propagate(batch_3, forward_propagation_3);
    sum_squared_error.back_propagate(batch_3, forward_propagation_3, training_back_propagation_3);
 
-   forward_propagation_3.print();
    sum_squared_error.calculate_error(batch_3, forward_propagation_3, training_back_propagation_3);
 
    assert_true(training_back_propagation_3.error - 8.241 < 1e-3, LOG);
@@ -217,6 +216,7 @@ void SumSquaredErrorTest::test_calculate_error()
 void SumSquaredErrorTest::test_calculate_output_delta()
 {
    cout << "test_calculate_output_delta\n";
+
    NeuralNetwork neural_network;
 
    Tensor<type, 1> parameters;

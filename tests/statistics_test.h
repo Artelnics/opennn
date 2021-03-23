@@ -31,6 +31,7 @@ public:
    virtual ~StatisticsTest();
 
    // Constructor and destructor methods
+
    void test_constructor();
    void test_destructor();
 
@@ -52,46 +53,35 @@ public:
 
 
    // Mean
-   void test_calculate_mean();
-   void test_calculate_mean_missing_values();
+   void test_mean();
    void test_weighted_mean();
 
    // Mean binary
-   void test_calculate_means_binary_column();
    void test_means_binary_columns();
-   void test_means_binary_columns_missing_values();
 
 
    // Median
-   void test_calculate_median();
-   void test_calculate_median_missing_values();
+   void test_median();
 
    // Variance
-   void test_calculate_variance_missing_values();
    void test_variance();
 
    // Assymetry
    void test_calculate_asymmetry();
-   void test_calculate_asymmetry_missing_values();
 
    // Kurtosis
    void test_calculate_kurtosis();
-   void test_calculate_kurtosis_missing_values();
 
    // Standard deviation
    void test_standard_deviation();
-   void test_standard_deviation_missing_values();
 
    // Quartiles
    void test_quartiles();
-   void test_calculate_quartiles_missing_values();
 
    // Box plot
-   void test_calculate_box_plot();
-   void test_calculate_box_plot_missing_values();
+   void test_box_plot();
 
    // Descriptives struct
-   void test_descriptives_missing_values();
 
    // Histogram
    void test_get_bins_number();
@@ -103,11 +93,9 @@ public:
    void test_calculate_maximal_centers();
    void test_calculate_bin();
    void test_calculate_frequency();
-   void test_calculate_histogram();
+   void test_histogram();
    void test_total_frequencies();
-   void test_calculate_histograms();
-   void test_calculate_histogram_missing_values();
-   void test_histograms_missing_values();
+   void test_histograms();
 
    // Minimal indices
    void test_calculate_minimal_index();
@@ -118,15 +106,13 @@ public:
    void test_calculate_maximal_indices();
 
    // Normality
-   void test_calculate_l2_norm();
+   void test_l2_norm();
 
    // Percentiles
    void test_percentiles();
-   void test_percentiles_missing_values();
 
    // Means by categories
    void test_means_by_categories();
-   void test_means_by_categories_missing_values();
 
 
    // Unit testing methods

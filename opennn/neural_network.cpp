@@ -132,8 +132,8 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void add_layer(const Layer*) method.\n"
-               << "Layer type (" << layer_pointer->get_type_string() << ") cannot be added in position " << layers_pointers.size()
-               << " to the neural network architecture.\n";
+               << "Layer type " << layer_pointer->get_type_string() << " cannot be added in position " << layers_pointers.size()
+               << " in the neural network architecture.\n";
 
         throw logic_error(buffer.str());
     }
@@ -193,6 +193,7 @@ bool NeuralNetwork::has_long_short_term_memory_layer() const
 
     return false;
 }
+
 
 /// Returns true if the neural network object has a convolutional object inside,
 /// and false otherwise.

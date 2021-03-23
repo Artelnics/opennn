@@ -80,7 +80,6 @@ int main(void)
         system("pause");
 
         return 0;
-
     }
     catch(exception& e)
     {

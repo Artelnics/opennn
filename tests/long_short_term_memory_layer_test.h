@@ -34,10 +34,6 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Assignment operators methods
-
-   void  test_assignment_operator();
-
    // Inputs and perceptrons
 
    void test_is_empty();

@@ -66,19 +66,11 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
         training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
-        QuasiNewtonMethod* qn = training_strategy.get_quasi_Newton_method_pointer();
 
-        qn->set_maximum_epochs_number(100000);
-        qn->set_display_period(1000);
+        QuasiNewtonMethod* quasi_newton_method = training_strategy.get_quasi_Newton_method_pointer();
 
-//        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
-//        training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
-
-
-
-//        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
-//        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
-//        quasi_Newton_method_pointer->set_loss_goal(1.0e-3);
+        quasi_newton_method->set_maximum_epochs_number(100000);
+        quasi_newton_method->set_display_period(1000);
 
         const TrainingResults training_results = training_strategy.perform_training();
 

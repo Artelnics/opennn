@@ -1000,7 +1000,7 @@ void LongShortTermMemoryLayer::initialize_state_weights(const type& value)
 /// Initializes the output weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Output weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_output_weights(const type & value)
+void LongShortTermMemoryLayer::initialize_output_weights(const type&  value)
 {
     output_weights.setConstant(value);
 }
@@ -1048,7 +1048,7 @@ void LongShortTermMemoryLayer::initialize_state_recurrent_weights(const type& va
 /// Initializes the output recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Output recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_output_recurrent_weights(const type & value)
+void LongShortTermMemoryLayer::initialize_output_recurrent_weights(const type&  value)
 {
     output_recurrent_weights.setConstant(value);
 }
