@@ -317,15 +317,15 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
-
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+
+     Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
      const Index batch_samples_number = batch.get_samples_number();
      const Index total_samples_number = data_set_pointer->get_samples_number();
 
      const type coefficient
-     = static_cast<type>(2.0)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
+     = static_cast<type>(2)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
 
      switch(output_layer_pointer->get_type())
      {

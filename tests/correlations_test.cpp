@@ -872,7 +872,6 @@ void CorrelationsTest::run_test_case()
 
    test_linear_correlation();
    test_spearman_linear_correlation();
-   test_linear_correlation_missing_values();
    test_rank_linear_correlation();
    test_rank_linear_correlation_missing_values();
 
@@ -901,7 +900,6 @@ void CorrelationsTest::run_test_case()
    // Regression Methods
 
    test_linear_regression();
-   test_linear_regression_missing_values();
    test_exponential_regression();
    test_exponential_correlation_missing_values();
    test_logarithmic_regression();
@@ -936,7 +934,6 @@ void CorrelationsTest::run_test_case()
    test_chi_square_test();
    test_chi_square_critical_point();
    test_karl_pearson_correlation();
-   test_karl_pearson_correlation_missing_values();
 
    cout << "End of correlation analysis test case.\n\n";
 }

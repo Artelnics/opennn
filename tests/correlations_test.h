@@ -34,7 +34,6 @@ public:
 
     void test_linear_correlation();
     void test_spearman_linear_correlation();
-    void test_linear_correlation_missing_values();
     void test_rank_linear_correlation();
     void test_rank_linear_correlation_missing_values();
 
@@ -101,8 +100,6 @@ public:
     void test_chi_square_test();
     void test_chi_square_critical_point();
     void test_karl_pearson_correlation();
-    void test_karl_pearson_correlation_missing_values();
-
 
     // Unit tseting method
 
