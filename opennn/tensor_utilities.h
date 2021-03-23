@@ -20,7 +20,7 @@ using namespace Eigen;
 namespace OpenNN
 {
 
-void aaa()
+inline void aaa()
 {
 
 }

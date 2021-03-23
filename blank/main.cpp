@@ -27,57 +27,58 @@ int main(void)
 {
     try
     {
-        cout << "OpenNN. Rosenbrock Example." << endl;
+        cout << "OpenNN. Blank application." << endl;
+
+        srand(static_cast<unsigned>(time(nullptr)));
 
         // Data Set
 
-        const Index samples = 10;
-        const Index variables = 3;
+        DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
 
-        DataSet data_set;
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
 
-        data_set.generate_Rosenbrock_data(samples, variables+1);
+//        const Tensor<string, 1> scaling_methods = data_set.calculate_default_scaling_methods();
+//        const Tensor<string, 1> unscaling_methods = data_set.calculate_default_unscaling_methods();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables_minimum_maximum();
+        Tensor<string, 1> scaling_methods(input_variables_number);
+        scaling_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables_minimum_maximum();
+        Tensor<string, 1> unscaling_methods(target_variables_number);
+        unscaling_methods.setConstant("MinimumMaximum");
+
+        const Tensor<Descriptives, 1> input_descriptives = data_set.scale_input_variables(scaling_methods);
+
+        const Tensor<Descriptives, 1> target_descriptives = data_set.scale_target_variables(unscaling_methods);
 
         // Neural network
 
-        const Index inputs_number = data_set.get_input_variables_number();
-
-        const Index hidden_neurons_number = variables;
-
-        const Index outputs_number = data_set.get_target_variables_number();
-
         Tensor<Index, 1> architecture(3);
+        architecture(0) = input_variables_number;
+        architecture(1) = 6;
+        architecture(2) = target_variables_number;
 
-        architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
-
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, architecture);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+        scaling_layer_pointer->set_scaling_methods(scaling_methods);
+        scaling_layer_pointer->set_descriptives(input_descriptives);
 
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
+        unscaling_layer_pointer->set_unscaling_methods(unscaling_methods);
+        unscaling_layer_pointer->set_descriptives(target_descriptives);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
+        training_strategy.set_display_period(1);
 
-        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
-        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
-
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(1);
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10);
+//        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
         training_strategy.perform_training();
-
-        cout << "End Rosenbrock" << endl;
-
-        system("pause");
 
         return 0;
 

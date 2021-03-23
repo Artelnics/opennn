@@ -10117,7 +10117,6 @@ void DataSet::read_csv_3_simple()
 
     // Check Constant
 
-
     cout << "Checking constant columns..." << endl;
 
     Index variable_index = 0;
