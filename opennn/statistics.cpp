@@ -269,8 +269,8 @@ Histogram::Histogram(const Tensor<type, 1>& probability_data)
 
     const type step = (data_maximum - data_minimum) / number_of_bins;
 
-
     Tensor<type, 1> new_centers(number_of_bins);
+
     for(size_t i = 0; i < number_of_bins; i++)
     {
         new_centers(i) = data_minimum + (0.5 * step) + (step * i);

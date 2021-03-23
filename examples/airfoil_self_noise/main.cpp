@@ -84,10 +84,6 @@ int main(void)
 
         const TrainingResults training_results = training_strategy.perform_training();
 
-
-        /*
-
-
         data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
         data_set.unscale_target_variables(scaling_target_methods, target_descriptives);
 
@@ -112,8 +108,8 @@ int main(void)
         training_results.save("../data/training_results.dat");
 
         linear_regression_analysis.save("../data/linear_regression_analysis.dat");
-*/
-        cout << "Bye!" << endl;
+
+        cout << "End Airfoil Self-Noise Example" << endl;
 
         return 0;
     }

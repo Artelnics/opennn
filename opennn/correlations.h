@@ -199,7 +199,6 @@ struct CorrelationResults
     // Covariance
 
     type covariance(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type covariance_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     Tensor<type, 2> covariance_matrix(const Tensor<type, 2>&);
 

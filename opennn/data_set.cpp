@@ -523,61 +523,6 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-    /*else if(type == Binary)
-    {
-        if(categories.size() > 0)
-        {
-            // Categories
-
-            file_stream.OpenElement("Categories");
-            file_stream.PushText(categories(0).c_str());
-            file_stream.PushText(";");
-            file_stream.PushText(categories(1).c_str());
-            file_stream.CloseElement();
-
-            // Categories uses
-
-            file_stream.OpenElement("CategoriesUses");
-
-            if(categories_uses(0) == Input)
-            {
-                file_stream.PushText("Input");
-            }
-            else if (categories_uses(0) == Target)
-            {
-                file_stream.PushText("Target");
-            }
-            else if (categories_uses(0) == Time)
-            {
-                file_stream.PushText("Time");
-            }
-            else
-            {
-                file_stream.PushText("Unused");
-            }
-
-            file_stream.PushText(";");
-
-            if(categories_uses(1) == Input)
-            {
-                file_stream.PushText("Input");
-            }
-            else if (categories_uses(1) == Target)
-            {
-                file_stream.PushText("Target");
-            }
-            else if (categories_uses(1) == Time)
-            {
-                file_stream.PushText("Time");
-            }
-            else
-            {
-                file_stream.PushText("Unused");
-            }
-
-            file_stream.CloseElement();
-        }
-    }*/
 }
 
 
@@ -4424,7 +4369,7 @@ void DataSet::set(const Index& new_samples_number,
         }
     }
 
-    input_variables_dimensions.resize(/*new_inputs_number*/1);
+    input_variables_dimensions.resize(1);
 
     samples_uses.resize(new_samples_number);
 
@@ -6102,25 +6047,25 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
             {
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, input_j/*current_input_j*/).correlation;
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, input_j).correlation;
             }
             else if(type_i == Numeric && type_j == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, input_i/*current_input_i*/).correlation;
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, input_i).correlation;
             }
             else if(type_i == Categorical && type_j == Binary)
             {
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, input_j/*current_input_j*/).correlation;
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, input_j).correlation;
             }
             else if(type_i == Binary && type_j == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, input_i/*current_input_i*/).correlation;
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, input_i).correlation;
             }
             else
             {

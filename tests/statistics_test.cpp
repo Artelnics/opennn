@@ -35,6 +35,9 @@ void StatisticsTest::test_set_minimum()
    cout << "test_set_minimum\n";
 
    Descriptives descriptives;
+
+   // Test
+
    descriptives.set_minimum(5.0);
 
    assert_true(static_cast<Index>(descriptives.minimum) == 5, LOG);
@@ -46,6 +49,9 @@ void StatisticsTest::test_set_maximum()
    cout << "test_set_maximun\n";
 
    Descriptives descriptives;
+
+   // Test
+
    descriptives.set_maximum(5.0);
 
    assert_true(static_cast<Index>(descriptives.maximum) == 5, LOG);
@@ -57,6 +63,9 @@ void StatisticsTest::test_set_mean()
    cout << "test_set_mean\n";
 
    Descriptives descriptives;
+
+   // Test
+
    descriptives.set_mean(5.0);
 
    assert_true(static_cast<Index>(descriptives.mean) == 5, LOG);
@@ -68,6 +77,9 @@ void StatisticsTest::test_set_standard_deviation()
    cout << "test_set_standard_deviation\n";
 
    Descriptives descriptives;
+
+   // Test
+
    descriptives.set_standard_deviation(3.0);
 
    assert_true(static_cast<Index>(descriptives.standard_deviation) == 3.0, LOG);
@@ -78,8 +90,12 @@ void StatisticsTest::test_has_mean_zero_standard_deviation_one()
 {
     cout << "test_has_mean_zero_standard_deviation_one\n";
 
+    Descriptives descriptives;
+
     // Test 0
-    Descriptives descriptives(-4.0, 5.0, 0.0, 1.0);
+
+//    descriptives.set(-4.0, 5.0, 0.0, 1.0);
+
     assert_true(descriptives.has_mean_zero_standard_deviation_one(), LOG);
 
     // Test 1
@@ -990,38 +1006,44 @@ void StatisticsTest::test_quartiles()
 void StatisticsTest::test_histogram()
 {
    cout << "test_histogram\n";
-/*
+
+   Tensor<type, 1> vector;
+
+   Tensor<type, 1> centers;
+   Tensor<Index, 1> frequencies;
+
    // Test 1
-   Tensor<type, 1> vector(11);
+
+   vector.resize(11);
    vector.setValues({0,1,2,3,4,5,6,7,8,9,10});
 
-   Histogram histogram(vector, 10);
-   assert_true(histogram.get_bins_number() == 10, LOG);
+//   Histogram histogram(vector, 10);
+//   assert_true(histogram.get_bins_number() == 10, LOG);
 
-   Tensor<type, 1> centers = histogram.centers;
-   Tensor<Index, 1> frequencies = histogram.frequencies;
+//   centers = histogram.centers;
+//   frequencies = histogram.frequencies;
 
-   assert_true(abs(centers[0] - static_cast<type>(0.5)) < static_cast<type>(1.0e-3), LOG);
-   assert_true(abs(centers[1] - static_cast<type>(1.5)) < static_cast<type>(1.0e-3), LOG);
-   assert_true(abs(centers[2] - static_cast<type>(2.5)) < static_cast<type>(1.0e-3), LOG);
-   assert_true(abs(centers[3] - static_cast<type>(3.5)) < static_cast<type>(1.0e-3), LOG);
-   assert_true(abs(centers[4] - static_cast<type>(4.5)) < static_cast<type>(1.0e-3), LOG);
-   assert_true(abs(centers[5] - static_cast<type>(5.5)) < static_cast<type>(1.0e-3), LOG);
-   assert_true(abs(centers[6] - static_cast<type>(6.5)) < static_cast<type>(1.0e-3), LOG);
-   assert_true(abs(centers[7] - static_cast<type>(7.5)) < static_cast<type>(1.0e-3), LOG);
-   assert_true(abs(centers[8] - static_cast<type>(8.5)) < static_cast<type>(1.0e-3), LOG);
-   assert_true(abs(centers[9] - static_cast<type>(9.5)) < static_cast<type>(1.0e-3), LOG);
+//   assert_true(abs(centers[0] - static_cast<type>(0.5)) < static_cast<type>(1.0e-3), LOG);
+//   assert_true(abs(centers[1] - static_cast<type>(1.5)) < static_cast<type>(1.0e-3), LOG);
+//   assert_true(abs(centers[2] - static_cast<type>(2.5)) < static_cast<type>(1.0e-3), LOG);
+//   assert_true(abs(centers[3] - static_cast<type>(3.5)) < static_cast<type>(1.0e-3), LOG);
+//   assert_true(abs(centers[4] - static_cast<type>(4.5)) < static_cast<type>(1.0e-3), LOG);
+//   assert_true(abs(centers[5] - static_cast<type>(5.5)) < static_cast<type>(1.0e-3), LOG);
+//   assert_true(abs(centers[6] - static_cast<type>(6.5)) < static_cast<type>(1.0e-3), LOG);
+//   assert_true(abs(centers[7] - static_cast<type>(7.5)) < static_cast<type>(1.0e-3), LOG);
+//   assert_true(abs(centers[8] - static_cast<type>(8.5)) < static_cast<type>(1.0e-3), LOG);
+//   assert_true(abs(centers[9] - static_cast<type>(9.5)) < static_cast<type>(1.0e-3), LOG);
 
-   assert_true(frequencies[0] == 1, LOG);
-   assert_true(frequencies[1] == 1, LOG);
-   assert_true(frequencies[2] == 1, LOG);
-   assert_true(frequencies[3] == 1, LOG);
-   assert_true(frequencies[4] == 1, LOG);
-   assert_true(frequencies[5] == 1, LOG);
-   assert_true(frequencies[6] == 1, LOG);
-   assert_true(frequencies[7] == 1, LOG);
-   assert_true(frequencies[8] == 1, LOG);
-   assert_true(frequencies[9] == 1, LOG);
+//   assert_true(frequencies[0] == 1, LOG);
+//   assert_true(frequencies[1] == 1, LOG);
+//   assert_true(frequencies[2] == 1, LOG);
+//   assert_true(frequencies[3] == 1, LOG);
+//   assert_true(frequencies[4] == 1, LOG);
+//   assert_true(frequencies[5] == 1, LOG);
+//   assert_true(frequencies[6] == 1, LOG);
+//   assert_true(frequencies[7] == 1, LOG);
+//   assert_true(frequencies[8] == 1, LOG);
+//   assert_true(frequencies[9] == 1, LOG);
 
    Tensor<Index, 0> sum_frec_1 = frequencies.sum();
    //assert_true(sum_frec_1(0) == 11, LOG); // <--- failed
@@ -1031,15 +1053,15 @@ void StatisticsTest::test_histogram()
    vector.resize(20);
    vector.setRandom();
 
-   Histogram histogram_2(vector, 10);
+//   Histogram histogram_2(vector, 10);
 
-   Tensor<type, 1> centers_2 = histogram_2.centers;
-   Tensor<Index, 1> frequencies_2 = histogram_2.frequencies;
+//   centers_2 = histogram_2.centers;
+//   frequencies_2 = histogram_2.frequencies;
 
-   Tensor<Index, 0> sum_frec_2;
-   sum_frec_2 = frequencies_2.sum();
+//   Tensor<Index, 0> sum_frec_2;
+//   sum_frec_2 = frequencies_2.sum();
    //assert_true(sum_frec_2(0) == 20, LOG); // <--- failed
-*/
+
 }
 
 
@@ -1417,7 +1439,7 @@ void StatisticsTest::test_means_binary_columns() //<--- EXC(Negative numb)
     assert_true(means(1) - solution_1(1) < static_cast<type>(1.0e-7), LOG);
 
     // Test missing values
-    Tensor<type, 2> matrix_m(3,4);
+    Tensor<type, 2> matrix_m(3, 4);
     matrix_m(0,0) = 1.0;
     matrix_m(0,1) = 0.0;
     matrix_m(0,2) = 7.0;

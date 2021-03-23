@@ -59,7 +59,7 @@ public:
    void test_set();
 
    void test_set_names();
-   void test_set_number();
+   void test_set_inputs_number();
 
    void test_set_pointers();
 

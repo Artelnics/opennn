@@ -21,6 +21,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "tensor_utilities.h"
 #include "layer.h"
 
 #include "probabilistic_layer.h"
