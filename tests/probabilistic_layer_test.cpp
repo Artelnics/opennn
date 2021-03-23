@@ -75,30 +75,6 @@ void ProbabilisticLayerTest::test_destructor()
    cout << "test_destructor\n";
 }
 
-void ProbabilisticLayerTest::test_assignment_operator()
-{
-   cout << "test_assignment_operator\n";
-
-   ProbabilisticLayer probabilistic_layer_l1;
-   ProbabilisticLayer probabilistic_layer_l2;
-   ProbabilisticLayer probabilistic_layer_l3;
-
-   probabilistic_layer_l1.set_neurons_number(2);
-   probabilistic_layer_l2.set_neurons_number(probabilistic_layer_l1.get_neurons_number());
-   probabilistic_layer_l3.set_neurons_number(probabilistic_layer_l2.get_neurons_number());
-
-   assert_true(probabilistic_layer_l2.get_inputs_number() == 0, LOG);
-   assert_true(probabilistic_layer_l2.get_neurons_number() == 2, LOG);
-   assert_true(probabilistic_layer_l2.get_biases_number() == 2, LOG);
-   assert_true(probabilistic_layer_l2.get_synaptic_weights_number() == 0, LOG);
-   assert_true(probabilistic_layer_l2.get_parameters_number() == 2, LOG);
-
-   assert_true(probabilistic_layer_l3.get_inputs_number() == 0, LOG);
-   assert_true(probabilistic_layer_l3.get_neurons_number() == 2, LOG);
-   assert_true(probabilistic_layer_l3.get_biases_number() == 2, LOG);
-   assert_true(probabilistic_layer_l3.get_synaptic_weights_number() == 0, LOG);
-   assert_true(probabilistic_layer_l3.get_parameters_number() == 2, LOG);
-}
 
 void ProbabilisticLayerTest::test_get_inputs_number()
 {
@@ -862,11 +838,6 @@ void ProbabilisticLayerTest::run_test_case()
 
    test_constructor();
    test_destructor();
-
-
-   // Assignment operators methods
-
-   test_assignment_operator();
 
 
    // Get methods

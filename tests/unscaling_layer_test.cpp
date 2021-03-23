@@ -46,16 +46,6 @@ void UnscalingLayerTest::test_destructor()
    cout << "test_destructor\n";
 }
 
-void UnscalingLayerTest::test_assignment_operator()
-{
-   cout << "test_assignment_operator\n";
-
-   UnscalingLayer ul_1;
-   UnscalingLayer ul_2 = ul_1;
-
-   assert_true(ul_2.get_inputs_number() == 0, LOG);
-   assert_true(ul_2.get_neurons_number() == 0, LOG);
-}
 
 void UnscalingLayerTest::test_get_dimensions()
 {
@@ -823,11 +813,6 @@ void UnscalingLayerTest::run_test_case()
 
    test_constructor();
    test_destructor();
-
-
-   // Assignment operators methods
-
-   test_assignment_operator();
 
 
    // Get methods

@@ -35,7 +35,7 @@ public:
 
    // Assignment operators methods
 
-   void test_assignment_operator();
+   
 
    // Get methods
 

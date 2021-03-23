@@ -45,17 +45,6 @@ void BoundingLayerTest::test_destructor()
 }
 
 
-void BoundingLayerTest::test_assignment_operator()
-{
-   cout << "test_assignment_operator\n";
-
-   BoundingLayer bounding_layer_1;
-   BoundingLayer bounding_layer_2 = bounding_layer_1;
-
-   assert_true(bounding_layer_2.get_neurons_number() == 0, LOG);
-}
-
-
 void BoundingLayerTest::test_get_neurons_number()
 {
    cout << "test_get_neurons_number\n";
@@ -210,11 +199,6 @@ void BoundingLayerTest::run_test_case()
 
    test_constructor();
    test_destructor();
-
-
-   // Assignment operators methods
-
-   test_assignment_operator();
 
 
    // Get methods
