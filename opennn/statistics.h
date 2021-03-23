@@ -328,4 +328,4 @@ struct Histogram
      Index count_nan(const Tensor<type,1>&);
 }
 
-#endif // __STATISTICS_H
+#endif // STATISTICS_H
