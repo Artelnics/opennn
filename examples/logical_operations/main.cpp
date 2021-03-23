@@ -112,7 +112,6 @@ int main(void)
         training_strategy.save("../data/training_strategy.xml");
 
         return 0;
-
     }
     catch(exception& e)
     {

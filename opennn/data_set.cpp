@@ -5650,10 +5650,17 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                const CorrelationResults linear_correlation = linear_correlations(thread_pool_device, input_column, target_column);
-                const CorrelationResults exponential_correlation = exponential_correlations(thread_pool_device, input_column, target_column);
-                const CorrelationResults logarithmic_correlation = logarithmic_correlations(thread_pool_device, input_column, target_column);
-                const CorrelationResults power_correlation = power_correlations(thread_pool_device, input_column, target_column);
+                const CorrelationResults linear_correlation
+                        = linear_correlations(thread_pool_device, input_column, target_column);
+
+                const CorrelationResults exponential_correlation
+                        = exponential_correlations(thread_pool_device, input_column, target_column);
+
+                const CorrelationResults logarithmic_correlation
+                        = logarithmic_correlations(thread_pool_device, input_column, target_column);
+
+                const CorrelationResults power_correlation
+                        = power_correlations(thread_pool_device, input_column, target_column);
 
                 CorrelationResults strongest_correlation = linear_correlation;
 

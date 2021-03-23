@@ -64,20 +64,6 @@ void RecurrentLayerTest::test_destructor()
 
 }
 
-void RecurrentLayerTest::test_assignment_operator()
-{
-   cout << "test_assignment_operator\n";
-
-   LongShortTermMemoryLayer long_short_term_memory_layer_1;
-
-   long_short_term_memory_layer_1.set(4,3);
-
-   LongShortTermMemoryLayer long_short_term_memory_layer_2 = long_short_term_memory_layer_1;
-
-   assert_true(long_short_term_memory_layer_1.get_inputs_number() == 4, LOG);
-   assert_true(long_short_term_memory_layer_1.get_neurons_number() == 3, LOG);
-}
-
 
 void RecurrentLayerTest::test_get_inputs_number()
 {
@@ -87,7 +73,6 @@ void RecurrentLayerTest::test_get_inputs_number()
 
    Index inputs_number;
    Index neurons_number;
-
 
    // Test
 
@@ -494,10 +479,6 @@ void RecurrentLayerTest::run_test_case()
    test_constructor();
 
    test_destructor();
-
-   // Assignment operators methods
-
-   test_assignment_operator();
 
    // Inputs and perceptrons
 

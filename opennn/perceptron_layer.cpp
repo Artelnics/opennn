@@ -1239,6 +1239,8 @@ string PerceptronLayer::write_activation_function_expression() const
     case HardSigmoid:
         return "hard_sigmoid";
     }
+
+    return string();
 }
 
 

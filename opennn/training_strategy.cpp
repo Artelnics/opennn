@@ -643,7 +643,7 @@ void TrainingStrategy::set_display(const bool& new_display)
 }
 
 
-void TrainingStrategy::set_loss_goal(const type & new_loss_goal)
+void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 {
     gradient_descent.set_loss_goal(new_loss_goal);
     conjugate_gradient.set_loss_goal(new_loss_goal);
@@ -689,7 +689,7 @@ void TrainingStrategy::set_display_period(const int & display_period)
 }
 
 
-void TrainingStrategy::set_maximum_time(const type & maximum_time)
+void TrainingStrategy::set_maximum_time(const type&  maximum_time)
 {
     gradient_descent.set_maximum_time(maximum_time);
     conjugate_gradient.set_maximum_time(maximum_time);

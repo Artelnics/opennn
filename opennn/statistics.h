@@ -293,10 +293,7 @@ struct Histogram
      type uniform_distribution_distance(const Tensor<type, 1>&);
 
      // Normality
-//     Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>&);
      type normality_parameter(const Tensor<type, 1>&);
-     //bool perform_Lilliefors_normality_test(const Tensor<type, 1>&, const type&);
-     //Tensor<bool, 1> perform_Lilliefors_normality_test(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      // Minimal indices
      Index minimal_index(const Tensor<type, 1>&);

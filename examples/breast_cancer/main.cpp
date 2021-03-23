@@ -50,8 +50,11 @@ int main(void)
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, neural_netowrk_architecture);
 
-        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_activation_function(PerceptronLayer::HyperbolicTangent);
-        dynamic_cast<ProbabilisticLayer*>(neural_network.get_trainable_layers_pointers()(1))->set_activation_function(ProbabilisticLayer::Logistic);
+        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))
+                ->set_activation_function(PerceptronLayer::HyperbolicTangent);
+
+        dynamic_cast<ProbabilisticLayer*>(neural_network.get_trainable_layers_pointers()(1))
+                ->set_activation_function(ProbabilisticLayer::Logistic);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
