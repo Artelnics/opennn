@@ -434,15 +434,15 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
 struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 {
-    const Index neurons_number = layer_pointer->get_neurons_number();
-    const Index inputs_number = layer_pointer->get_inputs_number();
-
     explicit LongShortTermMemoryLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
     {
     }
 
     void set(const Index& new_batch_samples_number)
     {
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
+
         batch_samples_number = new_batch_samples_number;
 
         current_layer_deltas.resize(neurons_number);
@@ -464,29 +464,29 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
         delta.resize(batch_samples_number, neurons_number);
 
-        input_combinations_biases_derivatives(neurons_number, neurons_number);
-        forget_combinations_biases_derivatives(neurons_number, neurons_number);
-        state_combinations_biases_derivatives(neurons_number, neurons_number);
-        output_combinations_biases_derivatives(neurons_number, neurons_number);
+        input_combinations_biases_derivatives.resize(neurons_number, neurons_number);
+        forget_combinations_biases_derivatives.resize(neurons_number, neurons_number);
+        state_combinations_biases_derivatives.resize(neurons_number, neurons_number);
+        output_combinations_biases_derivatives.resize(neurons_number, neurons_number);
 
-        hidden_states_biases_derivatives(neurons_number, neurons_number);
-        cell_state_biases_derivatives(neurons_number, neurons_number);
+        hidden_states_biases_derivatives.resize(neurons_number, neurons_number);
+        cell_state_biases_derivatives.resize(neurons_number, neurons_number);
 
-        input_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
-        forget_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
-        state_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
-        output_combinations_weights_derivatives(inputs_number*neurons_number, neurons_number);
+        input_combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
+        forget_combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
+        state_combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
+        output_combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
 
-        hidden_states_weights_derivatives(inputs_number*neurons_number, neurons_number);
-        cell_state_weights_derivatives(inputs_number*neurons_number, neurons_number);
+        hidden_states_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
+        cell_state_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
 
-        input_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
-        forget_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
-        state_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
-        output_combinations_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+        input_combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
+        forget_combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
+        state_combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
+        output_combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
 
-        hidden_states_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
-        cell_state_recurrent_weights_derivatives(neurons_number*neurons_number, neurons_number);
+        hidden_states_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
+        cell_state_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
     }
 
     void print() const
