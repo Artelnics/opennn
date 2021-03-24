@@ -92,11 +92,11 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     NeuralNetwork nn(NeuralNetwork::Approximation, architecture);
 
-    TrainingStrategy ts(&nn, &data_set);
+    TrainingStrategy training_strategy(&nn, &data_set);
 
-    ts.set_display(false);
+    training_strategy.set_display(false);
 
-    ModelSelection model_selection(&ts);
+    ModelSelection model_selection(&training_strategy);
 
     model_selection.set_display(false);
 

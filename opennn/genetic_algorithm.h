@@ -22,6 +22,7 @@
 // OpenNN includes
 
 #include "training_strategy.h"
+#include "tensor_utilities.h"
 #include "inputs_selection.h"
 #include "config.h"
 
@@ -58,6 +59,7 @@ public:
     const Tensor<bool, 2>& get_population() const;
 
     const Tensor<type, 1>& get_fitness() const;
+    const Tensor<bool, 1>& get_selection() const;
 
     Index get_individuals_number() const;
     Index get_genes_number() const;
@@ -79,10 +81,12 @@ public:
     void set_default();
 
     void set_population(const Tensor<bool, 2>&);
+    void set_individuals_number(const Index&);
 
-    void set_fitness(const Tensor<type, 1>&);
+    void set_training_errors(const Tensor<type, 1>&);
+    void set_selection_errors(const Tensor<type, 1>&);
 
-    void set_population_size(const Index&);
+    void set_fitnesses(const Tensor<type, 1>&);
 
     void set_mutation_rate(const type&);
 
@@ -122,20 +126,6 @@ public:
 
     InputsSelectionResults* perform_inputs_selection();
 
-    // Utilities
-
-    bool is_false(const Tensor<bool, 1>& tensor)
-    {
-        const Index size = tensor.size();
-
-        for(Index i = 0; i < size; i++)
-        {
-            if(tensor(i) == true) return false;
-        }
-
-        return true;
-    }
-
     // Serialization methods
 
     Tensor<string, 2> to_string_matrix() const;
@@ -160,16 +150,16 @@ private:
 
     /// Performance of population.
 
-    Tensor<Tensor<type, 1>, 1> population_parameters;
+    Tensor<Tensor<type, 1>, 1> parameters;
 
-    Tensor<type, 1> population_training_errors;
-    Tensor<type, 1> population_selection_errors;
+    Tensor<type, 1> training_errors;
+    Tensor<type, 1> selection_errorss;
 
     /// Fitness of population.
 
-    Tensor<type, 1> population_fitness;
+    Tensor<type, 1> fitnesses;
 
-    Tensor<bool, 1> population_selection;
+    Tensor<bool, 1> selections;
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.
