@@ -58,7 +58,7 @@ void GrowingInputsTest::test_set_default() // @todo
 void GrowingInputsTest::test_perform_inputs_selection() // @todo
 {
     cout << "test_perform_inputs_selection\n";
-
+/*
     DataSet data_set;
 
     Tensor<type, 2> data;
@@ -132,6 +132,7 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 //    gi1.delete_selection_history();
 //    gi1.delete_parameters_history();
 //    gi1.delete_loss_history();
+*/
 }
 
 // Serialization methods

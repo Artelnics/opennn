@@ -20,6 +20,8 @@ using namespace Eigen;
 namespace OpenNN
 {
 
+void initialize_sequential(Tensor<type, 1>&);
+
 void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 bool is_zero(const Tensor<type, 1>&);

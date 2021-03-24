@@ -263,6 +263,7 @@ public:
    Tensor<VariableUse, 1> get_variables_uses() const;
 
    const Tensor<Index, 1>& get_input_variables_dimensions() const;
+   Index get_input_variables_rank() const;
 
    // Batches get methods
 
@@ -863,7 +864,7 @@ struct DataSetBatch
 
     DataSetBatch() {}
 
-    DataSetBatch(const Index& new_samples_number, DataSet* new_data_set_pointer);
+    DataSetBatch(const Index&, DataSet*);
 
     /// Destructor.
 
@@ -871,9 +872,11 @@ struct DataSetBatch
 
     Index get_samples_number() const;
 
-    void print();
+    void set(const Index&, DataSet*);
 
     void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+
+    void print() const;
 
     Index samples_number = 0;
 

@@ -33,7 +33,7 @@ namespace OpenNN
 {
 
 /// This class is used to store information about the Pooling Layer in Convolutional Neural Network(CNN).
-/// Pooling: is the procees of merging, ie, reducing the size of the data and remove some noise by different processes.
+/// Pooling: is the procross_entropy_errors of merging, ie, reducing the size of the data and remove some noise by different processes.
 
 class PoolingLayer : public Layer
 {
