@@ -20,21 +20,11 @@ using namespace Eigen;
 namespace OpenNN
 {
 
-//void multiply_rows(Tensor<type, 2> & matrix, const Tensor<type, 1> & vector)
-//{
-//    const Index columns_number = matrix.dimension(1);
-//    const Index rows_number = matrix.dimension(0);
+void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 
-//    #pragma omp parallel for
+bool is_zero(const Tensor<type, 1>&);
 
-//    for(Index i = 0; i < rows_number; i++)
-//    {
-//        for(Index j = 0; j < columns_number; j++)
-//        {
-//           matrix(i,j) *= vector(j);
-//        }
-//    }
-//}
+
 
 }
 
