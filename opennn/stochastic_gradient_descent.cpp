@@ -453,9 +453,6 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-    
-
     NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
@@ -499,6 +496,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
     batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
     neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
+    loss_index_pointer->calculate_errors(batch_training, training_forward_propagation, training_back_propagation);
     loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
     results.training_error_history(0) = training_back_propagation.error;
 
@@ -507,6 +505,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
         batch_selection.fill(selection_batches.chip(0,0), input_variables_indices, target_variables_indices);
         neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
+        loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
         loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
         results.selection_error_history(0) = selection_back_propagation.error;
     }
@@ -572,6 +571,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 // Loss
 
+                loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
                 selection_error += selection_back_propagation.error;

@@ -1159,24 +1159,18 @@ type LossIndex::l1_norm(const Tensor<type, 1>& parameters) const
 
 void LossIndex::l1_norm_gradient(const Tensor<type, 1>& parameters, Tensor<type, 1>& gradient) const
 {
-    const Index parameters_number = parameters.size();
-
     gradient.device(*thread_pool_device) = parameters.sign();
 }
 
 
-void LossIndex::l1_norm_hessian(const Tensor<type, 1>& parameters, Tensor<type, 2>& hessian) const
+void LossIndex::l1_norm_hessian(const Tensor<type, 1>& /*parameters*/, Tensor<type, 2>& hessian) const
 {
-    const Index parameters_number = parameters.size();
-
     hessian.device(*thread_pool_device) =  hessian.setZero();  //<---
 }
 
 
 void LossIndex::l2_norm_gradient(const Tensor<type, 1>& parameters, Tensor<type, 1>& gradient) const
 {
-    const Index parameters_number = parameters.size();
-
     const type norm = l2_norm(parameters);
 
     if((norm - static_cast<type>(0)) < std::numeric_limits<type>::min())
@@ -1192,8 +1186,6 @@ void LossIndex::l2_norm_gradient(const Tensor<type, 1>& parameters, Tensor<type,
 
 void LossIndex::l2_norm_hessian(const Tensor<type, 1>& parameters, Tensor<type, 2>& hessian) const
 {
-    const Index parameters_number = parameters.size();
-
     const type norm = l2_norm(parameters);
 
     if((norm - static_cast<type>(0)) < std::numeric_limits<type>::min())

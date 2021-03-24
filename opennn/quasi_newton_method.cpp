@@ -849,6 +849,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             // Loss Index
 
+            loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             if(selection_back_propagation.error > old_selection_error)
