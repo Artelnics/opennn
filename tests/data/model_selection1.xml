@@ -6,7 +6,6 @@
          <MaximumNeurons>10</MaximumNeurons>
          <Step>1</Step>
          <TrialsNumber>3</TrialsNumber>
-         <Tolerance>0</Tolerance>
          <SelectionErrorGoal>0</SelectionErrorGoal>
          <MaximumSelectionFailures>100</MaximumSelectionFailures>
          <MaximumTime>3600</MaximumTime>
@@ -18,7 +17,6 @@
       <InputsSelectionMethod>GROWING_INPUTS</InputsSelectionMethod>
       <GrowingInputs>
          <TrialsNumber>3</TrialsNumber>
-         <Tolerance>0</Tolerance>
          <SelectionErrorGoal>0</SelectionErrorGoal>
          <MaximumSelectionFailures>100</MaximumSelectionFailures>
          <MinimumInputsNumber>1</MinimumInputsNumber>
@@ -32,7 +30,6 @@
       </GrowingInputs>
       <PruningInputs>
          <TrialsNumber>3</TrialsNumber>
-         <Tolerance>0</Tolerance>
          <SelectionErrorGoal>0</SelectionErrorGoal>
          <MaximumSelectionFailures>100</MaximumSelectionFailures>
          <MinimumInputsNumber>1</MinimumInputsNumber>
@@ -45,15 +42,8 @@
          <ReserveSelectionErrorHistory>1</ReserveSelectionErrorHistory>
       </PruningInputs>
       <GeneticAlgorithm>
-         <TrialsNumber>1</TrialsNumber>
-         <Tolerance>0</Tolerance>
          <PopulationSize>10</PopulationSize>
-         <InitializationMethod>Random</InitializationMethod>
-         <FitnessAssignmentMethod>RankBased</FitnessAssignmentMethod>
-         <CrossoverMethod>Uniform</CrossoverMethod>
          <ElitismSize>2</ElitismSize>
-         <CrossoverFirstPoint>0</CrossoverFirstPoint>
-         <CrossoverSecondPoint>0</CrossoverSecondPoint>
          <SelectivePressure>1.5</SelectivePressure>
          <MutationRate>0.5</MutationRate>
          <SelectionErrorGoal>0</SelectionErrorGoal>
@@ -62,7 +52,6 @@
          <ReserveGenerationOptimumLoss>1</ReserveGenerationOptimumLoss>
          <ReserveGenerationMinimumSelection>1</ReserveGenerationMinimumSelection>
          <ReserveGenerationMean>1</ReserveGenerationMean>
-         <ReserveGenerationStandardDeviation>0</ReserveGenerationStandardDeviation>
       </GeneticAlgorithm>
    </InputsSelection>
 </ModelSelection>

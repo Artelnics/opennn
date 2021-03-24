@@ -49,7 +49,7 @@ void CorrelationsTest::test_linear_correlation()
 
     for(Index i = 0; i < size; i++) y[i] = 2*x[i];
 
-    correlation = linear_correlation(thread_pool_device,x,y);
+    correlation = linear_correlation(thread_pool_device, x, y);
 
    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
 
@@ -57,7 +57,7 @@ void CorrelationsTest::test_linear_correlation()
 
     y = -1.0*x;
 
-    correlation = linear_correlation(thread_pool_device,x,y);
+    correlation = linear_correlation(thread_pool_device, x, y);
     assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
     assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 
@@ -79,18 +79,18 @@ void CorrelationsTest::test_spearman_linear_correlation()
 
     for(Index i = 0; i < size; i++) y[i] = 2*x[i];
 
-    correlation = rank_linear_correlation(thread_pool_device,x,y);
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
 
    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
 
     y = -1.0*x;
 
-    assert_true(abs(rank_linear_correlation(thread_pool_device,x,y)) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(rank_linear_correlation(thread_pool_device, x, y)) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
     assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
 
     y.setConstant(static_cast<type>(0.1));
-    correlation = rank_linear_correlation(thread_pool_device,x,y);
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
     assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
     assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
 
@@ -122,93 +122,70 @@ void CorrelationsTest::test_rank_linear_correlation()
 {
     cout << "test_rank_linear_correlation()\n";
 
-    Index size = 10;
-    Tensor<type, 1> x(size);
-    for(Index i = 0; i < size; i++) x(i) = i;
-    Tensor<type, 1> y(size);
+    Index size;
+    Tensor<type, 1> x;
+    Tensor<type, 1> y;
 
     type correlation;
 
-    for(Index i = 0; i < size; i++) y[i] = 2*x[i];
+    // Test
 
-    correlation = rank_linear_correlation(thread_pool_device,x,y);
+    x.resize(10);
+    initialize_sequential(x);
 
-    //@todo(assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
+    y = 2*x;
 
-    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
 
-    y = -1.0*x;
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
 
-    correlation = rank_linear_correlation(thread_pool_device,x,y);
-    //@todo(assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
-    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
-/*
-    Index size = 10;
-
-    Tensor<type, 1> x(size);
-    Tensor<type, 1> y(size);
-    Tensor<Index, 1> z(0);
-
-    for(Index i = 0; i < size; i++) x(i) = i;
-    z.setRandom();
-
-    type correlation;
-
-    y = 2.0*x;
-
-    correlation = rank_linear_correlation_missing_values(thread_pool_device,x,y);
-
-    //@todo(assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
-    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
+    // Test
 
     y = -1.0*x;
 
-    correlation = rank_linear_correlation_missing_values(thread_pool_device, x, y);
-    //@todo(assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
-    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
+
+    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 
     // Test missing values
-    Tensor<type, 1> vector;
-    vector.resize(5);
-    vector[0] = 1;
-    vector[1] = 2;
-    vector[2] = 3;
-    vector[3] = 4;
-    vector[4] = 5;
 
-    Tensor<type, 1> target;
-    target.resize(5);
-    target[0] = 1;
-    target[1] = 2;
-    target[2] = 3;
-    target[3] = static_cast<type>(NAN);
-    target[4] = 5;
+    x.resize(5);
+    x[0] = 1;
+    x[1] = 2;
+    x[2] = 3;
+    x[3] = 4;
+    x[4] = 5;
 
-    type rank_linear_correlation = rank_linear_correlation_missing_values(thread_pool_device, vector, target);
+    y.resize(5);
+    y[0] = 1;
+    y[1] = 2;
+    y[2] = 3;
+    y[3] = static_cast<type>(NAN);
+    y[4] = 5;
 
-    assert_true((rank_linear_correlation - static_cast<type>(1.0)) < static_cast<type>(1.0e-3), LOG );
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
+
+    assert_true(abs(correlation - static_cast<type>(1.0)) < static_cast<type>(1.0e-3), LOG);
 
     // Test with ties
-    Tensor<type, 1> vector_ties;
-    vector_ties.resize(5);
-    vector_ties[0] = 1;
-    vector_ties[1] = 1;
-    vector_ties[2] = 3;
-    vector_ties[3] = static_cast<type>(NAN);
-    vector_ties[4] = 5;
 
-    Tensor<type, 1> target_ties;
-    target_ties.resize(5);
-    target_ties[0] = 1;
-    target_ties[1] = 1;
-    target_ties[2] = 3;
-    target_ties[3] = static_cast<type>(NAN);
-    target_ties[4] = 5;
+    x.resize(5);
+    x[0] = 1;
+    x[1] = 1;
+    x[2] = 3;
+    x[3] = static_cast<type>(NAN);
+    x[4] = 5;
 
-    type rank_linear_correlation_ties = rank_linear_correlation_missing_values(thread_pool_device, vector_ties, target_ties);
+    y.resize(5);
+    y[0] = 1;
+    y[1] = 1;
+    y[2] = 3;
+    y[3] = static_cast<type>(NAN);
+    y[4] = 5;
 
-    //@todo(assert_true(abs(rank_linear_correlation_ties - static_cast<type>(1.0)) < static_cast<type>(1.0e-3), LOG );)
-*/
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
+
+    assert_true(abs(correlation - static_cast<type>(1.0)) < static_cast<type>(1.0e-3), LOG );
 }
 
 
@@ -451,7 +428,7 @@ void CorrelationsTest::test_exponential_correlation()
 
     for(Index i = 0; i < size; i++) y[i] = exp(static_cast<type>(2.5)*x[i] + static_cast<type>(1.4));
 
-//    type correlation = exponential_correlation(thread_pool_device,x,y);
+//    type correlation = exponential_correlation(thread_pool_device, x, y);
     //@todo(assert_true(correlation > static_cast<type>(0.999999), LOG);)
 
     // Test missing values
@@ -640,7 +617,7 @@ void CorrelationsTest::test_logistic_regression() // @todo
         else y[i] = 1;
     }
 
-//    RegressionResults log = logistic_regression(thread_pool_device,x,y);
+//    RegressionResults log = logistic_regression(thread_pool_device, x, y);
 
 //    assert_true(abs(log.correlation - static_cast<type>(0.95)) <= static_cast<type>(0.01), LOG);
 }
