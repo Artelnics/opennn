@@ -103,6 +103,7 @@ HEADERS += \
 SOURCES += \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
+    tensor_utilities.cpp \
     statistics.cpp \
     correlations.cpp \
     tinyxml2.cpp \

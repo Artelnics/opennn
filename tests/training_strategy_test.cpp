@@ -30,9 +30,7 @@ void TrainingStrategyTest::test_constructor()
 
    TrainingStrategy ts1(&neural_network, &data_set);
 
-   // Test
 
-   TrainingStrategy ts2(&neural_network, &data_set);
 }
 
 
@@ -46,6 +44,7 @@ void TrainingStrategyTest::test_destructor()
    TrainingStrategy* ts = new TrainingStrategy(&neural_network, &data_set);
 
    delete ts;
+
 }
 
 

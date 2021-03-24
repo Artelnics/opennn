@@ -1117,7 +1117,7 @@ type LossIndex::calculate_h(const type& x) const
 }
 
 
-Tensor<type, 2> LossIndex::kronecker_product(const Tensor<type, 1> & tensor, const Tensor<type, 1> & other_tensor) const
+Tensor<type, 2> LossIndex::kronecker_product(const Tensor<type, 1>& tensor, const Tensor<type, 1>& other_tensor) const
 {
     const Index size = tensor.size();
 

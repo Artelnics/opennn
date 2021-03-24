@@ -135,7 +135,7 @@ void CrossEntropyErrorTest::test_calculate_error()
 void CrossEntropyErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
-
+/*
    NeuralNetwork neural_network;
 
    DataSet data_set;
@@ -348,7 +348,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
 //   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
-
+*/
 }
 
 
