@@ -360,7 +360,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
 //   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
-*/
+
 }
 
 

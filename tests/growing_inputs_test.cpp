@@ -83,7 +83,7 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 
     neural_network.set(NeuralNetwork::Approximation, architecture);
 
-    TrainingStrategy ts(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     ModelSelection ms(&ts);
 
@@ -113,7 +113,7 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 
     neural_network.set(NeuralNetwork::Approximation, architecture);
 
-    TrainingStrategy ts1(&neural_network, &data_set);
+    TrainingStrategy training_strategy1(&neural_network, &data_set);
 
     ModelSelection ms1(&ts);
 

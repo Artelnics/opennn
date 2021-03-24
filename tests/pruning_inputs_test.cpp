@@ -81,7 +81,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
 //    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-//    TrainingStrategy ts(&neural_network, &data_set);
+//    TrainingStrategy training_strategy(&neural_network, &data_set);
 
 //    PruningInputs pi(&ts);
 

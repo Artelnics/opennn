@@ -47,6 +47,19 @@ bool is_zero(const Tensor<type, 1>& tensor)
 }
 
 
+bool is_false(const Tensor<bool, 1>& tensor)
+{
+    const Index size = tensor.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(tensor(i) == true) return false;
+    }
+
+    return true;
+}
+
+
 }
 
 

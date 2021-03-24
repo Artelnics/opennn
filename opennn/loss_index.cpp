@@ -1163,9 +1163,9 @@ void LossIndex::l1_norm_gradient(const Tensor<type, 1>& parameters, Tensor<type,
 }
 
 
-void LossIndex::l1_norm_hessian(const Tensor<type, 1>& /*parameters*/, Tensor<type, 2>& hessian) const
+void LossIndex::l1_norm_hessian(const Tensor<type, 1>&, Tensor<type, 2>& hessian) const
 {
-    hessian.device(*thread_pool_device) =  hessian.setZero();  //<---
+    hessian.device(*thread_pool_device) = hessian.setZero();
 }
 
 
@@ -1173,7 +1173,7 @@ void LossIndex::l2_norm_gradient(const Tensor<type, 1>& parameters, Tensor<type,
 {
     const type norm = l2_norm(parameters);
 
-    if((norm - static_cast<type>(0)) < std::numeric_limits<type>::min())
+    if(norm - static_cast<type>(0) < std::numeric_limits<type>::min())
     {
         gradient.setZero();
 
@@ -1188,7 +1188,7 @@ void LossIndex::l2_norm_hessian(const Tensor<type, 1>& parameters, Tensor<type, 
 {
     const type norm = l2_norm(parameters);
 
-    if((norm - static_cast<type>(0)) < std::numeric_limits<type>::min())
+    if(norm - static_cast<type>(0) < std::numeric_limits<type>::min())
     {
         hessian.setZero();
 
