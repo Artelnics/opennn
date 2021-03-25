@@ -113,7 +113,7 @@ public:
 
    // Training methods
 
-   void update_parameters(const LossIndexBackPropagation& back_propagation,
+   void update_parameters(LossIndexBackPropagation& back_propagation,
                          StochasticGradientDescentData& optimization_data);
 
    TrainingResults perform_training();
@@ -223,10 +223,6 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
 
         const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-        parameters.resize(parameters_number);
-
-        parameters = neural_network_pointer->get_parameters();
-
         parameters_increment.resize(parameters_number);
         nesterov_increment.resize(parameters_number);
         last_parameters_increment.resize(parameters_number);
@@ -244,7 +240,6 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
 
     Index iteration = 0;
 
-    Tensor<type, 1> parameters;
     Tensor<type, 1> parameters_increment;
     Tensor<type, 1> nesterov_increment;
     Tensor<type, 1> last_parameters_increment;
