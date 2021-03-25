@@ -503,9 +503,7 @@ void GradientDescent::update_parameters(
 
     // Update parameters
 
-    NeuralNetwork* neural_network_pointer = forward_propagation.neural_network_pointer;
-
-    neural_network_pointer->set_parameters(back_propagation.parameters);
+    forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
 }
 
 
@@ -640,7 +638,11 @@ TrainingResults GradientDescent::perform_training()
 
         // Optimization algorithm
 
+        cout << "before parameters" << endl;
+
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+
+        cout << "after parameters" << endl;
 
         // Elapsed time
 

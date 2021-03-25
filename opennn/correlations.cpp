@@ -37,7 +37,7 @@ type linear_correlation(const ThreadPoolDevice* thread_pool_device,
     if(y_size != x_size)
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size must be equal to X size.\n";
 
         throw logic_error(buffer.str());
@@ -111,7 +111,7 @@ type rank_linear_correlation(const ThreadPoolDevice* thread_pool_device, const T
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type rank_linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type rank_linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size must be equal to X size.\n";
 
         throw logic_error(buffer.str());
@@ -141,7 +141,7 @@ type exponential_correlation(const ThreadPoolDevice* thread_pool_device, const T
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
 
         throw logic_error(buffer.str());
@@ -174,7 +174,7 @@ type logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logarithmic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type logarithmic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size must be equal to X size.\n";
 
         throw logic_error(buffer.str());
@@ -220,7 +220,7 @@ type power_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
 
         throw logic_error(buffer.str());
@@ -931,7 +931,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type logistic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
         throw logic_error(buffer.str());
@@ -1216,7 +1216,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
         throw logic_error(buffer.str());
@@ -1372,7 +1372,7 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
     if(y.size() != x.dimension(0))
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
         throw logic_error(buffer.str());
@@ -1601,10 +1601,12 @@ CorrelationResults karl_pearson_correlations(const ThreadPoolDevice*, const Tens
 
     const Tensor<type, 0> contingency_table_sum = contingency_table.cast<type>().sum();
 
-    karl_pearson.correlation = sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
+    karl_pearson.correlation
+            = sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
 
     return karl_pearson;
 }
+
 
 CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
@@ -1615,7 +1617,7 @@ CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type gauss_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type gauss_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
         throw logic_error(buffer.str());

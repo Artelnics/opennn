@@ -266,6 +266,15 @@ struct NeuralNetworkForwardPropagation
 
     NeuralNetworkForwardPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
     {
+        set(new_batch_samples_number, new_neural_network_pointer);
+    }
+
+    /// Destructor.
+
+    virtual ~NeuralNetworkForwardPropagation() {}
+
+    void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+    {
         if (new_batch_samples_number == 0) return;
 
         batch_samples_number = new_batch_samples_number;
@@ -319,11 +328,7 @@ struct NeuralNetworkForwardPropagation
         }
     }
 
-    /// Destructor.
-
-    virtual ~NeuralNetworkForwardPropagation() {}
-
-    void print()
+    void print() const
     {
         const Index layers_number = layers.size();
 

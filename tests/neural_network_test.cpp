@@ -1633,7 +1633,7 @@ void NeuralNetworkTest::test_forward_propagate()
     Index inputs_number = 2;
     Index target_number = 1;
 
-    Tensor<Index, 1>architecture(2);
+    Tensor<Index, 1> architecture(2);
 
     architecture.setValues({inputs_number,target_number});
 

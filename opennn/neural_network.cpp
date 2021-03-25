@@ -2654,7 +2654,7 @@ void NeuralNetwork::save_expression_python(const string& file_name)
 /// @param inputs Inputs to calculate the outputs.
 /// @param file_name Name of data file
 
-void NeuralNetwork::save_outputs(const Tensor<type, 2> & inputs, const string & file_name)
+void NeuralNetwork::save_outputs(const Tensor<type, 2>& inputs, const string & file_name)
 {
     const Tensor<type, 2> outputs = calculate_outputs(inputs);
 

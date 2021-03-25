@@ -148,12 +148,12 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &)
+Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2>&)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_outputs(const Tensor<type, 2> &) method.\n"
+           << "calculate_outputs(const Tensor<type, 2>&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());

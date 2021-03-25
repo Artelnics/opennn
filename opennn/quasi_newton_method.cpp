@@ -493,7 +493,7 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
 }
 
 
-const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & left_matrix, Tensor<type, 1> & right_matrix) const
+const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1>& left_matrix, Tensor<type, 1>& right_matrix) const
 {
     // Transform Tensors into Dense matrix
 
@@ -849,6 +849,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             // Loss Index
 
+            loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             if(selection_back_propagation.error > old_selection_error)

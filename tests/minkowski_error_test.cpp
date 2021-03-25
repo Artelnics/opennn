@@ -100,7 +100,7 @@ void MinkowskiErrorTest::test_calculate_error()
 
    batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
-   Tensor<Index, 1>architecture(2);
+   Tensor<Index, 1> architecture(2);
    architecture.setValues({inputs_number,target_number});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
@@ -141,7 +141,7 @@ void MinkowskiErrorTest::test_calculate_selection_error() // @todo
 void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 {
    cout << "test_calculate_error_gradient\n";
-
+/*
    NeuralNetwork neural_network;
 
    DataSet data_set;
@@ -427,6 +427,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
 //   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
+*/
 }
 
 

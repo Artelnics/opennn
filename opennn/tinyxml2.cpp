@@ -30,13 +30,13 @@
 
 #if defined(_MSC_VER) &&(_MSC_VER >= 1400 ) &&(!defined WINCE)
 // Microsoft Visual Studio, version 2005 and higher. Not WinCE.
-/*int _snprintf_s(
-   char *buffer,
-   int sizeOfBuffer,
-   int count,
-   const char *format [,
-	  argument] ...
-);*/
+//int _snprintf_s(
+//   char *buffer,
+//   int sizeOfBuffer,
+//   int count,
+//   const char *format [,
+//	  argument] ...
+//);
 static inline int TIXML_SNPRINTF(char* buffer, int size, const char* format, ...)
 {
     va_list va;
@@ -1202,7 +1202,7 @@ char* XMLNode::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
     return 0;
 }
 
-/*static*/ void XMLNode::DeleteNode(XMLNode* node )
+void XMLNode::DeleteNode(XMLNode* node )
 {
     if(node == 0 )
     {
@@ -2547,7 +2547,7 @@ void XMLDocument::SetError(XMLError error, int lineNum, const char* format, ...)
 }
 
 
-/*static*/ const char* XMLDocument::ErrorIDToName(XMLError errorID)
+const char* XMLDocument::ErrorIDToName(XMLError errorID)
 {
     TIXMLASSERT(errorID >= 0 && errorID < XML_ERROR_COUNT );
     const char* errorName = _errorNames[errorID];

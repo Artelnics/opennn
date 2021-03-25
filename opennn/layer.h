@@ -200,23 +200,6 @@ public:
 
     virtual string write_expression_python() const {return string();}
 
-    void multiply_rows(Tensor<type, 2> & matrix, const Tensor<type, 1> & vector) const
-    {
-        const Index columns_number = matrix.dimension(1);
-        const Index rows_number = matrix.dimension(0);
-
-        #pragma omp parallel for
-
-        for(Index i = 0; i < rows_number; i++)
-        {
-            for(Index j = 0; j < columns_number; j++)
-            {
-               matrix(i,j) *= vector(j);
-            }
-        }
-    }
-
-
 protected:
 
     NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
