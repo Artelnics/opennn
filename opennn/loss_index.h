@@ -378,6 +378,7 @@ struct LossIndexBackPropagationLM
 
     LossIndexBackPropagationLM(const Index& parameters_number, const Index& samples_number)
     {
+        error = 0;
         loss = 0;
         gradient.resize(parameters_number);
         squared_errors_Jacobian.resize(samples_number, parameters_number);

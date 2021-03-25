@@ -406,7 +406,8 @@ void NormalizedSquaredError::calculate_hessian_approximation(const DataSetBatch&
 
     const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-    loss_index_back_propagation_lm.hessian.device(*thread_pool_device) = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors_Jacobian, AT_B);
+    loss_index_back_propagation_lm.hessian.device(*thread_pool_device) =
+            loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors_Jacobian, AT_B);
 
     loss_index_back_propagation_lm.hessian.device(*thread_pool_device) = coefficient*loss_index_back_propagation_lm.hessian;
 }
