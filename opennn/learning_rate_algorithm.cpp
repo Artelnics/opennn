@@ -368,6 +368,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
+        loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
         const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
@@ -524,6 +525,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
+        loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
         const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
@@ -544,6 +546,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
+        loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
         const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
@@ -561,6 +564,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
+            loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
             loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
             const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
@@ -576,6 +580,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
+        loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
         loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
         const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
@@ -593,6 +598,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
+            loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
             loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation);
 
             const type regularization = loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
@@ -679,7 +685,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 
     const type denominator = (u-a)*(fu-fb) - (u-b)*(fu-fa);
 
-    return u - 0.5*numerator/denominator;
+    return u - static_cast<type>(0.5)*numerator/denominator;
 }
 
 
