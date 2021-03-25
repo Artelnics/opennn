@@ -97,9 +97,9 @@ public:
 
     void check() const;
 
-    ModelSelectionResults perform_neurons_selection();
+    NeuronsSelectionResults perform_neurons_selection();
 
-    ModelSelectionResults perform_inputs_selection();
+    InputsSelectionResults perform_inputs_selection();
 
     // Serialization methods
     
@@ -147,28 +147,6 @@ private:
     /// Display messages to screen.
 
     bool display = true;
-};
-
-
-/// This structure contains the results from the model selection process.
-
-struct ModelSelectionResults
-{
-    /// Default constructor.
-
-    explicit ModelSelectionResults();
-
-    // Neurons selection
-
-    /// Pointer to a structure with the results from the neurons neurons selection algorithm.
-
-    NeuronsSelectionResults* neurons_selection_results_pointer = nullptr;
-
-    // Inputs selection
-
-    /// Pointer to a structure with the results from the inputs selection algorithm.
-
-    InputsSelectionResults* inputs_selection_results_pointer = nullptr;
 };
 
 }

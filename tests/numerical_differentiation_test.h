@@ -111,7 +111,7 @@ private:
        return cte*vector_x.square();
    }
 
-   Tensor<type,1> f2_2(const Index& cte, const Tensor<type,2>& matrix_x) const
+   Tensor<type,1> f2_2(const Index& cte, const Tensor<type, 2>& matrix_x) const
    {
        return cte*matrix_x.maximum();
    }
@@ -121,15 +121,15 @@ private:
        return dummy*vector_x.square();
    }
 
-   Tensor<type,2> f3(const Tensor<type,2>& vector_x) const
+   Tensor<type, 2> f3(const Tensor<type, 2>& vector_x) const
    {
        return vector_x.square();
    }
 
 
-   Tensor<type,2> f3_1(const Tensor<type,1>& vector_x, const Tensor<type,1>&) const
+   Tensor<type, 2> f3_1(const Tensor<type,1>& vector_x, const Tensor<type,1>&) const
    {
-       Tensor<type,2> matrix;
+       Tensor<type, 2> matrix;
 
        return matrix;
    }

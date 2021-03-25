@@ -1637,7 +1637,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     architecture.setValues({inputs_number,target_number});
 
-    Tensor<type,2> data(5, 3);
+    Tensor<type, 2> data(5, 3);
 
     data.setValues({{1,1,1},{2,2,2},{3,3,3},{0,0,0},{0,0,0}});
 

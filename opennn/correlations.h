@@ -142,7 +142,7 @@ struct CorrelationResults
 
     // Karl Pearson
 
-    type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>&, const Tensor<type,2>&);
+    type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     // Time series correlation methods
 

@@ -332,6 +332,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    // Test 2_1 / Perceptron
 
    //Dataset
+
    Index samples_number = 3;
    inputs_number = 1;
    Index hidden_neurons = 1;

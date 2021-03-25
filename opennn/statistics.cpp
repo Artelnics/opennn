@@ -3150,7 +3150,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
 /// Returns a matrix in which each of the columns contain the maximal indices of each of the columns of the
 /// original matrix.
 
-Tensor<Index, 2> maximal_columns_indices(const Tensor<type,2>& matrix, const Index& maximum_number)
+Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>& matrix, const Index& maximum_number)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);

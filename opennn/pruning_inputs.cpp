@@ -167,7 +167,7 @@ void PruningInputs::set_maximum_selection_failures(const Index& new_maximum_loss
 
 /// Perform the inputs selection with the pruning inputs method.
 
-InputsSelectionResults* PruningInputs::perform_inputs_selection()
+InputsSelectionResults PruningInputs::perform_inputs_selection()
 {
 
 #ifdef OPENNN_DEBUG
@@ -176,7 +176,7 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
 #endif
 
-    InputsSelectionResults* results = new InputsSelectionResults(maximum_epochs_number);
+    InputsSelectionResults results(maximum_epochs_number);
 
     if(display) cout << "Performing pruning inputs selection..." << endl;
 
@@ -248,14 +248,14 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
             training_results = training_strategy_pointer->perform_training();
 
-            if(training_results.selection_error < results->optimum_selection_error)
+            if(training_results.selection_error < results.optimum_selection_error)
             {
-                results->optimal_inputs = data_set_pointer->get_input_columns_binary();
+                results.optimal_inputs = data_set_pointer->get_input_columns_binary();
 
-                results->optimal_parameters = training_results.parameters;
+                results.optimal_parameters = training_results.parameters;
 
-                results->optimum_training_error = training_results.training_error;
-                results->optimum_selection_error = training_results.selection_error;
+                results.optimum_training_error = training_results.training_error;
+                results.optimum_selection_error = training_results.selection_error;
             }
 
             if(display)
@@ -266,13 +266,13 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
             }
         }
 
-        if(results->optimum_selection_error >= previus_selection_error) selection_failures++;
+        if(results.optimum_selection_error >= previus_selection_error) selection_failures++;
 
-        previus_selection_error = results->optimum_selection_error;
+        previus_selection_error = results.optimum_selection_error;
 
-        if(reserve_training_errors)results->training_errors(epoch) = training_results.training_error;
+        if(reserve_training_errors)results.training_errors(epoch) = training_results.training_error;
 
-        if(reserve_selection_errors) results->selection_errors(epoch) = training_results.selection_error;
+        if(reserve_selection_errors) results.selection_errors(epoch) = training_results.selection_error;
 
         time(&current_time);
 
@@ -286,15 +286,15 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
             if(display) cout << "Maximum time reached." << endl;
 
-            results->stopping_condition = InputsSelection::MaximumTime;
+            results.stopping_condition = InputsSelection::MaximumTime;
         }
-        else if(results->optimum_selection_error <= selection_error_goal)
+        else if(results.optimum_selection_error <= selection_error_goal)
         {
             stop = true;
 
             if(display) cout << "Selection loss reached." << endl;
 
-            results->stopping_condition = InputsSelection::SelectionErrorGoal;
+            results.stopping_condition = InputsSelection::SelectionErrorGoal;
         }
         else if(epoch >= maximum_epochs_number)
         {
@@ -302,7 +302,7 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
             if(display) cout << "Maximum number of epochs reached." << endl;
 
-            results->stopping_condition = InputsSelection::MaximumEpochs;
+            results.stopping_condition = InputsSelection::MaximumEpochs;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
@@ -310,7 +310,7 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
             if(display) cout << "Maximum selection failures("<<selection_failures<<") reached." << endl;
 
-            results->stopping_condition = InputsSelection::MaximumSelectionFailures;
+            results.stopping_condition = InputsSelection::MaximumSelectionFailures;
         }
         else if(current_input_columns.size() <= minimum_inputs_number
              || current_input_columns.size() == 1)
@@ -319,7 +319,7 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
             if(display) cout << "Minimum inputs (" << minimum_inputs_number << ") reached." << endl;
 
-            results->stopping_condition = InputsSelection::MaximumInputs;
+            results.stopping_condition = InputsSelection::MaximumInputs;
         }
 
         if(display)
@@ -332,8 +332,8 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
             cout << "Number of inputs: " << current_input_columns.size() << endl;
             cout << "Current inputs: " << endl <<  data_set_pointer->get_input_variables_names().cast<string>() << endl << endl;
 
-            cout << "Training error: " << results->optimum_training_error << endl;
-            cout << "Selection error: " << results->optimum_selection_error << endl;
+            cout << "Training error: " << results.optimum_training_error << endl;
+            cout << "Selection error: " << results.optimum_selection_error << endl;
 
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
@@ -344,8 +344,8 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
         {
             // Save results
 
-            results->epochs_number = epoch + 1;
-            results->elapsed_time = write_elapsed_time(elapsed_time);
+            results.epochs_number = epoch + 1;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             break;
         }
@@ -356,15 +356,15 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 //        cout << "Optimal number of inputs: " << optimal_input_variables_number << endl;
         cout << "Optimal inputs: " << endl << data_set_pointer->get_input_variables_names().cast<string>() << endl << endl;
 
-        cout << "Optimum training error: " << results->optimum_training_error << endl;
-        cout << "Optimum selection error: " << results->optimum_selection_error << endl;
+        cout << "Optimum training error: " << results.optimum_training_error << endl;
+        cout << "Optimum selection error: " << results.optimum_selection_error << endl;
 
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
 
     // Set data set stuff
 
-    data_set_pointer->set_input_columns_binary(results->optimal_inputs);
+    data_set_pointer->set_input_columns_binary(results.optimal_inputs);
 
     // Set neural network stuff
 
@@ -372,7 +372,7 @@ InputsSelectionResults* PruningInputs::perform_inputs_selection()
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-    neural_network_pointer->set_parameters(results->optimal_parameters);
+    neural_network_pointer->set_parameters(results.optimal_parameters);
 
     return results;
 }
