@@ -255,7 +255,7 @@ void GeneticAlgorithm::set_selection_errors(const Tensor<type, 1>& new_selection
 /// Sets a new fitness for the population.
 /// @param new_fitness New fitness values.
 
-void GeneticAlgorithm::set_fitnesses(const Tensor<type, 1>& new_fitnesses)
+void GeneticAlgorithm::set_fitnesses(const Tensor<type, 1>& new_fitness)
 {
 #ifdef OPENNN_DEBUG
 
@@ -289,7 +289,7 @@ void GeneticAlgorithm::set_fitnesses(const Tensor<type, 1>& new_fitnesses)
 
 #endif
 
-    fitnesses = new_fitnesses;
+    fitnesses = new_fitness;
 }
 
 
