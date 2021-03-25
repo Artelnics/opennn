@@ -356,8 +356,6 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         }
         catch(const logic_error& error)
         {
-            cout << "Learning rate" << endl;
-
             //cout << error.what() << endl;
 
             return triplet.minimum();
@@ -519,7 +517,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     {
         count++;
 
-        triplet.B.first = optimization_data.initial_learning_rate*count;
+        triplet.B.first = optimization_data.initial_learning_rate*static_cast<type>(count);
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;

@@ -61,7 +61,7 @@ void StochasticGradientDescentTest::test_set_reserve_all_training_history()
 void StochasticGradientDescentTest::test_perform_training() // @todo
 {
    cout << "test_perform_training\n";
-
+/*
    DataSet data_set(1, 1, 2);
    data_set.set_data_random();
 
@@ -136,6 +136,7 @@ void StochasticGradientDescentTest::test_perform_training() // @todo
 
 //   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
+*/
 }
 
 

@@ -28,11 +28,9 @@ void TrainingStrategyTest::test_constructor()
 
    // Test
 
-   TrainingStrategy ts1(&neural_network, &data_set);
+   TrainingStrategy training_strategy1(&neural_network, &data_set);
 
-   // Test
 
-   TrainingStrategy ts2(&neural_network, &data_set);
 }
 
 
@@ -46,6 +44,7 @@ void TrainingStrategyTest::test_destructor()
    TrainingStrategy* ts = new TrainingStrategy(&neural_network, &data_set);
 
    delete ts;
+
 }
 
 
@@ -58,9 +57,9 @@ void TrainingStrategyTest::test_get_loss_index_pointer()
 
    SumSquaredError sum_squared_error;
 
-   TrainingStrategy ts(&neural_network, &data_set);
+   TrainingStrategy training_strategy(&neural_network, &data_set);
 
-   LossIndex* loss_index_pointer = ts.get_loss_index_pointer();
+   LossIndex* loss_index_pointer = training_strategy.get_loss_index_pointer();
 
    assert_true(loss_index_pointer != nullptr, LOG);
 }
@@ -91,10 +90,9 @@ void TrainingStrategyTest::test_set_default()
 {
    cout << "test_set_default\n"; 
 
-   TrainingStrategy ts1;
+   TrainingStrategy training_strategy;
 
-   ts1.set_default();
-
+   training_strategy.set_default();
 
 }
 
@@ -124,20 +122,20 @@ void TrainingStrategyTest::test_perform_training()
 
     NormalizedSquaredError nse(&neural_network, &data_set);
 
-    TrainingStrategy ts(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     // Test
 
     architecture.setValues({1, 1, 1});
 
     neural_network.set(NeuralNetwork::Approximation, architecture);
-    ts.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+    training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
     neural_network.set_parameters_random();
 
-    ts.set_maximum_epochs_number(10);
-    ts.set_display(false);
+    training_strategy.set_maximum_epochs_number(10);
+    training_strategy.set_display(false);
 
-    ts.perform_training();
+    training_strategy.perform_training();
 }
 
 
@@ -145,7 +143,7 @@ void TrainingStrategyTest::test_to_XML()
 {
    cout << "test_to_XML\n";
 
-   TrainingStrategy ts;
+   TrainingStrategy training_strategy;
 
    FILE *pFile;
 
@@ -155,7 +153,7 @@ void TrainingStrategyTest::test_to_XML()
 
    tinyxml2::XMLPrinter document(pFile);
 
-   ts.write_XML(document);
+   training_strategy.write_XML(document);
 
    fclose(pFile);
 
@@ -165,9 +163,9 @@ void TrainingStrategyTest::test_to_XML()
 void TrainingStrategyTest::test_from_XML()
 {
    cout << "test_from_XML\n";
-
-   TrainingStrategy ts1;
-   TrainingStrategy ts2;
+/*
+   TrainingStrategy training_strategy1;
+   TrainingStrategy training_strategy2;
 
    ts1.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
@@ -189,6 +187,7 @@ void TrainingStrategyTest::test_from_XML()
    }
 
    ts1.from_XML(document);
+*/
 }
 
 

@@ -57,7 +57,7 @@ void SumSquaredErrorTest::test_calculate_error()
    Index inputs_number;
    Index target_number;
 
-   Tensor<Index, 1>architecture;
+   Tensor<Index, 1> architecture;
    Tensor<type, 1> parameters;
 
    DataSet data_set;
@@ -253,7 +253,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
 
    Index inputs_number = 2;
    Index target_number = 2;
-   Tensor<Index, 1>architecture(2);
+   Tensor<Index, 1> architecture(2);
    architecture.setValues({inputs_number,target_number});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
@@ -418,7 +418,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient() // @todo
 
         // Neural network
 
-   Tensor<Index, 1>architecture(2);
+   Tensor<Index, 1> architecture(2);
    architecture.setValues({inputs_number,target_number});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);

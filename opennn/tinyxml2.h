@@ -477,37 +477,37 @@ public:
     virtual ~XMLVisitor() {}
 
     /// Visit a document.
-    virtual bool VisitEnter(const XMLDocument& /*doc*/)			{
+    virtual bool VisitEnter(const XMLDocument&)			{
         return true;
     }
     /// Visit a document.
-    virtual bool VisitExit(const XMLDocument& /*doc*/)			{
+    virtual bool VisitExit(const XMLDocument&)			{
         return true;
     }
 
     /// Visit an element.
-    virtual bool VisitEnter(const XMLElement& /*element*/, const XMLAttribute* /*firstAttribute*/)	{
+    virtual bool VisitEnter(const XMLElement&, const XMLAttribute*)	{
         return true;
     }
     /// Visit an element.
-    virtual bool VisitExit(const XMLElement& /*element*/)			{
+    virtual bool VisitExit(const XMLElement&)			{
         return true;
     }
 
     /// Visit a declaration.
-    virtual bool Visit(const XMLDeclaration& /*declaration*/)		{
+    virtual bool Visit(const XMLDeclaration&)		{
         return true;
     }
     /// Visit a text node.
-    virtual bool Visit(const XMLText& /*text*/)					{
+    virtual bool Visit(const XMLText&)					{
         return true;
     }
     /// Visit a comment node.
-    virtual bool Visit(const XMLComment& /*comment*/)				{
+    virtual bool Visit(const XMLComment&)				{
         return true;
     }
     /// Visit an unknown node.
-    virtual bool Visit(const XMLUnknown& /*unknown*/)				{
+    virtual bool Visit(const XMLUnknown&)				{
         return true;
     }
 };
@@ -1857,10 +1857,10 @@ public:
 	// internal
 	void MarkInUse(XMLNode*);
 
-    virtual XMLNode* ShallowClone(XMLDocument* /*document*/) const	{
+    virtual XMLNode* ShallowClone(XMLDocument*) const	{
         return nullptr;
     }
-    virtual bool ShallowEqual(const XMLNode* /*compare*/) const	{
+    virtual bool ShallowEqual(const XMLNode*) const	{
         return false;
     }
 
@@ -2199,8 +2199,8 @@ public:
     void PushDeclaration(const char* value );
     void PushUnknown(const char* value );
 
-    virtual bool VisitEnter(const XMLDocument& /*doc*/);
-    virtual bool VisitExit(const XMLDocument& /*doc*/)			{
+    virtual bool VisitEnter(const XMLDocument&);
+    virtual bool VisitExit(const XMLDocument&)			{
         return true;
     }
 

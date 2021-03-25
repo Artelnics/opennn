@@ -64,9 +64,9 @@ void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
     NeuralNetwork neural_network;
 
     DataSet data_set;
-    TrainingStrategy ts(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    GrowingNeurons io(&ts);
+    GrowingNeurons io(&training_strategy);
 
     GrowingNeuronsResults* results = nullptr;
 
@@ -113,11 +113,11 @@ void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
     neural_network.set(NeuralNetwork::Approximation,architecture);
     neural_network.set_parameters_constant(0.0);
 
-    ts.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 
-    ts.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+    training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-    ts.set_display(false);
+    training_strategy.set_display(false);
 
     io.set_trials_number(1);
     io.set_maximum_neurons(7);
@@ -166,11 +166,11 @@ void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
     neural_network.set(NeuralNetwork::Approximation, architecture);
     neural_network.set_parameters_constant(0.0);
 
-    ts.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 
-    ts.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+    training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-    ts.set_display(false);
+    training_strategy.set_display(false);
 
     io.set_trials_number(1);
     io.set_maximum_neurons(7);

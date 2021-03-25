@@ -781,7 +781,7 @@ void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, LayerForwa
 }
 
 
-void RecurrentLayer::forward_propagate(const Tensor<type, 2> &inputs,
+void RecurrentLayer::forward_propagate(const Tensor<type, 2>&inputs,
                                        Tensor<type, 1> parameters,
                                        LayerForwardPropagation* forward_propagation)
 {

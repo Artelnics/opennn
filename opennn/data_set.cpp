@@ -2080,6 +2080,12 @@ const Tensor<Index, 1>& DataSet::get_input_variables_dimensions() const
 }
 
 
+Index DataSet::get_input_variables_rank() const
+{
+    return input_variables_dimensions.rank();
+}
+
+
 /// Returns the number of variables which are either input nor target.
 
 Index DataSet::get_used_variables_number() const
@@ -8193,7 +8199,7 @@ void DataSet::print_data() const
 }
 
 
-/// Prints to the sceen a preview of the data matrix,
+/// Prints to the scross_entropy_errorn a preview of the data matrix,
 /// i.e., the first, second and last samples
 
 void DataSet::print_data_preview() const
@@ -11013,6 +11019,13 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
 DataSetBatch::DataSetBatch(const Index& new_samples_number, DataSet* new_data_set_pointer)
 {
+    set(new_samples_number, new_data_set_pointer);
+}
+
+
+
+void DataSetBatch::set(const Index& new_samples_number, DataSet* new_data_set_pointer)
+{
     samples_number = new_samples_number;
 
     data_set_pointer = new_data_set_pointer;
@@ -11045,7 +11058,7 @@ Index DataSetBatch::get_samples_number() const
 }
 
 
-void DataSetBatch::print()
+void DataSetBatch::print() const
 {
     cout << "Batch structure" << endl;
 

@@ -1205,11 +1205,11 @@ void LongShortTermMemoryLayer::set_parameters_random()
 }
 
 
-void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1> & inputs,
-                                                      const Tensor<type, 2> & weights,
-                                                      const Tensor<type, 2> & recurrent_weights,
-                                                      const Tensor<type, 1> & biases,
-                                                      Tensor<type, 1> & combinations) const
+void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1>& inputs,
+                                                      const Tensor<type, 2>& weights,
+                                                      const Tensor<type, 2>& recurrent_weights,
+                                                      const Tensor<type, 1>& biases,
+                                                      Tensor<type, 1>& combinations) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -1887,7 +1887,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(Probabilisti
 }
 
 
-void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2> &inputs, LayerForwardPropagation* forward_propagation)
+void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2>&inputs, LayerForwardPropagation* forward_propagation)
 {
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
             = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation);
@@ -2223,7 +2223,7 @@ void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propag
 }
 
 
-void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2> &  inputs,
+void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2>&  inputs,
                                                         LayerForwardPropagation* forward_propagation,
     LayerBackPropagation* back_propagation) const
 {

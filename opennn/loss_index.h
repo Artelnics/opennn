@@ -331,8 +331,7 @@ struct LossIndexBackPropagation
         regularization_gradient.setConstant(0);
     }
 
-
-    void print()
+    void print() const
     {
         cout << "Error:" << endl;
         cout << error << endl;

@@ -91,7 +91,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient(void) 
 void NormalizedSquaredErrorTest::test_calculate_error(void) // @todo
 {
    cout << "test_calculate_error\n";
-
+/*
    Tensor<Index, 1> architecture(2);
    architecture.setValues({1, 2});
    Tensor<type, 1> parameters;
@@ -158,6 +158,7 @@ void NormalizedSquaredErrorTest::test_calculate_error(void) // @todo
    normalized_squared_error.set_normalization_coefficient();
 
 //   assert_true(abs(normalized_squared_error.calculate_error() - normalized_squared_error.calculate_training_error(parameters)) < 1.0e-3, LOG);
+*/
 }
 
 
@@ -166,7 +167,7 @@ void NormalizedSquaredErrorTest::test_calculate_error(void) // @todo
 void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 {
    cout << "test_calculate_error_gradient\n";
-
+/*
    NeuralNetwork neural_network;
 
    DataSet data_set;
@@ -767,6 +768,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
        numerical_error_gradient = nse.calculate_gradient_numerical_differentiation();
    }
+*/
 }
 
 

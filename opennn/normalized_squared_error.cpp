@@ -274,7 +274,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 /// \param back_propagation
 
 void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     const NeuralNetworkForwardPropagation& /*forward_propagation*/,
                      LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
