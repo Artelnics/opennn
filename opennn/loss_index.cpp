@@ -565,9 +565,9 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 /// @param layers_delta vector of tensors with layers delta.
 
 void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
-                                           NeuralNetworkForwardPropagation& forward_propagation,
-                                           LossIndexBackPropagation& back_propagation,
-                                           LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                                  NeuralNetworkForwardPropagation& forward_propagation,
+                                                  LossIndexBackPropagation& back_propagation,
+                                                  LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();

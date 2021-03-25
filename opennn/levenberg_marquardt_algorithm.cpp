@@ -582,12 +582,14 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     // Calculate error before training
 
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+    loss_index_pointer->calculate_squared_errors(training_batch, training_forward_propagation, training_loss_index_back_propagation_lm);
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_loss_index_back_propagation_lm);
     results.training_error_history(0)  = training_loss_index_back_propagation_lm.error;
 
     if(has_selection)
     {
         neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+        loss_index_pointer->calculate_squared_errors(selection_batch, selection_forward_propagation, selection_loss_index_back_propagation_lm);
         loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_loss_index_back_propagation_lm);
         results.selection_error_history(0)  = selection_loss_index_back_propagation_lm.error;
     }
@@ -633,6 +635,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         {
           neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
+          loss_index_pointer->calculate_squared_errors(selection_batch, selection_forward_propagation, training_loss_index_back_propagation_lm);
           loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, training_loss_index_back_propagation_lm);
         }
 
