@@ -164,12 +164,11 @@ void TrainingStrategyTest::test_from_XML()
 {
    cout << "test_from_XML\n";
 /*
-   TrainingStrategy training_strategy1;
-   TrainingStrategy training_strategy2;
+   TrainingStrategy training_strategy;
 
-   ts1.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
+   training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
-   ts1.set_default();
+   training_strategy.set_default();
 
    tinyxml2::XMLDocument document;
 
@@ -186,7 +185,7 @@ void TrainingStrategyTest::test_from_XML()
        throw logic_error(buffer.str());
    }
 
-   ts1.from_XML(document);
+   training_strategy.from_XML(document);
 */
 }
 
