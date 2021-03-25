@@ -566,8 +566,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     type gradient_norm = 0;
 
-    LossIndexBackPropagationLM training_loss_index_back_propagation_lm(parameters_number, training_samples_number);
-    LossIndexBackPropagationLM selection_loss_index_back_propagation_lm(parameters_number, training_samples_number);
+    LossIndexBackPropagationLM training_loss_index_back_propagation_lm(training_samples_number, loss_index_pointer);
+    LossIndexBackPropagationLM selection_loss_index_back_propagation_lm(training_samples_number, loss_index_pointer);
 
     // Training strategy stuff
 

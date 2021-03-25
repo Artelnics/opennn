@@ -290,8 +290,8 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
-                     LossIndexBackPropagationLM& back_propagation) const
+                                             const NeuralNetworkForwardPropagation& forward_propagation,
+                                             LossIndexBackPropagationLM& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
 
