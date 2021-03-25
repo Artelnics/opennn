@@ -415,7 +415,7 @@ void MeanSquaredErrorTest::test_calculate_squared_errors()
    data_set.set_data_random();
 
    NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
-   LossIndexBackPropagationLM loss_index_back_propagation_lm(parameters,batch_samples_number);
+   LossIndexBackPropagationLM loss_index_back_propagation_lm(batch_samples_number, &mean_squared_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
 

@@ -454,7 +454,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient() // @todo
    LossIndexBackPropagation training_back_propagation(data_set.get_training_samples_number(), &sum_squared_error);
    sum_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
 
-   LossIndexBackPropagationLM loss_index_back_propagation_lm(neural_network.get_parameters_number(), training_samples_indices.size());
+   LossIndexBackPropagationLM loss_index_back_propagation_lm(training_samples_indices.size(), &sum_squared_error);
 //   sum_squared_error.calculate_squared_errors_Jacobian(batch, forward_propagation, training_back_propagation, loss_index_back_propagation_lm);
 //   sum_squared_error.calculate_gradient(batch, forward_propagation, loss_index_back_propagation_lm);
 
