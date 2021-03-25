@@ -362,7 +362,7 @@ void StochasticGradientDescent::set_reserve_selection_error_history(const bool& 
 
 /// Set hardware to use. Default: Multi-core.
 
-void StochasticGradientDescent::update_parameters(const LossIndexBackPropagation& back_propagation,
+void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back_propagation,
                       StochasticGradientDescentData& optimization_data)
 {
     const type learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay);
@@ -375,19 +375,19 @@ void StochasticGradientDescent::update_parameters(const LossIndexBackPropagation
 
         if(!nesterov)
         {
-            optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+            back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
         }
         else
         {
             optimization_data.nesterov_increment.device(*thread_pool_device)
                     = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
 
-            optimization_data.parameters.device(*thread_pool_device) += optimization_data.nesterov_increment;
+            back_propagation.parameters.device(*thread_pool_device) += optimization_data.nesterov_increment;
         }
     }
     else
     {
-        optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+        back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
     }
 
     optimization_data.last_parameters_increment = optimization_data.parameters_increment;
@@ -398,9 +398,7 @@ void StochasticGradientDescent::update_parameters(const LossIndexBackPropagation
 
     NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
 
-    neural_network_pointer->set_parameters(optimization_data.parameters);
-
-
+    neural_network_pointer->set_parameters(back_propagation.parameters);
 }
 
 
@@ -482,7 +480,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    bool shuffle = true;
+    bool shuffle = false;
 
     results.resize_training_history(maximum_epochs_number+1);
     if(has_selection) results.resize_selection_history(maximum_epochs_number+1);
@@ -590,7 +588,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             else if(selection_error <= results.optimum_selection_error)
             {
                 results.optimum_selection_error = selection_error;
-                results.optimal_parameters = optimization_data.parameters;
+                results.optimal_parameters = training_back_propagation.parameters;
             }
         }
 
@@ -675,7 +673,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             if(has_selection) results.resize_selection_error_history(epoch + 1);
 
-            results.parameters = optimization_data.parameters;
+            results.parameters = training_back_propagation.parameters;
 
             results.training_error = training_error;
 
