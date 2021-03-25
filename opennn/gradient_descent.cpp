@@ -638,11 +638,7 @@ TrainingResults GradientDescent::perform_training()
 
         // Optimization algorithm
 
-        cout << "before parameters" << endl;
-
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
-
-        cout << "after parameters" << endl;
 
         // Elapsed time
 
