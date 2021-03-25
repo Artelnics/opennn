@@ -595,6 +595,7 @@ void DataSet::transform_time_series_columns()
 
     if(has_time_columns())
     {
+        // @todo check if there are more than one time column
         new_columns.resize((columns_number-1)*(lags_number+steps_ahead));
     }
     else
@@ -634,7 +635,8 @@ void DataSet::transform_time_series_columns()
 
             new_columns(new_column_index).type = columns(column_index).type;
             new_columns(new_column_index).categories = columns(column_index).categories;
-            new_columns(new_column_index).categories_uses = columns(column_index).categories_uses;
+            new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(new_column_index).categories_uses.setConstant(Target);
 
             new_column_index++;
         }
