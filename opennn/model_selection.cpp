@@ -406,9 +406,9 @@ void ModelSelection::check() const
 /// It also set the neural network of the training strategy pointer with the optimum parameters.
 /// @todo
 
-ModelSelectionResults ModelSelection::perform_neurons_selection()
+NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {
-    ModelSelectionResults results;
+    NeuronsSelectionResults results;
 
     switch(neurons_selection_method)
     {
@@ -437,9 +437,9 @@ ModelSelectionResults ModelSelection::perform_neurons_selection()
 /// Perform the inputs selection, returns a structure with the results of the inputs selection.
 /// It also set the neural network of the training strategy pointer with the optimum parameters.
 
-ModelSelectionResults ModelSelection::perform_inputs_selection()
+InputsSelectionResults ModelSelection::perform_inputs_selection()
 {
-    ModelSelectionResults results;
+    InputsSelectionResults results;
 
     TrainingStrategy* ts = get_training_strategy_pointer();
 
@@ -455,7 +455,7 @@ ModelSelectionResults ModelSelection::perform_inputs_selection()
 
         growing_inputs.set_training_strategy_pointer(ts);
 
-        results.inputs_selection_results_pointer = growing_inputs.perform_inputs_selection();
+        return growing_inputs.perform_inputs_selection();
 
         break;
     }
@@ -465,7 +465,7 @@ ModelSelectionResults ModelSelection::perform_inputs_selection()
 
         pruning_inputs.set_training_strategy_pointer(ts);
 
-        results.inputs_selection_results_pointer = pruning_inputs.perform_inputs_selection();
+        return pruning_inputs.perform_inputs_selection();
 
         break;
     }
@@ -475,7 +475,7 @@ ModelSelectionResults ModelSelection::perform_inputs_selection()
 
         genetic_algorithm.set_training_strategy_pointer(ts);
 
-        results.inputs_selection_results_pointer = genetic_algorithm.perform_inputs_selection();
+        return genetic_algorithm.perform_inputs_selection();
 
         break;
     }
@@ -741,16 +741,6 @@ void ModelSelection::load(const string& file_name)
     }
 
     from_XML(document);
-}
-
-
-/// Results constructor.
-
-ModelSelectionResults::ModelSelectionResults()
-{
-    neurons_selection_results_pointer = nullptr;
-
-    inputs_selection_results_pointer = nullptr;
 }
 
 }

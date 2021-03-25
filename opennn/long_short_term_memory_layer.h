@@ -196,7 +196,7 @@ public:
 
    // Long short term memory layer derivatives
 
-   void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type,2>&, Tensor<type, 2>&) const;
+   void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
    void calculate_activations_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
    void calculate_recurrent_activations_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
 

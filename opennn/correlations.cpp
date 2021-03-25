@@ -244,7 +244,7 @@ type power_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<
 /// @param x Matrix of the variable X.
 /// @param y Matrix of the variable Y.
 
-type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>& x, const Tensor<type,2>& y)
+type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
 #ifdef  OPENNN_DEBUG
 
@@ -628,7 +628,7 @@ Tensor<type, 1> gaussian (const type& a, const type& b, const Tensor<type, 1>& x
 /// @param a Parameter a.
 /// @param b Parameter b.
 
-Tensor<type, 2> logistic(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& a, const Tensor<type,2>& b, const Tensor<type, 2>& x)
+Tensor<type, 2> logistic(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& a, const Tensor<type, 2>& b, const Tensor<type, 2>& x)
 {
     const Index samples_number = x.dimension(0);
     const Index biases_number = a.dimension(0);

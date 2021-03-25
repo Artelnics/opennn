@@ -2625,7 +2625,7 @@ public:
        const Index rn = x.dimension(0);
        const Index cn = x.dimension(1);
 
-       Tensor<type,2> J(cn,cn);
+       Tensor<type, 2> J(cn,cn);
 
        for(Index j = 0; j < cn; j++)
        {

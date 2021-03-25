@@ -106,7 +106,7 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     incremental_neurons_pointer->set_display(false);
 
-    ModelSelectionResults results;
+    NeuronsSelectionResults results;
 
     results = model_selection.perform_neurons_selection();
 

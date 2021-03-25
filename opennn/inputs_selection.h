@@ -115,7 +115,7 @@ public:
 
     /// Performs the inputs selection for a neural network.
 
-    virtual InputsSelectionResults* perform_inputs_selection() = 0;
+    virtual InputsSelectionResults perform_inputs_selection() = 0;
 
     /// Writes the time from seconds in format HH:mm:ss.
 
@@ -195,6 +195,14 @@ protected:
 
 struct InputsSelectionResults
 {
+    // Default constructor
+
+    explicit InputsSelectionResults()
+    {
+    }
+
+    // Maximum epochs number constructor
+
    explicit InputsSelectionResults(const Index& maximum_epochs_number)
    {
         training_errors.resize(maximum_epochs_number);

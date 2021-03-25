@@ -3201,7 +3201,7 @@ void DataSet::set_columns_number(const Index& new_variables_number)
 }
 
 
-Tensor<type,2> DataSet::transform_binary_column(const Tensor<type,1>& column) const
+Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type,1>& column) const
 {
     const Index rows_number = column.dimension(0);
 
@@ -3589,7 +3589,7 @@ Tensor<type, 2> DataSet::get_training_data() const
 
        return get_subtensor_data(training_indices, variables_indices);
 
-//    return Tensor<type,2>();
+//    return Tensor<type, 2>();
 }
 
 

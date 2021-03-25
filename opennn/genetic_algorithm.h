@@ -86,7 +86,7 @@ public:
     void set_training_errors(const Tensor<type, 1>&);
     void set_selection_errors(const Tensor<type, 1>&);
 
-    void set_fitnesses(const Tensor<type, 1>&);
+    void set_fitness(const Tensor<type, 1>&);
 
     void set_mutation_rate(const type&);
 
@@ -124,7 +124,7 @@ public:
 
     // Inputs selection methods
 
-    InputsSelectionResults* perform_inputs_selection();
+    InputsSelectionResults perform_inputs_selection();
 
     // Serialization methods
 
@@ -157,9 +157,9 @@ private:
 
     /// Fitness of population.
 
-    Tensor<type, 1> fitnesses;
+    Tensor<type, 1> fitness;
 
-    Tensor<bool, 1> selections;
+    Tensor<bool, 1> selection;
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.

@@ -415,7 +415,7 @@ public:
 
    // Columns other methods
 
-   Tensor<type,2> transform_binary_column(const Tensor<type,1>&) const;
+   Tensor<type, 2> transform_binary_column(const Tensor<type,1>&) const;
 
    // Variables set methods
 

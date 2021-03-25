@@ -179,6 +179,12 @@ protected:
 
 struct NeuronsSelectionResults
 {
+    // Default constructor
+
+    explicit NeuronsSelectionResults() {}
+
+    // Epochs constructor
+
    explicit NeuronsSelectionResults(const Index& maximum_epochs_number)
    {
         neurons_numbers.resize(maximum_epochs_number);

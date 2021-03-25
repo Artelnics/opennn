@@ -169,7 +169,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_derivative
    Tensor<type,2>x_2d(1,2);
    x_2d.setValues({{1,2}});
 
-   Tensor<type,2> d3 = nd.calculate_forward_differences_derivatives(*this, &NumericalDifferentiationTest::f3, x_2d);
+   Tensor<type, 2> d3 = nd.calculate_forward_differences_derivatives(*this, &NumericalDifferentiationTest::f3, x_2d);
 
    assert_true(abs(d3(0,0) - 2) < static_cast<type>(1e-2), LOG);
    assert_true(abs(d3(0,1) - 4) < static_cast<type>(1e-2), LOG);
@@ -225,7 +225,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_derivative
    Tensor<type,2>x_2d(1,2);
    x_2d.setValues({{1,2}});
 
-   Tensor<type,2> d3 = nd.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f3, x_2d);
+   Tensor<type, 2> d3 = nd.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f3, x_2d);
 
    assert_true(abs(d3(0,0) - 2) < static_cast<type>(1e-2), LOG);
    assert_true(abs(d3(0,1) - 4) < static_cast<type>(1e-2), LOG);

@@ -511,21 +511,21 @@ const string InputsSelection::write_elapsed_time(const type& time) const
 }
 
 
-/// Return the index of uses where is the(input_number)-th input.
+/// Return the index of uses where is the(inputs_number)-th input.
 /// @param uses Vector of the uses of the variables.
-/// @param input_number Index of the input to find.
+/// @param inputs_number Index of the input to find.
 
-Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& input_number)
+Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& inputs_number)
 {
 #ifdef OPENNN_DEBUG
 
-    if(uses.size() < input_number)
+    if(uses.size() < inputs_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "const Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index) method.\n"
-               << "Size of uses vector("<< uses.size() <<") must be greater than " <<  input_number << ".\n";
+               << "Size of uses vector("<< uses.size() <<") must be greater than " <<  inputs_number << ".\n";
 
         throw logic_error(buffer.str());
     }
@@ -538,7 +538,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& us
     while(i < uses.size())
     {
         if(uses[i] == DataSet::Input &&
-                input_number == j)
+                inputs_number == j)
         {
             break;
         }

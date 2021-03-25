@@ -1875,7 +1875,7 @@ void DataSetTest::test_get_time_series_data()
 {
     cout << "test_get_time_series_data\n";
 
-    Tensor<type,2> new_data(5,2);
+    Tensor<type, 2> new_data(5,2);
     new_data.setValues({{1,10}, {2,20}, {3,30}, {4,40}, {5,50}});
 
     DataSet data_set;
@@ -1897,7 +1897,7 @@ void DataSetTest::test_get_time_series_columns()
 {
     cout << "test_get_time_series_columns\n";
 
-    Tensor<type,2> new_data(5,2);
+    Tensor<type, 2> new_data(5,2);
     new_data.setValues({{1,10}, {2,20}, {3,30}, {4,40}, {5,50}});
 
     DataSet data_set;
@@ -1917,7 +1917,7 @@ void DataSetTest::test_get_time_series_columns_number()
 {
     cout << "test_get_time_series_columns_number\n";
 
-    Tensor<type,2> new_data(5,2);
+    Tensor<type, 2> new_data(5,2);
     new_data.setValues({{1,10}, {2,20}, {3,30}, {4,40}, {5,50}});
 
     DataSet data_set;
@@ -1935,7 +1935,7 @@ void DataSetTest::test_get_time_series_column_data()
 {
     cout << "test_get_time_series_column_data\n";
 
-    Tensor<type,2> new_data(4,2);
+    Tensor<type, 2> new_data(4,2);
     new_data.setValues({{1,10},{2,20},{3,30},{4,40}});
 
     DataSet old_data_set;
@@ -1957,7 +1957,7 @@ void DataSetTest::test_get_time_series_columns_names()
 {
     cout << "test_get_time_series_columns_names\n";
 
-    Tensor<type,2> new_data(4,2);
+    Tensor<type, 2> new_data(4,2);
     new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
 
     DataSet data_set;
@@ -1976,7 +1976,7 @@ void DataSetTest::test_set_time_series_data()
 {
     cout << "test_set_time_series_data\n";
 
-    Tensor<type,2> new_data(4,2);
+    Tensor<type, 2> new_data(4,2);
     new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
 
     DataSet data_set;
@@ -1987,7 +1987,7 @@ void DataSetTest::test_set_time_series_data()
 
     data_set.transform_time_series();
 
-    Tensor<type,2> new_data2(5,3);
+    Tensor<type, 2> new_data2(5,3);
     new_data2.setValues({{15,14,13},{12,11,10},{9,8,7},{6,5,4},{3,2,1}});
 
     data_set.set_time_series_data(new_data2);
@@ -2002,7 +2002,7 @@ void DataSetTest::test_set_time_index()
 {
     cout << "test_set_time_index\n";
 
-    Tensor<type,2> new_data(4,2);
+    Tensor<type, 2> new_data(4,2);
     new_data.setValues({{1,10},{2,20},{3,30},{4,40}});
 
     DataSet data_set;
@@ -2032,7 +2032,7 @@ void DataSetTest::test_has_time_columns()
 {
     cout << "test_has_time_columns\n";
 
-    Tensor<type,2> new_data(4,2);
+    Tensor<type, 2> new_data(4,2);
     new_data.setValues({{1,10},{2,20},{3,30},{4,40}});
 
     DataSet data_set;
@@ -2049,7 +2049,7 @@ void DataSetTest::test_save_time_series_data_binary()
 {
     cout << "test:_save_time_series_data_binary";
 
-    Tensor<type,2> new_data(4,2);
+    Tensor<type, 2> new_data(4,2);
     new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
 
     DataSet data_set;
@@ -2078,7 +2078,7 @@ void DataSetTest::test_set_steps_ahead_number()
 {
     cout << "test_set_steps_ahead_nuber\n";
 
-    Tensor<type,2> new_data(4,2);
+    Tensor<type, 2> new_data(4,2);
     new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
 
     DataSet data_set;
@@ -2098,7 +2098,7 @@ void DataSetTest::test_set_lags_number()
 {
     cout << "test_set_lags_number\n";
 
-    Tensor<type,2> new_data(4,2);
+    Tensor<type, 2> new_data(4,2);
     new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
 
     DataSet data_set;
