@@ -28,6 +28,7 @@ Descriptives::Descriptives()
 Descriptives::Descriptives(const type& new_minimum, const type& new_maximum,
                            const type& new_mean, const type& new_standard_deviation)
 {
+    name = "Descriptives";
     minimum = new_minimum;
     maximum = new_maximum;
     mean = new_mean;
@@ -39,6 +40,16 @@ Descriptives::Descriptives(const type& new_minimum, const type& new_maximum,
 
 Descriptives::~Descriptives()
 {}
+
+
+void Descriptives::set(const type& new_minimum, const type& new_maximum,
+                               const type& new_mean, const type& new_standard_deviation)
+{
+    minimum = new_minimum;
+    maximum = new_maximum;
+    mean = new_mean;
+    standard_deviation = new_standard_deviation;
+}
 
 
 /// Sets a new minimum value in the descriptives structure.

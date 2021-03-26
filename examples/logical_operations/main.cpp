@@ -20,7 +20,7 @@
 
 using namespace OpenNN;
 
-int main(void)
+int main()
 {
     try
     {

@@ -53,6 +53,8 @@ struct Descriptives {
 
   // Set methods
 
+  void set(const type&, const type&, const type&, const type&);
+
   void set_minimum(const type&);
 
   void set_maximum(const type&);

@@ -408,7 +408,7 @@ void DataSetTest::test_calculate_data_descriptives()
 }
 
 
-void DataSetTest::test_calculate_data_descriptives_missing_values() // @todo
+void DataSetTest::test_calculate_data_descriptives_missing_values()
 {
     cout << "test_calculate_data_descriptives_missing_values\n";
 
@@ -1003,7 +1003,7 @@ void DataSetTest::test_initialize_data()
 }
 
 
-void DataSetTest::test_calculate_target_columns_distribution() // @todo
+void DataSetTest::test_calculate_target_columns_distribution()
 {
     cout << "test_calculate_target_columns_distribution\n";
 
@@ -1207,7 +1207,7 @@ void DataSetTest::test_is_constant_numeric()
 void DataSetTest::test_read_csv() 
 {
    cout << "test_read_csv\n";
-/*
+
    DataSet data_set;
 //   data_set.set_data_file_name("../../datasets/empty.csv");
 //   data_set.set_data_file_name("../../datasets/iris.data");
@@ -1585,7 +1585,7 @@ void DataSetTest::test_read_csv()
 
    assert_true(data.dimension(0) == 10, LOG);
    assert_true(data.dimension(1) == 7, LOG);
-*/
+
 }
 
 
@@ -1609,7 +1609,7 @@ void DataSetTest::test_read_adult_csv()
 }
 
 
-void DataSetTest::test_read_airline_passengers_csv() // @todo
+void DataSetTest::test_read_airline_passengers_csv()
 {
     cout << "test_read_airline_passengers_csv\n";
 
@@ -1628,7 +1628,7 @@ void DataSetTest::test_read_airline_passengers_csv() // @todo
 }
 
 
-void DataSetTest::test_read_car_csv() // @todo
+void DataSetTest::test_read_car_csv()
 {
     cout << "test_read_car_csv\n";
 
@@ -1654,7 +1654,7 @@ void DataSetTest::test_read_car_csv() // @todo
 }
 
 
-void DataSetTest::test_read_empty_csv() // @todo
+void DataSetTest::test_read_empty_csv()
 {
     cout << "test_read_empty_csv\n";
 
@@ -1673,7 +1673,7 @@ void DataSetTest::test_read_empty_csv() // @todo
 }
 
 
-void DataSetTest::test_read_heart_csv() // @todo
+void DataSetTest::test_read_heart_csv()
 {
     cout << "test_read_heart_csv\n";
 
@@ -1698,7 +1698,7 @@ void DataSetTest::test_read_heart_csv() // @todo
 }
 
 
-void DataSetTest::test_read_iris_csv() // @todo
+void DataSetTest::test_read_iris_csv()
 {
     cout << "test_read_iris_csv\n";
 
@@ -1714,7 +1714,7 @@ void DataSetTest::test_read_iris_csv() // @todo
 }
 
 
-void DataSetTest::test_read_mnsit_csv() // @todo
+void DataSetTest::test_read_mnsit_csv()
 {
     cout << "test_read_mnist_csv\n";
 
@@ -1731,7 +1731,7 @@ void DataSetTest::test_read_mnsit_csv() // @todo
 }
 
 
-void DataSetTest::test_read_one_variable_csv() // @todo
+void DataSetTest::test_read_one_variable_csv()
 {
     cout << "test_read_one_variable_csv\n";
 
@@ -1743,7 +1743,7 @@ void DataSetTest::test_read_one_variable_csv() // @todo
 }
 
 
-void DataSetTest::test_read_pollution_csv() // @todo
+void DataSetTest::test_read_pollution_csv()
 {
     cout << "test_read_pollution_csv\n";
 
@@ -1767,7 +1767,7 @@ void DataSetTest::test_read_pollution_csv() // @todo
 }
 
 
-void DataSetTest::test_read_urinary_inflammations_csv() // @todo
+void DataSetTest::test_read_urinary_inflammations_csv()
 {
     cout << "test_read_urinary_inflammations_csv\n";
 
@@ -1786,7 +1786,7 @@ void DataSetTest::test_read_urinary_inflammations_csv() // @todo
 }
 
 
-void DataSetTest::test_read_wine_csv() // @todo
+void DataSetTest::test_read_wine_csv()
 {
     cout << "test_read_wine_csv\n";
 
@@ -2115,7 +2115,7 @@ void DataSetTest::test_set_lags_number()
 }
 
 
-void DataSetTest::test_scrub_missing_values() // @todo
+void DataSetTest::test_scrub_missing_values()
 {
     cout << "test_scrub_missing_values\n";
 
@@ -2195,7 +2195,7 @@ void DataSetTest::test_empty()
 }
 
 
-void DataSetTest::test_filter_column() // @todo
+void DataSetTest::test_filter_column()
 {
     cout << "test_filter_column\n";
 
@@ -2224,7 +2224,7 @@ void DataSetTest::test_filter_column() // @todo
 }
 
 
-void DataSetTest::test_calculate_variables_means() // @todo
+void DataSetTest::test_calculate_variables_means()
 {
     cout << "test_calculate_variables_means\n";
 
@@ -2240,7 +2240,7 @@ void DataSetTest::test_calculate_variables_means() // @todo
 }
 
 
-void DataSetTest::test_calculate_training_targets_mean() // @todo
+void DataSetTest::test_calculate_training_targets_mean()
 {
     cout << "test_calculate_training_targets_mean\n";
 
@@ -2282,7 +2282,7 @@ void DataSetTest::test_calculate_training_targets_mean() // @todo
 
 
 
-void DataSetTest::test_calculate_selection_targets_mean() // @todo
+void DataSetTest::test_calculate_selection_targets_mean()
 {
     cout << "test_calculate_selection_targets_mean\n";
 
@@ -2310,7 +2310,7 @@ void DataSetTest::test_calculate_selection_targets_mean() // @todo
 }
 
 
-void DataSetTest::test_calculate_testing_targets_mean() // @todo
+void DataSetTest::test_calculate_testing_targets_mean()
 {
     cout << "test_calculate_testing_targets_mean\n";
 
@@ -2332,7 +2332,7 @@ void DataSetTest::test_calculate_testing_targets_mean() // @todo
 }
 
 
-void DataSetTest::test_calculate_input_target_correlations() // @todo
+void DataSetTest::test_calculate_input_target_correlations()
 {
 //    cout << "test_calculate_input_target_correlations\n";
 
@@ -2354,7 +2354,7 @@ void DataSetTest::test_calculate_input_target_correlations() // @todo
 }
 
 
-void DataSetTest::test_calculate_total_input_correlations() // @todo
+void DataSetTest::test_calculate_total_input_correlations()
 {
     cout << "test_calculate_total_input_correlations\n";    
 

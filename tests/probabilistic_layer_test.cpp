@@ -775,8 +775,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     probabilistic_layer.set_parameters_constant(1);
     inputs.setConstant(1);
 
-    ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(&probabilistic_layer);
-    probabilistic_layer_forward_propagation.set(1);
+    ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(1, &probabilistic_layer);
 
     probabilistic_layer.forward_propagate(inputs, &probabilistic_layer_forward_propagation);
 
@@ -804,7 +803,10 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
     Tensor<type, 2> inputs(1,2);
 
     Tensor<type, 2> output_delta(1,2);
-/*
+
+    ProbabilisticLayerForwardPropagation forward_propagation;
+    ProbabilisticLayerBackPropagation back_propagation;
+
     // Test 1
 
     parameters.setValues({1,1, 1,1,1,1});
@@ -812,12 +814,11 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
 
     inputs.setValues({{0,1}});
 
-    ProbabilisticLayerForwardPropagation forward_propagation(&probabilistic_layer);
-    forward_propagation.set(1);
+    forward_propagation.set(1, &probabilistic_layer);
 
     probabilistic_layer.forward_propagate(inputs, &forward_propagation);
 
-    ProbabilisticLayerBackPropagation back_propagation(&probabilistic_layer);
+    back_propagation.set(1, &probabilistic_layer);
 
     output_delta.setValues({{1,-7}});
 
@@ -839,7 +840,6 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
     assert_true(abs(back_propagation.synaptic_weights_derivatives(0,1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(back_propagation.synaptic_weights_derivatives(1,0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(back_propagation.synaptic_weights_derivatives(1,1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-*/
 }
 
 

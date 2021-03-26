@@ -54,7 +54,7 @@ void GrowingNeuronsTest::test_set_default()
 }
 
 
-void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
+void GrowingNeuronsTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
 

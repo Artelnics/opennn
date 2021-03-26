@@ -142,6 +142,7 @@ void RecurrentLayerTest::test_get_biases()
    assert_true(biases(0) == 1, LOG);
 }
 
+
 void RecurrentLayerTest::test_get_weights()
 {
    cout << "test_get_synaptic_weights\n";

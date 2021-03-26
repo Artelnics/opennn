@@ -60,6 +60,31 @@ bool is_false(const Tensor<bool, 1>& tensor)
 }
 
 
+bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2, const type& tolerance)
+{
+    const Index size = vector_1.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(abs(vector_1(i) - vector_2(i)) > tolerance) return false;
+    }
+
+    return true;
+}
+
+
+bool are_equal(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2, const type& tolerance)
+{
+    const Index size = matrix_1.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(abs(matrix_1(i) - matrix_2(i)) > tolerance) return false;
+    }
+
+    return true;
+}
+
 }
 
 

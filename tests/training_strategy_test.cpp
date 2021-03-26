@@ -120,7 +120,7 @@ void TrainingStrategyTest::test_perform_training()
 
     data_set.set_data(new_data);
 
-    NormalizedSquaredError nse(&neural_network, &data_set);
+    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
@@ -163,7 +163,7 @@ void TrainingStrategyTest::test_to_XML()
 void TrainingStrategyTest::test_from_XML()
 {
    cout << "test_from_XML\n";
-/*
+
    TrainingStrategy training_strategy;
 
    training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
@@ -186,7 +186,7 @@ void TrainingStrategyTest::test_from_XML()
    }
 
    training_strategy.from_XML(document);
-*/
+
 }
 
 

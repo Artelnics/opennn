@@ -155,8 +155,8 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
 
-   PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer();
-   PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
+   PerceptronLayer* perceptron_layer_1 = new PerceptronLayer();
+   PerceptronLayer* perceptron_layer_2 = new PerceptronLayer();
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
 
@@ -201,7 +201,6 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
        Tensor<Index,1> targets_indices = data_set.get_target_variables_indices();
 
        batch.fill(batch_samples_indices, inputs_indices, targets_indices);
-
 
        Index batch_samples_number = batch.get_samples_number();
 
@@ -258,12 +257,12 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    data_set.set_training();
 
-   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
-   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   perceptron_layer_1->set(inputs_number, hidden_neurons);
+   perceptron_layer_2->set(hidden_neurons, outputs_number);
    probabilistic_layer->set(outputs_number, outputs_number);
 
-   neural_network.add_layer(hidden_perceptron_layer);
-   neural_network.add_layer(output_perceptron_layer);
+   neural_network.add_layer(perceptron_layer_1);
+   neural_network.add_layer(perceptron_layer_2);
    neural_network.add_layer(probabilistic_layer);
 
    neural_network.set_parameters_random();
@@ -313,10 +312,10 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 //   data_set.set_training();
 
 //   long_short_term_memory_layer->set(inputs_number, hidden_neurons);
-//   output_perceptron_layer->set(hidden_neurons, outputs_number);
+//   perceptron_layer_2->set(hidden_neurons, outputs_number);
 
 //   neural_network.add_layer(long_short_term_memory_layer);
-//   neural_network.add_layer(output_perceptron_layer);
+//   neural_network.add_layer(perceptron_layer_2);
 
 //   neural_network.set_parameters_random();
 
@@ -365,10 +364,10 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 //   data_set.set_training();
 
 //   recurrent_layer->set(inputs_number, hidden_neurons);
-//   output_perceptron_layer->set(hidden_neurons, outputs_number);
+//   perceptron_layer_2->set(hidden_neurons, outputs_number);
 
 //   neural_network.add_layer(recurrent_layer);
-//   neural_network.add_layer(output_perceptron_layer);
+//   neural_network.add_layer(perceptron_layer_2);
 
 //   neural_network.set_parameters_random();
 
@@ -527,9 +526,9 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_squared_errors_Jacobian()
+void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 {
-   cout << "test_calculate_squared_errors_Jacobian\n";
+   cout << "test_calculate_squared_errors_jacobian\n";
 
    NumericalDifferentiation nd;
 
@@ -545,7 +544,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_Jacobian()
 
    Tensor<type, 1> squared_errors;
    Tensor<type, 2> terms_Jacobian;
-   Tensor<type, 2> numerical_Jacobian_terms;
+   Tensor<type, 2> numerical_squared_errors_jacobian;
 
    // Test
 
@@ -559,7 +558,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_Jacobian()
 
 //   data_set.generate_data_binary_classification(3, 1);
 
-//   terms_Jacobian = wse.calculate_squared_errors_Jacobian();
+//   terms_Jacobian = wse.calculate_squared_errors_jacobian();
 
    assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
    assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
@@ -576,7 +575,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_Jacobian()
    wse.set(&neural_network, &data_set);
 //   data_set.generate_data_binary_classification(3, 3);
 
-//   terms_Jacobian = wse.calculate_squared_errors_Jacobian();
+//   terms_Jacobian = wse.calculate_squared_errors_jacobian();
 
    assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
    assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
@@ -596,7 +595,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_Jacobian()
    wse.set(&neural_network, &data_set);
 //   data_set.generate_data_binary_classification(3, 2);
 
-//   terms_Jacobian = wse.calculate_squared_errors_Jacobian();
+//   terms_Jacobian = wse.calculate_squared_errors_jacobian();
 
    assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
    assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
@@ -613,10 +612,10 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_Jacobian()
    data_set.set(3, 1, 1);
 //   data_set.generate_data_binary_classification(3, 1);
 
-//   terms_Jacobian = wse.calculate_squared_errors_Jacobian();
-//   numerical_Jacobian_terms = nd.calculate_Jacobian(wse, &WeightedSquaredError::calculate_training_error_terms, parameters);
+//   terms_Jacobian = wse.calculate_squared_errors_jacobian();
+//   numerical_squared_errors_jacobian = nd.calculate_Jacobian(wse, &WeightedSquaredError::calculate_training_error_terms, parameters);
 
-   //assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
+   //assert_true(absolute_value(terms_Jacobian-numerical_squared_errors_jacobian) < 1.0e-3, LOG);
 
    // Test
 
@@ -629,10 +628,10 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_Jacobian()
    data_set.set(2, 2, 1);
 //   data_set.generate_data_binary_classification(2, 2);
 
-//   terms_Jacobian = wse.calculate_squared_errors_Jacobian();
-//   numerical_Jacobian_terms = nd.calculate_Jacobian(wse, &WeightedSquaredError::calculate_training_error_terms, parameters);
+//   terms_Jacobian = wse.calculate_squared_errors_jacobian();
+//   numerical_squared_errors_jacobian = nd.calculate_Jacobian(wse, &WeightedSquaredError::calculate_training_error_terms, parameters);
 
-//   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
+//   assert_true(absolute_value(terms_Jacobian-numerical_squared_errors_jacobian) < 1.0e-3, LOG);
 
    // Test
 
@@ -645,7 +644,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_Jacobian()
 //   error_gradient = wse.calculate_gradient();
 
 //   squared_errors = wse.calculate_training_error_terms();
-//   terms_Jacobian = wse.calculate_squared_errors_Jacobian();
+//   terms_Jacobian = wse.calculate_squared_errors_jacobian();
 
 //   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(squared_errors)*2.0 - error_gradient) < 1.0e-3, LOG);
 }
@@ -685,7 +684,7 @@ void WeightedSquaredErrorTest::run_test_case()
    // Squared errors methods
 
    test_calculate_squared_errors();
-   test_calculate_squared_errors_Jacobian();
+   test_calculate_squared_errors_jacobian();
 
    // Loss hessian methods
 

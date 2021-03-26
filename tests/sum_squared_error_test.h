@@ -50,7 +50,7 @@ public:
    // Squared errors methods
 
    void test_calculate_squared_errors();
-   void test_calculate_squared_errors_Jacobian();
+   void test_calculate_squared_errors_jacobian();
 
    // Serialization methods
 

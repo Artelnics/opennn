@@ -407,7 +407,7 @@ struct LossIndexBackPropagationLM
 
         gradient.resize(parameters_number);
 
-        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+        squared_errors_jacobian.resize(batch_samples_number, parameters_number);
 
         hessian.resize(parameters_number, parameters_number);
 
@@ -436,7 +436,7 @@ struct LossIndexBackPropagationLM
     NeuralNetworkBackPropagation neural_network;
 
     Tensor<type, 1> squared_errors;
-    Tensor<type, 2> squared_errors_Jacobian;
+    Tensor<type, 2> squared_errors_jacobian;
 
     Tensor<type, 1> gradient;
     Tensor<type, 2> hessian;

@@ -245,13 +245,15 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
     }
 
 
-    explicit PerceptronLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
+    explicit PerceptronLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerForwardPropagation()
     {
+        set(new_batch_samples_number, new_layer_pointer);
     }
 
-    void set(const Index& new_batch_samples_number)
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
-        //layer_pointer = new_layer_pointer;
+        layer_pointer = new_layer_pointer;
 
         batch_samples_number = new_batch_samples_number;
 
@@ -296,13 +298,17 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
     }
 
 
-    explicit PerceptronLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
+    explicit PerceptronLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagation()
     {
-
+        set(new_batch_samples_number, new_layer_pointer);
     }
 
-    void set(const Index& new_batch_samples_number)
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
+        layer_pointer = new_layer_pointer;
+
         batch_samples_number = new_batch_samples_number;
 
         delta.resize(batch_samples_number, neurons_number);

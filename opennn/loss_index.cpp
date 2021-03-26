@@ -525,7 +525,7 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     // Second Order
 
-//    calculate_squared_errors_Jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
+//    calculate_squared_errors_jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
 
     calculate_gradient(batch, loss_index_back_propagation_lm);
 

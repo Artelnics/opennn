@@ -25,7 +25,7 @@ using namespace OpenNN;
 using namespace std;
 using namespace Eigen;
 
-int main(void)
+int main()
 {
     try
     {

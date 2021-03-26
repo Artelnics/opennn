@@ -1524,7 +1524,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_gradient_m
 
 }
 
-void NumericalDifferentiationTest::test_calculate_central_differences_hessian_matrices() // @todo
+void NumericalDifferentiationTest::test_calculate_central_differences_hessian_matrices()
 {
     cout << "test_calculate_central_differences_hessian_matrices\n";
 

@@ -675,7 +675,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
     if(!loss_index_pointer)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_PR_training_direction(void) const method.\n"
+               << "void calculate_PR_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
