@@ -422,7 +422,7 @@ void LossIndex::calculate_squared_errors(const DataSetBatch& batch,
     case Layer::Perceptron:
     {
         PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-        = static_cast<PerceptronLayerForwardPropagation*>(output_layer_forward_propagation);
+                = static_cast<PerceptronLayerForwardPropagation*>(output_layer_forward_propagation);
 
         const Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->activations;
 
@@ -433,7 +433,7 @@ void LossIndex::calculate_squared_errors(const DataSetBatch& batch,
     case Layer::Probabilistic:
     {
         ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-        = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
+                = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
         const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
 
@@ -444,7 +444,7 @@ void LossIndex::calculate_squared_errors(const DataSetBatch& batch,
     case Layer::Recurrent:
     {
         RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
-        = static_cast<RecurrentLayerForwardPropagation*>(output_layer_forward_propagation);
+                = static_cast<RecurrentLayerForwardPropagation*>(output_layer_forward_propagation);
 
         const Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->activations;
 
@@ -455,7 +455,7 @@ void LossIndex::calculate_squared_errors(const DataSetBatch& batch,
     case Layer::LongShortTermMemory:
     {
         LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
-        = static_cast<LongShortTermMemoryLayerForwardPropagation*>(output_layer_forward_propagation);
+                = static_cast<LongShortTermMemoryLayerForwardPropagation*>(output_layer_forward_propagation);
 
         const Tensor<type, 2>& outputs = long_short_term_memory_layer_forward_propagation->activations;
 
