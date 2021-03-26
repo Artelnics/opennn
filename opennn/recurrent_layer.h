@@ -254,10 +254,11 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
         batch_samples_number = new_batch_samples_number;
 
         const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
 
         previous_activations.resize(neurons_number);
 
-        current_inputs.resize(neurons_number);
+        current_inputs.resize(inputs_number);
         current_combinations.resize(neurons_number);
         current_activations_derivatives.resize(neurons_number);
 

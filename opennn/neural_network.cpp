@@ -644,13 +644,13 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == Forecasting)
     {
-        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+//        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
 
-        this->add_layer(long_short_term_memory_layer_pointer);
+//        this->add_layer(long_short_term_memory_layer_pointer);
 
-//        RecurrentLayer* recurrent_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
+        RecurrentLayer* recurrent_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
-//        this->add_layer(recurrent_layer_pointer);
+        this->add_layer(recurrent_layer_pointer);
 
         for(Index i = 1; i < size-1; i++)
         {
@@ -1333,6 +1333,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     else
     {
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
+
     }
 
     for(Index i = 1; i < trainable_layers_number; i++)
@@ -1343,6 +1344,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         {
             trainable_layers_pointers(i)->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             forward_propagation.layers(i));
+
         }
             break;
 
@@ -1357,6 +1359,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         {
             trainable_layers_pointers(i)->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                             forward_propagation.layers(i));
+
         }
             break;
 
