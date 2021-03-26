@@ -142,7 +142,7 @@ void GeneticAlgorithmTest::test_calculate_fitness()
 }
 
 
-void GeneticAlgorithmTest::test_perform_selection() // @todo
+void GeneticAlgorithmTest::test_perform_selection()
 {
     cout << "test_perform_selection\n";
 
@@ -205,7 +205,7 @@ void GeneticAlgorithmTest::test_perform_selection() // @todo
 }
 
 
-void GeneticAlgorithmTest::test_perform_crossover() // @todo
+void GeneticAlgorithmTest::test_perform_crossover()
 {
     cout << "test_perform_crossover\n";
 
@@ -342,7 +342,7 @@ void GeneticAlgorithmTest::test_perform_mutation()
 }
 
 
-void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
+void GeneticAlgorithmTest::test_perform_inputs_selection()
 {
     cout << "test_perform_inputs_selection\n";
 

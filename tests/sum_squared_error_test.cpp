@@ -407,7 +407,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
 }
 
 
-void SumSquaredErrorTest::test_calculate_Jacobian_gradient() // @todo
+void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 {
    cout << "test_calculate_Jacobian_gradient\n";
 
@@ -455,7 +455,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient() // @todo
    sum_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
 
    LossIndexBackPropagationLM loss_index_back_propagation_lm(training_samples_indices.size(), &sum_squared_error);
-//   sum_squared_error.calculate_squared_errors_Jacobian(batch, forward_propagation, training_back_propagation, loss_index_back_propagation_lm);
+//   sum_squared_error.calculate_squared_errors_jacobian(batch, forward_propagation, training_back_propagation, loss_index_back_propagation_lm);
 //   sum_squared_error.calculate_gradient(batch, forward_propagation, loss_index_back_propagation_lm);
 
    assert_true(loss_index_back_propagation_lm.gradient(0) == 0.0, LOG);
@@ -573,13 +573,13 @@ void SumSquaredErrorTest::test_calculate_error_gradient()
 
     data_set.set_training();
 
-    PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer(inputs_number, hidden_neurons);
+    PerceptronLayer* perceptron_layer_1 = new PerceptronLayer(inputs_number, hidden_neurons);
 
-    neural_network.add_layer(hidden_perceptron_layer);
+    neural_network.add_layer(perceptron_layer_1);
 
-    PerceptronLayer* output_perceptron_layer = new PerceptronLayer(hidden_neurons, outputs_number);
+    PerceptronLayer* perceptron_layer_2 = new PerceptronLayer(hidden_neurons, outputs_number);
 
-    neural_network.add_layer(output_perceptron_layer);
+    neural_network.add_layer(perceptron_layer_2);
 
 //    numerical_gradient = sum_squared_error.calculate_gradient_numerical_differentiation();
 
@@ -668,9 +668,9 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 }
 
 
-void SumSquaredErrorTest::test_calculate_squared_errors_Jacobian()
+void SumSquaredErrorTest::test_calculate_squared_errors_jacobian()
 {   
-   cout << "test_calculate_squared_errors_Jacobian\n";
+   cout << "test_calculate_squared_errors_jacobian\n";
 
 //   NumericalDifferentiation nd;
 
@@ -686,7 +686,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors_Jacobian()
 
 //   Tensor<type, 1> terms;
 //   Tensor<type, 2> terms_Jacobian;
-//   Tensor<type, 2> numerical_Jacobian_terms;
+//   Tensor<type, 2> numerical_squared_errors_jacobian;
 
 //   Tensor<Index, 1> samples;
 
@@ -727,7 +727,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors_Jacobian()
 
 //   layers_delta = sum_squared_error.calculate_layers_delta(forward_propagation, output_delta);
 
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_Jacobian(inputs, forward_propagation, layers_delta);
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian(inputs, forward_propagation, layers_delta);
 
 //   assert_true(terms_Jacobian.dimension(0) == data_set.get_samples_number(), LOG);
 //   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
@@ -744,7 +744,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors_Jacobian()
 //   sum_squared_error.set(&neural_network, &data_set);
 //   data_set.initialize_data(0.0);
 
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
 //   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
 //   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
@@ -764,7 +764,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors_Jacobian()
 //   sum_squared_error.set(&neural_network, &data_set);
 //   data_set.initialize_data(0.0);
 
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
 //   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
 //   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
@@ -781,10 +781,10 @@ void SumSquaredErrorTest::test_calculate_squared_errors_Jacobian()
 //   data_set.set(1, 1, 1);
 //   data_set.set_data_random();
 
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_Jacobian();
-//   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
+//   numerical_squared_errors_jacobian = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
 
-//   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
+//   assert_true(absolute_value(terms_Jacobian-numerical_squared_errors_jacobian) < 1.0e-3, LOG);
 
    // Test
 
@@ -797,10 +797,10 @@ void SumSquaredErrorTest::test_calculate_squared_errors_Jacobian()
 //   data_set.set(2, 2, 2);
 //   data_set.set_data_random();
 
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_Jacobian();
-//   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
+//   numerical_squared_errors_jacobian = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
 
-//   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
+//   assert_true(absolute_value(terms_Jacobian-numerical_squared_errors_jacobian) < 1.0e-3, LOG);
 
    // Test
 
@@ -815,7 +815,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors_Jacobian()
 //   gradient = sum_squared_error.calculate_gradient();
 
 //   terms = sum_squared_error.calculate_training_error_terms();
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
 //   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(terms)*2.0 - gradient) < 1.0e-3, LOG);
 
@@ -891,7 +891,7 @@ void SumSquaredErrorTest::run_test_case()
 
    test_calculate_squared_errors();
 
-   test_calculate_squared_errors_Jacobian();
+   test_calculate_squared_errors_jacobian();
 
    //Serialization methods
 

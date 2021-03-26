@@ -46,14 +46,9 @@ struct LayerForwardPropagation
     }
 
 
-    explicit LayerForwardPropagation(Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-    }
-
     virtual ~LayerForwardPropagation() {}
 
-    virtual void set(const Index&) {}
+    virtual void set(const Index&, Layer*) {}
 
     virtual void print() const = 0;
 
@@ -69,14 +64,9 @@ struct LayerBackPropagation
 
     explicit LayerBackPropagation() {}
 
-    explicit LayerBackPropagation(Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-    }
-
     virtual ~LayerBackPropagation() {}
 
-    virtual void set(const Index&) {}
+    virtual void set(const Index&, Layer*) {}
 
     virtual void print() const {}
 

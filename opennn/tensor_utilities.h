@@ -26,6 +26,9 @@ void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 bool is_zero(const Tensor<type, 1>&);
 
+bool are_equal(const Tensor<type, 1>&, const Tensor<type, 1>&, const type& tolerance = 0.0);
+bool are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& tolerance = 0.0);
+
 bool is_false(const Tensor<bool, 1>& tensor);
 
 }

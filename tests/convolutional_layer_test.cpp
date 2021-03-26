@@ -158,7 +158,7 @@ void ConvolutionalLayerTest::test_destructor()
 }
 
 
-void ConvolutionalLayerTest::test_get_parameters() // @todo
+void ConvolutionalLayerTest::test_get_parameters()
 {
     cout << "test_get_parameters\n";
 
@@ -254,7 +254,7 @@ void ConvolutionalLayerTest::test_get_parameters() // @todo
 }
 
 
-void ConvolutionalLayerTest::test_get_outputs_dimensions() // @todo
+void ConvolutionalLayerTest::test_get_outputs_dimensions()
 {
     cout << "test_get_outputs_dimensions\n";
 
@@ -302,7 +302,7 @@ void ConvolutionalLayerTest::test_get_outputs_dimensions() // @todo
 }
 
 
-void ConvolutionalLayerTest::test_get_parameters_number() // @todo
+void ConvolutionalLayerTest::test_get_parameters_number()
 {
     cout << "test_get_parameters_number\n";
 
@@ -322,7 +322,7 @@ void ConvolutionalLayerTest::test_get_parameters_number() // @todo
 }
 
 
-void ConvolutionalLayerTest::test_set() // @todo
+void ConvolutionalLayerTest::test_set()
 {
     cout << "test_set\n";
 
@@ -885,7 +885,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 }
 
 
-void ConvolutionalLayerTest::test_calculate_activations_derivatives() // @todo
+void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_activations_derivatives\n";
 
@@ -1368,7 +1368,7 @@ void ConvolutionalLayerTest::test_calculate_outputs()
 }
 
 
-void ConvolutionalLayerTest::test_insert_padding() // @todo
+void ConvolutionalLayerTest::test_insert_padding()
 {
     cout << "test_insert_padding\n";
 
@@ -1468,7 +1468,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations;
     Tensor<type, 4> activations_derivatives;
-    ConvolutionalLayerForwardPropagation forward_propagation(nullptr);
+    ConvolutionalLayerForwardPropagation forward_propagation;
 
     Tensor<type, 4> kernels;
     Tensor<type, 1> biases;
@@ -1635,7 +1635,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 }
 
 
-void ConvolutionalLayerTest::run_test_case() // @todo
+void ConvolutionalLayerTest::run_test_case()
 {
    cout << "Running convolutional layer test case...\n";
 

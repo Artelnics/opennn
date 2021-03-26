@@ -333,12 +333,21 @@ protected:
 
 struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit LongShortTermMemoryLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
+    explicit LongShortTermMemoryLayerForwardPropagation() : LayerForwardPropagation()
     {
     }
 
-    void set(const Index& new_batch_samples_number)
+    explicit LongShortTermMemoryLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerForwardPropagation()
     {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
         const Index inputs_number = layer_pointer->get_inputs_number();
         const Index neurons_number = layer_pointer->get_neurons_number();
 
@@ -435,16 +444,25 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
 struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 {
-    explicit LongShortTermMemoryLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
+    explicit LongShortTermMemoryLayerBackPropagation() : LayerBackPropagation()
     {
     }
 
-    void set(const Index& new_batch_samples_number)
+
+    explicit LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagation()
     {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+        batch_samples_number = new_batch_samples_number;
+
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
-
-        batch_samples_number = new_batch_samples_number;
 
         current_layer_deltas.resize(neurons_number);
 

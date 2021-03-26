@@ -19,19 +19,19 @@ PoolingLayerTest::~PoolingLayerTest()
 }
 
 
-void PoolingLayerTest::test_constructor() // @todo
+void PoolingLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
 }
 
-void PoolingLayerTest::test_destructor() // @todo
+void PoolingLayerTest::test_destructor()
 {
    cout << "test_destructor\n";
 
 }
 
-void PoolingLayerTest::test_calculate_average_pooling_outputs() // @todo
+void PoolingLayerTest::test_calculate_average_pooling_outputs()
 {
     cout << "test_calculate_average_pooling_outputs\n";
 
@@ -147,7 +147,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs() // @todo
 }
 
 
-void PoolingLayerTest::test_calculate_max_pooling_outputs() // @todo
+void PoolingLayerTest::test_calculate_max_pooling_outputs()
 {
     cout << "test_calculate_max_pooling_outputs\n";
 
@@ -263,7 +263,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs() // @todo
 }
 
 
-void PoolingLayerTest::run_test_case() // @todo
+void PoolingLayerTest::run_test_case()
 {
    cout << "Running pooling layer test case...\n";
 

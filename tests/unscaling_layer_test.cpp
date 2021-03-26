@@ -429,12 +429,17 @@ void UnscalingLayerTest::test_set_default()
 void UnscalingLayerTest::test_set_descriptives()
 {
    cout << "test_set_descriptives\n";
-/*
+
    UnscalingLayer unscaling_layer;
+
+   Tensor<Descriptives, 1> descriptives;
+
+   Descriptives item_descriptives(1,1,1,0);
+   Descriptives des_1(2,2,2,0);
 
    // Test 0
 
-   Tensor<Descriptives, 1> descriptives(1);
+   descriptives.resize(1);
 
    unscaling_layer.set_descriptives(descriptives);
 
@@ -445,24 +450,24 @@ void UnscalingLayerTest::test_set_descriptives()
 
    // Test 1
 
-   Descriptives des_0(1,1,1,0);
-   Descriptives des_1(2,2,2,0);
+   item_descriptives.set(1,1,1,0);
 
-   descriptives.resize(2);
-   descriptives.setValues({des_0,des_1});
+   descriptives.resize(1);
+   descriptives.setValues({item_descriptives});
 
    unscaling_layer.set_descriptives(descriptives);
 
    assert_true(abs(unscaling_layer.get_descriptives_matrix()(0,0) - 1) < static_cast<type>(1e-3), LOG);
    assert_true(abs(unscaling_layer.get_descriptives_matrix()(0,2) - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(unscaling_layer.get_descriptives_matrix()(1,1) - 2) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(unscaling_layer.get_descriptives_matrix()(1,3) - 0) < static_cast<type>(1e-3), LOG);
-*/
 }
+
 
 void UnscalingLayerTest::test_set_descriptives_eigen()
 {
    cout << "test_set_descriptives_eigen\n";
+
+
+   ScalingLayer scaling_layer(2);
 
    UnscalingLayer unscaling_layer(1);
 
@@ -479,18 +484,17 @@ void UnscalingLayerTest::test_set_descriptives_eigen()
 
    // Test 1
 
-   ScalingLayer sl_(2);
-
    Tensor<type, 2> descriptives_eigen_(2,4);
    descriptives_eigen_.setValues({{1,1,1,0},{2,2,2,0}});
 
-   sl_.set_descriptives_eigen(descriptives_eigen_);
+   scaling_layer.set_descriptives_eigen(descriptives_eigen_);
 
-   assert_true(abs(sl_.get_descriptives_matrix()(0,0) - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(sl_.get_descriptives_matrix()(0,2) - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(sl_.get_descriptives_matrix()(1,1) - 2) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(sl_.get_descriptives_matrix()(1,3) - 0) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,0) - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,2) - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(scaling_layer.get_descriptives_matrix()(1,1) - 2) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(scaling_layer.get_descriptives_matrix()(1,3) - 0) < static_cast<type>(1e-3), LOG);
 }
+
 
 void UnscalingLayerTest::test_set_item_descriptives()
 {

@@ -528,7 +528,7 @@ void NeuralNetworkTest::test_set()
    assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
 
    // Test 2 / Convolutional layer set
-/*
+
    Tensor<Index, 1> new_inputs_dimensions(1);
    new_inputs_dimensions.setConstant(1);
 
@@ -539,13 +539,12 @@ void NeuralNetworkTest::test_set()
 
    Index new_outputs_number = 1;
 
-   ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
+//   ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
 
    neural_network.set(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
 
    assert_true(neural_network.is_empty(), LOG);
    assert_true(neural_network.get_layers_number() == 0, LOG);
-*/
 
    // Test 3
 
@@ -699,6 +698,7 @@ void NeuralNetworkTest::test_set_pointers()
    assert_true(neural_network_2.get_layer_pointer(1)->get_type() == Layer::Perceptron, LOG);
    assert_true(neural_network_2.get_layer_pointer(2)->get_type() == Layer::Unscaling, LOG);
 }
+
 
 void NeuralNetworkTest::test_set_display()
 {
@@ -1208,7 +1208,7 @@ void NeuralNetworkTest::test_perturbate_parameters()
 }
 
 
-void NeuralNetworkTest::test_calculate_outputs() // @todo
+void NeuralNetworkTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
@@ -1540,7 +1540,7 @@ void NeuralNetworkTest::test_save()
 void NeuralNetworkTest::test_load()
 {
    cout << "test_load\n";
-/*
+
    string file_name = "../data/neural_network.xml";
 
    // Empty neural network
@@ -1548,7 +1548,6 @@ void NeuralNetworkTest::test_load()
    NeuralNetwork neural_network;
    neural_network.save(file_name);
    neural_network.load(file_name);
-*/
 }
 
 
@@ -1634,7 +1633,7 @@ void NeuralNetworkTest::test_write_expression()
 void NeuralNetworkTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
-/*
+
     // Test 1
 
     Index inputs_number = 2;
@@ -1787,7 +1786,6 @@ void NeuralNetworkTest::test_forward_propagate()
 //    assert_true(abs(probabilistic_activations_3_1(0,0) - 1) < static_cast<type>(1e-3)
 //             && abs(probabilistic_activations_3_1(1,0) - 1) < static_cast<type>(1e-3)
 //             && abs(probabilistic_activations_3_1(2,0) - 1) < static_cast<type>(1e-3), LOG);
-*/
 }
 
 

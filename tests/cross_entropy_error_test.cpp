@@ -216,9 +216,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    numerical_error_gradient = cross_entropy_error.calculate_gradient_numerical_differentiation();
 
-   const Tensor<type, 1> difference = training_back_propagation.gradient-numerical_error_gradient;
-
-   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
+   assert_true(are_equal(training_back_propagation.gradient, numerical_error_gradient, 1.0e-3), LOG);
 }
 
 //   neural_network.set();
@@ -243,10 +241,10 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    neural_network.set(NeuralNetwork::Forecasting, architecture);
 
    long_short_term_memory_layer.set(inputs_number, hidden_neurons);
-//   output_perceptron_layer.set(hidden_neurons, outputs_number);
+//   perceptron_layer_2.set(hidden_neurons, outputs_number);
 
    neural_network.add_layer(&long_short_term_memory_layer);
-//   neural_network.add_layer(&output_perceptron_layer);
+//   neural_network.add_layer(&perceptron_layer_2);
 
    neural_network.set_parameters_random();
 
@@ -274,11 +272,11 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    data_set.set_training();
 
    recurrent_layer.set(inputs_number, hidden_neurons);
-//   output_perceptron_layer.set(hidden_neurons, outputs_number);
+//   perceptron_layer_2.set(hidden_neurons, outputs_number);
 
    neural_network.add_layer(&scaling_layer);
    neural_network.add_layer(&recurrent_layer);
-//   neural_network.add_layer(&output_perceptron_layer);
+//   neural_network.add_layer(&perceptron_layer_2);
 
    neural_network.set_parameters_random();
 

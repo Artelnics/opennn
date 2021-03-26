@@ -39,7 +39,7 @@ void GrowingInputsTest::test_constructor()
 }
 
 
-void GrowingInputsTest::test_destructor() // @todo
+void GrowingInputsTest::test_destructor()
 {
     cout << "test_destructor\n";
 
@@ -49,16 +49,16 @@ void GrowingInputsTest::test_destructor() // @todo
 }
 
 
-void GrowingInputsTest::test_set_default() // @todo
+void GrowingInputsTest::test_set_default()
 {
     cout << "test_set_default\n";
 }
 
 
-void GrowingInputsTest::test_perform_inputs_selection() // @todo
+void GrowingInputsTest::test_perform_inputs_selection()
 {
     cout << "test_perform_inputs_selection\n";
-/*
+
     DataSet data_set;
 
     Tensor<type, 2> data;
@@ -66,15 +66,19 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 
     NeuralNetwork neural_network;
 
-    SumSquaredError sum_squared_error(&neural_network ,&data_set);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    InputsSelectionResults* gir;
+    ModelSelection model_selection(&training_strategy);
+
+    GrowingInputs growing_inputs(&training_strategy);
+
+    InputsSelectionResults inputs_selection_results;
 
     // Test
 
 //    ds.generate_inputs_selection_data(30,3);
 
-//    ds.set_columns_uses({"Input","Input","Target"});
+//    data_set.set_columns_uses({"Input","Input","Target"});
 
     data_set.split_samples_random();
 
@@ -83,19 +87,7 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 
     neural_network.set(NeuralNetwork::Approximation, architecture);
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
-    ModelSelection ms(&ts);
-
-    GrowingInputs gi(&ts);
-
-    ts.set_display(false);
-
-    gi.set_display(false);
-
-    gi.set_approximation(true);
-
-    gir = gi.perform_inputs_selection();
+    inputs_selection_results = growing_inputs.perform_inputs_selection();
 
 //    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
 
@@ -115,29 +107,17 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 
     TrainingStrategy training_strategy1(&neural_network, &data_set);
 
-    ModelSelection ms1(&ts);
-
-    GrowingInputs gi1(&ts);
-
-    ts1.set_display(false);
-
-    gi1.set_display(false);
-
-    gi1.set_approximation(false);
-
-    gir = gi1.perform_inputs_selection();
+    inputs_selection_results = growing_inputs.perform_inputs_selection();
 
 //    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
 
 //    gi1.delete_selection_history();
 //    gi1.delete_parameters_history();
 //    gi1.delete_loss_history();
-*/
 }
 
-// Serialization methods
 
-void GrowingInputsTest::test_to_XML() // @todo
+void GrowingInputsTest::test_to_XML()
 {
     cout << "test_to_XML\n";
 
@@ -149,7 +129,7 @@ void GrowingInputsTest::test_to_XML() // @todo
 //    delete document;
 }
 
-void GrowingInputsTest::test_from_XML() // @todo
+void GrowingInputsTest::test_from_XML()
 {
     cout << "test_from_XML\n";
 
@@ -162,7 +142,7 @@ void GrowingInputsTest::test_from_XML() // @todo
 }
 
 
-void GrowingInputsTest::run_test_case() // @todo
+void GrowingInputsTest::run_test_case()
 {
     cout << "Running growing inputs test case...\n";
 

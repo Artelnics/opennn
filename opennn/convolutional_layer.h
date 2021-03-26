@@ -235,23 +235,33 @@ protected:
 
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit ConvolutionalLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
+    // Default constructor
+
+    explicit ConvolutionalLayerForwardPropagation()
+        : LayerForwardPropagation()
     {
+    }
+
+    // Constructor
+
+    explicit ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerForwardPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
         const Index neurons_number = layer_pointer->get_neurons_number();
 
         const Index kernels_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_number();
         const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
         const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
-    }
 
-
-    void set(const Index& new_batch_samples_number)
-    {
         batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = layer_pointer->get_neurons_number();
-
-        Index kernels_number, outputs_rows_number, outputs_columns_number;
 
         combinations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
         activations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
@@ -277,12 +287,19 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     const Index neurons_number = layer_pointer->get_neurons_number();
     const Index inputs_nmumber = layer_pointer->get_inputs_number();
 
-    explicit ConvolutionalLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
+    explicit ConvolutionalLayerBackPropagation() : LayerBackPropagation()
     {
     }
 
 
-    void set(const Index& new_batch_samples_number)
+    explicit ConvolutionalLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
     }
 

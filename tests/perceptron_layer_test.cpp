@@ -905,7 +905,7 @@ void PerceptronLayerTest::test_set_parameters_random()
 }
 
 
-void PerceptronLayerTest::test_calculate_combinations() // @todo
+void PerceptronLayerTest::test_calculate_combinations()
 {
    cout << "test_calculate_combinations\n";
 

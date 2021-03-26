@@ -24,7 +24,7 @@ using namespace std;
 using namespace OpenNN;
 
 
-int main(void)
+int main()
 {
     try
     {

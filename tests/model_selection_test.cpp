@@ -50,9 +50,9 @@ void ModelSelectionTest::test_get_training_strategy_pointer()
 
     TrainingStrategy training_strategy;
 
-    ModelSelection ms(&training_strategy);
+    ModelSelection model_selection(&training_strategy);
 
-    assert_true(ms.get_training_strategy_pointer() != nullptr, LOG);
+    assert_true(model_selection.get_training_strategy_pointer() != nullptr, LOG);
 }
 
 

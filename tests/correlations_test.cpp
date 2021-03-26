@@ -526,7 +526,7 @@ void CorrelationsTest::test_exponential_regression()
 }
 
 
-void CorrelationsTest::test_logarithmic_regression() // @todo
+void CorrelationsTest::test_logarithmic_regression()
 {
     cout << "test_logarithmic_regression\n";
 
@@ -563,7 +563,7 @@ void CorrelationsTest::test_logarithmic_regression() // @todo
 }
 
 
-void CorrelationsTest::test_power_regression() // @todo
+void CorrelationsTest::test_power_regression()
 {
     cout << "test_power_regression\n";
 
@@ -599,7 +599,7 @@ void CorrelationsTest::test_power_regression() // @todo
 }
 
 
-void CorrelationsTest::test_logistic_regression() // @todo
+void CorrelationsTest::test_logistic_regression()
 {
     cout << "test_logistic_regression \n";
 
@@ -678,7 +678,7 @@ void CorrelationsTest::test_covariance_matrix()
 }
 
 
-void CorrelationsTest::test_less_rank_with_ties() // @todo
+void CorrelationsTest::test_less_rank_with_ties()
 {
     cout << "test_less_rank_with_ties\n";
 
@@ -712,7 +712,7 @@ void CorrelationsTest::test_less_rank_with_ties() // @todo
 }
 
 
-void CorrelationsTest::test_contingency_table() // @todo
+void CorrelationsTest::test_contingency_table()
 {
     cout << "test_contingency_table\n";
 
@@ -727,7 +727,7 @@ void CorrelationsTest::test_contingency_table() // @todo
 }
 
 
-void CorrelationsTest::test_chi_square_test() // @todo
+void CorrelationsTest::test_chi_square_test()
 {
     cout << "test_chi_square_test\n";
 

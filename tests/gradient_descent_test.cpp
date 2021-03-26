@@ -19,7 +19,7 @@ GradientDescentTest::~GradientDescentTest()
 }
 
 
-void GradientDescentTest::test_constructor() // @todo
+void GradientDescentTest::test_constructor()
 {
    cout << "test_constructor\n"; 
 
@@ -37,13 +37,13 @@ void GradientDescentTest::test_constructor() // @todo
 }
 
 
-void GradientDescentTest::test_destructor() // @todo
+void GradientDescentTest::test_destructor()
 {
    cout << "test_destructor\n"; 
 }
 
 
-void GradientDescentTest::test_set_reserve_all_training_history() // @todo
+void GradientDescentTest::test_set_reserve_all_training_history()
 {
    cout << "test_set_reserve_all_training_history\n";
 
@@ -56,7 +56,7 @@ void GradientDescentTest::test_set_reserve_all_training_history() // @todo
 }
 
 
-void GradientDescentTest::test_perform_training() // @todo
+void GradientDescentTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
@@ -151,7 +151,7 @@ void GradientDescentTest::test_perform_training() // @todo
 }
 
 
-void GradientDescentTest::test_resize_training_history() // @todo
+void GradientDescentTest::test_resize_training_history()
 {
    cout << "test_resize_training_history\n";
 
@@ -170,7 +170,7 @@ void GradientDescentTest::test_resize_training_history() // @todo
 
 /// @todo
 
-void GradientDescentTest::test_to_XML() // @todo
+void GradientDescentTest::test_to_XML()
 {
    cout << "test_to_XML\n";
 
@@ -188,13 +188,13 @@ void GradientDescentTest::test_to_XML() // @todo
 }
 
 
-void GradientDescentTest::test_from_XML() // @todo
+void GradientDescentTest::test_from_XML()
 {
    cout << "test_from_XML\n";
 }
 
 
-void GradientDescentTest::run_test_case() // @todo
+void GradientDescentTest::run_test_case()
 {
    cout << "Running gradient descent test case...\n";
 

@@ -294,38 +294,38 @@ struct NeuralNetworkForwardPropagation
             {
             case Layer::Perceptron:
             {
-                layers(i) = new PerceptronLayerForwardPropagation(trainable_layers_pointers(i));
+                layers(i) = new PerceptronLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Probabilistic:
             {
-                layers(i) = new ProbabilisticLayerForwardPropagation(trainable_layers_pointers(i));
+                layers(i) = new ProbabilisticLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Recurrent:
             {
-                layers(i) = new RecurrentLayerForwardPropagation(trainable_layers_pointers(i));
+                layers(i) = new RecurrentLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::LongShortTermMemory:
             {
-                layers(i) = new LongShortTermMemoryLayerForwardPropagation(trainable_layers_pointers(i));
+                layers(i) = new LongShortTermMemoryLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Convolutional:
             {
-                layers(i) = new ConvolutionalLayerForwardPropagation(trainable_layers_pointers(i));
+                layers(i) = new ConvolutionalLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             default: break;
             }
 
-            layers(i)->set(new_batch_samples_number);
+//            layers(i)->set(new_batch_samples_number);
         }
     }
 
@@ -380,38 +380,36 @@ struct NeuralNetworkBackPropagation
             {
             case Layer::Perceptron:
             {
-                layers(i) = new PerceptronLayerBackPropagation(trainable_layers_pointers(i));
+                layers(i) = new PerceptronLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Probabilistic:
             {
-                layers(i) = new ProbabilisticLayerBackPropagation(trainable_layers_pointers(i));
+                layers(i) = new ProbabilisticLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Recurrent:
             {
-                layers(i) = new RecurrentLayerBackPropagation(trainable_layers_pointers(i));
+                layers(i) = new RecurrentLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::LongShortTermMemory:
             {
-                layers(i) = new LongShortTermMemoryLayerBackPropagation(trainable_layers_pointers(i));
+                layers(i) = new LongShortTermMemoryLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             case Layer::Convolutional:
             {
-                layers(i) = new ConvolutionalLayerBackPropagation(trainable_layers_pointers(i));
+                layers(i) = new ConvolutionalLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
             default: break;
             }
-
-            layers(i)->set(new_batch_samples_number);
         }
     }
 

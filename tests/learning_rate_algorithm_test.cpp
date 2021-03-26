@@ -203,7 +203,7 @@ void LearningRateAlgorithmTest::test_calculate_fixed_directional_point()
 }
 
 
-void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
+void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
     cout << "test_calculate_bracketing_triplet\n";
 

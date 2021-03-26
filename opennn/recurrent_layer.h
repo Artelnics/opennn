@@ -245,12 +245,19 @@ protected:
 
 struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit RecurrentLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
+    explicit RecurrentLayerForwardPropagation() : LayerForwardPropagation()
     {
     }
 
-    void set(const Index& new_batch_samples_number)
+    explicit RecurrentLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer) : LayerForwardPropagation()
     {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
         batch_samples_number = new_batch_samples_number;
 
         const Index neurons_number = layer_pointer->get_neurons_number();
@@ -288,16 +295,25 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 
 struct RecurrentLayerBackPropagation : LayerBackPropagation
 {
-    const Index neurons_number = layer_pointer->get_neurons_number();
-    const Index inputs_number = layer_pointer->get_inputs_number();
-
-    explicit RecurrentLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
+    explicit RecurrentLayerBackPropagation() : LayerBackPropagation()
     {
     }
 
-    void set(const Index& new_batch_samples_number)
+    explicit RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagation()
     {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
         batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
 
         current_layer_deltas.resize(neurons_number);
 
@@ -319,7 +335,6 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
     {
 
     }
-
 
     Tensor<type, 1> current_layer_deltas;
 
