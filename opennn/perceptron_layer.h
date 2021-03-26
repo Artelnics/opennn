@@ -249,7 +249,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
     {
     }
 
-    void set(const Index& new_batch_samples_number, const PerceptronLayer* new_layer_pointer)
+    void set(const Index& new_batch_samples_number)
     {
         //layer_pointer = new_layer_pointer;
 
