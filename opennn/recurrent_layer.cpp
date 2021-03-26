@@ -777,6 +777,7 @@ void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, LayerForwa
             recurrent_layer_forward_propagation->activations(i,j) = hidden_states(j);
             recurrent_layer_forward_propagation->activations_derivatives(i,j) = recurrent_layer_forward_propagation->current_activations_derivatives(j);
         }
+
     }
 }
 

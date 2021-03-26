@@ -493,7 +493,11 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
     batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
+
     neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
+
+
+
     loss_index_pointer->calculate_errors(batch_training, training_forward_propagation, training_back_propagation);
     loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
     results.training_error_history(0) = training_back_propagation.error;
