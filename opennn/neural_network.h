@@ -49,13 +49,14 @@ class NeuralNetwork
 
 public:
 
-    enum ProjectType{Approximation, Classification, Forecasting, ImageApproximation, ImageClassification};
+   enum ProjectType{Approximation, Classification, Forecasting, ImageApproximation, ImageClassification};
 
    // Constructors
 
    explicit NeuralNetwork();
 
    explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
+   explicit NeuralNetwork(const NeuralNetwork::ProjectType&, const initializer_list<Index>&);
 
    explicit NeuralNetwork(const Tensor<Index, 1>&, const Index&, const Tensor<Index, 1>&, const Index&);
 

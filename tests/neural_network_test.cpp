@@ -485,8 +485,9 @@ void NeuralNetworkTest::test_get_layer_pointer()
 void NeuralNetworkTest::test_set()
 {
    cout << "test_set\n";
-/*
+
    NeuralNetwork neural_network;
+   Tensor<Index, 1> architecture;
 
    // Test 0
 
@@ -498,8 +499,7 @@ void NeuralNetworkTest::test_set()
 
    // Test 1
 
-   Tensor<Index, 1> architecture(3);
-
+   architecture.resize(3);
    architecture.setValues({1,0,1}); //CC -> architecture = {inp_n, hddn_neurns_n, out_n}
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
@@ -528,7 +528,7 @@ void NeuralNetworkTest::test_set()
    assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
 
    // Test 2 / Convolutional layer set
-
+/*
    Tensor<Index, 1> new_inputs_dimensions(1);
    new_inputs_dimensions.setConstant(1);
 
@@ -545,24 +545,22 @@ void NeuralNetworkTest::test_set()
 
    assert_true(neural_network.is_empty(), LOG);
    assert_true(neural_network.get_layers_number() == 0, LOG);
-
+*/
 
    // Test 3
 
-   Tensor<Index, 1> architecture_1(4);
+   architecture.resize(4);
+   architecture.setValues({1,1,1,1});
 
-   architecture_1.setValues({1,1,1,1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture_1);
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    assert_true(neural_network.get_inputs_names().size() == 1, LOG);
    assert_true(neural_network.get_outputs_names().size() == 1, LOG);
    assert_true(neural_network.get_layers_pointers().size() == 6, LOG);
 
-   neural_network.set(NeuralNetwork::Classification, architecture_1);
+   neural_network.set(NeuralNetwork::Classification, architecture);
    assert_true(neural_network.get_inputs_names().size() == 1, LOG);
    assert_true(neural_network.get_outputs_names().size() == 1, LOG);
    assert_true(neural_network.get_layers_pointers().size() == 4, LOG);
-*/
 }
 
 
@@ -603,22 +601,31 @@ void NeuralNetworkTest::test_set_names()
 void NeuralNetworkTest::test_set_inputs_number()
 {
    cout << "test_set_inputs_number\n";
-/*
+
+   NeuralNetwork neural_network;
+
    Tensor<Index, 1> architecture(3);
    architecture.setValues({1,0,1});
 
-   NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
-
-   // Test 0_0
-
    Index inputs_number = 0;
+
+   Tensor<bool, 1> inputs;
+
+   // Test
+
+   architecture.resize(3);
+   architecture.setValues({1,0,1});
+
+   neural_network.set(NeuralNetwork::Classification, architecture);
+
+   inputs_number = 0;
 
    neural_network.set_inputs_number(inputs_number);
 
    assert_true(neural_network.get_inputs_number() == 0, LOG);
    assert_true(neural_network.get_layer_pointer(0)->get_inputs_number() == 0, LOG); //CC -> Scaling layer nmb assert
 
-   // Test 0_1
+   // Test
 
    inputs_number = 3;
 
@@ -648,7 +655,7 @@ void NeuralNetworkTest::test_set_inputs_number()
 
    neural_network.set_inputs_number(inputs_names_1_2);
    assert_true(neural_network.get_inputs_number() ==2 , LOG);
-*/
+
 }
 
 

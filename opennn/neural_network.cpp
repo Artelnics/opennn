@@ -35,6 +35,15 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const
 }
 
 
+NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const initializer_list<Index>& architecture_list)
+{
+    Tensor<Index, 1> architecture(architecture_list.size());
+    architecture.setValues(architecture_list);
+
+    set(model_type, architecture);
+}
+
+
 /// (Convolutional layer) constructor.
 /// It creates a neural network object with the given parameters.
 /// Note that this method is only valid when our problem presents convolutional layers.
@@ -815,7 +824,6 @@ void NeuralNetwork::set_inputs_number(const Tensor<bool, 1>& inputs)
     }
 
     set_inputs_number(new_inputs_number);
-
 }
 
 

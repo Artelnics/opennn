@@ -357,7 +357,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-//    InputsSelectionResults inputs_selection_results;
+    InputsSelectionResults inputs_selection_results;
 
     // Test
 
@@ -384,8 +384,8 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
     genetic_algorithm.set_individuals_number(10);
 
     genetic_algorithm.set_selection_error_goal(1);
-/*
-//    InputsSelectionResults inputs_selection_results = genetic_algorithm.perform_inputs_selection();
+
+    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
 //    assert_true(ga_results->selection_error < 1, LOG);
     assert_true(inputs_selection_results.stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
@@ -420,31 +420,17 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 
     neural_network.set(NeuralNetwork::Approximation, architecture);
 
-    TrainingStrategy training_strategy1(&neural_network, &data_set);
+    genetic_algorithm.set_individuals_number(10);
 
-    GeneticAlgorithm genetic_algorithm1(&ts);
+    genetic_algorithm.set_selection_error_goal(0.0);
+    genetic_algorithm.set_maximum_iterations_number(1);
 
-    ts1.set_display(false);
+    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
-    ga1.set_display(false);
+//    assert_true(genetic_algorithm.iterations_number == 1, LOG);
+//    assert_true(genetic_algorithm.selection_error < 1, LOG);
+//    assert_true(genetic_algorithm.stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
 
-    ga1.set_approximation(false);
-
-    ga1.set_individuals_number(10);
-
-    ga1.set_selection_error_goal(0.0);
-    ga1.set_maximum_iterations_number(1);
-
-    ga1_results = ga1.perform_inputs_selection();
-
-//    assert_true(ga1_results->iterations_number == 1, LOG);
-//    assert_true(ga1_results->selection_error < 1, LOG);
-//    assert_true(ga_results->stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
-
-//    ga1.delete_selection_history();
-//    ga1.delete_parameters_history();
-//    ga1.delete_loss_history();
-*/
 }
 
 
