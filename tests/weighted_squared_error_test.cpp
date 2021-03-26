@@ -219,7 +219,6 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
        assert_true(back_propagation.gradient(0)-1.1499 < 1e-3, LOG); // @todo 1e-2 precission
        assert_true(back_propagation.gradient(1)-0 < 1e-3, LOG);
 
-
 }
 
    neural_network.set();
@@ -480,27 +479,27 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
 {
    cout << "test_calculate_squared_errors\n";
 
-//   NeuralNetwork neural_network;
-//   Tensor<Index, 1> hidden_layers_size;
-//   Tensor<type, 1> parameters;
+   DataSet data_set;
 
-//   DataSet data_set;
+   NeuralNetwork neural_network;
+   Tensor<Index, 1> architecture;
+   Tensor<type, 1> parameters;
    
-//   WeightedSquaredError wse(&neural_network, &data_set);
+   WeightedSquaredError wse(&neural_network, &data_set);
 
-//   type error;
+   type error;
 
-//   Tensor<type, 1> squared_errors;
+   Tensor<type, 1> squared_errors;
 
    // Test
 
-//   Tensor<Index, 1> architecture;
-//   architecture.setValues({2, 1});
+   architecture.resize(2);
+   architecture.setValues({2, 1});
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_random();
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_random();
 
-//   data_set.set(3, 2, 2);
+   data_set.set(3, 2, 2);
 //   data_set.generate_data_binary_classification(3, 2);
 
 //   error = wse.calculate_error();
@@ -511,12 +510,13 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
 
    // Test
 
-//   architecture.setValues({3, 1});
+   architecture.resize(2);
+   architecture.setValues({3, 1});
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_random();
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_random();
 
-//   data_set.set(9, 3, 1);
+   data_set.set(9, 3, 1);
 //   data_set.generate_data_binary_classification(9, 3);
 
 //   error = wse.calculate_error();

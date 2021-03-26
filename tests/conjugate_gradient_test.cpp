@@ -25,8 +25,6 @@ void ConjugateGradientTest::test_constructor()
 {
    cout << "test_constructor\n"; 
 
-//   SumSquaredError sum_squared_error;
-
    // Default constructor
 
    ConjugateGradient cg1; 
@@ -34,8 +32,10 @@ void ConjugateGradientTest::test_constructor()
 
    // Loss index constructor
 
-//   ConjugateGradient cg2(&sum_squared_error);
-//   assert_true(cg2.has_loss_index(), LOG);
+   SumSquaredError sum_squared_error;
+
+   ConjugateGradient cg2(&sum_squared_error);
+   assert_true(cg2.has_loss_index(), LOG);
 }
 
 
@@ -103,21 +103,20 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
    Tensor<Index, 1> architecture(2);
    architecture.setValues({1,1});
 
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
-//   ConjugateGradient conjugate_gradient(&sum_squared_error);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   SumSquaredError sum_squared_error(&neural_network, &data_set);
+   ConjugateGradient conjugate_gradient(&sum_squared_error);
 
-//   neural_network.set_parameters_constant(2.0);
+   neural_network.set_parameters_constant(2.0);
 //   Tensor<type, 1> old_gradient = sum_squared_error.calculate_gradient();
 
-//   neural_network.set_parameters_constant(1.0);
+   neural_network.set_parameters_constant(1.0);
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_gradient();
 
 //   type PR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
 
 //   assert_true(PR_parameter >= 0.0, LOG);
 //   assert_true(PR_parameter <= 1.0, LOG);
-
 }
 
 

@@ -80,15 +80,26 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation() /
 {
    cout << "test_calculate_DFP_inverse_hessian_approximation\n";
 
-//   DataSet data_set(2, 1, 1);
-//   data_set.set_data_random();
+   DataSet data_set;
 
-//   Tensor<type, > architecture(2);
-//   architecture.setValues({1,1});
+   Tensor<type, 1> architecture;
 
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
-//   QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
+   NeuralNetwork neural_network;
+
+   SumSquaredError sum_squared_error(&neural_network, &data_set);
+
+   QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
+
+
+   // Test
+
+   data_set.set(2, 1, 1);
+   data_set.set_data_random();
+
+   architecture.resize(2);
+   architecture.setValues({1,1});
+
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    // Test
 
