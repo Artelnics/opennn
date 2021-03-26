@@ -306,7 +306,7 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                                    NeuralNetworkForwardPropagation& forward_propagation,
+                                                    NeuralNetworkForwardPropagation& ,
                                                     LossIndexBackPropagation& back_propagation) const
 {
      #ifdef OPENNN_DEBUG
@@ -367,6 +367,12 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      default: break;
      }
+}
+
+
+void NormalizedSquaredError::calculate_output_delta(const DataSetBatch &, NeuralNetworkForwardPropagation &, LossIndexBackPropagationLM &) const
+{
+
 }
 
 
