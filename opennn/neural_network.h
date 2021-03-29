@@ -289,12 +289,18 @@ struct NeuralNetworkForwardPropagation
         layers.resize(trainable_layers_number);
 
         for(Index i = 0; i < trainable_layers_number; i++)
-        {
+        {cout << "i: " << i << endl;
             switch (trainable_layers_pointers(i)->get_type())
             {
             case Layer::Perceptron:
             {
+                cout << "perceptron type" << endl;
+
                 layers(i) = new PerceptronLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+
+
+
+                cout << "after perceptron type" << endl;
             }
             break;
 

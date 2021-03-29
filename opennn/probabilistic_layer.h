@@ -215,8 +215,6 @@ protected:
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {
-    const Index neurons_number = layer_pointer->get_neurons_number();
-
     // Constructor
 
     explicit ProbabilisticLayerForwardPropagation() : LayerForwardPropagation()
