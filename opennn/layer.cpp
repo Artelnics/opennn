@@ -224,12 +224,10 @@ void Layer::set_neurons_number(const Index& )
 }
 
 
-// Activations 1d
-
 void Layer::hard_sigmoid(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
-    Tensor<bool, 1> if_sentence = x < x.constant(-2.5);
-    Tensor<bool, 1> elif_sentence = x > x.constant(2.5);
+    const Tensor<bool, 1> if_sentence = x < x.constant(-2.5);
+    const Tensor<bool, 1> elif_sentence = x > x.constant(2.5);
 
     Tensor<type, 1> f1(x.dimension(0));
     Tensor<type, 1> f2(x.dimension(0));
@@ -318,7 +316,6 @@ void Layer::scaled_exponential_linear(const Tensor<type, 1>& x, Tensor<type, 1>&
     f_2 = lambda*x;
 
     y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
 }
 
 
@@ -348,7 +345,6 @@ void Layer::soft_sign(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 
 void Layer::exponential_linear(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
-
     const Tensor<bool, 1> if_sentence = x < x.constant(0);
 
     const type alpha = static_cast<type>(1.0);
@@ -357,7 +353,7 @@ void Layer::exponential_linear(const Tensor<type, 1>& x, Tensor<type, 1>& y) con
 
     Tensor<type, 1> f_2(x.dimension(0));
 
-    f_1 = alpha*(x.exp() - static_cast<type>(1));
+    f_1.device(*thread_pool_device) = alpha*(x.exp() - static_cast<type>(1));
 
     f_2 = x;
 
@@ -408,7 +404,9 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 1>& combinations,
     // Conditions
 
     const Tensor<bool, 1> if_sentence = combinations < combinations.constant(-2.5);
+
     const Tensor<bool, 1> elif_sentence = combinations > combinations.constant(2.5);
+
     const Tensor<bool, 1> if_sentence_2 = combinations < combinations.constant(-2.5) || combinations > combinations.constant(2.5);
 
     // Sentences
@@ -442,7 +440,6 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 1>& combinations,
                                            Tensor<type, 1>& activations,
                                            Tensor<type, 1>& activations_derivatives) const
 {
-
     // Activations
 
     activations.device(*thread_pool_device) = combinations.tanh();
@@ -450,7 +447,6 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 1>& combinations,
     // Activations Derivatives
 
     activations_derivatives.device(*thread_pool_device) = 1 - activations.square();
-
 }
 
 
@@ -458,11 +454,7 @@ void Layer::logistic_derivatives(const Tensor<type, 1>& combinations,
                                  Tensor<type, 1>& activations,
                                  Tensor<type, 1>& activations_derivatives) const
 {
-    // Activations
-
     activations.device(*thread_pool_device) = (1 + combinations.exp().inverse()).inverse();
-
-    // Activations Derivatives
 
     activations_derivatives.device(*thread_pool_device) = activations*(1-activations);
 }
@@ -478,12 +470,10 @@ void Layer::linear_derivatives(const Tensor<type, 1>& combinations,
 }
 
 
-
 void Layer::threshold_derivatives(const Tensor<type, 1>& combinations,
                                   Tensor<type, 1>& activations,
                                   Tensor<type, 1>& activations_derivatives) const
 {
-
     const Tensor<bool, 1> if_sentence = combinations > combinations.constant(0);
 
     Tensor<type, 1> ones(combinations.dimension(0));
@@ -499,7 +489,6 @@ void Layer::threshold_derivatives(const Tensor<type, 1>& combinations,
     // Activations Derivatives
 
     activations_derivatives.setZero();
-
 }
 
 
@@ -507,7 +496,6 @@ void Layer::symmetric_threshold_derivatives(const Tensor<type, 1>& combinations,
                                             Tensor<type, 1>& activations,
                                             Tensor<type, 1>& activations_derivatives) const
 {
-
     const Tensor<bool, 1> if_sentence = combinations > combinations.constant(0);
 
     Tensor<type, 1> ones(combinations.dimension(0));
@@ -521,7 +509,6 @@ void Layer::symmetric_threshold_derivatives(const Tensor<type, 1>& combinations,
     // Activations Derivatives
 
     activations_derivatives.setZero();
-
 }
 
 
@@ -529,7 +516,6 @@ void Layer::rectified_linear_derivatives(const Tensor<type, 1>& combinations,
                                          Tensor<type, 1>& activations,
                                          Tensor<type, 1>& activations_derivatives) const
 {
-
     const Tensor<bool, 1> if_sentence = combinations < combinations.constant(0);
 
     Tensor<type, 1> zeros(combinations.dimension(0));
@@ -584,11 +570,7 @@ void Layer::soft_plus_derivatives(const Tensor<type, 1>& combinations,
                                   Tensor<type, 1>& activations,
                                   Tensor<type, 1>& activations_derivatives) const
 {
-    // Activations
-
     activations.device(*thread_pool_device) = (combinations.constant(1) + combinations.exp()).log();
-
-    // Activations Derivatives
 
     activations_derivatives.device(*thread_pool_device) = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations.exp().inverse());
 }
@@ -598,7 +580,6 @@ void Layer::soft_sign_derivatives(const Tensor<type, 1>& combinations,
                                   Tensor<type, 1>& activations,
                                   Tensor<type, 1>& activations_derivatives) const
 {
-
     const Tensor<bool, 1> if_sentence = combinations < combinations.constant(0);
 
     Tensor<type, 1> f_1(combinations.dimension(0));
@@ -700,7 +681,6 @@ void Layer::linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-
     const Tensor<bool, 2> if_sentence = x >= x.constant(0);
 
     Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
@@ -715,7 +695,6 @@ void Layer::threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-
     const Tensor<bool, 2> if_sentence = x > x.constant(0);
 
     Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
@@ -740,7 +719,6 @@ void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-
     const type lambda = static_cast<type>(1.0507);
 
     const type alpha = static_cast<type>(1.67326);
@@ -767,7 +745,6 @@ void Layer::soft_plus(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-
     const Tensor<bool, 2> if_sentence = x < x.constant(0);
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
@@ -784,7 +761,6 @@ void Layer::soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-
     const Tensor<bool, 2> if_sentence = x < x.constant(0);
 
     const type alpha = static_cast<type>(1.0);
@@ -821,7 +797,6 @@ void Layer::binary(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-
     const Index samples_number = x.dimension(0);
 
     Index maximum_index = 0;
@@ -875,11 +850,12 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& combinations,
                                      Tensor<type, 2>& activations,
                                      Tensor<type, 2>& activations_derivatives) const
 {
-
     // Conditions
 
     const Tensor<bool, 2> if_sentence = combinations < combinations.constant(-2.5);
+
     const Tensor<bool, 2> elif_sentence = combinations > combinations.constant(2.5);
+
     const Tensor<bool, 2> if_sentence_2 = combinations < combinations.constant(-2.5) || combinations > combinations.constant(2.5);
 
     // Sentences
@@ -996,7 +972,6 @@ void Layer::rectified_linear_derivatives(const Tensor<type, 2>& combinations,
                                          Tensor<type, 2>& activations,
                                          Tensor<type, 2>& activations_derivatives) const
 {
-
     const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
 
     Tensor<type, 2> zeros(combinations.dimension(0), combinations.dimension(1));
@@ -1019,7 +994,6 @@ void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& combina
                                                   Tensor<type, 2>& activations,
                                                   Tensor<type, 2>& activations_derivatives) const
 {
-
     const type lambda = static_cast<type>(1.0507);
 
     const type alpha = static_cast<type>(1.67326);
@@ -1053,15 +1027,11 @@ void Layer::soft_plus_derivatives(const Tensor<type, 2>& combinations,
                                   Tensor<type, 2>& activations,
                                   Tensor<type, 2>& activations_derivatives) const
 {
+    activations.device(*thread_pool_device)
+            = (combinations.constant(1) + combinations.exp()).log();
 
-    // Activations
-
-    activations.device(*thread_pool_device) = (combinations.constant(1) + combinations.exp()).log();
-
-    // Activations Derivatives
-
-    activations_derivatives.device(*thread_pool_device) = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations.exp().inverse());
-
+    activations_derivatives.device(*thread_pool_device)
+            = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations.exp().inverse());
 }
 
 
@@ -1091,7 +1061,6 @@ void Layer::soft_sign_derivatives(const Tensor<type, 2>& combinations,
     f_2 = static_cast<type>(1.0) / (static_cast<type>(1.0) + combinations).pow(2);
 
     activations_derivatives.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
 }
 
 
@@ -1099,7 +1068,6 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& combinations,
                                            Tensor<type, 2>& activations,
                                            Tensor<type, 2>& activations_derivatives) const
 {
-
     const type alpha = static_cast<type>(1.0);
 
     const Tensor<bool, 2> if_sentence = combinations < combinations.constant(0);
@@ -1126,7 +1094,6 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& combinations,
 }
 
 
-
 void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
                                  Tensor<type, 2>& activations,
                                  Tensor<type, 3>& activations_derivatives) const
@@ -1149,8 +1116,6 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                                  Tensor<type, 2>& activations,
                                  Tensor<type, 3>& activations_derivatives) const
 {
-    /// @todo Add #pragma parallel for in loops.
-
      const Index dim = combinations.dimension(1);
 
      const Index rows_number = activations.dimension(0);
@@ -1163,6 +1128,8 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 
      sums.setZero();
 
+     #pragma omp parallel for
+
      for(Index i = 0; i< rows_number; i++)
      {
          for(Index j = 0; j < dim; j++)
@@ -1171,13 +1138,17 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
          }
      }
 
+     #pragma omp parallel for
+
      for(Index i = 0; i< rows_number; i++)
      {
          for(Index j = 0; j < dim; j++)
          {
-             activations(i, j) = activations(i, j) / sums(i);
+             activations(i, j) /= sums(i);
          }
      }
+
+     /// @todo Add #pragma parallel for in loops.
 
      // Activations derivatives
 
@@ -1195,6 +1166,7 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                  // row, i, j
 
                  activations_derivatives(index) = activations(row,i) * (delta - activations(row,j));
+
                  index++;
              }
          }
@@ -1238,7 +1210,6 @@ void Layer::threshold(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 
 void Layer::symmetric_threshold(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
-
     const Tensor<bool, 4> if_sentence = x > x.constant(0);
 
     Tensor<type, 4> ones(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
@@ -1263,7 +1234,6 @@ void Layer::rectified_linear(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 
 void Layer::scaled_exponential_linear(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
-
     const type lambda = static_cast<type>(1.0507);
 
     const type alpha = static_cast<type>(1.67326);
@@ -1290,7 +1260,6 @@ void Layer::soft_plus(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 
 void Layer::soft_sign(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
-
     const Tensor<bool, 4> if_sentence = x < x.constant(0);
 
     Tensor<type, 4> f_1(x.dimension(0), x.dimension(1), x.dimension(2), x.dimension(3));
@@ -1390,7 +1359,6 @@ void Layer::threshold_derivatives(const Tensor<type, 4>& combinations,
                                   Tensor<type, 4>& activations,
                                   Tensor<type, 4>& activations_derivatives) const
 {
-
     const Tensor<bool, 4> if_sentence = combinations > combinations.constant(0);
 
     Tensor<type, 4> ones(combinations.dimension(0), combinations.dimension(1), combinations.dimension(2), combinations.dimension(3));
@@ -1406,7 +1374,6 @@ void Layer::threshold_derivatives(const Tensor<type, 4>& combinations,
     // Activations Derivatives
 
     activations_derivatives.setZero();
-
 }
 
 

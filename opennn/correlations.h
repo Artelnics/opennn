@@ -58,6 +58,8 @@ struct RegressionResults
             case KarlPearson: return "KarlPearson";
             case OneWayAnova: return "one-way-anova";
         }
+
+        return string();
     }
 
     /// Independent coefficient of the logistic function.
@@ -150,7 +152,7 @@ struct CorrelationResults
                                      const Tensor<type, 1>&,
                                      const Index&  = 10);
 
-    Tensor<type ,1> cross_correlations(const ThreadPoolDevice*,
+    Tensor<type, 1> cross_correlations(const ThreadPoolDevice*,
                                        const Tensor<type, 1>&,
                                        const Tensor<type, 1>&,
                                        const Index&);
@@ -206,14 +208,7 @@ struct CorrelationResults
 
     // Contingency tables
 
-    Tensor<Index, 2> contingency_table(const Tensor<string, 1>&, const Tensor<string, 1>&);
-    Tensor<Index, 2> contingency_table(Tensor<string, 2>&);
-    Tensor<Index, 2> contingency_table(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-
     type chi_square_test(const Tensor<type, 2>&);
-
-    type chi_square_critical_point(const type&, const type&);
-
 
     // Missing values methods
 

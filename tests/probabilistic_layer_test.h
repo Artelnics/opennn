@@ -34,10 +34,6 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Assignment operators methods
-
-   
-
    // Get methods
 
    void test_get_biases();

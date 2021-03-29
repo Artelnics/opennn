@@ -122,7 +122,6 @@ void CorrelationsTest::test_rank_linear_correlation()
 {
     cout << "test_rank_linear_correlation()\n";
 
-    Index size;
     Tensor<type, 1> x;
     Tensor<type, 1> y;
 
@@ -193,17 +192,25 @@ void CorrelationsTest::test_logistic_correlation()
 {
     cout << "test_logistic_correlation\n";
 
-    Index size = 100;
-    Tensor<type, 1> x(size);
-    for(Index i = 0; i < size; i++) x(i) = i;
+    Index size;
 
-    Tensor<type, 1> y(size);
+    Tensor<type, 1> x;
+    Tensor<type, 1> y;
+
     type correlation;
+
+    // Test
+
+    size = 100;
+    x.resize(size);
+    initialize_sequential(x);
+
+    y.resize(size);
     y.setConstant(0.0);
 
-    for(Index i= size - (size/2); i < size; i++) y[i] = 1;
+    for(Index i = size - size/2; i < size; i++) y[i] = 1;
 
-//    correlation = logistic_correlation(x.to_column_matrix(), y);
+//    correlation = logistic_correlation(thread_pool_device, x, y);
 
 //    assert_true(correlation <= 0.95, LOG);
 
@@ -739,19 +746,6 @@ void CorrelationsTest::test_chi_square_test()
 }
 
 
-void CorrelationsTest::test_chi_square_critical_point()
-{
-    cout << "test_chi_square_critical_point\n";
-
-    type crit_point;
-    type solution = static_cast<type>(14.067);
-
-    crit_point = chi_square_critical_point(static_cast<type>(0.05),7);
-
-    assert_true(crit_point - solution <= static_cast<type>(0.01), LOG);
-}
-
-
 void CorrelationsTest::test_karl_pearson_correlation()
 {
     cout << "test_karl_pearson_correlation\n";
@@ -813,7 +807,6 @@ void CorrelationsTest::run_test_case()
 
    test_exponential_correlation();
 
-
    // Regression Methods
 
    test_linear_regression();
@@ -822,12 +815,10 @@ void CorrelationsTest::run_test_case()
    test_power_regression();
    test_logistic_regression();
 
-
    // Time series correlation methods
 
    test_autocorrelation();
    test_cross_correlations();
-
 
    // Covariance
 
@@ -835,12 +826,10 @@ void CorrelationsTest::run_test_case()
    test_covariance_matrix();
    test_less_rank_with_ties();
 
-
    // Contingency table
 
    test_contingency_table();
    test_chi_square_test();
-   test_chi_square_critical_point();
    test_karl_pearson_correlation();
 
    cout << "End of correlation analysis test case.\n\n";

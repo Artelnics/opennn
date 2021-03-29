@@ -636,7 +636,8 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 
         buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
                << "void set_parameters(const Tensor<type, 1>&) method.\n"
-               << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters (" << parameters_number << ").\n";
+               << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters ("
+               << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -728,21 +729,6 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
            static_cast<size_t>(size)*sizeof(type));
 
     current_index += size;
-
-//       set_forget_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-//       set_input_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-//       set_state_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({2*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-//       set_input_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({3*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({inputs_number * neurons_number})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-
-//       set_forget_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4*inputs_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-//       set_input_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-//       set_state_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 2 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-//       set_output_recurrent_weights(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * inputs_number * neurons_number + 3 * neurons_number * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number*neurons_number})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
-
-//       set_forget_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number)}), Eigen::array<Eigen::Index, 1>({neurons_number})));
-//       set_input_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number})));
-//       set_state_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number})));
-//       set_output_biases(new_parameters.slice(Eigen::array<Eigen::Index, 1>({4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number}), Eigen::array<Eigen::Index, 1>({neurons_number})));
 }
 
 
@@ -1220,7 +1206,7 @@ void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1>& inp
         ostringstream buffer;
 
         buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>&, Tensor<type, 1>&) const method.\n"
+               << "void calculate_combinations() const method.\n"
                << "Size of layer inputs (" << inputs.size() << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -1247,8 +1233,9 @@ void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& comb
         ostringstream buffer;
 
         buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&) const method.\n"
-               << "Number of columns("<< combinations_columns_number <<") of combinations must be equal to number of neurons("<<neurons_number<<").\n";
+               << "void calculate_activations() const method.\n"
+               << "Number of columns (" << combinations_columns_number << ") of combinations must be equal to number of neurons ("
+               <<neurons_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -1475,7 +1462,8 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
 }
 
 
-void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 1>& combinations_1d, Tensor<type, 1>& recurrent_activations_1d) const
+void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type, 1>& combinations_1d,
+                                                               Tensor<type, 1>& recurrent_activations_1d) const
 {
 
 #ifdef OPENNN_DEBUG

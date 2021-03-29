@@ -8,7 +8,6 @@
 
 #include "loss_index.h"
 
-
 namespace OpenNN
 {
 
@@ -602,7 +601,6 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
 //        back_propagation.output_jacobian(i) /= loss_index_back_propagation_lm.squared_errors(i);
 
 #endif
-
 }
 
 
@@ -1079,7 +1077,8 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation()
 
     DataSetBatch batch(samples_number, data_set_pointer);
 
-    Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
+    const Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
+
     const Tensor<Index, 1> input_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
@@ -1106,7 +1105,7 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation()
     Tensor<type, 1> error_terms_forward(parameters_number);
     Tensor<type, 1> error_terms_backward(parameters_number);
 
-    Tensor<type, 2> J(samples_number,parameters_number);
+    Tensor<type, 2> jacobian(samples_number,parameters_number);
 
     for(Index j = 0; j < parameters_number; j++)
     {
@@ -1126,11 +1125,11 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation()
 
         for(Index i = 0; i < samples_number; i++)
         {
-            J(i,j) = (error_terms_forward(i) - error_terms_backward(i))/(static_cast<type>(2.0)*h);
+            jacobian(i,j) = (error_terms_forward(i) - error_terms_backward(i))/(static_cast<type>(2.0)*h);
         }
     }
 
-    return J;
+    return jacobian;
 }
 
 

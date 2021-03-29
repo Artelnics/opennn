@@ -441,6 +441,7 @@ void ScalingLayer::set_min_max_range(const type min, const type max)
     max_range = max;
 }
 
+
 /// Sets all the scaling layer descriptives from a vector descriptives structures.
 /// The size of the vector must be equal to the number of scaling neurons in the layer.
 /// @param new_descriptives Scaling layer descriptives.
@@ -894,16 +895,13 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 
     const Index points_number = inputs.dimension(0);
 
-//        outputs.set(points_number, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3));
-//    outputs.resize(points_number, inputs.dimension(1));
-
     for(Index i = 0; i < points_number; i++)
     {
         for(Index j = 0; j < neurons_number; j++)
         {
-            Index channel_index = j%inputs.dimension(1);
-            Index row_index = (j/(inputs.dimension(1)))%inputs.dimension(2);
-            Index column_index = (j/(inputs.dimension(1) * inputs.dimension(2)))%inputs.dimension(3);
+            const Index channel_index = j%inputs.dimension(1);
+            const Index row_index = (j/(inputs.dimension(1)))%inputs.dimension(2);
+            const Index column_index = (j/(inputs.dimension(1) * inputs.dimension(2)))%inputs.dimension(3);
 
             if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
             {
@@ -1039,7 +1037,7 @@ string ScalingLayer::write_standard_deviation_expression(const Tensor<string, 1>
 
 /// Returns a string with the expression of the inputs scaling process.
 
-string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>&) const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -1493,7 +1491,6 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 }
-
 
 }
 

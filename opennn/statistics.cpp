@@ -344,7 +344,6 @@ Index Histogram::calculate_minimum_frequency() const
 Index Histogram::calculate_maximum_frequency() const
 {
     return maximum(frequencies);
-
 }
 
 
@@ -352,7 +351,6 @@ Index Histogram::calculate_maximum_frequency() const
 
 Index Histogram::calculate_most_populated_bin() const
 {
-
     const Tensor<Index, 0> max_element = frequencies.maximum();
 
     for(Index i = 0; i < frequencies.size(); i++)
@@ -512,7 +510,6 @@ void Histogram::save(const string& histogram_file_name) const
     const Index number_of_bins = centers.dimension(0);
     ofstream histogram_file(histogram_file_name);
 
-
     histogram_file << "centers,frequencies" << endl;
     for(Index i = 0; i < number_of_bins; i++)
     {
@@ -521,7 +518,6 @@ void Histogram::save(const string& histogram_file_name) const
     }
 
     histogram_file.close();
-
 }
 
 
@@ -679,7 +675,9 @@ Index maximum(const Tensor<Index, 1>& vector)
 /// @param rows_indices Indices of the rows for which the maximums are to be computed.
 /// @param columns_indices Indices of the columns for which the maximums are to be computed.
 
-Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>& columns_indices)
+Tensor<type, 1> columns_maximums(const Tensor<type, 2>& matrix,
+                                 const Tensor<Index, 1>& rows_indices,
+                                 const Tensor<Index, 1>& columns_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -914,10 +912,7 @@ type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
         }
     }
 
-    if(count <= 1)
-    {
-        return 0.0;
-    }
+    if(count <= 1) return 0.0;
 
     const type variance = squared_sum/static_cast<type>(count - 1) -(sum/static_cast<type>(count))*(sum/static_cast<type>(count))*static_cast<type>(count)/static_cast<type>(count-1);
 
@@ -978,9 +973,12 @@ type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& i
     }
 
 #endif
-    if(variance(vector, indices)<static_cast<double>(1e-9)){
+
+    if(variance(vector, indices)<static_cast<double>(1e-9))
+    {
         return static_cast<double>(0);
-    }else{
+    }else
+    {
         return sqrt(variance(vector, indices));
     }
 }
@@ -1022,7 +1020,6 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& p
 
 type asymmetry(const Tensor<type, 1>& vector)
 {
-
     const Index size = vector.dimension(0);
 
 #ifdef OPENNN_DEBUG
@@ -1118,7 +1115,6 @@ type kurtosis(const Tensor<type, 1>& vector)
     const type denominator = standard_deviation_value*standard_deviation_value*standard_deviation_value*standard_deviation_value;
 
     return numerator/denominator - 3;
-
 }
 
 
@@ -1135,10 +1131,7 @@ type median(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
-        if(!isnan(vector(i)))
-        {
-            new_size++;
-        }
+        if(!isnan(vector(i))) new_size++;
     }
 
     Tensor<type, 1> sorted_vector;
@@ -1190,10 +1183,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
-        if(!::isnan(vector(i)))
-        {
-            new_size++;
-        }
+        if(!::isnan(vector(i))) new_size++;
     }
 
     Tensor<type, 1> sorted_vector;
@@ -1283,10 +1273,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>&
     {
         index = indices(i);
 
-        if(!isnan(vector(index)))
-        {
-            new_size++;
-        }
+        if(!isnan(vector(index))) new_size++;
     }
 
     Tensor<type, 1> sorted_vector;
@@ -1479,7 +1466,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     }
 
     if(unique_values_number <= bins_number)
-    {cout << "if" << endl;
+    {
         sort(unique_values.data(), unique_values.data() + unique_values.size(), less<type>());
 
         centers = unique_values;
@@ -1506,7 +1493,6 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     }
     else
     {
-        cout << "else" << endl;
         const type min = minimum(vector);
         const type max = maximum(vector);
 
@@ -1541,17 +1527,13 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
             {
                 if(vector(i) >= minimums(j) && vector(i) < maximums(j))
                 {
-                    cout << "vector(i): " << vector(i) << endl;
-                    cout << "minimun(i): " << minimums(j) << endl;
-                    cout << "maximun(i): " << maximums(j) << endl;
-
                     frequencies(j)++;
                     break;
                 }
             }
 
             if(vector(i) >= minimums(bins_number - 1))
-            {cout << "hello" << endl;
+            {
                 frequencies(bins_number - 1)++;
             }
         }
@@ -1711,7 +1693,6 @@ Histogram histogram(const Tensor<bool, 1>& v)
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
 
-//    Histogram histogram;
     return histogram;
 }
 
@@ -1812,7 +1793,9 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
 /// @param row_indices Indices of the rows for which the descriptives are to be computed.
 /// @param columns_indices Indices of the columns for which the descriptives are to be computed.
 
-Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& columns_indices)
+Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
+                                     const Tensor<Index, 1>& row_indices,
+                                     const Tensor<Index, 1>& columns_indices)
 {
     const Index row_indices_size = row_indices.size();
     const Index columns_indices_size = columns_indices.size();
@@ -3065,6 +3048,7 @@ if(number > size)
 
 /// Returns the indices of the largest elements in the vector.
 /// @param number Number of maximal indices to be computed.
+/// @todo Clean variables names minim, vector_!!!
 
 Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
@@ -3072,7 +3056,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& num
 
     const Index size = vector.dimension(0);
     Tensor<Index, 1> maximal_indices(number);
-    Eigen::Tensor<type, 0> minim = vector.minimum();
+    const Eigen::Tensor<type, 0> minim = vector.minimum();
 
 #ifdef OPENNN_DEBUG
 
@@ -3101,6 +3085,7 @@ if(number > size)
                 maximal = vector_(i);
             }
         }
+
         vector_(maximal_index) = minim(0)-1;
         maximal_indices(j) = maximal_index;
     }
@@ -3123,7 +3108,7 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 2>& matrix)
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            if(!::isnan(matrix(i,j))  && matrix(i,j) < minimum)
+            if(!::isnan(matrix(i,j)) && matrix(i,j) < minimum)
             {
                 minimum = matrix(i,j);
                 minimal_indices(0) = i;
@@ -3378,6 +3363,7 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
 
       /// Aempirical method
+
       Tensor<type, 1> percentiles(10);
 
       for(Index i = 0; i < 9; i++)

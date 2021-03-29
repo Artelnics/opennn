@@ -1,4 +1,3 @@
-
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
@@ -231,10 +230,10 @@ Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& par
 
     const Index start_recurrent_weights_number = (parameters_size - recurrent_weights_number);
 
-    Tensor<type, 1> new_synaptic_weights
+    const Tensor<type, 1> new_synaptic_weights
             = parameters.slice(Eigen::array<Eigen::Index, 1>({start_recurrent_weights_number}), Eigen::array<Eigen::Index, 1>({recurrent_weights_number}));
 
-    Eigen::array<Index, 2> two_dim{{neurons_number, neurons_number}};
+    const Eigen::array<Index, 2> two_dim{{neurons_number, neurons_number}};
 
     return new_synaptic_weights.reshape(two_dim);
 }
@@ -406,6 +405,7 @@ void RecurrentLayer::set_input_weights(const Tensor<type, 2>& new_input_weights)
     input_weights = new_input_weights;
 }
 
+
 void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_weights)
 {
     recurrent_weights = new_recurrent_weights;
@@ -417,7 +417,6 @@ void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_
 
 void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-
 #ifdef OPENNN_DEBUG
 
     const Index parameters_number = get_parameters_number();
@@ -436,6 +435,7 @@ void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const
     }
 
 #endif
+
     const Index biases_number = get_biases_number();
     const Index inputs_weights_number = get_input_weights_number();
     const Index recurrent_weights_number = get_recurrent_weights_number();
@@ -777,7 +777,6 @@ void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, LayerForwa
             recurrent_layer_forward_propagation->activations(i,j) = hidden_states(j);
             recurrent_layer_forward_propagation->activations_derivatives(i,j) = recurrent_layer_forward_propagation->current_activations_derivatives(j);
         }
-
     }
 }
 
@@ -945,8 +944,6 @@ void RecurrentLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerForw
     }
     else // Multiple
     {
-
-
         const Index samples_number = next_back_propagation->delta.dimension(0);
         const Index outputs_number = next_back_propagation->delta.dimension(1);
         const Index next_layer_neurons_number = probabilistic_layer_pointer->get_neurons_number();
@@ -1080,7 +1077,8 @@ void RecurrentLayer::calculate_biases_error_gradient(const Tensor<type, 2>& inpu
         {
             multiply_rows(back_propagation->combinations_biases_derivatives, forward_propagation->current_activations_derivatives);
 
-            back_propagation->combinations_biases_derivatives = back_propagation->combinations_biases_derivatives.contract(recurrent_weights, A_B).eval();
+            back_propagation->combinations_biases_derivatives
+                    = back_propagation->combinations_biases_derivatives.contract(recurrent_weights, A_B).eval();
         }
 
         forward_propagation->current_activations_derivatives
@@ -1124,7 +1122,9 @@ void RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<type, 2
         else
         {
             multiply_rows(back_propagation->combinations_weights_derivatives, forward_propagation->current_activations_derivatives);
-            back_propagation->combinations_weights_derivatives = back_propagation->combinations_weights_derivatives.contract(recurrent_weights, A_B).eval();
+
+            back_propagation->combinations_weights_derivatives
+                    = back_propagation->combinations_weights_derivatives.contract(recurrent_weights, A_B).eval();
         }
 
         forward_propagation->current_activations_derivatives
@@ -1184,7 +1184,8 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 
             multiply_rows(back_propagation->combinations_recurrent_weights_derivatives, forward_propagation->current_activations_derivatives);
 
-            back_propagation->combinations_recurrent_weights_derivatives = back_propagation->combinations_recurrent_weights_derivatives.contract(recurrent_weights,A_B);
+            back_propagation->combinations_recurrent_weights_derivatives
+                    = back_propagation->combinations_recurrent_weights_derivatives.contract(recurrent_weights,A_B);
 
             column_index = 0;
             activation_index = 0;

@@ -39,8 +39,8 @@ SumSquaredError::~SumSquaredError()
 }
 
 
-void SumSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
+void SumSquaredError::calculate_error(const DataSetBatch&,
+                     const NeuralNetworkForwardPropagation&,
                      LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -51,8 +51,8 @@ void SumSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void SumSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
+void SumSquaredError::calculate_error(const DataSetBatch&,
+                     const NeuralNetworkForwardPropagation&,
                      LossIndexBackPropagationLM& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -63,8 +63,8 @@ void SumSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                             NeuralNetworkForwardPropagation& forward_propagation,
+void SumSquaredError::calculate_output_delta(const DataSetBatch&,
+                                             NeuralNetworkForwardPropagation&,
                                              LossIndexBackPropagation& back_propagation) const
 {
      #ifdef OPENNN_DEBUG
@@ -75,7 +75,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
+     const Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
 
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 

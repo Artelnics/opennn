@@ -464,17 +464,18 @@ void PerceptronLayer::set_synaptic_weights_glorot()
     fan_in = synaptic_weights.dimension(0);
     fan_out = synaptic_weights.dimension(1);
 
-    scale /= ((fan_in + fan_out) / static_cast<type>(2.0));
+    scale /= (fan_in + fan_out) / static_cast<type>(2.0);
     limit = sqrt(static_cast<type>(3.0) * scale);
 
     biases.setZero();
 
     synaptic_weights.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
 
-    Eigen::Tensor<type, 0> min_weight = synaptic_weights.minimum();
-    Eigen::Tensor<type, 0> max_weight = synaptic_weights.maximum();
+    const Eigen::Tensor<type, 0> min_weight = synaptic_weights.minimum();
+    const Eigen::Tensor<type, 0> max_weight = synaptic_weights.maximum();
 
     synaptic_weights = (synaptic_weights - synaptic_weights.constant(min_weight(0))) / (synaptic_weights.constant(max_weight(0))- synaptic_weights.constant(min_weight(0)));
+
     synaptic_weights = (synaptic_weights * synaptic_weights.constant(2. * limit)) - synaptic_weights.constant(limit);
 }
 
@@ -578,6 +579,7 @@ void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations,
          case ExponentialLinear: exponential_linear(combinations, activations); return;
      }
 }
+
 
 void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations,
                                                         Tensor<type, 2>& activations,
@@ -959,14 +961,10 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
     switch(perceptron_layer_type)
     {
          case HiddenLayer:
-         {
             return write_hidden_layer_expression(inputs_names, outputs_names);
-         }
 
          case OutputLayer:
-         {
             return write_output_layer_expression(inputs_names, outputs_names);
-         }
     }
 
     return string();
@@ -979,18 +977,17 @@ string PerceptronLayer::write_hidden_layer_expression(const Tensor<string, 1> & 
 
     for(Index j = 0; j < outputs_names.size(); j++)
     {
+        const Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
 
-      Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
+        buffer << outputs_names[j] << to_string(j) << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
 
-               buffer << outputs_names[j] << to_string(j) << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
+        for(Index i = 0; i < inputs_names.size() - 1; i++)
+        {
 
-               for(Index i = 0; i < inputs_names.size() - 1; i++)
-               {
+           buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ")+";
+        }
 
-                   buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ")+";
-               }
-
-               buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
+        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
     }
 
     return buffer.str();
@@ -1003,8 +1000,7 @@ string PerceptronLayer::write_output_layer_expression(const Tensor<string, 1> & 
 
     for(Index j = 0; j < outputs_names.size(); j++)
     {
-
-        Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
+        const Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
 
         buffer << outputs_names[j] << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
 
@@ -1036,7 +1032,6 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         throw logic_error(buffer.str());
     }
-
 
     // Layer name
 

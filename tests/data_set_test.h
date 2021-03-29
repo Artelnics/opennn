@@ -31,11 +31,7 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
-
-   // Assignment operators methods
-
-   
+   void test_destructor();  
 
    // Get methods
 
@@ -95,8 +91,7 @@ public:
 
    // Statistics methods
 
-   void test_calculate_data_descriptives();
-   void test_calculate_data_descriptives_missing_values();
+   void test_calculate_variables_descriptives();
    void test_calculate_training_samples_descriptives();
    void test_calculate_selection_samples_descriptives();
    void test_calculate_testing_samples_descriptives();
@@ -179,7 +174,9 @@ public:
    void test_from_XML();
    void test_print();
    void test_print_data_preview();
+
    void test_read_csv();
+
    void test_read_adult_csv();
    void test_read_airline_passengers_csv();
    void test_read_car_csv();

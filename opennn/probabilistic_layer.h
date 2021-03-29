@@ -168,7 +168,7 @@ public:
    string write_no_probabilistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_combinations(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_combinations(const Tensor<string, 1>&) const;
    string write_activations(const Tensor<string, 1>&) const;
 
    string write_expression_c() const;

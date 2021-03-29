@@ -1511,11 +1511,13 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
 void GeneticAlgorithm::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+    FILE * file = fopen(file_name.c_str(), "w");
 
-//    document->SaveFile(file_name.c_str());
+    tinyxml2::XMLPrinter printer(file);
 
-//    delete document;
+    write_XML(printer);
+
+    fclose(file);
 }
 
 

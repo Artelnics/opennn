@@ -353,9 +353,9 @@ void DataSetTest::test_set_data()
 }
 
 
-void DataSetTest::test_calculate_data_descriptives() 
+void DataSetTest::test_calculate_variables_descriptives()
 {
-   cout << "test_calculate_data_descriptives\n";
+   cout << "test_calculate_variables_descriptives\n";
 
    DataSet data_set;
 
@@ -405,41 +405,35 @@ void DataSetTest::test_calculate_data_descriptives()
    assert_true(descriptives[3].maximum < static_cast<type>(1.0e-6), LOG);
    assert_true(descriptives[3].mean < static_cast<type>(1.0e-6), LOG);
    assert_true(descriptives[3].standard_deviation < static_cast<type>(1.0e-6), LOG);
-}
 
+   const string data_file_name = "../data/data.dat";
 
-void DataSetTest::test_calculate_data_descriptives_missing_values()
-{
-    cout << "test_calculate_data_descriptives_missing_values\n";
+   ofstream file;
 
-    const string data_file_name = "../data/data.dat";
+   data_set.set_data_file_name(data_file_name);
 
-    ofstream file;
+   Tensor<type, 2> data;
 
-    DataSet data_set;
+   string data_string;
 
-    data_set.set_data_file_name(data_file_name);
+   data_set.set_separator(' ');
+   data_set.set_missing_values_label("?");
 
-    Tensor<type, 2> data;
+   data_string = "-1000 ? 0 \n 3 4 ? \n ? 4 1";
 
-    string data_string;
+   file.open(data_file_name.c_str());
+   file << data_string;
+   file.close();
 
-    data_set.set_separator(' ');
-    data_set.set_missing_values_label("?");
+   data_set.read_csv();
 
-    data_string = "-1000 ? 0 \n 3 4 ? \n ? 4 1";
+   data = data_set.get_data();
 
-    file.open(data_file_name.c_str());
-    file << data_string;
-    file.close();
-
-    data_set.read_csv();
-
-    data = data_set.get_data();
 
 //    assert_true(abs(data_set.calculate_columns_descriptives_matrix()(0, 0) - (-1000)) < 1.0e-4, LOG);
 //    assert_true(abs(data_set.calculate_columns_descriptives_matrix()(1, 0) - 4.0) < 1.0e-4, LOG);
 //    assert_true(abs(data_set.calculate_columns_descriptives_matrix()(2, 0) - 0.0) < 1.0e-4, LOG);
+
 }
 
 
@@ -1209,44 +1203,17 @@ void DataSetTest::test_read_csv()
    cout << "test_read_csv\n";
 
    DataSet data_set;
-//   data_set.set_data_file_name("../../datasets/empty.csv");
-//   data_set.set_data_file_name("../../datasets/iris.data");
-//   data_set.set_data_file_name("../../datasets/airline_passengers.csv");
-//   data_set.set_data_file_name("../../datasets/pollution.csv");
-   data_set.set_data_file_name("../../datasets/heart.csv");
-
-   data_set.set_separator(DataSet::Comma);
-   data_set.set_has_columns_names(true);
-   data_set.read_csv();
-
-   const string data_file_name = "../data/data.dat";
-
    ofstream file;
-
-   data_set.set_data_file_name(data_file_name);
 
    Tensor<type, 2> data;
 
    string data_string;
-
-   // Test
-
-   data_set.set();
-   data_set.set_data_file_name(data_file_name);
-
-   data_set.set_display(false);
-
-   data_set.save_data();
-
-   data_set.read_csv();
-
-   data = data_set.get_data();
-
-   assert_true(data_set.is_empty(), LOG);
+   const string data_file_name = "../data/data.dat";
 
    // Test
 
    data_set.set(2, 2, 2);
+   data_set.set_separator(',');
    data_set.set_data_file_name(data_file_name);
 
    data_set.initialize_data(0.0);
@@ -1259,8 +1226,8 @@ void DataSetTest::test_read_csv()
 
    data = data_set.get_data();
 
-//   assert_true(data == 0.0, LOG);
-
+   assert_true(is_equal(data, 0.0), LOG);
+/*
    // Test
 
    data_set.set_separator(' ');
@@ -1445,7 +1412,7 @@ void DataSetTest::test_read_csv()
    assert_true((data(3,6) - 1) < 1.0e-4, LOG);
 
    // Test
-
+/*
    data_set.set_has_columns_names(true);
    data_set.set_separator(',');
    data_set.set_missing_values_label("NaN");
@@ -1508,7 +1475,7 @@ void DataSetTest::test_read_csv()
    data_set.read_csv();
 
    // Test
-
+/*
    data_set.set_separator(' ');
 
    data_string = "1 2\n3 4\n5 6\n";
@@ -1530,7 +1497,7 @@ void DataSetTest::test_read_csv()
    assert_true(data_set.get_variable_name(1) == "y", LOG);
 
    // Test
-
+/*
    data_set.set_has_columns_names(false);
    data_set.set_separator(' ');
 
@@ -1585,7 +1552,7 @@ void DataSetTest::test_read_csv()
 
    assert_true(data.dimension(0) == 10, LOG);
    assert_true(data.dimension(1) == 7, LOG);
-
+*/
 }
 
 
@@ -2554,8 +2521,7 @@ void DataSetTest::run_test_case()
 
    // Statistics methods
 
-   test_calculate_data_descriptives();
-   test_calculate_data_descriptives_missing_values();
+   test_calculate_variables_descriptives();
    test_calculate_training_samples_descriptives();
    test_calculate_selection_samples_descriptives();
    test_calculate_testing_samples_descriptives();
