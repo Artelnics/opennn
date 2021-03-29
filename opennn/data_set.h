@@ -641,6 +641,7 @@ public:
    void transform_time_series_data();
    void get_time_series_columns_number(const Index&);
    void set_time_series_data(const Tensor<type, 2>&);
+   void set_time_series_columns_number(const Index&);
 
    Tensor<type, 2> get_time_series_column_data(const Index&) const;
    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
