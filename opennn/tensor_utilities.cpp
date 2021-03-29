@@ -60,6 +60,19 @@ bool is_false(const Tensor<bool, 1>& tensor)
 }
 
 
+bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tolerance)
+{
+    const Index size = matrix.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(abs(matrix(i) - value) > tolerance) return false;
+    }
+
+    return true;
+}
+
+
 bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2, const type& tolerance)
 {
     const Index size = vector_1.size();

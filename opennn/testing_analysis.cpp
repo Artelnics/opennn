@@ -226,7 +226,6 @@ Tensor<RegressionResults, 1> TestingAnalysis::linear_regression() const
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     return linear_regression(targets,outputs);
-
 }
 
 
@@ -405,6 +404,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 #endif
 
     const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
+
     const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
     // Error data
@@ -485,26 +485,26 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
 #endif
 
-       const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
-       const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
+    const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
+    const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
-       const Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-       // Error data
+    // Error data
 
-       Tensor<type, 2> error_data(testing_samples_number, outputs_number);
+    Tensor<type, 2> error_data(testing_samples_number, outputs_number);
 
-       Tensor<type, 2> difference_value = (targets - outputs);
+    Tensor<type, 2> difference_value = (targets - outputs);
 
-       for(Index i = 0; i < testing_samples_number; i++)
+    for(Index i = 0; i < testing_samples_number; i++)
+    {
+       for(Index j = 0; j < outputs_number; j++)
        {
-           for(Index j = 0; j < outputs_number; j++)
-           {
-               error_data(i,j) = (difference_value(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
-           }
+           error_data(i,j) = (difference_value(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
        }
+    }
 
-       return error_data;
+    return error_data;
 }
 
 
@@ -521,14 +521,12 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(
 
     // Error descriptives
 
-    Tensor<Descriptives, 1> descriptives = calculate_absolute_errors_descriptives(targets,outputs);
-
-    return descriptives;
+    return calculate_absolute_errors_descriptives(targets, outputs);
 }
 
 
 Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(const Tensor<type, 2>& targets,
-        const Tensor<type, 2>& outputs) const
+                                                                                const Tensor<type, 2>& outputs) const
 {
     const Tensor<type, 2> diff = (targets-outputs).abs();
 
@@ -549,10 +547,7 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptive
 
     // Error descriptives
 
-    const Tensor<Descriptives, 1> descriptives = calculate_percentage_errors_descriptives(targets,outputs);
-
-    return descriptives;
-
+    return calculate_percentage_errors_descriptives(targets,outputs);
 }
 
 
@@ -624,10 +619,10 @@ void TestingAnalysis::print_error_data_descriptives() const
         cout << "Maximum percentage error: " << error_data_statistics[i][2].maximum << " %" << endl;
         cout << "Mean percentage error: " << error_data_statistics[i][2].mean << " %" << endl;
         cout << "Standard deviation percentage error: " << error_data_statistics[i][2].standard_deviation << " %" << endl;
-
         cout << endl;
     }
 }
+
 
 /// Calculates histograms for the relative errors of all the output variables.
 /// The number of bins is set by the user.
@@ -712,7 +707,7 @@ Tensor<type, 2> TestingAnalysis::calculate_errors() const
 
 Tensor<type, 2> TestingAnalysis::calculate_binary_classification_errors() const
 {
-    Tensor<type, 2> errors(7,3);
+    Tensor<type, 2> errors(7, 3);
 
     const Tensor<type, 1> training_errors = calculate_binary_classification_training_errors();
     const Tensor<type, 1> selection_errors = calculate_binary_classification_selection_errors();
@@ -989,6 +984,7 @@ Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
     return errors;
 }
 
+
 Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_errors() const
 {
     // Data set
@@ -1039,6 +1035,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_error
 
     return errors;
 }
+
 
 Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_errors() const
 {
@@ -1134,19 +1131,6 @@ Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
     // Neural network
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
-
-#ifdef OPENNN_DEBUG
-
-//    if(!unscaling_layer_pointer)
-//    {
-//       buffer << "OpenNN Exception: TestingAnalysis class.\n"
-//              << "Tensor<type, 1> calculate_testing_errors() const.\n"
-//              << "Unscaling layer is nullptr.\n";
-
-//       throw logic_error(buffer.str());
-//    }
-
-#endif
 
     Tensor<type, 1> errors(4);
 
@@ -1281,7 +1265,6 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
     errors(1) = errors(0)/testing_samples_number;
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
-//    errors(4) = calculate_cross_entropy_error(targets, outputs);
 
     return errors;
 }
@@ -1302,9 +1285,10 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
     type normalization_coefficient = 0;
 
 #pragma omp parallel for reduction(+: normalization_coefficient)
+
     for(Index i = 0; i < samples_number; i++)
     {
-        Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
+        const Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
 
         normalization_coefficient += norm_1(0);
     }

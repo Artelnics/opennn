@@ -652,7 +652,6 @@ public:
    void generate_constant_data(const Index&, const Index&, const type&);
    void generate_random_data(const Index&, const Index&);
    void generate_sequential_data(const Index&, const Index&);
-   void generate_paraboloid_data(const Index&, const Index&);
    void generate_Rosenbrock_data(const Index&, const Index&);
    void generate_sum_data(const Index&, const Index&);
 
@@ -692,8 +691,6 @@ public:
    // Trasform methods
 
    void fill_time_series(const Index&);
-
-   void numeric_to_categorical(const Index&);
 
    // Missing values
 

@@ -93,6 +93,7 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 /// \param batch
 /// \param forward_propagation
 /// \param back_propagation
+/// @todo Divide by number of samples.
 
 void MinkowskiError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
@@ -100,14 +101,16 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
 {
     Tensor<type, 0> minkowski_error;
 
-    minkowski_error.device(*thread_pool_device) = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(static_cast<type>(1.0)/minkowski_parameter);
+    minkowski_error.device(*thread_pool_device)
+            = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(static_cast<type>(1.0)/minkowski_parameter);
 
     back_propagation.error = minkowski_error(0);
 }
 
+/// @todo Divide by number of samples.
 
-void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
-                                            NeuralNetworkForwardPropagation& forward_propagation,
+void MinkowskiError::calculate_output_delta(const DataSetBatch&,
+                                            NeuralNetworkForwardPropagation&,
                                             LossIndexBackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -115,9 +118,6 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
-
-//     const Tensor<type, 0> p_norm_derivative
-//             =(back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
 
      switch(output_layer_pointer->get_type())
      {
@@ -229,8 +229,6 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Minkowski parameter
-
-//    const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
 
     if(root_element)
     {

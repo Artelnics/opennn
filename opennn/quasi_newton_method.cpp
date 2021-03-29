@@ -539,7 +539,6 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left
     TensorMap< Tensor<type, 2> > direct_matrix(product.data(), product.rows(), product.cols());
 
     return direct_matrix;
-
 }
 
 
@@ -589,6 +588,7 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
 /// @param old_inverse_hessian The hessian of the error function for that previous set of parameters.
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
+/// @todo Add thread pool.
 
 void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
 {
@@ -1307,7 +1307,6 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
         throw logic_error(buffer.str());
     }
-
 
     // Inverse hessian approximation method
     {

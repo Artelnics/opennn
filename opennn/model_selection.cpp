@@ -387,8 +387,6 @@ void ModelSelection::check() const
         throw logic_error(buffer.str());
     }
 
-//
-
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
     if(selection_samples_number == 0)
@@ -576,11 +574,9 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
             growing_neurons.from_XML(growing_neurons_document);
         }
-
     }
 
     // Inputs Selection
-
     {
         const tinyxml2::XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
 
@@ -632,7 +628,6 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 pruning_inputs.from_XML(pruning_inputs_document);
             }
-
 
             // Genetic algorithm
 
@@ -708,17 +703,13 @@ void ModelSelection::print() const
 
 void ModelSelection::save(const string& file_name) const
 {
-    FILE *pFile;
-//    int err;
+    FILE * file = fopen(file_name.c_str(), "w");
 
-//    err = fopen_s(&pFile, file_name.c_str(), "w");
-    pFile = fopen(file_name.c_str(), "w");
+    tinyxml2::XMLPrinter printer(file);
 
-    tinyxml2::XMLPrinter document(pFile);
+    write_XML(printer);
 
-    write_XML(document);
-
-    fclose(pFile);
+    fclose(file);
 }
 
 

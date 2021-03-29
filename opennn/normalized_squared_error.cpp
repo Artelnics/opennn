@@ -86,19 +86,22 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
     const Tensor<type, 1> targets_mean = data_set_pointer->calculate_used_targets_mean();
 
-    //Targets matrix
+    // Targets matrix
 
     const Tensor<type, 2> targets = data_set_pointer->get_target_data();
 
-    //Normalization coefficient
+    // Normalization coefficient
 
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
 }
 
 
+/// @todo What is targets_t1 ???
+
 void NormalizedSquaredError::set_time_series_normalization_coefficient()
 {
     //Targets matrix
+
     const Tensor<type, 2> targets = data_set_pointer->get_target_data();
 
     const Index rows = targets.dimension(0)-1;
@@ -124,14 +127,15 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
     //Normalization coefficient
 
     normalization_coefficient = calculate_time_series_normalization_coefficient(targets_t_1, targets_t);
-
 }
 
-type NormalizedSquaredError::calculate_time_series_normalization_coefficient(const Tensor<type, 2>& targets_t_1, const Tensor<type, 2>& targets_t) const
+
+type NormalizedSquaredError::calculate_time_series_normalization_coefficient(const Tensor<type, 2>& targets_t_1,
+                                                                             const Tensor<type, 2>& targets_t) const
 {
 #ifdef OPENNN_DEBUG
 
-//    check();
+    check();
 
     const Index target_t_1_samples_number = targets_t_1.dimension(0);
     const Index target_t_1_variables_number = targets_t_1.dimension(1);
@@ -290,7 +294,7 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
-                                             const NeuralNetworkForwardPropagation& forward_propagation,
+                                             const NeuralNetworkForwardPropagation&,
                                              LossIndexBackPropagationLM& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -306,7 +310,7 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                                    NeuralNetworkForwardPropagation& ,
+                                                    NeuralNetworkForwardPropagation&,
                                                     LossIndexBackPropagation& back_propagation) const
 {
      #ifdef OPENNN_DEBUG
@@ -370,7 +374,9 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 }
 
 
-void NormalizedSquaredError::calculate_output_delta(const DataSetBatch &, NeuralNetworkForwardPropagation &, LossIndexBackPropagationLM &) const
+void NormalizedSquaredError::calculate_output_delta(const DataSetBatch &,
+                                                    NeuralNetworkForwardPropagation &,
+                                                    LossIndexBackPropagationLM &) const
 {
 
 }

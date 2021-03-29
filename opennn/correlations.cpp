@@ -21,79 +21,7 @@ namespace OpenNN
 type linear_correlation(const ThreadPoolDevice* thread_pool_device,
                         const Tensor<type, 1>& x, const Tensor<type, 1>& y, const bool & scale_vectors)
 {
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
-
-    const Tensor<type, 1> new_x = scale_vectors ? scale_minimum_maximum(filter_vectors.first) : filter_vectors.first;
-    const Tensor<type, 1> new_y = scale_vectors ? scale_minimum_maximum(filter_vectors.second) : filter_vectors.second;
-
-    const Index x_size = new_x.size();
-
-#ifdef OPENNN_DEBUG
-
-    const Index y_size = y.size();
-
-    ostringstream buffer;
-
-    if(y_size != x_size)
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "type linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Tensor<type, 0> s_x;
-    Tensor<type, 0> s_y;
-
-    Tensor<type, 0> s_xx;
-    Tensor<type, 0> s_yy;
-                        ;
-    Tensor<type, 0> s_xy;
-
-    s_x.device(*thread_pool_device) = new_x.sum();
-    s_y.device(*thread_pool_device) = new_y.sum();
-    s_xx.device(*thread_pool_device) = new_x.square().sum();
-    s_yy.device(*thread_pool_device) = new_y.square().sum();
-    s_xy.device(*thread_pool_device) = (new_y*new_x).sum();
-
-    type linear_correlation;
-
-    if(abs(s_x() - 0) < numeric_limits<type>::epsilon()
-            && abs(s_y() - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xx() - 0) < numeric_limits<type>::epsilon()
-            && abs(s_yy() - 0) < numeric_limits<type>::epsilon()
-            && abs(s_xy() - 0) < numeric_limits<type>::epsilon())
-    {
-        linear_correlation = 0.0;
-    }
-    else
-    {
-        const type numerator = (x_size * s_xy() - s_x() * s_y());
-
-        const type radicand = (x_size * s_xx() - s_x() * s_x()) *(x_size * s_yy() - s_y() * s_y());
-
-        if(radicand <= static_cast<type>(0.0))
-        {
-            return 0.0;
-        }
-
-        const type denominator = sqrt(radicand);
-
-        if(denominator < numeric_limits<type>::epsilon())
-        {
-            linear_correlation = 0;
-        }
-        else
-        {
-            linear_correlation = numerator / denominator;
-        }
-    }
-
-    return linear_correlation;
-
+    return linear_regression(thread_pool_device, x, y, scale_vectors).correlation;
 }
 
 
@@ -104,6 +32,7 @@ type linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
 type rank_linear_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
+
 #ifdef OPENNN_DEBUG
 
     ostringstream buffer;
@@ -123,7 +52,6 @@ type rank_linear_correlation(const ThreadPoolDevice* thread_pool_device, const T
     const Tensor<type, 1> ranks_y = less_rank_with_ties(y);
 
     return linear_correlation(thread_pool_device, ranks_x, ranks_y);
-
 }
 
 
@@ -134,29 +62,7 @@ type rank_linear_correlation(const ThreadPoolDevice* thread_pool_device, const T
 
 type exponential_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(y.size() != x.size())
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Check negative values from y
-
-    for(Index i = 0; i < y.dimension(0); i++)
-    {
-        if(!::isnan(y(i)) && y(i) <= 0) return NAN;
-    }
-
-    return linear_correlation(thread_pool_device, x, y.log(), false);
+    return exponential_regression(thread_pool_device, x, y).correlation;
 }
 
 
@@ -167,29 +73,7 @@ type exponential_correlation(const ThreadPoolDevice* thread_pool_device, const T
 type logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
                              const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(y.size() != x.size())
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "type logarithmic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Check negative values from x
-
-    for(Index i = 0; i < x.dimension(0); i++)
-    {
-        if(!::isnan(x(i)) && x(i) <= 0) return NAN;
-    }
-
-    return linear_correlation(thread_pool_device, x.log(), y, false);
+    return logarithmic_regression(thread_pool_device, x, y).correlation;
 }
 
 
@@ -213,30 +97,7 @@ type rank_logistic_correlation(const ThreadPoolDevice* thread_pool_device, const
 
 type power_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(y.size() != x.size())
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "type power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Check negative values from x and y
-
-    for(Index i = 0; i < x.dimension(0); i++)
-    {
-        if(!::isnan(x(i)) && x(i) <= 0) return NAN;
-        if(!::isnan(y(i)) && y(i) <= 0) return NAN;
-    }
-
-    return linear_correlation(thread_pool_device, x.log(), y.log(), false);
+    return power_regression(thread_pool_device, x, y).correlation;
 }
 
 
@@ -292,14 +153,9 @@ type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type, 2>& x,
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(isnan(x(i, 0)))
-        {
-            x_NAN++;
-        }
-        if(isnan(x(i, 0)))
-        {
-            y_NAN++;
-        }
+        if(isnan(x(i, 0))) x_NAN++;
+
+        if(isnan(y(i, 0))) y_NAN++;
     }
 
     Tensor<type, 2> new_x;
@@ -347,7 +203,7 @@ type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type, 2>& x,
 
     const Index new_size = new_x.dimension(0);
 
-    Tensor<Index, 2> contingency_table(new_x.dimension(1),new_y.dimension(1));
+    Tensor<Index, 2> contingency_table(new_x.dimension(1), new_y.dimension(1));
 
     for(Index i = 0; i < new_x.dimension(1); i ++)
     {
@@ -384,44 +240,6 @@ type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type, 2>& x,
 /// @param x Vector containing the data.
 /// @param lags_number Maximum lags number.
 
-//Tensor<type, 1> autocorrelations(const Tensor<type, 1>& x, const Index& lags_number)
-//{
-//    Tensor<type, 1> autocorrelation(lags_number);
-
-//    const Tensor<type, 0> mean = x.mean();
-
-//    const Index this_size = x.size();
-
-//    type numerator = 0;
-//    type denominator = 0;
-
-//    for(Index i = 0; i < lags_number; i++)
-//    {
-//        for(Index j = 0; j < this_size - i; j++)
-//        {
-//            numerator += ((x[j] - mean(0)) *(x[j + i] - mean(0))) /static_cast<type>(this_size - i);
-//        }
-//        for(Index j = 0; j < this_size; j++)
-//        {
-//            denominator += ((x[j] - mean(0)) *(x[j] - mean(0))) /static_cast<type>(this_size);
-//        }
-
-//        if(abs(denominator) < numeric_limits<type>::min())
-//        {
-//            autocorrelation[i] = 1.0;
-//        }
-//        else
-//        {
-//            autocorrelation[i] = numerator / denominator;
-//        }
-
-//        numerator = 0;
-//        denominator = 0;
-//    }
-
-//    return autocorrelation;
-//}
-
 Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Index& lags_number)
 {
     Tensor<type, 1> autocorrelation(lags_number);
@@ -452,65 +270,6 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, con
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with this vector.
 /// @param maximum_lags_number Maximum lags for which cross-correlation is calculated.
-
-//Tensor<type, 1> cross_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index& maximum_lags_number)
-//{
-//    if(y.size() != x.size())
-//    {
-//        ostringstream buffer;
-
-//        buffer << "OpenNN Exception: Correlations.\n"
-//               << "Tensor<type, 1> calculate_cross_correlation(const Tensor<type, 1>&) method.\n"
-//               << "Both vectors must have the same size.\n";
-
-//        throw logic_error(buffer.str());
-//    }
-
-//    Tensor<type, 1> cross_correlation(maximum_lags_number);
-
-//    const Tensor<type, 0> this_mean = x.mean();
-//    const Tensor<type, 0> y_mean = y.mean();
-
-//    const Index this_size = x.size();
-
-//    type numerator = 0;
-
-//    type this_denominator = 0;
-//    type y_denominator = 0;
-//    type denominator = 0;
-
-//    for(Index i = 0; i < maximum_lags_number; i++)
-//    {
-//        numerator = 0;
-//        this_denominator = 0;
-//        y_denominator = 0;
-
-//        for(Index j = 0; j < this_size - i; j++)
-//        {
-//            numerator += (x[j] - this_mean(0)) *(y[j + i] - y_mean(0));
-//        }
-
-//        for(Index j = 0; j < this_size; j++)
-//        {
-//            this_denominator += (x[j] - this_mean(0)) *(x[j] - this_mean(0));
-//            y_denominator += (y[j] - y_mean(0)) *(y[j] - y_mean(0));
-//        }
-
-//        denominator = sqrt(this_denominator * y_denominator);
-
-//        if(abs(denominator) < numeric_limits<type>::min())
-//        {
-//            cross_correlation[i] = 0;
-//        }
-//        else
-//        {
-//            cross_correlation[i] = numerator / denominator;
-//        }
-//    }
-
-//    return cross_correlation;
-//}
-
 
 Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index& maximum_lags_number)
 {
@@ -545,6 +304,7 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device, c
 
         cross_correlation[i] = linear_correlation(thread_pool_device, column_x, column_y, false);
     }
+
     return cross_correlation;
 }
 
@@ -648,7 +408,6 @@ Tensor<type, 2> logistic(const ThreadPoolDevice* thread_pool_device, const Tenso
 }
 
 
-
 ///Calculate the mean square error of the logistic function.
 
 type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
@@ -683,7 +442,10 @@ type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, cons
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,const Tensor<type, 1>& x, const Tensor<type, 1>& y, const bool& scale_data)
+RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,
+                                    const Tensor<type, 1>& x,
+                                    const Tensor<type, 1>& y,
+                                    const bool& scale_data)
 {
 #ifdef OPENNN_DEBUG
 
@@ -702,7 +464,7 @@ RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,c
 
 #endif
 
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1> new_x = scale_data ? scale_minimum_maximum(filter_vectors.first) : filter_vectors.first;
     const Tensor<type, 1> new_y = scale_data ? scale_minimum_maximum(filter_vectors.second) : filter_vectors.second;
@@ -766,7 +528,6 @@ RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,c
 ///Calculate the coefficients of a logarithmic regression (a, b) and the correlation among the variables
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
-///
 /// @todo check
 
 RegressionResults logarithmic_regression(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
@@ -941,7 +702,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     // Filter missing values
 
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1>& new_x = filter_vectors.first;
     const Tensor<type, 1>& new_y = filter_vectors.second;
@@ -1049,7 +810,7 @@ CorrelationResults linear_correlations(const ThreadPoolDevice*, const Tensor<typ
 
 #endif
 
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1> new_vector_x = scale_minimum_maximum(filter_vectors.first);
     const Tensor<type, 1> new_vector_y = scale_minimum_maximum(filter_vectors.second);
@@ -1226,12 +987,10 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     // Filter missing values
 
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1>& new_x = filter_vectors.first;
     Tensor<type, 1>& new_y = filter_vectors.second;
-
-    const Index new_size = new_x.size();
 
     // Scale data
 
@@ -1382,15 +1141,15 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
 
     // Filter missing values
 
-    pair <Tensor<type, 2>, Tensor<type, 2>> filter_vectors = filter_missing_values(x,y);
+    pair<Tensor<type, 2>, Tensor<type, 2>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 2>& new_x = filter_vectors.first;
     const Tensor<type, 2>& new_y = filter_vectors.second;
 
     // Scale data
 
-    Tensor<type, 2> scaled_x = scale_minimum_maximum(new_x);
-    Tensor<type, 2> scaled_y = scale_minimum_maximum(new_y);
+    const Tensor<type, 2> scaled_x = scale_minimum_maximum(new_x);
+    const Tensor<type, 2> scaled_y = scale_minimum_maximum(new_y);
 
     // Inputs: scaled_x; Targets: sorted_y
 
@@ -1627,7 +1386,7 @@ CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device
 
     // Filter missing values
 
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1>& new_x = filter_vectors.first;
     const Tensor<type, 1>& new_y = filter_vectors.second;
@@ -1770,7 +1529,7 @@ type covariance(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2
 
 type covariance_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1> new_x = filter_vectors.first;
     const Tensor<type, 1> new_y = filter_vectors.second;
@@ -1921,135 +1680,6 @@ Tensor<type, 1> less_rank_with_ties(const Tensor<type, 1>& vector)
 }
 
 
-/// Calculate the contingency table of two cualitatives variables given to the function.
-/// @param vector1 First variable.
-/// @param vector2 Second variable.
-/// @todo
-
-Tensor<Index, 2> contingency_table(const Tensor<string, 1>& vector1, const Tensor<string, 1>& vector2)
-{
-//    Tensor<string, 2> data_set = {vector1, vector2};
-
-//    data_set.set_header(Tensor<string, 1>({"variable1","variable2"}));
-
-//    const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
-//    const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
-
-//    const Index rows_number = categories_vector1.size();
-//    const Index columns_number = categories_vector2.size();
-
-//    Tensor<Index, 2> contingency_table(rows_number,columns_number);
-
-//    for(Index i = 0 ; i < rows_number; i ++)
-//    {
-//        for(Index j = 0 ; j < columns_number; j ++)
-//        {
-//            contingency_table(i,j) = data_set.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
-//        }
-//    }
-
-//    return contingency_table;
-
-    return Tensor<Index, 2>();
-}
-
-
-/// Calculate the contingency table of two cualitatives variables given to the function
-/// @param contingency_table Data set to perform the test.
-/// @todo
-
-Tensor<Index, 2> contingency_table(Tensor<string, 2>& matrix)
-{  
-    #ifdef OPENNN_DEBUG
-
-    if(matrix.dimension(1) == 0)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: Matrix template."
-              << "Index contingency_table const method.\n"
-              << "Number of columns("<< matrix.dimension(1) <<") must be greater than zero.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    if(matrix.dimension(1) > 2)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: Matrix template."
-              << "Index contingency_table const method.\n"
-              << "Number of columns("<< matrix.dimension(1) <<") must be lower than two.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-
-
-//    matrix.set_header({"variable1", "variable2"});
-
-    const Tensor<string, 1> vector1 = matrix.chip(0,1);
-    const Tensor<string, 1> vector2 = matrix.chip(1,1);
-
-//    const Tensor<string, 1> categories_vector1 = vector1.get_unique_elements();
-//    const Tensor<string, 1> categories_vector2 = vector2.get_unique_elements();
-
-//    const Index rows_number = categories_vector1.size();
-//    const Index columns_number = categories_vector2.size();
-
-//    Tensor<Index, 2> contingency_table(rows_number,columns_number);
-
-//    for(Index i = 0 ; i < rows_number; i ++)
-//    {
-//        for(Index j = 0 ; j < columns_number; j ++)
-//        {
-//            contingency_table(i,j) = matrix.count_equal_to("variable1",categories_vector1[i],"variable2",categories_vector2[j]);
-//        }
-//    }
-
-//    return contingency_table;
-
-    return Tensor<Index, 2>();
-}
-
-
-/// Calculate the contingency table of two cualitatives variables given to the function
-
-Tensor<Index, 2> contingency_table(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& indices1, const Tensor<Index, 1>& indices2)
-{
-    Tensor<Index, 2> contingency_table(indices1.size(), indices2.size());
-
-    for(Index i = 0; i < indices1.size(); i ++)
-    {
-
-        Index count = 0;
-
-        Index i_2;
-
-        i_2 = indices1[i];
-
-        for(Index j = 0; j < indices2.size(); j ++)
-        {
-            Index j_2;
-
-            j_2 = indices2[j];
-
-            for(Index k = 0; k < matrix.dimension(0); k ++)
-            {
-                if(matrix(k,i_2) + matrix(k,j_2) - static_cast<type>(2.0) <= static_cast<type>(0.0001))
-                {
-                    count ++;
-                    contingency_table(i,j) = count;
-                }
-            }
-        }
-    }
-
-    return contingency_table;
-}
-
-
 /// Calculate the chi squared test statistic of a contingency table
 /// @param matrix Matrix that represent the contingency table
 
@@ -2057,8 +1687,8 @@ type chi_square_test(const Tensor<type, 2>& matrix)
 {
     // Eigen stuff
 
-    Eigen::array<int, 1> rows = {Eigen::array<int, 1>({1})};
-    Eigen::array<int, 1> columns = {Eigen::array<int, 1>({0})};
+    const Eigen::array<int, 1> rows = {Eigen::array<int, 1>({1})};
+    const Eigen::array<int, 1> columns = {Eigen::array<int, 1>({0})};
 
     const Tensor<type, 1> sum_columns = matrix.sum(columns);
     const Tensor<type, 1> sum_rows = matrix.sum(rows);
@@ -2079,7 +1709,7 @@ type chi_square_test(const Tensor<type, 2>& matrix)
 
     const Tensor<type, 2> squared = ((matrix.cast<type>()-ei)*(matrix.cast<type>()-ei));
 
-    Tensor<type, 2> chi (sum_rows.size(),sum_columns.size());
+    Tensor<type, 2> chi(sum_rows.size(),sum_columns.size());
 
     for(Index i = 0; i < sum_rows.size(); i++)
     {
@@ -2095,72 +1725,15 @@ type chi_square_test(const Tensor<type, 2>& matrix)
 }
 
 
-///Calaculate the chi squared critical point of a contingency table
-/// @param alpha significance of the test
-/// @param degree_freedom Degree of freedom of the contingency table
-
-type chi_square_critical_point(const type& alpha, const type& degrees_of_freedom)
-{
-    const type zeta = degrees_of_freedom/static_cast<type>(2.0);
-
-    const type gamma = pow((zeta+static_cast<type>(1.0)),zeta-static_cast<type>(0.5))/exp(zeta+static_cast<type>(1.0))*(sqrt(static_cast<type>(2)*static_cast<type>(3.14159265)))+(pow(static_cast<type>(1),static_cast<type>(0.5))*exp(static_cast<type>(1))/zeta);
-
-    const type step = static_cast<type>(1.0e-5);
-
-    type p_0 = 0;
-    type p_1 = 0;
-
-    type x = 0;
-
-    while(p_1 < static_cast<type>(1.0) - alpha)
-    {
-        x += step;
-
-        const type f_x = pow(x, (zeta-static_cast<type>(1)))/((exp(x/static_cast<type>(2)))*pow(static_cast<type>(2), zeta)*gamma);
-
-        p_1 = p_0 + step * f_x;
-
-        p_0 = p_1;
-    }
-
-    return x;
-}
-
-
-///Calculate the karl_pearson_coefficient between two cualitative variable. It shows the realtionship between the two varibles.
-/// @param x First variable
-/// @param y Second variable
-/// @todo
-
-type karl_pearson_correlation(const Tensor<string, 1>& x, const Tensor<string, 1>& y)
-{
-
-    const Tensor<Index, 2> contingency_table = OpenNN::contingency_table(x,y);
-
-    const type chi_squared_exp = chi_square_test(contingency_table.cast<type>());
-
-    Tensor<Index, 1> categories(2);
-//        categories[0] = x.get_unique_elements().size();
-//        categories[1] = y.get_unique_elements().size();
-
-    const Tensor<Index, 0> k = categories.minimum();
-
-    return sqrt(k(0)/(k(0)-1))*sqrt(chi_squared_exp/(x.size() + chi_squared_exp));
-}
-
-
 ///Filter the missing values of two vectors
 
-pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     Index new_size = 0;
 
     for(Index i = 0; i < x.size(); i++)
     {
-        if(!::isnan(x(i)) && !::isnan(y(i)))
-        {
-            new_size++;
-        }
+        if(!::isnan(x(i)) && !::isnan(y(i))) new_size++;
     }
 
     if(new_size == x.size())
@@ -2168,9 +1741,9 @@ pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type
         return make_pair(x, y);
     }
 
-    Tensor<type, 1> new_vector_x(new_size);
+    Tensor<type, 1> new_x(new_size);
 
-    Tensor<type, 1> new_vector_y(new_size);
+    Tensor<type, 1> new_y(new_size);
 
     Index index = 0;
 
@@ -2178,14 +1751,14 @@ pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type
     {
         if(!::isnan(x(i)) && !::isnan(y(i)))
         {
-            new_vector_x(index) = x(i);
-            new_vector_y(index) = y(i);
+            new_x(index) = x(i);
+            new_y(index) = y(i);
 
             index++;
         }
     }
 
-    return make_pair(new_vector_x, new_vector_y);
+    return make_pair(new_x, new_y);
 }
 
 

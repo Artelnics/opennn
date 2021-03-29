@@ -1239,15 +1239,13 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
 void TrainingStrategy::save(const string& file_name) const
 {
-    FILE *pFile;
+    FILE * file = fopen(file_name.c_str(), "w");
 
-    pFile = fopen(file_name.c_str(), "w");
+    tinyxml2::XMLPrinter printer(file);
 
-    tinyxml2::XMLPrinter document(pFile);
+    write_XML(printer);
 
-    write_XML(document);
-
-    fclose(pFile);
+    fclose(file);
 }
 
 
