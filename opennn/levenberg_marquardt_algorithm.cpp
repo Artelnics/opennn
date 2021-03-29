@@ -549,12 +549,10 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
+cout << "hello" << endl;
     NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
-
+cout << "forward propagation" << endl;
     // Loss index
 
     type old_training_loss = 0;
@@ -568,7 +566,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     LossIndexBackPropagationLM training_loss_index_back_propagation_lm(training_samples_number, loss_index_pointer);
     LossIndexBackPropagationLM selection_loss_index_back_propagation_lm(training_samples_number, loss_index_pointer);
-
+cout << "back propagation" << endl;
     // Training strategy stuff
 
     bool stop_training = false;
@@ -578,13 +576,15 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     type elapsed_time = 0;
 
     LevenbergMarquardtAlgorithmData optimization_data(this);
-
+cout << "hello" << endl;
     // Calculate error before training
 
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
     loss_index_pointer->calculate_squared_errors(training_batch, training_forward_propagation, training_loss_index_back_propagation_lm);
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_loss_index_back_propagation_lm);
     results.training_error_history(0)  = training_loss_index_back_propagation_lm.error;
+
+    cout << "initial error" << endl;
 
     if(has_selection)
     {
@@ -593,6 +593,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_loss_index_back_propagation_lm);
         results.selection_error_history(0)  = selection_loss_index_back_propagation_lm.error;
     }
+
+    cout << "selection error" << endl;
 
     // Main loop
 

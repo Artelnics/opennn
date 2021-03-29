@@ -34,8 +34,8 @@ QMAKE_LFLAGS += -fopenmp -pthread -lgomp
 LIBS += -fopenmp -pthread -lgomp
 
 win32:!win32-g++{
-QMAKE_CXXFLAGS+= -arch:AVX
-QMAKE_CFLAGS+= -arch:AVX
+#QMAKE_CXXFLAGS+= -arch:AVX
+#QMAKE_CFLAGS+= -arch:AVX
 }
 }
 

@@ -40,6 +40,7 @@ struct PerceptronLayerBackPropagation;
 /// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
 
 class PerceptronLayer : public Layer
+
 {
 
 public:
@@ -236,14 +237,11 @@ protected:
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
-    const Index neurons_number = layer_pointer->get_neurons_number();
-
     // Default constructor
 
     explicit PerceptronLayerForwardPropagation() : LayerForwardPropagation()
     {
     }
-
 
     explicit PerceptronLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
         : LayerForwardPropagation()
@@ -266,7 +264,6 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
         activations_derivatives.resize(batch_samples_number, neurons_number);
     }
 
-
     void print() const
     {
         cout << "Combinations:" << endl;
@@ -287,8 +284,6 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
-    const Index neurons_number = layer_pointer->get_neurons_number();
-    const Index inputs_number = layer_pointer->get_inputs_number();
 
     // Default constructor
 
@@ -310,6 +305,9 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
         layer_pointer = new_layer_pointer;
 
         batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
 
         delta.resize(batch_samples_number, neurons_number);
 

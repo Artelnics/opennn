@@ -278,7 +278,6 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 
     void print() const
     {
-
     }
 
     Tensor<type, 1> previous_activations;
