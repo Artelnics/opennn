@@ -1479,7 +1479,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     }
 
     if(unique_values_number <= bins_number)
-    {
+    {cout << "if" << endl;
         sort(unique_values.data(), unique_values.data() + unique_values.size(), less<type>());
 
         centers = unique_values;
@@ -1495,7 +1495,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
             for(Index j = 0; j < unique_values_number; j++)
             {
-                if(static_cast<Index>(vector(i)) == static_cast<Index>(centers(j)))
+//                if(static_cast<Index>(vector(i)) == static_cast<Index>(centers(j)))
+                if(vector(i) - centers(j) < static_cast<type>(1e-6))
                 {
                     frequencies(j)++;
                     break;
@@ -1505,6 +1506,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     }
     else
     {
+        cout << "else" << endl;
         const type min = minimum(vector);
         const type max = maximum(vector);
 
@@ -1539,13 +1541,17 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
             {
                 if(vector(i) >= minimums(j) && vector(i) < maximums(j))
                 {
+                    cout << "vector(i): " << vector(i) << endl;
+                    cout << "minimun(i): " << minimums(j) << endl;
+                    cout << "maximun(i): " << maximums(j) << endl;
+
                     frequencies(j)++;
                     break;
                 }
             }
 
             if(vector(i) >= minimums(bins_number - 1))
-            {
+            {cout << "hello" << endl;
                 frequencies(bins_number - 1)++;
             }
         }
