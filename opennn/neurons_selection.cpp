@@ -472,7 +472,6 @@ void NeuronsSelection::check() const
         throw logic_error(buffer.str());
     }
 
-
     if(neural_network_pointer->get_layers_number() == 1)
     {
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
@@ -508,11 +507,11 @@ void NeuronsSelection::check() const
 
 }
 
+
 /// Writes the time from seconds in format HH:mm:ss.
 
 const string NeuronsSelection::write_elapsed_time(const type& time) const
 {
-
 #ifdef OPENNN_DEBUG
 
     if(time > static_cast<type>(3600e5))
@@ -538,9 +537,9 @@ const string NeuronsSelection::write_elapsed_time(const type& time) const
     }
 #endif
 
-    int hours = static_cast<int>(time) / 3600;
+    const int hours = static_cast<int>(time) / 3600;
     int seconds = static_cast<int>(time) % 3600;
-    int minutes = seconds / 60;
+    const int minutes = seconds / 60;
     seconds = seconds % 60;
 
     ostringstream elapsed_time;

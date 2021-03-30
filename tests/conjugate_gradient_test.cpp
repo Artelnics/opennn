@@ -156,6 +156,15 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
 {
    cout << "test_calculate_PR_training_direction\n";
 
+    Tensor<type, 1> old_gradient;
+    Tensor<type, 1> gradient;
+    Tensor<type, 1> old_training_direction;
+    Tensor<type, 1> training_direction;
+
+    Index parameters_number;
+
+    // Test
+
    DataSet data_set(1, 1, 2);
    data_set.set_data_random();
 
@@ -173,12 +182,11 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
    neural_network.set_parameters_constant(1.0);
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_error_gradient();
 
-//   Tensor<type, 1> PR_training_direction
-//   = conjugate_gradient.calculate_PR_training_direction(old_gradient, gradient, old_training_direction);
+   conjugate_gradient.calculate_PR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
 
-   Index parameters_number = neural_network.get_parameters_number();
+   parameters_number = neural_network.get_parameters_number();
 
-//   assert_true(PR_training_direction.size() == parameters_number, LOG);
+   assert_true(training_direction.size() == parameters_number, LOG);
 
 }
 
@@ -188,6 +196,15 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
 void ConjugateGradientTest::test_calculate_FR_training_direction()
 {
    cout << "test_calculate_FR_training_direction\n";
+
+   Tensor<type, 1> old_gradient;
+   Tensor<type, 1> gradient;
+   Tensor<type, 1> old_training_direction;
+   Tensor<type, 1> training_direction;
+
+   Index parameters_number;
+
+   // Test
 
    DataSet data_set(1, 1, 2);
    data_set.set_data_random();
@@ -206,13 +223,11 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
    neural_network.set_parameters_constant(1.0);
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_error_gradient();
 	
-//   Tensor<type, 1> FR_training_direction
-//   = conjugate_gradient.calculate_FR_training_direction(old_gradient, gradient, old_training_direction);
+   conjugate_gradient.calculate_FR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
 
-   Index parameters_number = neural_network.get_parameters_number();
+   parameters_number = neural_network.get_parameters_number();
 
-//   assert_true(FR_training_direction.size() == parameters_number, LOG);
-
+   assert_true(training_direction.size() == parameters_number, LOG);
 }
 
 
@@ -394,11 +409,9 @@ void ConjugateGradientTest::run_test_case()
    test_calculate_training_direction();
    test_perform_training();
 
-
    // Training history methods
 
    test_set_reserve_all_training_history();
-
 
    // Serialization methods
 

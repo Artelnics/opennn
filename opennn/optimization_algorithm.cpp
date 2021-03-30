@@ -87,6 +87,7 @@ void OptimizationAlgorithm::set_hardware_use(const string& new_hardware_use)
     hardware_use = new_hardware_use;
 }
 
+
 /// Returns true if this optimization algorithm object has an associated loss index object,
 /// and false otherwise.
 
@@ -195,8 +196,6 @@ void OptimizationAlgorithm::set_display(const bool& new_display)
 
 void OptimizationAlgorithm::set_display_period(const Index& new_display_period)
 {
-
-
 #ifdef OPENNN_DEBUG
 
     if(new_display_period <= 0)
@@ -222,8 +221,6 @@ void OptimizationAlgorithm::set_display_period(const Index& new_display_period)
 
 void OptimizationAlgorithm::set_save_period(const Index& new_save_period)
 {
-
-
 #ifdef OPENNN_DEBUG
 
     if(new_save_period <= 0)
@@ -322,7 +319,6 @@ void OptimizationAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-
     file_stream.CloseElement();
 }
 
@@ -381,8 +377,6 @@ Tensor<string, 2> OptimizationAlgorithm::to_string_matrix() const
 
 void OptimizationAlgorithm::print() const
 {
-
-
 }
 
 
@@ -391,11 +385,13 @@ void OptimizationAlgorithm::print() const
 
 void OptimizationAlgorithm::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+    FILE * file = fopen(file_name.c_str(), "w");
 
-//    document->SaveFile(file_name.c_str());
+    tinyxml2::XMLPrinter printer(file);
 
-//    delete document;
+    write_XML(printer);
+
+    fclose(file);
 }
 
 
@@ -536,9 +532,9 @@ const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
     }
 #endif
 
-    int hours = static_cast<int>(time) / 3600;
+    const int hours = static_cast<int>(time) / 3600;
     int seconds = static_cast<int>(time) % 3600;
-    int minutes = seconds / 60;
+    const int minutes = seconds / 60;
     seconds = seconds % 60;
 
     ostringstream elapsed_time;
@@ -557,7 +553,6 @@ void TrainingResults::save(const string&) const
 {
 
 }
-
 
 
 Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) const
@@ -601,15 +596,6 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     buffer << setprecision(precision) << final_gradient_norm;
 
     final_results(3,1) = buffer.str();
-
-    // Final learning rate
-
-    //   names.push_back("Final learning rate");
-
-    //   buffer.str("");
-    //   buffer << setprecision(precision) << final_learning_rate;
-
-    //   values.push_back(buffer.str());
 
     // Epochs number
 

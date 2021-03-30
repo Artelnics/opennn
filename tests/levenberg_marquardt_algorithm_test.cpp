@@ -485,8 +485,8 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
 
 //   lma.perform_Householder_QR_decomposition(a, b);
 
-//   assert_true(a == 1.0, LOG);
-//   assert_true(b == 0.0, LOG);
+   assert_true(is_equal(a, 1.0), LOG);
+   assert_true(is_zero(b), LOG);
 
    // Test
 

@@ -216,8 +216,6 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
 
 void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-
-
 #ifdef OPENNN_DEBUG
 
     if(new_maximum_epochs_number < static_cast<type>(0.0))
@@ -244,8 +242,6 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
 
 void GradientDescent::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
 {
-
-
 #ifdef OPENNN_DEBUG
 
     if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
@@ -272,7 +268,6 @@ void GradientDescent::set_minimum_parameters_increment_norm(const type& new_mini
 
 void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
-
 
 #ifdef OPENNN_DEBUG
 
@@ -311,8 +306,6 @@ void GradientDescent::set_loss_goal(const type& new_loss_goal)
 
 void GradientDescent::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 {
-
-
 #ifdef OPENNN_DEBUG
 
     if(new_gradient_norm_goal < static_cast<type>(0.0))
@@ -349,8 +342,6 @@ void GradientDescent::set_maximum_selection_error_increases(const Index& new_max
 
 void GradientDescent::set_maximum_time(const type& new_maximum_time)
 {
-
-
 #ifdef OPENNN_DEBUG
 
     if(new_maximum_time < static_cast<type>(0.0))

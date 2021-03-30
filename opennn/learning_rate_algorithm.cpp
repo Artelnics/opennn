@@ -422,10 +422,6 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         }
         catch(const logic_error& error)
         {
-            //cout << "Triplet reduction" << endl;
-
-            //cout << error.what() << endl;
-
             return triplet.minimum();
         }
     }

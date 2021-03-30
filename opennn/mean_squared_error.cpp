@@ -47,7 +47,7 @@ MeanSquaredError::~MeanSquaredError()
 /// \param back_propagation
 
 void MeanSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     const NeuralNetworkForwardPropagation&,
                      LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -61,7 +61,7 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 void MeanSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     const NeuralNetworkForwardPropagation&,
                      LossIndexBackPropagationLM& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -76,7 +76,7 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                              NeuralNetworkForwardPropagation& forward_propagation,
+                                              NeuralNetworkForwardPropagation&,
                                               LossIndexBackPropagation& back_propagation) const
 {
      #ifdef OPENNN_DEBUG

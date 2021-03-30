@@ -273,8 +273,6 @@ void StochasticGradientDescent::set_reserve_all_training_history(const bool& new
 
 void StochasticGradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-
-
 #ifdef OPENNN_DEBUG
 
     if(new_maximum_epochs_number < static_cast<type>(0.0))
@@ -496,8 +494,6 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
 
-
-
     loss_index_pointer->calculate_errors(batch_training, training_forward_propagation, training_back_propagation);
     loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
     results.training_error_history(0) = training_back_propagation.error;
@@ -710,7 +706,6 @@ TrainingResults StochasticGradientDescent::perform_training()
     }
 
     if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
-
 
     return results;
 }
@@ -953,17 +948,6 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         try
         {
             set_batch_samples_number(new_batch_size);
-
-//            const Index training_samples_number = loss_index_pointer->get_data_set_pointer()->get_training_samples_number();
-
-//            if(new_batch_size > training_samples_number || new_batch_size == 0)
-//            {
-//                set_batch_samples_number(training_samples_number);
-//            }
-//            else
-//            {
-//                set_batch_samples_number(new_batch_size);
-//            }
         }
         catch(const logic_error& e)
         {
