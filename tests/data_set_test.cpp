@@ -495,9 +495,9 @@ void DataSetTest::test_calculate_testing_samples_descriptives()
 }
 
 
-void DataSetTest::test_calculate_inputs_descriptives() //@todo
+void DataSetTest::test_calculate_input_variables_descriptives() //@todo
 {
-   cout << "test_calculate_inputs_descriptives\n";
+   cout << "test_calculate_input_variables_descriptives\n";
 
    Tensor<type, 2> matrix(2, 3);
    matrix.setValues({{1.0,2.0,3.0},{1.0,2.0,3.0}});
@@ -647,7 +647,7 @@ void DataSetTest::test_scale_inputs_mean_standard_deviation()
 
    DataSet data_set;
 
-   Tensor<Descriptives, 1> inputs_descriptives;
+   Tensor<Descriptives, 1> input_variables_descriptives;
 
    // Test
 
@@ -655,9 +655,9 @@ void DataSetTest::test_scale_inputs_mean_standard_deviation()
    data_set.set_data_random();
 //   data_set.scale_input_mean_standard_deviation();
 
-   inputs_descriptives = data_set.calculate_input_variables_descriptives();
+   input_variables_descriptives = data_set.calculate_input_variables_descriptives();
 
-   //assert_true(inputs_descriptives[0].has_mean_zero_standard_deviation_one(), LOG);
+   //assert_true(input_variables_descriptives[0].has_mean_zero_standard_deviation_one(), LOG);
 }
 
 
@@ -688,7 +688,7 @@ void DataSetTest::test_scale_inputs_minimum_maximum()
 
    DataSet data_set;
 
-   Tensor<Descriptives, 1> inputs_descriptives;
+   Tensor<Descriptives, 1> input_variables_descriptives;
    Tensor<Descriptives, 1> target_descriptives;
 
    // Test
@@ -701,15 +701,15 @@ void DataSetTest::test_scale_inputs_minimum_maximum()
 
 //   data_set.set_min_max_range(-10,10);
 
-   inputs_descriptives = data_set.calculate_input_variables_descriptives();
+   input_variables_descriptives = data_set.calculate_input_variables_descriptives();
    target_descriptives = data_set.calculate_target_variables_descriptives();
 
    data_set.scale_input_variables_minimum_maximum();
    data_set.scale_target_variables_minimum_maximum();
 
-//   data_set.unscale_input_variables_minimum_maximum(inputs_descriptives);
+//   data_set.unscale_input_variables_minimum_maximum(input_variables_descriptives);
 
-   //assert_true(inputs_descriptives[0].has_minimum_minus_one_maximum_one(), LOG);
+   //assert_true(input_variables_descriptives[0].has_minimum_minus_one_maximum_one(), LOG);
 }
 
 
@@ -2525,7 +2525,7 @@ void DataSetTest::run_test_case()
    test_calculate_training_samples_descriptives();
    test_calculate_selection_samples_descriptives();
    test_calculate_testing_samples_descriptives();
-   test_calculate_inputs_descriptives();
+   test_calculate_input_variables_descriptives();
    test_calculate_training_targets_mean();
    test_calculate_selection_targets_mean();
    test_calculate_testing_targets_mean();

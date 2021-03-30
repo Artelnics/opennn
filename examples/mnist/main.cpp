@@ -52,7 +52,7 @@ int main()
 
         scaling_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_methods);
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables(scaling_methods);
 
         data_set.unuse_constant_columns();
 
@@ -86,12 +86,8 @@ int main()
         cout << "input_variables_number" << input_variables_number <<endl;
         cout << "target_variables_number" << target_variables_number <<endl;
 
-        Tensor<Index, 1> architecture(3);
-        architecture[0] = input_variables_number;
-        architecture[1] = 50;
-        architecture[2] = target_variables_number;
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, 50, target_variables_number});
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, architecture);
         PerceptronLayer* perceptron_layer_pointer = neural_network.get_first_perceptron_layer_pointer();
         perceptron_layer_pointer->set_activation_function("RectifiedLinear");
 

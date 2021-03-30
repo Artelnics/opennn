@@ -96,6 +96,7 @@ public:
    Index get_output_index(const string&) const;
 
    Tensor<Layer*, 1> get_layers_pointers() const;
+   Layer* get_layer_pointer(const Index&) const;
    Tensor<Layer*, 1> get_trainable_layers_pointers() const;
    Tensor<Index, 1> get_trainable_layers_indices() const;
 
@@ -107,7 +108,6 @@ public:
    RecurrentLayer* get_recurrent_layer_pointer() const;
 
    Layer* get_output_layer_pointer() const;
-   Layer* get_layer_pointer(const Index&) const;
    PerceptronLayer* get_first_perceptron_layer_pointer() const;
 
    const bool& get_display() const;

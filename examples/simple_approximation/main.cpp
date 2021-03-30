@@ -49,7 +49,7 @@ int main()
 
         scaling_targets_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
 
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables(scaling_inputs_methods);
 
@@ -75,7 +75,7 @@ int main()
 
         training_strategy.perform_training();
 
-        data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
+        data_set.unscale_input_variables(scaling_inputs_methods, input_variables_descriptives);
 
         data_set.unscale_target_variables(scaling_targets_methods, targets_descriptives);
 
