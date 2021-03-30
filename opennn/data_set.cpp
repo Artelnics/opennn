@@ -3324,7 +3324,7 @@ void DataSet::set_input_variables_dimensions(const Tensor<Index, 1>& new_inputs_
 /// Returns true if the data matrix is empty, and false otherwise.
 
 bool DataSet::is_empty() const
-{  
+{
     if(data.dimension(0) == 0 || data.dimension(1) == 0)
     {
         return true;
@@ -4694,7 +4694,7 @@ void DataSet::set_time_index(const Index& new_time_index)
 
 
 void DataSet::set_threads_number(const int& new_threads_number)
-{        
+{
     if(non_blocking_thread_pool != nullptr) delete non_blocking_thread_pool;
     if(thread_pool_device != nullptr) delete thread_pool_device;
 
@@ -10006,8 +10006,11 @@ void DataSet::read_csv_1()
                 || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
                 || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
                 || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label)
-                || data_file_preview(0)(i).find("time") != string::npos)
+                || (data_file_preview(0)(i).find("time") != string::npos && is_numeric_string(data_file_preview(1)(i)) && is_numeric_string(data_file_preview(2)(i))
+                                                                         && is_numeric_string(data_file_preview(lines_number-2)(i))
+                                                                         && is_numeric_string(data_file_preview(lines_number-2)(i)) ))
         {
+
 
             columns(column_index).type = DateTime;
             column_index++;
