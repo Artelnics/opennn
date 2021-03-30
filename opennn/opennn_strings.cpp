@@ -291,7 +291,7 @@ bool is_date_time_string(const string& str)
                                    + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13);
 
     if(regex_match(str, regular_expression))
-    {
+    {   
         return true;
     }
     else
