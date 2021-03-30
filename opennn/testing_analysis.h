@@ -73,6 +73,16 @@ public:
        void save(const string&) const
        {
        }
+
+
+       void print() const
+       {
+           cout << "Linear regression analysis" << endl;
+           cout << "Correlation: " << correlation << endl;
+           cout << "Intercept: " << intercept << endl;
+           cout << "Slope: " << slope << endl;
+       }
+
     };
 
 

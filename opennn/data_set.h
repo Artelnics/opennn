@@ -839,7 +839,7 @@ private:
 
    Tensor<Tensor<string, 1>, 1> data_file_preview;
 
-   Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
+   const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
 
    /// Missing values
 

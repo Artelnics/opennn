@@ -29,9 +29,7 @@ int main()
 
         // Data set
 
-        DataSet data_set("../data/breast_cancer.csv",';',true);
-
-        data_set.split_samples_random();
+        DataSet data_set("../data/breast_cancer.csv", ';', true);
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
@@ -45,10 +43,7 @@ int main()
 
         // Neural network
 
-        Tensor<Index, 1> neural_netowrk_architecture(3);
-        neural_netowrk_architecture.setValues({9, 7, 1});
-
-        NeuralNetwork neural_network(NeuralNetwork::Classification, neural_netowrk_architecture);
+        NeuralNetwork neural_network(NeuralNetwork::Classification, {9, 7, 1});
 
         dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))
                 ->set_activation_function(PerceptronLayer::HyperbolicTangent);
