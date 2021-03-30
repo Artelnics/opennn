@@ -383,7 +383,7 @@ void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
     }
     else if(next_layer_type == Perceptron)
     {
-        PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
+        PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(next_layer_pointer);
 
 //        calculate_hidden_delta_perceptron(perceptron_layer,
 //                                          convolutional_layer_forward_propagation->activations,

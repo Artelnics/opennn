@@ -207,10 +207,10 @@ Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& paramet
     const Index neurons_number = get_neurons_number();
     const Index input_weights_number = get_input_weights_number();
 
-    Tensor<type, 1> new_inputs_weights
+    const Tensor<type, 1> new_inputs_weights
             = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({input_weights_number}));
 
-    Eigen::array<Index, 2> two_dim{{inputs_number, neurons_number}};
+    const Eigen::array<Index, 2> two_dim{{inputs_number, neurons_number}};
 
     return new_inputs_weights.reshape(two_dim);
 }
@@ -360,7 +360,6 @@ void RecurrentLayer::set_inputs_number(const Index& new_inputs_number)
     const Index neurons_number = get_neurons_number();
 
     input_weights.resize(new_inputs_number, neurons_number);
-
 }
 
 

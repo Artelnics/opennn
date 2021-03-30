@@ -113,7 +113,7 @@ public:
    void set_mean(const Index&, const type&);
    void set_standard_deviation(const Index&, const type&);
 
-   void set_min_max_range(const type min, const type max);
+   void set_min_max_range(const type& min, const type& max);
 
    // Scaling method
 

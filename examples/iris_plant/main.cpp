@@ -55,7 +55,6 @@ int main()
         neural_network.set_outputs_names(targets_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-
         scaling_layer_pointer->set_descriptives(input_variables_descriptives);
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
 
@@ -63,15 +62,15 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
-
+        training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+/*
         AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
 
         adam->set_loss_goal(1.0e-3);
         adam->set_maximum_epochs_number(10000);
         adam->set_display_period(1000);
-
+*/
         training_strategy.perform_training();
 
         // Testing analysis
@@ -82,15 +81,15 @@ int main()
                           {6.4,3.2,4.5,1.5},
                           {6.3,2.7,4.9,1.8}});
 
-        cout << "inputs: " << endl;
+        cout << "Inputs: " << endl;
         cout << inputs << endl;
 
-        cout << "outputs: " << endl;
+        cout << "Outputs: " << endl;
         cout << neural_network.calculate_outputs(inputs) << endl;
 
-//        data_set.unscale_input_variables(scaling_inputs_methods, input_variables_descriptives);
+        data_set.unscale_input_variables_minimum_maximum(input_variables_descriptives);
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
@@ -99,9 +98,9 @@ int main()
 
         // Save results
 
-        data_set.save("../data/data_set.xml");
         neural_network.save("../data/neural_network.xml");
-        training_strategy.save("../data/training_strategy.xml");
+        neural_network.save_expression_c("../data/neural_network.c");
+        neural_network.save_expression_python("../data/neural_network.py");
 
         return 0;
     }

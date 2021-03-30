@@ -53,7 +53,7 @@ int main()
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
 
-        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_synaptic_weights_glorot();
+        static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1))->set_synaptic_weights_glorot();
 
         // Training strategy
 
@@ -77,36 +77,36 @@ int main()
 
         outputs = neural_network.calculate_outputs(inputs);
 
-        cout <<"X = 1 Y = 1" << endl << inputs << " " << outputs << endl;
+        cout <<"X = 1 Y = 1" << endl
+            << inputs << " " << outputs.round() << endl;
 
         inputs(0,0) = 1.0;
         inputs(0,1) = 0.0;
 
         outputs = neural_network.calculate_outputs(inputs);
 
-        cout << "X = 1 Y = 0" << endl << inputs << " " << outputs << endl;
+        cout << "X = 1 Y = 0" << endl
+             << inputs << " " << outputs.round() << endl;
 
         inputs(0,0) = 0.0;
         inputs(0,1) = 1.0;
 
         outputs = neural_network.calculate_outputs(inputs);
 
-        cout << "X = 0 Y = 1" << endl << inputs << " " << outputs << endl;
+        cout << "X = 0 Y = 1" << endl
+             << inputs << " " << outputs.round() << endl;
 
         inputs(0,0) = 0.0;
         inputs(0,1) = 0.0;
 
         outputs = neural_network.calculate_outputs(inputs);
 
-        cout << "X = 0 Y = 0" << endl << inputs << " " << outputs << endl;
+        cout << "X = 0 Y = 0" << endl
+             << inputs << " " << outputs.round() << endl;
 
         // Save results
 
-        data_set.save("../data/data_set.xml");
-
         neural_network.save("../data/neural_network.xml");
-
-        training_strategy.save("../data/training_strategy.xml");
 
         return 0;
     }

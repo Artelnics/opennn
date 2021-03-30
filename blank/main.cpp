@@ -38,14 +38,8 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
-//        const Tensor<string, 1> scaling_methods = data_set.calculate_default_scaling_methods();
-//        const Tensor<string, 1> unscaling_methods = data_set.calculate_default_unscaling_methods();
-
-        Tensor<string, 1> scaling_methods(input_variables_number);
-        scaling_methods.setConstant("MinimumMaximum");
-
-        Tensor<string, 1> unscaling_methods(target_variables_number);
-        unscaling_methods.setConstant("MinimumMaximum");
+        const Tensor<string, 1> scaling_methods = data_set.calculate_default_scaling_methods();
+        const Tensor<string, 1> unscaling_methods = data_set.calculate_default_unscaling_methods();
 
         const Tensor<Descriptives, 1> input_descriptives = data_set.scale_input_variables(scaling_methods);
 

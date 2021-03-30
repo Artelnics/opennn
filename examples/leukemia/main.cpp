@@ -37,7 +37,10 @@ int main()
 
         const Tensor<CorrelationResults, 2> correlation_results = data_set.calculate_input_target_columns_correlations();
 
-        /// @todo Print results
+        for(Index i = 0; i < correlation_results.size(); i++)
+        {
+            cout << "Gene " << i << " correlation: " << correlation_results(i).correlation;
+        }
 
         return 0;
     }
