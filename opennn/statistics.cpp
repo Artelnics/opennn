@@ -1495,7 +1495,6 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
             for(Index j = 0; j < unique_values_number; j++)
             {
-//                if(static_cast<Index>(vector(i)) == static_cast<Index>(centers(j)))
                 if(vector(i) - centers(j) < static_cast<type>(1e-6))
                 {
                     frequencies(j)++;
