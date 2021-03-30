@@ -402,6 +402,51 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 }
 
 
+void LossIndex::calculate_errors(const DataSetBatch &batch,
+                                 const NeuralNetworkForwardPropagation & neural_network_forward_propagation,
+                                 LossIndexBackPropagationLM & loss_index_back_propagation) const
+{
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    switch(neural_network_forward_propagation.layers(trainable_layers_number-1)->layer_pointer->get_type())
+    {
+    case Layer::Perceptron:
+    {
+        loss_index_back_propagation.errors.device(*thread_pool_device) =
+                static_cast<PerceptronLayerForwardPropagation*>(neural_network_forward_propagation.layers(trainable_layers_number-1))->activations -
+                batch.targets_2d;
+    }
+        break;
+
+    case Layer::Probabilistic:
+    {
+        loss_index_back_propagation.errors.device(*thread_pool_device) =
+                static_cast<ProbabilisticLayerForwardPropagation*>(neural_network_forward_propagation.layers(trainable_layers_number-1))->activations -
+                batch.targets_2d;
+    }
+        break;
+
+    case Layer::Recurrent:
+    {
+        loss_index_back_propagation.errors.device(*thread_pool_device) =
+                static_cast<RecurrentLayerForwardPropagation*>(neural_network_forward_propagation.layers(trainable_layers_number-1))->activations -
+                batch.targets_2d;
+    }
+        break;
+
+    case Layer::LongShortTermMemory:
+    {
+        loss_index_back_propagation.errors.device(*thread_pool_device) =
+                static_cast<LongShortTermMemoryLayerForwardPropagation*>(neural_network_forward_propagation.layers(trainable_layers_number-1))->activations -
+                batch.targets_2d;
+    }
+        break;
+
+    default: break;
+    }
+}
+
+
 void LossIndex::calculate_squared_errors(const DataSetBatch& batch,
                                          const NeuralNetworkForwardPropagation& forward_propagation,
                                          LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
@@ -518,7 +563,15 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
 
-    cout << "Squared errors" << endl;
+    cout << "calculate_squared_errors" << endl;
+
+    calculate_errors(batch, forward_propagation, loss_index_back_propagation_lm);
+
+    cout << "calculate_errors" << endl;
+
+    calculate_error(batch, forward_propagation, loss_index_back_propagation_lm);
+
+    cout << "calculate_error" << endl;
 
 //    calculate_error_terms_output_jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
 
@@ -528,7 +581,7 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     // Second Order
 
-//    calculate_squared_errors_jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
+    calculate_squared_errors_jacobian(batch, forward_propagation, loss_index_back_propagation_lm);
 
     cout << "squared errors jacobian" << endl;
 
@@ -541,6 +594,8 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
     // Loss
 
     loss_index_back_propagation_lm.loss = loss_index_back_propagation_lm.error;
+
+    system("pause");
 
     // Regularization
 
