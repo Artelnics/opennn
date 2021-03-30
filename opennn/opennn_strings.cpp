@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn_strings.h"
+
 namespace OpenNN
 {
 
@@ -16,18 +17,6 @@ namespace OpenNN
 
 Index count_tokens(string& str, const char& separator)
 {
-//    if(!(this->find(separator) != string::npos))
-//    {
-//        ostringstream buffer;
-//
-//        buffer << "OpenNN Exception:\n"
-//               << "string class.\n"
-//               << "inline Index count_tokens(const string&) const method.\n"
-//               << "Separator not found in string: \"" << separator << "\".\n";
-//
-//        throw logic_error(buffer.str());
-//    }
-
     trim(str);
 
     Index tokens_count = 0;
@@ -113,7 +102,6 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
         pos = str.find_first_of(separator, lastPos);
 
         index++;
-
     }
 
     return tokens;
@@ -139,7 +127,6 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
     Index index = 0;
 
     Index old_pos;
-
 
     while(string::npos != position || string::npos != last_position)
     {
@@ -225,6 +212,7 @@ bool is_numeric_string(const string& str)
     }
 
     // was all the input successfully consumed/converted?
+
     try
     {
         stod(str, &index);
@@ -242,10 +230,6 @@ bool is_numeric_string(const string& str)
     {
         return false;
     }
-
-//    if(!std::isdigit(str[0])) return false;
-//    return !str.empty() && std::find_if(str.begin(),
-//        str.end(), [](unsigned char c) { return (!std::isdigit(c) && !std::isspace(c) && c != '-' && c != '+' && c != '.' && c != 'e' && c != 'E'); }) == str.end();
 }
 
 
@@ -275,11 +259,12 @@ bool is_constant_numeric(const Tensor<type, 1>& str)
 
     for(int i = 1; i < str.size(); i++)
     {
-        if (abs(str[i]-a0)>1e-3 || ::isnan(str[i]) || ::isnan(a0))
-            return false;
+        if (abs(str[i]-a0) > 1e-3 || ::isnan(str[i]) || ::isnan(a0)) return false;
     }
+
     return true;
 }
+
 
 /// Returns true if given string is a date, false otherwise.
 /// @param str String to be checked.
@@ -304,7 +289,8 @@ bool is_date_time_string(const string& str)
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
                                    + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13);
-    if(regex_match(str,regular_expression))
+
+    if(regex_match(str, regular_expression))
     {
         return true;
     }
@@ -349,7 +335,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
     regex_search(date, matchs, regular_expression);
 
-
     if(matchs[1] != "") // yyyy/mm/dd hh:mm:ss
     {
         if(stoi(matchs[1].str()) < 1970)
@@ -371,7 +356,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_hour = stoi(matchs[4].str()) - static_cast<int>(gmt);
             time_structure.tm_min = stoi(matchs[5].str());
             time_structure.tm_sec = stoi(matchs[6].str());
-
         }
     }
     else if (matchs[7] != "") // yyyy/mm/dd hh:mm
@@ -416,7 +400,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_hour = 0;
             time_structure.tm_min = 0;
             time_structure.tm_sec = 0;
-
         }
     }
     else if (matchs[15] != "") // dd/mm/yyyy hh:mm:ss
@@ -664,7 +647,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         else{
             time_structure.tm_hour = stoi(matchs[54].str());
         }
-
     }
     else if(is_numeric_string(date)){
     }

@@ -562,7 +562,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
    assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-//   assert_true(terms_Jacobian == 0.0, LOG);
+   assert_true(is_equal(terms_Jacobian, 0.0), LOG);
 
    // Test
 
@@ -579,7 +579,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
    assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-//   assert_true(terms_Jacobian == 0.0, LOG);
+   assert_true(is_equal(terms_Jacobian, 0.0), LOG);
 
    // Test
 
@@ -599,7 +599,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
    assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-//   assert_true(terms_Jacobian == 0.0, LOG);
+   assert_true(is_equal(terms_Jacobian, 0.0), LOG);
 
    // Test
 

@@ -526,6 +526,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     results.resize_training_history(maximum_epochs_number+1);
     results.resize_selection_history(maximum_epochs_number+1);
+
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
@@ -565,7 +566,7 @@ cout << "forward propagation" << endl;
     type gradient_norm = 0;
 
     LossIndexBackPropagationLM training_loss_index_back_propagation_lm(training_samples_number, loss_index_pointer);
-    LossIndexBackPropagationLM selection_loss_index_back_propagation_lm(training_samples_number, loss_index_pointer);
+    LossIndexBackPropagationLM selection_loss_index_back_propagation_lm(selection_samples_number, loss_index_pointer);
 cout << "back propagation" << endl;
     // Training strategy stuff
 
@@ -605,7 +606,8 @@ cout << "hello" << endl;
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(training_batch,
+                                                  training_forward_propagation);
 
         // Loss index
 
@@ -635,10 +637,16 @@ cout << "hello" << endl;
 
         if(has_selection)
         {
-          neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+          neural_network_pointer->forward_propagate(selection_batch,
+                                                    selection_forward_propagation);
 
-          loss_index_pointer->calculate_squared_errors(selection_batch, selection_forward_propagation, training_loss_index_back_propagation_lm);
-          loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, training_loss_index_back_propagation_lm);
+          loss_index_pointer->calculate_squared_errors(selection_batch,
+                                                       selection_forward_propagation,
+                                                       training_loss_index_back_propagation_lm);
+
+          loss_index_pointer->calculate_error(selection_batch,
+                                              selection_forward_propagation,
+                                              training_loss_index_back_propagation_lm);
         }
 
         if(epoch == 1)
@@ -873,8 +881,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
              set_damping_parameter(damping_parameter*damping_parameter_factor);
          }
-    }
-    while(damping_parameter < maximum_damping_parameter);
+    }while(damping_parameter < maximum_damping_parameter);
 
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 

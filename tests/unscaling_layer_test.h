@@ -32,11 +32,7 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
-
-   // Assignment operators methods
-
-   
+   void test_destructor();  
 
    // Get methods
 

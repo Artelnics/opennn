@@ -82,7 +82,6 @@ public:
 
     void test_contingency_table();
     void test_chi_square_test();
-    void test_chi_square_critical_point();
     void test_karl_pearson_correlation();
 
     // Unit tseting method

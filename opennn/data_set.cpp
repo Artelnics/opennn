@@ -289,7 +289,6 @@ void DataSet::Column::set_categories_uses(const Tensor<string, 1>& new_categorie
                    << "Category use not valid (" << new_categories_uses(i) << ").\n";
 
             throw logic_error(buffer.str());
-
         }
     }
 }
@@ -876,6 +875,7 @@ Tensor<Index, 1> DataSet::get_training_samples_indices() const
             count++;
         }
     }
+
     return training_indices;
 }
 
@@ -1753,6 +1753,7 @@ void DataSet::set_default_columns_uses()
     }
 }
 
+
 /// This method sets the n columns of the dataset by default,
 /// i.e. until column n-1 are Input and column n is Target.
 
@@ -1810,11 +1811,7 @@ void DataSet::set_default_columns_names()
 {
     const Index size = columns.size();
 
-    if(size == 0)
-    {
-        return;
-    }
-    else if(size == 1)
+    if(size == 0 || size == 1)
     {
         return;
     }
@@ -2055,7 +2052,7 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
 
     for(Index i = 0; i < target_columns_indices.size(); i++)
     {
-        Index target_index = target_columns_indices(i);
+        const Index target_index = target_columns_indices(i);
 
         const Tensor<string, 1> current_used_variables_names = columns(target_index).get_used_variables_names();
 
@@ -2265,6 +2262,7 @@ Tensor<string, 1> DataSet::get_time_series_columns_names() const
     return columns_names;
 }
 
+
 /// Returns a string vector that contains the names of the columns whose uses are Input.
 
 Tensor<string, 1> DataSet::get_input_columns_names() const
@@ -2368,6 +2366,7 @@ Index DataSet::get_input_time_series_columns_number() const
 
     return input_columns_number;
 }
+
 
 /// Returns the number of columns whose uses are Target.
 
@@ -6927,9 +6926,13 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables(const Tensor<string, 1>&
 
 void DataSet::unscale_input_variable_minimum_maximum(const Descriptives& input_statistics, const Index&  input_index)
 {
-    const type slope = std::abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
+    const type slope = std::abs(max_range-min_range) < static_cast<type>(1e-3)
+            ? 0
+            : (input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
 
-    const type intercept = std::abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : -(min_range*input_statistics.maximum-max_range*input_statistics.minimum)/(max_range-min_range);
+    const type intercept = std::abs(max_range-min_range) < static_cast<type>(1e-3)
+            ? 0
+            : -(min_range*input_statistics.maximum-max_range*input_statistics.minimum)/(max_range-min_range);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -6945,9 +6948,12 @@ void DataSet::unscale_input_variable_minimum_maximum(const Descriptives& input_s
 
 void DataSet::unscale_input_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
-    const type slope = std::abs(input_statistics.mean - 0) < static_cast<type>(1e-3) ? 0 : input_statistics.standard_deviation/static_cast<type>(2);
+    const type slope = std::abs(input_statistics.mean - 0) < static_cast<type>(1e-3) ? 0
+            : input_statistics.standard_deviation/static_cast<type>(2);
 
-    const type intercept = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3) ? input_statistics.minimum : input_statistics.mean;
+    const type intercept = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3)
+            ? input_statistics.minimum
+            : input_statistics.mean;
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -6963,9 +6969,13 @@ void DataSet::unscale_input_mean_standard_deviation(const Descriptives& input_st
 
 void DataSet::unscale_input_variable_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
-    const type slope = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3) ? 0 : input_statistics.standard_deviation/static_cast<type>(2);
+    const type slope = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3)
+            ? 0
+            : input_statistics.standard_deviation/static_cast<type>(2);
 
-    const type intercept = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3) ? input_statistics.minimum : 0;
+    const type intercept = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3)
+            ? input_statistics.minimum
+            : 0;
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -6986,27 +6996,19 @@ void DataSet::unscale_input_variables(const Tensor<string, 1>& scaling_unscaling
         switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
         {
         case NoScaling:
-        {
             // Do nothing
-        }
         break;
 
         case MinimumMaximum:
-        {
             unscale_input_variable_minimum_maximum(inputs_descriptives(i), input_variables_indices(i));
-        }
         break;
 
         case MeanStandardDeviation:
-        {
             unscale_input_mean_standard_deviation(inputs_descriptives(i), input_variables_indices(i));
-        }
         break;
 
         case StandardDeviation:
-        {
             unscale_input_variable_standard_deviation(inputs_descriptives(i), input_variables_indices(i));
-        }
         break;
 
         default:
@@ -9506,33 +9508,6 @@ void DataSet::generate_sequential_data(const Index& samples_number, const Index&
 
 
 /// Generates an artificial dataset with a given number of samples and number of variables
-/// using a paraboloid data.
-/// @param samples_number Number of samples in the dataset.
-/// @param variables_number Number of variables in the dataset.
-/// @todo
-
-void DataSet::generate_paraboloid_data(const Index& samples_number, const Index& variables_number)
-{
-    const Index inputs_number = variables_number-1;
-
-    set(samples_number, variables_number);
-
-//    data.setRandom();
-
-    data.setRandom();
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-//        const type norm = l2_norm(data.chip(i, 0).delete_last(1));
-
-//        data(i, inputs_number) = norm*norm;
-    }
-
-    scale_minimum_maximum(data);
-}
-
-
-/// Generates an artificial dataset with a given number of samples and number of variables
 /// using the Rosenbrock function.
 /// @param samples_number Number of samples in the dataset.
 /// @param variables_number Number of variables in the dataset.
@@ -9758,39 +9733,6 @@ Tensor<Index, 1> DataSet::filter_column(const string& variable_name, const type&
 }
 
 
-/// This method converts a numerical variable into categorical.
-/// Note that this method resizes the dataset.
-/// @param variable_index Index of the variable to be converted.
-
-void DataSet::numeric_to_categorical(const Index& variable_index)
-{
-#ifdef OPENNN_DEBUG
-
-    const Index variables_number = get_variables_number();
-
-    if(variable_index >= variables_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void convert_categorical_variable(const Index&) method.\n"
-               << "Index of variable(" << variable_index << ") must be less than number of variables (" << variables_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-//    const Tensor<type, 1> categories = data.get_column(variable_index).get_unique_elements();
-
-//    data = data.to_categorical(variable_index);
-
-//    columns(variable_index).categories_uses = Tensor<VariableUse, 1>(categories.size(), columns(variable_index).column_use);
-//    columns(variable_index).type = Categorical;
-//    columns(variable_index).categories = categories.to_string_vector();
-}
-
-
 /// Sets all the samples with missing values to "Unused".
 
 void DataSet::impute_missing_values_unuse()
@@ -9807,6 +9749,7 @@ void DataSet::impute_missing_values_unuse()
         }
     }
 }
+
 
 /// Substitutes all the missing values by the mean of the corresponding variable.
 
@@ -9933,6 +9876,17 @@ Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number
 
 void DataSet::read_csv_1()
 {
+    if(data_file_name.empty())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv() method.\n"
+               << "Data file name is empty.\n";
+
+        throw logic_error(buffer.str());
+    }
+
     ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
@@ -10029,7 +9983,8 @@ void DataSet::read_csv_1()
 
     if(has_columns_names)
     {
-        has_rows_labels ? set_columns_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}), Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
+        has_rows_labels ? set_columns_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}),
+                                                                       Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
                         : set_columns_names(data_file_preview(0));
     }
     else
@@ -10221,7 +10176,6 @@ void DataSet::read_csv_3_simple()
     Index sample_index = 0;
     Index column_index = 0;
 
-
     while(file.good())
     {
         getline(file, line);
@@ -10322,13 +10276,8 @@ void DataSet::read_csv_3_simple()
 
             variable_index += columns(column).get_categories_number();
         }
-
-//        if(is_constant_numeric(data.chip(column, 1)) && columns(column).type!=DateTime)
-//        {
-//            columns(column).type = Constant;
-//            columns(column).column_use = UnusedVariable;
-//        }
     }
+
     // Check Binary
 
     cout << "Checking binary columns..." << endl;
@@ -10419,10 +10368,7 @@ void DataSet::read_csv_2_complete()
 
         for(unsigned j = 0; j < raw_columns_number; j++)
         {
-            if(has_rows_labels && j == 0)
-            {
-                continue;
-            }
+            if(has_rows_labels && j == 0) continue;
 
             trim(tokens(j));
 
@@ -10497,8 +10443,6 @@ void DataSet::read_csv_3_complete()
 
         throw logic_error(buffer.str());
     }
-
-
 
     const char separator_char = get_separator_char();
 
@@ -10716,19 +10660,17 @@ void DataSet::read_csv_3_complete()
 void DataSet::check_separators(const string& line) const
 {
     if(line.find(',') == string::npos
-            && line.find(';') == string::npos
-            && line.find(' ') == string::npos
-            && line.find('\t') == string::npos)
-    {
-        return;
-    }
+    && line.find(';') == string::npos
+    && line.find(' ') == string::npos
+    && line.find('\t') == string::npos) return;
 
     const char separator_char = get_separator_char();
 
     if(line.find(separator_char) == string::npos)
     {
         const string message =
-            "Error: " + get_separator_string() + " separator not found in data file " + data_file_name + ".";
+            "Error: " + get_separator_string() + " separator not found in line data file " + data_file_name + ".\n"
+            "Line: '" + line + "'";
 
         throw logic_error(message);
     }

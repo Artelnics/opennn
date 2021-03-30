@@ -88,7 +88,9 @@ Tensor<type, 1> ResponseOptimization::get_outputs_maximums()
     return outputs_maximums;
 }
 
-void ResponseOptimization::set_input_condition(const string& name, const ResponseOptimization::Condition& condition, const Tensor<type, 1>& values)
+void ResponseOptimization::set_input_condition(const string& name,
+                                               const ResponseOptimization::Condition& condition,
+                                               const Tensor<type, 1>& values)
 {
     const Index index = neural_network_pointer->get_input_index(name);
 
