@@ -5601,8 +5601,6 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
             const ColumnType target_type = columns(target_index).type;
 
-            cout << "Calculating " << columns(input_index).name << " - " << columns(target_index).name << " correlations. \n" ;
-
             if(input_type == Numeric && target_type == Numeric)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
@@ -5695,7 +5693,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 throw logic_error(buffer.str());
             }
 
-            cout << "Correlation: " << correlations(i,j).correlation << endl;
+            cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).correlation << endl;
         }
     }
 
@@ -7474,11 +7472,9 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     if(missing_values_number > 0)
     {
         // Columns missing values number
-
         {
             file_stream.OpenElement("ColumnsMissingValuesNumber");
 
-            cout << "count nan columns" << endl;
             const Index columns_number = columns_missing_values_number.size();
 
             buffer.str("");
@@ -7496,7 +7492,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         }
 
         // Rows missing values number
-
         {
             file_stream.OpenElement("RowsMissingValuesNumber");
 

@@ -862,7 +862,7 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer_pointer() const
     {
         if(layers_pointers(i)->get_type() == Layer::Perceptron)
         {
-            return dynamic_cast<PerceptronLayer*>(layers_pointers[i]);
+            return static_cast<PerceptronLayer*>(layers_pointers[i]);
         }
     }
 

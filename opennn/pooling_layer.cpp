@@ -228,7 +228,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
         }
         else if(layer_type == Perceptron)
         {
-            PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
+            PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(next_layer_pointer);
 
             return calculate_hidden_delta_perceptron(perceptron_layer, activations, activations_derivatives, next_layer_delta);
         }

@@ -71,16 +71,26 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-        const TrainingResults training_results = training_strategy.perform_training();
+//        const TrainingResults training_results = training_strategy.perform_training();
+
+        // Model selection
+
+        ModelSelection model_selection(&training_strategy);
+
+//        model_selection.perform_neurons_selection();
+
+        model_selection.perform_inputs_selection();
+
+        system("pause");
+
+        // Testing analysis
 
         data_set.unscale_input_variables(scaling_inputs_methods, input_variables_descriptives);
         data_set.unscale_target_variables(scaling_target_methods, target_descriptives);
-
-        // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
@@ -91,6 +101,7 @@ int main()
         // Save results
 
         neural_network.save("../data/neural_network.xml");
+        neural_network.save_expression_python("../data/neural_network.py");
 
         cout << "End Airfoil Self-Noise Example" << endl;
 
