@@ -53,12 +53,7 @@ int main()
 
         // Neural network
 
-        Tensor<Index, 1> architecture(3);
-        architecture(0) = input_variables_number;
-        architecture(1) = 10;
-        architecture(2) = target_variables_number;
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, architecture);
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, 10, target_variables_number});
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_scaling_methods(scaling_methods);

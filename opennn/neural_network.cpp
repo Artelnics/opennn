@@ -365,6 +365,12 @@ Tensor<Layer*, 1> NeuralNetwork::get_layers_pointers() const
 }
 
 
+Layer* NeuralNetwork::get_layer_pointer(const Index& layer_index) const
+{
+    return layers_pointers(layer_index);
+}
+
+
 /// Returns a pointer to the trainable layers object composing this neural network object.
 
 Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
@@ -491,7 +497,7 @@ BoundingLayer* NeuralNetwork::get_bounding_layer_pointer() const
 }
 
 
-/// Returns a pointer to the probabilistic layers object composing this neural network object.
+/// Returns a pointer to the first probabilistic layer composing this neural network.
 
 ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer_pointer() const
 {
@@ -2717,24 +2723,11 @@ Tensor<string, 1> NeuralNetwork::get_layers_names() const
 
 Layer* NeuralNetwork::get_output_layer_pointer() const
 {
-    if(layers_pointers.dimension(0) == 0)
-    {
-        return nullptr;
-    }
-    else
-    {
-        const Index layers_number = get_layers_number();
+    if(layers_pointers.dimension(0) == 0) return nullptr;
 
-        return layers_pointers[layers_number-1];
-    }
+    const Index layers_number = get_layers_number();
 
-    return nullptr;
-}
-
-
-Layer* NeuralNetwork::get_layer_pointer(const Index& index) const
-{
-    return layers_pointers[index];
+    return layers_pointers[layers_number-1];
 }
 
 }

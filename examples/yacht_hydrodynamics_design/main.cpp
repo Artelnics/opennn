@@ -49,7 +49,7 @@ int main()
         Tensor<string, 1> scaling_target_methods(target_variables_number);
         scaling_target_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
 
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables(scaling_target_methods);
 
@@ -67,7 +67,7 @@ int main()
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
         unscaling_layer_pointer->set_unscaling_methods(UnscalingLayer::MinimumMaximum);

@@ -52,7 +52,7 @@ int main()
         Tensor<string, 1> scaling_inputs_methods(input_variables_number);
         scaling_inputs_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
 
         // Neural network
 
@@ -68,7 +68,7 @@ int main()
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
 
         // Training strategy
@@ -90,7 +90,7 @@ int main()
 
         // Testing analysis
 
-        data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
+        data_set.unscale_input_variables(scaling_inputs_methods, input_variables_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 

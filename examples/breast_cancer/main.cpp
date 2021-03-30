@@ -36,28 +36,27 @@ int main()
 
         const Index input_variables_number = data_set.get_input_variables_number();
 
-        Tensor<string, 1> scaling_methods(input_variables_number);
-        scaling_methods.setConstant("MeanStandardDeviation");
-
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_methods);
+        const Tensor<Descriptives, 1> input_variables_descriptives
+                = data_set.scale_input_variables_mean_standard_deviation();
 
         // Neural network
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, {9, 7, 1});
 
-        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))
+        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
+
+        static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1))
                 ->set_activation_function(PerceptronLayer::HyperbolicTangent);
 
-        dynamic_cast<ProbabilisticLayer*>(neural_network.get_trainable_layers_pointers()(1))
+        static_cast<ProbabilisticLayer*>(neural_network.get_layer_pointer(2))
                 ->set_activation_function(ProbabilisticLayer::Logistic);
-
-        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-
+/*
         training_strategy.set_optimization_method(TrainingStrategy::CONJUGATE_GRADIENT);
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
@@ -72,11 +71,8 @@ int main()
         cg->set_display(true);
 
         training_strategy.set_display(true);
-
+*/
         training_strategy.perform_training();
-
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
 
         // Model selection
 
@@ -86,16 +82,16 @@ int main()
 
          // Testing analysis
 
-         data_set.unscale_input_variables(scaling_methods, inputs_descriptives);
+//         data_set.unscale_input_variables(scaling_methods, input_variables_descriptives);
 
          TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
          cout << "Confusion: " << endl;
          cout << confusion << endl;
 
-         Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+         const Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
 
          cout << "Binary classification tests: " << endl;
          cout << "Classification accuracy         : " << binary_classification_tests[0] << endl;
@@ -114,7 +110,7 @@ int main()
          cout << "Informedness                    : " << binary_classification_tests[13] << endl;
          cout << "Markedness                      : " << binary_classification_tests[14] << endl;
 
-         cout << "End" << endl;
+         cout << "End breast cancer application" << endl;
 
          return 0;
     }

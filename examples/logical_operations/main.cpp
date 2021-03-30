@@ -48,10 +48,7 @@ int main()
 
         const Index hidden_neurons_number = 6;
 
-        Tensor<Index, 1> architecture(3);
-        architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
-
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
