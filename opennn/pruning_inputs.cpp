@@ -142,13 +142,13 @@ void PruningInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_nu
 
 
 /// Sets the maximum selection failures for the pruning inputs algorithm.
-/// @param new_maximum_loss_failures Maximum number of selection failures in the pruning inputs algorithm.
+/// @param new_maximum_selection_failures Maximum number of selection failures in the pruning inputs algorithm.
 
-void PruningInputs::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
+void PruningInputs::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_loss_failures <= 0)
+    if(new_maximum_selection_failures <= 0)
     {
         ostringstream buffer;
 
@@ -161,7 +161,7 @@ void PruningInputs::set_maximum_selection_failures(const Index& new_maximum_loss
 
 #endif
 
-    maximum_selection_failures = new_maximum_loss_failures;
+    maximum_selection_failures = new_maximum_selection_failures;
 }
 
 
@@ -250,7 +250,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
             if(training_results.selection_error < results.optimum_selection_error)
             {
-                results.optimal_inputs = data_set_pointer->get_input_columns_binary();
+                //results.optimal_inputs = data_set_pointer->get_input_columns_binary();
 
                 results.optimal_parameters = training_results.parameters;
 
@@ -340,7 +340,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
             cout << endl;
         }
 
-        if(stop == true)
+        if(stop)
         {
             // Save results
 
@@ -364,7 +364,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     // Set data set stuff
 
-    data_set_pointer->set_input_columns_binary(results.optimal_inputs);
+//    data_set_pointer->set_input_columns_binary(results.optimal_inputs);
 
     // Set neural network stuff
 

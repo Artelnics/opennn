@@ -97,13 +97,13 @@ void GrowingNeurons::set_step(const Index& new_step)
 
 
 /// Sets the maximum selection failures for the growing order selection algorithm.
-/// @param new_maximum_loss_failures Maximum number of selection failures in the growing neurons selection algorithm.
+/// @param new_maximum_selection_failures Maximum number of selection failures in the growing neurons selection algorithm.
 
-void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
+void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_loss_failures <= 0)
+    if(new_maximum_selection_failures <= 0)
     {
         ostringstream buffer;
 
@@ -116,7 +116,7 @@ void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_los
 
 #endif
 
-    maximum_selection_failures = new_maximum_loss_failures;
+    maximum_selection_failures = new_maximum_selection_failures;
 }
 
 

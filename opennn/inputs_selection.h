@@ -203,22 +203,32 @@ struct InputsSelectionResults
 
     // Maximum epochs number constructor
 
-   explicit InputsSelectionResults(const Index& maximum_epochs_number)
-   {
+    explicit InputsSelectionResults(const Index& maximum_epochs_number)
+    {
         training_errors.resize(maximum_epochs_number);
 
         selection_errors.resize(maximum_epochs_number);
-   }
+    }
 
    virtual ~InputsSelectionResults() {}
 
    string write_stopping_condition() const;
 
+   void print()
+   {
+       cout << "Inputs Selection Results" << endl;
+
+       cout << "Optimal inputs number: " << optimal_inputs_names.size() << endl;
+
+       cout << "Inputs: " << endl;
+
+       for(Index i = 0; i < optimal_inputs_names.size(); i++) cout << "   " << optimal_inputs_names(i) << endl;
+
+       cout << "Optimum training error: " << optimum_training_error << endl;
+       cout << "Optimum selection error: " << optimum_selection_error << endl;
+   }
+
    // Neural network
-
-   /// Inputs of the different neural networks.
-
-//   Tensor<bool, 2> inputs_data;
 
    /// Vector of parameters for the neural network with minimum selection error.
 
@@ -243,6 +253,8 @@ struct InputsSelectionResults
    type optimum_selection_error;
 
    /// Inputs of the neural network with minimum selection error.
+
+   Tensor<string, 1> optimal_inputs_names;
 
    Tensor<bool, 1> optimal_inputs;
 

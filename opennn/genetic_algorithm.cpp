@@ -883,7 +883,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
             cout << endl;
         }
 
-        if(stop == true)
+        if(stop)
         {
             results.elapsed_time = write_elapsed_time(elapsed_time);
             break;
