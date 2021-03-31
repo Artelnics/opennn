@@ -3287,8 +3287,8 @@ void DataSet::set_binary_simple_columns()
                 }
                 else
                 {
-                    columns(column_index).categories(0) = "Class_1";// + to_string(values(0));
-                    columns(column_index).categories(1) = "Class_2";// + to_string(values(1));
+                    columns(column_index).categories(0) = "Class_1";
+                    columns(column_index).categories(1) = "Class_2";
                 }
 
                 const VariableUse column_use = columns(column_index).column_use;
@@ -6567,9 +6567,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables_mean_standard_deviation()
     scale_input_variables_mean_standard_deviation(input_variables_descriptives);
 
     return input_variables_descriptives;
-
 }
-
 
 
 void DataSet::unscale_input_variables_minimum_maximum(const Tensor<Descriptives, 1>& input_variables_descriptives)
@@ -9650,7 +9648,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
         }
     }
 
-    Index filtered_samples_number =
+    const Index filtered_samples_number =
             static_cast<Index>(count_if(filtered_indices.data(),
                                         filtered_indices.data()+filtered_indices.size(), [](type value)
                                 {return value > static_cast<type>(0.5);}));
@@ -9919,7 +9917,7 @@ void DataSet::read_csv_1()
 
     cout << "Setting data file preview..." << endl;
 
-    Index lines_number = has_columns_names ? 4 : 3;
+    const Index lines_number = has_columns_names ? 4 : 3;
 
     data_file_preview.resize(lines_number);
 
@@ -10044,8 +10042,6 @@ void DataSet::read_csv_1()
             column_index++;
         }
     }
-
-
 }
 
 
