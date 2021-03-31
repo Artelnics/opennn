@@ -437,49 +437,42 @@ NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 
 InputsSelectionResults ModelSelection::perform_inputs_selection()
 {
-    InputsSelectionResults results;
-
-    TrainingStrategy* training_strategy_pointer = get_training_strategy_pointer();
+//    TrainingStrategy* training_strategy_pointer = get_training_strategy_pointer();
 
     switch(inputs_selection_method)
     {
     case NO_INPUTS_SELECTION:
     {
-        break;
+        return InputsSelectionResults();
     }
     case GROWING_INPUTS:
     {
-        growing_inputs.set_display(display);
+//        growing_inputs.set_display(display);
 
         growing_inputs.set_training_strategy_pointer(training_strategy_pointer);
 
         return growing_inputs.perform_inputs_selection();
-
-        break;
     }
     case PRUNING_INPUTS:
     {
-        pruning_inputs.set_display(display);
+//        pruning_inputs.set_display(display);
 
         pruning_inputs.set_training_strategy_pointer(training_strategy_pointer);
 
         return pruning_inputs.perform_inputs_selection();
-
-        break;
     }
     case GENETIC_ALGORITHM:
     {
-        genetic_algorithm.set_display(display);
+//        genetic_algorithm.set_display(display);
 
         genetic_algorithm.set_training_strategy_pointer(training_strategy_pointer);
 
         return genetic_algorithm.perform_inputs_selection();
-
-        break;
     }
     }
 
-    return results;
+    return InputsSelectionResults();
+
 }
 
 
