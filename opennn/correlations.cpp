@@ -1012,13 +1012,13 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     for(Index i=0; i< scaled_x.dimension(0)-1; i++)
     {
-        if((y_sorted(i) - y_sorted(i+1)) > std::numeric_limits<type>::min())
+        if((y_sorted(i) - y_sorted(i+1)) > numeric_limits<type>::min())
         {
             counter++;
         }
     }
 
-    if(counter == 1 && (new_y(sorted_index[0]) - 0) < std::numeric_limits<type>::min())
+    if(counter == 1 && (new_y(sorted_index[0]) - 0) < numeric_limits<type>::min())
     {
         CorrelationResults logistic_correlations;
 
@@ -1029,7 +1029,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
         return logistic_correlations;
     }
 
-    if(counter == 1 && (new_y(sorted_index[0]) - 1) < std::numeric_limits<type>::min())
+    if(counter == 1 && (new_y(sorted_index[0]) - 1) < numeric_limits<type>::min())
     {
         CorrelationResults logistic_correlations;
 

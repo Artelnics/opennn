@@ -1024,26 +1024,6 @@ Index NeuralNetwork::get_parameters_number() const
 }
 
 
-/// Returns the number of parameters in the neural network
-/// The number of parameters is the sum of all the neural network trainable parameters(biases and synaptic weights) and independent parameters.
-
-Index NeuralNetwork::get_trainable_parameters_number() const
-{
-    const Index trainable_layers_number = get_trainable_layers_number();
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-
-    Index trainable_parameters_number = 0;
-
-    for(Index i = 0; i < trainable_layers_number; i++)
-    {
-        trainable_parameters_number += trainable_layers_pointers[i]->get_parameters_number();
-    }
-
-    return trainable_parameters_number;
-}
-
-
 /// Returns the values of the parameters in the neural network as a single vector.
 /// This contains all the neural network parameters(biases and synaptic weights) and preprocessed independent parameters.
 
@@ -1631,8 +1611,8 @@ Tensor<string, 2> NeuralNetwork::get_information() const
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-        information(i,0) = std::to_string(trainable_layers_pointers(i)->get_inputs_number());
-        information(i,1) = std::to_string(trainable_layers_pointers(i)->get_neurons_number());
+        information(i,0) = to_string(trainable_layers_pointers(i)->get_inputs_number());
+        information(i,1) = to_string(trainable_layers_pointers(i)->get_neurons_number());
 
         const string layer_type = trainable_layers_pointers(i)->get_type_string();
 
@@ -1672,8 +1652,8 @@ Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
 
         if(layer_type == "Perceptron")
         {
-            information(perceptron_layer_index,0) = std::to_string(trainable_layers_pointers(i)->get_inputs_number());
-            information(perceptron_layer_index,1) = std::to_string(trainable_layers_pointers(i)->get_neurons_number());
+            information(perceptron_layer_index,0) = to_string(trainable_layers_pointers(i)->get_inputs_number());
+            information(perceptron_layer_index,1) = to_string(trainable_layers_pointers(i)->get_neurons_number());
 
             const PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(trainable_layers_pointers(i));
 
@@ -1707,8 +1687,8 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 
         if(layer_type == "Probabilistic")
         {
-            information(probabilistic_layer_index,0) = std::to_string(trainable_layers_pointers(i)->get_inputs_number());
-            information(probabilistic_layer_index,1) = std::to_string(trainable_layers_pointers(i)->get_neurons_number());
+            information(probabilistic_layer_index,0) = to_string(trainable_layers_pointers(i)->get_inputs_number());
+            information(probabilistic_layer_index,1) = to_string(trainable_layers_pointers(i)->get_neurons_number());
 
             ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(trainable_layers_pointers(i));
 
@@ -1975,7 +1955,7 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
             const tinyxml2::XMLElement* input_element = start_element->NextSiblingElement("Input");
             start_element = input_element;
 
-            if(input_element->Attribute("Index") != std::to_string(i+1))
+            if(input_element->Attribute("Index") != to_string(i+1))
             {
                 buffer << "OpenNN Exception: NeuralNetwork class.\n"
                        << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -2279,7 +2259,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
             const tinyxml2::XMLElement* output_element = start_element->NextSiblingElement("Output");
             start_element = output_element;
 
-            if(output_element->Attribute("Index") != std::to_string(i+1))
+            if(output_element->Attribute("Index") != to_string(i+1))
             {
                 buffer << "OpenNN Exception: NeuralNetwork class.\n"
                        << "void outputs_from_XML(const tinyxml2::XMLDocument&) method.\n"

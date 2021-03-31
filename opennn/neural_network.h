@@ -163,7 +163,6 @@ public:
    // Parameters
 
    Index get_parameters_number() const;
-   Index get_trainable_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;

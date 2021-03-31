@@ -837,6 +837,8 @@ private:
 
    Tensor<Column, 1> columns;
 
+   Tensor<ScalingUnscalingMethod, 1> scalers;
+
    /// Header wihch contains the rows label.
 
    bool has_rows_labels = false;

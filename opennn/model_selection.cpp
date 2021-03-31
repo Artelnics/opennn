@@ -24,7 +24,7 @@ ModelSelection::ModelSelection()
 
 ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
 {
-    training_strategy_pointer = new_training_strategy_pointer;
+    set_training_strategy_pointer(new_training_strategy_pointer);
 
     set_default();
 }

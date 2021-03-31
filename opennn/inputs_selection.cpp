@@ -153,7 +153,7 @@ const type& InputsSelection::get_minimum_correlation() const
 
 void InputsSelection::set_training_strategy_pointer(TrainingStrategy* new_training_strategy_pointer)
 {
-    training_strategy_pointer = new_training_strategy_pointer;
+    training_strategy_pointer = new_training_strategy_pointer;     
 }
 
 

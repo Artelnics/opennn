@@ -805,7 +805,7 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
         if(columns(i).type == Numeric)
         {
             if(::isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-            else sample_string += std::to_string(data(sample_index, variable_index));
+            else sample_string += to_string(data(sample_index, variable_index));
 
             variable_index++;
         }
@@ -821,7 +821,7 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
             // @todo do something
 
             if(::isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-            else sample_string += std::to_string(data(sample_index, variable_index));
+            else sample_string += to_string(data(sample_index, variable_index));
 
             variable_index++;
         }
@@ -837,7 +837,7 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
 
                 for(Index j = 0; j < categories_number; j++)
                 {
-                    if(abs(data(sample_index, variable_index+j) - static_cast<type>(1)) < std::numeric_limits<type>::min())
+                    if(abs(data(sample_index, variable_index+j) - static_cast<type>(1)) < numeric_limits<type>::min())
                     {
                         sample_string += columns(i).categories(j);
                         break;
@@ -1824,12 +1824,12 @@ void DataSet::set_default_columns_names()
         {
             if(columns(i).column_use == Input)
             {
-                columns(i).name = "input_" + std::to_string(input_index+1);
+                columns(i).name = "input_" + to_string(input_index+1);
                 input_index++;
             }
             else if(columns(i).column_use == Target)
             {
-                columns(i).name = "target_" + std::to_string(target_index+1);
+                columns(i).name = "target_" + to_string(target_index+1);
                 target_index++;
             }
         }
@@ -2306,7 +2306,6 @@ Tensor<string, 1> DataSet::get_target_columns_names() const
     }
 
     return target_columns_names;
-
 }
 
 
@@ -3189,15 +3188,14 @@ void DataSet::set_variables_unused()
 
 /// Sets a new number of variables in the variables object.
 /// All variables are set as inputs but the last one, which is set as targets.
-/// @param new_variables_number Number of variables.
+/// @param new_columns_number Number of variables.
 
-void DataSet::set_columns_number(const Index& new_variables_number)
+void DataSet::set_columns_number(const Index& new_columns_number)
 {
-    columns.resize(new_variables_number);
+    columns.resize(new_columns_number);
 
     set_default_columns_uses();
 }
-
 
 
 Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type,1>& column) const
@@ -3210,11 +3208,11 @@ Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type,1>& column) c
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(abs(column(i) - static_cast<type>(1)) < std::numeric_limits<type>::min())
+        if(abs(column(i) - static_cast<type>(1)) < numeric_limits<type>::min())
         {
             new_column(i,1) = static_cast<type>(1);
         }
-        else if(abs(column(i) - static_cast<type>(0)) < std::numeric_limits<type>::min())
+        else if(abs(column(i) - static_cast<type>(0)) < numeric_limits<type>::min())
         {
             new_column(i,0) = static_cast<type>(1);
         }
@@ -3289,8 +3287,8 @@ void DataSet::set_binary_simple_columns()
                 }
                 else
                 {
-                    columns(column_index).categories(0) = "Class_1";// + std::to_string(values(0));
-                    columns(column_index).categories(1) = "Class_2";// + std::to_string(values(1));
+                    columns(column_index).categories(0) = "Class_1";// + to_string(values(0));
+                    columns(column_index).categories(1) = "Class_2";// + to_string(values(1));
                 }
 
                 const VariableUse column_use = columns(column_index).column_use;
@@ -4836,7 +4834,7 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
             sample_j = get_sample_data(j);
 
             if(get_sample_use(j) != UnusedSample
-                    && std::equal(sample_i.data(), sample_i.data()+sample_i.size(), sample_j.data()))
+                    && equal(sample_i.data(), sample_i.data()+sample_i.size(), sample_j.data()))
             {
                 set_sample_use(j, UnusedSample);
 
@@ -6482,11 +6480,11 @@ Descriptives DataSet::scale_input_variable_standard_deviation(const Index& input
 
 void DataSet::scale_input_variable_minimum_maximum(const Descriptives& input_statistics, const Index& input_index)
 {
-    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ?
+    const type slope = abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ?
                 0 :
                 (max_range-min_range)/(input_statistics.maximum-input_statistics.minimum);
 
-    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ?
+    const type intercept = abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ?
                 0 :
                 (min_range*input_statistics.maximum-max_range*input_statistics.minimum)/(input_statistics.maximum-input_statistics.minimum);
 
@@ -6839,11 +6837,11 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables(const string& scaling_un
 
 void DataSet::scale_target_variable_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
 {
-    const type slope = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
+    const type slope = abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
                 0 :
                 (max_range-min_range)/(target_statistics.maximum-target_statistics.minimum);
 
-    const type intercept = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
+    const type intercept = abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
                 0 :
                 (min_range*target_statistics.maximum-max_range*target_statistics.minimum)/(target_statistics.maximum-target_statistics.minimum);
 
@@ -6856,11 +6854,11 @@ void DataSet::scale_target_variable_minimum_maximum(const Descriptives& target_s
 
 void DataSet::scale_target_variable_mean_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
 {
-    const type slope = std::abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
+    const type slope = abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
                 0 :
                 static_cast<type>(1)/target_statistics.standard_deviation;
 
-    const type intercept = std::abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
+    const type intercept = abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
                 0 :
                 -target_statistics.mean/target_statistics.standard_deviation;
 
@@ -6875,7 +6873,7 @@ void DataSet::scale_target_variable_logarithmic(const Descriptives& target_stati
 {
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        if(std::abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3))
+        if(abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3))
         {
             data(i, target_index) = 0;
         }
@@ -6939,11 +6937,11 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables(const Tensor<string, 1>&
 
 void DataSet::unscale_input_variable_minimum_maximum(const Descriptives& input_statistics, const Index&  input_index)
 {
-    const type slope = std::abs(max_range-min_range) < static_cast<type>(1e-3)
+    const type slope = abs(max_range-min_range) < static_cast<type>(1e-3)
             ? 0
             : (input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
 
-    const type intercept = std::abs(max_range-min_range) < static_cast<type>(1e-3)
+    const type intercept = abs(max_range-min_range) < static_cast<type>(1e-3)
             ? 0
             : -(min_range*input_statistics.maximum-max_range*input_statistics.minimum)/(max_range-min_range);
 
@@ -6961,10 +6959,10 @@ void DataSet::unscale_input_variable_minimum_maximum(const Descriptives& input_s
 
 void DataSet::unscale_input_variable_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
-    const type slope = std::abs(input_statistics.mean - 0) < static_cast<type>(1e-3) ? 0
+    const type slope = abs(input_statistics.mean - 0) < static_cast<type>(1e-3) ? 0
             : input_statistics.standard_deviation/static_cast<type>(2);
 
-    const type intercept = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3)
+    const type intercept = abs(input_statistics.mean-0) < static_cast<type>(1e-3)
             ? input_statistics.minimum
             : input_statistics.mean;
 
@@ -6982,11 +6980,11 @@ void DataSet::unscale_input_variable_mean_standard_deviation(const Descriptives&
 
 void DataSet::unscale_input_variable_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
-    const type slope = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3)
+    const type slope = abs(input_statistics.mean-0) < static_cast<type>(1e-3)
             ? 0
             : input_statistics.standard_deviation/static_cast<type>(2);
 
-    const type intercept = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3)
+    const type intercept = abs(input_statistics.mean-0) < static_cast<type>(1e-3)
             ? input_statistics.minimum
             : 0;
 
@@ -7041,9 +7039,9 @@ void DataSet::unscale_input_variables(const Tensor<string, 1>& scaling_unscaling
 
 void DataSet::unscale_target_variable_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
 {
-    const type slope = std::abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : (target_statistics.maximum-target_statistics.minimum)/(max_range-min_range);
+    const type slope = abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : (target_statistics.maximum-target_statistics.minimum)/(max_range-min_range);
 
-    const type intercept = std::abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : -(min_range*target_statistics.maximum-max_range*target_statistics.minimum)/(max_range-min_range);
+    const type intercept = abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : -(min_range*target_statistics.maximum-max_range*target_statistics.minimum)/(max_range-min_range);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -7054,7 +7052,7 @@ void DataSet::unscale_target_variable_minimum_maximum(const Descriptives& target
 
 void DataSet::unscale_target_variable_mean_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
 {
-    const type slope = std::abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
+    const type slope = abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
                 0 :
                 target_statistics.standard_deviation/static_cast<type>(2);
 
@@ -7071,7 +7069,7 @@ void DataSet::unscale_target_variable_logarithmic(const Descriptives& target_sta
 {
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        if(std::abs(target_statistics.maximum - target_statistics.minimum) < static_cast<type>(1e-3))
+        if(abs(target_statistics.maximum - target_statistics.minimum) < static_cast<type>(1e-3))
         {
             data(i, target_index) = target_statistics.minimum;
         }
@@ -7789,7 +7787,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("Column");
             start_element = column_element;
 
-            if(column_element->Attribute("Item") != std::to_string(i+1))
+            if(column_element->Attribute("Item") != to_string(i+1))
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
                        << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -7952,7 +7950,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 const tinyxml2::XMLElement* time_series_column_element = time_series_start_element->NextSiblingElement("TimeSeriesColumn");
                 time_series_start_element = time_series_column_element;
 
-                if(time_series_column_element->Attribute("Item") != std::to_string(i+1))
+                if(time_series_column_element->Attribute("Item") != to_string(i+1))
                 {
                     buffer << "OpenNN Exception: DataSet class.\n"
                            << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -8285,7 +8283,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
         start_element = row_element;
 
-        if(row_element->Attribute("Item") != std::to_string(i+1))
+        if(row_element->Attribute("Item") != to_string(i+1))
         {
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -9653,7 +9651,9 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
     }
 
     Index filtered_samples_number =
-            static_cast<Index>(std::count_if(filtered_indices.data(), filtered_indices.data()+filtered_indices.size(), [](type value) {return value > static_cast<type>(0.5);}));
+            static_cast<Index>(count_if(filtered_indices.data(),
+                                        filtered_indices.data()+filtered_indices.size(), [](type value)
+                                {return value > static_cast<type>(0.5);}));
 
     Tensor<Index, 1> filtered_samples_indices(filtered_samples_number);
 
@@ -10752,7 +10752,7 @@ void DataSet::check_separators(const string& line) const
 
 void DataSet::check_special_characters(const string & line) const
 {
-    if(line.find_first_of("|@#~€¬^*") != std::string::npos)
+    if(line.find_first_of("|@#~€¬^*") != string::npos)
     {
         const string message =
             "Error: found special characters in line: " + line + ". Please, review the document.";
@@ -10760,7 +10760,7 @@ void DataSet::check_special_characters(const string & line) const
         throw logic_error(message);
     }
 //#ifdef __unix__
-//    if(line.find("\r") != std::string::npos)
+//    if(line.find("\r") != string::npos)
 //    {
 //        const string message =
 //                "Error: mixed break line characters in line: " + line + ". Please, review the document.";
@@ -10934,11 +10934,11 @@ void DataSet::fix_repeated_names()
 
     const Index columns_number = columns.size();
 
-    std::map<std::string, Index> columns_count_map;
+    map<string, Index> columns_count_map;
 
     for(Index i = 0; i < columns_number; i++)
     {
-        auto result = columns_count_map.insert(std::pair<std::string, Index>(columns(i).name, 1));
+        auto result = columns_count_map.insert(pair<string, Index>(columns(i).name, 1));
 
         if (!result.second) result.first->second++;
     }
@@ -10954,7 +10954,7 @@ void DataSet::fix_repeated_names()
             {
                 if(columns(i).name == repeated_name)
                 {
-                    columns(i).name = columns(i).name + "_" + std::to_string(repeated_index);
+                    columns(i).name = columns(i).name + "_" + to_string(repeated_index);
                     repeated_index++;
                 }
             }
@@ -10969,11 +10969,11 @@ void DataSet::fix_repeated_names()
 
         const Index variables_number = variables_names.size();
 
-        std::map<std::string, Index> variables_count_map;
+        map<string, Index> variables_count_map;
 
         for(Index i = 0; i < variables_number; i++)
         {
-            auto result = variables_count_map.insert(std::pair<std::string, Index>(variables_names(i), 1));
+            auto result = variables_count_map.insert(pair<string, Index>(variables_names(i), 1));
 
             if (!result.second) result.first->second++;
         }

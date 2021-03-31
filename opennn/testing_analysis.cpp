@@ -1823,7 +1823,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
     // Sort by ascending values of outputs vector
 
     Tensor<Index, 1> sorted_indices(outputs.dimension(0));
-    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+    iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
 
     stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
 
@@ -2239,7 +2239,7 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
     // Sort by ascending values of outputs vector
 
     Tensor<Index, 1> sorted_indices(outputs.dimension(0));
-    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+    iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
 
     stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) > outputs(i2,0);});
 
@@ -2313,7 +2313,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
     // Sort by ascending values of outputs vector
 
     Tensor<Index, 1> sorted_indices(outputs.dimension(0));
-    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+    iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
 
     stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) > outputs(i2,0);});
 
