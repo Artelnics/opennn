@@ -169,6 +169,10 @@ public:
                          const NeuralNetworkForwardPropagation&,
                          LossIndexBackPropagation&) const;
 
+   void calculate_errors(const DataSetBatch&,
+                         const NeuralNetworkForwardPropagation&,
+                         LossIndexBackPropagationLM&) const;
+
    void calculate_squared_errors(const DataSetBatch&,
                                  const NeuralNetworkForwardPropagation&,
                                  LossIndexBackPropagationLM&) const;
@@ -399,6 +403,8 @@ struct LossIndexBackPropagationLM
 
         const Index parameters_number = neural_network_pointer->get_parameters_number();
 
+        const Index outputs_number = neural_network_pointer->get_outputs_number();
+
         neural_network.set(batch_samples_number, neural_network_pointer);
 
         error = 0;
@@ -410,6 +416,8 @@ struct LossIndexBackPropagationLM
         squared_errors_jacobian.resize(batch_samples_number, parameters_number);
 
         hessian.resize(parameters_number, parameters_number);
+
+        errors.resize(batch_samples_number, outputs_number);
 
         squared_errors.resize(batch_samples_number);
     }
@@ -435,6 +443,7 @@ struct LossIndexBackPropagationLM
 
     NeuralNetworkBackPropagation neural_network;
 
+    Tensor<type, 2> errors;
     Tensor<type, 1> squared_errors;
     Tensor<type, 2> squared_errors_jacobian;
 

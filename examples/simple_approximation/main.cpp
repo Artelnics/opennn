@@ -35,31 +35,13 @@ int main()
 
         DataSet data_set("../data/simple_function_regression.csv", ';', true);
 
-        data_set.split_samples_random();
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables(DataSet::MinimumMaximum);
 
-        const Index input_variables_number = data_set.get_input_variables_number();
-
-        const Index target_variables_number = data_set.get_target_variables_number();
-
-        Tensor<string, 1> scaling_inputs_methods(input_variables_number);
-
-        Tensor<string, 1> scaling_targets_methods(target_variables_number);
-
-        scaling_inputs_methods.setConstant("MinimumMaximum");
-
-        scaling_targets_methods.setConstant("MinimumMaximum");
-
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
-
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables(DataSet::MinimumMaximum);
 
         // Neural network
 
-        Tensor<Index, 1> neural_network_architecture(3);
-
-        neural_network_architecture.setValues({1, 3, 1});
-
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 3, 1});
 
         // Training strategy
 
@@ -75,13 +57,13 @@ int main()
 
         training_strategy.perform_training();
 
-        data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
+        data_set.unscale_input_variables_minimum_maximum(input_variables_descriptives);
 
-        data_set.unscale_target_variables(scaling_targets_methods, targets_descriptives);
+        data_set.unscale_target_variables(DataSet::MinimumMaximum, targets_descriptives);
 
         neural_network.save_expression_python("simple_function_regresion.py");
 
-        cout<<"Bye Simple Function Regression"<<endl;
+        cout << "Bye Simple Function Regression" << endl;
 
         return 0;
     }
