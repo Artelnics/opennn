@@ -668,6 +668,10 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
         UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(architecture[size-1]);
 
         this->add_layer(unscaling_layer_pointer);
+
+        BoundingLayer* bounding_layer_pointer = new BoundingLayer(outputs_number);
+
+        this->add_layer(bounding_layer_pointer);
     }
 
     outputs_names.resize(outputs_number);
