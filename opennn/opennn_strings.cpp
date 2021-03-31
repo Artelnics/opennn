@@ -196,9 +196,9 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 
 bool is_numeric_string(const string& str)
 {
-    std::string::size_type index;
+    string::size_type index;
 
-    std::istringstream iss(str.data());
+    istringstream iss(str.data());
 
     type dTestSink;
 
@@ -217,7 +217,7 @@ bool is_numeric_string(const string& str)
     {
         stod(str, &index);
 
-        if(index == str.size() || (str.find("%") != std::string::npos && index+1 == str.size()))
+        if(index == str.size() || (str.find("%") != string::npos && index+1 == str.size()))
         {
             return true;
         }

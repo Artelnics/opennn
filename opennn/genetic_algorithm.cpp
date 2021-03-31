@@ -296,11 +296,11 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 /// Sets a new population size. It must be greater than 4.
 /// @param new_population_size Size of the population.
 
-void GeneticAlgorithm::set_individuals_number(const Index& new_population_size)
+void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_population_size < 4)
+    if(new_individuals_number < 4)
     {
         ostringstream buffer;
 
@@ -315,6 +315,13 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_population_size)
 
 // @todo Set population and other matrices
 
+    const Index new_genes_number = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer()->get_inputs_number();
+
+    population.resize(new_individuals_number, new_genes_number);
+
+    fitness.resize(new_individuals_number);
+
+    selection.resize(new_individuals_number);
 }
 
 
@@ -518,7 +525,7 @@ void GeneticAlgorithm::evaluate_population()
 
     for(Index i = 0; i < individuals_number; i++)
     {
-        individual = population.chip(i,0);
+        individual = population.chip(i, 0);
 
         const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
 
@@ -547,6 +554,13 @@ void GeneticAlgorithm::evaluate_population()
 
         training_errors(i) = training_results.training_error;
         selection_errors(i) = training_results.selection_error;
+
+        if(display)
+        {
+            cout << "Individual " << i+1 << endl;
+            cout << "   Training error: " << training_results.training_error << endl;
+            cout << "   Selection error: " << training_results.selection_error << endl;
+        }
     }
 }
 
@@ -785,11 +799,9 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
 #endif
 
+    if(population.size() == 0) set_individuals_number(10);
+
     if(display) cout << "Performing genetic inputs selection..." << endl;
-
-    print_summary();
-
-    system("pause");
 
     InputsSelectionResults results(maximum_epochs_number);
 
@@ -816,14 +828,18 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     time(&beginning_time);
 
-//    initialize_population();
+    initialize_population();
+
+    cout << population << endl;
+
+    system("pause");
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         cout << "Generation: " << epoch << endl;
-/*
-        evaluate_population();
 
+        evaluate_population();
+/*
         optimal_individual_index = minimal_index(selection_errors);
 
         results.training_errors(epoch) = training_errors(optimal_individual_index);

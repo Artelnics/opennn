@@ -150,6 +150,13 @@ private:
 
     Tensor<bool, 2> population;
 
+    /// Fitness of population.
+
+    Tensor<type, 1> fitness;
+
+    Tensor<bool, 1> selection;
+
+
     /// Performance of population.
 
     Tensor<Tensor<type, 1>, 1> parameters;
@@ -157,11 +164,6 @@ private:
     Tensor<type, 1> training_errors;
     Tensor<type, 1> selection_errors;
 
-    /// Fitness of population.
-
-    Tensor<type, 1> fitness;
-
-    Tensor<bool, 1> selection;
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.

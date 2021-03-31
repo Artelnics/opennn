@@ -265,8 +265,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
        assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
-       assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
-                               [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
+       assert_true(all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
+                               [](type i) { return (i-static_cast<type>(0))<numeric_limits<type>::min(); }), LOG);
    }
 
    neural_network.set();
@@ -334,7 +334,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        for(Index i = 0; i < columns_number-1; i++)
        {
-           columns(i).name = "input_" + std::to_string(i+1);
+           columns(i).name = "input_" + to_string(i+1);
            columns(i).column_use = DataSet::Input;
            columns(i).type = DataSet::Numeric;
        }
@@ -411,7 +411,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        for(Index i = 0; i < columns_number-1; i++)
        {
-           columns(i).name = "input_" + std::to_string(i+1);
+           columns(i).name = "input_" + to_string(i+1);
            columns(i).column_use = DataSet::Input;
            columns(i).type = DataSet::Numeric;
        }
@@ -421,7 +421,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        Tensor<string, 1> categories(outputs_number);
 
-       for(Index i = 0; i < outputs_number; i++) categories(i) = "category_" + std::to_string(i+1);
+       for(Index i = 0; i < outputs_number; i++) categories(i) = "category_" + to_string(i+1);
 
        columns(columns_number-1).name = "target";
        columns(columns_number-1).column_use = DataSet::Target;
@@ -588,7 +588,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        for(Index i = 0; i < columns_number-1; i++)
        {
-           columns(i).name = "input_" + std::to_string(i+1);
+           columns(i).name = "input_" + to_string(i+1);
            columns(i).column_use = DataSet::Input;
            columns(i).type = DataSet::Numeric;
        }
@@ -666,7 +666,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        for(Index i = 0; i < columns_number-1; i++)
        {
-           columns(i).name = "input_" + std::to_string(i+1);
+           columns(i).name = "input_" + to_string(i+1);
            columns(i).column_use = DataSet::Input;
            columns(i).type = DataSet::Numeric;
        }
@@ -676,7 +676,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        Tensor<string, 1> categories(outputs_number);
 
-       for(Index i = 0; i < outputs_number; i++) categories(i) = "category_" + std::to_string(i+1);
+       for(Index i = 0; i < outputs_number; i++) categories(i) = "category_" + to_string(i+1);
 
        columns(columns_number-1).name = "target";
        columns(columns_number-1).column_use = DataSet::Target;

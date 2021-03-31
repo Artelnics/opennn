@@ -199,7 +199,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
 
       assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
-      assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
+      assert_true(all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<numeric_limits<type>::min(); }), LOG);
 
    // Test perceptron and probabilistic
 {

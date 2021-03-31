@@ -1219,49 +1219,49 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 
     labels_values(2,0) = "Learning rate tolerance";
 
-    labels_values(2,1) = std::to_string(learning_rate_algorithm.get_learning_rate_tolerance());
+    labels_values(2,1) = to_string(learning_rate_algorithm.get_learning_rate_tolerance());
 
     // Minimum parameters increment norm
 
     labels_values(3,0) = "Minimum parameters increment norm";
 
-    labels_values(3,1) = std::to_string(minimum_parameters_increment_norm);
+    labels_values(3,1) = to_string(minimum_parameters_increment_norm);
 
     // Minimum loss decrease
 
     labels_values(4,0) = "Minimum loss decrease";
 
-    labels_values(4,1) = std::to_string(minimum_loss_decrease);
+    labels_values(4,1) = to_string(minimum_loss_decrease);
 
     // Loss goal
 
     labels_values(5,0) = "Loss goal";
 
-    labels_values(5,1) = std::to_string(training_loss_goal);
+    labels_values(5,1) = to_string(training_loss_goal);
 
     // Gradient norm goal
 
     labels_values(6,0) = "Gradient norm goal";
 
-    labels_values(6,1) = std::to_string(gradient_norm_goal);
+    labels_values(6,1) = to_string(gradient_norm_goal);
 
     // Maximum selection error increases
 
     labels_values(7,0) = "Maximum selection error increases";
 
-    labels_values(7,1) = std::to_string(maximum_selection_error_increases);
+    labels_values(7,1) = to_string(maximum_selection_error_increases);
 
     // Maximum epochs number
 
     labels_values(8,0) = "Maximum epochs number";
 
-    labels_values(8,1) = std::to_string(maximum_epochs_number);
+    labels_values(8,1) = to_string(maximum_epochs_number);
 
     // Maximum time
 
     labels_values(9,0) = "Maximum time";
 
-    labels_values(9,1) = std::to_string(maximum_time);
+    labels_values(9,1) = to_string(maximum_time);
 
     // Reserve training error history
 

@@ -607,63 +607,63 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
     // Initial learning rate
 
     labels_values(row_index,0) = "Initial learning rate";
-    labels_values(row_index,1) = std::to_string(initial_learning_rate);
+    labels_values(row_index,1) = to_string(initial_learning_rate);
 
     row_index++;
 
     // Initial decay
 
     labels_values(row_index,0) = "Initial decay";
-    labels_values(row_index,1) = std::to_string(initial_decay);
+    labels_values(row_index,1) = to_string(initial_decay);
 
     row_index++;
 
     // Beta 1
 
     labels_values(row_index,0) = "Beta 1";
-    labels_values(row_index,1) = std::to_string(beta_1);
+    labels_values(row_index,1) = to_string(beta_1);
 
     row_index++;
 
     // Beta 2
 
     labels_values(row_index,0) = "Beta 2";
-    labels_values(row_index,1) = std::to_string(beta_2);
+    labels_values(row_index,1) = to_string(beta_2);
 
     row_index++;
 
     // Epsilon
 
     labels_values(row_index,0) = "Epsilon";
-    labels_values(row_index,1) = std::to_string(epsilon);
+    labels_values(row_index,1) = to_string(epsilon);
 
     row_index++;
 
     // Training loss goal
 
     labels_values(row_index,0) = "Training loss goal";
-    labels_values(row_index,1) = std::to_string(training_loss_goal);
+    labels_values(row_index,1) = to_string(training_loss_goal);
 
     row_index++;
 
     // Maximum epochs number
 
     labels_values(row_index,0) = "Maximum epochs number";
-    labels_values(row_index,1) = std::to_string(maximum_epochs_number);
+    labels_values(row_index,1) = to_string(maximum_epochs_number);
 
     row_index++;
 
     // Maximum time
 
     labels_values(row_index,0) = "Maximum time";
-    labels_values(row_index,1) = std::to_string(maximum_time);
+    labels_values(row_index,1) = to_string(maximum_time);
 
     row_index++;
 
     // DataSetBatch samples number
 
     labels_values(row_index,0) = "DataSetBatch samples number";
-    labels_values(row_index,1) = std::to_string(batch_samples_number);
+    labels_values(row_index,1) = to_string(batch_samples_number);
 
     row_index++;
 
