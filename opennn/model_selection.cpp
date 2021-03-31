@@ -64,7 +64,7 @@ TrainingStrategy* ModelSelection::get_training_strategy_pointer() const
 /// and false otherwise.
 
 bool ModelSelection::has_training_strategy() const
-{
+{   
     if(training_strategy_pointer)
     {
         return true;
@@ -145,49 +145,18 @@ void ModelSelection::set_display(const bool& new_display)
 {
     display = new_display;
 
-    switch(inputs_selection_method)
-    {
-    case NO_INPUTS_SELECTION:
-    {
-        // do nothing
+    // Neurons selection
 
-        break;
-    }
-    case GROWING_INPUTS:
-    {
-        growing_inputs.set_display(new_display);
+    growing_neurons.set_display(new_display);
 
-        break;
-    }
-    case PRUNING_INPUTS:
-    {
-        pruning_inputs.set_display(new_display);
+    // Inputs selection
 
-        break;
-    }
-    case GENETIC_ALGORITHM:
-    {
-        genetic_algorithm.set_display(new_display);
+    growing_inputs.set_display(new_display);
 
-        break;
-    }
-    }
+    pruning_inputs.set_display(new_display);
 
-    switch(neurons_selection_method)
-    {
-    case NO_NEURONS_SELECTION:
-    {
-        // do nothing
+    genetic_algorithm.set_display(new_display);
 
-        break;
-    }
-    case GROWING_NEURONS:
-    {
-        growing_neurons.set_display(new_display);
-
-        break;
-    }
-    }
 }
 
 
@@ -265,43 +234,6 @@ void ModelSelection::set_inputs_selection_method(const string& new_inputs_select
                << "Unknown inputs selection type: " << new_inputs_selection_method << ".\n";
 
         throw logic_error(buffer.str());
-    }
-}
-
-
-/// Sets a new approximation method.
-/// If it is set to true the problem will be taken as a approximation;
-/// if it is set to false the problem will be taken as a classification.
-/// @param new_approximation Approximation value.
-
-void ModelSelection::set_approximation(const bool& new_approximation)
-{
-    switch(inputs_selection_method)
-    {
-    case NO_INPUTS_SELECTION:
-    {
-        // do nothing
-
-        break;
-    }
-    case GROWING_INPUTS:
-    {
-        growing_inputs.set_approximation(new_approximation);
-
-        break;
-    }
-    case PRUNING_INPUTS:
-    {
-        pruning_inputs.set_approximation(new_approximation);
-
-        break;
-    }
-    case GENETIC_ALGORITHM:
-    {
-        genetic_algorithm.set_approximation(new_approximation);
-
-        break;
-    }
     }
 }
 
@@ -437,8 +369,6 @@ NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 
 InputsSelectionResults ModelSelection::perform_inputs_selection()
 {
-//    TrainingStrategy* training_strategy_pointer = get_training_strategy_pointer();
-
     switch(inputs_selection_method)
     {
     case NO_INPUTS_SELECTION:
@@ -447,24 +377,18 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
     }
     case GROWING_INPUTS:
     {
-//        growing_inputs.set_display(display);
-
         growing_inputs.set_training_strategy_pointer(training_strategy_pointer);
 
         return growing_inputs.perform_inputs_selection();
     }
     case PRUNING_INPUTS:
     {
-//        pruning_inputs.set_display(display);
-
         pruning_inputs.set_training_strategy_pointer(training_strategy_pointer);
 
         return pruning_inputs.perform_inputs_selection();
     }
     case GENETIC_ALGORITHM:
     {
-//        genetic_algorithm.set_display(display);
-
         genetic_algorithm.set_training_strategy_pointer(training_strategy_pointer);
 
         return genetic_algorithm.perform_inputs_selection();
@@ -472,7 +396,6 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
     }
 
     return InputsSelectionResults();
-
 }
 
 

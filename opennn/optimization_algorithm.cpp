@@ -367,9 +367,7 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
 Tensor<string, 2> OptimizationAlgorithm::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix;
-
-    return string_matrix;
+    return Tensor<string, 2>();
 }
 
 

@@ -379,34 +379,22 @@ string TrainingStrategy::write_loss_method_text() const
     switch(loss_method)
     {
     case SUM_SQUARED_ERROR:
-    {
         return "Sum squared error";
-    }
 
     case MEAN_SQUARED_ERROR:
-    {
         return "Mean squared error";
-    }
 
     case NORMALIZED_SQUARED_ERROR:
-    {
         return "Normalized squared error";
-    }
 
     case MINKOWSKI_ERROR:
-    {
         return "Minkowski error";
-    }
 
     case WEIGHTED_SQUARED_ERROR:
-    {
         return "Weighted squared error";
-    }
 
     case CROSS_ENTROPY_ERROR:
-    {
         return "Cross entropy error";
-    }
     }
 
     return string();
@@ -630,6 +618,18 @@ void TrainingStrategy::set_loss_index_neural_network_pointer(NeuralNetwork* new_
 void TrainingStrategy::set_display(const bool& new_display)
 {
     display = new_display;
+
+    // Loss index
+
+    sum_squared_error.set_display(display);
+    mean_squared_error.set_display(display);
+    normalized_squared_error.set_display(display);
+    cross_entropy_error.set_display(display);
+    weighted_squared_error.set_display(display);
+    Minkowski_error.set_display(display);
+
+    // Optimization algorithm
+
     gradient_descent.set_display(display);
     conjugate_gradient.set_display(display);
     stochastic_gradient_descent.set_display(display);
@@ -775,64 +775,6 @@ TrainingResults TrainingStrategy::perform_training()
     }
 
     return TrainingResults();
-}
-
-
-/// Perfom the training with the selected method.
-
-void TrainingStrategy::perform_training_void()
-{
-    switch(optimization_method)
-    {
-    case GRADIENT_DESCENT:
-    {
-        gradient_descent.set_display(display);
-
-        gradient_descent.perform_training_void();
-    }
-    break;
-
-    case CONJUGATE_GRADIENT:
-    {
-        conjugate_gradient.set_display(display);
-
-        conjugate_gradient.perform_training_void();
-    }
-    break;
-
-    case QUASI_NEWTON_METHOD:
-    {
-        quasi_Newton_method.set_display(display);
-
-        quasi_Newton_method.perform_training_void();
-    }
-    break;
-
-    case LEVENBERG_MARQUARDT_ALGORITHM:
-    {
-        Levenberg_Marquardt_algorithm.set_display(display);
-
-        Levenberg_Marquardt_algorithm.perform_training_void();
-    }
-    break;
-
-    case STOCHASTIC_GRADIENT_DESCENT:
-    {
-        stochastic_gradient_descent.set_display(display);
-
-        stochastic_gradient_descent.perform_training_void();
-    }
-    break;
-
-
-    case ADAPTIVE_MOMENT_ESTIMATION:
-    {
-        adaptive_moment_estimation.set_display(display);
-
-        adaptive_moment_estimation.perform_training_void();
-    }
-    break;
-    }
 }
 
 

@@ -118,7 +118,7 @@ public:
 
    TrainingResults perform_training();
 
-   void perform_training_void();
+   
 
    string write_optimization_algorithm_type() const;
 

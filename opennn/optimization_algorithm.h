@@ -110,8 +110,7 @@ public:
 
    // Serialization methods
 
-   virtual 
-   void print() const;
+   virtual void print() const;
 
    virtual Tensor<string, 2> to_string_matrix() const;
 
@@ -231,6 +230,12 @@ struct TrainingResults
     /// Returns a string representation of the results structure.
 
     void save(const string&) const;
+
+    void print()
+    {
+        cout << "Optimum training error: " << optimum_training_error << endl;
+        cout << "Optimum selection error: " << optimum_selection_error << endl;
+    }
 
     /// Writes final results of the training.
 

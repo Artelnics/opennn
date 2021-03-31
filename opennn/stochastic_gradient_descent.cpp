@@ -707,13 +707,9 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
+    if(display) results.print();
+
     return results;
-}
-
-
-void StochasticGradientDescent::perform_training_void()
-{
-    perform_training();
 }
 
 

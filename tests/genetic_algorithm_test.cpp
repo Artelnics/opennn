@@ -111,7 +111,7 @@ void GeneticAlgorithmTest::test_calculate_fitness()
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-    Tensor<type, 1> selection_errorss;
+    Tensor<type, 1> selection_errors;
 
     Tensor<type, 1> fitness;
 
@@ -124,14 +124,14 @@ void GeneticAlgorithmTest::test_calculate_fitness()
 
     genetic_algorithm.set_individuals_number(4);
 
-    selection_errorss.resize(4);
+    selection_errors.resize(4);
 
-    selection_errorss(0) = 1;
-    selection_errorss(1) = 2;
-    selection_errorss(2) = 3;
-    selection_errorss(3) = 4;
+    selection_errors(0) = 1;
+    selection_errors(1) = 2;
+    selection_errors(2) = 3;
+    selection_errors(3) = 4;
 
-    genetic_algorithm.set_selection_errors(selection_errorss);
+    genetic_algorithm.set_selection_errors(selection_errors);
 
     genetic_algorithm.perform_fitness_assignment();
 
@@ -378,8 +378,6 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     neural_network.set(NeuralNetwork::Approximation, architecture);
 
     genetic_algorithm.set_display(false);
-
-    genetic_algorithm.set_approximation(true);
 
     genetic_algorithm.set_individuals_number(10);
 
