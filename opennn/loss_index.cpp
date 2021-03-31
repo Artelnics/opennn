@@ -630,16 +630,22 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
                                                   NeuralNetworkForwardPropagation& forward_propagation,
                                                   LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
 //    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
 
     const Tensor<type, 2>& targets = batch.targets_2d;
 
-    // Gives Eigen error in debug
 
-#ifndef OPENNN_DEBUG
+
+
+
+
+
+
+// Gives Eigen error in debug
+
+//#ifndef OPENNN_DEBUG
 
 //     back_propagation.output_jacobian.device(*thread_pool_device) = (outputs-targets)/loss_index_back_propagation_lm.squared_errors;
 
@@ -648,14 +654,14 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
 //    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
 //        back_propagation.output_jacobian(i) /= loss_index_back_propagation_lm.squared_errors(i);
 
-#else
+//#else
 
 //    back_propagation.output_jacobian = (outputs-targets);
 
 //    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
 //        back_propagation.output_jacobian(i) /= loss_index_back_propagation_lm.squared_errors(i);
 
-#endif
+//#endif
 }
 
 
@@ -903,6 +909,8 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
 
         case Layer::Convolutional:
         {
+            // @todo
+
             //trainable_layers_pointers(i)->
             //        calculate_error_gradient(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
             //                                 forward_propagation.layers(i),
@@ -912,7 +920,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
 
         case Layer::Pooling:
         {
-
+            // @todo
         }
             break;
 
