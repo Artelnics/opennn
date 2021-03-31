@@ -666,7 +666,7 @@ void NeuralNetworkTest::test_set_default()
 
    neural_network.set_default();
 
-   assert_true(display == true, LOG);
+   assert_true(neural_network.get_display(), LOG);
 }
 
 

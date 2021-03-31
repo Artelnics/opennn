@@ -1183,16 +1183,11 @@ TrainingResults ConjugateGradient::perform_training()
 
     results.elapsed_time = write_elapsed_time(elapsed_time);
 
+    if(display) results.print();
+
     return results;
 }
 
-
-/// Perform the training.
-
-void ConjugateGradient::perform_training_void()
-{
-    perform_training();
-}
 
 /// Write a string with best algorithm type for the model.
 

@@ -816,16 +816,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
+    if(display) results.print();
+
     return results;
-}
-
-
-/// Trains a neural network with an associated loss index according to the Levenberg-Marquardt algorithm.
-/// Training occurs according to the training parameters.
-
-void LevenbergMarquardtAlgorithm::perform_training_void()
-{
-    perform_training();
 }
 
 

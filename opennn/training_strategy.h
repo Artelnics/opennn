@@ -164,7 +164,7 @@ public:
    // Training methods
 
    TrainingResults perform_training();
-   void perform_training_void();
+   
 
    // Check methods
 

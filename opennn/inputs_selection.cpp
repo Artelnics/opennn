@@ -38,14 +38,6 @@ InputsSelection::~InputsSelection()
 }
 
 
-/// Returns whether the problem is of function regression type.
-
-const bool& InputsSelection::get_approximation() const
-{
-    return approximation;
-}
-
-
 /// Returns a pointer to the training strategy object.
 
 TrainingStrategy* InputsSelection::get_training_strategy_pointer() const
@@ -154,17 +146,6 @@ const type& InputsSelection::get_maximum_correlation() const
 const type& InputsSelection::get_minimum_correlation() const
 {
     return minimum_correlation;
-}
-
-
-/// Sets a new regression value.
-/// If it is set to true the problem will be taken as a function regression;
-/// if it is set to false the problem will be taken as a classification.
-/// @param new_approximation Regression value.
-
-void InputsSelection::set_approximation(const bool& new_approximation)
-{
-    approximation = new_approximation;
 }
 
 
@@ -537,8 +518,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& us
 
     while(i < uses.size())
     {
-        if(uses[i] == DataSet::Input &&
-                inputs_number == j)
+        if(uses[i] == DataSet::Input && inputs_number == j)
         {
             break;
         }

@@ -150,7 +150,7 @@ public:
 
    TrainingResults perform_training();
 
-   void perform_training_void();
+   
 
    // Training history methods
 

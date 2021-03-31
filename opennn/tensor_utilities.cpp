@@ -53,7 +53,7 @@ bool is_false(const Tensor<bool, 1>& tensor)
 
     for(Index i = 0; i < size; i++)
     {
-        if(tensor(i) == true) return false;
+        if(tensor(i)) return false;
     }
 
     return true;

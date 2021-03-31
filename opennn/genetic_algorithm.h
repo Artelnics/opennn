@@ -153,7 +153,7 @@ private:
     Tensor<Tensor<type, 1>, 1> parameters;
 
     Tensor<type, 1> training_errors;
-    Tensor<type, 1> selection_errorss;
+    Tensor<type, 1> selection_errors;
 
     /// Fitness of population.
 

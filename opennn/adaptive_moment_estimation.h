@@ -118,10 +118,6 @@ public:
 
    TrainingResults perform_training();
 
-   /// Perform Neural Network training.
-
-   void perform_training_void();
-
    /// Return the algorithm optimum for your model.
 
    string write_optimization_algorithm_type() const;

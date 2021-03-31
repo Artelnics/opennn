@@ -581,18 +581,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     {
         neural_network_pointer->set_parameters(results.optimal_parameters);
 
-        neural_network_pointer->set_parameters(training_back_propagation.parameters);
-
         selection_error = results.optimum_selection_error;
     }
 
+    if(display) results.print();
+
     return results;
-}
-
-
-void AdaptiveMomentEstimation::perform_training_void()
-{
-   perform_training();
 }
 
 

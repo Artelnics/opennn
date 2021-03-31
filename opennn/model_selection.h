@@ -91,8 +91,6 @@ public:
     void set_inputs_selection_method(const InputsSelectionMethod&);
     void set_inputs_selection_method(const string&);
 
-    void set_approximation(const bool&);
-
     // Model selection methods
 
     void check() const;

@@ -190,25 +190,20 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-//    const Tensor<bool, 1> input_columns_binary = data_set_pointer->get_input_columns_binary();
-
-    const Tensor<Index, 1> input_columns = data_set_pointer->get_input_columns_indices();
-
     const Index original_input_columns_number = data_set_pointer->get_input_columns_number();
 
     const Tensor<string, 1> columns_names = data_set_pointer->get_columns_names();
 
     Tensor<string, 1> input_columns_names;
 
-
     const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
 
     const Tensor<type, 1> total_correlations = correlations.abs().sum(rows_sum);
 
-    Tensor<Index, 1> correlations_rank_descending = input_columns;
+    Tensor<Index, 1> correlations_rank_descending = data_set_pointer->get_input_columns_indices();
 
     sort(correlations_rank_descending.data(),
-         correlations_rank_descending.data() + input_columns.size(),
+         correlations_rank_descending.data() + correlations_rank_descending.size(),
          [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
 
     // Neural network
@@ -274,7 +269,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
             {
                 // Neural network
 
-                results.optimal_inputs = data_set_pointer->get_input_columns_binary();
+                results.optimal_inputs_names = data_set_pointer->get_input_columns_names();
                 results.optimal_parameters = training_results.parameters;
 
                 // Loss index
@@ -302,7 +297,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "Maximum time reached." << endl;
+            if(display) cout << "\nMaximum time reached." << endl;
 
             results.stopping_condition = InputsSelection::MaximumTime;
         }
@@ -310,7 +305,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "Selection loss reached." << endl;
+            if(display) cout << "\nSelection loss reached." << endl;
 
             results.stopping_condition = InputsSelection::SelectionErrorGoal;
         }
@@ -318,7 +313,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "Maximum number of epochs reached." << endl;
+            if(display) cout << "\nMaximum number of epochs reached." << endl;
 
             results.stopping_condition = InputsSelection::MaximumEpochs;
         }
@@ -326,7 +321,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "Maximum selection failures ("<<selection_failures<<") reached." << endl;
+            if(display) cout << "\nMaximum selection failures ("<<selection_failures<<") reached." << endl;
 
             results.stopping_condition = InputsSelection::MaximumSelectionFailures;
         }
@@ -335,13 +330,10 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << endl
-                             << "Maximum inputs (" << input_columns_number << ") reached." << endl;
+            if(display) cout << "\nMaximum inputs (" << input_columns_number << ") reached." << endl;
 
             results.stopping_condition = InputsSelection::MaximumInputs;
         }
-
-        if(display) results.print();
 
         if(stop)
         {
@@ -353,7 +345,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     // Set data set stuff
 
-    data_set_pointer->set_input_columns_binary(results.optimal_inputs);
+//    data_set_pointer->set_input_columns_binary(results.optimal_inputs);
 
     // Set neural network stuff
 
@@ -363,26 +355,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     neural_network_pointer->set_parameters(results.optimal_parameters);
 
-    if(display)
-    {
-/*
-        cout << "Results "
-        cout << "Optimal number of inputs: " << data_set_pointer->get_input_variables_number() << endl;
-        cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << endl;
-
-//        inpu
-
-//        input_columns_names = data_set_pointer->get_input_columns_names();
-
-//        for(Index i = 0; i < input_columns_number; i++) cout << "   " << input_columns_names(i) << endl;
-
-
-        cout << "Optimum training error: " << results.optimum_training_error << endl;
-        cout << "Optimum selection error: " << results.optimum_selection_error << endl;
-
-        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-*/
-    }
+    if(display) results.print();
 
     return results;
 }
@@ -405,7 +378,6 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
     buffer << trials_number;
 
     values(0) = buffer.str();
-
     // Selection loss goal
 
     labels(2) = "Selection error goal";
@@ -665,25 +637,6 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
                << "GrowingInputs element is nullptr.\n";
 
         throw logic_error(buffer.str());
-    }
-
-    // Regression
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Approximation");
-
-        if(element)
-        {
-            const string new_regression = element->GetText();
-
-            try
-            {
-                set_approximation(new_regression != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
     }
 
     // Trials number

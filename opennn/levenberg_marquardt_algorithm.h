@@ -128,7 +128,7 @@ public:
 
    TrainingResults perform_training();
 
-   void perform_training_void();
+   
 
    void update_parameters(
            const DataSetBatch&,
