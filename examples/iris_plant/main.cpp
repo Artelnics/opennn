@@ -40,46 +40,37 @@ int main()
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        data_set.split_samples_random();
-
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
-        Tensor<string, 1> scaling_inputs_methods(input_variables_number);
-        scaling_inputs_methods.setConstant("MinimumMaximum");
-
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables_minimum_maximum();
 
         // Neural network
 
         const Index hidden_neurons_number = 3;
 
-        Tensor<Index, 1> architecture(3);
-        architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
-
-        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+        NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
-
+        training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+/*
         AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
 
         adam->set_loss_goal(1.0e-3);
         adam->set_maximum_epochs_number(10000);
         adam->set_display_period(1000);
-
+*/
         training_strategy.perform_training();
 
         // Testing analysis
@@ -90,15 +81,15 @@ int main()
                           {6.4,3.2,4.5,1.5},
                           {6.3,2.7,4.9,1.8}});
 
-        cout << "inputs: " << endl;
+        cout << "Inputs: " << endl;
         cout << inputs << endl;
 
-        cout << "outputs: " << endl;
+        cout << "Outputs: " << endl;
         cout << neural_network.calculate_outputs(inputs) << endl;
 
-        data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
+        data_set.unscale_input_variables_minimum_maximum(input_variables_descriptives);
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
@@ -107,9 +98,9 @@ int main()
 
         // Save results
 
-        data_set.save("../data/data_set.xml");
         neural_network.save("../data/neural_network.xml");
-        training_strategy.save("../data/training_strategy.xml");
+        neural_network.save_expression_c("../data/neural_network.c");
+        neural_network.save_expression_python("../data/neural_network.py");
 
         return 0;
     }

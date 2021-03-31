@@ -40,7 +40,7 @@ int main()
 
         data_set.set_training();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables_minimum_maximum();
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables_minimum_maximum();
 
         // Neural network
@@ -49,15 +49,11 @@ int main()
         const Index hidden_neurons_number = variables;
         const Index outputs_number = data_set.get_target_variables_number();
 
-        Tensor<Index, 1> architecture(3);
-
-        architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
-
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
 
         // Training strategy
 

@@ -837,11 +837,11 @@ void NeuralNetworkTest::test_get_parameters()
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-   PerceptronLayer* pl00 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+   PerceptronLayer* pl00 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
    pl00->set_biases_constant(0);
    pl00->set_synaptic_weights_constant(1);
 
-   PerceptronLayer* pl01 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
+   PerceptronLayer* pl01 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
    pl01->set_biases_constant(2);
    pl01->set_synaptic_weights_constant(3);
 
@@ -860,15 +860,15 @@ void NeuralNetworkTest::test_get_parameters()
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-   PerceptronLayer* pl10 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+   PerceptronLayer* pl10 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
    pl10->set_biases_constant(0);
    pl10->set_synaptic_weights_constant(1);
 
-   PerceptronLayer* pl11 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
+   PerceptronLayer* pl11 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
    pl11->set_biases_constant(2);
    pl11->set_synaptic_weights_constant(3);
 
-   PerceptronLayer* pl12 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
+   PerceptronLayer* pl12 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
    pl12->set_biases_constant(4);
    pl12->set_synaptic_weights_constant(5);
 
@@ -891,19 +891,19 @@ void NeuralNetworkTest::test_get_parameters()
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-   PerceptronLayer* pl20 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+   PerceptronLayer* pl20 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
    pl20->set_biases_constant(0);
    pl20->set_synaptic_weights_constant(1);
 
-   PerceptronLayer* pl21 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
+   PerceptronLayer* pl21 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
    pl21->set_biases_constant(2);
    pl21->set_synaptic_weights_constant(3);
 
-   PerceptronLayer* pl22 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
+   PerceptronLayer* pl22 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
    pl22->set_biases_constant(4);
    pl22->set_synaptic_weights_constant(5);
 
-   PerceptronLayer* pl23 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(4));
+   PerceptronLayer* pl23 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(4));
    pl23->set_biases_constant(6);
    pl23->set_synaptic_weights_constant(7);
 
@@ -972,15 +972,15 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 
     neural_network.set(NeuralNetwork::Approximation, architecture);
 
-    PerceptronLayer* pl0 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+    PerceptronLayer* pl0 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
     pl0->set_biases_constant(0);
     pl0->set_synaptic_weights_constant(1);
 
-    PerceptronLayer* pl1 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
+    PerceptronLayer* pl1 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
     pl1->set_biases_constant(2);
     pl1->set_synaptic_weights_constant(3);
 
-    PerceptronLayer* pl2 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
+    PerceptronLayer* pl2 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
     pl2->set_biases_constant(4);
     pl2->set_synaptic_weights_constant(5);
 
@@ -1665,7 +1665,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
-    PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+    PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
     const Index neurons_number = perceptron_layer->get_neurons_number();
     perceptron_layer->set_activation_function(PerceptronLayer::Logistic);
 

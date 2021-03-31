@@ -95,7 +95,7 @@ public:
    void test_calculate_training_samples_descriptives();
    void test_calculate_selection_samples_descriptives();
    void test_calculate_testing_samples_descriptives();
-   void test_calculate_inputs_descriptives();
+   void test_calculate_input_variables_descriptives();
    void test_calculate_variables_means();
    void test_calculate_training_targets_mean();
    void test_calculate_selection_targets_mean();

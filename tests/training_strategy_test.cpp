@@ -41,10 +41,9 @@ void TrainingStrategyTest::test_destructor()
    NeuralNetwork neural_network;
    DataSet data_set;
 
-   TrainingStrategy* ts = new TrainingStrategy(&neural_network, &data_set);
+   TrainingStrategy* training_strategy_pointer = new TrainingStrategy(&neural_network, &data_set);
 
-   delete ts;
-
+   delete training_strategy_pointer;
 }
 
 

@@ -16,7 +16,7 @@
       </Regularization>
    </LossIndex>
    <OptimizationAlgorithm>
-      <OptimizationMethod>ADAPTIVE_MOMENT_ESTIMATION</OptimizationMethod>
+      <OptimizationMethod>GRADIENT_DESCENT</OptimizationMethod>
       <GradientDescent>
          <LearningRateAlgorithm>
             <LearningRateMethod>BrentMethod</LearningRateMethod>

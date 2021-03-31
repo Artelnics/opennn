@@ -53,7 +53,7 @@
             <Minimum>0</Minimum>
             <Maximum>67.1</Maximum>
             <Mean>31.9926</Mean>
-            <StandardDeviation>7.88403</StandardDeviation>
+            <StandardDeviation>7.88416</StandardDeviation>
             <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
          <ScalingNeuron Index="7">
@@ -72,16 +72,17 @@
          </ScalingNeuron>
       </ScalingLayer>
       <PerceptronLayer>
+         <LayerName>perceptron_layer0</LayerName>
          <InputsNumber>8</InputsNumber>
-         <NeuronsNumber>3</NeuronsNumber>
+         <NeuronsNumber>10</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>-3.45451 4.83074 1.31041 -1.06494 -1.14781 0.979487 -0.976902 3.91167 -0.56169 -2.33408 -3.02645 5.16685 -3.52276 -0.125427 0.284248 -3.08183 -0.402245 1.96908 -1.50099 4.35697 4.58136 -1.49118 -1.51 4.17903 5.31309 2.26318 -4.75308</Parameters>
+         <Parameters>-0.344441 1.28495 -0.915864 -1.53954 1.96774 -0.714383 -1.83028 0.322988 -1.04362 -0.502631 0.061757 -0.904486 -0.493875 -0.0232282 -3.42773 0.638003 1.06447 2.38931 -2.62476 -0.604308 -0.934981 -2.47752 -0.580871 0.652084 2.60291 3.93346 2.79149 -0.935514 1.51425 3.48911 -2.4768 2.13902 -0.577143 -1.41892 -1.12964 -1.19861 -0.492825 -1.45284 -2.75182 -0.872432 -0.252605 -0.653187 3.57815 -0.29979 3.13222 3.16706 -0.453602 1.48859 0.677884 -1.79148 2.74898 2.38235 -0.832677 0.576348 -1.65773 -0.867659 0.745612 -1.07261 -2.36645 -2.2402 -1.89463 -2.77321 2.30689 -0.936681 0.975143 -1.17414 4.397 0.205155 -0.683524 -2.68165 -0.627052 -3.02023 2.01462 -1.57854 0.573855 -0.533912 -0.608998 0.874663 -0.75689 0.657402 -1.22587 3.27615 3.54597 -0.648733 -2.17591 -3.16129 -3.90909 1.13256 3.16189 0.996273</Parameters>
       </PerceptronLayer>
       <ProbabilisticLayer>
-         <InputsNumber>3</InputsNumber>
+         <InputsNumber>10</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <ActivationFunction>Logistic</ActivationFunction>
-         <Parameters>-0.979313 -7.7716 -6.40899 1.52092</Parameters>
+         <Parameters>-0.896229 -4.97121 3.87479 4.29005 -4.6291 -3.76376 3.93188 -4.35661 -5.16295 -4.84191 5.06267</Parameters>
          <DecisionThreshold>0.5</DecisionThreshold>
       </ProbabilisticLayer>
    </Layers>

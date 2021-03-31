@@ -31,33 +31,23 @@ int main()
 
         DataSet data_set("../data/simple_pattern_recognition.csv", ';', true);
 
-        data_set.split_samples_random();
+        const Tensor<string, 1> input_variables_names = data_set.get_input_variables_names();
 
-        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> target_variables_names = data_set.get_target_variables_names();
 
-        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
-
-        Tensor<string, 1> scaling_inputs_methods(inputs_names.dimension(0));
-
-        scaling_inputs_methods.setConstant("MinimumMaximum");
-
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables_minimum_maximum();
 
         // Neural network
 
-        Tensor<Index, 1> neural_network_architecture(3);
+        NeuralNetwork neural_network(NeuralNetwork::Classification, {2, 10, 1});
 
-        neural_network_architecture.setValues({2, 10, 1});
+        neural_network.set_inputs_names(input_variables_names);
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
-
-        neural_network.set_inputs_names(inputs_names);
-
-        neural_network.set_outputs_names(targets_names);
+        neural_network.set_outputs_names(target_variables_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
 
         // Training strategy
 
@@ -73,23 +63,18 @@ int main()
 
         // Testing analysis
 
-        data_set.unscale_input_variables_minimum_maximum(inputs_descriptives);
+        data_set.unscale_input_variables_minimum_maximum(input_variables_descriptives);
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+        const Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
 
-        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
         // Save results
 
-        data_set.save("../data/data_set.xml");
-
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_python("../data/expression.py");
-
-        training_strategy.save("../data/training_strategy.xml");
-        training_results.save("../data/training_results.dat");
 
         cout << "Bye" << endl;
 

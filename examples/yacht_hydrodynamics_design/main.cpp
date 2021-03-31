@@ -38,8 +38,6 @@ int main()
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        data_set.split_samples_random();
-
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
@@ -49,7 +47,7 @@ int main()
         Tensor<string, 1> scaling_target_methods(target_variables_number);
         scaling_target_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
 
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables(scaling_target_methods);
 
@@ -57,17 +55,14 @@ int main()
 
         const Index hidden_neurons_number = 10;
 
-        Tensor<Index, 1> neural_network_architecture(3);
-        neural_network_architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
-
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
         unscaling_layer_pointer->set_unscaling_methods(UnscalingLayer::MinimumMaximum);

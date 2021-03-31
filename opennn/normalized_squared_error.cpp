@@ -278,8 +278,8 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 /// \param back_propagation
 
 void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation&,
-                     LossIndexBackPropagation& back_propagation) const
+                                             const NeuralNetworkForwardPropagation&,
+                                             LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
 
@@ -289,7 +289,7 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
     back_propagation.error
-    = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+            = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 }
 
 
@@ -299,13 +299,13 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 {
     Tensor<type, 0> sum_squared_error;
 
-    sum_squared_error.device(*thread_pool_device) = back_propagation.squared_errors.sum();
+    sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
     back_propagation.error
-    = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+            = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 }
 
 
@@ -313,77 +313,134 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                                     NeuralNetworkForwardPropagation&,
                                                     LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef OPENNN_DEBUG
+#ifdef OPENNN_DEBUG
 
-     check();
+    check();
 
-     #endif
+#endif
 
-     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+    LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-     Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
+    Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
-     const Index batch_samples_number = batch.get_samples_number();
-     const Index total_samples_number = data_set_pointer->get_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
 
-     const type coefficient
-     = static_cast<type>(2)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
+    const type coefficient
+            = static_cast<type>(2)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
 
-     switch(output_layer_pointer->get_type())
-     {
-     case Layer::Perceptron:
-     {
-         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
-         = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
+    switch(output_layer_pointer->get_type())
+    {
+    case Layer::Perceptron:
+    {
+        PerceptronLayerBackPropagation* perceptron_layer_back_propagation
+                = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
-         perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-     }
-         break;
+        perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+    }
+        break;
 
-     case Layer::Probabilistic:
-     {
-         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-         = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
+    case Layer::Probabilistic:
+    {
+        ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+                = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
-         probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-     }
-         break;
+        probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+    }
+        break;
 
-     case Layer::Recurrent:
-     {
-         RecurrentLayerBackPropagation* recurrent_layer_back_propagation
-         = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
+    case Layer::Recurrent:
+    {
+        RecurrentLayerBackPropagation* recurrent_layer_back_propagation
+                = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
 
-         recurrent_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-     }
-         break;
+        recurrent_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+    }
+        break;
 
-     case Layer::LongShortTermMemory:
-     {
-         LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
-         = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
+    case Layer::LongShortTermMemory:
+    {
+        LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
+                = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
 
-         long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-     }
-         break;
+        long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+    }
+        break;
 
-     default: break;
-     }
+    default: break;
+    }
 }
 
 
-void NormalizedSquaredError::calculate_output_delta(const DataSetBatch &,
-                                                    NeuralNetworkForwardPropagation &,
-                                                    LossIndexBackPropagationLM &) const
+void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & batch,
+                                                    NeuralNetworkForwardPropagation & ,
+                                                    LossIndexBackPropagationLM & loss_index_back_propagation) const
 {
+#ifdef OPENNN_DEBUG
 
+    check();
+
+#endif
+
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    LayerBackPropagation* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
+
+    Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
+
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
+
+    const type coefficient
+            = static_cast<type>(2)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
+
+    switch(output_layer_pointer->get_type())
+    {
+    case Layer::Perceptron:
+    {
+        PerceptronLayerBackPropagation* perceptron_layer_back_propagation
+                = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
+
+        perceptron_layer_back_propagation->delta = coefficient*(loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors);
+    }
+        break;
+
+    case Layer::Probabilistic:
+    {
+        ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+                = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
+
+        probabilistic_layer_back_propagation->delta = coefficient*(loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors);
+    }
+        break;
+
+    case Layer::Recurrent:
+    {
+        RecurrentLayerBackPropagation* recurrent_layer_back_propagation
+                = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
+
+        recurrent_layer_back_propagation->delta = coefficient*(loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors);
+    }
+        break;
+
+    case Layer::LongShortTermMemory:
+    {
+        LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
+                = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
+
+        long_short_term_memory_layer_back_propagation->delta = coefficient*(loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors);
+    }
+        break;
+
+    default: break;
+    }
 }
 
 
 void NormalizedSquaredError::calculate_gradient(const DataSetBatch& batch,
-                                    LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                                LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef OPENNN_DEBUG
 

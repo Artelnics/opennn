@@ -212,7 +212,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_neural_network_pointer();
 
-    // Optimization algorithm
+    // Training strategy
+
+    training_strategy_pointer->set_display(false);
 
     Index selection_failures = 0;
 
@@ -228,12 +230,26 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     bool stop = false;
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
-    {
+    {                
         data_set_pointer->set_column_use(correlations_rank_descending[epoch], DataSet::Input);
 
         neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
-        // Trial
+
+        if(display)
+        {
+            cout << "Epoch: " << epoch+1 << endl;
+            cout << "Inputs number: " << data_set_pointer->get_input_columns_number() << endl;
+            cout << "Inputs: " << endl
+                 << data_set_pointer->get_input_columns_names() << endl;
+
+            system("pause");
+
+        }
+
+
+
+        // Trials
 
         for(Index i = 0; i < trials_number; i++)
         {

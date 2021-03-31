@@ -422,7 +422,7 @@ NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 
         growing_neurons.set_display(display);
 
-//        results.neurons_selection_results_pointer = growing_neurons.perform_neurons_selection();
+        return growing_neurons.perform_neurons_selection();
 
         break;
     }
@@ -439,7 +439,7 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
 {
     InputsSelectionResults results;
 
-    TrainingStrategy* ts = get_training_strategy_pointer();
+    TrainingStrategy* training_strategy_pointer = get_training_strategy_pointer();
 
     switch(inputs_selection_method)
     {
@@ -451,7 +451,7 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
     {
         growing_inputs.set_display(display);
 
-        growing_inputs.set_training_strategy_pointer(ts);
+        growing_inputs.set_training_strategy_pointer(training_strategy_pointer);
 
         return growing_inputs.perform_inputs_selection();
 
@@ -461,7 +461,7 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
     {
         pruning_inputs.set_display(display);
 
-        pruning_inputs.set_training_strategy_pointer(ts);
+        pruning_inputs.set_training_strategy_pointer(training_strategy_pointer);
 
         return pruning_inputs.perform_inputs_selection();
 
@@ -471,7 +471,7 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
     {
         genetic_algorithm.set_display(display);
 
-        genetic_algorithm.set_training_strategy_pointer(ts);
+        genetic_algorithm.set_training_strategy_pointer(training_strategy_pointer);
 
         return genetic_algorithm.perform_inputs_selection();
 

@@ -38,14 +38,8 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
-//        const Tensor<string, 1> scaling_methods = data_set.calculate_default_scaling_methods();
-//        const Tensor<string, 1> unscaling_methods = data_set.calculate_default_unscaling_methods();
-
-        Tensor<string, 1> scaling_methods(input_variables_number);
-        scaling_methods.setConstant("MinimumMaximum");
-
-        Tensor<string, 1> unscaling_methods(target_variables_number);
-        unscaling_methods.setConstant("MinimumMaximum");
+        const Tensor<string, 1> scaling_methods = data_set.calculate_default_scaling_methods();
+        const Tensor<string, 1> unscaling_methods = data_set.calculate_default_unscaling_methods();
 
         const Tensor<Descriptives, 1> input_descriptives = data_set.scale_input_variables(scaling_methods);
 
@@ -53,12 +47,7 @@ int main()
 
         // Neural network
 
-        Tensor<Index, 1> architecture(3);
-        architecture(0) = input_variables_number;
-        architecture(1) = 10;
-        architecture(2) = target_variables_number;
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, architecture);
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, 10, target_variables_number});
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_scaling_methods(scaling_methods);
@@ -74,9 +63,9 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
-        training_strategy.set_display_period(1);
+//        training_strategy.set_display_period(1);
 
 //        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 

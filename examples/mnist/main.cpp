@@ -34,9 +34,7 @@ int main()
 
         // Data set
 
-        bool display_data_set = false;
-
-        DataSet data_set("../data/mnist_train.csv",',',true);
+        DataSet data_set("../data/mnist_train.csv", ',', true);
 
         data_set.set_input();
 
@@ -48,74 +46,55 @@ int main()
 
         const Index target_variables_number = data_set.get_target_variables_number();
 
-        Tensor<string, 1> scaling_methods(input_variables_number);
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables_minimum_maximum();
+/*
+        const Tensor<DataSet::Column, 1> columns = data_set.get_columns();
 
-        scaling_methods.setConstant("MinimumMaximum");
-
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_methods);
-
-        data_set.unuse_constant_columns();
-
-        if(display_data_set)
+        for(Index i = 0; i < columns.size(); i++)
         {
-            Tensor<DataSet::Column, 1> columns = data_set.get_columns();
+            cout << "Column " << i << ": " << endl;
+            cout << "   Name: " << columns(i).name << endl;
 
-            for(Index i = 0; i < columns.size(); i++)
-            {
-                cout << "Column " << i << ": " << endl;
-                cout << "   Name: " << columns(i).name << endl;
+            if(columns(i).column_use == OpenNN::DataSet::Input) cout << "   Use: input" << endl;
+            else if(columns(i).column_use == OpenNN::DataSet::Target) cout << "   Use: target" << endl;
+            else if(columns(i).column_use == OpenNN::DataSet::UnusedVariable) cout << "   Use: unused" << endl;
 
-                if(columns(i).column_use == OpenNN::DataSet::Input) cout << "   Use: input" << endl;
-                else if(columns(i).column_use == OpenNN::DataSet::Target) cout << "   Use: target" << endl;
-                else if(columns(i).column_use == OpenNN::DataSet::UnusedVariable) cout << "   Use: unused" << endl;
+            if(columns(i).type == OpenNN::DataSet::ColumnType::Categorical) cout << "   Categories: " << columns(i).categories << endl;
 
-
-                if(columns(i).type == OpenNN::DataSet::ColumnType::Categorical) cout << "   Categories: " << columns(i).categories << endl;
-
-                cout << endl;
-            }
-
-            cout << "Input variables number: " << data_set.get_target_variables_number() << endl;
-            cout << "Target variables number: " << data_set.get_target_variables_number() << endl;
+            cout << endl;
         }
+*/
+        cout << "Input variables number: " << data_set.get_target_variables_number() << endl;
+        cout << "Target variables number: " << data_set.get_target_variables_number() << endl;
 
         // Neural network
-
-        bool display_neural_network = false;
 
         cout << "input_variables_number" << input_variables_number <<endl;
         cout << "target_variables_number" << target_variables_number <<endl;
 
-        Tensor<Index, 1> architecture(3);
-        architecture[0] = input_variables_number;
-        architecture[1] = 50;
-        architecture[2] = target_variables_number;
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, architecture);
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, 50, target_variables_number});
+/*
         PerceptronLayer* perceptron_layer_pointer = neural_network.get_first_perceptron_layer_pointer();
         perceptron_layer_pointer->set_activation_function("RectifiedLinear");
 
-        if(display_neural_network)
+        Tensor<Layer*, 1> layers_pointers = neural_network.get_trainable_layers_pointers();
+
+        for(Index i = 0; i < layers_pointers.size(); i++)
         {
-            Tensor<Layer*, 1> layers_pointers = neural_network.get_trainable_layers_pointers();
+            cout << "Layer " << i << ": " << endl;
+            cout << "   Type: " << layers_pointers(i)->get_type_string() << endl;
 
-            for(Index i = 0; i < layers_pointers.size(); i++)
-            {
-                cout << "Layer " << i << ": " << endl;
-                cout << "   Type: " << layers_pointers(i)->get_type_string() << endl;
-
-                if(layers_pointers(i)->get_type_string() == "Perceptron") cout << "   Activation: " << static_cast<PerceptronLayer*>(layers_pointers(i))->write_activation_function() << endl;
-                if(layers_pointers(i)->get_type_string() == "Probabilistic") cout << "   Activation: " << static_cast<ProbabilisticLayer*>(layers_pointers(i))->write_activation_function() << endl;
-            }
+            if(layers_pointers(i)->get_type_string() == "Perceptron") cout << "   Activation: " << static_cast<PerceptronLayer*>(layers_pointers(i))->write_activation_function() << endl;
+            if(layers_pointers(i)->get_type_string() == "Probabilistic") cout << "   Activation: " << static_cast<ProbabilisticLayer*>(layers_pointers(i))->write_activation_function() << endl;
         }
-
+*/
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.set_display_period(10);
 
@@ -125,16 +104,16 @@ int main()
 
         // Testing analysis
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-        Tensor<type, 1> multiple_classification_tests = testing_analysis.calculate_multiple_classification_tests();
+        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        const Tensor<type, 1> multiple_classification_tests = testing_analysis.calculate_multiple_classification_tests();
 
         cout << "Confusion matrix: " << endl;
         cout << confusion << endl;
 
-        cout << "Accuracy: " << multiple_classification_tests(0)*100 << endl;
-        cout << "Error: " << multiple_classification_tests(1)*100 << endl;
+        cout << "Accuracy: " << multiple_classification_tests(0)*100 << "%" << endl;
+        cout << "Error: " << multiple_classification_tests(1)*100 << "%" << endl;
 
         return 0;
     }
