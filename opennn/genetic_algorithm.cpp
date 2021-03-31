@@ -787,6 +787,10 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     if(display) cout << "Performing genetic inputs selection..." << endl;
 
+    print_summary();
+
+    system("pause");
+
     InputsSelectionResults results(maximum_epochs_number);
 
     // Loss index
@@ -812,12 +816,12 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     time(&beginning_time);
 
-    initialize_population();
+//    initialize_population();
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         cout << "Generation: " << epoch << endl;
-
+/*
         evaluate_population();
 
         optimal_individual_index = minimal_index(selection_errors);
@@ -896,10 +900,11 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         perform_crossover();
 
         perform_mutation();
+*/
     }
 
     time(&current_time);
-
+/*
     elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
     // Set data set stuff
@@ -913,7 +918,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
     neural_network_pointer->set_parameters(results.optimal_parameters);
-
+*/
     if(display) results.print();
 
     return results;
@@ -1476,6 +1481,14 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
+}
+
+
+void GeneticAlgorithm::print_summary() const
+{
+    cout << "Genetic algorithm" << endl;
+    cout << "Individuals number: " << get_individuals_number() << endl;
+    cout << "Genes number: " << get_genes_number() << endl;
 }
 
 

@@ -372,10 +372,11 @@ Tensor<type, 1> logistic(const type& a, const type& b, const Tensor<type, 1>& x)
     return (1 + combination.exp().inverse()).inverse();
 }
 
+
 /// Calculate the gaussian function with specific parameters 'a' and 'b'.
 /// @param a Parameter a.
 /// @param b Parameter b.
-///
+
 Tensor<type, 1> gaussian (const type& a, const type& b, const Tensor<type, 1>& x)
 {
     const Tensor<type, 1> combination =(-0.5*((x-a)/b)*((x-a)/b)).exp();

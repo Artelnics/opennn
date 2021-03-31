@@ -11,7 +11,6 @@
 namespace OpenNN
 {
 
-
 /// Default constructor.
 
 InputsSelection::InputsSelection()
