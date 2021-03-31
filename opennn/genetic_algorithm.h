@@ -133,6 +133,8 @@ public:
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
+
+    void print_summary() const;
     
     void save(const string&) const;
     void load(const string&);

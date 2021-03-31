@@ -26,11 +26,11 @@ def scaling_layer(inputs):
 
 	outputs = [None] * 5
 
-	outputs[0] = inputs[0]*1+0
-	outputs[1] = inputs[1]*1+0
-	outputs[2] = inputs[2]*1+0
-	outputs[3] = inputs[3]*1+0
-	outputs[4] = inputs[4]*1+0
+	outputs[0] = inputs[0]*0.0001010101041-1.020202041
+	outputs[1] = inputs[1]*0.09009008855-1
+	outputs[2] = inputs[2]*7.158196449-1.181818247
+	outputs[3] = inputs[3]*0.0505050458-2.601010084
+	outputs[4] = inputs[4]*34.47644806-1.013814092
 
 	return outputs;
 
@@ -39,18 +39,18 @@ def perceptron_layer_0(inputs):
 
 	combinations = [None] * 12
 
-	combinations[0] = 0.634633 -0.481795*inputs[0] -1.6842*inputs[1] -0.149289*inputs[2] -0.32709*inputs[3] +0.551054*inputs[4] 
-	combinations[1] = 0.0448996 -0.444546*inputs[0] +0.990089*inputs[1] -0.998241*inputs[2] +0.385156*inputs[3] +0.898606*inputs[4] 
-	combinations[2] = -1.18718 +1.11978*inputs[0] +0.773625*inputs[1] -0.842091*inputs[2] -0.0533032*inputs[3] -0.725724*inputs[4] 
-	combinations[3] = 0.372593 -0.0672449*inputs[0] +0.313956*inputs[1] -0.753665*inputs[2] +0.126055*inputs[3] -0.156953*inputs[4] 
-	combinations[4] = 3.92162 +2.72534*inputs[0] +0.325506*inputs[1] +0.590943*inputs[2] -0.129484*inputs[3] +0.744502*inputs[4] 
-	combinations[5] = -2.474 -1.69416*inputs[0] -1.18867*inputs[1] -0.196646*inputs[2] +0.0270279*inputs[3] -1.04437*inputs[4] 
-	combinations[6] = -0.306698 +1.07073*inputs[0] -1.46254*inputs[1] +0.134703*inputs[2] -0.27411*inputs[3] -1.28313*inputs[4] 
-	combinations[7] = 2.97146 +2.72748*inputs[0] +0.276044*inputs[1] +1.12543*inputs[2] -0.0705648*inputs[3] -0.0206729*inputs[4] 
-	combinations[8] = 0.153684 -0.872525*inputs[0] +0.730216*inputs[1] -0.492265*inputs[2] -0.144793*inputs[3] -0.452021*inputs[4] 
-	combinations[9] = -0.252472 +0.323011*inputs[0] +0.681261*inputs[1] -0.654571*inputs[2] -0.296809*inputs[3] -0.0611627*inputs[4] 
-	combinations[10] = 1.38862 +2.25924*inputs[0] +0.960843*inputs[1] -0.0489971*inputs[2] -0.0789258*inputs[3] -0.104179*inputs[4] 
-	combinations[11] = 0.136703 +0.0161593*inputs[0] +0.127963*inputs[1] -0.251298*inputs[2] -0.497724*inputs[3] -0.29338*inputs[4] 
+	combinations[0] = -0.805298 -0.396118*inputs[0] +0.45874*inputs[1] +0.941162*inputs[2] +0.437805*inputs[3] -0.13855*inputs[4] 
+	combinations[1] = 0.369934 +0.614502*inputs[0] -0.0108032*inputs[1] -0.154968*inputs[2] +0.692383*inputs[3] +0.842102*inputs[4] 
+	combinations[2] = 0.628906 -0.49176*inputs[0] -0.407166*inputs[1] -0.196045*inputs[2] +0.634338*inputs[3] +0.17688*inputs[4] 
+	combinations[3] = 0.692261 -0.826355*inputs[0] -0.866516*inputs[1] -0.0663452*inputs[2] -0.0968018*inputs[3] +0.657043*inputs[4] 
+	combinations[4] = 0.398438 +0.0903931*inputs[0] +0.657593*inputs[1] -0.502075*inputs[2] +0.920593*inputs[3] -0.886353*inputs[4] 
+	combinations[5] = -0.659607 -0.724609*inputs[0] -0.80481*inputs[1] -0.662842*inputs[2] +0.858704*inputs[3] +0.497498*inputs[4] 
+	combinations[6] = 0.0861816 -0.166809*inputs[0] -0.517334*inputs[1] -0.6745*inputs[2] -0.858826*inputs[3] -0.491821*inputs[4] 
+	combinations[7] = 0.875122 +0.424988*inputs[0] +0.240906*inputs[1] +0.23407*inputs[2] -0.487122*inputs[3] +0.158142*inputs[4] 
+	combinations[8] = -0.794556 -0.993225*inputs[0] +0.419128*inputs[1] +0.372864*inputs[2] +0.74292*inputs[3] -0.47229*inputs[4] 
+	combinations[9] = -0.205933 +0.721985*inputs[0] -0.206726*inputs[1] -0.282593*inputs[2] +0.229492*inputs[3] -0.255066*inputs[4] 
+	combinations[10] = -0.722961 -0.672241*inputs[0] -0.660706*inputs[1] +0.582214*inputs[2] -0.65155*inputs[3] -0.416809*inputs[4] 
+	combinations[11] = 0.119446 +0.2229*inputs[0] +0.438965*inputs[1] -0.115784*inputs[2] +0.771179*inputs[3] +0.933289*inputs[4] 
 	
 	activations = [None] * 12
 
@@ -74,7 +74,7 @@ def perceptron_layer_1(inputs):
 
 	combinations = [None] * 1
 
-	combinations[0] = -0.656562 +0.948865*inputs[0] -0.772016*inputs[1] +1.61825*inputs[2] -0.587631*inputs[3] +2.98619*inputs[4] +1.5254*inputs[5] -1.01491*inputs[6] -2.15285*inputs[7] +1.15962*inputs[8] -0.927031*inputs[9] +1.29812*inputs[10] -0.725414*inputs[11] 
+	combinations[0] = -0.49585 -0.959167*inputs[0] +0.420654*inputs[1] +0.0996704*inputs[2] -0.757263*inputs[3] -0.634399*inputs[4] -0.937561*inputs[5] +0.610901*inputs[6] +0.543823*inputs[7] +0.524658*inputs[8] -0.300659*inputs[9] +0.455688*inputs[10] -0.549988*inputs[11] 
 	
 	activations = [None] * 1
 

@@ -174,11 +174,7 @@ void ModelSelection::set_neurons_selection_method(const ModelSelection::NeuronsS
 
 void ModelSelection::set_neurons_selection_method(const string& new_neurons_selection_method)
 {
-    if(new_neurons_selection_method == "NO_NEURONS_SELECTION")
-    {
-        set_neurons_selection_method(NO_NEURONS_SELECTION);
-    }
-    else if(new_neurons_selection_method == "GROWING_NEURONS")
+    if(new_neurons_selection_method == "GROWING_NEURONS")
     {
         set_neurons_selection_method(GROWING_NEURONS);
     }
@@ -196,7 +192,7 @@ void ModelSelection::set_neurons_selection_method(const string& new_neurons_sele
 
 
 /// Sets a new method for selecting the inputs which have more impact on the targets.
-/// @param new_inputs_selection_method Method for selecting the inputs(NO_INPUTS_SELECTION, GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM).
+/// @param new_inputs_selection_method Method for selecting the inputs(GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM).
 
 void ModelSelection::set_inputs_selection_method(const ModelSelection::InputsSelectionMethod& new_inputs_selection_method)
 {
@@ -209,11 +205,7 @@ void ModelSelection::set_inputs_selection_method(const ModelSelection::InputsSel
 
 void ModelSelection::set_inputs_selection_method(const string& new_inputs_selection_method)
 {
-    if(new_inputs_selection_method == "NO_INPUTS_SELECTION")
-    {
-        set_inputs_selection_method(NO_INPUTS_SELECTION);
-    }
-    else if(new_inputs_selection_method == "GROWING_INPUTS")
+    if(new_inputs_selection_method == "GROWING_INPUTS")
     {
         set_inputs_selection_method(GROWING_INPUTS);
     }
@@ -245,7 +237,11 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
 {
     training_strategy_pointer = new_training_strategy_pointer;
 
+    // Neurons selection
+
     growing_neurons.set_training_strategy_pointer(new_training_strategy_pointer);
+
+    // Inputs selection
 
     growing_inputs.set_training_strategy_pointer(new_training_strategy_pointer);
     pruning_inputs.set_training_strategy_pointer(new_training_strategy_pointer);
@@ -338,29 +334,13 @@ void ModelSelection::check() const
 
 NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {
-    NeuronsSelectionResults results;
-
     switch(neurons_selection_method)
     {
-    case NO_NEURONS_SELECTION:
-    {
-        break;
-    }
     case GROWING_NEURONS:
-    {
-        TrainingStrategy* training_strategy_pointer = get_training_strategy_pointer();
-
-        growing_neurons.set_training_strategy_pointer(training_strategy_pointer);
-
-        growing_neurons.set_display(display);
-
         return growing_neurons.perform_neurons_selection();
-
-        break;
     }
-    }
+    return NeuronsSelectionResults();
 
-    return results;
 }
 
 
@@ -371,28 +351,14 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
 {
     switch(inputs_selection_method)
     {
-    case NO_INPUTS_SELECTION:
-    {
-        return InputsSelectionResults();
-    }
     case GROWING_INPUTS:
-    {
-        growing_inputs.set_training_strategy_pointer(training_strategy_pointer);
-
         return growing_inputs.perform_inputs_selection();
-    }
+
     case PRUNING_INPUTS:
-    {
-        pruning_inputs.set_training_strategy_pointer(training_strategy_pointer);
-
         return pruning_inputs.perform_inputs_selection();
-    }
-    case GENETIC_ALGORITHM:
-    {
-        genetic_algorithm.set_training_strategy_pointer(training_strategy_pointer);
 
+    case GENETIC_ALGORITHM:
         return genetic_algorithm.perform_inputs_selection();
-    }
     }
 
     return InputsSelectionResults();
@@ -574,9 +540,6 @@ string ModelSelection::write_neurons_selection_method() const
 {
     switch(neurons_selection_method)
     {
-    case NO_NEURONS_SELECTION:
-        return "NO_NEURONS_SELECTION";
-
     case GROWING_NEURONS:
         return "GROWING_NEURONS";
     }
@@ -589,9 +552,6 @@ string ModelSelection::write_inputs_selection_method() const
 {
     switch(inputs_selection_method)
     {
-    case NO_INPUTS_SELECTION:
-        return "NO_INPUTS_SELECTION";
-
     case GROWING_INPUTS:
         return "GROWING_INPUTS";
 

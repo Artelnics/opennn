@@ -199,6 +199,11 @@ struct InputsSelectionResults
 
     explicit InputsSelectionResults(const Index& maximum_epochs_number)
     {
+        set(maximum_epochs_number);
+    }
+
+    void set(const Index& maximum_epochs_number)
+    {
         training_errors.resize(maximum_epochs_number);
 
         selection_errors.resize(maximum_epochs_number);
