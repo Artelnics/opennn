@@ -921,7 +921,7 @@ void RecurrentLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPro
                                                        RecurrentLayerBackPropagation* back_propagation) const
 {
     const Tensor<type, 2>& next_synaptic_weights
-            = static_cast<PerceptronLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
+            = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
     back_propagation->delta.device(*thread_pool_device) =
             (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
@@ -1039,14 +1039,13 @@ void RecurrentLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
             static_cast<RecurrentLayerBackPropagation*>(back_propagation);
 
-#pragma omp parallel
-    {
-        calculate_biases_error_gradient(inputs, recurrent_layer_forward_propagation, recurrent_layer_back_propagation);
 
-        calculate_input_weights_error_gradient(inputs, recurrent_layer_forward_propagation, recurrent_layer_back_propagation);
+    calculate_biases_error_gradient(inputs, recurrent_layer_forward_propagation, recurrent_layer_back_propagation);
 
-        calculate_recurrent_weights_error_gradient(inputs, recurrent_layer_forward_propagation, recurrent_layer_back_propagation);
-    }
+    calculate_input_weights_error_gradient(inputs, recurrent_layer_forward_propagation, recurrent_layer_back_propagation);
+
+    calculate_recurrent_weights_error_gradient(inputs, recurrent_layer_forward_propagation, recurrent_layer_back_propagation);
+
 }
 
 
