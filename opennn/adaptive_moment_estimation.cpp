@@ -40,7 +40,7 @@ AdaptiveMomentEstimation::~AdaptiveMomentEstimation()
 {
 }
 
-
+ 
 /// Returns the initial learning rate.
 
 const type& AdaptiveMomentEstimation::get_initial_learning_rate() const
