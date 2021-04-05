@@ -453,9 +453,9 @@ void LossIndex::calculate_squared_errors(const DataSetBatch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
-
     LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
+
+    const Layer* output_layer_pointer = output_layer_forward_propagation->layer_pointer;
 
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
@@ -509,11 +509,6 @@ void LossIndex::calculate_squared_errors(const DataSetBatch& batch,
 
     default: break;
     }
-
-    Tensor<type, 0> error;
-    error.device(*thread_pool_device) = loss_index_back_propagation_lm.squared_errors.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
-
-    loss_index_back_propagation_lm.error = error();
 }
 
 
@@ -634,7 +629,65 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
 
 //    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
 
-    const Tensor<type, 2>& targets = batch.targets_2d;
+//    const Tensor<type, 2>& targets = batch.targets_2d;
+
+    loss_index_back_propagation_lm.squared_errors_jacobian.setZero();
+
+    const Index batch_samples_number = batch.get_samples_number();
+    Index mem_index = 0;
+
+    // Rest of the layers
+
+    for(Index i = 0; i < trainable_layers_number; i++)
+    {
+        Layer* layer_pointer = forward_propagation.layers(i)->layer_pointer;
+
+        switch (layer_pointer->get_type())
+        {
+        case Layer::Perceptron:
+        {
+            static_cast<PerceptronLayer*>(forward_propagation.layers(i)->layer_pointer)->
+                    calculate_layer_squared_errors_Jacobian(batch.inputs_2d,
+                                                            loss_index_back_propagation_lm.neural_network.layers(i));
+
+            const Index layer_parameters_number = layer_pointer->get_parameters_number();
+
+            memcpy(loss_index_back_propagation_lm.squared_errors_jacobian.data() + mem_index,
+                   static_cast<PerceptronLayerBackPropagation*>(loss_index_back_propagation_lm.neural_network.layers(i))->squared_errors_Jacobian.data(),
+                   static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
+
+            mem_index += layer_parameters_number*batch_samples_number;
+        }
+            break;
+
+        case Layer::Probabilistic:
+        {
+//            static_cast<PerceptronLayer*>(forward_propagation.layers(0)->layer_pointer)->
+//                    calculate_layer_squared_errors_Jacobian(batch.inputs_2d,
+//                                                            loss_index_back_propagation_lm.neural_network.layers(i));
+
+//            const Index layer_parameters_number = layer_pointer->get_parameters_number();
+
+//            memcpy(loss_index_back_propagation_lm.squared_errors_jacobian.data() + mem_index,
+//                   static_cast<PerceptronLayerBackPropagation*>(loss_index_back_propagation_lm.neural_network.layers(i))->squared_errors_Jacobian.data(),
+//                   static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
+
+        }
+            break;
+
+        default:
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: LossIndex class.\n"
+                   << "void calculate_squared_errors_jacobian(const DataSetBatch&, NeuralNetworkForwardPropagation&, LossIndexBackPropagationLM&) const method "
+                   << "Levenberg - Marquardt algorithm can only be used with Perceptron and Probabilistic layers.\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        }
+    }
 
 
 
