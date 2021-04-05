@@ -882,8 +882,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 
 
 void PerceptronLayer::calculate_layer_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
-                                                              LayerBackPropagation* back_propagation,
-                                                              Tensor<type, 2>& layer_error_Jacobian)
+                                                              LayerBackPropagation* back_propagation)
 {
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(back_propagation);
@@ -905,12 +904,11 @@ void PerceptronLayer::calculate_layer_squared_errors_Jacobian(const Tensor<type,
             {
                 perceptron_layer_back_propagation->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
                         perceptron_layer_back_propagation->delta(sample, neuron) * inputs(sample, input);
+
+                parameter_index++;
             }
         }
     }
-
-
-
 }
 
 

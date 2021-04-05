@@ -175,8 +175,7 @@ public:
    // Squared errors methods
 
    void calculate_layer_squared_errors_Jacobian(const Tensor<type, 2>&,
-                                                LayerBackPropagation*,
-                                                Tensor<type, 2>&);
+                                                LayerBackPropagation*);
 
    // Gradient methods
 
