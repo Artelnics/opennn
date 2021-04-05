@@ -536,6 +536,10 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
 
+            training_back_propagation.print();
+
+            system("pause");
+
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
