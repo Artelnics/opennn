@@ -648,6 +648,7 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
         {
             static_cast<PerceptronLayer*>(forward_propagation.layers(i)->layer_pointer)->
                     calculate_layer_squared_errors_Jacobian(batch.inputs_2d,
+                                                            forward_propagation.layers(i),
                                                             loss_index_back_propagation_lm.neural_network.layers(i));
 
             const Index layer_parameters_number = layer_pointer->get_parameters_number();

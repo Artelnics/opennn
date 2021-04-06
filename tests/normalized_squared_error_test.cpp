@@ -929,12 +929,16 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    normalized_squared_error.calculate_squared_errors_jacobian(batch, forward_propagation, loss_index_back_propagation_lm);
 
+   normalized_squared_error.calculate_gradient(batch, loss_index_back_propagation_lm);
+
    Tensor<type, 2> numerical_squared_errors_jacobian;
 
    numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
 
    cout << "squared_errors_jacobian: " << endl << loss_index_back_propagation_lm.squared_errors_jacobian << endl;
    cout << "numerical_squared_errors_jacobian: " << endl << numerical_squared_errors_jacobian << endl;
+
+   cout << "Gradient: " << loss_index_back_propagation_lm.gradient << endl;
 
    assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, 1.0e-3), LOG);
 }
