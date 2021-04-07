@@ -288,8 +288,10 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
+    const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+
     back_propagation.error
-            = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+            = sum_squared_error(0)/coefficient;
 }
 
 
@@ -304,8 +306,10 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
+    const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+
     back_propagation.error
-            = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+            = sum_squared_error(0)/coefficient;
 }
 
 
@@ -436,45 +440,6 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & batch,
 
     default: break;
     }
-}
-
-
-void NormalizedSquaredError::calculate_gradient(const DataSetBatch& batch,
-                                                LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
-{
-#ifdef OPENNN_DEBUG
-
-    check();
-
-#endif
-
-    const Index batch_samples_number = batch.get_samples_number();
-    const Index total_samples_number = data_set_pointer->get_samples_number();
-
-    const type coefficient = static_cast<type>(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
-
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
-
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = coefficient*loss_index_back_propagation_lm.gradient;
-
-    cout << "Squared errors jacobian: " << loss_index_back_propagation_lm.squared_errors_jacobian << endl;
-
-    cout << "Squared errors: " << loss_index_back_propagation_lm.squared_errors << endl;
-
-    cout << "Gradient: " << loss_index_back_propagation_lm.gradient << endl;
-    system("pause");
-
-//    const Index batch_samples_number = batch.get_samples_number();
-//    const Index total_samples_number = data_set_pointer->get_samples_number();
-
-//    const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
-
-//    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_terms_Jacobian.contract(second_order_loss.error_terms, AT_B);
-
-//    second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
-
 }
 
 
