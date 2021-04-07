@@ -33,6 +33,11 @@ namespace OpenNN
 struct RecurrentLayerForwardPropagation;
 struct RecurrentLayerBackPropagation;
 
+
+#ifdef OPENNN_CUDA
+        #include "../../opennn-cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
+#endif
+
 /// This class represents a layer of neurons.
 /// Layers of neurons will be used to construct multilayer neurons.
 
@@ -239,9 +244,9 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/recurrent_layer_cuda.h"
-#endif
-
+#else
 };
+#endif
 
 struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {
@@ -349,6 +354,8 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 2> delta;
 };
+
+
 
 
 }

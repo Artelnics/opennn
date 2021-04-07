@@ -32,6 +32,11 @@ namespace OpenNN
 struct PerceptronLayerForwardPropagation;
 struct PerceptronLayerBackPropagation;
 
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn_cuda/struct_perceptron_layer_cuda.h"
+#endif
+
+
 /// This class represents a layer of perceptrons.
 
 /// PerceptronLayer is a single-layer network with a hard-limit trabsfer function.
@@ -237,9 +242,9 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/perceptron_layer_cuda.h"
-#endif
-
+#else
 };
+#endif
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
@@ -346,6 +351,7 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 2> squared_errors_Jacobian;
 };
+
 
 
 }
