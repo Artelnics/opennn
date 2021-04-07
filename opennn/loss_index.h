@@ -198,7 +198,7 @@ public:
                                           LossIndexBackPropagationLM&) const;
 
    virtual void calculate_gradient(const DataSetBatch&,
-                                   LossIndexBackPropagationLM&) const {}
+                                   LossIndexBackPropagationLM&) const;
 
    virtual void calculate_hessian_approximation(const DataSetBatch&,
                                                 LossIndexBackPropagationLM&) const {}

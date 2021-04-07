@@ -94,9 +94,6 @@ public:
                                NeuralNetworkForwardPropagation&,
                                LossIndexBackPropagationLM& ) const;
 
-   void calculate_gradient(const DataSetBatch& batch,
-                           LossIndexBackPropagationLM&) const;
-
    // Hessian method
 
    void calculate_hessian_approximation(const DataSetBatch&,
