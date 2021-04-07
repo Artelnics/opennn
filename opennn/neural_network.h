@@ -421,6 +421,8 @@ struct NeuralNetworkBackPropagation
         for(Index i = 0; i < layers_number; i++)
         {
             cout << "Layer " << i + 1 << endl;
+
+            layers(i)->print();
         }
     }
 

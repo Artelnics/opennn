@@ -35,44 +35,12 @@ namespace OpenNN {
 
 class Layer;
 
-/// This structure represents the first order activaions of layers.
+struct LayerForwardPropagation;
+struct LayerBackPropagation;
 
-struct LayerForwardPropagation
-{
-    /// Default constructor.
-
-    explicit LayerForwardPropagation()
-    {
-    }
-
-    virtual ~LayerForwardPropagation() {}
-
-    virtual void set(const Index&, Layer*) {}
-
-    virtual void print() const = 0;
-
-    Index batch_samples_number = 0;
-
-    Layer* layer_pointer = nullptr;
-};
-
-
-struct LayerBackPropagation
-{
-    /// Default constructor.
-
-    explicit LayerBackPropagation() {}
-
-    virtual ~LayerBackPropagation() {}
-
-    virtual void set(const Index&, Layer*) {}
-
-    virtual void print() const {}
-
-    Index batch_samples_number = 0;
-
-    Layer* layer_pointer = nullptr;
-};
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn_cuda/struct_layer_cuda.h"
+#endif
 
 
 /// This abstract class represents the concept of layer of neurons in OpenNN.
@@ -295,9 +263,46 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/layer_cuda.h"
-#endif
-
+#else
 };
+#endif
+struct LayerForwardPropagation
+{
+    /// Default constructor.
+
+    explicit LayerForwardPropagation()
+    {
+    }
+
+    virtual ~LayerForwardPropagation() {}
+
+    virtual void set(const Index&, Layer*) {}
+
+    virtual void print() const = 0;
+
+    Index batch_samples_number = 0;
+
+    Layer* layer_pointer = nullptr;
+};
+
+
+struct LayerBackPropagation
+{
+    /// Default constructor.
+
+    explicit LayerBackPropagation() {}
+
+    virtual ~LayerBackPropagation() {}
+
+    virtual void set(const Index&, Layer*) {}
+
+    virtual void print() const {}
+
+    Index batch_samples_number = 0;
+
+    Layer* layer_pointer = nullptr;
+};
+
 
 }
 

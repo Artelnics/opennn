@@ -33,6 +33,11 @@ namespace OpenNN
 struct ProbabilisticLayerForwardPropagation;
 struct ProbabilisticLayerBackPropagation;
 
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn_cuda/struct_probabilistic_layer_cuda.h"
+#endif
+
+
 /// This class represents a layer of probabilistic neurons.
 
 ///
@@ -185,6 +190,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
+
 protected:
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
@@ -208,10 +214,9 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/probabilistic_layer_cuda.h"
-#endif
-
+#else
 };
-
+#endif
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {
