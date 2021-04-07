@@ -627,16 +627,10 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-//    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1)->activations;
-
-//    const Tensor<type, 2>& targets = batch.targets_2d;
-
     loss_index_back_propagation_lm.squared_errors_jacobian.setZero();
 
     const Index batch_samples_number = batch.get_samples_number();
     Index mem_index = 0;
-
-    // Rest of the layers
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
@@ -689,33 +683,15 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
 
         }
     }
+}
 
 
 
-
-
-
-
-
-// Gives Eigen error in debug
-
-//#ifndef OPENNN_DEBUG
-
-//     back_propagation.output_jacobian.device(*thread_pool_device) = (outputs-targets)/loss_index_back_propagation_lm.squared_errors;
-
-//    back_propagation.output_jacobian = (outputs-targets);
-
-//    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
-//        back_propagation.output_jacobian(i) /= loss_index_back_propagation_lm.squared_errors(i);
-
-//#else
-
-//    back_propagation.output_jacobian = (outputs-targets);
-
-//    for(Index i = 0; i < back_propagation.output_jacobian.dimension(0); i++)
-//        back_propagation.output_jacobian(i) /= loss_index_back_propagation_lm.squared_errors(i);
-
-//#endif
+void LossIndex::calculate_gradient(const DataSetBatch& batch,
+                                   LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+{
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
+            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
 }
 
 
