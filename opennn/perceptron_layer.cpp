@@ -915,12 +915,12 @@ void PerceptronLayer::calculate_layer_squared_errors_Jacobian(const Tensor<type,
                         perceptron_layer_forward_propagation->activations_derivatives(sample, neuron) *
                         inputs(sample, input);
 
-                cout << "Index: " << neurons_number+parameter_index << endl;
+                cout << "Index: " << sample << "; " << neurons_number+parameter_index << endl;
 
                 parameter_index++;
             }
 
-            cout << "Out Index: " << neuron << endl;
+            cout << "Out Index: " << sample << "; " << neuron << endl;
 
             perceptron_layer_back_propagation->squared_errors_Jacobian(sample, neuron) =
                     perceptron_layer_back_propagation->delta(sample, neuron) * perceptron_layer_forward_propagation->activations_derivatives(sample, neuron);
