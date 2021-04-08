@@ -179,6 +179,11 @@ public:
 
    // Squared errors methods
 
+   void calculate_layer_squared_errors_Jacobian(LayerForwardPropagation*,
+                                                LayerForwardPropagation*,
+                                                LayerBackPropagation*);
+
+
    void calculate_layer_squared_errors_Jacobian(const Tensor<type, 2>&,
                                                 LayerForwardPropagation*,
                                                 LayerBackPropagation*);

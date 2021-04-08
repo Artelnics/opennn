@@ -881,6 +881,68 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 }
 
 
+void PerceptronLayer::calculate_layer_squared_errors_Jacobian(LayerForwardPropagation* previous_forward_propagation,
+                                                              LayerForwardPropagation* forward_propagation,
+                                                              LayerBackPropagation* back_propagation)
+{
+    switch (previous_forward_propagation->layer_pointer->get_type())
+    {
+    case Perceptron:
+    {
+
+    }
+        break;
+
+    case Probabilistic:
+    {
+
+    }
+        break;
+
+    default:
+    {
+
+    }
+
+    }
+
+//    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
+//            static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
+
+//    PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
+//            static_cast<PerceptronLayerBackPropagation*>(back_propagation);
+
+//    const Index samples_number = inputs.dimension(0);
+
+//    const Index inputs_number = get_inputs_number();
+//    const Index neurons_number = get_neurons_number();
+
+//    Index parameter_index = 0;
+
+//    for(Index sample = 0; sample < samples_number; sample++)
+//    {
+//        parameter_index = 0;
+
+//        for(Index neuron = 0; neuron < neurons_number; neuron++)
+//        {
+//            for(Index input = 0; input <  inputs_number; input++)
+//            {
+//                perceptron_layer_back_propagation->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
+//                        perceptron_layer_back_propagation->delta(sample, neuron) *
+//                        perceptron_layer_forward_propagation->activations_derivatives(sample, neuron) *
+//                        inputs(sample, input);
+
+//                parameter_index++;
+//            }
+
+//            perceptron_layer_back_propagation->squared_errors_Jacobian(sample, neuron) =
+//                    perceptron_layer_back_propagation->delta(sample, neuron) *
+//                    perceptron_layer_forward_propagation->activations_derivatives(sample, neuron);
+//        }
+//    }
+}
+
+
 void PerceptronLayer::calculate_layer_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
                                                               LayerForwardPropagation* forward_propagation,
                                                               LayerBackPropagation* back_propagation)
@@ -898,10 +960,6 @@ void PerceptronLayer::calculate_layer_squared_errors_Jacobian(const Tensor<type,
 
     Index parameter_index = 0;
 
-    cout << "Delta: " << endl << perceptron_layer_back_propagation->delta << endl;
-    cout << "Activations derivatives: " << endl << perceptron_layer_forward_propagation->activations_derivatives << endl;
-    cout << "Inputs: " << endl << inputs << endl;
-
     for(Index sample = 0; sample < samples_number; sample++)
     {
         parameter_index = 0;
@@ -915,21 +973,14 @@ void PerceptronLayer::calculate_layer_squared_errors_Jacobian(const Tensor<type,
                         perceptron_layer_forward_propagation->activations_derivatives(sample, neuron) *
                         inputs(sample, input);
 
-                cout << "Index: " << sample << "; " << neurons_number+parameter_index << endl;
-
                 parameter_index++;
             }
 
-            cout << "Out Index: " << sample << "; " << neuron << endl;
-
             perceptron_layer_back_propagation->squared_errors_Jacobian(sample, neuron) =
-                    perceptron_layer_back_propagation->delta(sample, neuron) * perceptron_layer_forward_propagation->activations_derivatives(sample, neuron);
+                    perceptron_layer_back_propagation->delta(sample, neuron) *
+                    perceptron_layer_forward_propagation->activations_derivatives(sample, neuron);
         }
     }
-
-    cout << "Squared errors Jacobian: " << endl << perceptron_layer_back_propagation->squared_errors_Jacobian << endl;
-
-    system("pause");
 }
 
 
