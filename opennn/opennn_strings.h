@@ -31,7 +31,6 @@ namespace OpenNN
 
     Tensor<type, 1> to_type_vector(const string&, const char&);
 
-//    inline bool is_digit_string(const char str) {return std::isdigit(str);}
     bool is_numeric_string(const string&);
     bool is_date_time_string(const string&);
     bool is_constant_numeric(const Tensor<type, 1>&);
@@ -56,7 +55,7 @@ namespace OpenNN
     bool is_not_numeric(const Tensor<string, 1>&);
     bool is_mixed(const Tensor<string, 1>&);
 
-    void replace(string& source, const string& find, const string& replace);
+    void replace(string&, const string&, const string&);
     void replace_substring(Tensor<string, 1>&, const string& , const string&);
 }
 

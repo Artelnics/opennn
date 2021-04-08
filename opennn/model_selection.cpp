@@ -24,7 +24,7 @@ ModelSelection::ModelSelection()
 
 ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
 {
-    training_strategy_pointer = new_training_strategy_pointer;
+    set_training_strategy_pointer(new_training_strategy_pointer);
 
     set_default();
 }
@@ -41,7 +41,7 @@ ModelSelection::~ModelSelection()
 
 TrainingStrategy* ModelSelection::get_training_strategy_pointer() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!training_strategy_pointer)
     {
@@ -64,7 +64,7 @@ TrainingStrategy* ModelSelection::get_training_strategy_pointer() const
 /// and false otherwise.
 
 bool ModelSelection::has_training_strategy() const
-{
+{   
     if(training_strategy_pointer)
     {
         return true;
@@ -145,49 +145,18 @@ void ModelSelection::set_display(const bool& new_display)
 {
     display = new_display;
 
-    switch(inputs_selection_method)
-    {
-    case NO_INPUTS_SELECTION:
-    {
-        // do nothing
+    // Neurons selection
 
-        break;
-    }
-    case GROWING_INPUTS:
-    {
-        growing_inputs.set_display(new_display);
+    growing_neurons.set_display(new_display);
 
-        break;
-    }
-    case PRUNING_INPUTS:
-    {
-        pruning_inputs.set_display(new_display);
+    // Inputs selection
 
-        break;
-    }
-    case GENETIC_ALGORITHM:
-    {
-        genetic_algorithm.set_display(new_display);
+    growing_inputs.set_display(new_display);
 
-        break;
-    }
-    }
+    pruning_inputs.set_display(new_display);
 
-    switch(neurons_selection_method)
-    {
-    case NO_NEURONS_SELECTION:
-    {
-        // do nothing
+    genetic_algorithm.set_display(new_display);
 
-        break;
-    }
-    case GROWING_NEURONS:
-    {
-        growing_neurons.set_display(new_display);
-
-        break;
-    }
-    }
 }
 
 
@@ -205,11 +174,7 @@ void ModelSelection::set_neurons_selection_method(const ModelSelection::NeuronsS
 
 void ModelSelection::set_neurons_selection_method(const string& new_neurons_selection_method)
 {
-    if(new_neurons_selection_method == "NO_NEURONS_SELECTION")
-    {
-        set_neurons_selection_method(NO_NEURONS_SELECTION);
-    }
-    else if(new_neurons_selection_method == "GROWING_NEURONS")
+    if(new_neurons_selection_method == "GROWING_NEURONS")
     {
         set_neurons_selection_method(GROWING_NEURONS);
     }
@@ -227,7 +192,7 @@ void ModelSelection::set_neurons_selection_method(const string& new_neurons_sele
 
 
 /// Sets a new method for selecting the inputs which have more impact on the targets.
-/// @param new_inputs_selection_method Method for selecting the inputs(NO_INPUTS_SELECTION, GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM).
+/// @param new_inputs_selection_method Method for selecting the inputs(GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM).
 
 void ModelSelection::set_inputs_selection_method(const ModelSelection::InputsSelectionMethod& new_inputs_selection_method)
 {
@@ -240,11 +205,7 @@ void ModelSelection::set_inputs_selection_method(const ModelSelection::InputsSel
 
 void ModelSelection::set_inputs_selection_method(const string& new_inputs_selection_method)
 {
-    if(new_inputs_selection_method == "NO_INPUTS_SELECTION")
-    {
-        set_inputs_selection_method(NO_INPUTS_SELECTION);
-    }
-    else if(new_inputs_selection_method == "GROWING_INPUTS")
+    if(new_inputs_selection_method == "GROWING_INPUTS")
     {
         set_inputs_selection_method(GROWING_INPUTS);
     }
@@ -269,43 +230,6 @@ void ModelSelection::set_inputs_selection_method(const string& new_inputs_select
 }
 
 
-/// Sets a new approximation method.
-/// If it is set to true the problem will be taken as a approximation;
-/// if it is set to false the problem will be taken as a classification.
-/// @param new_approximation Approximation value.
-
-void ModelSelection::set_approximation(const bool& new_approximation)
-{
-    switch(inputs_selection_method)
-    {
-    case NO_INPUTS_SELECTION:
-    {
-        // do nothing
-
-        break;
-    }
-    case GROWING_INPUTS:
-    {
-        growing_inputs.set_approximation(new_approximation);
-
-        break;
-    }
-    case PRUNING_INPUTS:
-    {
-        pruning_inputs.set_approximation(new_approximation);
-
-        break;
-    }
-    case GENETIC_ALGORITHM:
-    {
-        genetic_algorithm.set_approximation(new_approximation);
-
-        break;
-    }
-    }
-}
-
-
 /// Sets a new training strategy pointer.
 /// @param new_training_strategy_pointer Pointer to a training strategy object.
 
@@ -313,7 +237,11 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
 {
     training_strategy_pointer = new_training_strategy_pointer;
 
+    // Neurons selection
+
     growing_neurons.set_training_strategy_pointer(new_training_strategy_pointer);
+
+    // Inputs selection
 
     growing_inputs.set_training_strategy_pointer(new_training_strategy_pointer);
     pruning_inputs.set_training_strategy_pointer(new_training_strategy_pointer);
@@ -387,8 +315,6 @@ void ModelSelection::check() const
         throw logic_error(buffer.str());
     }
 
-//
-
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
     if(selection_samples_number == 0)
@@ -404,96 +330,40 @@ void ModelSelection::check() const
 
 /// Perform the order selection, returns a structure with the results of the order selection.
 /// It also set the neural network of the training strategy pointer with the optimum parameters.
+/// @todo
 
-ModelSelectionResults ModelSelection::perform_neurons_selection()
+NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {
-    ModelSelectionResults results;
-
     switch(neurons_selection_method)
     {
-    case NO_NEURONS_SELECTION:
-    {
-        break;
-    }
     case GROWING_NEURONS:
-    {
-        TrainingStrategy* training_strategy_pointer = get_training_strategy_pointer();
-
-        growing_neurons.set_training_strategy_pointer(training_strategy_pointer);
-
-        growing_neurons.set_display(display);
-
-        results.growing_neurons_results_pointer = growing_neurons.perform_neurons_selection();
-
-        break;
+        return growing_neurons.perform_neurons_selection();
     }
-    }
+    return NeuronsSelectionResults();
 
-    return results;
 }
 
 
 /// Perform the inputs selection, returns a structure with the results of the inputs selection.
 /// It also set the neural network of the training strategy pointer with the optimum parameters.
 
-ModelSelectionResults ModelSelection::perform_inputs_selection()
+InputsSelectionResults ModelSelection::perform_inputs_selection()
 {
-    ModelSelectionResults results;
-
-    TrainingStrategy* ts = get_training_strategy_pointer();
-
     switch(inputs_selection_method)
     {
-    case NO_INPUTS_SELECTION:
-    {
-        break;
-    }
     case GROWING_INPUTS:
-    {
-        growing_inputs.set_display(display);
+        return growing_inputs.perform_inputs_selection();
 
-        growing_inputs.set_training_strategy_pointer(ts);
-
-        results.growing_inputs_results_pointer = growing_inputs.perform_inputs_selection();
-
-        break;
-    }
     case PRUNING_INPUTS:
-    {
-        pruning_inputs.set_display(display);
+        return pruning_inputs.perform_inputs_selection();
 
-        pruning_inputs.set_training_strategy_pointer(ts);
-
-        results.pruning_inputs_results_pointer = pruning_inputs.perform_inputs_selection();
-
-        break;
-    }
     case GENETIC_ALGORITHM:
-    {
-        genetic_algorithm.set_display(display);
-
-        genetic_algorithm.set_training_strategy_pointer(ts);
-
-        results.genetic_algorithm_results_pointer = genetic_algorithm.perform_inputs_selection();
-
-        break;
-    }
+        return genetic_algorithm.perform_inputs_selection();
     }
 
-    return results;
+    return InputsSelectionResults();
 }
 
-
-/// Perform inputs selection and order selection.
-/// @todo
-/*
-ModelSelectionResults ModelSelection::perform_model_selection()
-{
-    perform_inputs_selection();
-
-    return perform_neurons_selection();
-}
-*/
 
 /// Serializes the model selection object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
@@ -586,11 +456,9 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
             growing_neurons.from_XML(growing_neurons_document);
         }
-
     }
 
     // Inputs Selection
-
     {
         const tinyxml2::XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
 
@@ -643,7 +511,6 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
                 pruning_inputs.from_XML(pruning_inputs_document);
             }
 
-
             // Genetic algorithm
 
             const tinyxml2::XMLElement* genetic_algorithm_element = inputs_selection_element->FirstChildElement("GeneticAlgorithm");
@@ -673,9 +540,6 @@ string ModelSelection::write_neurons_selection_method() const
 {
     switch(neurons_selection_method)
     {
-    case NO_NEURONS_SELECTION:
-        return "NO_NEURONS_SELECTION";
-
     case GROWING_NEURONS:
         return "GROWING_NEURONS";
     }
@@ -688,9 +552,6 @@ string ModelSelection::write_inputs_selection_method() const
 {
     switch(inputs_selection_method)
     {
-    case NO_INPUTS_SELECTION:
-        return "NO_INPUTS_SELECTION";
-
     case GROWING_INPUTS:
         return "GROWING_INPUTS";
 
@@ -718,17 +579,13 @@ void ModelSelection::print() const
 
 void ModelSelection::save(const string& file_name) const
 {
-    FILE *pFile;
-//    int err;
+    FILE * file = fopen(file_name.c_str(), "w");
 
-//    err = fopen_s(&pFile, file_name.c_str(), "w");
-    pFile = fopen(file_name.c_str(), "w");
+    tinyxml2::XMLPrinter printer(file);
 
-    tinyxml2::XMLPrinter document(pFile);
+    write_XML(printer);
 
-    write_XML(document);
-
-    fclose(pFile);
+    fclose(file);
 }
 
 
@@ -751,20 +608,6 @@ void ModelSelection::load(const string& file_name)
     }
 
     from_XML(document);
-}
-
-
-/// Results constructor.
-
-ModelSelectionResults::ModelSelectionResults()
-{
-    growing_neurons_results_pointer = nullptr;
-
-    growing_inputs_results_pointer = nullptr;
-
-    pruning_inputs_results_pointer = nullptr;
-
-    genetic_algorithm_results_pointer = nullptr;
 }
 
 }

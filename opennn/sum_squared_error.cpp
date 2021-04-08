@@ -39,8 +39,8 @@ SumSquaredError::~SumSquaredError()
 }
 
 
-void SumSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
+void SumSquaredError::calculate_error(const DataSetBatch&,
+                     const NeuralNetworkForwardPropagation&,
                      LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -51,8 +51,8 @@ void SumSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void SumSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
+void SumSquaredError::calculate_error(const DataSetBatch&,
+                     const NeuralNetworkForwardPropagation&,
                      LossIndexBackPropagationLM& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -63,11 +63,11 @@ void SumSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                             NeuralNetworkForwardPropagation& forward_propagation,
+void SumSquaredError::calculate_output_delta(const DataSetBatch&,
+                                             NeuralNetworkForwardPropagation&,
                                              LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      check();
 
@@ -75,7 +75,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
+     const Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
 
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
@@ -127,7 +127,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
 void SumSquaredError::calculate_gradient(const DataSetBatch& ,
                                     LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -136,7 +136,7 @@ void SumSquaredError::calculate_gradient(const DataSetBatch& ,
     const type coefficient = (static_cast<type>(2.0));
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
+            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = coefficient*loss_index_back_propagation_lm.gradient;
@@ -146,7 +146,7 @@ void SumSquaredError::calculate_gradient(const DataSetBatch& ,
 void SumSquaredError::calculate_hessian_approximation(const DataSetBatch&,
                                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      check();
 
@@ -155,7 +155,7 @@ void SumSquaredError::calculate_hessian_approximation(const DataSetBatch&,
      const type coefficient = (static_cast<type>(2.0));
 
      loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
-             = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors_Jacobian, AT_B);
+             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);
 
      loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
              = coefficient*loss_index_back_propagation_lm.hessian;

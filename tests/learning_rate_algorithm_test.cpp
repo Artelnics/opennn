@@ -27,11 +27,11 @@ void LearningRateAlgorithmTest::test_constructor()
 
    LearningRateAlgorithm tra1(&sum_squared_error);
 
-   assert_true(tra1.has_loss_index() == true, LOG);
+   assert_true(tra1.has_loss_index(), LOG);
 
    LearningRateAlgorithm tra2;
 
-   assert_true(tra2.has_loss_index() == false, LOG);
+   assert_true(!tra2.has_loss_index(), LOG);
 }
 
 
@@ -83,7 +83,7 @@ void LearningRateAlgorithmTest::test_get_display()
 
    tra.set_display(false);
 
-   assert_true(tra.get_display() == false, LOG);
+   assert_true(!tra.get_display(), LOG);
 }
 
 
@@ -203,7 +203,7 @@ void LearningRateAlgorithmTest::test_calculate_fixed_directional_point()
 }
 
 
-void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
+void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
     cout << "test_calculate_bracketing_triplet\n";
 
@@ -229,7 +229,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 
 //    LearningRateAlgorithm::Triplet triplet;
 
-//    // Test
+    // Test
 
 //    sum_squared_error.set_regularization_method(LossIndex::L2);
 
@@ -246,7 +246,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 //    assert_true(triplet.A.second >= triplet.U.second, LOG);
 //    assert_true(triplet.U.second <= triplet.B.second, LOG);
 
-//    // Test
+    // Test
 
 //    neural_network.set_parameters_constant(0.0);
 
@@ -256,7 +256,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 
 //    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-//    // Test
+    // Test
 
 //    neural_network.set_parameters_constant(1.0);
 
@@ -266,7 +266,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 
 //    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-//    // Test
+    // Test
 
 //    data_set.set(1, 1, 1);
 //    data_set.set_data_random();
@@ -291,7 +291,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 //    assert_true(triplet.A.second >= triplet.U.second, LOG);
 //    assert_true(triplet.U.second <= triplet.B.second, LOG);
 
-//    // Test
+    // Test
 
 //    data_set.set(3, 1, 1);
 //    data_set.set_data_random();

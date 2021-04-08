@@ -5,7 +5,6 @@
 #endif
 
 //Eigen includes
-
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
 #define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
@@ -35,9 +34,10 @@
 
 #endif
 
+#include <omp.h>
+
 namespace OpenNN
 {
-    typedef float type;
+    typedef double type;
 }
 
-//#define align 64;

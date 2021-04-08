@@ -66,7 +66,7 @@ public:
 
     // Order selection methods
 
-    GrowingNeuronsResults* perform_neurons_selection();
+    NeuronsSelectionResults perform_neurons_selection();
 
     // Serialization methods
 
@@ -83,30 +83,12 @@ private:
 
    /// Number of neurons added at each iteration.
 
-   Index step;
+   Index neurons_increment;
 
    /// Maximum number of epochs at which the selection error increases.
 
    Index maximum_selection_failures;
 
-};
-
-
-/// This structure contains the training results for the growing neurons method.
-
-struct GrowingNeuronsResults : public NeuronsSelectionResults
-{
-    /// Default constructor.
-
-    explicit GrowingNeuronsResults() : NeuronsSelectionResults()
-    {
-    }
-
-    /// Destructor.
-
-    virtual ~GrowingNeuronsResults()
-    {
-    }
 };
 
 }

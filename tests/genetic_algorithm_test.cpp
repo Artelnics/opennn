@@ -23,18 +23,22 @@ void GeneticAlgorithmTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    GeneticAlgorithm ga1(&training_strategy);
+    // Test
 
-    assert_true(ga1.has_training_strategy(), LOG);
+    GeneticAlgorithm genetic_algorithm_1(&training_strategy);
 
-    GeneticAlgorithm ga2;
+    assert_true(genetic_algorithm_1.has_training_strategy(), LOG);
 
-    assert_true(!ga2.has_training_strategy(), LOG);
+    // Test
+
+    GeneticAlgorithm genetic_algorithm_2;
+
+    assert_true(!genetic_algorithm_2.has_training_strategy(), LOG);
 }
 
 
@@ -42,9 +46,9 @@ void GeneticAlgorithmTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GeneticAlgorithm* ga = new GeneticAlgorithm;
+    GeneticAlgorithm* genetic_algorithm = new GeneticAlgorithm;
 
-    delete ga;
+    delete genetic_algorithm;
 }
 
 
@@ -60,145 +64,148 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     DataSet data_set;
 
-    Tensor<Index, 1> architecture(3);
-    architecture.setValues({3,2,1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network;
+    Tensor<Index, 1> architecture;
 
     SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-    TrainingStrategy ts(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    GeneticAlgorithm ga(&ts);
-
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
     Tensor<bool, 2> population;
+    Tensor<bool, 1> gene;
 
-    ga.set_population_size(10);
+    // Test
 
-    ga.set_inicialization_method(GeneticAlgorithm::Random);
+    architecture.resize(3);
+    architecture.setValues({3,2,1});
 
-    ga.initialize_population();
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-    population = ga.get_population();
-    const Tensor<bool, 1> population_column = population.chip(0,1);
+    genetic_algorithm.set_individuals_number(10);
+
+    genetic_algorithm.initialize_population();
+
+    population = genetic_algorithm.get_population();
+    gene = population.chip(0,1);
 
     assert_true(population.size() == 10, LOG);
-    assert_true(population_column.size() == 3, LOG);
-
+    assert_true(gene.size() == 3, LOG);
 }
 
 
 /// @todo
 
-void GeneticAlgorithmTest::test_calculate_fitness() // @todo
+void GeneticAlgorithmTest::test_calculate_fitness()
 {
     cout << "test_calculate_fitness\n";
 
-//    DataSet data_set;
+    DataSet data_set;
 
-//    Tensor<Index, 1> architecture(3);
-//    architecture.setValues({3,2,1});
+    NeuralNetwork neural_network;
+    Tensor<Index, 1> architecture;
 
-//    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-//    SumSquaredError sum_squared_error(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//    TrainingStrategy ts(&neural_network, &data_set);
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-//    GeneticAlgorithm ga(&ts);
+    Tensor<type, 1> selection_errors;
 
-//    Tensor<type, 2> loss(4,2);
+    Tensor<type, 1> fitness;
 
-//    Tensor<type, 1> fitness;
+    // Test
 
-//    ga.set_population_size(4);
+    architecture.resize(3);
+    architecture.setValues({3,2,1});
 
-//    loss(0,1) = 1;
-//    loss(1,1) = 2;
-//    loss(2,1) = 3;
-//    loss(3,1) = 4;
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-//    ga.set_loss(loss);
+    genetic_algorithm.set_individuals_number(4);
 
-//    ga.set_fitness_assignment_method(GeneticAlgorithm::RankBased);
+    selection_errors.resize(4);
 
-//    ga.calculate_fitness();
+    selection_errors(0) = 1;
+    selection_errors(1) = 2;
+    selection_errors(2) = 3;
+    selection_errors(3) = 4;
 
-//    fitness = ga.get_fitness();
+    genetic_algorithm.set_selection_errors(selection_errors);
 
-//    assert_true(maximal_index(fitness) == 0, LOG);
-//    assert_true(minimal_index(fitness) == 3, LOG);
+    genetic_algorithm.perform_fitness_assignment();
 
-//    ga.set_fitness_assignment_method(GeneticAlgorithm::ObjectiveBased);
+    fitness = genetic_algorithm.get_fitness();
 
-//    ga.calculate_fitness();
-
-//    fitness = ga.get_fitness();
-
-//    assert_true(maximal_index(fitness) == 0, LOG);
-//    assert_true(minimal_index(fitness) == 3, LOG);
+    assert_true(maximal_index(fitness) == 0, LOG);
+    assert_true(minimal_index(fitness) == 3, LOG);
 }
 
 
-void GeneticAlgorithmTest::test_perform_selection() // @todo
+void GeneticAlgorithmTest::test_perform_selection()
 {
     cout << "test_perform_selection\n";
 
-//    DataSet data_set;
+    DataSet data_set;
 
-//    Tensor<Index, 1> architecture(3);
-//    architecture.setValues({3,2,1});
+    NeuralNetwork neural_network;
+    Tensor<Index, 1> architecture;
 
-//    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-//    SumSquaredError sum_squared_error(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//    TrainingStrategy ts(&neural_network, &data_set);
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-//    GeneticAlgorithm ga(&ts);
+    Tensor<bool, 2> population;
 
-//    Tensor<bool, 2> population;
+    Tensor<bool, 1> selection;
 
-//    Tensor< Tensor<bool, 1>, 1> selected_population;
+    Tensor<type, 1> selection_errors;
+    Tensor<type, 1> fitness;
 
-//    Tensor<type, 1> fitness(4);
+    // Test
 
-//    Tensor<type, 2> loss(4,2);
+    architecture.resize(3);
+    architecture.setValues({3,2,1});
 
-//    ga.set_population_size(4);
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-//    fitness[0] = 1;
-//    fitness[1] = 2;
-//    fitness[2] = 3;
-//    fitness[3] = 4;
+    genetic_algorithm.set_individuals_number(4);
 
-//    loss(0,0) = 0.0; loss(0,1) = static_cast<type>(0.4);
-//    loss(1,0) = 0.0; loss(1,1) = static_cast<type>(0.3);
-//    loss(2,0) = 0.0; loss(2,1) = static_cast<type>(0.2);
-//    loss(3,0) = 0.0; loss(3,1) = static_cast<type>(0.1);
+    fitness.resize(4);
+    fitness[0] = 1;
+    fitness[1] = 2;
+    fitness[2] = 3;
+    fitness[3] = 4;
 
-//    ga.set_inicialization_method(GeneticAlgorithm::Random);
+    genetic_algorithm.set_fitness(fitness);
 
-//    ga.initialize_population();
+    selection_errors.resize(4);
+    selection_errors(0) = static_cast<type>(0.4);
+    selection_errors(1) = static_cast<type>(0.3);
+    selection_errors(2) = static_cast<type>(0.2);
+    selection_errors(3) = static_cast<type>(0.1);
 
-//    ga.set_fitness(fitness);
+    genetic_algorithm.initialize_population();
 
-//    ga.set_loss(loss);
+    genetic_algorithm.set_selection_errors(selection_errors);
 
-//    ga.set_elitism_size(2);
+    genetic_algorithm.set_elitism_size(2);
 
-//    population = ga.get_population();
+    population = genetic_algorithm.get_population();
 
-//    ga.perform_selection();
+    genetic_algorithm.perform_selection();
 
-//    selected_population = ga.get_population();
+    selection = genetic_algorithm.get_selection();
 
 //    assert_true(selected_population[0] == population[3], LOG);
 //    assert_true(selected_population[1] == population[2], LOG);
+
 }
 
 
-void GeneticAlgorithmTest::test_perform_crossover() // @todo
+void GeneticAlgorithmTest::test_perform_crossover()
 {
     cout << "test_perform_crossover\n";
 
@@ -211,78 +218,72 @@ void GeneticAlgorithmTest::test_perform_crossover() // @todo
 
     SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-    TrainingStrategy ts(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    GeneticAlgorithm ga(&ts);
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-    Tensor<bool, 2> population(4,4);
-    Tensor<bool, 1> individual(2);
+    Tensor<bool, 2> population;
+    Tensor<bool, 1> individual;
 
-    Tensor<bool, 2> crossover_population;
+    Tensor<type, 1> fitness;
 
-    Tensor<type, 1> fitness(4);
+    // Test
 
-    Tensor<type, 2> loss(4,2);
+    genetic_algorithm.set_individuals_number(4);
 
+    population.resize(4, 4);
+    individual.resize(2);
     individual[0] = true;
     individual[1] = true;
 //    population[0] = individual[0];
 //    population[1] = individual[1];
 
-    individual[0] = false;
-    individual[1] = true;
-//    population[2] = individual[0];
-//    population[3] = individual[1];
+    genetic_algorithm.set_population(population);
 
+    fitness.resize(4);
     fitness[0] = 1;
     fitness[1] = 2;
     fitness[2] = 3;
     fitness[3] = 4;
 
-    loss(0,0) = 0.0; loss(0,1) = static_cast<type>(0.4);
-    loss(1,0) = 0.0; loss(1,1) = static_cast<type>(0.3);
-    loss(2,0) = 0.0; loss(2,1) = static_cast<type>(0.2);
-    loss(3,0) = 0.0; loss(3,1) = static_cast<type>(0.1);
+    genetic_algorithm.set_fitness(fitness);
 
-//    ga.set_population_size(4);
+//    loss(0,0) = 0.0; loss(0,1) = static_cast<type>(0.4);
+//    loss(1,0) = 0.0; loss(1,1) = static_cast<type>(0.3);
+//    loss(2,0) = 0.0; loss(2,1) = static_cast<type>(0.2);
+//    loss(3,0) = 0.0; loss(3,1) = static_cast<type>(0.1);
 
-//    ga.set_population(population);
 
-//    ga.set_fitness(fitness);
 
-//    ga.set_loss(loss);
 
-//    ga.set_elitism_size(2);
+//    genetic_algorithm.set_loss(loss);
 
-//    ga.perform_selection();
+    genetic_algorithm.set_elitism_size(2);
 
-//    ga.set_crossover_method(GeneticAlgorithm::Uniform);
+    genetic_algorithm.perform_selection();
 
-//    ga.perform_crossover();
+    genetic_algorithm.perform_crossover();
 
-//    crossover_population = ga.get_population();
+//    crossover_population = genetic_algorithm.get_population();
 
-//    assert_true(crossover_population(2,1) == true, LOG);
+//    assert_true(crossover_population(2,1), LOG);
 
-//    ga.set_population(population);
+    genetic_algorithm.set_population(population);
 
-//    ga.set_fitness(fitness);
+    genetic_algorithm.set_fitness(fitness);
 
-//    ga.set_loss(loss);
+//    genetic_algorithm.set_loss(loss);
 
-//    ga.set_elitism_size(2);
+    genetic_algorithm.set_elitism_size(2);
 
-//    ga.perform_selection();
+    genetic_algorithm.perform_selection();
 
-//    ga.set_crossover_method(GeneticAlgorithm::OnePoint);
+    genetic_algorithm.perform_crossover();
 
-//    ga.set_crossover_first_point(1);
+//    crossover_population = genetic_algorithm.get_population();
 
-//    ga.perform_crossover();
+//    assert_true(crossover_population(2,1), LOG);
 
-//    crossover_population = ga.get_population();
-
-//    assert_true(crossover_population(2,1) == true, LOG);
 }
 
 
@@ -292,165 +293,142 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     DataSet data_set;
 
-    Tensor<Index, 1> architecture(3);
-    architecture.setValues({1,2,1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network;
+    Tensor<Index, 1> architecture;
 
     SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-    TrainingStrategy ts(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    GeneticAlgorithm ga(&ts);
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
     Tensor<bool, 2> population(4,1);
-    Tensor<bool, 1> individual(1);
+//    Tensor<bool, 1> individual(1);
 
     Tensor<bool, 2> mutated_population;
 
-//    individual[0] = 1;
-//    population[0] = individual;
-//    population[1] = individual;
+    // Test
 
-//    individual[0] = 0;
-//    population[2] = individual;
-//    population[3] = individual;
+    architecture.resize(3);
+    architecture.setValues({1,2,1});
 
-    ga.set_population_size(4);
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-    ga.set_population(population);
+    genetic_algorithm.set_individuals_number(4);
 
-    ga.set_mutation_rate(1);
+    genetic_algorithm.set_population(population);
 
-    ga.perform_mutation();
+    genetic_algorithm.set_mutation_rate(1);
 
-    mutated_population = ga.get_population();
+    genetic_algorithm.perform_mutation();
 
-//    assert_true(mutated_population[0][0] == 1, LOG);
-//    assert_true(mutated_population[1][0] == 1, LOG);
-//    assert_true(mutated_population[2][0] == 1, LOG);
-//    assert_true(mutated_population[3][0] == 1, LOG);
+    mutated_population = genetic_algorithm.get_population();
 
-    ga.set_population(population);
+    population.resize(4,1);
 
-    ga.set_mutation_rate(0);
+    genetic_algorithm.set_population(population);
 
-    ga.perform_mutation();
+    genetic_algorithm.set_mutation_rate(0);
 
-    mutated_population = ga.get_population();
+    genetic_algorithm.perform_mutation();
 
-//    assert_true(mutated_population[0][0] == 1, LOG);
-//    assert_true(mutated_population[1][0] == 1, LOG);
-//    assert_true(mutated_population[2][0] == 0, LOG);
-//    assert_true(mutated_population[3][0] == 0, LOG);
+    mutated_population = genetic_algorithm.get_population();
+
+    assert_true(mutated_population(0,0) == 1, LOG);
+    assert_true(mutated_population(1,0) == 1, LOG);
+    assert_true(mutated_population(2,0) == 0, LOG);
+    assert_true(mutated_population(3,0) == 0, LOG);
 
 }
 
 
-void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
+void GeneticAlgorithmTest::test_perform_inputs_selection()
 {
     cout << "test_perform_inputs_selection\n";
 
-//    DataSet data_set;
+    DataSet data_set;
 
-//    Tensor<type, 2> data(20,3);
+    Tensor<type, 2> data;
 
-//    NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
+    Tensor<Index, 1> architecture;
 
-//    SumSquaredError sum_squared_error(&neural_network,& data_set);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//    GeneticAlgorithmResults* ga_results;
-//    GeneticAlgorithmResults* ga1_results;
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-//    // Test
+    InputsSelectionResults inputs_selection_results;
 
-//    for(Index i = 0; i < 20; i++)
-//    {
-//        data(i,0) = static_cast<type>(i);
-//        data(i,1) = 10.0;
-//        data(i,2) = static_cast<type>(i);
-//    }
+    // Test
 
-//    data_set.set(data);
+    data.resize(20,3);
 
-//    Tensor<Index, 1> architecture(3);
-//    architecture.setValues({2,6,1});
+    for(Index i = 0; i < 20; i++)
+    {
+        data(i,0) = static_cast<type>(i);
+        data(i,1) = 10.0;
+        data(i,2) = static_cast<type>(i);
+    }
 
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
+    data_set.set(data);
 
-//    TrainingStrategy ts(&neural_network, &data_set);
+    architecture.resize(3);
+    architecture.setValues({2,6,1});
 
-//    GeneticAlgorithm ga(&ts);
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-//    ts.set_display(false);
+    genetic_algorithm.set_display(false);
 
-//    ga.set_display(false);
+    genetic_algorithm.set_individuals_number(10);
 
-//    ga.set_approximation(true);
+    genetic_algorithm.set_selection_error_goal(1);
 
-//    ga.set_population_size(10);
+    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
-//    ga.set_selection_error_goal(1);
+//    assert_true(ga_results->selection_error < 1, LOG);
+    assert_true(inputs_selection_results.stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
 
-//    ga_results = ga.perform_inputs_selection();
+//    genetic_algorithm.delete_selection_history();
+//    genetic_algorithm.delete_parameters_history();
+//    genetic_algorithm.delete_loss_history();
 
-//    assert_true(ga_results->final_selection_error < 1, LOG);
-//    assert_true(ga_results->stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
+    // Test
 
-//    ga.delete_selection_history();
-//    ga.delete_parameters_history();
-//    ga.delete_loss_history();
+    Index j = -10;
 
-//    // Test
+    for(Index i = 0; i < 10; i++)
+    {
+        data(i,0) = (type)j;
+        data(i,1) = rand();
+        data(i,2) = 1.0;
+        j+=1;
+    }
+    for(Index i = 10; i < 20; i++)
+    {
+        data(i,0) = (type)i;
+        data(i,1) = rand();
+        data(i,2) = 0.0;
+    }
 
-//    Index j = -10;
-
-//    for(Index i = 0; i < 10; i++)
-//    {
-//        data(i,0) = (type)j;
-//        data(i,1) = rand();
-//        data(i,2) = 1.0;
-//        j+=1;
-//    }
-//    for(Index i = 10; i < 20; i++)
-//    {
-//        data(i,0) = (type)i;
-//        data(i,1) = rand();
-//        data(i,2) = 0.0;
-//    }
-
-//    data_set.set(data);
+    data_set.set(data);
 
 //    data_set.generate_inputs_selection_data(20,3);
 
-//    data_set.set_default_columns_uses();
+    data_set.set_default_columns_uses();
 
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-//    TrainingStrategy ts1(&neural_network, &data_set);
+    genetic_algorithm.set_individuals_number(10);
 
-//    GeneticAlgorithm ga1(&ts);
+    genetic_algorithm.set_selection_error_goal(0.0);
+    genetic_algorithm.set_maximum_iterations_number(1);
 
-//    ts1.set_display(false);
+    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
-//    ga1.set_display(false);
+//    assert_true(genetic_algorithm.iterations_number == 1, LOG);
+//    assert_true(genetic_algorithm.selection_error < 1, LOG);
+//    assert_true(genetic_algorithm.stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
 
-//    ga1.set_approximation(false);
-
-//    ga1.set_population_size(10);
-
-//    ga1.set_selection_error_goal(0.0);
-//    ga1.set_maximum_iterations_number(1);
-
-//    ga1_results = ga1.perform_inputs_selection();
-
-//    assert_true(ga1_results->iterations_number == 1, LOG);
-//    assert_true(ga1_results->final_selection_error < 1, LOG);
-//    assert_true(ga_results->stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
-
-//    ga1.delete_selection_history();
-//    ga1.delete_parameters_history();
-//    ga1.delete_loss_history();
 }
 
 
@@ -458,9 +436,9 @@ void GeneticAlgorithmTest::test_to_XML()
 {
     cout << "test_to_XML\n";
 
-    GeneticAlgorithm ga;
+    GeneticAlgorithm genetic_algorithm;
 
-//    tinyxml2::XMLDocument* document = ga.to_XML();
+//    tinyxml2::XMLDocument* document = genetic_algorithm.to_XML();
 //    assert_true(document != nullptr, LOG);
 
 //    delete document;
@@ -471,10 +449,10 @@ void GeneticAlgorithmTest::test_from_XML()
 {
     cout << "test_from_XML\n";
 
-    GeneticAlgorithm ga;
+    GeneticAlgorithm genetic_algorithm;
 
-//    tinyxml2::XMLDocument* document = ga.to_XML();
-//    ga.from_XML(*document);
+//    tinyxml2::XMLDocument* document = genetic_algorithm.to_XML();
+//    genetic_algorithm.from_XML(*document);
 
 //    delete document;
 }

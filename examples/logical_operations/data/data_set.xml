@@ -1,0 +1,92 @@
+<DataSet>
+   <DataFile>
+      <FileType>csv</FileType>
+      <DataFileName>../data/logical_operations.csv</DataFileName>
+      <Separator>Semicolon</Separator>
+      <ColumnsNames>1</ColumnsNames>
+      <RowsLabels>0</RowsLabels>
+      <MissingValuesLabel>NA</MissingValuesLabel>
+      <LagsNumber>0</LagsNumber>
+      <StepsAhead>0</StepsAhead>
+      <TimeIndex>0</TimeIndex>
+   </DataFile>
+   <Columns>
+      <ColumnsNumber>8</ColumnsNumber>
+      <Column Item="1">
+         <Name>X</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Binary</Type>
+         <Categories>Positive (1);Negative (0)</Categories>
+         <CategoriesUses>Input;Input</CategoriesUses>
+      </Column>
+      <Column Item="2">
+         <Name>Y</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Binary</Type>
+         <Categories>Positive (1);Negative (0)</Categories>
+         <CategoriesUses>Input;Input</CategoriesUses>
+      </Column>
+      <Column Item="3">
+         <Name>AND</Name>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Binary</Type>
+         <Categories>Positive (1);Negative (0)</Categories>
+         <CategoriesUses>Target;Target</CategoriesUses>
+      </Column>
+      <Column Item="4">
+         <Name>OR</Name>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Binary</Type>
+         <Categories>Positive (1);Negative (0)</Categories>
+         <CategoriesUses>Target;Target</CategoriesUses>
+      </Column>
+      <Column Item="5">
+         <Name>NAND</Name>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Binary</Type>
+         <Categories>Negative (0);Positive (1)</Categories>
+         <CategoriesUses>Target;Target</CategoriesUses>
+      </Column>
+      <Column Item="6">
+         <Name>NOR</Name>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Binary</Type>
+         <Categories>Negative (0);Positive (1)</Categories>
+         <CategoriesUses>Target;Target</CategoriesUses>
+      </Column>
+      <Column Item="7">
+         <Name>XOR</Name>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Binary</Type>
+         <Categories>Negative (0);Positive (1)</Categories>
+         <CategoriesUses>Target;Target</CategoriesUses>
+      </Column>
+      <Column Item="8">
+         <Name>XNOR</Name>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Binary</Type>
+         <Categories>Positive (1);Negative (0)</Categories>
+         <CategoriesUses>Target;Target</CategoriesUses>
+      </Column>
+   </Columns>
+   <TimeSeriesColumns>
+      <TimeSeriesColumnsNumber>0</TimeSeriesColumnsNumber>
+   </TimeSeriesColumns>
+   <Samples>
+      <SamplesNumber>4</SamplesNumber>
+      <SamplesUses>0 0 0 0</SamplesUses>
+   </Samples>
+   <MissingValues>
+      <MissingValuesMethod>Unuse</MissingValuesMethod>
+      <MissingValuesNumber>140716414476220</MissingValuesNumber>
+      <ColumnsMissingValuesNumber></ColumnsMissingValuesNumber>
+      <RowsMissingValuesNumber>0</RowsMissingValuesNumber>
+   </MissingValues>
+   <PreviewData>
+      <PreviewSize>4</PreviewSize>
+      <Row Item="1">X,Y,AND,OR,NAND,NOR,XOR,XNOR</Row>
+      <Row Item="2">1,1,1,1,0,0,0,1</Row>
+      <Row Item="3">1,0,0,1,1,0,1,0</Row>
+      <Row Item="4">0,0,0,0,1,1,0,1</Row>
+   </PreviewData>
+</DataSet>

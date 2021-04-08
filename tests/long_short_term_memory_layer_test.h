@@ -34,10 +34,6 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Assignment operators methods
-
-   void  test_assignment_operator();
-
    // Inputs and perceptrons
 
    void test_is_empty();
@@ -59,8 +55,6 @@ public:
    void test_get_parameters_number();
 
    void test_get_parameters();
-
-   void test_calculate_parameters_norm();
 
    void test_get_perceptrons_parameters();
 

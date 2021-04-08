@@ -43,10 +43,10 @@ public:
    void test_calculate_error();
    void test_calculate_error_gradient();
 
-   // Error terms methods 
+   // Squared errors methods 
 
-   void test_calculate_error_terms();
-   void test_calculate_error_terms_Jacobian();
+   void test_calculate_squared_errors();
+   void test_calculate_squared_errors_jacobian();
 
    // Serialization methods
 

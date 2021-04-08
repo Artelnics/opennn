@@ -19,26 +19,27 @@ InputsSelectionTest::~InputsSelectionTest()
 }
 
 
-void InputsSelectionTest::test_constructor() // @todo
+void InputsSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GrowingInputs gi1(&training_strategy);
 
-    assert_true(gi1.has_training_strategy() == true, LOG);
+    assert_true(gi1.has_training_strategy(), LOG);
 
     GrowingInputs gi2;
 
-    assert_true(gi2.has_training_strategy() == false, LOG);
+    assert_true(!gi2.has_training_strategy(), LOG);
 
 }
 
-void InputsSelectionTest::test_destructor() // @todo
+
+void InputsSelectionTest::test_destructor()
 {
     cout << "tes_destructor\n";
 
@@ -48,29 +49,29 @@ void InputsSelectionTest::test_destructor() // @todo
 }
 
 
-void InputsSelectionTest::test_get_training_strategy_pointer() // @todo
+void InputsSelectionTest::test_get_training_strategy_pointer()
 {
     cout << "test_get_training_strategy_pointer\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn,&ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    GrowingInputs gi(&training_strategy);
+    GrowingInputs growing_inputs(&training_strategy);
 
-    assert_true(gi.get_training_strategy_pointer() != nullptr, LOG);
+    assert_true(growing_inputs.get_training_strategy_pointer() != nullptr, LOG);
 }
 
 
-void InputsSelectionTest::test_set_training_strategy_pointer() // @todo
+void InputsSelectionTest::test_set_training_strategy_pointer()
 {
     cout << "test_set_training_strategy_pointer\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GrowingInputs growing_inputs;
 
@@ -79,44 +80,43 @@ void InputsSelectionTest::test_set_training_strategy_pointer() // @todo
     assert_true(growing_inputs.get_training_strategy_pointer() != nullptr, LOG);
 }
 
-void InputsSelectionTest::test_set_default() // @todo
+void InputsSelectionTest::test_set_default()
 {
     cout << "test_set_default\n";
 
 }
 
-void InputsSelectionTest::test_set_loss_calculation_method() // @todo
+void InputsSelectionTest::test_set_loss_calculation_method()
 {
     cout << "test_set_loss_calculation_method\n";
 
 }
 
 
-void InputsSelectionTest::test_get_final_loss() // @todo
+void InputsSelectionTest::test_get_final_loss()
 {
     cout << "test_get_final_loss\n";
 
 }
 
-void InputsSelectionTest::test_calculate_losses() // @todo
+
+void InputsSelectionTest::test_calculate_losses()
 {
     cout << "test_calculate_losses\n";
 
 }
 
-void InputsSelectionTest::test_get_parameters_order() // @todo
+
+void InputsSelectionTest::test_get_parameters_order()
 {
     cout << "test_get_parameters_order\n";
 
 }
 
 
-// Unit testing methods
-
-void InputsSelectionTest::run_test_case() // @todo
+void InputsSelectionTest::run_test_case()
 {
     cout << "Running inputs selection algorithm test case...\n";
-
 
     // Constructor and destructor methods
 

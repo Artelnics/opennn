@@ -97,6 +97,11 @@ protected:
    /// True if messages from this class are to be displayed, false otherwise.
 
    bool display = true;
+
+   const int n = omp_get_max_threads();
+   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
 };
 
 #endif

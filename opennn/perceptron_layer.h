@@ -29,61 +29,13 @@
 namespace OpenNN
 {
 
-    struct PerceptronLayerForwardPropagation : LayerForwardPropagation
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
+struct PerceptronLayerForwardPropagation;
+struct PerceptronLayerBackPropagation;
 
-        explicit PerceptronLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
-        {
-        }
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn_cuda/struct_perceptron_layer_cuda.h"
+#endif
 
-        void set(const Index& new_batch_samples_number)
-        {
-            batch_samples_number = new_batch_samples_number;
-
-            const Index neurons_number = layer_pointer->get_neurons_number();
-
-            combinations.resize(batch_samples_number, neurons_number);
-
-            activations.resize(batch_samples_number, neurons_number);
-
-            activations_derivatives.resize(batch_samples_number, neurons_number);
-        }
-
-        Tensor<type, 2> combinations;
-        Tensor<type, 2> activations;
-        Tensor<type, 2> activations_derivatives;
-    };
-
-
-    struct PerceptronLayerBackPropagation : LayerBackPropagation
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index inputs_number = layer_pointer->get_inputs_number();
-
-        explicit PerceptronLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
-        {
-
-        }
-
-        void set(const Index& new_batch_samples_number)
-        {
-            batch_samples_number = new_batch_samples_number;
-
-            delta.resize(batch_samples_number, neurons_number);
-
-            biases_derivatives.resize(neurons_number);
-
-            synaptic_weights_derivatives.resize(inputs_number, neurons_number);
-
-            delta.resize(batch_samples_number, neurons_number);
-        }
-
-        Tensor<type, 2> delta;
-
-        Tensor<type, 1> biases_derivatives;
-        Tensor<type, 2> synaptic_weights_derivatives;
-    };
 
 /// This class represents a layer of perceptrons.
 
@@ -93,6 +45,7 @@ namespace OpenNN
 /// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
 
 class PerceptronLayer : public Layer
+
 {
 
 public:
@@ -108,7 +61,7 @@ public:
 
    explicit PerceptronLayer();
 
-   explicit PerceptronLayer(const Index&, const Index&, const Index& = 0 , const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
+   explicit PerceptronLayer(const Index&, const Index&, const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
 
    // Destructor
    
@@ -150,7 +103,7 @@ public:
    void set(const Index&, const Index&, const PerceptronLayer::ActivationFunction& = PerceptronLayer::HyperbolicTangent);
 
    void set_default();
-   void set_layer_name(const string&);
+   void set_name(const string&);
 
    // Architecture
 
@@ -224,11 +177,17 @@ public:
                                              ProbabilisticLayerBackPropagation*,
                                              PerceptronLayerBackPropagation*) const;
 
+   // Squared errors methods
+
+   void calculate_layer_squared_errors_Jacobian(const Tensor<type, 2>&,
+                                                LayerForwardPropagation*,
+                                                LayerBackPropagation*);
+
    // Gradient methods
 
    void calculate_error_gradient(const Tensor<type, 2>&,
                                  LayerForwardPropagation*,
-       LayerBackPropagation*) const;
+                                 LayerBackPropagation*) const;
 
    void insert_gradient(LayerBackPropagation*,
                         const Index&,
@@ -283,12 +242,117 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/perceptron_layer_cuda.h"
+#else
+};
 #endif
 
-#ifdef OPENNN_MKL
-    #include"../../opennn-mkl/opennn_mkl/perceptron_layer_mkl.h"
-#endif
+struct PerceptronLayerForwardPropagation : LayerForwardPropagation
+{
+    // Default constructor
+
+    explicit PerceptronLayerForwardPropagation() : LayerForwardPropagation()
+    {
+    }
+
+    explicit PerceptronLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerForwardPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        combinations.resize(batch_samples_number, neurons_number);
+
+        activations.resize(batch_samples_number, neurons_number);
+
+        activations_derivatives.resize(batch_samples_number, neurons_number);
+    }
+
+    void print() const
+    {
+        cout << "Combinations:" << endl;
+        cout << combinations << endl;
+
+        cout << "Activations:" << endl;
+        cout << activations << endl;
+
+        cout << "Activations derivatives:" << endl;
+        cout << activations_derivatives << endl;
+    }
+
+    Tensor<type, 2> combinations;
+    Tensor<type, 2> activations;
+    Tensor<type, 2> activations_derivatives;
 };
+
+
+struct PerceptronLayerBackPropagation : LayerBackPropagation
+{
+
+    // Default constructor
+
+    explicit PerceptronLayerBackPropagation() : LayerBackPropagation()
+    {
+
+    }
+
+
+    explicit PerceptronLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
+        const Index parameters_number = layer_pointer->get_parameters_number();
+
+        delta.resize(batch_samples_number, neurons_number);
+
+        biases_derivatives.resize(neurons_number);
+
+        synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+
+        delta.resize(batch_samples_number, neurons_number);
+
+        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+    }
+
+    void print() const
+    {
+        cout << "Delta:" << endl;
+        cout << delta << endl;
+
+        cout << "Biases derivatives:" << endl;
+        cout << biases_derivatives << endl;
+
+        cout << "Synaptic weights derivatives:" << endl;
+        cout << synaptic_weights_derivatives << endl;
+    }
+
+    Tensor<type, 2> delta;
+
+    Tensor<type, 1> biases_derivatives;
+    Tensor<type, 2> synaptic_weights_derivatives;
+
+    Tensor<type, 2> squared_errors_Jacobian;
+};
+
+
 
 }
 

@@ -31,7 +31,7 @@ int main()
    "conjugate_gradient | cg\n"
    "convolutional_layer | cl\n"
    "correlations | cr\n"
-   "cross_entropy_error | cee\n"
+   "cross_entropy_error | cross_entropy_error\n"
    "descriptives | dsc\n"
    "data_set | ds\n"
    "evolutionary_algorithm\n"

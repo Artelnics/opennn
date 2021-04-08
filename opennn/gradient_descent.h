@@ -118,15 +118,15 @@ public:
 
    void calculate_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
-   void update_epoch(
+   void update_parameters(
            const DataSetBatch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
            LossIndexBackPropagation& back_propagation,
            GradientDescentData& optimization_data);
 
-   OptimizationAlgorithmResults perform_training();
+   TrainingResults perform_training();
 
-   void perform_training_void();
+   
 
    string write_optimization_algorithm_type() const;
 
@@ -146,7 +146,7 @@ private:
 
    LearningRateAlgorithm learning_rate_algorithm;
 
-   type first_learning_rate = static_cast<type>(0.01);
+   const type first_learning_rate = static_cast<type>(0.01);
 
    // Stopping criteria
 
@@ -204,12 +204,15 @@ struct GradientDescentData : public OptimizationAlgorithmData
     {
     }
 
+
     explicit GradientDescentData(GradientDescent* new_gradient_descent_pointer)
     {
         set(new_gradient_descent_pointer);
     }
 
+
     virtual ~GradientDescentData() {}
+
 
     void set(GradientDescent* new_gradient_descent_pointer)
     {
@@ -237,6 +240,7 @@ struct GradientDescentData : public OptimizationAlgorithmData
         training_direction.resize(parameters_number);
     }
 
+
     void print() const
     {
         cout << "Training Direction:" << endl;
@@ -245,6 +249,7 @@ struct GradientDescentData : public OptimizationAlgorithmData
         cout << "Learning rate:" << endl;
         cout << learning_rate << endl;
     }
+
 
     GradientDescent* gradient_descent_pointer = nullptr;
 
@@ -261,9 +266,6 @@ struct GradientDescentData : public OptimizationAlgorithmData
     type old_training_loss = 0;
 
     Tensor<type, 1> old_gradient;
-
-    Tensor<type, 2> inverse_hessian;
-    Tensor<type, 2> old_inverse_hessian;
 
     // Optimization algorithm data
 

@@ -164,7 +164,7 @@ Index StochasticGradientDescent::get_batch_samples_number() const
 
 void StochasticGradientDescent::set_initial_learning_rate(const type& new_learning_rate)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_learning_rate <= static_cast<type>(0.0))
     {
@@ -190,7 +190,7 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
 
 void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_dacay < static_cast<type>(0.0))
     {
@@ -217,7 +217,7 @@ void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
 
 void StochasticGradientDescent::set_momentum(const type& new_momentum)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_momentum < static_cast<type>(0.0))
     {
@@ -271,11 +271,9 @@ void StochasticGradientDescent::set_reserve_all_training_history(const bool& new
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
 
-void StochasticGradientDescent:: set_maximum_epochs_number(const Index& new_maximum_epochs_number)
+void StochasticGradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-
-
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_epochs_number < static_cast<type>(0.0))
     {
@@ -311,7 +309,7 @@ void StochasticGradientDescent::set_loss_goal(const type& new_loss_goal)
 
 void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_time < static_cast<type>(0.0))
     {
@@ -362,11 +360,9 @@ void StochasticGradientDescent::set_reserve_selection_error_history(const bool& 
 
 /// Set hardware to use. Default: Multi-core.
 
-void StochasticGradientDescent::update_iteration(const LossIndexBackPropagation& back_propagation,
+void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back_propagation,
                       StochasticGradientDescentData& optimization_data)
 {
-
-
     const type learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay);
 
     optimization_data.parameters_increment.device(*thread_pool_device) = back_propagation.gradient*(-learning_rate);
@@ -377,25 +373,30 @@ void StochasticGradientDescent::update_iteration(const LossIndexBackPropagation&
 
         if(!nesterov)
         {
-            optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+            back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
         }
         else
         {
             optimization_data.nesterov_increment.device(*thread_pool_device)
                     = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
 
-            optimization_data.parameters.device(*thread_pool_device) += optimization_data.nesterov_increment;
+            back_propagation.parameters.device(*thread_pool_device) += optimization_data.nesterov_increment;
         }
     }
     else
     {
-        optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+        back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
     }
 
     optimization_data.last_parameters_increment = optimization_data.parameters_increment;
 
     optimization_data.iteration++;
 
+    // Update parameters
+
+    NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
+
+    neural_network_pointer->set_parameters(back_propagation.parameters);
 }
 
 
@@ -404,9 +405,9 @@ void StochasticGradientDescent::update_iteration(const LossIndexBackPropagation&
 /// Training occurs according to the training parameters and stopping criteria.
 /// It returns a results structure with the history and the final values of the reserved variables.
 
-OptimizationAlgorithmResults StochasticGradientDescent::perform_training()
+TrainingResults StochasticGradientDescent::perform_training()
 {
-    OptimizationAlgorithmResults results;
+    TrainingResults results;
 
     check();
 
@@ -448,9 +449,6 @@ OptimizationAlgorithmResults StochasticGradientDescent::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-    
-
     NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
@@ -474,16 +472,13 @@ OptimizationAlgorithmResults StochasticGradientDescent::perform_training()
 
     type learning_rate = 0;
 
-    Tensor<type, 1> minimal_selection_parameters(parameters_number);
-    type minimum_selection_error = numeric_limits<type>::max();
-
     bool stop_training = false;
 
     time_t beginning_time, current_time;
     time(&beginning_time);
     type elapsed_time = 0;
 
-    bool shuffle = true;
+    bool shuffle = false;
 
     results.resize_training_history(maximum_epochs_number+1);
     if(has_selection) results.resize_selection_history(maximum_epochs_number+1);
@@ -496,17 +491,21 @@ OptimizationAlgorithmResults StochasticGradientDescent::perform_training()
 
     training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
     batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
+
     neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
+
+    loss_index_pointer->calculate_errors(batch_training, training_forward_propagation, training_back_propagation);
     loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
-    results.training_error_history(0)  = training_back_propagation.error;
+    results.training_error_history(0) = training_back_propagation.error;
 
     if(has_selection)
     {
         selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
         batch_selection.fill(selection_batches.chip(0,0), input_variables_indices, target_variables_indices);
         neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
+        loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
         loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
-        results.selection_error_history(0)  = selection_back_propagation.error;
+        results.selection_error_history(0) = selection_back_propagation.error;
     }
     // Main loop
 
@@ -533,18 +532,21 @@ OptimizationAlgorithmResults StochasticGradientDescent::perform_training()
 
             neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
 
+//            training_forward_propagation.print();
+
+
             // Loss index
 
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
+//            training_back_propagation.neural_network.print();
 
+//system("pause");
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
             // Gradient
 
-            update_iteration(training_back_propagation, optimization_data);
-
-            neural_network_pointer->set_parameters(optimization_data.parameters);
+            update_parameters(training_back_propagation, optimization_data);
         }
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
@@ -572,6 +574,7 @@ OptimizationAlgorithmResults StochasticGradientDescent::perform_training()
 
                 // Loss
 
+                loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
                 selection_error += selection_back_propagation.error;
@@ -581,16 +584,16 @@ OptimizationAlgorithmResults StochasticGradientDescent::perform_training()
 
             if(epoch == 1)
             {
-                minimum_selection_error = selection_error;
+                results.optimum_selection_error = selection_error;
             }
             else if(selection_error > old_selection_error)
             {
                 selection_error_increases++;
             }
-            else if(selection_error <= minimum_selection_error)
+            else if(selection_error <= results.optimum_selection_error)
             {
-                minimum_selection_error = selection_error;
-                minimal_selection_parameters = optimization_data.parameters;
+                results.optimum_selection_error = selection_error;
+                results.optimal_parameters = training_back_propagation.parameters;
             }
         }
 
@@ -675,11 +678,11 @@ OptimizationAlgorithmResults StochasticGradientDescent::perform_training()
 
             if(has_selection) results.resize_selection_error_history(epoch + 1);
 
-            results.final_parameters = optimization_data.parameters;
+            results.parameters = training_back_propagation.parameters;
 
-            results.final_training_error = training_error;
+            results.training_error = training_error;
 
-            if(has_selection) results.final_selection_error = selection_error;
+            if(has_selection) results.selection_error = selection_error;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
@@ -707,22 +710,11 @@ OptimizationAlgorithmResults StochasticGradientDescent::perform_training()
         if(stop_training) break;
     }
 
-    if(choose_best_selection)
-    {
-        optimization_data.parameters = optimization_data.minimal_selection_parameters;
+    if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
-        neural_network_pointer->set_parameters(optimization_data.parameters);
-
-        selection_error = minimum_selection_error;
-    }
+    if(display) results.print();
 
     return results;
-}
-
-
-void StochasticGradientDescent::perform_training_void()
-{
-    perform_training();
 }
 
 
@@ -742,13 +734,13 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 
     labels_values(0,0) = "Inital learning rate";
 
-    labels_values(0,1) = std::to_string(initial_learning_rate);
+    labels_values(0,1) = to_string(initial_learning_rate);
 
     // Initial decay
 
     labels_values(1,0) = "Inital decay";
 
-    labels_values(1,1) = std::to_string(initial_decay);
+    labels_values(1,1) = to_string(initial_decay);
 
     // Momentum
 
@@ -767,25 +759,25 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 
     labels_values(3,0) = "Training loss goal";
 
-    labels_values(3,1) = std::to_string(training_loss_goal);
+    labels_values(3,1) = to_string(training_loss_goal);
 
     // Maximum epochs number
 
     labels_values(4,0) = "Maximum epochs number";
 
-    labels_values(4,1) = std::to_string(maximum_epochs_number);
+    labels_values(4,1) = to_string(maximum_epochs_number);
 
     // Maximum time
 
     labels_values(5,0) = "Maximum time";
 
-    labels_values(5,1) = std::to_string(maximum_time);
+    labels_values(5,1) = to_string(maximum_time);
 
     // DataSetBatch samples number
 
     labels_values(6,0) = "DataSetBatch samples number";
 
-    labels_values(6,1) = std::to_string(batch_samples_number);
+    labels_values(6,1) = to_string(batch_samples_number);
 
     // Reserve training error history
 
@@ -957,17 +949,6 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         try
         {
             set_batch_samples_number(new_batch_size);
-
-//            const Index training_samples_number = loss_index_pointer->get_data_set_pointer()->get_training_samples_number();
-
-//            if(new_batch_size > training_samples_number || new_batch_size == 0)
-//            {
-//                set_batch_samples_number(training_samples_number);
-//            }
-//            else
-//            {
-//                set_batch_samples_number(new_batch_size);
-//            }
         }
         catch(const logic_error& e)
         {

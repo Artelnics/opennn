@@ -126,11 +126,11 @@ public:
 
    void check() const;
 
-   OptimizationAlgorithmResults perform_training();
+   TrainingResults perform_training();
 
-   void perform_training_void();
+   
 
-   void update_epoch(
+   void update_parameters(
            const DataSetBatch&,
            NeuralNetworkForwardPropagation&,
            LossIndexBackPropagationLM&,

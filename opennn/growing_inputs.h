@@ -28,8 +28,6 @@
 namespace OpenNN
 {
 
-struct GrowingInputsResults;
-
 /// This concrete class represents a growing inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
 
 /// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
@@ -70,13 +68,12 @@ public:
 
     // Order selection methods
 
-    GrowingInputsResults* perform_inputs_selection();
+    InputsSelectionResults perform_inputs_selection();
 
     // Serialization methods
 
     Tensor<string, 2> to_string_matrix() const;
 
-    
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
@@ -97,23 +94,6 @@ private:
     /// Maximum number of epochs at which the selection error increases.
 
     Index maximum_selection_failures = 10;
-};
-
-
-/// This structure contains the training results for the growing inputs method.
-
-struct GrowingInputsResults : public InputsSelectionResults
-{
-    /// Default constructor.
-
-    explicit GrowingInputsResults() : InputsSelectionResults() {}
-
-    /// Destructor.
-
-    virtual ~GrowingInputsResults() {}
-
-
-    Tensor<bool, 1> selected_inputs;
 };
 
 }

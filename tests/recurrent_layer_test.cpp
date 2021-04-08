@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "recurrent_layer_test.h"
-#include <omp.h>
 
 RecurrentLayerTest::RecurrentLayerTest() : UnitTesting()
 {
@@ -46,7 +45,7 @@ void RecurrentLayerTest::test_constructor()
 
     assert_true(recurrent_layer.get_biases_number() == 1, LOG);
 
-    //Test
+    // Test
 
     inputs_number = 2;
     neurons_number = 3;
@@ -65,20 +64,6 @@ void RecurrentLayerTest::test_destructor()
 
 }
 
-void RecurrentLayerTest::test_assignment_operator()
-{
-   cout << "test_assignment_operator\n";
-
-   LongShortTermMemoryLayer long_short_term_memory_layer_1;
-
-   long_short_term_memory_layer_1.set(4,3);
-
-   LongShortTermMemoryLayer long_short_term_memory_layer_2 = long_short_term_memory_layer_1;
-
-   assert_true(long_short_term_memory_layer_1.get_inputs_number() == 4, LOG);
-   assert_true(long_short_term_memory_layer_1.get_neurons_number() == 3, LOG);
-}
-
 
 void RecurrentLayerTest::test_get_inputs_number()
 {
@@ -88,7 +73,6 @@ void RecurrentLayerTest::test_get_inputs_number()
 
    Index inputs_number;
    Index neurons_number;
-
 
    // Test
 
@@ -140,7 +124,7 @@ void RecurrentLayerTest::test_get_biases()
    Index inputs_number;
    Index neurons_number;
 
-   //Test
+   // Test
 
    neurons_number = 3;
    inputs_number = 2;
@@ -158,6 +142,7 @@ void RecurrentLayerTest::test_get_biases()
    assert_true(biases(0) == 1, LOG);
 }
 
+
 void RecurrentLayerTest::test_get_weights()
 {
    cout << "test_get_synaptic_weights\n";
@@ -166,7 +151,7 @@ void RecurrentLayerTest::test_get_weights()
 
 //   Tensor<type, 2> weights;
 
-   //Test
+   // Test
 
    recurrent_layer.set(3,2);
 
@@ -185,7 +170,7 @@ void RecurrentLayerTest::test_get_recurrent_initializer()
 
 //   Tensor<type, 2> recurrent_weights;
 
-   //Test
+   // Test
 
    recurrent_layer.set(1,2);
 
@@ -269,7 +254,7 @@ void RecurrentLayerTest::test_get_parameters()
    assert_true(abs(parameters(8) - 1.0) < numeric_limits<type>::epsilon(), LOG);
    assert_true(abs(parameters(24) - -0.48) < numeric_limits<type>::epsilon(), LOG);
 
-   //Test
+   // Test
 
    Tensor<type, 1> biases(2);
    Tensor<type, 2> input_weights(3, 2);
@@ -291,7 +276,6 @@ void RecurrentLayerTest::test_get_parameters()
 //   recurrent_weights.setValues({{7.9, -2.3},{1.2, -1.5}});
 
    recurrent_layer.set_recurrent_weights(recurrent_weights);
-
 }
 
 
@@ -318,23 +302,23 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
    combinations.setZero();
    activations.resize(1,1);
    activations_derivatives.resize(1,1);
-/*
+
    recurrent_layer.set_activation_function(RecurrentLayer::Logistic);
-   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+//   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
    assert_true(activations_derivatives(0) == 0.25, LOG);
 
    recurrent_layer.set_activation_function(RecurrentLayer::HyperbolicTangent);
-   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+//   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
    assert_true(activations_derivatives(0) == 1.0, LOG);
 
    recurrent_layer.set_activation_function(RecurrentLayer::Linear);
-   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+//   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
@@ -434,7 +418,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 //      assert_true(absolute_value((activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
 
    }
-*/
+
 }
 
 
@@ -459,7 +443,7 @@ void RecurrentLayerTest::test_calculate_outputs()
    Tensor<type, 2> new_recurrent_weights;
    Tensor<type, 1> new_biases;
 
-   //Test
+   // Test
 
    recurrent_layer.set(2,2);
 
@@ -496,10 +480,6 @@ void RecurrentLayerTest::run_test_case()
    test_constructor();
 
    test_destructor();
-
-   // Assignment operators methods
-
-   test_assignment_operator();
 
    // Inputs and perceptrons
 

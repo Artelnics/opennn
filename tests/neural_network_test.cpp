@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "neural_network_test.h"
-#include <omp.h>
 
 NeuralNetworkTest::NeuralNetworkTest() : UnitTesting()
 {
@@ -52,18 +51,18 @@ void NeuralNetworkTest::test_constructor()
   assert_true(neural_network_1_2.get_layer_pointer(1)->get_type() == Layer::Perceptron, LOG);
   assert_true(neural_network_1_2.get_layer_pointer(2)->get_type() == Layer::Probabilistic, LOG);
 
-//  NeuralNetwork neural_network_1_3(NeuralNetwork::Forecasting, architecture);
+  NeuralNetwork neural_network_1_3(NeuralNetwork::Forecasting, architecture);
 
-//  assert_true(neural_network_1_3.get_layers_number() == 4, LOG);
-//  assert_true(neural_network_1_3.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
-//  assert_true(neural_network_1_3.get_layer_pointer(1)->get_type() == Layer::LongShortTermMemory, LOG);
-//  assert_true(neural_network_1_3.get_layer_pointer(2)->get_type() == Layer::Perceptron, LOG);
-//  assert_true(neural_network_1_3.get_layer_pointer(3)->get_type() == Layer::Unscaling, LOG);
+  assert_true(neural_network_1_3.get_layers_number() == 4, LOG);
+  assert_true(neural_network_1_3.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
+  assert_true(neural_network_1_3.get_layer_pointer(1)->get_type() == Layer::LongShortTermMemory, LOG);
+  assert_true(neural_network_1_3.get_layer_pointer(2)->get_type() == Layer::Perceptron, LOG);
+  assert_true(neural_network_1_3.get_layer_pointer(3)->get_type() == Layer::Unscaling, LOG);
 
-//  NeuralNetwork neural_network_1_4(NeuralNetwork::ImageApproximation, architecture);
+  NeuralNetwork neural_network_1_4(NeuralNetwork::ImageApproximation, architecture);
 
-//  assert_true(neural_network_1_4.get_layers_number() == 1, LOG);
-//  assert_true(neural_network_1_4.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
+  assert_true(neural_network_1_4.get_layers_number() == 1, LOG);
+  assert_true(neural_network_1_4.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
 
 //  NeuralNetwork neural_network_1_5(NeuralNetwork::ImageClassification, architecture);
 
@@ -142,40 +141,34 @@ void NeuralNetworkTest::test_destructor()
    delete neural_network_1;
 }
 
-void NeuralNetworkTest::test_assignment_operator()
-{
-   cout << "test_assignment_operator\n";
-
-   NeuralNetwork nn1;
-   NeuralNetwork nn2 = nn1;
-}
 
 void NeuralNetworkTest::test_get_display()
 {
    cout << "test_get_display\n";
 }
 
+
 void NeuralNetworkTest::test_add_layer()
 {
    cout << "test_add_layer\n";
 
-//    // LSTM
+    // LSTM
 
-//   NeuralNetwork neural_network_;
+   NeuralNetwork neural_network_;
 
-//   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer;
-//   neural_network_.add_layer(long_short_term_memory_layer);
-//   assert_true(neural_network_.get_layers_number() == 1, LOG);
-//   assert_true(neural_network_.get_layer_pointer(0)->get_type() == Layer::LongShortTermMemory, LOG);
+   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer;
+   neural_network_.add_layer(long_short_term_memory_layer);
+   assert_true(neural_network_.get_layers_number() == 1, LOG);
+   assert_true(neural_network_.get_layer_pointer(0)->get_type() == Layer::LongShortTermMemory, LOG);
 
-//    // RECURRENT
+    // RECURRENT
 
-//   NeuralNetwork neural_network__;
+   NeuralNetwork neural_network__;
 
-//   RecurrentLayer* recurrent_layer = new RecurrentLayer;
-//   neural_network__.add_layer(recurrent_layer);
-//   assert_true(neural_network__.get_layers_number() == 1, LOG);
-//   assert_true(neural_network__.get_layer_pointer(0)->get_type() == Layer::Recurrent, LOG);
+   RecurrentLayer* recurrent_layer = new RecurrentLayer;
+   neural_network__.add_layer(recurrent_layer);
+   assert_true(neural_network__.get_layers_number() == 1, LOG);
+   assert_true(neural_network__.get_layer_pointer(0)->get_type() == Layer::Recurrent, LOG);
 
    // SCALING
 
@@ -255,7 +248,6 @@ void NeuralNetworkTest::check_layer_type()
    assert_true(neural_network.check_layer_type(Layer::Probabilistic), LOG);
    assert_true(neural_network.check_layer_type(Layer::Unscaling), LOG);
    assert_true(neural_network.check_layer_type(Layer::Bounding), LOG);
-   assert_true(neural_network.check_layer_type(Layer::PrincipalComponents), LOG);
 
    // Test 2
 
@@ -287,7 +279,6 @@ void NeuralNetworkTest::check_layer_type()
    assert_true(neural_network_2.check_layer_type(Layer::Probabilistic), LOG);
    assert_true(neural_network_2.check_layer_type(Layer::Unscaling), LOG);
    assert_true(neural_network_2.check_layer_type(Layer::Bounding), LOG);
-   assert_true(neural_network_2.check_layer_type(Layer::PrincipalComponents), LOG);
 
    // Test 4
 
@@ -348,10 +339,8 @@ void NeuralNetworkTest::test_has_methods()
    assert_true(neural_network_2.has_unscaling_layer(), LOG);
    assert_true(!neural_network_2.has_bounding_layer(), LOG);
    assert_true(!neural_network_2.has_probabilistic_layer(), LOG);
-
-
-
 }
+
 
 void NeuralNetworkTest::test_get_inputs()
 {
@@ -370,6 +359,7 @@ void NeuralNetworkTest::test_get_inputs()
    assert_true(neural_network.get_input_index("in_2") == 1, LOG);
 }
 
+
 void NeuralNetworkTest::test_get_outputs()
 {
    cout << "test_get_outputs\n";
@@ -387,11 +377,12 @@ void NeuralNetworkTest::test_get_outputs()
    assert_true(neural_network.get_output_index("out_2") == 1, LOG);
 }
 
+
 void NeuralNetworkTest::test_get_trainable_layers()
 {
    cout << "test_get_trainable_layers\n";
 
-   //Test 0
+   // Test 0
 
    Tensor<Layer*,1> layer_tensor_0(4);
    layer_tensor_0.setValues({new ScalingLayer, new PerceptronLayer, new UnscalingLayer, new ProbabilisticLayer});
@@ -429,6 +420,7 @@ void NeuralNetworkTest::test_get_trainable_layers()
    assert_true(neural_network.get_trainable_layers_indices()(5) == 6, LOG);
 }
 
+
 void NeuralNetworkTest::test_get_layers_type_pointers()
 {
    cout << "test_get_layers_type_pointers\n";
@@ -451,7 +443,7 @@ void NeuralNetworkTest::test_get_layers_type_pointers()
 
    assert_true(neural_network.get_first_perceptron_layer_pointer()->get_type() == Layer::Perceptron, LOG);
 
-   //Test 2
+   // Test 2
 
    Tensor<Layer*,1> layer_tensor_1(3);
    layer_tensor_1.setValues({new ScalingLayer, new PerceptronLayer, new UnscalingLayer});
@@ -462,9 +454,8 @@ void NeuralNetworkTest::test_get_layers_type_pointers()
    assert_true(neural_network_1.get_unscaling_layer_pointer()->get_type() == Layer::Unscaling, LOG);
    assert_true(neural_network_1.get_first_perceptron_layer_pointer()->get_type() == Layer::Perceptron, LOG);
 
-
-
 }
+
 
 void NeuralNetworkTest::test_get_layer_pointer()
 {
@@ -490,11 +481,13 @@ void NeuralNetworkTest::test_get_layer_pointer()
    assert_true(neural_network.get_output_layer_pointer()->get_type() == Layer::Bounding, LOG);
 }
 
+
 void NeuralNetworkTest::test_set()
 {
    cout << "test_set\n";
 
    NeuralNetwork neural_network;
+   Tensor<Index, 1> architecture;
 
    // Test 0
 
@@ -506,8 +499,7 @@ void NeuralNetworkTest::test_set()
 
    // Test 1
 
-   Tensor<Index, 1> architecture(3);
-
+   architecture.resize(3);
    architecture.setValues({1,0,1}); //CC -> architecture = {inp_n, hddn_neurns_n, out_n}
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
@@ -520,58 +512,56 @@ void NeuralNetworkTest::test_set()
    assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
    assert_true(neural_network.get_layers_pointers().size() == 3, LOG);
 
-//   neural_network.set(NeuralNetwork::Forecasting, architecture);
-//   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
-//   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
-//   assert_true(neural_network.get_layers_pointers().size() == 4, LOG);
+   neural_network.set(NeuralNetwork::Forecasting, architecture);
+   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+   assert_true(neural_network.get_layers_pointers().size() == 4, LOG);
 
-//   neural_network.set(NeuralNetwork::ImageApproximation, architecture);
-//   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
-//   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
-//   assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
+   neural_network.set(NeuralNetwork::ImageApproximation, architecture);
+   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+   assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
 
-//   neural_network.set(NeuralNetwork::ImageClassification, architecture);
-//   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
-//   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
-//   assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
+   neural_network.set(NeuralNetwork::ImageClassification, architecture);
+   assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+   assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+   assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
 
    // Test 2 / Convolutional layer set
 
-//   Tensor<Index, 1> new_inputs_dimensions(1);
-//   new_inputs_dimensions.setConstant(1);
+   Tensor<Index, 1> new_inputs_dimensions(1);
+   new_inputs_dimensions.setConstant(1);
 
-//   Index new_blocks_number = 1;
+   Index new_blocks_number = 1;
 
-//   Tensor<Index, 1> new_filters_dimensions(1);
-//   new_filters_dimensions.setConstant(1);
+   Tensor<Index, 1> new_filters_dimensions(1);
+   new_filters_dimensions.setConstant(1);
 
-//   Index new_outputs_number = 1;
+   Index new_outputs_number = 1;
 
 //   ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
 
-//   neural_network.set(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
+   neural_network.set(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
 
-//   assert_true(neural_network.is_empty(), LOG);
-//   assert_true(neural_network.get_layers_number() == 0, LOG);
-
+   assert_true(neural_network.is_empty(), LOG);
+   assert_true(neural_network.get_layers_number() == 0, LOG);
 
    // Test 3
 
-   Tensor<Index, 1> architecture_1(4);
+   architecture.resize(4);
+   architecture.setValues({1,1,1,1});
 
-   architecture_1.setValues({1,1,1,1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture_1);
+   neural_network.set(NeuralNetwork::Approximation, architecture);
    assert_true(neural_network.get_inputs_names().size() == 1, LOG);
    assert_true(neural_network.get_outputs_names().size() == 1, LOG);
    assert_true(neural_network.get_layers_pointers().size() == 6, LOG);
 
-   neural_network.set(NeuralNetwork::Classification, architecture_1);
+   neural_network.set(NeuralNetwork::Classification, architecture);
    assert_true(neural_network.get_inputs_names().size() == 1, LOG);
    assert_true(neural_network.get_outputs_names().size() == 1, LOG);
    assert_true(neural_network.get_layers_pointers().size() == 4, LOG);
-
 }
+
 
 void NeuralNetworkTest::test_set_names()
 {
@@ -607,30 +597,34 @@ void NeuralNetworkTest::test_set_names()
 }
 
 
-/// @todo Change name
-
-void NeuralNetworkTest::test_set_number()
+void NeuralNetworkTest::test_set_inputs_number()
 {
-   cout << "test_set_number\n";
+   cout << "test_set_inputs_number\n";
+
+   NeuralNetwork neural_network;
 
    Tensor<Index, 1> architecture(3);
    architecture.setValues({1,0,1});
 
-   NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
-
-
-   // Test 0_0
-
    Index inputs_number = 0;
+
+   Tensor<bool, 1> inputs;
+
+   // Test
+
+   architecture.resize(3);
+   architecture.setValues({1,0,1});
+
+   neural_network.set(NeuralNetwork::Classification, architecture);
+
+   inputs_number = 0;
 
    neural_network.set_inputs_number(inputs_number);
 
    assert_true(neural_network.get_inputs_number() == 0, LOG);
    assert_true(neural_network.get_layer_pointer(0)->get_inputs_number() == 0, LOG); //CC -> Scaling layer nmb assert
 
-
-
-   // Test 0_1
+   // Test
 
    inputs_number = 3;
 
@@ -645,7 +639,6 @@ void NeuralNetworkTest::test_set_number()
 
    assert_true(neural_network.get_inputs_number() == 0, LOG);
 
-
    // Test 1_1
 
    Tensor<bool, 1> inputs_names_1_1(2);
@@ -654,7 +647,7 @@ void NeuralNetworkTest::test_set_number()
    neural_network.set_inputs_number(inputs_names_1_1);
    assert_true(neural_network.get_inputs_number() == 1, LOG);
 
- // Test 1_2
+   // Test 1_2
 
    Tensor<bool, 1> inputs_names_1_2(2);
    inputs_names_1_2.setValues({true,true});
@@ -664,6 +657,7 @@ void NeuralNetworkTest::test_set_number()
 
 }
 
+
 void NeuralNetworkTest::test_set_default()
 {
    cout << "test_set_default\n";
@@ -672,8 +666,9 @@ void NeuralNetworkTest::test_set_default()
 
    neural_network.set_default();
 
-   assert_true(display == true, LOG);
+   assert_true(neural_network.get_display(), LOG);
 }
+
 
 void NeuralNetworkTest::test_set_pointers()
 {
@@ -687,8 +682,6 @@ void NeuralNetworkTest::test_set_pointers()
    // Test 1 // Device
 
    assert_true(neural_network.get_layers_number() == 3, LOG);
-   //assert_true(neural_network.get_layer_pointer(0)->device_pointer->get_type() == Device::EigenThreadPool, LOG);
-   // Need get_device_pointer method?
 
    // Test 2 // Layers
 
@@ -706,6 +699,7 @@ void NeuralNetworkTest::test_set_pointers()
    assert_true(neural_network_2.get_layer_pointer(2)->get_type() == Layer::Unscaling, LOG);
 }
 
+
 void NeuralNetworkTest::test_set_display()
 {
    cout << "test_set_display\n";
@@ -713,11 +707,12 @@ void NeuralNetworkTest::test_set_display()
    NeuralNetwork neural_network;
 
    neural_network.set_display(true);
-   assert_true(neural_network.get_display() == true, LOG);
+   assert_true(neural_network.get_display(), LOG);
 
    neural_network.set_display(false);
-   assert_true(neural_network.get_display() == false, LOG);
+   assert_true(!neural_network.get_display(), LOG);
 }
+
 
 void NeuralNetworkTest::test_get_layers_number()
 {
@@ -752,6 +747,7 @@ void NeuralNetworkTest::test_get_layers_number()
    assert_true(neural_network_1.get_layers_neurons_numbers()(0) == 0, LOG);
 }
 
+
 void NeuralNetworkTest::test_inputs_outputs_number()
 {
    cout << "test_inputs_outputs_number\n";
@@ -775,7 +771,7 @@ void NeuralNetworkTest::test_inputs_outputs_number()
    assert_true(neural_network_1.get_inputs_number() == 5, LOG);
    assert_true(neural_network_1.get_outputs_number() == 2, LOG);
 
-   //Test 2
+   // Test 2
 
    Tensor<Layer*, 1> layers_tensor_2(4);
    layers_tensor_2.setValues({new ScalingLayer(1),new PerceptronLayer(1,2), new UnscalingLayer(2), new BoundingLayer(2)});
@@ -786,6 +782,7 @@ void NeuralNetworkTest::test_inputs_outputs_number()
    assert_true(neural_network_2.get_outputs_number() == 2, LOG);
 
 }
+
 
 void NeuralNetworkTest::test_get_architecture()
 {
@@ -840,11 +837,11 @@ void NeuralNetworkTest::test_get_parameters()
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-   PerceptronLayer* pl00 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+   PerceptronLayer* pl00 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
    pl00->set_biases_constant(0);
    pl00->set_synaptic_weights_constant(1);
 
-   PerceptronLayer* pl01 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
+   PerceptronLayer* pl01 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
    pl01->set_biases_constant(2);
    pl01->set_synaptic_weights_constant(3);
 
@@ -863,15 +860,15 @@ void NeuralNetworkTest::test_get_parameters()
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-   PerceptronLayer* pl10 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+   PerceptronLayer* pl10 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
    pl10->set_biases_constant(0);
    pl10->set_synaptic_weights_constant(1);
 
-   PerceptronLayer* pl11 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
+   PerceptronLayer* pl11 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
    pl11->set_biases_constant(2);
    pl11->set_synaptic_weights_constant(3);
 
-   PerceptronLayer* pl12 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
+   PerceptronLayer* pl12 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
    pl12->set_biases_constant(4);
    pl12->set_synaptic_weights_constant(5);
 
@@ -894,19 +891,19 @@ void NeuralNetworkTest::test_get_parameters()
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-   PerceptronLayer* pl20 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+   PerceptronLayer* pl20 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
    pl20->set_biases_constant(0);
    pl20->set_synaptic_weights_constant(1);
 
-   PerceptronLayer* pl21 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
+   PerceptronLayer* pl21 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
    pl21->set_biases_constant(2);
    pl21->set_synaptic_weights_constant(3);
 
-   PerceptronLayer* pl22 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
+   PerceptronLayer* pl22 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
    pl22->set_biases_constant(4);
    pl22->set_synaptic_weights_constant(5);
 
-   PerceptronLayer* pl23 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(4));
+   PerceptronLayer* pl23 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(4));
    pl23->set_biases_constant(6);
    pl23->set_synaptic_weights_constant(7);
 
@@ -975,15 +972,15 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 
     neural_network.set(NeuralNetwork::Approximation, architecture);
 
-    PerceptronLayer* pl0 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+    PerceptronLayer* pl0 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
     pl0->set_biases_constant(0);
     pl0->set_synaptic_weights_constant(1);
 
-    PerceptronLayer* pl1 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
+    PerceptronLayer* pl1 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
     pl1->set_biases_constant(2);
     pl1->set_synaptic_weights_constant(3);
 
-    PerceptronLayer* pl2 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
+    PerceptronLayer* pl2 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
     pl2->set_biases_constant(4);
     pl2->set_synaptic_weights_constant(5);
 
@@ -1115,6 +1112,7 @@ void NeuralNetworkTest::test_set_parameters_random()
    assert_true(neural_network.get_parameters_number() == parameters.size(), LOG);
 }
 
+
 void NeuralNetworkTest::test_calculate_parameters_norm()
 {
    cout << "test_calculate_parameters_norm\n";
@@ -1158,15 +1156,14 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
 
    assert_true(abs(parameters_norm_1 - static_cast<type>(sqrt(8))) < static_cast<type>(1e-5), LOG);
 
-
-
 }
+
 
 void NeuralNetworkTest::test_perturbate_parameters()
 {
    cout << "test_perturbate_parameters\n";
 
-   //Test 1
+   // Test 1
 
    Tensor<Index, 1> architecture(3);
    NeuralNetwork neural_network;
@@ -1210,7 +1207,8 @@ void NeuralNetworkTest::test_perturbate_parameters()
    assert_true(parameters1.size() == 0, LOG);
 }
 
-void NeuralNetworkTest::test_calculate_outputs() // @todo
+
+void NeuralNetworkTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
@@ -1290,8 +1288,8 @@ void NeuralNetworkTest::test_calculate_outputs() // @todo
    outputs = neural_network.calculate_outputs(inputs);
 
    assert_true(outputs.size() == 2, LOG);
- // assert_true(abs(outputs(0,0) - 2) < static_cast<type>(1e-5), LOG);
-//   assert_true(abs(outputs(0,1) - tanh(3)) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(outputs(0,0) - 2) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(outputs(0,1) - tanh(3)) < static_cast<type>(1e-5), LOG);
 
    // Test 4
 
@@ -1311,9 +1309,9 @@ void NeuralNetworkTest::test_calculate_outputs() // @todo
 
    assert_true(neural_network.calculate_outputs(inputs).size() == 3, LOG);
 
-//   assert_true(abs(outputs(0,0) - tanh(3.2847)) < static_cast<type>(1e-3), LOG);
-//   assert_true(abs(outputs(0,1) - tanh(3.2847)) < static_cast<type>(1e-3), LOG);
-//   assert_true(abs(outputs(0,2) - tanh(3.2847)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs(0,0) - tanh(3.2847)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs(0,1) - tanh(3.2847)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs(0,2) - tanh(3.2847)) < static_cast<type>(1e-3), LOG);
 
    // Test 5
 
@@ -1441,6 +1439,7 @@ void NeuralNetworkTest::test_calculate_outputs() // @todo
 
 }
 
+
 void NeuralNetworkTest::test_calculate_directional_inputs()
 {
    cout << "test_calculate_directional_inputs\n";
@@ -1503,6 +1502,7 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
    assert_true(abs(directional_inputs(4,0) + 0) < static_cast<type>(1e-5), LOG);
 }
 
+
 void NeuralNetworkTest::test_save()
 {
    cout << "test_save\n";
@@ -1536,6 +1536,7 @@ void NeuralNetworkTest::test_save()
    neural_network.save(file_name);
 }
 
+
 void NeuralNetworkTest::test_load()
 {
    cout << "test_load\n";
@@ -1548,6 +1549,7 @@ void NeuralNetworkTest::test_load()
    neural_network.save(file_name);
    neural_network.load(file_name);
 }
+
 
 void NeuralNetworkTest::test_print()
 {
@@ -1568,15 +1570,15 @@ void NeuralNetworkTest::test_print()
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-
    //neural_network.print();
 }
+
 
 void NeuralNetworkTest::test_write_expression()
 {
    cout << "test_write_expression\n";
 
-   //Test 0
+   // Test 0
 
    NeuralNetwork neural_network;
 
@@ -1599,9 +1601,9 @@ void NeuralNetworkTest::test_write_expression()
    neural_network.set_inputs_names(inputs_names);
    neural_network.set_outputs_names(outputs_names);
 
-   cout << neural_network.write_expression(inputs_names, outputs_names);
+   //cout << neural_network.write_expression(inputs_names, outputs_names);
 
-   //Test 1
+   // Test 1
 
    NeuralNetwork neural_network_2;
 
@@ -1624,7 +1626,7 @@ void NeuralNetworkTest::test_write_expression()
    neural_network_2.set_inputs_names(inputs_names_2);
    neural_network_2.set_outputs_names(outputs_names_2);
 
-   cout << neural_network_2.write_expression(inputs_names_2, outputs_names_2);
+   //cout << neural_network_2.write_expression(inputs_names_2, outputs_names_2);
 
 }
 
@@ -1637,15 +1639,15 @@ void NeuralNetworkTest::test_forward_propagate()
     Index inputs_number = 2;
     Index target_number = 1;
 
-    Tensor<Index, 1>architecture(2);
+    Tensor<Index, 1> architecture(2);
 
     architecture.setValues({inputs_number,target_number});
 
-    Tensor<type,2> data(5, 3);
+    Tensor<type, 2> data(5, 3);
 
     data.setValues({{1,1,1},{2,2,2},{3,3,3},{0,0,0},{0,0,0}});
 
-//    //DataSet
+    //DataSet
 
     DataSet dataset(data);
 
@@ -1663,7 +1665,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
-    PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+    PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
     const Index neurons_number = perceptron_layer->get_neurons_number();
     perceptron_layer->set_activation_function(PerceptronLayer::Logistic);
 
@@ -1758,33 +1760,32 @@ void NeuralNetworkTest::test_forward_propagate()
     NeuralNetworkForwardPropagation forward_propagation_3(dataset.get_training_samples_number(), &neural_network_2);
 
     neural_network_2.forward_propagate(batch_3, forward_propagation_3);
-/*
-    Tensor<type, 2>perceptron_combinations_3_0 = forward_propagation_3.layers[0].combinations;
-    Tensor<type, 2>perceptron_activations_3_0 = forward_propagation_3.layers[0].activations;
-    Tensor<type, 2>probabilistic_combinations_3_1 = forward_propagation_3.layers[1].combinations;
-    Tensor<type, 2>probabilistic_activations_3_1= forward_propagation_3.layers[1].activations;
 
-    assert_true(perceptron_combinations_3_0.dimension(0) == 3, LOG);
+//    Tensor<type, 2> perceptron_combinations_3_0 = forward_propagation_3.layers[0].combinations;
+//    Tensor<type, 2> perceptron_activations_3_0 = forward_propagation_3.layers[0].activations;
+//    Tensor<type, 2> probabilistic_combinations_3_1 = forward_propagation_3.layers[1].combinations;
+//    Tensor<type, 2> probabilistic_activations_3_1= forward_propagation_3.layers[1].activations;
 
-    assert_true(abs(perceptron_combinations_3_0(0,0) - 5) < static_cast<type>(1e-3)
-             && abs(perceptron_combinations_3_0(1,0) - 1) < static_cast<type>(1e-3)
-             && abs(perceptron_combinations_3_0(2,0) + 1) < static_cast<type>(1e-3), LOG);
+//    assert_true(perceptron_combinations_3_0.dimension(0) == 3, LOG);
 
-    assert_true(perceptron_activations_3_0.dimension(0) == 3, LOG);
-    assert_true(abs(perceptron_activations_3_0(0,0) - static_cast<type>(0.993)) < static_cast<type>(1e-3)
-             && abs(perceptron_activations_3_0(1,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3)
-             && abs(perceptron_activations_3_0(2,0) - static_cast<type>(0.268)) < static_cast<type>(1e-3), LOG);
+//    assert_true(abs(perceptron_combinations_3_0(0,0) - 5) < static_cast<type>(1e-3)
+//             && abs(perceptron_combinations_3_0(1,0) - 1) < static_cast<type>(1e-3)
+//             && abs(perceptron_combinations_3_0(2,0) + 1) < static_cast<type>(1e-3), LOG);
 
-    assert_true(probabilistic_combinations_3_1.dimension(0) == 3, LOG);
-    assert_true(abs(probabilistic_combinations_3_1(0,0) - static_cast<type>(3.993)) < static_cast<type>(1e-3)
-             && abs(probabilistic_combinations_3_1(1,0) - static_cast<type>(3.731)) < static_cast<type>(1e-3)
-             && abs(probabilistic_combinations_3_1(2,0) - static_cast<type>(3.268)) < static_cast<type>(1e-3), LOG);
+//    assert_true(perceptron_activations_3_0.dimension(0) == 3, LOG);
+//    assert_true(abs(perceptron_activations_3_0(0,0) - static_cast<type>(0.993)) < static_cast<type>(1e-3)
+//             && abs(perceptron_activations_3_0(1,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3)
+//             && abs(perceptron_activations_3_0(2,0) - static_cast<type>(0.268)) < static_cast<type>(1e-3), LOG);
 
-    assert_true(probabilistic_activations_3_1.dimension(0) == 3, LOG);
-    assert_true(abs(probabilistic_activations_3_1(0,0) - 1) < static_cast<type>(1e-3)
-             && abs(probabilistic_activations_3_1(1,0) - 1) < static_cast<type>(1e-3)
-             && abs(probabilistic_activations_3_1(2,0) - 1) < static_cast<type>(1e-3), LOG);
-*/
+//    assert_true(probabilistic_combinations_3_1.dimension(0) == 3, LOG);
+//    assert_true(abs(probabilistic_combinations_3_1(0,0) - static_cast<type>(3.993)) < static_cast<type>(1e-3)
+//             && abs(probabilistic_combinations_3_1(1,0) - static_cast<type>(3.731)) < static_cast<type>(1e-3)
+//             && abs(probabilistic_combinations_3_1(2,0) - static_cast<type>(3.268)) < static_cast<type>(1e-3), LOG);
+
+//    assert_true(probabilistic_activations_3_1.dimension(0) == 3, LOG);
+//    assert_true(abs(probabilistic_activations_3_1(0,0) - 1) < static_cast<type>(1e-3)
+//             && abs(probabilistic_activations_3_1(1,0) - 1) < static_cast<type>(1e-3)
+//             && abs(probabilistic_activations_3_1(2,0) - 1) < static_cast<type>(1e-3), LOG);
 }
 
 
@@ -1819,7 +1820,7 @@ void NeuralNetworkTest::run_test_case()
    test_set();
 
    test_set_names();
-   test_set_number();
+   test_set_inputs_number();
 
    test_set_pointers();
 
@@ -1875,6 +1876,7 @@ void NeuralNetworkTest::run_test_case()
 
    cout << "End of neural network test case.\n\n";
 }
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.

@@ -52,7 +52,7 @@ void NumericalDifferentiationTest::test_set_get_methods()
 
    assert_true(nd.get_numerical_differentiation_method() == OpenNN::NumericalDifferentiation::ForwardDifferences, LOG);
    assert_true(nd.get_precision_digits() == 9, LOG);
-   assert_true(nd.get_display() == true, LOG);
+   assert_true(nd.get_display(), LOG);
 
    // Test 2
 
@@ -60,7 +60,7 @@ void NumericalDifferentiationTest::test_set_get_methods()
 
    assert_true(nd_1.get_numerical_differentiation_method() == OpenNN::NumericalDifferentiation::ForwardDifferences, LOG);
    assert_true(nd_1.get_precision_digits() == 9, LOG);
-   assert_true(nd_1.get_display() == true, LOG);
+   assert_true(nd_1.get_display(), LOG);
 
    // Test 3
 
@@ -82,7 +82,7 @@ void NumericalDifferentiationTest::test_set_get_methods()
 
    assert_true(nd.get_numerical_differentiation_method() == OpenNN::NumericalDifferentiation::CentralDifferences, LOG);
    assert_true(nd.get_precision_digits() == 6, LOG);
-   assert_true(nd.get_display() == true, LOG);
+   assert_true(nd.get_display(), LOG);
 }
 
 void NumericalDifferentiationTest::test_calculate_methods()
@@ -169,7 +169,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_derivative
    Tensor<type,2>x_2d(1,2);
    x_2d.setValues({{1,2}});
 
-   Tensor<type,2> d3 = nd.calculate_forward_differences_derivatives(*this, &NumericalDifferentiationTest::f3, x_2d);
+   Tensor<type, 2> d3 = nd.calculate_forward_differences_derivatives(*this, &NumericalDifferentiationTest::f3, x_2d);
 
    assert_true(abs(d3(0,0) - 2) < static_cast<type>(1e-2), LOG);
    assert_true(abs(d3(0,1) - 4) < static_cast<type>(1e-2), LOG);
@@ -225,7 +225,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_derivative
    Tensor<type,2>x_2d(1,2);
    x_2d.setValues({{1,2}});
 
-   Tensor<type,2> d3 = nd.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f3, x_2d);
+   Tensor<type, 2> d3 = nd.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f3, x_2d);
 
    assert_true(abs(d3(0,0) - 2) < static_cast<type>(1e-2), LOG);
    assert_true(abs(d3(0,1) - 4) < static_cast<type>(1e-2), LOG);
@@ -1524,7 +1524,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_gradient_m
 
 }
 
-void NumericalDifferentiationTest::test_calculate_central_differences_hessian_matrices() // @todo
+void NumericalDifferentiationTest::test_calculate_central_differences_hessian_matrices()
 {
     cout << "test_calculate_central_differences_hessian_matrices\n";
 

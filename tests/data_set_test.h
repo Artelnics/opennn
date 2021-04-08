@@ -31,11 +31,7 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
-
-   // Assignment operators methods
-
-   void test_assignment_operator();
+   void test_destructor();  
 
    // Get methods
 
@@ -44,8 +40,6 @@ public:
    void test_get_variables();
    void test_get_display();
    void test_write_first_cell();
-   void test_is_binary_classification();
-   void test_is_multiple_classification();
    void test_has_time_columns();
 
    // Data methods
@@ -78,22 +72,9 @@ public:
    void test_set_time_index();
 
    // Data methods
+
    void test_set_data();
    void test_empty();
-
-   // Sample methods
-   void test_set_sample();
-   void test_set_training_sample();
-   void test_set_selection_sample();
-   void test_set_testing_sample();
-   void test_set_input_sample();
-   void test_set_target_sample();
-   void test_set_training_input_sample();
-   void test_set_training_target_sample();
-   void test_set_selection_input_sample(); 
-   void test_set_selection_target_sample();
-   void test_set_testing_input_sample();
-   void test_set_testing_target_sample();
 
    // Data resizing methods
 
@@ -102,8 +83,7 @@ public:
    void test_remove_variable();
    void test_unuse_constant_columns();
    void test_unuse_repeated_samples();
-   void test_unuse_non_significant_inputs();
-   void test_unuse_columns_missing_values();
+   void test_unuse_uncorrelated_columns();
 
    // Initialization methods
 
@@ -111,12 +91,11 @@ public:
 
    // Statistics methods
 
-   void test_calculate_data_descriptives();
-   void test_calculate_data_descriptives_missing_values();
+   void test_calculate_variables_descriptives();
    void test_calculate_training_samples_descriptives();
    void test_calculate_selection_samples_descriptives();
    void test_calculate_testing_samples_descriptives();
-   void test_calculate_inputs_descriptives();
+   void test_calculate_input_variables_descriptives();
    void test_calculate_variables_means();
    void test_calculate_training_targets_mean();
    void test_calculate_selection_targets_mean();
@@ -182,16 +161,12 @@ public:
 
    void test_calculate_target_columns_distribution();
    void test_unuse_most_populated_target();
-   void test_balance_binary_targets_distribution();
-   void test_balance_multiple_targets_distribution();
-   void test_balance_function_regression_targets_distribution();
 
    void test_clean_Tukey_outliers();
 
    // Data generation
+
    void test_generate_constant_data();
-   void test_generate_data_binary_classification();
-   void test_generate_data_multiple_classification();
 
    // Serialization methods
 
@@ -199,7 +174,9 @@ public:
    void test_from_XML();
    void test_print();
    void test_print_data_preview();
+
    void test_read_csv();
+
    void test_read_adult_csv();
    void test_read_airline_passengers_csv();
    void test_read_car_csv();
@@ -216,12 +193,9 @@ public:
    //Trasform methods
 
    void test_transform_time_series();
-   void test_convert_autoassociation();
 
    //Principal components mehtod
 
-   void test_covariance_matrix();
-   void test_perform_principal_components_analysis();
    void test_calculate_training_negatives();
    void test_calculate_selection_negatives();
    void test_scrub_missing_values();

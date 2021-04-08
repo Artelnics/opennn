@@ -88,9 +88,6 @@ private:
     #include "../../opennn-cuda/opennn_cuda/minkowski_error_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/minkowski_error_mkl.h"
-#endif
 };
 
 }

@@ -113,7 +113,7 @@ public:
    void set_mean(const Index&, const type&);
    void set_standard_deviation(const Index&, const type&);
 
-   void set_min_max_range(const type min, const type max);
+   void set_min_max_range(const type& min, const type& max);
 
    // Scaling method
 
@@ -134,6 +134,7 @@ public:
    void check_range(const Tensor<type, 1>&) const;
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
 
    // Expression methods
 

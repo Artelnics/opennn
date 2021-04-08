@@ -132,25 +132,25 @@ public:
 
    // Training methods
 
-   void calculate_DFP_inverse_hessian(const LossIndexBackPropagation&, QuasiNewtonMehtodData&) const;
+   void calculate_DFP_inverse_hessian(QuasiNewtonMehtodData&) const;
 
-   void calculate_BFGS_inverse_hessian(const LossIndexBackPropagation&, QuasiNewtonMehtodData&) const;
+   void calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData&) const;
 
    void initialize_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
-   void calculate_inverse_hessian_approximation(const LossIndexBackPropagation&, QuasiNewtonMehtodData&) const;
+   void calculate_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
 
    const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
    const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
 
-   void update_epoch(
+   void update_parameters(
            const DataSetBatch& batch,
            NeuralNetworkForwardPropagation& forward_propagation,
            LossIndexBackPropagation& back_propagation,
            QuasiNewtonMehtodData& optimization_data);
 
-   OptimizationAlgorithmResults perform_training();
+   TrainingResults perform_training();
 
-   void perform_training_void();
+   
 
    // Training history methods
 

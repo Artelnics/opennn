@@ -26,7 +26,7 @@
 namespace OpenNN
 {
 
-class NeuronsSelectionResults;
+struct NeuronsSelectionResults;
 
 /// This abstract class represents the concept of neurons selection algorithm for a ModelSelection[1].
 
@@ -53,7 +53,7 @@ public:
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, AlgorithmFinished};
+    enum StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons};
 
     // Get methods
 
@@ -65,16 +65,14 @@ public:
     const Index& get_minimum_neurons() const;
     const Index& get_trials_number() const;
 
-    const bool& get_reserve_training_error_data() const;
-    const bool& get_reserve_selection_error_data() const;
-    const bool& get_reserve_minimal_parameters() const;
+    const bool& get_reserve_training_errors() const;
+    const bool& get_reserve_selection_errors() const;
 
     const bool& get_display() const;
 
     const type& get_selection_error_goal() const;
     const Index& get_maximum_epochs_number() const;
     const type& get_maximum_time() const;
-    const type& get_tolerance() const;
 
     // Set methods
 
@@ -88,20 +86,16 @@ public:
 
     void set_reserve_training_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
-    void set_reserve_minimal_parameters(const bool&);
 
     void set_display(const bool&);
 
     void set_selection_error_goal(const type&);
     void set_maximum_epochs_number(const Index&);
     void set_maximum_time(const type&);
-    void set_tolerance(const type&);
 
     // Loss calculation methods
 
-    Tensor<type, 1> calculate_losses(const Index&, NeuralNetwork&);
-
-    string write_stopping_condition(const OptimizationAlgorithmResults&) const;
+    string write_stopping_condition(const TrainingResults&) const;
 
     // Neuron selection methods
 
@@ -111,13 +105,9 @@ public:
 
     // Utilities
 
-    Tensor<Index, 1> insert_index_result(const Index&, const Tensor<Index, 1>&) const;
-    Tensor<type, 1> insert_result(const type&, const Tensor<type, 1>&) const;
-    Tensor< Tensor<type, 1>, 1> insert_result(const Tensor<type, 1>&, const Tensor< Tensor<type, 1>, 1>&) const;
-
     /// Performs the neurons selection for a neural network.
 
-//    virtual NeuronsSelectionResults* perform_neurons_selection() = 0;
+    virtual NeuronsSelectionResults perform_neurons_selection() = 0;
 
     /// Writes the time from seconds in format HH:mm:ss.
 
@@ -137,7 +127,7 @@ protected:
 
     Tensor<type, 1> selection_error_history;
 
-    /// Performance of all the neural networks trained.
+    /// Error of all the neural networks trained.
 
     Tensor<type, 1> training_error_history;
 
@@ -161,15 +151,11 @@ protected:
 
     /// True if the loss of all neural networks are to be reserved.
 
-    bool reserve_training_error_data;
+    bool reserve_training_errors;
 
     /// True if the selection error of all neural networks are to be reserved.
 
-    bool reserve_selection_error_data;
-
-    /// True if the vector parameters of the neural network presenting minimum selection error is to be reserved.
-
-    bool reserve_minimal_parameters;
+    bool reserve_selection_errors;
 
     /// Display messages to screen.
 
@@ -179,17 +165,13 @@ protected:
 
     type selection_error_goal;
 
-    /// Maximum number of epochs to perform_neurons_selection. It is used as a stopping criterion.
+    /// Maximum number of epochs to perform neurons selection. It is used as a stopping criterion.
 
     Index maximum_epochs_number;
 
     /// Maximum selection algorithm time. It is used as a stopping criterion.
 
     type maximum_time;
-
-    /// Tolerance for the error in the trainings of the algorithm.
-
-    type tolerance;
 };
 
 
@@ -197,43 +179,64 @@ protected:
 
 struct NeuronsSelectionResults
 {
-   explicit NeuronsSelectionResults() {}
+    // Default constructor
+
+    explicit NeuronsSelectionResults() {}
+
+    // Epochs constructor
+
+   explicit NeuronsSelectionResults(const Index& maximum_epochs_number)
+   {
+        neurons_numbers.resize(maximum_epochs_number);
+
+        training_errors.resize(maximum_epochs_number);
+        selection_errors.resize(maximum_epochs_number);
+
+        optimum_training_error = numeric_limits<type>::max();
+        optimum_selection_error = numeric_limits<type>::max();
+    }
 
    virtual ~NeuronsSelectionResults() {}
 
    string write_stopping_condition() const;
 
+   // Neural network
+
    /// Neurons of the diferent neural networks.
 
-   Tensor<Index, 1> neurons_data;
-
-   /// Performance of the different neural networks.
-
-   Tensor<type, 1> training_error_data;
-
-   /// Selection loss of the different neural networks.
-
-   Tensor<type, 1> selection_error_data;
-
-   /// Vector of parameters for the neural network with minimum selection error.
-
-   Tensor<type, 1> minimal_parameters;
-
-   /// Value of minimum selection error.
-
-   type final_selection_error;
-
-   /// Value of loss for the neural network with minimum selection error.
-
-   type final_training_error;
+   Tensor<Index, 1> neurons_numbers;
 
    /// Neurons of the neural network with minimum selection error.
 
    Index optimal_neurons_number;
 
+   /// Vector of parameters for the neural network with minimum selection error.
+
+   Tensor<type, 1> optimal_parameters;
+
+   // Loss index
+
+   /// Performance of the different neural networks.
+
+   Tensor<type, 1> training_errors;
+
+   /// Selection loss of the different neural networks.
+
+   Tensor<type, 1> selection_errors;
+
+   /// Value of loss for the neural network with minimum selection error.
+
+   type optimum_training_error;
+
+   /// Value of minimum selection error.
+
+   type optimum_selection_error;
+
+   // Model selection
+
    /// Number of iterations to perform the neurons selection.
 
-   Index iterations_number;
+   Index epochs_number;
 
    /// Stopping condition of the algorithm.
 

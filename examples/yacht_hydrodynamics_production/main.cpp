@@ -16,7 +16,6 @@
 #include <string>
 #include <cstring>
 #include <time.h>
-#include <omp.h>
 
 // OpenNN includes
 
@@ -24,7 +23,7 @@
 
 using namespace OpenNN;
 
-int main(void)
+int main()
 {
     try
     {
@@ -63,14 +62,19 @@ int main(void)
         cin >> Froude_number;
 
         Tensor<type, 2> inputs(1, 6);
-        inputs.setValues({{longitudinal_position_center_buoyancy, prismatic_coefficient,length_displacement_ratio, beam_draught_ratio, lenght_beam_ratio, Froude_number}});
 
-        Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+        inputs.setValues({{longitudinal_position_center_buoyancy,
+                           prismatic_coefficient,length_displacement_ratio,
+                           beam_draught_ratio,
+                           lenght_beam_ratio,
+                           Froude_number}});
+
+        const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
         double residuary_resistance = outputs(0, 0);
 
         cout << "Residuary resistance per unit weight of displacement:\n"
-                  << residuary_resistance << endl;
+             << residuary_resistance << endl;
 
         return 0;
     }

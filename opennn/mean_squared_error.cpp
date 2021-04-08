@@ -47,7 +47,7 @@ MeanSquaredError::~MeanSquaredError()
 /// \param back_propagation
 
 void MeanSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     const NeuralNetworkForwardPropagation&,
                      LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -61,7 +61,7 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 void MeanSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     const NeuralNetworkForwardPropagation&,
                      LossIndexBackPropagationLM& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -76,10 +76,10 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 
 
 void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                              NeuralNetworkForwardPropagation& forward_propagation,
+                                              NeuralNetworkForwardPropagation&,
                                               LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      check();
 
@@ -139,7 +139,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 void MeanSquaredError::calculate_gradient(const DataSetBatch& batch,
                                                    LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -150,7 +150,7 @@ void MeanSquaredError::calculate_gradient(const DataSetBatch& batch,
     const type coefficient = static_cast<type>(2)/static_cast<type>(batch_samples_number);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
+            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = coefficient*loss_index_back_propagation_lm.gradient;
@@ -161,7 +161,7 @@ void MeanSquaredError::calculate_gradient(const DataSetBatch& batch,
 void MeanSquaredError::calculate_hessian_approximation(const DataSetBatch& batch,
                                                        LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      check();
 
@@ -172,7 +172,7 @@ void MeanSquaredError::calculate_hessian_approximation(const DataSetBatch& batch
      const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_samples_number));
 
      loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
-             = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors_Jacobian, AT_B);
+             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);
 
      loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
              = coefficient*loss_index_back_propagation_lm.hessian;

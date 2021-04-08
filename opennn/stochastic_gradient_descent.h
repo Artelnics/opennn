@@ -45,20 +45,6 @@ class StochasticGradientDescent : public OptimizationAlgorithm
 
 public:
 
-    static vector<Index> tensor_to_vector(const Tensor<Index, 1>& tensor)
-    {
-        const size_t size = static_cast<size_t>(tensor.dimension(0));
-
-        vector<Index> new_vector(static_cast<size_t>(size));
-
-        for(size_t i = 0; i < size; i++)
-        {
-            new_vector[i] = tensor(static_cast<Index>(i));
-        }
-
-        return new_vector;
-    }
-
    // Constructors
 
    explicit StochasticGradientDescent(); 
@@ -127,12 +113,12 @@ public:
 
    // Training methods
 
-   void update_iteration(const LossIndexBackPropagation& back_propagation,
+   void update_parameters(LossIndexBackPropagation& back_propagation,
                          StochasticGradientDescentData& optimization_data);
 
-   OptimizationAlgorithmResults perform_training();
+   TrainingResults perform_training();
 
-   void perform_training_void();
+   
 
    string write_optimization_algorithm_type() const;
 
@@ -205,15 +191,10 @@ private:
    Index batch_samples_number = 1000;
 
 
-
-
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/stochastic_gradient_descent_mkl.h"
-#endif
 };
 
 
@@ -242,10 +223,6 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
 
         const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-        parameters.resize(parameters_number);
-
-        parameters = neural_network_pointer->get_parameters();
-
         parameters_increment.resize(parameters_number);
         nesterov_increment.resize(parameters_number);
         last_parameters_increment.resize(parameters_number);
@@ -263,12 +240,9 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
 
     Index iteration = 0;
 
-    Tensor<type, 1> parameters;
     Tensor<type, 1> parameters_increment;
     Tensor<type, 1> nesterov_increment;
     Tensor<type, 1> last_parameters_increment;
-
-    Tensor<type, 1> minimal_selection_parameters;
 };
 
 }

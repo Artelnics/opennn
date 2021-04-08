@@ -238,7 +238,7 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods_text() const
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
     {
@@ -388,17 +388,6 @@ void ScalingLayer::set(const ScalingLayer& new_scaling_layer)
 }
 
 
-//void ScalingLayer::set(const Tensor<bool, 1>& new_uses)
-//{
-//    /*
-//        const Tensor<Index, 1> indices = new_uses.get_indices_equal_to(true);
-//    */
-//    descriptives = descriptives.get_subvector(indices);
-
-//    scaling_methods = scaling_methods.get_subvector(indices);
-//}
-
-
 void ScalingLayer::set_inputs_number(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
@@ -446,11 +435,12 @@ void ScalingLayer::set_default()
 /// Sets max and min scaling range for minmaxscaling.
 /// @param min and max for scaling range.
 
-void ScalingLayer::set_min_max_range(const type min, const type max)
+void ScalingLayer::set_min_max_range(const type& min, const type& max)
 {
     min_range = min;
     max_range = max;
 }
+
 
 /// Sets all the scaling layer descriptives from a vector descriptives structures.
 /// The size of the vector must be equal to the number of scaling neurons in the layer.
@@ -458,8 +448,7 @@ void ScalingLayer::set_min_max_range(const type min, const type max)
 
 void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
-
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index new_descriptives_size = new_descriptives.size();
 
@@ -555,7 +544,7 @@ void ScalingLayer::set_standard_deviation(const Index& i, const type& new_standa
 
 void ScalingLayer::set_scaling_methods(const Tensor<ScalingLayer::ScalingMethod, 1>& new_scaling_methods)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -584,7 +573,7 @@ void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_meth
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
     {
@@ -643,7 +632,7 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
     {
@@ -746,7 +735,7 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 {
     const Index inputs_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index size = inputs.size();
 
@@ -794,11 +783,9 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
     Tensor<type, 2> outputs;
 
-    if(inputs.rank() == 2)
-    {
-        const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
         ostringstream buffer;
 
@@ -815,76 +802,80 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
 #endif
 
-        const Index points_number = inputs.dimension(0);
+    const Index points_number = inputs.dimension(0);
 
-        outputs.resize(points_number, neurons_number);
+    outputs.resize(points_number, neurons_number);
 
-        for(Index i = 0; i < points_number; i++)
+    for(Index i = 0; i < points_number; i++)
+    {
+        for(Index j = 0; j < neurons_number; j++)
         {
-            for(Index j = 0; j < neurons_number; j++)
+            if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
             {
-                if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
+                if(display)
                 {
-                    if(display)
-                    {
-                        cout << "OpenNN Warning: ScalingLayer class.\n"
-                             << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                             << "Standard deviation of variable " << i << " is zero.\n"
-                             << "Those variables won't be scaled.\n";
-                    }
+                    cout << "OpenNN Warning: ScalingLayer class.\n"
+                         << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+                         << "Standard deviation of variable " << i << " is zero.\n"
+                         << "Those variables won't be scaled.\n";
+                }
 
-                    outputs(j) = inputs(j);
+                outputs(j) = inputs(j);
+            }
+            else
+            {
+                if(scaling_methods(j) == NoScaling)
+                {
+                    outputs(i,j) = inputs(i,j);
+                }
+                else if(scaling_methods(j) == MinimumMaximum)
+                {
+                    const type slope =
+                                (max_range-min_range)/(descriptives(j).maximum-descriptives(j).minimum);
+
+                    const type intercept =
+                                (min_range*descriptives(j).maximum-max_range*descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum);
+
+                    outputs(i,j) = inputs(i,j)*slope + intercept;
+                }
+                else if(scaling_methods(j) == MeanStandardDeviation)
+                {
+                    const type slope = static_cast<type>(1)/descriptives(j).standard_deviation;
+
+                    const type intercept = -descriptives(j).mean/descriptives(j).standard_deviation;
+
+                    outputs(i,j) = inputs(i,j)*slope + intercept;
+
+                }
+                else if(scaling_methods(j) == StandardDeviation)
+                {
+                    outputs(i,j) = inputs(i,j)/descriptives(j).standard_deviation;
                 }
                 else
                 {
-                    if(scaling_methods(j) == NoScaling)
-                    {
-                        outputs(i,j) = inputs(i,j);
-                    }
-                    else if(scaling_methods(j) == MinimumMaximum)
-                    {
-                        const type slope =
-                                    (max_range-min_range)/(descriptives(j).maximum-descriptives(j).minimum);
+                    ostringstream buffer;
 
-                        const type intercept =
-                                    (min_range*descriptives(j).maximum-max_range*descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum);
+                    buffer << "OpenNN Exception: ScalingLayer class\n"
+                           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+                           << "Unknown scaling method.\n";
 
-                        outputs(i,j) = inputs(i,j)*slope + intercept;
-                    }
-                    else if(scaling_methods(j) == MeanStandardDeviation)
-                    {
-                        const type slope = static_cast<type>(1)/descriptives(j).standard_deviation;
-
-                        const type intercept = -descriptives(j).mean/descriptives(j).standard_deviation;
-
-                        outputs(i,j) = inputs(i,j)*slope + intercept;
-
-                    }
-                    else if(scaling_methods(j) == StandardDeviation)
-                    {
-                        outputs(i,j) = inputs(i,j)/descriptives(j).standard_deviation;
-                    }
-                    else
-                    {
-                        ostringstream buffer;
-
-                        buffer << "OpenNN Exception: ScalingLayer class\n"
-                               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                               << "Unknown scaling method.\n";
-
-                        throw logic_error(buffer.str());
-                    }
+                    throw logic_error(buffer.str());
                 }
             }
         }
     }
-    else if(inputs.rank() == 4)
-    {
-        /*
+
+    return outputs;
+}
+
+
+Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
+{
+    Tensor<type, 4> outputs;
 
         const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
         ostringstream buffer;
 
@@ -901,65 +892,58 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
 #endif
 
-        const Index points_number = inputs.dimension(0);
+    const Index points_number = inputs.dimension(0);
 
-//        outputs.set(points_number, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3));
-        outputs.resize(points_number, inputs.dimension(1));
-
-        for(Index i = 0; i < points_number; i++)
+    for(Index i = 0; i < points_number; i++)
+    {
+        for(Index j = 0; j < neurons_number; j++)
         {
-            for(Index j = 0; j < neurons_number; j++)
+            const Index channel_index = j%inputs.dimension(1);
+            const Index row_index = (j/(inputs.dimension(1)))%inputs.dimension(2);
+            const Index column_index = (j/(inputs.dimension(1) * inputs.dimension(2)))%inputs.dimension(3);
+
+            if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
             {
-                Index channel_index = j%(inputs.dimension(1));
-                Index row_index = (j/(inputs.dimension(1)))%(inputs.dimension(2));
-                Index column_index = (j/(inputs.dimension(1) * inputs.dimension(2)))%(inputs.dimension(3));
-
-                if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
+                if(display)
                 {
-                    if(display)
-                    {
-                        cout << "OpenNN Warning: ScalingLayer class.\n"
-                             << "Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const method.\n"
-                             << "Standard deviation of variable " << i << " is zero.\n"
-                             << "Those variables won't be scaled.\n";
-                    }
+                    cout << "OpenNN Warning: ScalingLayer class.\n"
+                         << "Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const method.\n"
+                         << "Standard deviation of variable " << i << " is zero.\n"
+                         << "Those variables won't be scaled.\n";
+                }
 
-                    outputs(j) = inputs(j);
+                outputs(j) = inputs(j);
+            }
+            else
+            {
+                if(scaling_methods(j) == NoScaling)
+                {
+                    outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index);
+                }
+                else if(scaling_methods(j) == MinimumMaximum)
+                {
+                    outputs(i, channel_index, row_index, column_index) = static_cast<type>(2)*(inputs(i, channel_index, row_index, column_index) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1);
+                }
+                else if(scaling_methods(j) == MeanStandardDeviation)
+                {
+                    outputs(i, channel_index, row_index, column_index) = (inputs(i, channel_index, row_index, column_index) - descriptives(j).mean)/descriptives(j).standard_deviation;
+                }
+                else if(scaling_methods(j) == StandardDeviation)
+                {
+                    outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index)/descriptives(j).standard_deviation;
                 }
                 else
                 {
+                    ostringstream buffer;
 
-                    if(scaling_methods(j) == NoScaling)
-                    {
-                        outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index);
-                    }
-                    else if(scaling_methods(j) == MinimumMaximum)
-                    {
-                        outputs(i, channel_index, row_index, column_index) = static_cast<type>(2)*(inputs(i, channel_index, row_index, column_index) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1);
-                    }
-                    else if(scaling_methods(j) == MeanStandardDeviation)
-                    {
-                        outputs(i, channel_index, row_index, column_index) = (inputs(i, channel_index, row_index, column_index) - descriptives(j).mean)/descriptives(j).standard_deviation;
-                    }
-                    else if(scaling_methods(j) == StandardDeviation)
-                    {
-                        outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index)/descriptives(j).standard_deviation;
-                    }
-                    else
-                    {
-                        ostringstream buffer;
+                    buffer << "OpenNN Exception: ScalingLayer class\n"
+                           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+                           << "Unknown scaling method.\n";
 
-                        buffer << "OpenNN Exception: ScalingLayer class\n"
-                               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                               << "Unknown scaling method.\n";
-
-                        throw logic_error(buffer.str());
-                    }
-
+                    throw logic_error(buffer.str());
                 }
             }
         }
-        */
     }
 
     return outputs;
@@ -1052,7 +1036,7 @@ string ScalingLayer::write_standard_deviation_expression(const Tensor<string, 1>
 
 /// Returns a string with the expression of the inputs scaling process.
 
-string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>&) const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -1506,7 +1490,6 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 }
-
 
 }
 

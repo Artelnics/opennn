@@ -29,30 +29,12 @@ void BoundingLayerTest::test_constructor()
 
    assert_true(bounding_layer_1.get_neurons_number() == 0, LOG);
 
-   // Copy constructor
-
-   bounding_layer_1.set(2);
-
-   BoundingLayer bounding_layer2(bounding_layer_1);
-
-   assert_true(bounding_layer2.get_neurons_number() == 2, LOG);
 }
 
 
 void BoundingLayerTest::test_destructor()
 {
    cout << "test_destructor\n";
-}
-
-
-void BoundingLayerTest::test_assignment_operator()
-{
-   cout << "test_assignment_operator\n";
-
-   BoundingLayer bounding_layer_1;
-   BoundingLayer bounding_layer_2 = bounding_layer_1;
-
-   assert_true(bounding_layer_2.get_neurons_number() == 0, LOG);
 }
 
 
@@ -210,11 +192,6 @@ void BoundingLayerTest::run_test_case()
 
    test_constructor();
    test_destructor();
-
-
-   // Assignment operators methods
-
-   test_assignment_operator();
 
 
    // Get methods

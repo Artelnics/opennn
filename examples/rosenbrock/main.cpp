@@ -15,8 +15,6 @@
 #include <string>
 #include <time.h>
 
-#include <omp.h>
-
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
@@ -25,7 +23,7 @@ using namespace OpenNN;
 using namespace std;
 using namespace Eigen;
 
-int main(void)
+int main()
 {          
     try
     {
@@ -33,35 +31,29 @@ int main(void)
 
         // Data Set
 
-        const Index samples = 1000000;
-        const Index variables = 1000;
+        const Index samples = 100;
+        const Index variables = 5;
 
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
+
         data_set.set_training();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables_minimum_maximum();
-
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables_minimum_maximum();
 
         // Neural network
 
         const Index inputs_number = data_set.get_input_variables_number();
-
         const Index hidden_neurons_number = variables;
-
         const Index outputs_number = data_set.get_target_variables_number();
 
-        Tensor<Index, 1> architecture(3);
-
-        architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
-
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
 
         // Training strategy
 
@@ -73,9 +65,9 @@ int main(void)
 
         training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(1);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(100);
 
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1000);
 
         training_strategy.perform_training();
 
@@ -84,7 +76,6 @@ int main(void)
         system("pause");
 
         return 0;
-
     }
     catch(exception& e)
     {

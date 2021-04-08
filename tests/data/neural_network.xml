@@ -1,11 +1,55 @@
 <NeuralNetwork>
    <Inputs>
-      <InputsNumber>0</InputsNumber>
+      <InputsNumber>1</InputsNumber>
+      <Input Index="1"></Input>
    </Inputs>
    <Layers>
-      <LayersTypes></LayersTypes>
+      <LayersTypes>Scaling Perceptron Perceptron Unscaling Bounding</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>1</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>-1</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer_0</LayerName>
+         <InputsNumber>1</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>-0.432312 -0.996399</Parameters>
+      </PerceptronLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer_1</LayerName>
+         <InputsNumber>1</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Linear</ActivationFunction>
+         <Parameters>0.137878 -0.0684204</Parameters>
+      </PerceptronLayer>
+      <UnscalingLayer>
+         <UnscalingNeuronsNumber>1</UnscalingNeuronsNumber>
+         <Descriptives Index="1">
+            <Minimum>-1</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <UnscalingMethod>MinimumMaximum</UnscalingMethod>
+         </Descriptives>
+      </UnscalingLayer>
+      <BoundingLayer>
+         <BoundingNeuronsNumber>1</BoundingNeuronsNumber>
+         <Item Index="1">
+            <LowerBound>-3.40282e+38</LowerBound>
+            <UpperBound>3.40282e+38</UpperBound>
+         </Item>
+         <UseBoundingLayer>1</UseBoundingLayer>
+      </BoundingLayer>
    </Layers>
    <Outputs>
-      <OutputsNumber>0</OutputsNumber>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1"></Output>
    </Outputs>
 </NeuralNetwork>

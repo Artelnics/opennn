@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "testing_analysis_test.h"
-#include <omp.h>
 
 TestingAnalysisTest::TestingAnalysisTest() : UnitTesting() 
 {
@@ -1381,8 +1380,6 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
 }
 
 
-/// @todo Complete tests
-
 void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 {
     cout << "test_calculate_multiple_classification_rates\n";
@@ -1394,6 +1391,10 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
+
+    Tensor<Index, 1> testing_indices;
+
+    Tensor<Tensor<Index,1>, 2> multiple_classification_rates;
 
     // Test
 
@@ -1420,20 +1421,21 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     outputs(7,0) = 0; outputs(7,0) = 0; outputs(7,2) = 1;
     outputs(8,0) = 1; outputs(8,1) = 0; outputs(8,2) = 0;
 
-    Tensor<Index, 1> testing_indices(9);
+    testing_indices.resize(9);
     testing_indices.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8});
 
-    Tensor<Tensor<Index,1>, 2> multiple_classification_rates = ta.calculate_multiple_classification_rates(targets, outputs, testing_indices);
+    multiple_classification_rates = ta.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
-//    assert_true(multiple_classification_rates(0,0) == 0, LOG);
-//    assert_true(multiple_classification_rates(0,1) == 3, LOG);
-//    assert_true(multiple_classification_rates(0,2) == 6, LOG);
-//    assert_true(multiple_classification_rates(1,0) == 4, LOG);
-//    assert_true(multiple_classification_rates(1,1) == 1, LOG);
-//    assert_true(multiple_classification_rates(1,2) == 7, LOG);
-//    assert_true(multiple_classification_rates(2,0) == 8, LOG);
-//    assert_true(multiple_classification_rates(2,1) == 5, LOG);
-//    assert_true(multiple_classification_rates(2,2) == 2, LOG);
+    assert_true(multiple_classification_rates(0,0)(0) == 0, LOG);
+    assert_true(multiple_classification_rates(0,1)(0) == 3, LOG);
+    assert_true(multiple_classification_rates(0,2)(0) == 6, LOG);
+    assert_true(multiple_classification_rates(1,0)(0) == 4, LOG);
+    assert_true(multiple_classification_rates(1,1)(0) == 1, LOG);
+    assert_true(multiple_classification_rates(1,2)(0) == 7, LOG);
+    assert_true(multiple_classification_rates(2,0)(0) == 8, LOG);
+    assert_true(multiple_classification_rates(2,1)(0) == 5, LOG);
+    assert_true(multiple_classification_rates(2,2)(0) == 2, LOG);
+
 }
 
 

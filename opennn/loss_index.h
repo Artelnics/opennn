@@ -24,7 +24,6 @@
 
 #include "data_set.h"
 #include "neural_network.h"
-#include "numerical_differentiation.h"
 
 namespace OpenNN
 {
@@ -70,7 +69,7 @@ public:
 
    inline NeuralNetwork* get_neural_network_pointer() const 
    {
-        #ifdef __OPENNN_DEBUG__
+        #ifdef OPENNN_DEBUG
 
         if(!neural_network_pointer)
         {
@@ -92,7 +91,7 @@ public:
 
    inline DataSet* get_data_set_pointer() const 
    {
-        #ifdef __OPENNN_DEBUG__
+        #ifdef OPENNN_DEBUG
 
         if(!data_set_pointer)
         {
@@ -153,19 +152,26 @@ public:
                                        NeuralNetworkForwardPropagation&,
                                        LossIndexBackPropagation&) const = 0;
 
+   virtual void calculate_output_delta(const DataSetBatch&,
+                                       NeuralNetworkForwardPropagation&,
+                                       LossIndexBackPropagationLM&) const {}
+
    // Numerical differentiation
 
    type calculate_eta() const;
    type calculate_h(const type&) const;
 
-   Tensor<type, 1> calculate_error_gradient_numerical_differentiation(LossIndex*) const;
+   Tensor<type, 1> calculate_gradient_numerical_differentiation();
 
-   Tensor<type, 2> calculate_Jacobian_numerical_differentiation(LossIndex*) const;
-
+   Tensor<type, 2> calculate_Jacobian_numerical_differentiation();
 
    void calculate_errors(const DataSetBatch&,
                          const NeuralNetworkForwardPropagation&,
                          LossIndexBackPropagation&) const;
+
+   void calculate_errors(const DataSetBatch&,
+                         const NeuralNetworkForwardPropagation&,
+                         LossIndexBackPropagationLM&) const;
 
    void calculate_squared_errors(const DataSetBatch&,
                                  const NeuralNetworkForwardPropagation&,
@@ -187,13 +193,12 @@ public:
                        NeuralNetworkForwardPropagation&,
                        LossIndexBackPropagationLM&) const;
 
-   void calculate_error_terms_output_jacobian(const DataSetBatch&,
-                                              NeuralNetworkForwardPropagation&,
-                                              LossIndexBackPropagation&,
-                                              LossIndexBackPropagationLM&) const;
+   void calculate_squared_errors_jacobian(const DataSetBatch&,
+                                          NeuralNetworkForwardPropagation&,
+                                          LossIndexBackPropagationLM&) const;
 
    virtual void calculate_gradient(const DataSetBatch&,
-                                   LossIndexBackPropagationLM&) const {}
+                                   LossIndexBackPropagationLM&) const;
 
    virtual void calculate_hessian_approximation(const DataSetBatch&,
                                                 LossIndexBackPropagationLM&) const {}
@@ -211,13 +216,13 @@ public:
                                NeuralNetworkForwardPropagation&,
                                LossIndexBackPropagation&) const;
 
+   void calculate_layers_delta(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagationLM&) const;
+
    void calculate_error_gradient(const DataSetBatch&,
                                  const NeuralNetworkForwardPropagation&,
                                  LossIndexBackPropagation&) const;
-
-   void calculate_error_terms_Jacobian(const DataSetBatch&,
-                                       const NeuralNetworkForwardPropagation&,
-                                       LossIndexBackPropagationLM&) const;
 
    // Serialization methods
 
@@ -283,10 +288,6 @@ protected:
     #include "../../opennn-cuda/opennn_cuda/loss_index_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/loss_index_mkl.h"
-#endif
-
 };
 
 
@@ -340,8 +341,7 @@ struct LossIndexBackPropagation
         regularization_gradient.setConstant(0);
     }
 
-
-    void print()
+    void print() const
     {
         cout << "Error:" << endl;
         cout << error << endl;
@@ -386,13 +386,40 @@ struct LossIndexBackPropagationLM
 
     LossIndexBackPropagationLM() {}
 
-    LossIndexBackPropagationLM(const Index& parameters_number, const Index& samples_number)
+    explicit LossIndexBackPropagationLM(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
     {
+        if(new_batch_samples_number == 0) return;
+
+        set(new_batch_samples_number, new_loss_index_pointer);
+    }
+
+    void set(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
+    {
+        batch_samples_number = new_batch_samples_number;
+
+        loss_index_pointer = new_loss_index_pointer;
+
+        NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+        const Index outputs_number = neural_network_pointer->get_outputs_number();
+
+        neural_network.set(batch_samples_number, neural_network_pointer);
+
+        error = 0;
+
         loss = 0;
+
         gradient.resize(parameters_number);
-        squared_errors_Jacobian.resize(samples_number, parameters_number);
+
+        squared_errors_jacobian.resize(batch_samples_number, parameters_number);
+
         hessian.resize(parameters_number, parameters_number);
-        squared_errors.resize(samples_number);
+
+        errors.resize(batch_samples_number, outputs_number);
+
+        squared_errors.resize(batch_samples_number);
     }
 
     void sum_hessian_diagonal(const type& value)
@@ -405,13 +432,20 @@ struct LossIndexBackPropagationLM
             hessian(i,i) += value;
     }
 
+    LossIndex* loss_index_pointer = nullptr;
+
+    Index batch_samples_number = 0;
+
     type error;
     type loss;
 
     Tensor<type, 1> parameters;
 
+    NeuralNetworkBackPropagation neural_network;
+
+    Tensor<type, 2> errors;
     Tensor<type, 1> squared_errors;
-    Tensor<type, 2> squared_errors_Jacobian;
+    Tensor<type, 2> squared_errors_jacobian;
 
     Tensor<type, 1> gradient;
     Tensor<type, 2> hessian;

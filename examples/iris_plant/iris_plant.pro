@@ -1,7 +1,7 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.opennn.net                                                                      #
+#   www.opennn.net                                                                                #
 #                                                                                                 #
 #   I R I S   P L A N T   P R O J E C T                                                           #
 #                                                                                                 #
@@ -30,8 +30,8 @@ QMAKE_LFLAGS += -static-libstdc++
 QMAKE_LFLAGS += -static
 
 win32:!win32-g++{
-QMAKE_CXXFLAGS+= -arch:AVX
-QMAKE_CFLAGS+= -arch:AVX
+#QMAKE_CXXFLAGS+= -arch:AVX
+#QMAKE_CFLAGS+= -arch:AVX
 }
 
 QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp

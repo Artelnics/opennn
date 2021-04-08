@@ -57,11 +57,11 @@ public:
 
     /// Enumeration of all the available order selection algorithms.
 
-    enum NeuronsSelectionMethod{NO_NEURONS_SELECTION, GROWING_NEURONS};
+    enum NeuronsSelectionMethod{GROWING_NEURONS};
 
     /// Enumeration of all the available inputs selection algorithms.
 
-    enum InputsSelectionMethod{NO_INPUTS_SELECTION, GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM};
+    enum InputsSelectionMethod{GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM};
 
     // Get methods
 
@@ -91,18 +91,14 @@ public:
     void set_inputs_selection_method(const InputsSelectionMethod&);
     void set_inputs_selection_method(const string&);
 
-    void set_approximation(const bool&);
-
     // Model selection methods
 
     void check() const;
 
-    ModelSelectionResults perform_neurons_selection();
+    NeuronsSelectionResults perform_neurons_selection();
 
-    ModelSelectionResults perform_inputs_selection();
-/*
-    ModelSelectionResults perform_model_selection();
-*/
+    InputsSelectionResults perform_inputs_selection();
+
     // Serialization methods
     
     void from_XML(const tinyxml2::XMLDocument&);
@@ -149,36 +145,6 @@ private:
     /// Display messages to screen.
 
     bool display = true;
-};
-
-
-/// This structure contains the results from the model selection process.
-
-struct ModelSelectionResults
-{
-    /// Default constructor.
-
-    explicit ModelSelectionResults();
-
-    // Neurons selection
-
-    /// Pointer to a structure with the results from the growing neurons selection algorithm.
-
-    GrowingNeuronsResults* growing_neurons_results_pointer = nullptr;
-
-    // Inputs selection
-
-    /// Pointer to a structure with the results from the growing inputs selection algorithm.
-
-    GrowingInputsResults* growing_inputs_results_pointer = nullptr;
-
-    /// Pointer to a structure with the results from the pruning inputs selection algorithm.
-
-    PruningInputsResults* pruning_inputs_results_pointer = nullptr;
-
-    /// Pointer to a structure with the results from the genetic inputs selection algorithm.
-
-    GeneticAlgorithmResults* genetic_algorithm_results_pointer = nullptr;
 };
 
 }

@@ -28,12 +28,12 @@ void LevenbergMarquardtAlgorithmTest::test_constructor()
    // Default constructor
 
    LevenbergMarquardtAlgorithm lma1; 
-   assert_true(lma1.has_loss_index() == false, LOG);
+   assert_true(!lma1.has_loss_index(), LOG);
 
    // Loss index constructor
 
    LevenbergMarquardtAlgorithm lma2(&sum_squared_error);
-   assert_true(lma2.has_loss_index() == true, LOG);
+   assert_true(lma2.has_loss_index(), LOG);
 }
 
 
@@ -168,7 +168,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   terms = mean_squared_error.calculate_training_error_terms(outputs, targets);
 
-//   terms_Jacobian = mse.calculate_error_terms_Jacobian(inputs,
+//   terms_Jacobian = mse.calculate_squared_errors_jacobian(inputs,
 //                                                       neural_network.forward_propagate(inputs),
 //                                                       mean_squared_error.calculate_output_delta(outputs,targets)));
 
@@ -193,7 +193,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   terms = sum_squared_error.calculate_training_error_terms();
 
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
 //   gradient = lma.calculate_gradient(terms, terms_Jacobian);
 
@@ -209,7 +209,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   terms= sum_squared_error.calculate_training_error_terms();
 
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
 //   gradient = lma.calculate_gradient(terms, terms_Jacobian);
 
@@ -253,7 +253,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 //   data_set.set(1,2,2);
 //   data_set.initialize_data(0.0);
 
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
 //   hessian_approximation = lma.calculate_hessian_approximation(terms_Jacobian);
 
@@ -271,7 +271,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 //   data_set.set(1,2,3);
 //   data_set.set_data_random();
 
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
 //   hessian_approximation = lma.calculate_hessian_approximation(terms_Jacobian);
 
@@ -295,7 +295,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
 //   numerical_hessian = nd.calculate_hessian(pf, &LossIndex::calculate_training_loss, parameters);
 
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
 //   hessian_approximation = lma.calculate_hessian_approximation(terms_Jacobian);
 
@@ -312,8 +312,8 @@ void LevenbergMarquardtAlgorithmTest::test_set_reserve_all_training_history()
    lma.set_reserve_all_training_history(true);
 
 
-   assert_true(lma.get_reserve_training_error_history() == true, LOG);
-   assert_true(lma.get_reserve_selection_error_history() == true, LOG);
+   assert_true(lma.get_reserve_training_error_history(), LOG);
+   assert_true(lma.get_reserve_selection_error_history(), LOG);
 }
 
 
@@ -437,7 +437,7 @@ void LevenbergMarquardtAlgorithmTest::test_resize_training_history()
 
    lma.set_reserve_all_training_history(true);
 
-   OptimizationAlgorithmResults lmatr;//(&lma);
+   TrainingResults lmatr;//(&lma);
 
    lmatr.resize_training_history(1);
 
@@ -485,8 +485,8 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
 
 //   lma.perform_Householder_QR_decomposition(a, b);
 
-//   assert_true(a == 1.0, LOG);
-//   assert_true(b == 0.0, LOG);
+   assert_true(is_equal(a, 1.0), LOG);
+   assert_true(is_zero(b), LOG);
 
    // Test
 

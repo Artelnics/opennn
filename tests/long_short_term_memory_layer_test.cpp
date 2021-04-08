@@ -7,8 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "long_short_term_memory_layer_test.h"
-#include <omp.h>
-
 
 LongShortTermMemoryLayerTest::LongShortTermMemoryLayerTest() : UnitTesting()
 {
@@ -47,7 +45,7 @@ void LongShortTermMemoryLayerTest::test_constructor()
 
     assert_true(long_short_term_memory_layer.get_parameters_number() == 12, LOG);
 
-    //Test
+    // Test
 
     inputs_number = 2;
     neurons_number = 3;
@@ -64,19 +62,7 @@ void LongShortTermMemoryLayerTest::test_destructor()
 
 }
 
-void LongShortTermMemoryLayerTest::test_assignment_operator()
-{
-   cout << "test_assignment_operator\n";
 
-//   LongShortTermMemoryLayer long_short_term_memory_layer_1;
-
-//   long_short_term_memory_layer_1.set(4,3);
-
-//   LongShortTermMemoryLayer long_short_term_memory_layer_2 = long_short_term_memory_layer_1;
-
-//   assert_true(long_short_term_memory_layer_1.get_inputs_number() == 4, LOG);
-//   assert_true(long_short_term_memory_layer_1.get_neurons_number() == 3, LOG);
-}
 
 void LongShortTermMemoryLayerTest::test_get_inputs_number()
 {
@@ -101,6 +87,7 @@ void LongShortTermMemoryLayerTest::test_get_inputs_number()
    assert_true(long_short_term_memory_layer.get_inputs_number() == inputs_number, LOG);
    assert_true(long_short_term_memory_layer.get_neurons_number() == neurons_number, LOG);
 }
+
 
 void LongShortTermMemoryLayerTest::test_get_neurons_number()
 {
@@ -148,6 +135,7 @@ void LongShortTermMemoryLayerTest::test_get_activation_function()
    long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::Linear);
    assert_true(long_short_term_memory_layer.get_activation_function() == LongShortTermMemoryLayer::Linear, LOG);
 }
+
 
 void LongShortTermMemoryLayerTest::test_write_activation_function()
 {
@@ -217,6 +205,7 @@ void LongShortTermMemoryLayerTest::test_write_recurrent_activation_function()
    assert_true(long_short_term_memory_layer.write_recurrent_activation_function() == "Linear", LOG);
 }
 
+
 void LongShortTermMemoryLayerTest::test_get_parameters_number()
 {
    cout << "test_get_parameters_number\n";
@@ -246,7 +235,6 @@ void LongShortTermMemoryLayerTest::test_get_parameters_number()
    long_short_term_memory_layer.set(4, 2);
 
    assert_true(long_short_term_memory_layer.get_parameters_number() == 28 * 2, LOG);
-
 }
 
 
@@ -402,8 +390,6 @@ void LongShortTermMemoryLayerTest::test_set_parameters()
     LongShortTermMemoryLayer long_short_term_memory_layer(1, 1);
 
     Tensor<type, 1> parameters(12);
-
-//    parameters.initialize_sequential();
     parameters.setRandom();
 
     long_short_term_memory_layer.set_parameters(parameters,0);
@@ -567,58 +553,6 @@ void LongShortTermMemoryLayerTest::test_set_parameters_random()
 }
 
 
-void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
-{
-   cout << "test_calculate_parameters_norm\n";
-
-//   LongShortTermMemoryLayer long_short_term_memory_layer;
-
-//   Tensor<type, 1> parameters;
-
-//   type parameters_norm = 0;
-
-   // Test
-
-//   long_short_term_memory_layer.set(1, 2);
-//   long_short_term_memory_layer.set_parameters_constant(0.0);
-//   parameters=long_short_term_memory_layer.get_parameters();
-
-//   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
-
-//   assert_true(parameters == 0.0, LOG);
-//   assert_true(parameters.size() == 32, LOG);
-//   assert_true(parameters_norm == 0.0, LOG);
-
-   // Test
-
-//   long_short_term_memory_layer.set(4, 2);
-
-//   long_short_term_memory_layer.set_biases_constant(2.0);
-//   long_short_term_memory_layer.set_biases_constant(1.0);
-//   long_short_term_memory_layer.initialize_recurrent_weights(-0.5);
-
-//   parameters = long_short_term_memory_layer.get_parameters();
-
-//   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
-
-//   assert_true(abs(parameters_norm - l2_norm(parameters)) < 1.0e-6, LOG);
-
-
-   // Test
-
-//   long_short_term_memory_layer.set(4, 2);
-
-//   parameters.resize(56);
-
-//   parameters.setConstant(1.0);
-
-//   long_short_term_memory_layer.set_parameters(parameters);
-
-//   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
-
-//   assert_true(abs(parameters_norm - l2_norm(parameters)) < 1.0e-6, LOG);
-}
-
 void LongShortTermMemoryLayerTest::test_get_parameters()
 {
    cout << "test_get_parameters\n";
@@ -665,7 +599,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 
 //   Index samples = 3;
 
-//    //Test
+//    // Test
 
 //   const Index neurons_number = 2;
 //   const Index inputs_number = 3;
@@ -686,14 +620,12 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   weights.initialize_sequential();
 //   recurrent_weights.initialize_sequential();
 //   biases.initialize_sequential();
-
+//   for(Index i = 0; i < size; i++) x(i) = i;
 //   parameters = weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases.to_vector());
 
 //   long_short_term_memory_layer.set_parameters_random();
 
 //   parameters = long_short_term_memory_layer.get_parameters();
-
-//   long_short_term_memory_layer.set_thread_pool_device(thread_pool_device);
 
 //   long_short_term_memory_layer.set_forget_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
 //   long_short_term_memory_layer.set_input_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
@@ -727,7 +659,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(2) == long_short_term_memory_layer.calculate_outputs(inputs,biases, weights, recurrent_weights)(2), LOG);
 
 
-//   //Test
+//   // Test
 
 //   long_short_term_memory_layer.set(1, 2 );
 
@@ -756,10 +688,6 @@ void LongShortTermMemoryLayerTest::run_test_case()
    test_constructor();
 
    test_destructor();
-
-   // Assignment operators methods
-
-   test_assignment_operator();
 
    // Inputs and perceptrons
 
@@ -805,10 +733,6 @@ void LongShortTermMemoryLayerTest::run_test_case()
    test_initialize_recurrent_weights();
 
    test_set_parameters_random();
-
-   // Parameters norm
-
-   test_calculate_parameters_norm();
 
    // Calculate outputs
 

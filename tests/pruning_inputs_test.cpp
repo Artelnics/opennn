@@ -23,10 +23,10 @@ void PruningInputsTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     PruningInputs pi1(&training_strategy);
 
@@ -69,9 +69,9 @@ void PruningInputsTest::test_perform_inputs_selection()
 
 //    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-//    PruningInputsResults* pir;
+//    InputsSelectionResults* pir;
 
-//    // Test
+    // Test
 
 //    data_set.generate_inputs_selection_data(40,3);
 
@@ -81,7 +81,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
 //    neural_network.set(NeuralNetwork::Approximation, architecture);
 
-//    TrainingStrategy ts(&neural_network, &data_set);
+//    TrainingStrategy training_strategy(&neural_network, &data_set);
 
 //    PruningInputs pi(&ts);
 
@@ -99,7 +99,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 //    pi.delete_parameters_history();
 //    pi.delete_loss_history();
 
-//    // Test
+    // Test
 
 //    data_set.generate_sum_data(40,3);
 

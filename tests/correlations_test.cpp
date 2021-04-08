@@ -20,7 +20,7 @@ CorrelationsTest::~CorrelationsTest()
 
 void CorrelationsTest::test_linear_correlation()
 {
-    cout << "test_calculate_linear_correlation\n";
+    cout << "test_linear_correlation\n";
 
     // Perfect case
 
@@ -30,9 +30,6 @@ void CorrelationsTest::test_linear_correlation()
     vector2.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 
     const type solution = 1;
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     assert_true(linear_correlation(thread_pool_device, vector1, vector2) - solution <= 0.000001, LOG);
 
@@ -45,14 +42,14 @@ void CorrelationsTest::test_linear_correlation()
 
     Index size = 100;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> y(size);
 
     type correlation;
 
     for(Index i = 0; i < size; i++) y[i] = 2*x[i];
 
-    correlation = linear_correlation(thread_pool_device,x,y);
+    correlation = linear_correlation(thread_pool_device, x, y);
 
    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
 
@@ -60,51 +57,44 @@ void CorrelationsTest::test_linear_correlation()
 
     y = -1.0*x;
 
-    correlation = linear_correlation(thread_pool_device,x,y);
+    correlation = linear_correlation(thread_pool_device, x, y);
     assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
     assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 
 }
 
 
+/// @todo
+
 void CorrelationsTest::test_spearman_linear_correlation()
 {
-    cout << "test_calculate_spearman_linear_correlation\n";
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+    cout << "test_spearman_linear_correlation\n";
 
     Index size = 100;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> y(size);
 
     type correlation;
 
     for(Index i = 0; i < size; i++) y[i] = 2*x[i];
 
-    correlation = rank_linear_correlation(thread_pool_device,x,y);
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
 
-   //@todo(assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
-   //@todo(assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
+   assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+   assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
 
     y = -1.0*x;
 
-    assert_true(abs(rank_linear_correlation(thread_pool_device,x,y)) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(rank_linear_correlation(thread_pool_device, x, y)) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
     assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
 
     y.setConstant(static_cast<type>(0.1));
-    correlation = rank_linear_correlation(thread_pool_device,x,y);
-    //@todo(assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
     assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
-}
 
-void CorrelationsTest::test_linear_correlation_missing_values()
-{
-    cout << "test_calculate_linear_correlation_missing_values\n";
-
-//Test missing values
+    // Test missing values
 
     Tensor<type, 1> vector;
     vector.resize(5);
@@ -122,40 +112,79 @@ void CorrelationsTest::test_linear_correlation_missing_values()
     target[3] = static_cast<type>(NAN);
     target[4] = 5;
 
-    //@todo(type linear_correlation = linear_correlation_missing_values(thread_pool_device, vector, target);)
+//    type linear_correlation = linear_correlation(thread_pool_device, vector, target);
 
-    //@todo(assert_true(abs(linear_correlation - 1.0) < 1.0e-3, LOG );)
+//    assert_true(abs(linear_correlation - 1.0) < 1.0e-3, LOG );
 }
 
 
 void CorrelationsTest::test_rank_linear_correlation()
 {
-    cout << "test_calculate_rank_linear_correlation()\n";
+    cout << "test_rank_linear_correlation()\n";
 
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-    Index size = 10;
-    Tensor<type, 1> x(size);
-//    x.initialize_sequential();
-    Tensor<type, 1> y(size);
+    Tensor<type, 1> x;
+    Tensor<type, 1> y;
 
     type correlation;
 
-    for(Index i = 0; i < size; i++) y[i] = 2*x[i];
+    // Test
 
-    correlation = rank_linear_correlation(thread_pool_device,x,y);
+    x.resize(10);
+    initialize_sequential(x);
 
-    //@todo(assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
+    y = 2*x;
 
-    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
+
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+
+    // Test
 
     y = -1.0*x;
 
-    correlation = rank_linear_correlation(thread_pool_device,x,y);
-    //@todo(assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
+
     assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+
+    // Test missing values
+
+    x.resize(5);
+    x[0] = 1;
+    x[1] = 2;
+    x[2] = 3;
+    x[3] = 4;
+    x[4] = 5;
+
+    y.resize(5);
+    y[0] = 1;
+    y[1] = 2;
+    y[2] = 3;
+    y[3] = static_cast<type>(NAN);
+    y[4] = 5;
+
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
+
+    assert_true(abs(correlation - static_cast<type>(1.0)) < static_cast<type>(1.0e-3), LOG);
+
+    // Test with ties
+
+    x.resize(5);
+    x[0] = 1;
+    x[1] = 1;
+    x[2] = 3;
+    x[3] = static_cast<type>(NAN);
+    x[4] = 5;
+
+    y.resize(5);
+    y[0] = 1;
+    y[1] = 1;
+    y[2] = 3;
+    y[3] = static_cast<type>(NAN);
+    y[4] = 5;
+
+    correlation = rank_linear_correlation(thread_pool_device, x, y);
+
+    assert_true(abs(correlation - static_cast<type>(1.0)) < static_cast<type>(1.0e-3), LOG );
 }
 
 
@@ -163,17 +192,25 @@ void CorrelationsTest::test_logistic_correlation()
 {
     cout << "test_logistic_correlation\n";
 
-    const Index size = 100;
-    Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    Index size;
 
-    Tensor<type, 1> y(size);
+    Tensor<type, 1> x;
+    Tensor<type, 1> y;
+
     type correlation;
+
+    // Test
+
+    size = 100;
+    x.resize(size);
+    initialize_sequential(x);
+
+    y.resize(size);
     y.setConstant(0.0);
 
-    for(Index i= size - (size/2); i < size; i++) y[i] = 1;
+    for(Index i = size - size/2; i < size; i++) y[i] = 1;
 
-//    correlation = logistic_correlation_missing_values(x.to_column_matrix(), y);
+//    correlation = logistic_correlation(thread_pool_device, x, y);
 
 //    assert_true(correlation <= 0.95, LOG);
 
@@ -192,163 +229,13 @@ void CorrelationsTest::test_logistic_correlation()
 //    correlation = logistic_correlation(x.to_column_matrix(), y);
 
 //    assert_true(abs(correlation - 0.0) < numeric_limits<type>::min(), LOG);
-}
-
-
-void CorrelationsTest::test_rank_logistic_correlation()
-{
-    cout << "test_calculate_rank_logistic_correlation\n";
-
-    const Index size = 10;
-    Tensor<type, 1> x(size);
-//    x.initialize_sequential();
-
-    Tensor<type, 1> y(size);
-
-    type correlation;
-
-    y.setConstant(0.0);
-    for(Index i= size - (size/2); i < size; i++) y[i] = 1;
-//    correlation = rank_logistic_correlation(thread_pool_device, x,y);
-//    assert_true(correlation <= 1, LOG);
-
-//    y.setConstant(1.0);
-//    for(Index i= size - (size/2); i < size; i++) y[i] = 0;
-//    correlation = rank_logistic_correlation(x,y);
-//    assert_true(correlation >= -1, LOG);
-
-//    y.setConstant(0.0);
-//    correlation = rank_logistic_correlation(x,y);
-//    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
-
-}
-
-
-void CorrelationsTest::test_logistic_error_gradient()
-{
-    cout << "test_logistic_error_gradient\n";
-
-    Tensor<type, 1> solution(2);
-
-//    solution.setValues({0.09296,0.152088});
-
-    const Tensor<type, 1> error_gradient;// = logistic_error_gradient(0,1,{1, 2, 3, 4, 5, 6}, {0, 0, 0, 1, 1, 1});
-
-//    assert_true(abs(solution[0] - error_gradient[0]) <= static_cast<type>(0.001), LOG);
-//    assert_true(abs(solution[1] - error_gradient[1]) <= static_cast<type>(0.001), LOG);
-
-}
-
-
-void CorrelationsTest::test_logistic_error_gradient_missing_values()
-{
-    cout << "test_logistic_error_gradient\n";
-
-    Tensor<type, 1> solution(2);
-
-//    solution.setValues({0.09296,0.152088});
-
-    const Tensor<type, 1> error_gradient;// = logistic_error_gradient_missing_values(0,1,{1, 2, 3, 4, 5, 6, NAN}, {0, 0, 0, 1, 1, 1, 1});
-
-    assert_true(abs(solution[0] - error_gradient[0]) <= static_cast<type>(0.001), LOG);
-    assert_true(abs(solution[1] - error_gradient[1]) <= static_cast<type>(0.001), LOG);
-}
-
-
-void CorrelationsTest::test_rank_linear_correlation_missing_values()
-{
-    cout << "test_calculate_rank_linear_correlation_missing_values\n";
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-    Index size = 10;
-
-    Tensor<type, 1> x(size);
-    Tensor<type, 1> y(size);
-    Tensor<Index, 1> z(0);
-
-//    x.initialize_sequential();
-    z.setRandom();
-
-    type correlation;
-
-    y = 2.0*x;
-
-    correlation = rank_linear_correlation_missing_values(thread_pool_device,x,y);
-
-    //@todo(assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
-    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
-
-    y = -1.0*x;
-
-    correlation = rank_linear_correlation_missing_values(thread_pool_device, x, y);
-    //@todo(assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);)
-    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
-
-    //Test missing values
-    Tensor<type, 1> vector;
-    vector.resize(5);
-    vector[0] = 1;
-    vector[1] = 2;
-    vector[2] = 3;
-    vector[3] = 4;
-    vector[4] = 5;
-
-    Tensor<type, 1> target;
-    target.resize(5);
-    target[0] = 1;
-    target[1] = 2;
-    target[2] = 3;
-    target[3] = static_cast<type>(NAN);
-    target[4] = 5;
-
-    type rank_linear_correlation = rank_linear_correlation_missing_values(thread_pool_device, vector, target);
-
-    assert_true((rank_linear_correlation - static_cast<type>(1.0)) < static_cast<type>(1.0e-3), LOG );
-
-    // Test with ties
-    Tensor<type, 1> vector_ties;
-    vector_ties.resize(5);
-    vector_ties[0] = 1;
-    vector_ties[1] = 1;
-    vector_ties[2] = 3;
-    vector_ties[3] = static_cast<type>(NAN);
-    vector_ties[4] = 5;
-
-    Tensor<type, 1> target_ties;
-    target_ties.resize(5);
-    target_ties[0] = 1;
-    target_ties[1] = 1;
-    target_ties[2] = 3;
-    target_ties[3] = static_cast<type>(NAN);
-    target_ties[4] = 5;
-
-    type rank_linear_correlation_ties = rank_linear_correlation_missing_values(thread_pool_device, vector_ties, target_ties);
-
-    //@todo(assert_true(abs(rank_linear_correlation_ties - static_cast<type>(1.0)) < static_cast<type>(1.0e-3), LOG );)
-}
-
-
-void CorrelationsTest::test_logistic_correlation_missing_values()
-{
-    cout << "test_logistic_correlation_missing_values\n";
-
-    Index size;
-
-    Tensor<type, 1> x;
-
-    Tensor<type, 1> y;
-
-    type correlation = 0.0;
 
     // Test
 
     size = 100;
 
     x.resize(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
 
     y.resize(size);
 
@@ -385,16 +272,92 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 //    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
 
     assert_true(correlation < static_cast<type>(0.3), LOG);
+
+}
+
+
+void CorrelationsTest::test_rank_logistic_correlation()
+{
+    cout << "test_rank_logistic_correlation\n";
+
+    const Index size = 10;
+    Tensor<type, 1> x(size);
+    for(Index i = 0; i < size; i++) x(i) = i;
+
+    Tensor<type, 1> y(size);
+
+    type correlation;
+
+    y.setConstant(0.0);
+    for(Index i= size - (size/2); i < size; i++) y[i] = 1;
+//    correlation = rank_logistic_correlation(thread_pool_device, x,y);
+//    assert_true(correlation <= 1, LOG);
+
+//    y.setConstant(1.0);
+//    for(Index i= size - (size/2); i < size; i++) y[i] = 0;
+//    correlation = rank_logistic_correlation(x,y);
+//    assert_true(correlation >= -1, LOG);
+
+//    y.setConstant(0.0);
+//    correlation = rank_logistic_correlation(x,y);
+//    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+
+}
+
+
+void CorrelationsTest::test_logistic_error_gradient()
+{
+    cout << "test_logistic_error_gradient\n";
+
+    Tensor<type, 1> x;
+    Tensor<type, 1> y;
+
+    Tensor<type, 1> solution;
+
+    Tensor<type, 1> error_gradient;
+
+    // Test
+
+    x.resize(6);
+    x.setValues({1, 2, 3, 4, 5, 6});
+
+    y.resize(6);
+    y.setValues({0, 0, 0, 1, 1, 1});
+
+    solution.resize(2);
+    solution.setValues({0.09296, 0.152088});
+
+    error_gradient = logistic_error_gradient(0, 1, x, y);
+
+    assert_true(abs(solution[0] - error_gradient[0]) <= static_cast<type>(0.001), LOG);
+    assert_true(abs(solution[1] - error_gradient[1]) <= static_cast<type>(0.001), LOG);
+
+    // Test
+
+    x.resize(7);
+    x.setValues({1, 2, 3, 4, 5, 6, NAN});
+
+    y.resize(7);
+    y.setValues({0, 0, 0, 1, 1, 1, 1});
+
+    solution.resize(2);
+    solution.setValues({0.09296, 0.152088});
+
+    error_gradient = logistic_error_gradient(0, 1, x, y);
+
+    assert_true(abs(solution[0] - error_gradient[0]) <= static_cast<type>(0.001), LOG);
+    assert_true(abs(solution[1] - error_gradient[1]) <= static_cast<type>(0.001), LOG);
+
 }
 
 
 void CorrelationsTest::test_autocorrelation()
 {
-    cout << "test_calculate_autocorrelation\n";
+    cout << "test_autocorrelation\n";
 
     Index size = 1000;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> correlations;
 
 //    correlations = autocorrelations(x, size/100);
@@ -404,14 +367,14 @@ void CorrelationsTest::test_autocorrelation()
 
 void CorrelationsTest::test_cross_correlations()
 {
-    cout << "test_calculate_autocorrelation\n";
+    cout << "test_cross_correlations\n";
 
     Index size = 1000;
     Tensor<type, 1> x(size);
     Tensor<type, 1> y(size);
 
-//    x.initialize_sequential();
-//    y.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
+    for(Index i = 0; i < size; i++) y(i) = i;
 
     Tensor<type, 1> cros_correlations;
 
@@ -423,13 +386,9 @@ void CorrelationsTest::test_cross_correlations()
 
 void CorrelationsTest::test_logarithmic_correlation()
 {
-    cout << "test_calculate_logarithmic_correlation\n";
+    cout << "test_logarithmic_correlation\n";
 
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-//    // Perfect case
+    // Perfect case
 
     const Tensor<type, 1> vector1;//({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
     const Tensor<type, 1> vector2;//({0, 0.30103, 0.477121, 0.60206, 0.69897, 0.778151, 0.845098, 0.90309, 0.954243, 1});
@@ -444,57 +403,42 @@ void CorrelationsTest::test_logarithmic_correlation()
     const Tensor<type, 1> vector_2;//({1002,1002.004321,1002.0086,1002.012837,1002.017033,1002.021189,1002.025306,1002.029384,1002.033424,1002.037426,1002.041393,1002.045323,1002.049218,1002.053078,1002.056905,1002.060698,1002.064458,1002.068186,});
 
     assert_true(logarithmic_correlation(thread_pool_device, vector_1, vector_2) - solution <= static_cast<type>(0.00001), LOG);
-}
 
+    // Test missing values
 
-void CorrelationsTest::test_logarithmic_correlation_missing_values()
-{
-    cout << "test_calculate_logarithmic_correlation_missing_values\n";
+    Tensor<type, 1> vector;
+    vector.resize(5);
+    vector[0] = 1;
+    vector[1] = 2;
+    vector[2] = 3;
+    vector[3] = 4;
+    vector[4] = static_cast<type>(NAN);
 
-       //Test missing values
+    Tensor<type, 1> target(vector.size());
 
-       Tensor<type, 1> vector;
-       vector.resize(5);
-       vector[0] = 1;
-       vector[1] = 2;
-       vector[2] = 3;
-       vector[3] = 4;
-       vector[4] = static_cast<type>(NAN);
-
-       Tensor<type, 1> target(vector.size());
-
-       for(Index i = 0; i < vector.size(); i++)
-       {
-           target[i] = log(static_cast<type>(1.5)*vector[i] + 2);
-       }
+    for(Index i = 0; i < vector.size(); i++)
+    {
+        target[i] = log(static_cast<type>(1.5)*vector[i] + 2);
+    }
 }
 
 
 void CorrelationsTest::test_exponential_correlation()
 {
-    cout << "test_calculate_exponential_correlation\n";
+    cout << "test_exponential_correlation\n";
 
     const Index size = 100;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> y(size);
 
-    for(Index i = 0; i < size; i++)
-    {
-        y[i] = exp(static_cast<type>(2.5)*x[i] + static_cast<type>(1.4));
-    }
-    const ThreadPoolDevice* thread_pool_device = thread_pool_device;
+    for(Index i = 0; i < size; i++) y[i] = exp(static_cast<type>(2.5)*x[i] + static_cast<type>(1.4));
 
-    type correlation = exponential_correlation(thread_pool_device,x,y);
+//    type correlation = exponential_correlation(thread_pool_device, x, y);
     //@todo(assert_true(correlation > static_cast<type>(0.999999), LOG);)
-}
 
-
-void CorrelationsTest::test_exponential_correlation_missing_values()
-{
-    cout << "test_calculate_exponential_correlation_missing_values\n";
-
-    //Test missing values
+    // Test missing values
 
        Tensor<type, 1> vector;
        vector.resize(5);
@@ -506,9 +450,7 @@ void CorrelationsTest::test_exponential_correlation_missing_values()
        Tensor<type, 1> target(vector.size());
 
        for(Index i = 0; i < vector.size(); i++)
-       {
            target[i] = exp(static_cast<type>(2.5)*vector[i] + static_cast<type>(1.4));
-       }
 
 //       type exponential_correlation = exponential_correlation_missing_values(vector, target);
 //       assert_true(abs(exponential_correlation - 1.0) < 1.0e-3, LOG );
@@ -520,10 +462,6 @@ void CorrelationsTest::test_linear_regression()
     cout << "test_linear_regression\n";
 
     // Device
-
-//    const int n = omp_get_max_threads();
-//    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-//    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
 //    Tensor<type, 1> vector1(4);
 //    vector1.setValues({10, 16, 25, 40, 60});
@@ -538,17 +476,6 @@ void CorrelationsTest::test_linear_regression()
 //    assert_true(lr.a - solution1 <= 0.01, LOG);
 //    assert_true(lr.b - solution2 <= 0.01, LOG);
 //    assert_true(lr.correlation - solution3 <= 0.01, LOG);
-}
-
-
-void CorrelationsTest::test_linear_regression_missing_values()
-{
-    cout << "test_linear_regression_missing_values\n";
-
-    // Device
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     Tensor<type, 1> vector1(6);
     vector1.setValues({10, 16, 25, 40, 60, NAN});
@@ -572,13 +499,9 @@ void CorrelationsTest::test_exponential_regression()
 {
     cout << "test_exponential_regression\n";
 
-    // Device
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     Tensor<type, 1> vector1(5);
     vector1.setValues({10, 16, 25, 40, 60});
+
     Tensor<type, 1> vector2(5);
     vector2.setValues({94, 118, 147, 180, 230});
 
@@ -586,32 +509,21 @@ void CorrelationsTest::test_exponential_regression()
     const type solution2 = static_cast<type>(0.017);
     const type solution3 = static_cast<type>(0.9754);
 
-
     RegressionResults er = exponential_regression(thread_pool_device,vector1,vector2);
 
     assert_true(er.a - solution1 <= static_cast<type>(0.01), LOG);
     //@todo(assert_true(er.b - solution2 <= static_cast<type>(0.01), LOG);)
     assert_true(er.correlation - solution3 <= static_cast<type>(0.1), LOG);
-}
 
-
-void CorrelationsTest::test_exponential_regression_missing_values()
-{
-    cout << "test_exponential_regression_missing_values\n";
-
-    // Device
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-    Tensor<type, 1> vector1(6);
+    vector1.resize(6);
     vector1.setValues({10, 16, 25, 40, 60, NAN});
-    Tensor<type, 1> vector2(6);
+
+    vector2.resize(6);
     vector2.setValues({94, 118, 147, 180, 230, 100});
 
-    const type solution1 = static_cast<type>(87.805);
-    const type solution2 = static_cast<type>(0.017);
-    const type solution3 = static_cast<type>(0.9754);
+//    solution1 = static_cast<type>(87.805);
+//    solution2 = static_cast<type>(0.017);
+//    solution3 = static_cast<type>(0.9754);
 
 //    RegressionResults er = exponential_regression_missing_values(vector1,vector2);
 
@@ -621,54 +533,36 @@ void CorrelationsTest::test_exponential_regression_missing_values()
 }
 
 
-void CorrelationsTest::test_logarithmic_regression() // @todo
+void CorrelationsTest::test_logarithmic_regression()
 {
     cout << "test_logarithmic_regression\n";
 
-    // Device
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     Tensor<type, 1> vector1(5);
     vector1.setValues({10, 16, 25, 40, 60});
+
     Tensor<type, 1> vector2(5);
     vector2.setValues({94, 118, 147, 180, 230});
 
-    const type solution1 = static_cast<type>(-83.935);
-    const type solution2 = static_cast<type>(73.935);
-    const type solution3 = static_cast<type>(0.985799);
+    type solution1 = static_cast<type>(-83.935);
+    type solution2 = static_cast<type>(73.935);
+    type solution3 = static_cast<type>(0.985799);
 
     RegressionResults lr = logarithmic_regression(thread_pool_device, vector1,vector2);
 
     assert_true(lr.a - solution1 <= static_cast<type>(0.01), LOG);
     assert_true(lr.b - solution2 <= static_cast<type>(0.01), LOG);
     assert_true(lr.correlation - solution3 <= static_cast<type>(0.01), LOG);
-}
 
-
-void CorrelationsTest::test_logarithmic_regression_missing_values() // @todo
-{
-    cout << "test_logarithmic_regression_missing_values\n";
-
-    // Device
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-    Tensor<type, 1> vector1(6);
+    vector1.resize(6);
     vector1.setValues({10, 16, 25, 40, 60, NAN});
-    Tensor<type, 1> vector2(6);
+    vector2.resize(6);
     vector2.setValues({94, 118, 147, 180, 230, 100});
 
-    const type solution1 = static_cast<type>(-83.935);
-    const type solution2 = static_cast<type>(73.935);
-    const type solution3 = static_cast<type>(0.985799);
+    solution1 = static_cast<type>(-83.935);
+    solution2 = static_cast<type>(73.935);
+    solution3 = static_cast<type>(0.985799);
 
-
-    RegressionResults lr = logarithmic_regression(thread_pool_device,vector1,vector2);
+    lr = logarithmic_regression(thread_pool_device,vector1,vector2);
 
     assert_true(lr.a - solution1 <= static_cast<type>(0.01), LOG);
     assert_true(lr.b - solution2 <= static_cast<type>(0.01), LOG);
@@ -676,25 +570,18 @@ void CorrelationsTest::test_logarithmic_regression_missing_values() // @todo
 }
 
 
-void CorrelationsTest::test_power_regression() // @todo
+void CorrelationsTest::test_power_regression()
 {
     cout << "test_power_regression\n";
-
-    // Device
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     Tensor<type, 1> vector1(5);
     vector1.setValues({10, 16, 25, 40, 60});
     Tensor<type, 1> vector2(5);
     vector2.setValues({94, 118, 147, 180, 230});
 
-    const type solution1 = static_cast<type>(30.213);
-    const type solution2 = static_cast<type>(0.491);
-    const type solution3 = static_cast<type>(0.998849);
-
+    type solution1 = static_cast<type>(30.213);
+    type solution2 = static_cast<type>(0.491);
+    type solution3 = static_cast<type>(0.998849);
 
     RegressionResults pr = power_regression(thread_pool_device,vector1,vector2);
 
@@ -702,27 +589,14 @@ void CorrelationsTest::test_power_regression() // @todo
     assert_true(pr.b - solution2 <= static_cast<type>(0.01), LOG);
     assert_true(pr.correlation - solution3 <= static_cast<type>(0.01), LOG);
 
-}
-
-
-void CorrelationsTest::test_power_regression_missing_values()
-{
-    cout << "test_power_regression_missing_values\n";
-
-    // Device
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-    Tensor<type, 1> vector1(6);
+    vector1.resize(6);
     vector1.setValues({10, 16, 25, 40, 60, NAN});
-    Tensor<type, 1> vector2(6);
+    vector2.resize(6);
     vector2.setValues({94, 118, 147, 180, 230, 100});
 
-    const type solution1 = static_cast<type>(30.213);
-    const type solution2 = static_cast<type>(0.491);
-    const type solution3 = static_cast<type>(0.998849);
+    solution1 = static_cast<type>(30.213);
+    solution2 = static_cast<type>(0.491);
+    solution3 = static_cast<type>(0.998849);
 
 //    RegressionResults pr = power_regression_missing_values(vector1,vector2);
 
@@ -732,7 +606,7 @@ void CorrelationsTest::test_power_regression_missing_values()
 }
 
 
-void CorrelationsTest::test_logistic_regression() // @todo
+void CorrelationsTest::test_logistic_regression()
 {
     cout << "test_logistic_regression \n";
 
@@ -750,11 +624,7 @@ void CorrelationsTest::test_logistic_regression() // @todo
         else y[i] = 1;
     }
 
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-//    RegressionResults log = logistic_regression(thread_pool_device,x,y);
+//    RegressionResults log = logistic_regression(thread_pool_device, x, y);
 
 //    assert_true(abs(log.correlation - static_cast<type>(0.95)) <= static_cast<type>(0.01), LOG);
 }
@@ -762,33 +632,26 @@ void CorrelationsTest::test_logistic_regression() // @todo
 
 void CorrelationsTest::test_covariance()
 {
-    cout << "test_calculate_covariance\n";
+    cout << "test_covariance\n";
 
     Index size = 100;
     Tensor<type, 1> x(size);
-//    x.initialize_sequential();
+    for(Index i = 0; i < size; i++) x(i) = i;
     Tensor<type, 1> y(size);
-//    y.initialize_sequential();
+    for(Index i = 0; i < size; i++) y(i) = i;
 
     type covariance = OpenNN::covariance(x,y);
 
     //@todo(assert_true(abs(covariance - static_cast<type>(841.6666666666666)) < static_cast<type>(1.0e-3), LOG);)
     //@todo(assert_true(covariance < 842, LOG);)
-}
 
+    x.resize(size);
+    for(Index i = 0; i < size; i++) x(i) = i;
+    y.resize(size);
+    for(Index i = 0; i < size; i++) x(i) = i;
 
-void CorrelationsTest::test_covariance_missing_values()
-{
-    cout << "test_covariance_missing_values\n";
-
-    Index size = 100;
-    Tensor<type, 1> x(size);
-//    x.initialize_sequential();
-    Tensor<type, 1> y(size);
-//    y.initialize_sequential();
-
-    type covariance = OpenNN::covariance(x,y);
-    type covariance_missing_values = OpenNN::covariance_missing_values(x,y);
+    covariance = OpenNN::covariance(x,y);
+    covariance = OpenNN::covariance(x,y);
 
     //@todo(assert_true(abs(covariance_missing_values - static_cast<type>(841.6666666666666)) < static_cast<type>(1.0e-3), LOG);)
     //@todo(assert_true(abs(covariance_missing_values - covariance) < static_cast<type>(1.0e-3), LOG);)
@@ -797,7 +660,7 @@ void CorrelationsTest::test_covariance_missing_values()
 
 void CorrelationsTest::test_covariance_matrix()
 {
-    cout << "test_calculate_covariance_matrix\n";
+    cout << "test_covariance_matrix\n";
 
     Index size = 2;
     Tensor<type, 1> vector1(size);
@@ -822,9 +685,9 @@ void CorrelationsTest::test_covariance_matrix()
 }
 
 
-void CorrelationsTest::test_less_rank_with_ties() // @todo
+void CorrelationsTest::test_less_rank_with_ties()
 {
-    cout << "test_calculate_less_rank_with_ties\n";
+    cout << "test_less_rank_with_ties\n";
 
     Tensor<type, 1> vector1(3);
     vector1.setValues({0.0, 1, 2.0});
@@ -856,13 +719,7 @@ void CorrelationsTest::test_less_rank_with_ties() // @todo
 }
 
 
-void CorrelationsTest::test_remove_correlations()
-{
-    cout << "test_remove_correlations\n";
-}
-
-
-void CorrelationsTest::test_contingency_table() // @todo
+void CorrelationsTest::test_contingency_table()
 {
     cout << "test_contingency_table\n";
 
@@ -877,7 +734,7 @@ void CorrelationsTest::test_contingency_table() // @todo
 }
 
 
-void CorrelationsTest::test_chi_square_test() // @todo
+void CorrelationsTest::test_chi_square_test()
 {
     cout << "test_chi_square_test\n";
 
@@ -886,19 +743,6 @@ void CorrelationsTest::test_chi_square_test() // @todo
 
 //    assert_true(abs(chi_square_test(contingency_table(vector_1, vector_2).to_type_matrix()) - 0.0) < 1.0e-3, LOG);
 
-}
-
-
-void CorrelationsTest::test_chi_square_critical_point()
-{
-    cout << "test_chi_square_critical_point\n";
-
-    type crit_point;
-    type solution = static_cast<type>(14.067);
-
-    crit_point = chi_square_critical_point(static_cast<type>(0.05),7);
-
-    assert_true(crit_point - solution <= static_cast<type>(0.01), LOG);
 }
 
 
@@ -920,15 +764,9 @@ void CorrelationsTest::test_karl_pearson_correlation()
 //    const type correlation = karl_pearson_correlation(matrix1, matrix2);
 
 //    assert_true(abs(correlation - solution) <= 0.001, LOG);
-}
 
-
-void CorrelationsTest::test_karl_pearson_correlation_missing_values() // @todo
-{
-    cout << "test_karl_pearson_correlation_missing_values\n";
-
-    Tensor<type, 2> matrix1(5,2);
-    Tensor<type, 2> matrix2(5,2);
+    matrix1.resize(5,2);
+    matrix2.resize(5,2);
 
 //    matrix1.set_column(0, {1, 0, 1, 0, 0});
 //    matrix1.set_column(1, {0, 1, NAN, 1, NAN});
@@ -944,6 +782,7 @@ void CorrelationsTest::test_karl_pearson_correlation_missing_values() // @todo
 }
 
 
+
 void CorrelationsTest::run_test_case()
 {
    cout << "Running correlation analysis test case...\n";
@@ -952,71 +791,46 @@ void CorrelationsTest::run_test_case()
 
    test_linear_correlation();
    test_spearman_linear_correlation();
-   test_linear_correlation_missing_values();
    test_rank_linear_correlation();
-   test_rank_linear_correlation_missing_values();
-
 
    // Logistic correlation methods
 
    test_logistic_correlation();
    test_rank_logistic_correlation();
-   test_logistic_correlation_missing_values();
    test_logistic_error_gradient();
-   test_logistic_correlation_missing_values();
-
 
    // Logarithmic correlation methods
 
    test_logarithmic_correlation();
-   test_logarithmic_correlation_missing_values();
-
 
    // Exponential correlation methods
 
    test_exponential_correlation();
-   test_exponential_correlation_missing_values();
-
 
    // Regression Methods
 
    test_linear_regression();
-   test_linear_regression_missing_values();
    test_exponential_regression();
-   test_exponential_correlation_missing_values();
    test_logarithmic_regression();
-   test_logarithmic_regression_missing_values();
    test_power_regression();
-   test_power_regression_missing_values();
    test_logistic_regression();
-
 
    // Time series correlation methods
 
    test_autocorrelation();
    test_cross_correlations();
 
-
    // Covariance
 
    test_covariance();
-   test_covariance_missing_values();
    test_covariance_matrix();
    test_less_rank_with_ties();
 
-
-   //Remove methods
-
-   test_remove_correlations();
-
-
-   //Contingency table
+   // Contingency table
 
    test_contingency_table();
    test_chi_square_test();
-   test_chi_square_critical_point();
    test_karl_pearson_correlation();
-   test_karl_pearson_correlation_missing_values();
 
    cout << "End of correlation analysis test case.\n\n";
 }

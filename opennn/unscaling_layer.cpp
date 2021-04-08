@@ -402,7 +402,7 @@ void UnscalingLayer::set_min_max_range(const type min, const type max)
 
 void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -510,7 +510,7 @@ void UnscalingLayer::set_unscaling_methods(const Tensor<UnscalingLayer::Unscalin
 
 void UnscalingLayer::set_unscaling_methods(const string& new_scaling_methods_string)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -552,7 +552,6 @@ void UnscalingLayer::set_unscaling_methods(const string& new_scaling_methods_str
 
         throw logic_error(buffer.str());
     }
-
 }
 
 
@@ -564,7 +563,7 @@ void UnscalingLayer::set_unscaling_methods(const Tensor<string, 1>& new_unscalin
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(neurons_number == 0)
     {
@@ -647,7 +646,7 @@ void UnscalingLayer::check_range(const Tensor<type, 1>& outputs) const
 {
     const Index neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index size = outputs.size();
 
@@ -712,93 +711,85 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
     Tensor<type, 2> outputs;
 
-    if(inputs.rank() == 2)
+    const Index neurons_number = get_neurons_number();
+
+#ifdef OPENNN_DEBUG
+
+    ostringstream buffer;
+
+    const Index columns_number = inputs.dimension(1);
+
+    if(columns_number != neurons_number)
     {
-        const Index neurons_number = get_neurons_number();
+        buffer << "OpenNN Exception: ScalingLayer class.\n"
+               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+               << "Size of inputs (" << columns_number << ") must be equal to number of scaling neurons (" << neurons_number << ").\n";
 
-#ifdef __OPENNN_DEBUG__
-
-        ostringstream buffer;
-
-        const Index columns_number = inputs.dimension(1);
-
-        if(columns_number != neurons_number)
-        {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                   << "Size of inputs (" << columns_number << ") must be equal to number of scaling neurons (" << neurons_number << ").\n";
-
-            throw logic_error(buffer.str());
-        }
+        throw logic_error(buffer.str());
+    }
 
 #endif
-        const Index points_number = inputs.dimension(0);
+    const Index points_number = inputs.dimension(0);
 
-        outputs.resize(points_number, neurons_number);
+    outputs.resize(points_number, neurons_number);
 
-        for(Index i = 0; i < points_number; i++)
+    for(Index i = 0; i < points_number; i++)
+    {
+        for(Index j = 0; j < neurons_number; j++)
         {
-            for(Index j = 0; j < neurons_number; j++)
+            if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
             {
-                if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
+                if(display)
                 {
-                    if(display)
-                    {
-                        cout << "OpenNN Warning: ScalingLayer class.\n"
-                             << "Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const method.\n"
-                             << "Standard deviation of variable " << i << " is zero.\n"
-                             << "Those variables won't be scaled.\n";
-                    }
+                    cout << "OpenNN Warning: ScalingLayer class.\n"
+                         << "Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const method.\n"
+                         << "Standard deviation of variable " << i << " is zero.\n"
+                         << "Those variables won't be scaled.\n";
+                }
 
-                    outputs(j) = inputs(j);
+                outputs(j) = inputs(j);
+            }
+            else
+            {
+                if(unscaling_methods(j) == NoUnscaling)
+                {
+                    outputs(i,j) = inputs(i,j);
+                }
+
+                else if(unscaling_methods(j) == MinimumMaximum)
+                {
+                    const type slope = (descriptives(j).maximum-descriptives(j).minimum)/(max_range-min_range);
+
+                    const type intercept = -(min_range*descriptives(j).maximum-max_range*descriptives(j).minimum)/(max_range-min_range);
+
+                    outputs(i,j) = inputs(i,j)*slope + intercept;
+                }
+
+                else if(unscaling_methods(j) == MeanStandardDeviation)
+                {
+                    const type slope = descriptives(j).standard_deviation;
+
+                    const type intercept = descriptives(j).mean;
+
+                    outputs(i,j) = inputs(i,j)*slope + intercept;
+                }
+                else if(unscaling_methods(j) == Logarithmic)
+                {
+                    outputs(i,j) = static_cast<type>(0.5)*(exp(inputs(i,j))+1)*(descriptives[j].maximum-descriptives[j].minimum)
+                                 + descriptives[j].minimum;
                 }
                 else
                 {
-                    if(unscaling_methods(j) == NoUnscaling)
-                    {
-                        outputs(i,j) = inputs(i,j);
-                    }
+                    ostringstream buffer;
 
-                    else if(unscaling_methods(j) == MinimumMaximum)
-                    {
-                        const type slope = (descriptives(j).maximum-descriptives(j).minimum)/(max_range-min_range);
+                    buffer << "OpenNN Exception: ScalingLayer class\n"
+                           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+                           << "Unknown scaling method.\n";
 
-                        const type intercept = -(min_range*descriptives(j).maximum-max_range*descriptives(j).minimum)/(max_range-min_range);
-
-                        outputs(i,j) = inputs(i,j)*slope + intercept;
-                    }
-
-                    else if(unscaling_methods(j) == MeanStandardDeviation)
-                    {
-                        const type slope = descriptives(j).standard_deviation;
-
-                        const type intercept = descriptives(j).mean;
-
-                        outputs(i,j) = inputs(i,j)*slope + intercept;
-                    }
-                    else if(unscaling_methods(j) == Logarithmic)
-                    {
-                        outputs(i,j) = static_cast<type>(0.5)*(exp(inputs(i,j))+1)*(descriptives[j].maximum-descriptives[j].minimum) + descriptives[j].minimum;
-                    }
-                    else
-                    {
-                        ostringstream buffer;
-
-                        buffer << "OpenNN Exception: ScalingLayer class\n"
-                               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                               << "Unknown scaling method.\n";
-
-                        throw logic_error(buffer.str());
-                    }
+                    throw logic_error(buffer.str());
                 }
             }
         }
-    }
-    else if(inputs.rank() == 4)
-    {
-
-    ///@todo
-
     }
 
     return outputs;
@@ -1091,7 +1082,6 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
-/// @todo PHP
 
 /// Returns a string with the expression of the unscaling process in this layer.
 /// @param inputs_names Name of inputs to the unscaling layer. The size of this vector must be equal to the number of unscaling neurons.
@@ -1140,7 +1130,8 @@ string UnscalingLayer::write_expression_c() const
         }
         else if(unscaling_methods(i) == Logarithmic)
         {
-            buffer << "\toutputs[" << i << "] = 0.5*exp( inputs[" << i << "] -1)*(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
+            buffer << "\toutputs[" << i << "] = 0.5*exp( inputs[" << i << "] -1)*("
+                   << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
         }
         else
         {
@@ -1186,7 +1177,8 @@ string UnscalingLayer::write_expression_python() const
         {
             const type slope = (descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
-            const type intercept = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
+            const type intercept
+                    = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
         }
@@ -1201,7 +1193,8 @@ string UnscalingLayer::write_expression_python() const
         }
         else if(unscaling_methods(i) == Logarithmic)
         {
-            buffer << "\toutputs[" << i << "] = 0.5*exp( inputs[" << i << "] -1)*(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
+            buffer << "\toutputs[" << i << "] = 0.5*exp( inputs[" << i << "] -1)*("
+                   << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
         }
         else
         {

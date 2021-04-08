@@ -22,10 +22,10 @@ void GrowingNeuronsTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork nn;
-    DataSet ds;
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    TrainingStrategy training_strategy(&nn, &ds);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GrowingNeurons io1(&training_strategy);
 
@@ -54,131 +54,133 @@ void GrowingNeuronsTest::test_set_default()
 }
 
 
-void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
+void GrowingNeuronsTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
 
-//    string str;
-//    Tensor<type, 2> data(21,2);
+    string str;
+    Tensor<type, 2> data(21,2);
 
-//    NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-//    DataSet data_set;
-//    TrainingStrategy ts(&neural_network, &data_set);
+    DataSet data_set;
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//    GrowingNeurons io(&ts);
+    GrowingNeurons io(&training_strategy);
 
-//    GrowingNeuronsResults* results = nullptr;
+    GrowingNeuronsResults* results = nullptr;
 
-//    // Test
+    // Test
 
-//    str =   "-1 0\n"
-//            "-0.9 0\n"
-//            "-0.8 0\n"
-//            "-0.7 0\n"
-//            "-0.6 0\n"
-//            "-0.5 0\n"
-//            "-0.4 0\n"
-//            "-0.3 0\n"
-//            "-0.2 0\n"
-//            "-0.1 0\n"
-//            "0.0 0\n"
-//            "0.1 0\n"
-//            "0.2 0\n"
-//            "0.3 0\n"
-//            "0.4 0\n"
-//            "0.5 0\n"
-//            "0.6 0\n"
-//            "0.7 0\n"
-//            "0.8 0\n"
-//            "0.9 0\n"
-//            "1 0\n";
+    str =   "-1 0\n"
+            "-0.9 0\n"
+            "-0.8 0\n"
+            "-0.7 0\n"
+            "-0.6 0\n"
+            "-0.5 0\n"
+            "-0.4 0\n"
+            "-0.3 0\n"
+            "-0.2 0\n"
+            "-0.1 0\n"
+            "0.0 0\n"
+            "0.1 0\n"
+            "0.2 0\n"
+            "0.3 0\n"
+            "0.4 0\n"
+            "0.5 0\n"
+            "0.6 0\n"
+            "0.7 0\n"
+            "0.8 0\n"
+            "0.9 0\n"
+            "1 0\n";
 
 //    data.parse(str);
-//    data.setValues({{-1,0},{-0.9f,0},{-0.9f,0},{-0.7f,0},{-0.6f,0},{-0.5,0},{-0.4f,0},
-//                    {-0.3f,0},{-0.2f,0},{-0.1f,0},{0.0,0},{0.1f,0},{0.2f,0},{0.3f,0},{0.4f,0},
-//                   {0.5f,0},{0.6f,0},{0.7f,0},{0.8f,0},{0.9f,0},{1,0}});
 
-//    data_set.set(data);
+    data.setValues({{-1,0},{-0.9f,0},{-0.9f,0},{-0.7f,0},{-0.6f,0},{-0.5,0},{-0.4f,0},
+                    {-0.3f,0},{-0.2f,0},{-0.1f,0},{0.0,0},{0.1f,0},{0.2f,0},{0.3f,0},{0.4f,0},
+                   {0.5f,0},{0.6f,0},{0.7f,0},{0.8f,0},{0.9f,0},{1,0}});
 
-//    Tensor<DataSet::VariableUse, 1> uses(2);
-//    uses.setValues({DataSet::Input, DataSet::Target});
+    data_set.set(data);
 
-//    data_set.set_columns_uses(uses);
+    Tensor<DataSet::VariableUse, 1> uses(2);
+    uses.setValues({DataSet::Input, DataSet::Target});
 
-//    Tensor<Index, 1 > architecture(3);
-//    architecture.setValues({1,3,1});
+    data_set.set_columns_uses(uses);
 
-//    neural_network.set(NeuralNetwork::Approximation,architecture);
-//    neural_network.set_parameters_constant(0.0);
+    Tensor<Index, 1 > architecture(3);
+    architecture.setValues({1,3,1});
 
-//    ts.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
+    neural_network.set(NeuralNetwork::Approximation,architecture);
+    neural_network.set_parameters_constant(0.0);
 
-//    ts.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+    training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 
-//    ts.set_display(false);
+    training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-//    io.set_trials_number(1);
-//    io.set_maximum_order(7);
-//    io.set_selection_error_goal(1.0e-3f);
-//    io.set_display(false);
+    training_strategy.set_display(false);
+
+    io.set_trials_number(1);
+    io.set_maximum_neurons(7);
+    io.set_selection_error_goal(1.0e-3f);
+    io.set_display(false);
 
 //    results = io.perform_neurons_selection();
 
-//    assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
+    assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
 //    assert_true(results->stopping_condition ==
 //                NeuronsSelection::SelectionErrorGoal, LOG);
 
-//    // Test
+    // Test
 
-//    str =
-//            "-1 -1\n"
-//            "-0.9 -0.9\n"
-//            "-0.8 -0.8\n"
-//            "-0.7 -0.7\n"
-//            "-0.6 -0.6\n"
-//            "-0.5 -0.5\n"
-//            "-0.4 -0.4\n"
-//            "-0.3 -0.3\n"
-//            "-0.2 -0.2\n"
-//            "-0.1 -0.1\n"
-//            "0.0 0.0\n"
-//            "0.1 0.1\n"
-//            "0.2 0.2\n"
-//            "0.3 0.3\n"
-//            "0.4 0.4\n"
-//            "0.5 0.5\n"
-//            "0.6 0.6\n"
-//            "0.7 0.7\n"
-//            "0.8 0.8\n"
-//            "0.9 0.9\n"
-//            "1 1\n";
+    str =
+            "-1 -1\n"
+            "-0.9 -0.9\n"
+            "-0.8 -0.8\n"
+            "-0.7 -0.7\n"
+            "-0.6 -0.6\n"
+            "-0.5 -0.5\n"
+            "-0.4 -0.4\n"
+            "-0.3 -0.3\n"
+            "-0.2 -0.2\n"
+            "-0.1 -0.1\n"
+            "0.0 0.0\n"
+            "0.1 0.1\n"
+            "0.2 0.2\n"
+            "0.3 0.3\n"
+            "0.4 0.4\n"
+            "0.5 0.5\n"
+            "0.6 0.6\n"
+            "0.7 0.7\n"
+            "0.8 0.8\n"
+            "0.9 0.9\n"
+            "1 1\n";
 
 //    data.parse(str);
-//    data.setValues({{-1,1},{-0.9f, -0.9f},{-0.9f,-0.8f},{-0.7f,-0.7f},{-0.6f,-0.6f},{-0.5,-0.5},{-0.4f, -0.4f},
-//                    {-0.3f,-0.3f},{-0.2f,-0.2f},{-0.1f,-0.1f},{0.0,0.0},{0.1f,0.1f},{0.2f,0.2f},{0.3f,0.3f},{0.4f,0.4f},
-//                   {0.5,0.5},{0.6f,0.6f},{0.7f,0.7f},{0.8f,0.8f},{0.9f,0.9f},{1,1}});
 
-//    data_set.set(data);
+    data.setValues({{-1,1},{-0.9f, -0.9f},{-0.9f,-0.8f},{-0.7f,-0.7f},{-0.6f,-0.6f},{-0.5,-0.5},{-0.4f, -0.4f},
+                    {-0.3f,-0.3f},{-0.2f,-0.2f},{-0.1f,-0.1f},{0.0,0.0},{0.1f,0.1f},{0.2f,0.2f},{0.3f,0.3f},{0.4f,0.4f},
+                   {0.5,0.5},{0.6f,0.6f},{0.7f,0.7f},{0.8f,0.8f},{0.9f,0.9f},{1,1}});
 
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
-//    neural_network.set_parameters_constant(0.0);
+    data_set.set(data);
 
-//    ts.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
+    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set_parameters_constant(0.0);
 
-//    ts.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+    training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 
-//    ts.set_display(false);
+    training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-//    io.set_trials_number(1);
-//    io.set_maximum_order(7);
-//    io.set_selection_error_goal(0.0);
-//    io.set_maximum_selection_failures(1);
-//    io.set_display(false);
+    training_strategy.set_display(false);
+
+    io.set_trials_number(1);
+    io.set_maximum_neurons(7);
+    io.set_selection_error_goal(0.0);
+    io.set_maximum_selection_failures(1);
+    io.set_display(false);
 
 //    results = io.perform_neurons_selection();
 
-//    assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
+    assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
 //    assert_true(results->stopping_condition == NeuronsSelection::AlgorithmFinished, LOG);
 
 }

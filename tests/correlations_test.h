@@ -34,9 +34,7 @@ public:
 
     void test_linear_correlation();
     void test_spearman_linear_correlation();
-    void test_linear_correlation_missing_values();
     void test_rank_linear_correlation();
-    void test_rank_linear_correlation_missing_values();
 
     // Logistic correlation methods
 
@@ -44,38 +42,28 @@ public:
     void test_rank_logistic_correlation();
     void test_logistic_function();
     void test_logistic_error_gradient();
-    void test_logistic_error_gradient_missing_values();
-    void test_logistic_correlation_draft();
-    void test_logistic_correlation_missing_values();
 
     // Point-Biserial correlation methods
 
     void test_point_biserial_correlation();
-    void test_point_biserial_correlation_missing_values();
 
     // Logarithmic correlation methods
 
     void test_logarithmic_correlation();
-    void test_logarithmic_correlation_missing_values();
 
     // Exponential correlation methods
 
     void test_exponential_correlation();
-    void test_exponential_correlation_missing_values();
 
     // Regressions methods
 
     void test_linear_regression();
-    void test_linear_regression_missing_values();
 
     void test_exponential_regression();
-    void test_exponential_regression_missing_values();
 
     void test_logarithmic_regression();
-    void test_logarithmic_regression_missing_values();
 
     void test_power_regression();
-    void test_power_regression_missing_values();
 
     void test_logistic_regression();
 
@@ -87,22 +75,14 @@ public:
     // Covariance
 
     void test_covariance();
-    void test_covariance_missing_values();
     void test_covariance_matrix();
     void test_less_rank_with_ties();
-
-    // Remove methods
-
-    void test_remove_correlations();
 
     //Contingency table
 
     void test_contingency_table();
     void test_chi_square_test();
-    void test_chi_square_critical_point();
     void test_karl_pearson_correlation();
-    void test_karl_pearson_correlation_missing_values();
-
 
     // Unit tseting method
 

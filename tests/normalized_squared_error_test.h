@@ -25,14 +25,14 @@ class NormalizedSquaredErrorTest : public UnitTesting
 
 public:
 
-   explicit NormalizedSquaredErrorTest(void); 
+   explicit NormalizedSquaredErrorTest(); 
 
-   virtual ~NormalizedSquaredErrorTest(void);
+   virtual ~NormalizedSquaredErrorTest();
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Get methods
 
@@ -40,37 +40,35 @@ public:
  
    // Normalization coefficient
 
-   void test_calculate_normalization_coefficient(void);
+   void test_calculate_normalization_coefficient();
 
-   void test_calculate_training_normalization_coefficient(void);   
-   void test_calculate_selection_normalization_coefficient(void);   
+   void test_calculate_training_normalization_coefficient();   
+   void test_calculate_selection_normalization_coefficient();   
 
    // Error methods
 
-   void test_calculate_error(void);
+   void test_calculate_error();
 
-   void test_calculate_error_gradient(void);
-
-   // Error terms methods
-
-   void test_calculate_error_terms(void);
-
-   void test_calculate_error_terms_Jacobian(void);
+   void test_calculate_error_gradient();
 
    // Squared errors methods
 
-   void test_calculate_squared_errors(void);
+   void test_calculate_squared_errors();
 
-   void test_calculate_maximal_errors(void);
+   void test_calculate_squared_errors_jacobian();
+
+   // Squared errors methods
+
+   void test_calculate_maximal_errors();
 
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 

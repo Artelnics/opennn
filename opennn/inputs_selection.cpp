@@ -11,7 +11,6 @@
 namespace OpenNN
 {
 
-
 /// Default constructor.
 
 InputsSelection::InputsSelection()
@@ -38,19 +37,11 @@ InputsSelection::~InputsSelection()
 }
 
 
-/// Returns whether the problem is of function regression type.
-
-const bool& InputsSelection::get_approximation() const
-{
-    return approximation;
-}
-
-
 /// Returns a pointer to the training strategy object.
 
 TrainingStrategy* InputsSelection::get_training_strategy_pointer() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!training_strategy_pointer)
     {
@@ -94,26 +85,17 @@ const Index& InputsSelection::get_trials_number() const
 
 /// Returns true if the loss index losses are to be reserved, and false otherwise.
 
-const bool& InputsSelection::get_reserve_training_error_data() const
+const bool& InputsSelection::get_reserve_training_errors() const
 {
-    return reserve_training_error_data;
+    return reserve_training_errors;
 }
 
 
 /// Returns true if the selection losses are to be reserved, and false otherwise.
 
-const bool& InputsSelection::get_reserve_selection_error_data() const
+const bool& InputsSelection::get_reserve_selection_errors() const
 {
-    return reserve_selection_error_data;
-}
-
-
-/// Returns true if the parameters vector of the neural network with minimum selection error is to be reserved,
-/// and false otherwise.
-
-const bool& InputsSelection::get_reserve_minimal_parameters() const
-{
-    return reserve_minimal_parameters;
+    return reserve_selection_errors;
 }
 
 
@@ -166,31 +148,12 @@ const type& InputsSelection::get_minimum_correlation() const
 }
 
 
-/// Return the tolerance of error for the algorithm.
-
-const type& InputsSelection::get_tolerance() const
-{
-    return tolerance;
-}
-
-
-/// Sets a new regression value.
-/// If it is set to true the problem will be taken as a function regression;
-/// if it is set to false the problem will be taken as a classification.
-/// @param new_approximation Regression value.
-
-void InputsSelection::set_approximation(const bool& new_approximation)
-{
-    approximation = new_approximation;
-}
-
-
 /// Sets a new training strategy pointer.
 /// @param new_training_strategy_pointer Pointer to a training strategy object.
 
 void InputsSelection::set_training_strategy_pointer(TrainingStrategy* new_training_strategy_pointer)
 {
-    training_strategy_pointer = new_training_strategy_pointer;
+    training_strategy_pointer = new_training_strategy_pointer;     
 }
 
 
@@ -202,9 +165,8 @@ void InputsSelection::set_default()
 
     // Results
 
-    reserve_training_error_data = true;
-    reserve_selection_error_data = true;
-    reserve_minimal_parameters = true;
+    reserve_training_errors = true;
+    reserve_selection_errors = true;
 
     // Stopping criteria
 
@@ -216,8 +178,6 @@ void InputsSelection::set_default()
     minimum_correlation = 0;
 
     maximum_time = 3600.0;
-
-    tolerance = 0;
 }
 
 
@@ -226,7 +186,7 @@ void InputsSelection::set_default()
 
 void InputsSelection::set_trials_number(const Index& new_trials_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_trials_number <= 0)
     {
@@ -249,7 +209,7 @@ void InputsSelection::set_trials_number(const Index& new_trials_number)
 
 void InputsSelection::set_reserve_training_error_data(const bool& new_reserve_training_error_data)
 {
-    reserve_training_error_data = new_reserve_training_error_data;
+    reserve_training_errors = new_reserve_training_error_data;
 }
 
 
@@ -258,16 +218,7 @@ void InputsSelection::set_reserve_training_error_data(const bool& new_reserve_tr
 
 void InputsSelection::set_reserve_selection_error_data(const bool& new_reserve_selection_error_data)
 {
-    reserve_selection_error_data = new_reserve_selection_error_data;
-}
-
-
-/// Sets the reserve flag for the minimal parameters.
-/// @param new_reserve_minimal_parameters Flag value.
-
-void InputsSelection::set_reserve_minimal_parameters(const bool& new_reserve_minimal_parameters)
-{
-    reserve_minimal_parameters = new_reserve_minimal_parameters;
+    reserve_selection_errors = new_reserve_selection_error_data;
 }
 
 
@@ -287,7 +238,7 @@ void InputsSelection::set_display(const bool& new_display)
 
 void InputsSelection::set_selection_error_goal(const type& new_selection_error_goal)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_selection_error_goal < 0)
     {
@@ -320,7 +271,7 @@ void InputsSelection::set_maximum_iterations_number(const Index& new_maximum_ite
 
 void InputsSelection::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_time < 0)
     {
@@ -344,7 +295,7 @@ void InputsSelection::set_maximum_time(const type& new_maximum_time)
 
 void InputsSelection::set_maximum_correlation(const type& new_maximum_correlation)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_correlation < 0 || new_maximum_correlation > 1)
     {
@@ -368,7 +319,7 @@ void InputsSelection::set_maximum_correlation(const type& new_maximum_correlatio
 
 void InputsSelection::set_minimum_correlation(const type& new_minimum_correlation)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_correlation < 0 || new_minimum_correlation > 1)
     {
@@ -387,347 +338,12 @@ void InputsSelection::set_minimum_correlation(const type& new_minimum_correlatio
 }
 
 
-/// Set the tolerance for the errors in the trainings of the algorithm.
-/// @param new_tolerance Value of the tolerance.
-
-void InputsSelection::set_tolerance(const type& new_tolerance)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_tolerance < 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "void set_tolerance(const type&) method.\n"
-               << "Tolerance must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    tolerance = new_tolerance;
-}
-
-
-/// Returns the minimum of the loss and selection error in trials_number trainings.
-/// @param inputs Vector of the inputs to be trained with.
-
-Tensor<type, 1> InputsSelection::calculate_losses(const Tensor<bool, 1> & inputs)
-{
-
-#ifdef __OPENNN_DEBUG__
-
-    Index count = 0;
-
-    for(Index i = 0; i < inputs.size(); i++)
-    {
-        if(inputs(i) == true) count++;
-    }
-
-    if(count <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "Tensor<type, 1> perform_minimum_model_evaluation(Index) method.\n"
-               << "Number of inputs must be greater or equal than 1.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(trials_number <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: InputsSelection class.\n"
-               << "Tensor<type, 1> perform_minimum_model_evaluation(Index) method.\n"
-               << "Number of parameters assay must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Neural network
-
-    NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
-
-    // Optimization algorithm
-
-    OptimizationAlgorithmResults results;
-
-    type optimum_selection_error = numeric_limits<type>::max();
-    type optimum_training_error = numeric_limits<type>::max();
-
-    Tensor<type, 1> optimum_parameters;
-
-    Tensor<type, 1> optimum_losses(2);
-
-    bool flag_loss = false;
-    bool flag_selection = false;
-
-    // Check population
-
-    for(Index i = 0; i < inputs_history.size(); i++)
-    {
-        const Tensor<bool, 1> inputs_rows = inputs_history.chip(i,0);
-
-        for(Index j = 0; j < inputs_rows.size(); j++)
-        {
-            if(inputs_rows(j) != inputs(j)) break;
-
-            optimum_losses[0] = training_error_history[i];
-            flag_loss = true;
-        }
-        /*if(inputs_history(i) == inputs)
-        {
-            optimum_losses[0] = training_error_history[i];
-            flag_loss = true;
-        }*/
-    }
-
-    for(Index i = 0; i < inputs_history.size(); i++)
-    {
-        const Tensor<bool, 1> inputs_rows = inputs_history.chip(i,0);
-
-        for(Index j = 0; j < inputs_rows.size(); j++)
-        {
-            if(inputs_rows(j) != inputs(j)) break;
-
-            optimum_losses(0) = selection_error_history(i);
-            flag_selection = true;
-        }
-        /*
-                if(inputs_history[i] == inputs)
-                {
-                    optimum_losses[1] = selection_error_history[i];
-                    flag_selection = true;
-                }*/
-    }
-
-    if(flag_loss && flag_selection)
-    {
-        if(display)
-        {
-            cout << "Training error: " << optimum_losses[0] << endl;
-            cout << "Selection error: " << optimum_losses[1] << endl;
-            cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
-        }
-        return optimum_losses;
-    }
-
-    neural_network->perturbate_parameters(static_cast<type>(0.001));
-
-    for(Index i = 0; i < trials_number; i++)
-    {
-        neural_network->set_parameters_random();
-
-        results = training_strategy_pointer->perform_training();
-
-        const type selection_error = results.final_selection_error;
-        const type training_error = results.final_training_error;
-        const Tensor<type, 1> parameters = results.final_parameters;
-
-        if(display && trials_number != 1)
-        {
-            cout << "Trial number: " << i << endl;
-            cout << "Training error: " << training_error << endl;
-            cout << "Selection error: " << selection_error << endl;
-            cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
-        }
-
-        if(optimum_selection_error > selection_error)
-        {
-            optimum_selection_error = selection_error;
-            optimum_training_error = training_error;
-            optimum_parameters = parameters;
-        }
-    }
-
-    if(display)
-    {
-        if(trials_number != 1) cout << "Trial number: " << trials_number << endl;
-        cout << "Training error: " << optimum_training_error << endl;
-        cout << "Selection error: " << optimum_selection_error << endl;
-        cout << "Stopping condition: " << write_stopping_condition(results) << endl << endl;
-    }
-
-//    inputs_history = insert_result(inputs, inputs_history);
-
-    training_error_history = insert_result(optimum_training_error, training_error_history);
-
-    selection_error_history = insert_result(optimum_selection_error, selection_error_history);
-
-    parameters_history = insert_result(optimum_parameters, parameters_history);
-    /*
-        inputs_history.push_back(inputs);
-
-        training_error_history.push_back(optimum_training_error);
-
-        selection_error_history.push_back(optimum_selection_error);
-
-        parameters_history.push_back(optimum_parameters);
-    */
-    optimum_losses[0] = optimum_training_error;
-    optimum_losses[1] = optimum_selection_error;
-
-    return optimum_losses;
-
-//    return Tensor<type, 1>();
-}
-
-
-Tensor<type, 1> InputsSelection::insert_result(const type& value, const Tensor<type, 1>& old_tensor) const
-{
-    const Index size = old_tensor.size();
-
-    Tensor<type, 1> new_tensor(size+1);
-
-    for(Index i = 0; i < size; i++)
-    {
-        new_tensor(i) = old_tensor(i);
-    }
-
-    new_tensor(size) = value;
-
-    return new_tensor;
-}
-
-Tensor<Index, 1> InputsSelection::insert_result(const Index& value, const Tensor<Index, 1>& old_tensor) const
-{
-    const Index size = old_tensor.size();
-
-    Tensor<Index, 1> new_tensor(size+1);
-
-    for(Index i = 0; i < size; i++)
-    {
-        new_tensor(i) = old_tensor(i);
-    }
-
-    new_tensor(size) = value;
-
-    return new_tensor;
-}
-
-Tensor<Index, 1> InputsSelection::delete_result(const Index& value, const Tensor<Index, 1>& old_tensor) const
-{
-    const Index size = old_tensor.size();
-
-    Tensor<Index, 1> new_tensor(size-1);
-
-    Index index = 0;
-
-    for(Index i = 0; i < size; i++)
-    {
-        if(old_tensor(i) != value)
-        {
-            new_tensor(index) = old_tensor(i);
-
-            index++;
-        }
-    }
-
-    return new_tensor;
-}
-
-
-Tensor< Tensor<type, 1>, 1> InputsSelection::insert_result(const Tensor<type, 1>& value,
-                                                           const Tensor< Tensor<type, 1>, 1>& old_tensor) const
-{
-    const Index size = old_tensor.size();
-
-    Tensor< Tensor<type, 1>, 1> new_tensor(size+1);
-
-    for(Index i = 0; i < size; i++)
-    {
-        new_tensor(i) = old_tensor(i);
-    }
-
-    new_tensor(size) = value;
-
-    return new_tensor;
-}
-
-
-/// Returns the parameters of the neural network if the inputs is in the history.
-/// @param inputs Vector of inputs to be trained with.
-
-Tensor<type, 1> InputsSelection::get_parameters_inputs(const Tensor<bool, 1>& inputs) const
-{
-    /*
-    #ifdef __OPENNN_DEBUG__
-
-        if(inputs.count_equal_to(true) <= 0)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: InputsSelection class.\n"
-                   << "Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) method.\n"
-                   << "Inputs must be greater than 1.\n";
-
-            throw logic_error(buffer.str());
-        }
-
-    #endif
-
-        Index i;
-
-        Tensor<type, 1> parameters;
-
-        for(i = 0; i < inputs_history.size(); i++)
-        {
-            if(inputs_history[i] == inputs)
-            {
-                parameters = parameters_history[i];
-
-                break;
-            }
-        }
-
-        return parameters;
-    */
-    return Tensor<type, 1>();
-}
-
-
 /// Return a string with the stopping condition of the training depending on the training method.
 /// @param results Results of the perform_training method.
 
-string InputsSelection::write_stopping_condition(const OptimizationAlgorithmResults& results) const
+string InputsSelection::write_stopping_condition(const TrainingResults& results) const
 {
     return results.write_stopping_condition();
-}
-
-
-/// Delete the history of the selection error values.
-
-void InputsSelection::delete_selection_history()
-{
-    /*
-        selection_error_history.set();
-    */
-}
-
-
-/// Delete the history of the loss values.
-
-void InputsSelection::delete_loss_history()
-{
-    /*
-        training_error_history.set();
-    */
-}
-
-
-/// Delete the history of the parameters of the trained neural networks.
-
-void InputsSelection::delete_parameters_history()
-{
-    /*
-        parameters_history.set();
-    */
 }
 
 
@@ -735,8 +351,6 @@ void InputsSelection::delete_parameters_history()
 
 void InputsSelection::check() const
 {
-    // Optimization algorithm
-
     ostringstream buffer;
 
     if(!training_strategy_pointer)
@@ -826,9 +440,6 @@ string InputsSelectionResults::write_stopping_condition() const
 
     case InputsSelection::CorrelationGoal:
         return "CorrelationGoal";
-
-    case InputsSelection::AlgorithmFinished:
-        return "AlgorithmFinished";
     }
 
     return string();
@@ -840,7 +451,7 @@ string InputsSelectionResults::write_stopping_condition() const
 const string InputsSelection::write_elapsed_time(const type& time) const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(time > static_cast<type>(3600e5))
     {
@@ -880,21 +491,21 @@ const string InputsSelection::write_elapsed_time(const type& time) const
 }
 
 
-/// Return the index of uses where is the(input_number)-th input.
+/// Return the index of uses where is the(inputs_number)-th input.
 /// @param uses Vector of the uses of the variables.
-/// @param input_number Index of the input to find.
+/// @param inputs_number Index of the input to find.
 
-Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1> uses, const Index input_number)
+Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& inputs_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
-    if(uses.size() < input_number)
+    if(uses.size() < inputs_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "const Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index) method.\n"
-               << "Size of uses vector("<< uses.size() <<") must be greater than " <<  input_number << ".\n";
+               << "Size of uses vector("<< uses.size() <<") must be greater than " <<  inputs_number << ".\n";
 
         throw logic_error(buffer.str());
     }
@@ -906,8 +517,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1> use
 
     while(i < uses.size())
     {
-        if(uses[i] == DataSet::Input &&
-                input_number == j)
+        if(uses[i] == DataSet::Input && inputs_number == j)
         {
             break;
         }

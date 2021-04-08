@@ -11,8 +11,6 @@
 
 #include "config.h"
 
-#include "statistics.h"
-
 // Data set
 
 #include "data_set.h"
@@ -69,8 +67,9 @@
 #include "numerical_differentiation.h"
 #include "correlations.h"
 #include "response_optimization.h"
-#include "statistics.h"
 #include "opennn_strings.h"
+#include "tensor_utilities.h"
+#include "statistics.h"
 
 #endif
 

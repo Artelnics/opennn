@@ -28,7 +28,7 @@
 
 namespace OpenNN
 {
-struct PruningInputsResults;
+struct InputsSelectionResults;
 
 /// This concrete class represents a pruning inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
 
@@ -67,7 +67,7 @@ public:
 
     // Order selection methods
 
-    PruningInputsResults* perform_inputs_selection();
+    InputsSelectionResults perform_inputs_selection();
 
     // Serialization methods
 
@@ -95,26 +95,6 @@ private:
     /// Maximum number of epochs at which the selection error increases.
 
     Index maximum_selection_failures;
-};
-
-///
-/// This structure contains the training results for the pruning inputs method.
-///
-
-struct PruningInputsResults : public InputsSelectionResults
-{
-    /// Default constructor.
-
-    explicit PruningInputsResults() : InputsSelectionResults()
-    {
-    }
-
-    /// Destructor.
-
-    virtual ~PruningInputsResults()
-    {
-    }
-
 };
 
 }

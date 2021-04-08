@@ -34,10 +34,6 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Assignment operators methods
-
-   void test_assignment_operator();
-
    // Display messages
 
    void test_get_display();
@@ -63,7 +59,7 @@ public:
    void test_set();
 
    void test_set_names();
-   void test_set_number();
+   void test_set_inputs_number();
 
    void test_set_pointers();
 

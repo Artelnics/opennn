@@ -101,7 +101,7 @@ void NumericalDifferentiation::set_numerical_differentiation_method
 /// The argument is a string with the name of the numerical differentiation method.
 /// @param new_numerical_differentiation_method Numerical differentiation method name string.
 
-void NumericalDifferentiation:: set_numerical_differentiation_method(const string& new_numerical_differentiation_method)
+void NumericalDifferentiation::set_numerical_differentiation_method(const string& new_numerical_differentiation_method)
 {
     if(new_numerical_differentiation_method == "ForwardDifferences")
     {
@@ -244,7 +244,7 @@ Tensor<type, 4> NumericalDifferentiation::calculate_h(const Tensor<type, 4>& x) 
 Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivatives(const Tensor<type, 1>& x,
         const Tensor<type, 1>& y) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index x_size = x.size();
     const Index y_size = y.size();

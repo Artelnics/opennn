@@ -20,7 +20,7 @@ QuasiNewtonMethodTest::~QuasiNewtonMethodTest()
 }
 
 
-void QuasiNewtonMethodTest::test_constructor() // @todo
+void QuasiNewtonMethodTest::test_constructor()
 {
    cout << "test_constructor\n"; 
 
@@ -29,21 +29,21 @@ void QuasiNewtonMethodTest::test_constructor() // @todo
    // Default constructor
 
    QuasiNewtonMethod qnm1;
-   assert_true(qnm1.has_loss_index() == false, LOG);
+   assert_true(!qnm1.has_loss_index(), LOG);
 
    // Loss index constructor
 
    QuasiNewtonMethod qnm2(&sum_squared_error);
-   assert_true(qnm2.has_loss_index() == true, LOG);
+   assert_true(qnm2.has_loss_index(), LOG);
 }
 
 
-void QuasiNewtonMethodTest::test_destructor() // @todo
+void QuasiNewtonMethodTest::test_destructor()
 {
 }
 
 
-void QuasiNewtonMethodTest::test_get_inverse_hessian_approximation_method() // @todo
+void QuasiNewtonMethodTest::test_get_inverse_hessian_approximation_method()
 {
    cout << "test_get_inverse_hessian_approximation_method\n";
 
@@ -57,13 +57,13 @@ void QuasiNewtonMethodTest::test_get_inverse_hessian_approximation_method() // @
 }
 
 
-void QuasiNewtonMethodTest::test_get_inverse_hessian_approximation_method_name() // @todo
+void QuasiNewtonMethodTest::test_get_inverse_hessian_approximation_method_name()
 {
    cout << "test_get_inverse_hessian_approximation_method_name\n";
 }
 
 
-void QuasiNewtonMethodTest::test_set_inverse_hessian_approximation_method() // @todo
+void QuasiNewtonMethodTest::test_set_inverse_hessian_approximation_method()
 {
    cout << "test_set_training_direction_method\n";
 
@@ -76,19 +76,30 @@ void QuasiNewtonMethodTest::test_set_inverse_hessian_approximation_method() // @
 
 
 
-void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation() // @todo
+void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
 {
    cout << "test_calculate_DFP_inverse_hessian_approximation\n";
 
-//   DataSet data_set(2, 1, 1);
-//   data_set.set_data_random();
+   DataSet data_set;
 
-//   Tensor<type, > architecture(2);
-//   architecture.setValues({1,1});
+   Tensor<type, 1> architecture;
 
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
-//   QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
+   NeuralNetwork neural_network;
+
+   SumSquaredError sum_squared_error(&neural_network, &data_set);
+
+   QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
+
+
+   // Test
+
+   data_set.set(2, 1, 1);
+   data_set.set_data_random();
+
+   architecture.resize(2);
+   architecture.setValues({1,1});
+
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    // Test
 
@@ -163,7 +174,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation() /
 
 /// @todo
 
-void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation() // @todo
+void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation()
 {
    cout << "test_calculate_BFGS_inverse_hessian_approximation\n";
 
@@ -200,7 +211,7 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation() 
 
 /// @todo
 
-void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation() // @todo
+void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 {
    cout << "test_calculate_inverse_hessian_approximation\n";
 
@@ -268,13 +279,13 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation() // @t
 }
 
 
-void QuasiNewtonMethodTest::test_calculate_training_direction() // @todo
+void QuasiNewtonMethodTest::test_calculate_training_direction()
 {
    cout << "test_calculate_training_direction\n";
 }
 
 
-void QuasiNewtonMethodTest::test_perform_training() // @todo
+void QuasiNewtonMethodTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
@@ -287,7 +298,7 @@ void QuasiNewtonMethodTest::test_perform_training() // @todo
 
 //   quasi_newton_method.set_reserve_all_training_history(true);
 
-//    // Test
+    // Test
 
 //   neural_network.set_parameters_constant(3.1415927);
 
@@ -385,7 +396,7 @@ void QuasiNewtonMethodTest::test_to_XML()    // @todo
 }
 
 
-void QuasiNewtonMethodTest::test_resize_training_history() // @todo
+void QuasiNewtonMethodTest::test_resize_training_history()
 {
     cout << "test_resize_training_history\n";
 
@@ -397,11 +408,11 @@ void QuasiNewtonMethodTest::test_resize_training_history() // @todo
 
 //    QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
 
-//    OptimizationAlgorithmResults results;
+//    TrainingResults results;
 
 //    quasi_newton_method.set_reserve_all_training_history(true);
 
-//    // Test
+    // Test
 
 //    results.resize_training_history(2);
 
@@ -410,7 +421,7 @@ void QuasiNewtonMethodTest::test_resize_training_history() // @todo
 }
 
 
-void QuasiNewtonMethodTest::test_load() // @todo
+void QuasiNewtonMethodTest::test_load()
 {
    cout << "test_load\n";
 
@@ -423,7 +434,7 @@ void QuasiNewtonMethodTest::test_load() // @todo
 }
 
 
-void QuasiNewtonMethodTest::test_set_reserve_all_training_history() // @todo
+void QuasiNewtonMethodTest::test_set_reserve_all_training_history()
 {
    cout << "test_set_reserve_all_training_history\n";
 
@@ -432,7 +443,7 @@ void QuasiNewtonMethodTest::test_set_reserve_all_training_history() // @todo
 }
 
 
-void QuasiNewtonMethodTest::run_test_case() // @todo
+void QuasiNewtonMethodTest::run_test_case()
 {
    cout << "Running quasi-Newton method test case...\n";
 

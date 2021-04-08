@@ -55,12 +55,10 @@ public:
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum StoppingCondition{MaximumTime,SelectionErrorGoal,MaximumInputs,MinimumInputs,MaximumEpochs,
-                           MaximumSelectionFailures,CorrelationGoal,AlgorithmFinished};
+    enum StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumInputs, MinimumInputs, MaximumEpochs,
+                           MaximumSelectionFailures, CorrelationGoal};
 
     // Get methods
-
-    const bool& get_approximation() const;
 
     TrainingStrategy* get_training_strategy_pointer() const;
 
@@ -68,9 +66,8 @@ public:
 
     const Index& get_trials_number() const;
 
-    const bool& get_reserve_training_error_data() const;
-    const bool& get_reserve_selection_error_data() const;
-    const bool& get_reserve_minimal_parameters() const;
+    const bool& get_reserve_training_errors() const;
+    const bool& get_reserve_selection_errors() const;
 
     const bool& get_display() const;
 
@@ -83,7 +80,7 @@ public:
 
     // Set methods
 
-    void set_approximation(const bool&);
+    
 
     void set_training_strategy_pointer(TrainingStrategy*);
 
@@ -93,7 +90,6 @@ public:
 
     void set_reserve_training_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
-    void set_reserve_minimal_parameters(const bool&);
 
     void set_display(const bool&);
 
@@ -102,36 +98,22 @@ public:
     void set_maximum_time(const type&);
     void set_maximum_correlation(const type&);
     void set_minimum_correlation(const type&);
-    void set_tolerance(const type&);
 
     // Performances calculation methods
 
-    Tensor<type, 1> calculate_losses(const Tensor<bool, 1>&);
-
-    Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) const;
-
-    string write_stopping_condition(const OptimizationAlgorithmResults&) const;
+    string write_stopping_condition(const TrainingResults&) const;
 
     // inputs selection methods
 
-    void delete_selection_history();
-    void delete_loss_history();
-    void delete_parameters_history();
     void check() const;
 
     // Utilities
 
-    Tensor<type, 1> insert_result(const type&, const Tensor<type, 1>&) const;
-    Tensor<Index, 1> insert_result(const Index&, const Tensor<Index, 1>&) const;
-    Tensor< Tensor<type, 1>, 1> insert_result(const Tensor<type, 1>&, const Tensor< Tensor<type, 1>, 1>&) const;
-
-    Tensor<Index, 1> delete_result(const Index&, const Tensor<Index, 1>&) const;
-
-    Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index);
+    Index get_input_index(const Tensor<DataSet::VariableUse, 1>&, const Index&);
 
     /// Performs the inputs selection for a neural network.
 
-//    virtual InputsSelectionResults* perform_inputs_selection() = 0;
+    virtual InputsSelectionResults perform_inputs_selection() = 0;
 
     /// Writes the time from seconds in format HH:mm:ss.
 
@@ -142,10 +124,6 @@ protected:
     /// Pointer to a training strategy object.
 
     TrainingStrategy* training_strategy_pointer = nullptr;
-
-    /// True if this is a function regression problem.
-
-    bool approximation;
 
     /// Inputs of all the neural networks trained.
 
@@ -171,15 +149,11 @@ protected:
 
     /// True if the loss of all neural networks are to be reserved.
 
-    bool reserve_training_error_data;
+    bool reserve_training_errors;
 
     /// True if the selection error of all neural networks are to be reserved.
 
-    bool reserve_selection_error_data;
-
-    /// True if the vector parameters of the neural network presenting minimum selection error is to be reserved.
-
-    bool reserve_minimal_parameters;
+    bool reserve_selection_errors;
 
     /// Display messages to screen.
 
@@ -207,9 +181,7 @@ protected:
 
     type maximum_time;
 
-    /// Tolerance for the error in the trainings of the algorithm.
-
-    type tolerance;
+    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 };
 
 
@@ -217,47 +189,80 @@ protected:
 
 struct InputsSelectionResults
 {
-   explicit InputsSelectionResults() {}
+    // Default constructor
+
+    explicit InputsSelectionResults()
+    {
+    }
+
+    // Maximum epochs number constructor
+
+    explicit InputsSelectionResults(const Index& maximum_epochs_number)
+    {
+        set(maximum_epochs_number);
+    }
+
+    void set(const Index& maximum_epochs_number)
+    {
+        training_errors.resize(maximum_epochs_number);
+
+        selection_errors.resize(maximum_epochs_number);
+    }
 
    virtual ~InputsSelectionResults() {}
 
    string write_stopping_condition() const;
 
-   /// Inputs of the different neural networks.
+   void print()
+   {
+       cout << endl;
+       cout << "Inputs Selection Results" << endl;
 
-   Tensor<bool, 2> inputs_data;
+       cout << "Optimal inputs number: " << optimal_inputs_names.size() << endl;
 
-   /// Performance of the different neural networks.
+       cout << "Inputs: " << endl;
 
-   Tensor<type, 1> training_error_data;
+       for(Index i = 0; i < optimal_inputs_names.size(); i++) cout << "   " << optimal_inputs_names(i) << endl;
 
-   /// Selection loss of the different neural networks.
+       cout << "Optimum training error: " << optimum_training_error << endl;
+       cout << "Optimum selection error: " << optimum_selection_error << endl;
+   }
 
-   Tensor<type, 1> selection_error_data;
+   // Neural network
 
    /// Vector of parameters for the neural network with minimum selection error.
 
-   Tensor<type, 1> minimal_parameters;
+   Tensor<type, 1> optimal_parameters;
+
+   // Loss index
+
+   /// Performance of the different neural networks.
+
+   Tensor<type, 1> training_errors;
+
+   /// Selection loss of the different neural networks.
+
+   Tensor<type, 1> selection_errors;
+
+   /// Value of training for the neural network with minimum selection error.
+
+   type optimum_training_error = numeric_limits<type>::max();
 
    /// Value of minimum selection error.
 
-   type final_selection_error;
-
-   /// Value of loss for the neural network with minimum selection error.
-
-   type final_training_error;
+   type optimum_selection_error = numeric_limits<type>::max();
 
    /// Inputs of the neural network with minimum selection error.
 
-   Tensor<Index, 1> optimal_inputs_indices;
-
-   /// Inputs of the neural network with minimum selection error.
+   Tensor<string, 1> optimal_inputs_names;
 
    Tensor<bool, 1> optimal_inputs;
 
+   // Model selection
+
    /// Number of iterations to perform the inputs selection.
 
-   Index iterations_number;
+   Index epochs_number;
 
    /// Stopping condition of the algorithm.
 

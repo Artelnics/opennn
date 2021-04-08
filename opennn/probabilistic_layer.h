@@ -30,57 +30,12 @@
 namespace OpenNN
 {
 
-    struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
+struct ProbabilisticLayerForwardPropagation;
+struct ProbabilisticLayerBackPropagation;
 
-        explicit ProbabilisticLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
-        {
-        }
-
-        void set(const Index& new_batch_samples_number)
-        {
-            batch_samples_number = new_batch_samples_number;
-
-            const Index neurons_number = layer_pointer->get_neurons_number();
-
-            combinations.resize(batch_samples_number, neurons_number);
-
-            activations.resize(batch_samples_number, neurons_number);
-
-            activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
-        }
-
-        Tensor<type, 2> combinations;
-        Tensor<type, 2> activations;
-        Tensor<type, 3> activations_derivatives;
-    };
-
-    struct ProbabilisticLayerBackPropagation : LayerBackPropagation
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index inputs_number = layer_pointer->get_inputs_number();
-
-        explicit ProbabilisticLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
-        {
-
-        }
-
-        void set(const Index& new_batch_samples_number)
-        {
-            batch_samples_number = new_batch_samples_number;
-
-            biases_derivatives.resize(neurons_number);
-
-            synaptic_weights_derivatives.resize(inputs_number, neurons_number);
-
-            delta.resize(batch_samples_number, neurons_number);
-        }
-
-        Tensor<type, 2> delta;
-        Tensor<type, 2> synaptic_weights_derivatives;
-        Tensor<type, 1> biases_derivatives;
-    };
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn_cuda/struct_probabilistic_layer_cuda.h"
+#endif
 
 
 /// This class represents a layer of probabilistic neurons.
@@ -218,7 +173,7 @@ public:
    string write_no_probabilistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_combinations(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_combinations(const Tensor<string, 1>&) const;
    string write_activations(const Tensor<string, 1>&) const;
 
    string write_expression_c() const;
@@ -234,6 +189,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
+
 
 protected:
 
@@ -258,12 +214,114 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/probabilistic_layer_cuda.h"
+#else
+};
 #endif
 
-#ifdef OPENNN_MKL
-    #include"../../opennn-mkl/opennn_mkl/probabilistic_layer_mkl.h"
-#endif
+struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
+{
+    // Constructor
 
+    explicit ProbabilisticLayerForwardPropagation() : LayerForwardPropagation()
+    {
+    }
+
+    // Constructor
+
+    explicit ProbabilisticLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerForwardPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        combinations.resize(batch_samples_number, neurons_number);
+
+        activations.resize(batch_samples_number, neurons_number);
+
+        activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number);
+    }
+
+
+    void print() const
+    {
+        cout << "Combinations:" << endl;
+        cout << combinations << endl;
+
+        cout << "Activations:" << endl;
+        cout << activations << endl;
+
+        cout << "Activations derivatives:" << endl;
+        cout << activations_derivatives << endl;
+    }
+
+
+    Tensor<type, 2> combinations;
+    Tensor<type, 2> activations;
+    Tensor<type, 3> activations_derivatives;
+};
+
+
+struct ProbabilisticLayerBackPropagation : LayerBackPropagation
+{
+    explicit ProbabilisticLayerBackPropagation() : LayerBackPropagation()
+    {
+
+    }
+
+
+    explicit ProbabilisticLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
+
+        biases_derivatives.resize(neurons_number);
+
+        synaptic_weights_derivatives.resize(inputs_number, neurons_number);
+
+        delta.resize(batch_samples_number, neurons_number);
+        delta_row.resize(neurons_number);
+
+        error_combinations_derivatives.resize(batch_samples_number, neurons_number);
+    }
+
+    void print() const
+    {
+        cout << "Delta:" << endl;
+        cout << delta << endl;
+
+        cout << "Biases derivatives:" << endl;
+        cout << biases_derivatives << endl;
+
+        cout << "Synaptic weights derivatives:" << endl;
+        cout << synaptic_weights_derivatives << endl;
+    }
+
+    Tensor<type, 2> delta;
+    Tensor<type, 1> delta_row;
+
+    Tensor<type, 2> error_combinations_derivatives;
+
+    Tensor<type, 2> synaptic_weights_derivatives;
+    Tensor<type, 1> biases_derivatives;
 };
 
 }

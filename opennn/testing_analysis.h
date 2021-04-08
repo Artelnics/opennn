@@ -68,10 +68,21 @@ public:
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
+       /// @todo
+
        void save(const string&) const
        {
-        /// @todo
        }
+
+
+       void print() const
+       {
+           cout << "Linear regression analysis" << endl;
+           cout << "Correlation: " << correlation << endl;
+           cout << "Intercept: " << intercept << endl;
+           cout << "Slope: " << slope << endl;
+       }
+
     };
 
 

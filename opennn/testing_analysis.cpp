@@ -53,7 +53,7 @@ TestingAnalysis::~TestingAnalysis()
 
 NeuralNetwork* TestingAnalysis::get_neural_network_pointer() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!neural_network_pointer)
     {
@@ -76,7 +76,7 @@ NeuralNetwork* TestingAnalysis::get_neural_network_pointer() const
 
 DataSet* TestingAnalysis::get_data_set_pointer() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!data_set_pointer)
     {
@@ -198,7 +198,7 @@ void TestingAnalysis::check() const
 
 Tensor<RegressionResults, 1> TestingAnalysis::linear_regression() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -226,7 +226,6 @@ Tensor<RegressionResults, 1> TestingAnalysis::linear_regression() const
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     return linear_regression(targets,outputs);
-
 }
 
 
@@ -356,7 +355,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 {
     // Data set
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -364,7 +363,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -391,7 +390,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     const UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!unscaling_layer_pointer)
     {
@@ -405,6 +404,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 #endif
 
     const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
+
     const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
     // Error data
@@ -439,7 +439,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 {
     // Data set
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -447,7 +447,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -472,7 +472,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     const UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!unscaling_layer_pointer)
     {
@@ -485,26 +485,26 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
 #endif
 
-       const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
-       const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
+    const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
+    const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
-       const Index outputs_number = neural_network_pointer->get_outputs_number();
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-       // Error data
+    // Error data
 
-       Tensor<type, 2> error_data(testing_samples_number, outputs_number);
+    Tensor<type, 2> error_data(testing_samples_number, outputs_number);
 
-       Tensor<type, 2> difference_value = (targets - outputs);
+    Tensor<type, 2> difference_value = (targets - outputs);
 
-       for(Index i = 0; i < testing_samples_number; i++)
+    for(Index i = 0; i < testing_samples_number; i++)
+    {
+       for(Index j = 0; j < outputs_number; j++)
        {
-           for(Index j = 0; j < outputs_number; j++)
-           {
-               error_data(i,j) = (difference_value(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
-           }
+           error_data(i,j) = (difference_value(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
        }
+    }
 
-       return error_data;
+    return error_data;
 }
 
 
@@ -521,14 +521,12 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(
 
     // Error descriptives
 
-    Tensor<Descriptives, 1> descriptives = calculate_absolute_errors_descriptives(targets,outputs);
-
-    return descriptives;
+    return calculate_absolute_errors_descriptives(targets, outputs);
 }
 
 
 Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(const Tensor<type, 2>& targets,
-        const Tensor<type, 2>& outputs) const
+                                                                                const Tensor<type, 2>& outputs) const
 {
     const Tensor<type, 2> diff = (targets-outputs).abs();
 
@@ -549,10 +547,7 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptive
 
     // Error descriptives
 
-    const Tensor<Descriptives, 1> descriptives = calculate_percentage_errors_descriptives(targets,outputs);
-
-    return descriptives;
-
+    return calculate_percentage_errors_descriptives(targets,outputs);
 }
 
 
@@ -620,14 +615,14 @@ void TestingAnalysis::print_error_data_descriptives() const
         cout << "Mean error: " << error_data_statistics[i][0].mean << " " << endl;
         cout << "Standard deviation error: " << error_data_statistics[i][0].standard_deviation << " " << endl;
 
-        cout << "Minimum percentage error: " << error_data_statistics[i][2].minimum << " %" <<  endl;
-        cout << "Maximum percentage error: " << error_data_statistics[i][2].maximum << " %" <<  endl;
-        cout << "Mean percentage error: " << error_data_statistics[i][2].mean << " %" <<  endl;
-        cout << "Standard deviation percentage error: " << error_data_statistics[i][2].standard_deviation << " %" <<  endl;
-
+        cout << "Minimum percentage error: " << error_data_statistics[i][2].minimum << " %" << endl;
+        cout << "Maximum percentage error: " << error_data_statistics[i][2].maximum << " %" << endl;
+        cout << "Mean percentage error: " << error_data_statistics[i][2].mean << " %" << endl;
+        cout << "Standard deviation percentage error: " << error_data_statistics[i][2].standard_deviation << " %" << endl;
         cout << endl;
     }
 }
+
 
 /// Calculates histograms for the relative errors of all the output variables.
 /// The number of bins is set by the user.
@@ -712,7 +707,7 @@ Tensor<type, 2> TestingAnalysis::calculate_errors() const
 
 Tensor<type, 2> TestingAnalysis::calculate_binary_classification_errors() const
 {
-    Tensor<type, 2> errors(7,3);
+    Tensor<type, 2> errors(7, 3);
 
     const Tensor<type, 1> training_errors = calculate_binary_classification_training_errors();
     const Tensor<type, 1> selection_errors = calculate_binary_classification_selection_errors();
@@ -783,7 +778,7 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
 {
     // Data set
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -791,7 +786,7 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
 
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -833,7 +828,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
 {
     // Data set
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -841,7 +836,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
 
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -894,7 +889,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_erro
 {
     // Data set
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -902,7 +897,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_erro
 
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -944,7 +939,7 @@ Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
 {
     // Data set
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -952,7 +947,7 @@ Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
 
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -989,11 +984,12 @@ Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
     return errors;
 }
 
+
 Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_errors() const
 {
     // Data set
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -1001,7 +997,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_error
 
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -1040,11 +1036,12 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_error
     return errors;
 }
 
+
 Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_errors() const
 {
     // Data set
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -1052,7 +1049,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_err
 
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -1104,7 +1101,7 @@ Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
 {
     // Data set
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -1112,7 +1109,7 @@ Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
 
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -1134,19 +1131,6 @@ Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
     // Neural network
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
-
-#ifdef __OPENNN_DEBUG__
-
-//    if(!unscaling_layer_pointer)
-//    {
-//       buffer << "OpenNN Exception: TestingAnalysis class.\n"
-//              << "Tensor<type, 1> calculate_testing_errors() const.\n"
-//              << "Unscaling layer is nullptr.\n";
-
-//       throw logic_error(buffer.str());
-//    }
-
-#endif
 
     Tensor<type, 1> errors(4);
 
@@ -1178,7 +1162,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors(
 {
     // Data set
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -1186,7 +1170,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors(
 
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -1240,7 +1224,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 {
     // Data set
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -1248,7 +1232,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 
     const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -1281,7 +1265,6 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
     errors(1) = errors(0)/testing_samples_number;
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
-//    errors(4) = calculate_cross_entropy_error(targets, outputs);
 
     return errors;
 }
@@ -1302,9 +1285,10 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
     type normalization_coefficient = 0;
 
 #pragma omp parallel for reduction(+: normalization_coefficient)
+
     for(Index i = 0; i < samples_number; i++)
     {
-        Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
+        const Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
 
         normalization_coefficient += norm_1(0);
     }
@@ -1366,7 +1350,7 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
                                                        const Tensor<type, 2>& outputs,
                                                        const Tensor<type, 1>& weights) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index outputs_number = outputs.dimension(1);
 
@@ -1584,7 +1568,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 {
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -1665,7 +1649,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
 TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -1839,7 +1823,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
     // Sort by ascending values of outputs vector
 
     Tensor<Index, 1> sorted_indices(outputs.dimension(0));
-    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+    iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
 
     stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
 
@@ -2166,13 +2150,13 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
 
 Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
 #endif
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!neural_network_pointer)
     {
@@ -2187,7 +2171,7 @@ Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
 
 #endif
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 
@@ -2255,7 +2239,7 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
     // Sort by ascending values of outputs vector
 
     Tensor<Index, 1> sorted_indices(outputs.dimension(0));
-    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+    iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
 
     stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) > outputs(i2,0);});
 
@@ -2329,7 +2313,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
     // Sort by ascending values of outputs vector
 
     Tensor<Index, 1> sorted_indices(outputs.dimension(0));
-    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+    iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
 
     stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) > outputs(i2,0);});
 
@@ -2384,7 +2368,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
 
 Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -2477,7 +2461,7 @@ Tensor<type, 2> TestingAnalysis::calculate_lift_chart(const Tensor<type, 2>& cum
 
 TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Smirnov_analysis() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -2494,7 +2478,7 @@ TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Sm
 
 #endif
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 
@@ -2551,7 +2535,7 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
 {
     const Index points_number = positive_cumulative_gain.dimension(0);
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(points_number != negative_cumulative_gain.dimension(0))
     {
@@ -2592,7 +2576,7 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
 
 Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -2762,7 +2746,7 @@ Tensor<Histogram, 1> TestingAnalysis::calculate_output_histogram(const Tensor<ty
 
 TestingAnalysis::BinaryClassifcationRates TestingAnalysis::calculate_binary_classification_rates() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -3060,7 +3044,7 @@ void TestingAnalysis::save_multiple_classification_tests(const string& classific
 
 Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_rates() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -3434,7 +3418,7 @@ void TestingAnalysis::save_misclassified_samples_probability_histogram(const Ten
 
 Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(const Index& maximum_lags_number) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -3507,7 +3491,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 
 Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correlation(const Index& lags_number) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -3597,7 +3581,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
 
 Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 
@@ -3885,13 +3869,9 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
 type TestingAnalysis::calculate_logloss() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
-
-#endif
-
-#ifdef __OPENNN_DEBUG__
 
     if(!neural_network_pointer)
     {
@@ -3903,10 +3883,6 @@ type TestingAnalysis::calculate_logloss() const
 
         throw logic_error(buffer.str());
     }
-
-#endif
-
-#ifdef __OPENNN_DEBUG__
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 
@@ -4078,7 +4054,7 @@ Tensor<type, 2> TestingAnalysis::delete_row(const Tensor<type, 2>& tensor, const
 {
     const Index rows_number = tensor.dimension(0);
     const Index columns_number = tensor.dimension(1);
-   #ifdef __OPENNN_DEBUG__
+   #ifdef OPENNN_DEBUG
 
    if(row_index > rows_number)
    {

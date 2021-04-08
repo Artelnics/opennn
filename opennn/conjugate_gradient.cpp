@@ -312,7 +312,7 @@ void ConjugateGradient::set_default()
 
 void ConjugateGradient::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
     {
@@ -338,7 +338,7 @@ void ConjugateGradient::set_minimum_parameters_increment_norm(const type& new_mi
 
 void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_loss_decrease < static_cast<type>(0.0))
     {
@@ -375,7 +375,7 @@ void ConjugateGradient::set_loss_goal(const type& new_loss_goal)
 
 void ConjugateGradient::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_gradient_norm_goal < static_cast<type>(0.0))
     {
@@ -419,7 +419,7 @@ void ConjugateGradient::set_maximum_epochs_number(const Index& new_maximum_epoch
 
 void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_time < static_cast<type>(0.0))
     {
@@ -474,7 +474,7 @@ void ConjugateGradient::set_reserve_selection_error_history(const bool& new_rese
 
 void ConjugateGradient::set_save_period(const Index& new_save_period)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_save_period <= 0)
     {
@@ -499,7 +499,7 @@ void ConjugateGradient::set_save_period(const Index& new_save_period)
 
 type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -581,7 +581,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
 type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -668,14 +668,14 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                                                         const Tensor<type, 1>& old_training_direction,
                                                         Tensor<type, 1>& training_direction) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
     if(!loss_index_pointer)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
+               << "void calculate_PR_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
@@ -690,7 +690,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
     if(old_gradient_size != parameters_number)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
+               << "void calculate_PR_training_direction() const method.\n"
                << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -701,7 +701,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
     if(gradient_size != parameters_number)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
+               << "void calculate_PR_training_direction() const method.\n"
                << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -712,8 +712,9 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
     if(old_training_direction_size != parameters_number)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of old training direction(" << old_training_direction_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
+               << "void calculate_PR_training_direction() const method.\n"
+               << "Size of old training direction(" << old_training_direction_size
+               << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -736,14 +737,14 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                                                         const Tensor<type, 1>& old_training_direction,
                                                         Tensor<type, 1>& training_direction) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
     if(!loss_index_pointer)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
+               << "void calculate_FR_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
@@ -758,8 +759,8 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
     if(old_gradient_size != parameters_number)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
+               << "void calculate_FR_training_direction() const method.\n"
+               << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -769,8 +770,8 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
     if(gradient_size != parameters_number)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
+               << "void calculate_FR_training_direction() const method.\n"
+               << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -780,8 +781,9 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
     if(old_training_direction_size != parameters_number)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of old training direction(" << old_training_direction_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
+               << "void calculate_FR_training_direction() const method.\n"
+               << "Size of old training direction (" << old_training_direction_size
+               << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -816,7 +818,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                                                                         Tensor<type, 1>& training_direction) const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
@@ -826,7 +828,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
     if(!loss_index_pointer)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
+               << "void calculate_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
@@ -837,8 +839,8 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
     if(old_gradient_size != parameters_number)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
+               << "void calculate_training_direction() const method.\n"
+               << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -848,8 +850,8 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
     if(gradient_size != parameters_number)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
+               << "void calculate_training_direction() const method.\n"
+               << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -859,8 +861,9 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
     if(old_training_direction_size != parameters_number)
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of old training direction(" << old_training_direction_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
+               << "void calculate_training_direction() const method.\n"
+               << "Size of old training direction (" << old_training_direction_size
+               << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -883,7 +886,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
 /// Trains a neural network with an associated loss index according to the conjugate gradient algorithm.
 /// Training occurs according to the training operators, training parameters and stopping criteria.
 
-OptimizationAlgorithmResults ConjugateGradient::perform_training()
+TrainingResults ConjugateGradient::perform_training()
 {
     check();
 
@@ -891,7 +894,7 @@ OptimizationAlgorithmResults ConjugateGradient::perform_training()
 
     if(display) cout << "Training with conjugate gradient...\n";
 
-    OptimizationAlgorithmResults results;
+    TrainingResults results;
 
     results.resize_training_history(maximum_epochs_number+1);
 
@@ -909,21 +912,16 @@ OptimizationAlgorithmResults ConjugateGradient::perform_training()
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
     const bool has_selection = data_set_pointer->has_selection();
 
-    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
-    Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
-    Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
     DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
     training_batch.fill(training_samples_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
-
-    training_samples_indices.resize(0);
-    selection_samples_indices.resize(0);
-    inputs_indices.resize(0);
-    target_indices.resize(0);
 
     // Neural network
 
@@ -951,9 +949,6 @@ OptimizationAlgorithmResults ConjugateGradient::perform_training()
 
     type learning_rate = 0;
 
-    type minimum_selection_error = numeric_limits<type>::max();
-    Tensor<type, 1> minimal_selection_parameters;
-
     bool stop_training = false;
 
     Index selection_error_increases = 0;
@@ -962,19 +957,21 @@ OptimizationAlgorithmResults ConjugateGradient::perform_training()
 
     if(has_selection)
     {
-        minimal_selection_parameters = training_back_propagation.parameters;
+        results.optimal_parameters = training_back_propagation.parameters;
         results.resize_selection_history(maximum_epochs_number + 1);
     }
 
     // Calculate error before training
 
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+    loss_index_pointer->calculate_errors(training_batch, training_forward_propagation, training_back_propagation);
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
-    results.training_error_history(0)  = training_back_propagation.error;
+    results.training_error_history(0) = training_back_propagation.error;
 
     neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+    loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
     loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
-    results.selection_error_history(0)  = selection_back_propagation.error;
+    results.selection_error_history(0) = selection_back_propagation.error;
 
     // Main loop
 
@@ -996,28 +993,29 @@ OptimizationAlgorithmResults ConjugateGradient::perform_training()
         {
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
+            loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             selection_error = selection_back_propagation.error;
 
             if(epoch == 0)
             {
-                minimum_selection_error = selection_error;
+                results.optimum_selection_error = selection_error;
             }
             else if(selection_error > old_selection_error)
             {
                 selection_error_increases++;
             }
-            else if(selection_error <= minimum_selection_error)
+            else if(selection_error <= results.optimum_selection_error)
             {
-                minimum_selection_error = selection_error;
-                minimal_selection_parameters = training_back_propagation.parameters;
+                results.optimum_selection_error = selection_error;
+                results.optimal_parameters = training_back_propagation.parameters;
             }
         }
 
         // Optimization algorithm
 
-        update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         // Training history
 
@@ -1141,10 +1139,10 @@ OptimizationAlgorithmResults ConjugateGradient::perform_training()
             results.resize_training_error_history(epoch+1);
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            results.final_parameters = training_back_propagation.parameters;
+            results.parameters = training_back_propagation.parameters;
 
-            results.final_training_error = training_back_propagation.error;
-            if(has_selection) results.final_selection_error = selection_error;
+            results.training_error = training_back_propagation.error;
+            if(has_selection) results.selection_error = selection_error;
 
             results.final_gradient_norm = gradient_norm;
 
@@ -1157,7 +1155,7 @@ OptimizationAlgorithmResults ConjugateGradient::perform_training()
 
         if(display)
         if(epoch == 1
-        ||((epoch) % display_period) == 0)
+        || epoch%display_period == 0)
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Training error: " << training_back_propagation.error << "\n"
@@ -1168,47 +1166,28 @@ OptimizationAlgorithmResults ConjugateGradient::perform_training()
             if(has_selection) cout << "Selection error: " << selection_error << endl;
         }
 
-        // Set new parameters
-
-        neural_network_pointer->set_parameters(training_back_propagation.parameters);
-
         // Update stuff
 
         if(has_selection) old_selection_error = selection_error;
     }
 
-    if(has_selection && choose_best_selection)
-    {
-        neural_network_pointer->set_parameters(minimal_selection_parameters);
+    if(has_selection && choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
-//        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+    results.parameters = training_back_propagation.parameters;
 
-//        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+    results.training_error = training_back_propagation.error;
 
-//        training_loss = training_back_propagation.loss;
-
-//        selection_error = minimum_selection_error;
-    }
-
-    results.final_parameters = training_back_propagation.parameters;
-
-    results.final_training_error = training_back_propagation.error;
-    if(has_selection) results.final_selection_error = selection_error;
+    if(has_selection) results.selection_error = selection_error;
 
     results.final_gradient_norm = gradient_norm;
 
     results.elapsed_time = write_elapsed_time(elapsed_time);
 
+    if(display) results.print();
+
     return results;
 }
 
-
-/// Perform the training.
-
-void ConjugateGradient::perform_training_void()
-{
-    perform_training();
-}
 
 /// Write a string with best algorithm type for the model.
 
@@ -1240,49 +1219,49 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 
     labels_values(2,0) = "Learning rate tolerance";
 
-    labels_values(2,1) = std::to_string(learning_rate_algorithm.get_learning_rate_tolerance());
+    labels_values(2,1) = to_string(learning_rate_algorithm.get_learning_rate_tolerance());
 
     // Minimum parameters increment norm
 
     labels_values(3,0) = "Minimum parameters increment norm";
 
-    labels_values(3,1) = std::to_string(minimum_parameters_increment_norm);
+    labels_values(3,1) = to_string(minimum_parameters_increment_norm);
 
     // Minimum loss decrease
 
     labels_values(4,0) = "Minimum loss decrease";
 
-    labels_values(4,1) = std::to_string(minimum_loss_decrease);
+    labels_values(4,1) = to_string(minimum_loss_decrease);
 
     // Loss goal
 
     labels_values(5,0) = "Loss goal";
 
-    labels_values(5,1) = std::to_string(training_loss_goal);
+    labels_values(5,1) = to_string(training_loss_goal);
 
     // Gradient norm goal
 
     labels_values(6,0) = "Gradient norm goal";
 
-    labels_values(6,1) = std::to_string(gradient_norm_goal);
+    labels_values(6,1) = to_string(gradient_norm_goal);
 
     // Maximum selection error increases
 
     labels_values(7,0) = "Maximum selection error increases";
 
-    labels_values(7,1) = std::to_string(maximum_selection_error_increases);
+    labels_values(7,1) = to_string(maximum_selection_error_increases);
 
     // Maximum epochs number
 
     labels_values(8,0) = "Maximum epochs number";
 
-    labels_values(8,1) = std::to_string(maximum_epochs_number);
+    labels_values(8,1) = to_string(maximum_epochs_number);
 
     // Maximum time
 
     labels_values(9,0) = "Maximum time";
 
-    labels_values(9,1) = std::to_string(maximum_time);
+    labels_values(9,1) = to_string(maximum_time);
 
     // Reserve training error history
 
@@ -1557,7 +1536,8 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
     // Minimum parameters increment norm
     {
-        const tinyxml2::XMLElement* minimum_parameters_increment_norm_element = root_element->FirstChildElement("MinimumParametersIncrementNorm");
+        const tinyxml2::XMLElement* minimum_parameters_increment_norm_element
+                = root_element->FirstChildElement("MinimumParametersIncrementNorm");
 
         if(minimum_parameters_increment_norm_element)
         {
@@ -1843,12 +1823,13 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-// \brief ConjugateGradient::update_epoch
-// \param batch
-// \param forward_propagation
-// \param back_propagation
-// \param optimization_data
-void ConjugateGradient::update_epoch(
+/// \brief ConjugateGradient::update_parameters
+/// \param batch
+/// \param forward_propagation
+/// \param back_propagation
+/// \param optimization_data
+
+void ConjugateGradient::update_parameters(
         const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,
@@ -1912,6 +1893,10 @@ void ConjugateGradient::update_epoch(
 
     optimization_data.old_training_direction = optimization_data.training_direction;
     optimization_data.old_learning_rate = optimization_data.learning_rate;
+
+    // Update parameters
+
+    forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
 }
 
 

@@ -58,6 +58,8 @@ struct RegressionResults
             case KarlPearson: return "KarlPearson";
             case OneWayAnova: return "one-way-anova";
         }
+
+        return string();
     }
 
     /// Independent coefficient of the logistic function.
@@ -123,7 +125,6 @@ struct CorrelationResults
     // Rank linear
 
     type rank_linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type rank_linear_correlation_missing_values(const ThreadPoolDevice*, const Tensor<type, 1>&x, const Tensor<type, 1>&);
 
     // Exponential
 
@@ -143,14 +144,18 @@ struct CorrelationResults
 
     // Karl Pearson
 
-    type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>&, const Tensor<type,2>&);
+    type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     // Time series correlation methods
 
-//    Tensor<type, 1> autocorrelations(const Tensor<type, 1>&, const Index & = 10);
-    Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>&, const Index & = 10);
-//    Tensor<type, 1> cross_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Index & = 10);
-    Tensor<type ,1> cross_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index &maximum_lags_number);
+    Tensor<type, 1> autocorrelations(const ThreadPoolDevice*,
+                                     const Tensor<type, 1>&,
+                                     const Index&  = 10);
+
+    Tensor<type, 1> cross_correlations(const ThreadPoolDevice*,
+                                       const Tensor<type, 1>&,
+                                       const Tensor<type, 1>&,
+                                       const Index&);
 
     // Logistic error methods
 
@@ -196,7 +201,6 @@ struct CorrelationResults
     // Covariance
 
     type covariance(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type covariance_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     Tensor<type, 2> covariance_matrix(const Tensor<type, 2>&);
 
@@ -204,14 +208,7 @@ struct CorrelationResults
 
     // Contingency tables
 
-    Tensor<Index, 2> contingency_table(const Tensor<string, 1>&, const Tensor<string, 1>&);
-    Tensor<Index, 2> contingency_table(Tensor<string, 2>&);
-    Tensor<Index, 2> contingency_table(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-
     type chi_square_test(const Tensor<type, 2>&);
-
-    type chi_square_critical_point(const type&, const type&);
-
 
     // Missing values methods
 

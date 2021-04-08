@@ -116,11 +116,7 @@ public:
 
    // Training methods
 
-   OptimizationAlgorithmResults perform_training();
-
-   /// Perform Neural Network training.
-
-   void perform_training_void();
+   TrainingResults perform_training();
 
    /// Return the algorithm optimum for your model.
 
@@ -134,7 +130,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_iteration(const LossIndexBackPropagation& ,
+   void update_parameters(LossIndexBackPropagation& ,
                          AdaptiveMomentEstimationData& );
 
 private:
@@ -209,10 +205,6 @@ private:
     #include "../../opennn-cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/adaptive_moment_estimation_mkl.h"
-#endif
-
 };
 
 
@@ -222,11 +214,11 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
     explicit AdaptiveMomentEstimationData();
 
-    explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer);
+    explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation*);
 
     virtual ~AdaptiveMomentEstimationData();
 
-    void set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer);
+    void set(AdaptiveMomentEstimation*);
 
     void print() const;
 
@@ -234,13 +226,8 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
     Index learning_rate_iteration = 0;
 
-    Tensor<type, 1> parameters;
-    Tensor<type, 1> minimal_selection_parameters;
-
     Tensor<type, 1> gradient_exponential_decay;
     Tensor<type, 1> square_gradient_exponential_decay;
-
-    Tensor<type, 1> aux;
 
     Index iteration;
 };

@@ -53,6 +53,8 @@ struct Descriptives {
 
   // Set methods
 
+  void set(const type&, const type&, const type&, const type&);
+
   void set_minimum(const type&);
 
   void set_maximum(const type&);
@@ -150,7 +152,7 @@ struct Histogram
 
   /// Bins number constructor.
 
-  explicit Histogram(const Index &);
+  explicit Histogram(const Index&);
 
   /// Values constructor.
 
@@ -211,7 +213,6 @@ struct Histogram
      type minimum(const Tensor<type, 1>&);
      type minimum(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      Index minimum(const Tensor<Index, 1>&);
-//     time_t minimum(const Tensor<time_t, 1>&);
      type minimum(const Tensor<type, 2>&);
      Tensor<type, 1> columns_minimums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
 
@@ -220,14 +221,13 @@ struct Histogram
      type maximum(const Tensor<type, 1>&);
      type maximum(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      Index maximum(const Tensor<Index, 1>&);
-//     time_t maximum(const Tensor<time_t, 1>&);
      type maximum(const Tensor<type, 2>&);
      Tensor<type, 1> columns_maximums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
 
      type strongest(const Tensor<type, 1>&);
 
      //Norm l2
-     type l2_norm(const Tensor<type, 1>& vector);
+     type l2_norm(const Tensor<type, 1>&);
 
      // Range
      type range(const Tensor<type, 1>&);
@@ -279,10 +279,10 @@ struct Histogram
      Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
      // Histograms
-     Histogram histogram(const Tensor<type, 1>&, const Index & = 10);
-     Histogram histogram_centered(const Tensor<type, 1>&, const type& = 0.0, const Index & = 10);
+     Histogram histogram(const Tensor<type, 1>&, const Index&  = 10);
+     Histogram histogram_centered(const Tensor<type, 1>&, const type& = 0.0, const Index&  = 10);
      Histogram histogram(const Tensor<bool, 1>&);
-     Histogram histogram(const Tensor<Index, 1>&, const Index & = 10);
+     Histogram histogram(const Tensor<Index, 1>&, const Index&  = 10);
      Tensor<Histogram, 1> histograms(const Tensor<type, 2>&, const Index& = 10);
      Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>&);
 
@@ -293,19 +293,16 @@ struct Histogram
      type uniform_distribution_distance(const Tensor<type, 1>&);
 
      // Normality
-//     Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>&);
      type normality_parameter(const Tensor<type, 1>&);
-     //bool perform_Lilliefors_normality_test(const Tensor<type, 1>&, const type&);
-     //Tensor<bool, 1> perform_Lilliefors_normality_test(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      // Minimal indices
      Index minimal_index(const Tensor<type, 1>&);
-     Tensor<Index, 1> minimal_indices(const Tensor<type, 1>&, const Index &);
+     Tensor<Index, 1> minimal_indices(const Tensor<type, 1>&, const Index& );
      Tensor<Index, 1> minimal_indices(const Tensor<type, 2>&);
 
      // Maximal indices
      Index maximal_index(const Tensor<type, 1>&);
-     Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index &);
+     Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index& );
      Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
      Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>&, const Index&);
      Tensor<type, 1> variation_percentage(const Tensor<type, 1>&);
@@ -331,4 +328,4 @@ struct Histogram
      Index count_nan(const Tensor<type,1>&);
 }
 
-#endif // __STATISTICS_H
+#endif // STATISTICS_H

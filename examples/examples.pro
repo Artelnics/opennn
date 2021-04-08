@@ -25,8 +25,8 @@ SUBDIRS += leukemia
 SUBDIRS += mnist
 
 win32:!win32-g++{
-QMAKE_CXXFLAGS+= -arch:AVX
-QMAKE_CFLAGS+= -arch:AVX
+#QMAKE_CXXFLAGS+= -arch:AVX
+#QMAKE_CFLAGS+= -arch:AVX
 }
 
 # OpenMP library

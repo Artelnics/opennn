@@ -25,10 +25,13 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
     const Index outputs_number = neural_network_pointer->get_outputs_number();
-    /*
-        inputs_conditions.set(inputs_number, Between);
-        outputs_conditions.set(outputs_number, Minimum);
-    */
+
+    inputs_conditions.resize(inputs_number);
+    inputs_conditions.setConstant(Between);
+
+    outputs_conditions.resize(outputs_number);
+    outputs_conditions.setConstant(Minimum);
+
     inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
     inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
 
@@ -85,7 +88,9 @@ Tensor<type, 1> ResponseOptimization::get_outputs_maximums()
     return outputs_maximums;
 }
 
-void ResponseOptimization::set_input_condition(const string& name, const ResponseOptimization::Condition& condition, const Tensor<type, 1>& values)
+void ResponseOptimization::set_input_condition(const string& name,
+                                               const ResponseOptimization::Condition& condition,
+                                               const Tensor<type, 1>& values)
 {
     const Index index = neural_network_pointer->get_input_index(name);
 
@@ -299,33 +304,37 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 }
 
 
-void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>& names, const Tensor<string, 1>& conditions_string, const Tensor<type, 1>& values)
+/// @todo Update method.
+
+void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>& names,
+                                                         const Tensor<string, 1>& conditions_string,
+                                                         const Tensor<type, 1>& values)
 {
-    Tensor<Condition, 1> conditions = get_conditions(conditions_string);
-    Tensor<Tensor<type, 1>, 1> values_conditions = get_values_conditions(conditions, values);
+    const Tensor<Condition, 1> conditions = get_conditions(conditions_string);
+
+    const Tensor<Tensor<type, 1>, 1> values_conditions = get_values_conditions(conditions, values);
 
     const Index variables_number = conditions_string.size();
 
     const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
 
     Index index;
-    /*
-        for(Index i = 0; i < variables_number; i ++)
+
+    for(Index i = 0; i < variables_number; i ++)
+    {
+//        if(inputs_names.contains(names[i]))
         {
-            if(inputs_names.contains(names[i]))
-            {
-                index = neural_network_pointer->get_input_index(names[i]);
+            index = neural_network_pointer->get_input_index(names[i]);
 
-                set_input_condition(index, conditions[i], values_conditions[i]);
-            }
-            else
-            {
-                index = neural_network_pointer->get_output_index(names[i]);
-
-                set_output_condition(index, conditions[i], values_conditions[i]);
-            }
+            set_input_condition(index, conditions[i], values_conditions[i]);
         }
-    */
+//        else
+        {
+            index = neural_network_pointer->get_output_index(names[i]);
+
+            set_output_condition(index, conditions[i], values_conditions[i]);
+        }
+    }
 }
 
 
@@ -472,20 +481,21 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
 {
     const Index inputs_number = neural_network_pointer->get_inputs_number();
     const Index outputs_number = neural_network_pointer->get_outputs_number();
-    /*
-        Tensor<type, 2> envelope = (inputs.to_matrix()).assemble_columns((outputs.to_matrix()));
 
-        for(Index i = 0; i < outputs_number; i++)
-        {
-            envelope = envelope.filter_column_minimum_maximum(inputs_number+i, outputs_minimums[i], outputs_maximums[i]);
-        }
+//    Tensor<type, 2> envelope = (inputs.to_matrix()).assemble_columns((outputs.to_matrix()));
 
-        return envelope;
-    */
+    for(Index i = 0; i < outputs_number; i++)
+    {
+//        envelope = envelope.filter_column_minimum_maximum(inputs_number+i, outputs_minimums[i], outputs_maximums[i]);
+    }
+
+//        return envelope;
 
     return Tensor<type, 2>();
 }
 
+
+/// @todo Update method.
 
 ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 {
@@ -532,18 +542,18 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
     }
 
     const Index optimal_index = minimal_index(objective);
-    /*
-        results->optimal_variables = envelope.get_row(optimal_index);
 
-        results->optimum_objective = objective[optimal_index];
-    */
+//    results->optimal_variables = envelope.get_row(optimal_index);
+
+    results->optimum_objective = objective[optimal_index];
+
     return results;
 }
 
 
 type ResponseOptimization::calculate_random_uniform(const type& minimum, const type& maximum) const
 {
-    const type random = static_cast<type>(rand()/(RAND_MAX + 1.0));
+    const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
     const type random_uniform = minimum + (maximum - minimum) * random;
 

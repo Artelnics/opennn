@@ -23,6 +23,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "tensor_utilities.h"
 #include "loss_index.h"
 
 using namespace std;
@@ -32,7 +33,7 @@ using namespace Eigen;
 namespace OpenNN
 {
 
-struct OptimizationAlgorithmResults;
+struct TrainingResults;
 
 /// This abstract class represents the concept of optimization algorithm for a neural network in OpenNN library.
 /// Any derived class must implement the perform_training() method.
@@ -103,14 +104,13 @@ public:
 
    /// Trains a neural network which has a loss index associated. 
 
-   virtual OptimizationAlgorithmResults perform_training() = 0;
+   virtual TrainingResults perform_training() = 0;
 
    virtual string write_optimization_algorithm_type() const {return string();}
 
    // Serialization methods
 
-   virtual 
-   void print() const;
+   virtual void print() const;
 
    virtual Tensor<string, 2> to_string_matrix() const;
 
@@ -168,7 +168,6 @@ protected:
        tensor.device(*thread_pool_device) = tensor/norm;
    }
 
-
    type l2_norm(const Tensor<type, 1>& tensor) const
    {
        Tensor<type, 0> norm;
@@ -178,17 +177,6 @@ protected:
        return norm(0);
    }
 
-   bool is_zero(const Tensor<type, 1>& tensor) const
-   {
-       const Index size = tensor.size();
-
-       for(Index i = 0; i < size; i++)
-       {
-           if(abs(tensor[i]) > numeric_limits<type>::min()) return false;
-       }
-
-       return true;
-   }
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/optimization_algorithm_cuda.h"
@@ -227,11 +215,11 @@ struct OptimizationAlgorithmData
 
 /// This structure contains the optimization algorithm results.
 
-struct OptimizationAlgorithmResults
+struct TrainingResults
 {
-    explicit OptimizationAlgorithmResults() {}
+    explicit TrainingResults() {}
 
-    virtual ~OptimizationAlgorithmResults() {}
+    virtual ~TrainingResults() {}
 
     string write_stopping_condition() const;
 
@@ -242,6 +230,12 @@ struct OptimizationAlgorithmResults
     /// Returns a string representation of the results structure.
 
     void save(const string&) const;
+
+    void print()
+    {
+        cout << "Optimum training error: " << optimum_training_error << endl;
+        cout << "Optimum selection error: " << optimum_selection_error << endl;
+    }
 
     /// Writes final results of the training.
 
@@ -277,7 +271,7 @@ struct OptimizationAlgorithmResults
 
     /// Final neural network parameters vector.
 
-    Tensor<type, 1> final_parameters;
+    Tensor<type, 1> parameters;
 
     /// Final neural network parameters norm.
 
@@ -285,11 +279,11 @@ struct OptimizationAlgorithmResults
 
     /// Final loss function evaluation.
 
-    type final_training_error;
+    type training_error;
 
     /// Final selection error.
 
-    type final_selection_error;
+    type selection_error;
 
     /// Final gradient norm.
 
@@ -306,6 +300,11 @@ struct OptimizationAlgorithmResults
     /// Stopping criterion.
 
     string stopping_criterion;
+
+    Tensor<type, 1> optimal_parameters;
+
+    type optimum_selection_error = numeric_limits<type>::max();
+    type optimum_training_error = numeric_limits<type>::max();
 };
 
 }
