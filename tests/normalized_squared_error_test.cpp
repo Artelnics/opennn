@@ -880,7 +880,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    samples_number = 2;
    inputs_number = 2;
-   hidden_neurons_number = 1;
+   hidden_neurons_number = 3;
    outputs_number = 1;
 
    data_set.set(samples_number, inputs_number, outputs_number);

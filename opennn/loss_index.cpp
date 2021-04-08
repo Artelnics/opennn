@@ -632,9 +632,29 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_samples_number();
     Index mem_index = 0;
 
-    for(Index i = 0; i < trainable_layers_number; i++)
+    Layer* layer_pointer = forward_propagation.layers(0)->layer_pointer;
+
+    // Layer 0
+
+    static_cast<PerceptronLayer*>(forward_propagation.layers(0)->layer_pointer)->
+            calculate_layer_squared_errors_Jacobian(batch.inputs_2d,
+                                                    forward_propagation.layers(0),
+                                                    loss_index_back_propagation_lm.neural_network.layers(0));
+
+    const Index layer_parameters_number = layer_pointer->get_parameters_number();
+
+    memcpy(loss_index_back_propagation_lm.squared_errors_jacobian.data() + mem_index,
+           static_cast<PerceptronLayerBackPropagation*>(loss_index_back_propagation_lm.neural_network.layers(0))->squared_errors_Jacobian.data(),
+           static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
+
+    mem_index += layer_parameters_number*batch_samples_number;
+
+    // Rest of layers
+
+
+    for(Index i = 1; i < trainable_layers_number; i++)
     {
-        Layer* layer_pointer = forward_propagation.layers(i)->layer_pointer;
+        layer_pointer = forward_propagation.layers(i)->layer_pointer;
 
         switch (layer_pointer->get_type())
         {
