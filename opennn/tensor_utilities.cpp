@@ -98,6 +98,44 @@ bool are_equal(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2,
     return true;
 }
 
+void save_csv(const Tensor<type,2>& data, const string& filename)
+{
+    ofstream file(filename);
+
+    if(!file.is_open())
+    {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix template." << endl
+             << "void save_csv(const Tensor<type,2>&, const string&) method." << endl
+             << "Cannot open matrix data file: " << filename << endl;
+
+      throw logic_error(buffer.str());
+    }
+
+    file.precision(20);
+
+    const Index data_rows = data.dimension(0);
+    const Index data_columns = data.dimension(1);
+
+    char separator_char = ';';
+
+    for(Index i = 0; i < data_rows; i++)
+    {
+       for(Index j = 0; j < data_columns; j++)
+       {
+           file << data(i,j);
+
+           if(j != data_columns-1)
+           {
+               file << separator_char;
+           }
+       }
+       file << endl;
+    }
+    file.close();
+}
+
 }
 
 

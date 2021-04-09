@@ -33,6 +33,7 @@ bool are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = 0.0
 
 bool is_false(const Tensor<bool, 1>& tensor);
 
+void save_csv(const Tensor<type,2>&, const string&);
 }
 
 #endif
