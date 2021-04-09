@@ -9265,6 +9265,227 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 }
 
 
+type DataSet::calculate_euclidean_distance(const Index& sample_index, const Index& other_sample_index) const
+{
+    type distance = 0.0;
+    type error;
+
+    const Index columns_number = get_columns_number();
+
+    //const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+
+    //const Tensor<type, 1> sample = get_sample_data(sample_index);
+    //const Tensor<type, 1> other_sample = get_sample_data(other_sample_index);
+
+    Index variable_index = 0;
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).column_use == UnusedVariable
+            || columns(i).column_use == Id
+            || columns(i).column_use == Time
+            || columns(i).column_use == Target)
+        {
+            columns(i).type != Categorical ? variable_index++ : variable_index += columns(i).get_categories_number();
+            continue;
+        }
+        else if(columns(i).type == DateTime)
+        {
+            variable_index++;
+        }
+        else if(columns(i).type == Categorical)
+        {
+            for(Index j = 0; j < columns(i).get_categories_number(); j++)
+            {
+                error = data(sample_index, variable_index) - data(other_sample_index, variable_index);
+                //error = sample(variable_index) - other_sample(variable_index);
+                distance += error * error;
+
+                variable_index++;
+            }
+        }
+        else // Numeric or Binary
+        {
+            error = data(sample_index, variable_index) - data(other_sample_index, variable_index);
+            //error = sample(variable_index) - other_sample(variable_index);
+
+            distance += error * error;
+
+            variable_index++;
+        }
+    }
+
+    return sqrt(distance);
+}
+
+
+Tensor<type, 2> DataSet::calculate_distance_matrix()const
+{
+    const Index used_samples_number = get_used_samples_number();
+    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
+
+    Tensor<type, 2> distance_matrix(used_samples_number, used_samples_number);
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < used_samples_number ; i++)
+    {
+        distance_matrix(i,i) = 0.0;
+
+        for(Index k = 0; k < i; k++)
+        {
+            distance_matrix(i,k) = distance_matrix(k,i)
+                    = calculate_euclidean_distance(used_samples_indices(i), used_samples_indices(k));
+        }
+    }
+
+    return distance_matrix;
+}
+
+
+/// @todo Check if can be simplified.
+
+Tensor<Index, 2> DataSet::calculate_k_nearest_neighbors(const Tensor<type, 2>& distance_matrix, const Index& k_neighbors) const
+{
+    const Index samples_number = get_used_samples_number();
+
+    Tensor<Index, 2> neighbors_indices(samples_number, k_neighbors);
+    neighbors_indices.setConstant(0);
+
+    Tensor<type, 1> min_distances(k_neighbors);
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        min_distances.setConstant(numeric_limits<type>::max());
+
+        type prev_value;
+        Index prev_index;
+
+        #pragma omp parallel for
+
+        for(Index j = 0; j < samples_number; j++)
+        {
+            if(j == i) continue;
+
+            for(Index k = 0; k < k_neighbors; k++)
+            {
+                if(distance_matrix(i,j) < min_distances(k))
+                {
+                    prev_value = min_distances(k);
+                    prev_index = neighbors_indices(i, k);
+
+                    min_distances(k) = distance_matrix(i, j);
+                    neighbors_indices(i, k) = j;
+
+                    for(Index k_left = k; k_left < k_neighbors; k_left++)
+                    {
+                        if(prev_value < min_distances(k_left))
+                        {
+                            swap(prev_value, min_distances(k_left));
+                            swap(prev_index, neighbors_indices(i, k_left));
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    return neighbors_indices;
+}
+
+
+Tensor<type, 1> DataSet::calculate_average_reachability(const Tensor<type,2>& distance_matrix,
+                                                        const Tensor<Index, 2>& k_nearest_indexes,
+                                                        const Index& k) const
+{
+    const Index samples_number = get_used_samples_number();
+    const Tensor<Index, 1> samples_indices = get_used_samples_indices();
+
+    Tensor<type, 1> average_reachability(samples_number);
+    average_reachability.setZero();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        for(Index j = 0; j < k; j++)
+        {
+            const Index other_index = k_nearest_indexes(i, j);
+
+            average_reachability(i) += max(distance_matrix(i, other_index), distance_matrix(other_index, k-1));
+        }
+
+        average_reachability(i) /= k;
+    }
+
+    return average_reachability;
+}
+
+
+// TODO
+Tensor<Index, 1> DataSet::calculate_LOF_outliers(const Index& k, const type& LOF_treshold) const
+{
+    /*
+    if(contamination < 0.0 && contamination > 0.5)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<Index, 1> DataSet::calculate_LOF_outliers(const Index&, const type&) method.\n"
+               << "Outlier contamination(" << contamination
+               << ") should be a value between 0.0 and 0.5\n";
+
+        throw logic_error(buffer.str());
+    }
+    */
+
+    const Index samples_number = get_used_samples_number();
+    const Tensor<Index, 1> samples_indices = get_used_samples_indices();
+    const Index fixed_k = k >= samples_number ? samples_number - 1 : k;
+
+    const Tensor<type, 2> distance_matrix = calculate_distance_matrix();
+
+    const Tensor<Index, 2> k_nearest_indexes = calculate_k_nearest_neighbors(distance_matrix, fixed_k);
+
+    const Tensor<type, 1> average_reachabilities = calculate_average_reachability(distance_matrix, k_nearest_indexes, fixed_k);
+
+    Tensor<type, 1> LOF(samples_number);
+
+    Tensor<Index, 1> outlier_indexes(samples_number);
+
+    outlier_indexes.setZero();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        type sum = 0;
+
+        const type current_reachibility = average_reachabilities(i);
+
+        for(Index j = 0; j < fixed_k; j++)
+        {
+            const Index other_index = k_nearest_indexes(i, j);
+
+            sum += current_reachibility / average_reachabilities(other_index);
+        }
+
+        if(sum/fixed_k > LOF_treshold)
+        {
+            outlier_indexes(i) = 1;
+        }
+
+        LOF(i) = sum/fixed_k;
+    }
+
+    cout << LOF << endl;
+
+    return outlier_indexes;
+}
+
+
 /// Returns a matrix with the values of autocorrelation for every variable in the data set.
 /// The number of rows is equal to the number of
 /// The number of columns is the maximum lags number.
