@@ -164,6 +164,14 @@ public:
 
    void test_clean_Tukey_outliers();
 
+   void test_calculate_euclidean_distance();
+   void test_calculate_distance_matrix();
+   void test_calculate_k_nearest_neighbors();
+   void test_calculate_average_reachability();
+
+   void test_calculate_LOF_outliers();
+   void test_unuse_LOF_outliers();
+
    // Data generation
 
    void test_generate_constant_data();

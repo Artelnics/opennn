@@ -1121,6 +1121,50 @@ void DataSetTest::test_clean_Tukey_outliers()
 }
 
 
+void DataSetTest::test_calculate_euclidean_distance()
+{
+   cout << "test_calculate_euclidean_distance\n";
+
+   assert_true(0 == 1, LOG);
+   assert_true(false, LOG);
+
+}
+
+
+void DataSetTest::test_calculate_distance_matrix()
+{
+   cout << "test_calculate_distance_matrix\n";
+}
+
+
+void DataSetTest::test_calculate_k_nearest_neighbors()
+{
+   cout << "test_k_nearest_neighbors\n";
+
+   DataSet data_set;
+
+//   Tensor kneware = data_set.calculate_k_nearest_neighbors();
+}
+
+
+void DataSetTest::test_calculate_average_reachability()
+{
+   cout << "test_calculate_average_reachability\n";
+}
+
+
+void DataSetTest::test_calculate_LOF_outliers()
+{
+   cout << "test_calculate_LOF_outliers\n";
+}
+
+
+void DataSetTest::test_unuse_LOF_outliers()
+{
+   cout << "test_unuse_LOF_outliers\n";
+}
+
+
 void DataSetTest::test_to_XML() 
 {
    cout << "test_to_XML\n";
@@ -2584,6 +2628,11 @@ void DataSetTest::run_test_case()
    // Outlier detection
 
    test_clean_Tukey_outliers();
+
+   test_calculate_euclidean_distance();
+   test_calculate_distance_matrix();
+   test_calculate_k_nearest_neighbors();
+   test_calculate_average_reachability();
 
    // Data generation
 

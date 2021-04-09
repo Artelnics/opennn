@@ -641,6 +641,14 @@ public:
 
    void unuse_Tukey_outliers(const type& = 1.5);
 
+   type calculate_euclidean_distance(const Index&, const Index&) const;
+   Tensor<type, 2> calculate_distance_matrix()const;
+   Tensor<Index, 2> calculate_k_nearest_neighbors(const Tensor<type, 2>&, const Index& = 20) const;
+   Tensor<type, 1> calculate_average_reachability(const Tensor<type,2>&, const Tensor<Index, 2>&, const Index&) const;
+
+   Tensor<Index, 1> calculate_LOF_outliers(const Index& = 20, const type& = 1.5) const;
+   void unuse_LOF_outliers(const Index& = 20, const type& = 1.5);
+
    // Time series methods
 
    void transform_time_series();
