@@ -931,8 +931,6 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
 
-   cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
-
    cout << "squared_errors_jacobian: " << endl << loss_index_back_propagation_lm.squared_errors_jacobian << endl;
    cout << "2*numerical_squared_errors_jacobian: " << endl << 2*numerical_squared_errors_jacobian << endl;
 

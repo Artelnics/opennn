@@ -661,7 +661,7 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
         case Layer::Perceptron:
         {
             static_cast<PerceptronLayer*>(forward_propagation.layers(i)->layer_pointer)->
-                    calculate_layer_squared_errors_Jacobian(batch.inputs_2d,
+                    calculate_layer_squared_errors_Jacobian(forward_propagation.layers(i-1),
                                                             forward_propagation.layers(i),
                                                             loss_index_back_propagation_lm.neural_network.layers(i));
 
@@ -677,16 +677,18 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
 
         case Layer::Probabilistic:
         {
-//            static_cast<PerceptronLayer*>(forward_propagation.layers(0)->layer_pointer)->
-//                    calculate_layer_squared_errors_Jacobian(batch.inputs_2d,
-//                                                            loss_index_back_propagation_lm.neural_network.layers(i));
+            static_cast<PerceptronLayer*>(forward_propagation.layers(i)->layer_pointer)->
+                    calculate_layer_squared_errors_Jacobian(forward_propagation.layers(i-1),
+                                                            forward_propagation.layers(i),
+                                                            loss_index_back_propagation_lm.neural_network.layers(i));
 
-//            const Index layer_parameters_number = layer_pointer->get_parameters_number();
+            const Index layer_parameters_number = layer_pointer->get_parameters_number();
 
-//            memcpy(loss_index_back_propagation_lm.squared_errors_jacobian.data() + mem_index,
-//                   static_cast<PerceptronLayerBackPropagation*>(loss_index_back_propagation_lm.neural_network.layers(i))->squared_errors_Jacobian.data(),
-//                   static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
+            memcpy(loss_index_back_propagation_lm.squared_errors_jacobian.data() + mem_index,
+                   static_cast<PerceptronLayerBackPropagation*>(loss_index_back_propagation_lm.neural_network.layers(i))->squared_errors_Jacobian.data(),
+                   static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
 
+            mem_index += layer_parameters_number*batch_samples_number;
         }
             break;
 

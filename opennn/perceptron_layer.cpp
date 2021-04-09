@@ -889,57 +889,38 @@ void PerceptronLayer::calculate_layer_squared_errors_Jacobian(LayerForwardPropag
     {
     case Perceptron:
     {
+        PerceptronLayerForwardPropagation* previous_perceptron_forward_propagation =
+                static_cast<PerceptronLayerForwardPropagation*>(previous_forward_propagation);
 
+        calculate_layer_squared_errors_Jacobian(previous_perceptron_forward_propagation->activations,
+                                                forward_propagation,
+                                                back_propagation);
     }
         break;
 
     case Probabilistic:
     {
+        ProbabilisticLayerForwardPropagation* previous_probabilistic_forward_propagation =
+                static_cast<ProbabilisticLayerForwardPropagation*>(previous_forward_propagation);
 
+        calculate_layer_squared_errors_Jacobian(previous_probabilistic_forward_propagation->activations,
+                                                forward_propagation,
+                                                back_propagation);
     }
         break;
 
     default:
     {
+        ostringstream buffer;
 
+        buffer << "OpenNN Exception: LossIndex class.\n"
+               << "void calculate_layer_squared_errors_Jacobian(LayerForwardPropagation, LayerForwardPropagation*, LayerBackPropagation*) const method "
+               << "Levenberg - Marquardt algorithm can only be used with Perceptron and Probabilistic layers.\n";
+
+        throw logic_error(buffer.str());
     }
 
     }
-
-//    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
-//            static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
-
-//    PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
-//            static_cast<PerceptronLayerBackPropagation*>(back_propagation);
-
-//    const Index samples_number = inputs.dimension(0);
-
-//    const Index inputs_number = get_inputs_number();
-//    const Index neurons_number = get_neurons_number();
-
-//    Index parameter_index = 0;
-
-//    for(Index sample = 0; sample < samples_number; sample++)
-//    {
-//        parameter_index = 0;
-
-//        for(Index neuron = 0; neuron < neurons_number; neuron++)
-//        {
-//            for(Index input = 0; input <  inputs_number; input++)
-//            {
-//                perceptron_layer_back_propagation->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
-//                        perceptron_layer_back_propagation->delta(sample, neuron) *
-//                        perceptron_layer_forward_propagation->activations_derivatives(sample, neuron) *
-//                        inputs(sample, input);
-
-//                parameter_index++;
-//            }
-
-//            perceptron_layer_back_propagation->squared_errors_Jacobian(sample, neuron) =
-//                    perceptron_layer_back_propagation->delta(sample, neuron) *
-//                    perceptron_layer_forward_propagation->activations_derivatives(sample, neuron);
-//        }
-//    }
 }
 
 
