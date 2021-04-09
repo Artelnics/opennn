@@ -128,8 +128,6 @@ public:
 
    TrainingResults perform_training();
 
-   
-
    void update_parameters(
            const DataSetBatch&,
            NeuralNetworkForwardPropagation&,
