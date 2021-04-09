@@ -859,12 +859,13 @@ private:
 
    Index rows_missing_values_number;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"
-#endif
+
 
 };
 
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"
+#endif
 
 struct DataSetBatch
 {
