@@ -621,6 +621,7 @@ public:
 
    // Data unscaling
 
+   void unscale_target_variables_minimum_maximum(const Tensor<Descriptives, 1>&);
    void unscale_input_variable_minimum_maximum(const Descriptives&, const Index&);
    void unscale_input_variable_mean_standard_deviation(const Descriptives&, const Index&);
    void unscale_input_variable_standard_deviation(const Descriptives&, const Index&);

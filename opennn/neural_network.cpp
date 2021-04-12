@@ -2532,7 +2532,6 @@ string NeuralNetwork::write_expression(const Tensor<string, 1>& inputs_names, co
 
 
 /// Returns a string with the python function of the expression represented by the neural network.
-
 string NeuralNetwork::write_expression_python() const
 {
     const Index layers_number = get_layers_number();
@@ -2554,12 +2553,28 @@ string NeuralNetwork::write_expression_python() const
     buffer <<"\toutputs = neural_network(sample)"<<endl;
     buffer <<""<<endl;
     buffer <<"\tInputs Names: \t"<<endl;
-    buffer <<"\t" << get_inputs_names() << endl;
+
+    const Tensor<string, 1> inputs =  get_inputs_names();
+
+    for (int i=0; i<inputs.dimension(0); i++)
+    {
+        if(inputs[i] == "")
+        {
+            buffer <<"\t" << to_string(1+i) + " )" << "input_"+ to_string(1+i) << endl;
+        }
+        else
+        {
+            buffer <<"\t" << to_string(1+i) + " )" << inputs[i] << endl;
+        }
+    }
+
     buffer <<""<<endl;
     buffer <<"Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,\t"<<endl;
     buffer <<"however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
     buffer <<"'''"<<endl;
     buffer <<""<<endl;
+    buffer << "import numpy as np\n" << endl;
+
     buffer << "import numpy as np\n" << endl;
 
     for(Index i = 0; i  < layers_number; i++)
@@ -2615,6 +2630,104 @@ void NeuralNetwork::save_expression_c(const string& file_name)
 
     file.close();
 }
+
+
+//string NeuralNetwork::write_expression_python() const
+//{
+//    const Index layers_number = get_layers_number();
+
+//    const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
+//    const Tensor<string, 1> layers_names = get_layers_names();
+
+//    ostringstream buffer;
+
+//    buffer <<"'''"<<endl;
+//    buffer <<"Artificial Intelligence Techniques SL\t"<<endl;
+//    buffer <<"artelnics@artelnics.com\t"<<endl;
+//    buffer <<""<<endl;
+//    buffer <<"Your model has been exported to this python file." <<endl;
+//    buffer <<"You can manage it with the 'neural network' method.\t"<<endl;
+//    buffer <<"Example:"<<endl;
+//    buffer <<""<<endl;
+//    buffer <<"\tsample = [input_1, input_2, input_3, input_4, ...] 	 \t"<<endl;
+//    buffer <<"\toutputs = neural_network(sample)"<<endl;
+//    buffer <<""<<endl;
+//    buffer <<"\tInputs Names: \t"<<endl;
+
+//    const Tensor<string, 1> inputs =  get_inputs_names();
+
+//    for (int i=0; i<inputs.dimension(0); i++)
+//    {
+//        if(inputs[i] == "")
+//        {
+//            buffer <<"\t" << to_string(1+i) + " )" << "input_"+ to_string(1+i) << endl;
+//        }
+//        else
+//        {
+//            buffer <<"\t" << to_string(1+i) + " )" << inputs[i] << endl;
+//        }
+//    }
+
+//    buffer <<""<<endl;
+//    buffer <<"Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,\t"<<endl;
+//    buffer <<"however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
+//    buffer <<"'''"<<endl;
+//    buffer <<""<<endl;
+//    buffer << "import numpy as np\n" << endl;
+
+//    for(Index i = 0; i  < layers_number; i++)
+//    {
+//        buffer << layers_pointers[i]->write_expression_python() << endl;
+//    }
+
+//    buffer << "def neural_network(inputs):\n" << endl;
+
+//    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
+
+//    if(layers_number > 0)
+//    {
+//        buffer << "\toutputs = " << layers_names[0] << "(inputs)\n";
+//    }
+
+//    for(Index i = 1; i < layers_number; i++)
+//    {
+//        buffer << "\toutputs = " << layers_names[i] << "(outputs)\n";
+//    }
+
+//    buffer << "\n\treturn outputs;\n" << endl;
+
+//    string expression = buffer.str();
+
+//    replace(expression, "+-", "-");
+//    replace(expression, "-+", "-");
+//    replace(expression, "--", "+");
+
+//    return expression;
+//}
+
+
+///// Saves the mathematical expression represented by the neural network to a text file.
+///// @param file_name Name of expression text file.
+
+//void NeuralNetwork::save_expression_c(const string& file_name)
+//{
+//    ofstream file(file_name.c_str());
+
+//    if(!file.is_open())
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+//               << "void  save_expression(const string&) method.\n"
+//               << "Cannot open expression text file.\n";
+
+//        throw logic_error(buffer.str());
+//    }
+
+//    file << write_expression_c();
+
+//    file.close();
+//}
 
 
 /// Saves the python function of the expression represented by the neural network to a text file.
