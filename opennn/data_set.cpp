@@ -7035,6 +7035,19 @@ void DataSet::unscale_input_variables(const Tensor<string, 1>& scaling_unscaling
 }
 
 
+void DataSet::unscale_target_variables_minimum_maximum(const Tensor<Descriptives, 1>& target_variables_descriptives)
+{
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+
+    const Index target_variables_number = target_variables_indices.size();
+
+    for(Index i = 0; i < target_variables_number ; i++)
+    {
+        unscale_target_variable_minimum_maximum(target_variables_descriptives[i], target_variables_indices[i]);
+    }
+}
+
+
 void DataSet::unscale_target_variable_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
 {
     const type slope = abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : (target_statistics.maximum-target_statistics.minimum)/(max_range-min_range);
