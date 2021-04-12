@@ -40,8 +40,8 @@ int main()
 
         data_set.set_training();
 
-        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables_minimum_maximum();
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables_minimum_maximum();
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables();
 
         // Neural network
 

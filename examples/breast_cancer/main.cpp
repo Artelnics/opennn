@@ -37,7 +37,7 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
 
         const Tensor<Descriptives, 1> input_variables_descriptives
-                = data_set.scale_input_variables_mean_standard_deviation();
+                = data_set.scale_input_variables();
 
         // Neural network
 

@@ -674,7 +674,7 @@ void DataSetTest::test_scale_targets_mean_standard_deviation()
    data_set.set(2, 2, 2);
    data_set.set_data_random();
 
-   data_set.scale_target_variables_mean_standard_deviation();
+   //data_set.scale_target_variables_mean_standard_deviation();
 
    targets_descriptives = data_set.calculate_target_variables_descriptives();
 
@@ -704,8 +704,8 @@ void DataSetTest::test_scale_inputs_minimum_maximum()
    input_variables_descriptives = data_set.calculate_input_variables_descriptives();
    target_descriptives = data_set.calculate_target_variables_descriptives();
 
-   data_set.scale_input_variables_minimum_maximum();
-   data_set.scale_target_variables_minimum_maximum();
+   //data_set.scale_input_variables_minimum_maximum();
+   //data_set.scale_target_variables_minimum_maximum();
 
 //   data_set.unscale_input_variables_minimum_maximum(input_variables_descriptives);
 
@@ -726,7 +726,7 @@ void DataSetTest::test_scale_targets_minimum_maximum()
    data_set.set(2, 2, 2);
    data_set.set_data_random();
 
-   data_set.scale_target_variables_minimum_maximum();
+   //data_set.scale_target_variables_minimum_maximum();
 
    targets_descriptives = data_set.calculate_target_variables_descriptives();
 
@@ -734,9 +734,9 @@ void DataSetTest::test_scale_targets_minimum_maximum()
 }
 
 
-void DataSetTest::test_scale_data_minimum_maximum()
+void DataSetTest::test_scale_data()
 {
-   cout << "test_scale_data_minimum_maximum\n";
+   cout << "test_scale_data\n";
 
    DataSet data_set;
 
@@ -758,24 +758,18 @@ void DataSetTest::test_scale_data_minimum_maximum()
 
    data = data_set.get_data();
 
-   data_descriptives = data_set.scale_data_minimum_maximum();
+//   data_descriptives = data_set.scale_data_minimum_maximum();
 
    scaled_data = data_set.get_data();
 
 //   assert_true(scaled_data == data, LOG);
-}
 
+//   DataSet data_set;
 
-void DataSetTest::test_scale_data_mean_standard_deviation()
-{
-   cout << "test_scale_data_mean_standard_deviation\n";
+//   Tensor<Descriptives, 1> data_descriptives;
 
-   DataSet data_set;
-
-   Tensor<Descriptives, 1> data_descriptives;
-
-   Tensor<type, 2> data;
-   Tensor<type, 2> scaled_data;
+//   Tensor<type, 2> data;
+//   Tensor<type, 2> scaled_data;
 
     // Test
 
@@ -786,12 +780,13 @@ void DataSetTest::test_scale_data_mean_standard_deviation()
 
    data = data_set.get_data();
 
-   data_descriptives = data_set.scale_data_mean_standard_deviation();
+//   data_descriptives = data_set.scale_data_mean_standard_deviation();
 
    scaled_data = data_set.get_data();
 
 //   assert_true(scaled_data == data, LOG);
 }
+
 
 void DataSetTest::test_unscale_data_mean_standard_deviation()
 {
@@ -2585,8 +2580,7 @@ void DataSetTest::run_test_case()
 
    // Data scaling
 
-   test_scale_data_mean_standard_deviation();
-   test_scale_data_minimum_maximum();
+   test_scale_data();
 
    // Input variables scaling
 

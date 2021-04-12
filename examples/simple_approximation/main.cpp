@@ -35,9 +35,9 @@ int main()
 
         DataSet data_set("../data/simple_function_regression.csv", ';', true);
 
-        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables(DataSet::MinimumMaximum);
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
 
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables(DataSet::MinimumMaximum);
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables();
 
         // Neural network
 
@@ -57,9 +57,9 @@ int main()
 
         training_strategy.perform_training();
 
-        data_set.unscale_input_variables_minimum_maximum(input_variables_descriptives);
+        data_set.unscale_input_variables(input_variables_descriptives);
 
-        data_set.unscale_target_variables(DataSet::MinimumMaximum, targets_descriptives);
+        data_set.unscale_target_variables(targets_descriptives);
 
         neural_network.save_expression_python("simple_function_regresion.py");
 
