@@ -839,7 +839,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         cout << "Generation: " << epoch << endl;
 
         evaluate_population();
-/*
+
         optimal_individual_index = minimal_index(selection_errors);
 
         results.training_errors(epoch) = training_errors(optimal_individual_index);
@@ -916,11 +916,10 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         perform_crossover();
 
         perform_mutation();
-*/
     }
 
     time(&current_time);
-/*
+
     elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
     // Set data set stuff
@@ -933,8 +932,17 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
+    const Tensor<DataSet::Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+    const Tensor<DataSet::Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+
+//    if(neural_network_pointer->has_scaling_layer())
+//        neural_network_pointer->get_scaling_layer_pointer()->set_scaling_methods(input_variables_scalers);
+
+//    if(neural_network_pointer->has_unscaling_layer())
+//        neural_network_pointer->get_unscaling_layer_pointer()->set_unscaling_methods(target_variables_scalers);
+
     neural_network_pointer->set_parameters(results.optimal_parameters);
-*/
+
     if(display) results.print();
 
     return results;

@@ -47,9 +47,9 @@ int main()
         Tensor<string, 1> scaling_target_methods(target_variables_number);
         scaling_target_methods.setConstant("MinimumMaximum");
 
-        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
 
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables(scaling_target_methods);
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables();
 
         // Neural network
 

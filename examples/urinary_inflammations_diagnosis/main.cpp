@@ -47,7 +47,7 @@ int main()
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables_minimum_maximum();
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
 
         // Neural network
 
@@ -82,7 +82,7 @@ int main()
 
         // Testing analysis
 
-        data_set.unscale_input_variables_minimum_maximum(input_variables_descriptives);
+        data_set.unscale_input_variables(input_variables_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 

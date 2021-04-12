@@ -124,8 +124,7 @@ public:
 
    // Data scaling
 
-   void test_scale_data_mean_standard_deviation();  
-   void test_scale_data_minimum_maximum(); 
+   void test_scale_data();
 
    // Input variables scaling
 
