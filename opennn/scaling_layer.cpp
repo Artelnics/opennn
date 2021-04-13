@@ -185,7 +185,7 @@ Tensor<type, 1> ScalingLayer::get_standard_deviations() const
 
 const Tensor<Scaler, 1> ScalingLayer::get_scaling_methods() const
 {
-    return scaling_methods;
+    return scalers;
 }
 
 
@@ -199,19 +199,19 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scaling_methods[i] == NoScaling)
+        if(scalers[i] == NoScaling)
         {
             scaling_methods_strings[i] = "NoScaling";
         }
-        else if(scaling_methods[i] == MeanStandardDeviation)
+        else if(scalers[i] == MeanStandardDeviation)
         {
             scaling_methods_strings[i] = "MeanStandardDeviation";
         }
-        else if(scaling_methods[i] == MinimumMaximum)
+        else if(scalers[i] == MinimumMaximum)
         {
             scaling_methods_strings[i] = "MinimumMaximum";
         }
-        else if(scaling_methods[i] == StandardDeviation)
+        else if(scalers[i] == StandardDeviation)
         {
             scaling_methods_strings[i] = "StandardDeviation";
         }
@@ -257,19 +257,19 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods_text() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scaling_methods[i] == NoScaling)
+        if(scalers[i] == NoScaling)
         {
             scaling_methods_strings[i] = "no scaling";
         }
-        else if(scaling_methods[i] == MeanStandardDeviation)
+        else if(scalers[i] == MeanStandardDeviation)
         {
             scaling_methods_strings[i] = "mean and standard deviation";
         }
-        else if(scaling_methods[i] == StandardDeviation)
+        else if(scalers[i] == StandardDeviation)
         {
             scaling_methods_strings[i] = "standard deviation";
         }
-        else if(scaling_methods[i] == MinimumMaximum)
+        else if(scalers[i] == MinimumMaximum)
         {
             scaling_methods_strings[i] = "minimum and maximum";
         }
@@ -305,7 +305,7 @@ void ScalingLayer::set()
 {
     descriptives.resize(0);
 
-    scaling_methods.resize(0);
+    scalers.resize(0);
 
     set_default();
 }
@@ -318,9 +318,9 @@ void ScalingLayer::set(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
 
-    scaling_methods.resize(new_inputs_number);
+    scalers.resize(new_inputs_number);
 
-    scaling_methods.setConstant(MinimumMaximum);
+    scalers.setConstant(MinimumMaximum);
 
     set_default();
 }
@@ -332,8 +332,8 @@ void ScalingLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 
     descriptives.resize(dimension_product(0));
 
-    scaling_methods.resize(dimension_product(0));
-    scaling_methods.setConstant(MinimumMaximum);
+    scalers.resize(dimension_product(0));
+    scalers.setConstant(MinimumMaximum);
 
     input_variables_dimensions.resize(new_inputs_dimensions.size());
 
@@ -352,11 +352,19 @@ void ScalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives)
 {
     descriptives = new_descriptives;
 
-    scaling_methods.resize(new_descriptives.size());
+    scalers.resize(new_descriptives.size());
 
-    scaling_methods.setConstant(MinimumMaximum);
+    scalers.setConstant(MinimumMaximum);
 
     set_default();
+}
+
+
+void ScalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
+{
+    descriptives = new_descriptives;
+
+    scalers = new_scalers;
 }
 
 
@@ -375,9 +383,9 @@ void ScalingLayer::set_inputs_number(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
 
-    scaling_methods.resize(new_inputs_number);
+    scalers.resize(new_inputs_number);
 
-    scaling_methods.setConstant(MinimumMaximum);
+    scalers.setConstant(MinimumMaximum);
 }
 
 
@@ -385,9 +393,9 @@ void ScalingLayer::set_neurons_number(const Index& new_neurons_number)
 {
     descriptives.resize(new_neurons_number);
 
-    scaling_methods.resize(new_neurons_number);
+    scalers.resize(new_neurons_number);
 
-    scaling_methods.setConstant(MinimumMaximum);
+    scalers.setConstant(MinimumMaximum);
 }
 
 
@@ -544,7 +552,7 @@ void ScalingLayer::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
 
 #endif
 
-    scaling_methods = new_scaling_methods;
+    scalers = new_scaling_methods;
 }
 
 
@@ -675,7 +683,7 @@ void ScalingLayer::set_scalers(const Scaler& new_scaling_method)
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        scaling_methods(i) = new_scaling_method;
+        scalers(i) = new_scaling_method;
     }
 }
 
@@ -807,11 +815,11 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
             }
             else
             {
-                if(scaling_methods(j) == NoScaling)
+                if(scalers(j) == NoScaling)
                 {
                     outputs(i,j) = inputs(i,j);
                 }
-                else if(scaling_methods(j) == MinimumMaximum)
+                else if(scalers(j) == MinimumMaximum)
                 {
                     const type slope =
                                 (max_range-min_range)/(descriptives(j).maximum-descriptives(j).minimum);
@@ -821,7 +829,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
                     outputs(i,j) = inputs(i,j)*slope + intercept;
                 }
-                else if(scaling_methods(j) == MeanStandardDeviation)
+                else if(scalers(j) == MeanStandardDeviation)
                 {
                     const type slope = static_cast<type>(1)/descriptives(j).standard_deviation;
 
@@ -830,7 +838,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                     outputs(i,j) = inputs(i,j)*slope + intercept;
 
                 }
-                else if(scaling_methods(j) == StandardDeviation)
+                else if(scalers(j) == StandardDeviation)
                 {
                     outputs(i,j) = inputs(i,j)/descriptives(j).standard_deviation;
                 }
@@ -899,19 +907,19 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
             }
             else
             {
-                if(scaling_methods(j) == NoScaling)
+                if(scalers(j) == NoScaling)
                 {
                     outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index);
                 }
-                else if(scaling_methods(j) == MinimumMaximum)
+                else if(scalers(j) == MinimumMaximum)
                 {
                     outputs(i, channel_index, row_index, column_index) = static_cast<type>(2)*(inputs(i, channel_index, row_index, column_index) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1);
                 }
-                else if(scaling_methods(j) == MeanStandardDeviation)
+                else if(scalers(j) == MeanStandardDeviation)
                 {
                     outputs(i, channel_index, row_index, column_index) = (inputs(i, channel_index, row_index, column_index) - descriptives(j).mean)/descriptives(j).standard_deviation;
                 }
-                else if(scaling_methods(j) == StandardDeviation)
+                else if(scalers(j) == StandardDeviation)
                 {
                     outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index)/descriptives(j).standard_deviation;
                 }
@@ -1029,19 +1037,19 @@ string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, con
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scaling_methods(i) == NoScaling)
+        if(scalers(i) == NoScaling)
         {
             buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << ";\n";
         }
-        else if(scaling_methods(i) == MinimumMaximum)
+        else if(scalers(i) == MinimumMaximum)
         {
             buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "*(" << max_range << "-" << min_range << ")/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-" << descriptives(i).minimum << "*(" << max_range << "-" << min_range << ")/(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ")+" << min_range << ";\n";
         }
-        else if(scaling_methods(i) == MeanStandardDeviation)
+        else if(scalers(i) == MeanStandardDeviation)
         {
             buffer << "scaled_" << inputs_names(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
         }
-        else if(scaling_methods(i) == StandardDeviation)
+        else if(scalers(i) == StandardDeviation)
         {
             buffer << "scaled_" << inputs_names(i) << " = " << inputs_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
         }
@@ -1084,11 +1092,11 @@ string ScalingLayer::write_expression_c() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scaling_methods(i) == NoScaling)
+        if(scalers(i) == NoScaling)
         {
             buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
         }
-        else if(scaling_methods(i) == MinimumMaximum)
+        else if(scalers(i) == MinimumMaximum)
         {
             const type slope = (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
 
@@ -1096,7 +1104,7 @@ string ScalingLayer::write_expression_c() const
 
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
         }
-        else if(scaling_methods(i) == MeanStandardDeviation)
+        else if(scalers(i) == MeanStandardDeviation)
         {
             const type slope = static_cast<type>(2)/descriptives(i).standard_deviation;
 
@@ -1104,7 +1112,7 @@ string ScalingLayer::write_expression_c() const
 
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
         }
-        else if(scaling_methods(i) == StandardDeviation)
+        else if(scalers(i) == StandardDeviation)
         {
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << " ;" << endl;
         }
@@ -1140,11 +1148,11 @@ string ScalingLayer::write_expression_python() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        if(scaling_methods(i) == NoScaling)
+        if(scalers(i) == NoScaling)
         {
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]" << endl;
         }
-        else if(scaling_methods(i) == MinimumMaximum)
+        else if(scalers(i) == MinimumMaximum)
         {
             const type slope = (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
 
@@ -1152,7 +1160,7 @@ string ScalingLayer::write_expression_python() const
 
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
         }
-        else if(scaling_methods(i) == MeanStandardDeviation)
+        else if(scalers(i) == MeanStandardDeviation)
         {
             const type slope = static_cast<type>(2)/descriptives(i).standard_deviation;
 
@@ -1160,7 +1168,7 @@ string ScalingLayer::write_expression_python() const
 
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
         }
-        else if(scaling_methods(i) == StandardDeviation)
+        else if(scalers(i) == StandardDeviation)
         {
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << " " << endl;
         }
@@ -1437,19 +1445,19 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(new_method == "MinimumMaximum" || new_method == "Minimum - Maximum")
         {
-            scaling_methods[i] = MinimumMaximum;
+            scalers[i] = MinimumMaximum;
         }
         else if(new_method == "MeanStandardDeviation" || new_method == "Mean - Standard deviation")
         {
-            scaling_methods[i] = MeanStandardDeviation;
+            scalers[i] = MeanStandardDeviation;
         }
         else if(new_method == "StandardDeviation")
         {
-            scaling_methods[i] = StandardDeviation;
+            scalers[i] = StandardDeviation;
         }
         else
         {
-            scaling_methods[i] = NoScaling;
+            scalers[i] = NoScaling;
         }
     }
 
@@ -1477,7 +1485,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

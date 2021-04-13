@@ -200,6 +200,17 @@ struct NeuronsSelectionResults
 
    string write_stopping_condition() const;
 
+   void print() const
+   {
+       cout << endl;
+       cout << "Neurons Selection Results" << endl;
+
+       cout << "Optimal neurons number: " << optimal_neurons_number << endl;
+
+       cout << "Optimum training error: " << optimum_training_error << endl;
+       cout << "Optimum selection error: " << optimum_selection_error << endl;
+   }
+
    // Neural network
 
    /// Neurons of the diferent neural networks.

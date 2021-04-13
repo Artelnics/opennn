@@ -72,18 +72,18 @@ int main()
 
         training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-        const TrainingResults training_results = training_strategy.perform_training();
+//        const TrainingResults training_results = training_strategy.perform_training();
 
         // Model selection
 
         ModelSelection model_selection(&training_strategy);
 
 //        model_selection.perform_neurons_selection();
-/*
-        model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
+
+//        model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
 
         model_selection.perform_inputs_selection();
-
+/*
         // Testing analysis
 
         data_set.unscale_input_variables(input_variables_descriptives);

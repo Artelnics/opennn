@@ -82,7 +82,7 @@ int main()
 
          // Testing analysis
 
-//         data_set.unscale_input_variables(scaling_methods, input_variables_descriptives);
+//         data_set.unscale_input_variables(scalers, input_variables_descriptives);
 
          TestingAnalysis testing_analysis(&neural_network, &data_set);
 

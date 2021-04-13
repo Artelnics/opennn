@@ -504,7 +504,6 @@ void NeuronsSelection::check() const
 
         throw logic_error(buffer.str());
     }
-
 }
 
 
