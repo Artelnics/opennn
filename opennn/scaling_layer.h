@@ -22,6 +22,7 @@
 
 #include "layer.h"
 #include "statistics.h"
+#include "scaling.h"
 #include "opennn_strings.h"
 
 namespace OpenNN
@@ -51,12 +52,7 @@ public:
 
    virtual ~ScalingLayer();
 
-   /// Enumeration of available methods for scaling the input variables.  
-   
-   enum ScalingMethod{NoScaling, MinimumMaximum, MeanStandardDeviation, StandardDeviation};
-
    // Get methods
-
    
    Tensor<Index, 1> get_outputs_dimensions() const;
 
@@ -77,7 +73,7 @@ public:
 
    // Variables scaling and unscaling
 
-   const Tensor<ScalingMethod, 1> get_scaling_methods() const;
+   const Tensor<Scaler, 1> get_scaling_methods() const;
 
    Tensor<string, 1> write_scaling_methods() const;
    Tensor<string, 1> write_scaling_methods_text() const;
@@ -117,10 +113,10 @@ public:
 
    // Scaling method
 
-   void set_scaling_methods(const Tensor<ScalingMethod, 1>&);
+   void set_scaling_methods(const Tensor<Scaler, 1>&);
    void set_scaling_methods(const Tensor<string, 1>&);
 
-   void set_scaling_methods(const ScalingMethod&);
+   void set_scaling_methods(const Scaler&);
    void set_scaling_methods(const string&);
 
    // Display messages
@@ -168,7 +164,7 @@ protected:
 
    /// Vector of scaling methods for each variable.
 
-   Tensor<ScalingMethod, 1> scaling_methods;
+   Tensor<Scaler, 1> scaling_methods;
 
    /// min and max range for minmaxscaling
 

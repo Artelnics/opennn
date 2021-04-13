@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "statistics.h"
+#include "scaling.h"
 #include "correlations.h"
 #include "opennn_strings.h"
 
@@ -80,10 +81,6 @@ public:
    /// Enumeration of available methods for missing values in the data.
 
    enum MissingValuesMethod{Unuse, Mean, Median};
-
-   /// Enumeration of available methods for scaling and unscaling the data.
-
-   enum Scaler{NoScaling, NoUnscaling, MinimumMaximum, MeanStandardDeviation, StandardDeviation, Logarithmic};
 
    /// Enumeration of the learning tasks.
 
@@ -145,6 +142,8 @@ public:
        /// Categories use.
 
        Tensor<VariableUse, 1> categories_uses;
+
+       Scaler scaler = MeanStandardDeviation;
 
        // Methods
 
@@ -267,7 +266,7 @@ public:
 
    // Scalers get methods
 
-   const Tensor<Scaler, 1>& get_columns_scalers() const;
+   Tensor<Scaler, 1> get_columns_scalers() const;
 
    Tensor<Scaler, 1> get_variables_scalers() const;
 
@@ -818,8 +817,6 @@ private:
    Tensor<Index, 1> input_variables_dimensions;
 
    Tensor<Column, 1> columns;
-
-   Tensor<Scaler, 1> columns_scalers;
 
    /// Header wihch contains the rows label.
 
