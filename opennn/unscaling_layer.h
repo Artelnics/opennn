@@ -108,7 +108,7 @@ public:
 
    // Display messages
 
-   void set_display(const bool&); 
+   void set_display(const bool&);
 
    // Check methods
 
