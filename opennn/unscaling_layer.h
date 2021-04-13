@@ -100,10 +100,10 @@ public:
 
    // Outputs unscaling method
 
-   void set_unscaling_methods(const Tensor<Scaler,1>&);
-   void set_unscaling_methods(const string&);
-   void set_unscaling_methods(const Tensor<string, 1>&);
-   void set_unscaling_methods(const Scaler&);
+   void set_scalers(const Tensor<Scaler,1>&);
+   void set_scalers(const string&);
+   void set_scalers(const Tensor<string, 1>&);
+   void set_scalers(const Scaler&);
 
    // Display messages
 
@@ -175,4 +175,3 @@ protected:
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

@@ -61,11 +61,11 @@ int main()
         neural_network.set_outputs_names(targets_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-        scaling_layer_pointer->set_scaling_methods(MinimumMaximum);
+        scaling_layer_pointer->set_scalers(MinimumMaximum);
         scaling_layer_pointer->set_descriptives(input_variables_descriptives);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
-        unscaling_layer_pointer->set_unscaling_methods(MinimumMaximum);
+        unscaling_layer_pointer->set_scalers(MinimumMaximum);
         unscaling_layer_pointer->set_descriptives(targets_descriptives);
 
         // Training strategy object
