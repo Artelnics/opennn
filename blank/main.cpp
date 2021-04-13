@@ -50,11 +50,11 @@ int main()
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_descriptives(input_descriptives);
-        //scaling_layer_pointer->set_scalers(scaling_methods);
+        //scaling_layer_pointer->set_scalers(scalers);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
         unscaling_layer_pointer->set_descriptives(target_descriptives);
-        //unscaling_layer_pointer->set_scalers(unscaling_methods);
+        //unscaling_layer_pointer->set_scalers(scalers);
 
         // Training strategy
 

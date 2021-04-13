@@ -301,20 +301,14 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         }
     }
 
-    if(display)
-    {
-        cout << endl;
-        cout << "Optimal neurons number: " << results.optimal_neurons_number << endl;
-        cout << "Optimum training error: " << results.optimum_training_error << endl;
-        cout << "Optimum selection error: " << results.optimum_selection_error << endl;
-    }
-
     // Save neural network
 
     trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(results.optimal_neurons_number);
     trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(results.optimal_neurons_number);
 
     neural_network->set_parameters(results.optimal_parameters);
+
+    if(display) results.print();
 
     return results;
 }

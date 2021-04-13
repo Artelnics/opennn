@@ -345,13 +345,25 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     // Set data set stuff
 
-//    data_set_pointer->set_input_columns_binary(results.optimal_inputs);
+    data_set_pointer->set_input_columns_binary(results.optimal_inputs);
+
+    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+
+    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+    const Tensor<Descriptives, 1> target_variables_descriptives = data_set_pointer->scale_target_variables();
 
     // Set neural network stuff
 
     neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+
+    if(neural_network_pointer->has_scaling_layer())
+        neural_network_pointer->get_scaling_layer_pointer()->set_scalers(input_variables_scalers);
+
+    if(neural_network_pointer->has_unscaling_layer())
+        neural_network_pointer->get_unscaling_layer_pointer()->set_scalers(target_variables_scalers);
 
     neural_network_pointer->set_parameters(results.optimal_parameters);
 
@@ -911,7 +923,7 @@ void GrowingInputs::load(const string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

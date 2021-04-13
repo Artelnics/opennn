@@ -76,6 +76,7 @@ public:
    void set();
    void set(const Index&);
    void set(const Tensor<Descriptives, 1>&);
+   void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const UnscalingLayer&);
 
@@ -141,7 +142,7 @@ protected:
 
    /// Unscaling method for the output variables.
 
-   Tensor<Scaler, 1> unscaling_methods;
+   Tensor<Scaler, 1> scalers;
 
    /// min and max range for unscaling
 

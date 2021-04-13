@@ -6296,7 +6296,7 @@ void DataSet::set_default_columns_scalers() const
     const Index used_inputs_number = used_inputs_indices.size();
 
     Index current_distribution;
-    Tensor<string, 1> scaling_methods(used_inputs_number);
+    Tensor<string, 1> scalers(used_inputs_number);
 
     #pragma omp parallel for private(current_distribution)
 
@@ -6306,15 +6306,15 @@ void DataSet::set_default_columns_scalers() const
 
         if(current_distribution == 0) // Normal distribution
         {
-            scaling_methods(i) = "MeanStandardDeviation";
+            scalers(i) = "MeanStandardDeviation";
         }
         else if(current_distribution == 1) // Uniform distribution
         {
-            scaling_methods(i) = "MinimumMaximum";
+            scalers(i) = "MinimumMaximum";
         }
         else // Default
         {
-            scaling_methods(i) = "MinimumMaximum";
+            scalers(i) = "MinimumMaximum";
         }
     }
 */
@@ -11132,7 +11132,7 @@ bool DataSet::get_has_rows_labels() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

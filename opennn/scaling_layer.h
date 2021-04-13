@@ -88,6 +88,7 @@ public:
    void set(const Index&);
    void set(const Tensor<Index, 1>&);
    void set(const Tensor<Descriptives, 1>&);
+   void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
 
    void set_inputs_number(const Index&);
@@ -161,7 +162,7 @@ protected:
 
    /// Vector of scaling methods for each variable.
 
-   Tensor<Scaler, 1> scaling_methods;
+   Tensor<Scaler, 1> scalers;
 
    /// min and max range for minmaxscaling
 
@@ -180,7 +181,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -150,8 +150,6 @@ public:
 
    TrainingResults perform_training();
 
-   
-
    // Training history methods
 
    void set_reserve_all_training_history(const bool&);
@@ -159,12 +157,10 @@ public:
    string write_optimization_algorithm_type() const;
 
    // Serialization methods
-
    
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-
    
    Tensor<string, 2> to_string_matrix() const;
 
@@ -282,7 +278,6 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
         training_direction.resize(parameters_number);
 
         old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
-
     }
 
     void print() const
