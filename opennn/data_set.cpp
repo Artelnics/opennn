@@ -2233,27 +2233,36 @@ Tensor<Index, 1> DataSet::get_used_columns_indices() const
 }
 
 
-const Tensor<DataSet::Scaler, 1>& DataSet::get_columns_scalers() const
+Tensor<Scaler, 1> DataSet::get_columns_scalers() const
 {
+    const Index columns_number = get_columns_number();
+
+    Tensor<Scaler, 1> columns_scalers(columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        columns_scalers(i) = columns(i).scaler;
+    }
+
     return columns_scalers;
 }
 
 
-Tensor<DataSet::Scaler, 1> DataSet::get_variables_scalers() const
+Tensor<Scaler, 1> DataSet::get_variables_scalers() const
 {
-    return Tensor<DataSet::Scaler, 1>();
+    return Tensor<Scaler, 1>();
 }
 
 
-Tensor<DataSet::Scaler, 1> DataSet::get_input_variables_scalers() const
+Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
 {
-    return Tensor<DataSet::Scaler, 1>();
+    return Tensor<Scaler, 1>();
 }
 
 
-Tensor<DataSet::Scaler, 1> DataSet::get_target_variables_scalers() const
+Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
 {
-    return Tensor<DataSet::Scaler, 1>();
+    return Tensor<Scaler, 1>();
 }
 
 
@@ -3221,10 +3230,6 @@ void DataSet::set_columns_number(const Index& new_columns_number)
     columns.resize(new_columns_number);
 
     set_default_columns_uses();
-
-    columns_scalers.resize(new_columns_number);
-    columns_scalers.setConstant(MeanStandardDeviation);
-
 }
 
 
@@ -3561,7 +3566,7 @@ const Index& DataSet::get_time_index() const
 /// Returns a value of the scaling-unscaling method enumeration from a string containing the name of that method.
 /// @param scaling_unscaling_method String with the name of the scaling and unscaling method.
 
-DataSet::Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_method)
+Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_method)
 {
     if(scaling_unscaling_method == "NoScaling")
     {
@@ -3577,7 +3582,7 @@ DataSet::Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unsc
     }
     else if(scaling_unscaling_method == "Logarithmic")
     {
-        return Logarithmic;
+        return Logarithm;
     }
     else if(scaling_unscaling_method == "MeanStandardDeviation")
     {
@@ -4354,9 +4359,6 @@ void DataSet::set(const Index& new_samples_number, const Index& new_variables_nu
 
     columns.resize(new_variables_number);
 
-    columns_scalers.resize(new_variables_number);
-    columns_scalers.setConstant(MeanStandardDeviation);
-
     for(Index index = 0; index < new_variables_number-1; index++)
     {
         columns(index).name = "column_" + to_string(index+1);
@@ -4391,9 +4393,6 @@ void DataSet::set(const Index& new_samples_number,
     data.resize(new_samples_number, new_variables_number);
 
     columns.resize(new_variables_number);
-
-    columns_scalers.resize(new_variables_number);
-    columns_scalers.setConstant(MeanStandardDeviation);
 
     for(Index i = 0; i < new_variables_number; i++)
     {
@@ -6442,7 +6441,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
             scale_variable_standard_deviation(input_variables_descriptives(i), input_variables_indices(i));
         break;
 
-        case Logarithmic:
+        case Logarithm:
             scale_variable_logarithmic(input_variables_descriptives(i), input_variables_indices(i));
         break;
 
@@ -6497,7 +6496,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
             scale_variable_standard_deviation(target_variables_descriptives(i), target_variables_indices(i));
         break;
 
-        case Logarithmic:
+        case Logarithm:
             scale_variable_logarithmic(target_variables_descriptives(i), target_variables_indices(i));
         break;
 
@@ -6687,7 +6686,7 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
             unscale_variable_mean_standard_deviation(targets_descriptives(i), target_variables_indices(i));
             break;
 
-        case Logarithmic:
+        case Logarithm:
             unscale_variable_logarithmic(targets_descriptives(i), target_variables_indices(i));
             break;
 
@@ -6704,8 +6703,6 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
         }
     }
 }
-
-
 
 
 /// Initializes the data matrix with a given value.
@@ -9781,9 +9778,6 @@ void DataSet::read_csv_1()
     const Index columns_number = has_rows_labels ? data_file_preview(0).size()-1 : data_file_preview(0).size();
 
     columns.resize(columns_number);
-
-    columns_scalers.resize(columns_number);
-    columns_scalers.setConstant(MeanStandardDeviation);
 
     // Check if header has numeric value
 

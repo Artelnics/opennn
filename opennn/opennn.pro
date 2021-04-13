@@ -53,6 +53,7 @@ HEADERS += \
     config.h \
     opennn_strings.h \
     statistics.h \
+    scaling.h \
     correlations.h \
     tinyxml2.h \
     data_set.h \
@@ -105,6 +106,7 @@ SOURCES += \
     opennn_strings.cpp \
     tensor_utilities.cpp \
     statistics.cpp \
+    scaling.cpp \
     correlations.cpp \
     tinyxml2.cpp \
     data_set.cpp \

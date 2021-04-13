@@ -135,7 +135,7 @@ Tensor<type, 1> UnscalingLayer::get_maximums() const
 /// Returns the method used for unscaling
 ///(no unscaling, minimum and maximum or mean and standard deviation).
 
-const Tensor<UnscalingLayer::UnscalingMethod, 1> UnscalingLayer::get_unscaling_method() const
+const Tensor<Scaler, 1> UnscalingLayer::get_unscaling_method() const
 {
     return unscaling_methods;
 }
@@ -498,7 +498,7 @@ void UnscalingLayer::set_standard_deviation(const Index& i, const type& new_stan
 /// Sets the method to be used for unscaling the outputs from the neural network
 /// @param new_unscaling_method New unscaling method for the output variables.
 
-void UnscalingLayer::set_unscaling_methods(const Tensor<UnscalingLayer::UnscalingMethod,1>& new_unscaling_method)
+void UnscalingLayer::set_unscaling_methods(const Tensor<Scaler,1>& new_unscaling_method)
 {
     unscaling_methods = new_unscaling_method;
 }
@@ -529,19 +529,19 @@ void UnscalingLayer::set_unscaling_methods(const string& new_scaling_methods_str
 
     if(new_scaling_methods_string == "NoUnscaling")
     {
-        set_unscaling_methods(UnscalingLayer::NoUnscaling);
+        set_unscaling_methods(NoUnscaling);
     }
     else if(new_scaling_methods_string == "MinimumMaximum")
     {
-        set_unscaling_methods(UnscalingLayer::MinimumMaximum);
+        set_unscaling_methods(MinimumMaximum);
     }
     else if(new_scaling_methods_string == "MeanStandardDeviation")
     {
-        set_unscaling_methods(UnscalingLayer::MeanStandardDeviation);
+        set_unscaling_methods(MeanStandardDeviation);
     }
-    else if(new_scaling_methods_string == "Logarithmic")
+    else if(new_scaling_methods_string == "Logarithm")
     {
-        set_unscaling_methods(UnscalingLayer::Logarithmic);
+        set_unscaling_methods(Logarithm);
     }
     else
     {
@@ -578,7 +578,7 @@ void UnscalingLayer::set_unscaling_methods(const Tensor<string, 1>& new_unscalin
 
 #endif
 
-    Tensor<UnscalingMethod, 1> new_unscaling_methods(neurons_number);
+    Tensor<Scaler, 1> new_unscaling_methods(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
     {
@@ -594,9 +594,9 @@ void UnscalingLayer::set_unscaling_methods(const Tensor<string, 1>& new_unscalin
         {
             new_unscaling_methods(i) = MinimumMaximum;
         }
-        else if(new_unscaling_methods_string(i) == "StandardDeviation")
+        else if(new_unscaling_methods_string(i) == "Logarithm")
         {
-            new_unscaling_methods(i) = Logarithmic;
+            new_unscaling_methods(i) = Logarithm;
         }
         else
         {
@@ -617,7 +617,7 @@ void UnscalingLayer::set_unscaling_methods(const Tensor<string, 1>& new_unscalin
 /// Sets the method to be used for unscaling the variables.
 /// @param new_unscaling_method New unscaling method for the variables.
 
-void UnscalingLayer::set_unscaling_methods(const UnscalingLayer::UnscalingMethod& new_unscaling_method)
+void UnscalingLayer::set_unscaling_methods(const Scaler& new_unscaling_method)
 {
     const Index neurons_number = get_neurons_number();
     for(Index i = 0; i < neurons_number; i++)
@@ -876,7 +876,7 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         // Unscaling method
 
-        file_stream.OpenElement("UnscalingMethod");
+        file_stream.OpenElement("Scaler");
 
         buffer.str("");
         buffer << unscaling_methods(i);
@@ -1036,7 +1036,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         // Unscaling method
 
-        const tinyxml2::XMLElement* unscaling_method_element = descriptives_element->FirstChildElement("UnscalingMethod");
+        const tinyxml2::XMLElement* unscaling_method_element = descriptives_element->FirstChildElement("Scaler");
 
         if(!unscaling_method_element)
         {
@@ -1057,9 +1057,9 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
             unscaling_methods[i] = MeanStandardDeviation;
         }
-        else if(new_method == "Logarithmic")
+        else if(new_method == "Logarithm")
         {
-            unscaling_methods[i] = Logarithmic;
+            unscaling_methods[i] = Logarithm;
         }
     }
 

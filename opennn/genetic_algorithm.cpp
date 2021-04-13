@@ -932,8 +932,8 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-    const Tensor<DataSet::Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-    const Tensor<DataSet::Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
 //    if(neural_network_pointer->has_scaling_layer())
 //        neural_network_pointer->get_scaling_layer_pointer()->set_scaling_methods(input_variables_scalers);

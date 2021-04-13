@@ -53,15 +53,7 @@ public:
 
    virtual ~UnscalingLayer();
 
-   // Enumerations
-
-   /// Enumeration of available methods for input variables, output variables and independent parameters scaling.  
-   
-   enum UnscalingMethod{NoUnscaling, MinimumMaximum, MeanStandardDeviation, Logarithmic};
-
-   // Get methods
-
-   
+   // Get methods  
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -72,7 +64,7 @@ public:
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
 
-   const Tensor<UnscalingLayer::UnscalingMethod, 1> get_unscaling_method() const;
+   const Tensor<Scaler, 1> get_unscaling_method() const;
 
    Tensor<string, 1> write_unscaling_methods() const;
    Tensor<string, 1> write_unscaling_method_text() const;
@@ -108,10 +100,10 @@ public:
 
    // Outputs unscaling method
 
-   void set_unscaling_methods(const Tensor<UnscalingMethod,1>&);
+   void set_unscaling_methods(const Tensor<Scaler,1>&);
    void set_unscaling_methods(const string&);
    void set_unscaling_methods(const Tensor<string, 1>&);
-   void set_unscaling_methods(const UnscalingLayer::UnscalingMethod&);
+   void set_unscaling_methods(const Scaler&);
 
    // Display messages
 
@@ -149,7 +141,7 @@ protected:
 
    /// Unscaling method for the output variables.
 
-   Tensor<UnscalingMethod, 1> unscaling_methods;
+   Tensor<Scaler, 1> unscaling_methods;
 
    /// min and max range for unscaling
 

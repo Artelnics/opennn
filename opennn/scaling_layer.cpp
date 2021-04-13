@@ -183,7 +183,7 @@ Tensor<type, 1> ScalingLayer::get_standard_deviations() const
 
 /// Returns the methods used for scaling.
 
-const Tensor<ScalingLayer::ScalingMethod, 1> ScalingLayer::get_scaling_methods() const
+const Tensor<Scaler, 1> ScalingLayer::get_scaling_methods() const
 {
     return scaling_methods;
 }
@@ -542,7 +542,7 @@ void ScalingLayer::set_standard_deviation(const Index& i, const type& new_standa
 /// Sets the methods to be used for scaling each variable.
 /// @param new_scaling_methods New scaling methods for the variables.
 
-void ScalingLayer::set_scaling_methods(const Tensor<ScalingLayer::ScalingMethod, 1>& new_scaling_methods)
+void ScalingLayer::set_scaling_methods(const Tensor<Scaler, 1>& new_scaling_methods)
 {
 #ifdef OPENNN_DEBUG
 
@@ -553,7 +553,7 @@ void ScalingLayer::set_scaling_methods(const Tensor<ScalingLayer::ScalingMethod,
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_scaling_methods(const Tensor<ScalingMethod, 1>&) method.\n"
+               << "void set_scaling_methods(const Tensor<Scaler, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -588,7 +588,7 @@ void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_meth
 
 #endif
 
-    Tensor<ScalingMethod, 1> new_scaling_methods(neurons_number);
+    Tensor<Scaler, 1> new_scaling_methods(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
     {
@@ -647,7 +647,7 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
 
 #endif
 
-    Tensor<ScalingMethod, 1> new_scaling_methods(neurons_number);
+    Tensor<Scaler, 1> new_scaling_methods(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
     {
@@ -686,7 +686,7 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
 /// Sets the method to be used for scaling the variables.
 /// @param new_scaling_method New scaling method for the variables.
 
-void ScalingLayer::set_scaling_methods(const ScalingLayer::ScalingMethod& new_scaling_method)
+void ScalingLayer::set_scaling_methods(const Scaler& new_scaling_method)
 {
     const Index neurons_number = get_neurons_number();
 
@@ -1281,7 +1281,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         // Scaling Method
 
-        file_stream.OpenElement("ScalingMethod");
+        file_stream.OpenElement("Scaler");
 
         buffer.str("");
         buffer << scaling_methods_string(i);
@@ -1439,7 +1439,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         // Scaling method
 
-        const tinyxml2::XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("ScalingMethod");
+        const tinyxml2::XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
 
         if(!scaling_method_element)
         {
