@@ -371,23 +371,6 @@ void ScalingLayer::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
 }
 
 
-/// Sets the members of this object to be the members of another object of the same class.
-/// @param new_scaling_layer Object to be copied.
-
-void ScalingLayer::set(const ScalingLayer& new_scaling_layer)
-{
-    descriptives = new_scaling_layer.descriptives;
-
-    scaling_methods = new_scaling_layer.scaling_methods;
-
-    layer_type = new_scaling_layer.layer_type;
-
-    display = new_scaling_layer.display;
-
-    layer_type = Scaling;
-}
-
-
 void ScalingLayer::set_inputs_number(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);

@@ -89,9 +89,6 @@ public:
    void set(const Tensor<Index, 1>&);
    void set(const Tensor<Descriptives, 1>&);
    void set(const tinyxml2::XMLDocument&);
-   void set(const ScalingLayer&);
-
-//   void set(const Tensor<bool, 1>&);
 
    void set_inputs_number(const Index&);
    void set_neurons_number(const Index&);

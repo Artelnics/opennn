@@ -858,6 +858,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
             }
             else if(selection_back_propagation.error < results.optimum_selection_error)
             {
+                results.optimum_training_error = training_back_propagation.error;
                 results.optimum_selection_error = selection_back_propagation.error;
 
                 results.optimal_parameters = training_back_propagation.parameters;
