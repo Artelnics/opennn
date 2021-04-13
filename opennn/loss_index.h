@@ -407,15 +407,23 @@ struct LossIndexBackPropagationLM
 
         neural_network.set(batch_samples_number, neural_network_pointer);
 
+        parameters = neural_network_pointer->get_parameters();
+
         error = 0;
 
         loss = 0;
 
         gradient.resize(parameters_number);
 
+        regularization_gradient.resize(parameters_number);
+        regularization_gradient.setZero();
+
         squared_errors_jacobian.resize(batch_samples_number, parameters_number);
 
         hessian.resize(parameters_number, parameters_number);
+
+        regularization_hessian.resize(parameters_number, parameters_number);
+        regularization_hessian.setZero();
 
         errors.resize(batch_samples_number, outputs_number);
 
@@ -449,6 +457,9 @@ struct LossIndexBackPropagationLM
 
     Tensor<type, 1> gradient;
     Tensor<type, 2> hessian;
+
+    Tensor<type, 1> regularization_gradient;
+    Tensor<type, 2> regularization_hessian;
 };
 
 

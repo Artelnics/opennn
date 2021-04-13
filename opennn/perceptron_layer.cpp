@@ -919,7 +919,6 @@ void PerceptronLayer::calculate_layer_squared_errors_Jacobian(LayerForwardPropag
 
         throw logic_error(buffer.str());
     }
-
     }
 }
 
@@ -931,8 +930,8 @@ void PerceptronLayer::calculate_layer_squared_errors_Jacobian(const Tensor<type,
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
-    PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
-            static_cast<PerceptronLayerBackPropagation*>(back_propagation);
+    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
+            static_cast<PerceptronLayerBackPropagationLM*>(back_propagation);
 
     const Index samples_number = inputs.dimension(0);
 
@@ -949,16 +948,16 @@ void PerceptronLayer::calculate_layer_squared_errors_Jacobian(const Tensor<type,
         {
             for(Index input = 0; input <  inputs_number; input++)
             {
-                perceptron_layer_back_propagation->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
-                        perceptron_layer_back_propagation->delta(sample, neuron) *
+                perceptron_layer_back_propagation_lm->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
+                        perceptron_layer_back_propagation_lm->delta(sample, neuron) *
                         perceptron_layer_forward_propagation->activations_derivatives(sample, neuron) *
                         inputs(sample, input);
 
                 parameter_index++;
             }
 
-            perceptron_layer_back_propagation->squared_errors_Jacobian(sample, neuron) =
-                    perceptron_layer_back_propagation->delta(sample, neuron) *
+            perceptron_layer_back_propagation_lm->squared_errors_Jacobian(sample, neuron) =
+                    perceptron_layer_back_propagation_lm->delta(sample, neuron) *
                     perceptron_layer_forward_propagation->activations_derivatives(sample, neuron);
         }
     }

@@ -269,6 +269,48 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 };
 
 
+struct ProbabilisticLayerBackPropagationLM : LayerBackPropagation
+{
+    explicit ProbabilisticLayerBackPropagationLM() : LayerBackPropagation()
+    {
+
+    }
+
+
+    explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+
+        delta.resize(batch_samples_number, neurons_number);
+        delta_row.resize(neurons_number);
+    }
+
+    void print() const
+    {
+        cout << "Delta:" << endl;
+        cout << delta << endl;
+    }
+
+    Tensor<type, 2> delta;
+    Tensor<type, 1> delta_row;
+
+    Tensor<type, 2> synaptic_weights_derivatives;
+    Tensor<type, 1> biases_derivatives;
+};
+
+
+
 struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 {
     explicit ProbabilisticLayerBackPropagation() : LayerBackPropagation()

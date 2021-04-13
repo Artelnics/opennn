@@ -323,8 +323,6 @@ struct NeuralNetworkForwardPropagation
 
             default: break;
             }
-
-//            layers(i)->set(new_batch_samples_number);
         }
     }
 
@@ -408,6 +406,80 @@ struct NeuralNetworkBackPropagation
             break;
 
             default: break;
+            }
+        }
+    }
+
+    void print()
+    {
+        const Index layers_number = layers.size();
+
+        cout << "Layers number: " << layers_number << endl;
+
+        for(Index i = 0; i < layers_number; i++)
+        {
+            cout << "Layer " << i + 1 << endl;
+
+            layers(i)->print();
+        }
+    }
+
+    Index batch_samples_number = 0;
+
+    NeuralNetwork* neural_network_pointer = nullptr;
+
+    Tensor<LayerBackPropagation*, 1> layers;
+};
+
+
+struct NeuralNetworkBackPropagationLM
+{
+    NeuralNetworkBackPropagationLM() {}
+
+    NeuralNetworkBackPropagationLM(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+    {
+        batch_samples_number = new_batch_samples_number;
+
+        neural_network_pointer = new_neural_network_pointer;
+    }
+
+    void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+    {
+        batch_samples_number = new_batch_samples_number;
+
+        neural_network_pointer = new_neural_network_pointer;
+
+        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+        const Index trainable_layers_number = trainable_layers_pointers.size();
+
+        layers.resize(trainable_layers_number);
+
+        for(Index i = 0; i < trainable_layers_number; i++)
+        {
+            switch (trainable_layers_pointers(i)->get_type())
+            {
+            case Layer::Perceptron:
+            {
+                layers(i) = new PerceptronLayerBackPropagationLM(new_batch_samples_number, trainable_layers_pointers(i));
+            }
+            break;
+
+            case Layer::Probabilistic:
+            {
+                layers(i) = new ProbabilisticLayerBackPropagationLM(new_batch_samples_number, trainable_layers_pointers(i));
+            }
+            break;
+
+            default:
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: NeuralNetwork class.\n"
+                       << "Levenberg-Marquardt.\n";
+
+                throw logic_error(buffer.str());
+            }
             }
         }
     }
