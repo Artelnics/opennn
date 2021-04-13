@@ -298,9 +298,56 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 };
 
 
+struct PerceptronLayerBackPropagationLM : LayerBackPropagation
+{
+    // Default constructor
+
+    explicit PerceptronLayerBackPropagationLM() : LayerBackPropagation()
+    {
+
+    }
+
+
+    explicit PerceptronLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index parameters_number = layer_pointer->get_parameters_number();
+
+        delta.resize(batch_samples_number, neurons_number);
+
+        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+    }
+
+    void print() const
+    {
+        cout << "Delta:" << endl;
+        cout << delta << endl;
+
+        cout << "Squared errors Jacobian: " << endl;
+        cout << squared_errors_Jacobian << endl;
+
+    }
+
+    Tensor<type, 2> delta;
+
+    Tensor<type, 2> squared_errors_Jacobian;
+};
+
+
+
 struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
-
     // Default constructor
 
     explicit PerceptronLayerBackPropagation() : LayerBackPropagation()
@@ -331,10 +378,6 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
         biases_derivatives.resize(neurons_number);
 
         synaptic_weights_derivatives.resize(inputs_number, neurons_number);
-
-        delta.resize(batch_samples_number, neurons_number);
-
-        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
     }
 
     void print() const
@@ -353,8 +396,6 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
-
-    Tensor<type, 2> squared_errors_Jacobian;
 };
 
 

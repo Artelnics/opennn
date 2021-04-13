@@ -378,7 +378,7 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 }
 
 
-void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & batch,
+void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & ,
                                                     NeuralNetworkForwardPropagation & ,
                                                     LossIndexBackPropagationLM & loss_index_back_propagation) const
 {
@@ -394,12 +394,6 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & batch,
 
     Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
-    const Index batch_samples_number = batch.get_samples_number();
-    const Index total_samples_number = data_set_pointer->get_samples_number();
-
-    const type coefficient
-            = static_cast<type>(2)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
-
     switch(output_layer_pointer->get_type())
     {
     case Layer::Perceptron:
@@ -407,7 +401,7 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & batch,
         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
                 = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
-        perceptron_layer_back_propagation->delta = coefficient*(loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors);
+        perceptron_layer_back_propagation->delta = loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors;
     }
         break;
 
@@ -416,7 +410,7 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & batch,
         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
                 = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
-        probabilistic_layer_back_propagation->delta = coefficient*(loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors);
+        probabilistic_layer_back_propagation->delta = loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors;
     }
         break;
 
@@ -425,7 +419,7 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & batch,
         RecurrentLayerBackPropagation* recurrent_layer_back_propagation
                 = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
 
-        recurrent_layer_back_propagation->delta = coefficient*(loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors);
+        recurrent_layer_back_propagation->delta = loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors;
     }
         break;
 
@@ -434,12 +428,27 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & batch,
         LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
                 = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
 
-        long_short_term_memory_layer_back_propagation->delta = coefficient*(loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors);
+        long_short_term_memory_layer_back_propagation->delta = loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors;
     }
         break;
 
     default: break;
     }
+}
+
+
+void NormalizedSquaredError::calculate_gradient(const DataSetBatch& batch,
+                                                LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+{
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
+
+    const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
+            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
+
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device) = coefficient * loss_index_back_propagation_lm.gradient;
 }
 
 

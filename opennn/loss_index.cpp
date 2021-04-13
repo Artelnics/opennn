@@ -568,8 +568,6 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     cout << "calculate_error" << endl;
 
-//    calculate_error_terms_output_jacobian(batch, forward_propagation, back_propagation, loss_index_back_propagation_lm);
-
     calculate_layers_delta(batch, forward_propagation, loss_index_back_propagation_lm);
 
     cout << "layers delta" << endl;
@@ -586,27 +584,27 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     calculate_hessian_approximation(batch, loss_index_back_propagation_lm);
 
+    cout << "hessian approximation" << endl;
+
     // Loss
 
     loss_index_back_propagation_lm.loss = loss_index_back_propagation_lm.error;
-
-    system("pause");
 
     // Regularization
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-//        const type regularization = calculate_regularization(back_propagation.parameters);
+        const type regularization = calculate_regularization(loss_index_back_propagation_lm.parameters);
 
-//        loss_index_back_propagation_lm.loss += regularization_weight*regularization;
+        loss_index_back_propagation_lm.loss += regularization_weight*regularization;
 
-//        calculate_regularization_gradient(back_propagation.parameters, back_propagation.regularization_gradient);
+        calculate_regularization_gradient(loss_index_back_propagation_lm.parameters, loss_index_back_propagation_lm.regularization_gradient);
 
-//        loss_index_back_propagation_lm.gradient.device(*thread_pool_device) += regularization_weight*back_propagation.regularization_gradient;
+        loss_index_back_propagation_lm.gradient.device(*thread_pool_device) += regularization_weight*loss_index_back_propagation_lm.regularization_gradient;
 
-//        calculate_regularization_hessian(back_propagation.parameters, loss_index_back_propagation_lm.regularization_hessian);
+        calculate_regularization_hessian(loss_index_back_propagation_lm.parameters, loss_index_back_propagation_lm.regularization_hessian);
 
-//        loss_index_back_propagation_lm.hessian += regularization_weight*calculate_regularization_hessian(back_propagation.parameters);
+        loss_index_back_propagation_lm.hessian += regularization_weight*loss_index_back_propagation_lm.regularization_hessian;
     }
 }
 
@@ -644,7 +642,7 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
     const Index layer_parameters_number = layer_pointer->get_parameters_number();
 
     memcpy(loss_index_back_propagation_lm.squared_errors_jacobian.data() + mem_index,
-           static_cast<PerceptronLayerBackPropagation*>(loss_index_back_propagation_lm.neural_network.layers(0))->squared_errors_Jacobian.data(),
+           static_cast<PerceptronLayerBackPropagationLM*>(loss_index_back_propagation_lm.neural_network.layers(0))->squared_errors_Jacobian.data(),
            static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
 
     mem_index += layer_parameters_number*batch_samples_number;
@@ -668,7 +666,7 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
             const Index layer_parameters_number = layer_pointer->get_parameters_number();
 
             memcpy(loss_index_back_propagation_lm.squared_errors_jacobian.data() + mem_index,
-                   static_cast<PerceptronLayerBackPropagation*>(loss_index_back_propagation_lm.neural_network.layers(i))->squared_errors_Jacobian.data(),
+                   static_cast<PerceptronLayerBackPropagationLM*>(loss_index_back_propagation_lm.neural_network.layers(i))->squared_errors_Jacobian.data(),
                    static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
 
             mem_index += layer_parameters_number*batch_samples_number;
@@ -676,7 +674,7 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
             break;
 
         case Layer::Probabilistic:
-        {
+        {// @todo
             static_cast<PerceptronLayer*>(forward_propagation.layers(i)->layer_pointer)->
                     calculate_layer_squared_errors_Jacobian(forward_propagation.layers(i-1),
                                                             forward_propagation.layers(i),
@@ -685,7 +683,7 @@ void LossIndex::calculate_squared_errors_jacobian(const DataSetBatch& batch,
             const Index layer_parameters_number = layer_pointer->get_parameters_number();
 
             memcpy(loss_index_back_propagation_lm.squared_errors_jacobian.data() + mem_index,
-                   static_cast<PerceptronLayerBackPropagation*>(loss_index_back_propagation_lm.neural_network.layers(i))->squared_errors_Jacobian.data(),
+                   static_cast<PerceptronLayerBackPropagationLM*>(loss_index_back_propagation_lm.neural_network.layers(i))->squared_errors_Jacobian.data(),
                    static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
 
             mem_index += layer_parameters_number*batch_samples_number;

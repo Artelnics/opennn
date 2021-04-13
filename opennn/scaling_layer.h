@@ -113,11 +113,11 @@ public:
 
    // Scaling method
 
-   void set_scaling_methods(const Tensor<Scaler, 1>&);
-   void set_scaling_methods(const Tensor<string, 1>&);
+   void set_scalers(const Tensor<Scaler, 1>&);
+   void set_scalers(const Tensor<string, 1>&);
 
-   void set_scaling_methods(const Scaler&);
-   void set_scaling_methods(const string&);
+   void set_scalers(const Scaler&);
+   void set_scalers(const string&);
 
    // Display messages
 

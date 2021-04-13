@@ -116,6 +116,8 @@ DataSet::Column::Column()
     type = Numeric;
     categories.resize(0);
     categories_uses.resize(0);
+
+    scaler = MeanStandardDeviation;
 }
 
 
@@ -132,6 +134,8 @@ DataSet::Column::Column(const string& new_name,
     type = new_type;
     categories = new_categories;
     categories_uses = new_categories_uses;
+
+    scaler = MeanStandardDeviation;
 }
 
 /// Column destructor.
@@ -521,6 +525,19 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
         }
 
         file_stream.CloseElement();
+    }
+}
+
+
+Index DataSet::Column::get_variables_number() const
+{
+    if(type == Categorical)
+    {
+        return categories.size();
+    }
+    else
+    {
+        return 1;
     }
 }
 
@@ -2248,21 +2265,52 @@ Tensor<Scaler, 1> DataSet::get_columns_scalers() const
 }
 
 
-Tensor<Scaler, 1> DataSet::get_variables_scalers() const
-{
-    return Tensor<Scaler, 1>();
-}
-
 
 Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
 {
-    return Tensor<Scaler, 1>();
+    const Index input_columns_number = get_input_columns_number();
+    const Index input_variables_number = get_input_variables_number();
+
+    const Tensor<Column, 1> input_columns = get_input_columns();
+
+    Tensor<Scaler, 1> input_variables_scalers(input_variables_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < input_columns_number; i++)
+    {
+        for(Index j = 0;  j < input_columns(i).get_variables_number(); j++)
+        {
+            input_variables_scalers(index) = input_columns(i).scaler;
+            index++;
+        }
+    }
+
+    return input_variables_scalers;
 }
 
 
 Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
 {
-    return Tensor<Scaler, 1>();
+    const Index target_columns_number = get_target_columns_number();
+    const Index target_variables_number = get_target_variables_number();
+
+    const Tensor<Column, 1> target_columns = get_target_columns();
+
+    Tensor<Scaler, 1> target_variables_scalers(target_variables_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < target_columns_number; i++)
+    {
+        for(Index j = 0;  j < target_columns(i).get_variables_number(); j++)
+        {
+            target_variables_scalers(index) = target_columns(i).scaler;
+            index++;
+        }
+    }
+
+    return target_variables_scalers;
 }
 
 
@@ -3230,6 +3278,17 @@ void DataSet::set_columns_number(const Index& new_columns_number)
     columns.resize(new_columns_number);
 
     set_default_columns_uses();
+}
+
+
+void DataSet::set_columns_scalers(const Scaler& scalers)
+{
+    const Index columns_number = get_columns_number();
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        columns(i).scaler = scalers;
+    }
 }
 
 
@@ -10412,6 +10471,7 @@ void DataSet::read_csv_3_complete()
     file.close();
 
     // Check binary
+
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();

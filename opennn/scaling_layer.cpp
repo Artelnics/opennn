@@ -422,7 +422,7 @@ void ScalingLayer::set_default()
 {
     layer_name = "scaling_layer";
 
-    set_scaling_methods(MinimumMaximum);
+    set_scalers(MinimumMaximum);
 
     set_min_max_range(-1, 1);
 
@@ -542,7 +542,7 @@ void ScalingLayer::set_standard_deviation(const Index& i, const type& new_standa
 /// Sets the methods to be used for scaling each variable.
 /// @param new_scaling_methods New scaling methods for the variables.
 
-void ScalingLayer::set_scaling_methods(const Tensor<Scaler, 1>& new_scaling_methods)
+void ScalingLayer::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
 {
 #ifdef OPENNN_DEBUG
 
@@ -553,7 +553,7 @@ void ScalingLayer::set_scaling_methods(const Tensor<Scaler, 1>& new_scaling_meth
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_scaling_methods(const Tensor<Scaler, 1>&) method.\n"
+               << "void set_scalers(const Tensor<Scaler, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -569,7 +569,7 @@ void ScalingLayer::set_scaling_methods(const Tensor<Scaler, 1>& new_scaling_meth
 /// The argument is a vector string containing the name of the methods("NoScaling", "MeanStandardDeviation" or "MinimumMaximum").
 /// @param new_scaling_methods_string New scaling methods for the variables.
 
-void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_methods_string)
+void ScalingLayer::set_scalers(const Tensor<string, 1>& new_scaling_methods_string)
 {
     const Index neurons_number = get_neurons_number();
 
@@ -580,7 +580,7 @@ void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_meth
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_scaling_methods(const Tensor<string, 1>&) method.\n"
+               << "void set_scalers(const Tensor<string, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -613,14 +613,14 @@ void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_meth
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void set_scaling_methods(const Tensor<string, 1>&) method.\n"
+                   << "void set_scalers(const Tensor<string, 1>&) method.\n"
                    << "Unknown scaling method: " << new_scaling_methods_string[i] << ".\n";
 
             throw logic_error(buffer.str());
         }
     }
 
-    set_scaling_methods(new_scaling_methods);
+    set_scalers(new_scaling_methods);
 }
 
 
@@ -628,7 +628,7 @@ void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_meth
 /// The argument is a string containing the name of the method("NoScaling", "MeanStandardDeviation" or "MinimumMaximum").
 /// @param new_scaling_methods_string New scaling methods for the variables.
 
-void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
+void ScalingLayer::set_scalers(const string& new_scaling_methods_string)
 {
     const Index neurons_number = get_neurons_number();
 
@@ -639,7 +639,7 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_scaling_methods(const Tensor<string, 1>&) method.\n"
+               << "void set_scalers(const Tensor<string, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ")must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -672,21 +672,21 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void set_scaling_methods(const Tensor<string, 1>&) method.\n"
+                   << "void set_scalers(const Tensor<string, 1>&) method.\n"
                    << "Unknown scaling method: " << new_scaling_methods_string[i] << ".\n";
 
             throw logic_error(buffer.str());
         }
     }
 
-    set_scaling_methods(new_scaling_methods);
+    set_scalers(new_scaling_methods);
 }
 
 
 /// Sets the method to be used for scaling the variables.
 /// @param new_scaling_method New scaling method for the variables.
 
-void ScalingLayer::set_scaling_methods(const Scaler& new_scaling_method)
+void ScalingLayer::set_scalers(const Scaler& new_scaling_method)
 {
     const Index neurons_number = get_neurons_number();
 
