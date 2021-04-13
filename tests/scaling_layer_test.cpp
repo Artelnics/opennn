@@ -456,18 +456,6 @@ void ScalingLayerTest::test_set()
 
    assert_true(scaling_layer.get_descriptives().size()== 4, LOG);
    assert_true(scaling_layer.get_scaling_methods().size()== 4, LOG);
-
-   // Test 5
-
-   scaling_layer.set();
-
-   ScalingLayer sl5;
-   sl5.set(7);
-
-   scaling_layer.set(sl5);
-
-   assert_true(scaling_layer.get_descriptives().size() == 7, LOG);
-   assert_true(scaling_layer.get_scaling_methods().size() == 7, LOG);
 }
 
 

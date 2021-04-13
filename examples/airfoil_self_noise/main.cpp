@@ -45,7 +45,7 @@ int main()
         const Tensor<Scaler, 1> target_variables_scalers = data_set.get_target_variables_scalers();
 
         const Tensor<Descriptives, 1> input_variables_descriptives =  data_set.scale_input_variables();
-        const Tensor<Descriptives, 1> target_descriptives = data_set.scale_target_variables();
+        const Tensor<Descriptives, 1> target_variables_descriptives = data_set.scale_target_variables();
 
         // Neural network
 
@@ -61,7 +61,7 @@ int main()
         scaling_layer_pointer->set_scalers(input_variables_scalers);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
-        unscaling_layer_pointer->set_descriptives(target_descriptives);
+        unscaling_layer_pointer->set_descriptives(target_variables_descriptives);
         unscaling_layer_pointer->set_scalers(target_variables_scalers);
 
         // Training strategy
@@ -72,14 +72,14 @@ int main()
 
         training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-//        const TrainingResults training_results = training_strategy.perform_training();
-/*
+        const TrainingResults training_results = training_strategy.perform_training();
+
         // Model selection
 
         ModelSelection model_selection(&training_strategy);
 
 //        model_selection.perform_neurons_selection();
-
+/*
         model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
 
         model_selection.perform_inputs_selection();
@@ -87,7 +87,7 @@ int main()
         // Testing analysis
 
         data_set.unscale_input_variables(input_variables_descriptives);
-        data_set.unscale_target_variables(target_descriptives);
+        data_set.unscale_target_variables(target_variables_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
