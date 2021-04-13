@@ -41,11 +41,12 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
+        const Tensor<Scaler, 1> input_variables_scalers =  data_set.get_input_variables_scalers();
+        const Tensor<Scaler, 1> target_variables_scalers = data_set.get_target_variables_scalers();
+
         const Tensor<Descriptives, 1> input_variables_descriptives =  data_set.scale_input_variables();
         const Tensor<Descriptives, 1> target_descriptives = data_set.scale_target_variables();
 
-        const Tensor<Scaler, 1> input_variables_scalers =  data_set.get_input_variables_scalers();
-        const Tensor<Scaler, 1> target_variables_scalers = data_set.get_target_variables_scalers();
         // Neural network
 
         const Index hidden_neurons_number = 12;
@@ -57,11 +58,11 @@ int main()
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_descriptives(input_variables_descriptives);
-//        scaling_layer_pointer->set_scaling_methods(scaling_inputs_methods);
+        scaling_layer_pointer->set_scalers(input_variables_scalers);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
         unscaling_layer_pointer->set_descriptives(target_descriptives);
-//        unscaling_layer_pointer->set_unscaling_methods(target_variables_scalers);
+        unscaling_layer_pointer->set_scalers(target_variables_scalers);
 
         // Training strategy
 
@@ -72,7 +73,7 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
 //        const TrainingResults training_results = training_strategy.perform_training();
-
+/*
         // Model selection
 
         ModelSelection model_selection(&training_strategy);
@@ -82,8 +83,6 @@ int main()
         model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
 
         model_selection.perform_inputs_selection();
-
-        system("pause");
 
         // Testing analysis
 
@@ -100,7 +99,7 @@ int main()
 
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_python("../data/neural_network.py");
-
+*/
         cout << "End Airfoil Self-Noise Example" << endl;
 
         return 0;

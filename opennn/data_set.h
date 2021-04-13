@@ -147,6 +147,8 @@ public:
 
        // Methods
 
+       Index get_variables_number() const;
+
        Index get_categories_number() const;
        Index get_used_categories_number() const;
 
@@ -267,8 +269,6 @@ public:
    // Scalers get methods
 
    Tensor<Scaler, 1> get_columns_scalers() const;
-
-   Tensor<Scaler, 1> get_variables_scalers() const;
 
    Tensor<Scaler, 1> get_input_variables_scalers() const;
    Tensor<Scaler, 1> get_target_variables_scalers() const;
@@ -418,6 +418,9 @@ public:
    void set_columns_names(const Tensor<string, 1>&);
 
    void set_columns_number(const Index&);
+
+   void set_columns_scalers(const Scaler&);
+
 
    void set_binary_simple_columns();
 

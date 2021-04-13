@@ -51,7 +51,7 @@ int main()
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
         scaling_layer_pointer->set_descriptives(input_variables_descriptives);
-        scaling_layer_pointer->set_scaling_methods(MinimumMaximum);
+        scaling_layer_pointer->set_scalers(MinimumMaximum);
 
         // Training strategy
 
