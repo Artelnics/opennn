@@ -253,9 +253,6 @@ void GeneticAlgorithmTest::test_perform_crossover()
 //    loss(2,0) = 0.0; loss(2,1) = static_cast<type>(0.2);
 //    loss(3,0) = 0.0; loss(3,1) = static_cast<type>(0.1);
 
-
-
-
 //    genetic_algorithm.set_loss(loss);
 
     genetic_algorithm.set_elitism_size(2);
