@@ -581,16 +581,16 @@ string BoundingLayer::write_expression_python() const
 
     ostringstream buffer;
 
-    buffer << "def " << layer_name << "(inputs):\n" << endl;
+    buffer << "\tdef " << layer_name << "(self,inputs):\n" << endl;
 
-    buffer << "\toutputs = [None] * "<<neurons_number<<"\n" << endl;
+    buffer << "\t\toutputs = [None] * "<<neurons_number<<"\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\toutputs[" << i << "] = inputs[" << i << "]" << endl;
+        buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]" << endl;
     }
 
-    buffer << "\n\treturn outputs\n" << endl;
+    buffer << "\n\t\treturn outputs\n" << endl;
 
     return buffer.str();
 }

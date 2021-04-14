@@ -1171,15 +1171,15 @@ string UnscalingLayer::write_expression_python() const
 
     buffer.precision(10);
 
-    buffer << "def " << layer_name << "(inputs):\n" << endl;
+    buffer << "\tdef " << layer_name << "(self,inputs):\n" << endl;
 
-    buffer << "\toutputs = [None] * "<<neurons_number<<"\n" << endl;
+    buffer << "\t\toutputs = [None] * "<<neurons_number<<"\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
         if(scalers(i) == NoUnscaling)
         {
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]" << endl;
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]" << endl;
         }
         else if(scalers(i) == MinimumMaximum)
         {
@@ -1188,7 +1188,7 @@ string UnscalingLayer::write_expression_python() const
             const type intercept
                     = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
         }
         else if(scalers(i) == MeanStandardDeviation)
         {
@@ -1196,12 +1196,12 @@ string UnscalingLayer::write_expression_python() const
 
             const type intercept = descriptives(i).mean;
 
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
 
         }
         else if(scalers(i) == Logarithm)
         {
-            buffer << "\toutputs[" << i << "] = 0.5*exp( inputs[" << i << "] -1)*("
+            buffer << "\t\toutputs[" << i << "] = 0.5*exp( inputs[" << i << "] -1)*("
                    << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
         }
         else
@@ -1216,7 +1216,7 @@ string UnscalingLayer::write_expression_python() const
         }
     }
 
-    buffer << "\n\treturn outputs\n" << endl;
+    buffer << "\n\t\treturn outputs\n" << endl;
 
     return buffer.str();
 }
