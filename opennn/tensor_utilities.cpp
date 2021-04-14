@@ -98,6 +98,7 @@ bool are_equal(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2,
     return true;
 }
 
+
 void save_csv(const Tensor<type,2>& data, const string& filename)
 {
     ofstream file(filename);
@@ -138,40 +139,42 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
 
 
 /// @todo It does not work well.
-/*
-Tensor<Index, 1> sort_indexes(const Tensor<type, 1> & vector)
-{
-  Tensor<Index, 1> indexes(vector.size());
-  iota(indexes.data(), indexes.data() + indexes.size(), 0);
 
-  stable_sort(indexes.data(), indexes.data()+indexes.size(),
-       [&vector](Index i1, Index i2) {return vector(i1) < vector(i2);});
+Tensor<Index, 1> calculate_rank(const Tensor<type, 1>& v)
+{        
+    const size_t size = v.size();
 
-  return indexes;
-}
-*/
+    vector<pair<type, size_t> > pairs(size);
 
-Tensor<Index, 1> rank_sort(const Tensor<type, 1>& v_temp)
-{
-    vector<pair<float, size_t> > v_sort(v_temp.size());
+     for(size_t i = 0; i < size; i++)
+     {
+         pairs[i] = make_pair(v[i], i);
+     }
 
-    for (size_t i = 0U; i < v_sort.size(); ++i) {
-        v_sort[i] = make_pair(v_temp[i], i);
-    }
+     sort(pairs.begin(), pairs.end());
 
-    sort(v_sort.begin(), v_sort.end());
+     pair<type, size_t> rank;
 
-    pair<double, size_t> rank;
+     Tensor<Index, 1> result(size);
 
-    Tensor<Index, 1> result(v_temp.size());
+     for(size_t i = 0; i < size; i++)
+     {
+         if(pairs[i].first != rank.first)
+         {
+             rank = make_pair(pairs[i].first, i);
+         }
 
-    for (size_t i = 0U; i < v_sort.size(); ++i) {
-        if (v_sort[i].first != rank.first) {
-            rank = make_pair(v_sort[i].first, i);
-        }
-        result(v_sort[i].second) = rank.second;
-    }
-    return result;
+         result(pairs[i].second) = rank.second;
+     }
+
+     Tensor<Index, 1> reverse_result(size);
+
+     for(size_t i = 0; i < size; i++)
+     {
+        reverse_result(i) = result(size-1-i) + 1;
+     }
+
+     return reverse_result;
 }
 
 }
