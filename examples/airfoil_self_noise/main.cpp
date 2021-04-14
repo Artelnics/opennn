@@ -82,8 +82,6 @@ int main()
 
         model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
 
-        model_selection.get_genetic_algorithm_pointer()->set_maximum_iterations_number(2);
-
         model_selection.perform_inputs_selection();
 /*
         // Testing analysis

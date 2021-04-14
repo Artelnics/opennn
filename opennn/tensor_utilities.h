@@ -37,7 +37,8 @@ bool is_false(const Tensor<bool, 1>& tensor);
 
 void save_csv(const Tensor<type,2>&, const string&);
 
-Tensor<Index, 1> rank_sort(const Tensor<type, 1>&v);
+Tensor<Index, 1> calculate_rank(const Tensor<type, 1>&v);
+
 
 }
 

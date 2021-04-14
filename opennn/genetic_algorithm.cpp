@@ -133,7 +133,7 @@ void GeneticAlgorithm::set_default()
     {
         maximum_epochs_number = 100;
 
-        mutation_rate = 0.5;
+        mutation_rate = 0.1;
 
         individuals_number = 10;
     }
@@ -573,20 +573,12 @@ void GeneticAlgorithm::perform_fitness_assignment()
 {
     const Index individuals_number = get_individuals_number();
 
-    const Tensor<Index, 1> rank = rank_sort(selection_errors);
+    const Tensor<Index, 1> selection_errors_rank = calculate_rank(selection_errors);
 
-//    for(Index i = 0; i < individuals_number; i++)
-//    {
-//        fitness(i) = selective_pressure*selection_errors_rank(i);
-//    }
-
-    cout << "selection_errors" << endl << endl;
-    cout << selection_errors << endl << endl;
-    cout << "rank" << endl << endl;
-    cout << rank << endl << endl;
-//    cout << fitness << endl;
-
-    system("pause");
+    for(Index i = 0; i < individuals_number; i++)
+    {
+        fitness(i) = selective_pressure*selection_errors_rank(i);
+    }
 }
 
 
@@ -594,7 +586,6 @@ void GeneticAlgorithm::perform_fitness_assignment()
 
 void GeneticAlgorithm::perform_selection()
 {
-
 #ifdef OPENNN_DEBUG
 
     if(population.size() == 0)
@@ -623,7 +614,6 @@ void GeneticAlgorithm::perform_selection()
 
     selection.setConstant(false);
 
-
     const Index individuals_number = get_individuals_number();
 
     const Index selected_individuals_number = static_cast<Index>(individuals_number/2);
@@ -631,17 +621,7 @@ void GeneticAlgorithm::perform_selection()
     const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
     const Tensor<type, 0> total_cumulative_fitness = cumulative_fitness.sum();
 
-//    cout << cumulative_fitness << endl;
-
-    Tensor<Index, 1> fitness_rank_descending(individuals_number);
-    iota(fitness_rank_descending.data(), fitness_rank_descending.data() + fitness_rank_descending.size(), 1);
-
-//    cout << fitness_rank_descending << endl;
-
-//    sort(fitness_rank_descending.data(),
-//         fitness_rank_descending.data() + fitness_rank_descending.size(),
-//         [&](Index i, Index j){return cumulative_fitness[i]<cumulative_fitness[j];});
-
+    Tensor<Index, 1> fitness_rank = calculate_rank(fitness);
 
     Index selection_count = 0;
 
@@ -651,7 +631,7 @@ void GeneticAlgorithm::perform_selection()
 
     for(Index i = 0; i < elitism_size ; i++)
     {
-        selection[fitness_rank_descending[i]] = true;
+        selection[fitness_rank(i)] = true;
 
         selection_count++;
     }
@@ -676,13 +656,10 @@ void GeneticAlgorithm::perform_selection()
         {
             for(Index i = 1; i < individuals_number; i++)
             {
-               if(pointer >= cumulative_fitness[i-1] && pointer < cumulative_fitness[i])
+               if(pointer >= cumulative_fitness[i-1] && pointer < cumulative_fitness[i] && !selection[i])
                {
-                  if(!selection[i])
-                  {
-                     selection[i] = true;
-                     selection_count++;
-                  }
+                 selection[i] = true;
+                 selection_count++;
                }
             }
         }
@@ -694,27 +671,28 @@ void GeneticAlgorithm::perform_selection()
 
 void GeneticAlgorithm::perform_crossover()
 {
+    const Index individuals_number = get_individuals_number();
+    const Index genes_number = get_genes_number();
+
+    const Index selected_individuals_number = individuals_number/2;
+
 #ifdef OPENNN_DEBUG
 
-    if(population.size() <= 1)
+    Index count_selected_individuals = 0;
+    for(Index i = 0; i < individuals_number; i++) if(selection(i)) count_selected_individuals++;
+
+    if(selected_individuals_number != count_selected_individuals)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void perform_crossover() method.\n"
-               << "Selected population size must be greater than 1.\n";
+               << "Selected individuals number is wrong.\n";
 
         throw logic_error(buffer.str());
     }
 
 #endif
-
-    cout << "Start" << endl;
-/*
-    const Index individuals_number = get_individuals_number();
-    const Index genes_number = get_genes_number();
-
-    const Index selected_individuals_number = static_cast<Index>(individuals_number/2);
 
     Index parent_1_index = 0;
     Index parent_2_index = 0;
@@ -736,7 +714,7 @@ void GeneticAlgorithm::perform_crossover()
         parent_1_index = i;
 
         do{
-        parent_2_index = static_cast<Index>(rand())%individuals_number;
+            parent_2_index = static_cast<Index>(rand())%individuals_number;
         }while(selection(parent_2_index) && parent_1_index != parent_2_index);
 
         parent_1 = population.chip(parent_1_index, 0);
@@ -764,6 +742,9 @@ void GeneticAlgorithm::perform_crossover()
 
         for(Index j = 0; j < genes_number; j++)
         {
+            cout << offspring_count << endl;
+            cout << offspring_count+1 << endl;
+
             new_population(offspring_count, j) = offspring_1(j);
             new_population(offspring_count+1, j) = offspring_2(j);
         }
@@ -771,8 +752,11 @@ void GeneticAlgorithm::perform_crossover()
         offspring_count += 2;
     }
 
+    cout << population << endl;
+
     population = new_population;
-*/
+
+    system("pause");
 }
 
 
@@ -780,7 +764,6 @@ void GeneticAlgorithm::perform_crossover()
 
 void GeneticAlgorithm::perform_mutation()
 {
-/*
     const Index individuals_number = get_individuals_number();
 
     const Index genes_number = get_genes_number();
@@ -802,11 +785,11 @@ void GeneticAlgorithm::perform_mutation()
         if(is_false(individual))
         {
             individual(static_cast<Index>(rand())%genes_number) = true;
-        }
 
-        // Not set in population !!!
+            for(Index j = 0; j < genes_number; j++)
+                population(i, j) = individual(j);
+        }
     }
-    */
 }
 
 
