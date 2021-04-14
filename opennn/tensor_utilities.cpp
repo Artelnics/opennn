@@ -136,6 +136,44 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
     file.close();
 }
 
+
+/// @todo It does not work well.
+/*
+Tensor<Index, 1> sort_indexes(const Tensor<type, 1> & vector)
+{
+  Tensor<Index, 1> indexes(vector.size());
+  iota(indexes.data(), indexes.data() + indexes.size(), 0);
+
+  stable_sort(indexes.data(), indexes.data()+indexes.size(),
+       [&vector](Index i1, Index i2) {return vector(i1) < vector(i2);});
+
+  return indexes;
+}
+*/
+
+Tensor<Index, 1> rank_sort(const Tensor<type, 1>& v_temp)
+{
+    vector<pair<float, size_t> > v_sort(v_temp.size());
+
+    for (size_t i = 0U; i < v_sort.size(); ++i) {
+        v_sort[i] = make_pair(v_temp[i], i);
+    }
+
+    sort(v_sort.begin(), v_sort.end());
+
+    pair<double, size_t> rank;
+
+    Tensor<Index, 1> result(v_temp.size());
+
+    for (size_t i = 0U; i < v_sort.size(); ++i) {
+        if (v_sort[i].first != rank.first) {
+            rank = make_pair(v_sort[i].first, i);
+        }
+        result(v_sort[i].second) = rank.second;
+    }
+    return result;
+}
+
 }
 
 
