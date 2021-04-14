@@ -1142,15 +1142,15 @@ string ScalingLayer::write_expression_python() const
 
     buffer.precision(10);
 
-    buffer << "def " << layer_name << "(inputs):\n" << endl;
+    buffer << "\tdef " << layer_name << "(self,inputs):\n" << endl;
 
-    buffer << "\toutputs = [None] * "<<neurons_number<<"\n" << endl;
+    buffer << "\t\toutputs = [None] * "<<neurons_number<<"\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
         if(scalers(i) == NoScaling)
         {
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]" << endl;
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]" << endl;
         }
         else if(scalers(i) == MinimumMaximum)
         {
@@ -1158,7 +1158,7 @@ string ScalingLayer::write_expression_python() const
 
             const type intercept = -(descriptives(i).minimum*(max_range-min_range))/(descriptives(i).maximum - descriptives(i).minimum) + min_range;
 
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
         }
         else if(scalers(i) == MeanStandardDeviation)
         {
@@ -1166,11 +1166,11 @@ string ScalingLayer::write_expression_python() const
 
             const type intercept = -static_cast<type>(2)*descriptives(i).mean/descriptives(i).standard_deviation;
 
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
         }
         else if(scalers(i) == StandardDeviation)
         {
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << " " << endl;
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << " " << endl;
         }
         else
         {
@@ -1184,7 +1184,7 @@ string ScalingLayer::write_expression_python() const
         }
     }
 
-    buffer << "\n\treturn outputs;\n" << endl;
+    buffer << "\n\t\treturn outputs;\n" << endl;
 
     return buffer.str();
 }

@@ -1420,11 +1420,11 @@ string PerceptronLayer::write_combinations_python() const
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
 
-    buffer << "\tcombinations = [None] * "<<neurons_number<<"\n" << endl;
+    buffer << "\t\tcombinations = [None] * "<<neurons_number<<"\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\tcombinations[" << i << "] = " << biases(i);
+        buffer << "\t\tcombinations[" << i << "] = " << biases(i);
 
         for(Index j = 0; j < inputs_number; j++)
         {
@@ -1434,7 +1434,7 @@ string PerceptronLayer::write_combinations_python() const
         buffer << " " << endl;
     }
 
-    buffer << "\t" << endl;
+    buffer << "\t\t" << endl;
 
     return buffer.str();
 }
@@ -1446,11 +1446,11 @@ string PerceptronLayer::write_activations_python() const
 
     const Index neurons_number = get_neurons_number();
 
-    buffer << "\tactivations = [None] * "<<neurons_number<<"\n" << endl;
+    buffer << "\t\tactivations = [None] * "<<neurons_number<<"\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\tactivations[" << i << "] = ";
+        buffer << "\t\tactivations[" << i << "] = ";
 
         switch(activation_function)
         {
@@ -1526,13 +1526,13 @@ string PerceptronLayer::write_expression_python() const
 {
     ostringstream buffer;
 
-    buffer << "def " << layer_name << "(inputs):\n" << endl;
+    buffer << "\tdef " << layer_name << "(self,inputs):\n" << endl;
 
     buffer << write_combinations_python();
 
     buffer << write_activations_python();
 
-    buffer << "\n\treturn activations;\n" << endl;
+    buffer << "\n\t\treturn activations;\n" << endl;
 
     return buffer.str();
 }

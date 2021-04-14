@@ -2546,11 +2546,12 @@ string NeuralNetwork::write_expression_python() const
     buffer <<"artelnics@artelnics.com\t"<<endl;
     buffer <<""<<endl;
     buffer <<"Your model has been exported to this python file." <<endl;
-    buffer <<"You can manage it with the 'neural network' method.\t"<<endl;
+    buffer <<"You can manage it with the 'NeuralNetwork' class.\t"<<endl;
     buffer <<"Example:"<<endl;
     buffer <<""<<endl;
+    buffer <<"\tmodel = NeuralNetwork()\t"<<endl;
     buffer <<"\tsample = [input_1, input_2, input_3, input_4, ...] 	 \t"<<endl;
-    buffer <<"\toutputs = neural_network(sample)"<<endl;
+    buffer <<"\toutputs = model.calculate_output(sample)"<<endl;
     buffer <<""<<endl;
     buffer <<"\tInputs Names: \t"<<endl;
 
@@ -2569,34 +2570,71 @@ string NeuralNetwork::write_expression_python() const
     }
 
     buffer <<""<<endl;
-    buffer <<"Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,\t"<<endl;
-    buffer <<"however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
+    buffer <<"You can predict with a batch of samples using calculate_batch_output method\t" <<endl;
+    buffer <<"IMPORTANT: input batch must be <class 'numpy.ndarray'> type\t" <<endl;
+    buffer <<"Example_1:\t" <<endl;
+    buffer <<"\tmodel = NeuralNetwork()\t"<<endl;
+    buffer <<"\tinput_batch = np.array([[1, 2], [4, 5]], np.int32)\t" <<endl;
+    buffer <<"\toutputs = model.calculate_batch_output(input_batch)"<<endl;
+    buffer <<"Example_2:\t" <<endl;
+    buffer <<"\tinput_batch = pd.DataFrame( {'col1': [1, 2], 'col2': [3, 4]})\t" <<endl;
+    buffer <<"\toutputs = model.calculate_batch_output(input_batch.values)"<<endl;
     buffer <<"'''"<<endl;
     buffer <<""<<endl;
     buffer << "import numpy as np\n" << endl;
+    buffer << "class NeuralNetwork:\n " << endl;
+    buffer << "\tdef __init__(self):\n " << endl;
 
-    buffer << "import numpy as np\n" << endl;
+    if(has_recurrent_layer())
+    {
+        buffer << "\t\tself.timestep = "+to_string(get_recurrent_layer_pointer()->get_timesteps())+"\n " << endl;
+        buffer << "\t\tself.hidden_states = " + to_string(get_recurrent_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
+    }
+
+    buffer << "\t\tself.parameters_number = " + to_string(get_parameters_number()) + "\n " << endl;
 
     for(Index i = 0; i  < layers_number; i++)
     {
         buffer << layers_pointers[i]->write_expression_python() << endl;
     }
 
-    buffer << "def neural_network(inputs):\n" << endl;
+    buffer << "\tdef calculate_output(self, inputs):\n" << endl;
 
-    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
+    buffer << "\t\toutput_" + layers_pointers[0]->get_name() + " = self." +layers_pointers[0]->get_name() + "(inputs)\n" << endl;
 
-    if(layers_number > 0)
+    for(Index i = 1; i  < layers_number; i++)
     {
-        buffer << "\toutputs = " << layers_names[0] << "(inputs)\n";
+        buffer << "\t\toutput_" + layers_pointers[i]->get_name() + " = self." +layers_pointers[i]->get_name() + "(output_"+layers_pointers[i-1]->get_name() + ")\n" << endl;
     }
 
-    for(Index i = 1; i < layers_number; i++)
+    buffer << "\t\treturn output_" + layers_pointers[layers_number-1]->get_name()<<endl;
+
+    buffer << "\n\n\tdef calculate_batch_output(self, input_batch):\n" << endl;
+
+    buffer << "\t\toutput = []\n" << endl;
+
+    buffer << "\t\tfor i in range(input_batch.shape[0]):\n" << endl;
+
+    if(has_recurrent_layer())
     {
-        buffer << "\toutputs = " << layers_names[i] << "(outputs)\n";
+
+        buffer << "\t\t\tif(i%self.timestep==0):\n" << endl;
+
+        buffer << "\t\t\t\tself.hidden_states = "+to_string(get_recurrent_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
     }
 
-    buffer << "\n\treturn outputs;\n" << endl;
+    buffer << "\t\t\tinputs = list(input_batch[i])\n" << endl;
+
+    buffer << "\t\t\toutput_" + layers_pointers[0]->get_name() + " = self." +layers_pointers[0]->get_name() + "(inputs)\n" << endl;
+
+    for(Index i = 1; i  < layers_number; i++)
+    {
+        buffer << "\t\t\toutput_" + layers_pointers[i]->get_name() + " = self." +layers_pointers[i]->get_name() + "(output_"+layers_pointers[i-1]->get_name() + ")\n" << endl;
+    }
+
+    buffer << "\t\t\toutput = np.append(output,output_" + layers_pointers[layers_number-1]->get_name()+ ", axis=0)\n"<< endl;
+
+    buffer << "\t\treturn output"<<endl;
 
     string expression = buffer.str();
 
@@ -2630,80 +2668,6 @@ void NeuralNetwork::save_expression_c(const string& file_name)
 
     file.close();
 }
-
-
-//string NeuralNetwork::write_expression_python() const
-//{
-//    const Index layers_number = get_layers_number();
-
-//    const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
-//    const Tensor<string, 1> layers_names = get_layers_names();
-
-//    ostringstream buffer;
-
-//    buffer <<"'''"<<endl;
-//    buffer <<"Artificial Intelligence Techniques SL\t"<<endl;
-//    buffer <<"artelnics@artelnics.com\t"<<endl;
-//    buffer <<""<<endl;
-//    buffer <<"Your model has been exported to this python file." <<endl;
-//    buffer <<"You can manage it with the 'neural network' method.\t"<<endl;
-//    buffer <<"Example:"<<endl;
-//    buffer <<""<<endl;
-//    buffer <<"\tsample = [input_1, input_2, input_3, input_4, ...] 	 \t"<<endl;
-//    buffer <<"\toutputs = neural_network(sample)"<<endl;
-//    buffer <<""<<endl;
-//    buffer <<"\tInputs Names: \t"<<endl;
-
-//    const Tensor<string, 1> inputs =  get_inputs_names();
-
-//    for (int i=0; i<inputs.dimension(0); i++)
-//    {
-//        if(inputs[i] == "")
-//        {
-//            buffer <<"\t" << to_string(1+i) + " )" << "input_"+ to_string(1+i) << endl;
-//        }
-//        else
-//        {
-//            buffer <<"\t" << to_string(1+i) + " )" << inputs[i] << endl;
-//        }
-//    }
-
-//    buffer <<""<<endl;
-//    buffer <<"Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,\t"<<endl;
-//    buffer <<"however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
-//    buffer <<"'''"<<endl;
-//    buffer <<""<<endl;
-//    buffer << "import numpy as np\n" << endl;
-
-//    for(Index i = 0; i  < layers_number; i++)
-//    {
-//        buffer << layers_pointers[i]->write_expression_python() << endl;
-//    }
-
-//    buffer << "def neural_network(inputs):\n" << endl;
-
-//    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
-
-//    if(layers_number > 0)
-//    {
-//        buffer << "\toutputs = " << layers_names[0] << "(inputs)\n";
-//    }
-
-//    for(Index i = 1; i < layers_number; i++)
-//    {
-//        buffer << "\toutputs = " << layers_names[i] << "(outputs)\n";
-//    }
-
-//    buffer << "\n\treturn outputs;\n" << endl;
-
-//    string expression = buffer.str();
-
-//    replace(expression, "+-", "-");
-//    replace(expression, "-+", "-");
-//    replace(expression, "--", "+");
-
-//    return expression;
-//}
 
 
 ///// Saves the mathematical expression represented by the neural network to a text file.

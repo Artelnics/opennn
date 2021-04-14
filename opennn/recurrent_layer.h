@@ -211,6 +211,10 @@ public:
 
    string write_activation_function_expression() const;
 
+   string write_expression_python() const;
+   string write_combinations_python() const;
+   string write_activations_python() const;
+
    // Serialization methods
 
    void from_XML(const tinyxml2::XMLDocument&);
