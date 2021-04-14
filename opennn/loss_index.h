@@ -449,7 +449,7 @@ struct LossIndexBackPropagationLM
 
     Tensor<type, 1> parameters;
 
-    NeuralNetworkBackPropagation neural_network;
+    NeuralNetworkBackPropagationLM neural_network;
 
     Tensor<type, 2> errors;
     Tensor<type, 1> squared_errors;
