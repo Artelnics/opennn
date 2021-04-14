@@ -881,9 +881,9 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 }
 
 
-void PerceptronLayer::calculate_layer_squared_errors_Jacobian(LayerForwardPropagation* previous_forward_propagation,
-                                                              LayerForwardPropagation* forward_propagation,
-                                                              LayerBackPropagation* back_propagation)
+void PerceptronLayer::calculate_squared_errors_Jacobian(LayerForwardPropagation* previous_forward_propagation,
+                                                        LayerForwardPropagation* forward_propagation,
+                                                        LayerBackPropagation* back_propagation)
 {
     switch (previous_forward_propagation->layer_pointer->get_type())
     {
@@ -892,9 +892,9 @@ void PerceptronLayer::calculate_layer_squared_errors_Jacobian(LayerForwardPropag
         PerceptronLayerForwardPropagation* previous_perceptron_forward_propagation =
                 static_cast<PerceptronLayerForwardPropagation*>(previous_forward_propagation);
 
-        calculate_layer_squared_errors_Jacobian(previous_perceptron_forward_propagation->activations,
-                                                forward_propagation,
-                                                back_propagation);
+        calculate_squared_errors_Jacobian(previous_perceptron_forward_propagation->activations,
+                                          forward_propagation,
+                                          back_propagation);
     }
         break;
 
@@ -903,9 +903,9 @@ void PerceptronLayer::calculate_layer_squared_errors_Jacobian(LayerForwardPropag
         ProbabilisticLayerForwardPropagation* previous_probabilistic_forward_propagation =
                 static_cast<ProbabilisticLayerForwardPropagation*>(previous_forward_propagation);
 
-        calculate_layer_squared_errors_Jacobian(previous_probabilistic_forward_propagation->activations,
-                                                forward_propagation,
-                                                back_propagation);
+        calculate_squared_errors_Jacobian(previous_probabilistic_forward_propagation->activations,
+                                          forward_propagation,
+                                          back_propagation);
     }
         break;
 
@@ -923,9 +923,9 @@ void PerceptronLayer::calculate_layer_squared_errors_Jacobian(LayerForwardPropag
 }
 
 
-void PerceptronLayer::calculate_layer_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
-                                                              LayerForwardPropagation* forward_propagation,
-                                                              LayerBackPropagation* back_propagation)
+void PerceptronLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
+                                                        LayerForwardPropagation* forward_propagation,
+                                                        LayerBackPropagation* back_propagation)
 {
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);

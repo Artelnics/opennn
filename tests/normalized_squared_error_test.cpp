@@ -875,58 +875,113 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    Index inputs_number;
    Index hidden_neurons_number;
    Index outputs_number;
+/*
+   // Test Perceptron
+   {
+       samples_number = 2;
+       inputs_number = 2;
+       hidden_neurons_number = 3;
+       outputs_number = 1;
 
-   // Test
+       data_set.set(samples_number, inputs_number, outputs_number);
+       data_set.set_data_random();
+       data_set.set_training();
 
-   samples_number = 2;
-   inputs_number = 2;
-   hidden_neurons_number = 3;
-   outputs_number = 1;
+       batch.set(samples_number, &data_set);
 
-   data_set.set(samples_number, inputs_number, outputs_number);
-   data_set.set_data_random();
-   data_set.set_training();
+       samples_indices = data_set.get_training_samples_indices();
+       input_indices = data_set.get_input_variables_indices();
+       target_indices = data_set.get_target_variables_indices();
 
-   batch.set(samples_number, &data_set);
+       batch.fill(samples_indices, input_indices, target_indices);
 
-   samples_indices = data_set.get_training_samples_indices();
-   input_indices = data_set.get_input_variables_indices();
-   target_indices = data_set.get_target_variables_indices();
+       architecture.resize(3);
+       architecture[0] = inputs_number;
+       architecture[1] = hidden_neurons_number;
+       architecture[2] = outputs_number;
 
-   batch.fill(samples_indices, input_indices, target_indices);
+       neural_network.set(NeuralNetwork::Approximation, architecture);
 
-   architecture.resize(3);
-   architecture[0] = inputs_number;
-   architecture[1] = hidden_neurons_number;
-   architecture[2] = outputs_number;
+       neural_network.set_parameters_random();
 
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+       normalized_squared_error.set_normalization_coefficient();
 
-   neural_network.set_parameters_random();
+       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
 
-   normalized_squared_error.set_normalization_coefficient();
+       normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-   NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-   LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
-   LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
+       neural_network.forward_propagate(batch, forward_propagation);
+       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-   normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+       normalized_squared_error.back_propagate(batch, forward_propagation, loss_index_back_propagation_lm);
 
-   neural_network.forward_propagate(batch, forward_propagation);
-   normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+       Tensor<type, 2> numerical_squared_errors_jacobian;
 
-   normalized_squared_error.back_propagate(batch, forward_propagation, loss_index_back_propagation_lm);
+       numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
 
-//   Tensor<type, 2> numerical_squared_errors_jacobian;
+       cout << "GradientLM: " << loss_index_back_propagation_lm.gradient << endl;
+       cout << "Gradient: " << back_propagation.gradient << endl;
 
-//   numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
+       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, 1.0e-3), LOG);
+   }
+*/
+   // Test probabilistic
 
-   cout << "GradientLM: " << loss_index_back_propagation_lm.gradient << endl;
-   cout << "Gradient: " << back_propagation.gradient << endl;
+   {
+       samples_number = 2;
+       inputs_number = 2;
+       hidden_neurons_number = 3;
+       outputs_number = 1;
 
-   assert_true(static_cast<type>(abs(loss_index_back_propagation_lm.error - back_propagation.error)) < static_cast<type>(1.0e-3), LOG);
+       data_set.set(samples_number, inputs_number, outputs_number);
 
-//   assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, 1.0e-3), LOG);
+       data_set.set_data_binary_random();
+
+       data_set.set_training();
+
+       batch.set(samples_number, &data_set);
+
+       samples_indices = data_set.get_training_samples_indices();
+       input_indices = data_set.get_input_variables_indices();
+       target_indices = data_set.get_target_variables_indices();
+
+       batch.fill(samples_indices, input_indices, target_indices);
+
+       architecture.resize(3);
+       architecture[0] = inputs_number;
+       architecture[1] = hidden_neurons_number;
+       architecture[2] = outputs_number;
+
+       neural_network.set(NeuralNetwork::Classification, architecture);
+
+       neural_network.set_parameters_random();
+
+       normalized_squared_error.set_normalization_coefficient();
+
+       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
+
+       normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+       neural_network.forward_propagate(batch, forward_propagation);
+       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+       normalized_squared_error.back_propagate(batch, forward_propagation, loss_index_back_propagation_lm);
+
+       Tensor<type, 2> numerical_squared_errors_jacobian;
+
+       numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
+
+       cout << "GradientLM: " << loss_index_back_propagation_lm.gradient << endl;
+       cout << "Gradient: " << back_propagation.gradient << endl;
+
+       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, 1.0e-3), LOG);
+   }
+
+
 }
 
 
