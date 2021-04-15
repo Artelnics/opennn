@@ -165,7 +165,7 @@ void GeneticAlgorithm::set_default()
 
     elitism_size = 2;
 
-    selective_pressure = 1.5;
+    selective_pressure = 1.0;
 
     // Inputs selection results
 
@@ -573,11 +573,11 @@ void GeneticAlgorithm::perform_fitness_assignment()
 {
     const Index individuals_number = get_individuals_number();
 
-    const Tensor<Index, 1> selection_errors_rank = calculate_rank(selection_errors);
+    const Tensor<Index, 1> rank = calculate_rank_greater(selection_errors);
 
     for(Index i = 0; i < individuals_number; i++)
     {
-        fitness(i) = selective_pressure*selection_errors_rank(i);
+        fitness(rank(i)) = selective_pressure*(i+1);
     }
 }
 
@@ -619,51 +619,70 @@ void GeneticAlgorithm::perform_selection()
     const Index selected_individuals_number = static_cast<Index>(individuals_number/2);
 
     const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
-    const Tensor<type, 0> total_cumulative_fitness = cumulative_fitness.sum();
 
-    Tensor<Index, 1> fitness_rank = calculate_rank(fitness);
+    Tensor<Index, 1> fitness_rank = calculate_rank_greater(fitness);
 
     Index selection_count = 0;
 
     // Elitism selection
 
-    selection.setConstant(false);
-
     for(Index i = 0; i < elitism_size ; i++)
     {
-        selection[fitness_rank(i)] = true;
-
+        selection(fitness_rank(i)) = true;
         selection_count++;
     }
 
     // Roulette wheel
 
-    while(selection_count <= selected_individuals_number)
+    do
     {
-        const type pointer = static_cast<type>(rand()/(RAND_MAX+1.0))*total_cumulative_fitness(0);
+        const type pointer = static_cast<type>(rand()/(RAND_MAX+1.0))*cumulative_fitness(individuals_number-1);
 
-        // Perform selection
-
-        if(pointer < cumulative_fitness[0])
+        for(Index i = 0; i < individuals_number; i++)
         {
-           if(!selection[0])
-           {
-              selection[0] = true;
-              selection_count++;
-           }
-        }
-        else
-        {
-            for(Index i = 1; i < individuals_number; i++)
+            if(pointer < cumulative_fitness(i))
             {
-               if(pointer >= cumulative_fitness[i-1] && pointer < cumulative_fitness[i] && !selection[i])
-               {
-                 selection[i] = true;
-                 selection_count++;
-               }
+                if(!selection(i))
+                {
+                    selection(i) = true;
+                    selection_count++;
+
+                    break;
+                }
+                else
+                {
+                    break;
+                }
             }
         }
+
+    }while(selection_count < selected_individuals_number);
+
+//    cout << fitness << endl;
+//    cout << selection << endl;
+
+//    system("pause");
+
+#ifdef OPENNN_DEBUG
+
+    Index selection_assert = 0;
+    for(Index i = 0; i < individuals_number; i++) if(selection(i)) selection_assert++;
+
+    if(selection_assert != individuals_number/2)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+               << "void perform_selection() method.\n"
+               << "Number of selected individuals (" << selection_assert << ") must be " << individuals_number/2 << " .\n";
+
+        throw logic_error(buffer.str());
     }
+
+#endif
+
+//    system("pause");
+
 }
 
 
@@ -742,9 +761,6 @@ void GeneticAlgorithm::perform_crossover()
 
         for(Index j = 0; j < genes_number; j++)
         {
-            cout << offspring_count << endl;
-            cout << offspring_count+1 << endl;
-
             new_population(offspring_count, j) = offspring_1(j);
             new_population(offspring_count+1, j) = offspring_2(j);
         }
@@ -752,11 +768,7 @@ void GeneticAlgorithm::perform_crossover()
         offspring_count += 2;
     }
 
-    cout << population << endl;
-
     population = new_population;
-
-    system("pause");
 }
 
 
@@ -805,7 +817,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     if(population.size() == 0) set_individuals_number(10);
 
-    if(display) cout << "Performing genetic inputs selection..." << endl;
+    if(display) cout << "Performing genetic inputs selection..." << endl << endl;
 
     InputsSelectionResults results(maximum_epochs_number);
 
@@ -843,6 +855,8 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
+        if(display) cout << "Generation: " << epoch + 1 << endl;
+
         evaluate_population();
 
         optimal_individual_index = minimal_index(selection_errors);
@@ -898,16 +912,16 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         if(display)
         {
-            cout << "Generation: " << epoch + 1 << endl;
+            cout << "Generation mean training error: " << training_errors.mean() << endl;
+            cout << "Generation mean selection mean: " << selection_errors.mean() << endl;
 
-            results.print();
-//            cout << "Generation optimal number of inputs: " << data_set_pointer->get_input_variables_names().size() << endl;
-//            cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << " " << endl;
-//            cout << "Optimum training error: " << training_errors(optimal_individual_index) << endl;
-//            cout << "Optimum selection error: " << selection_errors(optimal_individual_index) << endl;
-//            cout << "Generation selection mean: " << training_errors.mean() << endl;
-//            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-//            cout << endl;
+            cout << "Generation minimum training error: " << training_errors(optimal_individual_index) << endl;
+            cout << "Generation minimum selection error: " << selection_errors(optimal_individual_index) << endl;
+
+            cout << "Best ever training error: " << results.optimum_training_error << endl;
+            cout << "Best ever selection error: " << results.optimum_selection_error << endl;
+
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
         if(stop)
