@@ -154,6 +154,9 @@ public:
 
        Tensor<string, 1> get_used_variables_names() const;
 
+       void set_scaler(const Scaler&);
+       void set_scaler(const string&);
+
        void set_use(const VariableUse&);
        void set_use(const string&);
 
