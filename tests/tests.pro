@@ -22,6 +22,7 @@ TEMPLATE = app
 DESTDIR = "$$PWD/bin"
 
 SOURCES += \
+    tensor_utilities_test.cpp \
     data_set_test.cpp \
     growing_neurons_test.cpp \
     unscaling_layer_test.cpp \
@@ -60,6 +61,7 @@ SOURCES += \
     main.cpp
 
 HEADERS += \
+    tensor_utilities_test.h \
     growing_neurons_test.h \
     growing_neurons_test.h \
     unit_testing.h \

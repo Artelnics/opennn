@@ -56,6 +56,7 @@
 #include "pruning_inputs_test.h"
 #include "genetic_algorithm_test.h"
 #include "correlations_test.h"
+#include "tensor_utilities_test.h"
 
 #include "testing_analysis_test.h"
 

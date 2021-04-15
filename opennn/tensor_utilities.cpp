@@ -140,41 +140,35 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
 
 /// @todo It does not work well.
 
-Tensor<Index, 1> calculate_rank(const Tensor<type, 1>& v)
+Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
 {        
-    const size_t size = v.size();
 
-    vector<pair<type, size_t> > pairs(size);
+    const Index size = vector.size();
 
-     for(size_t i = 0; i < size; i++)
-     {
-         pairs[i] = make_pair(v[i], i);
-     }
+    Tensor<Index, 1> rank(size);
+    iota(rank.data(), rank.data() + rank.size(), 0);
 
-     sort(pairs.begin(), pairs.end());
+    sort(rank.data(),
+         rank.data() + rank.size(),
+         [&](Index i, Index j){return vector[i] > vector[j];});
 
-     pair<type, size_t> rank;
+    return rank;
+}
 
-     Tensor<Index, 1> result(size);
 
-     for(size_t i = 0; i < size; i++)
-     {
-         if(pairs[i].first != rank.first)
-         {
-             rank = make_pair(pairs[i].first, i);
-         }
+Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
+{
 
-         result(pairs[i].second) = rank.second;
-     }
+    const Index size = vector.size();
 
-     Tensor<Index, 1> reverse_result(size);
+    Tensor<Index, 1> rank(size);
+    iota(rank.data(), rank.data() + rank.size(), 0);
 
-     for(size_t i = 0; i < size; i++)
-     {
-        reverse_result(i) = result(size-1-i) + 1;
-     }
+    sort(rank.data(),
+         rank.data() + rank.size(),
+         [&](Index i, Index j){return vector[i] < vector[j];});
 
-     return reverse_result;
+    return rank;
 }
 
 }

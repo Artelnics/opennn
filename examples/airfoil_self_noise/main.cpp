@@ -82,6 +82,11 @@ int main()
 
         model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
 
+        GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
+        genetic_algorithm_pointer->set_elitism_size(0);
+        genetic_algorithm_pointer->set_selective_pressure(1);
+        genetic_algorithm_pointer->set_maximum_iterations_number(3);
+
         model_selection.perform_inputs_selection();
 /*
         // Testing analysis

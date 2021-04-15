@@ -62,6 +62,7 @@ int main()
    "statistics | st\n"
    "stochastic_gradient_descent | sgd\n"
    "sum_squared_error | sse\n"
+   "tensor_utilities | tu\n"
    "testing_analysis | ta\n"
    "training_strategy | ts\n"
    "unscaling_layer | ul\n"
@@ -386,6 +387,15 @@ int main()
         tests_count += genetic_algorithm_test.get_tests_count();
         tests_passed_count += genetic_algorithm_test.get_tests_passed_count();
         tests_failed_count += genetic_algorithm_test.get_tests_failed_count();
+      }
+
+      else if(test == "tensor_utilities" || test == "tu")
+      {
+        TensorUtilitiesTest tensor_utilities_test;
+        tensor_utilities_test.run_test_case();
+        tests_count += tensor_utilities_test.get_tests_count();
+        tests_passed_count += tensor_utilities_test.get_tests_passed_count();
+        tests_failed_count += tensor_utilities_test.get_tests_failed_count();
       }
 
       else if(test == "testing_analysis" || test == "ta")
