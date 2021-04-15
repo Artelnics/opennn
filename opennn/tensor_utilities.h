@@ -4,11 +4,13 @@
 
 // System includes
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <math.h>
 #include <vector>
+#include <numeric>
 
 // OpenNN includes
 
@@ -34,6 +36,10 @@ bool are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = 0.0
 bool is_false(const Tensor<bool, 1>& tensor);
 
 void save_csv(const Tensor<type,2>&, const string&);
+
+Tensor<Index, 1> calculate_rank(const Tensor<type, 1>&v);
+
+
 }
 
 #endif

@@ -218,7 +218,7 @@ struct InputsSelectionResults
        cout << endl;
        cout << "Inputs Selection Results" << endl;
 
-       cout << "Optimal inputs number: " << optimal_inputs_names.size() << endl;
+       cout << "Optimal inputs number: " << optimal_inputs.sum() << endl;
 
        cout << "Inputs: " << endl;
 
