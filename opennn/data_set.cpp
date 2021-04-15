@@ -130,18 +130,54 @@ DataSet::Column::Column(const string& new_name,
                         const Tensor<VariableUse, 1>& new_categories_uses)
 {
     name = new_name;
+    scaler = MeanStandardDeviation;
     column_use = new_column_use;
     type = new_type;
     categories = new_categories;
     categories_uses = new_categories_uses;
-
-    scaler = MeanStandardDeviation;
 }
 
 /// Column destructor.
 
 DataSet::Column::~Column()
 {}
+
+void DataSet::Column::set_scaler(const Scaler& new_scaler)
+{
+    scaler = new_scaler;
+}
+
+
+void DataSet::Column::set_scaler(const string& new_scaler)
+{
+    if(new_scaler == "MinimumMaximum")
+    {
+        set_scaler(MinimumMaximum);
+    }
+    else if(new_scaler == "MeanStandardDeviation")
+    {
+        set_scaler(MeanStandardDeviation);
+    }
+    else if(new_scaler == "StandardDeviation")
+    {
+        set_scaler(StandardDeviation);
+    }
+    else if(new_scaler == "Logarithm")
+    {
+        set_scaler(Logarithm);
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception DataSet class.\n"
+               << "void set_use(const string&) method.\n"
+               << "Unknown use: " << new_scaler << "\n";
+
+        throw logic_error(buffer.str());
+    }
+}
+
 
 
 /// Sets the use of the column and of the categories.
@@ -331,6 +367,26 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
         name = new_name;
     }
 
+    // Scaler
+
+    const tinyxml2::XMLElement* scaler_element = column_document.FirstChildElement("Scaler");
+
+    if(!scaler_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Scaler element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(scaler_element->GetText())
+    {
+        const string new_scaler = scaler_element->GetText();
+
+        set_scaler(new_scaler);
+    }
+
     // Column use
 
     const tinyxml2::XMLElement* column_use_element = column_document.FirstChildElement("ColumnUse");
@@ -422,6 +478,29 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("Name");
 
     file_stream.PushText(name.c_str());
+
+    file_stream.CloseElement();
+
+    // Scaler
+
+    file_stream.OpenElement("Scaler");
+
+    if(scaler == MinimumMaximum)
+    {
+        file_stream.PushText("MinimumMaximum");
+    }
+    else if (scaler == MeanStandardDeviation)
+    {
+        file_stream.PushText("MeanStandardDeviation");
+    }
+    else if (scaler == StandardDeviation)
+    {
+        file_stream.PushText("StandardDeviation");
+    }
+    else if (scaler == Logarithm)
+    {
+        file_stream.PushText("Logarithm");
+    }
 
     file_stream.CloseElement();
 
@@ -7456,6 +7535,26 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 columns(i).name = new_name;
             }
 
+            // Scaler
+
+            const tinyxml2::XMLElement* scaler_element = column_element->FirstChildElement("Scaler");
+
+            if(!scaler_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Scaler element is nullptr.\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            if(scaler_element->GetText())
+            {
+                const string new_scaler = scaler_element->GetText();
+
+                columns(i).set_scaler(new_scaler);
+            }
+
             // Column use
 
             const tinyxml2::XMLElement* column_use_element = column_element->FirstChildElement("ColumnUse");
@@ -7617,6 +7716,26 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                     const string time_series_new_name = time_series_name_element->GetText();
 
                     time_series_columns(i).name = time_series_new_name;
+                }
+
+                // Scaler
+
+                const tinyxml2::XMLElement* time_series_scaler_element = time_series_column_element->FirstChildElement("Scaler");
+
+                if(!time_series_scaler_element)
+                {
+                    buffer << "OpenNN Exception: DataSet class.\n"
+                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                           << "Time series scaler element is nullptr.\n";
+
+                    throw logic_error(buffer.str());
+                }
+
+                if(time_series_scaler_element->GetText())
+                {
+                    const string time_series_new_scaler = time_series_scaler_element->GetText();
+
+                    time_series_columns(i).set_scaler(time_series_new_scaler);
                 }
 
                 // Column use
