@@ -411,7 +411,7 @@ public:
    void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
    void set_input_columns_unused();
 
-   void set_input_columns_binary(const Tensor<bool, 1>&);
+   void set_input_columns(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
 
    void set_column_use(const Index&, const VariableUse&);
    void set_column_use(const string&, const VariableUse&);
@@ -662,6 +662,7 @@ public:
    void load(const string&);
 
    void print_columns_types() const;
+   void print_columns_uses() const;
 
    void print_data() const;
    void print_data_preview() const;

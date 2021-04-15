@@ -179,14 +179,14 @@ public:
 
    // Squared errors methods
 
-   void calculate_layer_squared_errors_Jacobian(LayerForwardPropagation*,
-                                                LayerForwardPropagation*,
-                                                LayerBackPropagation*);
+   void calculate_squared_errors_Jacobian(LayerForwardPropagation*,
+                                          LayerForwardPropagation*,
+                                          LayerBackPropagation*);
 
 
-   void calculate_layer_squared_errors_Jacobian(const Tensor<type, 2>&,
-                                                LayerForwardPropagation*,
-                                                LayerBackPropagation*);
+   void calculate_squared_errors_Jacobian(const Tensor<type, 2>&,
+                                          LayerForwardPropagation*,
+                                          LayerBackPropagation*);
 
    // Gradient methods
 
@@ -371,7 +371,6 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
-        const Index parameters_number = layer_pointer->get_parameters_number();
 
         delta.resize(batch_samples_number, neurons_number);
 

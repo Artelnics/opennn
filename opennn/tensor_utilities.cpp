@@ -98,6 +98,7 @@ bool are_equal(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2,
     return true;
 }
 
+
 void save_csv(const Tensor<type,2>& data, const string& filename)
 {
     ofstream file(filename);
@@ -134,6 +135,46 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
        file << endl;
     }
     file.close();
+}
+
+
+/// @todo It does not work well.
+
+Tensor<Index, 1> calculate_rank(const Tensor<type, 1>& v)
+{        
+    const size_t size = v.size();
+
+    vector<pair<type, size_t> > pairs(size);
+
+     for(size_t i = 0; i < size; i++)
+     {
+         pairs[i] = make_pair(v[i], i);
+     }
+
+     sort(pairs.begin(), pairs.end());
+
+     pair<type, size_t> rank;
+
+     Tensor<Index, 1> result(size);
+
+     for(size_t i = 0; i < size; i++)
+     {
+         if(pairs[i].first != rank.first)
+         {
+             rank = make_pair(pairs[i].first, i);
+         }
+
+         result(pairs[i].second) = rank.second;
+     }
+
+     Tensor<Index, 1> reverse_result(size);
+
+     for(size_t i = 0; i < size; i++)
+     {
+        reverse_result(i) = result(size-1-i) + 1;
+     }
+
+     return reverse_result;
 }
 
 }

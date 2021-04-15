@@ -2241,7 +2241,9 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
     Tensor<Index, 1> sorted_indices(outputs.dimension(0));
     iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
 
-    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) > outputs(i2,0);});
+    stable_sort(sorted_indices.data(),
+                sorted_indices.data()+sorted_indices.size(),
+                [outputs](Index i1, Index i2) {return outputs(i1,0) > outputs(i2,0);});
 
     Tensor<type, 1> sorted_targets(testing_samples_number);
 

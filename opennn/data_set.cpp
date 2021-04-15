@@ -3112,12 +3112,12 @@ void DataSet::set_input_target_columns(const Tensor<Index, 1>& input_columns, co
 
     for(Index i = 0; i < input_columns.size(); i++)
     {
-        set_column_use(i, Input);
+        set_column_use(input_columns(i), Input);
     }
 
     for(Index i = 0; i < target_columns.size(); i++)
     {
-        set_column_use(i, Target);
+        set_column_use(target_columns(i), Target);
     }
 }
 
@@ -3136,13 +3136,12 @@ void DataSet::set_input_columns_unused()
 
 
 
-void DataSet::set_input_columns_binary(const Tensor<bool, 1>& new_input_columns)
+void DataSet::set_input_columns(const Tensor<Index, 1>& input_columns_indices, const Tensor<bool, 1>& input_columns_use)
 {
-    const Index columns_number = get_columns_number();
-
-    for(Index i = 0; i < columns_number; i++)
-    {
-        if(new_input_columns(i)) set_column_use(i, Input);
+    for(Index i = 0; i < input_columns_indices.size(); i++)
+    {                
+        if(input_columns_use(i)) set_column_use(input_columns_indices(i), Input);
+        else set_column_use(input_columns_indices(i), UnusedVariable);
     }
 }
 
@@ -8161,7 +8160,21 @@ void DataSet::print_columns_types() const
         else if(columns(i).type == Categorical) cout << "Categorical ";
         else if(columns(i).type == DateTime) cout << "DateTime ";
         else if(columns(i).type == Constant) cout << "Constant ";
+    }
 
+    cout << endl;
+}
+
+
+void DataSet::print_columns_uses() const
+{
+    const Index columns_number = get_columns_number();
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).column_use == Input) cout << "Input ";
+        else if(columns(i).column_use == Target) cout << "Target ";
+        else if(columns(i).column_use == UnusedVariable) cout << "Unused ";
     }
 
     cout << endl;

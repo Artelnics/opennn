@@ -80,7 +80,7 @@ int main()
 
 //        model_selection.perform_neurons_selection();
 
-//        model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
+        model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
 
         model_selection.perform_inputs_selection();
 /*
