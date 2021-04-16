@@ -120,7 +120,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     training_strategy.set_display(false);
 
     io.set_trials_number(1);
-    io.set_maximum_neurons(7);
+    io.set_maximum_neurons_number(7);
     io.set_selection_error_goal(1.0e-3f);
     io.set_display(false);
 
@@ -173,7 +173,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     training_strategy.set_display(false);
 
     io.set_trials_number(1);
-    io.set_maximum_neurons(7);
+    io.set_maximum_neurons_number(7);
     io.set_selection_error_goal(0.0);
     io.set_maximum_selection_failures(1);
     io.set_display(false);

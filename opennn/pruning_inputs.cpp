@@ -190,15 +190,11 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-//    const Tensor<Index, 1> original_input_columns_indices = data_set_pointer->get_input_columns_indices();
-
-//    Tensor<Index, 1> current_input_columns = data_set_pointer->get_input_columns_indices();
+    const Tensor<Index, 1> target_columns_indices = data_set_pointer->get_target_columns_indices();
 
     const Tensor<string, 1> columns_names = data_set_pointer->get_columns_names();   
 
     Tensor<string, 1> input_columns_names;
-
-//    Index input_variables_number;
 
     const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
 
@@ -236,7 +232,6 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
         if(epoch > 0)
         {
             data_set_pointer->set_column_use(correlations_rank_ascending[epoch], DataSet::UnusedVariable);
-
         }
 
         const Index input_columns_number = data_set_pointer->get_input_columns_number();
@@ -266,14 +261,14 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
             if(training_results.selection_error < results.optimum_selection_error)
             {
+                results.optimal_input_columns_indices = data_set_pointer->get_input_columns_indices();
+                results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
+
                 // Neural network
 
-                results.optimal_inputs_names = data_set_pointer->get_input_columns_names();
                 results.optimal_parameters = training_results.parameters;
 
                 // Loss index
-
-                results.optimal_parameters = training_results.parameters;
 
                 results.optimum_training_error = training_results.training_error;
                 results.optimum_selection_error = training_results.selection_error;
@@ -356,13 +351,11 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     // Set data set stuff
 
-//    data_set_pointer->set_input_columns_binary(results.optimal_inputs);
+    data_set_pointer->set_input_target_columns(results.optimal_input_columns_indices, target_columns_indices);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
     const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
-    const Tensor<Descriptives, 1> target_variables_descriptives = data_set_pointer->scale_target_variables();
 
     // Set neural network stuff
 
@@ -372,9 +365,6 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     if(neural_network_pointer->has_scaling_layer())
         neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
-
-    if(neural_network_pointer->has_unscaling_layer())
-        neural_network_pointer->get_unscaling_layer_pointer()->set(input_variables_descriptives, target_variables_scalers);
 
     neural_network_pointer->set_parameters(results.optimal_parameters);
 

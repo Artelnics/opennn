@@ -80,8 +80,6 @@ public:
 
     // Set methods
 
-    
-
     void set_training_strategy_pointer(TrainingStrategy*);
 
     void set_default();
@@ -218,11 +216,11 @@ struct InputsSelectionResults
        cout << endl;
        cout << "Inputs Selection Results" << endl;
 
-       cout << "Optimal inputs number: " << optimal_inputs.sum() << endl;
+       cout << "Optimal inputs number: " << optimal_input_columns_names.size() << endl;
 
        cout << "Inputs: " << endl;
 
-       for(Index i = 0; i < optimal_inputs_names.size(); i++) cout << "   " << optimal_inputs_names(i) << endl;
+       for(Index i = 0; i < optimal_input_columns_names.size(); i++) cout << "   " << optimal_input_columns_names(i) << endl;
 
        cout << "Optimum training error: " << optimum_training_error << endl;
        cout << "Optimum selection error: " << optimum_selection_error << endl;
@@ -254,7 +252,9 @@ struct InputsSelectionResults
 
    /// Inputs of the neural network with minimum selection error.
 
-   Tensor<string, 1> optimal_inputs_names;
+   Tensor<string, 1> optimal_input_columns_names;
+
+   Tensor<Index, 1> optimal_input_columns_indices;
 
    Tensor<bool, 1> optimal_inputs;
 

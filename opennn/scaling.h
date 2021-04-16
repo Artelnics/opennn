@@ -20,6 +20,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "statistics.h"
 
 using namespace std;
 using namespace Eigen;
@@ -29,6 +30,18 @@ namespace OpenNN
 /// Enumeration of available methods for scaling and unscaling the data.
 
 enum Scaler{NoScaling, NoUnscaling, MinimumMaximum, MeanStandardDeviation, StandardDeviation, Logarithm};
+
+void scale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
+void scale_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
+void scale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&);
+void scale_logarithmic(Tensor<type, 2>&, const Index&, const Descriptives&);
+void scale_minimum_maximum_binary(Tensor<type, 2>&, const type&, const type&, const Index&);
+
+
+void unscale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&);
+void unscale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
+void unscale_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
+void unscale_logarithmic(Tensor<type, 2>&, const Index&, const Descriptives&);
 
 }
 
