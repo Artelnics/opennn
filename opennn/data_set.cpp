@@ -6369,7 +6369,6 @@ void DataSet::scale_variable_minimum_maximum_binary(const type& value_1,
 
 void DataSet::set_default_columns_scalers() const
 {
-/*
     const Tensor<Index, 1> used_inputs_indices = get_input_variables_indices();
     const Index used_inputs_number = used_inputs_indices.size();
 
@@ -6395,7 +6394,6 @@ void DataSet::set_default_columns_scalers() const
             scalers(i) = "MinimumMaximum";
         }
     }
-*/
 }
 
 
@@ -7847,8 +7845,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             rows_labels = get_tokens(new_rows_labels, ',');
         }
-
-
     }
 
     // Samples

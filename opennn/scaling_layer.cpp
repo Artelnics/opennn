@@ -215,6 +215,10 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods() const
         {
             scaling_methods_strings[i] = "StandardDeviation";
         }
+        else if(scalers[i] == Logarithm)
+        {
+            scaling_methods_strings[i] = "StandardDeviation";
+        }
         else
         {
             ostringstream buffer;
@@ -273,6 +277,10 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods_text() const
         {
             scaling_methods_strings[i] = "minimum and maximum";
         }
+        else if(scalers[i] == Logarithm)
+        {
+            scaling_methods_strings[i] = "StandardDeviation";
+        }
         else
         {
             ostringstream buffer;
@@ -320,7 +328,7 @@ void ScalingLayer::set(const Index& new_inputs_number)
 
     scalers.resize(new_inputs_number);
 
-    scalers.setConstant(MinimumMaximum);
+    scalers.setConstant(MeanStandardDeviation);
 
     set_default();
 }
@@ -333,7 +341,7 @@ void ScalingLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
     descriptives.resize(dimension_product(0));
 
     scalers.resize(dimension_product(0));
-    scalers.setConstant(MinimumMaximum);
+    scalers.setConstant(MeanStandardDeviation);
 
     input_variables_dimensions.resize(new_inputs_dimensions.size());
 
@@ -354,7 +362,7 @@ void ScalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives)
 
     scalers.resize(new_descriptives.size());
 
-    scalers.setConstant(MinimumMaximum);
+    scalers.setConstant(MeanStandardDeviation);
 
     set_default();
 }
@@ -385,7 +393,7 @@ void ScalingLayer::set_inputs_number(const Index& new_inputs_number)
 
     scalers.resize(new_inputs_number);
 
-    scalers.setConstant(MinimumMaximum);
+    scalers.setConstant(MeanStandardDeviation);
 }
 
 
@@ -395,7 +403,7 @@ void ScalingLayer::set_neurons_number(const Index& new_neurons_number)
 
     scalers.resize(new_neurons_number);
 
-    scalers.setConstant(MinimumMaximum);
+    scalers.setConstant(MeanStandardDeviation);
 }
 
 
@@ -413,7 +421,7 @@ void ScalingLayer::set_default()
 {
     layer_name = "scaling_layer";
 
-    set_scalers(MinimumMaximum);
+    set_scalers(MeanStandardDeviation);
 
     set_min_max_range(-1, 1);
 
@@ -1270,7 +1278,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
 
-        // Scaling Method
+        // Scaler
 
         file_stream.OpenElement("Scaler");
 
@@ -1454,6 +1462,10 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         else if(new_method == "StandardDeviation")
         {
             scalers[i] = StandardDeviation;
+        }
+        else if(new_method == "Logarithm")
+        {
+            scalers[i] = Logarithm;
         }
         else
         {
