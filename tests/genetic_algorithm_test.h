@@ -43,7 +43,9 @@ public:
 
    void test_initialize_population();
 
-   void test_calculate_fitness();
+   // Fitness assignment methods
+
+   void test_perform_fitness_assignment();
 
    // Selection methods
 

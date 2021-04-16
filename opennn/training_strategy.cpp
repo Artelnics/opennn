@@ -31,6 +31,7 @@ TrainingStrategy::TrainingStrategy()
     set_loss_index_pointer(loss_index_pointer);
 
     set_default();
+
 }
 
 

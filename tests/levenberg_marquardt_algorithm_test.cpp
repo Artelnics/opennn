@@ -98,7 +98,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss()
     cout << "test_calculate_training_loss\n";
 
     DataSet data_set;
-    Tensor<Index, 1> architecture;
+    
 
     NeuralNetwork neural_network;
 
@@ -137,7 +137,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   NeuralNetwork neural_network;
 
-//   Tensor<Index, 1> architecture;
+//   
 
 //   SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -228,7 +228,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
 //   Index parameters_number;
 
-//   Tensor<Index, 1> architecture;
+//   
 
 //   Tensor<type, 1> parameters;
 

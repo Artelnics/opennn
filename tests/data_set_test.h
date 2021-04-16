@@ -126,35 +126,8 @@ public:
 
    void test_scale_data();
 
-   // Input variables scaling
+   void test_unscale_data();
 
-   void test_scale_inputs_mean_standard_deviation();
-   void test_scale_inputs_minimum_maximum();
-
-   // Target variables scaling
-
-   void test_scale_targets_mean_standard_deviation();
-   void test_scale_targets_minimum_maximum();
-
-   // Input-target variables scaling
-
-   void test_scale_variables_mean_standard_deviation();
-   void test_scale_variables_minimum_maximum();
-
-   // Data unscaling
-
-   void test_unscale_data_mean_standard_deviation();
-   void test_unscale_data_minimum_maximum();
-
-   // Input variables unscaling
-
-   void test_unscale_inputs_mean_standard_deviation();
-   void test_unscale_inputs_minimum_maximum();
-
-   // Target variables unscaling
-
-   void test_unscale_targets_mean_standard_deviation();
-   void test_unscale_targets_minimum_maximum();
 
    // Pattern recognition methods
 

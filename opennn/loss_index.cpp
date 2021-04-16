@@ -305,17 +305,6 @@ void LossIndex::check() const
         throw logic_error(buffer.str());
     }
 
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    if(trainable_layers_number == 0)
-    {
-        buffer << "OpenNN Exception: LossIndex class.\n"
-               << "void check() const method.\n"
-               << "Neural network has no layers.\n";
-
-        throw logic_error(buffer.str());
-    }
-
     // Data set
 
     if(!data_set_pointer)
@@ -323,34 +312,6 @@ void LossIndex::check() const
         buffer << "OpenNN Exception: LossIndex class.\n"
                << "void check() const method.\n"
                << "Pointer to data set is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
-
-    const Index inputs_number = trainable_layers_pointers[0]->get_inputs_number();
-    const Index outputs_number = trainable_layers_pointers[trainable_layers_number-1]->get_neurons_number();
-
-    const Index data_set_inputs_number = data_set_pointer->get_input_variables_number();
-    const Index targets_number = data_set_pointer->get_target_variables_number();
-
-    if(data_set_inputs_number != inputs_number)
-    {
-        buffer << "OpenNN Exception: LossIndex class.\n"
-               << "void check() const method.\n"
-               << "Number of inputs in neural network (" << inputs_number
-               << ") must be equal to number of inputs in data set (" << data_set_inputs_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    if(outputs_number != targets_number)
-    {
-        buffer << "OpenNN Exception: LossIndex class.\n"
-               << "void check() const method.\n"
-               << "Number of outputs in neural network (" << outputs_number
-               << ") must be equal to number of targets in data set (" << targets_number << ").\n";
 
         throw logic_error(buffer.str());
     }

@@ -65,7 +65,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
 //    NeuralNetwork neural_network;
 
-//    Tensor<Index, 1> architecture;
+//    
 
 //    SumSquaredError sum_squared_error(&neural_network, &data_set);
 

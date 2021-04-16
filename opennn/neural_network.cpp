@@ -679,7 +679,15 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     outputs_names.resize(outputs_number);
 
     set_default();
+}
 
+
+void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const initializer_list<Index>& architecture_list)
+{
+    Tensor<Index, 1> architecture(architecture_list.size());
+    architecture.setValues(architecture_list);
+
+    set(model_type, architecture);
 }
 
 
@@ -2557,7 +2565,7 @@ string NeuralNetwork::write_expression_python() const
 
     const Tensor<string, 1> inputs =  get_inputs_names();
 
-    for (int i=0; i<inputs.dimension(0); i++)
+    for(int i = 0; i < inputs.dimension(0); i++)
     {
         if(inputs[i] == "")
         {

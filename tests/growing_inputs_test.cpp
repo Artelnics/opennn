@@ -62,7 +62,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
     DataSet data_set;
 
     Tensor<type, 2> data;
-    Tensor<Index, 1> architecture;
+    
 
     NeuralNetwork neural_network;
 
@@ -82,10 +82,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     data_set.split_samples_random();
 
-    architecture.resize(3);
-    architecture.setValues({2,1,1});
-
-    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, {2,1,1});
 
     inputs_selection_results = growing_inputs.perform_inputs_selection();
 
@@ -101,9 +98,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     neural_network.set();
 
-    architecture.setValues({2,6,1});
-
-    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, {2,6,1});
 
     TrainingStrategy training_strategy1(&neural_network, &data_set);
 
