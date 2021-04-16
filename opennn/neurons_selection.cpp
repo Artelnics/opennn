@@ -205,7 +205,7 @@ void NeuronsSelection::set_default()
 /// Sets the number of the maximum hidden perceptrons for the neurons selection algorithm.
 /// @param new_maximum_neurons Maximum number of hidden perceptrons.
 
-void NeuronsSelection::set_maximum_neurons(const Index& new_maximum_neurons)
+void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neurons)
 {
 #ifdef OPENNN_DEBUG
 
@@ -214,7 +214,7 @@ void NeuronsSelection::set_maximum_neurons(const Index& new_maximum_neurons)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_neurons(const Index&) method.\n"
+               << "void set_maximum_neurons_number(const Index&) method.\n"
                << "maximum_neurons(" << new_maximum_neurons << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -225,7 +225,7 @@ void NeuronsSelection::set_maximum_neurons(const Index& new_maximum_neurons)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_neurons(const Index&) method.\n"
+               << "void set_maximum_neurons_number(const Index&) method.\n"
                << "maximum_neurons(" << new_maximum_neurons << ") must be equal or greater than minimum_neurons(" << minimum_neurons << ").\n";
 
         throw logic_error(buffer.str());

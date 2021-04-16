@@ -391,7 +391,7 @@ void RecurrentLayer::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-void RecurrentLayer::set_timesteps(const Index&  new_timesteps)
+void RecurrentLayer::set_timesteps(const Index& new_timesteps)
 {
     timesteps = new_timesteps;
 }

@@ -56,6 +56,7 @@ SOURCES += \
     correlations_test.cpp \
     stochastic_gradient_descent_test.cpp \
     statistics_test.cpp \
+    scaling_test.cpp \
     convolutional_layer_test.cpp \
     pooling_layer_test.cpp \
     main.cpp
@@ -98,6 +99,7 @@ HEADERS += \
     stochastic_gradient_descent_test.h \
     correlations_test.h \
     statistics_test.h \
+    scaling_test.h \
     convolutional_layer_test.h \
     pooling_layer_test.h
 

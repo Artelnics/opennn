@@ -681,8 +681,6 @@ void GeneticAlgorithm::perform_selection()
 
 #endif
 
-//    system("pause");
-
 }
 
 
@@ -869,6 +867,10 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
             // Neural network
 
             results.optimal_inputs = population.chip(optimal_individual_index, 0);
+
+            data_set_pointer->set_input_columns(original_input_columns_indices, results.optimal_inputs);
+
+            results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
 
             results.optimal_parameters = parameters(optimal_individual_index);
 

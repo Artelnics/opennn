@@ -75,24 +75,24 @@ void GrowingNeurons::set_default()
 /// in the model order selection process.
 /// @param new_step number of hidden perceptrons pointed.
 
-void GrowingNeurons::set_step(const Index& new_step)
+void GrowingNeurons::set_neurons_increment(const Index& new_neurons_increment)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_step <= 0)
+    if(new_neurons_increment <= 0)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: GrowingNeurons class.\n"
-               << "void set_step(const Index&) method.\n"
-               << "New_step(" << new_step << ") must be greater than 0.\n";
+               << "void set_neurons_increment(const Index&) method.\n"
+               << "New_step(" << new_neurons_increment << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
 
 #endif
 
-    neurons_increment = new_step;
+    neurons_increment = new_neurons_increment;
 }
 
 
@@ -613,7 +613,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
             try
             {
-                set_step(new_step);
+                set_neurons_increment(new_step);
             }
             catch(const logic_error& e)
             {

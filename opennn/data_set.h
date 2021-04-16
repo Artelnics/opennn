@@ -411,6 +411,7 @@ public:
    void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
    void set_input_columns_unused();
 
+
    void set_input_columns(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
 
    void set_column_use(const Index&, const VariableUse&);
@@ -584,28 +585,14 @@ public:
 
    // Data scaling
 
-   void scale_variable_mean_standard_deviation(const Descriptives&, const Index&);
-   Descriptives scale_variable_mean_standard_deviation(const Index&);
-
-   void scale_variable_standard_deviation(const Descriptives&, const Index&);
-   Descriptives scale_variable_standard_deviation(const Index&);
-
-   void scale_variable_minimum_maximum(const Descriptives&, const Index&);
-   Descriptives scale_variable_minimum_maximum(const Index&);
-
-   void scale_variable_logarithmic(const Descriptives&, const Index&);
-
-   void scale_variable_minimum_maximum_binary(const type&, const type&, const Index&);
+   Tensor<Descriptives, 1> scale_data();
 
    Tensor<Descriptives, 1> scale_input_variables();
    Tensor<Descriptives, 1> scale_target_variables();
 
    // Data unscaling
 
-   void unscale_variable_minimum_maximum(const Descriptives&, const Index&);
-   void unscale_variable_mean_standard_deviation(const Descriptives&, const Index&);
-   void unscale_variable_standard_deviation(const Descriptives&, const Index&);
-   void unscale_variable_logarithmic(const Descriptives&, const Index&);
+   void unscale_data(const Tensor<Descriptives, 1>&);
 
    void unscale_input_variables(const Tensor<Descriptives, 1>&);
    void unscale_target_variables(const Tensor<Descriptives, 1>&);

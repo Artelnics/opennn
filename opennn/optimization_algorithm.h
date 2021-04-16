@@ -232,7 +232,9 @@ struct TrainingResults
     void save(const string&) const;
 
     void print()
-    {
+    {             
+        cout << endl;
+        cout << "Training results" << endl;
         cout << "Optimum training error: " << optimum_training_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
     }
