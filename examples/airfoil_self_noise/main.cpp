@@ -34,15 +34,15 @@ int main()
         // Data set
 
         DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
-
+/*
         data_set.print_data();
 
         const Tensor<Descriptives, 1> variables_descriptives = data_set.scale_data();
         data_set.unscale_data(variables_descriptives);
 
         data_set.print_data();
+*/
 
-/*
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
@@ -78,10 +78,10 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
-//        const TrainingResults training_results = training_strategy.perform_training();
-
+        const TrainingResults training_results = training_strategy.perform_training();
+/*
         // Model selection
 
         ModelSelection model_selection(&training_strategy);
