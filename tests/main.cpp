@@ -59,6 +59,7 @@ int main()
    "recurrent_layer | rl\n"
    "scaling_layer | sl\n"
    "simulated_annealing_order\n"
+   "scaling | sc\n"
    "statistics | st\n"
    "stochastic_gradient_descent | sgd\n"
    "sum_squared_error | sse\n"
@@ -126,25 +127,30 @@ int main()
          tests_failed_count += perceptron_layer_test.get_tests_failed_count();
       }
 
+      else if(test == "scaling" || test == "sc")
+      {
+         ScalingTest scaling_test;
+         scaling_test.run_test_case();
+         tests_count += scaling_test.get_tests_count();
+         tests_passed_count += scaling_test.get_tests_passed_count();
+         tests_failed_count += scaling_test.get_tests_failed_count();
+      }
+
       else if(test == "statistics" || test == "st")
       {
-         StatisticsTest matrix_test;
-         matrix_test.run_test_case();
-         tests_count += matrix_test.get_tests_count();
-         tests_passed_count += matrix_test.get_tests_passed_count();
-         tests_failed_count += matrix_test.get_tests_failed_count();
+         StatisticsTest statistics_test;
+         statistics_test.run_test_case();
+         tests_count += statistics_test.get_tests_count();
+         tests_passed_count += statistics_test.get_tests_passed_count();
+         tests_failed_count += statistics_test.get_tests_failed_count();
       }
 
       else if(test == "long_short_term_memory_layer" || test == "lstm")
       {
          LongShortTermMemoryLayerTest long_short_memory_layer_test;
-
          long_short_memory_layer_test.run_test_case();
-
          tests_count += long_short_memory_layer_test.get_tests_count();
-
          tests_passed_count += long_short_memory_layer_test.get_tests_passed_count();
-
          tests_failed_count += long_short_memory_layer_test.get_tests_failed_count();
 
       }
@@ -672,7 +678,6 @@ int main()
       {
          cout << "Test NOT OK. " << tests_failed_count << " tests failed" << endl;
       }
-
 
       return 0;
    }

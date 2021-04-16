@@ -117,6 +117,7 @@ public:
    void set();
 
    void set(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
+   void set(const NeuralNetwork::ProjectType&, const initializer_list<Index>&);
    void set(const Tensor<Index, 1>&, const Index&, const Tensor<Index, 1>&, const Index&);
 
    void set(const string&);

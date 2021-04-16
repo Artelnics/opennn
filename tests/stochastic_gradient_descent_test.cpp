@@ -64,8 +64,7 @@ void StochasticGradientDescentTest::test_perform_training()
 
    DataSet data_set;
 
-   NeuralNetwork neural_network;
-   Tensor<Index, 1> architecture;
+   NeuralNetwork neural_network; 
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -74,10 +73,7 @@ void StochasticGradientDescentTest::test_perform_training()
    data_set.set(1, 1, 2);
    data_set.set_data_random();
 
-   architecture.resize(2);
-   architecture.setValues({1, 2});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1, 2});
    neural_network.set_parameters_random();
 
    StochasticGradientDescent stochastic_gradient_descent(&sum_squared_error);

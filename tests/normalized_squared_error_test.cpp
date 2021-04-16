@@ -111,7 +111,7 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    Index hidden_neurons;
    Index outputs_number;
 
-   Tensor<Index, 1> architecture;
+   
    Tensor<type, 1> parameters;
 
 
@@ -125,10 +125,7 @@ void NormalizedSquaredErrorTest::test_calculate_error()
 
    data_set.set(1, 1, 1);
 
-   architecture.resize(2);
-   architecture.setValues({1, 2});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1, 2});
 
    samples_number = 1;
    inputs_number = 1;
@@ -170,9 +167,7 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    outputs_number = 5;
    hidden_neurons = 3;
 
-   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons, outputs_number});
    neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
@@ -796,7 +791,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors()
    cout << "test_calculate_squared_errors\n";
 
    NeuralNetwork neural_network;
-   Tensor<Index, 1> architecture;
+   
 
    DataSet data_set;
 
@@ -826,12 +821,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors()
 
    batch.fill(samples_indices, input_indices, target_indices);
 
-   architecture.resize(3);
-   architecture[0] = inputs_number;
-   architecture[1] = hidden_neurons_number;
-   architecture[2] = outputs_number;
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number,hidden_neurons_number,outputs_number});
    neural_network.set_parameters_random();
 
    normalized_squared_error.set_normalization_coefficient();
@@ -859,7 +849,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    cout << "test_calculate_squared_errors_jacobian\n";
 
    NeuralNetwork neural_network;
-   Tensor<Index, 1> architecture;
+   
 
    DataSet data_set;
 
@@ -949,12 +939,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        batch.fill(samples_indices, input_indices, target_indices);
 
-       architecture.resize(3);
-       architecture[0] = inputs_number;
-       architecture[1] = hidden_neurons_number;
-       architecture[2] = outputs_number;
-
-       neural_network.set(NeuralNetwork::Classification, architecture);
+       neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
@@ -980,8 +965,6 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, 1.0e-3), LOG);
    }
-
-
 }
 
 

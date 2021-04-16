@@ -1010,7 +1010,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     Index counter = 0;
 
-    for(Index i=0; i< scaled_x.dimension(0)-1; i++)
+    for(Index i = 0; i< scaled_x.dimension(0)-1; i++)
     {
         if((y_sorted(i) - y_sorted(i+1)) > numeric_limits<type>::min())
         {

@@ -17,7 +17,7 @@
 
 #include "statistics_test.h"
 #include "numerical_differentiation_test.h"
-#include "statistics_test.h"
+#include "scaling_test.h"
 
 #include "data_set_test.h"
 

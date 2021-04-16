@@ -481,7 +481,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
    DataSet data_set;
 
    NeuralNetwork neural_network;
-   Tensor<Index, 1> architecture;
+   
    Tensor<type, 1> parameters;
    
    WeightedSquaredError wse(&neural_network, &data_set);
@@ -492,10 +492,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
 
    // Test
 
-   architecture.resize(2);
-   architecture.setValues({2, 1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {2, 1});
    neural_network.set_parameters_random();
 
    data_set.set(3, 2, 2);
@@ -509,10 +506,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
 
    // Test
 
-   architecture.resize(2);
-   architecture.setValues({3, 1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {3, 1});
    neural_network.set_parameters_random();
 
    data_set.set(9, 3, 1);
@@ -533,7 +527,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    NumericalDifferentiation nd;
 
    NeuralNetwork neural_network;
-   Tensor<Index, 1> architecture;
+   
    Tensor<type, 1> parameters;
 
    DataSet data_set;
@@ -548,9 +542,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    // Test
 
-   architecture.setValues({1, 1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1, 1});
 
    neural_network.set_parameters_constant(0.0);
 
@@ -566,9 +558,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    // Test
 
-   architecture.setValues({3, 4, 2});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {3, 4, 2});
    neural_network.set_parameters_constant(0.0);
 
    data_set.set(3, 2, 5);
@@ -583,12 +573,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    // Test
 
-   architecture.resize(3);
-   architecture[0] = 2;
-   architecture[1] = 1;
-   architecture[2] = 2;
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {2,1,2});
    neural_network.set_parameters_constant(0.0);
 
    data_set.set(2, 2, 5);
@@ -603,9 +588,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    // Test
 
-   architecture.setValues({1, 1, 1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
    neural_network.set_parameters_random();
    parameters = neural_network.get_parameters();
 
@@ -619,9 +602,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    // Test
 
-   architecture.setValues({2, 2, 1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {2, 2, 1});
    neural_network.set_parameters_random();
    parameters = neural_network.get_parameters();
 

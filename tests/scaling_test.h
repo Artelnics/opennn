@@ -27,6 +27,18 @@ public:
 
    explicit ScalingTest();
 
+    // Scaling
+
+    void test_scale_mean_standard_deviation();
+    void test_scale_minimum_maximum();
+
+    // Unscaling
+
+    void test_unscale_data_mean_standard_deviation();
+    void test_unscale_data_minimum_maximum();
+
+
+
    virtual ~ScalingTest();
 
    void run_test_case();

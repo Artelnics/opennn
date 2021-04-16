@@ -34,8 +34,8 @@ void CrossEntropyErrorTest::test_calculate_error()
    Tensor<type, 1> parameters;
 
    Index inputs_number;
-   Index target_number;
-   Tensor<Index, 1> architecture;
+   Index targets_number;
+   
 
    NeuralNetworkForwardPropagation forward_propagation;
 
@@ -63,11 +63,9 @@ void CrossEntropyErrorTest::test_calculate_error()
    // Neural network
 
    inputs_number = 2;
-   target_number = 1;
-   architecture.resize(2);
-   architecture.setValues({inputs_number,target_number});
+   targets_number = 1;
 
-   neural_network.set(NeuralNetwork::Classification, architecture);
+   neural_network.set(NeuralNetwork::Classification, {inputs_number, targets_number});
    neural_network.set_parameters_constant(0);
 
    forward_propagation.set(data_set.get_training_samples_number(), &neural_network);
@@ -89,7 +87,7 @@ void CrossEntropyErrorTest::test_calculate_error()
 
    batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
-   neural_network.set(NeuralNetwork::Classification, architecture);
+   neural_network.set(NeuralNetwork::Classification, {inputs_number, targets_number});
    neural_network.set_parameters_constant(1);
 
    forward_propagation.set(data_set.get_training_samples_number(), &neural_network);
@@ -115,11 +113,9 @@ void CrossEntropyErrorTest::test_calculate_error()
    batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
    inputs_number = 2;
-   target_number = 2;
-   architecture.resize(2);
-   architecture.setValues({inputs_number, target_number});
+   targets_number = 2;
 
-   neural_network.set(NeuralNetwork::Classification, architecture);
+   neural_network.set(NeuralNetwork::Classification, {inputs_number, targets_number});
    neural_network.set_parameters_constant(0);
 
    forward_propagation.set(data_set.get_training_samples_number(), &neural_network);
@@ -149,8 +145,6 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    Tensor<Index,1> training_samples_indices;
    Tensor<Index,1> inputs_indices;
    Tensor<Index,1> targets_indices;
-
-   Tensor<Index, 1> architecture;
 
    CrossEntropyError cross_entropy_error(&neural_network, &data_set);
 
@@ -234,11 +228,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    data_set.set_training();
 
-   Tensor<Index, 1> architecture;
-
-   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
-
-   neural_network.set(NeuralNetwork::Forecasting, architecture);
+   neural_network.set(NeuralNetwork::Forecasting, {inputs_number, hidden_neurons, outputs_number});
 
    long_short_term_memory_layer.set(inputs_number, hidden_neurons);
 //   perceptron_layer_2.set(hidden_neurons, outputs_number);

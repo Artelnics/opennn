@@ -80,7 +80,7 @@ void MinkowskiErrorTest::test_calculate_error()
 
    Index samples_number;
    Index inputs_number;
-   Index target_number;
+   Index targets_number;
 
    MinkowskiError minkowski_error(&neural_network, &data_set);
    minkowski_error.set_Minkowski_parameter(1.5);
@@ -90,7 +90,7 @@ void MinkowskiErrorTest::test_calculate_error()
 
    samples_number = 1;
    inputs_number = 1;
-   target_number = 1;
+   targets_number = 1;
 
    DataSetBatch batch(1, &data_set);
 
@@ -101,7 +101,7 @@ void MinkowskiErrorTest::test_calculate_error()
    batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
    Tensor<Index, 1> architecture(2);
-   architecture.setValues({inputs_number,target_number});
+   architecture.setValues({inputs_number,targets_number});
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_constant(0);

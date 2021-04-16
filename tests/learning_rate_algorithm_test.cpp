@@ -143,7 +143,7 @@ void LearningRateAlgorithmTest::test_calculate_fixed_directional_point()
 
 //   NeuralNetwork neural_network;
 
-//   Tensor<Index, 1> architecture;
+//   
 //   Tensor<type, 1> parameters;
 
 //   SumSquaredError sum_squared_error(&neural_network);
@@ -213,7 +213,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    Tensor<Index, 1> samples_indices(0, 1, data_set.get_samples_number()-1);
 
-//    Tensor<Index, 1> architecture;
+//    
 
 //    architecture.setValues({1,1});
 
@@ -273,7 +273,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    samples_indices.set(0, 1, data_set.get_samples_number()-1);
 
-//    Tensor<Index, 1> architecture;
+//    
 
 //    architecture.setValues({1,1});
 
@@ -324,7 +324,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 //   DataSet data_set(1, 1, 1);
 //   Tensor<Index, 1> indices(1,1,data_set.get_samples_number()-1);
 
-//   Tensor<Index, 1> architecture;
+//   
 
 //   architecture.setValues({1,1});
 
