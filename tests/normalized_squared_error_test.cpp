@@ -965,7 +965,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
        cout << "GradientLM: " << loss_index_back_propagation_lm.gradient << endl;
        cout << "Gradient: " << back_propagation.gradient << endl;
 
-       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, 1.0e-3), LOG);
+       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
    }
 }
 

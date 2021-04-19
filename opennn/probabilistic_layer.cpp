@@ -865,7 +865,27 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>
     }
     else // Multiple
     {
+        Index parameter_index = 0;
 
+        for(Index sample = 0; sample < samples_number; sample++)
+        {
+            parameter_index = 0;
+
+            for(Index neuron = 0; neuron < neurons_number; neuron++)
+            {
+                for(Index input = 0; input <  inputs_number; input++)
+                {
+                    probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
+                            probabilistic_layer_back_propagation_lm->error_combinations_derivatives(sample, neuron) *
+                            inputs(sample, input);
+
+                    parameter_index++;
+                }
+
+                probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neuron) =
+                        probabilistic_layer_back_propagation_lm->error_combinations_derivatives(sample, neuron);
+            }
+        }
     }
 }
 

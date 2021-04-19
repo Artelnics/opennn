@@ -306,6 +306,8 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagation
         delta_row.resize(neurons_number);
 
         squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+
+        error_combinations_derivatives.resize(batch_samples_number, neurons_number);
     }
 
     void print() const
@@ -319,6 +321,8 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagation
 
     Tensor<type, 2> delta;
     Tensor<type, 1> delta_row;
+
+    Tensor<type, 2> error_combinations_derivatives;
 
     Tensor<type, 2> squared_errors_Jacobian;
 };
