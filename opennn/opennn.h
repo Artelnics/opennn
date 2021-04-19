@@ -70,6 +70,7 @@
 #include "opennn_strings.h"
 #include "tensor_utilities.h"
 #include "statistics.h"
+#include "scaling.h"
 
 #endif
 

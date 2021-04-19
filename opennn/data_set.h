@@ -116,6 +116,7 @@ public:
        Column(const string&,
               const VariableUse&,
               const ColumnType& = Numeric,
+              const Scaler& = MeanStandardDeviation,
               const Tensor<string, 1>& = Tensor<string, 1>(),
               const Tensor<VariableUse, 1>& = Tensor<VariableUse, 1>());
 
@@ -143,7 +144,7 @@ public:
 
        Tensor<VariableUse, 1> categories_uses;
 
-       Scaler scaler = MeanStandardDeviation;
+       Scaler scaler;
 
        // Methods
 
@@ -581,7 +582,7 @@ public:
 
    // Scaling methods
 
-   void set_default_columns_scalers() const;
+   void set_default_columns_scalers();
 
    // Data scaling
 
