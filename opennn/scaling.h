@@ -31,6 +31,7 @@ namespace OpenNN
 
 enum Scaler{NoScaling, NoUnscaling, MinimumMaximum, MeanStandardDeviation, StandardDeviation, Logarithm};
 
+
 void scale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
 void scale_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
 void scale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&);

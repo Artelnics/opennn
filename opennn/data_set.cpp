@@ -126,11 +126,12 @@ DataSet::Column::Column()
 DataSet::Column::Column(const string& new_name,
                         const VariableUse& new_column_use,
                         const ColumnType& new_type,
+                        const Scaler& new_scaler,
                         const Tensor<string, 1>& new_categories,
                         const Tensor<VariableUse, 1>& new_categories_uses)
 {
     name = new_name;
-    scaler = MeanStandardDeviation;
+    scaler = new_scaler;
     column_use = new_column_use;
     type = new_type;
     categories = new_categories;
@@ -6339,31 +6340,40 @@ void DataSet::print_top_inputs_correlations() const
 /// Returns a vector of strings containing the scaling method that best fits each
 /// of the input variables.
 
-void DataSet::set_default_columns_scalers() const
+void DataSet::set_default_columns_scalers()
 {
-    const Tensor<Index, 1> used_inputs_indices = get_input_variables_indices();
-    const Index used_inputs_number = used_inputs_indices.size();
+    const Index columns_number = get_columns_number();
 
     Index current_distribution;
-    Tensor<string, 1> scalers(used_inputs_number);
+
+    Tensor<string, 1> scalers(columns_number);
 
     #pragma omp parallel for private(current_distribution)
 
-    for(Index i = 0; i < static_cast<Index>(used_inputs_number); i++)
+    for(Index i = 0; i < static_cast<Index>(columns_number); i++)
     {
-        current_distribution = perform_distribution_distance_analysis(data.chip(used_inputs_indices(i),1));
+        ColumnType column_type = get_column_type(i);
+
+        if(column_type == ColumnType::Categorical || column_type == ColumnType::Binary || column_type == ColumnType::DateTime)
+        {
+            continue;
+        }
+
+        Tensor<type, 2> column_data = get_column_data(i);
+
+        const TensorMap<Tensor<type,1>> input_column(column_data.data(), column_data.dimension(0));
 
         if(current_distribution == 0) // Normal distribution
         {
-            scalers(i) = "MeanStandardDeviation";
+            columns(i).scaler = Scaler::MeanStandardDeviation;
         }
         else if(current_distribution == 1) // Uniform distribution
         {
-            scalers(i) = "MinimumMaximum";
+            columns(i).scaler = Scaler::MinimumMaximum;
         }
         else // Default
         {
-            scalers(i) = "MinimumMaximum";
+            columns(i).scaler = Scaler::MinimumMaximum;
         }
     }
 }
