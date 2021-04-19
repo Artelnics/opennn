@@ -115,11 +115,9 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
-
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-     switch(output_layer_pointer->get_type())
+     switch(output_layer_back_propagation->layer_pointer->get_type())
      {
      case Layer::Perceptron:
      {
