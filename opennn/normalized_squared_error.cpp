@@ -268,6 +268,8 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
         normalization_coefficient += norm(0);
     }
 
+    if(static_cast<type>(normalization_coefficient - 0) < std::numeric_limits<type>::min()) normalization_coefficient = 1;
+
     return normalization_coefficient;
 }
 

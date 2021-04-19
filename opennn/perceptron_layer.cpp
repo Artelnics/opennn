@@ -881,48 +881,6 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 }
 
 
-void PerceptronLayer::calculate_squared_errors_Jacobian(LayerForwardPropagation* previous_forward_propagation,
-                                                        LayerForwardPropagation* forward_propagation,
-                                                        LayerBackPropagation* back_propagation)
-{
-    switch (previous_forward_propagation->layer_pointer->get_type())
-    {
-    case Perceptron:
-    {
-        PerceptronLayerForwardPropagation* previous_perceptron_forward_propagation =
-                static_cast<PerceptronLayerForwardPropagation*>(previous_forward_propagation);
-
-        calculate_squared_errors_Jacobian(previous_perceptron_forward_propagation->activations,
-                                          forward_propagation,
-                                          back_propagation);
-    }
-        break;
-
-    case Probabilistic:
-    {
-        ProbabilisticLayerForwardPropagation* previous_probabilistic_forward_propagation =
-                static_cast<ProbabilisticLayerForwardPropagation*>(previous_forward_propagation);
-
-        calculate_squared_errors_Jacobian(previous_probabilistic_forward_propagation->activations,
-                                          forward_propagation,
-                                          back_propagation);
-    }
-        break;
-
-    default:
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LossIndex class.\n"
-               << "void calculate_layer_squared_errors_Jacobian(LayerForwardPropagation, LayerForwardPropagation*, LayerBackPropagation*) const method "
-               << "Levenberg - Marquardt algorithm can only be used with Perceptron and Probabilistic layers.\n";
-
-        throw logic_error(buffer.str());
-    }
-    }
-}
-
-
 void PerceptronLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
                                                         LayerForwardPropagation* forward_propagation,
                                                         LayerBackPropagation* back_propagation)
@@ -961,6 +919,22 @@ void PerceptronLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>& i
                     perceptron_layer_forward_propagation->activations_derivatives(sample, neuron);
         }
     }
+}
+
+
+void PerceptronLayer::insert_squared_errors_Jacobian(LayerBackPropagation * back_propagation ,
+                                                     const Index & index,
+                                                     Tensor<type, 2> & squared_errors_Jacobian) const
+{
+    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
+            static_cast<PerceptronLayerBackPropagationLM*>(back_propagation);
+
+    const Index batch_samples_number = perceptron_layer_back_propagation_lm->squared_errors_Jacobian.dimension(0);
+    const Index layer_parameters_number = get_parameters_number();
+
+    memcpy(squared_errors_Jacobian.data() + index,
+           perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data(),
+           static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
 }
 
 

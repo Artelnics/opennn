@@ -166,14 +166,13 @@ public:
 
    // Squared errors methods
 
-   void calculate_squared_errors_Jacobian(LayerForwardPropagation*,
-                                          LayerForwardPropagation*,
-                                          LayerBackPropagation*);
-
-
    void calculate_squared_errors_Jacobian(const Tensor<type, 2>&,
                                           LayerForwardPropagation*,
                                           LayerBackPropagation*);
+
+   void insert_squared_errors_Jacobian(LayerBackPropagation*,
+                                       const Index&,
+                                       Tensor<type, 2>&) const;
 
    // Expression methods
 
@@ -273,7 +272,6 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
         cout << activations_derivatives << endl;
     }
 
-
     Tensor<type, 2> combinations;
     Tensor<type, 2> activations;
     Tensor<type, 3> activations_derivatives;
@@ -302,22 +300,27 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagation
         batch_samples_number = new_batch_samples_number;
 
         const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index parameters_number = layer_pointer->get_parameters_number();
 
         delta.resize(batch_samples_number, neurons_number);
         delta_row.resize(neurons_number);
+
+        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
     }
 
     void print() const
     {
         cout << "Delta:" << endl;
         cout << delta << endl;
+
+        cout << "Squared errors Jacobian: " << endl;
+        cout << squared_errors_Jacobian << endl;
     }
 
     Tensor<type, 2> delta;
     Tensor<type, 1> delta_row;
 
-    Tensor<type, 2> synaptic_weights_derivatives;
-    Tensor<type, 1> biases_derivatives;
+    Tensor<type, 2> squared_errors_Jacobian;
 };
 
 

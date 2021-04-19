@@ -945,6 +945,8 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        normalized_squared_error.set_normalization_coefficient();
 
+       cout << "Normalization coefficient: " << normalized_squared_error.get_normalization_coefficient() << endl;
+
        NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
        LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
        LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
