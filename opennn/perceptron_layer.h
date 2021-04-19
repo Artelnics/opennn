@@ -179,14 +179,13 @@ public:
 
    // Squared errors methods
 
-   void calculate_squared_errors_Jacobian(LayerForwardPropagation*,
-                                          LayerForwardPropagation*,
-                                          LayerBackPropagation*);
-
-
    void calculate_squared_errors_Jacobian(const Tensor<type, 2>&,
                                           LayerForwardPropagation*,
                                           LayerBackPropagation*);
+
+   void insert_squared_errors_Jacobian(LayerBackPropagation*,
+                                       const Index&,
+                                       Tensor<type, 2>&) const;
 
    // Gradient methods
 

@@ -129,6 +129,16 @@ public:
                                           LayerForwardPropagation*,
                                           LayerBackPropagation*) const {}
 
+    // Squared errors
+
+    virtual void calculate_squared_errors_Jacobian(const Tensor<type, 2>&,
+                                                   LayerForwardPropagation*,
+                                                   LayerBackPropagation*) {}
+
+    virtual void insert_squared_errors_Jacobian(LayerBackPropagation*,
+                                                const Index&,
+                                                Tensor<type, 2>&) const {}
+
     // Get neurons number
 
     virtual Index get_inputs_number() const;

@@ -822,6 +822,71 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
 }
 
 
+void ProbabilisticLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
+                                                           LayerForwardPropagation* forward_propagation,
+                                                           LayerBackPropagation* back_propagation)
+{
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
+
+    ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
+            static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation);
+
+    const Index samples_number = inputs.dimension(0);
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    if(neurons_number == 1) // Binary
+    {
+        Index parameter_index = 0;
+
+        for(Index sample = 0; sample < samples_number; sample++)
+        {
+            parameter_index = 0;
+
+            for(Index neuron = 0; neuron < neurons_number; neuron++)
+            {
+                for(Index input = 0; input <  inputs_number; input++)
+                {
+                    probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
+                            probabilistic_layer_back_propagation_lm->delta(sample, neuron) *
+                            probabilistic_layer_forward_propagation->activations_derivatives(sample, neuron, 0) *
+                            inputs(sample, input);
+
+                    parameter_index++;
+                }
+
+                probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neuron) =
+                        probabilistic_layer_back_propagation_lm->delta(sample, neuron) *
+                        probabilistic_layer_forward_propagation->activations_derivatives(sample, neuron, 0);
+            }
+        }
+    }
+    else // Multiple
+    {
+
+    }
+}
+
+
+void ProbabilisticLayer::insert_squared_errors_Jacobian(LayerBackPropagation * back_propagation ,
+                                                        const Index & index,
+                                                        Tensor<type, 2> & squared_errors_Jacobian) const
+{
+    ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
+            static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation);
+
+    const Index batch_samples_number = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.dimension(0);
+    const Index layer_parameters_number = get_parameters_number();
+
+    memcpy(squared_errors_Jacobian.data() + index,
+           probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data(),
+           static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
+}
+
+
+
 /// Serializes the probabilistic layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
