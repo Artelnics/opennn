@@ -32,6 +32,7 @@ namespace OpenNN
 
 struct ProbabilisticLayerForwardPropagation;
 struct ProbabilisticLayerBackPropagation;
+struct ProbabilisticLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/struct_probabilistic_layer_cuda.h"
@@ -160,7 +161,7 @@ public:
 
    void calculate_error_gradient(const Tensor<type, 2>&,
                                  LayerForwardPropagation*,
-       LayerBackPropagation*) const;
+                                 LayerBackPropagation*) const;
 
    void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const;
 
@@ -168,9 +169,9 @@ public:
 
    void calculate_squared_errors_Jacobian(const Tensor<type, 2>&,
                                           LayerForwardPropagation*,
-                                          LayerBackPropagation*);
+                                          LayerBackPropagationLM*);
 
-   void insert_squared_errors_Jacobian(LayerBackPropagation*,
+   void insert_squared_errors_Jacobian(LayerBackPropagationLM*,
                                        const Index&,
                                        Tensor<type, 2>&) const;
 
@@ -278,16 +279,16 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 };
 
 
-struct ProbabilisticLayerBackPropagationLM : LayerBackPropagation
+struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 {
-    explicit ProbabilisticLayerBackPropagationLM() : LayerBackPropagation()
+    explicit ProbabilisticLayerBackPropagationLM() : LayerBackPropagationLM()
     {
 
     }
 
 
     explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagation()
+        : LayerBackPropagationLM()
     {
         set(new_batch_samples_number, new_layer_pointer);
     }

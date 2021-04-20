@@ -392,7 +392,7 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & ,
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    LayerBackPropagation* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
+    LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
 
     Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
@@ -400,8 +400,8 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & ,
     {
     case Layer::Perceptron:
     {
-        PerceptronLayerBackPropagation* perceptron_layer_back_propagation
-                = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
+        PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation
+                = static_cast<PerceptronLayerBackPropagationLM*>(output_layer_back_propagation);
 
         perceptron_layer_back_propagation->delta = loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors;
     }
@@ -409,32 +409,22 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & ,
 
     case Layer::Probabilistic:
     {
-        ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-                = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
+        ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation
+                = static_cast<ProbabilisticLayerBackPropagationLM*>(output_layer_back_propagation);
 
         probabilistic_layer_back_propagation->delta = loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors;
     }
         break;
 
-    case Layer::Recurrent:
+    default:
     {
-        RecurrentLayerBackPropagation* recurrent_layer_back_propagation
-                = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
+        ostringstream buffer;
 
-        recurrent_layer_back_propagation->delta = loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors;
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n";
+
+        throw logic_error(buffer.str());
     }
-        break;
-
-    case Layer::LongShortTermMemory:
-    {
-        LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
-                = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
-
-        long_short_term_memory_layer_back_propagation->delta = loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors;
-    }
-        break;
-
-    default: break;
     }
 }
 
