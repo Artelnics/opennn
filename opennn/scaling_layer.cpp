@@ -191,7 +191,7 @@ const Tensor<Scaler, 1> ScalingLayer::get_scaling_methods() const
 
 /// Returns a vector of strings with the name of the method used for each scaling neuron.
 
-Tensor<string, 1> ScalingLayer::write_scaling_methods() const
+Tensor<string, 1> ScalingLayer::write_scalers() const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -217,14 +217,14 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods() const
         }
         else if(scalers[i] == Logarithm)
         {
-            scaling_methods_strings[i] = "StandardDeviation";
+            scaling_methods_strings[i] = "Logarithm";
         }
         else
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "Tensor<string, 1> write_scaling_methods() const method.\n"
+                   << "Tensor<string, 1> write_scalers() const method.\n"
                    << "Unknown " << i << " scaling method.\n";
 
             throw logic_error(buffer.str());
@@ -238,7 +238,7 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods() const
 /// Returns a vector of strings with the name of the methods used for scaling,
 /// as paragaph text.
 
-Tensor<string, 1> ScalingLayer::write_scaling_methods_text() const
+Tensor<string, 1> ScalingLayer::write_scalers_text() const
 {
     const Index neurons_number = get_neurons_number();
 
@@ -249,7 +249,7 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods_text() const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "Tensor<string, 1> write_scaling_methods() const method.\n"
+               << "Tensor<string, 1> write_scalers() const method.\n"
                << "Neurons number must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -279,14 +279,14 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods_text() const
         }
         else if(scalers[i] == Logarithm)
         {
-            scaling_methods_strings[i] = "StandardDeviation";
+            scaling_methods_strings[i] = "Logarithm";
         }
         else
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "Tensor<string, 1> write_scaling_methods_text() const method.\n"
+                   << "Tensor<string, 1> write_scalers_text() const method.\n"
                    << "Unknown " << i << " scaling method.\n";
 
             throw logic_error(buffer.str());
@@ -1222,7 +1222,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    const Tensor<string, 1> scaling_methods_string = write_scaling_methods();
+    const Tensor<string, 1> scaling_methods_string = write_scalers();
 
     // Scaling neurons
 

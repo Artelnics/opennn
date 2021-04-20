@@ -75,8 +75,8 @@ public:
 
    const Tensor<Scaler, 1> get_scaling_methods() const;
 
-   Tensor<string, 1> write_scaling_methods() const;
-   Tensor<string, 1> write_scaling_methods_text() const;
+   Tensor<string, 1> write_scalers() const;
+   Tensor<string, 1> write_scalers_text() const;
 
    // Display messages
 
