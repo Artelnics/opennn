@@ -4080,7 +4080,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
 
-    // Perceptron layer
+    // LongShortTermMemoryLayer layer
 
     const tinyxml2::XMLElement* long_short_term_memory_layer_element = document.FirstChildElement("LongShortTermMemoryLayer");
 
