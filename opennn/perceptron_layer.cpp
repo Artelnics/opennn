@@ -862,8 +862,6 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 
         const Index step = next_layer_neurons_number*next_layer_neurons_number;
 
-        next_back_propagation->biases_derivatives.setZero();
-
         for(Index i = 0; i < samples_number; i++)
         {
             next_back_propagation->delta_row = next_back_propagation->delta.chip(i,0);
@@ -881,9 +879,141 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 }
 
 
+void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
+                                             LayerBackPropagationLM* next_layer_back_propagation,
+                                             LayerBackPropagationLM* layer_back_propagation) const
+{
+    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation =
+            static_cast<PerceptronLayerBackPropagationLM*>(layer_back_propagation);
+
+    switch(next_layer_back_propagation->layer_pointer->get_type())
+    {
+    case Perceptron:
+    {
+        PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
+                static_cast<PerceptronLayerForwardPropagation*>(next_layer_forward_propagation);
+
+        PerceptronLayerBackPropagationLM* next_perceptron_layer_back_propagation =
+                static_cast<PerceptronLayerBackPropagationLM*>(next_layer_back_propagation);
+
+        calculate_hidden_delta_perceptron(next_perceptron_layer_forward_propagation,
+                                          next_perceptron_layer_back_propagation,
+                                          perceptron_layer_back_propagation);
+    }
+        break;
+
+    case Probabilistic:
+    {
+        ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
+                static_cast<ProbabilisticLayerForwardPropagation*>(next_layer_forward_propagation);
+
+        ProbabilisticLayerBackPropagationLM* next_probabilistic_layer_back_propagation =
+                static_cast<ProbabilisticLayerBackPropagationLM*>(next_layer_back_propagation);
+
+        calculate_hidden_delta_probabilistic(next_probabilistic_layer_forward_propagation,
+                                             next_probabilistic_layer_back_propagation,
+                                             perceptron_layer_back_propagation);
+    }
+        break;
+
+    default: return;
+    }
+}
+
+
+void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation* next_forward_propagation,
+                                                        PerceptronLayerBackPropagationLM* next_back_propagation,
+                                                        PerceptronLayerBackPropagationLM* back_propagation) const
+{
+    const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
+
+    back_propagation->delta.device(*thread_pool_device) =
+            (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
+}
+
+
+void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation* next_forward_propagation,
+                                                           ProbabilisticLayerBackPropagationLM* next_back_propagation,
+                                                           PerceptronLayerBackPropagationLM* back_propagation) const
+{
+    const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
+
+    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();
+
+    if(probabilistic_layer_pointer->get_neurons_number() == 1) // Binary
+    {
+        back_propagation->delta.device(*thread_pool_device) =
+                (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
+    }
+    else // Multiple
+    {
+        const Index samples_number = next_back_propagation->delta.dimension(0);
+        const Index outputs_number = next_back_propagation->delta.dimension(1);
+        const Index next_layer_neurons_number = probabilistic_layer_pointer->get_neurons_number();
+
+        if(outputs_number != next_layer_neurons_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                   << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagationLM*,PerceptronLayerBackPropagationLM*) const.\n"
+                   << "Number of columns in delta (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        if(next_forward_propagation->activations_derivatives.dimension(1) != next_layer_neurons_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                   << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagationLM*,PerceptronLayerBackPropagationLM*) const.\n"
+                   << "Dimension 1 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        if(next_forward_propagation->activations_derivatives.dimension(2) != next_layer_neurons_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                   << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagationLM*,PerceptronLayerBackPropagationLM*) const.\n"
+                   << "Dimension 2 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        const Index step = next_layer_neurons_number*next_layer_neurons_number;
+
+        for(Index i = 0; i < samples_number; i++)
+        {
+            next_back_propagation->delta_row = next_back_propagation->delta.chip(i,0);
+
+            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(next_forward_propagation->activations_derivatives.data() + i*step,
+                                                                        next_layer_neurons_number, next_layer_neurons_number);
+
+            next_back_propagation->error_combinations_derivatives.chip(i,0) =
+                    next_back_propagation->delta_row.contract(activations_derivatives_matrix, AT_B);
+        }
+
+        back_propagation->delta.device(*thread_pool_device) =
+                (next_back_propagation->error_combinations_derivatives).contract(next_synaptic_weights, A_BT);
+
+
+        cout << "next delta: " << endl << next_back_propagation->delta << endl;
+        cout << "Act derivatives: " << endl << next_forward_propagation->activations_derivatives << endl;
+        cout << "Err comb: " << endl << next_back_propagation->error_combinations_derivatives << endl;
+        cout << "Delta: " << endl << back_propagation->delta << endl;
+        system("pause");
+
+    }
+}
+
+
 void PerceptronLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
                                                         LayerForwardPropagation* forward_propagation,
-                                                        LayerBackPropagation* back_propagation)
+                                                        LayerBackPropagationLM* back_propagation)
 {
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
@@ -922,7 +1052,7 @@ void PerceptronLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>& i
 }
 
 
-void PerceptronLayer::insert_squared_errors_Jacobian(LayerBackPropagation * back_propagation ,
+void PerceptronLayer::insert_squared_errors_Jacobian(LayerBackPropagationLM * back_propagation ,
                                                      const Index & index,
                                                      Tensor<type, 2> & squared_errors_Jacobian) const
 {

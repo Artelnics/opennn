@@ -261,7 +261,7 @@ void UnscalingLayerTest::test_get_maximums()
 }
 
 
-void UnscalingLayerTest::test_write_scaling_methods()
+void UnscalingLayerTest::test_write_scalers()
 {
     cout << "test_get_scaling_method_name\n";
 
@@ -917,7 +917,7 @@ void UnscalingLayerTest::run_test_case()
 
    // Variables scaling and unscaling
 
-   test_write_scaling_methods();
+   test_write_scalers();
 
 
    // Display messages

@@ -350,7 +350,7 @@ void ScalingLayerTest::test_get_scaling_method()
 }
 
 
-void ScalingLayerTest::test_write_scaling_methods()
+void ScalingLayerTest::test_write_scalers()
 {
    cout << "test_get_scaling_method_name\n";
 
@@ -367,30 +367,30 @@ void ScalingLayerTest::test_write_scaling_methods()
    Scaler standard_deviation = Scaler::StandardDeviation;
 
    scaling_layer.set_scalers(no_scaling);
-   assert_true(scaling_layer.write_scaling_methods()(0) == "NoScaling", LOG);
+   assert_true(scaling_layer.write_scalers()(0) == "NoScaling", LOG);
 
    scaling_layer.set_scalers(minimum_maximum);
-   assert_true(scaling_layer.write_scaling_methods()(0) == "MinimumMaximum", LOG);
+   assert_true(scaling_layer.write_scalers()(0) == "MinimumMaximum", LOG);
 
    scaling_layer.set_scalers(mean_standard_deviation);
-   assert_true(scaling_layer.write_scaling_methods()(0) == "MeanStandardDeviation", LOG);
+   assert_true(scaling_layer.write_scalers()(0) == "MeanStandardDeviation", LOG);
 
    scaling_layer.set_scalers(standard_deviation);
-   assert_true(scaling_layer.write_scaling_methods()(0) == "StandardDeviation", LOG);
+   assert_true(scaling_layer.write_scalers()(0) == "StandardDeviation", LOG);
 
    // Test 2
 
    scaling_layer.set_scalers(no_scaling);
-   assert_true(scaling_layer.write_scaling_methods_text()(0) == "no scaling", LOG);
+   assert_true(scaling_layer.write_scalers_text()(0) == "no scaling", LOG);
 
    scaling_layer.set_scalers(minimum_maximum);
-   assert_true(scaling_layer.write_scaling_methods_text()(0) == "minimum and maximum", LOG);
+   assert_true(scaling_layer.write_scalers_text()(0) == "minimum and maximum", LOG);
 
    scaling_layer.set_scalers(mean_standard_deviation);
-   assert_true(scaling_layer.write_scaling_methods_text()(0) == "mean and standard deviation", LOG);
+   assert_true(scaling_layer.write_scalers_text()(0) == "mean and standard deviation", LOG);
 
    scaling_layer.set_scalers(standard_deviation);
-   assert_true(scaling_layer.write_scaling_methods_text()(0) == "standard deviation", LOG);
+   assert_true(scaling_layer.write_scalers_text()(0) == "standard deviation", LOG);
 }
 
 
@@ -1125,7 +1125,7 @@ void ScalingLayerTest::run_test_case()
    // Variables scaling and unscaling
 
    test_get_scaling_method();
-   test_write_scaling_methods();
+   test_write_scalers();
 
 
    // Display messages
