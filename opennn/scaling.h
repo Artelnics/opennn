@@ -34,12 +34,12 @@ enum Scaler{NoScaling, NoUnscaling, MinimumMaximum, MeanStandardDeviation, Stand
 
 void scale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
 void scale_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
-void scale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&);
+void scale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&,const Index& = -1, const Index& = 1);
 void scale_logarithmic(Tensor<type, 2>&, const Index&, const Descriptives&);
 void scale_minimum_maximum_binary(Tensor<type, 2>&, const type&, const type&, const Index&);
 
 
-void unscale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&);
+void unscale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&, const Index&  = -1, const Index& = 1);
 void unscale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
 void unscale_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
 void unscale_logarithmic(Tensor<type, 2>&, const Index&, const Descriptives&);

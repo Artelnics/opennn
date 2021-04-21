@@ -202,38 +202,38 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 }
 
 
-/// @todo Update this method
-
 void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
                      LossIndexBackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-//    const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1]->activations, batch.targets_2d);
+    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
 
-//    const Tensor<bool, 2> if_sentence = y == y.constant(1);
-//    const Tensor<bool, 2> else_sentence = y == y.constant(0);
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_back_propagation
+    = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
-//    Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+    const Tensor<type, 2>& targets = batch.targets_2d;
+    const Tensor<type, 2>& outputs = probabilistic_layer_back_propagation->activations;
 
-//    Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+    const Tensor<bool, 2> if_sentence = outputs == outputs.constant(1);
+    const Tensor<bool, 2> else_sentence = outputs == outputs.constant(0);
 
-//    Tensor<type, 2> f_3(x.dimension(0), x.dimension(1));
+    Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
 
-//    f_1 = (x - y).square()*positives_weight;
+    Tensor<type, 2> f_2(targets.dimension(0), targets.dimension(1));
 
-//    f_2 = (x - y).square()*negatives_weight;
+    Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
 
-//    f_3 = x.constant(0);
+    f_1 = back_propagation.errors.square()*positives_weight;
 
-//    const Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
+    f_2 = back_propagation.errors.square()*negatives_weight;
 
-    const Index batch_samples_number = batch.samples_number;
-    const Index total_samples_number = data_set_pointer->get_samples_number();
+    f_3 = outputs.constant(0);
 
-//    back_propagation.error
-//    = error/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
+
+    back_propagation.error = weighted_sum_squared_error(0);
 }
 
 
@@ -433,6 +433,63 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 }
+
+
+type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x, const Tensor<type, 2> & y) const
+{
+#ifdef __OPENNN_DEBUG__
+
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
+
+    const Index other_rows_number = y.dimension(0);
+
+    if(other_rows_number != rows_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Metrics functions.\n"
+               << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
+               << "Other number of rows must be equal to this number of rows.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    const Index other_columns_number = y.dimension(1);
+
+    if(other_columns_number != columns_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Metrics functions.\n"
+               << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
+               << "Other number of columns must be equal to this number of columns.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    const Tensor<bool, 2> if_sentence = y == y.constant(1);
+    const Tensor<bool, 2> else_sentence = y == y.constant(0);
+
+    Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
+
+    Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
+
+    Tensor<type, 2> f_3(x.dimension(0), x.dimension(1));
+
+    f_1 = (x - y).square()*positives_weight;
+
+    f_2 = (x - y).square()*negatives_weight;
+
+    f_3 = x.constant(0);
+
+    Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
+
+    return weighted_sum_squared_error(0);
+}
+
 
 }
 
