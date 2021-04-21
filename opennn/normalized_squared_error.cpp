@@ -403,7 +403,11 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & ,
         PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation
                 = static_cast<PerceptronLayerBackPropagationLM*>(output_layer_back_propagation);
 
-        perceptron_layer_back_propagation->delta = loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors;
+        memcpy(perceptron_layer_back_propagation->delta.data(),
+               loss_index_back_propagation.errors.data(),
+               static_cast<size_t>(loss_index_back_propagation.errors.size())*sizeof (type));
+
+        divide_columns(perceptron_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
     }
         break;
 
@@ -412,7 +416,11 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch & ,
         ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation
                 = static_cast<ProbabilisticLayerBackPropagationLM*>(output_layer_back_propagation);
 
-        probabilistic_layer_back_propagation->delta = loss_index_back_propagation.errors / loss_index_back_propagation.squared_errors;
+        memcpy(probabilistic_layer_back_propagation->delta.data(),
+               loss_index_back_propagation.errors.data(),
+               static_cast<size_t>(loss_index_back_propagation.errors.size())*sizeof (type));
+
+        divide_columns(probabilistic_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
     }
         break;
 

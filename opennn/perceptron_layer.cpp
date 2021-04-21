@@ -999,14 +999,6 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 
         back_propagation->delta.device(*thread_pool_device) =
                 (next_back_propagation->error_combinations_derivatives).contract(next_synaptic_weights, A_BT);
-
-
-        cout << "next delta: " << endl << next_back_propagation->delta << endl;
-        cout << "Act derivatives: " << endl << next_forward_propagation->activations_derivatives << endl;
-        cout << "Err comb: " << endl << next_back_propagation->error_combinations_derivatives << endl;
-        cout << "Delta: " << endl << back_propagation->delta << endl;
-        system("pause");
-
     }
 }
 
