@@ -221,7 +221,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
-/*
+
    // Trivial test
    {
        samples_number = 10;
@@ -385,7 +385,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
    }
-*/
+
    neural_network.set();
 
    // Test perceptron and multiple probabilistic
@@ -460,12 +460,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       cout << "Gradient: " << error_gradient << endl;
-       cout << "Numerical gradient: " << numerical_error_gradient << endl;
-
        assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
    }
-/*
+
    neural_network.set();
 
    // Test lstm
@@ -783,7 +780,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
    }
-   */
 }
 
 
@@ -853,7 +849,6 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    cout << "test_calculate_squared_errors_jacobian\n";
 
    NeuralNetwork neural_network;
-   
 
    DataSet data_set;
 
@@ -865,17 +860,19 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
+   Tensor<Index, 1> architecture;
+
    Index samples_number;
    Index inputs_number;
    Index hidden_neurons_number;
    Index outputs_number;
-/*
+
    // Test Perceptron
    {
        samples_number = 2;
        inputs_number = 2;
        hidden_neurons_number = 3;
-       outputs_number = 1;
+       outputs_number = 4;
 
        data_set.set(samples_number, inputs_number, outputs_number);
        data_set.set_data_random();
@@ -915,13 +912,56 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
 
-       cout << "GradientLM: " << loss_index_back_propagation_lm.gradient << endl;
-       cout << "Gradient: " << back_propagation.gradient << endl;
-
        assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, 1.0e-3), LOG);
    }
-*/
-   // Test probabilistic
+
+   // Test probabilistic (binary)
+
+   {
+       samples_number = 2;
+       inputs_number = 2;
+       hidden_neurons_number = 3;
+       outputs_number = 1;
+
+       data_set.set(samples_number, inputs_number, outputs_number);
+
+       data_set.set_data_binary_random();
+
+       data_set.set_training();
+
+       batch.set(samples_number, &data_set);
+
+       samples_indices = data_set.get_training_samples_indices();
+       input_indices = data_set.get_input_variables_indices();
+       target_indices = data_set.get_target_variables_indices();
+
+       batch.fill(samples_indices, input_indices, target_indices);
+
+       neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons_number, outputs_number});
+
+       neural_network.set_parameters_random();
+
+       normalized_squared_error.set_normalization_coefficient();
+
+       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
+
+       normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+       neural_network.forward_propagate(batch, forward_propagation);
+       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+       normalized_squared_error.back_propagate(batch, forward_propagation, loss_index_back_propagation_lm);
+
+       Tensor<type, 2> numerical_squared_errors_jacobian;
+
+       numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
+
+       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
+   }
+
+   // Test probabilistic (multiple)
 
    {
        samples_number = 2;
@@ -964,12 +1004,6 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
 
-       cout << "Jacobian: " << loss_index_back_propagation_lm.squared_errors_jacobian << endl;
-       cout << "Numeric Jacobian:  " << numerical_squared_errors_jacobian << endl;
-
-//       cout << "GradientLM: " << loss_index_back_propagation_lm.gradient << endl;
-//       cout << "Gradient: " << back_propagation.gradient << endl;
-
        assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
    }
 }
@@ -1004,15 +1038,15 @@ void NormalizedSquaredErrorTest::run_test_case()
    // Error methods
 
    test_calculate_error();
-   */
+
    test_calculate_error_gradient();
-/*
+
    // Squared errors methods
 
    test_calculate_squared_errors();
-
+*/
    test_calculate_squared_errors_jacobian();
-
+/*
    // Squared errors methods
 
    test_calculate_squared_errors();
