@@ -166,7 +166,7 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
         {
             buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(" << inputs_names(i) << "+1)*((" << descriptives(i).maximum << ")-(" << descriptives(i).minimum << ");\n";
         }
-        else if(scalers(i) == Logarithmic)
+        else if(scalers(i) == Logarithm)
         {
             buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(exp(" << inputs_names(i) << ")+1)*((" << descriptives(i).maximum << ")-(" << descriptives(i).minimum << "));\n";
         }
@@ -212,9 +212,9 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
         {
             scaling_methods_strings[i] = "MeanStandardDeviation";
         }
-        else if(scalers[i] == Logarithmic)
+        else if(scalers[i] == Logarithm)
         {
-            scaling_methods_strings[i] = "Logarithmic";
+            scaling_methods_strings[i] = "Logarithm";
         }
         else
         {
