@@ -155,7 +155,7 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix, const Index& column_index,
 void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& column_index, const Descriptives& column_descriptives)
 {
     const type slope = abs(column_descriptives.mean - 0) < static_cast<type>(1e-3) ? 0
-            : column_descriptives.standard_deviation/static_cast<type>(2);
+            : column_descriptives.standard_deviation;
 
     const type intercept = abs(column_descriptives.mean-0) < static_cast<type>(1e-3)
             ? column_descriptives.minimum

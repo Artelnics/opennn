@@ -503,7 +503,7 @@ struct NeuralNetworkBackPropagationLM
 
     NeuralNetwork* neural_network_pointer = nullptr;
 
-    Tensor<LayerBackPropagation*, 1> layers;
+    Tensor<LayerBackPropagationLM*, 1> layers;
 };
 
 }

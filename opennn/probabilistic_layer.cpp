@@ -824,7 +824,7 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
 void ProbabilisticLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
                                                            LayerForwardPropagation* forward_propagation,
-                                                           LayerBackPropagation* back_propagation)
+                                                           LayerBackPropagationLM* back_propagation)
 {
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
             static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
@@ -836,6 +836,8 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>
 
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
+
+    probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.setZero();
 
     if(neurons_number == 1) // Binary
     {
@@ -890,7 +892,7 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>
 }
 
 
-void ProbabilisticLayer::insert_squared_errors_Jacobian(LayerBackPropagation * back_propagation ,
+void ProbabilisticLayer::insert_squared_errors_Jacobian(LayerBackPropagationLM * back_propagation ,
                                                         const Index & index,
                                                         Tensor<type, 2> & squared_errors_Jacobian) const
 {
