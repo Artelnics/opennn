@@ -117,8 +117,7 @@ DataSet::Column::Column()
     categories.resize(0);
     categories_uses.resize(0);
 
-//    scaler = MeanStandardDeviation;
-    scaler = MinimumMaximum;
+    scaler = MeanStandardDeviation;
 }
 
 
