@@ -87,9 +87,9 @@ void scale_standard_deviation(Tensor<type, 2>& matrix,
 
 void scale_minimum_maximum(Tensor<type, 2>& matrix,
                            const Index& column_index,
-                           const Descriptives& column_descriptives)
+                           const Descriptives& column_descriptives,
+                           const Index& min_range, const Index& max_range)
 {
-/*
     const type slope = abs(column_descriptives.maximum-column_descriptives.minimum) < static_cast<type>(1e-3) ?
                 0 :
                 (max_range-min_range)/(column_descriptives.maximum-column_descriptives.minimum);
@@ -102,7 +102,7 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix,
     {
         matrix(i, column_index) = matrix(i, column_index)*slope + intercept;
     }
-*/
+
 }
 
 void scale_logarithmic(Tensor<type, 2>& matrix, const Index& target_index, const Descriptives& descriptives)
@@ -128,9 +128,11 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Index& target_index, const
 /// @param column_descriptives vector with the descriptives of the input variable.
 /// @param column_index Index of the input to be scaled.
 
-void unscale_minimum_maximum(Tensor<type, 2>& matrix, const Index& column_index, const Descriptives& column_descriptives)
+void unscale_minimum_maximum(Tensor<type, 2>& matrix,
+                             const Index& column_index,
+                             const Descriptives& column_descriptives,
+                             const Index& min_range, const Index& max_range)
 {
-/*
     const type slope = abs(max_range-min_range) < static_cast<type>(1e-3)
             ? 0
             : (column_descriptives.maximum-column_descriptives.minimum)/(max_range-min_range);
@@ -141,9 +143,8 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix, const Index& column_index,
 
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
-        matrix(i, index) = matrix(i, index)*slope + intercept;
+        matrix(i, column_index) = matrix(i, column_index)*slope + intercept;
     }
-*/
 }
 
 
@@ -190,6 +191,11 @@ void unscale_standard_deviation(Tensor<type, 2>& matrix, const Index& column_ind
 }
 
 
+/// Unscales the given input variables with given logarithmic values.
+/// It updates the input variable of the matrix matrix.
+/// @param inputs_statistics vector of descriptives structures for the input variables.
+/// @param column_index Index of the input to be scaled.
+///
 void unscale_logarithmic(Tensor<type, 2>& matrix, const Index& target_index, const Descriptives& target_statistics)
 {
     for(Index i = 0; i < matrix.dimension(0); i++)
@@ -204,8 +210,6 @@ void unscale_logarithmic(Tensor<type, 2>& matrix, const Index& target_index, con
         }
     }
 }
-
-
 }
 
 
