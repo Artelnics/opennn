@@ -63,6 +63,10 @@ public:
                                NeuralNetworkForwardPropagation&,
                                LossIndexBackPropagation&) const;
 
+   void calculate_output_delta(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagationLM&) const;
+
    void calculate_gradient(const DataSetBatch&,
                            LossIndexBackPropagationLM&) const;
 

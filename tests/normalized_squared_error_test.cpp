@@ -109,10 +109,8 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    Index inputs_number;
    Index hidden_neurons;
    Index outputs_number;
-
    
    Tensor<type, 1> parameters;
-
 
    NeuralNetworkForwardPropagation forward_propagation;
 
