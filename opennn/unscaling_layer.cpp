@@ -212,6 +212,10 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
         {
             scaling_methods_strings[i] = "MeanStandardDeviation";
         }
+        else if(scalers[i] == StandardDeviation)
+        {
+            scaling_methods_strings[i] = "StandardDeviation";
+        }
         else if(scalers[i] == Logarithm)
         {
             scaling_methods_strings[i] = "Logarithm";
@@ -255,9 +259,13 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_method_text() const
         {
             scaling_methods_strings[i] = "mean and standard deviation";
         }
-        else if(scalers[i] == Logarithmic)
+        else if(scalers[i] == StandardDeviation)
         {
-            scaling_methods_strings[i] = "logarithmic";
+            scaling_methods_strings[i] = "standard deviation";
+        }
+        else if(scalers[i] == Logarithm)
+        {
+            scaling_methods_strings[i] = "logarithm";
         }
         else
         {
@@ -513,7 +521,7 @@ void UnscalingLayer::set_scalers(const Tensor<Scaler,1>& new_unscaling_method)
 
 
 /// Sets the method to be used for unscaling the outputs from the neural network
-/// The argument is a string containing the name of the method("NoUnscaling", "MeanStandardDeviation", "MinimumMaximum" or "Logarithmic").
+/// The argument is a string containing the name of the method("NoUnscaling", "MeanStandardDeviation", "MinimumMaximum" or "Logarithm").
 /// @param new_unscaling_method New unscaling method for the output variables.
 
 void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
@@ -547,6 +555,10 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
     {
         set_scalers(MeanStandardDeviation);
     }
+    else if(new_scaling_methods_string == "StandardDeviation")
+    {
+        set_scalers(StandardDeviation);
+    }
     else if(new_scaling_methods_string == "Logarithm")
     {
         set_scalers(Logarithm);
@@ -564,7 +576,7 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
 
 
 /// Sets the methods to be used for unscaling each variable.
-/// The argument is a vector string containing the name of the methods("NoScaling", "MeanStandardDeviation" or "Logarithmic").
+/// The argument is a vector string containing the name of the methods("NoScaling", "MeanStandardDeviation" or "Logarithm").
 /// @param new_unscaling_methods_string New unscaling methods for the variables.
 
 void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_string)
@@ -597,6 +609,10 @@ void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_
         else if(new_unscaling_methods_string(i) == "MeanStandardDeviation")
         {
             new_unscaling_methods(i) = MeanStandardDeviation;
+        }
+        else if(new_unscaling_methods_string(i) == "StandardDeviation")
+        {
+            new_unscaling_methods(i) = StandardDeviation;
         }
         else if(new_unscaling_methods_string(i) == "MinimumMaximum")
         {
@@ -781,7 +797,7 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
                     outputs(i,j) = inputs(i,j)*slope + intercept;
                 }
-                else if(scalers(j) == Logarithmic)
+                else if(scalers(j) == Logarithm)
                 {
                     outputs(i,j) = static_cast<type>(0.5)*(exp(inputs(i,j))+1)*(descriptives[j].maximum-descriptives[j].minimum)
                                  + descriptives[j].minimum;
@@ -1065,6 +1081,10 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
             scalers[i] = MeanStandardDeviation;
         }
+        else if(new_method == "StandardDeviation")
+        {
+            scalers[i] = StandardDeviation;
+        }
         else if(new_method == "Logarithm")
         {
             scalers[i] = Logarithm;
@@ -1136,7 +1156,7 @@ string UnscalingLayer::write_expression_c() const
 
             buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
         }
-        else if(scalers(i) == Logarithmic)
+        else if(scalers(i) == Logarithm)
         {
             buffer << "\toutputs[" << i << "] = 0.5*exp( inputs[" << i << "] -1)*("
                    << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
