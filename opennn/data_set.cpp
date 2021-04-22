@@ -6363,6 +6363,8 @@ void DataSet::set_default_columns_scalers()
 
         const TensorMap<Tensor<type,1>> input_column(column_data.data(), column_data.dimension(0));
 
+        current_distribution = perform_distribution_distance_analysis(input_column);
+
         if(current_distribution == 0) // Normal distribution
         {
             columns(i).scaler = Scaler::MeanStandardDeviation;
