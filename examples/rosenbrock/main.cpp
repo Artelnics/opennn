@@ -29,10 +29,23 @@ int main()
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
+        //float from1 = 0, to1 = nextafterf(from1, 1);
+
+//        float from2 = 1.0;
+//        float to2 = nextafterf(from2, from2-1);
+
+//        printf("The next representable float after %.2f is %.20f (%a)\n", from2, to2, to2);
+
+
+
+//        cout << nextafter(1, 2) << endl;
+
+//        system("pause");
+
         // Data Set
 
-        const Index samples = 100;
-        const Index variables = 5;
+        const Index samples = 1000;
+        const Index variables = 2;
 
         DataSet data_set;
 
@@ -46,7 +59,7 @@ int main()
         // Neural network
 
         const Index inputs_number = data_set.get_input_variables_number();
-        const Index hidden_neurons_number = variables;
+        const Index hidden_neurons_number = 10;
         const Index outputs_number = data_set.get_target_variables_number();
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
@@ -63,17 +76,16 @@ int main()
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(100);
+        training_strategy.get_quasi_Newton_method_pointer()->set_maximum_epochs_number(1000000);
+        training_strategy.get_quasi_Newton_method_pointer()->set_display_period(1000);
 
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1000);
+//        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1000);
 
         training_strategy.perform_training();
 
         cout << "End Rosenbrock" << endl;
-
-        system("pause");
 
         return 0;
     }
