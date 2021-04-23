@@ -29,7 +29,7 @@ int main()
     {
         cout << "OpenNN. Airfoil Self-Noise Example." << endl;
 
-        srand(static_cast<unsigned>(time(nullptr)));
+//        srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
 
@@ -78,7 +78,7 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
         const TrainingResults training_results = training_strategy.perform_training();
 /*

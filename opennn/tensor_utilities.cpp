@@ -51,7 +51,6 @@ void divide_columns(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 }
 
 
-
 bool is_zero(const Tensor<type, 1>& tensor)
 {
     const Index size = tensor.size();

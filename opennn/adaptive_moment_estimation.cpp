@@ -296,8 +296,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
     Index batch_size_training = 0;
     Index batch_size_selection = 0;
@@ -577,12 +577,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(stop_training) break;
     }
 
+    // @todo Does this work?
+
     if(choose_best_selection)
     {
         neural_network_pointer->set_parameters(results.optimal_parameters);
 
         selection_error = results.optimum_selection_error;
-    }
+    }    
 
     if(display) results.print();
 
