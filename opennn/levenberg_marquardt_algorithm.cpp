@@ -703,7 +703,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = LossGoal;
         }
 
-        else if(epoch != 1 && training_loss_decrease >= minimum_loss_decrease)
+        else if(epoch != 1 && abs(training_loss_decrease) < minimum_loss_decrease)
         {
             if(display)
             {

@@ -44,8 +44,8 @@ int main()
 
         // Data Set
 
-        const Index samples = 1000;
-        const Index variables = 2;
+        const Index samples = 1000000;
+        const Index variables = 10;
 
         DataSet data_set;
 
@@ -76,10 +76,22 @@ int main()
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
+//        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
+
+
+        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_maximum_epochs_number(100000);
+        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_maximum_selection_error_increases(1000000);
+        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_display_period(100);
+//        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_minimum_damping_parameter(numeric_limits<type>::min());
+
+
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10000000);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(100);
+
         training_strategy.get_quasi_Newton_method_pointer()->set_maximum_epochs_number(1000000);
-        training_strategy.get_quasi_Newton_method_pointer()->set_display_period(1000);
+        training_strategy.get_quasi_Newton_method_pointer()->set_display_period(10);
 
 //        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1000);
 

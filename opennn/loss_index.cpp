@@ -519,33 +519,19 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
     calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
 
-    cout << "calculate_squared_errors" << endl;
-
     calculate_errors(batch, forward_propagation, loss_index_back_propagation_lm);
-
-    cout << "calculate_errors" << endl;
 
     calculate_error(batch, forward_propagation, loss_index_back_propagation_lm);
 
-    cout << "calculate_error" << endl;
-
     calculate_layers_delta(batch, forward_propagation, loss_index_back_propagation_lm);
-
-    cout << "layers delta" << endl;
 
     // Second Order
 
     calculate_squared_errors_jacobian(batch, forward_propagation, loss_index_back_propagation_lm);
 
-    cout << "squared errors jacobian" << endl;
-
     calculate_gradient(batch, loss_index_back_propagation_lm);
 
-    cout << "gradient" << endl;
-
     calculate_hessian_approximation(batch, loss_index_back_propagation_lm);
-
-    cout << "hessian approximation" << endl;
 
     // Loss
 
