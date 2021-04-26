@@ -308,7 +308,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    // Test perceptron and binary probabilistic
@@ -350,7 +350,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -394,7 +394,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -445,7 +445,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -495,7 +495,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -548,7 +548,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -600,7 +600,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -652,7 +652,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    // Test Perceptron LM
@@ -698,8 +698,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, 1.0e-3), LOG);
-       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, static_cast<type>(1.0e-3)), LOG);
+       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -745,8 +745,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, 1.0e-3), LOG);
-       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, static_cast<type>(1.0e-3)), LOG);
+       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -791,8 +791,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, 1.0e-3), LOG);
-       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, static_cast<type>(1.0e-3)), LOG);
+       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    // Test convolutional

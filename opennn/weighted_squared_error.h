@@ -77,7 +77,15 @@ public:
                         const NeuralNetworkForwardPropagation&,
                         LossIndexBackPropagation&) const;
 
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagationLM&) const;
+
    type weighted_sum_squared_error(const Tensor<type, 2> & x, const Tensor<type, 2> & y) const;
+
+   void calculate_squared_errors(const DataSetBatch&,
+                                 const NeuralNetworkForwardPropagation&,
+                                 LossIndexBackPropagationLM&) const;
 
    string get_error_type() const;
 

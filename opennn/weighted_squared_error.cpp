@@ -122,7 +122,7 @@ void WeightedSquaredError::set_weights()
 
 #ifdef OPENNN_DEBUG
 
-//    check();
+    //    check();
 
 #endif
 
@@ -203,15 +203,15 @@ void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 
 void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
-                     LossIndexBackPropagation& back_propagation) const
+                                           const NeuralNetworkForwardPropagation& forward_propagation,
+                                           LossIndexBackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_back_propagation
-    = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
+            = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
     const Tensor<type, 2>& targets = batch.targets_2d;
     const Tensor<type, 2>& outputs = probabilistic_layer_back_propagation->activations;
@@ -237,52 +237,68 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
+void WeightedSquaredError::calculate_error(const DataSetBatch &batch,
+                                           const NeuralNetworkForwardPropagation &forward_propagation,
+                                           LossIndexBackPropagationLM &back_propagation) const
+{
+    Tensor<type, 0> error;
+    error.device(*thread_pool_device) = back_propagation.squared_errors.contract(back_propagation.squared_errors, AT_B);
+
+    const Index batch_samples_number = batch.get_samples_number();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
+
+    const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+
+    back_propagation.error = error()/coefficient;
+}
+
+
 void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                                   NeuralNetworkForwardPropagation& forward_propagation,
                                                   LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef OPENNN_DEBUG
+#ifdef OPENNN_DEBUG
 
-     check();
+    check();
 
-     #endif
+#endif
 
-     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+    LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
-     = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
+    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
+            = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
-     const Tensor<type, 2>& targets = batch.targets_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
 
-     const Index batch_samples_number = batch.targets_2d.size();
-     const Index total_samples_number = data_set_pointer->get_samples_number();
+    const Index batch_samples_number = batch.targets_2d.size();
+    const Index total_samples_number = data_set_pointer->get_samples_number();
 
-     const type coefficient = static_cast<type>(2.0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = static_cast<type>(2.0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-     const Tensor<bool, 2> if_sentence = targets == targets.constant(1);
-     const Tensor<bool, 2> else_sentence = targets == targets.constant(0);
+    const Tensor<bool, 2> if_sentence = targets == targets.constant(1);
+    const Tensor<bool, 2> else_sentence = targets == targets.constant(0);
 
-     Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
+    Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
 
-     Tensor<type, 2> f_2(targets.dimension(0), targets.dimension(1));
+    Tensor<type, 2> f_2(targets.dimension(0), targets.dimension(1));
 
-     Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
+    Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
 
-     f_1 = (coefficient*positives_weight)*back_propagation.errors;
+    f_1 = (coefficient*positives_weight)*back_propagation.errors;
 
-     f_2 = coefficient*negatives_weight*back_propagation.errors;
+    f_2 = coefficient*negatives_weight*back_propagation.errors;
 
-     f_3 = targets.constant(0);
+    f_3 = targets.constant(0);
 
-     probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
-             = if_sentence.select(f_1, else_sentence.select(f_2, f_3));
+    probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
+            = if_sentence.select(f_1, else_sentence.select(f_2, f_3));
 }
 
 
 void WeightedSquaredError::calculate_gradient(const DataSetBatch& batch,
-                                    LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                              LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -490,6 +506,80 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x,
     return weighted_sum_squared_error(0);
 }
 
+
+void WeightedSquaredError::calculate_squared_errors(const DataSetBatch& batch,
+                                                    const NeuralNetworkForwardPropagation& forward_propagation,
+                                                    LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+{
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
+
+    const Layer* output_layer_pointer = output_layer_forward_propagation->layer_pointer;
+
+    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+
+    const Tensor<type, 2>& targets = batch.targets_2d;
+
+    switch(output_layer_pointer->get_type())
+    {
+    case Layer::Perceptron:
+    {
+        PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+                = static_cast<PerceptronLayerForwardPropagation*>(output_layer_forward_propagation);
+
+        const Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->activations;
+
+        const Tensor<bool, 2> if_sentence = outputs == outputs.constant(1);
+
+        Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
+
+        Tensor<type, 2> f_2(outputs.dimension(0), outputs.dimension(1));
+
+        f_1 = ((outputs - targets))*positives_weight;
+
+        f_2 = ((outputs - targets))*negatives_weight;
+
+        loss_index_back_propagation_lm.squared_errors = ((if_sentence.select(f_1, f_2)).sum(rows_sum).square()).sqrt();
+    }
+        break;
+
+    case Layer::Probabilistic:
+    {
+        ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
+                = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
+
+        const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
+
+        const Tensor<bool, 2> if_sentence = outputs == outputs.constant(1);
+
+        Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
+
+        Tensor<type, 2> f_2(outputs.dimension(0), outputs.dimension(1));
+
+        f_1 = ((outputs - targets))*positives_weight;
+
+        f_2 = ((outputs - targets))*negatives_weight;
+
+        loss_index_back_propagation_lm.squared_errors = ((if_sentence.select(f_1, f_2)).sum(rows_sum).square()).sqrt();
+    }
+        break;
+
+    default:
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: LossIndex class.\n"
+               << "void calculate_squared_errors_jacobian(const DataSetBatch&, NeuralNetworkForwardPropagation&, LossIndexBackPropagationLM&) const method "
+               << "Levenberg - Marquardt algorithm can only be used with Perceptron and Probabilistic layers.\n";
+
+        throw logic_error(buffer.str());
+    }
+        break;
+    }
+
+
+}
 
 }
 
