@@ -173,9 +173,9 @@ public:
                          const NeuralNetworkForwardPropagation&,
                          LossIndexBackPropagationLM&) const;
 
-   void calculate_squared_errors(const DataSetBatch&,
-                                 const NeuralNetworkForwardPropagation&,
-                                 LossIndexBackPropagationLM&) const;
+   virtual void calculate_squared_errors(const DataSetBatch&,
+                                         const NeuralNetworkForwardPropagation&,
+                                         LossIndexBackPropagationLM&) const;
 
    virtual void calculate_error(const DataSetBatch&,
                                 const NeuralNetworkForwardPropagation&,
