@@ -177,7 +177,7 @@ void LevenbergMarquardtAlgorithm::set_default()
 {
     // Stopping criteria
 
-    minimum_parameters_increment_norm = static_cast<type>(1.0e-3);
+    minimum_parameters_increment_norm = static_cast<type>(0.0);
 
     minimum_loss_decrease = static_cast<type>(0.0);
     training_loss_goal = 0;
@@ -703,7 +703,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = LossGoal;
         }
 
-        else if(epoch != 1 && training_loss_decrease >= minimum_loss_decrease)
+        else if(epoch != 1 && abs(training_loss_decrease) < minimum_loss_decrease)
         {
             if(display)
             {

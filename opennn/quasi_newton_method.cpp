@@ -263,7 +263,7 @@ void QuasiNewtonMethod::set_default()
 
     // Stopping criteria
 
-    minimum_parameters_increment_norm = static_cast<type>(1.0e-3);
+    minimum_parameters_increment_norm = static_cast<type>(0.0);
 
     minimum_loss_decrease = static_cast<type>(0.0);
     training_loss_goal = 0;
@@ -723,6 +723,32 @@ void QuasiNewtonMethod::update_parameters(
 
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
+    if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
+    {
+//        cout << "Learning rate is zero###############################################" << endl;
+//        //cout << optimization_data.epoch << endl;
+
+        const Index parameters_number = back_propagation.parameters.size();
+
+        for(Index i = 0; i < parameters_number; i++)
+        {
+            if(abs(back_propagation.gradient(i)) < numeric_limits<type>::min())
+            {
+                back_propagation.parameters(i) = back_propagation.parameters(i);
+            }
+            else if(back_propagation.gradient(i) > 0)
+            {
+                back_propagation.parameters(i) = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)-1);
+            }
+            else
+            {
+                back_propagation.parameters(i) = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)+1);
+            }
+        }
+
+        optimization_data.learning_rate = optimization_data.initial_learning_rate;
+    }
+
     optimization_data.old_parameters = back_propagation.parameters;
 
     back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
@@ -892,7 +918,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
+/*
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
@@ -905,25 +931,26 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
+
         else if(epoch != 0 &&
                 training_back_propagation.loss - optimization_data.old_training_loss >= minimum_loss_decrease)
         {
             if(display)
             {
                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                    << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss << endl;
+                    << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss << endl
+                    << "Loss: " << training_back_propagation.loss << endl
+                    << "Old loss: " << optimization_data.old_training_loss << endl;
             }
 
             stop_training = true;
 
             results.stopping_condition = MinimumLossDecrease;
         }
-        else if(training_back_propagation.loss <= training_loss_goal)
+*/
+        if(training_back_propagation.loss <= training_loss_goal)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Loss goal reached.\n";
-            }
+            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
 
             stop_training = true;
 

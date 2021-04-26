@@ -279,7 +279,7 @@ struct TrainingResults
 
     type final_parameters_norm;
 
-    /// Final loss function evaluation.
+    /// Final training error.
 
     type training_error;
 

@@ -124,6 +124,64 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
 }
 
 
+void SumSquaredError::calculate_output_delta(const DataSetBatch&,
+                                             NeuralNetworkForwardPropagation&,
+                                             LossIndexBackPropagationLM& loss_index_back_propagation) const
+{
+#ifdef OPENNN_DEBUG
+
+    check();
+
+#endif
+
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
+
+    Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
+
+    switch(output_layer_pointer->get_type())
+    {
+    case Layer::Perceptron:
+    {
+        PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation
+                = static_cast<PerceptronLayerBackPropagationLM*>(output_layer_back_propagation);
+
+        memcpy(perceptron_layer_back_propagation->delta.data(),
+               loss_index_back_propagation.errors.data(),
+               static_cast<size_t>(loss_index_back_propagation.errors.size())*sizeof (type));
+
+        divide_columns(perceptron_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
+    }
+        break;
+
+    case Layer::Probabilistic:
+    {
+        ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation
+                = static_cast<ProbabilisticLayerBackPropagationLM*>(output_layer_back_propagation);
+
+        memcpy(probabilistic_layer_back_propagation->delta.data(),
+               loss_index_back_propagation.errors.data(),
+               static_cast<size_t>(loss_index_back_propagation.errors.size())*sizeof (type));
+
+        divide_columns(probabilistic_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
+    }
+        break;
+
+    default:
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: MeanSquaredError class.\n"
+               << "Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n";
+
+        throw logic_error(buffer.str());
+    }
+    }
+}
+
+
+
 void SumSquaredError::calculate_gradient(const DataSetBatch& ,
                                     LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
