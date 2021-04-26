@@ -216,8 +216,8 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
     const Tensor<type, 2>& targets = batch.targets_2d;
     const Tensor<type, 2>& outputs = probabilistic_layer_back_propagation->activations;
 
-    const Tensor<bool, 2> if_sentence = outputs == outputs.constant(1);
-    const Tensor<bool, 2> else_sentence = outputs == outputs.constant(0);
+    const Tensor<bool, 2> if_sentence = targets == targets.constant(1);
+    const Tensor<bool, 2> else_sentence = targets == targets.constant(0);
 
     Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
 
