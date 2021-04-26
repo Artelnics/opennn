@@ -615,6 +615,10 @@ TrainingResults StochasticGradientDescent::perform_training()
             stop_training = true;
 
             results.stopping_condition = MaximumEpochsNumber;
+            results.optimum_training_error = training_back_propagation.error;
+            results.optimum_selection_error = selection_back_propagation.error;
+
+            results.optimal_parameters = training_back_propagation.parameters;
 
         }
 
@@ -625,6 +629,10 @@ TrainingResults StochasticGradientDescent::perform_training()
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
+            results.optimum_training_error = training_back_propagation.error;
+            results.optimum_selection_error = selection_back_propagation.error;
+
+            results.optimal_parameters = training_back_propagation.parameters;
         }
 
         else if(training_loss <= training_loss_goal)
@@ -634,6 +642,10 @@ TrainingResults StochasticGradientDescent::perform_training()
             stop_training = true;
 
             results.stopping_condition  = LossGoal;
+            results.optimum_training_error = training_back_propagation.error;
+            results.optimum_selection_error = selection_back_propagation.error;
+
+            results.optimal_parameters = training_back_propagation.parameters;
         }
 
         else if(gradient_norm <= gradient_norm_goal)
@@ -643,6 +655,10 @@ TrainingResults StochasticGradientDescent::perform_training()
             stop_training = true;
 
             results.stopping_condition = GradientNormGoal;
+            results.optimum_training_error = training_back_propagation.error;
+            results.optimum_selection_error = selection_back_propagation.error;
+
+            results.optimal_parameters = training_back_propagation.parameters;
         }
 
         else if(selection_error_increases >= maximum_selection_error_increases)
@@ -656,6 +672,10 @@ TrainingResults StochasticGradientDescent::perform_training()
             stop_training = true;
 
             results.stopping_condition = MaximumSelectionErrorIncreases;
+            results.optimum_training_error = training_back_propagation.error;
+            results.optimum_selection_error = selection_back_propagation.error;
+
+            results.optimal_parameters = training_back_propagation.parameters;
         }
 
         if(epoch != 1 && epoch % save_period == 0)
