@@ -664,153 +664,157 @@ void SumSquaredErrorTest::test_calculate_squared_errors_jacobian()
 {   
    cout << "test_calculate_squared_errors_jacobian\n";
 
-//   NumericalDifferentiation nd;
+   NeuralNetwork neural_network;
 
-//   NeuralNetwork neural_network;
-//   
-//   Tensor<type, 1> parameters;
+   DataSet data_set;
 
-//   DataSet data_set;
+   Tensor<Index, 1> samples_indices;
+   Tensor<Index, 1> input_indices;
+   Tensor<Index, 1> target_indices;
 
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
+   DataSetBatch batch;
 
-//   Tensor<type, 1> gradient;
+   MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-//   Tensor<type, 1> terms;
-//   Tensor<type, 2> terms_Jacobian;
-//   Tensor<type, 2> numerical_squared_errors_jacobian;
+   Tensor<Index, 1> architecture;
 
-//   Tensor<Index, 1> samples;
+   Index samples_number;
+   Index inputs_number;
+   Index hidden_neurons_number;
+   Index outputs_number;
 
-//   Tensor<type, 2> inputs;
-//   Tensor<type, 2> targets;
+   // Test Perceptron
+   {
+       samples_number = 2;
+       inputs_number = 2;
+       hidden_neurons_number = 3;
+       outputs_number = 4;
 
-//   Tensor<type, 2> outputs;
-//   Tensor<type, 2> output_delta;
+       data_set.set(samples_number, inputs_number, outputs_number);
+       data_set.set_data_random();
+       data_set.set_training();
 
-//   Tensor<Tensor<type, 2>, 1> layers_activations;
+       batch.set(samples_number, &data_set);
 
-//   Tensor<Tensor<type, 2>, 1> layers_activations_derivatives;
+       samples_indices = data_set.get_training_samples_indices();
+       input_indices = data_set.get_input_variables_indices();
+       target_indices = data_set.get_target_variables_indices();
 
-//   Tensor<Tensor<type, 2>, 1> layers_delta;
+       batch.fill(samples_indices, input_indices, target_indices);
 
-   // Test
+       architecture.resize(3);
+       architecture[0] = inputs_number;
+       architecture[1] = hidden_neurons_number;
+       architecture[2] = outputs_number;
 
-//   architecture.setValues({1, 1, 1});
+       neural_network.set(NeuralNetwork::Approximation, architecture);
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
+       neural_network.set_parameters_random();
 
-//   neural_network.set_parameters_constant(0.0);
+       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       LossIndexBackPropagation back_propagation(samples_number, &mean_squared_error);
+       LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &mean_squared_error);
 
-//   data_set.set(1, 1, 1);
+       mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-//   data_set.initialize_data(0.0);
+       neural_network.forward_propagate(batch, forward_propagation);
+       mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-//   samples.set(1,0);
-   //samples.initialize_sequential();
+       mean_squared_error.back_propagate(batch, forward_propagation, loss_index_back_propagation_lm);
 
-//   inputs = data_set.get_input_data(samples);
-//   targets = data_set.get_target_data(samples);
+       Tensor<type, 2> numerical_squared_errors_jacobian;
 
-//   outputs = neural_network.calculate_outputs(inputs);
-//   output_delta = sum_squared_error.calculate_output_delta(outputs, targets);
+       numerical_squared_errors_jacobian = mean_squared_error.calculate_Jacobian_numerical_differentiation();
 
-//   Tensor<LayerForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
+       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, 1.0e-3), LOG);
+   }
 
-//   layers_delta = sum_squared_error.calculate_layers_delta(forward_propagation, output_delta);
+   // Test probabilistic (binary)
 
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian(inputs, forward_propagation, layers_delta);
+   {
+       samples_number = 2;
+       inputs_number = 2;
+       hidden_neurons_number = 3;
+       outputs_number = 1;
 
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_samples_number(), LOG);
-//   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-//   assert_true(terms_Jacobian == 0.0, LOG);
+       data_set.set(samples_number, inputs_number, outputs_number);
 
-   // Test 
+       data_set.set_data_binary_random();
 
-//   architecture.setValues({3, 4, 2});
+       data_set.set_training();
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_constant(0.0);
+       batch.set(samples_number, &data_set);
 
-//   data_set.set(3, 2, 5);
-//   sum_squared_error.set(&neural_network, &data_set);
-//   data_set.initialize_data(0.0);
+       samples_indices = data_set.get_training_samples_indices();
+       input_indices = data_set.get_input_variables_indices();
+       target_indices = data_set.get_target_variables_indices();
 
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
+       batch.fill(samples_indices, input_indices, target_indices);
 
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
-//   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-//   assert_true(terms_Jacobian == 0.0, LOG);
+       neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons_number, outputs_number});
 
-   // Test
+       neural_network.set_parameters_random();
 
-//   architecture.resize(3);
-//   architecture[0] = 5;
-//   architecture[1] = 1;
-//   architecture[2] = 2;
+       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       LossIndexBackPropagation back_propagation(samples_number, &mean_squared_error);
+       LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &mean_squared_error);
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_constant(0.0);
+       mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-//   data_set.set(5, 2, 3);
-//   sum_squared_error.set(&neural_network, &data_set);
-//   data_set.initialize_data(0.0);
+       neural_network.forward_propagate(batch, forward_propagation);
+       mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
+       mean_squared_error.back_propagate(batch, forward_propagation, loss_index_back_propagation_lm);
 
-//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
-//   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-//   assert_true(terms_Jacobian == 0.0, LOG);
+       Tensor<type, 2> numerical_squared_errors_jacobian;
 
-   // Test
+       numerical_squared_errors_jacobian = mean_squared_error.calculate_Jacobian_numerical_differentiation();
 
-//   architecture.setValues({1, 1, 1});
+       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
+   }
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_random();
-//   parameters = neural_network.get_parameters();
+   // Test probabilistic (multiple)
+   {
+       samples_number = 2;
+       inputs_number = 2;
+       hidden_neurons_number = 3;
+       outputs_number = 3;
 
-//   data_set.set(1, 1, 1);
-//   data_set.set_data_random();
+       data_set.set(samples_number, inputs_number, outputs_number);
 
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
-//   numerical_squared_errors_jacobian = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
+       data_set.set_data_binary_random();
 
-//   assert_true(absolute_value(terms_Jacobian-numerical_squared_errors_jacobian) < 1.0e-3, LOG);
+       data_set.set_training();
 
-   // Test
+       batch.set(samples_number, &data_set);
 
-//   architecture.setValues({2, 2, 2});
+       samples_indices = data_set.get_training_samples_indices();
+       input_indices = data_set.get_input_variables_indices();
+       target_indices = data_set.get_target_variables_indices();
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_random();
-//   parameters = neural_network.get_parameters();
+       batch.fill(samples_indices, input_indices, target_indices);
 
-//   data_set.set(2, 2, 2);
-//   data_set.set_data_random();
+       neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons_number, outputs_number});
 
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
-//   numerical_squared_errors_jacobian = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
+       neural_network.set_parameters_random();
 
-//   assert_true(absolute_value(terms_Jacobian-numerical_squared_errors_jacobian) < 1.0e-3, LOG);
+       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       LossIndexBackPropagation back_propagation(samples_number, &mean_squared_error);
+       LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &mean_squared_error);
 
-   // Test
+       mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-//   architecture.setValues({2, 2, 2});
+       neural_network.forward_propagate(batch, forward_propagation);
+       mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-//   neural_network.set_parameters_random();
+       mean_squared_error.back_propagate(batch, forward_propagation, loss_index_back_propagation_lm);
 
-//   data_set.set(2, 2, 2);
-//   data_set.set_data_random();
+       Tensor<type, 2> numerical_squared_errors_jacobian;
 
-//   gradient = sum_squared_error.calculate_gradient();
+       numerical_squared_errors_jacobian = mean_squared_error.calculate_Jacobian_numerical_differentiation();
 
-//   terms = sum_squared_error.calculate_training_error_terms();
-//   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
-
-//   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(terms)*2.0 - gradient) < 1.0e-3, LOG);
-
+       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
+   }
 }
 
 
@@ -863,7 +867,6 @@ void SumSquaredErrorTest::run_test_case()
 
    test_constructor();
    test_destructor();
-
 
    // Get methods
 

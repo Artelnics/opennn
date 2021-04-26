@@ -277,9 +277,9 @@ protected:
 
    /// Maximum interval length for the learning rate.
 
-   type learning_rate_tolerance = static_cast<type>(1.0e-3);
+   type learning_rate_tolerance;
 
-   type loss_tolerance = static_cast<type>(1.0e-3);
+   type loss_tolerance;
 
    // UTILITIES
 

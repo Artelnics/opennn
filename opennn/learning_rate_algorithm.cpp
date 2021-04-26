@@ -164,8 +164,8 @@ void LearningRateAlgorithm::set_default()
 
     // TRAINING PARAMETERS
 
-    learning_rate_tolerance = static_cast<type>(1.0e-3);
-    loss_tolerance = static_cast<type>(1.0e-3);
+    learning_rate_tolerance = numeric_limits<type>::min();//static_cast<type>(1.0e-9);
+    loss_tolerance = numeric_limits<type>::min();//static_cast<type>(1.0e-9);
 }
 
 
@@ -343,7 +343,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
     // Reduce the interval
 
     while(fabs(triplet.A.first-triplet.B.first) > learning_rate_tolerance
-      ||  fabs(triplet.A.second-triplet.B.second) > loss_tolerance)
+       || fabs(triplet.A.second-triplet.B.second) > loss_tolerance)
     {
         try
         {
@@ -356,7 +356,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         }
         catch(const logic_error& error)
         {
-            //cout << error.what() << endl;
+            cout << error.what() << endl;
 
             return triplet.minimum();
         }
