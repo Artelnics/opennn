@@ -833,7 +833,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     {
         optimization_data.epoch = epoch;
 
-        // Neural network
+       // Neural network
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 

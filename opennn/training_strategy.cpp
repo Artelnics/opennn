@@ -750,6 +750,7 @@ TrainingResults TrainingStrategy::perform_training()
         quasi_Newton_method.set_display(display);
 
         return quasi_Newton_method.perform_training();
+
     }
 
     case LEVENBERG_MARQUARDT_ALGORITHM:
