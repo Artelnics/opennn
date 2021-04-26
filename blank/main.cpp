@@ -38,11 +38,13 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
-        //data_set.set_default_columns_scalers();
+//        data_set.set_default_columns_scalers();
 
         const Tensor<Descriptives, 1> input_descriptives = data_set.scale_input_variables();
 
         const Tensor<Descriptives, 1> target_descriptives = data_set.scale_target_variables();
+
+        data_set.print_columns();
 
         // Neural network
 

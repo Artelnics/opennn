@@ -609,6 +609,132 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
+void DataSet::Column::print() const
+{
+    cout << "Name: " << name << endl;
+
+    cout << "Column use: ";
+
+    switch (column_use)
+    {
+    case Input:
+    {
+        cout << "Input" << endl;
+    }
+        break;
+
+    case Target:
+    {
+        cout << "Target" << endl;
+
+    }
+        break;
+
+    case UnusedVariable:
+    {
+        cout << "Unused" << endl;
+
+    }
+        break;
+
+    case Time:
+    {
+        cout << "Time" << endl;
+
+    }
+        break;
+
+    case Id:
+    {
+        cout << "Id" << endl;
+    }
+        break;
+    }
+
+    cout << "Column type: ";
+
+    switch (type)
+    {
+    case Numeric:
+    {
+        cout << "Numeric" << endl;
+    }
+        break;
+
+    case Binary:
+    {
+        cout << "Binary" << endl;
+
+        cout << "Categories: " << categories << endl;
+    }
+        break;
+
+    case Categorical:
+    {
+        cout << "Categorical" << endl;
+
+        cout << "Categories: " << categories << endl;
+    }
+        break;
+
+    case DateTime:
+    {
+        cout << "DateTime" << endl;
+
+    }
+        break;
+
+    case Constant:
+    {
+        cout << "Constant" << endl;
+    }
+        break;
+    }
+
+    cout << "Scaler: ";
+
+    switch (scaler)
+    {
+    case NoScaling:
+    {
+        cout << "NoScaling" << endl;
+    }
+        break;
+
+    case NoUnscaling:
+    {
+        cout << "NoUnscaling" << endl;
+    }
+        break;
+
+    case MinimumMaximum:
+    {
+        cout << "MinimumMaximum" << endl;
+    }
+        break;
+
+    case MeanStandardDeviation:
+    {
+        cout << "MeanStandardDeviation" << endl;
+    }
+        break;
+
+    case StandardDeviation:
+    {
+        cout << "StandardDeviation" << endl;
+
+    }
+        break;
+
+    case Logarithm:
+    {
+        cout << "Logarithm" << endl;
+    }
+        break;
+    }
+}
+
+
 Index DataSet::Column::get_variables_number() const
 {
     if(type == Categorical)
@@ -7093,6 +7219,14 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
+void DataSet::print() const
+{
+    print_data();
+
+    print_columns();
+}
+
+
 void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
     ostringstream buffer;
@@ -7972,6 +8106,20 @@ void DataSet::load(const string& file_name)
     from_XML(document);
 }
 
+
+void DataSet::print_columns() const
+{
+    const Index columns_number = get_columns_number();
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        columns(i).print();
+        cout << endl;
+    }
+
+    cout << endl;
+
+}
 
 void DataSet::print_columns_types() const
 {

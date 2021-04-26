@@ -618,9 +618,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         // Optimization data
 
         update_parameters(training_batch,
-                     training_forward_propagation,
-                     training_loss_index_back_propagation_lm,
-                     optimization_data);
+                          training_forward_propagation,
+                          training_loss_index_back_propagation_lm,
+                          optimization_data);
 
         if(epoch == 1)
         {
@@ -830,9 +830,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 /// \param optimization_data
 
 void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
-                                               NeuralNetworkForwardPropagation& forward_propagation,
-                                               LossIndexBackPropagationLM& loss_index_back_propagation_lm,
-                                               LevenbergMarquardtAlgorithmData& optimization_data)
+                                                    NeuralNetworkForwardPropagation& forward_propagation,
+                                                    LossIndexBackPropagationLM& loss_index_back_propagation_lm,
+                                                    LevenbergMarquardtAlgorithmData& optimization_data)
 {
 
     const type regularization_weight = loss_index_pointer->get_regularization_weight();
