@@ -50,11 +50,9 @@ void WeightedSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
-   Tensor<Index, 1> architecture(2);
-   architecture.setValues({1, 2});
    Tensor<type, 1> parameters;
 
-   NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+   NeuralNetwork neural_network(NeuralNetwork::Classification, {1, 2});
 
    neural_network.set_parameters_constant(1);
    DataSet data_set(1, 1, 1);
@@ -102,9 +100,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
     // Test
 
-  architecture.setValues({3, 1});
-
-  neural_network.set(NeuralNetwork::Approximation, architecture);
+  neural_network.set(NeuralNetwork::Approximation, {3, 1});
 
   neural_network.set_parameters_constant(0.0);
 
@@ -162,12 +158,9 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    // Test trivial
 {
-
-       Tensor<Index, 1> architecture(2);
-       architecture.setValues({1, 1});
        Tensor<type, 1> parameters;
 
-       NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+       NeuralNetwork neural_network(NeuralNetwork::Classification, {1, 1});
 
        neural_network.set_parameters_constant(1);
        DataSet data_set(1, 1, 1);
@@ -535,8 +528,6 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    DataSetBatch batch;
 
    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
-
-   Tensor<Index, 1> architecture;
 
    Index samples_number;
    Index inputs_number;

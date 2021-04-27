@@ -170,9 +170,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    Tensor<Index, 1> samples_indices(0, 1, data_set.get_samples_number()-1);
 
-//    architecture.setValues({1,1});
-
-//    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+//    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
 
 //    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -226,13 +224,9 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 //    data_set.set(1, 1, 1);
 //    data_set.set_data_random();
 
-//    samples_indices.set(0, 1, data_set.get_samples_number()-1);
+//    samples_indices.set(0, 1, data_set.get_samples_number()-1);  
 
-//    
-
-//    architecture.setValues({1,1});
-
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    neural_network.set(NeuralNetwork::Approximation, {1,1});
 //    neural_network.set_parameters_random();
 
 //    loss = sum_squared_error.calculate_training_loss();
@@ -253,9 +247,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    samples_indices.set(0, 1, data_set.get_samples_number()-1);
 
-//    architecture.setValues({1,1});
-
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    neural_network.set(NeuralNetwork::Approximation, {1,1});
 //    neural_network.set_parameters_random();
 
 //    loss = sum_squared_error.calculate_training_loss();
@@ -279,11 +271,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 //   DataSet data_set(1, 1, 1);
 //   Tensor<Index, 1> indices(1,1,data_set.get_samples_number()-1);
 
-//   
-
-//   architecture.setValues({1,1});
-
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+//   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
 
 //   SumSquaredError sum_squared_error(&neural_network);
 
@@ -316,13 +304,10 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
    Tensor<Index, 1> indices(3);
    indices.setValues({1,1,data_set.get_samples_number()-1});
 
-   Tensor<Index, 1> architecture(2);
-
-   architecture.setValues({1,1});
-
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
 
    neural_network.set_parameters_constant(1.0);
+
 //   type loss = sum_squared_error.calculate_training_loss();
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 

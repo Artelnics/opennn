@@ -74,8 +74,6 @@ void QuasiNewtonMethodTest::test_set_inverse_hessian_approximation_method()
 }
 
 
-
-
 void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
 {
    cout << "test_calculate_DFP_inverse_hessian_approximation\n";
@@ -90,16 +88,13 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
 
    QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
 
-
    // Test
 
    data_set.set(2, 1, 1);
    data_set.set_data_random();
 
    architecture.resize(2);
-   architecture.setValues({1,1});
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
    // Test
 
@@ -180,9 +175,7 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation()
 
 //   DataSet data_set;
 
-//   architecture.setValues({1,1});
-
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+//   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
 
 //   SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -215,9 +208,7 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 {
    cout << "test_calculate_inverse_hessian_approximation\n";
 
-//   architecture.setValues({1,1});
-
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+//   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
 //   DataSet data_set(2, 1, 1);
 //   data_set.set_data_random();
 //   SumSquaredError sum_squared_error(&neural_network, &data_set);

@@ -72,10 +72,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 
    targets = data_set.get_target_data();
 
-   Tensor<Index, 1> architecture(2);
-   architecture.setValues({inputs_number, outputs_number});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, outputs_number});
    neural_network.set_parameters_random();
 
    data_set.set(samples_number, inputs_number, outputs_number);
@@ -194,7 +191,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
    Tensor<Index, 1> input_indices;
    Tensor<Index, 1> target_indices;
 
-   Tensor<Index, 1> architecture;
 
    NeuralNetwork neural_network;
 
@@ -674,12 +670,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        batch.fill(samples_indices, input_indices, target_indices);
 
-       architecture.resize(3);
-       architecture[0] = inputs_number;
-       architecture[1] = hidden_neurons;
-       architecture[2] = outputs_number;
-
-       neural_network.set(NeuralNetwork::Approximation, architecture);
+       neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons, outputs_number});
 
        neural_network.set_parameters_random();
 
@@ -936,8 +927,6 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
-   Tensor<Index, 1> architecture;
-
    Index samples_number;
    Index inputs_number;
    Index hidden_neurons_number;
@@ -962,12 +951,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        batch.fill(samples_indices, input_indices, target_indices);
 
-       architecture.resize(3);
-       architecture[0] = inputs_number;
-       architecture[1] = hidden_neurons_number;
-       architecture[2] = outputs_number;
-
-       neural_network.set(NeuralNetwork::Approximation, architecture);
+       neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 

@@ -108,10 +108,7 @@ void TestingAnalysisTest::test_calculate_error_data()
 
     // Neural Network
 
-    Tensor<Index, 1> architecture(2);
-    architecture.setValues({1, 1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
@@ -145,10 +142,7 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
 
     // Neural Network
 
-    Tensor<Index, 1> architecture(2);
-    architecture.setValues({1, 1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
@@ -186,10 +180,7 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
 
     // Neural Network
 
-    Tensor<Index, 1> architecture(2);
-    architecture.setValues({1, 1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
@@ -204,6 +195,7 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
     assert_true(static_cast<double>(error_data[0].mean) == 0.0, LOG);
     assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
 }
+
 
 void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 {
@@ -220,10 +212,7 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 
     // Neural Network
 
-    Tensor<Index, 1> architecture(2);
-    architecture.setValues({1, 1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
@@ -234,8 +223,8 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 
     assert_true(error_data.size() == 1, LOG);
     assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
-
 }
+
 
 void TestingAnalysisTest::test_calculate_error_data_descriptives()
 {
@@ -252,10 +241,7 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
 
     // Neural Network
 
-    Tensor<Index, 1> architecture(2);
-    architecture.setValues({1, 1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
@@ -293,10 +279,7 @@ void TestingAnalysisTest::test_print_error_data_descriptives()
 
     // Neural Network
 
-    Tensor<Index, 1> architecture(2);
-    architecture.setValues({1, 1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
@@ -304,8 +287,6 @@ void TestingAnalysisTest::test_print_error_data_descriptives()
     TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     testing_analysis.print_error_data_descriptives();
-
-
 }
 
 
@@ -324,10 +305,7 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
 
     // Neural Network
 
-    Tensor<Index, 1> architecture(2);
-    architecture.setValues({1, 1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
@@ -356,10 +334,7 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 
     // Neural Network
 
-    Tensor<Index, 1> architecture(2);
-    architecture.setValues({1, 1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
@@ -388,10 +363,7 @@ void TestingAnalysisTest::test_linear_regression()
 
    // Neural Network
 
-   Tensor<Index, 1> architecture(3);
-   architecture.setValues({1, 1, 1});
-
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
    neural_network.set_parameters_constant(0.0);
 
    // Testing Analysis
@@ -423,10 +395,7 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
 
    // Neural Network
 
-   Tensor<Index, 1> architecture(3);
-   architecture.setValues({1, 1, 1});
-
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
    neural_network.set_parameters_constant(0.0);
 
    // Testing Analysis
@@ -453,10 +422,7 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 
     // Neural Network
 
-    Tensor<Index, 1> architecture(3);
-    architecture.setValues({1, 1, 1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
@@ -498,10 +464,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     // Neural Network
 
-    Tensor<Index, 1> architecture(3);
-    architecture.setValues({1, 1, 1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
@@ -591,10 +554,7 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 
    // Neural Network
 
-   Tensor<Index, 1> architecture(3);
-   architecture.setValues({1, 1, 1});
-
-   NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+   NeuralNetwork neural_network(NeuralNetwork::Classification, {1, 1, 1});
    neural_network.set_parameters_constant(0.0);
 
    // Testing Analysis

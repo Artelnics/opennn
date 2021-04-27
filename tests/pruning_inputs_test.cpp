@@ -77,9 +77,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
 //    data_set.split_samples_random();
 
-//    architecture.setValues({2,6,1});
-
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    neural_network.set(NeuralNetwork::Approximation, {2,6,1});
 
 //    TrainingStrategy training_strategy(&neural_network, &data_set);
 
@@ -103,9 +101,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
 //    data_set.generate_sum_data(40,3);
 
-//    architecture.setValues({2,6,1});
-
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    neural_network.set(NeuralNetwork::Approximation, {2,6,1});
 
 //    ts.set_display(false);
 

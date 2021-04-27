@@ -87,10 +87,7 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     data_set.generate_sum_data(20,2);
 
-    Tensor<Index, 1> architecture(3);
-    architecture.setValues({1, 2, 1});
-
-    NeuralNetwork nn(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork nn(NeuralNetwork::Approximation, {1, 2, 1});
 
     TrainingStrategy training_strategy(&nn, &data_set);
 

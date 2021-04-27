@@ -107,10 +107,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     data_set.set_columns_uses(uses);
 
-    Tensor<Index, 1 > architecture(3);
-    architecture.setValues({1,3,1});
-
-    neural_network.set(NeuralNetwork::Approximation,architecture);
+    neural_network.set(NeuralNetwork::Approximation, {1,3,1});
     neural_network.set_parameters_constant(0.0);
 
     training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
@@ -163,7 +160,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     data_set.set(data);
 
-    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
