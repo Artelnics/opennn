@@ -291,18 +291,6 @@ protected:
 
    NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
-
-   bool is_zero(const Tensor<type, 1>& tensor) const
-   {
-       const Index size = tensor.size();
-
-       for(Index i = 0; i < size; i++)
-       {
-           if(abs(tensor[i]) > numeric_limits<type>::min()) return false;
-       }
-
-       return true;
-   }
 };
 
 }

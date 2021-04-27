@@ -342,8 +342,8 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
     // Reduce the interval
 
-    while(fabs(triplet.A.first-triplet.B.first) > learning_rate_tolerance
-       || fabs(triplet.A.second-triplet.B.second) > loss_tolerance)
+    while(fabs(triplet.A.first-triplet.B.first) >= learning_rate_tolerance
+       || fabs(triplet.A.second-triplet.B.second) >= loss_tolerance)
     {
         try
         {
@@ -442,7 +442,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     LossIndexBackPropagation& back_propagation,
     OptimizationAlgorithmData& optimization_data) const
 {
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    Triplet triplet;
 
 #ifdef OPENNN_DEBUG
 
@@ -456,6 +456,11 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         throw logic_error(buffer.str());
     }
+#endif
+
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+#ifdef OPENNN_DEBUG
 
     if(neural_network_pointer == nullptr)
     {
@@ -498,8 +503,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     const type loss = back_propagation.loss;
 
     const type regularization_weight = loss_index_pointer->get_regularization_weight();
-
-    Triplet triplet;
 
     // Left point
 
@@ -613,6 +616,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     return triplet;
 }
+
 
 /// Calculates the golden section point within a minimum interval defined by three points.
 /// @param triplet Triplet containing a minimum.

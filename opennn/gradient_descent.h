@@ -124,9 +124,7 @@ public:
            LossIndexBackPropagation& back_propagation,
            GradientDescentData& optimization_data);
 
-   TrainingResults perform_training();
-
-   
+   TrainingResults perform_training(); 
 
    string write_optimization_algorithm_type() const;
 
