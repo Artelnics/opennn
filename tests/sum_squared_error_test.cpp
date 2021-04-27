@@ -432,12 +432,9 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 
    batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
-        // Neural network
+   // Neural network
 
-   Tensor<Index, 1> architecture(2);
-   architecture.setValues({inputs_number,targets_number});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number,targets_number});
    neural_network.set_parameters_constant(0.0);
 
    NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
@@ -676,8 +673,6 @@ void SumSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-   Tensor<Index, 1> architecture;
-
    Index samples_number;
    Index inputs_number;
    Index hidden_neurons_number;
@@ -702,12 +697,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        batch.fill(samples_indices, input_indices, target_indices);
 
-       architecture.resize(3);
-       architecture[0] = inputs_number;
-       architecture[1] = hidden_neurons_number;
-       architecture[2] = outputs_number;
-
-       neural_network.set(NeuralNetwork::Approximation, architecture);
+       neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 

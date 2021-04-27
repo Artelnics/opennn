@@ -115,9 +115,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss()
 //    data_set.set(2, 2, 2);
 //    data_set.set_data_random();
 
-//    architecture.setValues({2,2});
-
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    neural_network.set(NeuralNetwork::Approximation, {2,2});
 //    neural_network.set_parameters_random();
 
 //    terms = sum_squared_error.calculate_training_error_terms();
@@ -159,9 +157,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 //   Tensor<type, 2> inputs = data_set.get_training_input_data();
 //   Tensor<type, 2> targets = data_set.get_training_target_data();
 
-//   architecture.setValues({1,1});
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set(NeuralNetwork::Approximation, {1,1});
 //   neural_network.set_parameters_random();
 
 //   Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
@@ -186,9 +182,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 //   data_set.set(1, 1, 2);
 //   data_set.set_data_random();
 
-//   architecture.setValues({1,1});
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set(NeuralNetwork::Approximation, {1,1});
 //   neural_network.set_parameters_random();
 
 //   terms = sum_squared_error.calculate_training_error_terms();
@@ -201,9 +195,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
    // Test
 
-//   architecture.setValues({1,1});
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
 //   neural_network.set_parameters_random();
 
@@ -285,9 +277,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
 //   data_set.set_data_random();
 
-//   architecture.setValues({1,1});
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
 //   parameters = neural_network.get_parameters();
 

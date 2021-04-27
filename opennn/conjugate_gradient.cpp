@@ -911,7 +911,6 @@ TrainingResults ConjugateGradient::perform_training()
 
     for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
-/*
         optimization_data.epoch = epoch;
 
         // Neural network
@@ -957,15 +956,9 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Training history
 
-        if(reserve_training_error_history)
-        {
-            results.training_error_history(epoch) = training_back_propagation.loss;
-        }
+        results.training_error_history(epoch) = training_back_propagation.loss;
 
-        if(has_selection && reserve_selection_error_history)
-        {
-            results.selection_error_history(epoch) = selection_error;
-        }
+        if(has_selection) results.selection_error_history(epoch) = selection_error;
 
         // Stopping Criteria       
 
@@ -1107,7 +1100,6 @@ TrainingResults ConjugateGradient::perform_training()
         // Update stuff
 
         if(has_selection) old_selection_error = selection_error;
-*/
     }
 
     if(has_selection && choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);

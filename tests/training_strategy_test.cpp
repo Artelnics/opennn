@@ -107,7 +107,6 @@ void TrainingStrategyTest::test_perform_training()
    cout << "test_perform_training\n";
 
     NeuralNetwork neural_network;
-    Tensor<Index, 1> architecture(3);
 
     DataSet data_set(2, 2);
 
@@ -125,9 +124,7 @@ void TrainingStrategyTest::test_perform_training()
 
     // Test
 
-    architecture.setValues({1, 1, 1});
-
-    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
     training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
     neural_network.set_parameters_random();
 

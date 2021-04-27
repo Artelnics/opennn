@@ -100,10 +100,7 @@ void MinkowskiErrorTest::test_calculate_error()
 
    batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
-   Tensor<Index, 1> architecture(2);
-   architecture.setValues({inputs_number,targets_number});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number,targets_number});
    neural_network.set_parameters_constant(0);
 
    NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);

@@ -165,10 +165,7 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     // Test
 
-    architecture.resize(3);
-    architecture.setValues({3,2,1});
-
-    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, {3,2,1});
 
     genetic_algorithm.set_individuals_number(4);
 
@@ -210,10 +207,7 @@ void GeneticAlgorithmTest::test_perform_crossover()
 /*
     DataSet data_set;
 
-    Tensor<Index, 1> architecture(3);
-    architecture.setValues({2,2,1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {2,2,1});
 
     SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -306,10 +300,7 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     // Test
 
-    architecture.resize(3);
-    architecture.setValues({1,2,1});
-
-    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, {1,2,1});
 
     genetic_algorithm.set_individuals_number(4);
 
@@ -369,10 +360,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     data_set.set(data);
 
-    architecture.resize(3);
-    architecture.setValues({2,6,1});
-
-    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, {2,6,1});
 
     genetic_algorithm.set_display(false);
 

@@ -51,15 +51,9 @@ void MeanSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
-   //Case1
-
    Tensor<type, 1> parameters;
 
-   Tensor<Index, 1> architecture(3);
-
-   architecture.setValues({1,1,1});
-
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1,1});
    neural_network.set_parameters_constant(0.0);
 
    DataSet data_set(1, 1, 1);
@@ -68,10 +62,9 @@ void MeanSquaredErrorTest::test_calculate_error()
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
    DataSetBatch batch(1, &data_set);
 
-
    Index batch_samples_number = batch.get_samples_number();
 
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1,1,1});
    neural_network.set_parameters_constant(0.0);
 
    data_set.set(1, 1, 1);
@@ -92,10 +85,7 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    Tensor<type, 1> parameters_2;
 
-   Tensor<Index, 1> architecture2(2);
-   architecture2.setValues({1,1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture2);
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
    neural_network.set_parameters_random();
 
    parameters_2 = neural_network.get_parameters();
@@ -220,12 +210,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
         batch.fill(samples_indices, input_indices, target_indices);
 
-        Tensor<Index, 1> architecture(3);
-        architecture[0] = inputs_number;
-        architecture[1] = hidden_neurons;
-        architecture[2] = outputs_number;
-
-        neural_network.set(NeuralNetwork::Classification, architecture);
+        neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons, outputs_number});
 
         mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
@@ -405,11 +390,7 @@ void MeanSquaredErrorTest::test_calculate_squared_errors()
 
    // Test
 
-   Tensor<Index, 1> architecture(3);
-   architecture.setValues({1,1});
-
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
    neural_network.set_parameters_random();
 
    data_set.set(1, 1, 1);
