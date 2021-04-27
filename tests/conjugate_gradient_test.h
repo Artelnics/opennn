@@ -54,10 +54,6 @@ public:
 
    void test_perform_training();
 
-   // Training history methods
-
-   void test_set_reserve_all_training_history();
-
    // Serialization methods
 
    void test_to_XML();   

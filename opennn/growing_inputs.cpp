@@ -263,11 +263,11 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
             if(display)
             {
                 cout << "Trial number: " << i+1 << endl;
-                cout << "   Training error: " << training_results.training_error << endl;
-                cout << "   Selection error: " << training_results.selection_error << endl;
+                cout << "   Training error: " << training_results.final_training_error << endl;
+                cout << "   Selection error: " << training_results.final_selection_error << endl;
             }
 
-            if(training_results.selection_error < results.optimum_selection_error)
+            if(training_results.final_selection_error < results.optimum_selection_error)
             {
                 // Neural network
 
@@ -277,14 +277,14 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 // Loss index
 
-                results.optimum_selection_error = training_results.selection_error;
-                results.optimum_training_error = training_results.training_error;
+                results.optimum_selection_error = training_results.final_selection_error;
+                results.optimum_training_error = training_results.final_training_error;
             }
         }
 
-        if(previus_selection_error < training_results.selection_error) selection_failures++;
+        if(previus_selection_error < training_results.final_selection_error) selection_failures++;
 
-        previus_selection_error = training_results.selection_error;
+        previus_selection_error = training_results.final_selection_error;
 
 //        if(reserve_training_errors) results.training_errors(epoch) = training_results.training_error;
 
@@ -304,7 +304,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
             results.stopping_condition = InputsSelection::MaximumTime;
         }
-        else if(training_results.selection_error <= selection_error_goal)
+        else if(training_results.final_selection_error <= selection_error_goal)
         {
             stop = true;
 

@@ -151,22 +151,6 @@ const bool& ConjugateGradient::get_choose_best_selection() const
 }
 
 
-/// Returns true if the error history vector is to be reserved, and false otherwise.
-
-const bool& ConjugateGradient::get_reserve_training_error_history() const
-{
-    return reserve_training_error_history;
-}
-
-
-/// Returns true if the selection error history vector is to be reserved, and false otherwise.
-
-const bool& ConjugateGradient::get_reserve_selection_error_history() const
-{
-    return reserve_selection_error_history;
-}
-
-
 /// Sets a pointer to a loss index object to be associated to the conjugate gradient object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -221,29 +205,6 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
 }
 
 
-/// Makes the training history of all variables to reseved or not in memory when training.
-/// <ul>
-/// <li> Parameters.
-/// <li> Parameters norm.
-/// <li> loss.
-/// <li> Gradient.
-/// <li> Gradient norm.
-/// <li> selection error.
-/// <li> Training direction.
-/// <li> Training direction norm.
-/// <li> Learning rate.
-/// </ul>
-///
-/// @param new_reserve_all_training_history True if all training history variables are to be reserved,
-/// false otherwise.
-
-void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
-{
-    reserve_training_error_history = new_reserve_all_training_history;
-    reserve_selection_error_history = new_reserve_all_training_history;
-}
-
-
 /// Sets the default values into a conjugate gradient object.
 /// Training operators:
 /// <ul>
@@ -293,11 +254,6 @@ void ConjugateGradient::set_default()
     maximum_time = 3600.0;
 
     choose_best_selection = false;
-
-    // TRAINING HISTORY
-
-    reserve_training_error_history = true;
-    reserve_selection_error_history = true;
 
     // UTILITIES
 
@@ -446,25 +402,6 @@ void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
 void ConjugateGradient::set_choose_best_selection(const bool& new_choose_best_selection)
 {
     choose_best_selection = new_choose_best_selection;
-}
-
-
-/// Makes the error history vector to be reseved or not in memory.
-/// @param new_reserve_training_error_history True if the loss history vector is to be reserved, false otherwise.
-
-void ConjugateGradient::set_reserve_training_error_history(const bool& new_reserve_training_error_history)
-{
-    reserve_training_error_history = new_reserve_training_error_history;
-}
-
-
-/// Makes the selection error history to be reserved or not in memory.
-/// This is a vector.
-/// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
-
-void ConjugateGradient::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
-{
-    reserve_selection_error_history = new_reserve_selection_error_history;
 }
 
 
@@ -894,9 +831,7 @@ TrainingResults ConjugateGradient::perform_training()
 
     if(display) cout << "Training with conjugate gradient...\n";
 
-    TrainingResults results;
-
-    results.resize_training_history(maximum_epochs_number+1);
+    TrainingResults results(maximum_epochs_number+1);
 
     // Elapsed time
 
@@ -955,11 +890,7 @@ TrainingResults ConjugateGradient::perform_training()
 
     ConjugateGradientData optimization_data(this);
 
-    if(has_selection)
-    {
-        results.optimal_parameters = training_back_propagation.parameters;
-        results.resize_selection_history(maximum_epochs_number + 1);
-    }
+    if(has_selection) results.optimal_parameters = training_back_propagation.parameters;
 
     // Calculate error before training
 
@@ -968,15 +899,19 @@ TrainingResults ConjugateGradient::perform_training()
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
     results.training_error_history(0) = training_back_propagation.error;
 
-    neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-    loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
-    loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
-    results.selection_error_history(0) = selection_back_propagation.error;
+    if(has_selection)
+    {
+        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+        loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
+        loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+        results.selection_error_history(0) = selection_back_propagation.error;
+    }
 
     // Main loop
 
     for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
+/*
         optimization_data.epoch = epoch;
 
         // Neural network
@@ -998,20 +933,23 @@ TrainingResults ConjugateGradient::perform_training()
 
             selection_error = selection_back_propagation.error;
 
-            if(epoch == 0)
+            if(selection_back_propagation.error < results.optimum_selection_error)
             {
-                results.optimum_selection_error = selection_error;
+                results.optimum_selection_error = selection_back_propagation.error;
+                results.optimal_parameters = training_back_propagation.parameters;
             }
-            else if(selection_error > old_selection_error)
+            else
             {
                 selection_error_increases++;
             }
-            else if(selection_error <= results.optimum_selection_error)
-            {
-                results.optimum_selection_error = selection_error;
-                results.optimal_parameters = training_back_propagation.parameters;
-            }
         }
+
+        if(is_zero(training_back_propagation.gradient))
+        {
+            if(display) results.print("Gradient is zero");
+            return results;
+        }
+
 
         // Optimization algorithm
 
@@ -1141,8 +1079,8 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.parameters = training_back_propagation.parameters;
 
-            results.training_error = training_back_propagation.error;
-            if(has_selection) results.selection_error = selection_error;
+            results.final_training_error = training_back_propagation.error;
+            if(has_selection) results.final_selection_error = selection_error;
 
             results.final_gradient_norm = gradient_norm;
 
@@ -1169,15 +1107,16 @@ TrainingResults ConjugateGradient::perform_training()
         // Update stuff
 
         if(has_selection) old_selection_error = selection_error;
+*/
     }
 
     if(has_selection && choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
     results.parameters = training_back_propagation.parameters;
 
-    results.training_error = training_back_propagation.error;
+    results.final_training_error = training_back_propagation.error;
 
-    if(has_selection) results.selection_error = selection_error;
+    if(has_selection) results.final_selection_error = selection_error;
 
     results.final_gradient_norm = gradient_norm;
 
@@ -1262,32 +1201,6 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
     labels_values(9,0) = "Maximum time";
 
     labels_values(9,1) = to_string(maximum_time);
-
-    // Reserve training error history
-
-    labels_values(10,0) = "Reserve training error history";
-
-    if(reserve_training_error_history)
-    {
-        labels_values(10,1) = "true";
-    }
-    else
-    {
-        labels_values(10,1) = "false";
-    }
-
-    // Reserve selection error history
-
-    labels_values(11,0) = "Reserve selection error history";
-
-    if(reserve_training_error_history)
-    {
-        labels_values(11,1) = "true";
-    }
-    else
-    {
-        labels_values(11,1) = "false";
-    }
 
     return labels_values;
 }
@@ -1414,32 +1327,6 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         buffer.str("");
         buffer << maximum_time;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
-
-    // Reserve training error history
-
-    {
-        file_stream.OpenElement("ReserveTrainingErrorHistory");
-
-        buffer.str("");
-        buffer << reserve_training_error_history;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
-
-    // Reserve selection error history
-
-    {
-        file_stream.OpenElement("ReserveSelectionErrorHistory");
-
-        buffer.str("");
-        buffer << reserve_selection_error_history;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -1660,63 +1547,6 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_maximum_time(new_maximum_time);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve training error history
-    {
-        const tinyxml2::XMLElement* reserve_training_error_history_element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-        if(reserve_training_error_history_element)
-        {
-            const string new_reserve_training_error_history = reserve_training_error_history_element->GetText();
-
-            try
-            {
-                set_reserve_training_error_history(new_reserve_training_error_history != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve selection error history
-    {
-        const tinyxml2::XMLElement* reserve_selection_error_history_element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(reserve_selection_error_history_element)
-        {
-            const string new_reserve_selection_error_history = reserve_selection_error_history_element->GetText();
-
-            try
-            {
-                set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve selection error history
-    {
-        const tinyxml2::XMLElement* reserve_selection_error_history_element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(reserve_selection_error_history_element)
-        {
-            const string new_reserve_selection_error_history = reserve_selection_error_history_element->GetText();
-
-            try
-            {
-                set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
             }
             catch(const logic_error& e)
             {

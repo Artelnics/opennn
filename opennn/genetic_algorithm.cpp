@@ -555,8 +555,8 @@ void GeneticAlgorithm::evaluate_population()
 
         parameters(i) = training_results.parameters;
 
-        training_errors(i) = training_results.training_error;
-        selection_errors(i) = training_results.selection_error;
+        training_errors(i) = training_results.final_training_error;
+        selection_errors(i) = training_results.final_selection_error;
 
 //        if(display)
 //        {

@@ -508,7 +508,7 @@ public:
 
    // Initialization methods
 
-   void initialize_data(const type&);
+   void set_data_constant(const type&);
 
    void set_data_random();
    void set_data_binary_random();

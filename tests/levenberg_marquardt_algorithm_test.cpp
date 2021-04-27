@@ -251,7 +251,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 //   parameters_number = neural_network.get_parameters_number();
 
 //   data_set.set(1,2,2);
-//   data_set.initialize_data(0.0);
+//   data_set.set_data_constant(0.0);
 
 //   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
@@ -303,21 +303,6 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
 }
 
-
-void LevenbergMarquardtAlgorithmTest::test_set_reserve_all_training_history()
-{
-   cout << "test_set_reserve_all_training_history\n";
-
-   LevenbergMarquardtAlgorithm lma;
-   lma.set_reserve_all_training_history(true);
-
-
-   assert_true(lma.get_reserve_training_error_history(), LOG);
-   assert_true(lma.get_reserve_selection_error_history(), LOG);
-}
-
-
-/// @todo
 
 void LevenbergMarquardtAlgorithmTest::test_perform_training()
 {
@@ -425,21 +410,18 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 //   gradient_norm = l2_norm(gradient);
 
    assert_true(gradient_norm < gradient_norm_goal, LOG);
-
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_resize_training_history()
+void LevenbergMarquardtAlgorithmTest::test_resize_training_error_history()
 {
-   cout << "test_resize_training_history\n";
+   cout << "test_resize_training_error_history\n";
 
    LevenbergMarquardtAlgorithm lma;
 
-   lma.set_reserve_all_training_history(true);
-
    TrainingResults lmatr;//(&lma);
 
-   lmatr.resize_training_history(1);
+   lmatr.resize_training_error_history(1);
 
    assert_true(lmatr.training_error_history.size() == 1, LOG);
    assert_true(lmatr.selection_error_history.size() == 1, LOG);
@@ -554,8 +536,7 @@ void LevenbergMarquardtAlgorithmTest::run_test_case()
 
    // Training history methods
 
-   test_set_reserve_all_training_history();
-   test_resize_training_history();
+   test_resize_training_error_history();
 
    // Serialization methods
 

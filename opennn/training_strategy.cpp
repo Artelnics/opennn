@@ -658,17 +658,6 @@ void TrainingStrategy::set_maximum_selection_error_increases(const Index&  maxim
 }
 
 
-void TrainingStrategy::set_reserve_selection_error_history(const bool& reserve_selection_error)
-{
-    gradient_descent.set_reserve_selection_error_history(reserve_selection_error);
-    conjugate_gradient.set_reserve_selection_error_history(reserve_selection_error);
-    stochastic_gradient_descent.set_reserve_selection_error_history(reserve_selection_error);
-    adaptive_moment_estimation.set_reserve_selection_error_history(reserve_selection_error);
-    quasi_Newton_method.set_reserve_selection_error_history(reserve_selection_error);
-    Levenberg_Marquardt_algorithm.set_reserve_selection_error_history(reserve_selection_error);
-}
-
-
 void TrainingStrategy::set_maximum_epochs_number(const int & maximum_epochs_number)
 {
     gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
@@ -776,7 +765,7 @@ TrainingResults TrainingStrategy::perform_training()
     }
     }
 
-    return TrainingResults();
+    return TrainingResults(0);
 }
 
 

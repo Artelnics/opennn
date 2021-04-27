@@ -108,22 +108,6 @@ const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
 }
 
 
-/// Returns true if the error history vector is to be reserved, and false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_reserve_training_error_history() const
-{
-    return reserve_training_error_history;
-}
-
-
-/// Returns true if the selection error history vector is to be reserved, and false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_reserve_selection_error_history() const
-{
-    return reserve_selection_error_history;
-}
-
-
 /// Returns the damping parameter for the hessian approximation.
 
 const type& LevenbergMarquardtAlgorithm::get_damping_parameter() const
@@ -188,11 +172,6 @@ void LevenbergMarquardtAlgorithm::set_default()
     maximum_time = 3600.0;
 
     choose_best_selection = false;
-
-    // TRAINING HISTORY
-
-    reserve_training_error_history = false;
-    reserve_selection_error_history = true;
 
     // UTILITIES
 
@@ -438,25 +417,6 @@ void LevenbergMarquardtAlgorithm::set_choose_best_selection(const bool& new_choo
 }
 
 
-/// Makes the error history vector to be reseved or not in memory.
-/// @param new_reserve_training_error_history True if the error history vector is to be reserved, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_reserve_training_error_history(const bool& new_reserve_training_error_history)
-{
-    reserve_training_error_history = new_reserve_training_error_history;
-}
-
-
-/// Makes the selection error history to be reserved or not in memory.
-/// This is a vector.
-/// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
-{
-    reserve_selection_error_history = new_reserve_selection_error_history;
-}
-
-
 /// Checks that the Levenberg-Marquard object is ok for training.
 /// In particular, it checks that:
 /// <ul>
@@ -522,10 +482,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     if(display) cout << "Training with Levenberg-Marquardt algorithm...\n";
 
-    TrainingResults results;
-
-    results.resize_training_history(maximum_epochs_number+1);
-    results.resize_selection_history(maximum_epochs_number+1);
+    TrainingResults results(maximum_epochs_number+1);
 
     // Data set
 
@@ -669,15 +626,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Training history loss index
 
-        if(reserve_training_error_history)
-        {
             results.training_error_history(epoch) = training_loss_index_back_propagation_lm.error;
-        }
 
-        if(reserve_selection_error_history)
-        {
-            results.selection_error_history(epoch) = selection_loss_index_back_propagation_lm.error;
-        }
+        if(has_selection) results.selection_error_history(epoch) = selection_loss_index_back_propagation_lm.error;
 
         // Stopping Criteria
 
@@ -783,8 +734,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             results.resize_selection_error_history(epoch+1);
 
             results.parameters = training_loss_index_back_propagation_lm.parameters;
-            results.training_error = training_loss_index_back_propagation_lm.error;
-            results.selection_error = selection_loss_index_back_propagation_lm.error;
+            results.final_training_error = training_loss_index_back_propagation_lm.error;
+            results.final_selection_error = selection_loss_index_back_propagation_lm.error;
 
             results.final_gradient_norm = gradient_norm;
 
@@ -880,13 +831,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 }
 
 
-void LevenbergMarquardtAlgorithm::set_reserve_all_training_history(const bool&)
-{
-    reserve_training_error_history = true;
-    reserve_selection_error_history = true;
-}
-
-
 /// Writes the optimization algorithm type.
 
 string LevenbergMarquardtAlgorithm::write_optimization_algorithm_type() const
@@ -948,32 +892,6 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
     labels_values(7,0) = "Maximum time";
 
     labels_values(7,1) = to_string(maximum_time);
-
-    // Reserve training error history
-
-    labels_values(8,0) = "Reserve training error history";
-
-    if(reserve_training_error_history)
-    {
-        labels_values(8,1) = "true";
-    }
-    else
-    {
-        labels_values(8,1) = "false";
-    }
-
-    // Reserve selection error history
-
-    labels_values(9,0) = "Reserve selection error history";
-
-    if(reserve_selection_error_history)
-    {
-        labels_values(9,1) = "true";
-    }
-    else
-    {
-        labels_values(9,1) = "false";
-    }
 
     return labels_values;
 }
@@ -1084,28 +1002,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     buffer.str("");
     buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve training error history
-
-    file_stream.OpenElement("ReserveTrainingErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_training_error_history;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve selection error history
-
-    file_stream.OpenElement("ReserveSelectionErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_selection_error_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1306,44 +1202,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         try
         {
             set_maximum_time(new_maximum_time);
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Reserve training error history
-
-    const tinyxml2::XMLElement* reserve_training_error_history_element
-            = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-    if(reserve_training_error_history_element)
-    {
-        const string new_reserve_training_error_history = reserve_training_error_history_element->GetText();
-
-        try
-        {
-            set_reserve_training_error_history(new_reserve_training_error_history != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Reserve selection error history
-
-    const tinyxml2::XMLElement* reserve_selection_error_history_element
-            = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-    if(reserve_selection_error_history_element)
-    {
-        const string new_reserve_selection_error_history = reserve_selection_error_history_element->GetText();
-
-        try
-        {
-            set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
         }
         catch(const logic_error& e)
         {

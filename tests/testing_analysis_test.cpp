@@ -102,7 +102,7 @@ void TestingAnalysisTest::test_calculate_error_data()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
     data_set.set_testing();
 
@@ -139,7 +139,7 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
     data_set.set_testing();
 
@@ -180,7 +180,7 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
     data_set.set_testing();
 
@@ -214,7 +214,7 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
     data_set.set_testing();
 
@@ -246,7 +246,7 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
     data_set.set_testing();
 
@@ -287,7 +287,7 @@ void TestingAnalysisTest::test_print_error_data_descriptives()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
     data_set.set_testing();
 
@@ -318,7 +318,7 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
     data_set.set_testing();
 
@@ -350,7 +350,7 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
     DataSet data_set;
     data_set.set(4,2);
 
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
     data_set.set_testing();
 
@@ -382,7 +382,7 @@ void TestingAnalysisTest::test_linear_regression()
    DataSet data_set;
    data_set.set(1,2);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    data_set.set_testing();
 
@@ -417,7 +417,7 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
    DataSet data_set;
    data_set.set(1,2);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    data_set.set_testing();
 
@@ -447,7 +447,7 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
     data_set.set_testing();
 
@@ -492,7 +492,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
     DataSet data_set;
     data_set.set(1,2);
 
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
     data_set.set_testing();
 
@@ -585,7 +585,7 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
    DataSet data_set;
    data_set.set(1,2);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    data_set.set_testing();
 

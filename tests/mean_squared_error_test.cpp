@@ -63,7 +63,7 @@ void MeanSquaredErrorTest::test_calculate_error()
    neural_network.set_parameters_constant(0.0);
 
    DataSet data_set(1, 1, 1);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
    DataSetBatch batch(1, &data_set);
@@ -75,7 +75,7 @@ void MeanSquaredErrorTest::test_calculate_error()
    neural_network.set_parameters_constant(0.0);
 
    data_set.set(1, 1, 1);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
    data_set.set_training();
 
    NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
@@ -168,7 +168,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
       outputs_number = 1;
 
       data_set.set(samples_number, inputs_number, outputs_number);
-      data_set.initialize_data(0.0);
+      data_set.set_data_constant(0.0);
       data_set.set_training();
 
       batch.set(samples_number, &data_set);

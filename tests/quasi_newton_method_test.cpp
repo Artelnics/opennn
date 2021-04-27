@@ -396,9 +396,9 @@ void QuasiNewtonMethodTest::test_to_XML()    // @todo
 }
 
 
-void QuasiNewtonMethodTest::test_resize_training_history()
+void QuasiNewtonMethodTest::test_resize_training_error_history()
 {
-    cout << "test_resize_training_history\n";
+    cout << "test_resize_training_error_history\n";
 
 //    DataSet data_set;
 
@@ -414,7 +414,7 @@ void QuasiNewtonMethodTest::test_resize_training_history()
 
     // Test
 
-//    results.resize_training_history(2);
+//    results.resize_training_error_history(2);
 
 //    assert_true(results.elapsed_time_history.size() == 2, LOG);
 
@@ -431,15 +431,6 @@ void QuasiNewtonMethodTest::test_load()
 //   quasi_newton_method.from_XML(*document);
 
 //   delete document;
-}
-
-
-void QuasiNewtonMethodTest::test_set_reserve_all_training_history()
-{
-   cout << "test_set_reserve_all_training_history\n";
-
-//   QuasiNewtonMethod quasi_newton_method;
-//   quasi_newton_method.set_reserve_all_training_history(true);
 }
 
 
@@ -473,8 +464,7 @@ void QuasiNewtonMethodTest::run_test_case()
 
    // Training history methods
 
-   test_resize_training_history();
-   test_set_reserve_all_training_history();
+   test_resize_training_error_history();
 
    // Serialization methods
 

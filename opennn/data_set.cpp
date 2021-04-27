@@ -6797,7 +6797,7 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
 /// Initializes the data matrix with a given value.
 /// @param new_value Initialization value.
 
-void DataSet::initialize_data(const type& new_value)
+void DataSet::set_data_constant(const type& new_value)
 {
     data.setConstant(new_value);
 }

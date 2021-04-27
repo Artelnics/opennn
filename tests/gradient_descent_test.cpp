@@ -43,25 +43,11 @@ void GradientDescentTest::test_destructor()
 }
 
 
-void GradientDescentTest::test_set_reserve_all_training_history()
-{
-   cout << "test_set_reserve_all_training_history\n";
-
-   GradientDescent gradient_descent;
-
-   gradient_descent.set_reserve_all_training_history(true);
-
-   assert_true(gradient_descent.get_reserve_training_error_history(), LOG);
-   assert_true(gradient_descent.get_reserve_selection_error_history(), LOG);
-}
-
-
 void GradientDescentTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
-   DataSet data_set(1, 1, 2);
-   data_set.set_data_random();
+   DataSet data_set;
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 2});
    neural_network.set_parameters_random();
@@ -71,6 +57,24 @@ void GradientDescentTest::test_perform_training()
    GradientDescent gradient_descent(&sum_squared_error);
 
    // Test
+
+   data_set.set(1,1,1);
+   data_set.set_data_constant(0.0);
+
+   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   neural_network.set_parameters_constant(0.0);
+
+   gradient_descent.perform_training();
+
+   // Test
+/*
+   data_set.set(1,1,1);
+   data_set.set_data_random();
+
+   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   neural_network.set_parameters_random();
+
+   gradient_descent.perform_training();
 
 //   type old_loss = sum_squared_error.calculate_error({0});
 
@@ -147,24 +151,22 @@ void GradientDescentTest::test_perform_training()
 
 //   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
-
+*/
 }
 
 
-void GradientDescentTest::test_resize_training_history()
+void GradientDescentTest::test_resize_training_error_history()
 {
-   cout << "test_resize_training_history\n";
+   cout << "test_resize_training_error_history\n";
 
    GradientDescent gradient_descent;
 
-   gradient_descent.set_reserve_all_training_history(true);
-
    TrainingResults training_results;
 
-   training_results.resize_training_history(1);
+   training_results.resize_training_error_history(1);
 
    assert_true(training_results.training_error_history.size() == 1, LOG);
-   assert_true(training_results.selection_error_history.size() == 1, LOG);
+   assert_true(training_results.selection_error_history.size() == 0, LOG);
 }
 
 
@@ -203,17 +205,13 @@ void GradientDescentTest::run_test_case()
    test_constructor();
    test_destructor();
 
-   // Set methods
-
-   test_set_reserve_all_training_history();
-
    // Training methods
 
    test_perform_training();
 
    // Training history methods
 
-   test_resize_training_history();
+   test_resize_training_error_history();
 
    // Serialization methods
 

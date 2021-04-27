@@ -163,22 +163,6 @@ const bool& QuasiNewtonMethod::get_choose_best_selection() const
 }
 
 
-/// Returns true if the error history vector is to be reserved, and false otherwise.
-
-const bool& QuasiNewtonMethod::get_reserve_training_error_history() const
-{
-    return reserve_training_error_history;
-}
-
-
-/// Returns true if the selection error history vector is to be reserved, and false otherwise.
-
-const bool& QuasiNewtonMethod::get_reserve_selection_error_history() const
-{
-    return reserve_selection_error_history;
-}
-
-
 /// Sets a pointer to a loss index object to be associated to the quasi-Newton method object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -229,18 +213,6 @@ void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& n
 
         throw logic_error(buffer.str());
     }
-}
-
-
-/// Makes the training history of all variables to reseved or not in memory.
-/// @param new_reserve_all_training_history True if the training history of all variables is to be reserved,
-/// false otherwise.
-
-void QuasiNewtonMethod::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
-{
-    reserve_training_error_history = new_reserve_all_training_history;
-
-    reserve_selection_error_history = new_reserve_all_training_history;
 }
 
 
@@ -430,25 +402,6 @@ void QuasiNewtonMethod::set_choose_best_selection(const bool& new_choose_best_se
 }
 
 
-/// Makes the error history vector to be reseved or not in memory.
-/// @param new_reserve_training_error_history True if the loss history vector is to be reserved, false otherwise.
-
-void QuasiNewtonMethod::set_reserve_training_error_history(const bool& new_reserve_training_error_history)
-{
-    reserve_training_error_history = new_reserve_training_error_history;
-}
-
-
-/// Makes the selection error history to be reserved or not in memory.
-/// This is a vector.
-/// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
-
-void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
-{
-    reserve_selection_error_history = new_reserve_selection_error_history;
-}
-
-
 void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QuasiNewtonMehtodData& optimization_data) const
 {
     optimization_data.inverse_hessian.setZero();
@@ -456,7 +409,6 @@ void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QuasiNewtonMeht
     const Index parameters_number = optimization_data.inverse_hessian.dimension(0);
 
     for(Index i = 0; i < parameters_number; i++) optimization_data.inverse_hessian(i,i) = 1.0;
-
 }
 
 
@@ -793,9 +745,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     if(display) cout << "Training with quasi-Newton method...\n";
 
-    TrainingResults results;
-
-    results.resize_training_history(maximum_epochs_number+1);
+    TrainingResults results(maximum_epochs_number+1);
 
     // Data set
 
@@ -844,8 +794,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
     type elapsed_time;
 
     QuasiNewtonMehtodData optimization_data(this);
-
-    if(has_selection) results.resize_selection_history(maximum_epochs_number+1);
 
     // Calculate error before training
 
@@ -1017,8 +965,8 @@ TrainingResults QuasiNewtonMethod::perform_training()
         if(stop_training)
         {
             results.parameters = training_back_propagation.parameters;
-            results.training_error = training_back_propagation.error;
-            results.selection_error = selection_back_propagation.error;
+            results.final_training_error = training_back_propagation.error;
+            results.final_selection_error = selection_back_propagation.error;
 
             results.final_gradient_norm = gradient_norm;
 
@@ -1182,28 +1130,6 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve training error history
-
-    file_stream.OpenElement("ReserveTrainingErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_training_error_history;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve selection error history
-
-    file_stream.OpenElement("ReserveSelectionErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_selection_error_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1518,44 +1444,6 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_maximum_time(new_maximum_time);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve training error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_training_error_history = element->GetText();
-
-            try
-            {
-                set_reserve_training_error_history(new_reserve_training_error_history != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve selection error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_selection_error_history = element->GetText();
-
-            try
-            {
-                set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
             }
             catch(const logic_error& e)
             {

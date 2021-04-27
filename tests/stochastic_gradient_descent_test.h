@@ -37,7 +37,6 @@ public:
    // Set methods
 
    void test_set();
-   void test_set_reserve_all_training_history();
 
    // Training methods
 
@@ -45,7 +44,7 @@ public:
 
    // Training history methods
 
-   void test_resize_training_history();
+   void test_resize_training_error_history();
 
    // Serialization methods
 

@@ -171,7 +171,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     type elapsed_time = 0;
 
-    TrainingResults training_results;
+    TrainingResults training_results(maximum_epochs_number+1);
 
     training_strategy_pointer->set_display(false);
 
@@ -209,17 +209,17 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             if(display)
             {
                 cout << "Trial: " << trial+1 << endl;
-                cout << "Training error: " << training_results.training_error << endl;
-                cout << "Selection error: " << training_results.selection_error << endl;
+                cout << "Training error: " << training_results.final_training_error << endl;
+                cout << "Selection error: " << training_results.final_selection_error << endl;
             }
 
-            if(training_results.selection_error < results.optimum_selection_error)
+            if(training_results.final_selection_error < results.optimum_selection_error)
             {
                 results.optimal_neurons_number = neurons_number;
                 results.optimal_parameters = training_results.parameters;
 
-                results.optimum_training_error = training_results.training_error;
-                results.optimum_selection_error = training_results.selection_error;
+                results.optimum_training_error = training_results.final_training_error;
+                results.optimum_selection_error = training_results.final_selection_error;
             }
         }
 
@@ -234,9 +234,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        if(reserve_training_errors) results.training_errors(epoch) = training_results.training_error;
+        if(reserve_training_errors) results.training_errors(epoch) = training_results.final_training_error;
 
-        if(reserve_selection_errors) results.selection_errors(epoch) = training_results.selection_error;
+        if(reserve_selection_errors) results.selection_errors(epoch) = training_results.final_selection_error;
 
         // Stopping criteria
 
@@ -248,7 +248,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
             results.stopping_condition = GrowingNeurons::MaximumTime;
         }
-        else if(training_results.selection_error <= selection_error_goal)
+        else if(training_results.final_selection_error <= selection_error_goal)
         {
             end = true;
 
