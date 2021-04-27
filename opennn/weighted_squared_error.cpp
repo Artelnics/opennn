@@ -254,7 +254,7 @@ void WeightedSquaredError::calculate_error(const DataSetBatch &batch,
 
 
 void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                                  NeuralNetworkForwardPropagation& forward_propagation,
+                                                  NeuralNetworkForwardPropagation& ,
                                                   LossIndexBackPropagation& back_propagation) const
 {
 #ifdef OPENNN_DEBUG
