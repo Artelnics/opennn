@@ -96,8 +96,6 @@ public:
    void set_save_period(const Index&);
    void set_neural_network_file_name(const string&);
 
-   virtual void set_reserve_selection_error_history(const bool&) = 0;
-
    // Training methods
 
    virtual void check() const;
@@ -217,7 +215,15 @@ struct OptimizationAlgorithmData
 
 struct TrainingResults
 {
-    explicit TrainingResults() {}
+    explicit TrainingResults()
+    {
+    }
+
+    explicit TrainingResults(const Index& epochs_number)
+    {
+        training_error_history.resize(1+epochs_number);
+        selection_error_history.resize(1+epochs_number);
+    }
 
     virtual ~TrainingResults() {}
 
@@ -231,25 +237,27 @@ struct TrainingResults
 
     void save(const string&) const;
 
-    void print()
+    void print(const string& message = string())
     {             
-        cout << endl;
+        cout << message << endl;
+
         cout << "Training results" << endl;
+        cout << "Epochs number: " << epochs_number << endl;
+
+        cout << "Final training error: " << final_training_error << endl;
+
+        if(final_selection_error != numeric_limits<type>::max())
+            cout << "Final selection error: " << final_selection_error << endl;
+
         cout << "Optimum training error: " << optimum_training_error << endl;
-        cout << "Optimum selection error: " << optimum_selection_error << endl;
+
+        if(optimum_selection_error != numeric_limits<type>::max())
+            cout << "Optimum selection error: " << optimum_selection_error << endl;
     }
 
     /// Writes final results of the training.
 
     Tensor<string, 2> write_final_results(const Index& = 3) const;
-
-    /// Resizes training history variables.
-
-    void resize_training_history(const Index&);
-
-    /// Resizes selection history variables.
-
-    void resize_selection_history(const Index&);
 
     /// Resizes the training error history keeping the values.
 
@@ -279,14 +287,6 @@ struct TrainingResults
 
     type final_parameters_norm;
 
-    /// Final training error.
-
-    type training_error;
-
-    /// Final selection error.
-
-    type selection_error;
-
     /// Final gradient norm.
 
     type final_gradient_norm;
@@ -304,6 +304,9 @@ struct TrainingResults
     string stopping_criterion;
 
     Tensor<type, 1> optimal_parameters;
+
+    type final_training_error = numeric_limits<type>::max();
+    type final_selection_error = numeric_limits<type>::max();
 
     type optimum_selection_error = numeric_limits<type>::max();
     type optimum_training_error = numeric_limits<type>::max();

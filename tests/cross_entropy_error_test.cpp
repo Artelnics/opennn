@@ -49,7 +49,7 @@ void CrossEntropyErrorTest::test_calculate_error()
     //Dataset
 
    data_set.set(1, 2, 1);
-   data_set.initialize_data(0);
+   data_set.set_data_constant(0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -80,7 +80,7 @@ void CrossEntropyErrorTest::test_calculate_error()
 
    // Test 1 binary
 
-   data_set.initialize_data(1);
+   data_set.set_data_constant(1);
    training_samples_indices = data_set.get_training_samples_indices();
    inputs_indices = data_set.get_input_variables_indices();
    targets_indices = data_set.get_target_variables_indices();
@@ -103,7 +103,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    // Test 2 multiple
 
    data_set.set(1, 2, 2);
-   data_set.initialize_data(0);
+   data_set.set_data_constant(0);
    data_set.set_training();
 
    training_samples_indices = data_set.get_training_samples_indices();

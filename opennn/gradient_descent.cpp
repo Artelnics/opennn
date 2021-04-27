@@ -133,22 +133,6 @@ const bool& GradientDescent::get_choose_best_selection() const
 }
 
 
-/// Returns true if the loss history vector is to be reserved, and false otherwise.
-
-const bool& GradientDescent::get_reserve_training_error_history() const
-{
-    return reserve_training_error_history;
-}
-
-
-/// Returns true if the selection error history vector is to be reserved, and false otherwise.
-
-const bool& GradientDescent::get_reserve_selection_error_history() const
-{
-    return reserve_selection_error_history;
-}
-
-
 /// Sets a pointer to a loss index object to be associated to the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -178,38 +162,11 @@ void GradientDescent::set_default()
 
     choose_best_selection = false;
 
-    // TRAINING HISTORY
-
-    reserve_training_error_history = true;
-    reserve_selection_error_history = true;
-
     // UTILITIES
 
     display_period = 5;
 }
 
-
-/// Makes the training history of all variables to reseved or not in memory:
-/// <ul>
-/// <li> Parameters.
-/// <li> Parameters norm.
-/// <li> Loss.
-/// <li> Gradient.
-/// <li> Gradient norm.
-/// <li> Selection loss.
-/// <li> Training direction.
-/// <li> Training direction norm.
-/// <li> Learning rate.
-/// </ul>
-/// @param new_reserve_all_training_history True if the training history of all variables is to be reserved,
-/// false otherwise.
-
-void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
-{
-    reserve_training_error_history = new_reserve_all_training_history;
-
-    reserve_selection_error_history = new_reserve_all_training_history;
-}
 
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
@@ -373,25 +330,6 @@ void GradientDescent::set_choose_best_selection(const bool& new_choose_best_sele
 }
 
 
-/// Makes the error history vector to be reseved or not in memory.
-/// @param new_reserve_training_error_history True if the loss history vector is to be reserved, false otherwise.
-
-void GradientDescent::set_reserve_training_error_history(const bool& new_reserve_training_error_history)
-{
-    reserve_training_error_history = new_reserve_training_error_history;
-}
-
-
-/// Makes the selection error history to be reserved or not in memory.
-/// This is a vector.
-/// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
-
-void GradientDescent::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
-{
-    reserve_selection_error_history = new_reserve_selection_error_history;
-}
-
-
 /// Returns the gradient descent training direction,
 /// which is the negative of the normalized gradient.
 /// @param gradient Loss index gradient.
@@ -505,7 +443,7 @@ void GradientDescent::update_parameters(
 
 TrainingResults GradientDescent::perform_training()
 {
-    TrainingResults results;
+    TrainingResults results(maximum_epochs_number+1);
 
 #ifdef OPENNN_DEBUG
 
@@ -566,10 +504,6 @@ TrainingResults GradientDescent::perform_training()
 
     type parameters_increment_norm = 0;
 
-    results.resize_training_history(maximum_epochs_number+1);
-
-    if(has_selection) results.resize_selection_history(maximum_epochs_number+1);
-
     // Calculate error before training
 
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
@@ -593,6 +527,8 @@ TrainingResults GradientDescent::perform_training()
 
     for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
+        cout << "Epoch: " << epoch << endl;
+
         optimization_data.epoch = epoch;
 
         // Neural network
@@ -602,6 +538,7 @@ TrainingResults GradientDescent::perform_training()
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+        results.final_training_error = training_back_propagation.error;
 
         if(has_selection)
         {
@@ -610,7 +547,7 @@ TrainingResults GradientDescent::perform_training()
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            if(selection_back_propagation.error <= results.optimum_selection_error)
+            if(selection_back_propagation.error < results.optimum_selection_error)
             {
                 results.optimum_selection_error = selection_back_propagation.error;
                 results.optimal_parameters = training_back_propagation.parameters;
@@ -625,7 +562,11 @@ TrainingResults GradientDescent::perform_training()
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
-        if(gradient_norm < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
+        if(is_zero(training_back_propagation.gradient))
+        {
+            if(display) results.print("Gradient is zero");
+            return results;
+        }
 
         // Optimization algorithm
 
@@ -638,9 +579,9 @@ TrainingResults GradientDescent::perform_training()
 
         // Training history loss index
 
-        if(reserve_training_error_history) results.training_error_history(epoch) = training_back_propagation.error;
+        results.training_error_history(epoch) = training_back_propagation.error;
 
-        if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
+        if(has_selection) results.selection_error_history(epoch) = selection_back_propagation.error;
 
         // Stopping Criteria
 
@@ -741,9 +682,9 @@ TrainingResults GradientDescent::perform_training()
 
             results.parameters = training_back_propagation.parameters;
 
-            results.training_error = training_back_propagation.error;
+            results.final_training_error = training_back_propagation.error;
 
-            results.selection_error = selection_back_propagation.error;
+            results.final_selection_error = selection_back_propagation.error;
 
             results.final_gradient_norm = gradient_norm;
 
@@ -844,32 +785,6 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
     labels_values(8,0) = "Maximum time";
 
     labels_values(8,1) = to_string(maximum_time);
-
-    // Reserve training error history
-
-    labels_values(9,0) = "Reserve training error history";
-
-    if(reserve_training_error_history)
-    {
-        labels_values(9,1) = "true";
-    }
-    else
-    {
-        labels_values(9,1) = "false";
-    }
-
-    // Reserve selection error history
-
-    labels_values(10,0) = "Reserve selection error history";
-
-    if(reserve_selection_error_history)
-    {
-        labels_values(10,1) = "true";
-    }
-    else
-    {
-        labels_values(10,1) = "false";
-    }
 
     return labels_values;
 }
@@ -972,28 +887,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve training error history
-
-    file_stream.OpenElement("ReserveTrainingErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_training_error_history;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve selection error history
-
-    file_stream.OpenElement("ReserveSelectionErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_selection_error_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1192,45 +1085,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_maximum_time(new_maximum_time);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve training error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-        if(element)
-        {
-            cout << "ReserveTrainingErrorHistory" << endl;
-            const string new_reserve_training_error_history = element->GetText();
-
-            try
-            {
-                set_reserve_training_error_history(new_reserve_training_error_history != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve selection error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_selection_error_history = element->GetText();
-
-            try
-            {
-                set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
             }
             catch(const logic_error& e)
             {

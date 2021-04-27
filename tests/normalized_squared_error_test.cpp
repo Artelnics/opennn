@@ -228,7 +228,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        outputs_number = 1;
 
        data_set.set(samples_number, inputs_number, outputs_number);
-       data_set.initialize_data(0.0);
+       data_set.set_data_constant(0.0);
        data_set.set_training();
 
        batch.set(samples_number, &data_set);
@@ -823,7 +823,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        data_set.set(samples_number, inputs_number, outputs_number);
        data_set.set_input_variables_dimensions(input_variables_dimensions);
-       data_set.initialize_data(0.5);
+       data_set.set_data_constant(0.5);
        data_set.set_training();
 
        Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();

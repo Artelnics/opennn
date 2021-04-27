@@ -81,7 +81,7 @@ void SumSquaredErrorTest::test_calculate_error()
    //Dataset
 
    data_set.set(1, 2, 2);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -115,7 +115,7 @@ void SumSquaredErrorTest::test_calculate_error()
    //Dataset
 
    data_set.set(1, 2, 2);
-   data_set.initialize_data(1.0);
+   data_set.set_data_constant(1.0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -145,7 +145,7 @@ void SumSquaredErrorTest::test_calculate_error()
    //Dataset
 
    data_set.set(1, 1, 1);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -257,7 +257,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    //Dataset
 
    data_set.set(1, 2, 2);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -293,7 +293,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    //Dataset
 
    data_set.set(1, 2, 2);
-   data_set.initialize_data(1.0);
+   data_set.set_data_constant(1.0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -421,7 +421,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
    Index targets_number = 3;
 
    data_set.set(1, inputs_number, targets_number);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
    data_set.set_training();
 
    DataSetBatch batch(1, &data_set);

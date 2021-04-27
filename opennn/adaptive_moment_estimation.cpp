@@ -98,21 +98,6 @@ const bool& AdaptiveMomentEstimation::get_choose_best_selection() const
 }
 
 
-/// Returns true if the error history vector is to be reserved, and false otherwise.
-
-const bool& AdaptiveMomentEstimation::get_reserve_training_error_history() const
-{
-    return reserve_training_error_history;
-}
-
-
-/// Returns true if the selection error history vector is to be reserved, and false otherwise.
-
-const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() const
-{
-    return reserve_selection_error_history;
-}
-
 /// Sets a pointer to a loss index object to be associated to the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -120,28 +105,6 @@ const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() cons
 void AdaptiveMomentEstimation::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
     loss_index_pointer = new_loss_index_pointer;
-}
-
-
-/// Makes the training history of all variables to reseved or not in memory:
-/// <ul>
-/// <li> Parameters.
-/// <li> Parameters norm.
-/// <li> Loss.
-/// <li> Gradient.
-/// <li> Gradient norm.
-/// <li> Selection loss.
-/// <li> Training direction.
-/// <li> Training direction norm.
-/// <li> Learning rate.
-/// </ul>
-/// @param new_reserve_all_training_history True if the training history of all variables is to be reserved, false otherwise.
-
-void AdaptiveMomentEstimation::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
-{
-    reserve_training_error_history = new_reserve_all_training_history;
-
-    reserve_selection_error_history = new_reserve_all_training_history;
 }
 
 
@@ -253,25 +216,6 @@ void AdaptiveMomentEstimation::set_choose_best_selection(const bool& new_choose_
 }
 
 
-/// Makes the error history vector to be reseved or not in memory.
-/// @param new_reserve_training_error_history True if the error history vector is to be reserved, false otherwise.
-
-void AdaptiveMomentEstimation::set_reserve_training_error_history(const bool& new_reserve_training_error_history)
-{
-    reserve_training_error_history = new_reserve_training_error_history;
-}
-
-
-/// Makes the selection error history to be reserved or not in memory.
-/// This is a vector.
-/// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
-
-void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
-{
-    reserve_selection_error_history = new_reserve_selection_error_history;
-}
-
-
 /// Trains a neural network with an associated loss index,
 /// according to the gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
@@ -279,7 +223,7 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
-    TrainingResults results;
+    TrainingResults results(maximum_epochs_number+1);
 
     check();
 
@@ -356,9 +300,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     type elapsed_time = 0;
 
     bool shuffle = false;
-
-    results.resize_training_history(maximum_epochs_number+1);
-    if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
 
     if(neural_network_pointer->has_long_short_term_memory_layer()
     || neural_network_pointer->has_recurrent_layer())
@@ -567,9 +508,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.parameters = training_back_propagation.parameters;
 
-            results.training_error = training_error;
+            results.final_training_error = training_error;
 
-            if(has_selection) results.selection_error = selection_error;
+            if(has_selection) results.final_selection_error = selection_error;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
@@ -785,28 +726,6 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.CloseElement();
 
-    // Reserve training error history
-
-    file_stream.OpenElement("ReserveTrainingErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_training_error_history;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve selection error history
-
-    file_stream.OpenElement("ReserveSelectionErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_selection_error_history;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     // Hardware use
 
     file_stream.OpenElement("HardwareUse");
@@ -926,44 +845,6 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_maximum_time(new_maximum_time);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve training error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_training_error_history = element->GetText();
-
-            try
-            {
-                set_reserve_training_error_history(new_reserve_training_error_history != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve selection error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_selection_error_history = element->GetText();
-
-            try
-            {
-                set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
             }
             catch(const logic_error& e)
             {

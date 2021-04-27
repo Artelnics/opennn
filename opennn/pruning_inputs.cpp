@@ -229,10 +229,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
-        if(epoch > 0)
-        {
-            data_set_pointer->set_column_use(correlations_rank_ascending[epoch], DataSet::UnusedVariable);
-        }
+        if(epoch > 0) data_set_pointer->set_column_use(correlations_rank_ascending[epoch], DataSet::UnusedVariable);
 
         const Index input_columns_number = data_set_pointer->get_input_columns_number();
         const Index input_variables_number = data_set_pointer->get_input_variables_number();
@@ -259,7 +256,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
             training_results = training_strategy_pointer->perform_training();
 
-            if(training_results.selection_error < results.optimum_selection_error)
+            if(training_results.final_selection_error < results.optimum_selection_error)
             {
                 results.optimal_input_columns_indices = data_set_pointer->get_input_columns_indices();
                 results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
@@ -270,15 +267,15 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
                 // Loss index
 
-                results.optimum_training_error = training_results.training_error;
-                results.optimum_selection_error = training_results.selection_error;
+                results.optimum_training_error = training_results.final_training_error;
+                results.optimum_selection_error = training_results.final_selection_error;
             }
 
             if(display)
             {
                 cout << "Trial number: " << trial+1 << endl;
-                cout << "   Training error: " << training_results.training_error << endl;
-                cout << "   Selection error: " << training_results.selection_error << endl;
+                cout << "   Training error: " << training_results.final_training_error << endl;
+                cout << "   Selection error: " << training_results.final_selection_error << endl;
             }
         }
 
@@ -286,9 +283,9 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
         previus_selection_error = results.optimum_selection_error;
 
-        if(reserve_training_errors)results.training_errors(epoch) = training_results.training_error;
+        if(reserve_training_errors)results.training_errors(epoch) = training_results.final_training_error;
 
-        if(reserve_selection_errors) results.selection_errors(epoch) = training_results.selection_error;
+        if(reserve_selection_errors) results.selection_errors(epoch) = training_results.final_selection_error;
 
         time(&current_time);
 

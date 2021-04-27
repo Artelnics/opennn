@@ -112,7 +112,7 @@ void DataSetTest::test_get_data()
 
    DataSet data_set(1,1,1);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
 
    const Tensor<type, 2>& data = data_set.get_data();
@@ -123,7 +123,7 @@ void DataSetTest::test_get_data()
 
    DataSet data_set1(2,3,2);
 
-   data_set1.initialize_data(1.0);
+   data_set1.set_data_constant(1.0);
 
    const Tensor<type, 2>& data1 = data_set1.get_data();
 
@@ -262,7 +262,7 @@ void DataSetTest::test_get_sample()
    // Test
 
    data_set.set(1, 1, 1);
-   data_set.initialize_data(1.0);
+   data_set.set_data_constant(1.0);
 
    sample = data_set.get_sample_data(0);
 
@@ -272,7 +272,7 @@ void DataSetTest::test_get_sample()
    // Test several variables
 
    data_set.set(4, 3, 1);
-   data_set.initialize_data(1.0);
+   data_set.set_data_constant(1.0);
 
    Tensor<Index, 1> indices_variables(2);
    indices_variables.setValues({1,3});
@@ -365,7 +365,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
    data_set.set(1, 1);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    descriptives = data_set.calculate_variables_descriptives();
 
@@ -380,7 +380,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
    data_set.set(2, 2, 2);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    descriptives = data_set.calculate_variables_descriptives();
 
@@ -450,7 +450,7 @@ void DataSetTest::test_calculate_training_samples_descriptives()
 
    data_set.set_training();
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    data_set.calculate_columns_descriptives_training_samples();
 }
@@ -469,7 +469,7 @@ void DataSetTest::test_calculate_selection_samples_descriptives()
 
    data_set.set_selection();
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    selection_samples_descriptives = data_set.calculate_columns_descriptives_selection_samples();
 }
@@ -489,7 +489,7 @@ void DataSetTest::test_calculate_testing_samples_descriptives()
 
    data_set.set_testing();
    
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
 //   testing_samples_descriptives = data_set.calculate_columns_descriptives_testing_samples();
 }
@@ -626,7 +626,7 @@ void DataSetTest::test_filter_data()
    // Test
 
    data_set.set(2, 1, 1);
-   data_set.initialize_data(1.0);
+   data_set.set_data_constant(1.0);
 
    minimums.setValues({2, 0.0});
    maximums.setValues({2, 0.5});
@@ -658,7 +658,7 @@ void DataSetTest::test_scale_data()
     // Test
 
    data_set.set(2,2,2);
-//   data_set.initialize_data(0.0);
+//   data_set.set_data_constant(0.0);
 
    data.setValues({{1, 2}, {3, 4}});
    data_set.set_data(data);
@@ -683,7 +683,7 @@ void DataSetTest::test_scale_data()
     // Test
 
    data_set.set(2,2,2);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    data_set.set_display(false);
 
@@ -707,7 +707,7 @@ void DataSetTest::test_unuse_constant_columns()
 
    data_set.set(1, 2, 1);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    data_set.unuse_constant_columns();
 
@@ -726,7 +726,7 @@ void DataSetTest::test_initialize_data()
 
    data_set.set(matrix);
 
-   data_set.initialize_data(2);
+   data_set.set_data_constant(2);
 
    Tensor<type, 2> solution(3, 3);
    solution.setValues({{2,2,2},{2,2,2},{2,2,2}});
@@ -800,7 +800,7 @@ void DataSetTest::test_unuse_most_populated_target()
     // Test
 
     data_set.set(5,2,5);
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
 //    unused_samples_indices = data_set.unuse_most_populated_target(7);
 
@@ -813,7 +813,7 @@ void DataSetTest::test_unuse_most_populated_target()
     DataSet ds2;
 
     ds2.set(100, 7,5);
-    ds2.initialize_data(1.0);
+    ds2.set_data_constant(1.0);
 
     //unused_samples_indices = ds2.unuse_most_populated_target(99);
 
@@ -1005,7 +1005,7 @@ void DataSetTest::test_read_csv()
    data_set.set_separator(',');
    data_set.set_data_file_name(data_file_name);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    data_set.set_display(false);
 

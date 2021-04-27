@@ -45,19 +45,6 @@ void StochasticGradientDescentTest::test_destructor()
 }
 
 
-void StochasticGradientDescentTest::test_set_reserve_all_training_history()
-{
-   cout << "test_set_reserve_all_training_history\n";
-
-   StochasticGradientDescent sgd;
-
-   sgd.set_reserve_all_training_history(true);
-
-   assert_true(sgd.get_reserve_training_error_history(), LOG);
-   assert_true(sgd.get_reserve_selection_error_history(), LOG);
-}
-
-
 void StochasticGradientDescentTest::test_perform_training()
 {
    cout << "test_perform_training\n";
@@ -143,17 +130,15 @@ void StochasticGradientDescentTest::test_perform_training()
 }
 
 
-void StochasticGradientDescentTest::test_resize_training_history()
+void StochasticGradientDescentTest::test_resize_training_error_history()
 {
-   cout << "test_resize_training_history\n";
+   cout << "test_resize_training_error_history\n";
 
-   StochasticGradientDescent sgd;
-
-   sgd.set_reserve_all_training_history(true);
+   StochasticGradientDescent stochastic_gradient_descent;
 
    TrainingResults sgdtr;
 
-   sgdtr.resize_training_history(1);
+   sgdtr.resize_training_error_history(1);
 
    assert_true(sgdtr.training_error_history.size() == 1, LOG);
    assert_true(sgdtr.selection_error_history.size() == 1, LOG);
@@ -164,7 +149,7 @@ void StochasticGradientDescentTest::test_to_XML()
 {
    cout << "test_to_XML\n";
 
-   StochasticGradientDescent sgd;
+   StochasticGradientDescent stochastic_gradient_descent;
 
    tinyxml2::XMLDocument* document = nullptr;
 
@@ -192,10 +177,6 @@ void StochasticGradientDescentTest::run_test_case()
    test_constructor();
    test_destructor();
 
-   // Set methods
-
-   test_set_reserve_all_training_history();
-
    // Training methods
 
    test_perform_training();
@@ -203,7 +184,7 @@ void StochasticGradientDescentTest::run_test_case()
 
    // Training history methods
 
-   test_resize_training_history();
+   test_resize_training_error_history();
 
    // Serialization methods
 

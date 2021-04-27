@@ -76,7 +76,7 @@ void MinkowskiErrorTest::test_calculate_error()
    Tensor<type, 2> data;
 
    DataSet data_set(1, 1, 1);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    Index samples_number;
    Index inputs_number;
@@ -236,7 +236,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    batch.set(samples_number, &data_set);
 

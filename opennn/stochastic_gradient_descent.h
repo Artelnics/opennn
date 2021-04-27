@@ -68,18 +68,11 @@ public:
    const type& get_maximum_time() const;
    const bool& get_choose_best_selection() const;
 
-   // Reserve training history
-
-   const bool& get_reserve_training_error_history() const;
-   const bool& get_reserve_selection_error_history() const;
-
    // Set methods
 
    void set_loss_index_pointer(LossIndex*);
 
    void set_default();
-
-   void set_reserve_all_training_history(const bool&);
 
    void set_batch_samples_number(const Index& new_batch_samples_number)
    {
@@ -105,11 +98,6 @@ public:
    void set_loss_goal(const type&);
    void set_maximum_time(const type&);
    void set_choose_best_selection(const bool&);
-
-   // Reserve training history
-
-   void set_reserve_training_error_history(const bool&);
-   void set_reserve_selection_error_history(const bool&);
 
    // Training methods
 
@@ -175,16 +163,6 @@ private:
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
    bool choose_best_selection = false;
-
-   // Training history
-
-   /// True if the loss history vector is to be reserved, false otherwise.
-
-   bool reserve_training_error_history;
-
-   /// True if the selection error history vector is to be reserved, false otherwise.
-
-   bool reserve_selection_error_history;
 
    /// Number of samples per training batch.
 
