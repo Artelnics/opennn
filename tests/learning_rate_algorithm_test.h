@@ -71,9 +71,12 @@ public:
 
    // Training methods
 
-   void test_calculate_directional_point();
+   void test_calculate_golden_section_learning_rate();
+   void test_calculate_Brent_method_learning_rate();
 
    void test_calculate_bracketing_triplet();
+
+   void test_calculate_directional_point();
 
    void test_calculate_fixed_directional_point();
    void test_calculate_golden_section_directional_point();
@@ -109,4 +112,3 @@ public:
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
