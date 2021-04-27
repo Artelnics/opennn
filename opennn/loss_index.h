@@ -435,7 +435,6 @@ struct LossIndexBackPropagationLM
         const Index parameters_number = hessian.dimension(0);
 
          #pragma omp parallel for
-
         for(Index i = 0; i < parameters_number; i++)
             hessian(i,i) += value;
     }
