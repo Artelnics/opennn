@@ -245,7 +245,6 @@ void BoundingLayerTest::run_test_case()
 
    test_write_expression();
 
-
    cout << "End of bounding layer test case.\n\n";
 }
 

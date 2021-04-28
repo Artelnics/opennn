@@ -42,7 +42,7 @@ int main()
    "incremental_neurons | in\n"
    "inputs_selection | is\n"
    "learning_rate_algorithm | lra\n"
-   "levenberg_marquardt_algorithm | lma\n"
+   "levenberg_marquardt_algorithm | levenberg_marquardt_algorithm\n"
    "long_short_term_memory_layer | lstm\n"
    "mean_squared_error | mse\n"
    "minkowski_error | me\n"
@@ -307,7 +307,7 @@ int main()
         tests_passed_count += quasi_Newton_method_test.get_tests_passed_count();
         tests_failed_count += quasi_Newton_method_test.get_tests_failed_count();
       }
-      else if(test == "levenberg_marquardt_algorithm" || test == "lma")
+      else if(test == "levenberg_marquardt_algorithm" || test == "levenberg_marquardt_algorithm")
       {
         LevenbergMarquardtAlgorithmTest Levenberg_Marquardt_algorithm_test;
         Levenberg_Marquardt_algorithm_test.run_test_case();

@@ -13,6 +13,9 @@ using namespace OpenNN;
 
 ConjugateGradientTest::ConjugateGradientTest() : UnitTesting() 
 {
+    sum_squared_error.set(&neural_network, &data_set);
+
+    conjugate_gradient.set(&sum_squared_error);
 }
 
 
@@ -49,8 +52,6 @@ void ConjugateGradientTest::test_get_training_direction_method()
 {
    cout << "test_get_training_direction_method\n";
 
-   ConjugateGradient conjugate_gradient;
-
    conjugate_gradient.set_training_direction_method(ConjugateGradient::PR);
 
    ConjugateGradient::TrainingDirectionMethod training_direction_method = conjugate_gradient.get_training_direction_method();
@@ -69,8 +70,6 @@ void ConjugateGradientTest::test_set_training_direction_method()
 {
    cout << "test_set_training_direction_method\n";
 
-   ConjugateGradient conjugate_gradient;
-
    conjugate_gradient.set_training_direction_method(ConjugateGradient::FR);
    assert_true(conjugate_gradient.get_training_direction_method() == ConjugateGradient::FR, LOG);
 
@@ -85,12 +84,10 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
 {
    cout << "test_calculate_PR_parameter\n";
 
-   DataSet data_set(1, 1, 2);
+   data_set.set(1, 1, 2);
    data_set.set_data_random();
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
-   ConjugateGradient conjugate_gradient(&sum_squared_error);
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
    neural_network.set_parameters_constant(2.0);
 //   Tensor<type, 1> old_gradient = sum_squared_error.calculate_gradient();
@@ -111,12 +108,10 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 {
    cout << "test_calculate_FR_parameter\n";
 
-   DataSet data_set(1, 1, 2);
+   data_set.set(1, 1, 2);
    data_set.set_data_random();
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
-   ConjugateGradient conjugate_gradient(&sum_squared_error);
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
    neural_network.set_parameters_constant(2.0);
 //   Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_loss_gradient();
@@ -136,11 +131,8 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
 {
    cout << "test_calculate_PR_training_direction\n";
 
-   DataSet data_set;
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
-   ConjugateGradient conjugate_gradient(&sum_squared_error);
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
    Tensor<type, 1> old_gradient;
    Tensor<type, 1> gradient;
@@ -178,11 +170,7 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
 {
    cout << "test_calculate_FR_training_direction\n";
 
-   DataSet data_set;
-
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
-   ConjugateGradient conjugate_gradient(&sum_squared_error);
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
    Tensor<type, 1> old_gradient;
    Tensor<type, 1> gradient;
@@ -227,14 +215,8 @@ void ConjugateGradientTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
-   DataSet data_set;
-
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 2});
+   neural_network.set(NeuralNetwork::Approximation, {1, 2});
    neural_network.set_parameters_random();
-
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-   ConjugateGradient conjugate_gradient(&sum_squared_error);
 
    // Test
 
@@ -245,7 +227,6 @@ void ConjugateGradientTest::test_perform_training()
    neural_network.set_parameters_constant(0.0);
 
    conjugate_gradient.perform_training();
-
 /*
    DataSet data_set(1, 1, 1);
    data_set.set_data_random();
@@ -352,8 +333,6 @@ void ConjugateGradientTest::test_perform_training()
 void ConjugateGradientTest::test_to_XML()   
 {
    cout << "test_to_XML\n";
-
-   ConjugateGradient conjugate_gradient;
 
 //   tinyxml2::XMLDocument* cgd = conjugate_gradient.to_XML();
 //   assert_true(cgd != nullptr, LOG);

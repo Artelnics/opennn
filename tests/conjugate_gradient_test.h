@@ -63,6 +63,16 @@ public:
 
    void run_test_case();
 
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   SumSquaredError sum_squared_error;
+
+   ConjugateGradient conjugate_gradient;
+
 };
 
 

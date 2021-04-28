@@ -65,6 +65,17 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   SumSquaredError sum_squared_error;
+
+   QuasiNewtonMethod quasi_newton_method;
+
 };
 
 

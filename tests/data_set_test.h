@@ -188,6 +188,10 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+  private:
+
+   DataSet data_set;
 };
 
 #endif
