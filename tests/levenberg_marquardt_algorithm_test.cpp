@@ -11,6 +11,9 @@
 
 LevenbergMarquardtAlgorithmTest::LevenbergMarquardtAlgorithmTest() : UnitTesting() 
 {
+    sum_squared_error.set(&neural_network, &data_set);
+
+    levenberg_marquardt_algorithm.set(&sum_squared_error);
 }
 
 
@@ -97,18 +100,9 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss()
 {
     cout << "test_calculate_training_loss\n";
 
-    DataSet data_set;
-    
-
-    NeuralNetwork neural_network;
-
-    SumSquaredError sum_squared_error(&neural_network, &data_set);
-
     Tensor<type, 1> terms;
 
     type loss;
-
-    LevenbergMarquardtAlgorithm lma(&sum_squared_error);
 
   // Test
 
@@ -131,21 +125,12 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss()
 void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 {
    cout << "test_calculate_training_loss_gradient\n";
-//   DataSet data_set;
-
-//   NeuralNetwork neural_network;
-
-//   
-
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
 
 //   Tensor<type, 1> terms;
 //   Tensor<type, 2> terms_Jacobian;
 
 //   Tensor<type, 1> gradient;
 //   Tensor<type, 1> mse_gradient;
-
-//   LevenbergMarquardtAlgorithm lma(&sum_squared_error);
 
    // Test
 
@@ -189,7 +174,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
-//   gradient = lma.calculate_gradient(terms, terms_Jacobian);
+//   gradient = levenberg_marquardt_algorithm.calculate_gradient(terms, terms_Jacobian);
 
 //   assert_true(absolute_value(gradient-sum_squared_error.calculate_gradient()) < 1.0e-3, LOG);
 
@@ -203,7 +188,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
 
 //   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
-//   gradient = lma.calculate_gradient(terms, terms_Jacobian);
+//   gradient = levenberg_marquardt_algorithm.calculate_gradient(terms, terms_Jacobian);
 
 //   assert_true(gradient == sum_squared_error.calculate_gradient(), LOG);
 
@@ -216,25 +201,15 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
 //   NumericalDifferentiation nd;
 
-//   NeuralNetwork neural_network;
-
 //   Index parameters_number;
 
-//   
-
 //   Tensor<type, 1> parameters;
-
-//   DataSet data_set;
-
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
 
 //   Tensor<type, 2> terms_Jacobian;
 //   Tensor<type, 2> hessian;
 //   Tensor<type, 2> numerical_hessian;
 //   Tensor<type, 2> hessian_approximation;
 
-//   LevenbergMarquardtAlgorithm lma(&sum_squared_error);
-   
    // Test
 
 //   neural_network.set(NeuralNetwork::Approximation, {1, 2});
@@ -247,7 +222,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
 //   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
-//   hessian_approximation = lma.calculate_hessian_approximation(terms_Jacobian);
+//   hessian_approximation = levenberg_marquardt_algorithm.calculate_hessian_approximation(terms_Jacobian);
 
 //   assert_true(hessian_approximation.dimension(0) == parameters_number, LOG);
 //   assert_true(hessian_approximation.dimension(1) == parameters_number, LOG);
@@ -265,7 +240,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
 //   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
-//   hessian_approximation = lma.calculate_hessian_approximation(terms_Jacobian);
+//   hessian_approximation = levenberg_marquardt_algorithm.calculate_hessian_approximation(terms_Jacobian);
 
 //   assert_true(hessian_approximation.dimension(0) == parameters_number, LOG);
 //   assert_true(hessian_approximation.dimension(1) == parameters_number, LOG);
@@ -287,7 +262,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_hessian_approximation()
 
 //   terms_Jacobian = sum_squared_error.calculate_squared_errors_jacobian();
 
-//   hessian_approximation = lma.calculate_hessian_approximation(terms_Jacobian);
+//   hessian_approximation = levenberg_marquardt_algorithm.calculate_hessian_approximation(terms_Jacobian);
 
 //   assert_true(absolute_value(numerical_hessian - hessian_approximation) >= 0.0, LOG);
 
@@ -298,15 +273,9 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
-   NeuralNetwork neural_network;
-   
-   DataSet data_set;
-   
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
    Tensor<type, 1> gradient;
 
-   LevenbergMarquardtAlgorithm lma(&sum_squared_error);
-   lma.set_display(false);
+   levenberg_marquardt_algorithm.set_display(false);
 
    type old_loss;
    type loss;
@@ -326,7 +295,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
 //   old_loss = sum_squared_error.calculate_training_loss();
 
-//   lma.perform_training();
+//   levenberg_marquardt_algorithm.perform_training();
 
 //   loss = sum_squared_error.calculate_training_loss();
 
@@ -338,14 +307,14 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    minimum_parameters_increment_norm = 100.0;
 
-   lma.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-   lma.set_loss_goal(0.0);
-   lma.set_minimum_loss_decrease(0.0);
-   lma.set_gradient_norm_goal(0.0);
-   lma.set_maximum_epochs_number(10);
-   lma.set_maximum_time(10.0);
+   levenberg_marquardt_algorithm.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
+   levenberg_marquardt_algorithm.set_loss_goal(0.0);
+   levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
+   levenberg_marquardt_algorithm.set_gradient_norm_goal(0.0);
+   levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
+   levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-//   lma.perform_training();
+//   levenberg_marquardt_algorithm.perform_training();
 
    // Performance goal
 
@@ -353,14 +322,14 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    training_loss_goal = 100.0;
 
-   lma.set_minimum_parameters_increment_norm(0.0);
-   lma.set_loss_goal(training_loss_goal);
-   lma.set_minimum_loss_decrease(0.0);
-   lma.set_gradient_norm_goal(0.0);
-   lma.set_maximum_epochs_number(10);
-   lma.set_maximum_time(10.0);
+   levenberg_marquardt_algorithm.set_minimum_parameters_increment_norm(0.0);
+   levenberg_marquardt_algorithm.set_loss_goal(training_loss_goal);
+   levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
+   levenberg_marquardt_algorithm.set_gradient_norm_goal(0.0);
+   levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
+   levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-//   lma.perform_training();
+//   levenberg_marquardt_algorithm.perform_training();
 
 //   loss = sum_squared_error.calculate_training_loss();
 
@@ -372,14 +341,14 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    minimum_loss_decrease = 100.0;
 
-   lma.set_minimum_parameters_increment_norm(0.0);
-   lma.set_loss_goal(0.0);
-   lma.set_minimum_loss_decrease(minimum_loss_decrease);
-   lma.set_gradient_norm_goal(0.0);
-   lma.set_maximum_epochs_number(10);
-   lma.set_maximum_time(10.0);
+   levenberg_marquardt_algorithm.set_minimum_parameters_increment_norm(0.0);
+   levenberg_marquardt_algorithm.set_loss_goal(0.0);
+   levenberg_marquardt_algorithm.set_minimum_loss_decrease(minimum_loss_decrease);
+   levenberg_marquardt_algorithm.set_gradient_norm_goal(0.0);
+   levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
+   levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-//   lma.perform_training();
+//   levenberg_marquardt_algorithm.perform_training();
 
    // Gradient norm goal 
 
@@ -387,14 +356,14 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    gradient_norm_goal = 1.0e6;
 
-   lma.set_minimum_parameters_increment_norm(0.0);
-   lma.set_loss_goal(0.0);
-   lma.set_minimum_loss_decrease(0.0);
-   lma.set_gradient_norm_goal(gradient_norm_goal);
-   lma.set_maximum_epochs_number(10);
-   lma.set_maximum_time(10.0);
+   levenberg_marquardt_algorithm.set_minimum_parameters_increment_norm(0.0);
+   levenberg_marquardt_algorithm.set_loss_goal(0.0);
+   levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
+   levenberg_marquardt_algorithm.set_gradient_norm_goal(gradient_norm_goal);
+   levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
+   levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-//   lma.perform_training();
+//   levenberg_marquardt_algorithm.perform_training();
 
 //   gradient = sum_squared_error.calculate_training_loss_gradient();
 //   gradient_norm = l2_norm(gradient);
@@ -407,9 +376,7 @@ void LevenbergMarquardtAlgorithmTest::test_resize_training_error_history()
 {
    cout << "test_resize_training_error_history\n";
 
-   LevenbergMarquardtAlgorithm lma;
-
-   TrainingResults lmatr;//(&lma);
+   TrainingResults lmatr;//(&levenberg_marquardt_algorithm);
 
    lmatr.resize_training_error_history(1);
 
@@ -422,9 +389,7 @@ void LevenbergMarquardtAlgorithmTest::test_to_XML()
 {
    cout << "test_to_XML\n";
 
-   LevenbergMarquardtAlgorithm lma;
-
-//   tinyxml2::XMLDocument* lmad = lma.to_XML();
+//   tinyxml2::XMLDocument* lmad = levenberg_marquardt_algorithm.to_XML();
    
 //   assert_true(lmad != nullptr, LOG);
 }
@@ -433,16 +398,12 @@ void LevenbergMarquardtAlgorithmTest::test_to_XML()
 void LevenbergMarquardtAlgorithmTest::test_from_XML()
 {
    cout << "test_from_XML\n";
-
-   LevenbergMarquardtAlgorithm lma;
 }
 
 
 void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition()
 {
    cout << "test_perform_Householder_QR_decomposition\n";
-
-   LevenbergMarquardtAlgorithm lma;
 
    Tensor<type, 2> a;
    Tensor<type, 1> b;
@@ -455,7 +416,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
 
 //   b.set(1, 0.0);
 
-//   lma.perform_Householder_QR_decomposition(a, b);
+//   levenberg_marquardt_algorithm.perform_Householder_QR_decomposition(a, b);
 
    assert_true(is_equal(a, 1.0), LOG);
    assert_true(is_zero(b), LOG);
@@ -467,7 +428,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
 
 //   b.set(2, 0.0);
 
-//   lma.perform_Householder_QR_decomposition(a, b);
+//   levenberg_marquardt_algorithm.perform_Householder_QR_decomposition(a, b);
 
 //   inverse.set(2, 2);
 //   inverse.initialize_identity();
@@ -482,7 +443,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
 //   b.set(100);
    b.setRandom();
 
-//   lma.perform_Householder_QR_decomposition(a, b);
+//   levenberg_marquardt_algorithm.perform_Householder_QR_decomposition(a, b);
 
    assert_true(a.dimension(0) == 100, LOG);
    assert_true(a.dimension(1) == 100, LOG);

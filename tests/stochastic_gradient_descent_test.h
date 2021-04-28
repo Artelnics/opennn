@@ -55,6 +55,16 @@ public:
 
    void run_test_case();
 
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   SumSquaredError sum_squared_error;
+
+   StochasticGradientDescent stochastic_gradient_descent;
+
 };
 
 }

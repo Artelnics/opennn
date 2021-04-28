@@ -11,6 +11,9 @@
 
 GradientDescentTest::GradientDescentTest() : UnitTesting()
 {
+    sum_squared_error.set(&neural_network, &data_set);
+
+    gradient_descent.set(&sum_squared_error);
 }
 
 
@@ -47,14 +50,6 @@ void GradientDescentTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
-   DataSet data_set;
-
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 2});
-   neural_network.set_parameters_random();
-
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-   GradientDescent gradient_descent(&sum_squared_error);
 
    // Test
 
@@ -158,8 +153,6 @@ void GradientDescentTest::test_perform_training()
 void GradientDescentTest::test_resize_training_error_history()
 {
    cout << "test_resize_training_error_history\n";
-
-   GradientDescent gradient_descent;
 
    TrainingResults training_results;
 

@@ -11,6 +11,9 @@
 
 StochasticGradientDescentTest::StochasticGradientDescentTest() : UnitTesting()
 {
+    sum_squared_error.set(&neural_network, &data_set);
+
+    stochastic_gradient_descent.set(&sum_squared_error);
 }
 
 
@@ -22,8 +25,6 @@ StochasticGradientDescentTest::~StochasticGradientDescentTest()
 void StochasticGradientDescentTest::test_constructor()
 {
    cout << "test_constructor\n"; 
-
-   SumSquaredError sum_squared_error;
 
    // Default constructor
 
@@ -49,12 +50,6 @@ void StochasticGradientDescentTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
-   DataSet data_set;
-
-   NeuralNetwork neural_network; 
-
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
-
    // Test
 
    data_set.set(1, 1, 2);
@@ -62,8 +57,6 @@ void StochasticGradientDescentTest::test_perform_training()
 
    neural_network.set(NeuralNetwork::Approximation, {1, 2});
    neural_network.set_parameters_random();
-
-   StochasticGradientDescent stochastic_gradient_descent(&sum_squared_error);
 
    // Test
 
@@ -134,8 +127,6 @@ void StochasticGradientDescentTest::test_resize_training_error_history()
 {
    cout << "test_resize_training_error_history\n";
 
-   StochasticGradientDescent stochastic_gradient_descent;
-
    TrainingResults sgdtr;
 
    sgdtr.resize_training_error_history(1);
@@ -148,8 +139,6 @@ void StochasticGradientDescentTest::test_resize_training_error_history()
 void StochasticGradientDescentTest::test_to_XML()
 {
    cout << "test_to_XML\n";
-
-   StochasticGradientDescent stochastic_gradient_descent;
 
    tinyxml2::XMLDocument* document = nullptr;
 
