@@ -137,6 +137,10 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   NeuralNetwork neural_network;
 };
 
 #endif

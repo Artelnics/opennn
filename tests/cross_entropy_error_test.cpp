@@ -10,6 +10,7 @@
 
 CrossEntropyErrorTest::CrossEntropyErrorTest() : UnitTesting() 
 {
+    cross_entropy_error.set(&neural_network, &data_set);
 }
 
 
@@ -22,7 +23,6 @@ void CrossEntropyErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
-   DataSet data_set;
    Tensor<type, 2> data;
    Tensor<Index,1> training_samples_indices;
    Tensor<Index,1> inputs_indices;
@@ -46,7 +46,7 @@ void CrossEntropyErrorTest::test_calculate_error()
 
    // Test Trivial
 
-    //Dataset
+   // Dataset
 
    data_set.set(1, 2, 1);
    data_set.set_data_constant(0);
@@ -135,9 +135,6 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
 
-   NeuralNetwork neural_network;
-
-   DataSet data_set;
    Tensor<type, 2> data;
 
    DataSetBatch batch;

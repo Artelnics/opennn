@@ -10,6 +10,7 @@
 
 NormalizedSquaredErrorTest::NormalizedSquaredErrorTest() : UnitTesting()
 {
+    normalized_squared_error.set(&neural_network, &data_set);
 }
 
 
@@ -49,10 +50,6 @@ void NormalizedSquaredErrorTest::test_destructor()
 void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 {
    cout << "test_calculate_normalization_coefficient\n";
-
-   NeuralNetwork neural_network;
-   DataSet data_set;
-   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
    Index samples_number = 4;
    Index inputs_number = 4;
@@ -101,8 +98,6 @@ void NormalizedSquaredErrorTest::test_calculate_error()
 
    DataSetBatch batch;
 
-   NeuralNetwork neural_network;
-
    Index inputs_number;
    Index hidden_neurons;
    Index outputs_number;
@@ -110,8 +105,6 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    Tensor<type, 1> parameters;
 
    NeuralNetworkForwardPropagation forward_propagation;
-
-   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
    LossIndexBackPropagation back_propagation;
 
@@ -191,9 +184,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
    Tensor<Index, 1> input_indices;
    Tensor<Index, 1> target_indices;
 
-
-   NeuralNetwork neural_network;
-
    Index inputs_number;
    Index outputs_number;
    Index hidden_neurons;
@@ -209,8 +199,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
 
    NeuralNetworkForwardPropagation forward_propagation;
-
-   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
    LossIndexBackPropagation training_back_propagation;
 
@@ -860,12 +848,6 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors()
 {
    cout << "test_calculate_squared_errors\n";
 
-   DataSet data_set;
-   
-   NeuralNetwork neural_network;
-
-   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
-
    Index samples_number;
    Index inputs_number;
    Index hidden_neurons_number;
@@ -915,17 +897,11 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 {
    cout << "test_calculate_squared_errors_jacobian\n";
 
-   NeuralNetwork neural_network;
-
-   DataSet data_set;
-
    Tensor<Index, 1> samples_indices;
    Tensor<Index, 1> input_indices;
    Tensor<Index, 1> target_indices;
 
    DataSetBatch batch;
-
-   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
    Index samples_number;
    Index inputs_number;

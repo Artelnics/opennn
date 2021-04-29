@@ -150,25 +150,25 @@ void NeuralNetworkTest::test_add_layer()
 
     // LSTM
 
-   NeuralNetwork neural_network_;
+   neural_network.set();
 
    LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer;
-   neural_network_.add_layer(long_short_term_memory_layer);
-   assert_true(neural_network_.get_layers_number() == 1, LOG);
-   assert_true(neural_network_.get_layer_pointer(0)->get_type() == Layer::LongShortTermMemory, LOG);
+   neural_network.add_layer(long_short_term_memory_layer);
+   assert_true(neural_network.get_layers_number() == 1, LOG);
+   assert_true(neural_network.get_layer_pointer(0)->get_type() == Layer::LongShortTermMemory, LOG);
 
     // RECURRENT
 
-   NeuralNetwork neural_network__;
+   neural_network.set();
 
    RecurrentLayer* recurrent_layer = new RecurrentLayer;
-   neural_network__.add_layer(recurrent_layer);
-   assert_true(neural_network__.get_layers_number() == 1, LOG);
-   assert_true(neural_network__.get_layer_pointer(0)->get_type() == Layer::Recurrent, LOG);
+   neural_network.add_layer(recurrent_layer);
+   assert_true(neural_network.get_layers_number() == 1, LOG);
+   assert_true(neural_network.get_layer_pointer(0)->get_type() == Layer::Recurrent, LOG);
 
    // SCALING
 
-   NeuralNetwork neural_network;
+   neural_network.set();
 
    ScalingLayer* scaling_layer = new ScalingLayer(1);
    neural_network.add_layer(scaling_layer);
@@ -342,8 +342,6 @@ void NeuralNetworkTest::test_get_inputs()
 {
    cout << "test_get_inputs\n";
 
-   NeuralNetwork neural_network;
-
    Tensor<string, 1> inputs_names(2);
    inputs_names.setValues({"in_1","in_2"});
 
@@ -359,8 +357,6 @@ void NeuralNetworkTest::test_get_inputs()
 void NeuralNetworkTest::test_get_outputs()
 {
    cout << "test_get_outputs\n";
-
-   NeuralNetwork neural_network;
 
    Tensor<string, 1> outputs_names(2);
    outputs_names.setValues({"out_1","out_2"});
@@ -482,9 +478,6 @@ void NeuralNetworkTest::test_set()
 {
    cout << "test_set\n";
 
-   NeuralNetwork neural_network;
-   
-
    // Test 0
 
    neural_network.set();
@@ -557,8 +550,6 @@ void NeuralNetworkTest::test_set_names()
 {
    cout << "test_set_names\n";
 
-   NeuralNetwork neural_network;
-
    // Test 0
 
    Tensor<string, 1> inputs_names;
@@ -590,8 +581,6 @@ void NeuralNetworkTest::test_set_names()
 void NeuralNetworkTest::test_set_inputs_number()
 {
    cout << "test_set_inputs_number\n";
-
-   NeuralNetwork neural_network;
 
    Index inputs_number = 0;
 
@@ -646,8 +635,6 @@ void NeuralNetworkTest::test_set_default()
 {
    cout << "test_set_default\n";
 
-   NeuralNetwork neural_network;
-
    neural_network.set_default();
 
    assert_true(neural_network.get_display(), LOG);
@@ -684,8 +671,6 @@ void NeuralNetworkTest::test_set_pointers()
 void NeuralNetworkTest::test_set_display()
 {
    cout << "test_set_display\n";
-
-   NeuralNetwork neural_network;
 
    neural_network.set_display(true);
    assert_true(neural_network.get_display(), LOG);
@@ -796,7 +781,6 @@ void NeuralNetworkTest::test_get_parameters()
 {
    cout << "test_get_parameters\n";
 
-   NeuralNetwork neural_network;
    Tensor<type, 1> parameters;
 
    // Test 0
@@ -893,7 +877,6 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 {
     cout << "test_get_trainable_layers_parameters\n";
 
-    NeuralNetwork neural_network;
     Tensor<type, 1> parameters;
     Tensor<Tensor<type, 1>, 1> trainable_layers_parameters;
 
@@ -969,9 +952,6 @@ void NeuralNetworkTest::test_set_parameters()
 {
    cout << "test_set_parameters\n";
 
-   
-   NeuralNetwork neural_network;
-
    Index parameters_number;
    Tensor<type, 1> parameters;
 
@@ -1015,7 +995,6 @@ void NeuralNetworkTest::test_set_parameters_constant()
 {
    cout << "test_set_parameters_constant\n";
 
-   NeuralNetwork neural_network;
    Tensor<type, 1> parameters;
 
    neural_network.set(NeuralNetwork::Approximation, {1,2,1});
@@ -1047,7 +1026,6 @@ void NeuralNetworkTest::test_set_parameters_random()
 {
    cout << "test_set_parameters_random\n";
 
-   NeuralNetwork neural_network;
    Tensor<type, 1> parameters;
 
    Tensor<Index, 1> architecture(3);
@@ -1067,7 +1045,6 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
 {
    cout << "test_calculate_parameters_norm\n";
 
-   NeuralNetwork neural_network;
    type parameters_norm = 0;
    type parameters_norm_1 = 0;
    
@@ -1110,7 +1087,6 @@ void NeuralNetworkTest::test_perturbate_parameters()
    // Test 1
 
    Tensor<Index, 1> architecture(3);
-   NeuralNetwork neural_network;
 
    Index parameters_number;
    Tensor<type, 1> parameters;
@@ -1153,8 +1129,6 @@ void NeuralNetworkTest::test_perturbate_parameters()
 void NeuralNetworkTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
-
-   NeuralNetwork neural_network;
 
    Index inputs_number;
    Index outputs_number;
@@ -1355,8 +1329,6 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
 {
    cout << "test_calculate_directional_inputs\n";
 
-   NeuralNetwork neural_network; 
-
    Tensor<type, 2> inputs;
    Tensor<type, 2> outputs;
    Tensor<type, 2> trainable_outputs;
@@ -1415,8 +1387,6 @@ void NeuralNetworkTest::test_save()
 
    string file_name = "../data/neural_network.xml";
 
-   NeuralNetwork neural_network;   
-
    // Empty neural network
 
    neural_network.set();
@@ -1441,7 +1411,6 @@ void NeuralNetworkTest::test_load()
 
    // Empty neural network
 
-   NeuralNetwork neural_network;
    neural_network.save(file_name);
    neural_network.load(file_name);
 }
@@ -1452,8 +1421,6 @@ void NeuralNetworkTest::test_print()
    cout << "test_print\n";
 
    // Empty neural network
-
-   NeuralNetwork neural_network;
 
    //neural_network.print();
 
@@ -1470,8 +1437,6 @@ void NeuralNetworkTest::test_write_expression()
    cout << "test_write_expression\n";
 
    // Test 0
-
-   NeuralNetwork neural_network;
 
    //neural_network.print();
 

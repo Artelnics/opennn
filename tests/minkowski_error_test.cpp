@@ -11,6 +11,7 @@
 
 MinkowskiErrorTest::MinkowskiErrorTest() : UnitTesting() 
 {
+    minkowski_error.set(&neural_network, &data_set);
 }
 
 
@@ -68,8 +69,6 @@ void MinkowskiErrorTest::test_set_Minkowski_parameter()
 void MinkowskiErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
-
-   NeuralNetwork neural_network;
 
    Tensor<type, 1> parameters;
 
@@ -147,10 +146,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
    DataSetBatch batch;
 
-   NeuralNetwork neural_network;
    NeuralNetworkForwardPropagation forward_propagation;
-
-   MinkowskiError minkowski_error(&neural_network, &data_set);
 
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
@@ -161,8 +157,6 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
    Index hidden_neurons;
 
    LossIndexBackPropagation training_back_propagation(samples_number, &minkowski_error);
-
-   ScalingLayer* scaling_layer;
 
    RecurrentLayer* recurrent_layer;
 
@@ -222,7 +216,6 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
    assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
 }
-
 
    // Test trivial
 {
@@ -317,6 +310,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
    neural_network.add_layer(perceptron_layer_2);
 
    neural_network.set_parameters_random();
+
 //   error_gradient = me.calculate_error_gradient();
 
 //   numerical_error_gradient = me.calculate_gradient_numerical_differentiation();
