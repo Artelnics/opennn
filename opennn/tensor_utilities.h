@@ -41,6 +41,7 @@ void save_csv(const Tensor<type,2>&, const string&);
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 
+void scrub_missing_values(Tensor<type, 2>&, const type&);
 
 }
 

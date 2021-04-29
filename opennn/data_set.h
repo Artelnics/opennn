@@ -207,6 +207,7 @@ public:
 
    Tensor<Column, 1> get_columns() const;
    Tensor<Column, 1> get_time_series_columns() const;
+   Index get_time_series_data_rows_number() const;
    Tensor<Column, 1> get_input_columns() const;
    Tensor<bool, 1> get_input_columns_binary() const;
    Tensor<Column, 1> get_target_columns() const;

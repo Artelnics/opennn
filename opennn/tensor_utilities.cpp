@@ -188,6 +188,12 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
     return rank;
 }
 
+
+void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
+{
+    std::replace_if (matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
+}
+
 }
 
 
