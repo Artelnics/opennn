@@ -1238,6 +1238,40 @@ Index NeuralNetwork::get_probabilistic_layers_number() const
 }
 
 
+Index NeuralNetwork::get_long_short_term_memory_layers_number() const
+{
+    const Index layers_number = get_layers_number();
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers(i)->get_type() == Layer::LongShortTermMemory)
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+Index NeuralNetwork::get_recurrent_layers_number() const
+{
+    const Index layers_number = get_layers_number();
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers(i)->get_type() == Layer::Recurrent)
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
 /// Initializes all the neural and the independent parameters with a given value.
 
 void NeuralNetwork::set_parameters_constant(const type& value)

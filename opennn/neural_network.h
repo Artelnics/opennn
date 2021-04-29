@@ -148,6 +148,8 @@ public:
 
    Index get_perceptron_layers_number() const;
    Index get_probabilistic_layers_number() const;
+   Index get_long_short_term_memory_layers_number() const;
+   Index get_recurrent_layers_number() const;
 
    // Architecture
 
