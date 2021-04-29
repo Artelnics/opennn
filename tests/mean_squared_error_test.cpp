@@ -11,6 +11,7 @@
 
 MeanSquaredErrorTest::MeanSquaredErrorTest() : UnitTesting() 
 {
+    mean_squared_error.set(&neural_network, &data_set);
 }
 
 
@@ -53,13 +54,12 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    Tensor<type, 1> parameters;
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1,1});
+   neural_network.set(NeuralNetwork::Approximation, {1,1,1});
    neural_network.set_parameters_constant(0.0);
 
-   DataSet data_set(1, 1, 1);
+   data_set.set(1, 1, 1);
    data_set.set_data_constant(0.0);
 
-   MeanSquaredError mean_squared_error(&neural_network, &data_set);
    DataSetBatch batch(1, &data_set);
 
    Index batch_samples_number = batch.get_samples_number();
@@ -117,8 +117,6 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
 
-   DataSet data_set;
-
    Index samples_number;
 
    Tensor<Index, 1> samples_indices;
@@ -126,8 +124,6 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
    Tensor<Index, 1> target_indices;
 
    DataSetBatch batch;
-
-   NeuralNetwork neural_network;
 
    Index inputs_number;
    Index hidden_neurons;
@@ -143,8 +139,6 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
    ProbabilisticLayer* probabilistic_layer;
    RecurrentLayer* recurrent_layer;
    LongShortTermMemoryLayer* long_short_term_memory_layer;
-
-   MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
    LossIndexBackPropagation training_back_propagation(samples_number, &mean_squared_error);
 
@@ -373,16 +367,11 @@ void MeanSquaredErrorTest::test_calculate_squared_errors()
 {
    cout << "test_calculate_squared_errors\n";
 
-   NeuralNetwork neural_network;
    Tensor<Index, 1> hidden_layers_size;
 
    Index parameters;
-   DataSet data_set;
    
-   MeanSquaredError mean_squared_error(&neural_network, &data_set);
-
    DataSetBatch batch(1, &data_set);
-
 
    Index batch_samples_number = batch.get_samples_number();
 
@@ -416,17 +405,11 @@ void MeanSquaredErrorTest::test_calculate_squared_errors_jacobian()
 {
    cout << "test_calculate_squared_errors_jacobian\n";
 
-   NeuralNetwork neural_network;
-
-   DataSet data_set;
-
    Tensor<Index, 1> samples_indices;
    Tensor<Index, 1> input_indices;
    Tensor<Index, 1> target_indices;
 
    DataSetBatch batch;
-
-   MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
    Tensor<Index, 1> architecture;
 

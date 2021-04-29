@@ -36,7 +36,6 @@ public:
 
    void test_calculate_error();
 
-
    void test_calculate_error_gradient();
 
    void test_to_XML();
@@ -45,6 +44,15 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   CrossEntropyError cross_entropy_error;
+
 };
 
 #endif

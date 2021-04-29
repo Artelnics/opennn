@@ -59,6 +59,13 @@ public:
 
    void run_test_case();
 
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   MeanSquaredError mean_squared_error;
 };
 
 

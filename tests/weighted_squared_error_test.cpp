@@ -11,6 +11,7 @@
 
 WeightedSquaredErrorTest::WeightedSquaredErrorTest() : UnitTesting()
 {
+    weighted_squared_error.set(&neural_network, &data_set);
 }
 
 
@@ -50,20 +51,23 @@ void WeightedSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
+   Index samples_number;
+   Index inputs_number;
+   Index outputs_number;
+   Index hidden_neurons;
+
    Tensor<type, 1> parameters;
 
-   NeuralNetwork neural_network(NeuralNetwork::Classification, {1, 2});
+   // Test
+
+   neural_network.set(NeuralNetwork::Classification, {1, 2});
 
    neural_network.set_parameters_constant(1);
-   DataSet data_set(1, 1, 1);
+   data_set.set(1, 1, 1);
 
-   Index samples_number;
    samples_number = 1;
-   Index inputs_number;
    inputs_number = 1;
-   Index outputs_number;
    outputs_number = 1;
-   Index hidden_neurons;
    hidden_neurons = 1;
 
    Tensor<type, 2> new_data(2, 2);
@@ -75,9 +79,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
    data_set.set_data(new_data);
    data_set.set_training();
 
-   WeightedSquaredError wse(&neural_network, &data_set);
-
-   wse.set_weights();
+   weighted_squared_error.set_weights();
 
    DataSetBatch batch(1, &data_set);
 
@@ -90,11 +92,11 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
    NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
 
-   LossIndexBackPropagation back_propagation(batch_samples_number, &wse);
+   LossIndexBackPropagation back_propagation(batch_samples_number, &weighted_squared_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
-   wse.calculate_error(batch, forward_propagation, back_propagation);
+   weighted_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
    assert_true(back_propagation.error == 1, LOG);
 
@@ -121,7 +123,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
   data_set_2.set_data(new_data_2);
 
   WeightedSquaredError wse_2(&neural_network, &data_set_2);
-  wse.set_weights();
+  weighted_squared_error.set_weights();
 
   assert_true(wse_2.get_positives_weight() != wse_2.get_negatives_weight(), LOG);
 }
@@ -130,12 +132,6 @@ void WeightedSquaredErrorTest::test_calculate_error()
 void WeightedSquaredErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
-
-   NeuralNetwork neural_network;
-
-   DataSet data_set;
-
-   WeightedSquaredError wse(&neural_network, &data_set);
 
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
@@ -183,9 +179,9 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
        data_set.set_data(new_data);
        data_set.set_training();
 
-       WeightedSquaredError wse(&neural_network, &data_set);
 
-       wse.set_weights();
+
+       weighted_squared_error.set_weights();
 
        DataSetBatch batch(1, &data_set);
 
@@ -199,18 +195,17 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
        NeuralNetworkForwardPropagation forward_propagation(batch_samples_number, &neural_network);
 
-       LossIndexBackPropagation back_propagation(batch_samples_number, &wse);
+       LossIndexBackPropagation back_propagation(batch_samples_number, &weighted_squared_error);
 
        neural_network.forward_propagate(batch, forward_propagation);
         forward_propagation.print();
-       wse.back_propagate(batch, forward_propagation, back_propagation);
-//       wse.calculate_error(batch, forward_propagation, back_propagation);
+       weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+//       weighted_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
-       numerical_error_gradient = wse.calculate_gradient_numerical_differentiation();
+       numerical_error_gradient = weighted_squared_error.calculate_gradient_numerical_differentiation();
 
        assert_true(back_propagation.gradient(0)-1.1499 < 1e-3, LOG); // @todo 1e-2 precission
        assert_true(back_propagation.gradient(1)-0 < 1e-3, LOG);
-
 }
 
    neural_network.set();
@@ -260,9 +255,9 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    neural_network.set_parameters_random();
 
-//   error_gradient = wse.calculate_error_gradient();
+//   error_gradient = weighted_squared_error.calculate_error_gradient();
 
-   numerical_error_gradient = wse.calculate_gradient_numerical_differentiation();
+   numerical_error_gradient = weighted_squared_error.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -312,9 +307,9 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   neural_network.set_parameters_random();
 
-//   error_gradient = wse.calculate_error_gradient();
+//   error_gradient = weighted_squared_error.calculate_error_gradient();
 
-//   numerical_error_gradient = wse.calculate_gradient_numerical_differentiation();
+//   numerical_error_gradient = weighted_squared_error.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -364,9 +359,9 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   neural_network.set_parameters_random();
 
-//   error_gradient = wse.calculate_error_gradient();
+//   error_gradient = weighted_squared_error.calculate_error_gradient();
 
-//   numerical_error_gradient = wse.calculate_gradient_numerical_differentiation();
+//   numerical_error_gradient = weighted_squared_error.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -458,9 +453,9 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 //   neural_network.add_layer(perceptron_layer);
 //   neural_network.add_layer(probabilistic_layer);
 
-//   numerical_error_gradient = wse.calculate_gradient_numerical_differentiation();
+//   numerical_error_gradient = weighted_squared_error.calculate_gradient_numerical_differentiation();
 
-//   error_gradient = wse.calculate_error_gradient();
+//   error_gradient = weighted_squared_error.calculate_error_gradient();
 
 //   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
@@ -471,14 +466,9 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
 {
    cout << "test_calculate_squared_errors\n";
 
-   DataSet data_set;
 
-   NeuralNetwork neural_network;
-   
    Tensor<type, 1> parameters;
    
-   WeightedSquaredError wse(&neural_network, &data_set);
-
    type error;
 
    Tensor<type, 1> squared_errors;
@@ -491,9 +481,9 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
    data_set.set(3, 2, 2);
 //   data_set.generate_data_binary_classification(3, 2);
 
-//   error = wse.calculate_error();
+//   error = weighted_squared_error.calculate_error();
 
-//   squared_errors = wse.calculate_training_error_terms();
+//   squared_errors = weighted_squared_error.calculate_training_error_terms();
 
 //   assert_true(abs((squared_errors*squared_errors).sum() - error) < 1.0e-3, LOG);
 
@@ -505,9 +495,9 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
    data_set.set(9, 3, 1);
 //   data_set.generate_data_binary_classification(9, 3);
 
-//   error = wse.calculate_error();
+//   error = weighted_squared_error.calculate_error();
 
-//   squared_errors = wse.calculate_training_error_terms();
+//   squared_errors = weighted_squared_error.calculate_training_error_terms();
 
 //   assert_true(abs((squared_errors*squared_errors).sum() - error) < 1.0e-3, LOG);
 }
@@ -516,10 +506,6 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
 void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 {
    cout << "test_calculate_squared_errors_jacobian\n";
-
-   NeuralNetwork neural_network;
-
-   DataSet data_set;
 
    Tensor<Index, 1> samples_indices;
    Tensor<Index, 1> input_indices;

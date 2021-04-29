@@ -69,6 +69,14 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   NormalizedSquaredError normalized_squared_error;
 };
 
 

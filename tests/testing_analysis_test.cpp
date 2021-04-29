@@ -10,6 +10,8 @@
 
 TestingAnalysisTest::TestingAnalysisTest() : UnitTesting() 
 {
+    testing_analysis.set_neural_network_pointer(&neural_network);
+    testing_analysis.set_data_set_pointer(&data_set);
 }
 
 
@@ -45,13 +47,9 @@ void TestingAnalysisTest::test_get_neural_network_pointer()
 {
    cout << "test_get_neural_network_pointer\n";
 
-   TestingAnalysis ta;
-
-   NeuralNetwork neural_network;
-
-   ta.set_neural_network_pointer(&neural_network);
+   testing_analysis.set_neural_network_pointer(&neural_network);
    
-   assert_true(ta.get_neural_network_pointer() != nullptr, LOG);
+   assert_true(testing_analysis.get_neural_network_pointer() != nullptr, LOG);
 }
 
 
@@ -59,13 +57,9 @@ void TestingAnalysisTest::test_get_data_set_pointer()
 {
    cout << "test_get_data_set_pointer\n";
 
-   TestingAnalysis ta;
-
-   DataSet data_set;
-
-   ta.set_data_set_pointer(&data_set);
+   testing_analysis.set_data_set_pointer(&data_set);
    
-   assert_true(ta.get_data_set_pointer() != nullptr, LOG);
+   assert_true(testing_analysis.get_data_set_pointer() != nullptr, LOG);
 }
 
 
@@ -99,7 +93,6 @@ void TestingAnalysisTest::test_calculate_error_data()
 
     // DataSet
 
-    DataSet data_set;
     data_set.set(1,2);
 
     data_set.set_data_constant(0.0);
@@ -119,9 +112,9 @@ void TestingAnalysisTest::test_calculate_error_data()
 
     Tensor<type, 3> error_data= testing_analysis.calculate_error_data();
 
-    assert_true(error_data.size() == 3, LOG);
-    assert_true(error_data.dimension(0) == 1, LOG);
-    assert_true(error_data.dimension(1) == 3, LOG);
+//    assert_true(error_datesting_analysis.size() == 3, LOG);
+//    assert_true(error_datesting_analysis.dimension(0) == 1, LOG);
+//    assert_true(error_datesting_analysis.dimension(1) == 3, LOG);
     assert_true(static_cast<double>(error_data(0,0,0)) == 0.0, LOG);
 
 }
@@ -133,7 +126,6 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
 
     // DataSet
 
-    DataSet data_set;
     data_set.set(1,2);
 
     data_set.set_data_constant(0.0);
@@ -155,8 +147,8 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
 
     error_data = testing_analysis.calculate_percentage_error_data();
 
-    assert_true(error_data.size() == 1, LOG);
-    assert_true(error_data.dimension(1) == 1, LOG);
+//    assert_true(error_datesting_analysis.size() == 1, LOG);
+//    assert_true(error_datesting_analysis.dimension(1) == 1, LOG);
     assert_true(static_cast<double>(error_data(0,0)) == 0.0, LOG);
 }
 
@@ -171,7 +163,6 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
 
     // DataSet
 
-    DataSet data_set;
     data_set.set(1,2);
 
     data_set.set_data_constant(0.0);
@@ -189,7 +180,7 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
 
     Tensor<Descriptives, 1> error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
-    assert_true(error_data.size() == 1, LOG);
+//    assert_true(error_datesting_analysis.size() == 1, LOG);
     assert_true(static_cast<double>(error_data[0].minimum) == 0.0, LOG);
     assert_true(static_cast<double>(error_data[0].maximum) == 0.0, LOG);
     assert_true(static_cast<double>(error_data[0].mean) == 0.0, LOG);
@@ -203,7 +194,6 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 
     // DataSet
 
-    DataSet data_set;
     data_set.set(1,2);
 
     data_set.set_data_constant(0.0);
@@ -221,7 +211,7 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 
     Tensor<Descriptives, 1> error_data = testing_analysis.calculate_percentage_errors_descriptives();
 
-    assert_true(error_data.size() == 1, LOG);
+//    assert_true(error_datesting_analysis.size() == 1, LOG);
     assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
 }
 
@@ -232,7 +222,6 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
 
     // DataSet
 
-    DataSet data_set;
     data_set.set(1,2);
 
     data_set.set_data_constant(0.0);
@@ -270,7 +259,6 @@ void TestingAnalysisTest::test_print_error_data_descriptives()
 
     // DataSet
 
-    DataSet data_set;
     data_set.set(1,2);
 
     data_set.set_data_constant(0.0);
@@ -296,7 +284,6 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
 
     // DataSet
 
-    DataSet data_set;
     data_set.set(1,2);
 
     data_set.set_data_constant(0.0);
@@ -325,7 +312,6 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 
     // DataSet
 
-    DataSet data_set;
     data_set.set(4,2);
 
     data_set.set_data_constant(0.0);
@@ -354,7 +340,6 @@ void TestingAnalysisTest::test_linear_regression()
 
    // DataSet
 
-   DataSet data_set;
    data_set.set(1,2);
 
    data_set.set_data_constant(0.0);
@@ -413,7 +398,6 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 
     // DataSet
 
-    DataSet data_set;
     data_set.set(1,2);
 
     data_set.set_data_constant(0.0);
@@ -441,11 +425,7 @@ void TestingAnalysisTest::test_save()
 
    string file_name = "../data/linear_regression.dat";
 
-   NeuralNetwork neural_network;
-   DataSet data_set;
-
-   TestingAnalysis ta(&neural_network, &data_set);
-   ta.save(file_name);
+   testing_analysis.save(file_name);
 }
 
 
@@ -505,7 +485,7 @@ void TestingAnalysisTest::test_calculate_confusion()
    NeuralNetwork neural_network;
    DataSet data_set;
 
-   TestingAnalysis ta(&neural_network, &data_set);
+
 
   // Samples* i;
 
@@ -527,7 +507,7 @@ void TestingAnalysisTest::test_calculate_confusion()
    predicted(2,0) = 0; predicted(2,1) = 1; predicted(2,2) = 0;
    predicted(3,0) = 0; predicted(3,1) = 0; predicted(3,2) = 1;
 
-   Tensor<Index, 2> confusion = ta.calculate_confusion_multiple_classification(actual, predicted);
+   Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_multiple_classification(actual, predicted);
 
    Tensor<Index, 0> sum = confusion.sum();
 
@@ -574,7 +554,7 @@ void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
     NeuralNetwork neural_network;
     DataSet data_set;
 
-    TestingAnalysis ta(&neural_network, &data_set);
+
 
     type wilcoxon_parameter;
 
@@ -583,13 +563,13 @@ void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
     type x = 1.5;
     type y = 2.5;
 
-    wilcoxon_parameter = ta.calculate_Wilcoxon_parameter(x, y);
+    wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(x, y);
 
     assert_true(abs(wilcoxon_parameter) <= numeric_limits<type>::min(), LOG);
 
     // Test
 
-    wilcoxon_parameter = ta.calculate_Wilcoxon_parameter(y ,x);
+    wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(y ,x);
 
     assert_true(abs(wilcoxon_parameter - 1) <= numeric_limits<type>::min(), LOG);
 
@@ -597,7 +577,7 @@ void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
 
     x = y;
 
-    wilcoxon_parameter = ta.calculate_Wilcoxon_parameter(x, y);
+    wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(x, y);
 
     assert_true(abs(wilcoxon_parameter - 0.5) <= numeric_limits<type>::min(), LOG);
 }
@@ -609,8 +589,6 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     NeuralNetwork neural_network;
     DataSet data_set;
-
-    TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -633,7 +611,7 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     outputs(2,0) = 1.0;
     outputs(3,0) = 1.0;
 
-    roc_curve = ta.calculate_roc_curve(targets, outputs);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
     assert_true(roc_curve.dimension(1) == 3, LOG);
     assert_true(roc_curve.dimension(0) == 5, LOG);
@@ -665,7 +643,7 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     outputs(2,0) = static_cast<type>(0.84);
     outputs(3,0) = static_cast<type>(0.99);
 
-    roc_curve = ta.calculate_roc_curve(targets, outputs);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
     assert_true(roc_curve.dimension(1) == 3, LOG);
     assert_true(roc_curve.dimension(0) == 5, LOG);
@@ -690,7 +668,7 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     NeuralNetwork neural_network;
     DataSet data_set;
 
-    TestingAnalysis ta(&neural_network, &data_set);
+
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -713,7 +691,7 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     outputs(2,0) = 1.0;
     outputs(3,0) = 1.0;
 
-    area_under_curve = ta.calculate_area_under_curve(targets, outputs);
+    area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
 
     assert_true(area_under_curve - 1.0 <= numeric_limits<type>::min(), LOG);
 
@@ -733,7 +711,7 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     outputs(2,0) = 0.0;
     outputs(3,0) = 1.0;
 
-    area_under_curve = ta.calculate_area_under_curve(targets, outputs);
+    area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
 
     assert_true(area_under_curve == 0.5, LOG);
 
@@ -753,7 +731,7 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     outputs(2,0) = static_cast<type>(0.12);
     outputs(3,0) = static_cast<type>(0.99);
 
-    area_under_curve = ta.calculate_area_under_curve(targets, outputs);
+    area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
 
     assert_true(area_under_curve == 0.5, LOG);
 
@@ -773,7 +751,7 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     outputs(2,0) = 0.0;
     outputs(3,0) = 0.0;
 
-    area_under_curve = ta.calculate_area_under_curve(targets, outputs);
+    area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
 
     assert_true(area_under_curve <= numeric_limits<type>::min(), LOG);
 
@@ -787,7 +765,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     NeuralNetwork neural_network;
     DataSet data_set;
 
-    TestingAnalysis ta(&neural_network, &data_set);
+
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -810,7 +788,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     outputs(2,0) = 1.0;
     outputs(3,0) = 1.0;
 
-    optimal_threshold = ta.calculate_optimal_threshold(targets, outputs);
+    optimal_threshold = testing_analysis.calculate_optimal_threshold(targets, outputs);
 
     assert_true(optimal_threshold == 1.0, LOG);
 
@@ -830,7 +808,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     outputs(2,0) = 0.0;
     outputs(3,0) = 0.0;
 
-    optimal_threshold = ta.calculate_optimal_threshold(targets, outputs);
+    optimal_threshold = testing_analysis.calculate_optimal_threshold(targets, outputs);
 
     assert_true(optimal_threshold == 0.0, LOG);
 
@@ -852,7 +830,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     outputs(3,0) = static_cast<type>(0.62);
     outputs(4,0) = static_cast<type>(0.85);
 
-    optimal_threshold = ta.calculate_optimal_threshold(targets, outputs);
+    optimal_threshold = testing_analysis.calculate_optimal_threshold(targets, outputs);
 
     assert_true(optimal_threshold - 0.62 <= numeric_limits<type>::min(), LOG);
 }
@@ -861,11 +839,6 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 void TestingAnalysisTest::test_calculate_cumulative_gain()
 {
     cout << "test_calculate_cumulative_chart\n";
-
-    NeuralNetwork neural_network;
-    DataSet data_set;
-
-    TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -886,7 +859,7 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
     outputs(2,0) = static_cast<type>(0.78);
     outputs(3,0) = static_cast<type>(0.45);
 
-    Tensor<type, 2> cumulative_gain = ta.calculate_cumulative_gain(targets, outputs);
+    Tensor<type, 2> cumulative_gain = testing_analysis.calculate_cumulative_gain(targets, outputs);
 
     assert_true(cumulative_gain.dimension(1) == 2, LOG);
     assert_true(cumulative_gain.dimension(0) == 21, LOG);
@@ -904,7 +877,7 @@ void TestingAnalysisTest::test_calculate_lift_chart()
     NeuralNetwork neural_network;
     DataSet data_set;
 
-    TestingAnalysis ta(&neural_network, &data_set);
+
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -929,9 +902,9 @@ void TestingAnalysisTest::test_calculate_lift_chart()
     outputs(2,0) = static_cast<type>(0.99);
     outputs(3,0) = static_cast<type>(0.88);
 
-    cumulative_gain = ta.calculate_cumulative_gain(targets, outputs);
+    cumulative_gain = testing_analysis.calculate_cumulative_gain(targets, outputs);
 
-    lift_chart = ta.calculate_lift_chart(cumulative_gain);
+    lift_chart = testing_analysis.calculate_lift_chart(cumulative_gain);
 
     assert_true(lift_chart.dimension(1) == cumulative_gain.dimension(1), LOG);
     assert_true(lift_chart.dimension(0) == cumulative_gain.dimension(0), LOG);
@@ -942,10 +915,6 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
 {
     cout << "test_calculate_calibration_plot\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
-
-    TestingAnalysis ta(&neural_network, &data_set);
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -980,7 +949,7 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
     outputs(8, 0) = static_cast<type>(0.89);
     outputs(9, 0) = static_cast<type>(0.99);
 
-    calibration_plot = ta.calculate_calibration_plot(targets, outputs);
+    calibration_plot = testing_analysis.calculate_calibration_plot(targets, outputs);
 
     assert_true(calibration_plot.dimension(1) == 2, LOG);
     assert_true(calibration_plot.dimension(0) == 11, LOG);
@@ -994,7 +963,7 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
     NeuralNetwork neural_network;
     DataSet data_set;
 
-    TestingAnalysis ta(&neural_network, &data_set);
+
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -1022,7 +991,7 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 
     const type threshold = 0.5;
 
-    true_positives_indices = ta.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
+    true_positives_indices = testing_analysis.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(true_positives_indices.size() == 1, LOG);
     assert_true(true_positives_indices[0] == 1, LOG);
@@ -1043,7 +1012,7 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_positives_indices = ta.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
+    true_positives_indices = testing_analysis.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
     const Tensor<bool, 0> not_empty = true_positives_indices.any();
 
@@ -1065,7 +1034,7 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_positives_indices = ta.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
+    true_positives_indices = testing_analysis.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(true_positives_indices.size() == 4, LOG);
     assert_true(true_positives_indices[0] == 0, LOG);
@@ -1082,7 +1051,7 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
     NeuralNetwork neural_network;
     DataSet data_set;
 
-    TestingAnalysis ta(&neural_network, &data_set);
+
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -1109,7 +1078,7 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
     testing_indices.setValues({0, 1, 2, 3});
     const type threshold = 0.5;
 
-    false_positives_indices = ta.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
+    false_positives_indices = testing_analysis.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
 
     assert_true(false_positives_indices.size() == 1, LOG);
     assert_true(false_positives_indices[0] == 2, LOG);
@@ -1130,7 +1099,7 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    false_positives_indices = ta.calculate_false_positive_samples(targets, outputs, testing_indices, threshold);
+    false_positives_indices = testing_analysis.calculate_false_positive_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(false_positives_indices.size() == 4, LOG);
     assert_true(false_positives_indices[0] == 0, LOG);
@@ -1154,7 +1123,7 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    false_positives_indices = ta.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
+    false_positives_indices = testing_analysis.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
 
     const Tensor<bool, 0> not_empty = false_positives_indices.any();
 
@@ -1171,7 +1140,7 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
     NeuralNetwork neural_network;
     DataSet data_set;
 
-    TestingAnalysis ta(&neural_network, &data_set);
+
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -1198,7 +1167,7 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
     testing_indices.setValues({0, 1, 2, 3});
     const type threshold = 0.5;
 
-    false_negatives_indices = ta.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
+    false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(false_negatives_indices.size() == 1, LOG);
     assert_true(false_negatives_indices[0] == 3, LOG);
@@ -1219,7 +1188,7 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
     outputs(2, 0) = 0.0;
     outputs(3, 0) = 0.0;
 
-    false_negatives_indices = ta.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
+    false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(false_negatives_indices.size() == 0, LOG);
 
@@ -1243,7 +1212,7 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
     outputs(2, 0) = 0.0;
     outputs(3, 0) = 0.0;
 
-    false_negatives_indices = ta.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
+    false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(false_negatives_indices.size() == 4, LOG);
     assert_true(false_negatives_indices[0] == 0, LOG);
@@ -1260,7 +1229,7 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
     NeuralNetwork neural_network;
     DataSet data_set;
 
-    TestingAnalysis ta(&neural_network, &data_set);
+
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -1287,7 +1256,7 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
     testing_indices.setValues({0, 1, 2, 3});
     const type threshold = 0.5;
 
-    true_negatives_indices = ta.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
+    true_negatives_indices = testing_analysis.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(true_negatives_indices.size() == 4, LOG);
     assert_true(true_negatives_indices[0] == 0, LOG);
@@ -1311,7 +1280,7 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_negatives_indices = ta.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
+    true_negatives_indices = testing_analysis.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
     const Tensor<bool, 0> not_empty = true_negatives_indices.any();
 
@@ -1333,7 +1302,7 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
     outputs(2, 0) = 1.0;
     outputs(3, 0) = 1.0;
 
-    true_negatives_indices = ta.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
+    true_negatives_indices = testing_analysis.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
     assert_true(true_negatives_indices.size() == 1, LOG);
     assert_true(true_negatives_indices[0] == 0, LOG);
@@ -1347,7 +1316,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     NeuralNetwork neural_network;
     DataSet data_set;
 
-    TestingAnalysis ta(&neural_network, &data_set);
+
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -1384,7 +1353,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     testing_indices.resize(9);
     testing_indices.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8});
 
-    multiple_classification_rates = ta.calculate_multiple_classification_rates(targets, outputs, testing_indices);
+    multiple_classification_rates = testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
     assert_true(multiple_classification_rates(0,0)(0) == 0, LOG);
     assert_true(multiple_classification_rates(0,1)(0) == 3, LOG);

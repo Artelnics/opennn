@@ -57,6 +57,14 @@ public:
 
    void run_test_case();
 
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   WeightedSquaredError weighted_squared_error;
+
 };
 
 

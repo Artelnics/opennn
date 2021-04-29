@@ -11,6 +11,9 @@
 
 GeneticAlgorithmTest::GeneticAlgorithmTest() : UnitTesting()
 {
+    training_strategy.set_data_set_pointer(&data_set);
+    training_strategy.set_neural_network_pointer(&neural_network);
+    genetic_algorithm.set_training_strategy_pointer(&training_strategy);
 }
 
 
@@ -22,9 +25,6 @@ GeneticAlgorithmTest::~GeneticAlgorithmTest()
 void GeneticAlgorithmTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    NeuralNetwork neural_network;
-    DataSet data_set;
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
@@ -64,12 +64,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     DataSet data_set;
 
-    NeuralNetwork neural_network;
-
-
     SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
 
@@ -288,10 +283,6 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
 
     SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
-    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
     Tensor<bool, 2> population(4,1);
 //    Tensor<bool, 1> individual(1);
