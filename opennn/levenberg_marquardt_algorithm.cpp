@@ -535,12 +535,14 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     LevenbergMarquardtAlgorithmData optimization_data(this);
 
-    // Calculate error before training
+    // Calculate initial errors
 
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
     loss_index_pointer->calculate_squared_errors(training_batch, training_forward_propagation, training_loss_index_back_propagation_lm);
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_loss_index_back_propagation_lm);
     results.training_error_history(0)  = training_loss_index_back_propagation_lm.error;
+
+    if(display) cout << "Initial training error: " << training_loss_index_back_propagation_lm.error << endl;
 
     if(has_selection)
     {
@@ -548,6 +550,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         loss_index_pointer->calculate_squared_errors(selection_batch, selection_forward_propagation, selection_loss_index_back_propagation_lm);
         loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_loss_index_back_propagation_lm);
         results.selection_error_history(0)  = selection_loss_index_back_propagation_lm.error;
+
+        if(display) cout << "Initial selection error: " << selection_loss_index_back_propagation_lm.error << endl;
     }
 
     // Main loop

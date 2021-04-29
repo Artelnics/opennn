@@ -446,9 +446,7 @@ TrainingResults GradientDescent::perform_training()
     TrainingResults results(maximum_epochs_number+1);
 
 #ifdef OPENNN_DEBUG
-
     check();
-
 #endif
 
     // Start training
@@ -504,12 +502,14 @@ TrainingResults GradientDescent::perform_training()
 
     type parameters_increment_norm = 0;
 
-    // Calculate error before training
+    // Calculate initial errors
 
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
     loss_index_pointer->calculate_errors(training_batch, training_forward_propagation, training_back_propagation);
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
     results.training_error_history(0) = training_back_propagation.error;
+
+    if(display) cout << "Initial training error: " << training_back_propagation.error << endl;
 
     if(has_selection)
     {
@@ -517,6 +517,8 @@ TrainingResults GradientDescent::perform_training()
         loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
         loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
         results.selection_error_history(0) = selection_back_propagation.error;
+
+        if(display) cout << "Initial selection error: " << selection_back_propagation.error << endl;
     }
 
     // Main loop
@@ -527,8 +529,8 @@ TrainingResults GradientDescent::perform_training()
 
     for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
-        cout << "Epoch: " << epoch << endl;
-
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
+/*
         optimization_data.epoch = epoch;
 
         // Neural network
@@ -694,7 +696,7 @@ TrainingResults GradientDescent::perform_training()
 
             break;
         }
-        else if((display && epoch ==1) || (display && (epoch) % display_period == 0))
+        else if((display && epoch ==1) || (display && epoch % display_period == 0))
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Training error: " << training_back_propagation.error << "\n"
@@ -708,6 +710,7 @@ TrainingResults GradientDescent::perform_training()
         // Update stuff
 
         if(stop_training) break;
+*/
     }
 
     if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
