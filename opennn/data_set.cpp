@@ -2758,6 +2758,12 @@ Tensor<DataSet::Column, 1> DataSet::get_time_series_columns() const
 }
 
 
+Index DataSet::get_time_series_data_rows_number() const
+{
+    return time_series_data.dimension(0);
+}
+
+
 /// Returns the input columns of the data set.
 
 Tensor<DataSet::Column, 1> DataSet::get_input_columns() const
