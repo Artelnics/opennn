@@ -892,12 +892,14 @@ TrainingResults ConjugateGradient::perform_training()
 
     if(has_selection) results.optimal_parameters = training_back_propagation.parameters;
 
-    // Calculate error before training
+    // Calculate initial errors
 
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
     loss_index_pointer->calculate_errors(training_batch, training_forward_propagation, training_back_propagation);
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
     results.training_error_history(0) = training_back_propagation.error;
+
+    if(display) cout << "Initial training error: " << training_back_propagation.error << endl;
 
     if(has_selection)
     {
@@ -905,6 +907,8 @@ TrainingResults ConjugateGradient::perform_training()
         loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
         loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
         results.selection_error_history(0) = selection_back_propagation.error;
+
+        if(display) cout << "Initial selection error: " << selection_back_propagation.error << endl;
     }
 
     // Main loop
