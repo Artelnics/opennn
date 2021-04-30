@@ -649,12 +649,12 @@ void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 }
 
 
-void TrainingStrategy::set_maximum_selection_error_increases(const Index&  maximum_selection_error_increases)
+void TrainingStrategy::set_maximum_selection_failures(const Index&  maximum_selection_failures)
 {
-    gradient_descent.set_maximum_selection_error_increases(maximum_selection_error_increases);
-    conjugate_gradient.set_maximum_selection_error_increases(maximum_selection_error_increases);
-    quasi_Newton_method.set_maximum_selection_error_increases(maximum_selection_error_increases);
-    Levenberg_Marquardt_algorithm.set_maximum_selection_error_increases(maximum_selection_error_increases);
+    gradient_descent.set_maximum_selection_failures(maximum_selection_failures);
+    conjugate_gradient.set_maximum_selection_failures(maximum_selection_failures);
+    quasi_Newton_method.set_maximum_selection_failures(maximum_selection_failures);
+    Levenberg_Marquardt_algorithm.set_maximum_selection_failures(maximum_selection_failures);
 }
 
 

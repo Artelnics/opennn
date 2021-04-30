@@ -56,8 +56,11 @@ void GradientDescentTest::test_perform_training()
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
    neural_network.set_parameters_constant(0.0);
 
-//   gradient_descent.perform_training();
+   gradient_descent.set_maximum_epochs_number(1);
+   gradient_descent.perform_training();
 
+   system("pause");
+/*
    // Test
 
    data_set.set(1,1,1);
@@ -144,7 +147,7 @@ void GradientDescentTest::test_perform_training()
 
 //   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
-
+*/
 }
 
 

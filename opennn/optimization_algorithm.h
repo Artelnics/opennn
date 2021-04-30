@@ -248,11 +248,6 @@ struct TrainingResults
 
         if(final_selection_error != numeric_limits<type>::max())
             cout << "Final selection error: " << final_selection_error << endl;
-
-        cout << "Optimum training error: " << optimum_training_error << endl;
-
-        if(optimum_selection_error != numeric_limits<type>::max())
-            cout << "Optimum selection error: " << optimum_selection_error << endl;
     }
 
     /// Writes final results of the training.
@@ -307,9 +302,6 @@ struct TrainingResults
 
     type final_training_error = numeric_limits<type>::max();
     type final_selection_error = numeric_limits<type>::max();
-
-    type optimum_selection_error = numeric_limits<type>::max();
-    type optimum_training_error = numeric_limits<type>::max();
 };
 
 }

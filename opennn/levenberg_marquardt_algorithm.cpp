@@ -78,9 +78,9 @@ const type& LevenbergMarquardtAlgorithm::get_gradient_norm_goal() const
 
 /// Returns the maximum number of selection failures during the training process.
 
-const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_error_increases() const
+const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_failures() const
 {
-    return maximum_selection_error_increases;
+    return maximum_selection_failures;
 }
 
 
@@ -97,14 +97,6 @@ const Index& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
 const type& LevenbergMarquardtAlgorithm::get_maximum_time() const
 {
     return maximum_time;
-}
-
-
-/// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
-{
-    return choose_best_selection;
 }
 
 
@@ -166,12 +158,10 @@ void LevenbergMarquardtAlgorithm::set_default()
     minimum_loss_decrease = static_cast<type>(0.0);
     training_loss_goal = 0;
     gradient_norm_goal = 0;
-    maximum_selection_error_increases = 1000;
+    maximum_selection_failures = 1000;
 
     maximum_epochs_number = 1000;
     maximum_time = 3600.0;
-
-    choose_best_selection = false;
 
     // UTILITIES
 
@@ -364,13 +354,13 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const type& new_gradien
 
 
 /// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_error_increases Maximum number of epochs in which the
+/// @param new_maximum_selection_failures Maximum number of epochs in which the
 /// selection evalutation increases.
 
-void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(
-        const Index& new_maximum_selection_error_increases)
+void LevenbergMarquardtAlgorithm::set_maximum_selection_failures(
+        const Index& new_maximum_selection_failures)
 {
-    maximum_selection_error_increases = new_maximum_selection_error_increases;
+    maximum_selection_failures = new_maximum_selection_failures;
 }
 
 
@@ -404,16 +394,6 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
 #endif
 
     maximum_time = new_maximum_time;
-}
-
-
-/// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_choose_best_selection True if the final model will be the neural network with
-/// the minimum selection error, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_choose_best_selection(const bool& new_choose_best_selection)
-{
-    choose_best_selection = new_choose_best_selection;
 }
 
 
@@ -605,23 +585,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                                 selection_loss_index_back_propagation_lm);
         }
 
-        if(epoch == 1)
-        {
-            results.optimum_training_error = training_loss_index_back_propagation_lm.error;
-            results.optimum_selection_error = selection_loss_index_back_propagation_lm.error;
-
-            results.optimal_parameters = training_loss_index_back_propagation_lm.parameters;
-        }
-        else if(epoch != 1 && selection_loss_index_back_propagation_lm.error > old_selection_error)
+        if(selection_loss_index_back_propagation_lm.error > old_selection_error)
         {
             selection_failures++;
-        }
-        else if(selection_loss_index_back_propagation_lm.error < results.optimum_selection_error)
-        {
-            results.optimum_training_error = training_loss_index_back_propagation_lm.error;
-            results.optimum_selection_error = selection_loss_index_back_propagation_lm.error;
-
-            results.optimal_parameters = training_loss_index_back_propagation_lm.parameters;
         }
 
         // Elapsed time
@@ -681,7 +647,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(selection_failures >= maximum_selection_error_increases)
+        else if(selection_failures >= maximum_selection_failures)
         {
             if(display)
             {
@@ -769,8 +735,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         old_training_loss = training_loss_index_back_propagation_lm.loss;
         old_selection_error = selection_loss_index_back_propagation_lm.error;
     }
-
-    if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
     if(display) results.print();
 
@@ -884,7 +848,7 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
     labels_values(5,0) = "Maximum selection error increases";
 
-    labels_values(5,1) = to_string(maximum_selection_error_increases);
+    labels_values(5,1) = to_string(maximum_selection_failures);
 
     // Maximum iterations number
 
@@ -922,18 +886,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
-
-    // Return minimum selection error neural network
-    {
-        file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
-
-        buffer.str("");
-        buffer << choose_best_selection;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
 
     // Minimum parameters increment norm
 
@@ -984,7 +936,7 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
     buffer.str("");
-    buffer << maximum_selection_error_increases;
+    buffer << maximum_selection_failures;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1058,25 +1010,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         try
         {
             set_damping_parameter_factor(new_damping_parameter_factor);
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Return minimum selection error neural network
-
-    const tinyxml2::XMLElement* choose_best_selection_element
-            = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
-
-    if(choose_best_selection_element)
-    {
-        const string new_choose_best_selection = choose_best_selection_element->GetText();
-
-        try
-        {
-            set_choose_best_selection(new_choose_best_selection != "0");
         }
         catch(const logic_error& e)
         {
@@ -1160,17 +1093,17 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     // Maximum selection error increases
 
-    const tinyxml2::XMLElement* maximum_selection_error_increases_element
+    const tinyxml2::XMLElement* maximum_selection_failures_element
             = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
 
-    if(maximum_selection_error_increases_element)
+    if(maximum_selection_failures_element)
     {
-        const Index new_maximum_selection_error_increases
-                = static_cast<Index>(atoi(maximum_selection_error_increases_element->GetText()));
+        const Index new_maximum_selection_failures
+                = static_cast<Index>(atoi(maximum_selection_failures_element->GetText()));
 
         try
         {
-            set_maximum_selection_error_increases(new_maximum_selection_error_increases);
+            set_maximum_selection_failures(new_maximum_selection_failures);
         }
         catch(const logic_error& e)
         {
