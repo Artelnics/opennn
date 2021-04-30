@@ -78,7 +78,7 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
         training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_maximum_epochs_number(1000);
-        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_maximum_selection_error_increases(1000000);
+        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_maximum_selection_failures(1000000);
         training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_display_period(100);
 //        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_minimum_damping_parameter(numeric_limits<type>::min());
 

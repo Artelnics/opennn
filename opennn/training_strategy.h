@@ -154,7 +154,7 @@ public:
    void set_display(const bool&);
 
    void set_loss_goal(const type&);
-   void set_maximum_selection_error_increases(const Index&);
+   void set_maximum_selection_failures(const Index&);
    void set_maximum_epochs_number(const int&);
    void set_display_period(const int&);
 

@@ -66,7 +66,6 @@ public:
 
    const type& get_loss_goal() const;
    const type& get_maximum_time() const;
-   const bool& get_choose_best_selection() const;
 
    // Set methods
 
@@ -97,7 +96,6 @@ public:
 
    void set_loss_goal(const type&);
    void set_maximum_time(const type&);
-   void set_choose_best_selection(const bool&);
 
    // Training methods
 
@@ -158,11 +156,7 @@ private:
 
    /// Maximum selection error allowed
 
-   Index maximum_selection_error_increases = 1000;
-
-   /// True if the final model will be the neural network with the minimum selection error, false otherwise.
-
-   bool choose_best_selection = false;
+   Index maximum_selection_failures = 1000;
 
    /// Number of samples per training batch.
 

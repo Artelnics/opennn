@@ -73,7 +73,6 @@ public:
 
    const type& get_loss_goal() const;
    const type& get_maximum_time() const;
-   const bool& get_choose_best_selection() const;
 
    // Set methods
 
@@ -100,7 +99,6 @@ public:
 
    void set_loss_goal(const type&);
    void set_maximum_time(const type&);
-   void set_choose_best_selection(const bool&);
 
    // Training methods
 
@@ -161,25 +159,11 @@ private:
 
    /// Maximum selection error allowed
 
-   Index maximum_selection_error_increases = 1000;
+   Index maximum_selection_failures = 1000;
 
    /// Maximum training time. It is used as a stopping criterion.
 
    type maximum_time = 3600;
-
-   /// True if the final model will be the neural network with the minimum selection error, false otherwise.
-
-   bool choose_best_selection = false;
-
-   // TRAINING HISTORY
-
-   /// True if the error history vector is to be reserved, false otherwise.
-
-   bool reserve_training_error_history = true;
-
-   /// True if the selection error history vector is to be reserved, false otherwise.
-
-   bool reserve_selection_error_history = true;
 
    /// Training and selection batch size.
 

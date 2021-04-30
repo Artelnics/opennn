@@ -103,9 +103,9 @@ const type& GradientDescent::get_gradient_norm_goal() const
 
 /// Returns the maximum number of selection error increases during the training process.
 
-const Index& GradientDescent::get_maximum_selection_error_increases() const
+const Index& GradientDescent::get_maximum_selection_failures() const
 {
-    return maximum_selection_error_increases;
+    return maximum_selection_failures;
 }
 
 
@@ -122,14 +122,6 @@ const Index& GradientDescent::get_maximum_epochs_number() const
 const type& GradientDescent::get_maximum_time() const
 {
     return maximum_time;
-}
-
-
-/// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
-
-const bool& GradientDescent::get_choose_best_selection() const
-{
-    return choose_best_selection;
 }
 
 
@@ -155,12 +147,10 @@ void GradientDescent::set_default()
 
     training_loss_goal = 0;
     gradient_norm_goal = 0;
-    maximum_selection_error_increases = 100;
+    maximum_selection_failures = 100;
 
     maximum_epochs_number = 1000;
     maximum_time = 3600;
-
-    choose_best_selection = false;
 
     // UTILITIES
 
@@ -285,12 +275,12 @@ void GradientDescent::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 
 
 /// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_error_increases Maximum number of epochs in which the selection evalutation
+/// @param new_maximum_selection_failures Maximum number of epochs in which the selection evalutation
 /// increases.
 
-void GradientDescent::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_increases)
+void GradientDescent::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
-    maximum_selection_error_increases = new_maximum_selection_error_increases;
+    maximum_selection_failures = new_maximum_selection_failures;
 }
 
 
@@ -317,16 +307,6 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
     // Set maximum time
 
     maximum_time = new_maximum_time;
-}
-
-
-/// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_choose_best_selection True if the final model will be the neural network
-///  with the minimum selection error, false otherwise.
-
-void GradientDescent::set_choose_best_selection(const bool& new_choose_best_selection)
-{
-    choose_best_selection = new_choose_best_selection;
 }
 
 
@@ -498,7 +478,7 @@ TrainingResults GradientDescent::perform_training()
 
     GradientDescentData optimization_data(this);
 
-    Index selection_error_increases = 0;
+    Index selection_failures = 0;
 
     type parameters_increment_norm = 0;
 
@@ -530,7 +510,7 @@ TrainingResults GradientDescent::perform_training()
     for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
-/*
+
         optimization_data.epoch = epoch;
 
         // Neural network
@@ -549,15 +529,7 @@ TrainingResults GradientDescent::perform_training()
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            if(selection_back_propagation.error < results.optimum_selection_error)
-            {
-                results.optimum_selection_error = selection_back_propagation.error;
-                results.optimal_parameters = training_back_propagation.parameters;
-            }
-            else
-            {
-                selection_error_increases++;
-            }
+            //if(selection_back_propagation.error > results.optimum_selection_error) selection_failures++;
         }
 
         if(epoch != 1) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
@@ -622,12 +594,12 @@ TrainingResults GradientDescent::perform_training()
             results.stopping_condition = LossGoal;
         }
 
-        else if(selection_error_increases >= maximum_selection_error_increases)
+        else if(selection_failures >= maximum_selection_failures)
         {
             if(display)
             {
                 cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
-                     << "Selection error increases: " << selection_error_increases << endl;
+                     << "Selection error increases: " << selection_failures << endl;
             }
 
             stop_training = true;
@@ -710,10 +682,7 @@ TrainingResults GradientDescent::perform_training()
         // Update stuff
 
         if(stop_training) break;
-*/
     }
-
-    if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
     if(display) results.print();
 
@@ -775,7 +744,7 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
 
     labels_values(6,0) = "Maximum selection error increases";
 
-    labels_values(6,1) = to_string(maximum_selection_error_increases);
+    labels_values(6,1) = to_string(maximum_selection_failures);
 
     // Maximum epochs number
 
@@ -806,17 +775,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("GradientDescent");
 
     learning_rate_algorithm.write_XML(file_stream);
-
-    // Return minimum selection error neural network
-
-    file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
-
-    buffer.str("");
-    buffer << choose_best_selection;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
 
     // Minimum parameters increment norm
 
@@ -867,7 +825,7 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
     buffer.str("");
-    buffer << maximum_selection_error_increases;
+    buffer << maximum_selection_failures;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -940,25 +898,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             learning_rate_algorithm_document.InsertFirstChild(element_clone);
 
             learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
-        }
-    }
-
-    // Return minimum selection error neural network
-
-    const tinyxml2::XMLElement* choose_best_selection_element
-            = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
-
-    if(choose_best_selection_element)
-    {
-        string new_choose_best_selection = choose_best_selection_element->GetText();
-
-        try
-        {
-            set_choose_best_selection(new_choose_best_selection != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
         }
     }
 
@@ -1045,11 +984,11 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_selection_error_increases = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
 
             try
             {
-                set_maximum_selection_error_increases(new_maximum_selection_error_increases);
+                set_maximum_selection_failures(new_maximum_selection_failures);
             }
             catch(const logic_error& e)
             {
