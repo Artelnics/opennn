@@ -226,7 +226,7 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
     Tensor<type, 1> parameters_increment;
 
-    type parameters_increment_norm = 0;
+    type parameters_increment_norm = numeric_limits<type>::max();
 
     // Loss index data
 

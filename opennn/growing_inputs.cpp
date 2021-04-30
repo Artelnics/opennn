@@ -263,28 +263,28 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
             if(display)
             {
                 cout << "Trial number: " << i+1 << endl;
-                cout << "   Training error: " << training_results.final_training_error << endl;
-                cout << "   Selection error: " << training_results.final_selection_error << endl;
+//                cout << "   Training error: " << training_results.final_training_error << endl;
+//                cout << "   Selection error: " << training_results.final_selection_error << endl;
             }
 
-            if(training_results.final_selection_error < results.optimum_selection_error)
-            {
-                // Neural network
+//            if(training_results.final_selection_error < results.optimum_selection_error)
+//            {
+//                // Neural network
 
-                results.optimal_input_columns_indices = data_set_pointer->get_input_columns_indices();
-                results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
-                results.optimal_parameters = training_results.parameters;
+//                results.optimal_input_columns_indices = data_set_pointer->get_input_columns_indices();
+//                results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
+//                results.optimal_parameters = training_results.parameters;
 
-                // Loss index
+//                // Loss index
 
-                results.optimum_selection_error = training_results.final_selection_error;
-                results.optimum_training_error = training_results.final_training_error;
-            }
+//                results.optimum_selection_error = training_results.final_selection_error;
+//                results.optimum_training_error = training_results.final_training_error;
+//            }
         }
 
-        if(previus_selection_error < training_results.final_selection_error) selection_failures++;
+//        if(previus_selection_error < training_results.final_selection_error) selection_failures++;
 
-        previus_selection_error = training_results.final_selection_error;
+//        previus_selection_error = training_results.final_selection_error;
 
 //        if(reserve_training_errors) results.training_errors(epoch) = training_results.training_error;
 
@@ -304,14 +304,14 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
             results.stopping_condition = InputsSelection::MaximumTime;
         }
-        else if(training_results.final_selection_error <= selection_error_goal)
-        {
-            stop = true;
+//        else if(training_results.final_selection_error <= selection_error_goal)
+//        {
+//            stop = true;
 
-            if(display) cout << "\nSelection loss reached." << endl;
+//            if(display) cout << "\nSelection loss reached." << endl;
 
-            results.stopping_condition = InputsSelection::SelectionErrorGoal;
-        }
+//            results.stopping_condition = InputsSelection::SelectionErrorGoal;
+//        }
         else if(epoch >= maximum_epochs_number)
         {
             stop = true;

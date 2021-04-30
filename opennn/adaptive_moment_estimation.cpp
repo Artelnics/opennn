@@ -284,33 +284,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     || neural_network_pointer->has_recurrent_layer())
         shuffle = false;
 
-    // Calculate initial errors
-
-    training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
-    batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
-    neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
-    loss_index_pointer->calculate_errors(batch_training, training_forward_propagation, training_back_propagation);
-    loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
-    results.training_error_history(0) = training_back_propagation.error;
-
-    if(display) cout << "Initial training error: " << training_back_propagation.error << endl;
-
-    if(has_selection)
-    {
-        selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
-        batch_selection.fill(selection_batches.chip(0,0), input_variables_indices, target_variables_indices);
-        neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
-        loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
-        loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
-        results.selection_error_history(0) = selection_back_propagation.error;
-
-        if(display) cout << "Initial selection error: " << selection_back_propagation.error << endl;
-    }
-
     // Main loop
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
+
         training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
@@ -394,107 +373,59 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+            if(display) cout << "Maximum number of epochs reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = MaximumEpochsNumber;
-
-            results.optimal_parameters = training_back_propagation.parameters;
         }
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+            if(display) cout << "Maximum training time reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
-
-            results.optimal_parameters = training_back_propagation.parameters;
         }
         else if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
+            if(display) cout << "Loss goal reached.\n";
 
             stop_training = true;
 
             results.stopping_condition  = LossGoal;
-
-            results.optimal_parameters = training_back_propagation.parameters;
         }
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached.\n";
+            if(display) cout << "Gradient norm goal reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = GradientNormGoal;
-
-            results.optimal_parameters = training_back_propagation.parameters;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
-                     << "Selection error increases: " << selection_failures << endl;
-            }
+            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumSelectionErrorIncreases;
-
-            results.optimal_parameters = training_back_propagation.parameters;
-        }
-
-        if(epoch != 0 && epoch % save_period == 0)
-        {
-            neural_network_pointer->save(neural_network_file_name);
         }
 
         if(stop_training)
         {
-            if(display)
-            {
-                cout << "Training error: " << training_error << "\n"
-                     << "Learning rate: " << learning_rate << "\n"
-                     << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
-
-                //if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
-            }
-
             results.resize_training_error_history(epoch+1);
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            results.parameters = training_back_propagation.parameters;
-
-            results.final_training_error = training_error;
-
-            //if(has_selection) results.final_selection_error = selection_error;
-
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
-            results.epochs_number = epoch;
-
             break;
-        }
-        else if(epoch == 0 || (epoch)%display_period == 0)
-        {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ";\n"
-                     << "Training error: " << training_error << "\n"
-                     << "DataSetBatch size: " << batch_samples_number << "\n"
-                     << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
-
-                //if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
-            }
         }
 
         // Update stuff
 
-        //if(has_selection) old_selection_error = selection_error;
+        if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
 
         if(stop_training) break;
     }
