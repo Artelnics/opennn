@@ -108,7 +108,7 @@ public:
            LossIndexBackPropagation& back_propagation,
            GradientDescentData& optimization_data);
 
-   TrainingResults perform_training(); 
+   TrainingResults perform_training();   
 
    string write_optimization_algorithm_type() const;
 
@@ -211,13 +211,12 @@ struct GradientDescentData : public OptimizationAlgorithmData
 
     void print() const
     {
-        cout << "Training Direction:" << endl;
+        cout << "Training direction:" << endl;
         cout << training_direction << endl;
 
         cout << "Learning rate:" << endl;
         cout << learning_rate << endl;
     }
-
 
     GradientDescent* gradient_descent_pointer = nullptr;
 
@@ -227,7 +226,7 @@ struct GradientDescentData : public OptimizationAlgorithmData
 
     Tensor<type, 1> parameters_increment;
 
-    type parameters_increment_norm = 0;
+    type parameters_increment_norm = numeric_limits<type>::max();
 
     // Loss index data
 

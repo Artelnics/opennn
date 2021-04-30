@@ -31,8 +31,29 @@ int main()
 
         // Write your code here
 
-        return 0;
+        DataSet data_set;
 
+        NeuralNetwork neural_network;
+
+        SumSquaredError sum_squared_error;
+        sum_squared_error.set(&neural_network, &data_set);
+
+        GradientDescent gradient_descent;
+        gradient_descent.set_loss_index_pointer(&sum_squared_error);
+        gradient_descent.set_maximum_epochs_number(1);
+        gradient_descent.set_display_period(1);
+
+        data_set.set(1,1,1);
+        data_set.set_data_random();
+
+        neural_network.set(NeuralNetwork::Approximation, {1, 1});
+        neural_network.set_parameters_random();
+
+        gradient_descent.perform_training();
+
+        cout << "Good bye!" << endl;
+
+        return 0;
     }
     catch(exception& e)
     {

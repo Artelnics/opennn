@@ -81,7 +81,6 @@ public:
    // Set methods
 
    void set();
-   void set(LossIndex*);
 
    virtual void set_default();
 
@@ -222,7 +221,10 @@ struct TrainingResults
     explicit TrainingResults(const Index& epochs_number)
     {
         training_error_history.resize(1+epochs_number);
+        training_error_history.setConstant(-1.0);
+
         selection_error_history.resize(1+epochs_number);
+        selection_error_history.setConstant(-1.0);
     }
 
     virtual ~TrainingResults() {}
@@ -241,13 +243,17 @@ struct TrainingResults
     {             
         cout << message << endl;
 
+        const Index epochs_number = training_error_history.size();
+
         cout << "Training results" << endl;
         cout << "Epochs number: " << epochs_number << endl;
 
-        cout << "Final training error: " << final_training_error << endl;
+        cout << "Training error: " << training_error_history(epochs_number-1) << endl;
 
-        if(final_selection_error != numeric_limits<type>::max())
-            cout << "Final selection error: " << final_selection_error << endl;
+//        if(final_selection_error != -1.0)
+//            cout << "Final selection error: " << final_selection_error << endl;
+
+        cout << "Stopping condition: " << stopping_condition << endl;
     }
 
     /// Writes final results of the training.
@@ -272,12 +278,6 @@ struct TrainingResults
 
     Tensor<type, 1> selection_error_history;
 
-    // Final values
-
-    /// Final neural network parameters vector.
-
-    Tensor<type, 1> parameters;
-
     /// Final neural network parameters norm.
 
     type final_parameters_norm;
@@ -290,18 +290,9 @@ struct TrainingResults
 
     string elapsed_time;
 
-    /// Maximum number of training iterations.
-
-    Index epochs_number;
-
     /// Stopping criterion.
 
     string stopping_criterion;
-
-    Tensor<type, 1> optimal_parameters;
-
-    type final_training_error = numeric_limits<type>::max();
-    type final_selection_error = numeric_limits<type>::max();
 };
 
 }

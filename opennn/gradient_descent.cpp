@@ -368,14 +368,6 @@ void GradientDescent::update_parameters(
     if(is_zero(optimization_data.training_direction))
         throw logic_error("Training direction is zero");
 
-    // Training slope    
-
-    optimization_data.training_slope.device(*thread_pool_device)
-            = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
-
-    if(optimization_data.training_slope(0) >= static_cast<type>(0.0))
-        throw logic_error("Training slope is equal or greater than zero");
-
     // Get initial learning_rate
 
     optimization_data.initial_learning_rate = 0;
@@ -384,12 +376,17 @@ void GradientDescent::update_parameters(
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
+    cout << "Hello" << endl;
+
     const pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
                             batch,
                             forward_propagation,
                             back_propagation,
                             optimization_data);
 
+    cout << "Hello 2" << endl;
+
+/*
     optimization_data.learning_rate = directional_point.first;
 
     if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
@@ -413,6 +410,7 @@ void GradientDescent::update_parameters(
     // Update parameters
 
     forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
+*/
 }
 
 
@@ -480,26 +478,7 @@ TrainingResults GradientDescent::perform_training()
 
     Index selection_failures = 0;
 
-    type parameters_increment_norm = 0;
-
-    // Calculate initial errors
-
-    neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-    loss_index_pointer->calculate_errors(training_batch, training_forward_propagation, training_back_propagation);
-    loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
-    results.training_error_history(0) = training_back_propagation.error;
-
-    if(display) cout << "Initial training error: " << training_back_propagation.error << endl;
-
-    if(has_selection)
-    {
-        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-        loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
-        loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
-        results.selection_error_history(0) = selection_back_propagation.error;
-
-        if(display) cout << "Initial selection error: " << selection_back_propagation.error << endl;
-    }
+    type parameters_increment_norm = numeric_limits<type>::max();
 
     // Main loop
 
@@ -507,7 +486,7 @@ TrainingResults GradientDescent::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
@@ -520,7 +499,7 @@ TrainingResults GradientDescent::perform_training()
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-        results.final_training_error = training_back_propagation.error;
+        results.training_error_history(epoch) = training_back_propagation.error;
 
         if(has_selection)
         {
@@ -529,65 +508,41 @@ TrainingResults GradientDescent::perform_training()
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            //if(selection_back_propagation.error > results.optimum_selection_error) selection_failures++;
+            if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
 
         if(epoch != 1) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
-        if(is_zero(training_back_propagation.gradient))
-        {
-            if(display) results.print("Gradient is zero");
-            return results;
-        }
-
-        // Optimization algorithm
-
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
-
         // Elapsed time
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        // Training history loss index
+        // Print progress
 
-        results.training_error_history(epoch) = training_back_propagation.error;
+        if(display && epoch%display_period == 0)
+        {
+            cout << "Training error: " << training_back_propagation.error << endl;
+            if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
 
-        if(has_selection) results.selection_error_history(epoch) = selection_back_propagation.error;
+            cout << "Gradient norm: " << gradient_norm << endl;
+
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+        }
 
         // Stopping Criteria
 
-        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
+//        if(is_zero(training_back_propagation.gradient))
+//        {
+//            if(display) results.print("Gradient is zero");
+//            return results;
+//        }
+
+        if(training_back_propagation.loss <= training_loss_goal)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n";
-                cout << "Parameters increment norm: " << parameters_increment_norm << endl;
-            }
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumParametersIncrementNorm;
-        }
-
-        else if(epoch != 1 && abs(training_loss_decrease) <= minimum_loss_decrease)
-        {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                     << "Loss decrease: " << training_loss_decrease << endl;
-            }
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumLossDecrease;
-        }
-
-        else if(training_back_propagation.loss <= training_loss_goal)
-        {
-            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
+            if(display) cout << "Loss goal reached: " << training_back_propagation.loss << endl;
 
             stop_training = true;
 
@@ -596,11 +551,7 @@ TrainingResults GradientDescent::perform_training()
 
         else if(selection_failures >= maximum_selection_failures)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
-                     << "Selection error increases: " << selection_failures << endl;
-            }
+            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -609,7 +560,7 @@ TrainingResults GradientDescent::perform_training()
 
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached.\n";
+            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -618,70 +569,56 @@ TrainingResults GradientDescent::perform_training()
 
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumEpochsNumber;
         }
 
+        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
+        {
+            if(display) cout << "Minimum parameters increment norm reached: " << parameters_increment_norm << endl;
+
+            stop_training = true;
+
+            results.stopping_condition = MinimumParametersIncrementNorm;
+        }
+
+        if(epoch != 1 && abs(training_loss_decrease) <= minimum_loss_decrease)
+        {
+            if(display) cout << "Minimum loss decrease reached: " << training_loss_decrease << endl;
+
+            stop_training = true;
+
+            results.stopping_condition = MinimumLossDecrease;
+        }
+
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+            if(display) cout << "Maximum training time reached: " << elapsed_time;
 
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
         }
 
-        if(epoch != 1 && epoch % save_period == 0)
-        {
-            neural_network_pointer->save(neural_network_file_name);
-        }
-
         if(stop_training)
         {
-            if(display)
-            {
-                cout << "Training error: " << training_back_propagation.error << "\n"
-                     << "Gradient norm: " << gradient_norm << "\n"
-                     << "Learning rate: " << optimization_data.learning_rate << "\n"
-                     << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-
-                if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
-            }
-
             results.resize_training_error_history(epoch+1);
+
             if(has_selection) results.resize_selection_error_history(epoch+1);
-
-            results.parameters = training_back_propagation.parameters;
-
-            results.final_training_error = training_back_propagation.error;
-
-            results.final_selection_error = selection_back_propagation.error;
 
             results.final_gradient_norm = gradient_norm;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
-            results.epochs_number = epoch;
-
             break;
         }
-        else if((display && epoch ==1) || (display && epoch % display_period == 0))
-        {
-            cout << "Epoch " << epoch << ";\n"
-                 << "Training error: " << training_back_propagation.error << "\n"
-                 << "Gradient norm: " << gradient_norm << "\n"
-                 << "Learning rate: " << optimization_data.learning_rate << "\n"
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-            if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
-        }
+//        if(epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
 
-        // Update stuff
-
-        if(stop_training) break;
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
 
     if(display) results.print();

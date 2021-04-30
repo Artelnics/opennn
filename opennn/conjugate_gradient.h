@@ -219,7 +219,7 @@ struct ConjugateGradientData : public OptimizationAlgorithmData
     type learning_rate = 0;
     type old_learning_rate = 0;
 
-    type parameters_increment_norm = 0;
+    type parameters_increment_norm = numeric_limits<type>::max();
 
     Tensor<type, 0> training_slope;
 };

@@ -753,8 +753,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     type gradient_norm = 0;
 
-    type old_selection_error = numeric_limits<type>::max();
-
     LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
@@ -770,36 +768,21 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     QuasiNewtonMehtodData optimization_data(this);
 
-    // Calculate initial errors
-
-    neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-    loss_index_pointer->calculate_errors(training_batch, training_forward_propagation, training_back_propagation);
-    loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
-    results.training_error_history(0) = training_back_propagation.error;
-
-    if(display) cout << "Initial training error: " << training_back_propagation.error << endl;
-
-    if(has_selection)
-    {
-        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-        loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
-        loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
-        results.selection_error_history(0) = selection_back_propagation.error;
-
-        if(display) cout << "Initial selection error: " << selection_back_propagation.error << endl;
-    }
-
     // Main loop
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
+
         optimization_data.epoch = epoch;
 
-       // Neural network
+        // Neural network
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+
+        results.training_error_history(epoch) = training_back_propagation.error;
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
@@ -814,42 +797,32 @@ TrainingResults QuasiNewtonMethod::perform_training()
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            if(selection_back_propagation.error > old_selection_error) selection_failures++;
+            //if(selection_back_propagation.error > old_selection_error) selection_failures++;
 
             results.selection_error_history(epoch) = selection_back_propagation.error;
         }
-
-        // Optimization data
-
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
-
-        #ifdef OPENNN_DEBUG
-
-        if(::isnan(training_back_propagation.error)){
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-                   << "type perform_training() mehtod.\n"
-                   << "Error is NAN.\n";
-
-            throw logic_error(buffer.str());
-        }
-        #endif        
-
-        // Training history
-
-        results.training_error_history(epoch) = training_back_propagation.error;
 
         // Stopping Criteria
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-/*
+
+        if(display)
+        {
+            cout << "Training error: " << training_back_propagation.error <<  "\n"
+                 << "Gradient norm: " << gradient_norm <<  "\n"
+                 << "Learning rate: " << optimization_data.learning_rate <<  "\n"
+                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+
+            if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
+        }
+
+
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
-               cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
+               cout << "Minimum parameters increment norm reached.\n"
                     << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
             }
 
@@ -858,25 +831,19 @@ TrainingResults QuasiNewtonMethod::perform_training()
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        else if(epoch != 0 &&
+        if(epoch != 0 &&
                 training_back_propagation.loss - optimization_data.old_training_loss >= minimum_loss_decrease)
         {
-            if(display)
-            {
-               cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                    << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss << endl
-                    << "Loss: " << training_back_propagation.loss << endl
-                    << "Old loss: " << optimization_data.old_training_loss << endl;
-            }
+            if(display) cout << "Minimum loss decrease (" << minimum_loss_decrease << ") reached: " << training_back_propagation.loss - optimization_data.old_training_loss << endl;
 
             stop_training = true;
 
             results.stopping_condition = MinimumLossDecrease;
         }
-*/
+
         if(training_back_propagation.loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
+            if(display) cout << "Loss goal reached.\n";
 
             stop_training = true;
 
@@ -884,10 +851,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display)
-            {
-                cout << "Iteration " << epoch << ": Gradient norm goal reached.\n";
-            }
+            if(display) cout << "Gradient norm goal reached.\n";
 
             stop_training = true;
 
@@ -895,11 +859,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(selection_failures >= maximum_selection_failures)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
-                     << "Selection loss increases: "<< selection_failures << endl;
-            }
+            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -907,10 +867,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(epoch == maximum_epochs_number)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
-            }
+            if(display) cout << "Maximum number of epochs reached.\n";
 
             stop_training = true;
 
@@ -918,69 +875,31 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(elapsed_time >= maximum_time)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum training time reached.\n";
-            }
+            if(display) cout << "Maximum training time reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
         }
 
-        if(epoch != 0 && epoch % save_period == 0)
-        {
-            neural_network_pointer->save(neural_network_file_name);
-        }
-
         if(stop_training)
         {
-            results.parameters = training_back_propagation.parameters;
-            results.final_training_error = training_back_propagation.error;
-            results.final_selection_error = selection_back_propagation.error;
-
             results.final_gradient_norm = gradient_norm;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
-
-            results.epochs_number = epoch;
 
             results.resize_training_error_history(epoch+1);
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            if(display)
-            {
-                cout << "Training error: " << training_back_propagation.error <<  "\n"
-                     << "Gradient norm: " << gradient_norm <<  "\n"
-                     << "Learning rate: " << optimization_data.learning_rate <<  "\n"
-                     << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-
-                if(has_selection)
-                {
-                    cout << "Selection error: " << selection_back_propagation.error << endl;
-                }
-            }
-
             break;
         }
-        else if((display && epoch == 0) || (display && epoch % display_period == 0))
-        {
-            cout << "Epoch " << epoch << ";\n"
-                 << "Training error: " << training_back_propagation.error << "\n"
-                 << "Gradient norm: " << gradient_norm << "\n"
-                 << "Learning rate: " << optimization_data.learning_rate << "\n"
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-            if(has_selection)
-            {
-                cout << "Selection error: " << selection_back_propagation.error << endl;
-            }
-        }
-
-        old_selection_error = selection_back_propagation.error;
+        if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
 
         if(stop_training) break;
+
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
 
     if(display) results.print();

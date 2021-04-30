@@ -868,31 +868,12 @@ TrainingResults ConjugateGradient::perform_training()
 
     ConjugateGradientData optimization_data(this);
 
-    if(has_selection) results.optimal_parameters = training_back_propagation.parameters;
-
-    // Calculate initial errors
-
-    neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-    loss_index_pointer->calculate_errors(training_batch, training_forward_propagation, training_back_propagation);
-    loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
-    results.training_error_history(0) = training_back_propagation.error;
-
-    if(display) cout << "Initial training error: " << training_back_propagation.error << endl;
-
-    if(has_selection)
-    {
-        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-        loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
-        loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
-        results.selection_error_history(0) = selection_back_propagation.error;
-
-        if(display) cout << "Initial selection error: " << selection_back_propagation.error << endl;
-    }
-
     // Main loop
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
+
         optimization_data.epoch = epoch;
 
         // Neural network
@@ -902,6 +883,7 @@ TrainingResults ConjugateGradient::perform_training()
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+        results.training_error_history(epoch) = training_back_propagation.error;
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
@@ -912,10 +894,12 @@ TrainingResults ConjugateGradient::perform_training()
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            //selection_error = selection_back_propagation.error;
+            results.selection_error_history(epoch) = selection_back_propagation.error;
 
-            //if(selection_error > old_selection_error)  selection_failures++;
+            if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
+
+        if(display && epoch%display_period == 0) cout << "Training error: " << training_back_propagation.error << endl;
 
         if(is_zero(training_back_propagation.gradient))
         {
@@ -923,16 +907,22 @@ TrainingResults ConjugateGradient::perform_training()
             return results;
         }
 
-
         // Optimization algorithm
 
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);       
 
-        // Training history
+        results.training_error_history(epoch) = training_back_propagation.error;
+        if(has_selection) results.selection_error_history(epoch) = training_back_propagation.error;
 
-        results.training_error_history(epoch) = training_back_propagation.loss;
+        if(display && epoch%display_period == 0)
+        {
+            cout << "Training error: " << training_back_propagation.error << "\n"
+                 << "Gradient norm: " << gradient_norm << "\n"
+                 << "Learning rate: " << learning_rate << "\n"
+                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-        //if(has_selection) results.selection_error_history(epoch) = selection_error;
+            //if(has_selection) cout << "Selection error: " << selection_error << endl;
+        }
 
         // Stopping Criteria       
 
@@ -944,148 +934,83 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n";
-                cout << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
-            }
+            if(display) cout << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
 
             stop_training = true;
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        else if(epoch != 1 && abs(training_loss_decrease) <= minimum_loss_decrease)
+        if(epoch != 1 && abs(training_loss_decrease) <= minimum_loss_decrease)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                     << "Loss decrease: " << training_loss_decrease << endl;
-            }
+            if(display) cout << "Minimum loss decrease reached: " << minimum_loss_decrease << endl;
 
             stop_training = true;
 
             results.stopping_condition = MinimumLossDecrease;
         }
 
-        else if(training_back_propagation.loss <= training_loss_goal)
+        if(training_back_propagation.loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
+            if(display) cout << "Loss goal reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = LossGoal;
         }
 
-        else if(gradient_norm <= gradient_norm_goal)
+        if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached.\n";
+            if(display) cout << "Gradient norm goal reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(has_selection
-                && selection_failures >= maximum_selection_failures)
+        if(has_selection && selection_failures >= maximum_selection_failures)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
-                     << "Selection error increases: " << selection_failures << endl;
-            }
+            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        else if(epoch == maximum_epochs_number)
+        if(epoch == maximum_epochs_number)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
-            }
+            if(display) cout << "Maximum number of epochs reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = MaximumEpochsNumber;
         }
 
-        else if(elapsed_time >= maximum_time)
+        if(elapsed_time >= maximum_time)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum training time reached.\n";
-            }
+            if(display) cout << "Maximum training time reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
         }
 
-        if(epoch != 1 && epoch % save_period == 0)
-        {
-            neural_network_pointer->save(neural_network_file_name);
-        }
-
         if(stop_training)
         {
-            if(display)
-            {
-                cout << "Training error: " << training_back_propagation.error << "\n"
-                     << "Gradient norm: " << gradient_norm << "\n"
-                     << "Learning rate: " << learning_rate << "\n"
-                     << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-
-                //if(has_selection) cout << "Selection error: " << selection_error << endl;
-            }
-
             results.resize_training_error_history(epoch+1);
             if(has_selection) results.resize_selection_error_history(epoch+1);
-
-            results.parameters = training_back_propagation.parameters;
-
-            results.final_training_error = training_back_propagation.error;
-
-            //if(has_selection) results.final_selection_error = selection_error;
 
             results.final_gradient_norm = gradient_norm;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
-            results.epochs_number = epoch;
-
             break;
-        }
-
-        if(display)
-        if(epoch == 1
-        || epoch%display_period == 0)
-        {
-            cout << "Epoch " << epoch << ";\n"
-                 << "Training error: " << training_back_propagation.error << "\n"
-                 << "Gradient norm: " << gradient_norm << "\n"
-                 << "Learning rate: " << optimization_data.learning_rate << "\n"
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << "\n";
-
-            //if(has_selection) cout << "Selection error: " << selection_error << endl;
         }
 
         // Update stuff
 
-        //if(has_selection) old_selection_error = selection_error;
+        if(epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
-
-    results.parameters = training_back_propagation.parameters;
-
-    results.final_training_error = training_back_propagation.error;
-
-    //if(has_selection) results.final_selection_error = selection_error;
-
-    results.final_gradient_norm = gradient_norm;
-
-    results.elapsed_time = write_elapsed_time(elapsed_time);
 
     if(display) results.print();
 
@@ -1583,7 +1508,6 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
-
 }
 
 
@@ -1625,7 +1549,7 @@ void ConjugateGradient::update_parameters(
                     back_propagation.gradient,
                     optimization_data.training_direction);
 
-        cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
+//        cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
     }
 
     // Get initial learning rate
