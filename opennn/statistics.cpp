@@ -3207,25 +3207,6 @@ type strongest(const Tensor<type, 1>& vector)
 }
 
 
-/// Returns the l2 norm of a vector
-
-type l2_norm(const Tensor<type, 1>& vector)
-{
-    const Index size = vector.dimension(0);
-
-    if(size == 0) return NAN;
-
-    type square_sum = 0;
-
-    for(Index i = 0; i < size; i++)
-    {
-        square_sum = square_sum + vector[i] * vector[i];
-    }
-
-    return sqrt(square_sum);
-}
-
-
 /// Returns a vector containing the values of the means for the 0s and 1s of a
 /// binary column.
 /// The matrix must have 2 columns, the first one has to be binary.

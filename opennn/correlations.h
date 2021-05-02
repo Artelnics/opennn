@@ -118,6 +118,7 @@ struct CorrelationResults
 
     CorrelationType correlation_type;
 };
+
     // Linear
 
     type linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&, const bool& = true);

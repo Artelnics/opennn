@@ -75,9 +75,9 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     const Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
-
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+
+     Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
      const type coefficient = static_cast<type>(2.0);
 
@@ -89,13 +89,6 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
          = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-
-
-         cout << "hello" << endl;
-         cout << coefficient << endl;
-         cout << back_propagation.errors << endl;
-         system("pause");
-
      }
          break;
 

@@ -34,9 +34,6 @@ string Layer::get_type_string() const
 {
     switch(layer_type)
     {
-    case Convolutional:
-        return "Convolutional";
-
     case Perceptron:
         return "Perceptron";
 
@@ -48,6 +45,9 @@ string Layer::get_type_string() const
 
     case Probabilistic:
         return "Probabilistic";
+
+    case Convolutional:
+        return "Convolutional";
 
     case LongShortTermMemory:
         return "LongShortTermMemory";

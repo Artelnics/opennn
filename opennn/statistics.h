@@ -226,9 +226,6 @@ struct Histogram
 
      type strongest(const Tensor<type, 1>&);
 
-     //Norm l2
-     type l2_norm(const Tensor<type, 1>&);
-
      // Range
      type range(const Tensor<type, 1>&);
 
