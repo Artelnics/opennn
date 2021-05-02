@@ -107,7 +107,7 @@ public:
    LongShortTermMemoryLayer* get_long_short_term_memory_layer_pointer() const;
    RecurrentLayer* get_recurrent_layer_pointer() const;
 
-   Layer* get_output_layer_pointer() const;
+   Layer* get_last_trainable_layer_pointer() const;
    PerceptronLayer* get_first_perceptron_layer_pointer() const;
 
    const bool& get_display() const;

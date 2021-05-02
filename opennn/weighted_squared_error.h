@@ -107,7 +107,6 @@ public:
 
    // Serialization methods
 
-      
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;   
@@ -116,11 +115,11 @@ private:
 
    /// Weight for the positives for the calculation of the error.
 
-   type positives_weight;
+   type positives_weight = NAN;
 
    /// Weight for the negatives for the calculation of the error.
 
-   type negatives_weight;
+   type negatives_weight = NAN;
 
    /// Coefficient of normalization
 

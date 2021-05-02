@@ -108,7 +108,6 @@ public:
    string get_error_type() const;
    string get_error_type_text() const;
 
-   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -117,9 +116,9 @@ private:
 
    /// Coefficient of normalization for the calculation of the training error.
 
-   type normalization_coefficient;
+   type normalization_coefficient = NAN;
 
-   type selection_normalization_coefficient;
+   type selection_normalization_coefficient = NAN;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/normalized_squared_error_cuda.h"
