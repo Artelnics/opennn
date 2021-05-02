@@ -194,14 +194,9 @@ struct GradientDescentData : public OptimizationAlgorithmData
 
         // Neural network data
 
-        old_parameters.resize(parameters_number);
         potential_parameters.resize(parameters_number);
 
         parameters_increment.resize(parameters_number);
-
-        // Loss index data
-
-        old_gradient.resize(parameters_number);
 
         // Optimization algorithm data
 
@@ -222,17 +217,9 @@ struct GradientDescentData : public OptimizationAlgorithmData
 
     // Neural network data
 
-    Tensor<type, 1> old_parameters;
-
     Tensor<type, 1> parameters_increment;
 
     type parameters_increment_norm = numeric_limits<type>::max();
-
-    // Loss index data
-
-    type old_training_loss = 0;
-
-    Tensor<type, 1> old_gradient;
 
     // Optimization algorithm data
 

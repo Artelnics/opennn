@@ -899,20 +899,10 @@ TrainingResults ConjugateGradient::perform_training()
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
 
-        if(display && epoch%display_period == 0) cout << "Training error: " << training_back_propagation.error << endl;
-
-        if(is_zero(training_back_propagation.gradient))
-        {
-            if(display) results.print("Gradient is zero");
-            return results;
-        }
-
         // Optimization algorithm
 
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);       
-
-        results.training_error_history(epoch) = training_back_propagation.error;
-        if(has_selection) results.selection_error_history(epoch) = training_back_propagation.error;
+        time(&current_time);
+        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
         if(display && epoch%display_period == 0)
         {
@@ -926,30 +916,6 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Stopping Criteria       
 
-        if(epoch != 1) training_loss_decrease = training_back_propagation.loss - old_training_loss;
-        old_training_loss = training_back_propagation.loss;
-
-        time(&current_time);
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
-        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
-        {
-            if(display) cout << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumParametersIncrementNorm;
-        }
-
-        if(epoch != 1 && abs(training_loss_decrease) <= minimum_loss_decrease)
-        {
-            if(display) cout << "Minimum loss decrease reached: " << minimum_loss_decrease << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumLossDecrease;
-        }
-
         if(training_back_propagation.loss <= training_loss_goal)
         {
             if(display) cout << "Loss goal reached.\n";
@@ -961,7 +927,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Gradient norm goal reached.\n";
+            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -979,7 +945,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Maximum number of epochs reached.\n";
+            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;;
 
             stop_training = true;
 
@@ -988,11 +954,34 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Maximum training time reached.\n";
+            if(display) cout << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
+        }
+
+        if(epoch != 1) training_loss_decrease = training_back_propagation.loss - old_training_loss;
+        old_training_loss = training_back_propagation.loss;
+
+        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
+        {
+            if(display) cout << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
+
+            stop_training = true;
+
+            results.stopping_condition = MinimumParametersIncrementNorm;
+        }
+
+        //if(epoch != 1) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
+
+        if(epoch != 1 && abs(training_loss_decrease) <= minimum_loss_decrease)
+        {
+            if(display) cout << "Minimum loss decrease reached: " << minimum_loss_decrease << endl;
+
+            stop_training = true;
+
+            results.stopping_condition = MinimumLossDecrease;
         }
 
         if(stop_training)
@@ -1010,6 +999,8 @@ TrainingResults ConjugateGradient::perform_training()
         // Update stuff
 
         if(epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
+
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
 
     if(display) results.print();
@@ -1525,7 +1516,7 @@ void ConjugateGradient::update_parameters(
 {      
     const Index parameters_number = back_propagation.parameters.dimension(0);
 
-    if(optimization_data.epoch == 1 || optimization_data.epoch % parameters_number == 0)
+    if(optimization_data.epoch == 0 || optimization_data.epoch % parameters_number == 0)
     {
         calculate_gradient_descent_training_direction(
                     back_propagation.gradient,
@@ -1556,7 +1547,7 @@ void ConjugateGradient::update_parameters(
 
     optimization_data.initial_learning_rate = 0;
 
-    optimization_data.epoch == 1
+    optimization_data.epoch == 0
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
