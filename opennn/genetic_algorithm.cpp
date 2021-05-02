@@ -658,11 +658,6 @@ void GeneticAlgorithm::perform_selection()
 
     }while(selection_count < selected_individuals_number);
 
-//    cout << fitness << endl;
-//    cout << selection << endl;
-
-//    system("pause");
-
 #ifdef OPENNN_DEBUG
 
     Index selection_assert = 0;
@@ -1534,7 +1529,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void GeneticAlgorithm::print_summary() const
+void GeneticAlgorithm::print() const
 {
     cout << "Genetic algorithm" << endl;
     cout << "Individuals number: " << get_individuals_number() << endl;

@@ -89,6 +89,13 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
          = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+
+
+         cout << "hello" << endl;
+         cout << coefficient << endl;
+         cout << back_propagation.errors << endl;
+         system("pause");
+
      }
          break;
 
@@ -179,7 +186,6 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
     }
     }
 }
-
 
 
 void SumSquaredError::calculate_gradient(const DataSetBatch& ,

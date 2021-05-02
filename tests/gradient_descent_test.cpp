@@ -59,7 +59,6 @@ void GradientDescentTest::test_perform_training()
    gradient_descent.set_maximum_epochs_number(1);
    gradient_descent.perform_training();
 
-   system("pause");
 /*
    // Test
 

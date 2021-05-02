@@ -376,17 +376,12 @@ void GradientDescent::update_parameters(
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
-    cout << "Hello" << endl;
-
     const pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
                             batch,
                             forward_propagation,
                             back_propagation,
                             optimization_data);
 
-    cout << "Hello 2" << endl;
-
-/*
     optimization_data.learning_rate = directional_point.first;
 
     if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
@@ -410,7 +405,7 @@ void GradientDescent::update_parameters(
     // Update parameters
 
     forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
-*/
+
 }
 
 
@@ -496,10 +491,18 @@ TrainingResults GradientDescent::perform_training()
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
+//        training_forward_propagation.print();system("pause");
+
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
+
+//        training_back_propagation.print();system("pause");
+
+        if(epoch != 1) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
+
+        gradient_norm = l2_norm(training_back_propagation.gradient);
 
         if(has_selection)
         {
@@ -511,11 +514,7 @@ TrainingResults GradientDescent::perform_training()
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
 
-        if(epoch != 1) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
-
-        gradient_norm = l2_norm(training_back_propagation.gradient);
-
-        // Elapsed time
+        // Optimization algorithm
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));

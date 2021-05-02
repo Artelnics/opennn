@@ -171,7 +171,7 @@ public:
 
    // Serialization methods
 
-   void print_summary() const;
+   void print() const;
 
    void from_XML(const tinyxml2::XMLDocument&);
 

@@ -826,7 +826,7 @@ void TrainingStrategy::fix_forecasting()
 
 /// Prints to the screen the string representation of the training strategy object.
 
-void TrainingStrategy::print_summary() const
+void TrainingStrategy::print() const
 {
     cout << "Training strategy object" << endl;
     cout << "Loss index: " << write_loss_method() << endl;

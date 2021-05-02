@@ -2325,15 +2325,9 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Prints to the screen the members of a neural network object in a XML-type format.
-/// @todo
+/// Prints to the screen the most important information about the neural network object.
 
 void NeuralNetwork::print() const
-{
-}
-
-
-void NeuralNetwork::print_summary() const
 {
     const Index layers_number = get_layers_number();
 
@@ -2833,7 +2827,7 @@ Layer* NeuralNetwork::get_output_layer_pointer() const
 
     const Index layers_number = get_layers_number();
 
-    return layers_pointers[layers_number-1];
+    return layers_pointers(layers_number-1);
 }
 
 }
