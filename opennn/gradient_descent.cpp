@@ -491,14 +491,10 @@ TrainingResults GradientDescent::perform_training()
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-//        training_forward_propagation.print();system("pause");
-
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
-
-        training_back_propagation.print();system("pause");
 
         if(epoch != 1) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
 

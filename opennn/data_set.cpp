@@ -5819,24 +5819,6 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
 }
 
 
-/// Returns a vector with some basic descriptives of the given input variable on all
-/// The size of this vector is four:
-/// <ul>
-/// <li> Input variable minimum.
-/// <li> Input variable maximum.
-/// <li> Input variable mean.
-/// <li> Input variable standard deviation.
-/// </ul>
-/// @todo
-
-Descriptives DataSet::calculate_input_descriptives(const Index& input_index) const
-{
-//    return descriptives_missing_values(data.chip(input_index,1));
-
-    return Descriptives();
-}
-
-
 Tensor<type, 1> DataSet::calculate_used_targets_mean() const
 {
     const Tensor<Index, 1> used_indices = get_used_samples_indices();

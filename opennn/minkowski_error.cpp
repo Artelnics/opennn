@@ -126,11 +126,6 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device)
          = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
-
-//         cout << back_propagation.errors.abs() << endl;
-//         system("pause");
-
-
      }
          break;
 

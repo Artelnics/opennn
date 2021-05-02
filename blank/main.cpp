@@ -29,26 +29,14 @@ int main()
     {
         cout << "OpenNN. Blank application." << endl;
 
-        Tensor<type, 2> m(1,1);
-        m.setConstant(0);
-
-        cout << m.pow(-0.5) << endl;
-
-        system("pause");
-
-
         // Write your code here
 
         DataSet data_set;
 
         NeuralNetwork neural_network;
 
-        MinkowskiError error(&neural_network, &data_set);
-//        sum_squared_error.set(&neural_network, &data_set);
-
-        cout << error.get_Minkowski_parameter() << endl;
-
-//        sum_squared_error.set_regularization_method(LossIndex::NoRegularization);
+        SumSquaredError error;
+        error.set(&neural_network, &data_set);
 
         GradientDescent gradient_descent;
         gradient_descent.set_loss_index_pointer(&error);
