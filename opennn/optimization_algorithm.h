@@ -158,13 +158,6 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
-   void normalized(Tensor<type, 1>& tensor) const
-   {      
-       const type norm = l2_norm(tensor);
-
-       tensor.device(*thread_pool_device) = tensor/norm;
-   }
-
    type l2_norm(const Tensor<type, 1>& tensor) const
    {
        Tensor<type, 0> norm;

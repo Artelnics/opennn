@@ -242,18 +242,6 @@ public:
 
    void check() const;
 
-   // Metrics
-
-   Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
-
-   type l1_norm(const Tensor<type, 1>& parameters) const;
-   void l1_norm_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-   void l1_norm_hessian(const Tensor<type, 1>&, Tensor<type, 2>&) const;
-
-   type l2_norm(const Tensor<type, 1>& parameters) const;
-   void l2_norm_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-   void l2_norm_hessian(const Tensor<type, 1>&, Tensor<type, 2>&) const;
-
 protected:
 
    NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
