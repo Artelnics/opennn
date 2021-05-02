@@ -210,7 +210,6 @@ public:
    // virtual void read_XML( );
 
    void print() const;
-   void print_summary() const;
    void save(const string&) const;
    void save_parameters(const string&) const;
 
@@ -413,8 +412,10 @@ struct NeuralNetworkBackPropagation
         }
     }
 
-    void print()
+    void print() const
     {
+        cout << "Neural network back-propagation" << endl;
+
         const Index layers_number = layers.size();
 
         cout << "Layers number: " << layers_number << endl;

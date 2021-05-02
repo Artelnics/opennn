@@ -29,17 +29,6 @@ int main()
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
-        //float from1 = 0, to1 = nextafterf(from1, 1);
-
-//        float from2 = 1.0;
-//        float to2 = nextafterf(from2, from2-1);
-
-//        printf("The next representable float after %.2f is %.20f (%a)\n", from2, to2, to2);
-
-//        cout << nextafter(1, 2) << endl;
-
-//        system("pause");
-
         // Data Set
 
         const Index samples = 10000;

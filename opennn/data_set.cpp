@@ -7229,14 +7229,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void DataSet::print() const
-{
-    print_data();
-
-    print_columns();
-}
-
-
 void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
     ostringstream buffer;
@@ -8046,7 +8038,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 /// Prints to the screen in text format the main numbers from the data set object.
 
-void DataSet::print_summary() const
+void DataSet::print() const
 {
     if(display)
     {

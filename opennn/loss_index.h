@@ -183,7 +183,7 @@ public:
 
    virtual void calculate_error(const DataSetBatch&,
                                 const NeuralNetworkForwardPropagation&,
-                                LossIndexBackPropagationLM&) const {}
+                                LossIndexBackPropagationLM&) const {} 
 
    void back_propagate(const DataSetBatch&,
                        NeuralNetworkForwardPropagation&,
@@ -343,6 +343,11 @@ struct LossIndexBackPropagation
 
     void print() const
     {
+        cout << "Loss index back-propagation" << endl;
+
+        cout << "Errors:" << endl;
+        cout << errors << endl;
+
         cout << "Error:" << endl;
         cout << error << endl;
 
@@ -351,6 +356,8 @@ struct LossIndexBackPropagation
 
         cout << "Gradient:" << endl;
         cout << gradient << endl;
+
+        neural_network.print();
     }
 
     LossIndex* loss_index_pointer = nullptr;

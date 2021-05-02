@@ -38,19 +38,26 @@ int main()
         SumSquaredError sum_squared_error;
         sum_squared_error.set(&neural_network, &data_set);
 
+//        sum_squared_error.set_regularization_method(LossIndex::NoRegularization);
+
         GradientDescent gradient_descent;
         gradient_descent.set_loss_index_pointer(&sum_squared_error);
         gradient_descent.set_maximum_epochs_number(1);
         gradient_descent.set_display_period(1);
 
         data_set.set(1,1,1);
-        data_set.set_data_random();
+        data_set.set_data_constant(0.0);
 
         neural_network.set(NeuralNetwork::Approximation, {1, 1});
-        neural_network.set_parameters_random();
+
+//        neural_network.print();
+
+/*
+
+        neural_network.set_parameters_constant(0.0);
 
         gradient_descent.perform_training();
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

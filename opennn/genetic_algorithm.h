@@ -135,7 +135,7 @@ public:
 
     void write_XML(tinyxml2::XMLPrinter&) const;
 
-    void print_summary() const;
+    void print() const;
     
     void save(const string&) const;
     void load(const string&);
