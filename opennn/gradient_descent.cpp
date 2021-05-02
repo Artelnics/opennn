@@ -372,7 +372,7 @@ void GradientDescent::update_parameters(
 
     optimization_data.initial_learning_rate = 0;
 
-    optimization_data.epoch == 1
+    optimization_data.epoch == 0
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
@@ -390,22 +390,15 @@ void GradientDescent::update_parameters(
     optimization_data.parameters_increment.device(*thread_pool_device)
             = optimization_data.training_direction*optimization_data.learning_rate;
 
-    optimization_data.old_parameters = back_propagation.parameters;
-
     back_propagation.parameters += optimization_data.parameters_increment;
-
-    optimization_data.old_gradient = back_propagation.gradient;
 
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
-    optimization_data.old_training_loss = back_propagation.loss;
-
     // Update parameters
 
     forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
-
 }
 
 
@@ -496,8 +489,6 @@ TrainingResults GradientDescent::perform_training()
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
-        if(epoch != 1) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
-
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         if(has_selection)
@@ -578,7 +569,9 @@ TrainingResults GradientDescent::perform_training()
             stop_training = true;
 
             results.stopping_condition = MinimumParametersIncrementNorm;
-        }
+        }        
+
+        //if(epoch != 1) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
 
         if(epoch != 1 && abs(training_loss_decrease) <= minimum_loss_decrease)
         {

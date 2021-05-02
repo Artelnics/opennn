@@ -586,7 +586,7 @@ void QuasiNewtonMethod::update_parameters(
     optimization_data.gradient_difference.device(*thread_pool_device)
             = back_propagation.gradient - optimization_data.old_gradient;
 
-    if(optimization_data.epoch == 1
+    if(optimization_data.epoch == 0
     || is_zero(optimization_data.parameters_difference)
     || is_zero(optimization_data.gradient_difference))
     {
@@ -620,7 +620,7 @@ void QuasiNewtonMethod::update_parameters(
 
     optimization_data.initial_learning_rate = 0;
 
-    optimization_data.epoch == 1
+    optimization_data.epoch == 0
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
