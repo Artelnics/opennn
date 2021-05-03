@@ -425,13 +425,9 @@ struct LossIndexBackPropagationLM
         squared_errors.resize(batch_samples_number);
     }
 
-    void sum_hessian_diagonal(const type& value)
+    void print() const
     {
-        const Index parameters_number = hessian.dimension(0);
 
-         #pragma omp parallel for
-        for(Index i = 0; i < parameters_number; i++)
-            hessian(i,i) += value;
     }
 
     LossIndex* loss_index_pointer = nullptr;

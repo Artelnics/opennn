@@ -505,14 +505,14 @@ void StatisticsTest::test_mean()
    // Test 0
    Tensor<type, 2> matrix(3,3);
    matrix.setZero();
-   assert_true(mean(matrix)(0) - static_cast<type>(0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(mean(matrix)(0) < static_cast<type>(1.0e-6), LOG);
 
 
    // Test 1
    Tensor<type, 2> matrix_1(3,3);
    matrix_1.setValues({{0,1,-2},{0,1,8},{0,1,6}});
 
-   assert_true(mean(matrix_1)(0) - static_cast<type>(0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(mean(matrix_1)(0) < static_cast<type>(1.0e-6), LOG);
    assert_true(mean(matrix_1)(1) - static_cast<type>(1) < static_cast<type>(1.0e-6), LOG);
    assert_true(mean(matrix_1)(2) - static_cast<type>(4) < static_cast<type>(1.0e-6), LOG);
 
@@ -577,7 +577,7 @@ void StatisticsTest::test_standard_deviation()
    Tensor<type, 1> vector_3(3);
    vector_3.setZero();
 
-   assert_true(static_cast<Index>(standard_deviation(vector_3)) - static_cast<type>(0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(static_cast<Index>(standard_deviation(vector_3)) < static_cast<type>(1.0e-6), LOG);
 
 
    // Test 3
@@ -587,7 +587,7 @@ void StatisticsTest::test_standard_deviation()
 
    standard_deviation = OpenNN::standard_deviation(vector);
 
-   assert_true(abs(static_cast<Index>(standard_deviation) - static_cast<type>(0)) < static_cast<type>(1.0e-6), LOG);
+   assert_true(abs(static_cast<Index>(standard_deviation)) < static_cast<type>(1.0e-6), LOG);
 
    // Test 4
    vector.resize(2);
@@ -611,7 +611,7 @@ void StatisticsTest::test_standard_deviation()
 
    standard_deviation_missing_values = OpenNN::standard_deviation(vector_4);
 
-   assert_true(standard_deviation_missing_values - static_cast<type>(0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(standard_deviation_missing_values < static_cast<type>(1.0e-6), LOG);
 
    // Test 6
    vector_4.resize(5);
@@ -861,9 +861,9 @@ void StatisticsTest::test_quartiles()
 
    Tensor<type, 1> quartiles = OpenNN::quartiles(vector);
 
-   assert_true(static_cast<Index>(quartiles(0)) - static_cast<type>(0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(static_cast<Index>(quartiles(1)) - static_cast<type>(0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(static_cast<Index>(quartiles(2)) - static_cast<type>(0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(static_cast<Index>(quartiles(0)) < static_cast<type>(1.0e-6), LOG);
+   assert_true(static_cast<Index>(quartiles(1)) < static_cast<type>(1.0e-6), LOG);
+   assert_true(static_cast<Index>(quartiles(2)) < static_cast<type>(1.0e-6), LOG);
 
    // Test 2
    vector.resize(2);

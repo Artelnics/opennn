@@ -253,7 +253,7 @@ void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<t
 {
     const type norm = l2_norm(thread_pool_device, vector);
 
-    if(norm - static_cast<type>(0) < numeric_limits<type>::min())
+    if(norm < numeric_limits<type>::min())
     {
         gradient.setZero();
 
@@ -268,7 +268,7 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<ty
 {
     const type norm = l2_norm(thread_pool_device, vector);
 
-    if(norm - static_cast<type>(0) < numeric_limits<type>::min())
+    if(norm < numeric_limits<type>::min())
     {
         hessian.setZero();
 
@@ -278,6 +278,33 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<ty
     hessian.device(*thread_pool_device) = kronecker_product(vector, vector)/(norm*norm*norm);
 }
 
+
+void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
+{
+    const Index rows_number = matrix.dimension(0);
+
+     #pragma omp parallel for
+    for(Index i = 0; i < rows_number; i++)
+        matrix(i,i) += value;
+}
+
+
+/// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
+
+Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b)
+{
+    const Index n = A.dimension(0);
+
+    Tensor<type, 1> x(n);
+
+    const Map<Matrix<type, Dynamic, Dynamic>> A_eigen((type*)A.data(), n, n);
+    const Map<Matrix<type, Dynamic, 1>> b_eigen((type*)b.data(), n, 1);
+    Map<Matrix<type, Dynamic, 1>> x_eigen((type*)x.data(), n);
+
+    x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
+
+    return x;
+}
 
 
 }

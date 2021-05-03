@@ -1730,8 +1730,8 @@ void PerceptronLayerTest::test_calculate_error_gradient()
     assert_true(back_propagation.synaptic_weights_derivatives.rank() == 2, LOG);
     assert_true(back_propagation.synaptic_weights_derivatives.dimension(0) == 2, LOG);
     assert_true(back_propagation.synaptic_weights_derivatives.dimension(1) == 2, LOG);
-    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,0) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,0)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,1)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(back_propagation.synaptic_weights_derivatives(1,0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(back_propagation.synaptic_weights_derivatives(1,1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
 }

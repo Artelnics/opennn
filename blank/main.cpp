@@ -38,7 +38,7 @@ int main()
         SumSquaredError error;
         error.set(&neural_network, &data_set);
 
-        ConjugateGradient gradient_descent;
+        LevenbergMarquardtAlgorithm gradient_descent;
         gradient_descent.set_loss_index_pointer(&error);
         gradient_descent.set_maximum_epochs_number(1);
         gradient_descent.set_display_period(1);
