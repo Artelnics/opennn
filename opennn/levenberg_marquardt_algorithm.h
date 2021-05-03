@@ -24,6 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "tensor_utilities.h"
 #include "optimization_algorithm.h"
 
 // Eigen includes
@@ -121,14 +122,11 @@ public:
    // Serialization methods
 
    Tensor<string, 2> to_string_matrix() const;
-
    
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
    
-   Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
-
 private:
 
    // MEMBERS

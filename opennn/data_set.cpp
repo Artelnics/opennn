@@ -3521,7 +3521,7 @@ Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type,1>& column) c
         {
             new_column(i,1) = static_cast<type>(1);
         }
-        else if(abs(column(i) - static_cast<type>(0)) < numeric_limits<type>::min())
+        else if(abs(column(i)) < numeric_limits<type>::min())
         {
             new_column(i,0) = static_cast<type>(1);
         }

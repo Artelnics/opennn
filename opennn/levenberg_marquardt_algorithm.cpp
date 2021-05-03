@@ -502,8 +502,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     type gradient_norm = 0;
 
-    LossIndexBackPropagationLM training_loss_index_back_propagation_lm(training_samples_number, loss_index_pointer);
-    LossIndexBackPropagationLM selection_loss_index_back_propagation_lm(selection_samples_number, loss_index_pointer);
+    LossIndexBackPropagationLM training_back_propagation_lm(training_samples_number, loss_index_pointer);
+    LossIndexBackPropagationLM selection_back_propagation_lm(selection_samples_number, loss_index_pointer);
 
     // Training strategy stuff
 
@@ -532,21 +532,16 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         loss_index_pointer->back_propagate(training_batch,
                                            training_forward_propagation,
-                                           training_loss_index_back_propagation_lm);
+                                           training_back_propagation_lm);
 
-        // Update epoch
+//        training_back_propagation_lm.print();
 
-        gradient_norm = l2_norm(training_loss_index_back_propagation_lm.gradient);
+        results.training_error_history(epoch) = training_back_propagation_lm.error;
 
-        // Optimization data
+        gradient_norm = l2_norm(training_back_propagation_lm.gradient);
 
-        update_parameters(training_batch,
-                          training_forward_propagation,
-                          training_loss_index_back_propagation_lm,
-                          optimization_data);
 
-        epoch == 1 ? training_loss_decrease = 0
-                   : training_loss_decrease = training_loss_index_back_propagation_lm.loss - old_training_loss;
+
 
         if(has_selection)
         {
@@ -555,35 +550,30 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             loss_index_pointer->calculate_squared_errors(selection_batch,
                                                          selection_forward_propagation,
-                                                         selection_loss_index_back_propagation_lm);
+                                                         selection_back_propagation_lm);
 
             loss_index_pointer->calculate_error(selection_batch,
                                                 selection_forward_propagation,
-                                                selection_loss_index_back_propagation_lm);
+                                                selection_back_propagation_lm);
 
-            if(selection_loss_index_back_propagation_lm.error > old_selection_error) selection_failures++;
+            results.selection_error_history(epoch) = selection_back_propagation_lm.error;
+
+            if(selection_back_propagation_lm.error > old_selection_error) selection_failures++;
         }
 
         if(display)
         {
-            cout << "Training error: " << training_loss_index_back_propagation_lm.error << "\n"
-                 << "Gradient norm: " << gradient_norm << "\n"
-                 << "Damping parameter: " << damping_parameter << "\n"
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-
-            if(has_selection) cout << "Selection error: " << selection_loss_index_back_propagation_lm.error << endl;
+            cout << "Training error: " << training_back_propagation_lm.error << endl;
+            if(has_selection) cout << "Selection error: " << selection_back_propagation_lm.error << endl;
+            cout << "Gradient norm: " << gradient_norm << endl;
+            cout << "Damping parameter: " << damping_parameter << endl;
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
         // Elapsed time
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
-        // Training history loss index
-
-        results.training_error_history(epoch) = training_loss_index_back_propagation_lm.error;
-
-        if(has_selection) results.selection_error_history(epoch) = selection_loss_index_back_propagation_lm.error;
 
         // Stopping Criteria
 
@@ -596,16 +586,19 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        else if(training_loss_index_back_propagation_lm.loss <= training_loss_goal)
+        if(training_back_propagation_lm.loss <= training_loss_goal)
         {
-            if(display) cout << "Loss goal reached.\n";
+            if(display) cout << "Loss goal reached: " << training_back_propagation_lm.loss << endl;
 
             stop_training = true;
 
             results.stopping_condition = LossGoal;
         }
 
-        else if(epoch != 1 && abs(training_loss_decrease) < minimum_loss_decrease)
+        epoch == 1 ? training_loss_decrease = 0
+                   : training_loss_decrease = training_back_propagation_lm.loss - old_training_loss;
+
+        if(epoch != 1 && abs(training_loss_decrease) < minimum_loss_decrease)
         {
             if(display) cout << "Minimum loss decrease (" << minimum_loss_decrease << ") reached: " << training_loss_decrease << endl;
 
@@ -614,16 +607,16 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = MinimumLossDecrease;
         }
 
-        else if(gradient_norm <= gradient_norm_goal)
+        if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Gradient norm goal reached." << endl;
+            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(selection_failures >= maximum_selection_failures)
+        if(selection_failures >= maximum_selection_failures)
         {
             if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
 
@@ -632,18 +625,18 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        else if(epoch == maximum_epochs_number)
+        if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Maximum number of epochs reached." << endl;
+            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumEpochsNumber;
         }
 
-        else if(elapsed_time >= maximum_time)
+        if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Maximum training time reached." << endl;
+            if(display) cout << "Maximum training time reached: " << elapsed_time << endl;
 
             stop_training = true;
 
@@ -664,10 +657,15 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
 
+        update_parameters(training_batch,
+                          training_forward_propagation,
+                          training_back_propagation_lm,
+                          optimization_data);
+
         // Update stuff
 
-        old_training_loss = training_loss_index_back_propagation_lm.loss;
-        old_selection_error = selection_loss_index_back_propagation_lm.error;
+        old_training_loss = training_back_propagation_lm.loss;
+        old_selection_error = selection_back_propagation_lm.error;
     }
 
     if(display) results.print();
@@ -694,7 +692,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
     do
     {
-        loss_index_back_propagation_lm.sum_hessian_diagonal(damping_parameter);
+        sum_diagonal(loss_index_back_propagation_lm.hessian, damping_parameter);
 
         optimization_data.parameters_increment = perform_Householder_QR_decomposition(loss_index_back_propagation_lm.hessian,(-1)*loss_index_back_propagation_lm.gradient);
 
@@ -720,7 +718,9 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
         }
         else
         {
-            loss_index_back_propagation_lm.sum_hessian_diagonal(-damping_parameter);
+            sum_diagonal(loss_index_back_propagation_lm.hessian, -damping_parameter);
+
+            //loss_index_back_propagation_lm.sum_hessian_diagonal(-damping_parameter);
 
             set_damping_parameter(damping_parameter*damping_parameter_factor);
         }
@@ -1099,25 +1099,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
             }
         }
     }
-}
-
-
-/// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
-
-Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition(const Tensor<type, 2>& A,
-                                                                                  const Tensor<type, 1>& b) const
-{
-    const Index n = A.dimension(0);
-
-    Tensor<type, 1> x(n);
-
-    const Map<Matrix<type, Dynamic, Dynamic>> A_eigen((type*)A.data(), n, n);
-    const Map<Matrix<type, Dynamic, 1>> b_eigen((type*)b.data(), n, 1);
-    Map<Matrix<type, Dynamic, 1>> x_eigen((type*)x.data(), n);
-
-    x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
-
-    return x;
 }
 
 }

@@ -903,9 +903,9 @@ void ScalingLayerTest::test_calculate_outputs()
 
    assert_true(outputs.dimension(0) == 1, LOG);
    assert_true(outputs.dimension(1) == 3, LOG);
-   assert_true(abs(outputs(0) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(outputs(1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(outputs(2) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs(0)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs(1)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs(2)) < static_cast<type>(1e-3), LOG);
 
    // Test 1_0
 
