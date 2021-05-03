@@ -537,8 +537,6 @@ public:
    Tensor<type, 1> calculate_variables_means(const Tensor<Index, 1>&) const;
    Tensor<type, 1> calculate_used_variables_minimums() const;
 
-   Descriptives calculate_input_descriptives(const Index&) const;
-
    Tensor<type, 1> calculate_used_targets_mean() const;
    Tensor<type, 1> calculate_selection_targets_mean() const;
 
@@ -644,7 +642,6 @@ public:
    // Serialization methods
 
    void print() const;
-   void print_summary() const;
 
    void from_XML(const tinyxml2::XMLDocument&);
    void write_XML(tinyxml2::XMLPrinter&) const;

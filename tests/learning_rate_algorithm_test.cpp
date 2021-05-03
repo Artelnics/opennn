@@ -165,9 +165,6 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
 
-//    triplet.print();
-//    system("pause");
-
 //    Tensor<Index, 1> samples_indices(0, 1, data_set.get_samples_number()-1);
 
 //    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});

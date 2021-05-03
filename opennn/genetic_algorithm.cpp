@@ -553,10 +553,10 @@ void GeneticAlgorithm::evaluate_population()
 
         // Set stuff
 
-        parameters(i) = training_results.parameters;
+//        parameters(i) = training_results.parameters;
 
-        training_errors(i) = training_results.final_training_error;
-        selection_errors(i) = training_results.final_selection_error;
+//        training_errors(i) = training_results.final_training_error;
+//        selection_errors(i) = training_results.final_selection_error;
 
 //        if(display)
 //        {
@@ -657,11 +657,6 @@ void GeneticAlgorithm::perform_selection()
         }
 
     }while(selection_count < selected_individuals_number);
-
-//    cout << fitness << endl;
-//    cout << selection << endl;
-
-//    system("pause");
 
 #ifdef OPENNN_DEBUG
 
@@ -1534,7 +1529,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void GeneticAlgorithm::print_summary() const
+void GeneticAlgorithm::print() const
 {
     cout << "Genetic algorithm" << endl;
     cout << "Individuals number: " << get_individuals_number() << endl;

@@ -1150,10 +1150,6 @@ void RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<type, 2
 
         back_propagation->input_weights_derivatives += back_propagation->combinations_weights_derivatives
                 .contract(back_propagation->current_layer_deltas*forward_propagation->current_activations_derivatives, A_B);
-
-//        cout<<"combinations_weights_derivatives"<<endl;
-//        cout<<back_propagation->combinations_weights_derivatives<<endl;
-//        system("pause");
     }
 }
 
@@ -1190,22 +1186,8 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 
             multiply_rows(back_propagation->combinations_recurrent_weights_derivatives, forward_propagation->current_activations_derivatives);
 
-//            cout<<"previous_activations"<<endl;
-//            cout<<forward_propagation->previous_activations<<endl;
-//            system("pause");
-
-//            cout<<"forward_propagation->current_activations_derivatives"<<endl;
-//            cout<<forward_propagation->current_activations_derivatives<<endl;
-//            system("pause");
-
-
             back_propagation->combinations_recurrent_weights_derivatives
                     = back_propagation->combinations_recurrent_weights_derivatives.contract(recurrent_weights,A_B).eval();
-
-//            cout<<"forward_propagation->combinations_recurrent_weights_derivatives"<<endl;
-//            cout<< back_propagation->combinations_recurrent_weights_derivatives <<endl;
-//            system("pause");
-
 
             column_index = 0;
             activation_index = 0;
@@ -1229,10 +1211,6 @@ void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<typ
 
         back_propagation->recurrent_weights_derivatives += back_propagation->combinations_recurrent_weights_derivatives
                 .contract(back_propagation->current_layer_deltas*forward_propagation->current_activations_derivatives, A_B);
-
-//        cout<<"back_propagation->combinations_recurrent_weights_derivatives"<<endl;
-//        cout<<back_propagation->combinations_recurrent_weights_derivatives<<endl;
-//        system("pause");
     }
 
 }

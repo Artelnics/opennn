@@ -43,6 +43,18 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 
 void scrub_missing_values(Tensor<type, 2>&, const type&);
 
+
+type l1_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
+void l1_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
+void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+
+type l2_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
+void l2_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
+void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+
+Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&);
+
+
 }
 
 #endif

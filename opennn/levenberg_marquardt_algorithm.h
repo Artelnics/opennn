@@ -67,12 +67,10 @@ public:
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
    const type& get_gradient_norm_goal() const;
-   const Index& get_maximum_selection_error_increases() const;
+   const Index& get_maximum_selection_failures() const;
 
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
-
-   const bool& get_choose_best_selection() const;
 
    // Utilities
 
@@ -101,12 +99,10 @@ public:
    void set_minimum_loss_decrease(const type&);
    void set_loss_goal(const type&);
    void set_gradient_norm_goal(const type&);
-   void set_maximum_selection_error_increases(const Index&);
+   void set_maximum_selection_failures(const Index&);
 
    void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const type&);
-
-   void set_choose_best_selection(const bool&);
 
    // Training methods
 
@@ -174,7 +170,7 @@ private:
    /// Maximum number of epochs at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   Index maximum_selection_error_increases;
+   Index maximum_selection_failures;
 
    /// Maximum number of epoch to perform_training. It is used as a stopping criterion.
 
@@ -183,10 +179,6 @@ private:
    /// Maximum training time. It is used as a stopping criterion.
 
    type maximum_time;
-
-   /// True if the final model will be the neural network with the minimum selection error, false otherwise.
-
-   bool choose_best_selection = false;
 };
 
 
@@ -234,7 +226,7 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
     Tensor<type, 1> parameters_increment;
 
-    type parameters_increment_norm = 0;
+    type parameters_increment_norm = numeric_limits<type>::max();
 
     // Loss index data
 
