@@ -972,7 +972,7 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
-
+/*
         //if(epoch != 1) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
 
         if(epoch != 1 && abs(training_loss_decrease) <= minimum_loss_decrease)
@@ -983,13 +983,13 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.stopping_condition = MinimumLossDecrease;
         }
-
+*/
         if(stop_training)
         {
             results.resize_training_error_history(epoch+1);
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            results.final_gradient_norm = gradient_norm;
+            results.gradient_norm = gradient_norm;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
@@ -1539,13 +1539,9 @@ void ConjugateGradient::update_parameters(
         calculate_gradient_descent_training_direction(
                     back_propagation.gradient,
                     optimization_data.training_direction);
-
-//        cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
     }
 
     // Get initial learning rate
-
-    optimization_data.initial_learning_rate = 0;
 
     optimization_data.epoch == 0
             ? optimization_data.initial_learning_rate = first_learning_rate
@@ -1558,6 +1554,48 @@ void ConjugateGradient::update_parameters(
          optimization_data);
 
     optimization_data.learning_rate = directional_point.first;
+    back_propagation.loss = directional_point.second;
+
+    if(abs(optimization_data.learning_rate) > 0)
+    {
+        optimization_data.parameters_increment.device(*thread_pool_device)
+                = optimization_data.training_direction*optimization_data.learning_rate;
+
+        back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+    }
+    else
+    {
+        const Index parameters_number = back_propagation.parameters.size();
+
+        for(Index i = 0; i < parameters_number; i++)
+        {
+            if(abs(back_propagation.gradient(i)) < numeric_limits<type>::min())
+            {
+                back_propagation.parameters(i) = back_propagation.parameters(i);
+
+                optimization_data.parameters_increment(i) = 0;
+            }
+            else if(back_propagation.gradient(i) > 0)
+            {
+                back_propagation.parameters(i)
+                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)-1);
+
+                optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
+            }
+            else if(back_propagation.gradient(i) < 0)
+            {
+                back_propagation.parameters(i)
+                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)+1);
+
+                optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
+            }
+        }
+
+        optimization_data.learning_rate = optimization_data.initial_learning_rate;
+    }
+
+/*
+    optimization_data.learning_rate = directional_point.first;
 
     optimization_data.parameters_increment.device(*thread_pool_device)
             = optimization_data.training_direction*optimization_data.learning_rate;
@@ -1565,12 +1603,14 @@ void ConjugateGradient::update_parameters(
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
     back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+*/
 
     // Update stuff
 
     optimization_data.old_gradient = back_propagation.gradient;
 
     optimization_data.old_training_direction = optimization_data.training_direction;
+
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     // Update parameters

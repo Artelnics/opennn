@@ -548,7 +548,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(0,0) = "Final parameters norm";
 
     buffer.str("");
-    buffer << setprecision(precision) << final_parameters_norm;
+    buffer << setprecision(precision) << parameters_norm;
 
     final_results(0,1) = buffer.str();
 
@@ -575,7 +575,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(3,0) = "Final gradient norm";
 
     buffer.str("");
-    buffer << setprecision(precision) << final_gradient_norm;
+    buffer << setprecision(precision) << gradient_norm;
 
     final_results(3,1) = buffer.str();
 

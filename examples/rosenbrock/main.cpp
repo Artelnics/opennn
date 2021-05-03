@@ -29,6 +29,8 @@ int main()
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
+        srand(static_cast<unsigned>(time(nullptr)));
+
         // Data Set
 
         const Index samples = 10000;
@@ -65,7 +67,10 @@ int main()
 
         training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
-//        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1000);
+        LevenbergMarquardtAlgorithm* optimization_algorithm_pointer = training_strategy.get_Levenberg_Marquardt_algorithm_pointer();
+
+        optimization_algorithm_pointer->set_display_period(1000);
+        optimization_algorithm_pointer->set_maximum_epochs_number(1000000);
 
         training_strategy.perform_training();
 
