@@ -244,7 +244,7 @@ void OptimizationAlgorithm::set_default()
 {
     display = true;
 
-    display_period = 5;
+    display_period = 10;
 
     save_period = UINT_MAX;
 

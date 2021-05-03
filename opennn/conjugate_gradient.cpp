@@ -247,7 +247,7 @@ void ConjugateGradient::set_default()
 
     // UTILITIES
 
-    display_period = 5;
+    display_period = 10;
 
     training_direction_method = FR;
 }

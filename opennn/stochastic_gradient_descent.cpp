@@ -118,7 +118,7 @@ void StochasticGradientDescent::set_default()
 
     // UTILITIES
 
-    display_period = 5;
+    display_period = 10;
 }
 
 
@@ -354,8 +354,13 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    training_samples_number < batch_samples_number ? batch_size_training = training_samples_number : batch_size_training = batch_samples_number;
-    selection_samples_number < batch_samples_number && selection_samples_number != 0 ? batch_size_selection = selection_samples_number : batch_size_selection = batch_samples_number;
+    training_samples_number < batch_samples_number
+            ? batch_size_training = training_samples_number
+            : batch_size_training = batch_samples_number;
+
+    selection_samples_number < batch_samples_number && selection_samples_number != 0
+            ? batch_size_selection = selection_samples_number
+            : batch_size_selection = batch_samples_number;
 
     DataSetBatch batch_training(batch_size_training, data_set_pointer);
     DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
@@ -408,7 +413,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
+        training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -501,7 +506,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Maximum number of epochs reached.\n";
+            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -510,7 +515,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Maximum training time reached.\n";
+            if(display) cout << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -519,7 +524,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Loss goal reached.\n";
+            if(display) cout << "Loss goal reached: " << training_loss << endl;
 
             stop_training = true;
 
@@ -528,7 +533,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Gradient norm goal reached.\n";
+            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 

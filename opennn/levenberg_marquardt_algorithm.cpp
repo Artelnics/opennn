@@ -165,7 +165,7 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     // UTILITIES
 
-    display_period = 5;
+    display_period = 10;
 
     // Training parameters
 
@@ -534,14 +534,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                            training_forward_propagation,
                                            training_back_propagation_lm);
 
-//        training_back_propagation_lm.print();
-
         results.training_error_history(epoch) = training_back_propagation_lm.error;
 
         gradient_norm = l2_norm(training_back_propagation_lm.gradient);
-
-
-
 
         if(has_selection)
         {
@@ -561,7 +556,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             if(selection_back_propagation_lm.error > old_selection_error) selection_failures++;
         }
 
-        if(display)
+        // Elapsed time
+
+        time(&current_time);
+        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+
+        if(display && epoch%display_period == 0)
         {
             cout << "Training error: " << training_back_propagation_lm.error << endl;
             if(has_selection) cout << "Selection error: " << selection_back_propagation_lm.error << endl;
@@ -570,10 +570,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
-        // Elapsed time
-
-        time(&current_time);
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
         // Stopping Criteria
 
@@ -719,8 +715,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
         else
         {
             sum_diagonal(loss_index_back_propagation_lm.hessian, -damping_parameter);
-
-            //loss_index_back_propagation_lm.sum_hessian_diagonal(-damping_parameter);
 
             set_damping_parameter(damping_parameter*damping_parameter_factor);
         }

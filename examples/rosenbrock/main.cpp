@@ -63,19 +63,7 @@ int main()
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-//        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
-
-        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_maximum_epochs_number(1000);
-        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_maximum_selection_failures(1000000);
-        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_display_period(100);
-//        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_minimum_damping_parameter(numeric_limits<type>::min());
-
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10000000);
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(10000);
-
-        training_strategy.get_quasi_Newton_method_pointer()->set_maximum_epochs_number(1000000);
-        training_strategy.get_quasi_Newton_method_pointer()->set_display_period(1000);
 
 //        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1000);
 

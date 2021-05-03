@@ -813,7 +813,6 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
 }
 
 
-
 void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
                                          const NeuralNetworkForwardPropagation& forward_propagation,
                                          LossIndexBackPropagation& back_propagation) const

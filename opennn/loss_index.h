@@ -427,7 +427,30 @@ struct LossIndexBackPropagationLM
 
     void print() const
     {
+        cout << "Loss index back-propagation LM" << endl;
 
+        cout << "Errors:" << endl;
+        cout << errors << endl;
+
+        cout << "Squared errors:" << endl;
+        cout << squared_errors << endl;
+
+        cout << "Squared errors Jacobian:" << endl;
+        cout << squared_errors_jacobian << endl;
+
+        cout << "Error:" << endl;
+        cout << error << endl;
+
+        cout << "Loss:" << endl;
+        cout << loss << endl;
+
+        cout << "Gradient:" << endl;
+        cout << gradient << endl;
+
+        cout << "Hessian:" << endl;
+        cout << hessian << endl;
+
+        //neural_network.print();
     }
 
     LossIndex* loss_index_pointer = nullptr;
