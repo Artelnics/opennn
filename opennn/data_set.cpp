@@ -9289,7 +9289,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 
     Index new_lags_number;
 
-    if(samples_number == lags_number)
+    if(samples_number == lags_number || samples_number < lags_number)
     {
         new_lags_number = lags_number - 2;
     }
