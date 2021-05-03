@@ -578,13 +578,18 @@ void QuasiNewtonMethod::update_parameters(
 
     #endif
 
-    optimization_data.old_training_loss = back_propagation.loss;
 
     optimization_data.parameters_difference.device(*thread_pool_device)
             = back_propagation.parameters - optimization_data.old_parameters;
 
     optimization_data.gradient_difference.device(*thread_pool_device)
             = back_propagation.gradient - optimization_data.old_gradient;
+
+    optimization_data.old_training_loss = back_propagation.loss;
+
+    optimization_data.old_parameters = back_propagation.parameters; // do not move above
+
+    // Get training direction
 
     if(optimization_data.epoch == 0
     || is_zero(optimization_data.parameters_difference)
@@ -597,67 +602,41 @@ void QuasiNewtonMethod::update_parameters(
         calculate_inverse_hessian_approximation(optimization_data);
     }
 
-    // Optimization algorithm
-
     optimization_data.training_direction.device(*thread_pool_device)
             = -optimization_data.inverse_hessian.contract(back_propagation.gradient, A_B);
-
-    // Calculate training slope
 
     optimization_data.training_slope.device(*thread_pool_device)
             = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
 
-    // Check for a descent direction
-
     if(optimization_data.training_slope(0) >= 0)
     {
-        cout << "Training slope is greater than zero." << endl;
-
         optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;
     }
 
-    // Get initial learning rate
-
-    optimization_data.initial_learning_rate = 0;
+     // Get learning rate
 
     optimization_data.epoch == 0
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
-    pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
+    const pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
              batch,
              forward_propagation,
              back_propagation,
              optimization_data);
 
     optimization_data.learning_rate = directional_point.first;
+    back_propagation.loss = directional_point.second;
 
-    if(optimization_data.epoch != 1 && abs(optimization_data.learning_rate) < numeric_limits<type>::min())
+    if(abs(optimization_data.learning_rate) > 0)
     {
-        optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;
+        optimization_data.parameters_increment.device(*thread_pool_device)
+                = optimization_data.training_direction*optimization_data.learning_rate;
 
-        directional_point = learning_rate_algorithm.calculate_directional_point(
-                    batch,
-                    forward_propagation,
-                    back_propagation,
-                    optimization_data);
-
-        optimization_data.learning_rate = directional_point.first;
+        back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
     }
-
-    optimization_data.parameters_increment.device(*thread_pool_device)
-            = optimization_data.training_direction*optimization_data.learning_rate;
-
-    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
-
-    if(abs(optimization_data.learning_rate) <= numeric_limits<type>::min())
+    else
     {
-
-        optimization_data.old_parameters = back_propagation.parameters;
-
-//        cout << "Learning rate is zero###############################################" << endl;
-//        //cout << optimization_data.epoch << endl;
-
         const Index parameters_number = back_propagation.parameters.size();
 
         for(Index i = 0; i < parameters_number; i++)
@@ -665,27 +644,29 @@ void QuasiNewtonMethod::update_parameters(
             if(abs(back_propagation.gradient(i)) < numeric_limits<type>::min())
             {
                 back_propagation.parameters(i) = back_propagation.parameters(i);
+
+                optimization_data.parameters_increment(i) = 0;
             }
             else if(back_propagation.gradient(i) > 0)
             {
-                back_propagation.parameters(i) //-= 100*numeric_limits<type>::epsilon();
+                back_propagation.parameters(i)
                         = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)-1);
+
+                optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
-            else
+            else if(back_propagation.gradient(i) < 0)
             {
-                back_propagation.parameters(i) //+= 100*numeric_limits<type>::epsilon();
+                back_propagation.parameters(i)
                         = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)+1);
+
+                optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
             }
         }
 
         optimization_data.learning_rate = optimization_data.initial_learning_rate;
     }
-    else
-    {
-        optimization_data.old_parameters = back_propagation.parameters;
 
-        back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
-    }
+    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
     // Update stuff
 
@@ -694,8 +675,6 @@ void QuasiNewtonMethod::update_parameters(
     optimization_data.old_inverse_hessian = optimization_data.inverse_hessian;
 
     optimization_data.old_learning_rate = optimization_data.learning_rate;
-
-    back_propagation.loss = directional_point.second;
 
     // Set parameters
 
@@ -820,13 +799,15 @@ TrainingResults QuasiNewtonMethod::perform_training()
         {
             if(display) cout << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
 
+            cout << optimization_data.parameters_increment << endl;
+
             stop_training = true;
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
         if(epoch != 0 &&
-                training_back_propagation.loss - optimization_data.old_training_loss >= minimum_loss_decrease)
+                abs(training_back_propagation.loss - optimization_data.old_training_loss) < minimum_loss_decrease)
         {
             if(display) cout << "Minimum loss decrease (" << minimum_loss_decrease << ") reached: " << training_back_propagation.loss - optimization_data.old_training_loss << endl;
 
@@ -881,7 +862,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
             results.resize_training_error_history(epoch+1);
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            results.final_gradient_norm = gradient_norm;
+            results.gradient_norm = gradient_norm;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 

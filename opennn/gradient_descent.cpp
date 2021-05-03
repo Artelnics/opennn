@@ -370,8 +370,6 @@ void GradientDescent::update_parameters(
 
     // Get initial learning_rate
 
-    optimization_data.initial_learning_rate = 0;
-
     optimization_data.epoch == 0
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
@@ -383,7 +381,8 @@ void GradientDescent::update_parameters(
                             optimization_data);
 
     optimization_data.learning_rate = directional_point.first;
-
+    back_propagation.loss = directional_point.second;
+/*
     if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
         throw logic_error("Learning rate is zero");
 
@@ -395,10 +394,54 @@ void GradientDescent::update_parameters(
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
     optimization_data.old_learning_rate = optimization_data.learning_rate;
+*/
+
+    if(abs(optimization_data.learning_rate) > 0)
+    {
+        optimization_data.parameters_increment.device(*thread_pool_device)
+                = optimization_data.training_direction*optimization_data.learning_rate;
+
+        back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+    }
+    else
+    {
+        const Index parameters_number = back_propagation.parameters.size();
+
+        for(Index i = 0; i < parameters_number; i++)
+        {
+            if(abs(back_propagation.gradient(i)) < numeric_limits<type>::min())
+            {
+                back_propagation.parameters(i) = back_propagation.parameters(i);
+
+                optimization_data.parameters_increment(i) = 0;
+            }
+            else if(back_propagation.gradient(i) > 0)
+            {
+                back_propagation.parameters(i)
+                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)-1);
+
+                optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
+            }
+            else if(back_propagation.gradient(i) < 0)
+            {
+                back_propagation.parameters(i)
+                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)+1);
+
+                optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
+            }
+        }
+
+        optimization_data.learning_rate = optimization_data.old_learning_rate;
+    }
+
+    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
     // Update parameters
 
+    optimization_data.old_learning_rate = optimization_data.learning_rate;
+
     forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
+
 }
 
 
@@ -599,7 +642,7 @@ TrainingResults GradientDescent::perform_training()
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            results.final_gradient_norm = gradient_norm;
+            results.gradient_norm = gradient_norm;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 

@@ -173,8 +173,8 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     damping_parameter_factor = 10.0;
 
-    minimum_damping_parameter = static_cast<type>(1.0e-6);
-    maximum_damping_parameter = static_cast<type>(1.0e6);
+    minimum_damping_parameter = numeric_limits<type>::min();//static_cast<type>(1.0e-9);
+    maximum_damping_parameter = numeric_limits<type>::max();//static_cast<type>(1.0e9);
 }
 
 
@@ -475,6 +475,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+
     const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
@@ -570,7 +571,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
-
         // Stopping Criteria
 
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
@@ -644,7 +644,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             results.resize_training_error_history(epoch+1);
             results.resize_selection_error_history(epoch+1);
 
-            results.final_gradient_norm = gradient_norm;
+            results.gradient_norm = gradient_norm;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
@@ -679,7 +679,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
 void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
                                                     NeuralNetworkForwardPropagation& forward_propagation,
-                                                    LossIndexBackPropagationLM& loss_index_back_propagation_lm,
+                                                    LossIndexBackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
     const type regularization_weight = loss_index_pointer->get_regularization_weight();
@@ -688,33 +688,35 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
     do
     {
-        sum_diagonal(loss_index_back_propagation_lm.hessian, damping_parameter);
+        sum_diagonal(back_propagation_lm.hessian, damping_parameter);
 
-        optimization_data.parameters_increment = perform_Householder_QR_decomposition(loss_index_back_propagation_lm.hessian,(-1)*loss_index_back_propagation_lm.gradient);
+        optimization_data.parameters_increment
+                = perform_Householder_QR_decomposition(back_propagation_lm.hessian,(-1)*back_propagation_lm.gradient);
 
-        optimization_data.potential_parameters.device(*thread_pool_device) = loss_index_back_propagation_lm.parameters + optimization_data.parameters_increment;
+        optimization_data.potential_parameters.device(*thread_pool_device)
+                = back_propagation_lm.parameters + optimization_data.parameters_increment;
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
-        loss_index_pointer->calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
-        loss_index_pointer->calculate_error(batch, forward_propagation, loss_index_back_propagation_lm);
+        loss_index_pointer->calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+        loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation_lm);
 
-        const type new_loss = loss_index_back_propagation_lm.error + regularization_weight*loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+        const type new_loss = back_propagation_lm.error
+                + regularization_weight*loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
 
-        if(new_loss <= loss_index_back_propagation_lm.loss) // succesfull step
+        if(new_loss < back_propagation_lm.loss) // succesfull step
         {
             set_damping_parameter(damping_parameter/damping_parameter_factor);
 
-            loss_index_back_propagation_lm.parameters = optimization_data.potential_parameters;
+            back_propagation_lm.parameters = optimization_data.potential_parameters;
 
-            loss_index_back_propagation_lm.error = loss_index_back_propagation_lm.error;
-            loss_index_back_propagation_lm.loss = new_loss;
+            back_propagation_lm.loss = new_loss;
 
             break;
         }
         else
         {
-            sum_diagonal(loss_index_back_propagation_lm.hessian, -damping_parameter);
+            sum_diagonal(back_propagation_lm.hessian, -damping_parameter);
 
             set_damping_parameter(damping_parameter*damping_parameter_factor);
         }
@@ -724,7 +726,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
     // Set parameters
 
-    neural_network_pointer->set_parameters(loss_index_back_propagation_lm.parameters);
+    neural_network_pointer->set_parameters(back_propagation_lm.parameters);
 }
 
 

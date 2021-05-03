@@ -368,6 +368,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
+        if(display && epoch%display_period == 0)
+        {
+            cout << "Training error: " << training_error << endl;
+//            if(has_selection) cout << "Selection error: " << selection_error << endl;
+            cout << "Gradient norm: " << gradient_norm << endl;
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+        }
+
         // Training history
 
 

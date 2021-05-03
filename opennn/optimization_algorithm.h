@@ -273,11 +273,11 @@ struct TrainingResults
 
     /// Final neural network parameters norm.
 
-    type final_parameters_norm;
+    type parameters_norm;
 
     /// Final gradient norm.
 
-    type final_gradient_norm;
+    type gradient_norm;
 
     /// Elapsed time of the training process.
 
