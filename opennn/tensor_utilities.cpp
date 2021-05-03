@@ -194,6 +194,92 @@ void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
     std::replace_if (matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
 }
 
+
+Tensor<type, 2> kronecker_product(const Tensor<type, 1>& vector, const Tensor<type, 1>& other_vector)
+{
+    const Index size = vector.size();
+
+    Tensor<type, 2> direct(size, size);
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < size; i++)
+    {
+        for(Index j = 0; j < size; j++)
+        {
+            direct(i, j) = vector(i) * other_vector(j);
+        }
+    }
+
+    return direct;
+}
+
+
+type l1_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
+{
+    Tensor<type, 0> norm;
+
+    norm.device(*thread_pool_device) = vector.abs().sum();
+
+    return norm(0);
+}
+
+
+void l1_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 1>& gradient)
+{
+    gradient.device(*thread_pool_device) = vector.sign();
+}
+
+
+void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>& hessian)
+{
+    hessian.setZero();
+}
+
+
+/// Returns the l2 norm of a vector.
+
+type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
+{
+    Tensor<type, 0> norm;
+
+    norm.device(*thread_pool_device) = vector.square().sum().sqrt();
+
+    return norm(0);
+}
+
+
+void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 1>& gradient)
+{
+    const type norm = l2_norm(thread_pool_device, vector);
+
+    if(norm - static_cast<type>(0) < numeric_limits<type>::min())
+    {
+        gradient.setZero();
+
+        return;
+    }
+
+    gradient.device(*thread_pool_device) = vector/norm;
+}
+
+
+void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
+{
+    const type norm = l2_norm(thread_pool_device, vector);
+
+    if(norm - static_cast<type>(0) < numeric_limits<type>::min())
+    {
+        hessian.setZero();
+
+        return;
+    }
+
+    hessian.device(*thread_pool_device) = kronecker_product(vector, vector)/(norm*norm*norm);
+}
+
+
+
 }
 
 

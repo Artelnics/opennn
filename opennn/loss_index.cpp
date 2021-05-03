@@ -710,9 +710,9 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
     {
         case NoRegularization: return 0.0;
 
-        case L1: return l1_norm(parameters);
+        case L1: return l1_norm(thread_pool_device, parameters);
 
-        case L2: return l2_norm(parameters);
+        case L2: return l2_norm(thread_pool_device, parameters);
     }
 
     return 0.0;
@@ -729,9 +729,9 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
 {
     switch(regularization_method)
     {
-    case L1: l1_norm_gradient(parameters, regularization_gradient); return;
+    case L1: l1_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
 
-    case L2: l2_norm_gradient(parameters, regularization_gradient); return;
+    case L2: l2_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
 
     default: return;
     }
@@ -748,9 +748,9 @@ void LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& paramete
 {
     switch(regularization_method)
     {
-    case L1: l1_norm_hessian(parameters, regularization_hessian); return;
+    case L1: l1_norm_hessian(thread_pool_device, parameters, regularization_hessian); return;
 
-    case L2: l2_norm_hessian(parameters, regularization_hessian); return;
+    case L2: l2_norm_hessian(thread_pool_device, parameters, regularization_hessian); return;
 
     default: return;
     }
@@ -1209,88 +1209,6 @@ type LossIndex::calculate_h(const type& x) const
     const type eta = calculate_eta();
 
     return sqrt(eta)*(static_cast<type>(1.0) + abs(x));
-}
-
-
-Tensor<type, 2> LossIndex::kronecker_product(const Tensor<type, 1>& tensor, const Tensor<type, 1>& other_tensor) const
-{
-    const Index size = tensor.size();
-
-    Tensor<type, 2> direct(size, size);
-
-    #pragma omp parallel for if(size > 1000)
-
-    for(Index i = 0; i < size; i++)
-    {
-        for(Index j = 0; j < size; j++)
-        {
-            direct(i, j) = tensor(i) * other_tensor(j);
-        }
-    }
-
-    return direct;
-}
-
-
-type LossIndex::l2_norm(const Tensor<type, 1>& parameters) const
-{
-    Tensor<type, 0> norm;
-
-    norm.device(*thread_pool_device) = parameters.square().sum().sqrt();
-
-    return norm(0);
-}
-
-
-type LossIndex::l1_norm(const Tensor<type, 1>& parameters) const
-{
-    Tensor<type, 0> norm;
-
-    norm.device(*thread_pool_device) = parameters.abs().sum();
-
-    return norm(0);
-}
-
-
-void LossIndex::l1_norm_gradient(const Tensor<type, 1>& parameters, Tensor<type, 1>& gradient) const
-{
-    gradient.device(*thread_pool_device) = parameters.sign();
-}
-
-
-void LossIndex::l1_norm_hessian(const Tensor<type, 1>&, Tensor<type, 2>& hessian) const
-{
-    hessian.device(*thread_pool_device) = hessian.setZero();
-}
-
-
-void LossIndex::l2_norm_gradient(const Tensor<type, 1>& parameters, Tensor<type, 1>& gradient) const
-{
-    const type norm = l2_norm(parameters);
-
-    if(norm - static_cast<type>(0) < numeric_limits<type>::min())
-    {
-        gradient.setZero();
-
-        return;
-    }
-
-    gradient.device(*thread_pool_device) = parameters/norm;
-}
-
-
-void LossIndex::l2_norm_hessian(const Tensor<type, 1>& parameters, Tensor<type, 2>& hessian) const
-{
-    const type norm = l2_norm(parameters);
-
-    if(norm - static_cast<type>(0) < numeric_limits<type>::min())
-    {
-        hessian.setZero();
-
-        return;
-    }
-
-    hessian.device(*thread_pool_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
 }
 
 }

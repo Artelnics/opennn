@@ -29,17 +29,6 @@ int main()
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
-        //float from1 = 0, to1 = nextafterf(from1, 1);
-
-//        float from2 = 1.0;
-//        float to2 = nextafterf(from2, from2-1);
-
-//        printf("The next representable float after %.2f is %.20f (%a)\n", from2, to2, to2);
-
-//        cout << nextafter(1, 2) << endl;
-
-//        system("pause");
-
         // Data Set
 
         const Index samples = 10000;
@@ -78,7 +67,7 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
         training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_maximum_epochs_number(1000);
-        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_maximum_selection_error_increases(1000000);
+        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_maximum_selection_failures(1000000);
         training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_display_period(100);
 //        training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_minimum_damping_parameter(numeric_limits<type>::min());
 

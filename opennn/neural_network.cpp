@@ -381,7 +381,7 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
 
     Tensor<Layer*, 1> trainable_layers_pointers(trainable_layers_number);
 
-    Index trainable_layer_index = 0;
+    Index index = 0;
 
     for(Index i = 0; i < layers_number; i++)
     {
@@ -389,8 +389,8 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
         && layers_pointers[i]->get_type() != Layer::Unscaling
         && layers_pointers[i]->get_type() != Layer::Bounding)
         {
-            trainable_layers_pointers[trainable_layer_index] = layers_pointers[i];
-            trainable_layer_index++;
+            trainable_layers_pointers[index] = layers_pointers[i];
+            index++;
         }
     }
 
@@ -1191,8 +1191,8 @@ Index NeuralNetwork::get_trainable_layers_number() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers(i)->get_type() != Layer::Scaling
-                && layers_pointers(i)->get_type() != Layer::Unscaling
-                && layers_pointers(i)->get_type() != Layer::Bounding)
+        && layers_pointers(i)->get_type() != Layer::Unscaling
+        && layers_pointers(i)->get_type() != Layer::Bounding)
         {
             count++;
         }               
@@ -2325,15 +2325,9 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Prints to the screen the members of a neural network object in a XML-type format.
-/// @todo
+/// Prints to the screen the most important information about the neural network object.
 
 void NeuralNetwork::print() const
-{
-}
-
-
-void NeuralNetwork::print_summary() const
 {
     const Index layers_number = get_layers_number();
 
@@ -2827,13 +2821,15 @@ Tensor<string, 1> NeuralNetwork::get_layers_names() const
 }
 
 
-Layer* NeuralNetwork::get_output_layer_pointer() const
+Layer* NeuralNetwork::get_last_trainable_layer_pointer() const
 {
-    if(layers_pointers.dimension(0) == 0) return nullptr;
+    if(layers_pointers.size() == 0) return nullptr;
 
-    const Index layers_number = get_layers_number();
+    Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    return layers_pointers[layers_number-1];
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    return trainable_layers_pointers(trainable_layers_number-1);
 }
 
 }

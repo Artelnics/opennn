@@ -1231,6 +1231,9 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 {
     if(!shuffle) return split_samples(samples_indices, batch_samples_number);
 
+    std::random_device rng;
+    std::mt19937 urng(rng());
+
     const Index samples_number = samples_indices.size();
 
     Index buffer_size = new_buffer_size;
@@ -1257,7 +1260,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
         // Shuffle
 
-        random_shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size());
+        std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
         for(Index i = 0; i > batch_size; i++)
         {
@@ -1271,7 +1274,6 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
     {
         batches_number = samples_number / batch_size;
     }
-
 
     Tensor<Index, 2> batches(batches_number, batch_size);
 
@@ -1336,7 +1338,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
             if(i == batches_number-1)
             {
-                random_shuffle(buffer.data(), buffer.data() +  buffer.size());
+                std::shuffle(buffer.data(), buffer.data() +  buffer.size(), urng);
 
                 if(batch_size <= buffer_size)
                 {
@@ -1733,6 +1735,8 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
                                      const type& selection_samples_ratio,
                                      const type& testing_samples_ratio)
 {
+    std::random_device rng;
+    std::mt19937 urng(rng());
 
     const Index used_samples_number = get_used_samples_number();
 
@@ -1765,7 +1769,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     initialize_sequential(indices, 0, 1, samples_number-1);
 
-    random_shuffle(indices.data(), indices.data() + indices.size());
+    std::shuffle(indices.data(), indices.data() + indices.size(), urng);
 
     Index count = 0;
 
@@ -5815,24 +5819,6 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
 }
 
 
-/// Returns a vector with some basic descriptives of the given input variable on all
-/// The size of this vector is four:
-/// <ul>
-/// <li> Input variable minimum.
-/// <li> Input variable maximum.
-/// <li> Input variable mean.
-/// <li> Input variable standard deviation.
-/// </ul>
-/// @todo
-
-Descriptives DataSet::calculate_input_descriptives(const Index& input_index) const
-{
-//    return descriptives_missing_values(data.chip(input_index,1));
-
-    return Descriptives();
-}
-
-
 Tensor<type, 1> DataSet::calculate_used_targets_mean() const
 {
     const Tensor<Index, 1> used_indices = get_used_samples_indices();
@@ -7225,14 +7211,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void DataSet::print() const
-{
-    print_data();
-
-    print_columns();
-}
-
-
 void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
     ostringstream buffer;
@@ -8042,7 +8020,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 /// Prints to the screen in text format the main numbers from the data set object.
 
-void DataSet::print_summary() const
+void DataSet::print() const
 {
     if(display)
     {
@@ -11203,6 +11181,9 @@ void DataSetBatch::print() const
 
 void DataSet::shuffle()
 {
+    random_device rng;
+    mt19937 urng(rng());
+
     const Index data_rows = data.dimension(0);
     const Index data_columns = data.dimension(1);
 
@@ -11210,7 +11191,7 @@ void DataSet::shuffle()
 
     for(Index i = 0; i < data_rows; i++) indices(i) = i;
 
-    random_shuffle(&indices(0), &indices(data_rows-1));
+    std::shuffle(&indices(0), &indices(data_rows-1), urng);
 
     Tensor<type, 2> new_data(data_rows, data_columns);
     Tensor<string, 1> new_rows_labels(data_rows);

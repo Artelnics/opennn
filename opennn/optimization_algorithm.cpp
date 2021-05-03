@@ -148,18 +148,6 @@ void OptimizationAlgorithm::set()
 }
 
 
-/// Sets a new loss index pointer.
-/// It also sets the rest of members to their default values.
-/// @param new_loss_index_pointer Pointer to a loss index object.
-
-void OptimizationAlgorithm::set(LossIndex* new_loss_index_pointer)
-{
-    loss_index_pointer = new_loss_index_pointer;
-
-    set_default();
-}
-
-
 void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 {
     if(non_blocking_thread_pool != nullptr) delete this->non_blocking_thread_pool;
@@ -565,7 +553,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(0,1) = buffer.str();
 
     // Final loss
-
+/*
     final_results(1,0) = "Final training error";
 
     buffer.str("");
@@ -581,7 +569,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     buffer << setprecision(precision) << final_selection_error;
 
     final_results(2,1) = buffer.str();
-
+*/
     // Final gradient norm
 
     final_results(3,0) = "Final gradient norm";
@@ -596,7 +584,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(4,0) = "Epochs number";
 
     buffer.str("");
-    buffer << epochs_number;
+    buffer << training_error_history.size();
 
     final_results(4,1) = buffer.str();
 

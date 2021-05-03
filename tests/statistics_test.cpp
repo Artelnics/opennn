@@ -1278,13 +1278,13 @@ void StatisticsTest::test_l2_norm()
    vector.resize(2);
    vector.setConstant(1);
 
-   assert_true(abs(l2_norm(vector) - sqrt(static_cast<type>(2.0))) < static_cast<type>(1.0e-6), LOG);
+   assert_true(abs(l2_norm(thread_pool_device, vector) - sqrt(static_cast<type>(2.0))) < static_cast<type>(1.0e-6), LOG);
 
    // Test 2
    Tensor<type, 1> vector_1(4);
    vector_1.setValues({1,2,3,4});
 
-   assert_true(abs(l2_norm(vector_1) - sqrt(static_cast<type>(30.0))) < static_cast<type>(1.0e-6), LOG);
+   assert_true(abs(l2_norm(thread_pool_device, vector_1) - sqrt(static_cast<type>(30.0))) < static_cast<type>(1.0e-6), LOG);
 }
 
 
