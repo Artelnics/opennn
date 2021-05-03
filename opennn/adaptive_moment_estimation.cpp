@@ -318,8 +318,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
-            // Gradient
-
             update_parameters(training_back_propagation, optimization_data);
         }
 
@@ -329,6 +327,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         training_loss /= static_cast<type>(batches_number);
         training_error /= static_cast<type>(batches_number);
+
+        results.training_error_history(epoch) = training_error;
 
         if(has_selection)
         {
@@ -358,7 +358,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             //selection_error /= static_cast<type>(selection_batches_number);
 
             //if(selection_error > old_selection_error) selection_failures++;
+
+            //if(has_selection) results.selection_error_history(epoch) = selection_error;
         }
+
 
         // Elapsed time
 
@@ -367,43 +370,44 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         // Training history
 
-        results.training_error_history(epoch) = training_error;
-
-        //if(has_selection) results.selection_error_history(epoch) = selection_error;
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Maximum number of epochs reached.\n";
+            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumEpochsNumber;
         }
-        else if(elapsed_time >= maximum_time)
+
+        if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Maximum training time reached.\n";
+            if(display) cout << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
         }
-        else if(training_loss <= training_loss_goal)
+
+        if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Loss goal reached.\n";
+            if(display) cout << "Loss goal reached: " << training_loss << endl;
 
             stop_training = true;
 
             results.stopping_condition  = LossGoal;
         }
-        else if(gradient_norm <= gradient_norm_goal)
+
+        if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Gradient norm goal reached.\n";
+            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
             results.stopping_condition = GradientNormGoal;
         }
-        else if(selection_failures >= maximum_selection_failures)
+
+        if(selection_failures >= maximum_selection_failures)
         {
             if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
 

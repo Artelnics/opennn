@@ -45,7 +45,7 @@ void divide_columns(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
     {
         for(Index i = 0; i < rows_number; i++)
         {
-           matrix(i,j) /= vector(i);
+           matrix(i,j) /= vector(i) == 0 ? 1 : vector(i);
         }
     }
 }

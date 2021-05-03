@@ -35,13 +35,13 @@ int main()
 
         NeuralNetwork neural_network;
 
-        SumSquaredError error;
-        error.set(&neural_network, &data_set);
+        SumSquaredError loss_index;
+        loss_index.set(&neural_network, &data_set);
 
-        LevenbergMarquardtAlgorithm gradient_descent;
-        gradient_descent.set_loss_index_pointer(&error);
-        gradient_descent.set_maximum_epochs_number(1);
-        gradient_descent.set_display_period(1);
+        AdaptiveMomentEstimation optimization_algorithm;
+        optimization_algorithm.set_loss_index_pointer(&loss_index);
+        optimization_algorithm.set_maximum_epochs_number(1);
+        optimization_algorithm.set_display_period(1);
 
         data_set.set(1,1,1);
         data_set.set_data_constant(0);
@@ -50,7 +50,7 @@ int main()
 
         neural_network.set_parameters_constant(0);
 
-        gradient_descent.perform_training();
+        optimization_algorithm.perform_training();
 
         cout << "Good bye!" << endl;
 

@@ -140,7 +140,7 @@ protected:
 
    /// Number of iterations between the training showing progress.
 
-   Index display_period = 5;
+   Index display_period = 10;
 
    /// Number of iterations between the training saving progress.
 

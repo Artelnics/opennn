@@ -240,7 +240,7 @@ void QuasiNewtonMethod::set_default()
     // UTILITIES
 
     display = true;
-    display_period = 5;
+    display_period = 10;
 }
 
 
@@ -802,29 +802,23 @@ TrainingResults QuasiNewtonMethod::perform_training()
             results.selection_error_history(epoch) = selection_back_propagation.error;
         }
 
-        // Stopping Criteria
-
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        if(display)
+        if(display && epoch%display_period == 0)
         {
-            cout << "Training error: " << training_back_propagation.error <<  "\n"
-                 << "Gradient norm: " << gradient_norm <<  "\n"
-                 << "Learning rate: " << optimization_data.learning_rate <<  "\n"
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-
+            cout << "Training error: " << training_back_propagation.error << endl;
             if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
+            cout << "Gradient norm: " << gradient_norm << endl;
+            cout << "Learning rate: " << optimization_data.learning_rate << endl;
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
+        // Stopping Criteria
 
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
-            if(display)
-            {
-               cout << "Minimum parameters increment norm reached.\n"
-                    << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
-            }
+            if(display) cout << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
 
             stop_training = true;
 
@@ -843,7 +837,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(training_back_propagation.loss <= training_loss_goal)
         {
-            if(display) cout << "Loss goal reached.\n";
+            if(display) cout << "Loss goal reached: " << training_back_propagation.loss << endl;
 
             stop_training = true;
 
@@ -851,7 +845,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Gradient norm goal reached.\n";
+            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -867,7 +861,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Maximum number of epochs reached.\n";
+            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -875,7 +869,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Maximum training time reached.\n";
+            if(display) cout << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -884,13 +878,12 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(stop_training)
         {
+            results.resize_training_error_history(epoch+1);
+            if(has_selection) results.resize_selection_error_history(epoch+1);
+
             results.final_gradient_norm = gradient_norm;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
-
-            results.resize_training_error_history(epoch+1);
-
-            if(has_selection) results.resize_selection_error_history(epoch+1);
 
             break;
         }

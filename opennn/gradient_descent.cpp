@@ -154,7 +154,7 @@ void GradientDescent::set_default()
 
     // UTILITIES
 
-    display_period = 5;
+    display_period = 10;
 }
 
 
@@ -514,6 +514,8 @@ TrainingResults GradientDescent::perform_training()
             if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
 
             cout << "Gradient norm: " << gradient_norm << endl;
+
+            cout << "Learning rate: " << optimization_data.learning_rate << endl;
 
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
