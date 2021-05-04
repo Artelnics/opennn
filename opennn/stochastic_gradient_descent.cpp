@@ -334,7 +334,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     // Start training
 
-    if(display) cout << "Training with stochastic gradient descent \"SGD\" ...\n";
+    if(display) cout << "Training with stochastic gradient descent (SGD)...\n";
 
     // Data set
 
@@ -493,13 +493,12 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         //if(has_selection) results.selection_error_history(epoch) = selection_error;
 
-        if(display)
+        if(display && epoch%display_period == 0)
         {
-            cout << "Training error: " << training_error << "\n"
-                 << "Learning rate: " << learning_rate << "\n"
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
-
+            cout << "Training error: " << training_error << endl;
             //if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
+            cout << "Learning rate: " << learning_rate << endl;
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
         // Stopping criteria
