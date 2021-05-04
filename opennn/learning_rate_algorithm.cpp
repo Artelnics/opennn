@@ -164,8 +164,8 @@ void LearningRateAlgorithm::set_default()
 
     // TRAINING PARAMETERS
 
-    learning_rate_tolerance = numeric_limits<type>::min();//static_cast<type>(1.0e-9);
-    loss_tolerance = numeric_limits<type>::min();//static_cast<type>(1.0e-9);
+    learning_rate_tolerance = numeric_limits<type>::epsilon();//static_cast<type>(1.0e-9);
+    loss_tolerance = numeric_limits<type>::epsilon();//static_cast<type>(1.0e-9);
 }
 
 

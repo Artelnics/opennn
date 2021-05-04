@@ -84,7 +84,6 @@ public:
 
    void set_default();
 
-
    // Stopping criteria
 
    void set_maximum_epochs_number(const Index&);

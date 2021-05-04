@@ -29,7 +29,7 @@ int main()
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
-        srand(static_cast<unsigned>(time(nullptr)));
+//        srand(static_cast<unsigned>(time(nullptr)));
 
         // Data Set
 
@@ -40,6 +40,10 @@ int main()
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
 
+        data_set.set_data_file_name("C:/rosenbrock.csv");
+
+        data_set.read_csv();
+
         data_set.set_training();
 
         const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
@@ -48,7 +52,7 @@ int main()
         // Neural network
 
         const Index inputs_number = data_set.get_input_variables_number();
-        const Index hidden_neurons_number = 10;
+        const Index hidden_neurons_number = variables;
         const Index outputs_number = data_set.get_target_variables_number();
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
@@ -65,9 +69,9 @@ int main()
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+        training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
-        LevenbergMarquardtAlgorithm* optimization_algorithm_pointer = training_strategy.get_Levenberg_Marquardt_algorithm_pointer();
+        GradientDescent* optimization_algorithm_pointer = training_strategy.get_gradient_descent_pointer();
 
         optimization_algorithm_pointer->set_display_period(1000);
         optimization_algorithm_pointer->set_maximum_epochs_number(1000000);
