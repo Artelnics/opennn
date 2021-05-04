@@ -354,6 +354,7 @@ public:
    const Index& get_lags_number() const;
    const Index& get_steps_ahead() const;
    const Index& get_time_index() const;
+   Index get_time_series_time_column_index() const;
 
    static Tensor<string, 1> get_default_columns_names(const Index&);
 
@@ -486,6 +487,7 @@ public:
    bool has_binary_columns() const;
    bool has_categorical_columns() const;
    bool has_time_columns() const;
+   bool has_time_time_series_columns() const;
 
    bool has_selection() const;
 
