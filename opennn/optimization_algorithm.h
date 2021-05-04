@@ -207,6 +207,8 @@ struct OptimizationAlgorithmData
 
 struct TrainingResults
 {
+    /// Default constructor.
+
     explicit TrainingResults()
     {
     }
@@ -219,6 +221,8 @@ struct TrainingResults
         selection_error_history.resize(1+epochs_number);
         selection_error_history.setConstant(-1.0);
     }
+
+    /// Destructor.
 
     virtual ~TrainingResults() {}
 

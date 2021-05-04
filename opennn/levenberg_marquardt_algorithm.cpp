@@ -173,8 +173,8 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     damping_parameter_factor = 10.0;
 
-    minimum_damping_parameter = numeric_limits<type>::min();//static_cast<type>(1.0e-9);
-    maximum_damping_parameter = numeric_limits<type>::max();//static_cast<type>(1.0e9);
+    minimum_damping_parameter = static_cast<type>(1.0e-6);
+    maximum_damping_parameter = static_cast<type>(1.0e6);
 }
 
 
@@ -686,6 +686,8 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+    bool success = false;
+
     do
     {
         sum_diagonal(back_propagation_lm.hessian, damping_parameter);
@@ -712,6 +714,8 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
             back_propagation_lm.loss = new_loss;
 
+            success = true;
+
             break;
         }
         else
@@ -721,6 +725,37 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
             set_damping_parameter(damping_parameter*damping_parameter_factor);
         }
     }while(damping_parameter < maximum_damping_parameter);
+
+    if(!success)
+    {
+//        cout << "hello" << endl;
+
+        const Index parameters_number = back_propagation_lm.parameters.size();
+
+        for(Index i = 0; i < parameters_number; i++)
+        {
+            if(abs(back_propagation_lm.gradient(i)) < numeric_limits<type>::min())
+            {
+                back_propagation_lm.parameters(i) = back_propagation_lm.parameters(i);
+
+                optimization_data.parameters_increment(i) = 0;
+            }
+            else if(back_propagation_lm.gradient(i) > 0)
+            {
+                back_propagation_lm.parameters(i) -= numeric_limits<type>::epsilon();
+                        //= nextafter(back_propagation_lm.parameters(i), back_propagation_lm.parameters(i)-1);
+
+                optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
+            }
+            else if(back_propagation_lm.gradient(i) < 0)
+            {
+                back_propagation_lm.parameters(i) += numeric_limits<type>::epsilon();
+                        //= nextafter(back_propagation_lm.parameters(i), back_propagation_lm.parameters(i)+1);
+
+                optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
+            }
+        }
+    }
 
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);  
 

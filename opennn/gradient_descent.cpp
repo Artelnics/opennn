@@ -410,7 +410,6 @@ void GradientDescent::update_parameters(
                 back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
 //                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)-1);
 
-
                 optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
             else if(back_propagation.gradient(i) < 0)

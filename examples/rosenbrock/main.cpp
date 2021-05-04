@@ -29,7 +29,7 @@ int main()
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
-//        srand(static_cast<unsigned>(time(nullptr)));
+        srand(static_cast<unsigned>(time(nullptr)));
 
         // Data Set
 
@@ -55,7 +55,7 @@ int main()
         const Index hidden_neurons_number = variables;
         const Index outputs_number = data_set.get_target_variables_number();
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});     
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
@@ -69,9 +69,9 @@ int main()
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 
-        GradientDescent* optimization_algorithm_pointer = training_strategy.get_gradient_descent_pointer();
+        StochasticGradientDescent* optimization_algorithm_pointer = training_strategy.get_stochastic_gradient_descent_pointer();
 
         optimization_algorithm_pointer->set_display_period(1000);
         optimization_algorithm_pointer->set_maximum_epochs_number(1000000);

@@ -104,8 +104,6 @@ public:
 
    TrainingResults perform_training();
 
-   
-
    string write_optimization_algorithm_type() const;
 
    // Serialization methods
