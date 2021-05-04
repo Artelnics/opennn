@@ -117,6 +117,9 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
+    const Tensor<type, 0> p_norm_derivative =
+            (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
+
      switch(output_layer_back_propagation->layer_pointer->get_type())
      {
      case Layer::Perceptron:
@@ -125,7 +128,10 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
          = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device)
-         = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+                 = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+
+         perceptron_layer_back_propagation->delta.device(*thread_pool_device) =
+                 perceptron_layer_back_propagation->delta/(p_norm_derivative());
      }
          break;
 
@@ -136,7 +142,9 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
 
          probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
                  = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
-     }
+
+         probabilistic_layer_back_propagation->delta.device(*thread_pool_device) =
+                 probabilistic_layer_back_propagation->delta/(p_norm_derivative());     }
          break;
 
      case Layer::Recurrent:
@@ -146,6 +154,9 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
 
          recurrent_layer_back_propagation->delta.device(*thread_pool_device)
                  = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+
+         recurrent_layer_back_propagation->delta.device(*thread_pool_device) =
+                 recurrent_layer_back_propagation->delta/(p_norm_derivative());
      }
          break;
 
@@ -156,6 +167,9 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
 
          long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device)
                  = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+
+         long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) =
+                 long_short_term_memory_layer_back_propagation->delta/(p_norm_derivative());
      }
          break;
 
