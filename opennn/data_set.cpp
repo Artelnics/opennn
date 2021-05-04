@@ -3837,6 +3837,17 @@ const Index& DataSet::get_time_index() const
 }
 
 
+Index DataSet::get_time_series_time_column_index() const
+{
+    for(Index i = 0; i < time_series_columns.size(); i++)
+    {
+        if(time_series_columns(i).type == DateTime) return i;
+    }
+
+    return static_cast<Index>(NAN);
+}
+
+
 /// Returns a value of the scaling-unscaling method enumeration from a string containing the name of that method.
 /// @param scaling_unscaling_method String with the name of the scaling and unscaling method.
 
@@ -10744,15 +10755,29 @@ bool DataSet::has_categorical_columns() const
 
 bool DataSet::has_time_columns() const
 {
-    const Index variables_number = columns.size();
+    const Index columns_number = columns.size();
 
-    for(Index i = 0; i < variables_number; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).type == DateTime) return true;
     }
 
     return false;
 }
+
+
+bool DataSet::has_time_time_series_columns() const
+{
+    const Index time_series_columns_number = time_series_columns.size();
+
+    for(Index i = 0; i < time_series_columns_number; i++)
+    {
+        if(time_series_columns(i).type == DateTime) return true;
+    }
+
+    return false;
+}
+
 
 
 bool DataSet::has_selection() const
