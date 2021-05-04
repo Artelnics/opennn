@@ -722,7 +722,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
         }
     }while(damping_parameter < maximum_damping_parameter);
 
-    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);  
 
     // Set parameters
 

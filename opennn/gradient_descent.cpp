@@ -382,19 +382,6 @@ void GradientDescent::update_parameters(
 
     optimization_data.learning_rate = directional_point.first;
     back_propagation.loss = directional_point.second;
-/*
-    if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
-        throw logic_error("Learning rate is zero");
-
-    optimization_data.parameters_increment.device(*thread_pool_device)
-            = optimization_data.training_direction*optimization_data.learning_rate;
-
-    back_propagation.parameters += optimization_data.parameters_increment;
-
-    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
-
-    optimization_data.old_learning_rate = optimization_data.learning_rate;
-*/
 
     if(abs(optimization_data.learning_rate) > 0)
     {
@@ -420,12 +407,16 @@ void GradientDescent::update_parameters(
                 back_propagation.parameters(i)
                         = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)-1);
 
+                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
+//                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)-1);
+
+
                 optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
             else if(back_propagation.gradient(i) < 0)
             {
-                back_propagation.parameters(i)
-                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)+1);
+                back_propagation.parameters(i) += numeric_limits<type>::epsilon();
+//                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)+1);
 
                 optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
             }
@@ -492,16 +483,10 @@ TrainingResults GradientDescent::perform_training()
 
     // Loss index
 
-    type training_loss_decrease = -numeric_limits<type>::max();
-
     type gradient_norm = 0;
 
     LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
-
-    // Learning rate
-
-    bool stop_training = false;
 
     // Optimization algorithm
 
@@ -510,6 +495,11 @@ TrainingResults GradientDescent::perform_training()
     Index selection_failures = 0;
 
     type parameters_increment_norm = numeric_limits<type>::max();
+
+    bool stop_training = false;
+
+    type old_loss = 0;
+    type loss_decrease = numeric_limits<type>::max();
 
     // Main loop
 
@@ -565,15 +555,10 @@ TrainingResults GradientDescent::perform_training()
 
         // Stopping Criteria
 
-//        if(is_zero(training_back_propagation.gradient))
-//        {
-//            if(display) results.print("Gradient is zero");
-//            return results;
-//        }
-
         if(training_back_propagation.loss <= training_loss_goal)
         {
-            if(display) cout << "Loss goal reached: " << training_back_propagation.loss << endl;
+            if(display)
+                cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_back_propagation.loss << endl;
 
             stop_training = true;
 
@@ -582,7 +567,7 @@ TrainingResults GradientDescent::perform_training()
 
         else if(selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -591,7 +576,7 @@ TrainingResults GradientDescent::perform_training()
 
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -600,7 +585,7 @@ TrainingResults GradientDescent::perform_training()
 
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -609,33 +594,35 @@ TrainingResults GradientDescent::perform_training()
 
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
-            if(display) cout << "Minimum parameters increment norm reached: " << parameters_increment_norm << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Minimum parameters increment norm reached: " << parameters_increment_norm << endl;
 
             stop_training = true;
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }        
 
-        //if(epoch != 1) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
-
-        if(epoch != 1 && abs(training_loss_decrease) <= minimum_loss_decrease)
-        {
-            if(display) cout << "Minimum loss decrease reached: " << training_loss_decrease << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumLossDecrease;
-        }
-
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Maximum training time reached: " << elapsed_time;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << elapsed_time;
 
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
         }
+/*
+        if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
 
+        old_loss = training_back_propagation.loss;
+
+        if(loss_decrease < minimum_loss_decrease)
+        {
+            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << loss_decrease << endl;
+
+            stop_training = true;
+
+            results.stopping_condition = MinimumLossDecrease;
+        }
+*/
         if(stop_training)
         {
             results.resize_training_error_history(epoch+1);
