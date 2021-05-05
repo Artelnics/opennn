@@ -838,12 +838,10 @@ TrainingResults ConjugateGradient::perform_training()
 
     // Optimization algorithm
 
-    type old_training_loss = 0;
-    type training_loss_decrease = 0;
+    type old_loss = 0;
+    type loss_decrease = 0;
 
     type gradient_norm = 0;
-
-    type learning_rate = 0;
 
     bool stop_training = false;
 
@@ -943,9 +941,6 @@ TrainingResults ConjugateGradient::perform_training()
             results.stopping_condition = MaximumTime;
         }
 
-        if(epoch != 0) training_loss_decrease = training_back_propagation.loss - old_training_loss;
-        old_training_loss = training_back_propagation.loss;
-
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display) cout << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
@@ -955,9 +950,9 @@ TrainingResults ConjugateGradient::perform_training()
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        //if(epoch != 0) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
+        if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
 
-        if(epoch != 0 && abs(training_loss_decrease) <= minimum_loss_decrease)
+        if(loss_decrease <= minimum_loss_decrease)
         {
             if(display) cout << "Minimum loss decrease reached: " << minimum_loss_decrease << endl;
 
@@ -965,6 +960,8 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.stopping_condition = MinimumLossDecrease;
         }
+
+        old_loss = training_back_propagation.loss;
 
         if(stop_training)
         {

@@ -479,8 +479,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     // Loss index
 
-    type old_training_loss = 0;
-    type training_loss_decrease = 0;
+    type old_loss = 0;
+    type loss_decrease = 0;
 
     Index selection_failures = 0;
 
@@ -556,6 +556,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Stopping Criteria
 
+//        cout << optimization_data.parameters_increment_norm << endl;
+
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display) cout << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
@@ -574,19 +576,18 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = LossGoal;
         }
 
-        epoch == 1 ? training_loss_decrease = 0
-                   : training_loss_decrease = training_back_propagation_lm.loss - old_training_loss;
+        if(epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss;
 
-        if(epoch != 0 && abs(training_loss_decrease) < minimum_loss_decrease)
+        if(loss_decrease < minimum_loss_decrease)
         {
-            if(display) cout << "Minimum loss decrease (" << minimum_loss_decrease << ") reached: " << training_loss_decrease << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << loss_decrease << endl;
 
             stop_training = true;
 
             results.stopping_condition = MinimumLossDecrease;
         }
 
-        old_training_loss = training_back_propagation_lm.loss;
+        old_loss = training_back_propagation_lm.loss;
 
         if(gradient_norm <= gradient_norm_goal)
         {
