@@ -155,7 +155,7 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     minimum_parameters_increment_norm = static_cast<type>(0.0);
 
-    minimum_loss_decrease = static_cast<type>(0.0);
+    minimum_loss_decrease = -numeric_limits<type>::max();
     training_loss_goal = 0;
     gradient_norm_goal = 0;
     maximum_selection_failures = 1000;
@@ -299,21 +299,6 @@ void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(const ty
 
 void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_loss_decrease < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void set_minimum_loss_decrease(const type&) method.\n"
-               << "Minimum loss improvement must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
@@ -497,8 +482,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     type old_training_loss = 0;
     type training_loss_decrease = 0;
 
-    type old_selection_error = 0;
-
     Index selection_failures = 0;
 
     type gradient_norm = 0;
@@ -554,7 +537,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             results.selection_error_history(epoch) = selection_back_propagation_lm.error;
 
-            if(selection_back_propagation_lm.error > old_selection_error) selection_failures++;
+            if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
 
         // Elapsed time
@@ -594,7 +577,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         epoch == 1 ? training_loss_decrease = 0
                    : training_loss_decrease = training_back_propagation_lm.loss - old_training_loss;
 
-        if(epoch != 1 && abs(training_loss_decrease) < minimum_loss_decrease)
+        if(epoch != 0 && abs(training_loss_decrease) < minimum_loss_decrease)
         {
             if(display) cout << "Minimum loss decrease (" << minimum_loss_decrease << ") reached: " << training_loss_decrease << endl;
 
@@ -602,6 +585,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             results.stopping_condition = MinimumLossDecrease;
         }
+
+        old_training_loss = training_back_propagation_lm.loss;
 
         if(gradient_norm <= gradient_norm_goal)
         {
@@ -651,17 +636,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             break;
         }
 
-        if(epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
+        if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
 
         update_parameters(training_batch,
                           training_forward_propagation,
                           training_back_propagation_lm,
                           optimization_data);
-
-        // Update stuff
-
-        old_training_loss = training_back_propagation_lm.loss;
-        old_selection_error = selection_back_propagation_lm.error;
     }
 
     if(display) results.print();

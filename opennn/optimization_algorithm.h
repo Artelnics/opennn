@@ -247,8 +247,8 @@ struct TrainingResults
 
         cout << "Training error: " << training_error_history(epochs_number-1) << endl;
 
-//        if(final_selection_error != -1.0)
-//            cout << "Final selection error: " << final_selection_error << endl;
+        if(training_error_history(epochs_number-1) != -1.0)
+            cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
 
         cout << "Stopping condition: " << write_stopping_condition() << endl;
     }

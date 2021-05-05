@@ -562,7 +562,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(stop_training) break;
 
-        if(epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
+        if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
 
     if(display) results.print();

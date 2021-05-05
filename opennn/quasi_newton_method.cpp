@@ -229,7 +229,7 @@ void QuasiNewtonMethod::set_default()
 
     minimum_parameters_increment_norm = static_cast<type>(0.0);
 
-    minimum_loss_decrease = static_cast<type>(0.0);
+    minimum_loss_decrease = -numeric_limits<type>::max();
     training_loss_goal = 0;
     gradient_norm_goal = 0;
     maximum_selection_failures = 1000000;
@@ -275,23 +275,6 @@ void QuasiNewtonMethod::set_minimum_parameters_increment_norm(const type& new_mi
 
 void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_loss_decrease < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_minimum_loss_decrease(const type&) method.\n"
-               << "Minimum loss improvement must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set minimum loss improvement
-
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
 

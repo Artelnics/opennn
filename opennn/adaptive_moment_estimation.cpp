@@ -272,8 +272,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     AdaptiveMomentEstimationData optimization_data(this);
 
-    type learning_rate = 0;
-
     bool stop_training = false;
 
     time_t beginning_time, current_time;
@@ -364,7 +362,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
 
-
         // Elapsed time
 
         time(&current_time);
@@ -373,7 +370,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(display && epoch%display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
-//            if(has_selection) cout << "Selection error: " << selection_error << endl;
+            if(has_selection) cout << "Selection error: " << selection_error << endl;
             cout << "Gradient norm: " << gradient_norm << endl;
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
@@ -789,12 +786,11 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 
 void AdaptiveMomentEstimationData::print() const
 {
-    cout << "Gradien exponential decay:" << endl
+    cout << "Gradient exponential decay:" << endl
          <<gradient_exponential_decay << endl;
 
     cout << "Square gradient exponential decay:" << endl
          << square_gradient_exponential_decay << endl;
-
 }
 
 }
