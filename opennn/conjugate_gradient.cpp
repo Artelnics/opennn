@@ -237,7 +237,7 @@ void ConjugateGradient::set_default()
 
     minimum_parameters_increment_norm = 0;
 
-    minimum_loss_decrease = 0;
+    minimum_loss_decrease = -numeric_limits<type>::max();
     training_loss_goal = 0;
     gradient_norm_goal = 0;
     maximum_selection_failures = 1000000;
@@ -284,23 +284,6 @@ void ConjugateGradient::set_minimum_parameters_increment_norm(const type& new_mi
 
 void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_loss_decrease < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_minimum_loss_decrease(const type&) method.\n"
-               << "Minimum loss improvement must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set minimum loss improvement
-
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
@@ -906,12 +889,11 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(display && epoch%display_period == 0)
         {
-            cout << "Training error: " << training_back_propagation.error << "\n"
-                 << "Gradient norm: " << gradient_norm << "\n"
-                 << "Learning rate: " << learning_rate << "\n"
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-
-            //if(has_selection) cout << "Selection error: " << selection_error << endl;
+            cout << "Training error: " << training_back_propagation.error << endl;
+            if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
+            cout << "Gradient norm: " << gradient_norm << endl;
+            cout << "Learning rate: " << optimization_data.learning_rate << endl;
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
         // Stopping Criteria       
@@ -961,7 +943,7 @@ TrainingResults ConjugateGradient::perform_training()
             results.stopping_condition = MaximumTime;
         }
 
-        if(epoch != 1) training_loss_decrease = training_back_propagation.loss - old_training_loss;
+        if(epoch != 0) training_loss_decrease = training_back_propagation.loss - old_training_loss;
         old_training_loss = training_back_propagation.loss;
 
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
@@ -972,10 +954,10 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
-/*
-        //if(epoch != 1) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
 
-        if(epoch != 1 && abs(training_loss_decrease) <= minimum_loss_decrease)
+        //if(epoch != 0) training_loss_decrease = training_back_propagation.loss - optimization_data.old_training_loss;
+
+        if(epoch != 0 && abs(training_loss_decrease) <= minimum_loss_decrease)
         {
             if(display) cout << "Minimum loss decrease reached: " << minimum_loss_decrease << endl;
 
@@ -983,7 +965,7 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.stopping_condition = MinimumLossDecrease;
         }
-*/
+
         if(stop_training)
         {
             results.resize_training_error_history(epoch+1);
@@ -998,7 +980,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Update stuff
 
-        if(epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
+        if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
 
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }

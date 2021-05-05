@@ -143,7 +143,7 @@ void GradientDescent::set_default()
 
     minimum_parameters_increment_norm = static_cast<type>(0.0);
 
-    minimum_loss_decrease = static_cast<type>(0.0);
+    minimum_loss_decrease = -numeric_limits<type>::max();
 
     training_loss_goal = 0;
     gradient_norm_goal = 0;
@@ -177,8 +177,6 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
     }
 
 #endif
-
-    // Set maximum_epochs number
 
     maximum_epochs_number = new_maximum_epochs_number;
 }
@@ -215,24 +213,6 @@ void GradientDescent::set_minimum_parameters_increment_norm(const type& new_mini
 
 void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
-
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_loss_decrease < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_minimum_loss_decrease(const type&) method.\n"
-               << "Minimum loss improvement must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set minimum loss improvement
-
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
@@ -544,11 +524,8 @@ TrainingResults GradientDescent::perform_training()
         {
             cout << "Training error: " << training_back_propagation.error << endl;
             if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
-
             cout << "Gradient norm: " << gradient_norm << endl;
-
             cout << "Learning rate: " << optimization_data.learning_rate << endl;
-
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
@@ -608,7 +585,7 @@ TrainingResults GradientDescent::perform_training()
 
             results.stopping_condition = MaximumTime;
         }
-/*
+
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
 
         old_loss = training_back_propagation.loss;
@@ -621,7 +598,7 @@ TrainingResults GradientDescent::perform_training()
 
             results.stopping_condition = MinimumLossDecrease;
         }
-*/
+
         if(stop_training)
         {
             results.resize_training_error_history(epoch+1);
@@ -635,7 +612,7 @@ TrainingResults GradientDescent::perform_training()
             break;
         }
 
-//        if(epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
+        if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
 
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
@@ -1012,7 +989,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 }
 
-
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
@@ -1029,4 +1005,3 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

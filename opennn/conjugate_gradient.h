@@ -127,9 +127,7 @@ public:
 
    // Training methods
 
-   TrainingResults perform_training();
-
-   
+   TrainingResults perform_training();   
 
    string write_optimization_algorithm_type() const;
 
@@ -167,7 +165,7 @@ private:
 
    /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
 
-   type minimum_loss_decrease = 0;
+   type minimum_loss_decrease = -numeric_limits<type>::max();
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
