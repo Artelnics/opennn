@@ -633,7 +633,7 @@ string GradientDescent::write_optimization_algorithm_type() const
 
 Tensor<string, 2> GradientDescent::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(11, 2);
+    Tensor<string, 2> labels_values(9, 2);
 
     // Learning rate method
 

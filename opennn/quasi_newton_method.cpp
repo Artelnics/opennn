@@ -781,7 +781,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
-            if(display) cout << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
+            if(display) cout << "Epoch " << epoch << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
 
             cout << optimization_data.parameters_increment << endl;
 
@@ -805,7 +805,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(training_back_propagation.loss <= training_loss_goal)
         {
-            if(display) cout << "Loss goal reached: " << training_back_propagation.loss << endl;
+            if(display) cout << "Epoch " << epoch << "Loss goal reached: " << training_back_propagation.loss << endl;
 
             stop_training = true;
 
@@ -813,7 +813,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
+            if(display) cout << "Epoch " << epoch << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -821,7 +821,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -829,7 +829,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -837,7 +837,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -992,7 +992,7 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(12, 2);
+    Tensor<string, 2> labels_values(10, 2);
 
     // Inverse hessian approximation method
 

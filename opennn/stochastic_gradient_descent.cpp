@@ -502,7 +502,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -511,7 +511,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -520,7 +520,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Loss goal reached: " << training_loss << endl;
+            if(display) cout << "Epoch " << epoch << "Loss goal reached: " << training_loss << endl;
 
             stop_training = true;
 
@@ -529,7 +529,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
+            if(display) cout << "Epoch " << epoch << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -538,7 +538,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -579,7 +579,7 @@ string StochasticGradientDescent::write_optimization_algorithm_type() const
 
 Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(9, 2);
+    Tensor<string, 2> labels_values(7, 2);
 
     // Initial learning rate
 
@@ -624,9 +624,9 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 
     labels_values(5,1) = to_string(maximum_time);
 
-    // DataSetBatch samples number
+    // Batch samples number
 
-    labels_values(6,0) = "DataSetBatch samples number";
+    labels_values(6,0) = "Batch samples number";
 
     labels_values(6,1) = to_string(batch_samples_number);
 
