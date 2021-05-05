@@ -9347,7 +9347,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     const Index input_target_columns_number = input_columns_number + target_columns_number;
 
     const Tensor<Index, 1> input_columns_indices = get_input_time_series_columns_indices();
-    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();
+    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();    
 
     const Index inputs_targets_indices_number = input_columns_indices.size() + target_columns_indices.size();
 
@@ -9421,8 +9421,8 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
                 ostringstream buffer;
 
                 buffer << "OpenNN Exception: DataSet class.\n"
-                       << "Tensor<type, 2> calculate_inputs_correlations() const method.\n"
-                       << "Case not found: Column " << columns(input_columns_indices(i)).name << " and Column " << columns(input_columns_indices(j)).name << ".\n";
+                       << "Tensor<type, 2> calculate_cross_correlations() const method.\n"
+                       << "Non numeric columns: " << time_series_columns(input_columns_indices(i)).name << " and Column " << time_series_columns(input_columns_indices(j)).name << ".\n";
 
                 throw logic_error(buffer.str());
             }
