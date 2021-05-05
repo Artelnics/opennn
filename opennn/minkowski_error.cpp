@@ -120,13 +120,6 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
     Tensor<type, 0> p_norm_derivative =
             (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
 
-    if(p_norm_derivative() - 0 < std::numeric_limits<type>::min())
-    {
-        p_norm_derivative() = 1;
-    }
-
-    cout << "p_norm_derivative: " << p_norm_derivative() << endl;
-
      switch(output_layer_back_propagation->layer_pointer->get_type())
      {
      case Layer::Perceptron:
@@ -134,13 +127,18 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
          PerceptronLayerBackPropagation* perceptron_layer_back_propagation
          = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
-         perceptron_layer_back_propagation->delta.device(*thread_pool_device)
-                 = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+         if(p_norm_derivative() - 0 < std::numeric_limits<type>::min())
+         {
+             perceptron_layer_back_propagation->delta.setZero();
+         }
+         else
+         {
+             perceptron_layer_back_propagation->delta.device(*thread_pool_device)
+                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
 
-         perceptron_layer_back_propagation->delta.device(*thread_pool_device) =
-                 perceptron_layer_back_propagation->delta/(p_norm_derivative());
-
-         cout << "Delta: " << perceptron_layer_back_propagation->delta << endl;
+             perceptron_layer_back_propagation->delta.device(*thread_pool_device) =
+                     perceptron_layer_back_propagation->delta/(p_norm_derivative());
+         }
      }
          break;
 
@@ -149,11 +147,19 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
          ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
          = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
-         probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
-                 = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+         if(p_norm_derivative() - 0 < std::numeric_limits<type>::min())
+         {
+             probabilistic_layer_back_propagation->delta.setZero();
+         }
+         else
+         {
+             probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
+                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
 
-         probabilistic_layer_back_propagation->delta.device(*thread_pool_device) =
-                 probabilistic_layer_back_propagation->delta/(p_norm_derivative());     }
+             probabilistic_layer_back_propagation->delta.device(*thread_pool_device) =
+                     probabilistic_layer_back_propagation->delta/(p_norm_derivative());
+         }
+     }
          break;
 
      case Layer::Recurrent:
@@ -161,11 +167,18 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
          RecurrentLayerBackPropagation* recurrent_layer_back_propagation
          = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
 
-         recurrent_layer_back_propagation->delta.device(*thread_pool_device)
-                 = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+         if(p_norm_derivative() - 0 < std::numeric_limits<type>::min())
+         {
+             recurrent_layer_back_propagation->delta.setZero();
+         }
+         else
+         {
+             recurrent_layer_back_propagation->delta.device(*thread_pool_device)
+                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
 
-         recurrent_layer_back_propagation->delta.device(*thread_pool_device) =
-                 recurrent_layer_back_propagation->delta/(p_norm_derivative());
+             recurrent_layer_back_propagation->delta.device(*thread_pool_device) =
+                     recurrent_layer_back_propagation->delta/(p_norm_derivative());
+         }
      }
          break;
 
@@ -174,11 +187,18 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
          LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
          = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
 
-         long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device)
-                 = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+         if(p_norm_derivative() - 0 < std::numeric_limits<type>::min())
+         {
+             long_short_term_memory_layer_back_propagation->delta.setZero();
+         }
+         else
+         {
+             long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device)
+                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
 
-         long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) =
-                 long_short_term_memory_layer_back_propagation->delta/(p_norm_derivative());
+             long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) =
+                     long_short_term_memory_layer_back_propagation->delta/(p_norm_derivative());
+         }
      }
          break;
 

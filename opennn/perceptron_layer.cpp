@@ -717,8 +717,9 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                         Tensor<type, 1> potential_parameters,
                                         LayerForwardPropagation* forward_propagation)
-   {
+{
     const Index neurons_number = get_neurons_number();
+
     const Index inputs_number = get_inputs_number();
 
 #ifdef OPENNN_DEBUG

@@ -1418,7 +1418,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       Tensor<type, 1>& parameters,
-    NeuralNetworkForwardPropagation& forward_propagation) const
+                                      NeuralNetworkForwardPropagation& forward_propagation) const
 {
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 

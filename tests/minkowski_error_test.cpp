@@ -138,7 +138,6 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
 
-   DataSet data_set;
    Index samples_number;
 
    DataSetBatch batch;
@@ -198,26 +197,16 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        neural_network.forward_propagate(batch, forward_propagation);
 
-       cout << "Before back_propagate" << endl;
-
        minkowski_error.back_propagate(batch, forward_propagation, training_back_propagation);
        error_gradient = training_back_propagation.gradient;
 
-       cout << "Gradient: " << error_gradient << endl;
-
-       cout << "Before numerical_error_gradient" << endl;
-
        numerical_error_gradient = minkowski_error.calculate_gradient_numerical_differentiation();
-
-
-       cout << "Numerical gradient: " << numerical_error_gradient << endl;
-
 
        assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
        assert_true(all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
                           [](type i) { return (i-static_cast<type>(0))<numeric_limits<type>::min(); }), LOG);
    }
-/*
+
    neural_network.set();
 
    // Test perceptron
@@ -789,7 +778,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 //       numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
    }
-   */
+
 
 }
 
