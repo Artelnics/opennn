@@ -76,7 +76,7 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::MINKOWSKI_ERROR);
 
         training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
@@ -113,13 +113,13 @@ int main()
 
 //        data_set.unscale_input_variables(input_variables_descriptives);
 //        data_set.unscale_target_variables(target_variables_descriptives);
-
+*/
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
 
         linear_regression_analysis.print();
-
+/*
         // Save results
 
         neural_network.save("../data/neural_network.xml");
