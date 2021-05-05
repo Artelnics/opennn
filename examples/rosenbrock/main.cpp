@@ -44,7 +44,7 @@ int main()
 
         data_set.read_csv();
 
-//        data_set.set_training();
+        data_set.set_training();
 
         const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables();
@@ -69,9 +69,9 @@ int main()
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
-        StochasticGradientDescent* optimization_algorithm_pointer = training_strategy.get_stochastic_gradient_descent_pointer();
+        LevenbergMarquardtAlgorithm* optimization_algorithm_pointer = training_strategy.get_Levenberg_Marquardt_algorithm_pointer();
 
         optimization_algorithm_pointer->set_display_period(1000);
         optimization_algorithm_pointer->set_maximum_epochs_number(10000);

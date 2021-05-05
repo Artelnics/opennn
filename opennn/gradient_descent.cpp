@@ -588,8 +588,6 @@ TrainingResults GradientDescent::perform_training()
 
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
 
-        old_loss = training_back_propagation.loss;
-
         if(loss_decrease < minimum_loss_decrease)
         {
             if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << loss_decrease << endl;
@@ -598,6 +596,8 @@ TrainingResults GradientDescent::perform_training()
 
             results.stopping_condition = MinimumLossDecrease;
         }
+
+        old_loss = training_back_propagation.loss;
 
         if(stop_training)
         {

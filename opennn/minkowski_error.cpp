@@ -117,8 +117,15 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    const Tensor<type, 0> p_norm_derivative =
+    Tensor<type, 0> p_norm_derivative =
             (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
+
+    if(p_norm_derivative() - 0 < std::numeric_limits<type>::min())
+    {
+        p_norm_derivative() = 1;
+    }
+
+    cout << "p_norm_derivative: " << p_norm_derivative() << endl;
 
      switch(output_layer_back_propagation->layer_pointer->get_type())
      {
@@ -132,6 +139,8 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch&,
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device) =
                  perceptron_layer_back_propagation->delta/(p_norm_derivative());
+
+         cout << "Delta: " << perceptron_layer_back_propagation->delta << endl;
      }
          break;
 

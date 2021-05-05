@@ -228,7 +228,7 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
     // Loss index data
 
-    type old_training_loss = 0;
+    type old_loss = 0;
 
     // Optimization algorithm data
 
