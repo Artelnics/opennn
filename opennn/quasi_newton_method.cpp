@@ -568,8 +568,6 @@ void QuasiNewtonMethod::update_parameters(
     optimization_data.gradient_difference.device(*thread_pool_device)
             = back_propagation.gradient - optimization_data.old_gradient;
 
-    optimization_data.old_training_loss = back_propagation.loss;
-
     optimization_data.old_parameters = back_propagation.parameters; // do not move above
 
     // Get training direction
@@ -724,6 +722,9 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     Index selection_failures = 0;
 
+    type old_loss = 0;
+    type loss_decrease = numeric_limits<type>::max();
+
     time_t beginning_time, current_time;
     time(&beginning_time);
     type elapsed_time;
@@ -789,15 +790,18 @@ TrainingResults QuasiNewtonMethod::perform_training()
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        if(epoch != 0 &&
-                abs(training_back_propagation.loss - optimization_data.old_training_loss) < minimum_loss_decrease)
+        if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
+
+        if(loss_decrease < minimum_loss_decrease)
         {
-            if(display) cout << "Minimum loss decrease (" << minimum_loss_decrease << ") reached: " << training_back_propagation.loss - optimization_data.old_training_loss << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << loss_decrease << endl;
 
             stop_training = true;
 
             results.stopping_condition = MinimumLossDecrease;
         }
+
+        old_loss = training_back_propagation.loss;
 
         if(training_back_propagation.loss <= training_loss_goal)
         {

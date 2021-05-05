@@ -491,8 +491,6 @@ TrainingResults StochasticGradientDescent::perform_training()
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        //if(has_selection) results.selection_error_history(epoch) = selection_error;
-
         if(display && epoch%display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
@@ -551,7 +549,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         {
             results.resize_training_error_history(epoch + 1);
 
-            if(has_selection) results.resize_selection_error_history(epoch + 1);
+            results.resize_selection_error_history(epoch + 1);
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
