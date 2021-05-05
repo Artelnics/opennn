@@ -9347,23 +9347,30 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     const Index input_target_columns_number = input_columns_number + target_columns_number;
 
     const Tensor<Index, 1> input_columns_indices = get_input_time_series_columns_indices();
-    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();    
+    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();        
 
-    const Index inputs_targets_indices_number = input_columns_indices.size() + target_columns_indices.size();
-
-    Tensor<Index, 1> input_target_columns_indices(inputs_targets_indices_number);
-
+    Index input_target_numeric_column_number = 0;
     int counter = 0;
 
-    for(Index i = 0; i < inputs_targets_indices_number; i++)
+    for(Index i = 0; i < input_target_columns_number; i++)
     {
         if (i < input_columns_number)
         {
-            input_target_columns_indices(i) = input_columns_indices(i);
+            Index column_index = input_columns_indices(i);
+            ColumnType input_column_type = time_series_columns(column_index).type;
+            if (input_column_type == ColumnType::Numeric)
+            {
+                input_target_numeric_column_number++;
+            }
         }
         else
         {
-            input_target_columns_indices(i) = target_columns_indices(counter);
+            Index column_index = target_columns_indices(counter);
+            ColumnType target_column_type = time_series_columns(column_index).type;
+            if (target_column_type == ColumnType::Numeric)
+            {
+                input_target_numeric_column_number++;
+            }
             counter++;
         }
     }
@@ -9383,48 +9390,45 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
         new_lags_number = lags_number;
     }
 
-    Tensor<type, 3> cross_correlations(input_target_columns_number, input_target_columns_number, new_lags_number);
+    Tensor<type, 3> cross_correlations(input_target_numeric_column_number, input_target_numeric_column_number, new_lags_number);
     Tensor<type, 1> cross_correlations_vector(new_lags_number);
+    Tensor<type, 2> input_i;
+    Tensor<type, 2> input_j;
 
-    for(Index i = 0; i < input_target_columns_number; i++)
+    for(Index i = 0; i < input_target_numeric_column_number; i++)
     {
-        const Index current_input_target_index_i = input_target_columns_indices(i);
-
-        const ColumnType type_i = time_series_columns(current_input_target_index_i).type;
-
-        Tensor<type, 2> input_i = get_time_series_column_data(current_input_target_index_i);
-
-        cout << "Calculating " << time_series_columns(current_input_target_index_i).name << " cross correlations." << endl;
-
-        for(Index j = 0; j < input_target_columns_number; j++)
+        if(time_series_columns(i).column_use != VariableUse::UnusedVariable && time_series_columns(i).type == ColumnType::Numeric)
         {
-            const Index current_input_target_index_j = input_target_columns_indices(j);
+            input_i = get_time_series_column_data(i);
 
-            const ColumnType type_j = time_series_columns(current_input_target_index_j).type;
+            cout << "Calculating " << time_series_columns(i).name << " cross correlations." << endl;
+        }
+        else
+        {
+            continue;
+        }
 
-            Tensor<type, 2> input_j = get_time_series_column_data(current_input_target_index_j);
-
-            if(type_i == Numeric && type_j == Numeric)
+        for(Index j = 0; j < input_target_numeric_column_number; j++)
+        {
+            if(time_series_columns(j).column_use != VariableUse::UnusedVariable && time_series_columns(j).type == ColumnType::Numeric)
             {
-                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
-                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
+                input_j = get_time_series_column_data(j);
 
-                cross_correlations_vector = OpenNN::cross_correlations(thread_pool_device, current_input_i, current_input_j, new_lags_number);
-
-                for(Index k = 0; k < new_lags_number; k++)
-                {
-                    cross_correlations (i, j, k) = cross_correlations_vector(k) ;
-                }
+                cout << "Calculating " << time_series_columns(j).name << " cross correlations." << endl;
             }
             else
             {
-                ostringstream buffer;
+                continue;
+            }
 
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "Tensor<type, 2> calculate_cross_correlations() const method.\n"
-                       << "Non numeric columns: " << time_series_columns(input_columns_indices(i)).name << " and Column " << time_series_columns(input_columns_indices(j)).name << ".\n";
+            const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+            const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                throw logic_error(buffer.str());
+            cross_correlations_vector = OpenNN::cross_correlations(thread_pool_device, current_input_i, current_input_j, new_lags_number);
+
+            for(Index k = 0; k < new_lags_number; k++)
+            {
+                cross_correlations (i, j, k) = cross_correlations_vector(k) ;
             }
         }
     }
