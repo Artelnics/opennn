@@ -556,11 +556,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Stopping Criteria
 
-//        cout << optimization_data.parameters_increment_norm << endl;
-
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
-            if(display) cout << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
+            if(display) cout << "Epoch " << epoch << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
 
             stop_training = true;
 
@@ -569,7 +567,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(training_back_propagation_lm.loss <= training_loss_goal)
         {
-            if(display) cout << "Loss goal reached: " << training_back_propagation_lm.loss << endl;
+            if(display) cout << "Epoch " << epoch << "Loss goal reached: " << training_back_propagation_lm.loss << endl;
 
             stop_training = true;
 
@@ -591,7 +589,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
+            if(display) cout << "Epoch " << epoch << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -600,7 +598,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -609,7 +607,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -618,7 +616,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Maximum training time reached: " << elapsed_time << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum training time reached: " << elapsed_time << endl;
 
             stop_training = true;
 
@@ -709,8 +707,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
     if(!success)
     {
-//        cout << "hello" << endl;
-
         const Index parameters_number = back_propagation_lm.parameters.size();
 
         for(Index i = 0; i < parameters_number; i++)
@@ -758,7 +754,7 @@ string LevenbergMarquardtAlgorithm::write_optimization_algorithm_type() const
 
 Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(10,2);
+    Tensor<string, 2> labels_values(8,2);
 
     // Damping parameter factor
 
@@ -796,9 +792,9 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
     labels_values(5,1) = to_string(maximum_selection_failures);
 
-    // Maximum iterations number
+    // Maximum epochs number
 
-    labels_values(6,0) = "Maximum iterations number";
+    labels_values(6,0) = "Maximum epochs number";
 
     labels_values(6,1) = to_string(maximum_epochs_number);
 

@@ -73,6 +73,7 @@ int main()
 
         LevenbergMarquardtAlgorithm* optimization_algorithm_pointer = training_strategy.get_Levenberg_Marquardt_algorithm_pointer();
 
+        optimization_algorithm_pointer->set_minimum_loss_decrease(0);
         optimization_algorithm_pointer->set_display_period(1000);
         optimization_algorithm_pointer->set_maximum_epochs_number(10000);
 
