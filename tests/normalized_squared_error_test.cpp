@@ -85,8 +85,6 @@ void NormalizedSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
-   DataSet data_set;
-
    Tensor<type, 2> data;
    Index samples_number;
 
@@ -175,7 +173,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
 
-   DataSet data_set;
    Index samples_number;
 
    DataSetBatch batch;
