@@ -144,7 +144,7 @@ protected:
 
    /// Number of iterations between the training saving progress.
 
-   Index save_period = 100;
+   Index save_period = numeric_limits<Index>::max();
 
    /// Path where the neural network is saved.
 

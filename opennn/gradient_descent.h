@@ -230,7 +230,6 @@ struct GradientDescentData : public OptimizationAlgorithmData
     type old_learning_rate = 0;
 };
 
-
 }
 
 #endif

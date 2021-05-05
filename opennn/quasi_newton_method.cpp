@@ -776,9 +776,9 @@ TrainingResults QuasiNewtonMethod::perform_training()
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            //if(selection_back_propagation.error > old_selection_error) selection_failures++;
-
             results.selection_error_history(epoch) = selection_back_propagation.error;
+
+            if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
 
         time(&current_time);

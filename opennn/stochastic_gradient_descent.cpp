@@ -386,14 +386,14 @@ TrainingResults StochasticGradientDescent::perform_training()
     type training_error = 0;
     type training_loss = 0;
 
+    type selection_error = 0;
+
     Index selection_failures = 0;
     type gradient_norm = 0;
 
     // Optimization algorithm
 
     StochasticGradientDescentData optimization_data(this);
-
-    type learning_rate = 0;
 
     bool stop_training = false;
 
@@ -453,11 +453,13 @@ TrainingResults StochasticGradientDescent::perform_training()
         training_loss /= static_cast<type>(batches_number);
         training_error /= static_cast<type>(batches_number);
 
+        results.training_error_history(epoch) = training_error;
+
         if(has_selection)
         {
             selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
 
-            //selection_error = 0;
+            selection_error = 0;
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
@@ -474,12 +476,14 @@ TrainingResults StochasticGradientDescent::perform_training()
                 loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
-                //selection_error += selection_back_propagation.error;
+                selection_error += selection_back_propagation.error;
             }
 
-            //selection_error /= static_cast<type>(selection_batches_number);
+            selection_error /= static_cast<type>(selection_batches_number);
 
-            //if(selection_error > old_selection_error) selection_failures++;
+            results.selection_error_history(epoch) = selection_error;
+
+            if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
 
         // Elapsed time
@@ -487,17 +491,12 @@ TrainingResults StochasticGradientDescent::perform_training()
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        // Training history
-
-        results.training_error_history(epoch) = training_error;
-
         //if(has_selection) results.selection_error_history(epoch) = selection_error;
 
         if(display && epoch%display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
-            //if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
-            cout << "Learning rate: " << learning_rate << endl;
+            if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
