@@ -267,7 +267,7 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 
     // Loss index data
 
-    type old_training_loss = 0;
+//    type old_loss = 0;
 
     Tensor<type, 1> old_gradient;
     Tensor<type, 1> gradient_difference;

@@ -247,7 +247,7 @@ struct TrainingResults
 
         cout << "Training error: " << training_error_history(epochs_number-1) << endl;
 
-        if(training_error_history(epochs_number-1) != -1.0)
+        if(abs(training_error_history(epochs_number-1) + 1.0)  < numeric_limits<type>::min())
             cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
 
         cout << "Stopping condition: " << write_stopping_condition() << endl;
