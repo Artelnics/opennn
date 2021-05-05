@@ -549,7 +549,8 @@ TrainingResults StochasticGradientDescent::perform_training()
         {
             results.resize_training_error_history(epoch + 1);
 
-            results.resize_selection_error_history(epoch + 1);
+            if(has_selection) results.resize_selection_error_history(epoch+1);
+            else results.resize_selection_error_history(0);
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
