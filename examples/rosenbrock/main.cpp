@@ -44,7 +44,7 @@ int main()
 
         data_set.read_csv();
 
-        data_set.set_training();
+//        data_set.set_training();
 
         const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables();
@@ -65,7 +65,7 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
@@ -74,7 +74,7 @@ int main()
         StochasticGradientDescent* optimization_algorithm_pointer = training_strategy.get_stochastic_gradient_descent_pointer();
 
         optimization_algorithm_pointer->set_display_period(1000);
-        optimization_algorithm_pointer->set_maximum_epochs_number(1000000);
+        optimization_algorithm_pointer->set_maximum_epochs_number(10000);
 
         training_strategy.perform_training();
 
