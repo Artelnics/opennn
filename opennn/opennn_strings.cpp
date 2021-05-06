@@ -226,7 +226,7 @@ bool is_numeric_string(const string& str)
             return  false;
         }
     }
-    catch (exception)
+    catch(exception)
     {
         return false;
     }
