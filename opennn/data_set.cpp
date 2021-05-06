@@ -171,7 +171,7 @@ void DataSet::Column::set_scaler(const string& new_scaler)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception DataSet class.\n"
+        buffer << "OpenNN Exception: DataSet class.\n"
                << "void set_use(const string&) method.\n"
                << "Unknown use: " << new_scaler << "\n";
 
@@ -220,7 +220,7 @@ void DataSet::Column::set_use(const string& new_column_use)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception DataSet class.\n"
+        buffer << "OpenNN Exception: DataSet class.\n"
                << "void set_use(const string&) method.\n"
                << "Unknown use: " << new_column_use << "\n";
 
@@ -1241,6 +1241,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
     Index batch_size = batch_samples_number;
 
     // When samples_number is less than 100 (small sample)
+
     if(buffer_size > samples_number)
     {
         buffer_size = samples_number;
@@ -1278,6 +1279,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
     Tensor<Index, 2> batches(batches_number, batch_size);
 
     Tensor<Index, 1> buffer(buffer_size);
+
     for(Index i = 0; i < buffer_size; i++) buffer(i) = i;
 
     Index next_index = buffer_size;
@@ -1629,7 +1631,7 @@ void DataSet::set_sample_use(const Index& index, const string& new_use)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception DataSet class.\n"
+        buffer << "OpenNN Exception: DataSet class.\n"
                << "void set_sample_use(const string&) method.\n"
                << "Unknown use: " << new_use << "\n";
 
@@ -1716,7 +1718,7 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
         }
         else
         {
-            buffer << "OpenNN Exception DataSet class.\n"
+            buffer << "OpenNN Exception: DataSet class.\n"
                    << "void set_samples_uses(const Tensor<string, 1>&) method.\n"
                    << "Unknown use: " << new_uses(i) << ".\n";
 
@@ -1840,8 +1842,6 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
             cout << "Sample " << i << " is unused" << endl;
         }
     }
-
-
 }
 
 
@@ -3182,7 +3182,7 @@ void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception DataSet class.\n"
+        buffer << "OpenNN Exception: DataSet class.\n"
                << "void set_columns_uses(const Tensor<string, 1>&) method.\n"
                << "Size of columns uses ("
                << new_columns_uses_size << ") must be equal to columns size ("
@@ -3213,7 +3213,7 @@ void DataSet::set_columns_uses(const Tensor<VariableUse, 1>& new_columns_uses)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception DataSet class.\n"
+        buffer << "OpenNN Exception: DataSet class.\n"
                << "void set_columns_uses(const Tensor<string, 1>&) method.\n"
                << "Size of columns uses (" << new_columns_uses_size << ") must be equal to columns size (" << columns.size() << "). \n";
 
@@ -6085,7 +6085,7 @@ void DataSet::print_input_target_columns_correlations() const
     const Tensor<string, 1> inputs_names = get_input_variables_names();
     const Tensor<string, 1> targets_name = get_target_variables_names();
 
-    const Tensor<RegressionResults, 2> correlations;// = calculate_input_target_columns_correlations();
+    const Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
 
     for(Index j = 0; j < targets_number; j++)
     {
@@ -6227,6 +6227,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
@@ -6234,6 +6235,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
@@ -6241,6 +6243,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
             }
             else if(input_type == Binary && target_type == Categorical)
             {
@@ -6248,6 +6251,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
             }
             else if(input_type == Categorical && target_type == Binary)
             {
@@ -6255,6 +6259,15 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
+            }
+            else if(input_type == DateTime && target_type == DateTime)
+            {
+                // nothing
+
+                regressions(i,j).a = 0;
+                regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
             }
             else
             {
@@ -8287,8 +8300,8 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet template." << endl
-               << "void save_data_binary(const string) method." << endl
+        buffer << "OpenNN Exception: DataSet class." << endl
+               << "void save_data_binary() method." << endl
                << "Cannot open data binary file." << endl;
 
         throw logic_error(buffer.str());
@@ -8336,7 +8349,7 @@ void DataSet::save_time_series_data_binary(const string& binary_data_file_name) 
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet template." << endl
+        buffer << "OpenNN Exception: DataSet class." << endl
                << "void save_time_series_data_binary(const string) method." << endl
                << "Cannot open data binary file." << endl;
 
@@ -8375,7 +8388,6 @@ void DataSet::save_time_series_data_binary(const string& binary_data_file_name) 
 }
 
 
-
 /// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
 
 void DataSet::transform_time_series()
@@ -8402,8 +8414,8 @@ void DataSet::load_data_binary()
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet template.\n"
-               << "void load_binary(const string&) method.\n"
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void load_binary() method.\n"
                << "Cannot open binary file: " << data_file_name << "\n";
 
         throw logic_error(buffer.str());
@@ -8434,8 +8446,6 @@ void DataSet::load_data_binary()
 }
 
 
-
-
 /// This method loads time series data from a binary data.
 
 void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
@@ -8448,7 +8458,7 @@ void DataSet::load_time_series_data_binary(const string& time_series_data_file_n
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet template.\n"
+        buffer << "OpenNN Exception: DataSet class.\n"
                << "void load_time_series_data_binary(const string&) method.\n"
                << "Cannot open binary file: " << time_series_data_file_name << "\n";
 
@@ -8807,7 +8817,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             const Index samples_number = input_data.dimension(0);
             const Index variables_number = input_data.dimension(1);
 
-        #pragma omp parallel for schedule(dynamic)
+            #pragma omp parallel for schedule(dynamic)
 
             for(Index j = 0; j < variables_number; j++)
             {
@@ -8827,7 +8837,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             const Index samples_number = input_data.dimension(0);
             const Index variables_number = input_data.dimension(1);
 
-        #pragma omp parallel for schedule(dynamic)
+            #pragma omp parallel for schedule(dynamic)
 
             for(Index j = 0; j < variables_number; j++)
             {
@@ -9980,12 +9990,12 @@ void DataSet::read_csv_1()
         if(has_rows_labels && i == 0) continue;
 
         if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label)
-                || (data_file_preview(0)(i).find("time") != string::npos && is_numeric_string(data_file_preview(1)(i)) && is_numeric_string(data_file_preview(2)(i))
-                                                                         && is_numeric_string(data_file_preview(lines_number-2)(i))
-                                                                         && is_numeric_string(data_file_preview(lines_number-2)(i)) ))
+        || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+        || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
+        || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label)
+        || (data_file_preview(0)(i).find("time") != string::npos && is_numeric_string(data_file_preview(1)(i)) && is_numeric_string(data_file_preview(2)(i))
+                                                                 && is_numeric_string(data_file_preview(lines_number-2)(i))
+                                                                 && is_numeric_string(data_file_preview(lines_number-2)(i)) ))
         {
 
 
@@ -10372,7 +10382,6 @@ void DataSet::read_csv_2_complete()
         lines_count++;
     }
 
-
     cout << "Setting types..." << endl;
 
     for(Index j = 0; j < columns_number; j++)
@@ -10454,7 +10463,6 @@ void DataSet::read_csv_3_complete()
         }
     }
 
-
     // Read data
 
     cout << "Reading data..." << endl;
@@ -10476,7 +10484,6 @@ void DataSet::read_csv_3_complete()
 
         for(Index j = 0; j < raw_columns_number; j++)
         {
-
             trim(tokens(j));
 
             if(has_rows_labels && j ==0)
@@ -10496,11 +10503,10 @@ void DataSet::read_csv_3_complete()
                 {
                     try
                     {
-
                         data(sample_index, variable_index) = static_cast<type>(stod(tokens(j)));
                         variable_index++;
                     }
-                    catch (invalid_argument)
+                    catch(invalid_argument)
                     {
                         ostringstream buffer;
 
@@ -10716,18 +10722,20 @@ void DataSet::check_special_characters(const string & line) const
     if(line.find_first_of("|@#~€¬^*") != string::npos)
     {
         const string message =
-            "Error: found special characters in line: " + line + ". Please, review the document.";
+            "Error: found special characters in line: " + line + ". Please, review the file.";
 
         throw logic_error(message);
     }
+
 //#ifdef __unix__
 //    if(line.find("\r") != string::npos)
 //    {
 //        const string message =
-//                "Error: mixed break line characters in line: " + line + ". Please, review the document.";
+//                "Error: mixed break line characters in line: " + line + ". Please, review the file.";
 //        throw logic_error(message);
 //    }
 //#endif
+
 }
 
 
@@ -11051,7 +11059,6 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
     Index batches_number;
     Index batch_size = new_batch_size;
 
-//    const Index batches_number =  samples_number / batch_size;
     if(samples_number < batch_size)
     {
         batches_number = 1;
@@ -11061,7 +11068,6 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
     {
         batches_number = samples_number / batch_size;
     }
-
 
     Tensor<Index, 2> batches(batches_number, batch_size);
 

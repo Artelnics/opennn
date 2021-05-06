@@ -36,7 +36,6 @@
 
 namespace OpenNN
 {
-
     struct NeuralNetworkForwardPropagation;
     struct NeuralNetworkBackPropagation;
 
@@ -229,7 +228,7 @@ public:
 
    void save_outputs(const Tensor<type, 2>&, const string&);
 
-   /// Calculate de forward propagation in the neural network
+   /// Calculate forward propagation in neural network
 
    void forward_propagate(const DataSetBatch&, NeuralNetworkForwardPropagation&) const;
    void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
@@ -514,7 +513,7 @@ struct NeuralNetworkBackPropagationLM
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

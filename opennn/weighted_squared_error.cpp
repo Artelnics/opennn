@@ -231,19 +231,14 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 
     f_3 = outputs.constant(0);
 
-    const Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
+    Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
-    const Index batch_samples_number = batch.get_samples_number();
-    const Index total_samples_number = data_set_pointer->get_samples_number();
-
-    const type coefficient = (static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient;
-
-    back_propagation.error = weighted_sum_squared_error(0)/coefficient;
+    back_propagation.error = weighted_sum_squared_error(0);
 }
 
 
 void WeightedSquaredError::calculate_error(const DataSetBatch &batch,
-                                           const NeuralNetworkForwardPropagation&,
+                                           const NeuralNetworkForwardPropagation &forward_propagation,
                                            LossIndexBackPropagationLM &back_propagation) const
 {
     Tensor<type, 0> error;
@@ -252,7 +247,7 @@ void WeightedSquaredError::calculate_error(const DataSetBatch &batch,
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = (static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient;
+    const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     back_propagation.error = error()/coefficient;
 }
