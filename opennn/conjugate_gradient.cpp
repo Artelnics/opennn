@@ -839,7 +839,7 @@ TrainingResults ConjugateGradient::perform_training()
     // Optimization algorithm
 
     type old_loss = 0;
-    type loss_decrease = 0;
+    type loss_decrease = numeric_limits<type>::max();
 
     type gradient_norm = 0;
 
@@ -907,7 +907,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << "Gradient norm goal reached: " << gradient_norm << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -916,7 +916,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(has_selection && selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Epoch " << epoch << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -925,7 +925,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << "Maximum number of epochs reached: " << epoch << endl;;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;;
 
             stop_training = true;
 
@@ -934,7 +934,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -943,7 +943,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
-            if(display) cout << "Epoch " << epoch << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
 
             stop_training = true;
 
@@ -954,7 +954,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(loss_decrease <= minimum_loss_decrease)
         {
-            if(display) cout << "Epoch " << epoch << "Minimum loss decrease reached: " << minimum_loss_decrease << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << minimum_loss_decrease << endl;
 
             stop_training = true;
 
@@ -1573,17 +1573,6 @@ void ConjugateGradient::update_parameters(
 
         optimization_data.learning_rate = optimization_data.initial_learning_rate;
     }
-
-/*
-    optimization_data.learning_rate = directional_point.first;
-
-    optimization_data.parameters_increment.device(*thread_pool_device)
-            = optimization_data.training_direction*optimization_data.learning_rate;
-
-    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
-
-    back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
-*/
 
     // Update stuff
 
