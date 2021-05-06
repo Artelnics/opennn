@@ -6085,7 +6085,7 @@ void DataSet::print_input_target_columns_correlations() const
     const Tensor<string, 1> inputs_names = get_input_variables_names();
     const Tensor<string, 1> targets_name = get_target_variables_names();
 
-    const Tensor<RegressionResults, 2> correlations;// = calculate_input_target_columns_correlations();
+    const Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
 
     for(Index j = 0; j < targets_number; j++)
     {
@@ -6227,6 +6227,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
@@ -6234,6 +6235,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
@@ -6241,6 +6243,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
             }
             else if(input_type == Binary && target_type == Categorical)
             {
@@ -6248,6 +6251,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
             }
             else if(input_type == Categorical && target_type == Binary)
             {
@@ -6255,6 +6259,15 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
+            }
+            else if(input_type == DateTime && target_type == DateTime)
+            {
+                // nothing
+
+                regressions(i,j).a = 0;
+                regressions(i,j).b = 0;
+                regressions(i,j).correlation = 0;
             }
             else
             {
