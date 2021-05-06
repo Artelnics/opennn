@@ -1005,7 +1005,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     for(Index i = 0; i < scaled_x.dimension(0); i++)
     {
-        y_sorted(i) = new_y(sorted_index[static_cast<unsigned>(i)]);
+        y_sorted(i) = new_y(sorted_index[i]);
     }
 
     Index counter = 0;
