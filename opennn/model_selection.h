@@ -30,9 +30,6 @@
 namespace OpenNN
 {
 
-struct ModelSelectionResults;
-
-
 /// This class represents the concept of model selection[1] algorithm in OpenNN.
 
 ///
