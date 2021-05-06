@@ -480,7 +480,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     // Loss index
 
     type old_loss = 0;
-    type loss_decrease = 0;
+    type loss_decrease = numeric_limits<type>::max();
 
     Index selection_failures = 0;
 
