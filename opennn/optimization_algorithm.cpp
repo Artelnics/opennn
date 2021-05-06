@@ -541,8 +541,6 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 {
     ostringstream buffer;
 
-    const Index size = training_error_history.size();
-
     Tensor<string, 2> final_results(7, 2);
 
     // Final parameters norm
@@ -554,24 +552,24 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     final_results(0,1) = buffer.str();
 
-    // Final loss   
-
-    final_results(1,0) = "Training error";
+    // Final loss
+/*
+    final_results(1,0) = "Final training error";
 
     buffer.str("");
-    buffer << setprecision(precision) << training_error_history(size-1);
+    buffer << setprecision(precision) << final_training_error;
 
     final_results(1,1) = buffer.str();
 
     // Final selection error
 
-    final_results(2,0) = "Selection error";
+    final_results(2,0) = "Final selection error";
 
     buffer.str("");
-    buffer << setprecision(precision) << selection_error_history(size-1);
+    buffer << setprecision(precision) << final_selection_error;
 
     final_results(2,1) = buffer.str();
-
+*/
     // Final gradient norm
 
     final_results(3,0) = "Final gradient norm";
