@@ -31,27 +31,6 @@ int main()
 
         // Write your code here
 
-        DataSet data_set;
-
-        NeuralNetwork neural_network;
-
-        SumSquaredError loss_index;
-        loss_index.set(&neural_network, &data_set);
-
-        AdaptiveMomentEstimation optimization_algorithm;
-        optimization_algorithm.set_loss_index_pointer(&loss_index);
-        optimization_algorithm.set_maximum_epochs_number(1);
-        optimization_algorithm.set_display_period(1);
-
-        data_set.set(1,1,1);
-        data_set.set_data_constant(0);
-
-        neural_network.set(NeuralNetwork::Approximation, {1, 1});
-
-        neural_network.set_parameters_constant(0);
-
-        optimization_algorithm.perform_training();
-
         cout << "Good bye!" << endl;
 
         return 0;
