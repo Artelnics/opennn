@@ -9335,7 +9335,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 /// Calculates the cross-correlation between all the variables in the data set.
 
 Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) const
-{
+{    
     const Index samples_number = time_series_data.dimension(0);
 
         if(lags_number > samples_number)
@@ -9350,6 +9350,8 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
             throw logic_error(buffer.str());
         }
+
+    const Index columns_number = get_time_series_columns_number();
 
     const Index input_columns_number = get_input_time_series_columns_number();
     const Index target_columns_number = get_target_time_series_columns_number();
@@ -9404,27 +9406,30 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     Tensor<type, 1> cross_correlations_vector(new_lags_number);
     Tensor<type, 2> input_i;
     Tensor<type, 2> input_j;
+    Index counter_i = -1;
+    Index counter_j = -1;
 
-    for(Index i = 0; i < input_target_numeric_column_number; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
         if(time_series_columns(i).column_use != VariableUse::UnusedVariable && time_series_columns(i).type == ColumnType::Numeric)
         {
             input_i = get_time_series_column_data(i);
-
-            cout << "Calculating " << time_series_columns(i).name << " cross correlations." << endl;
+            cout << "Calculating " << time_series_columns(i).name << " cross correlations:" << endl;
+            counter_i++;
+            counter_j = -1;
         }
         else
         {
             continue;
         }
 
-        for(Index j = 0; j < input_target_numeric_column_number; j++)
+        for(Index j = 0; j < columns_number; j++)
         {
             if(time_series_columns(j).column_use != VariableUse::UnusedVariable && time_series_columns(j).type == ColumnType::Numeric)
             {
                 input_j = get_time_series_column_data(j);
-
-                cout << "Calculating " << time_series_columns(j).name << " cross correlations." << endl;
+                cout << "   -VS- " << time_series_columns(j).name << endl;
+                counter_j++;
             }
             else
             {
@@ -9438,10 +9443,11 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
             for(Index k = 0; k < new_lags_number; k++)
             {
-                cross_correlations (i, j, k) = cross_correlations_vector(k) ;
+                cross_correlations (counter_i, counter_j, k) = cross_correlations_vector(k) ;
             }
         }
     }
+
     return cross_correlations;
 }
 
