@@ -283,9 +283,9 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
         previus_selection_error = results.optimum_selection_error;
 
-        results.training_errors(epoch) = training_results.get_training_error();
+        results.training_error_history(epoch) = training_results.get_training_error();
 
-        results.selection_errors(epoch) = training_results.get_selection_error();
+        results.selection_error_history(epoch) = training_results.get_selection_error();
 
         time(&current_time);
 
@@ -339,8 +339,9 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
         {
             // Save results
 
-            results.epochs_number = epoch + 1;
             results.elapsed_time = write_elapsed_time(elapsed_time);
+
+            results.resize_history(epoch);
 
             break;
         }

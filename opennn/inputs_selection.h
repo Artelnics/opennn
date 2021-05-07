@@ -187,16 +187,39 @@ struct InputsSelectionResults
         set(maximum_epochs_number);
     }
 
+    Index get_epochs_number() const
+    {
+        return training_error_history.size();
+    }
+
     void set(const Index& maximum_epochs_number)
     {
-        training_errors.resize(maximum_epochs_number);
+        training_error_history.resize(maximum_epochs_number);
+        training_error_history.setConstant(-1);
 
-        selection_errors.resize(maximum_epochs_number);
+        selection_error_history.resize(maximum_epochs_number);
+        selection_error_history.setConstant(-1);
     }
 
    virtual ~InputsSelectionResults() {}
 
    string write_stopping_condition() const;
+
+   void resize_history(const Index& new_size)
+   {
+       const Tensor<type, 1> old_training_error_history = training_error_history;
+       const Tensor<type, 1> old_selection_error_history = selection_error_history;
+
+       training_error_history.resize(new_size);
+       selection_error_history.resize(new_size);
+
+       for(Index i = 0; i < new_size; i++)
+       {
+           training_error_history(i) = old_training_error_history(i);
+           selection_error_history(i) = old_selection_error_history(i);
+       }
+   }
+
 
    void print()
    {
@@ -221,13 +244,13 @@ struct InputsSelectionResults
 
    // Loss index
 
-   /// Performance of the different neural networks.
+   /// Final training errors of the different neural networks.
 
-   Tensor<type, 1> training_errors;
+   Tensor<type, 1> training_error_history;
 
-   /// Selection loss of the different neural networks.
+   /// Final selection errors of the different neural networks.
 
-   Tensor<type, 1> selection_errors;
+   Tensor<type, 1> selection_error_history;
 
    /// Value of training for the neural network with minimum selection error.
 
@@ -246,10 +269,6 @@ struct InputsSelectionResults
    Tensor<bool, 1> optimal_inputs;
 
    // Model selection
-
-   /// Number of iterations to perform the inputs selection.
-
-   Index epochs_number;
 
    /// Stopping condition of the algorithm.
 
