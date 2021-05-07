@@ -1,65 +1,33 @@
 <NeuralNetwork>
    <Inputs>
-      <InputsNumber>5</InputsNumber>
-      <Input Index="1">frequency</Input>
-      <Input Index="2">angle_of_attack</Input>
-      <Input Index="3">chord_lenght</Input>
-      <Input Index="4">free-stream_velocity</Input>
-      <Input Index="5">suction_side_displacement_thickness</Input>
+      <InputsNumber>1</InputsNumber>
+      <Input Index="1"></Input>
    </Inputs>
    <Layers>
       <LayersTypes>Scaling Perceptron Perceptron Unscaling Bounding</LayersTypes>
       <ScalingLayer>
-         <ScalingNeuronsNumber>5</ScalingNeuronsNumber>
+         <ScalingNeuronsNumber>1</ScalingNeuronsNumber>
          <ScalingNeuron Index="1">
-            <Minimum>-0.852121</Minimum>
-            <Maximum>5.42845</Maximum>
-            <Mean>-1.2492e-08</Mean>
-            <StandardDeviation>0.999997</StandardDeviation>
-            <Scaler>MeanStandardDeviation</Scaler>
-         </ScalingNeuron>
-         <ScalingNeuron Index="2">
-            <Minimum>-1.14602</Minimum>
-            <Maximum>2.60516</Maximum>
-            <Mean>3.18399e-06</Mean>
-            <StandardDeviation>0.999997</StandardDeviation>
-            <Scaler>MeanStandardDeviation</Scaler>
-         </ScalingNeuron>
-         <ScalingNeuron Index="3">
-            <Minimum>-1.18828</Minimum>
-            <Maximum>1.79877</Maximum>
-            <Mean>3.45037e-06</Mean>
-            <StandardDeviation>1.00004</StandardDeviation>
-            <Scaler>MeanStandardDeviation</Scaler>
-         </ScalingNeuron>
-         <ScalingNeuron Index="4">
-            <Minimum>-1.2304</Minimum>
-            <Maximum>1.31247</Maximum>
-            <Mean>-1.71206e-05</Mean>
-            <StandardDeviation>0.999989</StandardDeviation>
-            <Scaler>MeanStandardDeviation</Scaler>
-         </ScalingNeuron>
-         <ScalingNeuron Index="5">
-            <Minimum>-0.816655</Minimum>
-            <Maximum>3.59472</Maximum>
-            <Mean>-4.02143e-07</Mean>
+            <Minimum>-1</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0</Mean>
             <StandardDeviation>1</StandardDeviation>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
       </ScalingLayer>
       <PerceptronLayer>
-         <LayerName>perceptron_layer_0</LayerName>
-         <InputsNumber>5</InputsNumber>
+         <LayerName>Perceptron_layer_1</LayerName>
+         <InputsNumber>1</InputsNumber>
          <NeuronsNumber>12</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>0.224754 0.986529 0.969019 -3.34705 2.54435 1.47216 0.90808 0.948756 -0.0317754 1.82596 0.498034 -0.833019 0.606994 1.03101 0.732843 -0.243108 0.490888 1.04135 0.327358 1.64483 -0.0931937 0.149599 0.360831 -0.947579 0.674865 0.072007 0.749167 -3.54806 -0.0372676 -0.465287 0.10605 -0.485448 1.88319 0.747704 0.0716709 -0.12667 1.56467 -0.29741 -0.378461 0.708409 0.115108 0.361261 0.948578 -0.93593 0.17868 -0.244698 0.229507 -0.533389 -0.160999 -0.146825 0.233723 -0.521117 0.228526 0.290227 -0.881549 0.00847769 0.243467 2.71689 0.717719 0.00129796 -0.0703714 0.134434 0.107057 0.0282174 -0.0594822 -0.0808321 0.131948 0.557124 0.104484 -0.509617 -0.200699 1.04966</Parameters>
+         <Parameters>0.00579174 -0.00923719 0.0036113 -0.00432969 0.00480544 -0.00427574 0.000137226 -0.0148643 -0.000624239 0.00494637 0.00402091 0.00865105 0.0703753 -0.150621 0.0173306 -0.0580116 -0.0272374 -0.0654304 0.0634266 -0.204804 0.0348438 -0.087008 0.0771491 0.11452</Parameters>
       </PerceptronLayer>
       <PerceptronLayer>
-         <LayerName>perceptron_layer_1</LayerName>
+         <LayerName>Perceptron_layer_2</LayerName>
          <InputsNumber>12</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <ActivationFunction>Linear</ActivationFunction>
-         <Parameters>-1.19695 -1.0291 -1.27829 1.12676 -2.60768 2.38958 -1.49483 -0.840579 0.963969 -0.932136 -2.01229 -0.727141 1.00174</Parameters>
+         <Parameters>0.0134395 0.0700213 -0.151784 0.0173042 -0.0575696 -0.0287691 -0.0658386 0.0632458 -0.2004 0.0344881 -0.0871112 0.0796907 0.113821</Parameters>
       </PerceptronLayer>
       <UnscalingLayer>
          <UnscalingNeuronsNumber>1</UnscalingNeuronsNumber>

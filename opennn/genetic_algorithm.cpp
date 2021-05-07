@@ -530,6 +530,8 @@ void GeneticAlgorithm::evaluate_population()
     {
         individual = population.chip(i, 0);
 
+        if(display) cout << "Individual " << i+1 << " "<< individual << endl;
+
         const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
 
         Tensor<Index, 1> input_columns_indices(input_columns_number(0));
@@ -560,9 +562,8 @@ void GeneticAlgorithm::evaluate_population()
 
         if(display)
         {
-            cout << "Individual " << i+1 << endl;
-
-            training_results.print();
+            cout << "Training error: " << training_results.get_training_error() << endl;
+            cout << "Selection error: " << training_results.get_selection_error() << endl;
         }
     }
 }
@@ -847,12 +848,15 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     initialize_population();
 
+    cout << population << endl;
+
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {        
         if(display) cout << "Generation: " << epoch + 1 << endl;
 
         evaluate_population();
 
+/*
         optimal_individual_index = minimal_index(selection_errors);
 
         results.training_error_history(epoch) = training_errors(optimal_individual_index);
@@ -938,7 +942,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 //        perform_crossover();
 
 //        perform_mutation();
-
+*/
     }
 
     time(&current_time);
@@ -1383,11 +1387,11 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_iterations_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_epochs_number = static_cast<Index>(atoi(element->GetText()));
 
             try
             {
-                set_maximum_iterations_number(new_maximum_iterations_number);
+                set_maximum_epochs_number(new_maximum_epochs_number);
             }
             catch(const logic_error& e)
             {

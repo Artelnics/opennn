@@ -89,7 +89,7 @@ public:
     void set_display(const bool&);
 
     void set_selection_error_goal(const type&);
-    void set_maximum_iterations_number(const Index&);
+    void set_maximum_epochs_number(const Index&);
     void set_maximum_time(const type&);
     void set_maximum_correlation(const type&);
     void set_minimum_correlation(const type&);
