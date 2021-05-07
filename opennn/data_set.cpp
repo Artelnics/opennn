@@ -9259,6 +9259,8 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
             throw logic_error(buffer.str());
         }
 
+    const Index columns_number = get_time_series_columns_number();
+
     const Index input_columns_number = get_input_time_series_columns_number();
     const Index target_columns_number = get_target_time_series_columns_number();
 
@@ -9267,21 +9269,29 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
     const Tensor<Index, 1> input_columns_indices = get_input_time_series_columns_indices();
     const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();
 
-    const Index inputs_targets_indices_number = input_columns_indices.size() + target_columns_indices.size();
-
-    Tensor<Index, 1> input_target_columns_indices(inputs_targets_indices_number);
+    Index input_target_numeric_column_number = 0;
 
     int counter = 0;
 
-    for(Index i = 0; i < inputs_targets_indices_number; i++)
+    for(Index i = 0; i < input_target_columns_number; i++)
     {
         if (i < input_columns_number)
         {
-            input_target_columns_indices(i) = input_columns_indices(i);
+            Index column_index = input_columns_indices(i);
+            ColumnType input_column_type = time_series_columns(column_index).type;
+            if (input_column_type == ColumnType::Numeric)
+            {
+                input_target_numeric_column_number++;
+            }
         }
         else
         {
-            input_target_columns_indices(i) = target_columns_indices(counter);
+            Index column_index = target_columns_indices(counter);
+            ColumnType target_column_type = time_series_columns(column_index).type;
+            if (target_column_type == ColumnType::Numeric)
+            {
+                input_target_numeric_column_number++;
+            }
             counter++;
         }
     }
@@ -9301,31 +9311,33 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
         new_lags_number = lags_number;
     }
 
-    Tensor<type, 2> autocorrelations(input_target_columns_number, new_lags_number);
-
+    Tensor<type, 2> autocorrelations(input_target_numeric_column_number, new_lags_number);
     Tensor<type, 1> autocorrelations_vector(new_lags_number);
+    Tensor<type, 2> input_i;
+    Index counter_i = -1;
 
-    for(Index i = 0; i < input_target_columns_number; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
-        const Index current_input_target_index_i = input_target_columns_indices(i);
-
-        const ColumnType type_i = time_series_columns(current_input_target_index_i).type;
-
-        Tensor<type, 2> input_i = get_time_series_column_data(current_input_target_index_i);
-
-        cout << "Calculating " << time_series_columns(current_input_target_index_i).name << " autocorrelations." << endl;
-
-        if(type_i == Numeric)
+        if(time_series_columns(i).column_use != VariableUse::UnusedVariable && time_series_columns(i).type == ColumnType::Numeric)
         {
-            const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
-
-            autocorrelations_vector = OpenNN::autocorrelations(thread_pool_device, current_input_i, new_lags_number);
-
-            for(Index j = 0; j < new_lags_number; j++)
-            {
-                autocorrelations (i, j) = autocorrelations_vector(j) ;
-            }
+            input_i = get_time_series_column_data(i);
+            cout << "Calculating " << time_series_columns(i).name << " autocorrelations" << endl;
+            counter_i++;
         }
+        else
+        {
+            continue;
+        }
+
+        const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
+
+        autocorrelations_vector = OpenNN::autocorrelations(thread_pool_device, current_input_i, new_lags_number);
+
+        for(Index j = 0; j < new_lags_number; j++)
+        {
+            autocorrelations (counter_i, j) = autocorrelations_vector(j) ;
+        }
+
     }
 
     return autocorrelations;
