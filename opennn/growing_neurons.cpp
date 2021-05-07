@@ -205,23 +205,24 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             neural_network->set_parameters_random();
 
             training_results = training_strategy_pointer->perform_training();
-/*
+
+            const Index size = training_results.training_error_history.size();
+
             if(display)
             {
                 cout << "Trial: " << trial+1 << endl;
-                cout << "Training error: " << training_results.final_training_error << endl;
-                cout << "Selection error: " << training_results.final_selection_error << endl;
+                cout << "Training error: " << training_results.get_training_error() << endl;
+                cout << "Selection error: " << training_results.get_selection_error() << endl;
             }
 
-            if(training_results.final_selection_error < results.optimum_selection_error)
+            if(training_results.get_selection_error() < results.optimum_selection_error)
             {
                 results.optimal_neurons_number = neurons_number;
-                results.optimal_parameters = training_results.parameters;
+                //results.optimal_parameters = training_results.parameters;
 
-                results.optimum_training_error = training_results.final_training_error;
-                results.optimum_selection_error = training_results.final_selection_error;
+                results.optimum_training_error = training_results.get_training_error();
+                results.optimum_selection_error = training_results.get_selection_error();
             }
-*/
         }
 
         if(results.optimum_selection_error > previous_selection_error)
@@ -235,9 +236,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-//        if(reserve_training_errors) results.training_errors(epoch) = training_results.final_training_error;
+//        if(reserve_training_errors) results.training_errors(epoch) = training_results.get_training_error();
 
-//        if(reserve_selection_errors) results.selection_errors(epoch) = training_results.final_selection_error;
+//        if(reserve_selection_errors) results.selection_errors(epoch) = training_results.get_selection_error();
 
         // Stopping criteria
 
@@ -250,7 +251,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             results.stopping_condition = GrowingNeurons::MaximumTime;
         }
 
-//        if(training_results.final_selection_error <= selection_error_goal)
+//        if(training_results.get_selection_error() <= selection_error_goal)
 //        {
 //            end = true;
 
@@ -397,33 +398,6 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 
     values(7) = buffer.str();
 
-    // Plot training error history
-
-    labels(8) = "Plot training error history";
-
-    buffer.str("");
-
-    reserve_training_errors ? buffer << "true" : buffer << "false";
-
-    values(8) = buffer.str();
-
-    // Plot selection error history
-
-    labels(9) = "Plot selection error history";
-
-    buffer.str("");
-
-    if(reserve_selection_errors)
-    {
-        buffer << "true";
-    }
-    else
-    {
-        buffer << "false";
-    }
-
-    values(9) = buffer.str();
-
     const Index rows_number = labels.size();
     const Index columns_number = 2;
 
@@ -518,28 +492,6 @@ void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve training erro history
-
-    file_stream.OpenElement("ReserveTrainingErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_training_errors;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve selection error data
-
-    file_stream.OpenElement("ReserveSelectionErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_selection_errors;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -692,45 +644,6 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_maximum_time(new_maximum_time);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-
-    // Reserve training error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_training_error_data = element->GetText();
-
-            try
-            {
-                set_reserve_training_error_data(new_reserve_training_error_data != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve selection error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_selection_error_data = element->GetText();
-
-            try
-            {
-                set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
             }
             catch(const logic_error& e)
             {

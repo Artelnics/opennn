@@ -228,9 +228,19 @@ struct TrainingResults
 
     string write_stopping_condition() const;
 
-    /// Stopping condition of the algorithm.
+    type get_training_error()
+    {
+        const Index size = training_error_history.size();
 
-    OptimizationAlgorithm::StoppingCondition stopping_condition;
+        return training_error_history(size-1);
+    }
+
+    type get_selection_error()
+    {
+        const Index size = selection_error_history.size();
+
+        return selection_error_history(size-1);
+    }
 
     /// Returns a string representation of the results structure.
 
@@ -252,6 +262,10 @@ struct TrainingResults
 
         cout << "Stopping condition: " << write_stopping_condition() << endl;
     }
+
+    /// Stopping condition of the algorithm.
+
+    OptimizationAlgorithm::StoppingCondition stopping_condition;
 
     /// Writes final results of the training.
 
