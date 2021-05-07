@@ -84,24 +84,19 @@ int main()
 
 //        model_selection.perform_neurons_selection();
 
-        model_selection.set_inputs_selection_method(ModelSelection::PRUNING_INPUTS);
-
-        GrowingInputs* growing_inputs_pointer = model_selection.get_growing_inputs_pointer();
-        growing_inputs_pointer->set_maximum_iterations_number(20);
-        growing_inputs_pointer->set_maximum_inputs_number(20);
+        model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
 
         GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
         genetic_algorithm_pointer->set_elitism_size(0);
         genetic_algorithm_pointer->set_selective_pressure(1);
-        genetic_algorithm_pointer->set_maximum_iterations_number(3);
+        genetic_algorithm_pointer->set_individuals_number(4);
+        genetic_algorithm_pointer->set_maximum_epochs_number(2);
 
-        model_selection.perform_inputs_selection();
+        genetic_algorithm_pointer->perform_inputs_selection();
 
         // Testing analysis
-
+/*
         data_set.unscale_data(variables_descriptives);
-
-        data_set.print_data();
 
 //        data_set.unscale_input_variables(input_variables_descriptives);
 //        data_set.unscale_target_variables(target_variables_descriptives);
@@ -116,7 +111,7 @@ int main()
 
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_python("../data/neural_network.py");        
-
+*/
         cout << "End Airfoil Self-Noise Example" << endl;
 
         return 0;

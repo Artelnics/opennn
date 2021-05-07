@@ -658,11 +658,11 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_iterations_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_epochs_number = static_cast<Index>(atoi(element->GetText()));
 
             try
             {
-                set_maximum_iterations_number(new_maximum_iterations_number);
+                set_maximum_epochs_number(new_maximum_epochs_number);
             }
             catch(const logic_error& e)
             {
