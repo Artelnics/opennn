@@ -9314,7 +9314,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
     Tensor<type, 2> autocorrelations(input_target_numeric_column_number, new_lags_number);
     Tensor<type, 1> autocorrelations_vector(new_lags_number);
     Tensor<type, 2> input_i;
-    Index counter_i = -1;
+    Index counter_i = 0;
 
     for(Index i = 0; i < columns_number; i++)
     {
@@ -9322,7 +9322,6 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
         {
             input_i = get_time_series_column_data(i);
             cout << "Calculating " << time_series_columns(i).name << " autocorrelations" << endl;
-            counter_i++;
         }
         else
         {
@@ -9338,6 +9337,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
             autocorrelations (counter_i, j) = autocorrelations_vector(j) ;
         }
 
+        counter_i++;
     }
 
     return autocorrelations;
@@ -9418,8 +9418,8 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     Tensor<type, 1> cross_correlations_vector(new_lags_number);
     Tensor<type, 2> input_i;
     Tensor<type, 2> input_j;
-    Index counter_i = -1;
-    Index counter_j = -1;
+    Index counter_i = 0;
+    Index counter_j = 0;
 
     for(Index i = 0; i < columns_number; i++)
     {
@@ -9427,8 +9427,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
         {
             input_i = get_time_series_column_data(i);
             cout << "Calculating " << time_series_columns(i).name << " cross correlations:" << endl;
-            counter_i++;
-            counter_j = -1;
+            counter_j = 0;
         }
         else
         {
@@ -9441,7 +9440,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
             {
                 input_j = get_time_series_column_data(j);
                 cout << "   -VS- " << time_series_columns(j).name << endl;
-                counter_j++;
+
             }
             else
             {
@@ -9457,7 +9456,12 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
             {
                 cross_correlations (counter_i, counter_j, k) = cross_correlations_vector(k) ;
             }
+
+            counter_j++;
         }
+
+    counter_i++;
+
     }
 
     return cross_correlations;
