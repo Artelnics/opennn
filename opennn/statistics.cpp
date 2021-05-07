@@ -2138,8 +2138,6 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
         }
     }
 
-    const Index n = vector.dimension(0);
-
     Tensor<type, 1> sorted_vector(new_vector);
 
     sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
@@ -2149,11 +2147,11 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
     const type mean = descriptives.mean;
     const type standard_deviation = descriptives.standard_deviation;
     const type minimum = sorted_vector(0);
-    const type maximum = sorted_vector(n-1);
+    const type maximum = sorted_vector(new_size-1);
 
     #pragma omp parallel for schedule(dynamic)
 
-    for(Index i = 0; i < n; i++)
+    for(Index i = 0; i < new_size; i++)
     {
         const type normal_distribution = static_cast<type>(0.5)
                 * static_cast<type>(erfc((mean - sorted_vector(i)))/static_cast<type>((standard_deviation*static_cast<type>(sqrt(2)))));
@@ -2164,11 +2162,11 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
         Index counter = 0;
 
-        if(vector(i) < sorted_vector(0))
+        if(new_vector(i) < sorted_vector(0))
         {
             empirical_distribution = 0;
         }
-        else if(vector(i) >= sorted_vector(n-1))
+        else if(new_vector(i) >= sorted_vector(new_size-1))
         {
             empirical_distribution = 1.0;
         }
@@ -2176,7 +2174,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
         {
             counter = static_cast<Index>(i + 1);
 
-            for(Index j = i+1; j < n; j++)
+            for(Index j = i+1; j < new_size; j++)
             {
                 if(sorted_vector(j) <= sorted_vector(i))
                 {
@@ -2188,7 +2186,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
                 }
             }
 
-            empirical_distribution = static_cast<type>(counter)/static_cast<type>(n);
+            empirical_distribution = static_cast<type>(counter)/static_cast<type>(new_size);
         }
 
         #pragma omp critical
