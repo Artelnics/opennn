@@ -355,14 +355,14 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     // Set neural network stuff
 
-    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+//    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
-    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+//    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-    if(neural_network_pointer->has_scaling_layer())
-        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
+//    if(neural_network_pointer->has_scaling_layer())
+//        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
 
-    neural_network_pointer->set_parameters(results.optimal_parameters);
+//    neural_network_pointer->set_parameters(results.optimal_parameters);
 
     if(display) results.print();
 

@@ -847,9 +847,9 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     initialize_population();
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
-    {
+    {        
         if(display) cout << "Generation: " << epoch + 1 << endl;
-
+/*
         evaluate_population();
 
         optimal_individual_index = minimal_index(selection_errors);
@@ -934,6 +934,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         perform_crossover();
 
         perform_mutation();
+*/
     }
 
     time(&current_time);
@@ -942,27 +943,27 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     // Set data set stuff
 
-    data_set_pointer->set_input_columns(original_input_columns_indices, results.optimal_inputs);
+//    data_set_pointer->set_input_columns(original_input_columns_indices, results.optimal_inputs);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+//    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+//    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
-    const Tensor<Descriptives, 1> target_variables_descriptives = data_set_pointer->scale_target_variables();
+//    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+//    const Tensor<Descriptives, 1> target_variables_descriptives = data_set_pointer->scale_target_variables();
 
     // Set neural network stuff
 
-    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+//    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
-    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+//    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-    if(neural_network_pointer->has_scaling_layer())        
-        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
+//    if(neural_network_pointer->has_scaling_layer())
+//        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
 
-    if(neural_network_pointer->has_unscaling_layer())
-        neural_network_pointer->get_unscaling_layer_pointer()->set(input_variables_descriptives, target_variables_scalers);
+//    if(neural_network_pointer->has_unscaling_layer())
+//        neural_network_pointer->get_unscaling_layer_pointer()->set(input_variables_descriptives, target_variables_scalers);
 
-    neural_network_pointer->set_parameters(results.optimal_parameters);
+//    neural_network_pointer->set_parameters(results.optimal_parameters);
 
     if(display) results.print();
 
@@ -1046,14 +1047,7 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 
     buffer.str("");
 
-    if(reserve_generation_mean)
-    {
-        buffer << "true";
-    }
-    else
-    {
-        buffer << "false";
-    }
+    reserve_generation_mean ? buffer << "true" : buffer << "false";
 
     values(7) = buffer.str();
 

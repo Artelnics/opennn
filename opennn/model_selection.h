@@ -52,7 +52,7 @@ public:
 
     virtual ~ModelSelection();
 
-    /// Enumeration of all the available order selection algorithms.
+    /// Enumeration of all the available neurons selection algorithms.
 
     enum NeuronsSelectionMethod{GROWING_NEURONS};
 
@@ -115,7 +115,7 @@ private:
 
     TrainingStrategy* training_strategy_pointer = nullptr;
 
-    /// Growing order object to be used for order selection.
+    /// Growing neurons object to be used for neurons selection.
 
     GrowingNeurons growing_neurons;
 
@@ -131,7 +131,7 @@ private:
 
     GeneticAlgorithm genetic_algorithm;
 
-    /// Type of order selection algorithm.
+    /// Type of neurons selection algorithm.
 
     NeuronsSelectionMethod neurons_selection_method;
 

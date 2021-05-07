@@ -600,7 +600,7 @@ int main()
           tests_passed_count += model_selection_test.get_tests_passed_count();
           tests_failed_count += model_selection_test.get_tests_failed_count();
 
-          // order selection algorithm
+          // neurons selection algorithm
 
           NeuronsSelectionTest neurons_selection_algorithm_test;
           neurons_selection_algorithm_test.run_test_case();

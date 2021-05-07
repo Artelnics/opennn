@@ -76,7 +76,7 @@ bool ModelSelection::has_training_strategy() const
 }
 
 
-/// Returns the type of algorithm for the order selection.
+/// Returns the type of algorithm for the neurons selection.
 
 const ModelSelection::NeuronsSelectionMethod& ModelSelection::get_neurons_selection_method() const
 {
@@ -169,8 +169,8 @@ void ModelSelection::set_neurons_selection_method(const ModelSelection::NeuronsS
 }
 
 
-/// Sets a new order selection algorithm from a string.
-/// @param new_neurons_selection_method String with the order selection type.
+/// Sets a new neurons selection algorithm from a string.
+/// @param new_neurons_selection_method String with the neurons selection type.
 
 void ModelSelection::set_neurons_selection_method(const string& new_neurons_selection_method)
 {
@@ -184,7 +184,7 @@ void ModelSelection::set_neurons_selection_method(const string& new_neurons_sele
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void set_neurons_selection_method(const string&) method.\n"
-               << "Unknown order selection type: " << new_neurons_selection_method << ".\n";
+               << "Unknown neurons selection type: " << new_neurons_selection_method << ".\n";
 
         throw logic_error(buffer.str());
     }
@@ -328,7 +328,7 @@ void ModelSelection::check() const
 }
 
 
-/// Perform the order selection, returns a structure with the results of the order selection.
+/// Perform the neurons selection, returns a structure with the results of the neurons selection.
 /// It also set the neural network of the training strategy pointer with the optimum parameters.
 /// @todo
 
