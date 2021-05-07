@@ -553,7 +553,7 @@ void GeneticAlgorithm::evaluate_population()
 
         // Set stuff
 
-//        parameters(i) = training_results.parameters;
+        parameters(i) = neural_network_pointer->get_parameters();
 
         training_errors(i) = training_results.get_training_error();
         selection_errors(i) = training_results.get_selection_error();
@@ -561,6 +561,7 @@ void GeneticAlgorithm::evaluate_population()
         if(display)
         {
             cout << "Individual " << i+1 << endl;
+
             training_results.print();
         }
     }
@@ -849,13 +850,13 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {        
         if(display) cout << "Generation: " << epoch + 1 << endl;
-/*
+
         evaluate_population();
 
         optimal_individual_index = minimal_index(selection_errors);
 
-        results.training_errors(epoch) = training_errors(optimal_individual_index);
-        results.selection_errors(epoch) = selection_errors(optimal_individual_index);
+        results.training_error_history(epoch) = training_errors(optimal_individual_index);
+        results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
 
         if(selection_errors(optimal_individual_index) < results.optimum_selection_error)
         {
@@ -924,17 +925,20 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         if(stop)
         {
             results.elapsed_time = write_elapsed_time(elapsed_time);
+
+            results.resize_history(epoch);
+
             break;
         }
 
-        perform_fitness_assignment();
+//        perform_fitness_assignment();
 
-        perform_selection();
+//        perform_selection();
 
-        perform_crossover();
+//        perform_crossover();
 
-        perform_mutation();
-*/
+//        perform_mutation();
+
     }
 
     time(&current_time);
