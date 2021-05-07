@@ -6484,19 +6484,21 @@ void DataSet::print_top_inputs_correlations() const
 
 void DataSet::set_default_columns_scalers()
 {
-    const Index columns_number = get_columns_number();
+    const Index columns_number = columns.size();
 
     Index current_distribution;
 
-    Tensor<string, 1> scalers(columns_number);
+    ColumnType column_type;
 
     #pragma omp parallel for private(current_distribution)
 
     for(Index i = 0; i < static_cast<Index>(columns_number); i++)
     {
-        ColumnType column_type = get_column_type(i);
+        column_type = columns(i).type;
 
-        if(column_type == ColumnType::Categorical || column_type == ColumnType::Binary || column_type == ColumnType::DateTime)
+        if(column_type == ColumnType::Categorical
+                || column_type == ColumnType::Binary
+                || column_type == ColumnType::DateTime)
         {
             continue;
         }
