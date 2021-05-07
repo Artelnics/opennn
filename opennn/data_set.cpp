@@ -6552,7 +6552,7 @@ Tensor<Descriptives, 1> DataSet::scale_data()
         break;
 
         case Logarithm:
-            scale_logarithmic(data, i, variables_descriptives(i));
+            scale_logarithmic(data, i);
         break;
 
         default:
@@ -6597,7 +6597,7 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
         break;
 
         case Logarithm:
-            unscale_logarithmic(data, i, variables_descriptives(i));
+            unscale_logarithmic(data, i);
         break;
 
         default:
@@ -6648,7 +6648,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
         break;
 
         case Logarithm:
-            scale_logarithmic(data, input_variables_indices(i), input_variables_descriptives(i));
+            scale_logarithmic(data, input_variables_indices(i));
         break;
 
         default:
@@ -6703,7 +6703,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
         break;
 
         case Logarithm:
-            scale_logarithmic(data, target_variables_indices(i), target_variables_descriptives(i));
+            scale_logarithmic(data, target_variables_indices(i));
         break;
 
         default:
@@ -6794,7 +6794,7 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
             break;
 
         case Logarithm:
-            unscale_logarithmic(data, target_variables_indices(i), targets_descriptives(i));
+            unscale_logarithmic(data, target_variables_indices(i));
             break;
 
         default:

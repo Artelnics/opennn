@@ -105,20 +105,28 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix,
 
 }
 
-void scale_logarithmic(Tensor<type, 2>& matrix, const Index& target_index, const Descriptives& descriptives)
+
+void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
 {
+    // Check negative values
+
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
-        if(abs(descriptives.standard_deviation-0) < static_cast<type>(1e-3))
+        if(!::isnan(matrix(i,column_index)) && matrix(i,column_index) <= 0)
         {
-            matrix(i, target_index) = 0;
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void scale_logarithmic(Tensor<type, 2>&, const Index&, const Descriptives&) method.\n"
+                   << "Logarithmic scale method cannot be used with non-positive variables. \n";
+
+            throw logic_error(buffer.str());
         }
-        else
-        {
-            matrix(i, target_index)
-                    = static_cast<type>(0.5)*(exp(matrix(i,target_index)-1))*(descriptives.maximum-descriptives.minimum)
-                    + descriptives.minimum;
-        }
+    }
+
+    for(Index i = 0; i < matrix.dimension(0); i++)
+    {
+        matrix(i,column_index) = std::log(matrix(i,column_index));
     }
 }
 
@@ -195,19 +203,12 @@ void unscale_standard_deviation(Tensor<type, 2>& matrix, const Index& column_ind
 /// It updates the input variable of the matrix matrix.
 /// @param inputs_statistics vector of descriptives structures for the input variables.
 /// @param column_index Index of the input to be scaled.
-///
-void unscale_logarithmic(Tensor<type, 2>& matrix, const Index& target_index, const Descriptives& target_statistics)
+
+void unscale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
 {
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
-        if(abs(target_statistics.maximum - target_statistics.minimum) < static_cast<type>(1e-3))
-        {
-            matrix(i, target_index) = target_statistics.minimum;
-        }
-        else
-        {
-            matrix(i, target_index) = log(static_cast<type>(2)*(matrix(i,target_index)-target_statistics.minimum)/(target_statistics.maximum-target_statistics.minimum));
-        }
+        matrix(i, column_index) = std::exp(matrix(i, column_index));
     }
 }
 }
