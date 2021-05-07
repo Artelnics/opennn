@@ -348,22 +348,22 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     // Set data set stuff
 
-    data_set_pointer->set_input_target_columns(results.optimal_input_columns_indices, target_columns_indices);
+//    data_set_pointer->set_input_target_columns(results.optimal_input_columns_indices, target_columns_indices);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+//    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+//    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
 
     // Set neural network stuff
 
-    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+//    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
-    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+//    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-    if(neural_network_pointer->has_scaling_layer())
-        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
+//    if(neural_network_pointer->has_scaling_layer())
+//        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
 
-    neural_network_pointer->set_parameters(results.optimal_parameters);
+//    neural_network_pointer->set_parameters(results.optimal_parameters);
 
     if(display) results.print();
 
