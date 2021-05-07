@@ -65,9 +65,6 @@ public:
     const Index& get_minimum_neurons() const;
     const Index& get_trials_number() const;
 
-    const bool& get_reserve_training_errors() const;
-    const bool& get_reserve_selection_errors() const;
-
     const bool& get_display() const;
 
     const type& get_selection_error_goal() const;
@@ -83,9 +80,6 @@ public:
     void set_maximum_neurons_number(const Index&);
     void set_minimum_neurons(const Index&);
     void set_trials_number(const Index&);
-
-    void set_reserve_training_error_data(const bool&);
-    void set_reserve_selection_error_data(const bool&);
 
     void set_display(const bool&);
 
@@ -146,16 +140,6 @@ protected:
     /// Number of trials for each neural network.
 
     Index trials_number = 1;
-
-    // Neurons selection results
-
-    /// True if the loss of all neural networks are to be reserved.
-
-    bool reserve_training_errors;
-
-    /// True if the selection error of all neural networks are to be reserved.
-
-    bool reserve_selection_errors;
 
     /// Display messages to screen.
 

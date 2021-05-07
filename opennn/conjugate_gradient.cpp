@@ -954,11 +954,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(loss_decrease <= minimum_loss_decrease)
         {
-<<<<<<< HEAD
-            if(display) cout << "Epoch " << epoch << " Minimum loss decrease reached: " << minimum_loss_decrease << endl;
-=======
             if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << minimum_loss_decrease << endl;
->>>>>>> e7c61ea1f9c54c37eb9ee8cdfe951c483ccbd9fa
 
             stop_training = true;
 

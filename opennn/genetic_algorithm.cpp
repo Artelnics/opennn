@@ -555,14 +555,14 @@ void GeneticAlgorithm::evaluate_population()
 
 //        parameters(i) = training_results.parameters;
 
-//        training_errors(i) = training_results.final_training_error;
-//        selection_errors(i) = training_results.final_selection_error;
+        training_errors(i) = training_results.get_training_error();
+        selection_errors(i) = training_results.get_selection_error();
 
-//        if(display)
-//        {
-//            cout << "Individual " << i+1 << endl;
-//            training_results.print();
-//        }
+        if(display)
+        {
+            cout << "Individual " << i+1 << endl;
+            training_results.print();
+        }
     }
 }
 
@@ -975,7 +975,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
 Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix(18, 2);
+    Tensor<string, 2> string_matrix(8, 2);
 
     const Index individuals_number = get_individuals_number();
 
@@ -986,97 +986,63 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 
     // Population size
 
-    labels(2) = "Population size";
+    labels(0) = "Population size";
 
     buffer.str("");
     buffer << individuals_number;
-    values(2) = buffer.str();
+    values(0) = buffer.str();
 
     // Elitism size
 
-    labels(6) = "Elitism size";
+    labels(1) = "Elitism size";
 
     buffer.str("");
     buffer << elitism_size;
-    values(6) = buffer.str();
+    values(1) = buffer.str();
 
     // Selective pressure
 
-    labels(9) = "Selective pressure";
+    labels(2) = "Selective pressure";
 
     buffer.str("");
     buffer << selective_pressure;
-    values(9) = buffer.str();
+    values(2) = buffer.str();
 
     // Mutation rate
 
-    labels(10) = "Mutation rate";
+    labels(3) = "Mutation rate";
 
     buffer.str("");
     buffer << mutation_rate;
-    values(10) = buffer.str();
+    values(3) = buffer.str();
 
     // Selection loss goal
 
-    labels(11) = "Selection loss goal";
+    labels(4) = "Selection loss goal";
 
     buffer.str("");
     buffer << selection_error_goal;
-    values(11) = buffer.str();
+    values(4) = buffer.str();
 
     // Maximum Generations number
 
-    labels(12) = "Maximum Generations number";
+    labels(5) = "Maximum Generations number";
 
     buffer.str("");
     buffer << maximum_epochs_number;
-    values(12) = buffer.str();
+    values(5) = buffer.str();
 
     // Maximum time
 
-    labels(13) = "Maximum time";
+    labels(6) = "Maximum time";
 
     buffer.str("");
     buffer << maximum_time;
-    values(13) = buffer.str();
-
-    // Plot training error history
-
-    labels(14) = "Plot training error history";
-
-    buffer.str("");
-
-    if(reserve_training_errors)
-    {
-        buffer << "true";
-    }
-    else
-    {
-        buffer << "false";
-    }
-
-    values(14) = buffer.str();
-
-    // Plot selection error history
-
-    labels(15) = "Plot selection error histroy";
-
-    buffer.str("");
-
-    if(reserve_selection_errors)
-    {
-        buffer << "true";
-    }
-    else
-    {
-        buffer << "false";
-    }
-
-    values(15) = buffer.str();
+    values(6) = buffer.str();
 
     // Plot generation mean history
 
-    labels(16) = "Plot generation mean history";
+    labels(7) = "Plot generation mean history";
 
     buffer.str("");
 
@@ -1089,7 +1055,7 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
         buffer << "false";
     }
 
-    values(16) = buffer.str();
+    values(7) = buffer.str();
 
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;
@@ -1367,44 +1333,6 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_reserve_generation_optimum_loss(new_reserve_generation_optimum_loss != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve error data
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_training_error_data = element->GetText();
-
-            try
-            {
-                set_reserve_training_error_data(new_reserve_training_error_data != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve selection error data
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_selection_error_data = element->GetText();
-
-            try
-            {
-                set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
             }
             catch(const logic_error& e)
             {

@@ -34,14 +34,6 @@ int main()
         // Data set
 
         DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
-/*
-        data_set.print_data();
-
-        const Tensor<Descriptives, 1> variables_descriptives = data_set.scale_data();
-        data_set.unscale_data(variables_descriptives);
-
-        data_set.print_data();
-*/
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
@@ -76,12 +68,12 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::MINKOWSKI_ERROR);
+//        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+//        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-        const TrainingResults training_results = training_strategy.perform_training();
-/*
+//        const TrainingResults training_results = training_strategy.perform_training();
+
         // Model selection
 
         ModelSelection model_selection(&training_strategy);
@@ -113,18 +105,18 @@ int main()
 
 //        data_set.unscale_input_variables(input_variables_descriptives);
 //        data_set.unscale_target_variables(target_variables_descriptives);
-*/
+
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
 
         linear_regression_analysis.print();
-/*
+
         // Save results
 
         neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression_python("../data/neural_network.py");
-*/
+        neural_network.save_expression_python("../data/neural_network.py");        
+
         cout << "End Airfoil Self-Noise Example" << endl;
 
         return 0;
