@@ -339,7 +339,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
         if(stop)
         {
-            inputs_selection_results.elapsed_time = write_elapsed_time(elapsed_time);
+            inputs_selection_results.elapsed_time = write_time(elapsed_time);
 
             inputs_selection_results.resize_history(epoch);
 

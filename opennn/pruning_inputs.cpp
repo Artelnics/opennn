@@ -339,7 +339,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
         {
             // Save results
 
-            results.elapsed_time = write_elapsed_time(elapsed_time);
+            results.elapsed_time = write_time(elapsed_time);
 
             results.resize_history(epoch);
 

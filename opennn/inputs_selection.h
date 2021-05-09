@@ -112,7 +112,7 @@ public:
 
     /// Writes the time from seconds in format HH:mm:ss.
 
-    const string write_elapsed_time(const type&) const;
+    const string write_time(const type&) const;
 
 protected:
 
@@ -221,7 +221,7 @@ struct InputsSelectionResults
    }
 
 
-   void print()
+   void print() const
    {
        cout << endl;
        cout << "Inputs Selection Results" << endl;
