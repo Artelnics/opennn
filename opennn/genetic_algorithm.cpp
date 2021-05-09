@@ -89,38 +89,6 @@ const Index& GeneticAlgorithm::get_elitism_size() const
 }
 
 
-/// Returns the selective pressure used for the fitness assignment.
-
-const type& GeneticAlgorithm::get_selective_pressure() const
-{
-    return selective_pressure;
-}
-
-
-/// Returns true if the generation mean of the selection losses are to be reserved, and false otherwise.
-
-const bool& GeneticAlgorithm::get_reserve_generation_mean() const
-{
-    return reserve_generation_mean;
-}
-
-
-/// Returns true if the generation minimum selection error are to be reserved, and false otherwise.
-
-const bool& GeneticAlgorithm::get_reserve_generation_minimum_selection() const
-{
-    return reserve_generation_minimum_selection;
-}
-
-
-/// Returns true if the generation optimum loss error are to be reserved, and false otherwise.
-
-const bool& GeneticAlgorithm::get_reserve_generation_optimum_loss() const
-{
-    return reserve_generation_optimum_loss;
-}
-
-
 /// Sets the members of the genetic algorithm object to their default values.
 
 void GeneticAlgorithm::set_default()
@@ -164,16 +132,6 @@ void GeneticAlgorithm::set_default()
     // Training operators
 
     elitism_size = 2;
-
-    selective_pressure = 1.0;
-
-    // Inputs selection results
-
-    reserve_generation_mean = true;
-
-    reserve_generation_minimum_selection = true;
-
-    reserve_generation_optimum_loss = true;
 }
 
 
@@ -321,6 +279,9 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 
     population.resize(new_individuals_number, new_genes_number);
 
+    training_errors.resize(new_individuals_number);
+    selection_errors.resize(new_individuals_number);
+
     fitness.resize(new_individuals_number);
     fitness.setConstant(-1.0);
 
@@ -377,58 +338,6 @@ void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
 #endif
 
     elitism_size = new_elitism_size;
-}
-
-
-/// Sets a new value for the selective pressure parameter.
-/// Linear ranking allows values for the selective pressure greater than 0.
-/// @param new_selective_pressure Selective pressure value.
-
-void GeneticAlgorithm::set_selective_pressure(const type& new_selective_pressure)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_selective_pressure <= static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_selective_pressure(const type&) method. "
-               << "Selective pressure must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    selective_pressure = new_selective_pressure;
-}
-
-
-/// Sets the reserve flag for the generation mean history.
-/// @param new_reserve_generation_mean Flag value.
-
-void GeneticAlgorithm::set_reserve_generation_mean(const bool& new_reserve_generation_mean)
-{
-    reserve_generation_mean = new_reserve_generation_mean;
-}
-
-
-/// Sets the reserve flag for the generation minimum selection error history.
-/// @param new_reserve_generation_minimum_selection Flag value.
-
-void GeneticAlgorithm::set_reserve_generation_minimum_selection(const bool& new_reserve_generation_minimum_selection)
-{
-    reserve_generation_minimum_selection = new_reserve_generation_minimum_selection;
-}
-
-
-/// Sets the reserve flag for the optimum loss error history.
-/// @param new_reserve_generation_optimum_loss Flag value.
-
-void GeneticAlgorithm::set_reserve_generation_optimum_loss(const bool& new_reserve_generation_optimum_loss)
-{
-    reserve_generation_optimum_loss = new_reserve_generation_optimum_loss;
 }
 
 
@@ -513,6 +422,8 @@ void GeneticAlgorithm::evaluate_population()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+    Tensor<string, 1> inputs_names;
+
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -530,7 +441,7 @@ void GeneticAlgorithm::evaluate_population()
     {
         individual = population.chip(i, 0);
 
-        if(display) cout << "Individual " << i+1 << " "<< individual << endl;
+        if(display) cout << "Individual " << i+1 << endl;
 
         const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
 
@@ -549,7 +460,13 @@ void GeneticAlgorithm::evaluate_population()
 
         data_set_pointer->set_input_target_columns(input_columns_indices, original_target_columns_indices);
 
+        inputs_names = data_set_pointer->get_input_variables_names();
+
         neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+
+        neural_network_pointer->set_inputs_names(inputs_names);
+
+        neural_network_pointer->set_parameters_random();
 
         training_results = training_strategy_pointer->perform_training();
 
@@ -562,6 +479,12 @@ void GeneticAlgorithm::evaluate_population()
 
         if(display)
         {
+            cout << "Inputs: " << endl;
+
+            const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
+
+            for(Index i = 0; i < inputs_names.size(); i++) cout << "   " << inputs_names(i) << endl;
+
             cout << "Training error: " << training_results.get_training_error() << endl;
             cout << "Selection error: " << training_results.get_selection_error() << endl;
         }
@@ -579,7 +502,7 @@ void GeneticAlgorithm::perform_fitness_assignment()
 
     for(Index i = 0; i < individuals_number; i++)
     {
-        fitness(rank(i)) = selective_pressure*(i+1);
+        fitness(rank(i)) = i+1;
     }
 }
 
@@ -814,7 +737,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     if(display) cout << "Performing genetic inputs selection..." << endl << endl;
 
-    InputsSelectionResults results(maximum_epochs_number);
+    InputsSelectionResults inputs_selection_results(maximum_epochs_number);
 
     // Training strategy
 
@@ -848,42 +771,54 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     initialize_population();
 
-    cout << population << endl;
-
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {        
         if(display) cout << "Generation: " << epoch + 1 << endl;
 
         evaluate_population();
 
-/*
         optimal_individual_index = minimal_index(selection_errors);
 
-        results.training_error_history(epoch) = training_errors(optimal_individual_index);
-        results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
+        inputs_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
+        inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
 
-        if(selection_errors(optimal_individual_index) < results.optimum_selection_error)
+        if(selection_errors(optimal_individual_index) < inputs_selection_results.optimum_selection_error)
         {
             // Neural network
 
-            results.optimal_inputs = population.chip(optimal_individual_index, 0);
+            inputs_selection_results.optimal_inputs = population.chip(optimal_individual_index, 0);
 
-            data_set_pointer->set_input_columns(original_input_columns_indices, results.optimal_inputs);
+            data_set_pointer->set_input_columns(original_input_columns_indices, inputs_selection_results.optimal_inputs);
 
-            results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
+            inputs_selection_results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
 
-            results.optimal_parameters = parameters(optimal_individual_index);
+            inputs_selection_results.optimal_parameters = parameters(optimal_individual_index);
 
             // Loss index
 
-            results.optimum_training_error = training_errors(optimal_individual_index);
+            inputs_selection_results.optimum_training_error = training_errors(optimal_individual_index);
 
-            results.optimum_selection_error = selection_errors(optimal_individual_index);
+            inputs_selection_results.optimum_selection_error = selection_errors(optimal_individual_index);
         }
 
         time(&current_time);
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+
+        if(display)
+        {
+            cout << endl;
+            cout << "Generation mean training error: " << training_errors.mean() << endl;
+            cout << "Generation mean selection error: " << selection_errors.mean() << endl;
+
+            cout << "Generation minimum training error: " << training_errors(optimal_individual_index) << endl;
+            cout << "Generation minimum selection error: " << selection_errors(optimal_individual_index) << endl;
+
+            cout << "Best ever training error: " << inputs_selection_results.optimum_training_error << endl;
+            cout << "Best ever selection error: " << inputs_selection_results.optimum_selection_error << endl;
+
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+        }
 
         // Stopping criteria
 
@@ -891,46 +826,34 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "Maximum time reached." << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum time reached: " << write_elapsed_time(elapsed_time) << endl;
 
-            results.stopping_condition = InputsSelection::MaximumTime;
+            inputs_selection_results.stopping_condition = InputsSelection::MaximumTime;
         }
-        else if(selection_errors(optimal_individual_index) <= selection_error_goal)
+
+        if(selection_errors(optimal_individual_index) <= selection_error_goal) //???
         {
             stop = true;
 
-            if(display) cout << "selection error reached." << endl;
+            if(display) cout << "Epoch  " << epoch << endl << "Selection error reached: " << selection_errors(optimal_individual_index) << endl;
 
-            results.stopping_condition = InputsSelection::SelectionErrorGoal;
+            inputs_selection_results.stopping_condition = InputsSelection::SelectionErrorGoal;
         }
-        else if(epoch >= maximum_epochs_number-1)
+
+        if(epoch >= maximum_epochs_number-1)
         {
             stop = true;
 
-            if(display) cout << "Maximum number of epochs reached." << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
 
-            results.stopping_condition = InputsSelection::MaximumEpochs;
-        }
-
-        if(display)
-        {
-            cout << "Generation mean training error: " << training_errors.mean() << endl;
-            cout << "Generation mean selection mean: " << selection_errors.mean() << endl;
-
-            cout << "Generation minimum training error: " << training_errors(optimal_individual_index) << endl;
-            cout << "Generation minimum selection error: " << selection_errors(optimal_individual_index) << endl;
-
-            cout << "Best ever training error: " << results.optimum_training_error << endl;
-            cout << "Best ever selection error: " << results.optimum_selection_error << endl;
-
-            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+            inputs_selection_results.stopping_condition = InputsSelection::MaximumEpochs;
         }
 
         if(stop)
         {
-            results.elapsed_time = write_elapsed_time(elapsed_time);
+            inputs_selection_results.elapsed_time = write_elapsed_time(elapsed_time);
 
-            results.resize_history(epoch);
+            inputs_selection_results.resize_history(epoch);
 
             break;
         }
@@ -942,7 +865,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 //        perform_crossover();
 
 //        perform_mutation();
-*/
+
     }
 
     time(&current_time);
@@ -973,9 +896,9 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
 //    neural_network_pointer->set_parameters(results.optimal_parameters);
 
-    if(display) results.print();
+    if(display) inputs_selection_results.print();
 
-    return results;
+    return inputs_selection_results;
 }
 
 
@@ -1009,14 +932,6 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
     buffer << elitism_size;
     values(1) = buffer.str();
 
-    // Selective pressure
-
-    labels(2) = "Selective pressure";
-
-    buffer.str("");
-    buffer << selective_pressure;
-    values(2) = buffer.str();
-
     // Mutation rate
 
     labels(3) = "Mutation rate";
@@ -1048,16 +963,6 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
     buffer.str("");
     buffer << maximum_time;
     values(6) = buffer.str();
-
-    // Plot generation mean history
-
-    labels(7) = "Plot generation mean history";
-
-    buffer.str("");
-
-    reserve_generation_mean ? buffer << "true" : buffer << "false";
-
-    values(7) = buffer.str();
 
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;
@@ -1095,17 +1000,6 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << elitism_size;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Selective pressure
-
-    file_stream.OpenElement("SelectivePressure");
-
-    buffer.str("");
-    buffer << selective_pressure;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1150,39 +1044,6 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve generation optimum loss
-
-    file_stream.OpenElement("ReserveGenerationOptimumLoss");
-
-    buffer.str("");
-    buffer << reserve_generation_optimum_loss;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve generation minimum selection
-
-    file_stream.OpenElement("ReserveGenerationMinimumSelection");
-
-    buffer.str("");
-    buffer << reserve_generation_minimum_selection;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve generation mean
-
-    file_stream.OpenElement("ReserveGenerationMean");
-
-    buffer.str("");
-    buffer << reserve_generation_mean;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1259,82 +1120,6 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_elitism_size(new_elitism_size);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Selective pressure
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectivePressure");
-
-        if(element)
-        {
-            const type new_selective_pressure = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_selective_pressure(new_selective_pressure);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve generation mean
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGenerationMean");
-
-        if(element)
-        {
-            const string new_reserve_generation_mean = element->GetText();
-
-            try
-            {
-                set_reserve_generation_mean(new_reserve_generation_mean != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve generation minimum selection
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGenerationMinimumSelection");
-
-        if(element)
-        {
-            const string new_reserve_generation_minimum_selection = element->GetText();
-
-            try
-            {
-                set_reserve_generation_minimum_selection(new_reserve_generation_minimum_selection != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve generation optimum loss
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGenerationOptimumLoss");
-
-        if(element)
-        {
-            const string new_reserve_generation_optimum_loss = element->GetText();
-
-            try
-            {
-                set_reserve_generation_optimum_loss(new_reserve_generation_optimum_loss != "0");
             }
             catch(const logic_error& e)
             {
