@@ -88,7 +88,6 @@ int main()
 
         GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
         genetic_algorithm_pointer->set_elitism_size(0);
-        genetic_algorithm_pointer->set_selective_pressure(1);
         genetic_algorithm_pointer->set_individuals_number(4);
         genetic_algorithm_pointer->set_maximum_epochs_number(2);
 

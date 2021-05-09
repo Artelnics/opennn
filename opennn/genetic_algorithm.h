@@ -69,14 +69,6 @@ public:
 
     const Index& get_elitism_size() const;
 
-    const type& get_selective_pressure() const;
-
-    const bool& get_reserve_generation_mean() const;
-
-    const bool& get_reserve_generation_minimum_selection() const;
-
-    const bool& get_reserve_generation_optimum_loss() const;
-
     // Set methods
 
     void set_default();
@@ -92,14 +84,6 @@ public:
     void set_mutation_rate(const type&);
 
     void set_elitism_size(const Index&);
-
-    void set_selective_pressure(const type&);
-
-    void set_reserve_generation_mean(const bool&);
-
-    void set_reserve_generation_minimum_selection(const bool&);
-
-    void set_reserve_generation_optimum_loss(const bool&);
 
     // GENETIC METHODS
 
@@ -175,25 +159,6 @@ private:
     /// This is a parameter of the selection operator.
 
     Index elitism_size;
-
-    /// Linear ranking allows values for the selective pressure greater than 0.
-    /// This is a parameter of the fitness assignment operator.
-
-    type selective_pressure;
-
-    // Inputs selection results
-
-    /// True if the mean of selection error are to be reserved in each generation.
-
-    bool reserve_generation_mean;
-
-    /// True if the minimum of selection error are to be reserved in each generation.
-
-    bool reserve_generation_minimum_selection;
-
-    /// True if the optimum of loss are to be reserved in each generation.
-
-    bool reserve_generation_optimum_loss;
 };
 
 }
