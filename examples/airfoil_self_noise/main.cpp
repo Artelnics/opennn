@@ -29,7 +29,7 @@ int main()
     {
         cout << "OpenNN. Airfoil Self-Noise Example." << endl;
 
-//        srand(static_cast<unsigned>(time(nullptr)));
+        srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
 
@@ -89,7 +89,7 @@ int main()
         GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
         genetic_algorithm_pointer->set_elitism_size(0);
         genetic_algorithm_pointer->set_individuals_number(4);
-        genetic_algorithm_pointer->set_maximum_epochs_number(2);
+        genetic_algorithm_pointer->set_maximum_epochs_number(20);
 
         genetic_algorithm_pointer->perform_inputs_selection();
 

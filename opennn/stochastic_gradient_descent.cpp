@@ -495,7 +495,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         {
             cout << "Training error: " << training_error << endl;
             if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
-            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
         // Stopping criteria
@@ -511,7 +511,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -552,7 +552,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             if(has_selection) results.resize_selection_error_history(epoch+1);
             else results.resize_selection_error_history(0);
 
-            results.elapsed_time = write_elapsed_time(elapsed_time);
+            results.elapsed_time = write_time(elapsed_time);
 
             break;
         }
@@ -623,7 +623,7 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 
     labels_values(5,0) = "Maximum time";
 
-    labels_values(5,1) = to_string(maximum_time);
+    labels_values(5,1) = write_time(maximum_time);
 
     // Batch samples number
 

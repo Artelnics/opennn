@@ -551,7 +551,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             if(has_selection) cout << "Selection error: " << selection_back_propagation_lm.error << endl;
             cout << "Gradient norm: " << gradient_norm << endl;
             cout << "Damping parameter: " << damping_parameter << endl;
-            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
         // Stopping Criteria
@@ -633,7 +633,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             results.gradient_norm = gradient_norm;
 
-            results.elapsed_time = write_elapsed_time(elapsed_time);
+            results.elapsed_time = write_time(elapsed_time);
 
             break;
         }
@@ -805,7 +805,7 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
     labels_values(7,0) = "Maximum time";
 
-    labels_values(7,1) = to_string(maximum_time);
+    labels_values(7,1) = write_time(maximum_time);
 
     return labels_values;
 }

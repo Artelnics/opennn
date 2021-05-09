@@ -891,7 +891,7 @@ TrainingResults ConjugateGradient::perform_training()
             if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
             cout << "Gradient norm: " << gradient_norm << endl;
             cout << "Learning rate: " << optimization_data.learning_rate << endl;
-            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
         // Stopping Criteria       
@@ -934,7 +934,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -971,7 +971,7 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.gradient_norm = gradient_norm;
 
-            results.elapsed_time = write_elapsed_time(elapsed_time);
+            results.elapsed_time = write_time(elapsed_time);
 
             break;
         }
@@ -1061,7 +1061,7 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 
     labels_values(9,0) = "Maximum time";
 
-    labels_values(9,1) = to_string(maximum_time);
+    labels_values(9,1) = write_time(maximum_time);
 
     return labels_values;
 }

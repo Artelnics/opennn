@@ -96,23 +96,11 @@ void GeneticAlgorithm::set_default()
     const Index genes_number = get_genes_number();
     Index individuals_number;
 
-    if(training_strategy_pointer == nullptr
-    || !training_strategy_pointer->has_neural_network())
-    {
-        maximum_epochs_number = 100;
+    maximum_epochs_number = 100;
 
-        mutation_rate = 0.1;
+    mutation_rate = 0.1;
 
-        individuals_number = 10;
-    }
-    else
-    {
-        maximum_epochs_number = static_cast<Index>(max(100.0,genes_number*5.0));
-
-        mutation_rate = static_cast<type>(1.0/genes_number);
-
-        individuals_number = 10 * genes_number;
-    }
+    individuals_number = 10;
 
     // Population stuff
 
@@ -559,25 +547,27 @@ void GeneticAlgorithm::perform_selection()
 
     // Roulette wheel
 
+
     do
     {
         const type pointer = static_cast<type>(rand()/(RAND_MAX+1.0))*cumulative_fitness(individuals_number-1);
 
-        for(Index i = 0; i < individuals_number; i++)
+        if(pointer < cumulative_fitness(0) && !selection(0))
         {
-            if(pointer < cumulative_fitness(i))
-            {
-                if(!selection(i))
-                {
-                    selection(i) = true;
-                    selection_count++;
+            selection(0) = true;
+            selection_count++;
+            continue;
+        }
 
-                    break;
-                }
-                else
-                {
-                    break;
-                }
+        for(Index i = 1; i < individuals_number; i++)
+        {
+            if(cumulative_fitness(i-1) < pointer
+            && pointer < cumulative_fitness(i)
+            && !selection(i))
+            {
+                selection(i) = true;
+                selection_count++;
+                break;
             }
         }
 
@@ -817,7 +807,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
             cout << "Best ever training error: " << inputs_selection_results.optimum_training_error << endl;
             cout << "Best ever selection error: " << inputs_selection_results.optimum_selection_error << endl;
 
-            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
         // Stopping criteria
@@ -826,7 +816,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "Epoch " << epoch << endl << "Maximum time reached: " << write_elapsed_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum time reached: " << write_time(elapsed_time) << endl;
 
             inputs_selection_results.stopping_condition = InputsSelection::MaximumTime;
         }
@@ -851,50 +841,46 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         if(stop)
         {
-            inputs_selection_results.elapsed_time = write_elapsed_time(elapsed_time);
+            inputs_selection_results.elapsed_time = write_time(elapsed_time);
 
-            inputs_selection_results.resize_history(epoch);
+            inputs_selection_results.resize_history(epoch+1);
 
             break;
         }
 
-//        perform_fitness_assignment();
+        perform_fitness_assignment();
 
-//        perform_selection();
+        perform_selection();
 
-//        perform_crossover();
+        perform_crossover();
 
-//        perform_mutation();
+        perform_mutation();
 
     }
 
-    time(&current_time);
-
-    elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
     // Set data set stuff
 
-//    data_set_pointer->set_input_columns(original_input_columns_indices, results.optimal_inputs);
+    data_set_pointer->set_input_columns(original_input_columns_indices, inputs_selection_results.optimal_inputs);
 
-//    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-//    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-//    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
-//    const Tensor<Descriptives, 1> target_variables_descriptives = data_set_pointer->scale_target_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+    const Tensor<Descriptives, 1> target_variables_descriptives = data_set_pointer->scale_target_variables();
 
     // Set neural network stuff
 
-//    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
-//    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-//    if(neural_network_pointer->has_scaling_layer())
-//        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
+    if(neural_network_pointer->has_scaling_layer())
+        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
 
 //    if(neural_network_pointer->has_unscaling_layer())
 //        neural_network_pointer->get_unscaling_layer_pointer()->set(input_variables_descriptives, target_variables_scalers);
 
-//    neural_network_pointer->set_parameters(results.optimal_parameters);
+    neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 
     if(display) inputs_selection_results.print();
 

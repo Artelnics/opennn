@@ -409,7 +409,7 @@ string InputsSelectionResults::write_stopping_condition() const
 
 /// Writes the time from seconds in format HH:mm:ss.
 
-const string InputsSelection::write_elapsed_time(const type& time) const
+const string InputsSelection::write_time(const type& time) const
 {
 
 #ifdef OPENNN_DEBUG
@@ -419,7 +419,7 @@ const string InputsSelection::write_elapsed_time(const type& time) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_elapsed_time(const type& time) const method.\n"
+               << "const string write_time(const type& time) const method.\n"
                << "Time must be lower than 10e5 seconds.\n";
 
         throw logic_error(buffer.str());
@@ -430,7 +430,7 @@ const string InputsSelection::write_elapsed_time(const type& time) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_elapsed_time(const type& time) const method.\n"
+               << "const string write_time(const type& time) const method.\n"
                << "Time must be greater than 0.\n";
 
         throw logic_error(buffer.str());
