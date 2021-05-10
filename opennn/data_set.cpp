@@ -2475,6 +2475,28 @@ Tensor<Scaler, 1> DataSet::get_columns_scalers() const
 }
 
 
+Tensor<Scaler, 1> DataSet::get_variables_scalers(const Tensor<Index, 1>& columns_indices) const
+{
+    const Index columns_number = columns_indices.size();
+
+    const Index variables_number = get_variables_number(columns_indices);
+
+    Tensor<Scaler, 1> variables_scalers(variables_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        for(Index j = 0;  j < columns(columns_indices(i)).get_variables_number(); j++)
+        {
+            variables_scalers(index) = columns(columns_indices(i)).scaler;
+            index++;
+        }
+    }
+
+    return variables_scalers;
+}
+
 
 Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
 {
@@ -2876,6 +2898,26 @@ Index DataSet::get_variables_number() const
         if(columns(i).type == Categorical)
         {
             variables_number += columns(i).categories.size();
+        }
+        else
+        {
+            variables_number++;
+        }
+    }
+
+    return variables_number;
+}
+
+
+Index DataSet::get_variables_number(const Tensor<Index, 1>& columns_indices) const
+{
+    Index variables_number = 0;
+
+    for(Index i = 0; i < columns_indices.size(); i++)
+    {
+        if(columns(i).type == Categorical)
+        {
+            variables_number += columns(columns_indices(i)).categories_uses.size();
         }
         else
         {
@@ -6481,11 +6523,25 @@ void DataSet::print_top_inputs_correlations() const
 
 /// Returns a vector of strings containing the scaling method that best fits each
 /// of the input variables.
+/// @todo Takes too long in big files.
 
 void DataSet::set_default_columns_scalers()
 {
     const Index columns_number = columns.size();
 
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).type == ColumnType::Numeric)
+        {
+            columns(i).scaler = Scaler::MeanStandardDeviation;
+        }
+        else
+        {
+            columns(i).scaler = Scaler::MinimumMaximum;
+        }
+    }
+
+/*
     Index current_distribution;
 
     ColumnType column_type;
@@ -6522,6 +6578,7 @@ void DataSet::set_default_columns_scalers()
             columns(i).scaler = Scaler::MinimumMaximum;
         }
     }
+*/
 }
 
 
@@ -9865,6 +9922,8 @@ void DataSet::read_csv()
 
         read_csv_3_complete();
     }
+
+    variables_descriptives = scale_data();
 }
 
 

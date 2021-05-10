@@ -251,10 +251,6 @@ struct NeuronsSelectionResults
 
    // Model selection
 
-   /// Number of iterations to perform the neurons selection.
-
-   Index epochs_number;
-
    /// Stopping condition of the algorithm.
 
    NeuronsSelection::StoppingCondition stopping_condition;
