@@ -66,9 +66,6 @@ public:
 
     const Index& get_trials_number() const;
 
-
-
-
     const bool& get_display() const;
 
     const type& get_selection_error_goal() const;
@@ -120,21 +117,10 @@ protected:
 
     TrainingStrategy* training_strategy_pointer = nullptr;
 
-    /// Inputs of all the neural networks trained.
+    Tensor<Scaler, 1> original_input_variables_scalers;
 
-    Tensor<bool, 2> inputs_history;
-
-    /// Selection loss of all the neural networks trained.
-
-    Tensor<type, 1> selection_error_history;
-
-    /// Performance of all the neural networks trained.
-
-    Tensor<type, 1> training_error_history;
-
-    /// Parameters of all the neural network trained.
-
-    Tensor<Tensor<type, 1>, 1> parameters_history;
+    Tensor<Index, 1> original_input_columns_indices;
+    Tensor<Index, 1> original_target_columns_indices;
 
     /// Number of trials for each neural network.
 
@@ -235,6 +221,7 @@ struct InputsSelectionResults
        cout << "Optimum training error: " << optimum_training_error << endl;
        cout << "Optimum selection error: " << optimum_selection_error << endl;
    }
+
 
    // Neural network
 

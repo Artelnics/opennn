@@ -190,6 +190,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+    original_input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+
     const Tensor<Index, 1> target_columns_indices = data_set_pointer->get_target_columns_indices();
 
     const Index original_input_columns_number = data_set_pointer->get_input_columns_number();
@@ -252,7 +254,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
             for(Index i = 0; i < input_columns_number; i++) cout << "   " << input_columns_names(i) << endl;
         }
 
-        // Trials
+        type minimum_training_error = numeric_limits<type>::max();
+        type minimum_selection_error = numeric_limits<type>::max();
 
         for(Index i = 0; i < trials_number; i++)
         {
@@ -267,18 +270,28 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 cout << "   Selection error: " << training_results.get_selection_error() << endl;
             }
 
+            if(training_results.get_selection_error() < minimum_selection_error)
+            {
+                minimum_training_error = training_results.get_training_error();
+                minimum_selection_error = training_results.get_selection_error();
+
+                inputs_selection_results.training_error_history(epoch-1) = minimum_training_error;
+                inputs_selection_results.selection_error_history(epoch-1) = minimum_selection_error;
+            }
+
             if(training_results.get_selection_error() < inputs_selection_results.optimum_selection_error)
             {
                 // Neural network
 
                 inputs_selection_results.optimal_input_columns_indices = data_set_pointer->get_input_columns_indices();
                 inputs_selection_results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
-                //results.optimal_parameters = training_results.parameters;
+
+                inputs_selection_results.optimal_parameters = neural_network_pointer->get_parameters();
 
                 // Loss index
 
-                inputs_selection_results.optimum_selection_error = training_results.get_selection_error();
                 inputs_selection_results.optimum_training_error = training_results.get_training_error();
+                inputs_selection_results.optimum_selection_error = training_results.get_selection_error();
             }
         }
 
@@ -300,18 +313,18 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "\nMaximum time reached." << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum time reached: " << write_time(elapsed_time) << endl;
 
             inputs_selection_results.stopping_condition = InputsSelection::MaximumTime;
         }
-//        else if(training_results.get_selection_error() <= selection_error_goal)
-//        {
-//            stop = true;
+        else if(inputs_selection_results.optimum_selection_error <= selection_error_goal)
+        {
+            stop = true;
 
-//            if(display) cout << "\nSelection loss reached." << endl;
+            if(display) cout << "\nSelection error reached: " << inputs_selection_results.optimum_selection_error << endl;
 
-//            results.stopping_condition = InputsSelection::SelectionErrorGoal;
-//        }
+            inputs_selection_results.stopping_condition = InputsSelection::SelectionErrorGoal;
+        }
         else if(epoch >= maximum_epochs_number)
         {
             stop = true;
@@ -349,22 +362,23 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     // Set data set stuff
 
-//    data_set_pointer->set_input_target_columns(results.optimal_input_columns_indices, target_columns_indices);
+    data_set_pointer->set_input_target_columns(inputs_selection_results.optimal_input_columns_indices, target_columns_indices);
 
-//    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers
+            = data_set_pointer->get_variables_scalers(inputs_selection_results.optimal_input_columns_indices);
 
-//    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
 
     // Set neural network stuff
 
-//    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
-//    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-//    if(neural_network_pointer->has_scaling_layer())
-//        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
+    if(neural_network_pointer->has_scaling_layer())
+        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
 
-//    neural_network_pointer->set_parameters(results.optimal_parameters);
+    neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 
     if(display) inputs_selection_results.print();
 

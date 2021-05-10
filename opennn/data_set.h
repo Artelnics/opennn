@@ -248,6 +248,8 @@ public:
 
    Index get_variables_number() const;
 
+   Index get_variables_number(const Tensor<Index, 1>&) const;
+
    Index get_input_variables_number() const;
    Index get_target_variables_number() const;
    Index get_unused_variables_number() const;
@@ -276,6 +278,8 @@ public:
    // Scalers get methods
 
    Tensor<Scaler, 1> get_columns_scalers() const;
+
+   Tensor<Scaler, 1> get_variables_scalers(const Tensor<Index, 1>&) const;
 
    Tensor<Scaler, 1> get_input_variables_scalers() const;
    Tensor<Scaler, 1> get_target_variables_scalers() const;
@@ -816,7 +820,9 @@ private:
 
    Tensor<Column, 1> columns;
 
-   /// Header wihch contains the rows label.
+   Tensor<Descriptives, 1> variables_descriptives;
+
+   /// Header which contains the rows label.
 
    bool has_rows_labels = false;
 
@@ -826,8 +832,6 @@ private:
 
    Tensor<Tensor<string, 1>, 1> data_file_preview;
 
-   const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
-
    /// Missing values
 
    Index missing_values_number;
@@ -835,6 +839,9 @@ private:
    Tensor<Index, 1> columns_missing_values_number;
 
    Index rows_missing_values_number;
+
+   const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
+
 };
 
 

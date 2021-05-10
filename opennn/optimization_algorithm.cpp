@@ -541,7 +541,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 {
     ostringstream buffer;
 
-    const Index size = training_error_history.size();
+    const Index size = training_error_history.size();        
 
     Tensor<string, 2> final_results(7, 2);
 
@@ -568,7 +568,10 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(2,0) = "Selection error";
 
     buffer.str("");
-    buffer << setprecision(precision) << selection_error_history(size-1);
+
+    selection_error_history.size() == 0
+            ? buffer << "NAN"
+            : buffer << setprecision(precision) << selection_error_history(size-1);
 
     final_results(2,1) = buffer.str();
 
@@ -586,7 +589,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(4,0) = "Epochs number";
 
     buffer.str("");
-    buffer << training_error_history.size();
+    buffer << training_error_history.size()-1;
 
     final_results(4,1) = buffer.str();
 
