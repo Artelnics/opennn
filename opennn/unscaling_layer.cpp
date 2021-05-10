@@ -799,8 +799,7 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                 }
                 else if(scalers(j) == Logarithm)
                 {
-                    outputs(i,j) = static_cast<type>(0.5)*(exp(inputs(i,j))+1)*(descriptives[j].maximum-descriptives[j].minimum)
-                                 + descriptives[j].minimum;
+                    outputs(i,j) = exp(inputs(i,j));
                 }
                 else
                 {

@@ -607,6 +607,10 @@ void ScalingLayer::set_scalers(const Tensor<string, 1>& new_scaling_methods_stri
         {
             new_scaling_methods(i) = StandardDeviation;
         }
+        else if(new_scaling_methods_string(i) == "Logarithm")
+        {
+            new_scaling_methods(i) = Logarithm;
+        }
         else
         {
             ostringstream buffer;
@@ -665,6 +669,10 @@ void ScalingLayer::set_scalers(const string& new_scaling_methods_string)
         else if(new_scaling_methods_string == "StandardDeviation")
         {
             new_scaling_methods(i) = StandardDeviation;
+        }
+        else if(new_scaling_methods_string == "Logarithm")
+        {
+            new_scaling_methods(i) = Logarithm;
         }
         else
         {
@@ -850,6 +858,10 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                 {
                     outputs(i,j) = inputs(i,j)/descriptives(j).standard_deviation;
                 }
+                else if(scalers(j) == Logarithm)
+                {
+                    outputs(i,j) = log(inputs(i,j));
+                }
                 else
                 {
                     ostringstream buffer;
@@ -930,6 +942,10 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
                 else if(scalers(j) == StandardDeviation)
                 {
                     outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index)/descriptives(j).standard_deviation;
+                }
+                else if(scalers(j) == Logarithm)
+                {
+                    outputs(i, channel_index, row_index, column_index) = std::log(inputs(i, channel_index, row_index, column_index));
                 }
                 else
                 {
