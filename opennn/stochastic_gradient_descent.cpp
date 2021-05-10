@@ -362,6 +362,17 @@ TrainingResults StochasticGradientDescent::perform_training()
             ? batch_size_selection = selection_samples_number
             : batch_size_selection = batch_samples_number;
 
+    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
+    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
+
+    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+
+    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> target_variables_descriptives = data_set_pointer->calculate_target_variables_descriptives();
+
+    const Tensor<Descriptives, 1> variables_descriptives = data_set_pointer->scale_data();
+
     DataSetBatch batch_training(batch_size_training, data_set_pointer);
     DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
 
@@ -374,6 +385,21 @@ TrainingResults StochasticGradientDescent::perform_training()
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+    neural_network_pointer->set_inputs_names(inputs_names);
+    neural_network_pointer->set_outputs_names(targets_names);
+
+    if(neural_network_pointer->has_scaling_layer())
+    {
+        ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
+        scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
+    }
+
+    if(neural_network_pointer->has_unscaling_layer())
+    {
+        UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
+        unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
+    }
 
     NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
@@ -563,6 +589,8 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
+
+    data_set_pointer->unscale_data(variables_descriptives);
 
     if(display) results.print();
 

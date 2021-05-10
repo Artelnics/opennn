@@ -601,9 +601,9 @@ void GeneticAlgorithm::perform_crossover()
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
-    const Index selected_individuals_number = individuals_number/2;
-
 #ifdef OPENNN_DEBUG
+
+    const Index selected_individuals_number = individuals_number/2;
 
     Index count_selected_individuals = 0;
     for(Index i = 0; i < individuals_number; i++) if(selection(i)) count_selected_individuals++;
@@ -863,10 +863,8 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     data_set_pointer->set_input_columns(original_input_columns_indices, inputs_selection_results.optimal_inputs);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
-    const Tensor<Descriptives, 1> target_variables_descriptives = data_set_pointer->scale_target_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->calculate_input_variables_descriptives();
 
     // Set neural network stuff
 
@@ -876,9 +874,6 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     if(neural_network_pointer->has_scaling_layer())
         neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
-
-//    if(neural_network_pointer->has_unscaling_layer())
-//        neural_network_pointer->get_unscaling_layer_pointer()->set(input_variables_descriptives, target_variables_scalers);
 
     neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 

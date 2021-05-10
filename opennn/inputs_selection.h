@@ -117,8 +117,6 @@ protected:
 
     TrainingStrategy* training_strategy_pointer = nullptr;
 
-    Tensor<Scaler, 1> original_input_variables_scalers;
-
     Tensor<Index, 1> original_input_columns_indices;
     Tensor<Index, 1> original_target_columns_indices;
 
