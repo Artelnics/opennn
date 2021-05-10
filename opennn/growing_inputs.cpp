@@ -190,8 +190,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    original_input_variables_scalers = data_set_pointer->get_input_variables_scalers();
-
     const Tensor<Index, 1> target_columns_indices = data_set_pointer->get_target_columns_indices();
 
     const Index original_input_columns_number = data_set_pointer->get_input_columns_number();
@@ -364,10 +362,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     data_set_pointer->set_input_target_columns(inputs_selection_results.optimal_input_columns_indices, target_columns_indices);
 
-    const Tensor<Scaler, 1> input_variables_scalers
-            = data_set_pointer->get_variables_scalers(inputs_selection_results.optimal_input_columns_indices);
+    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->calculate_input_variables_descriptives();
 
     // Set neural network stuff
 

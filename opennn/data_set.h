@@ -248,8 +248,6 @@ public:
 
    Index get_variables_number() const;
 
-   Index get_variables_number(const Tensor<Index, 1>&) const;
-
    Index get_input_variables_number() const;
    Index get_target_variables_number() const;
    Index get_unused_variables_number() const;
@@ -278,8 +276,6 @@ public:
    // Scalers get methods
 
    Tensor<Scaler, 1> get_columns_scalers() const;
-
-   Tensor<Scaler, 1> get_variables_scalers(const Tensor<Index, 1>&) const;
 
    Tensor<Scaler, 1> get_input_variables_scalers() const;
    Tensor<Scaler, 1> get_target_variables_scalers() const;
@@ -819,8 +815,6 @@ private:
    Tensor<Index, 1> input_variables_dimensions;
 
    Tensor<Column, 1> columns;
-
-   Tensor<Descriptives, 1> variables_descriptives;
 
    /// Header which contains the rows label.
 

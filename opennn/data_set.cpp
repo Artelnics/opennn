@@ -2475,29 +2475,6 @@ Tensor<Scaler, 1> DataSet::get_columns_scalers() const
 }
 
 
-Tensor<Scaler, 1> DataSet::get_variables_scalers(const Tensor<Index, 1>& columns_indices) const
-{
-    const Index columns_number = columns_indices.size();
-
-    const Index variables_number = get_variables_number(columns_indices);
-
-    Tensor<Scaler, 1> variables_scalers(variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < columns_number; i++)
-    {
-        for(Index j = 0;  j < columns(columns_indices(i)).get_variables_number(); j++)
-        {
-            variables_scalers(index) = columns(columns_indices(i)).scaler;
-            index++;
-        }
-    }
-
-    return variables_scalers;
-}
-
-
 Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
 {
     const Index input_columns_number = get_input_columns_number();
@@ -2898,26 +2875,6 @@ Index DataSet::get_variables_number() const
         if(columns(i).type == Categorical)
         {
             variables_number += columns(i).categories.size();
-        }
-        else
-        {
-            variables_number++;
-        }
-    }
-
-    return variables_number;
-}
-
-
-Index DataSet::get_variables_number(const Tensor<Index, 1>& columns_indices) const
-{
-    Index variables_number = 0;
-
-    for(Index i = 0; i < columns_indices.size(); i++)
-    {
-        if(columns(i).type == Categorical)
-        {
-            variables_number += columns(columns_indices(i)).categories_uses.size();
         }
         else
         {
@@ -9922,8 +9879,6 @@ void DataSet::read_csv()
 
         read_csv_3_complete();
     }
-
-    variables_descriptives = scale_data();
 }
 
 

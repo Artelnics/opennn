@@ -464,6 +464,17 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
+    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
+    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
+
+    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+
+    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> target_variables_descriptives = data_set_pointer->calculate_target_variables_descriptives();
+
+    const Tensor<Descriptives, 1> variables_descriptives = data_set_pointer->scale_data();
+
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
     DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
@@ -473,6 +484,21 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+    neural_network_pointer->set_inputs_names(inputs_names);
+    neural_network_pointer->set_outputs_names(targets_names);
+
+    if(neural_network_pointer->has_scaling_layer())
+    {
+        ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
+        scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
+    }
+
+    if(neural_network_pointer->has_unscaling_layer())
+    {
+        UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
+        unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
+    }
 
     NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
@@ -607,7 +633,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -645,6 +671,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                           training_back_propagation_lm,
                           optimization_data);
     }
+
+    data_set_pointer->unscale_data(variables_descriptives);
 
     if(display) results.print();
 
