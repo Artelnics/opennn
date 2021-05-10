@@ -27,62 +27,15 @@ int main()
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        // Data set
-
         DataSet data_set("../data/breast_cancer.csv", ';', true);
-
-        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
-        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
         const Index input_variables_number = data_set.get_input_variables_number();
 
-        const Tensor<Descriptives, 1> input_variables_descriptives
-                = data_set.scale_input_variables();
-
-        // Neural network
-
-        NeuralNetwork neural_network(NeuralNetwork::Classification, {9, 7, 1});
-
-        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
-        scaling_layer_pointer->set_scalers(MeanStandardDeviation);
-
-        static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1))
-                ->set_activation_function(PerceptronLayer::HyperbolicTangent);
-
-        static_cast<ProbabilisticLayer*>(neural_network.get_layer_pointer(2))
-                ->set_activation_function(ProbabilisticLayer::Logistic);
-
-        // Training strategy
+        NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, 7, 1});
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-/*
-        training_strategy.set_optimization_method(TrainingStrategy::CONJUGATE_GRADIENT);
 
-        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
-
-        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
-        training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
-
-        ConjugateGradient* cg = training_strategy.get_conjugate_gradient_pointer();
-
-        cg->set_loss_goal(1.0e-3);
-
-        cg->set_display(true);
-
-        training_strategy.set_display(true);
-*/
         training_strategy.perform_training();
-
-        // Model selection
-
-//         ModelSelection model_selection(&training_strategy);
-
-//         model_selection.perform_neurons_selection();
-
-         // Testing analysis
-
-//         data_set.unscale_input_variables(scalers, input_variables_descriptives);
 
          TestingAnalysis testing_analysis(&neural_network, &data_set);
 

@@ -38,9 +38,6 @@ int main()
         data_set.set_columns_uses(uses);
         data_set.set_training();
 
-        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
-        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
-
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
@@ -50,19 +47,10 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, hidden_neurons_number, target_variables_number});
 
-        neural_network.set_inputs_names(inputs_names);
-        neural_network.set_outputs_names(targets_names);
-
-        static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1))->set_synaptic_weights_glorot();
-
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
-
-        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
         training_strategy.perform_training();
 
         // Print results to screen

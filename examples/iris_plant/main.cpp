@@ -37,13 +37,8 @@ int main()
 
         DataSet data_set("../data/iris_plant_original.csv", ';', true);
 
-        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
-        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
-
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
-
-        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
 
         // Neural network
 
@@ -51,26 +46,10 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
-        neural_network.set_inputs_names(inputs_names);
-        neural_network.set_outputs_names(targets_names);
-
-        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
-        scaling_layer_pointer->set_scalers(MinimumMaximum);
-
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
-/*
-        AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
-
-        adam->set_loss_goal(1.0e-3);
-        adam->set_maximum_epochs_number(10000);
-        adam->set_display_period(1000);
-*/
         training_strategy.perform_training();
 
         // Testing analysis
@@ -86,8 +65,6 @@ int main()
 
         cout << "Outputs: " << endl;
         cout << neural_network.calculate_outputs(inputs) << endl;
-
-        data_set.unscale_input_variables(input_variables_descriptives);
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 

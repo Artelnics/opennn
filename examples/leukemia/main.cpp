@@ -37,9 +37,14 @@ int main()
 
         const Tensor<CorrelationResults, 2> correlation_results = data_set.calculate_input_target_columns_correlations();
 
+        cout << "Separable genes: " << endl;
+
         for(Index i = 0; i < correlation_results.size(); i++)
         {
-            cout << "Gene " << i << " correlation: " << correlation_results(i).correlation;
+            if(abs(correlation_results(i).correlation - 1) < numeric_limits<type>::min()
+            || abs(correlation_results(i).correlation + 1) < numeric_limits<type>::min())
+
+            cout << "Gene " << i << " correlation: " << correlation_results(i).correlation << endl;
         }
 
         return 0;
@@ -51,7 +56,6 @@ int main()
         return 1;
     }
 }
-
 
 
 // OpenNN: Open Neural Networks Library.

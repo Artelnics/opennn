@@ -44,45 +44,21 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
-        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
-        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
-
-        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
-
         // Neural network
 
         const Index hidden_neurons_number = 6;
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
-        neural_network.set_inputs_names(inputs_names);
-        neural_network.set_outputs_names(targets_names);
-
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-
-        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
-        scaling_layer_pointer->set_scalers(MinimumMaximum);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
-
-        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
-        training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
-
-        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
-        ConjugateGradient* conjugate_gradient_pointer = training_strategy.get_conjugate_gradient_pointer();
-        conjugate_gradient_pointer->set_minimum_loss_decrease(1.0e-6);
-        conjugate_gradient_pointer->set_loss_goal(1.0e-3);
-
         const TrainingResults training_results = training_strategy.perform_training();
 
         // Testing analysis
-
-        data_set.unscale_input_variables(input_variables_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
@@ -102,11 +78,9 @@ int main()
         // Save results
 
         neural_network.save("../data/neural_network.xml");
-
         neural_network.save_expression_python("neural_network.py");
 
         return 0;
-
     }
     catch(exception& e)
     {
