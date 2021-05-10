@@ -283,6 +283,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     // Loss index
 
+    loss_index_pointer->set_normalization_coefficient();
+
     LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 

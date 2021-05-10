@@ -505,6 +505,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     // Loss index
 
+    loss_index_pointer->set_normalization_coefficient();
+
     type old_loss = 0;
     type loss_decrease = numeric_limits<type>::max();
 

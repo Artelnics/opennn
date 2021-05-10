@@ -458,6 +458,7 @@ TrainingResults GradientDescent::perform_training()
 
     const Tensor<Descriptives, 1> variables_descriptives = data_set_pointer->scale_data();
 
+
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
     DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
@@ -487,6 +488,10 @@ TrainingResults GradientDescent::perform_training()
     NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
+
+    const string error_type = loss_index_pointer->get_error_type();
+
+    loss_index_pointer->set_normalization_coefficient();
 
     type gradient_norm = 0;
 

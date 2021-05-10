@@ -855,7 +855,6 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         perform_crossover();
 
         perform_mutation();
-
     }
 
     // Set data set stuff

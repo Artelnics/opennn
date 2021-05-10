@@ -65,8 +65,6 @@ const Index& PruningInputs::get_maximum_selection_failures() const
 
 void PruningInputs::set_default()
 {
-    Index inputs_number;
-
     if(training_strategy_pointer == nullptr || !training_strategy_pointer->has_neural_network())
     {
         maximum_selection_failures = 100;
@@ -74,11 +72,10 @@ void PruningInputs::set_default()
         maximum_inputs_number = 20;
     }
     else
-    {
-        inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
-        maximum_selection_failures = 100;//static_cast<Index>(max(3.,inputs_number/5.));
+    {       
+        maximum_selection_failures = 100;
 
-        maximum_inputs_number = inputs_number;
+        maximum_inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
     }
 
     minimum_inputs_number = 1;
@@ -192,8 +189,6 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     const Tensor<Index, 1> target_columns_indices = data_set_pointer->get_target_columns_indices();
 
-    const Tensor<string, 1> columns_names = data_set_pointer->get_columns_names();   
-
     Tensor<string, 1> input_columns_names;
 
     const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
@@ -262,8 +257,8 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
                 minimum_training_error = training_results.get_training_error();
                 minimum_selection_error = training_results.get_selection_error();
 
-                inputs_selection_results.training_error_history(epoch-1) = minimum_training_error;
-                inputs_selection_results.selection_error_history(epoch-1) = minimum_selection_error;
+                inputs_selection_results.training_error_history(epoch) = minimum_training_error;
+                inputs_selection_results.selection_error_history(epoch) = minimum_selection_error;
             }
 
             if(training_results.get_selection_error() < inputs_selection_results.optimum_selection_error)
@@ -335,8 +330,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
             inputs_selection_results.stopping_condition = InputsSelection::MaximumSelectionFailures;
         }
-        else if(input_columns_number <= minimum_inputs_number
-             || input_columns_number == 1)
+        else if(input_columns_number <= minimum_inputs_number || input_columns_number == 1)
         {
             stop = true;
 
