@@ -54,9 +54,9 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
-    sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
-
     const type coefficient = static_cast<type>(batch_samples_number);
+
+    sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
     back_propagation.error = sum_squared_error(0)/coefficient;
 }
@@ -197,7 +197,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch&,
 
 
 void MeanSquaredError::calculate_gradient(const DataSetBatch& batch,
-                                                   LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+                                          LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef OPENNN_DEBUG
 
