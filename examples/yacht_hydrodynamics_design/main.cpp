@@ -35,38 +35,14 @@ int main()
 
         DataSet data_set("../data/yachtresistance.csv", ';', true);
 
-        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
-        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
-
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
-
-        Tensor<string, 1> scaling_inputs_methods(input_variables_number);
-        scaling_inputs_methods.setConstant("MinimumMaximum");
-
-        Tensor<string, 1> scaling_target_methods(target_variables_number);
-        scaling_target_methods.setConstant("MinimumMaximum");
-
-        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
-
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables();
 
         // Neural network
 
         const Index hidden_neurons_number = 10;
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, hidden_neurons_number, target_variables_number});
-
-        neural_network.set_inputs_names(inputs_names);
-        neural_network.set_outputs_names(targets_names);
-
-        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-        scaling_layer_pointer->set_scalers(MinimumMaximum);
-        scaling_layer_pointer->set_descriptives(input_variables_descriptives);
-
-        UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
-        unscaling_layer_pointer->set_scalers(MinimumMaximum);
-        unscaling_layer_pointer->set_descriptives(targets_descriptives);
 
         // Training strategy object
 
@@ -81,9 +57,7 @@ int main()
         const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis
                 = testing_analysis.perform_linear_regression_analysis()[0];
 
-
-        cout << "Linear regression analysis correlation: "
-             << linear_regression_analysis.correlation << endl;
+        linear_regression_analysis.print();
 
         // Save results
 

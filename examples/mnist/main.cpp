@@ -23,7 +23,6 @@
 using namespace std;
 using namespace OpenNN;
 
-
 int main()
 {
     try
@@ -40,14 +39,9 @@ int main()
 
         data_set.set_column_use(0, DataSet::VariableUse::Target);
 
-        const Tensor<string, 1> unused_variables = data_set.unuse_constant_columns();
-
         const Index input_variables_number = data_set.get_input_variables_number();
-
         const Index target_variables_number = data_set.get_target_variables_number();
 
-        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
-/*
         const Tensor<DataSet::Column, 1> columns = data_set.get_columns();
 
         for(Index i = 0; i < columns.size(); i++)
@@ -63,7 +57,7 @@ int main()
 
             cout << endl;
         }
-*/
+
         cout << "Input variables number: " << data_set.get_target_variables_number() << endl;
         cout << "Target variables number: " << data_set.get_target_variables_number() << endl;
 
@@ -73,7 +67,7 @@ int main()
         cout << "target_variables_number" << target_variables_number <<endl;
 
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, 50, target_variables_number});
-/*
+
         PerceptronLayer* perceptron_layer_pointer = neural_network.get_first_perceptron_layer_pointer();
         perceptron_layer_pointer->set_activation_function("RectifiedLinear");
 
@@ -87,12 +81,12 @@ int main()
             if(layers_pointers(i)->get_type_string() == "Perceptron") cout << "   Activation: " << static_cast<PerceptronLayer*>(layers_pointers(i))->write_activation_function() << endl;
             if(layers_pointers(i)->get_type_string() == "Probabilistic") cout << "   Activation: " << static_cast<ProbabilisticLayer*>(layers_pointers(i))->write_activation_function() << endl;
         }
-*/
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::CROSS_ENTROPY_ERROR);
 
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
