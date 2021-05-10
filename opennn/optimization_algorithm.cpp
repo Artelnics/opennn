@@ -543,29 +543,20 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     const Index size = training_error_history.size();        
 
-    Tensor<string, 2> final_results(7, 2);
+    Tensor<string, 2> final_results(6, 2);
 
-    // Final parameters norm
+    // Final training error
 
-    final_results(0,0) = "Final parameters norm";
-
-    buffer.str("");
-    buffer << setprecision(precision) << parameters_norm;
-
-    final_results(0,1) = buffer.str();
-
-    // Final loss   
-
-    final_results(1,0) = "Training error";
+    final_results(0,0) = "Training error";
 
     buffer.str("");
     buffer << setprecision(precision) << training_error_history(size-1);
 
-    final_results(1,1) = buffer.str();
+    final_results(0,1) = buffer.str();
 
     // Final selection error
 
-    final_results(2,0) = "Selection error";
+    final_results(1,0) = "Selection error";
 
     buffer.str("");
 
@@ -573,40 +564,40 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
             ? buffer << "NAN"
             : buffer << setprecision(precision) << selection_error_history(size-1);
 
-    final_results(2,1) = buffer.str();
+    final_results(1,1) = buffer.str();
 
     // Final gradient norm
 
-    final_results(3,0) = "Final gradient norm";
+    final_results(2,0) = "Gradient norm";
 
     buffer.str("");
     buffer << setprecision(precision) << gradient_norm;
 
-    final_results(3,1) = buffer.str();
+    final_results(2,1) = buffer.str();
 
     // Epochs number
 
-    final_results(4,0) = "Epochs number";
+    final_results(3,0) = "Epochs number";
 
     buffer.str("");
     buffer << training_error_history.size()-1;
 
-    final_results(4,1) = buffer.str();
+    final_results(3,1) = buffer.str();
 
     // Elapsed time
 
-    final_results(5,0) = "Elapsed time";
+    final_results(4,0) = "Elapsed time";
 
     buffer.str("");
     buffer << setprecision(precision) << elapsed_time;
 
-    final_results(5,1) = buffer.str();
+    final_results(4,1) = buffer.str();
 
     // Stopping criteria
 
-    final_results(6,0) = "Stopping criterion";
+    final_results(5,0) = "Stopping criterion";
 
-    final_results(6,1) = write_stopping_condition();
+    final_results(5,1) = write_stopping_condition();
 
     return final_results;
 }

@@ -79,7 +79,8 @@ int main()
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
+        const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis
+                = testing_analysis.perform_linear_regression_analysis()[0];
 
         linear_regression_analysis.print();
 

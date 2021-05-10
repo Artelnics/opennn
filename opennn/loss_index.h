@@ -144,6 +144,8 @@ public:
 
    void set_display(const bool&);
 
+   virtual void set_normalization_coefficient() {}
+
    bool has_selection() const;
 
    // GRADIENT METHODS

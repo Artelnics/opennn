@@ -857,6 +857,8 @@ TrainingResults ConjugateGradient::perform_training()
 
     string information;
 
+    loss_index_pointer->set_normalization_coefficient();
+
     LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 

@@ -686,6 +686,10 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+    // Loss index
+
+    const string error_type = loss_index_pointer->get_error_type();
+
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
 
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
@@ -739,6 +743,8 @@ TrainingResults QuasiNewtonMethod::perform_training()
     // Loss index
 
     type gradient_norm = 0;
+
+    loss_index_pointer->set_normalization_coefficient();
 
     LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
