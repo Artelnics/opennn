@@ -708,6 +708,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
     const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+    Tensor<Descriptives, 1> target_variables_descriptives;
 
     // Neural network
 
@@ -724,8 +725,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
         ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
         scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
     }
-
-    Tensor<Descriptives, 1> target_variables_descriptives;
 
     if(neural_network_pointer->has_unscaling_layer())
     {
@@ -901,9 +900,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network_pointer->has_unscaling_layer())
-    {
         data_set_pointer->unscale_target_variables(target_variables_descriptives);
-    }
 
     if(display) results.print();
 
