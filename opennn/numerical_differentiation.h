@@ -646,7 +646,7 @@ public:
 
    template<class T>
    Tensor<type, 2> calculate_forward_differences_second_derivatives(const T& t, type(T::*f)(const Index&, const Tensor<type, 1>&, const Index&, const Tensor<type, 1>&) const,
-                                                                    const Index& dummy_1, const Tensor<type, 1>& x1, const Index& dummy_2,const Tensor<type, 1>& x2) const
+                                                                    const Index& dummy_1, const Tensor<type, 1>& x1, const Index& dummy_2, const Tensor<type, 1>& x2) const
    {
        const Index n = x1.size();
        const Index m = x2.size();

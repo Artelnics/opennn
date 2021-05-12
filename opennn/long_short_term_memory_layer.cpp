@@ -1058,13 +1058,6 @@ void LongShortTermMemoryLayer::initialize_cell_states(const type& value)
 }
 
 
-/// @todo
-
-void LongShortTermMemoryLayer::set_synaptic_weights_glorot()
-{   
-}
-
-
 /// Initializes all the biases, weights and recurrent weights in the neural newtork with a given value.
 /// @param value Parameters initialization value.
 

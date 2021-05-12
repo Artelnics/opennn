@@ -151,7 +151,11 @@ void DataSet::Column::set_scaler(const Scaler& new_scaler)
 
 void DataSet::Column::set_scaler(const string& new_scaler)
 {
-    if(new_scaler == "MinimumMaximum")
+    if(new_scaler == "NoScaling")
+    {
+        set_scaler(NoScaling);
+    }
+    else if(new_scaler == "MinimumMaximum")
     {
         set_scaler(MinimumMaximum);
     }
@@ -486,7 +490,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("Scaler");
 
-    if(scaler == MinimumMaximum)
+    if(scaler == NoScaling)
+    {
+        file_stream.PushText("NoScaling");
+    }
+    else if(scaler == MinimumMaximum)
     {
         file_stream.PushText("MinimumMaximum");
     }
@@ -696,40 +704,23 @@ void DataSet::Column::print() const
     switch (scaler)
     {
     case NoScaling:
-    {
         cout << "NoScaling" << endl;
-    }
-        break;
-
-    case NoUnscaling:
-    {
-        cout << "NoUnscaling" << endl;
-    }
         break;
 
     case MinimumMaximum:
-    {
         cout << "MinimumMaximum" << endl;
-    }
         break;
 
     case MeanStandardDeviation:
-    {
         cout << "MeanStandardDeviation" << endl;
-    }
         break;
 
     case StandardDeviation:
-    {
         cout << "StandardDeviation" << endl;
-
-    }
         break;
 
     case Logarithm:
-    {
         cout << "Logarithm" << endl;
-    }
         break;
     }
 }
@@ -3856,10 +3847,6 @@ Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_met
     {
         return NoScaling;
     }
-    else if(scaling_unscaling_method == "NoUnscaling")
-    {
-        return NoUnscaling;
-    }
     else if(scaling_unscaling_method == "MinimumMaximum")
     {
         return MinimumMaximum;
@@ -6796,7 +6783,7 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
     {
         switch(target_variables_scalers(i))
         {
-        case NoUnscaling:
+        case NoScaling:
             break;
 
         case MinimumMaximum:

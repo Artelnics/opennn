@@ -710,32 +710,24 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     // Scale data
 
-    const Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
+    //const Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
 
     // Inputs: scaled_x; Targets: sorted_y
 
     const Index input_variables_number = 1;
     const Index target_variables_number = 1;
-    const Index samples_number = scaled_x.dimension(0);
+    const Index samples_number = new_x.dimension(0);
 
     Tensor<type, 2> data(samples_number, input_variables_number+target_variables_number);
 
     for(Index j = 0; j < input_variables_number+target_variables_number; j++)
     {
         if(j < input_variables_number)
-        {
             for(Index i = 0; i < samples_number; i++)
-            {
-                data(i,j) = scaled_x(i);
-            }
-        }
+                data(i,j) = new_x(i);
         else
-        {
             for(Index i = 0; i < samples_number; i++)
-            {
                 data(i,j) = new_y(i);
-            }
-        }
     }
 
     DataSet data_set(data);
@@ -753,7 +745,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-    training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+    //training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
     training_strategy.get_loss_index_pointer()->set_regularization_method("NO_REGULARIZATION");
 
@@ -773,7 +765,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
     regression_results.a = coefficients(0);
     regression_results.b = coefficients(1);
 
-    const Tensor<type, 1> logistic_y = logistic(regression_results.a,regression_results.b, scaled_x);
+    const Tensor<type, 1> logistic_y = logistic(regression_results.a,regression_results.b, new_x);
 
     regression_results.correlation = linear_correlation(thread_pool_device, logistic_y, new_y, false);
 
