@@ -29,15 +29,13 @@ namespace OpenNN
 {
 /// Enumeration of available methods for scaling and unscaling the data.
 
-enum Scaler{NoScaling, NoUnscaling, MinimumMaximum, MeanStandardDeviation, StandardDeviation, Logarithm};
-
+enum Scaler{NoScaling, MinimumMaximum, MeanStandardDeviation, StandardDeviation, Logarithm};
 
 void scale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
 void scale_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
-void scale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&,const Index& = -1, const Index& = 1);
+void scale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&, const Index& = -1, const Index& = 1);
 void scale_logarithmic(Tensor<type, 2>&, const Index&);
 void scale_minimum_maximum_binary(Tensor<type, 2>&, const type&, const type&, const Index&);
-
 
 void unscale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&, const Index&  = -1, const Index& = 1);
 void unscale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);

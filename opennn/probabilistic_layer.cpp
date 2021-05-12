@@ -553,30 +553,6 @@ void ProbabilisticLayer::set_parameters_random()
 }
 
 
-/// Initializes the synaptic weights with glorot uniform distribution.
-
-void ProbabilisticLayer::set_synaptic_weights_glorot()
-{
-    const Index fan_in = synaptic_weights.dimension(0);
-    const Index fan_out = synaptic_weights.dimension(1);
-
-    type scale = 1.0;
-    scale /= (fan_in + fan_out) / static_cast<type>(2.0);
-
-    const type limit = sqrt(static_cast<type>(3.0) * scale);
-
-    biases.setZero();
-
-    synaptic_weights.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
-
-    const Eigen::Tensor<type, 0> min_weight = synaptic_weights.minimum();
-    const Eigen::Tensor<type, 0> max_weight = synaptic_weights.maximum();
-
-    synaptic_weights = (synaptic_weights - synaptic_weights.constant(min_weight(0))) / (synaptic_weights.constant(max_weight(0))- synaptic_weights.constant(min_weight(0)));
-    synaptic_weights = (synaptic_weights * synaptic_weights.constant(static_cast<type>(2) * limit)) - synaptic_weights.constant(limit);
-}
-
-
 void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, const Index& )
 {
     const Index biases_number = get_biases_number();

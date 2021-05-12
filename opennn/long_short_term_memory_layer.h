@@ -172,7 +172,7 @@ public:
    void initialize_hidden_states(const type&);
    void initialize_cell_states(const type&);
 
-   void set_synaptic_weights_glorot();
+
 
    void set_parameters_constant(const type&);
 

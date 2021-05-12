@@ -451,35 +451,6 @@ void PerceptronLayer::set_synaptic_weights_constant(const type& value)
 }
 
 
-/// Initializes the synaptic weights of all the perceptrons in the layer of perceptrons with glorot uniform distribution.
-
-void PerceptronLayer::set_synaptic_weights_glorot()
-{
-    Index fan_in;
-    Index fan_out;
-
-    type scale = 1.0;
-    type limit;
-
-    fan_in = synaptic_weights.dimension(0);
-    fan_out = synaptic_weights.dimension(1);
-
-    scale /= (fan_in + fan_out) / static_cast<type>(2.0);
-    limit = sqrt(static_cast<type>(3.0) * scale);
-
-    biases.setZero();
-
-    synaptic_weights.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
-
-    const Eigen::Tensor<type, 0> min_weight = synaptic_weights.minimum();
-    const Eigen::Tensor<type, 0> max_weight = synaptic_weights.maximum();
-
-    synaptic_weights = (synaptic_weights - synaptic_weights.constant(min_weight(0))) / (synaptic_weights.constant(max_weight(0))- synaptic_weights.constant(min_weight(0)));
-
-    synaptic_weights = (synaptic_weights * synaptic_weights.constant(2. * limit)) - synaptic_weights.constant(limit);
-}
-
-
 /// Initializes all the biases and synaptic weights in the neural newtork with a given value.
 /// @param value Parameters initialization value.
 

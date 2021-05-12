@@ -578,7 +578,7 @@ void RecurrentLayer::initialize_recurrent_weights(const type& value)
 
 /// @todo
 
-void RecurrentLayer::initialize_input_weights_Glorot(const type&,const type&)
+void RecurrentLayer::initialize_input_weights_Glorot(const type&, const type&)
 {
     input_weights.setRandom();
 }

@@ -203,13 +203,13 @@ Tensor<string, 1> ScalingLayer::write_scalers() const
         {
             scaling_methods_strings[i] = "NoScaling";
         }
-        else if(scalers[i] == MeanStandardDeviation)
-        {
-            scaling_methods_strings[i] = "MeanStandardDeviation";
-        }
         else if(scalers[i] == MinimumMaximum)
         {
             scaling_methods_strings[i] = "MinimumMaximum";
+        }
+        else if(scalers[i] == MeanStandardDeviation)
+        {
+            scaling_methods_strings[i] = "MeanStandardDeviation";
         }
         else if(scalers[i] == StandardDeviation)
         {
@@ -595,13 +595,13 @@ void ScalingLayer::set_scalers(const Tensor<string, 1>& new_scaling_methods_stri
         {
             new_scaling_methods(i) = NoScaling;
         }
-        else if(new_scaling_methods_string(i) == "MeanStandardDeviation")
-        {
-            new_scaling_methods(i) = MeanStandardDeviation;
-        }
         else if(new_scaling_methods_string(i) == "MinimumMaximum")
         {
             new_scaling_methods(i) = MinimumMaximum;
+        }
+        else if(new_scaling_methods_string(i) == "MeanStandardDeviation")
+        {
+            new_scaling_methods(i) = MeanStandardDeviation;
         }
         else if(new_scaling_methods_string(i) == "StandardDeviation")
         {
@@ -1248,7 +1248,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.OpenElement("ScalingNeuron");
 
-        file_stream.PushAttribute("Index",int(i+1));
+        file_stream.PushAttribute("Index", int(i+1));
 
         // Minimum
 
@@ -1467,7 +1467,11 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         string new_method = scaling_method_element->GetText();
 
-        if(new_method == "MinimumMaximum" || new_method == "Minimum - Maximum")
+        if(new_method == "NoScaling" || new_method == "No Scaling")
+        {
+            scalers[i] = NoScaling;
+        }
+        else if(new_method == "MinimumMaximum" || new_method == "Minimum - Maximum")
         {
             scalers[i] = MinimumMaximum;
         }
@@ -1490,7 +1494,6 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Display
-
     {
         const tinyxml2::XMLElement* display_element = scaling_layer_element->FirstChildElement("Display");
 

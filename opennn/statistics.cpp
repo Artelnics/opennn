@@ -3002,7 +3002,7 @@ Index maximal_index(const Tensor<type, 1>& vector)
 
 Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
-    Eigen::Tensor<type, 1> vector_ = vector;
+    Tensor<type, 1> vector_ = vector;
 
     const Index size = vector.dimension(0);
     Tensor<Index, 1> minimal_indices(number);
@@ -3049,7 +3049,7 @@ if(number > size)
 
 Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
-    Eigen::Tensor<type, 1> vector_ = vector;
+    Tensor<type, 1> vector_ = vector;
 
     const Index size = vector.dimension(0);
     Tensor<Index, 1> maximal_indices(number);

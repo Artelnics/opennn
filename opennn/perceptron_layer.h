@@ -130,7 +130,7 @@ public:
    // Parameters initialization methods
    void set_biases_constant(const type&);
    void set_synaptic_weights_constant(const type&);
-   void set_synaptic_weights_glorot();
+   
 
    void set_parameters_constant(const type&);
 
