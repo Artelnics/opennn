@@ -453,11 +453,8 @@ TrainingResults GradientDescent::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->calculate_input_variables_descriptives();
-    const Tensor<Descriptives, 1> target_variables_descriptives = data_set_pointer->calculate_target_variables_descriptives();
-
-    const Tensor<Descriptives, 1> variables_descriptives = data_set_pointer->scale_data();
-
+    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+    Tensor<Descriptives, 1> target_variables_descriptives;
 
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
     DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
@@ -480,6 +477,8 @@ TrainingResults GradientDescent::perform_training()
 
     if(neural_network_pointer->has_unscaling_layer())
     {
+        target_variables_descriptives = data_set_pointer->scale_target_variables();
+
         UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
     }
@@ -649,7 +648,10 @@ TrainingResults GradientDescent::perform_training()
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
 
-    data_set_pointer->unscale_data(variables_descriptives);
+    data_set_pointer->unscale_input_variables(input_variables_descriptives);
+
+    if(neural_network_pointer->has_unscaling_layer())
+        data_set_pointer->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
 
