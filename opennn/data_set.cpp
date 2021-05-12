@@ -6598,9 +6598,13 @@ Tensor<Descriptives, 1> DataSet::scale_data()
 
     const Tensor<Descriptives, 1> variables_descriptives = calculate_variables_descriptives();
 
+    Index column_index;
+
     for(Index i = 0; i < variables_number; i++)
     {
-        switch(columns(i).scaler)
+        column_index = get_column_index(i);
+
+        switch(columns(column_index).scaler)
         {
         case NoScaling:
             // Do nothing
