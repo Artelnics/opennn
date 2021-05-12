@@ -839,7 +839,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(training_back_propagation.loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << "Loss goal reached: " << training_back_propagation.loss << endl;
+            if(display) cout << "Epoch " << epoch << "; Loss goal reached: " << training_back_propagation.loss << endl;
 
             stop_training = true;
 
@@ -847,7 +847,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << "Gradient norm goal reached: " << gradient_norm << endl;
+            if(display) cout << "Epoch " << epoch << "; Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -855,7 +855,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Epoch " << epoch << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << "; Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -863,7 +863,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "; Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -871,7 +871,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << "Maximum training time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "; Maximum training time reached: " << write_time(elapsed_time) << endl;
 
             stop_training = true;
 

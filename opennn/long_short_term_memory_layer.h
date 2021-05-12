@@ -353,8 +353,8 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
         batch_samples_number = new_batch_samples_number;
 
-        previous_hidden_state_activations.resize(inputs_number);
-        previous_cell_state_activations.resize(inputs_number);
+        previous_hidden_state_activations.resize(neurons_number);
+        previous_cell_state_activations.resize(neurons_number);
 
         current_inputs.resize(inputs_number);
 

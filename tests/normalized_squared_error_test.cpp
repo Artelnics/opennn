@@ -426,10 +426,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       cout << "Difference: " << error_gradient - numerical_error_gradient << endl;
-
-       system("pause");
-
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
