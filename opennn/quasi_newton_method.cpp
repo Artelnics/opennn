@@ -707,16 +707,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->calculate_input_variables_descriptives();
-    const Tensor<Descriptives, 1> target_variables_descriptives = data_set_pointer->calculate_target_variables_descriptives();
-
-    const Tensor<Descriptives, 1> variables_descriptives = data_set_pointer->scale_data();
-
-    DataSetBatch training_batch(training_samples_number, data_set_pointer);
-    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
-
-    training_batch.fill(training_samples_indices, inputs_indices, target_indices);
-    selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
+    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
 
     // Neural network
 
@@ -734,11 +725,21 @@ TrainingResults QuasiNewtonMethod::perform_training()
         scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
     }
 
+    Tensor<Descriptives, 1> target_variables_descriptives;
+
     if(neural_network_pointer->has_unscaling_layer())
     {
+        target_variables_descriptives = data_set_pointer->scale_target_variables();
+
         UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
     }
+
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+
+    training_batch.fill(training_samples_indices, inputs_indices, target_indices);
+    selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
 
     // Loss index
 
@@ -838,7 +839,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(training_back_propagation.loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << "Loss goal reached: " << training_back_propagation.loss << endl;
+            if(display) cout << "Epoch " << epoch << "; Loss goal reached: " << training_back_propagation.loss << endl;
 
             stop_training = true;
 
@@ -846,7 +847,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << "Gradient norm goal reached: " << gradient_norm << endl;
+            if(display) cout << "Epoch " << epoch << "; Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -854,7 +855,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Epoch " << epoch << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << "; Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -862,7 +863,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "; Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -870,7 +871,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << "Maximum training time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "; Maximum training time reached: " << write_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -897,7 +898,12 @@ TrainingResults QuasiNewtonMethod::perform_training()
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
 
-    data_set_pointer->unscale_data(variables_descriptives);
+    data_set_pointer->unscale_input_variables(input_variables_descriptives);
+
+    if(neural_network_pointer->has_unscaling_layer())
+    {
+        data_set_pointer->unscale_target_variables(target_variables_descriptives);
+    }
 
     if(display) results.print();
 

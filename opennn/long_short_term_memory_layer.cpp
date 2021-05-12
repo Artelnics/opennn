@@ -2216,8 +2216,6 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2>&  
 
 //#pragma omp parallel
     {
-
-
         // Biases
 
         calculate_forget_biases_error_gradient(inputs,
@@ -3439,14 +3437,14 @@ void LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tens
                forward_propagation->hidden_states_activations_derivatives.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        forward_propagation->previous_cell_state_activations.setZero();
-
         if(sample%timesteps == 0)
         {
             back_propagation->forget_combinations_biases_derivatives.setZero();
             back_propagation->input_combinations_biases_derivatives.setZero();
             back_propagation->state_combinations_biases_derivatives.setZero();
             back_propagation->output_combinations_biases_derivatives.setZero();
+
+            forward_propagation->previous_cell_state_activations.setZero();
 
             back_propagation->cell_state_biases_derivatives.setZero();
         }
@@ -3478,8 +3476,7 @@ void LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tens
                           forward_propagation->current_output_activations_derivatives);
         }
 
-        for(Index row = 0; row < parameters_number; row++) back_propagation->forget_combinations_biases_derivatives(row, row)
-                += static_cast<type>(1.0);
+        for(Index row = 0; row < parameters_number; row++) back_propagation->forget_combinations_biases_derivatives(row, row) += static_cast<type>(1.0);
 
         multiply_rows(back_propagation->cell_state_biases_derivatives,
                       forward_propagation->current_forget_activations);

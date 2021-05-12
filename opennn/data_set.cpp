@@ -2223,6 +2223,38 @@ Tensor<string, 1> DataSet::get_variables_names() const
     return variables_names;
 }
 
+/// Returns a string vector with the names of all the variables in the time series data.
+/// The size of the vector is the number of variables.
+
+Tensor<string, 1> DataSet::get_time_series_variables_names() const
+{
+    const Index variables_number = get_time_series_variables_number();
+
+    Tensor<string, 1> variables_names(variables_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < time_series_columns.size(); i++)
+    {
+        if(time_series_columns(i).type == Categorical)
+        {
+            for(Index j = 0; j < time_series_columns(i).categories.size(); j++)
+            {
+                variables_names(index) = time_series_columns(i).categories(j);
+
+                index++;
+            }
+        }
+        else
+        {
+            variables_names(index) = time_series_columns(i).name;
+            index++;
+        }
+    }
+
+    return variables_names;
+}
+
 
 /// Returns the names of the input variables in the data set.
 /// The size of the vector is the number of input variables.
@@ -2866,6 +2898,27 @@ Index DataSet::get_variables_number() const
         if(columns(i).type == Categorical)
         {
             variables_number += columns(i).categories.size();
+        }
+        else
+        {
+            variables_number++;
+        }
+    }
+
+    return variables_number;
+}
+
+/// Returns the number of variables in the time series data.
+
+Index DataSet::get_time_series_variables_number() const
+{
+    Index variables_number = 0;
+
+    for(Index i = 0; i < time_series_columns.size(); i++)
+    {
+        if(columns(i).type == Categorical)
+        {
+            variables_number += time_series_columns(i).categories.size();
         }
         else
         {
@@ -6532,9 +6585,13 @@ Tensor<Descriptives, 1> DataSet::scale_data()
 
     const Tensor<Descriptives, 1> variables_descriptives = calculate_variables_descriptives();
 
+    Index column_index;
+
     for(Index i = 0; i < variables_number; i++)
     {
-        switch(columns(i).scaler)
+        column_index = get_column_index(i);
+
+        switch(columns(column_index).scaler)
         {
         case NoScaling:
             // Do nothing

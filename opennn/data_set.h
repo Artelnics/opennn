@@ -247,6 +247,7 @@ public:
    // Variables get methods
 
    Index get_variables_number() const;
+   Index get_time_series_variables_number() const;
 
    Index get_input_variables_number() const;
    Index get_target_variables_number() const;
@@ -255,6 +256,7 @@ public:
 
    string get_variable_name(const Index&) const;
    Tensor<string, 1> get_variables_names() const;
+   Tensor<string, 1> get_time_series_variables_names() const;
 
    Tensor<string, 1> get_input_variables_names() const;
    Tensor<string, 1> get_target_variables_names() const;
