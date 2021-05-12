@@ -426,6 +426,10 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
+       cout << "Difference: " << error_gradient - numerical_error_gradient << endl;
+
+       system("pause");
+
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
@@ -1058,7 +1062,7 @@ void NormalizedSquaredErrorTest::run_test_case()
    cout << "Running normalized squared error test case...\n";
 
    // Constructor and destructor methods
-
+/*
    test_constructor();
    test_destructor();
    test_calculate_normalization_coefficient();
@@ -1070,9 +1074,9 @@ void NormalizedSquaredErrorTest::run_test_case()
    // Error methods
 
    test_calculate_error();
-
+*/
    test_calculate_error_gradient();
-
+/*
    // Squared errors methods
 
    test_calculate_squared_errors();
@@ -1087,7 +1091,7 @@ void NormalizedSquaredErrorTest::run_test_case()
 
    test_to_XML();
    test_from_XML();
-
+*/
    cout << "End of normalized squared error test case.\n\n";
 }
 
