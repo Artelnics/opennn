@@ -125,10 +125,6 @@ protected:
 
     Tensor<type, 1> training_error_history;
 
-    /// Parameters of all the neural networks trained.
-
-    Tensor<Tensor<type, 1>, 1> parameters_history;
-
     /// Minimum number of hidden neurons.
 
     Index minimum_neurons;
