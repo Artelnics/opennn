@@ -710,8 +710,6 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     // Scale data
 
-    //const Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
-
     // Inputs: scaled_x; Targets: sorted_y
 
     const Index input_variables_number = 1;
@@ -733,30 +731,29 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
     DataSet data_set(data);
     data_set.set_training();
 
-    NeuralNetwork neural_network;
-
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, PerceptronLayer::Logistic);
-
-    neural_network.add_layer(perceptron_layer);
-
+    NeuralNetwork neural_network(NeuralNetwork::Classification, {1,1});
     neural_network.set_parameters_random();
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-    //training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
     training_strategy.get_loss_index_pointer()->set_regularization_method("NO_REGULARIZATION");
 
-    training_strategy.set_display(false);
+//    training_strategy.set_display(false);
     training_strategy.get_optimization_algorithm_pointer()->set_display(false);
+
+    data_set.print_data();
 
     training_strategy.perform_training();
 
     // Logistic correlation
 
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
+
+    cout << coefficients << endl;
 
     // Regression results
 
@@ -981,29 +978,29 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1>& new_x = filter_vectors.first;
+    Tensor<type, 1>& new_x = filter_vectors.first;
     Tensor<type, 1>& new_y = filter_vectors.second;
 
     // Scale data
 
-    Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
+//    Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
 
     // Check ideal correlation
 
-    vector<int> sorted_index = get_indices_sorted(scaled_x);
+    vector<int> sorted_index = get_indices_sorted(new_x);
 
     Tensor<type,1> y_sorted(y.dimension(0));
 
-    for(Index i = 0; i < scaled_x.dimension(0); i++)
+    for(Index i = 0; i < new_x.dimension(0); i++)
     {
         y_sorted(i) = new_y(sorted_index[static_cast<unsigned>(i)]);
     }
 
     Index counter = 0;
 
-    for(Index i = 0; i< scaled_x.dimension(0)-1; i++)
+    for(Index i = 0; i< new_x.dimension(0)-1; i++)
     {
-        if((y_sorted(i) - y_sorted(i+1)) > numeric_limits<type>::min())
+        if(y_sorted(i) - y_sorted(i+1) > numeric_limits<type>::min())
         {
             counter++;
         }
@@ -1035,7 +1032,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     const Index input_variables_number = 1;
     const Index target_variables_number = 1;
-    const Index samples_number = scaled_x.dimension(0);
+    const Index samples_number = new_x.dimension(0);
 
     Tensor<type, 2> data(samples_number, input_variables_number+target_variables_number);
 
@@ -1045,7 +1042,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
         {
             for(Index i = 0; i < samples_number; i++)
             {
-                data(i,j) = scaled_x(i);
+                data(i,j) = new_x(i);
             }
         }
         else
@@ -1060,10 +1057,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     DataSet data_set(data);
     data_set.set_training();
 
-    Tensor<Index, 1> architecture(2);
-    architecture.setValues({1, 1});
-
-    NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Classification, {1, 1});
 
     neural_network.set_parameters_random();
 
@@ -1082,7 +1076,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
-    const Tensor<type, 1> logistic_y = logistic(coefficients(0), coefficients(1), scaled_x);
+    const Tensor<type, 1> logistic_y = logistic(coefficients(0), coefficients(1), new_x);
 
     logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y, new_y, false);
 
