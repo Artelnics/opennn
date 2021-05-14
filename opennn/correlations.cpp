@@ -272,7 +272,8 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, con
 /// @param y Vector for computing the linear correlation with this vector.
 /// @param maximum_lags_number Maximum lags for which cross-correlation is calculated.
 
-Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index& maximum_lags_number)
+Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
+                                   const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index& maximum_lags_number)
 {
     if(y.size() != x.size())
     {
@@ -309,48 +310,6 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device, c
     return cross_correlation;
 }
 
-
-/// Returns a vector with the logistic error gradient.
-/// @param coeffients.
-/// @param x Independent data.
-/// @param y Dependent data.
-/*
-Tensor<type, 1> logistic_error_gradient(const type& a, const type& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-
-#ifdef OPENNN_DEBUG
-
-    const Index n = y.size();
-    const Index x_size = x.size();
-
-    ostringstream buffer;
-
-    if(x_size != n)
-    {
-        buffer << "OpenNN Exception: type.\n"
-               << "logistic error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>& "
-               "method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Tensor<type, 1> error_gradient(2);
-
-    const Tensor<type, 1> activation = logistic(a, b, x);
-    const Tensor<type, 1> error = activation - y;
-
-    Tensor<type, 0> sum_a = (2*error*activation*(-1+activation)).sum();
-    Tensor<type, 0> sum_b = (2*error*activation*(-1+activation)*(-x)).sum();
-
-    error_gradient(0) = sum_a();
-    error_gradient(1) = sum_b();
-
-    return error_gradient;
-}
-*/
 
 /// Calculate the logistic function with specific parameters 'a' and 'b'.
 /// @param a Parameter a.
@@ -409,36 +368,6 @@ Tensor<type, 2> logistic(const ThreadPoolDevice* thread_pool_device, const Tenso
     return (1 + combinations.exp().inverse()).inverse();
 }
 
-
-///Calculate the mean square error of the logistic function.
-/*
-type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-    const Index n = y.size();
-
-#ifdef OPENNN_DEBUG
-
-    const Index x_size = x.size();
-
-    ostringstream buffer;
-
-    if(x_size != n)
-    {
-        buffer << "OpenNN Exception: type.\n"
-               << "logistic error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>& "
-               "method.\n"
-               << "Y size must be equal to X size.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Tensor<type, 0> error = (logistic(a, b, x) - y).square().sum();
-
-    return error()/static_cast<type>(n);
-}
-*/
 
 ///Calculate the coefficients of a linear regression (a, b) and the correlation among the variables.
 /// @param x Vector of the independent variable.
@@ -812,9 +741,11 @@ CorrelationResults linear_correlations(const ThreadPoolDevice*, const Tensor<typ
 
     linear_correlations.correlation_type = Linear_correlation;
 
-    if(abs(s_x()) < numeric_limits<type>::min() && abs(s_y()) < numeric_limits<type>::min()
-            && abs(s_xx()) < numeric_limits<type>::min() && abs(s_yy()) < numeric_limits<type>::min()
-            && abs(s_xy()) < numeric_limits<type>::min())
+    if(abs(s_x()) < numeric_limits<type>::min()
+    && abs(s_y()) < numeric_limits<type>::min()
+    && abs(s_xx()) < numeric_limits<type>::min()
+    && abs(s_yy()) < numeric_limits<type>::min()
+    && abs(s_xy()) < numeric_limits<type>::min())
     {
         linear_correlations.correlation = 1.0;
     }
@@ -1024,8 +955,6 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
         return logistic_correlations;
     }
 
-    // Inputs: scaled_x; Targets: sorted_y
-
     const Index input_variables_number = 1;
     const Index target_variables_number = 1;
     const Index samples_number = new_x.dimension(0);
@@ -1126,8 +1055,6 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
 
     const Tensor<type, 2> scaled_x = scale_minimum_maximum(new_x);
     const Tensor<type, 2> scaled_y = scale_minimum_maximum(new_y);
-
-    // Inputs: scaled_x; Targets: sorted_y
 
     const Index input_variables_number = scaled_x.dimension(1);
     const Index target_variables_number = new_y.dimension(1);
