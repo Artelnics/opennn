@@ -11,6 +11,8 @@
 namespace OpenNN
 {
 
+
+
 void initialize_sequential(Tensor<type, 1>& vector)
 {
     for(Index i = 0; i < vector.size(); i++) vector(i) = i;
@@ -159,7 +161,6 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
 
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
 {        
-
     const Index size = vector.size();
 
     Tensor<Index, 1> rank(size);
@@ -175,7 +176,6 @@ Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
 
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 {
-
     const Index size = vector.size();
 
     Tensor<Index, 1> rank(size);
@@ -304,6 +304,36 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
     x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
 
     return x;
+}
+
+
+void fill_submatrix(const Tensor<type, 2>& matrix,
+                    const Tensor<Index, 1>& rows_indices,
+                    const Tensor<Index, 1>& columns_indices,
+                    type* submatrix_pointer)
+{
+    const Index rows_number = rows_indices.size();
+    const Index columns_number = columns_indices.size();
+
+    const type* matrix_pointer = matrix.data();
+
+    #pragma omp parallel for
+
+    for(Index j = 0; j < columns_number; j++)
+    {
+        const type* matrix_column_pointer = matrix_pointer + matrix.dimension(0)*columns_indices[j];
+        type* submatrix_column_pointer = submatrix_pointer + rows_number*j;
+
+        const type* value_pointer = nullptr;
+        const Index* rows_indices_pointer = rows_indices.data();
+        for(Index i = 0; i < rows_number; i++)
+        {
+            value_pointer = matrix_column_pointer + *rows_indices_pointer;
+            rows_indices_pointer++;
+            *submatrix_column_pointer = *value_pointer;
+            submatrix_column_pointer++;
+        }
+    }
 }
 
 

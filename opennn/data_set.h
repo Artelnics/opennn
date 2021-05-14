@@ -35,6 +35,7 @@
 #include "scaling.h"
 #include "correlations.h"
 #include "opennn_strings.h"
+#include "tensor_utilities.h"
 
 using namespace std;
 using namespace Eigen;
@@ -614,6 +615,7 @@ public:
    void unuse_Tukey_outliers(const type& = 1.5);
 
    type calculate_euclidean_distance(const Index&, const Index&) const;
+
    Tensor<type, 2> calculate_distance_matrix() const;
    Tensor<Index, 2> calculate_k_nearest_neighbors(const Tensor<type, 2>&, const Index& = 20) const;
    Tensor<type, 1> calculate_average_reachability(const Tensor<type,2>&, const Tensor<Index, 2>&, const Index&) const;
@@ -726,9 +728,6 @@ public:
 
    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
 
-   void fill_submatrix(const Tensor<type, 2>& matrix,
-             const Tensor<Index, 1>& rows_indices,
-             const Tensor<Index, 1>& columns_indices, type*submatrix);
 
    bool get_has_rows_labels() const;
 
