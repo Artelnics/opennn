@@ -225,8 +225,9 @@ type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type, 2>& x,
 
     Index k;
 
-    if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
-    else k = y.dimension(1);
+    x.dimension(1) <= y.dimension(1)
+            ? k = x.dimension(1)
+            : k = y.dimension(1);
 
     const type chi_squared = chi_square_test(contingency_table.cast<type>());
 
@@ -313,7 +314,7 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device, c
 /// @param coeffients.
 /// @param x Independent data.
 /// @param y Dependent data.
-
+/*
 Tensor<type, 1> logistic_error_gradient(const type& a, const type& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 
@@ -349,7 +350,7 @@ Tensor<type, 1> logistic_error_gradient(const type& a, const type& b, const Tens
 
     return error_gradient;
 }
-
+*/
 
 /// Calculate the logistic function with specific parameters 'a' and 'b'.
 /// @param a Parameter a.
@@ -410,7 +411,7 @@ Tensor<type, 2> logistic(const ThreadPoolDevice* thread_pool_device, const Tenso
 
 
 ///Calculate the mean square error of the logistic function.
-
+/*
 type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     const Index n = y.size();
@@ -437,7 +438,7 @@ type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, cons
 
     return error()/static_cast<type>(n);
 }
-
+*/
 
 ///Calculate the coefficients of a linear regression (a, b) and the correlation among the variables.
 /// @param x Vector of the independent variable.
@@ -505,7 +506,7 @@ RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,
     else
     {
         linear_regression.a =
-            (s_y() * s_xx() - s_x() * s_xy()) /(static_cast<type>(new_size) * s_xx() - s_x() * s_x());
+            (s_y() * s_xx() - s_x() * s_xy())/(static_cast<type>(new_size) * s_xx() - s_x() * s_x());
 
         linear_regression.b =
             ((static_cast<type>(new_size) * s_xy()) - (s_x() * s_y())) /((static_cast<type>(new_size) * s_xx()) - (s_x() * s_x()));
@@ -738,14 +739,11 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
 
     training_strategy.get_loss_index_pointer()->set_regularization_method("NO_REGULARIZATION");
 
     training_strategy.set_display(false);
-    training_strategy.get_optimization_algorithm_pointer()->set_display(false);
-
-    data_set.print_data();
 
     training_strategy.perform_training();
 
@@ -1037,36 +1035,30 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     for(Index j = 0; j <input_variables_number+target_variables_number; j++)
     {
         if(j < input_variables_number)
-        {
             for(Index i = 0; i < samples_number; i++)
-            {
                 data(i,j) = new_x(i);
-            }
-        }
         else
-        {
             for(Index i = 0; i < samples_number; i++)
-            {
                 data(i,j) = new_y(i);
-            }
-        }
     }
 
     DataSet data_set(data);
     data_set.set_training();
 
-    NeuralNetwork neural_network(NeuralNetwork::Classification, {1, 1});
-
+    NeuralNetwork neural_network(NeuralNetwork::Classification, {1,1});
     neural_network.set_parameters_random();
 
-    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
-    normalized_squared_error.set_normalization_coefficient();
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    normalized_squared_error.set_regularization_method("NO_REGULARIZATION");
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
-    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&normalized_squared_error);
-    levenberg_marquardt_algorithm.set_display(false);
-    levenberg_marquardt_algorithm.perform_training();
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
+
+    training_strategy.get_loss_index_pointer()->set_regularization_method("NO_REGULARIZATION");
+
+    training_strategy.set_display(false);
+
+    training_strategy.perform_training();
 
     // Logistic correlation
 
