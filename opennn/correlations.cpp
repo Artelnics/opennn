@@ -742,7 +742,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     training_strategy.get_loss_index_pointer()->set_regularization_method("NO_REGULARIZATION");
 
-//    training_strategy.set_display(false);
+    training_strategy.set_display(false);
     training_strategy.get_optimization_algorithm_pointer()->set_display(false);
 
     data_set.print_data();
@@ -752,8 +752,6 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
     // Logistic correlation
 
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
-
-    cout << coefficients << endl;
 
     // Regression results
 
