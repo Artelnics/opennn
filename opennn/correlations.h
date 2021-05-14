@@ -165,9 +165,9 @@ struct CorrelationResults
 
     Tensor<type, 2> logistic(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-    type logistic_error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+//    type logistic_error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Tensor<type, 1> logistic_error_gradient(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+//    Tensor<type, 1> logistic_error_gradient(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     // Regression methods
 
