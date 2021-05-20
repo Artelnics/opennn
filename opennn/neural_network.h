@@ -276,7 +276,7 @@ struct NeuralNetworkForwardPropagation
 
     void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
     {
-        if (new_batch_samples_number == 0) return;
+        if(new_batch_samples_number == 0) return;
 
         batch_samples_number = new_batch_samples_number;
 

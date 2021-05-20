@@ -498,15 +498,15 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("MinimumMaximum");
     }
-    else if (scaler == MeanStandardDeviation)
+    else if(scaler == MeanStandardDeviation)
     {
         file_stream.PushText("MeanStandardDeviation");
     }
-    else if (scaler == StandardDeviation)
+    else if(scaler == StandardDeviation)
     {
         file_stream.PushText("StandardDeviation");
     }
-    else if (scaler == Logarithm)
+    else if(scaler == Logarithm)
     {
         file_stream.PushText("Logarithm");
     }
@@ -521,11 +521,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("Input");
     }
-    else if (column_use == Target)
+    else if(column_use == Target)
     {
         file_stream.PushText("Target");
     }
-    else if (column_use == UnusedVariable)
+    else if(column_use == UnusedVariable)
     {
         file_stream.PushText("Unused");
     }
@@ -544,11 +544,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("Numeric");
     }
-    else if (type == Binary)
+    else if(type == Binary)
     {
         file_stream.PushText("Binary");
     }
-    else if (type == Categorical)
+    else if(type == Categorical)
     {
         file_stream.PushText("Categorical");
     }
@@ -593,11 +593,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
             {
                 file_stream.PushText("Input");
             }
-            else if (categories_uses(i) == Target)
+            else if(categories_uses(i) == Target)
             {
                 file_stream.PushText("Target");
             }
-            else if (categories_uses(i) == Time)
+            else if(categories_uses(i) == Time)
             {
                 file_stream.PushText("Time");
             }
@@ -9325,11 +9325,11 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 
     for(Index i = 0; i < input_target_columns_number; i++)
     {
-        if (i < input_columns_number)
+        if(i < input_columns_number)
         {
             Index column_index = input_columns_indices(i);
             ColumnType input_column_type = time_series_columns(column_index).type;
-            if (input_column_type == ColumnType::Numeric)
+            if(input_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
             }
@@ -9338,7 +9338,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
         {
             Index column_index = target_columns_indices(counter);
             ColumnType target_column_type = time_series_columns(column_index).type;
-            if (target_column_type == ColumnType::Numeric)
+            if(target_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
             }
@@ -9352,7 +9352,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
     {
         new_lags_number = lags_number - 2;
     }
-    else if (samples_number == lags_number + 1)
+    else if(samples_number == lags_number + 1)
     {
         new_lags_number = lags_number - 1;
     }
@@ -9428,11 +9428,11 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
     for(Index i = 0; i < input_target_columns_number; i++)
     {
-        if (i < input_columns_number)
+        if(i < input_columns_number)
         {
             Index column_index = input_columns_indices(i);
             ColumnType input_column_type = time_series_columns(column_index).type;
-            if (input_column_type == ColumnType::Numeric)
+            if(input_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
             }
@@ -9441,7 +9441,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
         {
             Index column_index = target_columns_indices(counter);
             ColumnType target_column_type = time_series_columns(column_index).type;
-            if (target_column_type == ColumnType::Numeric)
+            if(target_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
             }
@@ -9455,7 +9455,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     {
         new_lags_number = lags_number - 2;
     }
-    else if (samples_number == lags_number + 1)
+    else if(samples_number == lags_number + 1)
     {
         new_lags_number = lags_number - 1;
     }
@@ -10995,7 +10995,7 @@ void DataSet::fix_repeated_names()
     {
         auto result = columns_count_map.insert(pair<string, Index>(columns(i).name, 1));
 
-        if (!result.second) result.first->second++;
+        if(!result.second) result.first->second++;
     }
 
     for(auto & element : columns_count_map)
@@ -11030,7 +11030,7 @@ void DataSet::fix_repeated_names()
         {
             auto result = variables_count_map.insert(pair<string, Index>(variables_names(i), 1));
 
-            if (!result.second) result.first->second++;
+            if(!result.second) result.first->second++;
         }
 
         for(auto & element : variables_count_map)
