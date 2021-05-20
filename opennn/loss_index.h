@@ -292,7 +292,7 @@ struct LossIndexBackPropagation
 
     explicit LossIndexBackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
     {
-        if (new_batch_samples_number == 0) return;
+        if(new_batch_samples_number == 0) return;
 
         set(new_batch_samples_number, new_loss_index_pointer);
     }
