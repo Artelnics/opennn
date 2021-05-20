@@ -32,7 +32,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();  
 
    // Get methods
 
@@ -56,10 +55,6 @@ public:
    void test_get_unscaling_method();
    void test_write_scalers();
 
-   // Display messages
-
-   void test_get_display();
-
    // Set methods
 
    void test_set();
@@ -81,10 +76,6 @@ public:
    // Variables scaling and unscaling
 
    void test_set_unscaling_method();
-
-   // Display messages
-
-   void test_set_display();
 
    // Check methods
 

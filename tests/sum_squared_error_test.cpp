@@ -42,12 +42,6 @@ void SumSquaredErrorTest::test_constructor()
 }
 
 
-void SumSquaredErrorTest::test_destructor()
-{
-   cout << "test_destructor\n";
-}
-
-
 void SumSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
@@ -836,7 +830,6 @@ void SumSquaredErrorTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
 
    // Get methods
 

@@ -32,11 +32,8 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Inputs and perceptrons
-
-   void test_is_empty();
 
    void test_get_inputs_number();
    void test_get_neurons_number();

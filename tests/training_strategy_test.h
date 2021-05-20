@@ -39,19 +39,10 @@ public:
 
    void test_get_loss_index_pointer();
 
-   // Utilities
-
-   void test_get_display();
-
    // Set methods
 
-   void test_set();
    void test_set_default();
    void test_set_loss_index_pointer();
-
-    // Utilities
-
-   void test_set_display();
 
    // Training methods
 
@@ -62,7 +53,6 @@ public:
    void test_to_XML();
    void test_from_XML();
 
-   void test_print();
    void test_save();
    void test_load();
 

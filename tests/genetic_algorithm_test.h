@@ -35,10 +35,6 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Set methods
-
-   void test_set_default();
-
    // Population methods
 
    void test_initialize_population();

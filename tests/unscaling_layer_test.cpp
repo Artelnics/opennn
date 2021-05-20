@@ -48,11 +48,6 @@ void UnscalingLayerTest::test_constructor()
 
 }
 
-void UnscalingLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
-}
-
 
 void UnscalingLayerTest::test_get_dimensions()
 {
@@ -203,7 +198,6 @@ void UnscalingLayerTest::test_get_descriptives_matrix()
    assert_true(abs(unscaling_layer.get_descriptives_matrix()(0,2) - 1) < static_cast<type>(1e-3), LOG);
    assert_true(abs(unscaling_layer.get_descriptives_matrix()(1,1) - 2) < static_cast<type>(1e-3), LOG);
    assert_true(abs(unscaling_layer.get_descriptives_matrix()(1,3) - 0) < static_cast<type>(1e-3), LOG);
-
 }
 
 
@@ -303,16 +297,6 @@ void UnscalingLayerTest::test_write_scalers()
     unscaling_layer.set_scalers(logarithmic);
     assert_true(unscaling_layer.write_unscaling_method_text()(0) == "logarithm", LOG);
 */
-}
-
-
-void UnscalingLayerTest::test_get_display()
-{
-   cout << "test_get_display\n";
-
-   UnscalingLayer unscaling_layer;
-
-   assert_true(unscaling_layer.get_display(), LOG);
 }
 
 
@@ -466,7 +450,6 @@ void UnscalingLayerTest::test_set_descriptives_eigen()
 {
    cout << "test_set_descriptives_eigen\n";
 
-
    ScalingLayer scaling_layer(2);
 
    UnscalingLayer unscaling_layer(1);
@@ -506,7 +489,7 @@ void UnscalingLayerTest::test_set_item_descriptives()
 
    Descriptives des;
 
-   ul.set_item_descriptives(0,des);
+   ul.set_item_descriptives(0, des);
 
    assert_true(abs(ul.get_descriptives_matrix()(0,0) + 1) < static_cast<type>(1e-3), LOG);
    assert_true(abs(ul.get_descriptives_matrix()(0,1) - 1) < static_cast<type>(1e-3), LOG);
@@ -632,20 +615,6 @@ void UnscalingLayerTest::test_set_unscaling_method()
    unscaling_layer.set_scalers(Logarithm);
    assert_true(unscaling_layer.write_unscaling_method_text()(0) == "logarithmic", LOG);
 */
-}
-
-void UnscalingLayerTest::test_set_display()
-{
-   cout << "test_set_display\n";
-
-   bool display_true = true;
-   bool display_false = false;
-
-   set_display(display_true);
-   assert_true(get_display(), LOG);
-
-   set_display(display_false);
-   assert_true(!get_display(), LOG);
 }
 
 
@@ -865,36 +834,25 @@ void UnscalingLayerTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
-
 
    // Get methods
 
    test_get_dimensions();
-
 
    // Unscaling layer architecture
 
    test_get_inputs_number();
    test_get_neurons_number();
 
-
    // Output variables descriptives
 
    test_get_minimums();
    test_get_maximums();
 
-
    // Variables descriptives
 
    test_get_descriptives();
    test_get_descriptives_matrix();
-
-
-   // Display messages
-
-   test_get_display();
-
 
    // Set methods
 
@@ -902,7 +860,6 @@ void UnscalingLayerTest::run_test_case()
    test_set_inputs_number();
    test_set_neurons_number();
    test_set_default();
-
 
    // Output variables descriptives
 
@@ -914,28 +871,17 @@ void UnscalingLayerTest::run_test_case()
    test_set_mean();
    test_set_standard_deviation();
 
-
-   // Variables descriptives
-
    // Variables scaling and unscaling
 
    test_write_scalers();
-
-
-   // Display messages
-
-   test_set_display();
-
 
    // Check methods
 
    test_is_empty();
 
-
    // Output methods
 
    test_calculate_outputs();
-
 
    // Expression methods
 

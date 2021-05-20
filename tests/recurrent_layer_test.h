@@ -32,7 +32,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Inputs and perceptrons
 
@@ -52,7 +51,6 @@ public:
    void test_get_parameters_number();
    void test_get_parameters();
    void test_calculate_activations_derivatives();
-   void test_calculate_combinations();
    void test_calculate_outputs();
 
    // Unit testing methods

@@ -38,12 +38,6 @@ void GradientDescentTest::test_constructor()
 }
 
 
-void GradientDescentTest::test_destructor()
-{
-   cout << "test_destructor\n"; 
-}
-
-
 void GradientDescentTest::test_perform_training()
 {
    cout << "test_perform_training\n";
@@ -163,32 +157,6 @@ void GradientDescentTest::test_resize_training_error_history()
 }
 
 
-/// @todo
-
-void GradientDescentTest::test_to_XML()
-{
-   cout << "test_to_XML\n";
-
-//   GradientDescent gradient_descent;
-
-//   tinyxml2::XMLDocument* document;
-
-   // Test
-
-//   document = gradient_descent.to_XML();
-//   assert_true(document != nullptr, LOG);
-
-//   delete document;
-
-}
-
-
-void GradientDescentTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
-}
-
-
 void GradientDescentTest::run_test_case()
 {
    cout << "Running gradient descent test case...\n";
@@ -196,7 +164,6 @@ void GradientDescentTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
 
    // Training methods
 
@@ -205,11 +172,6 @@ void GradientDescentTest::run_test_case()
    // Training history methods
 
    test_resize_training_error_history();
-
-   // Serialization methods
-
-   test_to_XML();
-   test_from_XML();
 
    cout << "End of gradient descent test case.\n\n";
 }

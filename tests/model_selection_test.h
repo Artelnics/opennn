@@ -40,8 +40,6 @@ public:
 
    void test_set_training_strategy_pointer();
 
-   void test_set_default();
-
    // Model selection methods
 
    void test_perform_neurons_selection();

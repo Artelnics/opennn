@@ -49,12 +49,6 @@ void PruningInputsTest::test_destructor()
 }
 
 
-void PruningInputsTest::test_set_default()
-{
-    cout << "test_set_default\n";
-}
-
-
 void PruningInputsTest::test_perform_inputs_selection()
 {
     cout << "test_perform_inputs_selection\n";
@@ -118,33 +112,6 @@ void PruningInputsTest::test_perform_inputs_selection()
 //    pi.delete_loss_history();
 }
 
-// Serialization methods
-
-void PruningInputsTest::test_to_XML()
-{
-    cout << "test_to_XML\n";
-
-    PruningInputs pi;
-
-//    tinyxml2::XMLDocument* document = pi.to_XML();
-//    assert_true(document != nullptr, LOG);
-
-//    delete document;
-}
-
-
-void PruningInputsTest::test_from_XML()
-{
-    cout << "test_from_XML\n";
-
-    PruningInputs pi;
-
-//    tinyxml2::XMLDocument* document = pi.to_XML();
-//    pi.from_XML(*document);
-
-//    delete document;
-}
-
 
 void PruningInputsTest::run_test_case()
 {
@@ -155,19 +122,9 @@ void PruningInputsTest::run_test_case()
     test_constructor();
     test_destructor();
 
-    // Set methods
-
-    test_set_default();
-
     // Input selection methods
 
     test_perform_inputs_selection();
-
-    // Serialization methods
-
-    test_to_XML();
-
-    test_from_XML();
 
     cout << "End of pruning input test case.\n\n";
 }

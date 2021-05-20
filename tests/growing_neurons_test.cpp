@@ -48,12 +48,6 @@ void GrowingNeuronsTest::test_destructor()
 }
 
 
-void GrowingNeuronsTest::test_set_default()
-{
-    cout << "test_set_default\n";
-}
-
-
 void GrowingNeuronsTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
@@ -183,32 +177,6 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 }
 
 
-void GrowingNeuronsTest::test_to_XML()
-{
-    cout << "test_to_XML\n";
-
-    GrowingNeurons io;
-
-//    tinyxml2::XMLDocument* document = io.to_XML();
-//    assert_true(document != nullptr, LOG);
-
-//    delete document;
-}
-
-
-void GrowingNeuronsTest::test_from_XML()
-{
-    cout << "test_from_XML\n";
-
-    GrowingNeurons io;
-
-//    tinyxml2::XMLDocument* document = io.to_XML();
-//    io.from_XML(*document);
-
-//    delete document;
-}
-
-
 void GrowingNeuronsTest::run_test_case()
 {
     cout << "Running incremental order test case...\n";
@@ -218,19 +186,9 @@ void GrowingNeuronsTest::run_test_case()
     test_constructor();
     test_destructor();
 
-    // Set methods
-
-    test_set_default();
-
     // Order selection methods
 
     test_perform_neurons_selection();
-
-    // Serialization methods
-
-    test_to_XML();
-
-    test_from_XML();
 
     cout << "End of incremental order test case.\n\n";
 }

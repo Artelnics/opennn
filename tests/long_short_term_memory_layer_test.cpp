@@ -56,14 +56,6 @@ void LongShortTermMemoryLayerTest::test_constructor()
 }
 
 
-void LongShortTermMemoryLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
-
-}
-
-
-
 void LongShortTermMemoryLayerTest::test_get_inputs_number()
 {
    cout << "test_get_inputs_number\n";
@@ -97,7 +89,6 @@ void LongShortTermMemoryLayerTest::test_get_neurons_number()
 
    Index inputs_number;
    Index neurons_number;
-
 
    // Test
 
@@ -533,6 +524,7 @@ void LongShortTermMemoryLayerTest::test_initialize_recurrent_weights()
 //   assert_true(output_recurrent_weights == long_short_term_memory_layer.get_recurrent_weights().get_matrix(3), LOG);
 }
 
+
 void LongShortTermMemoryLayerTest::test_set_parameters_random()
 {
    cout << "test_set_parameters_random\n";
@@ -560,8 +552,6 @@ void LongShortTermMemoryLayerTest::test_get_parameters()
 
    long_short_term_memory_layer.set(1,2);
 
-
-
    long_short_term_memory_layer.initialize_forget_weights(1.0);
    long_short_term_memory_layer.initialize_state_weights(3.0);
    long_short_term_memory_layer.initialize_input_weights(2.0);
@@ -575,10 +565,6 @@ void LongShortTermMemoryLayerTest::test_get_parameters()
    long_short_term_memory_layer.initialize_state_biases(11.0);
    long_short_term_memory_layer.initialize_output_biases(12.0);
 
-//   cout<< "parameters.  "<< long_short_term_memory_layer.get_parameters()<<endl;
-//   cout<< "weight.  "<< long_short_term_memory_layer.get_weights()<<endl;
-//   cout<< "recurrent_weight.  "<< long_short_term_memory_layer.get_recurrent_weights()<<endl;
-//   cout<< "biases "<< long_short_term_memory_layer.get_biases()<<endl;
 }
 
 
@@ -620,7 +606,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   weights.initialize_sequential();
 //   recurrent_weights.initialize_sequential();
 //   biases.initialize_sequential();
-//   for(Index i = 0; i < size; i++) x(i) = i;
+//   initialize_sequential(x);
 //   parameters = weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases.to_vector());
 
 //   long_short_term_memory_layer.set_parameters_random();
@@ -658,7 +644,6 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(1) == long_short_term_memory_layer.calculate_outputs(inputs,biases, weights, recurrent_weights)(1), LOG);
 //   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(2) == long_short_term_memory_layer.calculate_outputs(inputs,biases, weights, recurrent_weights)(2), LOG);
 
-
 //   // Test
 
 //   long_short_term_memory_layer.set(1, 2 );
@@ -686,8 +671,6 @@ void LongShortTermMemoryLayerTest::run_test_case()
    // Constructor and destructor
 
    test_constructor();
-
-   test_destructor();
 
    // Inputs and perceptrons
 

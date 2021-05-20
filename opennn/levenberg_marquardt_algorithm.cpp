@@ -548,7 +548,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         results.training_error_history(epoch) = training_back_propagation_lm.error;
 
-        gradient_norm = l2_norm(training_back_propagation_lm.gradient);
+        gradient_norm = l2_norm(thread_pool_device, training_back_propagation_lm.gradient);
 
         if(has_selection)
         {
@@ -770,7 +770,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
         }
     }
 
-    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);  
+    optimization_data.parameters_increment_norm = l2_norm(thread_pool_device, optimization_data.parameters_increment);
 
     // Set parameters
 

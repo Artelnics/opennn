@@ -28,9 +28,6 @@
 #include "config.h"
 
 
-//using namespace std;
-//using namespace Eigen;
-
 namespace OpenNN
 {
 
@@ -107,7 +104,7 @@ struct CorrelationResults
             case Gauss_correlation: return "Gauss";
         }
 
-        return "";
+        return string();
     }
 
     /// Correlation coefficient.

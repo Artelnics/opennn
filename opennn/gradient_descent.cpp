@@ -404,7 +404,7 @@ void GradientDescent::update_parameters(
         optimization_data.learning_rate = optimization_data.old_learning_rate;
     }
 
-    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+    optimization_data.parameters_increment_norm = l2_norm(thread_pool_device, optimization_data.parameters_increment);
 
     // Update parameters
 
@@ -531,7 +531,7 @@ TrainingResults GradientDescent::perform_training()
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
-        gradient_norm = l2_norm(training_back_propagation.gradient);
+        gradient_norm = l2_norm(thread_pool_device, training_back_propagation.gradient);
 
         if(has_selection)
         {

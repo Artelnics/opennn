@@ -34,19 +34,9 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Set methods
-
-   void test_set_default();
-
    // Order selection methods
 
    void test_perform_neurons_selection();
-
-   // Serialization methods
-
-   void test_to_XML();
-
-   void test_from_XML();
 
    // Unit testing methods
 

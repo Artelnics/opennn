@@ -32,11 +32,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
-
-   // Set methods
-
-   void test_set();
 
    // Training methods
 
@@ -49,7 +44,6 @@ public:
    // Serialization methods
 
    void test_to_XML();
-   void test_from_XML();
 
    // Unit testing methods
 

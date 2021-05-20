@@ -26,7 +26,6 @@ void ConvolutionalLayerTest::test_eigen_convolution()
 
     cout << "test_eigen_convolution\n";
 
-
     // Convolution 2D, 1 channel
     Tensor<float, 2> input(3, 3);
     Tensor<float, 2> kernel(2, 2);

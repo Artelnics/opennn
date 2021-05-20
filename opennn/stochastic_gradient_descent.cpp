@@ -476,7 +476,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             update_parameters(training_back_propagation, optimization_data);
         }
 
-        gradient_norm = l2_norm(training_back_propagation.gradient);
+        gradient_norm = l2_norm(thread_pool_device, training_back_propagation.gradient);
 
         // Loss
 

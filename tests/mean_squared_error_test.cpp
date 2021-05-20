@@ -42,12 +42,6 @@ void MeanSquaredErrorTest::test_constructor()
 }
 
 
-void MeanSquaredErrorTest::test_destructor()
-{
-    cout << "test_destructor\n";
-}
-
-
 void MeanSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
@@ -115,8 +109,6 @@ void MeanSquaredErrorTest::test_calculate_error()
 
 void MeanSquaredErrorTest::test_calculate_error_gradient()
 {
-   cout << "test_calculate_error_gradient\n";
-
    cout << "test_calculate_error_gradient\n";
 
    Index samples_number;
@@ -556,8 +548,6 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
        mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-
-
        recurrent_layer->set_timesteps(2);
 
        NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
@@ -597,8 +587,6 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons, outputs_number});
 
        neural_network.set_parameters_random();
-
-
 
        NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
        LossIndexBackPropagation back_propagation(samples_number, &mean_squared_error);
@@ -645,8 +633,6 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
        neural_network.set_parameters_random();
 
-
-
        NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
        LossIndexBackPropagation back_propagation(samples_number, &mean_squared_error);
        LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &mean_squared_error);
@@ -690,8 +676,6 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons, outputs_number});
 
        neural_network.set_parameters_random();
-
-
 
        NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
        LossIndexBackPropagation back_propagation(samples_number, &mean_squared_error);
@@ -902,18 +886,6 @@ void MeanSquaredErrorTest::test_calculate_squared_errors_jacobian()
 }
 
 
-void MeanSquaredErrorTest::test_to_XML()
-{
-   cout << "test_to_XML\n";
-}
-
-
-void MeanSquaredErrorTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
-}
-
-
 void MeanSquaredErrorTest::run_test_case()
 {
    cout << "Running mean squared error test case...\n";
@@ -937,12 +909,7 @@ void MeanSquaredErrorTest::run_test_case()
 
    //test_calculate_squared_errors();
    test_calculate_squared_errors_jacobian();
-*/
-   // Serialization methods
-
-//   test_to_XML();
-//   test_from_XML();
-
+*/   
    cout << "End of mean squared error test case.\n\n";
 }
 

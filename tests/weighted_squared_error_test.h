@@ -32,11 +32,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
-
-   // Get methods
-
-   // Set methods
 
    // Error methods
 

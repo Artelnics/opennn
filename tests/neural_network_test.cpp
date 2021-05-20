@@ -84,7 +84,6 @@ void NeuralNetworkTest::test_constructor()
 //  assert_true(neural_network_2.is_empty(), LOG);
 //  assert_true(neural_network_2.get_layers_number() == 0, LOG);
 
-
   // Test 3_1 / Layers constructor // Test other type of layers
 
   Tensor<Layer*, 1> layers_2;
@@ -128,6 +127,7 @@ void NeuralNetworkTest::test_constructor()
 
 }
 
+
 void NeuralNetworkTest::test_destructor()
 {
    cout << "test_destructor\n";
@@ -135,12 +135,6 @@ void NeuralNetworkTest::test_destructor()
    NeuralNetwork* neural_network_1 = new NeuralNetwork;
 
    delete neural_network_1;
-}
-
-
-void NeuralNetworkTest::test_get_display()
-{
-   cout << "test_get_display\n";
 }
 
 
@@ -222,6 +216,7 @@ void NeuralNetworkTest::test_add_layer()
    assert_true(neural_network.get_layer_pointer(5)->get_type() == Layer::Bounding, LOG);
 
 }
+
 
 void NeuralNetworkTest::check_layer_type()
 {
@@ -668,18 +663,6 @@ void NeuralNetworkTest::test_set_pointers()
 }
 
 
-void NeuralNetworkTest::test_set_display()
-{
-   cout << "test_set_display\n";
-
-   neural_network.set_display(true);
-   assert_true(neural_network.get_display(), LOG);
-
-   neural_network.set_display(false);
-   assert_true(!neural_network.get_display(), LOG);
-}
-
-
 void NeuralNetworkTest::test_get_layers_number()
 {
    cout << "test_get_layers_number\n";
@@ -777,6 +760,7 @@ void NeuralNetworkTest::test_get_architecture()
 
 }
 
+
 void NeuralNetworkTest::test_get_parameters()
 {
    cout << "test_get_parameters\n";
@@ -873,6 +857,7 @@ void NeuralNetworkTest::test_get_parameters()
 
 }
 
+
 void NeuralNetworkTest::test_get_trainable_layers_parameters()
 {
     cout << "test_get_trainable_layers_parameters\n";
@@ -947,6 +932,7 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
     assert_true(abs(trainable_layers_parameters(2)(0) - 4) < static_cast<type>(1e-5), LOG);
     assert_true(abs(trainable_layers_parameters(2)(1) - 5) < static_cast<type>(1e-5), LOG);
 }
+
 
 void NeuralNetworkTest::test_set_parameters()
 {
@@ -1416,22 +1402,6 @@ void NeuralNetworkTest::test_load()
 }
 
 
-void NeuralNetworkTest::test_print()
-{
-   cout << "test_print\n";
-
-   // Empty neural network
-
-   //neural_network.print();
-
-   // Only network architecture
-
-   neural_network.set(NeuralNetwork::Approximation, {2, 4, 3});
-
-   //neural_network.print();
-}
-
-
 void NeuralNetworkTest::test_write_expression()
 {
    cout << "test_write_expression\n";
@@ -1667,7 +1637,7 @@ void NeuralNetworkTest::run_test_case()
 
    test_set_pointers();
 
-   test_set_display();
+
 
    // Layers
 
@@ -1696,7 +1666,7 @@ void NeuralNetworkTest::run_test_case()
    test_calculate_parameters_norm();
    test_perturbate_parameters();
 
-   //Output
+   // Output
 
    test_calculate_outputs();
 
@@ -1704,7 +1674,6 @@ void NeuralNetworkTest::run_test_case()
 
    // Expression methods
 
-   test_print();
    test_write_expression();
 
    //Forward propagate

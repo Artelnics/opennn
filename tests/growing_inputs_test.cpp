@@ -35,7 +35,6 @@ void GrowingInputsTest::test_constructor()
     GrowingInputs growing_inputs_2;
 
     assert_true(!growing_inputs_2.has_training_strategy(), LOG);
-
 }
 
 
@@ -46,12 +45,6 @@ void GrowingInputsTest::test_destructor()
     GrowingInputs* gi = new GrowingInputs;
 
     delete gi;
-}
-
-
-void GrowingInputsTest::test_set_default()
-{
-    cout << "test_set_default\n";
 }
 
 
@@ -145,10 +138,6 @@ void GrowingInputsTest::run_test_case()
 
     test_constructor();
     test_destructor();
-
-    // Set methods
-
-    test_set_default();
 
     // Input selection methods
 

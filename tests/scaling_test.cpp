@@ -47,8 +47,6 @@ void ScalingTest::test_scale_mean_standard_deviation()
 }
 
 
-
-
 void ScalingTest::test_scale_minimum_maximum()
 {
    cout << "test_scale_minimum_maximum\n";

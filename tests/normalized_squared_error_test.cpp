@@ -41,12 +41,6 @@ void NormalizedSquaredErrorTest::test_constructor()
 }
 
 
-void NormalizedSquaredErrorTest::test_destructor()
-{
-   cout << "test_destructor\n";
-}
-
-
 void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 {
    cout << "test_calculate_normalization_coefficient\n";
@@ -482,7 +476,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
    neural_network.set();
 
    // Test recurrent and perceptron
-
    {
        samples_number = 4;
        inputs_number = 2;
@@ -681,7 +674,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
    neural_network.set();
 
    // Test probabilistic (binary) LM
-
    {
        samples_number = 2;
        inputs_number = 2;
@@ -1038,18 +1030,6 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
    }
-}
-
-
-void NormalizedSquaredErrorTest::test_to_XML()
-{
-   cout << "test_to_XML\n";
-}
-
-
-void NormalizedSquaredErrorTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
 }
 
 

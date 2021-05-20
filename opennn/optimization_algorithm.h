@@ -157,16 +157,6 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
-   type l2_norm(const Tensor<type, 1>& tensor) const
-   {
-       Tensor<type, 0> norm;
-
-       norm.device(*thread_pool_device) = tensor.square().sum().sqrt();
-
-       return norm(0);
-   }
-
-
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/optimization_algorithm_cuda.h"
 #endif

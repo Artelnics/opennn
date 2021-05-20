@@ -4313,7 +4313,7 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function_expression(
     }
     case Linear:
     {
-        return "";
+        return string();
     }
     default:
     {
@@ -4333,7 +4333,7 @@ string LongShortTermMemoryLayer::write_activation_function_expression() const
     }
     case Linear:
     {
-        return "";
+        return string();
     }
     default:
     {

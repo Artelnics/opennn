@@ -647,7 +647,7 @@ void QuasiNewtonMethod::update_parameters(
         optimization_data.learning_rate = optimization_data.initial_learning_rate;
     }
 
-    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+    optimization_data.parameters_increment_norm = l2_norm(thread_pool_device, optimization_data.parameters_increment);
 
     // Update stuff
 
@@ -780,7 +780,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         results.training_error_history(epoch) = training_back_propagation.error;
 
-        gradient_norm = l2_norm(training_back_propagation.gradient);
+        gradient_norm = l2_norm(thread_pool_device, training_back_propagation.gradient);
 
         // Selection error
 

@@ -29,8 +29,6 @@ void TrainingStrategyTest::test_constructor()
    // Test
 
    TrainingStrategy training_strategy1(&neural_network, &data_set);
-
-
 }
 
 
@@ -61,27 +59,6 @@ void TrainingStrategyTest::test_get_loss_index_pointer()
    LossIndex* loss_index_pointer = training_strategy.get_loss_index_pointer();
 
    assert_true(loss_index_pointer != nullptr, LOG);
-}
-
-
-void TrainingStrategyTest::test_get_display()
-{
-   cout << "test_get_display\n";
-
-   NeuralNetwork neural_network;
-   DataSet data_set;
-
-   TrainingStrategy training_strategy(&neural_network, &data_set);
-
-   training_strategy.set_display(false);
-
-   assert_true(!training_strategy.get_display(), LOG);
-}
-
-
-void TrainingStrategyTest::test_set()
-{
-   cout << "test_set\n"; 
 }
 
 
@@ -186,12 +163,6 @@ void TrainingStrategyTest::test_from_XML()
 }
 
 
-void TrainingStrategyTest::test_print()
-{
-   cout << "test_print\n";
-}
-
-
 void TrainingStrategyTest::test_save()
 {
    cout << "test_save\n";
@@ -238,18 +209,10 @@ void TrainingStrategyTest::run_test_case()
 
    test_get_loss_index_pointer();
 
-
-   // Utilities
-   
-   test_get_display();
-
-
    // Set methods
 
-   test_set();
    test_set_default();   
    test_set_loss_index_pointer();
-
 
    // Training methods
 
@@ -260,7 +223,6 @@ void TrainingStrategyTest::run_test_case()
 
    test_to_XML();
    test_from_XML();
-   test_print();
    test_save();
    test_load();
 

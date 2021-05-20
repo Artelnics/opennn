@@ -1365,7 +1365,7 @@ string PerceptronLayer::write_activation_function_expression() const
         return "tanh";
 
     case Linear:
-        return "";
+        return string();
 
     case RectifiedLinear:
         return "ReLU";

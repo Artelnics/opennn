@@ -42,12 +42,6 @@ void MinkowskiErrorTest::test_constructor()
 }
 
 
-void MinkowskiErrorTest::test_destructor()
-{
-   cout << "test_destructor\n";
-}
-
-
 void MinkowskiErrorTest::test_get_Minkowski_parameter()
 {
    cout << "test_get_Minkowski_parameter\n";
@@ -57,12 +51,6 @@ void MinkowskiErrorTest::test_get_Minkowski_parameter()
    minkowski_error.set_Minkowski_parameter(1.0);
    
    assert_true(minkowski_error.get_Minkowski_parameter() == 1.0, LOG);
-}
-
-
-void MinkowskiErrorTest::test_set_Minkowski_parameter()
-{
-   cout << "test_set_Minkowski_parameter\n";
 }
 
 
@@ -125,12 +113,6 @@ void MinkowskiErrorTest::test_calculate_error()
    minkowski_error.calculate_error(batch, forward_propagation_2, training_back_propagation_2);
 
    assert_true(training_back_propagation_2.error - 0.761 < 1.0e-3, LOG);
-}
-
-
-void MinkowskiErrorTest::test_calculate_selection_error()
-{
-   cout << "test_calculate_selection_error\n";
 }
 
 
@@ -779,51 +761,6 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
    }
 
-
-}
-
-
-void MinkowskiErrorTest::test_to_XML()
-{
-   cout << "test_to_XML\n";  
-
-//   MinkowskiError minkowski_error;
-
-//   tinyxml2::XMLDocument* document;
-
-   // Test
-
-//   document = me.to_XML();
-
-//   assert_true(document != nullptr, LOG);
-
-//   delete document;
-
-}
-
-
-void MinkowskiErrorTest::test_from_XML()    // @todo
-{
-   cout << "test_from_XML\n";
-
-//   MinkowskiError minkowski_error1;
-//   MinkowskiError minkowski_error2;
-
-//  tinyxml2::XMLDocument* document;
-
-//  // Test
-
-//  me1.set_Minkowski_parameter(1.33);
-//  me1.set_display(false);
-
-//  document = me1.to_XML();
-
-//  me2.from_XML(*document);
-
-//  delete document;
-
-//  assert_true(me2.get_Minkowski_parameter() == 1.33, LOG);
-
 }
 
 
@@ -850,11 +787,6 @@ void MinkowskiErrorTest::run_test_case()
    test_calculate_selection_error();*/
    test_calculate_error_gradient();
 
-   // Serialization methods
-/*
-   test_to_XML();
-   test_from_XML();
-*/
    cout << "End of Minkowski error test case.\n\n";
 }
 

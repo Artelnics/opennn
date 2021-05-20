@@ -58,13 +58,6 @@ void RecurrentLayerTest::test_constructor()
 }
 
 
-void RecurrentLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
-
-}
-
-
 void RecurrentLayerTest::test_get_inputs_number()
 {
    cout << "test_get_inputs_number\n";
@@ -158,9 +151,8 @@ void RecurrentLayerTest::test_get_weights()
    recurrent_layer.set_parameters_constant(4.0);
 
    assert_true(recurrent_layer.get_input_weights()(0) == 4.0, LOG);
-
-
 }
+
 
 void RecurrentLayerTest::test_get_recurrent_initializer()
 {
@@ -416,15 +408,8 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 //      activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
 //      numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
 //      assert_true(absolute_value((activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
-
    }
 
-}
-
-
-void RecurrentLayerTest::test_calculate_combinations()
-{
-   cout << "test_calculate_combinations\n";
 }
 
 
@@ -479,8 +464,6 @@ void RecurrentLayerTest::run_test_case()
 
    test_constructor();
 
-   test_destructor();
-
    // Inputs and perceptrons
 
    test_get_inputs_number();
@@ -497,7 +480,6 @@ void RecurrentLayerTest::run_test_case()
 
    test_calculate_activations_derivatives();
 
-   test_calculate_combinations();
    test_calculate_outputs();
 
    cout << "End of recurrent layer test case.\n\n";

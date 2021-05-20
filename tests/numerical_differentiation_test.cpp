@@ -31,11 +31,6 @@ void NumericalDifferentiationTest::test_constructor()
    assert_true(nd_1.get_numerical_differentiation_method() ==OpenNN::NumericalDifferentiation::ForwardDifferences, LOG);
 }
 
-void NumericalDifferentiationTest::test_destructor()
-{
-   cout << "test_destructor\n";
-}
-
 
 void NumericalDifferentiationTest::test_set_get_methods()
 {
@@ -247,6 +242,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_derivative
 //   assert_true(abs(d5(1) - 12) < static_cast<type>(1e-2), LOG);
 }
 
+
 void NumericalDifferentiationTest::test_calculate_derivatives()
 {
    cout << "test_calculate_derivative\n";
@@ -393,6 +389,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_second_der
 //   assert_true(abs(d3(0) - 2) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d3(1) - 2) < static_cast<type>(1e-2), LOG);
 }
+
 
 void NumericalDifferentiationTest::test_calculate_central_differences_second_derivatives()
 {
@@ -577,6 +574,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_gradient()
    assert_true(abs(d5(1) - 3) < static_cast<type>(1e-2), LOG);
 }
 
+
 void NumericalDifferentiationTest::test_calculate_central_differences_gradient()
 {
    cout << "test_calculate_central_differences_gradient\n";
@@ -630,6 +628,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_gradient()
    assert_true(abs(d5(0) - 2) < static_cast<type>(1e-2), LOG);
    assert_true(abs(d5(1) - 3) < static_cast<type>(1e-2), LOG);
 }
+
 
 void NumericalDifferentiationTest::test_calculate_training_loss_gradient()
 {
@@ -1553,7 +1552,6 @@ void NumericalDifferentiationTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
 
    test_set_get_methods();
    test_calculate_methods();
@@ -1563,7 +1561,6 @@ void NumericalDifferentiationTest::run_test_case()
    test_calculate_forward_differences_derivatives();
    test_calculate_central_differences_derivatives();
    test_calculate_derivatives();
-
 
    // Second derivative methods
 

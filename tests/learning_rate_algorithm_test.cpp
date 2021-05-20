@@ -35,12 +35,6 @@ void LearningRateAlgorithmTest::test_constructor()
 }
 
 
-void LearningRateAlgorithmTest::test_destructor()
-{
-   cout << "test_destructor\n"; 
-}
-
-
 void LearningRateAlgorithmTest::test_get_loss_index_pointer()
 {
    cout << "test_get_loss_index_pointer\n"; 
@@ -68,79 +62,6 @@ void LearningRateAlgorithmTest::test_get_learning_rate_method()
    assert_true(tra.get_learning_rate_method() == LearningRateAlgorithm::BrentMethod, LOG);
 }
 
-
-void LearningRateAlgorithmTest::test_get_learning_rate_method_name()
-{
-   cout << "test_get_learning_rate_method_name\n";
-}
-
-
-void LearningRateAlgorithmTest::test_get_display()
-{
-   cout << "test_get_display\n";
-
-   LearningRateAlgorithm tra;
-
-   tra.set_display(false);
-
-   assert_true(!tra.get_display(), LOG);
-}
-
-
-void LearningRateAlgorithmTest::test_get_loss_tolerance()
-{
-   cout << "test_get_loss_tolerance\n"; 
-}
-
-
-void LearningRateAlgorithmTest::test_set()
-{
-   cout << "test_set\n"; 
-}
-
-
-void LearningRateAlgorithmTest::test_set_default()
-{
-   cout << "test_set_default\n"; 
-}
-
-
-void LearningRateAlgorithmTest::test_set_loss_index_pointer()
-{
-   cout << "test_set_loss_index_pointer\n"; 
-}
-
-
-void LearningRateAlgorithmTest::test_set_display()
-{
-   cout << "test_set_display\n"; 
-}
-
-
-void LearningRateAlgorithmTest::test_set_learning_rate_method()
-{
-   cout << "test_set_learning_rate_method\n";
-}
-
-
-void LearningRateAlgorithmTest::test_set_loss_tolerance()
-{
-   cout << "test_set_loss_tolerance\n"; 
-}
-
-
-void LearningRateAlgorithmTest::test_calculate_golden_section_learning_rate()
-{
-    cout << "test_calculate_golden_section_learning_rate\n";
-
-}
-
-
-void LearningRateAlgorithmTest::test_calculate_Brent_method_learning_rate()
-{
-    cout << "test_calculate_Brent_method_learning_rate\n";
-
-}
 
 void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
@@ -322,20 +243,6 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 }
 
 
-void LearningRateAlgorithmTest::test_to_XML()
-{
-   cout << "test_to_XML\n";
-
-   LearningRateAlgorithm  tra;
-
-//   tinyxml2::XMLDocument* document = tra.to_XML();
-
-//   assert_true(document != nullptr, LOG);
-
-//   delete document;
-}
-
-
 void LearningRateAlgorithmTest::run_test_case()
 {
    cout << "Running training rate algorithm test case...\n";
@@ -343,7 +250,6 @@ void LearningRateAlgorithmTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
 
    // Get methods
 
@@ -352,45 +258,12 @@ void LearningRateAlgorithmTest::run_test_case()
    // Training operators
 
    test_get_learning_rate_method();
-   test_get_learning_rate_method_name();
-
-   // Training parameters
-
-   test_get_loss_tolerance();
-
-   // Utilities
-   
-   test_get_display();
-
-   // Set methods
-
-   test_set();
-   test_set_default();   
-   test_set_loss_index_pointer();
-
-   // Training operators
-
-   test_set_learning_rate_method();
-
-   // Training parameters
-
-   test_set_loss_tolerance();
-
-   // Utilities
-
-   test_set_display();
 
    // Training methods
 
    test_calculate_bracketing_triplet();
-//   test_calculate_fixed_directional_point();
    test_calculate_golden_section_directional_point();
    test_calculate_Brent_method_directional_point();
-//   test_calculate_directional_point();
-
-   // Serialization methods
-
-   test_to_XML();
 
    cout << "End of training rate algorithm test case.\n\n";
 }
