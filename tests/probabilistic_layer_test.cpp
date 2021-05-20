@@ -58,12 +58,6 @@ void ProbabilisticLayerTest::test_constructor()
 }
 
 
-void ProbabilisticLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
-}
-
-
 void ProbabilisticLayerTest::test_get_inputs_number()
 {
    cout << "test_get_inputs_number\n";
@@ -152,6 +146,7 @@ void ProbabilisticLayerTest::test_get_biases()
    assert_true(abs(biases(0,0) - 9) < static_cast<type>(1e-5), LOG);
    assert_true(abs(biases(0,3) - 6) < static_cast<type>(1e-5), LOG);
 }
+
 
 void ProbabilisticLayerTest::test_get_synaptic_weights()
 {
@@ -298,6 +293,7 @@ void ProbabilisticLayerTest::test_set_biases()
     assert_true(abs(probabilistic_layer.get_biases()(3)) < static_cast<type>(1e-5), LOG);
 }
 
+
 void ProbabilisticLayerTest::test_set_synaptic_weights()
 {
    cout << "test_set_synaptic_weights\n";
@@ -436,24 +432,6 @@ void ProbabilisticLayerTest::test_set_activation_function()
 }
 
 
-void ProbabilisticLayerTest::test_get_display()
-{
-   cout << "test_get_display\n";
-
-   ProbabilisticLayer probabilistic_layer;
-
-   probabilistic_layer.set_display(true);
-
-   assert_true(probabilistic_layer.get_display(), LOG);
-}
-
-
-void ProbabilisticLayerTest::test_set_display()
-{
-   cout << "test_set_display\n";
-}
-
-
 void ProbabilisticLayerTest::test_calculate_combinations()
 {
    cout << "test_calculate_combinations\n";
@@ -582,9 +560,10 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
 }
 
+
 void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 {
-    cout << "test_calculate_derivatives_activations\n";
+    cout << "test_calculate_activations_derivatives\n";
 
     NumericalDifferentiation numerical_differentiation;
     ProbabilisticLayer probabilistic_layer;
@@ -873,8 +852,6 @@ void ProbabilisticLayerTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
-
 
    // Get methods
 
@@ -888,12 +865,6 @@ void ProbabilisticLayerTest::run_test_case()
 
    test_get_inputs_number();
    test_get_neurons_number();
-
-
-   // Display messages
-
-   test_get_display();
-
 
    // Set methods
 
@@ -911,12 +882,6 @@ void ProbabilisticLayerTest::run_test_case()
    test_write_activation_function_text();
    test_set_activation_function();
 
-
-   // Display messages
-
-   test_set_display();
-
-
    // Probabilistic post-processing
 
    test_calculate_combinations();
@@ -932,8 +897,7 @@ void ProbabilisticLayerTest::run_test_case()
 
    test_calculate_error_gradient();
 
-
-   //Write expression
+   // Write expression
 
    test_write_expression();
 

@@ -32,7 +32,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Get methods
 
@@ -51,7 +50,7 @@ public:
 
    // Display messages
 
-   void test_get_display();
+   
 
    // Set methods
 
@@ -72,7 +71,7 @@ public:
 
    // Display messages
 
-   void test_set_display();
+   
 
   // Probabilistic post-processing
 

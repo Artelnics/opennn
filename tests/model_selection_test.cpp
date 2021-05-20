@@ -73,12 +73,6 @@ void ModelSelectionTest::test_set_training_strategy_pointer()
 }
 
 
-void ModelSelectionTest::test_set_default()
-{
-    cout << "test_set_default\n";
-}
-
-
 void ModelSelectionTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
@@ -172,8 +166,6 @@ void ModelSelectionTest::run_test_case()
     // Set methods
 
     test_set_training_strategy_pointer();
-
-    test_set_default();
 
     // Model selection methods
 

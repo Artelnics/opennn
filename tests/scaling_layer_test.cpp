@@ -44,13 +44,6 @@ void ScalingLayerTest::test_constructor()
 }
 
 
-void ScalingLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
-
-}
-
-
 void ScalingLayerTest::test_get_inputs_number()
 {
    cout << "test_get_neurons_number\n";
@@ -391,16 +384,6 @@ void ScalingLayerTest::test_write_scalers()
 
    scaling_layer.set_scalers(standard_deviation);
    assert_true(scaling_layer.write_scalers_text()(0) == "standard deviation", LOG);
-}
-
-
-void ScalingLayerTest::test_get_display()
-{
-   cout << "test_get_display\n";
-
-   ScalingLayer scaling_layer;
-
-   assert_true(scaling_layer.get_display(), LOG);
 }
 
 
@@ -816,21 +799,6 @@ void ScalingLayerTest::test_set_scaling_method()
 }
 
 
-void ScalingLayerTest::test_set_display()
-{
-   cout << "test_set_display\n";
-
-   bool display_true = true;
-   bool display_false = false;
-
-   set_display(display_true);
-   assert_true(get_display(), LOG);
-
-   set_display(display_false);
-   assert_true(!get_display(), LOG);
-}
-
-
 void ScalingLayerTest::test_is_empty()
 {
    cout << "test_is_empty\n";
@@ -1103,14 +1071,11 @@ void ScalingLayerTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
-
 
    // Scaling layer architecture
 
    test_get_inputs_number();
    test_get_neurons_number();
-
 
    // Input variables descriptives
 
@@ -1130,7 +1095,7 @@ void ScalingLayerTest::run_test_case()
 
    // Display messages
 
-   test_get_display();
+   
 
 
    // Set methods
@@ -1159,7 +1124,7 @@ void ScalingLayerTest::run_test_case()
 
    // Display messages
 
-   test_set_display();
+
 
 
    // Input range

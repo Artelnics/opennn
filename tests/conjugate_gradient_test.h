@@ -36,7 +36,6 @@ public:
    // Get methods
 
    void test_get_training_direction_method();
-   void test_get_training_direction_method_name();
 
    // Set methods
 
@@ -49,8 +48,6 @@ public:
 
    void test_calculate_FR_training_direction();
    void test_calculate_PR_training_direction();
-
-   void test_calculate_training_direction();
 
    void test_perform_training();
 

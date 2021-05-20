@@ -18,18 +18,6 @@ StatisticsTest::~StatisticsTest()
 }
 
 
-void StatisticsTest::test_constructor()
-{
-   cout << "test_constructor\n";
-}
-
-
-void StatisticsTest::test_destructor()
-{
-   cout << "test_destructor\n";
-}
-
-
 void StatisticsTest::test_set_minimum()
 {
    cout << "test_set_minimum\n";
@@ -528,13 +516,13 @@ void StatisticsTest::test_mean()
    assert_true(mean(vector) - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
 
    // Test missing values
-   Tensor<type, 1> vector1(5);
-   Tensor<type, 1> vector2(4);
+   Tensor<type, 1> vector_1(5);
+   Tensor<type, 1> vector_2(4);
 
-   vector1.setValues({1.0, NAN, 2.0, 3.0, 4.0});
-   vector2.setValues({1.0, 2.0, 3.0, 4.0});
+   vector_1.setValues({1.0, NAN, 2.0, 3.0, 4.0});
+   vector_2.setValues({1.0, 2.0, 3.0, 4.0});
 
-   assert_true(abs(mean(vector2) - mean(vector1)) < static_cast<type>(1.0e-6), LOG);
+   assert_true(abs(mean(vector_2) - mean(vector_1)) < static_cast<type>(1.0e-6), LOG);
 
    Tensor<type, 1> vector3;
    vector3.resize(4);
@@ -1265,29 +1253,6 @@ void StatisticsTest::test_calculate_maximal_indices()
 }
 
 
-void StatisticsTest::test_l2_norm()
-{
-   cout << "test_l2_norm\n";
-
-   // Test 0
-   Tensor<type, 1> vector;
-
-//   assert_true(l2_norm(vector) - sqrt(static_cast<type>(0.0)) < static_cast<type>(1.0e-6), LOG);
-
-   // Test 1
-   vector.resize(2);
-   vector.setConstant(1);
-
-   assert_true(abs(l2_norm(thread_pool_device, vector) - sqrt(static_cast<type>(2.0))) < static_cast<type>(1.0e-6), LOG);
-
-   // Test 2
-   Tensor<type, 1> vector_1(4);
-   vector_1.setValues({1,2,3,4});
-
-   assert_true(abs(l2_norm(thread_pool_device, vector_1) - sqrt(static_cast<type>(30.0))) < static_cast<type>(1.0e-6), LOG);
-}
-
-
 void StatisticsTest::test_box_plot()
 {
     cout << "test_box_plot\n";
@@ -1619,70 +1584,62 @@ void StatisticsTest::run_test_case()
 {
    cout << "Running statistics test case...\n";
 
-   // Constructor and destructor methods
-
-   test_constructor();
-   test_destructor();
-
    // Descriptives
 
    test_set_standard_deviation();
    test_has_mean_zero_standard_deviation_one();
    test_has_minimum_minus_one_maximum_one();
 
-
    // Minimum
+
    test_set_minimum();
    test_minimum();
 
-
    // Maximun
+
    test_set_maximum();
    test_maximum();
 
-
    // Mean
+
    test_set_mean();
    test_mean();
    test_weighted_mean();
 
-
    // Mean binary
+
    test_means_binary_columns();
 
-
    // Median
+
    test_median();
 
-
    // Variance
+
    test_variance();
 
-
    // Assymetry
+
    test_calculate_asymmetry();
 
-
    // Kurtosis
+
    test_calculate_kurtosis();
 
-
    // Standard deviation
+
    test_standard_deviation();
 
-
    // Quartiles
+
    test_quartiles();
 
-
    // Box plot
+
    test_box_plot();
 
-
-   // Descriptives struct
-
-
    // Histogram
+
    test_get_bins_number();
    test_count_empty_bins();
    test_calculate_minimum_frequency();
@@ -1697,24 +1654,21 @@ void StatisticsTest::run_test_case()
    test_histograms();
 
    // Minimal indices
+
    test_calculate_minimal_index();
    test_calculate_minimal_indices();
 
-
    // Maximal indices
+
    test_calculate_maximal_index();
    test_calculate_maximal_indices();
 
-
-   // Norm
-   test_l2_norm();
-
-
    // Percentiles
+
    test_percentiles();
 
-
    // Means by categories
+
    test_means_by_categories();
 
 

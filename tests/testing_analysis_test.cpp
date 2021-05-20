@@ -37,12 +37,6 @@ void TestingAnalysisTest::test_constructor()
 }
 
 
-void TestingAnalysisTest::test_destructor()
-{
-   cout << "test_destructor\n";
-}
-
-
 void TestingAnalysisTest::test_get_neural_network_pointer()
 {
    cout << "test_get_neural_network_pointer\n";
@@ -60,30 +54,6 @@ void TestingAnalysisTest::test_get_data_set_pointer()
    testing_analysis.set_data_set_pointer(&data_set);
    
    assert_true(testing_analysis.get_data_set_pointer() != nullptr, LOG);
-}
-
-
-void TestingAnalysisTest::test_get_display()
-{
-   cout << "test_get_display\n";
-}
-
-
-void TestingAnalysisTest::test_set_neural_network_pointer()
-{
-   cout << "test_set_neural_network_pointer\n";
-}
-
-
-void TestingAnalysisTest::test_set_data_set_pointer()
-{
-   cout << "test_set_data_set_pointer\n";
-}
-
-
-void TestingAnalysisTest::test_set_display()
-{
-   cout << "test_set_display\n";
 }
 
 
@@ -249,7 +219,6 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
     assert_true(static_cast<double>(error_data_statistics[0][2].maximum) == 0.0, LOG);
     assert_true(static_cast<double>(error_data_statistics[0][2].mean) == 0.0, LOG);
     assert_true(static_cast<double>(error_data_statistics[0][2].standard_deviation) == 0.0, LOG);
-
 }
 
 
@@ -466,26 +435,12 @@ void TestingAnalysisTest::test_perform_linear_regression()
 }
 
 
-void TestingAnalysisTest::test_print_linear_regression_analysis()
-{
-   cout << "test_print_linear_regression_analysis\n";
-}
-
-
-void TestingAnalysisTest::test_save_linear_regression_analysis()
-{
-   cout << "test_save_linear_regression_analysis\n";
-}
-
-
 void TestingAnalysisTest::test_calculate_confusion()
 {
    cout << "test_calculate_confusion\n";
 
    NeuralNetwork neural_network;
    DataSet data_set;
-
-
 
   // Samples* i;
 
@@ -553,8 +508,6 @@ void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
 
     NeuralNetwork neural_network;
     DataSet data_set;
-
-
 
     type wilcoxon_parameter;
 
@@ -765,8 +718,6 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     NeuralNetwork neural_network;
     DataSet data_set;
 
-
-
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
@@ -962,8 +913,6 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 
     NeuralNetwork neural_network;
     DataSet data_set;
-
-
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -1375,22 +1324,11 @@ void TestingAnalysisTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
 
    // Get methods
    
    test_get_neural_network_pointer();
    test_get_data_set_pointer();
-
-   test_get_display();
-
-
-   // Set methods
-
-   test_set_neural_network_pointer();
-   test_set_data_set_pointer();
-   test_set_display();
-
 
    // Error data methods
 
@@ -1403,22 +1341,17 @@ void TestingAnalysisTest::run_test_case()
    test_calculate_error_data_histograms();
    test_calculate_maximal_errors();
 
-
    // Linear regression analysis methodsta
 
    test_linear_regression();
    test_print_linear_regression_correlation();
    test_get_linear_regression_correlations_std();
    test_save();
-   test_print_linear_regression_analysis();
-   test_save_linear_regression_analysis();
    test_perform_linear_regression();
-
 
    // Binary classification test methods
 
    test_calculate_binary_classification_test();
-
 
    // Confusion matrix methods
 

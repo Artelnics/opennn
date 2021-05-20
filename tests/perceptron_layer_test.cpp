@@ -59,12 +59,6 @@ void PerceptronLayerTest::test_constructor()
 }
 
 
-void PerceptronLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
-}
-
-
 void PerceptronLayerTest::test_get_inputs_number()
 {
    cout << "test_get_inputs_number\n";
@@ -762,22 +756,6 @@ void PerceptronLayerTest::test_set_parameters()
 }
 
 
-void PerceptronLayerTest::test_get_display()
-{
-   cout << "test_get_display\n";
-
-   PerceptronLayer perceptron_layer;
-
-   perceptron_layer.set_display(true);
-
-   assert_true(perceptron_layer.get_display(), LOG);
-
-   perceptron_layer.set_display(false);
-
-   assert_true(!perceptron_layer.get_display(), LOG);
-}
-
-
 void PerceptronLayerTest::test_set_activation_function()
 {
    cout << "test_set_activation_function\n";
@@ -829,16 +807,6 @@ void PerceptronLayerTest::test_set_activation_function()
    assert_true(perceptron_layer.get_activation_function() == 10, LOG);
 }
 
-void PerceptronLayerTest::test_set_display()
-{
-   cout << "test_set_display\n";
-
-   PerceptronLayer perceptron_layer;
-
-   perceptron_layer.set_display(false);
-
-   assert_true(!perceptron_layer.get_display(), LOG);
-}
 
 void PerceptronLayerTest::test_set_parameters_constant()
 {
@@ -1765,8 +1733,6 @@ void PerceptronLayerTest::run_test_case()
 
    test_constructor();
 
-   test_destructor();
-
    // Inputs and perceptrons
 
    test_get_inputs_number();
@@ -1786,7 +1752,7 @@ void PerceptronLayerTest::run_test_case()
 
    // Display messages
 
-   test_get_display();
+   
 
    // Set methods
 
@@ -1813,7 +1779,7 @@ void PerceptronLayerTest::run_test_case()
 
    // Display messages
 
-   test_set_display();
+
 
    // Parameters initialization methods
 

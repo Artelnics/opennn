@@ -52,12 +52,6 @@ void GeneticAlgorithmTest::test_destructor()
 }
 
 
-void GeneticAlgorithmTest::test_set_default()
-{
-    cout << "test_set_default\n";
-}
-
-
 void GeneticAlgorithmTest::test_initialize_population()
 {
     cout << "test_initialize_population\n";
@@ -442,10 +436,6 @@ void GeneticAlgorithmTest::run_test_case()
 
     test_constructor();
     test_destructor();
-
-    // Set methods
-
-    test_set_default();
 
     // Population methods
 

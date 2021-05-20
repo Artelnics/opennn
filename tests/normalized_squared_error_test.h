@@ -32,12 +32,7 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
-   // Get methods
-
-   // Set methods
- 
    // Normalization coefficient
 
    void test_calculate_normalization_coefficient();
@@ -60,11 +55,6 @@ public:
    // Squared errors methods
 
    void test_calculate_maximal_errors();
-
-   // Serialization methods
-
-   void test_to_XML();
-   void test_from_XML();
 
    // Unit testing methods
 

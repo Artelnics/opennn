@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N P U T   S E L E C T I O N   T E S T   C L A S S
+//   I N P U T S   S E L E C T I O N   T E S T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                           
@@ -80,39 +80,6 @@ void InputsSelectionTest::test_set_training_strategy_pointer()
     assert_true(growing_inputs.get_training_strategy_pointer() != nullptr, LOG);
 }
 
-void InputsSelectionTest::test_set_default()
-{
-    cout << "test_set_default\n";
-
-}
-
-void InputsSelectionTest::test_set_loss_calculation_method()
-{
-    cout << "test_set_loss_calculation_method\n";
-
-}
-
-
-void InputsSelectionTest::test_get_final_loss()
-{
-    cout << "test_get_final_loss\n";
-
-}
-
-
-void InputsSelectionTest::test_calculate_losses()
-{
-    cout << "test_calculate_losses\n";
-
-}
-
-
-void InputsSelectionTest::test_get_parameters_order()
-{
-    cout << "test_get_parameters_order\n";
-
-}
-
 
 void InputsSelectionTest::run_test_case()
 {
@@ -130,10 +97,6 @@ void InputsSelectionTest::run_test_case()
     // Set methods
 
     test_set_training_strategy_pointer();
-    test_set_default();
-    test_get_final_loss();
-    test_calculate_losses();
-    test_get_parameters_order();
 
     cout << "End of inputs selection algorithm test case.\n\n";
 }

@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N P U T   S E L E C T I O N   A L G O R I T H M   T E S T   C L A S S   H E A D E R
+//   I N P U T S   S E L E C T I O N   A L G O R I T H M   T E S T   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                           
@@ -47,18 +47,6 @@ public:
    // Set methods
 
    void test_set_training_strategy_pointer();
-
-   void test_set_default();
-
-   void test_set_loss_calculation_method();
-
-   // Loss calculation methods
-
-   void test_get_final_loss();
-
-   void test_calculate_losses();
-
-   void test_get_parameters_order();
 
    // Unit testing methods
 

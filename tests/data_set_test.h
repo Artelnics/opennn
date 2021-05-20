@@ -38,7 +38,7 @@ public:
    void test_get_samples_number();
    void test_get_variables_number();
    void test_get_variables();
-   void test_get_display();
+   
    void test_write_first_cell();
    void test_has_time_columns();
 
@@ -64,7 +64,7 @@ public:
    void test_set();
    void test_set_samples_number();
    void test_set_columns_number();
-   void test_set_display();
+   
    void test_set_lags_number();
    void test_set_steps_ahead_number();
    void test_set_time_series_data();
@@ -152,7 +152,7 @@ public:
 
    void test_to_XML();
    void test_from_XML();
-   void test_print();
+   
    void test_print_data_preview();
 
    void test_read_csv();

@@ -40,60 +40,6 @@ void LevenbergMarquardtAlgorithmTest::test_constructor()
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_destructor()
-{
-   cout << "test_destructor\n";
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_get_damping_parameter()
-{
-   cout << "test_get_damping_parameter\n";
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_get_damping_parameter_factor()
-{
-   cout << "test_get_damping_parameter_factor\n";
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_get_minimum_damping_parameter()
-{
-   cout << "test_get_minimum_damping_parameter\n";
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_get_maximum_damping_parameter()
-{
-   cout << "test_get_maximum_damping_parameter\n";
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_set_damping_parameter()
-{
-   cout << "test_set_damping_parameter\n";
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_set_damping_parameter_factor()
-{
-   cout << "test_set_damping_parameter_factor\n";
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_set_minimum_damping_parameter()
-{
-   cout << "test_set_minimum_damping_parameter\n";
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_set_maximum_damping_parameter()
-{
-   cout << "test_set_maximum_damping_parameter\n";
-}
-
-
 /// @todo
 
 void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss()
@@ -385,22 +331,6 @@ void LevenbergMarquardtAlgorithmTest::test_resize_training_error_history()
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_to_XML()   
-{
-   cout << "test_to_XML\n";
-
-//   tinyxml2::XMLDocument* lmad = levenberg_marquardt_algorithm.to_XML();
-   
-//   assert_true(lmad != nullptr, LOG);
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
-}
-
-
 void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition()
 {
    cout << "test_perform_Householder_QR_decomposition\n";
@@ -458,25 +388,6 @@ void LevenbergMarquardtAlgorithmTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
-
-   // Get methods
-
-   test_get_damping_parameter();
-
-   test_get_damping_parameter_factor();
-
-   test_get_minimum_damping_parameter();
-   test_get_maximum_damping_parameter();
-
-   // Set methods
-
-   test_set_damping_parameter();
-
-   test_set_damping_parameter_factor();
-
-   test_set_minimum_damping_parameter();
-   test_set_maximum_damping_parameter();
 
    // Training methods
 
@@ -488,11 +399,6 @@ void LevenbergMarquardtAlgorithmTest::run_test_case()
    // Training history methods
 
    test_resize_training_error_history();
-
-   // Serialization methods
-
-   test_to_XML();   
-   test_from_XML();
 
    // Linear algebraic equations methods
 

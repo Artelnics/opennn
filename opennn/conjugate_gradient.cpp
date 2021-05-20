@@ -892,7 +892,7 @@ TrainingResults ConjugateGradient::perform_training()
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
-        gradient_norm = l2_norm(training_back_propagation.gradient);
+        gradient_norm = l2_norm(thread_pool_device, training_back_propagation.gradient);
 
         if(has_selection)
         {

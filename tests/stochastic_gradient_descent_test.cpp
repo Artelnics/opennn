@@ -38,14 +38,6 @@ void StochasticGradientDescentTest::test_constructor()
 }
 
 
-/// @todo
-
-void StochasticGradientDescentTest::test_destructor()
-{
-   cout << "test_destructor\n"; 
-}
-
-
 void StochasticGradientDescentTest::test_perform_training()
 {
    cout << "test_perform_training\n";
@@ -144,16 +136,10 @@ void StochasticGradientDescentTest::test_to_XML()
 
    // Test
 
-   //document = sgd.to_XML();
+//   document = stochastic_gradient_descent.to_XML();
    assert_true(document != nullptr, LOG);
 
    delete document;
-}
-
-
-void StochasticGradientDescentTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
 }
 
 
@@ -164,7 +150,6 @@ void StochasticGradientDescentTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
 
    // Training methods
 
@@ -178,7 +163,6 @@ void StochasticGradientDescentTest::run_test_case()
    // Serialization methods
 
    test_to_XML();
-   test_from_XML();
 
    cout << "End of stochastic gradient descent test case.\n\n";
 }

@@ -36,7 +36,6 @@ void CrossEntropyErrorTest::test_calculate_error()
    Index inputs_number;
    Index targets_number;
    
-
    NeuralNetworkForwardPropagation forward_propagation;
 
    CrossEntropyError cross_entropy_error(&neural_network, &data_set);
@@ -346,35 +345,13 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 }
 
 
-void CrossEntropyErrorTest::test_to_XML()   
-{
-	cout << "test_to_XML\n"; 
-}
-
-
-void CrossEntropyErrorTest::test_from_XML()
-{
-	cout << "test_from_XML\n"; 
-}
-
-
 void CrossEntropyErrorTest::run_test_case()
 {
     cout << "Running cross entropy error test case...\n";
 
-   // Get methods
-
-   // Set methods
-
-   // Error methods
-
    test_calculate_error();
+
    test_calculate_error_gradient();
-
-   // Serialization methods
-
-   test_to_XML();
-   test_from_XML();
 
    cout << "End of cross entropy error test case.\n\n";
 }

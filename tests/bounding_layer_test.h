@@ -41,42 +41,11 @@ public:
    
    // Variables bounds
 
-   void test_get_lower_bounds();
-   void test_get_lower_bound();
-
-   void test_get_upper_bounds();
-   void test_get_upper_bound();
-
-   void test_get_bounds();
    void test_get_type();
-
-   // Display messages
-
-   void test_get_display();
-
-   // Set methods
-
-   void test_set();
-   void test_set_default();
-
-   // Variables bounds
-
-   void test_set_lower_bounds();
-   void test_set_lower_bound();
-
-   void test_set_upper_bounds();
-   void test_set_upper_bound();
-
-   void test_set_bounds();
-
-   // Display messages
-
-   void test_set_display();
 
    // Output methods
 
    void test_calculate_outputs();
-   void test_calculate_derivatives();
 
    // Expression methods
 

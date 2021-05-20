@@ -30,11 +30,6 @@ public:
 
    virtual ~StatisticsTest();
 
-   // Constructor and destructor methods
-
-   void test_constructor();
-   void test_destructor();
-
    // Descriptives
    void test_set_mean();
    void test_set_standard_deviation();
@@ -104,9 +99,6 @@ public:
    // Maximal indices
    void test_calculate_maximal_index();
    void test_calculate_maximal_indices();
-
-   // Normality
-   void test_l2_norm();
 
    // Percentiles
    void test_percentiles();

@@ -1284,7 +1284,7 @@ string RecurrentLayer::write_activation_function_expression() const
     {
         case HyperbolicTangent: return "tanh";
 
-        case Linear: return "";
+        case Linear: return string();
 
         default: return write_activation_function();
     }

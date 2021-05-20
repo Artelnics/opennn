@@ -60,12 +60,6 @@ void ConjugateGradientTest::test_get_training_direction_method()
 }
 
 
-void ConjugateGradientTest::test_get_training_direction_method_name()
-{
-   cout << "test_get_training_direction_method_name\n";
-}
-
-
 void ConjugateGradientTest::test_set_training_direction_method()
 {
    cout << "test_set_training_direction_method\n";
@@ -130,7 +124,6 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 void ConjugateGradientTest::test_calculate_PR_training_direction()
 {
    cout << "test_calculate_PR_training_direction\n";
-
 
    neural_network.set(NeuralNetwork::Approximation, {1,1});
 
@@ -201,13 +194,6 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
    conjugate_gradient.calculate_FR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
 
    assert_true(training_direction.size() == parameters_number, LOG);
-}
-
-
-void ConjugateGradientTest::test_calculate_training_direction()
-{
-   cout << "test_calculate_training_direction\n";
-
 }
 
 
@@ -369,12 +355,9 @@ void ConjugateGradientTest::run_test_case()
    test_constructor();
    test_destructor();
 
-
    // Get methods
 
-   test_get_training_direction_method();
-   test_get_training_direction_method_name();
-
+   test_get_training_direction_method(); 
 
    // Set methods
 
@@ -386,7 +369,6 @@ void ConjugateGradientTest::run_test_case()
    test_calculate_FR_parameter();
    test_calculate_FR_training_direction();
    test_calculate_PR_training_direction();
-   test_calculate_training_direction();
    test_perform_training();
 
    // Serialization methods

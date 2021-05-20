@@ -31,7 +31,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Get methods
 
@@ -40,53 +39,14 @@ public:
    // Training operators
 
    void test_get_learning_rate_method();
-   void test_get_learning_rate_method_name();
-
-   // Training parameters
-
-   void test_get_loss_tolerance();
-
-   // Utilities
-
-   void test_get_display();
-
-   // Set methods
-
-   void test_set();
-   void test_set_default();
-
-   void test_set_loss_index_pointer();
-
-   // Training operators
-
-   void test_set_learning_rate_method();
-
-   // Training parameters
-
-   void test_set_loss_tolerance();
-
-    // Utilities
-
-   void test_set_display();
 
    // Training methods
 
-   void test_calculate_golden_section_learning_rate();
-   void test_calculate_Brent_method_learning_rate();
-
    void test_calculate_bracketing_triplet();
 
-   void test_calculate_directional_point();
-
-   void test_calculate_fixed_directional_point();
    void test_calculate_golden_section_directional_point();
    void test_calculate_Brent_method_directional_point();
    
-   // Serialization methods
-
-   void test_to_XML();
-   void test_from_XML();
-
    // Unit testing methods
 
    void run_test_case();

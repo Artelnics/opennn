@@ -42,11 +42,6 @@ void WeightedSquaredErrorTest::test_constructor()
 }
 
 
-void WeightedSquaredErrorTest::test_destructor()
-{
-}
-
-
 void WeightedSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";

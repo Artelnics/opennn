@@ -40,8 +40,6 @@ public:
 
     void test_logistic_correlation();
     void test_rank_logistic_correlation();
-    void test_logistic_function();
-    void test_logistic_error_gradient();
 
     // Point-Biserial correlation methods
 
@@ -78,7 +76,7 @@ public:
     void test_covariance_matrix();
     void test_less_rank_with_ties();
 
-    //Contingency table
+    // Contingency table
 
     void test_contingency_table();
     void test_chi_square_test();
@@ -92,7 +90,6 @@ public:
 
 
 #endif
-
 
 
 // OpenNN: Open Neural Networks Library.

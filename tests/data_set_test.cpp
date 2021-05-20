@@ -86,20 +86,6 @@ void DataSetTest::test_get_variables()
 }
 
 
-void DataSetTest::test_get_display() 
-{
-   cout << "test_get_display\n";
-
-   data_set.set_display(true);
-
-   assert_true(data_set.get_display(), LOG);
-
-   data_set.set_display(false);
-
-   assert_true(!data_set.get_display(), LOG);
-}
-
-
 void DataSetTest::test_get_data() 
 {
    cout << "test_get_data\n";
@@ -317,12 +303,6 @@ void DataSetTest::test_set_columns_number()
    data_set.set_columns_number(2);
 
    assert_true(data_set.get_variables_number() == 2, LOG);
-}
-
-
-void DataSetTest::test_set_display() 
-{
-   cout << "test_set_display\n";
 }
 
 
@@ -2201,7 +2181,7 @@ void DataSetTest::run_test_case()
    test_get_samples_number();
    test_get_variables_number();
    test_get_variables();
-   test_get_display();
+
 
     // Data methods
 
@@ -2220,7 +2200,6 @@ void DataSetTest::run_test_case()
    // Set methods
 
    test_set();
-   test_set_display();
 
    // Data methods
 

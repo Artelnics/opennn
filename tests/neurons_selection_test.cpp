@@ -76,37 +76,6 @@ void NeuronsSelectionTest::test_set_training_strategy_pointer()
     assert_true(in.get_training_strategy_pointer() != nullptr, LOG);
 }
 
-void NeuronsSelectionTest::test_set_default()
-{
-    cout << "test_set_default\n";
-
-}
-
-void NeuronsSelectionTest::test_set_loss_calculation_method()
-{
-    cout << "test_set_loss_calculation_method\n";
-
-}
-
-
-void NeuronsSelectionTest::test_get_final_loss()
-{
-    cout << "test_get_final_loss\n";
-
-}
-
-void NeuronsSelectionTest::test_calculate_losses()
-{
-    cout << "test_calculate_losses\n";
-
-}
-
-void NeuronsSelectionTest::test_get_parameters_order()
-{
-    cout << "test_get_parameters_order\n";
-
-}
-
 
 void NeuronsSelectionTest::run_test_case()
 {
@@ -124,14 +93,6 @@ void NeuronsSelectionTest::run_test_case()
     // Set methods
 
     test_set_training_strategy_pointer();
-
-    test_set_default();
-
-    test_get_final_loss();
-
-    test_calculate_losses();
-
-    test_get_parameters_order();
 
     cout << "End of neurons selection algorithm test case.\n\n";
 }

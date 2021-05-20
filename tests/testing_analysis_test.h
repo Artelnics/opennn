@@ -32,20 +32,12 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Get methods
 
    void test_get_neural_network_pointer();
    void test_get_data_set_pointer();
-   void test_get_display();
-
-   // Set methods
-
-   void test_set_neural_network_pointer();
-   void test_set_data_set_pointer();
-   void test_set_display();
-
+   
    // Error data methods
 
    void test_calculate_error_data();
@@ -65,8 +57,6 @@ public:
    void test_get_linear_regression_correlations_std();
    void test_save();
    void test_perform_linear_regression();
-   void test_print_linear_regression_analysis();
-   void test_save_linear_regression_analysis();
 
    // Binary classification test methods
 
