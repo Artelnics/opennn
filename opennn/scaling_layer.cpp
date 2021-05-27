@@ -1071,7 +1071,7 @@ string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, con
         }
         else if(scalers(i) == MeanStandardDeviation)
         {
-            buffer << "scaled_" << inputs_names(i) << " = (" << inputs_names(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
+            buffer << "scaled_" << inputs_names(i) << " = (" << inputs_names(i) << "-" << descriptives(i).mean << ")/" << descriptives(i).standard_deviation << ";\n";
         }
         else if(scalers(i) == StandardDeviation)
         {
