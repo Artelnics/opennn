@@ -164,11 +164,11 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
         }
         else if(scalers(i) == MeanStandardDeviation)
         {
-            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(" << inputs_names(i) << "+1)*((" << descriptives(i).maximum << ")-(" << descriptives(i).minimum << ");\n";
+            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(" << inputs_names(i) << "+1)*(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ");\n";
         }
         else if(scalers(i) == Logarithm)
         {
-            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(exp(" << inputs_names(i) << ")+1)*((" << descriptives(i).maximum << ")-(" << descriptives(i).minimum << "));\n";
+            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(exp(" << inputs_names(i) << ")+1)*(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ");\n";
         }
         else
         {

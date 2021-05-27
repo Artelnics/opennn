@@ -2517,16 +2517,16 @@ string NeuralNetwork::write_expression_c() const
 }
 
 
-string NeuralNetwork::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string NeuralNetwork::write_expression() const
 {
     const Index layers_number = get_layers_number();
 
     const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
     const Tensor<string, 1> layers_names = get_layers_names();
 
-    Tensor<string, 1> temporal_outputs_names;
-    Tensor<string, 1> temporal_inputs_names;
-    temporal_inputs_names = inputs_names;
+    Tensor<string, 1> outputs_names_vector;
+    Tensor<string, 1> inputs_names_vector;
+    inputs_names_vector = inputs_names;
 
     Index layer_neurons_number;
 
@@ -2536,27 +2536,28 @@ string NeuralNetwork::write_expression(const Tensor<string, 1>& inputs_names, co
     {
         if(i == layers_number-1)
         {
-            temporal_outputs_names = outputs_names;
-            buffer << layers_pointers[i]->write_expression(temporal_inputs_names, temporal_outputs_names) << endl;
+            outputs_names_vector = outputs_names;
+            buffer << layers_pointers[i]->write_expression(inputs_names_vector, outputs_names_vector) << endl;
         }
-        else{
+        else
+        {
             layer_neurons_number = layers_pointers[i]->get_neurons_number();
-            temporal_outputs_names.resize(layer_neurons_number);
-
+            outputs_names_vector.resize(layer_neurons_number);
 
             for(Index j = 0; j < layer_neurons_number; j++)
             {
                 if(layers_names(i) == "scaling_layer")
                 {
-                    temporal_outputs_names(j) = "scaled_" + inputs_names(j);
+                    outputs_names_vector(j) = "scaled_" + inputs_names(j);
                 }
-                else{
-                    temporal_outputs_names(j) =  layers_names(i) + "_output_" + to_string(j);
+                else
+                {
+                    outputs_names_vector(j) =  layers_names(i) + "_output_" + to_string(j);
                 }
             }
-            buffer << layers_pointers[i]->write_expression(temporal_inputs_names, temporal_outputs_names) << endl;
+            buffer << layers_pointers[i]->write_expression(inputs_names_vector, outputs_names_vector) << endl;
 
-            temporal_inputs_names = temporal_outputs_names;
+            inputs_names_vector = outputs_names_vector;
         }
     }
 
