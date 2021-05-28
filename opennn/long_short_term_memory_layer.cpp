@@ -3965,94 +3965,94 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
     ostringstream buffer;
 
-    // Forget gate
+        // Forget gate
 
-       for(Index j = 0; j < neurons_number; j++)
-       {
-           buffer << "forget_gate_" << to_string(j+1) << " = " << write_recurrent_activation_function_expression() << " (" << forget_biases[j] << "+";
+        for(Index j = 0; j < neurons_number; j++)
+        {
+            buffer << "forget_gate_" << to_string(j+1) << " = " << write_recurrent_activation_function_expression() << " (" << forget_biases[j] << " + ";
 
-           for(Index i = 0; i < inputs_number; i++)
-           {
-//               buffer << inputs_names[i] << "*" << forget_weights.get_column(j)(i) << "+";
-           }
+            for(Index i = 0; i < inputs_number; i++)
+            {
+                buffer << inputs_names[j] << " * (" << forget_weights(j,i) << ") + ";
+            }
 
-           for(Index k = 0; k < neurons_number-1; k++)
-           {
-//               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << forget_recurrent_weights.get_column(j)[k] << "+";
-           }
+            for(Index k = 0; k < neurons_number-1; k++)
+            {
+                buffer << "hidden_state_" << to_string(k+1) << "(t-1) * (" << forget_recurrent_weights(j,k) << ") + ";
+            }
 
-//           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << forget_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
-       }
+            buffer << "hidden_state_" << to_string(neurons_number) << "(t-1) * (" << forget_recurrent_weights(j,neurons_number-1) << ") );\n";
+        }
 
        // Input gate
 
        for(Index j = 0; j < neurons_number; j++)
        {
-           buffer << "input_gate_" << to_string(j+1) << " = " << write_recurrent_activation_function_expression() << " (" << input_biases[j] << "+";
+           buffer << "input_gate_" << to_string(j+1) << " = " << write_recurrent_activation_function_expression() << " (" << input_biases[j] << " + ";
 
            for(Index i = 0; i < inputs_number; i++)
            {
-//               buffer << inputs_names[i] << "*" << input_weights.get_column(j)(i) << "+";
+               buffer << inputs_names[i] << " * (" << input_weights(j,i) << ") + ";
            }
 
            for(Index k = 0; k < neurons_number-1; k++)
            {
-//               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << input_recurrent_weights.get_column(j)[k] << "+";
+               buffer << "hidden_state_" << to_string(k+1) << "(t-1) * (" << input_recurrent_weights(j,k) << ") + ";
            }
 
-//           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << input_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
+           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1) * (" << input_recurrent_weights(j,neurons_number-1) << ") );\n";
        }
 
        // State gate
 
        for(Index j = 0; j < neurons_number; j++)
        {
-           buffer << "state_gate_" << to_string(j+1) << " = " << write_activation_function_expression() << " (" << state_biases[j] << "+";
+           buffer << "state_gate_" << to_string(j+1) << " = " << write_activation_function_expression() << " (" << state_biases[j] << " + ";
 
            for(Index i = 0; i < inputs_number; i++)
            {
-//               buffer << inputs_names[i] << "*" << state_weights.get_column(j)(i) << "+";
+               buffer << inputs_names[i] << " * (" << state_weights(j,i) << ") + ";
            }
 
            for(Index k = 0; k < neurons_number-1; k++)
            {
-//               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << state_recurrent_weights.get_column(j)[k] << "+";
+               buffer << "hidden_state_" << to_string(k+1) << "(t-1) * (" << state_recurrent_weights(j,k) << ") + ";
            }
 
-//           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << state_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
+           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1) * (" << state_recurrent_weights(j,neurons_number-1) << ") );\n";
        }
 
        // Output gate
 
        for(Index j = 0; j < neurons_number; j++)
        {
-           buffer << "output_gate_" << to_string(j+1) << " = " << write_recurrent_activation_function_expression() << " (" << output_biases[j] << "+";
+           buffer << "output_gate_" << to_string(j+1) << " = " << write_recurrent_activation_function_expression() << " (" << output_biases[j] << " + ";
 
            for(Index i = 0; i < inputs_number; i++)
            {
-//               buffer << inputs_names[i] << "*" << output_weights.get_column(j)(i) << "+";
+               buffer << inputs_names[i] << " * (" << output_weights(j,i) << ") + ";
            }
 
            for(Index k = 0; k < neurons_number-1; k++)
            {
-//               buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << output_recurrent_weights.get_column(j)[k] << "+";
+               buffer << "hidden_state_" << to_string(k+1) << "(t-1) * (" << output_recurrent_weights(j,k) << ") + ";
            }
 
-//           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1)*" << output_recurrent_weights.get_column(j)[neurons_number-1] << ");\n";
+           buffer << "hidden_state_" << to_string(neurons_number) << "(t-1) * (" << output_recurrent_weights(j,neurons_number-1) << ") );\n";
        }
 
        // Cell state
 
        for(Index i = 0; i < neurons_number; i++)
        {
-            buffer << "cell_state_" << to_string(i+1) << "(t) = forget_gate_" << to_string(i+1) << "*cell_state_" << to_string(i+1) << "(t-1)+input_gate_" << to_string(i+1) << "*state_gate_" << to_string(i+1) << ";\n";
+            buffer << "cell_state_" << to_string(i+1) << "(t) = forget_gate_" << to_string(i+1) << " * cell_state_" << to_string(i+1) << "(t-1)+input_gate_" << to_string(i+1) << " * state_gate_" << to_string(i+1) << ";\n";
        }
 
        // Hidden state
 
        for(Index i = 0; i < neurons_number; i++)
        {
-            buffer << "hidden_state_" << to_string(i+1) << "(t) = output_gate_" << to_string(i+1) << "*" << write_activation_function_expression() << "(cell_state_" << to_string(i+1) << ");\n";
+            buffer << "hidden_state_" << to_string(i+1) << "(t) = output_gate_" << to_string(i+1) << " * " << write_activation_function_expression() << "(cell_state_" << to_string(i+1) << ");\n";
        }
 
        // Output
