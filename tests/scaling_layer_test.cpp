@@ -1086,17 +1086,10 @@ void ScalingLayerTest::run_test_case()
    test_get_means();
    test_get_standard_deviations();
 
-
    // Variables scaling and unscaling
 
    test_get_scaling_method();
    test_write_scalers();
-
-
-   // Display messages
-
-   
-
 
    // Set methods
 
@@ -1104,7 +1097,6 @@ void ScalingLayerTest::run_test_case()
    test_set_inputs_number();
    test_set_neurons_number();
    test_set_default();
-
 
    // Input variables descriptives
 
@@ -1116,32 +1108,22 @@ void ScalingLayerTest::run_test_case()
    test_set_mean();
    test_set_standard_deviation();
 
-
    // Variables scaling and unscaling
 
    test_set_scaling_method();
-
-
-   // Display messages
-
-
-
 
    // Input range
 
    test_is_empty();
    test_check_range();
 
-
    // Scaling and unscaling
 
    test_calculate_outputs();
 
-
    // Expression methods
 
    test_write_expression();
-
 
    cout << "End of scaling layer test case.\n\n";
 }
