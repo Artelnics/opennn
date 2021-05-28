@@ -1548,8 +1548,8 @@ void DataSetTest::test_transform_time_series()
     // Tests for transform_time_series, transform_time_series_data, transform_time_series_colums
 
     assert_true(data_set.get_columns_number() == 6, LOG);
-    assert_true(data_set.get_variables_number() == 6, LOG );
-    assert_true(data_set.get_samples_number() == 7, LOG );
+    assert_true(data_set.get_variables_number() == 6, LOG);
+    assert_true(data_set.get_samples_number() == 7, LOG);
 
     assert_true(data_set.get_input_variables_number() == 4, LOG);
     assert_true(data_set.get_target_variables_number() == 2, LOG);

@@ -5211,7 +5211,7 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
 {
     Tensor<string, 1> unused_columns;
 
-    const Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_columns_correlations();
 
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
@@ -5912,7 +5912,7 @@ void DataSet::set_gmt(Index& new_gmt)
 /// and number of columns is the target number.
 /// Each element contains the correlation between a single input and a single target.
 
-Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlations() const
+Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() const
 {
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
@@ -5920,7 +5920,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
     const Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
 
-    Tensor<CorrelationResults, 2> correlations(input_columns_number, target_columns_number);
+    Tensor<Correlation, 2> correlations(input_columns_number, target_columns_number);
 
     for(Index i = 0; i < input_columns_number; i++)
     {
@@ -5943,19 +5943,19 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                const CorrelationResults linear_correlation
-                        = linear_correlations(thread_pool_device, input_column, target_column);
+                const Correlation linear_correlation
+                        = OpenNN::linear_correlation(thread_pool_device, input_column, target_column);
 
-                const CorrelationResults exponential_correlation
-                        = exponential_correlations(thread_pool_device, input_column, target_column);
+                const Correlation exponential_correlation
+                        = OpenNN::exponential_correlation(thread_pool_device, input_column, target_column);
 
-                const CorrelationResults logarithmic_correlation
-                        = logarithmic_correlations(thread_pool_device, input_column, target_column);
+                const Correlation logarithmic_correlation
+                        = OpenNN::logarithmic_correlation(thread_pool_device, input_column, target_column);
 
-                const CorrelationResults power_correlation
-                        = power_correlations(thread_pool_device, input_column, target_column);
+                const Correlation power_correlation
+                        = OpenNN::power_correlation(thread_pool_device, input_column, target_column);
 
-                CorrelationResults strongest_correlation = linear_correlation;
+                Correlation strongest_correlation = linear_correlation;
 
                 if(abs(exponential_correlation.correlation) > abs(strongest_correlation.correlation))
                     strongest_correlation = exponential_correlation;
@@ -5973,47 +5973,47 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = linear_correlations(thread_pool_device, input_column, target_column);
+                correlations(i,j) = linear_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
+                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input, target);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = logistic_correlations(thread_pool_device, input_column, target_column);
+                correlations(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Binary && target_type == Numeric)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = logistic_correlations(thread_pool_device, input_column, target_column);
+                correlations(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
+                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input, target);
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input);
+                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, target, input);
             }
             else if(input_type == Binary && target_type == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> input_column(input.data(), input.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input);
+                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, target, input);
             }
             else if(input_type == Categorical && target_type == Binary)
             {
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
+                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input, target);
             }
             else if(input_type == DateTime || target_type == DateTime)
             {
@@ -6045,7 +6045,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
 Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() const
 {
-    const Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_columns_correlations();
 
     const Index rows_number = correlations.dimension(0);
     const Index columns_number = correlations.dimension(1);
@@ -6122,7 +6122,7 @@ void DataSet::print_input_target_columns_correlations() const
     const Tensor<string, 1> inputs_names = get_input_variables_names();
     const Tensor<string, 1> targets_name = get_target_variables_names();
 
-    const Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_columns_correlations();
 
     for(Index j = 0; j < targets_number; j++)
     {
@@ -6171,11 +6171,11 @@ void DataSet::print_top_input_target_columns_correlations() const
 
 
 /// Calculates the regressions between all outputs and all inputs.
-/// It returns a matrix with the data stored in RegressionResults format, where the number of rows is the input number
+/// It returns a matrix with the data stored in Correlation format, where the number of rows is the input number
 /// and number of columns is the target number.
 /// Each element contains the correlation between a single input and a single target.
 
-Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions() const
+Tensor<Correlation, 2> DataSet::calculate_input_target_columns_regressions() const
 {
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
@@ -6183,7 +6183,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
     Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
 
-    Tensor<RegressionResults, 2> regressions(input_columns_number, target_columns_number);
+    Tensor<Correlation, 2> regressions(input_columns_number, target_columns_number);
 
     for(Index i = 0; i < input_columns_number; i++)
     {
@@ -6212,28 +6212,28 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                const RegressionResults linear_regression
-                        = OpenNN::linear_regression(thread_pool_device, input_column, target_column);
+                const Correlation linear_correlation
+                        = OpenNN::linear_correlation(thread_pool_device, input_column, target_column);
 
-                const RegressionResults exponential_regression
-                        = OpenNN::exponential_regression(thread_pool_device, input_column, target_column);
+                const Correlation exponential_correlation
+                        = OpenNN::exponential_correlation(thread_pool_device, input_column, target_column);
 
-                const RegressionResults logarithmic_regression
-                        = OpenNN::logarithmic_regression(thread_pool_device, input_column, target_column);
+                const Correlation logarithmic_correlation
+                        = OpenNN::logarithmic_correlation(thread_pool_device, input_column, target_column);
 
-                const RegressionResults power_regression
-                        = OpenNN::power_regression(thread_pool_device, input_column, target_column);
+                const Correlation power_correlation
+                        = OpenNN::power_correlation(thread_pool_device, input_column, target_column);
 
-                RegressionResults strongest_regression = linear_regression;
+                Correlation strongest_regression = linear_correlation;
 
-                if(abs(exponential_regression.correlation) > abs(strongest_regression.correlation))
-                    strongest_regression = exponential_regression;
+                if(abs(exponential_correlation.correlation) > abs(strongest_regression.correlation))
+                    strongest_regression = exponential_correlation;
 
-                if(abs(logarithmic_regression.correlation) > abs(strongest_regression.correlation))
-                    strongest_regression = logarithmic_regression;
+                if(abs(logarithmic_correlation.correlation) > abs(strongest_regression.correlation))
+                    strongest_regression = logarithmic_correlation;
 
-                if(abs(power_regression.correlation) > abs(strongest_regression.correlation))
-                    strongest_regression = power_regression;
+                if(abs(power_correlation.correlation) > abs(strongest_regression.correlation))
+                    strongest_regression = power_correlation;
 
                 regressions(i,j) = strongest_regression;
             }
@@ -6242,21 +6242,21 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                regressions(i,j) = linear_regression(thread_pool_device, input_column, target_column);
+                regressions(i,j) = linear_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                regressions(i,j) = logistic_regression(thread_pool_device, input_column, target_column);
+                regressions(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Binary && target_type == Numeric)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                regressions(i,j) = logistic_regression(thread_pool_device, input_column, target_column);
+                regressions(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
@@ -6366,10 +6366,10 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                const type linear_correlation = OpenNN::linear_correlation(thread_pool_device, current_input_i, current_input_j);
-                const type exponential_correlation = OpenNN::exponential_correlation(thread_pool_device, current_input_i, current_input_j);
-                const type logarithmic_correlation = OpenNN::logarithmic_correlation(thread_pool_device, current_input_i, current_input_j);
-                const type power_correlation = OpenNN::power_correlation(thread_pool_device, current_input_i, current_input_j);
+                const type linear_correlation = OpenNN::linear_correlation(thread_pool_device, current_input_i, current_input_j).correlation;
+                const type exponential_correlation = OpenNN::exponential_correlation(thread_pool_device, current_input_i, current_input_j).correlation;
+                const type logarithmic_correlation = OpenNN::logarithmic_correlation(thread_pool_device, current_input_i, current_input_j).correlation;
+                const type power_correlation = OpenNN::power_correlation(thread_pool_device, current_input_i, current_input_j).correlation;
 
                 type strongest_correlation = linear_correlation;
 
@@ -6384,49 +6384,49 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = linear_correlation(thread_pool_device, current_input_i, current_input_j);
+                correlations(i,j) = linear_correlation(thread_pool_device, current_input_i, current_input_j).correlation;
             }
             else if(type_i == Categorical && type_j == Categorical)
             {
-                correlations(i,j) = karl_pearson_correlation(thread_pool_device, input_i, input_j);
+                correlations(i,j) = karl_pearson_correlation(thread_pool_device, input_i, input_j).correlation;
             }
             else if(type_i == Numeric && type_j == Binary)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = logistic_correlations(thread_pool_device, current_input_i, current_input_j).correlation;
+                correlations(i,j) = logistic_correlation(thread_pool_device, current_input_i, current_input_j).correlation;
             }
             else if(type_i == Binary && type_j == Numeric)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = logistic_correlations(thread_pool_device, current_input_i, current_input_j).correlation;
+                correlations(i,j) = logistic_correlation(thread_pool_device, current_input_i, current_input_j).correlation;
             }
             else if(type_i == Categorical && type_j == Numeric)
             {
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, input_j).correlation;
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_i, input_j).correlation;
             }
             else if(type_i == Numeric && type_j == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, input_i).correlation;
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_j, input_i).correlation;
             }
             else if(type_i == Categorical && type_j == Binary)
             {
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, input_j).correlation;
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_i, input_j).correlation;
             }
             else if(type_i == Binary && type_j == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, input_i).correlation;
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_j, input_i).correlation;
             }
             else
             {

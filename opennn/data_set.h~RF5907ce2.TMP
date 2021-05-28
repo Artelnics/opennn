@@ -568,7 +568,7 @@ public:
 
    // Inputs-targets correlations
 
-   Tensor<Correlation, 2> calculate_input_target_columns_correlations() const;
+   Tensor<CorrelationResults, 2> calculate_input_target_columns_correlations() const;
    Tensor<type, 2> calculate_input_target_columns_correlations_values() const;
 
    void print_input_target_columns_correlations() const;
@@ -577,7 +577,7 @@ public:
 
    // Inputs-targets regressions
 
-   Tensor<Correlation, 2> calculate_input_target_columns_regressions() const;
+   Tensor<CorrelationResults, 2> calculate_input_target_columns_regressions() const;
 
    // Filtering methods
 

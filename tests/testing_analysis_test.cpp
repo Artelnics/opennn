@@ -324,12 +324,12 @@ void TestingAnalysisTest::test_linear_regression()
 
    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-   Tensor<RegressionResults, 1> linear_regression = testing_analysis.linear_regression();
+   Tensor<Correlation, 1> linear_correlation = testing_analysis.linear_correlation();
 
-   assert_true(linear_regression.size() == 1, LOG);
-   assert_true(static_cast<double>(linear_regression(0).a) == 0.0, LOG);
-   assert_true(static_cast<double>(linear_regression(0).b) == 0.0, LOG);
-   assert_true(static_cast<double>(linear_regression(0).correlation) == 1.0, LOG);
+   assert_true(linear_correlation.size() == 1, LOG);
+   assert_true(static_cast<double>(linear_correlation(0).a) == 0.0, LOG);
+   assert_true(static_cast<double>(linear_correlation(0).b) == 0.0, LOG);
+   assert_true(static_cast<double>(linear_correlation(0).correlation) == 1.0, LOG);
 
 }
 
@@ -392,7 +392,7 @@ void TestingAnalysisTest::test_save()
 {
    cout << "test_save\n";
 
-   string file_name = "../data/linear_regression.dat";
+   string file_name = "../data/linear_correlation.dat";
 
    testing_analysis.save(file_name);
 }

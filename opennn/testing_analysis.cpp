@@ -196,7 +196,7 @@ void TestingAnalysis::check() const
 /// The size of each element is equal to the number of regression parameters(2).
 /// In this way, each subvector contains the regression parameters intercept and slope of an output variable.
 
-Tensor<RegressionResults, 1> TestingAnalysis::linear_regression() const
+Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
 {
 #ifdef OPENNN_DEBUG
 
@@ -209,7 +209,7 @@ Tensor<RegressionResults, 1> TestingAnalysis::linear_regression() const
     if(testing_samples_number == 0)
     {
         buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "Tensor<RegressionResults, 1> linear_regression() const method.\n"
+               << "Tensor<Correlation, 1> linear_correlation() const method.\n"
                << "Number of testing samples is zero.\n";
 
         throw logic_error(buffer.str());
@@ -225,53 +225,53 @@ Tensor<RegressionResults, 1> TestingAnalysis::linear_regression() const
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-    return linear_regression(targets,outputs);
+    return linear_correlation(targets,outputs);
 }
 
 
-Tensor<RegressionResults, 1> TestingAnalysis::linear_regression(const Tensor<type, 2>& target, const Tensor<type, 2>& output) const
+Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>& target, const Tensor<type, 2>& output) const
 {
     const Index outputs_number = data_set_pointer->get_target_variables_number();
 
-    Tensor<RegressionResults, 1> linear_regression(outputs_number);
+    Tensor<Correlation, 1> linear_correlation(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        linear_regression[i] = OpenNN::linear_regression(thread_pool_device, output.chip(i,1), target.chip(i,1));
+        linear_correlation[i] = OpenNN::linear_correlation(thread_pool_device, output.chip(i,1), target.chip(i,1));
     }
 
-    return linear_regression;
+    return linear_correlation;
 }
 
 
 void TestingAnalysis::print_linear_regression_correlations() const
 {
-    const Tensor<RegressionResults, 1> linear_regression = this->linear_regression();
+    const Tensor<Correlation, 1> linear_correlation = this->linear_correlation();
 
     const Tensor<string, 1> targets_name = data_set_pointer->get_target_variables_names();
 
-    const Index targets_number = linear_regression.size();
+    const Index targets_number = linear_correlation.size();
 
     for(Index i = 0; i < targets_number; i++)
     {
-        cout << targets_name[i] << " correlation: " << linear_regression[i].correlation << endl;
+        cout << targets_name[i] << " correlation: " << linear_correlation[i].correlation << endl;
     }
 }
 
 
 Tensor<type, 1> TestingAnalysis::get_linear_regression_correlations_std() const
 {
-    const Tensor<RegressionResults, 1> linear_regression = this->linear_regression();
+    const Tensor<Correlation, 1> linear_correlation = this->linear_correlation();
 
     const Tensor<string, 1> targets_name = data_set_pointer->get_target_variables_names();
 
-    const Index targets_number = linear_regression.size();
+    const Index targets_number = linear_correlation.size();
 
     Tensor<type, 1> std_correlations(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
     {
-        std_correlations[i] = linear_regression[i].correlation;
+        std_correlations[i] = linear_correlation[i].correlation;
     }
 
     return std_correlations;
@@ -321,14 +321,14 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
         const Tensor<type, 1> targets = testing_targets.chip(i,1);
         const Tensor<type, 1> outputs = testing_outputs.chip(i,1);
 
-        const RegressionResults linear_regression = OpenNN::linear_regression(thread_pool_device, outputs, targets, false);
+        const Correlation linear_correlation = OpenNN::linear_correlation(thread_pool_device, outputs, targets, false);
 
         linear_regression_results[i].targets = targets;
         linear_regression_results[i].outputs = outputs;
 
-        linear_regression_results[i].intercept = linear_regression.a;
-        linear_regression_results[i].slope = linear_regression.b;
-        linear_regression_results[i].correlation = linear_regression.correlation;
+        linear_regression_results[i].intercept = linear_correlation.a;
+        linear_regression_results[i].slope = linear_correlation.b;
+        linear_regression_results[i].correlation = linear_correlation.correlation;
     }
 
     return linear_regression_results;
