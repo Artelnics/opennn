@@ -30,51 +30,23 @@ public:
 
     virtual ~CorrelationsTest();
 
-    // Linear correlation methods
+    // Correlation methods
 
     void test_linear_correlation();
-    void test_spearman_linear_correlation();
-    void test_rank_linear_correlation();
-
-    // Logistic correlation methods
 
     void test_logistic_correlation();
-    void test_rank_logistic_correlation();
-
-    // Point-Biserial correlation methods
-
-    void test_point_biserial_correlation();
-
-    // Logarithmic correlation methods
 
     void test_logarithmic_correlation();
 
-    // Exponential correlation methods
-
     void test_exponential_correlation();
 
-    // Regressions methods
+    void test_power_correlation();
 
-    void test_linear_regression();
-
-    void test_exponential_regression();
-
-    void test_logarithmic_regression();
-
-    void test_power_regression();
-
-    void test_logistic_regression();
 
     // Time series correlation methods
 
     void test_autocorrelation();
     void test_cross_correlations();
-
-    // Covariance
-
-    void test_covariance();
-    void test_covariance_matrix();
-    void test_less_rank_with_ties();
 
     // Contingency table
 

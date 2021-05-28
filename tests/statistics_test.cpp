@@ -1334,7 +1334,7 @@ void StatisticsTest::test_box_plot()
 //    frequencies_2 = graphic_2.frequencies;
 
 //    assert_true(centers_2 == centers , LOG);
-//    assert_true(frequencies_2 == frequencies, LOG );
+//    assert_true(frequencies_2 == frequencies, LOG);
 }
 
 
