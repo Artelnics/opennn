@@ -35,7 +35,7 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, con
             column_y[j] = x[j + i];
         }
 
-        autocorrelation[i] = linear_correlation(thread_pool_device, column_x, column_y, false).correlation;
+        autocorrelation[i] = linear_correlation(thread_pool_device, column_x, column_y, false).r;
     }
 
     return autocorrelation;
@@ -79,22 +79,12 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
             column_y[j] = y[j + i];
         }
 
-        cross_correlation[i] = linear_correlation(thread_pool_device, column_x, column_y, false).correlation;
+        cross_correlation[i] = linear_correlation(thread_pool_device, column_x, column_y, false).r;
     }
 
     return cross_correlation;
 }
 
-/*
-/// Calculate the logistic function with specific parameters 'a' and 'b'.
-/// @param a Parameter a.
-/// @param b Parameter b.
-
-type logistic(const type& a, const type& b, const type& x)
-{
-    return static_cast<type>(1.0)/(static_cast<type>(1.0) + exp(-(a+b*x)));
-}
-*/
 
 /// Calculate the logistic function with specific parameters 'a' and 'b'.
 /// @param a Parameter a.
@@ -107,30 +97,6 @@ Tensor<type, 1> logistic(const type& a, const type& b, const Tensor<type, 1>& x)
     return (1 + combination.exp().inverse()).inverse();
 }
 
-
-/// Calculate the logistic function with specific parameters 'a' and 'b'.
-/// @param a Parameter a.
-/// @param b Parameter b.
-/*
-Tensor<type, 2> logistic(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& a, const Tensor<type, 2>& b, const Tensor<type, 2>& x)
-{
-    const Index samples_number = x.dimension(0);
-    const Index biases_number = a.dimension(0);
-
-    Tensor<type, 2> combinations(samples_number, biases_number);
-
-    for(Index i = 0; i < biases_number; i++)
-    {
-        fill_n(combinations.data() + i*samples_number, samples_number, a(i));
-    }
-
-    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
-
-    combinations.device(*thread_pool_device) += x.contract(b, A_B);
-
-    return (1 + combinations.exp().inverse()).inverse();
-}
-*/
 
 /// Calculate the coefficients of a linear regression (a, b) and the correlation among the variables.
 /// @param x Vector of the independent variable.
@@ -193,7 +159,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
         linear_correlation.b = 0;
 
-        linear_correlation.correlation = 1.0;
+        linear_correlation.r = 1.0;
     }
     else
     {
@@ -205,11 +171,11 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
         if(sqrt((static_cast<type>(new_size) * s_xx() - s_x() * s_x()) *(static_cast<type>(new_size) * s_yy() - s_y() * s_y())) < numeric_limits<type>::min())
         {
-            linear_correlation.correlation = 1.0;
+            linear_correlation.r = 1.0;
         }
         else
         {
-            linear_correlation.correlation =
+            linear_correlation.r =
                 (static_cast<type>(new_size) * s_xy() - s_x() * s_y()) /
                 sqrt((static_cast<type>(new_size) * s_xx() - s_x() * s_x()) *(static_cast<type>(new_size) * s_yy() - s_y() * s_y()));
         }
@@ -256,7 +222,7 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device, 
     {
         if(!::isnan(x(i)) && x(i) <= 0)
         {
-            logarithmic_correlation.correlation = NAN;
+            logarithmic_correlation.r = NAN;
 
             return logarithmic_correlation;
         }
@@ -299,7 +265,7 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device, 
         if(!::isnan(y(i)) && y(i) <= 0)
         {
             exponential_correlation.correlation_type = Exponential;
-            exponential_correlation.correlation = NAN;
+            exponential_correlation.r = NAN;
 
             return exponential_correlation;
         }
@@ -347,7 +313,7 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device, const 
         if(!::isnan(x(i)) && x(i) <= 0)
         {
             power_correlation.correlation_type = Exponential;
-            power_correlation.correlation = NAN;
+            power_correlation.r = NAN;
 
             return power_correlation;
         }
@@ -355,7 +321,7 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device, const 
         if(!::isnan(y(i)) && y(i) <= 0)
         {
             power_correlation.correlation_type = Exponential;
-            power_correlation.correlation = NAN;
+            power_correlation.r = NAN;
 
             return power_correlation;
         }
@@ -450,9 +416,9 @@ Correlation logistic_correlation(const ThreadPoolDevice* thread_pool_device, con
 
     const Tensor<type, 1> logistic_y = logistic(correlation.a, correlation.b, new_x);
 
-    correlation.correlation = linear_correlation(thread_pool_device, logistic_y, new_y, false).correlation;
+    correlation.r = linear_correlation(thread_pool_device, logistic_y, new_y, false).r;
 
-    if(correlation.b < 0) correlation.correlation *= (-1);
+    if(correlation.b < 0) correlation.r *= (-1);
 
     correlation.correlation_type = Logistic;
 
@@ -568,7 +534,7 @@ Correlation multiple_logistic_correlation(const ThreadPoolDevice* thread_pool_de
     /// @todo
 //    const Tensor<type, 2> logistic_y = logistic(thread_pool_device, bias, weights, scaled_x);
 
-//    logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y.chip(0,1), scaled_y.chip(0,1), false).correlation;
+//    logistic_correlations.r = linear_correlation(thread_pool_device, logistic_y.chip(0,1), scaled_y.chip(0,1), false).r;
 
     logistic_correlations.correlation_type = Logistic;
 
@@ -711,7 +677,7 @@ Correlation karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,
 
     const Tensor<type, 0> contingency_table_sum = contingency_table.cast<type>().sum();
 
-    karl_pearson.correlation
+    karl_pearson.r
             = sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
 
     return karl_pearson;

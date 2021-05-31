@@ -26,19 +26,17 @@ void WeightedSquaredErrorTest::test_constructor()
 
    // Default
 
-   WeightedSquaredError wse1;
+   WeightedSquaredError weighted_squared_error_1;
 
-   assert_true(!wse1.has_neural_network(), LOG);
-   assert_true(!wse1.has_data_set(), LOG);
+   assert_true(!weighted_squared_error_1.has_neural_network(), LOG);
+   assert_true(!weighted_squared_error_1.has_data_set(), LOG);
 
    // Neural network and data set
 
-   NeuralNetwork nn3;
-   DataSet ds3;
-   WeightedSquaredError wse3(&nn3, &ds3);
+   WeightedSquaredError weighted_squared_error_2(&neural_network, &data_set);
 
-   assert_true(wse3.has_neural_network(), LOG);
-   assert_true(wse3.has_data_set(), LOG);
+   assert_true(weighted_squared_error_2.has_neural_network(), LOG);
+   assert_true(weighted_squared_error_2.has_data_set(), LOG);
 }
 
 
@@ -46,12 +44,14 @@ void WeightedSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
+   Tensor<type, 2> data;
+
    Index samples_number;
    Index inputs_number;
    Index outputs_number;
    Index hidden_neurons;
 
-   Tensor<type, 1> parameters;
+   Tensor<type, 1> parameters; 
 
    // Test
 
@@ -65,13 +65,13 @@ void WeightedSquaredErrorTest::test_calculate_error()
    outputs_number = 1;
    hidden_neurons = 1;
 
-   Tensor<type, 2> new_data(2, 2);
-   new_data(0,0) = 0.0;
-   new_data(0,1) = 0.0;
-   new_data(1,0) = 1.0;
-   new_data(1,1) = 1.0;
+   data.resize(2, 2);
+   data(0,0) = 0.0;
+   data(0,1) = 0.0;
+   data(1,0) = 1.0;
+   data(1,1) = 1.0;
 
-   data_set.set_data(new_data);
+   data_set.set_data(data);
    data_set.set_training();
 
    weighted_squared_error.set_weights();
@@ -101,26 +101,23 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
   neural_network.set_parameters_constant(0.0);
 
-  DataSet data_set_2;
+  data_set.set(3, 3, 1);
 
-  data_set_2.set(3, 3, 1);
+  data.resize(3, 3);
+  data(0,0) = 0.0;
+  data(0,1) = 0.0;
+  data(0,2) = 0.0;
+  data(1,0) = 1.0;
+  data(1,1) = 1.0;
+  data(1,2) = 1.0;
+  data(2,0) = 1.0;
+  data(2,1) = 0.0;
+  data(2,2) = 0.0;
+  data_set.set_data(data);
 
-  Tensor<type, 2> new_data_2(3, 3);
-  new_data_2(0,0) = 0.0;
-  new_data_2(0,1) = 0.0;
-  new_data_2(0,2) = 0.0;
-  new_data_2(1,0) = 1.0;
-  new_data_2(1,1) = 1.0;
-  new_data_2(1,2) = 1.0;
-  new_data_2(2,0) = 1.0;
-  new_data_2(2,1) = 0.0;
-  new_data_2(2,2) = 0.0;
-  data_set_2.set_data(new_data_2);
-
-  WeightedSquaredError wse_2(&neural_network, &data_set_2);
   weighted_squared_error.set_weights();
 
-  assert_true(wse_2.get_positives_weight() != wse_2.get_negatives_weight(), LOG);
+  assert_true(weighted_squared_error.get_positives_weight() != weighted_squared_error.get_negatives_weight(), LOG);
 }
 
 
@@ -173,8 +170,6 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
        data_set.set_data(new_data);
        data_set.set_training();
-
-
 
        weighted_squared_error.set_weights();
 
@@ -461,7 +456,6 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
 {
    cout << "test_calculate_squared_errors\n";
 
-
    Tensor<type, 1> parameters;
    
    type error;
@@ -488,6 +482,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
    neural_network.set_parameters_random();
 
    data_set.set(9, 3, 1);
+
 //   data_set.generate_data_binary_classification(9, 3);
 
 //   error = weighted_squared_error.calculate_error();
@@ -516,7 +511,6 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    Index outputs_number;
 
    // Test probabilistic (binary)
-
    {
        samples_number = 2;
        inputs_number = 2;
@@ -563,30 +557,13 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 }
 
 
-void WeightedSquaredErrorTest::test_to_XML()
-{
-   cout << "test_to_XML\n";
-}
-
-
-void WeightedSquaredErrorTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
-}
-
-
 void WeightedSquaredErrorTest::run_test_case()
 {
    cout << "Running weighted squared error test case...\n";
 
    // Constructor and destructor methods
-/*
+
    test_constructor();
-   test_destructor();
-
-   // Get methods
-
-   // Set methods
 
    // Error methods
 
@@ -596,16 +573,11 @@ void WeightedSquaredErrorTest::run_test_case()
 
    // Squared errors methods
 
-   test_calculate_squared_errors();*/
+   test_calculate_squared_errors();
    test_calculate_squared_errors_jacobian();
-/*
+
    // Loss hessian methods
 
-   // Serialization methods
-
-   test_to_XML();
-   test_from_XML();
-*/
    cout << "End of weighted squared error test case.\n\n";
 }
 

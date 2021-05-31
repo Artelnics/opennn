@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N P U T S   S E L E C T I O N   A L G O R I T H M   T E S T   C L A S S   H E A D E R
+//   I N P U T S   S E L E C T I O N   T E S T   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                           
@@ -14,7 +14,6 @@
 #include "unit_testing.h"
 
 using namespace OpenNN;
-
 
 class InputsSelectionTest : public UnitTesting
 {

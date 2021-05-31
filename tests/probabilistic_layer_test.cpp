@@ -64,11 +64,13 @@ void ProbabilisticLayerTest::test_get_inputs_number()
 
    ProbabilisticLayer probabilistic_layer;
 
-   // Test 0
+   // Test
+
    probabilistic_layer.set();
    assert_true(probabilistic_layer.get_inputs_number() == 0, LOG);
 
-   // Test 1
+   // Test
+
    probabilistic_layer.set_inputs_number(1);
    assert_true(probabilistic_layer.get_inputs_number() == 1, LOG);
 }

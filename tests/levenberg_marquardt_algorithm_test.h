@@ -34,10 +34,6 @@ public:
 
    // Training methods
 
-   void test_calculate_training_loss();
-   void test_calculate_training_loss_gradient();
-   void test_calculate_hessian_approximation();
-
    void test_perform_training();
 
    // Training history methods

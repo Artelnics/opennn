@@ -260,10 +260,8 @@ void UnscalingLayerTest::test_write_scalers()
     cout << "test_get_scaling_method_name\n";
 
     UnscalingLayer unscaling_layer(1);
-/*
-    // Test 1
 
-//    Scaler no_unscaling = Scaler::NoUnscaling;
+    // Test 1
 
     Scaler minimum_maximum = Scaler::MinimumMaximum;
 
@@ -271,7 +269,7 @@ void UnscalingLayerTest::test_write_scalers()
 
     Scaler logarithmic = Logarithm;
 
-    unscaling_layer.set_scalers(no_unscaling);
+    unscaling_layer.set_scalers(NoScaling);
     assert_true(unscaling_layer.write_unscaling_methods()(0) == "NoUnscaling", LOG);
 
     unscaling_layer.set_scalers(minimum_maximum);
@@ -285,7 +283,7 @@ void UnscalingLayerTest::test_write_scalers()
 
     // Test 2
 
-    unscaling_layer.set_scalers(no_unscaling);
+    unscaling_layer.set_scalers(NoScaling);
     assert_true(unscaling_layer.write_unscaling_method_text()(0) == "no unscaling", LOG);
 
     unscaling_layer.set_scalers(minimum_maximum);
@@ -296,7 +294,7 @@ void UnscalingLayerTest::test_write_scalers()
 
     unscaling_layer.set_scalers(logarithmic);
     assert_true(unscaling_layer.write_unscaling_method_text()(0) == "logarithm", LOG);
-*/
+
 }
 
 
@@ -597,12 +595,12 @@ void UnscalingLayerTest::test_set_standard_deviation()
 void UnscalingLayerTest::test_set_unscaling_method()
 {
    cout << "test_set_unscaling_method\n";
-/*
+
    UnscalingLayer unscaling_layer(1);
 
    // Test 1
 
-   unscaling_layer.set_scalers(Scaler::NoUnscaling);
+   unscaling_layer.set_scalers(Scaler::NoScaling);
    assert_true(unscaling_layer.write_unscaling_method_text()(0) == "no unscaling", LOG);
 
    unscaling_layer.set_scalers(Scaler::MinimumMaximum);
@@ -614,7 +612,7 @@ void UnscalingLayerTest::test_set_unscaling_method()
 
    unscaling_layer.set_scalers(Logarithm);
    assert_true(unscaling_layer.write_unscaling_method_text()(0) == "logarithmic", LOG);
-*/
+
 }
 
 
@@ -639,7 +637,7 @@ void UnscalingLayerTest::test_is_empty()
 void UnscalingLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
-/*
+
    UnscalingLayer unscaling_layer;
 
    Tensor<type, 2> inputs;
@@ -655,7 +653,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    // Test 0_0
 
    unscaling_layer.set(1);
-   unscaling_layer.set_scalers(NoUnscaling);
+   unscaling_layer.set_scalers(NoScaling);
 
    inputs.resize(1,1);
    outputs = unscaling_layer.calculate_outputs(inputs);
@@ -666,7 +664,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    // Test 0_1
 
    unscaling_layer.set(3);
-   unscaling_layer.set_scalers(NoUnscaling);
+   unscaling_layer.set_scalers(NoScaling);
 
    inputs.resize(1,3);
    inputs.setConstant(0);
@@ -766,14 +764,14 @@ void UnscalingLayerTest::test_calculate_outputs()
    assert_true(abs(outputs.dimension(1) - 2) < static_cast<type>(1e-3), LOG);
    assert_true(abs(outputs(0) - static_cast<type>(2.7182)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(outputs(1) - static_cast<type>(2.7182)) < static_cast<type>(1e-3), LOG);
-   */
+
 }
 
 
 void UnscalingLayerTest::test_write_expression()
 {
    cout << "test_write_expression\n";
-/*
+
    UnscalingLayer unscaling_layer;
 
    Tensor<string, 1> inputs_names(1);
@@ -784,7 +782,7 @@ void UnscalingLayerTest::test_write_expression()
    // Test 1
 
    unscaling_layer.set(1);
-   unscaling_layer.set_scalers(NoUnscaling);
+   unscaling_layer.set_scalers(NoScaling);
    inputs_names.setValues({"x"});
    outputs_names.setValues({"y"});
 
@@ -823,7 +821,7 @@ void UnscalingLayerTest::test_write_expression()
 
    assert_true(!expression.empty(), LOG);
    assert_true(expression == "y = -1+0.5*(exp(x)+1)*((1)-(-1));\n", LOG);
-   */
+
 }
 
 
@@ -889,7 +887,6 @@ void UnscalingLayerTest::run_test_case()
 
    cout << "End of unscaling layer test case.\n\n";
 }
-
 
 
 // OpenNN: Open Neural Networks Library.

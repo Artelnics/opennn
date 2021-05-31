@@ -43,11 +43,6 @@ public:
    void test_calculate_squared_errors();
    void test_calculate_squared_errors_jacobian();
 
-   // Serialization methods
-
-   void test_to_XML();
-   void test_from_XML();
-
    // Unit testing methods
 
    void run_test_case();

@@ -11,6 +11,9 @@
 
 LearningRateAlgorithmTest::LearningRateAlgorithmTest() : UnitTesting()
 {
+    sum_squared_error.set(&neural_network, &data_set);
+
+    learning_rate_algorithm.set(&sum_squared_error);
 }
 
 
@@ -39,13 +42,9 @@ void LearningRateAlgorithmTest::test_get_loss_index_pointer()
 {
    cout << "test_get_loss_index_pointer\n"; 
    
-   SumSquaredError sum_squared_error;
+   LossIndex* loss_index_pointer = learning_rate_algorithm.get_loss_index_pointer();
 
-   LearningRateAlgorithm tra(&sum_squared_error);
-
-   LossIndex* pfp = tra.get_loss_index_pointer();
-
-   assert_true(pfp != nullptr, LOG);
+   assert_true(loss_index_pointer != nullptr, LOG);
 }
 
 
@@ -53,13 +52,11 @@ void LearningRateAlgorithmTest::test_get_learning_rate_method()
 {
    cout << "test_get_learning_rate_method\n";
 
-   LearningRateAlgorithm tra;
+   learning_rate_algorithm.set_learning_rate_method(LearningRateAlgorithm::GoldenSection);
+   assert_true(learning_rate_algorithm.get_learning_rate_method() == LearningRateAlgorithm::GoldenSection, LOG);
 
-   tra.set_learning_rate_method(LearningRateAlgorithm::GoldenSection);
-   assert_true(tra.get_learning_rate_method() == LearningRateAlgorithm::GoldenSection, LOG);
-
-   tra.set_learning_rate_method(LearningRateAlgorithm::BrentMethod);
-   assert_true(tra.get_learning_rate_method() == LearningRateAlgorithm::BrentMethod, LOG);
+   learning_rate_algorithm.set_learning_rate_method(LearningRateAlgorithm::BrentMethod);
+   assert_true(learning_rate_algorithm.get_learning_rate_method() == LearningRateAlgorithm::BrentMethod, LOG);
 }
 
 
@@ -67,16 +64,11 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
     cout << "test_calculate_bracketing_triplet\n";
 
-    DataSet data_set;
     DataSetBatch batch;
 
-    NeuralNetwork neural_network;
     NeuralNetworkForwardPropagation forward_propagation;
 
-    SumSquaredError sum_squared_error(&neural_network, &data_set);
     LossIndexBackPropagation back_propagation;
-
-    LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 
     LearningRateAlgorithm::Triplet triplet;
 
@@ -90,9 +82,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
 
-//    SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-//    LearningRateAlgorithm tra(&sum_squared_error);
+//    LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 
 //    type loss = 0.0;
 //    Tensor<type, 1> training_direction;
@@ -193,7 +183,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 
 //   SumSquaredError sum_squared_error(&neural_network);
 
-//   LearningRateAlgorithm tra(&sum_squared_error);
+//   LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 
 //   neural_network.set_parameters_constant(1.0);
 
@@ -222,7 +212,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
    Tensor<Index, 1> indices(3);
    indices.setValues({1,1,data_set.get_samples_number()-1});
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
    neural_network.set_parameters_constant(1.0);
 

@@ -213,13 +213,11 @@ void ConjugateGradientTest::test_perform_training()
    neural_network.set_parameters_constant(0.0);
 
    conjugate_gradient.perform_training();
-/*
-   DataSet data_set(1, 1, 1);
+
+   data_set.set(1, 1, 1);
    data_set.set_data_random();
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1,1});
-
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
+   neural_network.set(NeuralNetwork::Approximation, {1,1,1});
 
    type old_loss;
    type loss;
@@ -312,7 +310,7 @@ void ConjugateGradientTest::test_perform_training()
 //   type gradient_norm = sum_squared_error.calculate_gradient().calculate_norm();
 
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
-*/
+
 }
 
 
