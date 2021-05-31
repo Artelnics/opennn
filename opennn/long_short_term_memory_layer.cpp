@@ -435,7 +435,7 @@ void LongShortTermMemoryLayer::set(const LongShortTermMemoryLayer& other_neuron_
 
 void LongShortTermMemoryLayer::set_default()
 {
-    layer_name = "long_short_term_memory_layer";
+    layer_name = "long_short_term_memory_layer ";
     layer_type = LongShortTermMemory;
 }
 
