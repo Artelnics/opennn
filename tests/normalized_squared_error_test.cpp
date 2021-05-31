@@ -767,7 +767,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
    {
        // @todo
 
-       /*
        neural_network.set();
 
        samples_number = 2;
@@ -825,10 +824,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
-       */
    }
 }
-
 
 
 ///@todo check for classification
@@ -1038,21 +1035,17 @@ void NormalizedSquaredErrorTest::run_test_case()
    cout << "Running normalized squared error test case...\n";
 
    // Constructor and destructor methods
-/*
+
    test_constructor();
-   test_destructor();
+
    test_calculate_normalization_coefficient();
-
-   // Get methods
-
-   // Set methods
 
    // Error methods
 
    test_calculate_error();
-*/
+
    test_calculate_error_gradient();
-/*
+
    // Squared errors methods
 
    test_calculate_squared_errors();
@@ -1063,11 +1056,6 @@ void NormalizedSquaredErrorTest::run_test_case()
 
    test_calculate_squared_errors();
 
-   // Serialization methods
-
-   test_to_XML();
-   test_from_XML();
-*/
    cout << "End of normalized squared error test case.\n\n";
 }
 

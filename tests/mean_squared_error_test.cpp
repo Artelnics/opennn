@@ -891,25 +891,20 @@ void MeanSquaredErrorTest::run_test_case()
    cout << "Running mean squared error test case...\n";
 
    // Constructor and destructor methods
-/*
+
    test_constructor();
-   test_destructor();
-
-   // Get methods
-
-   // Set methods
 
    // Error methods
 
    test_calculate_error();
-*/
+
    test_calculate_error_gradient();
-/*
+
    // Squared errors methods
 
    //test_calculate_squared_errors();
    test_calculate_squared_errors_jacobian();
-*/   
+
    cout << "End of mean squared error test case.\n\n";
 }
 

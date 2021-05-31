@@ -23,11 +23,6 @@ void GrowingInputsTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
     GrowingInputs growing_inputs_1(&training_strategy);
 
     assert_true(growing_inputs_1.has_training_strategy(), LOG);
@@ -42,9 +37,9 @@ void GrowingInputsTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GrowingInputs* gi = new GrowingInputs;
+    GrowingInputs* growing_inputs_pointer = new GrowingInputs;
 
-    delete gi;
+    delete growing_inputs_pointer;
 }
 
 
@@ -52,16 +47,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 {
     cout << "test_perform_inputs_selection\n";
 
-    DataSet data_set;
-
     Tensor<type, 2> data;
-    
-
-    NeuralNetwork neural_network;
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
-    ModelSelection model_selection(&training_strategy);
 
     GrowingInputs growing_inputs(&training_strategy);
 
@@ -105,31 +91,6 @@ void GrowingInputsTest::test_perform_inputs_selection()
 }
 
 
-void GrowingInputsTest::test_to_XML()
-{
-    cout << "test_to_XML\n";
-
-    GrowingInputs growing_inputs;
-
-//    tinyxml2::XMLDocument* document = growing_inputs.to_XML();
-//    assert_true(document != nullptr, LOG);
-
-//    delete document;
-}
-
-void GrowingInputsTest::test_from_XML()
-{
-    cout << "test_from_XML\n";
-
-//    GrowingInputs growing_inputs;
-
-//    tinyxml2::XMLDocument* document = growing_inputs.to_XML();
-//    growing_inputs.from_XML(*document);
-
-//    delete document;
-}
-
-
 void GrowingInputsTest::run_test_case()
 {
     cout << "Running growing inputs test case...\n";
@@ -142,12 +103,6 @@ void GrowingInputsTest::run_test_case()
     // Input selection methods
 
     test_perform_inputs_selection();
-
-    // Serialization methods
-
-    test_to_XML();
-
-    test_from_XML();
 
     cout << "End of growing input test case.\n\n";
 }

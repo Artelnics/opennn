@@ -50,6 +50,18 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   SumSquaredError sum_squared_error;
+
+
+   LearningRateAlgorithm learning_rate_algorithm;
+
 };
 
 

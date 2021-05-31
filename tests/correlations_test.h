@@ -42,19 +42,20 @@ public:
 
     void test_power_correlation();
 
+    void test_contingency_table();
+
+    void test_chi_square_test();
+
+    void test_karl_pearson_correlation();
 
     // Time series correlation methods
 
-    void test_autocorrelation();
+    void test_autocorrelations();
     void test_cross_correlations();
 
     // Contingency table
 
-    void test_contingency_table();
-    void test_chi_square_test();
-    void test_karl_pearson_correlation();
-
-    // Unit tseting method
+    // Unit testing methods
 
     void run_test_case();
 

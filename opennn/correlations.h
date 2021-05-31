@@ -68,7 +68,7 @@ struct Correlation
 
     /// Correlation coefficient of the  regression.
 
-    type correlation =  static_cast<type>(NAN);
+    type r =  static_cast<type>(NAN);
 
     /// Regression method type.
 

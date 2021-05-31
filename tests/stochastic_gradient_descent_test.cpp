@@ -28,13 +28,13 @@ void StochasticGradientDescentTest::test_constructor()
 
    // Default constructor
 
-   StochasticGradientDescent sgd1;
-   assert_true(!sgd1.has_loss_index(), LOG);
+   StochasticGradientDescent stochastic_gradient_descent_1;
+   assert_true(!stochastic_gradient_descent_1.has_loss_index(), LOG);
 
    // Loss index constructor
 
-   StochasticGradientDescent sgd2(&sum_squared_error);
-   assert_true(sgd2.has_loss_index(), LOG);
+   StochasticGradientDescent stochastic_gradient_descent_2(&sum_squared_error);
+   assert_true(stochastic_gradient_descent_2.has_loss_index(), LOG);
 }
 
 

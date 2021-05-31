@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N C R E M E N T A L   N E U R O N S   T E S T   C L A S S   H E A D E R
+//   G R O W I N G   N E U R O N S   T E S T   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                           
@@ -21,11 +21,6 @@ GrowingNeuronsTest::~GrowingNeuronsTest()
 void GrowingNeuronsTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    NeuralNetwork neural_network;
-    DataSet data_set;
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GrowingNeurons io1(&training_strategy);
 

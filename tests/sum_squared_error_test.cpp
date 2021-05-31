@@ -32,10 +32,7 @@ void SumSquaredErrorTest::test_constructor()
 
    // Neural network and data set
 
-   NeuralNetwork neural_network_2;
-
-   NeuralNetwork neural_network_3;
-   SumSquaredError sum_squared_error_4(&neural_network_2, &data_set);
+   SumSquaredError sum_squared_error_4(&neural_network, &data_set);
 
    assert_true(sum_squared_error_4.has_neural_network(), LOG);
    assert_true(sum_squared_error_4.has_data_set(), LOG);
@@ -61,7 +58,6 @@ void SumSquaredErrorTest::test_calculate_error()
 
    NeuralNetworkForwardPropagation forward_propagation;
 
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
    sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    LossIndexBackPropagation training_back_propagation;
@@ -173,17 +169,20 @@ void SumSquaredErrorTest::test_calculate_error()
    //Dataset
 
    data.resize(9,5);
-   data.setValues({{-1,-1,1,-1,3},
-                       {-1,0,1,0,2},
-                       {-1,1,1,1,2},
-                       {0,-1,1,0,2},
-                       {0,0,1,1,1},
-                       {0,1,1,2,2},
-                       {1,-2,1,1,3},
-                       {1,0,1,2,2},
-                       {1,1,1,3,3}});
+
+   data.setValues({
+    {-1,-1,1,-1,3},
+    {-1,0,1,0,2},
+    {-1,1,1,1,2},
+    {0,-1,1,0,2},
+    {0,0,1,1,1},
+    {0,1,1,2,2},
+    {1,-2,1,1,3},
+    {1,0,1,2,2},
+    {1,1,1,3,3}});
+
    data_set.set(data);
-   data_set.set(9, 3, 2);
+
    data_set.set_training();
 
    batch.set(9, &data_set);
@@ -229,10 +228,8 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    Index inputs_number;
    Index targets_number;
    
-
    NeuralNetworkForwardPropagation forward_propagation;
 
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
    sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    LossIndexBackPropagation training_back_propagation;

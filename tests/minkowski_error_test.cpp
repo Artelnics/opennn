@@ -44,9 +44,7 @@ void MinkowskiErrorTest::test_constructor()
 
 void MinkowskiErrorTest::test_get_Minkowski_parameter()
 {
-   cout << "test_get_Minkowski_parameter\n";
-
-   MinkowskiError minkowski_error;
+   cout << "test_get_Minkowski_parameter\n"; 
 
    minkowski_error.set_Minkowski_parameter(1.0);
    
@@ -58,18 +56,23 @@ void MinkowskiErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
-   Tensor<type, 1> parameters;
-
-   Tensor<type, 2> data;
-
-   DataSet data_set(1, 1, 1);
-   data_set.set_data_constant(0.0);
-
    Index samples_number;
    Index inputs_number;
    Index targets_number;
 
-   MinkowskiError minkowski_error(&neural_network, &data_set);
+   Tensor<type, 1> parameters;
+
+   Tensor<type, 2> data;
+
+   DataSetBatch batch;
+
+   NeuralNetworkForwardPropagation forward_propagation;
+   LossIndexBackPropagation training_back_propagation;
+
+
+   data_set.set(1, 1, 1);
+   data_set.set_data_constant(0.0);
+
    minkowski_error.set_Minkowski_parameter(1.5);
    minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
@@ -79,7 +82,7 @@ void MinkowskiErrorTest::test_calculate_error()
    inputs_number = 1;
    targets_number = 1;
 
-   DataSetBatch batch(1, &data_set);
+   batch.set(1, &data_set);
 
    Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -90,8 +93,8 @@ void MinkowskiErrorTest::test_calculate_error()
    neural_network.set(NeuralNetwork::Approximation, {inputs_number,targets_number});
    neural_network.set_parameters_constant(0);
 
-   NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
-   LossIndexBackPropagation training_back_propagation(data_set.get_training_samples_number(), &minkowski_error);
+   forward_propagation.set(data_set.get_training_samples_number(), &neural_network);
+   training_back_propagation.set(data_set.get_training_samples_number(), &minkowski_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
    minkowski_error.back_propagate(batch, forward_propagation, training_back_propagation);
@@ -104,15 +107,15 @@ void MinkowskiErrorTest::test_calculate_error()
 
    neural_network.set_parameters_constant(1);
 
-   NeuralNetworkForwardPropagation forward_propagation_2(data_set.get_training_samples_number(), &neural_network);
-   LossIndexBackPropagation training_back_propagation_2(data_set.get_training_samples_number(), &minkowski_error);
+   forward_propagation.set(data_set.get_training_samples_number(), &neural_network);
+   training_back_propagation.set(data_set.get_training_samples_number(), &minkowski_error);
 
-   neural_network.forward_propagate(batch, forward_propagation_2);
-   minkowski_error.back_propagate(batch, forward_propagation_2, training_back_propagation_2);
+   neural_network.forward_propagate(batch, forward_propagation);
+   minkowski_error.back_propagate(batch, forward_propagation, training_back_propagation);
 
-   minkowski_error.calculate_error(batch, forward_propagation_2, training_back_propagation_2);
+   minkowski_error.calculate_error(batch, forward_propagation, training_back_propagation);
 
-   assert_true(training_back_propagation_2.error - 0.761 < 1.0e-3, LOG);
+   assert_true(training_back_propagation.error - 0.761 < 1.0e-3, LOG);
 }
 
 

@@ -42,7 +42,7 @@ void BoundingLayerTest::test_get_neurons_number()
 {
    cout << "test_get_neurons_number\n";
 
-   BoundingLayer bounding_layer;
+
 
    // Test
 
@@ -60,7 +60,7 @@ void BoundingLayerTest::test_get_type()
 {
    cout << "test_get_type\n";
 
-   BoundingLayer bounding_layer;
+
 
    assert_true(bounding_layer.get_type() == Layer::Bounding, LOG);
 }

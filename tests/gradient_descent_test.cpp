@@ -53,7 +53,6 @@ void GradientDescentTest::test_perform_training()
    gradient_descent.set_maximum_epochs_number(1);
    gradient_descent.perform_training();
 
-/*
    // Test
 
    data_set.set(1,1,1);
@@ -140,7 +139,6 @@ void GradientDescentTest::test_perform_training()
 
 //   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
-*/
 }
 
 
@@ -177,7 +175,7 @@ void GradientDescentTest::run_test_case()
 }
 
 
- // OpenNN: Open Neural Networks Library.
+// OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or

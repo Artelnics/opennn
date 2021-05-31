@@ -254,7 +254,7 @@ void TestingAnalysis::print_linear_regression_correlations() const
 
     for(Index i = 0; i < targets_number; i++)
     {
-        cout << targets_name[i] << " correlation: " << linear_correlation[i].correlation << endl;
+        cout << targets_name[i] << " correlation: " << linear_correlation[i].r << endl;
     }
 }
 
@@ -271,7 +271,7 @@ Tensor<type, 1> TestingAnalysis::get_linear_regression_correlations_std() const
 
     for(Index i = 0; i < targets_number; i++)
     {
-        std_correlations[i] = linear_correlation[i].correlation;
+        std_correlations[i] = linear_correlation[i].r;
     }
 
     return std_correlations;
@@ -328,7 +328,7 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
 
         linear_regression_results[i].intercept = linear_correlation.a;
         linear_regression_results[i].slope = linear_correlation.b;
-        linear_regression_results[i].correlation = linear_correlation.correlation;
+        linear_regression_results[i].correlation = linear_correlation.r;
     }
 
     return linear_regression_results;

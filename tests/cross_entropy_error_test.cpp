@@ -158,6 +158,10 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    LongShortTermMemoryLayer long_short_term_memory_layer;
 
+   NeuralNetworkForwardPropagation forward_propagation;
+   LossIndexBackPropagation training_back_propagation;
+
+
    neural_network.set();
 
    // Test perceptron and probabilistic
@@ -193,8 +197,9 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    neural_network.set_parameters_random();
 
-   NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
-   LossIndexBackPropagation training_back_propagation(data_set.get_training_samples_number(), &cross_entropy_error);
+   forward_propagation.set(data_set.get_training_samples_number(), &neural_network);
+   training_back_propagation.set(data_set.get_training_samples_number(), &cross_entropy_error);
+
    cross_entropy_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    neural_network.forward_propagate(batch, forward_propagation);

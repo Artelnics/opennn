@@ -23,21 +23,15 @@ void TrainingStrategyTest::test_constructor()
 {
    cout << "test_constructor\n";
 
-   NeuralNetwork neural_network;
-   DataSet data_set;
-
    // Test
 
-   TrainingStrategy training_strategy1(&neural_network, &data_set);
+   TrainingStrategy training_strategy_1(&neural_network, &data_set);
 }
 
 
 void TrainingStrategyTest::test_destructor()
 {
    cout << "test_destructor\n";
-
-   NeuralNetwork neural_network;
-   DataSet data_set;
 
    TrainingStrategy* training_strategy_pointer = new TrainingStrategy(&neural_network, &data_set);
 
@@ -48,9 +42,6 @@ void TrainingStrategyTest::test_destructor()
 void TrainingStrategyTest::test_get_loss_index_pointer()
 {
    cout << "test_get_loss_index_pointer\n";
-
-   NeuralNetwork neural_network;
-   DataSet data_set;
 
    SumSquaredError sum_squared_error;
 
@@ -83,9 +74,8 @@ void TrainingStrategyTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
-    NeuralNetwork neural_network;
 
-    DataSet data_set(2, 2);
+    data_set.set(2, 2);
 
     Tensor<type, 2> new_data(2, 2);
     new_data(0,0) = 0.0;
@@ -96,8 +86,6 @@ void TrainingStrategyTest::test_perform_training()
     data_set.set_data(new_data);
 
     NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     // Test
 
