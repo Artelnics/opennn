@@ -54,6 +54,17 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   TrainingStrategy training_strategy;
+
+   ModelSelection model_selection;
+
 };
 
 #endif

@@ -66,12 +66,10 @@ void TestingAnalysisTest::test_calculate_error_data()
 
     // Neural Network
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
-
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     // Test
 
@@ -99,12 +97,10 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
 
     // Neural Network
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
-
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     Tensor<type, 2> error_data;
 
@@ -136,12 +132,10 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
 
     // Neural Network
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
-
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     Tensor<Descriptives, 1> error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
@@ -167,12 +161,10 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 
     // Neural Network
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
-
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     Tensor<Descriptives, 1> error_data = testing_analysis.calculate_percentage_errors_descriptives();
 
@@ -195,12 +187,10 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
 
     // Neural Network
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
-
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics = testing_analysis.calculate_error_data_descriptives();
 
@@ -231,12 +221,10 @@ void TestingAnalysisTest::test_print_error_data_descriptives()
 
     // Neural Network
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
-
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     testing_analysis.print_error_data_descriptives();
 }
@@ -256,12 +244,10 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
 
     // Neural Network
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
-
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     Tensor<Histogram, 1> error_data_histograms = testing_analysis.calculate_error_data_histograms();
 
@@ -284,12 +270,10 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 
     // Neural Network
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
-
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     Tensor<Tensor<Index, 1>, 1> error_data_maximal = testing_analysis.calculate_maximal_errors(2);
 
@@ -312,12 +296,10 @@ void TestingAnalysisTest::test_linear_regression()
 
    // Neural Network
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
+   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
    neural_network.set_parameters_constant(0.0);
 
-   // Testing Analysis
-
-   TestingAnalysis testing_analysis(&neural_network, &data_set);
+   // Testing Analysis   
 
    Tensor<Correlation, 1> linear_correlation = testing_analysis.linear_correlation();
 
@@ -348,8 +330,6 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
 
    // Testing Analysis
 
-   TestingAnalysis testing_analysis(&neural_network, &data_set);
-
    testing_analysis.print_linear_regression_correlations();
 
 }
@@ -369,18 +349,17 @@ void TestingAnalysisTest::test_get_linear_regression_correlations_std()
 
     // Neural Network
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
-
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     Tensor<type, 1> correlations = testing_analysis.get_linear_regression_correlations_std();
 
     assert_true(correlations.size() == 1, LOG);
     assert_true(correlations(0) == 1.0 , LOG);
 }
+
 
 void TestingAnalysisTest::test_save()
 {

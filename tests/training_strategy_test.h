@@ -39,11 +39,6 @@ public:
 
    void test_get_loss_index_pointer();
 
-   // Set methods
-
-   void test_set_default();
-   void test_set_loss_index_pointer();
-
    // Training methods
 
    void test_perform_training();

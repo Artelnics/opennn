@@ -45,28 +45,9 @@ void TrainingStrategyTest::test_get_loss_index_pointer()
 
    SumSquaredError sum_squared_error;
 
-   TrainingStrategy training_strategy(&neural_network, &data_set);
-
    LossIndex* loss_index_pointer = training_strategy.get_loss_index_pointer();
 
    assert_true(loss_index_pointer != nullptr, LOG);
-}
-
-
-void TrainingStrategyTest::test_set_default()
-{
-   cout << "test_set_default\n"; 
-
-   TrainingStrategy training_strategy;
-
-   training_strategy.set_default();
-
-}
-
-
-void TrainingStrategyTest::test_set_loss_index_pointer()
-{
-   cout << "test_set_loss_index_pointer\n"; 
 }
 
 
@@ -104,8 +85,6 @@ void TrainingStrategyTest::test_to_XML()
 {
    cout << "test_to_XML\n";
 
-   TrainingStrategy training_strategy;
-
    FILE *pFile;
 
    string file_name = "../data/training_strategy.xml";
@@ -124,8 +103,6 @@ void TrainingStrategyTest::test_to_XML()
 void TrainingStrategyTest::test_from_XML()
 {
    cout << "test_from_XML\n";
-
-   TrainingStrategy training_strategy;
 
    training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
@@ -157,8 +134,6 @@ void TrainingStrategyTest::test_save()
 
    string file_name = "../data/training_strategy.xml";
 
-   TrainingStrategy training_strategy;
-
    training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
    training_strategy.save(file_name);
@@ -170,11 +145,6 @@ void TrainingStrategyTest::test_load()
    cout << "test_load\n";
 
    string file_name = "../data/training_strategy.xml";
-
-   NeuralNetwork neural_network;
-   DataSet data_set;
-
-   TrainingStrategy training_strategy(&neural_network, &data_set);
 
    // Test
 
@@ -196,11 +166,6 @@ void TrainingStrategyTest::run_test_case()
    // Get methods
 
    test_get_loss_index_pointer();
-
-   // Set methods
-
-   test_set_default();   
-   test_set_loss_index_pointer();
 
    // Training methods
 

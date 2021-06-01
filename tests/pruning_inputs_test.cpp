@@ -23,11 +23,6 @@ void PruningInputsTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
     PruningInputs pi1(&training_strategy);
 
     assert_true(pi1.has_training_strategy(), LOG);
@@ -35,7 +30,6 @@ void PruningInputsTest::test_constructor()
     PruningInputs pi2;
 
     assert_true(!pi2.has_training_strategy(), LOG);
-
 }
 
 
