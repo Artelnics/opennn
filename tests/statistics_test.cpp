@@ -1353,118 +1353,6 @@ void StatisticsTest::test_box_plot()
 }
 
 
-/// @todo <--- EXC(Negative numb)
-
-void StatisticsTest::test_means_binary_columns() //<--- EXC(Negative numb)
-{
-    cout << "test_means_binary_columns\n";
-    // Test 0
-    Tensor<type, 2> matrix;
-
-    assert_true(static_cast<Index>(means_binary_column(matrix)(0)) == 0, LOG);
-
-    // Test 1
-    matrix.resize(4,2);
-    matrix.setValues({{0,1},{1,1},{0,0},{1,0}});
-
-    Tensor<type, 1> solution(2);
-    solution.setValues({0.5, 0.5});
-
-    assert_true(static_cast<type>(means_binary_column(matrix)(0)) - static_cast<type>(solution(0)) < static_cast<type>(1.0e-6), LOG);
-    assert_true(static_cast<type>(means_binary_column(matrix)(1)) - static_cast<type>(solution(1)) < static_cast<type>(1.0e-6), LOG);
-
-    // Test 2
-    matrix.resize(2,4);
-    matrix(0,0) = 1;
-    matrix(0,1) = 1;
-    matrix(0,2) = 1;
-    matrix(0,3) = 1;
-    matrix(1,0) = 1;
-    matrix(1,1) = 1;
-    matrix(1,2) = 0;
-    matrix(1,3) = 0;
-
-    Tensor<type, 1> solution_2(2);
-    solution_2.setValues({1.0, 1.0});
-
-    assert_true(static_cast<type>(means_binary_column(matrix)(0)) - static_cast<type>(solution_2(0)) < static_cast<type>(1.0e-6), LOG);
-    assert_true(static_cast<type>(means_binary_column(matrix)(1)) - static_cast<type>(solution_2(1)) < static_cast<type>(1.0e-6), LOG);
-
-    // Test 0
-    matrix.resize(2,2);
-    matrix.setZero();
-
-    assert_true(static_cast<Index>(means_binary_columns(matrix)(0)) == 0, LOG);
-
-    // Test 1
-    matrix.resize(3,3);
-    matrix.setValues({{1,0,5},{1,0,1},{0,1,7}});
-
-    solution.resize(2);
-    solution.setValues({3, 7});
-
-    assert_true(static_cast<Index>(means_binary_columns(matrix)(0)) == static_cast<Index>(solution(0)), LOG);
-    assert_true(static_cast<Index>(means_binary_columns(matrix)(1)) == static_cast<Index>(solution(1)), LOG);
-
-    // Test 2
-    matrix.resize(3,3);
-    matrix.setValues({{1, 0, 7}, {1, 1, 8}, {0, 0, 5}});
-
-    Tensor<type, 1> solution_1(2);
-    solution_1.setValues({7.5, 8});
-
-    Tensor<type, 1> means(2);
-    means = means_binary_columns(matrix);
-    assert_true(means(0) - solution_1(0) < static_cast<type>(1.0e-7), LOG);
-    assert_true(means(1) - solution_1(1) < static_cast<type>(1.0e-7), LOG);
-
-    // Test missing values
-    Tensor<type, 2> matrix_m(3, 4);
-    matrix_m(0,0) = 1.0;
-    matrix_m(0,1) = 0.0;
-    matrix_m(0,2) = 7.0;
-    matrix_m(1,0) = 1.0;
-    matrix_m(1,1) = 1.0;
-    matrix_m(1,2) = 8.0;
-    matrix_m(2,0) = 0.0;
-    matrix_m(2,1) = 0.0;
-    matrix_m(2,2) = 5.0;
-    matrix_m(3,0) = 1.0;
-    matrix_m(3,0) = 1.0;
-    matrix_m(3,0) = static_cast<type>(NAN);
-
-    Tensor<type, 1> solution_m(2);
-    solution_m.setValues({7.5, 8});
-
-    assert_true(means_binary_columns(matrix_m)(0) - solution_m[0] < static_cast<type>(1.0e-7), LOG);
-    assert_true(means_binary_columns(matrix_m)(1) - solution_m[1] < static_cast<type>(1.0e-7), LOG);
-}
-
-
-void StatisticsTest::test_weighted_mean()
-{
-    cout << "test_weighted_mean\n";
-
-    // Test 1
-    Tensor<type, 1> vector(4);
-    vector.setValues({1,1,1,1});
-
-    Tensor<type, 1> weights_1(4);
-    weights_1.setValues({0.25,0.25,0.25,0.25});
-
-    assert_true(static_cast<type>(weighted_mean(vector, weights_1)) - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
-
-    // Test 2
-    vector.resize(4);
-    vector.setValues({2,1,4,1});
-
-    Tensor<type, 1> weights_2(4);
-    weights_2.setValues({static_cast<type>(0.2),static_cast<type>(0.3),static_cast<type>(0.4),static_cast<type>(0.1)});
-
-    assert_true(static_cast<type>(weighted_mean(vector, weights_2)) - static_cast<type>(2.4) < static_cast<type>(1.0e-6), LOG);
-}
-
-
 void StatisticsTest::test_percentiles()
 {
     cout << "test_percentiles\n";
@@ -1619,11 +1507,6 @@ void StatisticsTest::run_test_case()
 
    test_set_mean();
    test_mean();
-   test_weighted_mean();
-
-   // Mean binary
-
-   test_means_binary_columns();
 
    // Median
 

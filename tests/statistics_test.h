@@ -46,14 +46,8 @@ public:
    void test_maximum();
    void test_maximum_matrix();
 
-
    // Mean
    void test_mean();
-   void test_weighted_mean();
-
-   // Mean binary
-   void test_means_binary_columns();
-
 
    // Median
    void test_median();
@@ -105,7 +99,6 @@ public:
 
    // Means by categories
    void test_means_by_categories();
-
 
    // Unit testing methods
 
