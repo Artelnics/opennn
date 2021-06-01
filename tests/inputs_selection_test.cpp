@@ -23,11 +23,6 @@ void InputsSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
     GrowingInputs gi1(&training_strategy);
 
     assert_true(gi1.has_training_strategy(), LOG);
@@ -35,7 +30,6 @@ void InputsSelectionTest::test_constructor()
     GrowingInputs gi2;
 
     assert_true(!gi2.has_training_strategy(), LOG);
-
 }
 
 
@@ -52,11 +46,6 @@ void InputsSelectionTest::test_destructor()
 void InputsSelectionTest::test_get_training_strategy_pointer()
 {
     cout << "test_get_training_strategy_pointer\n";
-
-    NeuralNetwork neural_network;
-    DataSet data_set;
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     GrowingInputs growing_inputs(&training_strategy);
 

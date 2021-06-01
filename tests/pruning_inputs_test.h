@@ -44,6 +44,16 @@ public:
 
    void run_test_case();
 
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   TrainingStrategy training_strategy;
+
+   PruningInputs pruning_inputs;
+
 };
 
 
