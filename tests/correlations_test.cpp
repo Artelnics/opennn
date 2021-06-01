@@ -301,16 +301,16 @@ void CorrelationsTest::test_power_correlation()
 {
     cout << "test_power_regression\n";
 
-    Tensor<type, 1> vector_1(5);
-    vector_1.setValues({10, 16, 25, 40, 60});
-    Tensor<type, 1> vector_2(5);
-    vector_2.setValues({94, 118, 147, 180, 230});
+    Tensor<type, 1> x(5);
+    x.setValues({10, 16, 25, 40, 60});
+    Tensor<type, 1> y(5);
+    y.setValues({94, 118, 147, 180, 230});
 
     type solution1 = static_cast<type>(30.213);
     type solution2 = static_cast<type>(0.491);
     type solution3 = static_cast<type>(0.998849);
 
-    Correlation correlation = power_correlation(thread_pool_device,vector_1,vector_2);
+    Correlation correlation = power_correlation(thread_pool_device,x,y);
 
     // Test
 
@@ -318,10 +318,10 @@ void CorrelationsTest::test_power_correlation()
     assert_true(correlation.b - solution2 <= static_cast<type>(0.01), LOG);
     assert_true(correlation.r - solution3 <= static_cast<type>(0.01), LOG);
 
-    vector_1.resize(6);
-    vector_1.setValues({10, 16, 25, 40, 60, NAN});
-    vector_2.resize(6);
-    vector_2.setValues({94, 118, 147, 180, 230, 100});
+    x.resize(6);
+    x.setValues({10, 16, 25, 40, 60, NAN});
+    y.resize(6);
+    y.setValues({94, 118, 147, 180, 230, 100});
 
     solution1 = static_cast<type>(30.213);
     solution2 = static_cast<type>(0.491);
@@ -329,7 +329,7 @@ void CorrelationsTest::test_power_correlation()
 
     // Test
 
-    correlation = power_correlation(thread_pool_device, vector_1,vector_2);
+    correlation = power_correlation(thread_pool_device, x,y);
 
     assert_true(correlation.a - solution1 <= 0.01, LOG);
     assert_true(correlation.b - solution2 <= 0.01, LOG);
@@ -341,12 +341,12 @@ void CorrelationsTest::test_contingency_table()
 {
     cout << "test_contingency_table\n";
 
-    Tensor<string, 1> vector_1(4);
-    vector_1.setValues({"a", "b", "b", "a" });
-    Tensor<string, 1> vector_2(4);
-    vector_2.setValues({"c", "c", "d", "d" });
+    Tensor<string, 1> x(4);
+    x.setValues({"a", "b", "b", "a" });
+    Tensor<string, 1> y(4);
+    y.setValues({"c", "c", "d", "d" });
 
-//    assert_true(contingency_table(vector_1, vector_2) == matrix, LOG);
+//    assert_true(contingency_table(x, y) == matrix, LOG);
 
 }
 
@@ -355,10 +355,10 @@ void CorrelationsTest::test_chi_square_test()
 {
     cout << "test_chi_square_test\n";
 
-//    Tensor<string, 1> vector_1({"a", "b", "b", "a" });
-//    Tensor<string, 1> vector_2({"c", "c", "d", "d" });
+//    Tensor<string, 1> x({"a", "b", "b", "a" });
+//    Tensor<string, 1> y({"c", "c", "d", "d" });
 
-//    assert_true(abs(chi_square_test(contingency_table(vector_1, vector_2).to_type_matrix()) - 0.0) < 1.0e-3, LOG);
+//    assert_true(abs(chi_square_test(contingency_table(x, y).to_type_matrix()) - 0.0) < 1.0e-3, LOG);
 
 }
 
