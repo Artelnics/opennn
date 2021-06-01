@@ -85,6 +85,7 @@ private:
 
   ConvolutionalLayer convolutional_layer;
 
+  NumericalDifferentiation numerical_differentiation;
 };
 
 

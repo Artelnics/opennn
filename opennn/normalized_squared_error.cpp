@@ -78,7 +78,7 @@ void NormalizedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 
 /// Sets the normalization coefficient from training samples.
-/// This method calculates the normalization coefficient of the dataset.
+/// This method calculates the normalization coefficient of the data_set.
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
@@ -182,7 +182,7 @@ void NormalizedSquaredError::set_normalization_coefficient(const type& new_norma
 
 
 /// Sets the normalization coefficient from selection samples.
-/// This method calculates the normalization coefficient of the dataset.
+/// This method calculates the normalization coefficient of the data_set.
 
 void NormalizedSquaredError::set_selection_normalization_coefficient()
 {
@@ -232,7 +232,7 @@ void NormalizedSquaredError::set_default()
 
 /// Returns the normalization coefficient to be used for the loss of the error.
 /// This is measured on the training samples of the data set.
-/// @param targets Matrix with the targets values from dataset.
+/// @param targets Matrix with the targets values from data_set.
 /// @param targets_mean Vector with the means of the given targets.
 
 type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<type, 2>& targets,

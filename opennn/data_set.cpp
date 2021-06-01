@@ -1923,7 +1923,7 @@ void DataSet::set_columns(const Tensor<Column, 1>& new_columns)
 }
 
 
-/// This method sets the n columns of the dataset by default,
+/// This method sets the n columns of the data_set by default,
 /// i.e. until column n-1 are Input and column n is Target.
 
 void DataSet::set_default_columns_uses()
@@ -1971,7 +1971,7 @@ void DataSet::set_default_columns_uses()
 }
 
 
-/// This method sets the n columns of the dataset by default,
+/// This method sets the n columns of the data_set by default,
 /// i.e. until column n-1 are Input and column n is Target.
 
 void DataSet::set_default_classification_columns_uses()
@@ -2020,8 +2020,8 @@ void DataSet::set_default_classification_columns_uses()
 }
 
 
-/// This method puts the names of the columns in the dataset.
-/// This is used when the dataset does not have a header,
+/// This method puts the names of the columns in the data_set.
+/// This is used when the data_set does not have a header,
 /// the default names are: column_0, column_1, ..., column_n.
 
 void DataSet::set_default_columns_names()
@@ -3272,7 +3272,7 @@ void DataSet::set_columns_uses(const Tensor<VariableUse, 1>& new_columns_uses)
 }
 
 
-/// Sets all columns in the dataset as unused columns.
+/// Sets all columns in the data_set as unused columns.
 
 void DataSet::set_columns_unused()
 {
@@ -3301,7 +3301,7 @@ void DataSet::set_input_target_columns(const Tensor<Index, 1>& input_columns, co
 }
 
 
-/// Sets all input columns in the dataset as unused columns.
+/// Sets all input columns in the data_set as unused columns.
 
 void DataSet::set_input_columns_unused()
 {
@@ -9105,32 +9105,32 @@ Tensor<type, 2> DataSet::calculate_distance_matrix(const Tensor<Index,1>& indice
 
 
 
-Tensor<Tensor<type, 1>, 1> get_data_kd_tree(const DataSet & dataset)
+Tensor<Tensor<type, 1>, 1> get_data_kd_tree(const DataSet & data_set)
 {
 
-    const Index used_samples_number = dataset.get_used_samples_number();
+    const Index used_samples_number = data_set.get_used_samples_number();
 
     Tensor<Tensor<type, 1>, 1> extracted_data(used_samples_number);
 
-    const Index columns_number = dataset.get_columns_number();
+    const Index columns_number = data_set.get_columns_number();
 
 
-    const Tensor<Index, 1> used_samples_indices = dataset.get_used_samples_indices();
+    const Tensor<Index, 1> used_samples_indices = data_set.get_used_samples_indices();
 
     Index used_variables = 0;
 
-    for(Index i = 0; i < dataset.get_columns_uses().size(); i++)
+    for(Index i = 0; i < data_set.get_columns_uses().size(); i++)
     {
-        if(!(dataset.get_column_use(i) == dataset.UnusedVariable
-            || dataset.get_column_use(i) == dataset.Id
-            || dataset.get_column_use(i) == dataset.Time))
+        if(!(data_set.get_column_use(i) == data_set.UnusedVariable
+            || data_set.get_column_use(i) == data_set.Id
+            || data_set.get_column_use(i) == data_set.Time))
         {
-           dataset.get_column_type(i) != dataset.Categorical ? used_variables++ : used_variables += dataset.get_columns()(i).get_categories_number();
+           data_set.get_column_type(i) != data_set.Categorical ? used_variables++ : used_variables += data_set.get_columns()(i).get_categories_number();
         }
     }
 
     DataSet::Column current_col;
-    Tensor<type, 2> data = dataset.get_data();
+    Tensor<type, 2> data = data_set.get_data();
 
 
     for(Index i = 0; i < used_samples_number; i++)
@@ -9145,18 +9145,18 @@ Tensor<Tensor<type, 1>, 1> get_data_kd_tree(const DataSet & dataset)
 
         for(Index j = 0; j < columns_number; j++)
         {
-            current_col = dataset.get_columns()(j);
-            if(current_col.column_use == dataset.UnusedVariable
-                || current_col.column_use == dataset.Id
-                || current_col.column_use == dataset.Time)
+            current_col = data_set.get_columns()(j);
+            if(current_col.column_use == data_set.UnusedVariable
+                || current_col.column_use == data_set.Id
+                || current_col.column_use == data_set.Time)
             {
-                current_col.type != dataset.Categorical ? variable_index++ : variable_index += current_col.get_categories_number();
+                current_col.type != data_set.Categorical ? variable_index++ : variable_index += current_col.get_categories_number();
             }
-            else if(current_col.type == dataset.DateTime)
+            else if(current_col.type == data_set.DateTime)
             {
                 variable_index++;
             }
-            else if(current_col.type == dataset.Categorical)
+            else if(current_col.type == data_set.Categorical)
             {
                 for(Index k = 0; k < current_col.get_categories_number(); k++)
                 {
@@ -9178,7 +9178,7 @@ Tensor<Tensor<type, 1>, 1> get_data_kd_tree(const DataSet & dataset)
 }
 
 
-
+/*
 Tensor<list<Index>, 1> DataSet::calculate_neighbors_kd_tree(const Index& k_neighbors, const Index& min_samples_leaf) const
 {
     const Index used_samples_number = get_used_samples_number();
@@ -9260,7 +9260,7 @@ Tensor<list<Index>, 1> DataSet::calculate_neighbors_kd_tree(const Index& k_neigh
 
         for(Index j = 0; j < last - first; j++)
         {
-            // Internal bounding box index to dataset index.
+            // Internal bounding box index to data_set index.
             for(auto & element : box_nearest_neighbors(j))
             {
                 element = bounding_boxes(i)(element);
@@ -9353,7 +9353,6 @@ Tensor<type, 1> DataSet::calculate_average_reachability(Tensor<list<Index>, 1>& 
 Tensor<Index, 1> DataSet::calculate_LocalOutlierFactor_outliers(const Index& user_k, const type& LOF_treshold,
                                                                 const type& contamination, const Index& min_samples_leaf) const
 {
-    /*
     if(contamination < 0.0 && contamination > 0.5)
     {
         ostringstream buffer;
@@ -9365,7 +9364,6 @@ Tensor<Index, 1> DataSet::calculate_LocalOutlierFactor_outliers(const Index& use
 
         throw logic_error(buffer.str());
     }
-    */
 
     const Index samples_number = get_used_samples_number();
     bool kdtree = false;
@@ -9447,12 +9445,11 @@ Tensor<Index, 1> DataSet::calculate_LocalOutlierFactor_outliers(const Index& use
         }
     }
 
-
     //cout<<"MediaLOF:"<<mean_lof<<endl;
     //cout<<"DesviacionLOF:"<<std_lof<<endl;
     return outlier_indexes;
 }
-
+*/
 
 
 /// Returns a matrix with the values of autocorrelation for every variable in the data set.
@@ -9686,10 +9683,10 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 }
 
 
-/// Generates an artificial dataset with a given number of samples and number of variables
+/// Generates an artificial data_set with a given number of samples and number of variables
 /// by constant data.
-/// @param samples_number Number of samples in the dataset.
-/// @param variables_number Number of variables in the dataset.
+/// @param samples_number Number of samples in the data_set.
+/// @param variables_number Number of variables in the data_set.
 
 void DataSet::generate_constant_data(const Index& samples_number, const Index& variables_number, const type& value)
 {
@@ -9701,10 +9698,10 @@ void DataSet::generate_constant_data(const Index& samples_number, const Index& v
 }
 
 
-/// Generates an artificial dataset with a given number of samples and number of variables
+/// Generates an artificial data_set with a given number of samples and number of variables
 /// using random data.
-/// @param samples_number Number of samples in the dataset.
-/// @param variables_number Number of variables in the dataset.
+/// @param samples_number Number of samples in the data_set.
+/// @param variables_number Number of variables in the data_set.
 /// @todo
 
 void DataSet::generate_random_data(const Index& samples_number, const Index& variables_number)
@@ -9715,10 +9712,10 @@ void DataSet::generate_random_data(const Index& samples_number, const Index& var
 }
 
 
-/// Generates an artificial dataset with a given number of samples and number of variables
+/// Generates an artificial data_set with a given number of samples and number of variables
 /// using a sequential data.
-/// @param samples_number Number of samples in the dataset.
-/// @param variables_number Number of variables in the dataset.
+/// @param samples_number Number of samples in the data_set.
+/// @param variables_number Number of variables in the data_set.
 
 void DataSet::generate_sequential_data(const Index& samples_number, const Index& variables_number)
 {
@@ -9734,10 +9731,10 @@ void DataSet::generate_sequential_data(const Index& samples_number, const Index&
 }
 
 
-/// Generates an artificial dataset with a given number of samples and number of variables
+/// Generates an artificial data_set with a given number of samples and number of variables
 /// using the Rosenbrock function.
-/// @param samples_number Number of samples in the dataset.
-/// @param variables_number Number of variables in the dataset.
+/// @param samples_number Number of samples in the data_set.
+/// @param variables_number Number of variables in the data_set.
 /// @todo
 
 void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index& variables_number)

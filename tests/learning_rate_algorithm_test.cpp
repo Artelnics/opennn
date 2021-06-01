@@ -80,7 +80,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    Tensor<Index, 1> samples_indices(0, 1, data_set.get_samples_number()-1);
 
-//    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
+    neural_network.set(NeuralNetwork::Approximation, {1,1});
 
 //    LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 
@@ -176,12 +176,10 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 {
    cout << "test_calculate_golden_section_directional_point\n";
 
-//   DataSet data_set(1, 1, 1);
+   data_set.set(1, 1, 1);
 //   Tensor<Index, 1> indices(1,1,data_set.get_samples_number()-1);
 
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
-
-//   SumSquaredError sum_squared_error(&neural_network);
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
 //   LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 
@@ -208,7 +206,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 {
    cout << "test_calculate_Brent_method_directional_point\n";
 
-   DataSet data_set(1, 1, 1);
+   data_set.set(1, 1, 1);
    Tensor<Index, 1> indices(3);
    indices.setValues({1,1,data_set.get_samples_number()-1});
 

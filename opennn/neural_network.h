@@ -122,6 +122,8 @@ public:
    void set(const string&);
    void set(const NeuralNetwork&);
 
+   void set_layers_pointers(Tensor<Layer*, 1>&);
+
    void set_inputs_names(const Tensor<string, 1>&);
    void set_outputs_names(const Tensor<string, 1>&);
 
@@ -132,7 +134,6 @@ public:
 
    void set_threads_number(const int&);
 
-   void set_layers_pointers(Tensor<Layer*, 1>&);
 
    void set_scaling_layer(ScalingLayer&);
 
@@ -158,7 +159,6 @@ public:
    Tensor<Index, 1> get_trainable_layers_neurons_numbers() const;
    Tensor<Index, 1> get_trainable_layers_inputs_numbers() const;
    Tensor<Index, 1> get_trainable_layers_synaptic_weight_numbers() const;
-
 
    Tensor<Index, 1> get_architecture() const;
 

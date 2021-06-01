@@ -27,8 +27,8 @@ void TestingAnalysisTest::test_constructor()
    // Neural network and data set constructor
 
    assert_true(testing_analysis.get_neural_network_pointer() != nullptr, LOG);
-   assert_true(testing_analysis.get_data_set_pointer() != nullptr, LOG);
 
+   assert_true(testing_analysis.get_data_set_pointer() != nullptr, LOG);
 }
 
 
@@ -75,9 +75,9 @@ void TestingAnalysisTest::test_calculate_error_data()
 
     Tensor<type, 3> error_data= testing_analysis.calculate_error_data();
 
-//    assert_true(error_datesting_analysis.size() == 3, LOG);
-//    assert_true(error_datesting_analysis.dimension(0) == 1, LOG);
-//    assert_true(error_datesting_analysis.dimension(1) == 3, LOG);
+    assert_true(error_data.size() == 3, LOG);
+    assert_true(error_data.dimension(0) == 1, LOG);
+    assert_true(error_data.dimension(1) == 3, LOG);
     assert_true(static_cast<double>(error_data(0,0,0)) == 0.0, LOG);
 
 }
@@ -108,14 +108,16 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
 
     error_data = testing_analysis.calculate_percentage_error_data();
 
-//    assert_true(error_datesting_analysis.size() == 1, LOG);
-//    assert_true(error_datesting_analysis.dimension(1) == 1, LOG);
+    assert_true(error_data.size() == 1, LOG);
+    assert_true(error_data.dimension(1) == 1, LOG);
     assert_true(static_cast<double>(error_data(0,0)) == 0.0, LOG);
 }
 
 
 void TestingAnalysisTest::test_calculate_forecasting_error_data()
-{}
+{
+
+}
 
 
 void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
@@ -139,7 +141,7 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
 
     Tensor<Descriptives, 1> error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
-//    assert_true(error_datesting_analysis.size() == 1, LOG);
+    assert_true(error_data.size() == 1, LOG);
     assert_true(static_cast<double>(error_data[0].minimum) == 0.0, LOG);
     assert_true(static_cast<double>(error_data[0].maximum) == 0.0, LOG);
     assert_true(static_cast<double>(error_data[0].mean) == 0.0, LOG);
@@ -168,7 +170,7 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 
     Tensor<Descriptives, 1> error_data = testing_analysis.calculate_percentage_errors_descriptives();
 
-//    assert_true(error_datesting_analysis.size() == 1, LOG);
+    assert_true(error_data.size() == 1, LOG);
     assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
 }
 
@@ -811,7 +813,6 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
 {
     cout << "test_calculate_calibration_plot\n";
 
-
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
@@ -937,8 +938,7 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 
 void TestingAnalysisTest::test_calculate_false_positive_samples()
 {
-    cout << "test_calculate_false_positive_instaces\n";
-
+    cout << "test_calculate_false_positive_samples\n";
 
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -1200,7 +1200,6 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     // Test
 
     targets.resize(9, 3);
-    outputs.resize(9, 3);
 
     targets(0,0) = 1; targets(0,1) = 0; targets(0,2) = 0;
     targets(1,0) = 0; targets(1,1) = 1; targets(1,2) = 0;
@@ -1211,6 +1210,8 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     targets(6,0) = 1; targets(6,1) = 0; targets(6,2) = 0;
     targets(7,0) = 0; targets(7,1) = 1; targets(7,2) = 0;
     targets(8,0) = 0; targets(8,1) = 0; targets(8,2) = 1;
+
+    outputs.resize(9, 3);
 
     outputs(0,0) = 1; outputs(0,1) = 0; outputs(0,2) = 0;
     outputs(1,0) = 0; outputs(1,1) = 1; outputs(1,2) = 0;
@@ -1280,7 +1281,6 @@ void TestingAnalysisTest::run_test_case()
 
    test_calculate_confusion();
 
-
    // ROC curve methods
 
    test_calculate_Wilcoxon_parameter();
@@ -1288,17 +1288,14 @@ void TestingAnalysisTest::run_test_case()
    test_calculate_area_under_curve();
    test_calculate_optimal_threshold();
 
-
    // Lift chart methods
 
    test_calculate_cumulative_gain();
    test_calculate_lift_chart();
 
-
    // Calibration plot
 
    test_calculate_calibration_plot();
-
 
    // Binary classification rates
 

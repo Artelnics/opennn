@@ -85,6 +85,10 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   LongShortTermMemoryLayer long_short_term_memory_layer;
 };
 
 

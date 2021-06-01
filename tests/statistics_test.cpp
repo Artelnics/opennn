@@ -545,23 +545,25 @@ void StatisticsTest::test_standard_deviation()
 {
    cout << "test_standard_deviation\n";
 
-   // Test 0
-//   Tensor<type, 1> vector_0;
-//   assert_true(standard_deviation(vector_0) - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+   Tensor<type, 1> vector;
 
+   // Test 0
+
+   assert_true(standard_deviation(vector) - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
 
    // Test 1
-   Tensor<type, 1> vector_1(4);
-   vector_1.setValues({2,4,8,10});
 
-   Tensor<type, 1> vector_2(4);
-   vector_2.setValues({-11,-11,-11,-11});
+   vector.resize(4);
+   vector.setValues({2,4,8,10});
 
-   assert_true(standard_deviation(vector_1) - sqrt(static_cast<type>(40)/static_cast<type>(3)) < static_cast<type>(1.0e-6), LOG);
-   assert_true(standard_deviation(vector_2) - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+   vector.resize(4);
+   vector.setValues({-11,-11,-11,-11});
 
+   assert_true(standard_deviation(vector) - sqrt(static_cast<type>(40)/static_cast<type>(3)) < static_cast<type>(1.0e-6), LOG);
+   assert_true(standard_deviation(vector) - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
 
    // Test 2
+
    Tensor<type, 1> vector_3(3);
    vector_3.setZero();
 

@@ -33,7 +33,7 @@ namespace OpenNN
 /// crossover and selection.
 
 ///
-/// This algorithm are commonly used in optimization and search problems. if the dataset has many inputs,
+/// This algorithm are commonly used in optimization and search problems. if the data_set has many inputs,
 /// but we do not know how they affect the target,
 /// then this algorithm provides the best possible combination of variables to optimize the problem.
 ///

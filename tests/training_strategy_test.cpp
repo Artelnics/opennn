@@ -43,8 +43,6 @@ void TrainingStrategyTest::test_get_loss_index_pointer()
 {
    cout << "test_get_loss_index_pointer\n";
 
-   SumSquaredError sum_squared_error;
-
    LossIndex* loss_index_pointer = training_strategy.get_loss_index_pointer();
 
    assert_true(loss_index_pointer != nullptr, LOG);
@@ -55,18 +53,13 @@ void TrainingStrategyTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
+    Tensor<type, 2> data;
+
+    data.resize(2, 2);
+    data.setValues({{0,1},{0,1}});
 
     data_set.set(2, 2);
-
-    Tensor<type, 2> new_data(2, 2);
-    new_data(0,0) = 0.0;
-    new_data(0,1) = 0.0;
-    new_data(1,0) = 1.0;
-    new_data(1,1) = 1.0;
-
-    data_set.set_data(new_data);
-
-    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
+    data_set.set_data(data);
 
     // Test
 
@@ -96,7 +89,6 @@ void TrainingStrategyTest::test_to_XML()
    training_strategy.write_XML(document);
 
    fclose(pFile);
-
 }
 
 
@@ -162,7 +154,6 @@ void TrainingStrategyTest::run_test_case()
    test_constructor();
    test_destructor();
 
-
    // Get methods
 
    test_get_loss_index_pointer();
@@ -170,7 +161,6 @@ void TrainingStrategyTest::run_test_case()
    // Training methods
 
    test_perform_training();
-
 
    // Serialization methods
 

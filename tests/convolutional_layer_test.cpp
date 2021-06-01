@@ -886,7 +886,6 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_activations_derivatives\n";
 
-    NumericalDifferentiation numerical_differentiation;
     numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 
     Tensor<type, 4> numerical_activation_derivatives;
@@ -1576,7 +1575,6 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
 //    convolutional_layer.set(inputs_4d, kernels, biases);
 
-//    NumericalDifferentiation numerical_differentiation;
 //    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 //    Tensor<type, 4> numerical_activations = numerical_differentiation.calculate_derivatives(convolutional_layer,
 //                                                                                            &ConvolutionalLayer::calculate_error_gradient,

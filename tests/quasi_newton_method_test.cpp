@@ -27,17 +27,16 @@ void QuasiNewtonMethodTest::test_constructor()
 {
    cout << "test_constructor\n"; 
 
-   SumSquaredError sum_squared_error;
-
    // Default constructor
 
-   QuasiNewtonMethod qnm1;
-   assert_true(!qnm1.has_loss_index(), LOG);
+   QuasiNewtonMethod quasi_newton_method_1;
+
+   assert_true(!quasi_newton_method_1.has_loss_index(), LOG);
 
    // Loss index constructor
 
-   QuasiNewtonMethod qnm2(&sum_squared_error);
-   assert_true(qnm2.has_loss_index(), LOG);
+   QuasiNewtonMethod quasi_newton_method_2(&sum_squared_error);
+   assert_true(quasi_newton_method_2.has_loss_index(), LOG);
 }
 
 
@@ -78,7 +77,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
 
    // Test
 
-//   neural_network.set_parameters_constant(1.0);
+   neural_network.set_parameters_constant(1.0);
 
 //   Tensor<type, 1> old_parameters = neural_network.get_parameters();
 //   Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_loss_gradient();
@@ -153,17 +152,17 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation()
 {
    cout << "test_calculate_BFGS_inverse_hessian_approximation\n";
 
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
-//   sum_squared_error.set_regularization_method(LossIndex::L2);
+   sum_squared_error.set_regularization_method(LossIndex::L2);
 
-//   neural_network.set_parameters_constant(1.0);
+   neural_network.set_parameters_constant(1.0);
 
 //   Tensor<type, 1> old_parameters = neural_network.get_parameters();
 //   Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_loss_gradient();
 //   Tensor<type, 2> old_inverse_hessian = sum_squared_error.calculate_inverse_hessian();
 
-//   neural_network.set_parameters_constant(-0.5);
+   neural_network.set_parameters_constant(-0.5);
 
 //   Tensor<type, 1> parameters = neural_network.get_parameters();
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
@@ -182,13 +181,13 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 {
    cout << "test_calculate_inverse_hessian_approximation\n";
 
-    neural_network.set(NeuralNetwork::Approximation, {1,1});
-//   DataSet data_set(2, 1, 1);
-//   data_set.set_data_random();
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
+   data_set.set(2, 1, 1);
+   data_set.set_data_random();
 
-//   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
+   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
 
-//   neural_network.set_parameters_constant(1.0);
+   neural_network.set_parameters_constant(1.0);
 
 //   Tensor<type, 1> old_parameters = neural_network.get_parameters();
 //   Tensor<type, 1> old_gradient = sum_squared_error.calculate_training_loss_gradient();
@@ -249,20 +248,18 @@ void QuasiNewtonMethodTest::test_perform_training()
    data_set.set(2, 1, 1);
    data_set.set_data_random();
    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
-//   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
-
-//   quasi_newton_method.set_reserve_all_training_history(true);
+   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
 
     // Test
 
-//   neural_network.set_parameters_constant(3.1415927);
+   neural_network.set_parameters_constant(3.1415927);
 
 //   type old_loss = sum_squared_error.calculate_training_loss();
 
-//   quasi_newton_method.set_maximum_epochs_number(2),
-//   quasi_newton_method.set_display(false);
+   quasi_newton_method.set_maximum_epochs_number(2),
+   quasi_newton_method.set_display(false);
 
-//   quasi_newton_method.perform_training();
+   quasi_newton_method.perform_training();
 
 //   type loss = sum_squared_error.calculate_training_loss();
 
@@ -270,33 +267,33 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    // Minimum parameters increment norm
 
-//   neural_network.set_parameters_constant(3.1415927);
+   neural_network.set_parameters_constant(3.1415927);
 
-//   type minimum_parameters_increment_norm = 0.1;
+   type minimum_parameters_increment_norm = 0.1;
 
-//   quasi_newton_method.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-//   quasi_newton_method.set_loss_goal(0.0);
-//   quasi_newton_method.set_minimum_loss_decrease(0.0);
-//   quasi_newton_method.set_gradient_norm_goal(0.0);
-//   quasi_newton_method.set_maximum_epochs_number(10);
-//   quasi_newton_method.set_maximum_time(1000.0);
+   quasi_newton_method.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
+   quasi_newton_method.set_loss_goal(0.0);
+   quasi_newton_method.set_minimum_loss_decrease(0.0);
+   quasi_newton_method.set_gradient_norm_goal(0.0);
+   quasi_newton_method.set_maximum_epochs_number(10);
+   quasi_newton_method.set_maximum_time(1000.0);
 
-//   quasi_newton_method.perform_training();
+   quasi_newton_method.perform_training();
 
    // Performance goal
 
-//   neural_network.set_parameters_constant(3.1415927);
+   neural_network.set_parameters_constant(3.1415927);
 
-//   type training_loss_goal = 100.0;
+   type training_loss_goal = 100.0;
 
-//   quasi_newton_method.set_minimum_parameters_increment_norm(0.0);
-//   quasi_newton_method.set_loss_goal(training_loss_goal);
-//   quasi_newton_method.set_minimum_loss_decrease(0.0);
-//   quasi_newton_method.set_gradient_norm_goal(0.0);
-//   quasi_newton_method.set_maximum_epochs_number(10);
-//   quasi_newton_method.set_maximum_time(1000.0);
+   quasi_newton_method.set_minimum_parameters_increment_norm(0.0);
+   quasi_newton_method.set_loss_goal(training_loss_goal);
+   quasi_newton_method.set_minimum_loss_decrease(0.0);
+   quasi_newton_method.set_gradient_norm_goal(0.0);
+   quasi_newton_method.set_maximum_epochs_number(10);
+   quasi_newton_method.set_maximum_time(1000.0);
 
-//   quasi_newton_method.perform_training();
+   quasi_newton_method.perform_training();
 
 //   loss = sum_squared_error.calculate_training_loss();
 
@@ -306,52 +303,50 @@ void QuasiNewtonMethodTest::test_perform_training()
 
 //   neural_network.set_parameters_constant(3.1415927);
 
-//   type minimum_loss_decrease = 100.0;
+   type minimum_loss_decrease = 100.0;
 
-//   quasi_newton_method.set_minimum_parameters_increment_norm(0.0);
-//   quasi_newton_method.set_loss_goal(0.0);
-//   quasi_newton_method.set_minimum_loss_decrease(minimum_loss_decrease);
-//   quasi_newton_method.set_gradient_norm_goal(0.0);
-//   quasi_newton_method.set_maximum_epochs_number(10);
-//   quasi_newton_method.set_maximum_time(1000.0);
+   quasi_newton_method.set_minimum_parameters_increment_norm(0.0);
+   quasi_newton_method.set_loss_goal(0.0);
+   quasi_newton_method.set_minimum_loss_decrease(minimum_loss_decrease);
+   quasi_newton_method.set_gradient_norm_goal(0.0);
+   quasi_newton_method.set_maximum_epochs_number(10);
+   quasi_newton_method.set_maximum_time(1000.0);
 
-//   quasi_newton_method.perform_training();
+   quasi_newton_method.perform_training();
 
    // Gradient norm goal
 
-//   neural_network.set_parameters_constant(3.1415927);
+   neural_network.set_parameters_constant(3.1415927);
 
-//   type gradient_norm_goal = 100.0;
+   type gradient_norm_goal = 100.0;
 
-//   quasi_newton_method.set_minimum_parameters_increment_norm(0.0);
-//   quasi_newton_method.set_loss_goal(0.0);
-//   quasi_newton_method.set_minimum_loss_decrease(0.0);
-//   quasi_newton_method.set_gradient_norm_goal(gradient_norm_goal);
-//   quasi_newton_method.set_maximum_epochs_number(10);
-//   quasi_newton_method.set_maximum_time(1000.0);
+   quasi_newton_method.set_minimum_parameters_increment_norm(0.0);
+   quasi_newton_method.set_loss_goal(0.0);
+   quasi_newton_method.set_minimum_loss_decrease(0.0);
+   quasi_newton_method.set_gradient_norm_goal(gradient_norm_goal);
+   quasi_newton_method.set_maximum_epochs_number(10);
+   quasi_newton_method.set_maximum_time(1000.0);
 
-//   quasi_newton_method.perform_training();
+   quasi_newton_method.perform_training();
 
 //   type gradient_norm = sum_squared_error.calculate_training_loss_gradient().calculate_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
-
 }
-
 
 
 void QuasiNewtonMethodTest::test_resize_training_error_history()
 {
     cout << "test_resize_training_error_history\n";
 
-//    TrainingResults results;
+    TrainingResults training_results;
 
 //    quasi_newton_method.set_reserve_all_training_history(true);
 
     // Test
 
-//    results.resize_training_error_history(2);
+    training_results.resize_training_error_history(2);
 
-//    assert_true(results.elapsed_time_history.size() == 2, LOG);
+//    assert_true(training_results.elapsed_time_history.size() == 2, LOG);
 
 }
 

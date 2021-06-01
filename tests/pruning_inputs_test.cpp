@@ -11,6 +11,13 @@
 
 PruningInputsTest::PruningInputsTest() : UnitTesting()
 {
+//    training_strategy.set(&neural_network, &data_set);
+
+//    pruning_inputs.set(&training_strategy);
+
+    training_strategy.set_display(false);
+
+    pruning_inputs.set_display(false);
 }
 
 
@@ -23,13 +30,13 @@ void PruningInputsTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    PruningInputs pi1(&training_strategy);
+    PruningInputs pruning_inputs_1(&training_strategy);
 
-    assert_true(pi1.has_training_strategy(), LOG);
+    assert_true(pruning_inputs_1.has_training_strategy(), LOG);
 
-    PruningInputs pi2;
+    PruningInputs pruning_inputs_2;
 
-    assert_true(!pi2.has_training_strategy(), LOG);
+    assert_true(!pruning_inputs_2.has_training_strategy(), LOG);
 }
 
 
@@ -37,9 +44,9 @@ void PruningInputsTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    PruningInputs* pi = new PruningInputs;
+    PruningInputs* pruning_inputs_pointer = new PruningInputs;
 
-    delete pi;
+    delete pruning_inputs_pointer;
 }
 
 
@@ -47,63 +54,29 @@ void PruningInputsTest::test_perform_inputs_selection()
 {
     cout << "test_perform_inputs_selection\n";
 
-//    DataSet data_set;
-
-//    Tensor<type, 2> data;
-
-//    NeuralNetwork neural_network;
-
-//    
-
-//    SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-//    InputsSelectionResults* pir;
+    InputsSelectionResults inputs_selection_results;
 
     // Test
 
-//    data_set.generate_inputs_selection_data(40,3);
+    data_set.generate_Rosenbrock_data(40,3);
 
-//    data_set.split_samples_random();
+    data_set.split_samples_random();
 
-//    neural_network.set(NeuralNetwork::Approximation, {2,6,1});
+    neural_network.set(NeuralNetwork::Approximation, {2,6,1});
 
-//    TrainingStrategy training_strategy(&neural_network, &data_set);
+    inputs_selection_results = pruning_inputs.perform_inputs_selection();
 
-//    PruningInputs pi(&ts);
-
-//    ts.set_display(false);
-
-//    pi.set_display(false);
-
-//    pi.set_approximation(true);
-
-//    pir = pi.perform_inputs_selection();
-
-//    assert_true(pir->optimal_inputs_indices[0] == 0, LOG);
-
-//    pi.delete_selection_history();
-//    pi.delete_parameters_history();
-//    pi.delete_loss_history();
+//    assert_true(inputs_selection_results.optimal_inputs_indices[0] == 0, LOG);
 
     // Test
 
-//    data_set.generate_sum_data(40,3);
+    data_set.generate_sum_data(40,3);
 
-//    neural_network.set(NeuralNetwork::Approximation, {2,6,1});
+    neural_network.set(NeuralNetwork::Approximation, {2,6,1});
 
-//    ts.set_display(false);
-
-//    pi.set_display(false);
-
-//    pi.set_approximation(false);
-
-//    pir = pi.perform_inputs_selection();
+    inputs_selection_results = pruning_inputs.perform_inputs_selection();
 
 //    assert_true(pir->optimal_inputs_indices[0] == 0, LOG);
-
-//    pi.delete_selection_history();
-//    pi.delete_parameters_history();
-//    pi.delete_loss_history();
 }
 
 

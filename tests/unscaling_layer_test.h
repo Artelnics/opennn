@@ -101,6 +101,12 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   UnscalingLayer unscaling_layer;
+
+
 };
 
 

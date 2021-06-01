@@ -50,7 +50,7 @@ private:
 
    TrainingStrategy training_strategy;
 
-   GrowingInputs growing_inputs;
+   GrowingNeurons growing_neurons;
 
 };
 

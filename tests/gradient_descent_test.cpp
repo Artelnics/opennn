@@ -28,13 +28,13 @@ void GradientDescentTest::test_constructor()
 
    // Default constructor
 
-   GradientDescent gd1;
-   assert_true(!gd1.has_loss_index(), LOG);
+   GradientDescent gradient_descent_1;
+   assert_true(!gradient_descent_1.has_loss_index(), LOG);
 
    // Loss index constructor
 
-   GradientDescent gd2(&sum_squared_error);
-   assert_true(gd2.has_loss_index(), LOG);
+   GradientDescent gradient_descent_2(&sum_squared_error);
+   assert_true(gradient_descent_2.has_loss_index(), LOG);
 }
 
 
@@ -191,4 +191,3 @@ void GradientDescentTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

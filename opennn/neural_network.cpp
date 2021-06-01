@@ -650,9 +650,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == Forecasting)
     {
-        cout<<"LSTM"<<endl;
         LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-//        cout<<"Recurrent"<<endl;
 //        RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
         this->add_layer(long_short_term_memory_layer_pointer);
@@ -1892,7 +1890,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
             inputs_from_XML(inputs_document);
         }
-
     }
 
     // Layers
@@ -2484,7 +2481,6 @@ string NeuralNetwork::write_expression_c() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-
         buffer << layers_pointers[i]->write_expression_c() << endl;
     }
 
@@ -2505,7 +2501,6 @@ string NeuralNetwork::write_expression_c() const
     buffer << "\n\treturn outputs;\n}" << endl;
 
     buffer << "int main(){return 0;}" << endl;
-
 
     string expression = buffer.str();
 
@@ -2706,30 +2701,6 @@ void NeuralNetwork::save_expression_c(const string& file_name)
 
     file.close();
 }
-
-
-///// Saves the mathematical expression represented by the neural network to a text file.
-///// @param file_name Name of expression text file.
-
-//void NeuralNetwork::save_expression_c(const string& file_name)
-//{
-//    ofstream file(file_name.c_str());
-
-//    if(!file.is_open())
-//    {
-//        ostringstream buffer;
-
-//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-//               << "void  save_expression(const string&) method.\n"
-//               << "Cannot open expression text file.\n";
-
-//        throw logic_error(buffer.str());
-//    }
-
-//    file << write_expression_c();
-
-//    file.close();
-//}
 
 
 /// Saves the python function of the expression represented by the neural network to a text file.

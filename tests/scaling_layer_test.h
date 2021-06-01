@@ -135,6 +135,10 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   ScalingLayer scaling_layer;
 };
 
 

@@ -111,7 +111,6 @@ void StochasticGradientDescentTest::test_perform_training()
 
 //   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
-
 }
 
 
@@ -119,12 +118,12 @@ void StochasticGradientDescentTest::test_resize_training_error_history()
 {
    cout << "test_resize_training_error_history\n";
 
-   TrainingResults sgdtr;
+   TrainingResults training_results;
 
-   sgdtr.resize_training_error_history(1);
+   training_results.resize_training_error_history(1);
 
-   assert_true(sgdtr.training_error_history.size() == 1, LOG);
-   assert_true(sgdtr.selection_error_history.size() == 1, LOG);
+   assert_true(training_results.training_error_history.size() == 1, LOG);
+   assert_true(training_results.selection_error_history.size() == 1, LOG);
 }
 
 
@@ -155,7 +154,6 @@ void StochasticGradientDescentTest::run_test_case()
 
    test_perform_training();
 
-
    // Training history methods
 
    test_resize_training_error_history();
@@ -184,4 +182,3 @@ void StochasticGradientDescentTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

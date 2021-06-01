@@ -46,9 +46,9 @@ void GeneticAlgorithmTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GeneticAlgorithm* genetic_algorithm = new GeneticAlgorithm;
+    GeneticAlgorithm* genetic_algorithm_pointer = new GeneticAlgorithm;
 
-    delete genetic_algorithm;
+    delete genetic_algorithm_pointer;
 }
 
 
@@ -131,10 +131,7 @@ void GeneticAlgorithmTest::test_perform_selection()
     genetic_algorithm.set_individuals_number(4);
 
     fitness.resize(4);
-    fitness[0] = 1;
-    fitness[1] = 2;
-    fitness[2] = 3;
-    fitness[3] = 4;
+    fitness.setValues({1, 2, 3, 4});
 
     genetic_algorithm.set_fitness(fitness);
 
@@ -156,8 +153,8 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     selection = genetic_algorithm.get_selection();
 
-//    assert_true(selected_population[0] == population[3], LOG);
-//    assert_true(selected_population[1] == population[2], LOG);
+//    assert_true(selection[0] == population[3], LOG);
+//    assert_true(selection[1] == population[2], LOG);
 
 }
 
@@ -303,10 +300,6 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 //    assert_true(ga_results->selection_error < 1, LOG);
     assert_true(inputs_selection_results.stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
 
-//    genetic_algorithm.delete_selection_history();
-//    genetic_algorithm.delete_parameters_history();
-//    genetic_algorithm.delete_loss_history();
-
     // Test
 
     Index j = -10;
@@ -347,32 +340,6 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 }
 
 
-void GeneticAlgorithmTest::test_to_XML()
-{
-    cout << "test_to_XML\n";
-
-    GeneticAlgorithm genetic_algorithm;
-
-//    tinyxml2::XMLDocument* document = genetic_algorithm.to_XML();
-//    assert_true(document != nullptr, LOG);
-
-//    delete document;
-}
-
-
-void GeneticAlgorithmTest::test_from_XML()
-{
-    cout << "test_from_XML\n";
-
-    GeneticAlgorithm genetic_algorithm;
-
-//    tinyxml2::XMLDocument* document = genetic_algorithm.to_XML();
-//    genetic_algorithm.from_XML(*document);
-
-//    delete document;
-}
-
-
 void GeneticAlgorithmTest::run_test_case()
 {
     cout << "Running genetic algorithm test case...\n";
@@ -403,12 +370,6 @@ void GeneticAlgorithmTest::run_test_case()
     // Order selection methods
 
     test_perform_inputs_selection();
-
-    // Serialization methods
-
-    test_to_XML();
-
-    test_from_XML();
 
     cout << "End of genetic algorithm test case.\n\n";
 }

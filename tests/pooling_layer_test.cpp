@@ -35,7 +35,7 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
 {
     cout << "test_calculate_average_pooling_outputs\n";
 
-//    PoolingLayer pooling_layer;
+//
 
 //    Tensor<type, 2> inputs;
 //    Tensor<type, 2> outputs;
@@ -151,7 +151,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 {
     cout << "test_calculate_max_pooling_outputs\n";
 
-//    PoolingLayer pooling_layer;
+//
 
 //    Tensor<type, 2> inputs;
 //    Tensor<type, 2> outputs;

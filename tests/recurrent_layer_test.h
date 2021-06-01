@@ -56,6 +56,12 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+    RecurrentLayer recurrent_layer;
+
+    NumericalDifferentiation numerical_differentiation;
 };
 
 
