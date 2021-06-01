@@ -23,6 +23,7 @@ SUBDIRS += yacht_hydrodynamics_design
 SUBDIRS += yacht_hydrodynamics_production
 SUBDIRS += leukemia
 SUBDIRS += mnist
+SUBDIRS += outlier_detection
 
 win32:!win32-g++{
 #QMAKE_CXXFLAGS+= -arch:AVX

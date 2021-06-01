@@ -616,11 +616,14 @@ public:
 
    type calculate_euclidean_distance(const Index&, const Index&) const;
 
-   Tensor<type, 2> calculate_distance_matrix() const;
-   Tensor<Index, 2> calculate_k_nearest_neighbors(const Tensor<type, 2>&, const Index& = 20) const;
-   Tensor<type, 1> calculate_average_reachability(const Tensor<type,2>&, const Tensor<Index, 2>&, const Index&) const;
+   Tensor<type, 2> calculate_distance_matrix(const Tensor<Index, 1>&) const;
 
-   Tensor<Index, 1> calculate_LOF_outliers(const Index& = 20, const type& = 1.5) const;
+   Tensor<list<Index>, 1> calculate_neighbors_kd_tree(const Index& = 20, const Index& = 40) const;
+
+   Tensor<list<Index>, 1> calculate_k_nearest_neighbors(const Tensor<type, 2>&, const Index& = 20) const;
+   Tensor<type, 1> calculate_average_reachability(Tensor<list<Index>, 1>&, const Index&) const;
+   Tensor<Index, 1> calculate_LocalOutlierFactor_outliers(const Index& = 20, const type& = 1.5, const type& = 0.0, const Index& = 1000) const;
+
    void unuse_LOF_outliers(const Index& = 20, const type& = 1.5);
 
    // Time series methods
