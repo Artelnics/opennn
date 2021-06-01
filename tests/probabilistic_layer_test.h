@@ -106,6 +106,12 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   ProbabilisticLayer probabilistic_layer;
+
+   NumericalDifferentiation numerical_differentiation;
 };
 
 

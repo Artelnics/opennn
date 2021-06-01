@@ -22,7 +22,7 @@ void RecurrentLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    RecurrentLayer recurrent_layer;
+
     Index inputs_number;
     Index neurons_number;
 
@@ -62,7 +62,7 @@ void RecurrentLayerTest::test_get_inputs_number()
 {
    cout << "test_get_inputs_number\n";
 
-   RecurrentLayer recurrent_layer;
+
 
    Index inputs_number;
    Index neurons_number;
@@ -87,7 +87,7 @@ void RecurrentLayerTest::test_get_neurons_number()
 {
    cout << "test_get_neurons_number\n";
 
-   RecurrentLayer recurrent_layer;
+
 
    Index inputs_number;
    Index neurons_number;
@@ -112,7 +112,7 @@ void RecurrentLayerTest::test_get_biases()
 {
    cout << "test_get_biases\n";
 
-   RecurrentLayer recurrent_layer;
+
 
    Index inputs_number;
    Index neurons_number;
@@ -140,7 +140,7 @@ void RecurrentLayerTest::test_get_weights()
 {
    cout << "test_get_synaptic_weights\n";
 
-   RecurrentLayer recurrent_layer;
+
 
 //   Tensor<type, 2> weights;
 
@@ -158,7 +158,7 @@ void RecurrentLayerTest::test_get_recurrent_initializer()
 {
    cout << "test_get_recurrent_initializer\n";
 
-   RecurrentLayer recurrent_layer;
+
 
 //   Tensor<type, 2> recurrent_weights;
 
@@ -183,7 +183,7 @@ void RecurrentLayerTest::test_get_parameters_number()
 {
    cout << "test_get_parameters_number\n";
 
-   RecurrentLayer recurrent_layer;
+
 
    // Test
 
@@ -215,7 +215,7 @@ void RecurrentLayerTest::test_get_parameters()
 {
    cout << "test_get_parameters\n";
 
-   RecurrentLayer recurrent_layer;
+
 
    // Test
 
@@ -275,9 +275,6 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 {
    cout << "test_calculate_activation_derivative\n";
 
-   NumericalDifferentiation numerical_differentiation;
-
-   RecurrentLayer recurrent_layer;
    Tensor<type, 1> parameters;
    Tensor<type, 2> inputs;
    Tensor<type, 2> combinations;
@@ -417,7 +414,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
-   RecurrentLayer recurrent_layer;
+
    Tensor<type, 2> inputs;
 
    Tensor<type, 1> parameters;

@@ -67,10 +67,6 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
 //    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
 
-//    gi.delete_selection_history();
-//    gi.delete_parameters_history();
-//    gi.delete_loss_history();
-
     // Test
 
     data_set.generate_sum_data(20,3);
@@ -84,10 +80,6 @@ void GrowingInputsTest::test_perform_inputs_selection()
     inputs_selection_results = growing_inputs.perform_inputs_selection();
 
 //    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
-
-//    gi1.delete_selection_history();
-//    gi1.delete_parameters_history();
-//    gi1.delete_loss_history();
 }
 
 

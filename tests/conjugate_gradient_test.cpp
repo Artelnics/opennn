@@ -30,15 +30,13 @@ void ConjugateGradientTest::test_constructor()
 
    // Default constructor
 
-   ConjugateGradient cg1; 
-   assert_true(!cg1.has_loss_index(), LOG);
+   ConjugateGradient conjugate_gradient_1;
+   assert_true(!conjugate_gradient_1.has_loss_index(), LOG);
 
    // Loss index constructor
 
-   SumSquaredError sum_squared_error;
-
-   ConjugateGradient cg2(&sum_squared_error);
-   assert_true(cg2.has_loss_index(), LOG);
+   ConjugateGradient conjugate_gradient_2(&sum_squared_error);
+   assert_true(conjugate_gradient_2.has_loss_index(), LOG);
 }
 
 
@@ -201,12 +199,16 @@ void ConjugateGradientTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 2});
-   neural_network.set_parameters_random();
+   type old_loss;
+   type loss;
+
+   type training_loss_goal;
+
+   type minimum_parameters_increment_norm;
 
    // Test
 
-   data_set.set(1,1,1);
+   data_set.set(1, 1, 1);
    data_set.set_data_constant(0.0);
 
    neural_network.set(NeuralNetwork::Approximation, {1, 1});
@@ -217,16 +219,7 @@ void ConjugateGradientTest::test_perform_training()
    data_set.set(1, 1, 1);
    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::Approximation, {1,1,1});
-
-   type old_loss;
-   type loss;
-
-   type training_loss_goal;
-
-   ConjugateGradient conjugate_gradient(&sum_squared_error);
-
-   type minimum_parameters_increment_norm;
+   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
 
    // Test
 
@@ -314,36 +307,6 @@ void ConjugateGradientTest::test_perform_training()
 }
 
 
-void ConjugateGradientTest::test_to_XML()   
-{
-   cout << "test_to_XML\n";
-
-//   tinyxml2::XMLDocument* cgd = conjugate_gradient.to_XML();
-//   assert_true(cgd != nullptr, LOG);
-}
-
-
-void ConjugateGradientTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
-
-   ConjugateGradient cg1;
-   ConjugateGradient cg2;
-
-   tinyxml2::XMLDocument* document;
-
-   // Test
-
-   cg1.set_display(true);
-
-//   document = cg1.to_XML();
-
-//   cg2.from_XML(*document);
-
-//   delete document;
-}
-
-
 void ConjugateGradientTest::run_test_case()
 {
    cout << "Running conjugate gradient test case...\n";
@@ -368,11 +331,6 @@ void ConjugateGradientTest::run_test_case()
    test_calculate_FR_training_direction();
    test_calculate_PR_training_direction();
    test_perform_training();
-
-   // Serialization methods
-
-   test_to_XML();   
-   test_from_XML();
 
    cout << "End of conjugate gradient test case.\n\n";
 }

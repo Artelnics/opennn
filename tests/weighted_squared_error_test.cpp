@@ -125,6 +125,8 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
 
+   Tensor<type, 2> data;
+
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
 
@@ -144,31 +146,28 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
 
+   Tensor<type, 1> parameters;
+
+
    // Test trivial
 {
-       Tensor<type, 1> parameters;
-
-       NeuralNetwork neural_network(NeuralNetwork::Classification, {1, 1});
+       neural_network.set(NeuralNetwork::Classification, {1, 1});
 
        neural_network.set_parameters_constant(1);
-       DataSet data_set(1, 1, 1);
+       data_set.set(1, 1, 1);
 
-       Index samples_number;
        samples_number = 1;
-       Index inputs_number;
        inputs_number = 1;
-       Index outputs_number;
        outputs_number = 1;
-       Index hidden_neurons;
        hidden_neurons = 1;
 
-       Tensor<type, 2> new_data(2, 2);
-       new_data(0,0) = 0.0;
-       new_data(0,1) = 0.0;
-       new_data(1,0) = 1.0;
-       new_data(1,1) = 1.0;
+       data.resize(2, 2);
+       data(0,0) = 0.0;
+       data(0,1) = 0.0;
+       data(1,0) = 1.0;
+       data(1,1) = 1.0;
 
-       data_set.set_data(new_data);
+       data_set.set_data(data);
        data_set.set_training();
 
        weighted_squared_error.set_weights();
@@ -295,7 +294,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 //   neural_network.add_layer(long_short_term_memory_layer);
 //   neural_network.add_layer(perceptron_layer_2);
 
-//   neural_network.set_parameters_random();
+   neural_network.set_parameters_random();
 
 //   error_gradient = weighted_squared_error.calculate_error_gradient();
 
@@ -347,7 +346,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 //   neural_network.add_layer(recurrent_layer);
 //   neural_network.add_layer(perceptron_layer_2);
 
-//   neural_network.set_parameters_random();
+   neural_network.set_parameters_random();
 
 //   error_gradient = weighted_squared_error.calculate_error_gradient();
 
@@ -468,6 +467,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors()
    neural_network.set_parameters_random();
 
    data_set.set(3, 2, 2);
+
 //   data_set.generate_data_binary_classification(3, 2);
 
 //   error = weighted_squared_error.calculate_error();
@@ -510,6 +510,14 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    Index hidden_neurons_number;
    Index outputs_number;
 
+   NeuralNetworkForwardPropagation forward_propagation;
+
+   LossIndexBackPropagation back_propagation;
+
+   LossIndexBackPropagationLM back_propagation_lm;
+
+   Tensor<type, 2> numerical_squared_errors_jacobian;
+
    // Test probabilistic (binary)
    {
        samples_number = 2;
@@ -537,22 +545,22 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        normalized_squared_error.set_normalization_coefficient();
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
-       LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
+       forward_propagation.set(samples_number, &neural_network);
+
+       back_propagation.set(samples_number, &normalized_squared_error);
+
+       back_propagation_lm.set(samples_number, &normalized_squared_error);
 
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        neural_network.forward_propagate(batch, forward_propagation);
        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-       normalized_squared_error.back_propagate(batch, forward_propagation, loss_index_back_propagation_lm);
-
-       Tensor<type, 2> numerical_squared_errors_jacobian;
+       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation_lm);
 
        numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
 
-       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
+       assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
    }
 }
 

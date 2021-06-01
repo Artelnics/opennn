@@ -192,6 +192,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
    NeuralNetworkForwardPropagation forward_propagation;
 
    LossIndexBackPropagation training_back_propagation;
+   LossIndexBackPropagation back_propagation;
 
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
@@ -408,9 +409,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        long_short_term_memory_layer->set_timesteps(2);
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       forward_propagation.set(samples_number, &neural_network);
 
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       back_propagation.set(samples_number, &normalized_squared_error);
 
        neural_network.forward_propagate(batch, forward_propagation);
 
@@ -458,9 +459,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        recurrent_layer->set_timesteps(2);
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       forward_propagation.set(samples_number, &neural_network);
 
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       back_propagation.set(samples_number, &normalized_squared_error);
 
        neural_network.forward_propagate(batch, forward_propagation);
 
@@ -510,9 +511,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        recurrent_layer->set_timesteps(2);
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       forward_propagation.set(samples_number, &neural_network);
 
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       back_propagation.set(samples_number, &normalized_squared_error);
 
        neural_network.forward_propagate(batch, forward_propagation);
 
@@ -562,9 +563,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        recurrent_layer->set_timesteps(2);
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       forward_propagation.set(samples_number, &neural_network);
 
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       back_propagation.set(samples_number, &normalized_squared_error);
 
        neural_network.forward_propagate(batch, forward_propagation);
 
@@ -614,9 +615,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        recurrent_layer->set_timesteps(2);
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       forward_propagation.set(samples_number, &neural_network);
 
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       back_propagation.set(samples_number, &normalized_squared_error);
 
        neural_network.forward_propagate(batch, forward_propagation);
 
@@ -654,8 +655,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        normalized_squared_error.set_normalization_coefficient();
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       forward_propagation.set(samples_number, &neural_network);
+       back_propagation.set(samples_number, &normalized_squared_error);
        LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
 
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
@@ -700,8 +701,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        normalized_squared_error.set_normalization_coefficient();
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       forward_propagation.set(samples_number, &neural_network);
+       back_propagation.set(samples_number, &normalized_squared_error);
        LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
 
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
@@ -746,8 +747,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        normalized_squared_error.set_normalization_coefficient();
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       forward_propagation.set(samples_number, &neural_network);
+       back_propagation.set(samples_number, &normalized_squared_error);
        LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
 
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
@@ -815,9 +816,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
        normalized_squared_error.set_normalization_coefficient(1);
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
+       forward_propagation.set(samples_number, &neural_network);
 
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+       back_propagation.set(samples_number, &normalized_squared_error);
 
        neural_network.forward_propagate(batch, forward_propagation);
 
@@ -838,6 +839,10 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors()
    Index inputs_number;
    Index hidden_neurons_number;
    Index outputs_number;
+
+   NeuralNetworkForwardPropagation forward_propagation;
+
+   LossIndexBackPropagation back_propagation;
 
    // Test
 
@@ -863,8 +868,8 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors()
 
    normalized_squared_error.set_normalization_coefficient();
 
-   NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-   LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
+   forward_propagation.set(samples_number, &neural_network);
+   back_propagation.set(samples_number, &normalized_squared_error);
    LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
@@ -894,6 +899,14 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    Index hidden_neurons_number;
    Index outputs_number;
 
+   NeuralNetworkForwardPropagation forward_propagation;
+
+   LossIndexBackPropagation back_propagation;
+
+   LossIndexBackPropagationLM back_propagation_lm;
+
+   Tensor<type, 2> numerical_squared_errors_jacobian;
+
    // Test Perceptron
    {
        samples_number = 2;
@@ -919,22 +932,22 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        normalized_squared_error.set_normalization_coefficient();
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
-       LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
+       forward_propagation.set(samples_number, &neural_network);
+
+       back_propagation.set(samples_number, &normalized_squared_error);
+
+       back_propagation_lm.set(samples_number, &normalized_squared_error);
 
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        neural_network.forward_propagate(batch, forward_propagation);
        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-       normalized_squared_error.back_propagate(batch, forward_propagation, loss_index_back_propagation_lm);
-
-       Tensor<type, 2> numerical_squared_errors_jacobian;
+       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation_lm);
 
        numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
 
-       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, 1.0e-3), LOG);
+       assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, 1.0e-3), LOG);
    }
 
    // Test probabilistic (binary)
@@ -965,22 +978,20 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        normalized_squared_error.set_normalization_coefficient();
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
-       LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
+       forward_propagation.set(samples_number, &neural_network);
+       back_propagation.set(samples_number, &normalized_squared_error);
+       back_propagation_lm.set(samples_number, &normalized_squared_error);
 
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        neural_network.forward_propagate(batch, forward_propagation);
        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-       normalized_squared_error.back_propagate(batch, forward_propagation, loss_index_back_propagation_lm);
-
-       Tensor<type, 2> numerical_squared_errors_jacobian;
+       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation_lm);
 
        numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
 
-       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
+       assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
    }
 
    // Test probabilistic (multiple)
@@ -1010,22 +1021,22 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        normalized_squared_error.set_normalization_coefficient();
 
-       NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-       LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
-       LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, &normalized_squared_error);
+       forward_propagation.set(samples_number, &neural_network);
+
+       back_propagation.set(samples_number, &normalized_squared_error);
+
+       back_propagation_lm.set(samples_number, &normalized_squared_error);
 
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        neural_network.forward_propagate(batch, forward_propagation);
        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-       normalized_squared_error.back_propagate(batch, forward_propagation, loss_index_back_propagation_lm);
-
-       Tensor<type, 2> numerical_squared_errors_jacobian;
+       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation_lm);
 
        numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
 
-       assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
+       assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
    }
 }
 

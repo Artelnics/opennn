@@ -1136,6 +1136,8 @@ Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
 
 Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation()
 {
+    LossIndexBackPropagationLM back_propagation_lm;
+
     const Index samples_number = data_set_pointer->get_training_samples_number();
 
     DataSetBatch batch(samples_number, data_set_pointer);
@@ -1155,10 +1157,10 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation()
 
     const Index parameters_number = parameters.size();
 
-    LossIndexBackPropagationLM loss_index_back_propagation_lm(samples_number, this);
+    back_propagation_lm.set(samples_number, this);
 
     neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
-    calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
+    calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
     type h;
 
@@ -1176,14 +1178,14 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation()
 
         parameters_backward(j) -= h;
         neural_network_pointer->forward_propagate(batch, parameters_backward, forward_propagation);
-        calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
-        error_terms_backward = loss_index_back_propagation_lm.squared_errors;
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+        error_terms_backward = back_propagation_lm.squared_errors;
         parameters_backward(j) += h;
 
         parameters_forward(j) += h;
         neural_network_pointer->forward_propagate(batch, parameters_forward, forward_propagation);
-        calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
-        error_terms_forward = loss_index_back_propagation_lm.squared_errors;
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+        error_terms_forward = back_propagation_lm.squared_errors;
         parameters_forward(j) -= h;
 
         for(Index i = 0; i < samples_number; i++)

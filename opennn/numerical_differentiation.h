@@ -74,13 +74,6 @@ public:
 
    Tensor<type, 1> calculate_backward_differences_derivatives(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
-   // Serialization methods
-
-      
-   void from_XML(const tinyxml2::XMLDocument&);   
-
-   void write_XML(tinyxml2::XMLPrinter&) const;
-
    /// Returns the derivative of a function using the forward differences method. 
    /// @param t  Object constructor containing the member method to differentiate.  
    /// @param f Pointer to the member method.

@@ -121,6 +121,12 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   PerceptronLayer perceptron_layer;
+
+    NumericalDifferentiation numerical_differentiation;
 };
 
 

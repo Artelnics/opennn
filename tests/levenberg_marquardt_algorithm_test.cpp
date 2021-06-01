@@ -28,8 +28,8 @@ void LevenbergMarquardtAlgorithmTest::test_constructor()
 
    // Default constructor
 
-   LevenbergMarquardtAlgorithm lma1; 
-   assert_true(!lma1.has_loss_index(), LOG);
+   LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm_1;
+   assert_true(!levenberg_marquardt_algorithm_1.has_loss_index(), LOG);
 
    // Loss index constructor
 
@@ -56,15 +56,16 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    // Test
 
-//   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
-//   neural_network.set_parameters_random(0.0, 1.0e-3);
+   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
+   neural_network.set_parameters_random();
 
    data_set.set(1, 1, 2);
-//   data_set.randomize_data_normal(0.0, 1.0e-3);
+
+   data_set.set_data_random();
 
 //   old_loss = sum_squared_error.calculate_training_loss();
 
-//   levenberg_marquardt_algorithm.perform_training();
+   levenberg_marquardt_algorithm.perform_training();
 
 //   loss = sum_squared_error.calculate_training_loss();
 
@@ -72,7 +73,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    // Minimum parameters increment norm
 
-//   neural_network.set_parameters_random(0.0, 1.0e-3);
+   neural_network.set_parameters_random();
 
    minimum_parameters_increment_norm = 100.0;
 
@@ -83,11 +84,11 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-//   levenberg_marquardt_algorithm.perform_training();
+   levenberg_marquardt_algorithm.perform_training();
 
    // Performance goal
 
-//   neural_network.set_parameters_random(0.0, 1.0e-3);
+   neural_network.set_parameters_random();
 
    training_loss_goal = 100.0;
 
@@ -98,7 +99,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-//   levenberg_marquardt_algorithm.perform_training();
+   levenberg_marquardt_algorithm.perform_training();
 
 //   loss = sum_squared_error.calculate_training_loss();
 
@@ -106,7 +107,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    // Minimum loss increas
 
-//   neural_network.set_parameters_random(0.0, 1.0e-3);
+   neural_network.set_parameters_random();
 
    minimum_loss_decrease = 100.0;
 
@@ -117,11 +118,11 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-//   levenberg_marquardt_algorithm.perform_training();
+   levenberg_marquardt_algorithm.perform_training();
 
    // Gradient norm goal 
 
-//   neural_network.set_parameters_random(0.0, 1.0e-3);
+   neural_network.set_parameters_random();
 
    gradient_norm_goal = 1.0e6;
 
@@ -132,7 +133,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-//   levenberg_marquardt_algorithm.perform_training();
+   levenberg_marquardt_algorithm.perform_training();
 
 //   gradient = sum_squared_error.calculate_training_loss_gradient();
 //   gradient_norm = l2_norm(gradient);
@@ -176,14 +177,14 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
 
    // Test
 
-//   a.set(2, 2);
+   a.resize(2, 2);
 //   a.initialize_identity();
 
 //   b.set(2, 0.0);
 
 //   levenberg_marquardt_algorithm.perform_Householder_QR_decomposition(a, b);
 
-//   inverse.set(2, 2);
+   inverse.resize(2, 2);
 //   inverse.initialize_identity();
 
 //   assert_true(a == inverse, LOG);
@@ -191,9 +192,9 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
 
    // Test
 
-//   a.set(100, 100);
+   a.resize(100, 100);
    a.setRandom();
-//   b.set(100);
+   b.resize(100);
    b.setRandom();
 
 //   levenberg_marquardt_algorithm.perform_Householder_QR_decomposition(a, b);

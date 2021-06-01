@@ -451,8 +451,6 @@ struct LossIndexBackPropagationLM
 
         cout << "Hessian:" << endl;
         cout << hessian << endl;
-
-        //neural_network.print();
     }
 
     LossIndex* loss_index_pointer = nullptr;

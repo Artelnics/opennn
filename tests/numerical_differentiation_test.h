@@ -82,8 +82,9 @@ public:
 
 private:
 
-   // Constant methods
+   NumericalDifferentiation numerical_differentiation;
 
+   // Constant methods
 
    type f1(const type& var_x) const
    {

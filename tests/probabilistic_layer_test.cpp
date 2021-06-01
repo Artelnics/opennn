@@ -37,7 +37,6 @@ void ProbabilisticLayerTest::test_constructor()
    // Probabilistic neurons number constructor
 
    ProbabilisticLayer probabilistic_layer_l21;
-   ProbabilisticLayer probabilistic_layer_l22;
 
    probabilistic_layer_l21.set_neurons_number(0);
 
@@ -47,6 +46,7 @@ void ProbabilisticLayerTest::test_constructor()
    assert_true(probabilistic_layer_l21.get_synaptic_weights_number() == 0, LOG);
    assert_true(probabilistic_layer_l21.get_parameters_number() == 0, LOG);
 
+   ProbabilisticLayer probabilistic_layer_l22;
 
    probabilistic_layer_l22.set_neurons_number(3);
 
@@ -61,8 +61,6 @@ void ProbabilisticLayerTest::test_constructor()
 void ProbabilisticLayerTest::test_get_inputs_number()
 {
    cout << "test_get_inputs_number\n";
-
-   ProbabilisticLayer probabilistic_layer;
 
    // Test
 
@@ -80,8 +78,6 @@ void ProbabilisticLayerTest::test_get_neurons_number()
 {
    cout << "test_get_neurons_number\n";
 
-   ProbabilisticLayer probabilistic_layer;
-
    // Test 0
    probabilistic_layer.set();
    assert_true(probabilistic_layer.get_neurons_number() == 0, LOG);
@@ -95,8 +91,6 @@ void ProbabilisticLayerTest::test_get_neurons_number()
 void ProbabilisticLayerTest::test_get_biases()
 {
    cout << "test_get_biases\n";
-
-   ProbabilisticLayer probabilistic_layer;
 
    Index biases_number;
 
@@ -154,7 +148,6 @@ void ProbabilisticLayerTest::test_get_synaptic_weights()
 {
     cout << "test_get_synaptic_weights\n";
 
-    ProbabilisticLayer probabilistic_layer;
     Tensor<type, 2> biases;
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 1> parameters;
@@ -198,7 +191,6 @@ void ProbabilisticLayerTest::test_get_parameters()
 {
    cout << "test_get_parameters\n";
 
-   ProbabilisticLayer probabilistic_layer;
    Tensor<type, 2> synaptic_weights;
    Tensor<type, 1> parameters;
 
@@ -235,7 +227,6 @@ void ProbabilisticLayerTest::test_get_decision_threshold()
 {
    cout << "test_get_decision_threshold\n";
 
-   ProbabilisticLayer probabilistic_layer;
    probabilistic_layer.set_decision_threshold(0.5);
 
    assert_true(abs(probabilistic_layer.get_decision_threshold() - static_cast<type>(0.5)) < static_cast<type>(1e-5), LOG);
@@ -246,7 +237,6 @@ void ProbabilisticLayerTest::test_set()
 {
    cout << "test_set\n";
 
-   ProbabilisticLayer probabilistic_layer;
    probabilistic_layer.set();
 
    assert_true(probabilistic_layer.get_biases_number() == 0, LOG);
@@ -258,7 +248,6 @@ void ProbabilisticLayerTest::test_set_default()
 {
    cout << "test_set_default\n";
 
-   ProbabilisticLayer probabilistic_layer;
    probabilistic_layer.set_neurons_number(2);
 
    probabilistic_layer.set_default();
@@ -279,9 +268,11 @@ void ProbabilisticLayerTest::test_set_biases()
 {
    cout << "test_set_biases\n";
 
-    ProbabilisticLayer probabilistic_layer;
+   Tensor<type, 2> biases;
 
-    Tensor<type, 2> biases(1, 4);
+   // Test
+
+   biases.resize(1, 4);
 
     probabilistic_layer.set(1, 4);
 
@@ -300,9 +291,13 @@ void ProbabilisticLayerTest::test_set_synaptic_weights()
 {
    cout << "test_set_synaptic_weights\n";
 
-    ProbabilisticLayer probabilistic_layer(1, 2);
+   Tensor<type, 2> synaptic_weights;
 
-    Tensor<type, 2> synaptic_weights(2, 1);
+   // Test
+
+    probabilistic_layer.set(1, 2);
+
+    synaptic_weights.resize(2, 1);
 
     synaptic_weights.setZero();
 
@@ -319,26 +314,22 @@ void ProbabilisticLayerTest::test_set_parameters()
 {
   cout << "test_set_parameters\n";
 
-    ProbabilisticLayer probabilistic_layer;
-
     probabilistic_layer.set(1, 2);
 
-    Tensor<type, 1> parameters_2(4);
+    Tensor<type, 1> parameters(4);
 
-    parameters_2.setValues({11,12,21,22});
+    parameters.setValues({11,12,21,22});
 
-    probabilistic_layer.set_parameters(parameters_2);
+    probabilistic_layer.set_parameters(parameters);
 
-    assert_true(probabilistic_layer.get_biases()(0) - parameters_2(0) < static_cast<type>(1e-5), LOG);
-    assert_true(probabilistic_layer.get_synaptic_weights()(0) - parameters_2(2)  < static_cast<type>(1e-5), LOG);
+    assert_true(probabilistic_layer.get_biases()(0) - parameters(0) < static_cast<type>(1e-5), LOG);
+    assert_true(probabilistic_layer.get_synaptic_weights()(0) - parameters(2)  < static_cast<type>(1e-5), LOG);
 }
 
 
 void ProbabilisticLayerTest::test_set_decision_threshold()
 {
    cout << "test_set_decision_threshold\n";
-
-   ProbabilisticLayer probabilistic_layer;
 
    // Test
 
@@ -351,8 +342,6 @@ void ProbabilisticLayerTest::test_set_decision_threshold()
 void ProbabilisticLayerTest::test_write_activation_function()
 {
    cout << "test_write_activation_function\n";
-
-   ProbabilisticLayer probabilistic_layer;
 
    // Test
 
@@ -388,8 +377,6 @@ void ProbabilisticLayerTest::test_write_activation_function_text()
 {
     cout << "test_write_activation_function_text\n";
 
-    ProbabilisticLayer probabilistic_layer;
-
     // Test
 
     probabilistic_layer.set(1, 1);
@@ -424,8 +411,6 @@ void ProbabilisticLayerTest::test_set_activation_function()
 {
    cout << "test_set_activation_function\n";
 
-   ProbabilisticLayer probabilistic_layer;
-
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
    assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::Softmax, LOG);
 
@@ -437,8 +422,6 @@ void ProbabilisticLayerTest::test_set_activation_function()
 void ProbabilisticLayerTest::test_calculate_combinations()
 {
    cout << "test_calculate_combinations\n";
-
-   ProbabilisticLayer probabilistic_layer;
 
    Tensor<type, 2> biases(1,1);
    Tensor<type, 2> synaptic_weights(1,1);
@@ -466,8 +449,6 @@ void ProbabilisticLayerTest::test_calculate_combinations()
 void ProbabilisticLayerTest::test_calculate_activations()
 {
    cout << "test_calculate_activations\n";
-
-   ProbabilisticLayer probabilistic_layer;
 
    Tensor<type, 2> biases(1,1);
    Tensor<type, 2> synaptic_weights(1,1);
@@ -567,9 +548,6 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_activations_derivatives\n";
 
-    NumericalDifferentiation numerical_differentiation;
-    ProbabilisticLayer probabilistic_layer;
-
     Tensor<type, 2> combinations;
     Tensor<type, 2> activations;
     Tensor<type, 3> activations_derivatives;
@@ -639,7 +617,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
 
-    ProbabilisticLayer probabilistic_layer;
+
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 2> biases;
 

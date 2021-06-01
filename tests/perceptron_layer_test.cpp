@@ -63,8 +63,6 @@ void PerceptronLayerTest::test_get_inputs_number()
 {
    cout << "test_get_inputs_number\n";
 
-   PerceptronLayer perceptron_layer;
-
    // Test 0
    perceptron_layer.set();
    assert_true(perceptron_layer.get_inputs_number() == 0, LOG);
@@ -83,7 +81,7 @@ void PerceptronLayerTest::test_get_neurons_number()
 {
    cout << "test_get_size\n";
 
-   PerceptronLayer perceptron_layer;
+
 
    // Test 0
    perceptron_layer.set();
@@ -102,8 +100,6 @@ void PerceptronLayerTest::test_get_neurons_number()
 void PerceptronLayerTest::test_get_activation_function()
 {
    cout << "test_get_activation_function\n";
-
-   PerceptronLayer perceptron_layer;
 
    perceptron_layer.set();
 
@@ -146,8 +142,6 @@ void PerceptronLayerTest::test_write_activation_function()
 {
    cout << "test_write_activation_function\n";
 
-   PerceptronLayer perceptron_layer;
-
    perceptron_layer.set();
 
    perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
@@ -186,8 +180,6 @@ void PerceptronLayerTest::test_get_parameters_number()
 {
    cout << "test_get_parameters_number\n";
 
-   PerceptronLayer perceptron_layer;
-
    // Test 0
    perceptron_layer.set();
    assert_true(perceptron_layer.get_parameters_number() == 0, LOG);
@@ -211,8 +203,6 @@ void PerceptronLayerTest::test_set()
    cout << "test_set\n";
 
    // Test 0
-
-   PerceptronLayer perceptron_layer;
 
    perceptron_layer.set();
 
@@ -248,8 +238,6 @@ void PerceptronLayerTest::test_set_default()
 {
    cout << "test_set_default\n";
 
-   PerceptronLayer perceptron_layer;
-
    perceptron_layer.set_default();
 
    assert_true(perceptron_layer.get_display(), LOG);
@@ -261,7 +249,6 @@ void PerceptronLayerTest::test_get_biases()
 {
    cout << "test_get_biases\n";
 
-   PerceptronLayer perceptron_layer;
    Tensor<type, 2> biases;
 
    // Test  0
@@ -277,7 +264,6 @@ void PerceptronLayerTest::test_get_biases()
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 0, LOG);
-
 
    // Test 2
    perceptron_layer.set(1, 1);
@@ -328,7 +314,7 @@ void PerceptronLayerTest::test_get_synaptic_weights()
 {
    cout << "test_get_synaptic_weights\n";
 
-   PerceptronLayer perceptron_layer;
+
    Tensor<type, 2> synaptic_weights;
 
    // Test 0
@@ -414,8 +400,6 @@ void PerceptronLayerTest::test_get_synaptic_weights()
 void PerceptronLayerTest::test_get_parameters()
 {
    cout << "test_get_parameters\n";
-
-   PerceptronLayer perceptron_layer;
 
    Index inputs_number;
    Index neurons_number;
@@ -504,8 +488,6 @@ void PerceptronLayerTest::test_set_biases()
 
    cout << "test_set_biases\n";
 
-    PerceptronLayer perceptron_layer;
-
     Tensor<type, 2> biases;
 
     // Test 0
@@ -559,9 +541,13 @@ void PerceptronLayerTest::test_set_synaptic_weights()
 {
    cout << "test_set_synaptic_weights\n";
 
-    PerceptronLayer perceptron_layer(1, 2);
+   Tensor<type, 2> synaptic_weights;
 
-    Tensor<type, 2> synaptic_weights(2, 1);
+    // Test
+
+    perceptron_layer.set(1, 2);
+
+    synaptic_weights.resize(2, 1);
 
     // Test 0
     synaptic_weights.setZero();
@@ -604,13 +590,13 @@ void PerceptronLayerTest::test_set_inputs_number()
 {
    cout << "test_set_inputs_number\n";
 
-    PerceptronLayer perceptron_layer;
+   Tensor<type, 2> biases;
+   Tensor<type, 2> synaptic_weights;
+
     Tensor<type, 2> new_biases;
     Tensor<type, 2> new_synaptic_weights;
 
     // Test 0
-    Tensor<type, 2> biases;
-    Tensor<type, 2> synaptic_weights;
 
     perceptron_layer.set_biases(biases);
     perceptron_layer.set_synaptic_weights(synaptic_weights);
@@ -676,7 +662,7 @@ void PerceptronLayerTest::test_set_perceptrons_number()
 {
    cout << "test_set_perceptrons_number\n";
 
-    PerceptronLayer perceptron_layer;
+
     Tensor<type, 2> new_biases;
     Tensor<type, 2> new_synaptic_weights;
 
@@ -726,7 +712,7 @@ void PerceptronLayerTest::test_set_parameters()
 {
   cout << "test_set_parameters\n";
 
-    PerceptronLayer perceptron_layer;
+
 
     // Test 0
     perceptron_layer.set(1, 4);
@@ -745,14 +731,14 @@ void PerceptronLayerTest::test_set_parameters()
 
     perceptron_layer.set(1, 2);
 
-    Tensor<type, 1> parameters_2(4);
+    Tensor<type, 1> parameters(4);
 
-    parameters_2.setValues({11,12,21,22});
+    parameters.setValues({11,12,21,22});
 
-    perceptron_layer.set_parameters(parameters_2);
+    perceptron_layer.set_parameters(parameters);
 
-    assert_true(abs(perceptron_layer.get_biases()(0) - parameters_2(0)) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(0) - parameters_2(2))  < static_cast<type>(1e-5), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(0) - parameters(0)) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(0) - parameters(2))  < static_cast<type>(1e-5), LOG);
 }
 
 
@@ -760,7 +746,7 @@ void PerceptronLayerTest::test_set_activation_function()
 {
    cout << "test_set_activation_function\n";
 
-   PerceptronLayer perceptron_layer;
+
 
    string new_activation_function_name = "Threshold";
    perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
@@ -812,7 +798,7 @@ void PerceptronLayerTest::test_set_parameters_constant()
 {
    cout << "test_set_parameters_constant\n";
 
-   PerceptronLayer perceptron_layer;
+
    Tensor<type, 1> parameters;
 
    // Test 0
@@ -841,7 +827,7 @@ void PerceptronLayerTest::test_set_synaptic_weights_constant()
 {
    cout << "test_set_synaptic_weights_constant\n";
 
-   PerceptronLayer perceptron_layer;
+
 
    Tensor<type, 2> synaptic_weights;
 
@@ -859,7 +845,7 @@ void PerceptronLayerTest::test_set_parameters_random()
 {
    cout << "test_set_parameters_random\n";
 
-   PerceptronLayer perceptron_layer;
+
    Tensor<type, 1> parameters;;
 
    // Test
@@ -1037,7 +1023,7 @@ void PerceptronLayerTest::test_calculate_activations()
 {
    cout << "test_calculate_activations\n";
 
-   PerceptronLayer perceptron_layer;
+
 
    Tensor<type, 2> biases(1,1);
    Tensor<type, 2> synaptic_weights(1,1);
@@ -1208,9 +1194,6 @@ void PerceptronLayerTest::test_calculate_activations()
 void PerceptronLayerTest::test_calculate_activations_derivatives()
 {
    cout << "test_calculate_activations_derivatives\n";
-
-   NumericalDifferentiation numerical_differentiation;
-   PerceptronLayer perceptron_layer;
 
    Tensor<type, 1> parameters(1);
    Tensor<type, 2> inputs(1,1);
@@ -1408,7 +1391,7 @@ void PerceptronLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
 
-    PerceptronLayer perceptron_layer;
+
 
     Tensor<type, 2> biases;
     Tensor<type, 2> synaptic_weights;
@@ -1531,7 +1514,7 @@ void PerceptronLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
-    PerceptronLayer perceptron_layer;
+
 
     Tensor<type, 1> parameters;
     Tensor<type, 2> inputs;
@@ -1594,7 +1577,7 @@ void PerceptronLayerTest::test_calculate_hidden_delta()
 {
     cout << "test_calculate_hidden_delta\n";
 
-    PerceptronLayer perceptron_layer;
+
 
     Tensor<type, 1> parameters;
     Tensor<type, 2> inputs;
@@ -1660,7 +1643,7 @@ void PerceptronLayerTest::test_calculate_error_gradient()
 {
     cout << "test_calculate_error_gradient\n";
 
-    PerceptronLayer perceptron_layer;
+
 
     Tensor<type, 1> parameters;
     Tensor<type, 2> inputs;

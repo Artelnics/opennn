@@ -59,7 +59,6 @@ private:
 
    SumSquaredError sum_squared_error;
 
-
    LearningRateAlgorithm learning_rate_algorithm;
 
 };

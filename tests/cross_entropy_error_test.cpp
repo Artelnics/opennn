@@ -38,7 +38,6 @@ void CrossEntropyErrorTest::test_calculate_error()
    
    NeuralNetworkForwardPropagation forward_propagation;
 
-   CrossEntropyError cross_entropy_error(&neural_network, &data_set);
    cross_entropy_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    LossIndexBackPropagation training_back_propagation;
@@ -142,25 +141,16 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    Tensor<Index,1> inputs_indices;
    Tensor<Index,1> targets_indices;
 
-   CrossEntropyError cross_entropy_error(&neural_network, &data_set);
-
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
 
    Index samples_number;
    Index inputs_number;
    Index outputs_number;
-   Index hidden_neurons;
-
-   ScalingLayer scaling_layer;
-
-   RecurrentLayer recurrent_layer;
-
-   LongShortTermMemoryLayer long_short_term_memory_layer;
+   Index hidden_neurons;  
 
    NeuralNetworkForwardPropagation forward_propagation;
    LossIndexBackPropagation training_back_propagation;
-
 
    neural_network.set();
 
@@ -215,6 +205,8 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    // Test lstm
 {
+   LongShortTermMemoryLayer long_short_term_memory_layer;
+
    samples_number = 10;
    inputs_number = 3;
    outputs_number = 2;
@@ -248,10 +240,12 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    // Test recurrent
 
 {
-   samples_number = 10;
-   inputs_number = 3;
-   outputs_number = 2;
-   hidden_neurons = 2;
+
+    RecurrentLayer recurrent_layer;
+    samples_number = 10;
+    inputs_number = 3;
+    outputs_number = 2;
+    hidden_neurons = 2;
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
@@ -262,7 +256,6 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    recurrent_layer.set(inputs_number, hidden_neurons);
 //   perceptron_layer_2.set(hidden_neurons, outputs_number);
 
-   neural_network.add_layer(&scaling_layer);
    neural_network.add_layer(&recurrent_layer);
 //   neural_network.add_layer(&perceptron_layer_2);
 
@@ -277,15 +270,15 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    // Test convolutional
 {
-//   samples_number = 5;
-//   inputs_number = 147;
-//   outputs_number = 1;
+   samples_number = 5;
+   inputs_number = 147;
+   outputs_number = 1;
 
 //   data_set.set(samples_number, inputs_number, outputs_number);
 //   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
 //   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
-//   data_set.set_data_random();
-//   data_set.set_training();
+   data_set.set_data_random();
+   data_set.set_training();
 
 //   const type parameters_minimum = -100.0;
 //   const type parameters_maximum = 100.0;
@@ -325,10 +318,10 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 //   pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
 
 //   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
-//   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+//   perceptron_layer->set_parameters_random();
 
 //   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
-//   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+//   probabilistic_layer->set_parameters_random();
 
 //   neural_network.set();
 //   neural_network.add_layer(convolutional_layer_1);

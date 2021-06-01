@@ -48,7 +48,7 @@ void ScalingLayerTest::test_get_inputs_number()
 {
    cout << "test_get_neurons_number\n";
 
-   ScalingLayer scaling_layer;
+
 
    Tensor<Descriptives, 1> descriptives;
 
@@ -73,7 +73,7 @@ void ScalingLayerTest::test_get_neurons_number()
 {
    cout << "test_get_neurons_number\n";
 
-   ScalingLayer scaling_layer;
+
 
    Tensor<Descriptives, 1> descriptives;
 
@@ -98,7 +98,7 @@ void ScalingLayerTest::test_get_descriptives()
 {
    cout << "test_get_descriptives\n";
 
-   ScalingLayer scaling_layer;
+
 
    Tensor<Descriptives, 1> descriptives;
 
@@ -391,7 +391,7 @@ void ScalingLayerTest::test_set()
 {
    cout << "test_set\n";
 
-   ScalingLayer scaling_layer;
+
 
    // Test 1
 
@@ -446,7 +446,7 @@ void ScalingLayerTest::test_set_inputs_number()
 {
    cout << "test_set_inputs_number\n";
 
-   ScalingLayer scaling_layer;
+
 
    Index new_inputs_number(0);
    scaling_layer.set_inputs_number(new_inputs_number);
@@ -465,7 +465,7 @@ void ScalingLayerTest::test_set_neurons_number()
 {
    cout << "test_set_neurons_number\n";
 
-   ScalingLayer scaling_layer;
+
 
    Index new_inputs_number(0);
    scaling_layer.set_neurons_number(new_inputs_number);
@@ -506,7 +506,7 @@ void ScalingLayerTest::test_set_descriptives()
 {
    cout << "test_set_descriptives\n";
 
-   ScalingLayer scaling_layer;
+
 
    Tensor<Descriptives, 1> descriptives;
 
@@ -575,7 +575,7 @@ void ScalingLayerTest::test_set_item_descriptives()
 {
    cout << "test_set_item_descriptives\n";
 
-   ScalingLayer scaling_layer;
+
 
    Descriptives item_descriptives_1;
    Descriptives item_descriptives_2;
@@ -612,7 +612,7 @@ void ScalingLayerTest::test_set_minimum()
 {
    cout << "test_set_minimum\n";
 
-   ScalingLayer scaling_layer;
+
    Tensor<Descriptives, 1> descriptives;
 
    // Test 1
@@ -803,7 +803,7 @@ void ScalingLayerTest::test_is_empty()
 {
    cout << "test_is_empty\n";
 
-   ScalingLayer scaling_layer;
+
 
    ScalingLayer sl1(1);
 
@@ -816,7 +816,7 @@ void ScalingLayerTest::test_check_range()
 {
    cout << "test_check_range\n";
 
-   ScalingLayer scaling_layer;
+
    Tensor<type, 1> inputs;
 
    // Test 0
@@ -843,7 +843,7 @@ void ScalingLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
-   ScalingLayer scaling_layer;
+
 
    Tensor<type, 2> inputs;
 
@@ -971,7 +971,7 @@ void ScalingLayerTest::test_write_expression()
 {
    cout << "test_write_expression\n";
 
-   ScalingLayer scaling_layer;
+
 
    Tensor<string, 1> inputs_names(1);
    Tensor<string, 1> outputs_names(1);

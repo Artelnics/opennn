@@ -53,8 +53,6 @@ void UnscalingLayerTest::test_get_dimensions()
 {
    cout << "test_get_dimensions\n";
 
-   UnscalingLayer unscaling_layer;
-
    unscaling_layer.set(1);
 
    // Test 0
@@ -72,8 +70,6 @@ void UnscalingLayerTest::test_get_dimensions()
 void UnscalingLayerTest::test_get_neurons_number()
 {
    cout << "test_get_neurons_number\n";
-
-   UnscalingLayer unscaling_layer;
 
    Tensor<Descriptives, 1> descriptives;
 
@@ -97,8 +93,6 @@ void UnscalingLayerTest::test_get_neurons_number()
 void UnscalingLayerTest::test_get_inputs_number()
 {
    cout << "test_get_inputs_number\n";
-
-   UnscalingLayer unscaling_layer;
 
    Tensor<Descriptives, 1> descriptives;
 
@@ -302,8 +296,6 @@ void UnscalingLayerTest::test_set()
 {
    cout << "test_set\n";
 
-   UnscalingLayer unscaling_layer;
-
    // Test 1
 
    unscaling_layer.set();
@@ -362,8 +354,6 @@ void UnscalingLayerTest::test_set_inputs_number()
 {
    cout << "test_set_inputs_number\n";
 
-//   UnscalingLayer unscaling_layer;
-
 //   Index new_inputs_number;
 //   ul.set_inputs_number(new_inputs_number);
 
@@ -375,11 +365,10 @@ void UnscalingLayerTest::test_set_inputs_number()
 //   assert_true(ul.get_descriptives().size()== 4, LOG);
 }
 
+
 void UnscalingLayerTest::test_set_neurons_number()
 {
    cout << "test_set_inputs_number\n";
-
-   UnscalingLayer unscaling_layer;
 
    Index new_inputs_number(0);
    unscaling_layer.set_neurons_number(new_inputs_number);
@@ -411,8 +400,6 @@ void UnscalingLayerTest::test_set_default()
 void UnscalingLayerTest::test_set_descriptives()
 {
    cout << "test_set_descriptives\n";
-
-   UnscalingLayer unscaling_layer;
 
    Tensor<Descriptives, 1> descriptives;
 
@@ -573,7 +560,6 @@ void UnscalingLayerTest::test_set_standard_deviation()
 {
    cout << "test_set_standard_deviation\n";
 
-   UnscalingLayer unscaling_layer;
    Tensor<Descriptives, 1> descriptives;
 
    // Test 1
@@ -620,8 +606,6 @@ void UnscalingLayerTest::test_is_empty()
 {
     cout << "test_is_empty\n";
 
-    UnscalingLayer unscaling_layer;
-
     // Test
 
     assert_true(unscaling_layer.is_empty(), LOG);
@@ -637,8 +621,6 @@ void UnscalingLayerTest::test_is_empty()
 void UnscalingLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
-
-   UnscalingLayer unscaling_layer;
 
    Tensor<type, 2> inputs;
    Tensor<type, 2> outputs;
@@ -771,8 +753,6 @@ void UnscalingLayerTest::test_calculate_outputs()
 void UnscalingLayerTest::test_write_expression()
 {
    cout << "test_write_expression\n";
-
-   UnscalingLayer unscaling_layer;
 
    Tensor<string, 1> inputs_names(1);
    Tensor<string, 1> outputs_names(1);
