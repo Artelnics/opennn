@@ -1824,14 +1824,6 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
         i++;
     }
-
-    for(Index i = 0; i < samples_uses.size(); i++)
-    {
-        if(samples_uses(i) == UnusedSample)
-        {
-            cout << "Sample " << i << " is unused" << endl;
-        }
-    }
 }
 
 
@@ -1912,6 +1904,7 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
             samples_uses(i) = Testing;
             count_testing++;
         }
+
         i++;
     }
 }
@@ -2215,6 +2208,7 @@ Tensor<string, 1> DataSet::get_variables_names() const
         else
         {
             variables_names(index) = columns(i).name;
+
             index++;
         }
     }
@@ -10126,7 +10120,7 @@ void DataSet::read_csv_1()
 
     const char separator_char = get_separator_char();
 
-    cout << "Setting data file preview..." << endl;
+    if(display) cout << "Setting data file preview..." << endl;
 
     const Index lines_number = has_columns_names ? 4 : 3;
 
@@ -10174,7 +10168,7 @@ void DataSet::read_csv_1()
 
     // Set rows labels and columns names
 
-    cout << "Setting rows labels..." << endl;
+    if(display) cout << "Setting rows labels..." << endl;
 
     string first_name = data_file_preview(0)(0);
     transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
@@ -10203,7 +10197,7 @@ void DataSet::read_csv_1()
 
     // Columns names
 
-    cout << "Setting columns names..." << endl;
+    if(display) cout << "Setting columns names..." << endl;
 
     if(has_columns_names)
     {
@@ -10218,7 +10212,7 @@ void DataSet::read_csv_1()
 
     // Columns types
 
-    cout << "Setting columns types..." << endl;
+    if(display) cout << "Setting columns types..." << endl;
 
     Index column_index = 0;
 
@@ -10296,7 +10290,7 @@ void DataSet::read_csv_2_simple()
 
     Index tokens_count;
 
-    cout << "Setting data dimensions..." << endl;
+    if(display) cout << "Setting data dimensions..." << endl;
 
     const char separator_char = get_separator_char();
 
@@ -10381,12 +10375,9 @@ void DataSet::read_csv_3_simple()
         }
     }
 
-
     // Read data
 
     Index j = 0;
-
-    //???
 
     const Index raw_columns_number = has_rows_labels ? get_columns_number() + 1 : get_columns_number();
 
@@ -10396,7 +10387,7 @@ void DataSet::read_csv_3_simple()
 
     if(has_rows_labels) rows_labels.resize(samples_number);
 
-    cout << "Reading data..." << endl;
+    if(display) cout << "Reading data..." << endl;
 
     Index sample_index = 0;
     Index column_index = 0;
@@ -10448,11 +10439,11 @@ void DataSet::read_csv_3_simple()
 
     file.close();
 
-    cout << "Data read succesfully..." << endl;
+    if(display) cout << "Data read succesfully..." << endl;
 
     // Check Constant
 
-    cout << "Checking constant columns..." << endl;
+    if(display) cout << "Checking constant columns..." << endl;
 
     Index variable_index = 0;
 
@@ -10505,7 +10496,7 @@ void DataSet::read_csv_3_simple()
 
     // Check Binary
 
-    cout << "Checking binary columns..." << endl;
+    if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
 }
@@ -10563,7 +10554,7 @@ void DataSet::read_csv_2_complete()
 
     // Read data
 
-    cout << "Setting data dimensions..." << endl;
+    if(display) cout << "Setting data dimensions..." << endl;
 
     const Index raw_columns_number = has_rows_labels ? columns_number + 1 : columns_number;
 
@@ -10619,7 +10610,7 @@ void DataSet::read_csv_2_complete()
         lines_count++;
     }
 
-    cout << "Setting types..." << endl;
+    if(display) cout << "Setting types..." << endl;
 
     for(Index j = 0; j < columns_number; j++)
     {
@@ -10702,7 +10693,7 @@ void DataSet::read_csv_3_complete()
 
     // Read data
 
-    cout << "Reading data..." << endl;
+    if(display) cout << "Reading data..." << endl;
 
     while(file.good())
     {
@@ -10812,19 +10803,19 @@ void DataSet::read_csv_3_complete()
 
     data_file_preview(data_file_preview_index) = tokens;
 
-    cout << "Data read succesfully..." << endl;
+    if(display) cout << "Data read succesfully..." << endl;
 
     file.close();
 
     // Check binary
 
-    cout << "Checking binary columns..." << endl;
+    if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
 
     // Check Constant and DateTime to unused
 
-    cout << "Checking constant columns..." << endl;
+    if(display) cout << "Checking constant columns..." << endl;
 
     variable_index = 0;
 

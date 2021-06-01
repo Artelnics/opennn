@@ -26,19 +26,17 @@ void MinkowskiErrorTest::test_constructor()
 
    // Default
 
-   MinkowskiError minkowski_error1;
+   MinkowskiError minkowski_error_1;
 
-   assert_true(!minkowski_error1.has_neural_network(), LOG);
-   assert_true(!minkowski_error1.has_data_set(), LOG);
+   assert_true(!minkowski_error_1.has_neural_network(), LOG);
+   assert_true(!minkowski_error_1.has_data_set(), LOG);
 
    // Neural network and data set
 
-   NeuralNetwork nn3;
-   DataSet ds3;
-   MinkowskiError minkowski_error3(&nn3, &ds3);
+   MinkowskiError minkowski_error_2(&neural_network, &data_set);
 
-   assert_true(minkowski_error3.has_neural_network(), LOG);
-   assert_true(minkowski_error3.has_data_set(), LOG);
+   assert_true(minkowski_error_2.has_neural_network(), LOG);
+   assert_true(minkowski_error_2.has_data_set(), LOG);
 }
 
 

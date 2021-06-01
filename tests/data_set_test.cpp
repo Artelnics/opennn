@@ -10,6 +10,7 @@
 
 DataSetTest::DataSetTest() : UnitTesting() 
 {
+    data_set.set_display(false);
 }
 
 
@@ -786,10 +787,8 @@ void DataSetTest::test_unuse_most_populated_target()
 
     // Test
 
-    DataSet ds2;
-
-    ds2.set(100, 7,5);
-    ds2.set_data_constant(1.0);
+    data_set.set(100, 7,5);
+    data_set.set_data_constant(1.0);
 
     //unused_samples_indices = ds2.unuse_most_populated_target(99);
 
@@ -799,10 +798,8 @@ void DataSetTest::test_unuse_most_populated_target()
 
     // Test
 
-    DataSet ds3;
-
-    ds3.set(1, 10,10);
-    ds3.set_data_random();
+    data_set.set(1, 10,10);
+    data_set.set_data_random();
 
 //    unused_samples_indices = ds3.unuse_most_populated_target(50);
 
@@ -818,6 +815,10 @@ void DataSetTest::test_clean_Tukey_outliers()
 
     Tensor<type, 1> sample;
 
+    Tensor<Tensor<Index, 1>, 1> outliers_indices;
+
+    // Test
+
     data_set.set(100, 5, 1);
     data_set.set_data_random();
 
@@ -826,10 +827,7 @@ void DataSetTest::test_clean_Tukey_outliers()
 
     //data_set.set_sample(9, sample);
 
-    const Tensor<Tensor<Index, 1>, 1> outliers_indices = data_set.calculate_Tukey_outliers(1.5);
-
-//    const Tensor<Index, 1> outliers_samples = outliers_indices[0].get_indices_greater_than(0);
-//    Index outliers_number = outliers_samples.size();
+    outliers_indices = data_set.calculate_Tukey_outliers(1.5);
 
 //    data_set.set_samples_unused(outliers_samples);
 
@@ -844,6 +842,7 @@ void DataSetTest::test_calculate_euclidean_distance()
    cout << "test_calculate_euclidean_distance\n";
 
    assert_true(0 == 1, LOG);
+
    assert_true(false, LOG);
 
 }
@@ -936,7 +935,7 @@ void DataSetTest::test_from_XML()
 
 void DataSetTest::test_is_constant_numeric()
 {
-    cout << "test_read_csv\n";
+    cout << "test_is_constant_numeric\n";
 
     data_set.set_data_file_name("../../datasets/constant_variables.csv");
 
@@ -963,12 +962,14 @@ void DataSetTest::test_read_csv()
    Tensor<type, 2> data;
 
    string data_string;
-   const string data_file_name = "../data/data.dat";
+
+   string data_file_name;
 
    // Test
 
    data_set.set(2, 2, 2);
    data_set.set_separator(',');
+   data_file_name = "../data/data.dat";
    data_set.set_data_file_name(data_file_name);
 
    data_set.set_data_constant(0.0);
@@ -1912,27 +1913,20 @@ void DataSetTest::test_filter_column()
 
     Tensor<type, 2> data;
 
+    Tensor<Index, 1> indices;
+
+    // Test
+
     data.resize(3,3);
     data.setValues({{1,2,3},{4,2,8},{7,8,6}});
-
-//    Tensor<Index, 1> solution({0,1});
-//    Tensor<Index, 1> solution_1({0, 1, 2});
-//    Tensor<Index, 1> solution_2({});
 
     data_set.set_data(data);
 
     // Test
 
-//    assert_true(data_set.filter_variable(1, 1, 3) == solution, LOG);
-//    assert_true(data_set.filter_variable(0, 4, 5) == solution_1, LOG);
+//    assert_true(data_set.filter_column(1, 1, 3) == solution, LOG);
+//    assert_true(data_set.filter_columm(0, 4, 5) == solution_1, LOG);
 
-    // Test
-
-//    Tensor<type, 2> data_1({{1,2,3},{4,2,8},{7,8,6}});
-
-    DataSet ds_1;
-
-//    ds_1.set_data(matrix_1);
 }
 
 
