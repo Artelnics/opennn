@@ -124,10 +124,26 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
 #endif
 
-    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
+    Correlation linear_correlation;
 
-    const Tensor<type, 1> new_x = scale_data ? scale_minimum_maximum(filter_vectors.first) : filter_vectors.first;
-    const Tensor<type, 1> new_y = scale_data ? scale_minimum_maximum(filter_vectors.second) : filter_vectors.second;
+    linear_correlation.correlation_type = Linear;
+
+    if(is_constant(y))
+    {
+        linear_correlation.a = y(0);
+        linear_correlation.b = 0;
+        linear_correlation.r = 1;
+
+        return linear_correlation;
+    }
+
+//    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
+
+//    const Tensor<type, 1> new_x = scale_data ? scale_minimum_maximum(filter_vectors.first) : filter_vectors.first;
+//    const Tensor<type, 1> new_y = scale_data ? scale_minimum_maximum(filter_vectors.second) : filter_vectors.second;
+
+    const Tensor<type, 1> new_x = x;
+    const Tensor<type, 1> new_y = y;
 
     const Index new_size = new_x.size();
 
@@ -144,10 +160,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     s_xx.device(*thread_pool_device) = new_x.square().sum();
     s_yy.device(*thread_pool_device) = new_y.square().sum();
     s_xy.device(*thread_pool_device) = (new_y*new_x).sum();
-
-    Correlation linear_correlation;
-
-    linear_correlation.correlation_type = Linear;
 
     if(abs(s_x()) < numeric_limits<type>::min()
     && abs(s_y()) < numeric_limits<type>::min()
