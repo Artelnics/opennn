@@ -16,17 +16,16 @@ int main(void)
 {
     try
     {
-        cout << "Mi prueba." << endl;
-
-        /* NAME               CONTAMINATION           N POINTS
-         *
-         * mnist                    0.092               7603
-         * satellite                0.31                6435
-         * Datos2Dimensiones        0.1                 300
-         * ionosphere               0.35                351
-         * vowels                   0.034               1456
-         * shuttle                  0.07                49097
-         */
+        cout << "Outliers test." << endl;
+/*
+//        * NAME               CONTAMINATION           N POINTS
+//         *
+//         * mnist                    0.092               7603
+//         * satellite                0.31                6435
+//         * Datos2Dimensiones        0.1                 300
+//         * ionosphere               0.35                351
+//         * vowels                   0.034               1456
+//         * shuttle                  0.07                49097
 
         srand(static_cast<unsigned>(time(nullptr)));
         unsigned t0, t1;
@@ -55,7 +54,7 @@ int main(void)
 
         t0 = clock();
         //Tensor<Index, 1> outliers = data_set.calculate_LocalOutlierFactor_outliers(K, treshold, data_set.get_used_samples_number());
-        Tensor<Index, 1> outliers = data_set.calculate_LocalOutlierFactor_outliers(K, treshold, contamination, 2000);
+        //Tensor<Index, 1> outliers = data_set.calculate_LocalOutlierFactor_outliers(K, treshold, contamination, 2000);
         t1 = clock();
 
         double time = (double(t1-t0)/CLOCKS_PER_SEC);
@@ -90,13 +89,11 @@ int main(void)
         }
         //cout<<endl;
 
-        /*
         for(Index i = 0; i < outliers.size(); i++)
         {
             cout<<outliers[i]<<",";
         }
         cout<<endl;
-        */
 
         for(Index i = 0; i < outliers.size(); i++)
         {
@@ -124,6 +121,7 @@ int main(void)
         cout<<"Total Number of Points:"<<data_set.get_used_samples_number()<<endl;
         cout<<"Detected contamination:"<< count / data_set.get_used_samples_number()<<endl;
         cout<<"Real contamination:"<< count2 / data_set.get_used_samples_number()<<endl;
+*/
         return 0;
     }
     catch(exception& e)
