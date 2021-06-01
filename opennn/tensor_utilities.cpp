@@ -79,6 +79,22 @@ bool is_false(const Tensor<bool, 1>& tensor)
 }
 
 
+bool is_constant(const Tensor<type, 1>& vector)
+{
+    const Index size = vector.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        for(Index j = 0; j < size; j++)
+        {
+            if((vector(i) - vector(j)) != 0) return false;
+        }
+    }
+
+    return true;
+}
+
+
 bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tolerance)
 {
     const Index size = matrix.size();
@@ -90,6 +106,7 @@ bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tole
 
     return true;
 }
+
 
 
 bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2, const type& tolerance)
