@@ -9172,7 +9172,7 @@ Tensor<Tensor<type, 1>, 1> get_data_kd_tree(const DataSet & data_set)
 }
 
 
-/*
+
 Tensor<list<Index>, 1> DataSet::calculate_neighbors_kd_tree(const Index& k_neighbors, const Index& min_samples_leaf) const
 {
     const Index used_samples_number = get_used_samples_number();
@@ -9443,7 +9443,7 @@ Tensor<Index, 1> DataSet::calculate_LocalOutlierFactor_outliers(const Index& use
     //cout<<"DesviacionLOF:"<<std_lof<<endl;
     return outlier_indexes;
 }
-*/
+
 
 
 /// Returns a matrix with the values of autocorrelation for every variable in the data set.
