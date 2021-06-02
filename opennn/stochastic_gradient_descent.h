@@ -89,7 +89,6 @@ public:
    void set_momentum(const type&);
    void set_nesterov(const bool&);
 
-
    void set_maximum_epochs_number(const Index&);
 
    // Stopping criteria
@@ -146,11 +145,11 @@ private:
 
    /// Maximum epochs number
 
-   Index maximum_epochs_number;
+   Index maximum_epochs_number = 10000;
 
    /// Maximum training time. It is used as a stopping criterion.
 
-   type maximum_time;
+   type maximum_time = 3600;
 
    /// Maximum selection error allowed
 
@@ -159,7 +158,6 @@ private:
    /// Number of samples per training batch.
 
    Index batch_samples_number = 1000;
-
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
@@ -200,10 +198,6 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
         parameters_increment.setZero();
         nesterov_increment.setZero();
         last_parameters_increment.setZero();
-    }
-
-    void print() const
-    {
     }
 
     StochasticGradientDescent* stochastic_gradient_descent_pointer = nullptr;
