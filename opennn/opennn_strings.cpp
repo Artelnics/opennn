@@ -663,7 +663,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
     if(is_numeric_string(date)){
         time_t time_t_date = stoi(date);
-        return(time_t_date);
+        return time_t_date;
     }
     else{
     return mktime(&time_structure);
