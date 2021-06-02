@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class PoolingLayerTest : public UnitTesting
 {
 

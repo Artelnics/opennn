@@ -83,8 +83,8 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    Index samples_number;
 
    Tensor<Index,1> batch_samples_indices;
-   Tensor<Index,1> inputs_indices;
-   Tensor<Index,1> targets_indices;
+   Tensor<Index,1> input_variables_indices;
+   Tensor<Index,1> target_variables_indices;
 
    Index batch_samples_number;
 
@@ -123,10 +123,10 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    batch.set(1, &data_set);
 
    batch_samples_indices = data_set.get_used_samples_indices();
-   inputs_indices = data_set.get_input_variables_indices();
-   targets_indices = data_set.get_target_variables_indices();
+   input_variables_indices = data_set.get_input_variables_indices();
+   target_variables_indices = data_set.get_target_variables_indices();
 
-   batch.fill(batch_samples_indices, inputs_indices, targets_indices);
+   batch.fill(batch_samples_indices, input_variables_indices, target_variables_indices);
    batch_samples_number = batch.get_samples_number();
 
    forward_propagation.set(batch_samples_number, &neural_network);
@@ -191,7 +191,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
    NeuralNetworkForwardPropagation forward_propagation;
 
-   LossIndexBackPropagation training_back_propagation;
    LossIndexBackPropagation back_propagation;
 
    Tensor<type, 1> error_gradient;
@@ -225,12 +224,12 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        forward_propagation.set(samples_number, &neural_network);
-       training_back_propagation.set(samples_number, &normalized_squared_error);
+       back_propagation.set(samples_number, &normalized_squared_error);
 
        neural_network.forward_propagate(batch, forward_propagation);
 
-       normalized_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
-       error_gradient = training_back_propagation.gradient;
+       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+       error_gradient = back_propagation.gradient;
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
@@ -275,12 +274,12 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        forward_propagation.set(samples_number, &neural_network);
-       training_back_propagation.set(samples_number, &normalized_squared_error);
+       back_propagation.set(samples_number, &normalized_squared_error);
 
        neural_network.forward_propagate(batch, forward_propagation);
 
-       normalized_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
-       error_gradient = training_back_propagation.gradient;
+       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+       error_gradient = back_propagation.gradient;
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
@@ -316,13 +315,13 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        forward_propagation.set(samples_number, &neural_network);
-       training_back_propagation.set(samples_number, &normalized_squared_error);
+       back_propagation.set(samples_number, &normalized_squared_error);
 
        neural_network.forward_propagate(batch, forward_propagation);
 
-       normalized_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
+       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-       error_gradient = training_back_propagation.gradient;
+       error_gradient = back_propagation.gradient;
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
@@ -360,13 +359,13 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        normalized_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        forward_propagation.set(samples_number, &neural_network);
-       training_back_propagation.set(samples_number, &normalized_squared_error);
+       back_propagation.set(samples_number, &normalized_squared_error);
 
        neural_network.forward_propagate(batch, forward_propagation);
 
-       normalized_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
+       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-       error_gradient = training_back_propagation.gradient;
+       error_gradient = back_propagation.gradient;
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 

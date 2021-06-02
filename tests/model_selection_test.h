@@ -11,9 +11,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class ModelSelectionTest : public UnitTesting 
 {
 

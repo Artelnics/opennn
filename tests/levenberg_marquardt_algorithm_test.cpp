@@ -86,7 +86,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    levenberg_marquardt_algorithm.perform_training();
 
-   // Performance goal
+   // Loss goal
 
    neural_network.set_parameters_random();
 

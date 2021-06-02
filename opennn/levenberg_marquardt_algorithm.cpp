@@ -471,6 +471,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
     const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+
     Tensor<Descriptives, 1> target_variables_descriptives;
 
     DataSetBatch training_batch(training_samples_number, data_set_pointer);

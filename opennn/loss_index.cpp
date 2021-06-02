@@ -503,7 +503,6 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
         back_propagation.gradient.device(*thread_pool_device) += regularization_weight*back_propagation.regularization_gradient;
     }
-
 }
 
 

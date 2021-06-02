@@ -14,9 +14,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class TrainingStrategyTest : public UnitTesting 
 {
 

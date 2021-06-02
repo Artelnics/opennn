@@ -65,7 +65,7 @@ void MinkowskiErrorTest::test_calculate_error()
    DataSetBatch batch;
 
    NeuralNetworkForwardPropagation forward_propagation;
-   LossIndexBackPropagation training_back_propagation;
+   LossIndexBackPropagation back_propagation;
 
 
    data_set.set(1, 1, 1);
@@ -92,28 +92,28 @@ void MinkowskiErrorTest::test_calculate_error()
    neural_network.set_parameters_constant(0);
 
    forward_propagation.set(data_set.get_training_samples_number(), &neural_network);
-   training_back_propagation.set(data_set.get_training_samples_number(), &minkowski_error);
+   back_propagation.set(data_set.get_training_samples_number(), &minkowski_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
-   minkowski_error.back_propagate(batch, forward_propagation, training_back_propagation);
+   minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
-   minkowski_error.calculate_error(batch, forward_propagation, training_back_propagation);
+   minkowski_error.calculate_error(batch, forward_propagation, back_propagation);
 
-   assert_true(training_back_propagation.error == 0.0, LOG);
+   assert_true(back_propagation.error == 0.0, LOG);
 
    // Test
 
    neural_network.set_parameters_constant(1);
 
    forward_propagation.set(data_set.get_training_samples_number(), &neural_network);
-   training_back_propagation.set(data_set.get_training_samples_number(), &minkowski_error);
+   back_propagation.set(data_set.get_training_samples_number(), &minkowski_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
-   minkowski_error.back_propagate(batch, forward_propagation, training_back_propagation);
+   minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
-   minkowski_error.calculate_error(batch, forward_propagation, training_back_propagation);
+   minkowski_error.calculate_error(batch, forward_propagation, back_propagation);
 
-   assert_true(training_back_propagation.error - 0.761 < 1.0e-3, LOG);
+   assert_true(back_propagation.error - 0.761 < 1.0e-3, LOG);
 }
 
 

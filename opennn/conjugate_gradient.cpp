@@ -490,7 +490,6 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
                << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-
                << "Loss index pointer is nullptr.\n";
 
         throw logic_error(buffer.str());

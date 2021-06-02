@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
 #ifndef GRADIENTDESCENTTEST_H
 #define GRADIENTDESCENTTEST_H
 

@@ -13,8 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
 class CrossEntropyErrorTest : public UnitTesting
 {
 
@@ -28,13 +26,19 @@ public:
 
    virtual ~CrossEntropyErrorTest();
 
-   // Get methods
-
-   // Set methods
-
    // Error methods
 
+    void test_calculate_error_binary_classification();
+    void test_calculate_error_multiple_classification();
+
    void test_calculate_error();
+
+   void test_calculate_error_gradient_binary_classification();
+   void test_calculate_error_gradient_multiple_classification();
+
+   void test_calculate_error_gradient_recurrent();
+   void test_calculate_error_gradient_long_short_term_memory();
+   void test_calculate_error_gradient_convolutional();
 
    void test_calculate_error_gradient();
 
