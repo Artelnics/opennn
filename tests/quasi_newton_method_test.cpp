@@ -280,7 +280,7 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    quasi_newton_method.perform_training();
 
-   // Performance goal
+   // Loss goal
 
    neural_network.set_parameters_constant(3.1415927);
 
@@ -299,7 +299,7 @@ void QuasiNewtonMethodTest::test_perform_training()
 
 //   assert_true(loss < training_loss_goal, LOG);
 
-   // Minimum evaluation improvement
+   // Minimum loss decrease
 
 //   neural_network.set_parameters_constant(3.1415927);
 

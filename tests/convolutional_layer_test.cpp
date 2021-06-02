@@ -8,9 +8,6 @@
 
 #include "convolutional_layer_test.h"
 
-using namespace OpenNN;
-
-
 ConvolutionalLayerTest::ConvolutionalLayerTest() : UnitTesting()
 {
 }
@@ -23,7 +20,6 @@ ConvolutionalLayerTest::~ConvolutionalLayerTest()
 
 void ConvolutionalLayerTest::test_eigen_convolution()
 {
-
     cout << "test_eigen_convolution\n";
 
     // Convolution 2D, 1 channel

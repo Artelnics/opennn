@@ -129,6 +129,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
+   Tensor<type, 0> maximum_difference;
 
    Index samples_number;
    Index inputs_number;
@@ -248,7 +249,9 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    numerical_error_gradient = weighted_squared_error.calculate_gradient_numerical_differentiation();
 
-//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+   maximum_difference = (error_gradient - numerical_error_gradient).abs().maximum();
+
+   assert_true(maximum_difference(0) < 1.0e-3, LOG);
 }
 
    neural_network.set();
@@ -267,6 +270,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
    inputs.setRandom();
 
    Tensor<type, 2> outputs(samples_number, outputs_number);
+
 //   outputs[0] = 1.0;
 //   outputs[1] = 0.0;
 
@@ -300,7 +304,9 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   numerical_error_gradient = weighted_squared_error.calculate_gradient_numerical_differentiation();
 
-//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+   maximum_difference = (error_gradient - numerical_error_gradient).abs().sum();
+
+   assert_true(maximum_difference(0) < 1.0e-3, LOG);
 }
 
 //   neural_network.set();
@@ -352,7 +358,9 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   numerical_error_gradient = weighted_squared_error.calculate_gradient_numerical_differentiation();
 
-//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+   maximum_difference = (error_gradient - numerical_error_gradient).abs().sum();
+
+   assert_true(maximum_difference(0) < 1.0e-3, LOG);
 }
 
    // Test convolutional
@@ -446,7 +454,9 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   error_gradient = weighted_squared_error.calculate_error_gradient();
 
-//   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
+       maximum_difference = (error_gradient - numerical_error_gradient).abs().sum();
+
+       assert_true(maximum_difference(0) < 1.0e-3, LOG);
 }
 }
 

@@ -279,8 +279,10 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
    Tensor<type, 2> inputs;
    Tensor<type, 2> combinations;
    Tensor<type, 2> activations;
+
    Tensor<type, 2> activations_derivatives;
    Tensor<type, 2> numerical_activation_derivative;
+   Tensor<type, 0> maximum_difference;
 
     numerical_differentiation_tests = true;
 

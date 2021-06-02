@@ -6,14 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef CORRELATIONS_TESTS_H
-#define CORRELATIONS_TESTS_H
+#ifndef CORRELATIONS_TEST_H
+#define CORRELATIONS_TEST_H
 
 // Unit testing includes
 
 #include "unit_testing.h"
-
-using namespace OpenNN;
 
 class CorrelationsTest : public UnitTesting
 {

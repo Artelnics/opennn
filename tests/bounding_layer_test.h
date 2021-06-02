@@ -13,8 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
 class BoundingLayerTest : public UnitTesting
 {
 
@@ -31,7 +29,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Get methods
 
@@ -46,10 +43,6 @@ public:
    // Output methods
 
    void test_calculate_outputs();
-
-   // Expression methods
-
-   void test_write_expression();
 
    // Unit testing methods
 

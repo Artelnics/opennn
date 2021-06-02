@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "stochastic_gradient_descent_test.h"
- 
 
 StochasticGradientDescentTest::StochasticGradientDescentTest() : UnitTesting()
 {

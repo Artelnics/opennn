@@ -90,7 +90,7 @@ void GradientDescentTest::test_perform_training()
 
    gradient_descent.perform_training();
 
-   // Performance goal
+   // Loss goal
 
    neural_network.set_parameters_constant(-1.0);
 
