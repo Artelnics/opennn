@@ -104,7 +104,9 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
 {
    cout << "test_calculate_PR_training_direction\n";
 
-   neural_network.set(NeuralNetwork::Approximation, {1,1});
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
 
    Tensor<type, 1> old_gradient;
    Tensor<type, 1> gradient;
@@ -115,10 +117,14 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
 
    // Test
 
-   data_set.set(1, 1, 2);
+   samples_number = 1;
+   inputs_number = 1;
+   targets_number = 1;
+
+   data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::Approximation, {1,1});
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
 
    parameters_number = neural_network.get_parameters_number();
 
@@ -142,7 +148,9 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
 {
    cout << "test_calculate_FR_training_direction\n";
 
-   neural_network.set(NeuralNetwork::Approximation, {1,1});
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
 
    Tensor<type, 1> old_gradient;
    Tensor<type, 1> gradient;
@@ -153,10 +161,10 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
 
    // Test
 
-   data_set.set(1, 1, 2);
+   data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::Approximation, {1,1});
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
 
    parameters_number = neural_network.get_parameters_number();
 
@@ -173,12 +181,17 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
    conjugate_gradient.calculate_FR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
 
    assert_true(training_direction.size() == parameters_number, LOG);
+
 }
 
 
 void ConjugateGradientTest::test_perform_training()
 {
    cout << "test_perform_training\n";
+
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
 
    type old_loss;
    type loss;
@@ -196,7 +209,7 @@ void ConjugateGradientTest::test_perform_training()
    data_set.set(1, 1, 1);
    data_set.set_data_constant(0.0);
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
    neural_network.set_parameters_constant(0.0);
 
    training_results = conjugate_gradient.perform_training();

@@ -160,20 +160,28 @@ void DataSetTest::test_get_selection_data()
 
    Tensor<type, 2> data;
 
+   Tensor<Index, 1> selection_indices;
+
+   Tensor<type, 2> selection_data;
+   Tensor<type, 2> solution;
+
+   // Test
+
    data.resize(3, 3);
 
    data.setValues({{1,4,6},{4,3,6},{7,8,9}});
 
    data_set.set(data);
+   data_set.set_training();
 
-   Tensor<Index, 1> selection_indices(2);
+   selection_indices.resize(2);
    selection_indices.setValues({0,1});
 
-   data_set.set_testing();
    data_set.set_selection(selection_indices);
 
-   Tensor<type, 2> selection_data = data_set.get_selection_data();
-   Tensor<type, 2> solution(2, 3);
+   selection_data = data_set.get_selection_data();
+
+   solution.resize(2, 3);
    solution.setValues({{1,4,6},{4,3,6}});
 
    assert_true(selection_data(0,0) - solution(0,0) < static_cast<type>(1.0e-6), LOG);
@@ -215,7 +223,7 @@ void DataSetTest::test_get_testing_data()
 }
 
 
-void DataSetTest::test_get_inputs() 
+void DataSetTest::test_get_input_data()
 {
    cout << "test_get_inputs\n";
 
@@ -234,7 +242,7 @@ void DataSetTest::test_get_inputs()
 }
 
 
-void DataSetTest::test_get_targets()
+void DataSetTest::test_get_target_data()
 {
    cout << "test_get_targets\n";
 
@@ -608,6 +616,10 @@ void DataSetTest::test_filter_data()
 {
    cout << "test_filter_data\n";
 
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
+
    Tensor<type, 1> minimums(2);
    Tensor<type, 1> maximums(2);
 
@@ -615,7 +627,11 @@ void DataSetTest::test_filter_data()
 
    // Test
 
-   data_set.set(2, 1, 1);
+   samples_number = 1;
+   inputs_number = 1;
+   targets_number = 1;
+
+   data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_constant(1.0);
 
    minimums.setValues({2, 0.0});
@@ -877,59 +893,6 @@ void DataSetTest::test_calculate_LOF_outliers()
 void DataSetTest::test_unuse_LOF_outliers()
 {
    cout << "test_unuse_LOF_outliers\n";
-}
-
-
-void DataSetTest::test_to_XML() 
-{
-   cout << "test_to_XML\n";
-
-   tinyxml2::XMLDocument* document;
-
-   // Test
-
-//   document = data_set.to_XML();
-
-//   assert_true(document != nullptr, LOG);
-}
-
-
-/// @todo
-
-void DataSetTest::test_from_XML() 
-{
-   cout << "test_from_XML\n";
-
-//   tinyxml2::XMLDocument* document;
-   
-   // Test
-
-//   document = data_set.to_XML();
-
-//   data_set.from_XML(*document);
-
-   // Test
-
-//   data_set.set(2, 2);
-
-//   data_set.set_variable_use(0, DataSet::Target);
-//   data_set.set_variable_use(1, DataSet::UnusedVariable);
-
-//   data_set.set_sample_use(0, DataSet::UnusedSample);
-//   data_set.set_sample_use(1, DataSet::Testing);
-
-//   document = data_set.to_XML();
-
-//   data_set.set();
-
-//   data_set.from_XML(*document);
-
-//   assert_true(data_set.get_variables_number() == 2, LOG);
-//   assert_true(data_set.get_variable_use(0) == DataSet::Target, LOG);
-//   assert_true(data_set.get_variable_use(1) == DataSet::UnusedVariable, LOG);
-//   assert_true(data_set.get_samples_number() == 2, LOG);
-//   assert_true(data_set.get_sample_use(0) == DataSet::UnusedSample, LOG);
-//   assert_true(data_set.get_sample_use(1) == DataSet::Testing, LOG);
 }
 
 
@@ -1962,7 +1925,7 @@ void DataSetTest::test_calculate_training_targets_mean()
 
 //    data_set.set_training(training_indexes);
 
-    // Test 3 targets
+    // Test targets
 //    data_set.set_target_variables_indices(indices);
 
 //    Tensor<type, 1> means = data_set.calculate_training_targets_mean();
@@ -1971,7 +1934,7 @@ void DataSetTest::test_calculate_training_targets_mean()
 
 //    assert_true(means == solutions, LOG);
 
-    // Test 1 target
+    // Test target
     Tensor<Index, 1> index_target(1);
     index_target.setValues({0});
     Tensor<Index, 1> indexes_inputs(2);
@@ -2004,7 +1967,7 @@ void DataSetTest::test_calculate_selection_targets_mean()
 
     data_set.set_selection(selection_indexes);
 
-    // Test 3 targets
+    // Test targets
 //    data_set.set_target_variables_indices(indexes_targets);
 
     Tensor<type, 1> means = data_set.calculate_selection_targets_mean();
@@ -2245,8 +2208,8 @@ void DataSetTest::run_test_case()
    test_get_data();
    test_get_training_data();
    test_get_selection_data();
-   test_get_inputs();
-   test_get_targets();
+   test_get_input_data();
+   test_get_target_data();
    test_get_testing_data();
 
    // Sample methods
@@ -2322,8 +2285,6 @@ void DataSetTest::run_test_case()
 
    // Serialization methods
 
-   test_to_XML();
-   test_from_XML();
    test_read_csv();
    test_read_adult_csv();
    test_read_airline_passengers_csv();

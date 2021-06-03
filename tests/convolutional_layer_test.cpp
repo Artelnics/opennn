@@ -1590,7 +1590,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
 //    Tensor<type, 2> output_delta(1,2);
 
-    // Test 1
+    // Test
 
 //    parameters.setConstant(1);
 //    perceptron_layer.set_parameters(parameters);

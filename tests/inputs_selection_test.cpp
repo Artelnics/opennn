@@ -11,6 +11,9 @@
 
 InputsSelectionTest::InputsSelectionTest() : UnitTesting()
 {
+    training_strategy.set(&neural_network, &data_set);
+
+    growing_inputs.set(&training_strategy);
 }
 
 
@@ -37,9 +40,9 @@ void InputsSelectionTest::test_destructor()
 {
     cout << "tes_destructor\n";
 
-    GrowingInputs* gi = new GrowingInputs;
+    GrowingInputs* growing_inputs_pointer = new GrowingInputs;
 
-    delete gi;
+    delete growing_inputs_pointer;
 }
 
 
@@ -53,18 +56,11 @@ void InputsSelectionTest::test_get_training_strategy_pointer()
 }
 
 
-void InputsSelectionTest::test_set_training_strategy_pointer()
+void InputsSelectionTest::test_set()
 {
-    cout << "test_set_training_strategy_pointer\n";
+    cout << "test_set\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
-    GrowingInputs growing_inputs;
-
-    growing_inputs.set_training_strategy_pointer(&training_strategy);
+    growing_inputs.set(&training_strategy);
 
     assert_true(growing_inputs.get_training_strategy_pointer() != nullptr, LOG);
 }
@@ -85,7 +81,7 @@ void InputsSelectionTest::run_test_case()
 
     // Set methods
 
-    test_set_training_strategy_pointer();
+    test_set();
 
     cout << "End of inputs selection algorithm test case.\n\n";
 }

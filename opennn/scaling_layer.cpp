@@ -470,24 +470,6 @@ void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descripti
 }
 
 
-void ScalingLayer::set_descriptives_eigen(const Tensor<type, 2>& descriptives_eigen)
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<Descriptives, 1> descriptives(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        descriptives(i).set_minimum(descriptives_eigen(i, 0));
-        descriptives(i).set_maximum(descriptives_eigen(i, 1));
-        descriptives(i).set_mean(descriptives_eigen(i, 2));
-        descriptives(i).set_standard_deviation(descriptives_eigen(i, 3));
-    }
-
-    set_descriptives(descriptives);
-}
-
-
 /// Sets the descriptives of a single scaling neuron.
 /// @param i Index of neuron.
 /// @param item_descriptives Descriptives structure for that neuron.

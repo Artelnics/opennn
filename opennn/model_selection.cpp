@@ -243,9 +243,9 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
 
     // Inputs selection
 
-    growing_inputs.set_training_strategy_pointer(new_training_strategy_pointer);
-    pruning_inputs.set_training_strategy_pointer(new_training_strategy_pointer);
-    genetic_algorithm.set_training_strategy_pointer(new_training_strategy_pointer);
+    growing_inputs.set(new_training_strategy_pointer);
+    pruning_inputs.set(new_training_strategy_pointer);
+    genetic_algorithm.set(new_training_strategy_pointer);
 }
 
 

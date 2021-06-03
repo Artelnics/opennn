@@ -12,6 +12,8 @@
 MinkowskiErrorTest::MinkowskiErrorTest() : UnitTesting() 
 {
     minkowski_error.set(&neural_network, &data_set);
+
+    minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 }
 
 
@@ -62,17 +64,16 @@ void MinkowskiErrorTest::test_calculate_error()
 
    Tensor<type, 2> data;
 
-   DataSetBatch batch;
+   Tensor<Index,1> training_samples_indices;
+   Tensor<Index,1> inputs_indices;
+   Tensor<Index,1> targets_indices;
 
-   NeuralNetworkForwardPropagation forward_propagation;
-   LossIndexBackPropagation back_propagation;
-
+   // Test
 
    data_set.set(1, 1, 1);
    data_set.set_data_constant(0.0);
 
    minkowski_error.set_Minkowski_parameter(1.5);
-   minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    // Test trivial
 
@@ -80,21 +81,20 @@ void MinkowskiErrorTest::test_calculate_error()
    inputs_number = 1;
    targets_number = 1;
 
-   batch.set(1, &data_set);
+   training_samples_indices = data_set.get_training_samples_indices();
+   inputs_indices = data_set.get_input_variables_indices();
+   targets_indices = data_set.get_target_variables_indices();
 
-   Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
-   Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
-   Tensor<Index,1> targets_indices = data_set.get_target_variables_indices();
-
-   batch.fill(training_samples_indices, inputs_indices, targets_indices);
-
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number,targets_number});
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
    neural_network.set_parameters_constant(0);
 
-   forward_propagation.set(data_set.get_training_samples_number(), &neural_network);
-   back_propagation.set(data_set.get_training_samples_number(), &minkowski_error);
+   batch.set(samples_number, &data_set);
+   batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
+   forward_propagation.set(samples_number, &neural_network);
    neural_network.forward_propagate(batch, forward_propagation);
+
+   back_propagation.set(samples_number, &minkowski_error);
    minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
    minkowski_error.calculate_error(batch, forward_propagation, back_propagation);
@@ -105,8 +105,8 @@ void MinkowskiErrorTest::test_calculate_error()
 
    neural_network.set_parameters_constant(1);
 
-   forward_propagation.set(data_set.get_training_samples_number(), &neural_network);
-   back_propagation.set(data_set.get_training_samples_number(), &minkowski_error);
+   forward_propagation.set(samples_number, &neural_network);
+   back_propagation.set(samples_number, &minkowski_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
    minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
@@ -123,31 +123,22 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
    Index samples_number;
 
-   DataSetBatch batch;
-
    Tensor<Index, 1> samples_indices;
    Tensor<Index, 1> input_indices;
    Tensor<Index, 1> target_indices;
 
    Index inputs_number;
    Index outputs_number;
-   Index hidden_neurons;
-   Index hidden_neurons_2;
+   Index neurons_number;
 
-   RecurrentLayer* recurrent_layer = new RecurrentLayer();
+   RecurrentLayer* recurrent_layer = new RecurrentLayer;
 
-   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
+   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer;
 
-   PerceptronLayer* perceptron_layer_1 = new PerceptronLayer();
-   PerceptronLayer* perceptron_layer_2 = new PerceptronLayer();
+   PerceptronLayer* perceptron_layer_1 = new PerceptronLayer;
+   PerceptronLayer* perceptron_layer_2 = new PerceptronLayer;
 
-   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-
-   NeuralNetworkForwardPropagation forward_propagation;
-
-   LossIndexBackPropagation back_propagation;
-
-   LossIndexBackPropagationLM back_propagation_lm;
+   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer;
 
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
@@ -162,27 +153,24 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
        data_set.set_data_constant(0.0);
        data_set.set_training();
 
-       batch.set(samples_number, &data_set);
-
        samples_indices = data_set.get_training_samples_indices();
        input_indices = data_set.get_input_variables_indices();
        target_indices = data_set.get_target_variables_indices();
-
-       batch.fill(samples_indices, input_indices, target_indices);
 
        perceptron_layer_1->set(inputs_number, outputs_number);
        neural_network.add_layer(perceptron_layer_1);
 
        neural_network.set_parameters_constant(0.0);
 
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+       batch.set(samples_number, &data_set);
+       batch.fill(samples_indices, input_indices, target_indices);
 
        forward_propagation.set(samples_number, &neural_network);
-       back_propagation.set(samples_number, &minkowski_error);
-
        neural_network.forward_propagate(batch, forward_propagation);
 
+       back_propagation.set(samples_number, &minkowski_error);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
+
        error_gradient = back_propagation.gradient;
 
        numerical_error_gradient = minkowski_error.calculate_gradient_numerical_differentiation();
@@ -223,8 +211,6 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        neural_network.set_parameters_random();
 
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
        forward_propagation.set(samples_number, &neural_network);
        back_propagation.set(samples_number, &minkowski_error);
 
@@ -242,7 +228,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
    {
        samples_number = 3;
        inputs_number = 3;
-       hidden_neurons = 4;
+       neurons_number = 4;
        outputs_number = 1;
 
        data_set.set(samples_number, inputs_number, outputs_number);
@@ -251,25 +237,21 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        data_set.set_training();
 
-       batch.set(samples_number, &data_set);
-
        samples_indices = data_set.get_training_samples_indices();
        input_indices = data_set.get_input_variables_indices();
        target_indices = data_set.get_target_variables_indices();
 
-       batch.fill(samples_indices, input_indices, target_indices);
-
-       neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons, outputs_number});
+       neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+       batch.set(samples_number, &data_set);
+       batch.fill(samples_indices, input_indices, target_indices);
 
        forward_propagation.set(samples_number, &neural_network);
-       back_propagation.set(samples_number, &minkowski_error);
-
        neural_network.forward_propagate(batch, forward_propagation);
 
+       back_propagation.set(samples_number, &minkowski_error);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
        error_gradient = back_propagation.gradient;
@@ -285,7 +267,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
    {
        samples_number = 3;
        inputs_number = 3;
-       hidden_neurons = 2;
+       neurons_number = 2;
        outputs_number = 3;
 
        data_set.set(samples_number, inputs_number, outputs_number);
@@ -294,19 +276,16 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        data_set.set_training();
 
-       batch.set(samples_number, &data_set);
-
        samples_indices = data_set.get_training_samples_indices();
        input_indices = data_set.get_input_variables_indices();
        target_indices = data_set.get_target_variables_indices();
 
+       batch.set(samples_number, &data_set);
        batch.fill(samples_indices, input_indices, target_indices);
 
-       neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons, outputs_number});
+       neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
-
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        forward_propagation.set(samples_number, &neural_network);
        back_propagation.set(samples_number, &minkowski_error);
@@ -330,7 +309,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
        samples_number = 4;
        inputs_number = 3;
        outputs_number = 2;
-       hidden_neurons = 1;
+       neurons_number = 1;
 
        data_set.set(samples_number, inputs_number, outputs_number);
 
@@ -338,30 +317,25 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        data_set.set_training();
 
-       batch.set(samples_number, &data_set);
-
        samples_indices = data_set.get_training_samples_indices();
        input_indices = data_set.get_input_variables_indices();
        target_indices = data_set.get_target_variables_indices();
 
-       batch.fill(samples_indices, input_indices, target_indices);
-
-       long_short_term_memory_layer->set(inputs_number, hidden_neurons);
+       long_short_term_memory_layer->set(inputs_number, neurons_number);
 
        neural_network.add_layer(long_short_term_memory_layer);
 
        neural_network.set_parameters_random();
 
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
        long_short_term_memory_layer->set_timesteps(2);
 
+       batch.set(samples_number, &data_set);
+       batch.fill(samples_indices, input_indices, target_indices);
+
        forward_propagation.set(samples_number, &neural_network);
-
-       back_propagation.set(samples_number, &minkowski_error);
-
        neural_network.forward_propagate(batch, forward_propagation);
 
+       back_propagation.set(samples_number, &minkowski_error);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
        error_gradient = back_propagation.gradient;
@@ -378,7 +352,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
        samples_number = 4;
        inputs_number = 2;
        outputs_number = 1;
-       hidden_neurons = 3;
+       neurons_number = 3;
 
        data_set.set(samples_number, inputs_number, outputs_number);
 
@@ -386,30 +360,25 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        data_set.set_training();
 
-       batch.set(samples_number, &data_set);
-
        samples_indices = data_set.get_training_samples_indices();
        input_indices = data_set.get_input_variables_indices();
        target_indices = data_set.get_target_variables_indices();
 
-       batch.fill(samples_indices, input_indices, target_indices);
-
-       recurrent_layer->set(inputs_number, hidden_neurons);
+       recurrent_layer->set(inputs_number, neurons_number);
 
        neural_network.add_layer(recurrent_layer);
 
        neural_network.set_parameters_random();
 
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
        recurrent_layer->set_timesteps(2);
 
+       batch.set(samples_number, &data_set);
+       batch.fill(samples_indices, input_indices, target_indices);
+
        forward_propagation.set(samples_number, &neural_network);
-
-       back_propagation.set(samples_number, &minkowski_error);
-
        neural_network.forward_propagate(batch, forward_propagation);
 
+       back_propagation.set(samples_number, &minkowski_error);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
        error_gradient = back_propagation.gradient;
@@ -422,12 +391,11 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
    neural_network.set();
 
    // Test recurrent and perceptron
-
    {
        samples_number = 4;
        inputs_number = 2;
        outputs_number = 1;
-       hidden_neurons = 3;
+       neurons_number = 3;
 
        data_set.set(samples_number, inputs_number, outputs_number);
 
@@ -435,32 +403,27 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        data_set.set_training();
 
-       batch.set(samples_number, &data_set);
-
        samples_indices = data_set.get_training_samples_indices();
        input_indices = data_set.get_input_variables_indices();
        target_indices = data_set.get_target_variables_indices();
 
-       batch.fill(samples_indices, input_indices, target_indices);
-
-       recurrent_layer->set(inputs_number, hidden_neurons);
-       perceptron_layer_1->set(hidden_neurons, outputs_number);
+       recurrent_layer->set(inputs_number, neurons_number);
+       perceptron_layer_1->set(neurons_number, outputs_number);
 
        neural_network.add_layer(recurrent_layer);
        neural_network.add_layer(perceptron_layer_1);
 
        neural_network.set_parameters_random();
 
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
        recurrent_layer->set_timesteps(2);
 
+       batch.set(samples_number, &data_set);
+       batch.fill(samples_indices, input_indices, target_indices);
+
        forward_propagation.set(samples_number, &neural_network);
-
-       back_propagation.set(samples_number, &minkowski_error);
-
        neural_network.forward_propagate(batch, forward_propagation);
 
+       back_propagation.set(samples_number, &minkowski_error);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
        error_gradient = back_propagation.gradient;
@@ -476,7 +439,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
    {
        samples_number = 4;
        inputs_number = 3;
-       hidden_neurons = 4;
+       neurons_number = 4;
        outputs_number = 1;
 
        data_set.set(samples_number, inputs_number, outputs_number);
@@ -485,32 +448,27 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        data_set.set_training();
 
-       batch.set(samples_number, &data_set);
-
        samples_indices = data_set.get_training_samples_indices();
        input_indices = data_set.get_input_variables_indices();
        target_indices = data_set.get_target_variables_indices();
 
-       batch.fill(samples_indices, input_indices, target_indices);
-
-       recurrent_layer->set(inputs_number, hidden_neurons);
-       probabilistic_layer->set(hidden_neurons, outputs_number);
+       recurrent_layer->set(inputs_number, neurons_number);
+       probabilistic_layer->set(neurons_number, outputs_number);
 
        neural_network.add_layer(recurrent_layer);
        neural_network.add_layer(probabilistic_layer);
 
        neural_network.set_parameters_random();
 
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
        recurrent_layer->set_timesteps(2);
 
+       batch.set(samples_number, &data_set);
+       batch.fill(samples_indices, input_indices, target_indices);
+
        forward_propagation.set(samples_number, &neural_network);
-
-       back_propagation.set(samples_number, &minkowski_error);
-
        neural_network.forward_propagate(batch, forward_propagation);
 
+       back_propagation.set(samples_number, &minkowski_error);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
        error_gradient = back_propagation.gradient;
@@ -526,7 +484,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
    {
        samples_number = 3;
        inputs_number = 3;
-       hidden_neurons = 2;
+       neurons_number = 2;
        outputs_number = 3;
 
        data_set.set(samples_number, inputs_number, outputs_number);
@@ -535,32 +493,27 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        data_set.set_training();
 
-       batch.set(samples_number, &data_set);
-
        samples_indices = data_set.get_training_samples_indices();
        input_indices = data_set.get_input_variables_indices();
        target_indices = data_set.get_target_variables_indices();
 
-       batch.fill(samples_indices, input_indices, target_indices);
-
-       recurrent_layer->set(inputs_number, hidden_neurons);
-       probabilistic_layer->set(hidden_neurons, outputs_number);
+       recurrent_layer->set(inputs_number, neurons_number);
+       probabilistic_layer->set(neurons_number, outputs_number);
 
        neural_network.add_layer(recurrent_layer);
        neural_network.add_layer(probabilistic_layer);
 
        neural_network.set_parameters_random();
 
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
        recurrent_layer->set_timesteps(2);
 
+       batch.set(samples_number, &data_set);
+       batch.fill(samples_indices, input_indices, target_indices);
+
        forward_propagation.set(samples_number, &neural_network);
-
-       back_propagation.set(samples_number, &minkowski_error);
-
        neural_network.forward_propagate(batch, forward_propagation);
 
+       back_propagation.set(samples_number, &minkowski_error);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
        error_gradient = back_propagation.gradient;
@@ -574,34 +527,31 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
    {
        samples_number = 2;
        inputs_number = 2;
-       hidden_neurons = 3;
+       neurons_number = 3;
        outputs_number = 4;
 
        data_set.set(samples_number, inputs_number, outputs_number);
        data_set.set_data_random();
        data_set.set_training();
 
-       batch.set(samples_number, &data_set);
-
        samples_indices = data_set.get_training_samples_indices();
        input_indices = data_set.get_input_variables_indices();
        target_indices = data_set.get_target_variables_indices();
 
-       batch.fill(samples_indices, input_indices, target_indices);
-
-       neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons, outputs_number});
+       neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
+       batch.set(samples_number, &data_set);
+       batch.fill(samples_indices, input_indices, target_indices);
+
        forward_propagation.set(samples_number, &neural_network);
-       back_propagation.set(samples_number, &minkowski_error);
-       back_propagation_lm.set(samples_number, &minkowski_error);
-
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
        neural_network.forward_propagate(batch, forward_propagation);
+
+       back_propagation.set(samples_number, &minkowski_error);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
+       back_propagation_lm.set(samples_number, &minkowski_error);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation_lm);
 
        numerical_error_gradient = minkowski_error.calculate_gradient_numerical_differentiation();
@@ -613,11 +563,10 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
    neural_network.set();
 
    // Test probabilistic (binary) LM
-
    {
        samples_number = 2;
        inputs_number = 2;
-       hidden_neurons = 3;
+       neurons_number = 3;
        outputs_number = 1;
 
        data_set.set(samples_number, inputs_number, outputs_number);
@@ -634,15 +583,13 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        batch.fill(samples_indices, input_indices, target_indices);
 
-       neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons, outputs_number});
+       neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
        forward_propagation.set(samples_number, &neural_network);
        back_propagation.set(samples_number, &minkowski_error);
        back_propagation_lm.set(samples_number, &minkowski_error);
-
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        neural_network.forward_propagate(batch, forward_propagation);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
@@ -661,7 +608,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
    {
        samples_number = 2;
        inputs_number = 2;
-       hidden_neurons = 3;
+       neurons_number = 3;
        outputs_number = 3;
 
        data_set.set(samples_number, inputs_number, outputs_number);
@@ -670,27 +617,24 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        data_set.set_training();
 
-       batch.set(samples_number, &data_set);
-
        samples_indices = data_set.get_training_samples_indices();
        input_indices = data_set.get_input_variables_indices();
        target_indices = data_set.get_target_variables_indices();
 
-       batch.fill(samples_indices, input_indices, target_indices);
-
-       neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons, outputs_number});
+       neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
-       forward_propagation.set(samples_number, &neural_network);
-       back_propagation.set(samples_number, &minkowski_error);
-       back_propagation_lm.set(samples_number, &minkowski_error);
-
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+       batch.set(samples_number, &data_set);
+       batch.fill(samples_indices, input_indices, target_indices);
 
        neural_network.forward_propagate(batch, forward_propagation);
+       forward_propagation.set(samples_number, &neural_network);
+
+       back_propagation.set(samples_number, &minkowski_error);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
+       back_propagation_lm.set(samples_number, &minkowski_error);
        minkowski_error.back_propagate(batch, forward_propagation, back_propagation_lm);
 
        numerical_error_gradient = minkowski_error.calculate_gradient_numerical_differentiation();
@@ -747,8 +691,6 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
        convolutional_layer_1->set_activation_function(ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
 
        neural_network.add_layer(convolutional_layer_1);
-
-       minkowski_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
        forward_propagation.set(samples_number, &neural_network);
 

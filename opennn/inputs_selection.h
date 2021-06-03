@@ -77,7 +77,7 @@ public:
 
     // Set methods
 
-    void set_training_strategy_pointer(TrainingStrategy*);
+    void set(TrainingStrategy*);
 
     void set_default();
 

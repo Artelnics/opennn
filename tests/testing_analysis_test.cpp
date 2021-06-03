@@ -56,30 +56,31 @@ void TestingAnalysisTest::test_calculate_error_data()
 {
     cout << "test_calculate_error_data\n";
 
-    // DataSet
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-    data_set.set(1,2);
-
-    data_set.set_data_constant(0.0);
-
-    data_set.set_testing();
-
-    // Neural Network
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.set_parameters_constant(0.0);
-
-    // Testing Analysis
+    Tensor<type, 3> error_data;
 
     // Test
 
-    Tensor<type, 3> error_data= testing_analysis.calculate_error_data();
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
+
+    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set_data_constant(0.0);
+    data_set.set_testing();
+
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+    neural_network.set_parameters_constant(0.0);
+
+    error_data = testing_analysis.calculate_error_data();
 
     assert_true(error_data.size() == 3, LOG);
     assert_true(error_data.dimension(0) == 1, LOG);
     assert_true(error_data.dimension(1) == 3, LOG);
     assert_true(static_cast<double>(error_data(0,0,0)) == 0.0, LOG);
-
 }
 
 
@@ -87,24 +88,24 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
 {
     cout << "test_calculate_percentage_error_data\n";
 
-    // DataSet
-
-    data_set.set(1,2);
-
-    data_set.set_data_constant(0.0);
-
-    data_set.set_testing();
-
-    // Neural Network
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.set_parameters_constant(0.0);
-
-    // Testing Analysis
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
     Tensor<type, 2> error_data;
 
     // Test
+
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
+
+    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set_data_constant(0.0);
+    data_set.set_testing();
+
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+    neural_network.set_parameters_constant(0.0);
 
     error_data = testing_analysis.calculate_percentage_error_data();
 
@@ -124,22 +125,26 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
 {
     cout << "test_calculate_absolute_errors_descriptives\n";
 
-    // DataSet
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-    data_set.set(1,2);
+    Tensor<Descriptives, 1> error_data;
 
+    // Test
+
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
+
+    data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(0.0);
-
     data_set.set_testing();
 
-    // Neural Network
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
     neural_network.set_parameters_constant(0.0);
 
-    // Testing Analysis
-
-    Tensor<Descriptives, 1> error_data = testing_analysis.calculate_absolute_errors_descriptives();
+    error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
     assert_true(error_data.size() == 1, LOG);
     assert_true(static_cast<double>(error_data[0].minimum) == 0.0, LOG);
@@ -153,22 +158,26 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 {
     cout << "test_calculate_percentage_error_descriptives\n";
 
-    // DataSet
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-    data_set.set(1,2);
+    Tensor<Descriptives, 1> error_data;
 
+    // Test
+
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
+
+    data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(0.0);
-
     data_set.set_testing();
 
-    // Neural Network
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
     neural_network.set_parameters_constant(0.0);
 
-    // Testing Analysis
-
-    Tensor<Descriptives, 1> error_data = testing_analysis.calculate_percentage_errors_descriptives();
+    error_data = testing_analysis.calculate_percentage_errors_descriptives();
 
     assert_true(error_data.size() == 1, LOG);
     assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
@@ -179,22 +188,26 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
 {
     cout << "test_calculate_error_data_descriptives\n";
 
-    // DataSet
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-    data_set.set(1,2);
+    Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics;
 
+    // Test
+
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
+
+    data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(0.0);
-
     data_set.set_testing();
 
-    // Neural Network
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
     neural_network.set_parameters_constant(0.0);
 
-    // Testing Analysis
-
-    Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics = testing_analysis.calculate_error_data_descriptives();
+    error_data_statistics = testing_analysis.calculate_error_data_descriptives();
 
     assert_true(error_data_statistics.size() == 1, LOG);
     assert_true(error_data_statistics[0].size() == 3, LOG);
@@ -213,20 +226,22 @@ void TestingAnalysisTest::test_print_error_data_descriptives()
 {
     cout << "test_print_error_data_descriptives\n";
 
-    // DataSet
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-    data_set.set(1,2);
+    // Test
 
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
+
+    data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(0.0);
-
     data_set.set_testing();
 
-    // Neural Network
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
     neural_network.set_parameters_constant(0.0);
-
-    // Testing Analysis
 
     testing_analysis.print_error_data_descriptives();
 }
@@ -236,22 +251,26 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
 {
     cout << "test_calculate_error_data_histograms\n";
 
-    // DataSet
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-    data_set.set(1,2);
+    Tensor<Histogram, 1> error_data_histograms;
 
+    // Test
+
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
+
+    data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(0.0);
-
     data_set.set_testing();
 
-    // Neural Network
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
     neural_network.set_parameters_constant(0.0);
 
-    // Testing Analysis
-
-    Tensor<Histogram, 1> error_data_histograms = testing_analysis.calculate_error_data_histograms();
+    error_data_histograms = testing_analysis.calculate_error_data_histograms();
 
     assert_true(error_data_histograms.size() == 1, LOG);
     assert_true(error_data_histograms[0].get_bins_number() == 10, LOG);
@@ -262,25 +281,29 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 {
     cout << "test_calculate_maximal_errors\n";
 
-    // DataSet
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-    data_set.set(4,2);
+    Tensor<Tensor<Index, 1>, 1> maximal_errors;
 
+    // Test
+
+    samples_number = 4;
+    inputs_number = 1;
+    targets_number = 1;
+
+    data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(0.0);
-
     data_set.set_testing();
 
-    // Neural Network
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
     neural_network.set_parameters_constant(0.0);
 
-    // Testing Analysis
+    maximal_errors = testing_analysis.calculate_maximal_errors(2);
 
-    Tensor<Tensor<Index, 1>, 1> error_data_maximal = testing_analysis.calculate_maximal_errors(2);
-
-    assert_true(error_data_maximal.size() == 1, LOG);
-    assert_true(error_data_maximal[0](0) == 0 , LOG);
+    assert_true(maximal_errors.size() == 1, LOG);
+    assert_true(maximal_errors[0](0) == 0 , LOG);
 }
 
 
@@ -288,28 +311,33 @@ void TestingAnalysisTest::test_linear_regression()
 {
    cout << "test_linear_regression\n";
 
-   // DataSet
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
 
-   data_set.set(1,2);
+   Index neurons_number;
 
+   Tensor<Correlation, 1> linear_correlation;
+
+   // Test
+
+   samples_number = 1;
+   inputs_number = 1;
+   targets_number = 1;
+
+   data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_constant(0.0);
-
    data_set.set_testing();
 
-   // Neural Network
-
-   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
    neural_network.set_parameters_constant(0.0);
 
-   // Testing Analysis   
-
-   Tensor<Correlation, 1> linear_correlation = testing_analysis.linear_correlation();
+   linear_correlation = testing_analysis.linear_correlation();
 
    assert_true(linear_correlation.size() == 1, LOG);
    assert_true(static_cast<double>(linear_correlation(0).a) == 0.0, LOG);
    assert_true(static_cast<double>(linear_correlation(0).b) == 0.0, LOG);
    assert_true(static_cast<double>(linear_correlation(0).r) == 1.0, LOG);
-
 }
 
 
@@ -317,9 +345,15 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
 {
    cout << "test_print_linear_regression_correlation\n";
 
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
+
+   Index neurons_number;
+
    // DataSet
 
-   data_set.set(1,2);
+   data_set.set(samples_number, inputs_number, targets_number);
 
    data_set.set_data_constant(0.0);
 
@@ -327,39 +361,13 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
 
    // Neural Network
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
    neural_network.set_parameters_constant(0.0);
 
    // Testing Analysis
 
    testing_analysis.print_linear_regression_correlations();
 
-}
-
-
-void TestingAnalysisTest::test_get_linear_regression_correlations_std()
-{
-    cout << "test_get_linear_regression_correlations_std\n";
-
-    // DataSet
-
-    data_set.set(1,2);
-
-    data_set.set_data_constant(0.0);
-
-    data_set.set_testing();
-
-    // Neural Network
-
-    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
-    neural_network.set_parameters_constant(0.0);
-
-    // Testing Analysis
-
-    Tensor<type, 1> correlations = testing_analysis.get_linear_regression_correlations_std();
-
-    assert_true(correlations.size() == 1, LOG);
-    assert_true(correlations(0) == 1.0 , LOG);
 }
 
 
@@ -377,9 +385,15 @@ void TestingAnalysisTest::test_perform_linear_regression()
 {
     cout << "test_perform_linear_regression\n";
 
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
+
+    Index neurons_number;
+
     // DataSet
 
-    data_set.set(1,2);
+    data_set.set(samples_number, inputs_number, targets_number);
 
     data_set.set_data_constant(0.0);
 
@@ -387,7 +401,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     // Neural Network
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
     neural_network.set_parameters_constant(0.0);
 
     // Testing Analysis
@@ -447,9 +461,13 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 {
    cout << "test_calculate_binary_classification_test\n";
 
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
+
    // DataSet
 
-   data_set.set(1,2);
+   data_set.set(samples_number, inputs_number, targets_number);
 
    data_set.set_data_constant(0.0);
 
@@ -1269,7 +1287,6 @@ void TestingAnalysisTest::run_test_case()
 
    test_linear_regression();
    test_print_linear_regression_correlation();
-   test_get_linear_regression_correlations_std();
    test_save();
    test_perform_linear_regression();
 

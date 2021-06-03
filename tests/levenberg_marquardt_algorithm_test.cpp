@@ -14,6 +14,8 @@ LevenbergMarquardtAlgorithmTest::LevenbergMarquardtAlgorithmTest() : UnitTesting
     sum_squared_error.set(&neural_network, &data_set);
 
     levenberg_marquardt_algorithm.set_loss_index_pointer(&sum_squared_error);
+
+    levenberg_marquardt_algorithm.set_display(false);
 }
 
 
@@ -29,11 +31,13 @@ void LevenbergMarquardtAlgorithmTest::test_constructor()
    // Default constructor
 
    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm_1;
+
    assert_true(!levenberg_marquardt_algorithm_1.has_loss_index(), LOG);
 
    // Loss index constructor
 
    LevenbergMarquardtAlgorithm lma2(&sum_squared_error);
+
    assert_true(lma2.has_loss_index(), LOG);
 }
 
@@ -42,9 +46,13 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
-   Tensor<type, 1> gradient;
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
 
-   levenberg_marquardt_algorithm.set_display(false);
+   Index neurons_number;
+
+   Tensor<type, 1> gradient;
 
    type old_loss;
    type loss;
@@ -56,12 +64,16 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
+   samples_number = 1;
+   inputs_number = 1;
+   targets_number = 1;
+
+   data_set.set(1, 1, 1);
+   data_set.set_data_random();
+
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
    neural_network.set_parameters_random();
 
-   data_set.set(1, 1, 2);
-
-   data_set.set_data_random();
 
 //   old_loss = sum_squared_error.calculate_training_loss();
 
@@ -146,7 +158,7 @@ void LevenbergMarquardtAlgorithmTest::test_resize_training_error_history()
 {
    cout << "test_resize_training_error_history\n";
 
-   TrainingResults training_results;//(&levenberg_marquardt_algorithm);
+   TrainingResults training_results;
 
    training_results.resize_training_error_history(1);
 

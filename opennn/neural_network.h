@@ -192,8 +192,6 @@ public:
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
-   Tensor<type, 1> calculate_outputs_std(const Tensor<type, 1>&);
-
    // Serialization methods
 
    Tensor<string, 2> get_information() const;

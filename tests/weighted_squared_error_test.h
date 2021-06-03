@@ -52,6 +52,13 @@ private:
 
    WeightedSquaredError weighted_squared_error;
 
+   DataSetBatch batch;
+
+   NeuralNetworkForwardPropagation forward_propagation;
+
+   LossIndexBackPropagation back_propagation;
+
+   LossIndexBackPropagationLM back_propagation_lm;
 };
 
 

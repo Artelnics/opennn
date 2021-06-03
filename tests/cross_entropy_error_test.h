@@ -54,6 +54,12 @@ private:
 
    CrossEntropyError cross_entropy_error;
 
+   DataSetBatch batch;
+
+   NeuralNetworkForwardPropagation forward_propagation;
+
+   LossIndexBackPropagation back_propagation;
+
 };
 
 #endif

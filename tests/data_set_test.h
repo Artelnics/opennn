@@ -46,8 +46,8 @@ public:
    void test_get_training_data();
    void test_get_selection_data();
    void test_get_testing_data();
-   void test_get_inputs();
-   void test_get_targets();
+   void test_get_input_data();
+   void test_get_target_data();
    void test_get_time_series_columns();
    void test_get_time_series_columns_number();
    void test_get_time_series_column_data();
@@ -148,9 +148,7 @@ public:
 
    // Serialization methods
 
-   void test_to_XML();
-   void test_from_XML();
-   
+
    void test_print_data_preview();
 
    void test_read_csv();

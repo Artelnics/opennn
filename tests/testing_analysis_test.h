@@ -51,7 +51,6 @@ public:
 
    void test_linear_regression();
    void test_print_linear_regression_correlation();
-   void test_get_linear_regression_correlations_std();
    void test_save();
    void test_perform_linear_regression();
 

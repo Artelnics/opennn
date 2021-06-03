@@ -44,7 +44,7 @@ public:
 
    void test_get_biases();
    void test_get_weights();
-   void test_get_recurrent_initializer();
+   void test_get_recurrent_weights();
    void test_get_parameters_number();
    void test_get_parameters();
    void test_calculate_activations_derivatives();

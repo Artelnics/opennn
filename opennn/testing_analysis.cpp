@@ -259,25 +259,6 @@ void TestingAnalysis::print_linear_regression_correlations() const
 }
 
 
-Tensor<type, 1> TestingAnalysis::get_linear_regression_correlations_std() const
-{
-    const Tensor<Correlation, 1> linear_correlation = this->linear_correlation();
-
-    const Tensor<string, 1> targets_name = data_set_pointer->get_target_variables_names();
-
-    const Index targets_number = linear_correlation.size();
-
-    Tensor<type, 1> std_correlations(targets_number);
-
-    for(Index i = 0; i < targets_number; i++)
-    {
-        std_correlations[i] = linear_correlation[i].r;
-    }
-
-    return std_correlations;
-}
-
-
 /// Performs a linear regression analysis of a neural network on the testing indices of a data set.
 /// It returns a linear regression analysis results structure, which consists of:
 /// <ul>
