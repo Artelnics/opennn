@@ -11,9 +11,9 @@
 
 GeneticAlgorithmTest::GeneticAlgorithmTest() : UnitTesting()
 {
-    training_strategy.set_data_set_pointer(&data_set);
-    training_strategy.set_neural_network_pointer(&neural_network);
-    genetic_algorithm.set_training_strategy_pointer(&training_strategy);
+    training_strategy.set(&neural_network, &data_set);
+
+    genetic_algorithm.set(&training_strategy);
 }
 
 
@@ -25,8 +25,6 @@ GeneticAlgorithmTest::~GeneticAlgorithmTest()
 void GeneticAlgorithmTest::test_constructor()
 {
     cout << "test_constructor\n";
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
 
     // Test
 
@@ -163,14 +161,14 @@ void GeneticAlgorithmTest::test_perform_crossover()
 {
     cout << "test_perform_crossover\n";
 
-    neural_network.set(NeuralNetwork::Approximation, {2,2,1});
-
     Tensor<bool, 2> population;
     Tensor<bool, 1> individual;
 
     Tensor<type, 1> fitness;
 
     // Test
+
+    neural_network.set(NeuralNetwork::Approximation, {2,2,1});
 
     genetic_algorithm.set_individuals_number(4);
 

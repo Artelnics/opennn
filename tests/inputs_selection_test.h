@@ -43,7 +43,7 @@ public:
 
    // Set methods
 
-   void test_set_training_strategy_pointer();
+   void test_set();
 
    // Unit testing methods
 
@@ -57,6 +57,7 @@ private:
 
    TrainingStrategy training_strategy;
 
+   GrowingInputs growing_inputs;
 
 };
 

@@ -290,9 +290,6 @@ struct TrainingResults
 
     string elapsed_time;
 
-    /// Stopping criterion.
-
-    string stopping_criterion;
 };
 
 }

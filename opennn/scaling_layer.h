@@ -99,7 +99,6 @@ public:
    // Descriptives
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
-   void set_descriptives_eigen(const Tensor<type, 2>&);
    void set_item_descriptives(const Index&, const Descriptives&);
 
    void set_minimum(const Index&, const type&);

@@ -423,6 +423,14 @@ void TrainingStrategy::set()
 }
 
 
+void TrainingStrategy::set(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
+{
+    set_data_set_pointer(new_data_set_pointer);
+
+    set_neural_network_pointer(new_neural_network_pointer);
+}
+
+
 /// Sets the loss index method.
 /// If that object does not exists, an exception is thrown.
 /// @param new_loss_method String with the name of the new method.

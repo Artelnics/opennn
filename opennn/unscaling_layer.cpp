@@ -443,24 +443,6 @@ void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descrip
 }
 
 
-void UnscalingLayer::set_descriptives_eigen(const Tensor<type, 2>& new_descriptives)
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<Descriptives, 1> descriptives(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        descriptives[i].set_minimum(new_descriptives(static_cast<long long>(i), 0));
-        descriptives[i].set_maximum(new_descriptives(static_cast<long long>(i), 1));
-        descriptives[i].set_mean(new_descriptives(static_cast<long long>(i), 2));
-        descriptives[i].set_standard_deviation(new_descriptives(static_cast<long long>(i), 3));
-    }
-
-    set_descriptives(descriptives);
-}
-
-
 /// Sets the minimum, maximum, mean and standard deviation values of a single unscaling neuron.
 /// @param i Index of unscaling neuron.
 /// @param item_descriptives  Descriptives values for that neuron.

@@ -69,7 +69,6 @@ public:
    // Descriptives
 
    void test_set_descriptives();
-   void test_set_descriptives_eigen();
    void test_set_item_descriptives();
 
    // Multilayer perceptron architecture

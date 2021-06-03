@@ -135,7 +135,7 @@ const type& InputsSelection::get_minimum_correlation() const
 /// Sets a new training strategy pointer.
 /// @param new_training_strategy_pointer Pointer to a training strategy object.
 
-void InputsSelection::set_training_strategy_pointer(TrainingStrategy* new_training_strategy_pointer)
+void InputsSelection::set(TrainingStrategy* new_training_strategy_pointer)
 {
     training_strategy_pointer = new_training_strategy_pointer;     
 }

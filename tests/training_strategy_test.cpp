@@ -11,6 +11,7 @@
 
 TrainingStrategyTest::TrainingStrategyTest() : UnitTesting() 
 {
+    training_strategy.set(&neural_network, &data_set);
 }
 
 
@@ -53,17 +54,27 @@ void TrainingStrategyTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
+
+   Index neurons_number;
+
     Tensor<type, 2> data;
-
-    data.resize(2, 2);
-    data.setValues({{0,1},{0,1}});
-
-    data_set.set(2, 2);
-    data_set.set_data(data);
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
+    samples_number = 2;
+    inputs_number = 1;
+    targets_number = 1;
+
+    data.resize(samples_number, inputs_number+targets_number);
+    data.setValues({{0,1},{0,1}});
+
+    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set_data(data);
+
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
     training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
     neural_network.set_parameters_random();
 
@@ -116,7 +127,6 @@ void TrainingStrategyTest::test_from_XML()
    }
 
    training_strategy.from_XML(document);
-
 }
 
 

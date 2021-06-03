@@ -46,6 +46,10 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
 
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
+
     Tensor<type, 2> data;
 
     NeuronsSelectionResults neurons_selection_results;
@@ -93,7 +97,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     data_set.set(data);
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
     neural_network.set_parameters_constant(0.0);
 
     training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);

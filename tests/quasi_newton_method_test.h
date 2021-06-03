@@ -65,6 +65,10 @@ private:
 
    QuasiNewtonMethod quasi_newton_method;
 
+   QuasiNewtonMehtodData quasi_newton_method_data;
+
+   TrainingResults training_results;
+
 };
 
 

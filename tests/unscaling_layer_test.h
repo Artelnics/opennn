@@ -62,7 +62,6 @@ public:
    // Output variables descriptives
 
    void test_set_descriptives();
-   void test_set_descriptives_eigen();
    void test_set_item_descriptives();
 
    void test_set_minimum();
@@ -103,13 +102,10 @@ private:
 
    UnscalingLayer unscaling_layer;
 
-
 };
 
 
 #endif
-
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
