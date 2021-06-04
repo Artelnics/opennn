@@ -64,6 +64,7 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
           const Tensor<Index, 1>& rows_indices,
           const Tensor<Index, 1>& columns_indices, type* submatrix);
 
+Index count_NAN(const Tensor<type, 1>&);
 
 }
 

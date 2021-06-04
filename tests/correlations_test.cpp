@@ -145,10 +145,11 @@ void CorrelationsTest::test_logistic_correlation()
     y.resize(size);
     y.setConstant(0.0);
 
-
     for(Index i = size - size/2; i < size; i++) y[i] = 1;
 
     correlation = logistic_correlation(thread_pool_device, x, y);
+
+    cout << "correlation r: " << correlation.r << endl;
 
     assert_true(correlation.r <= 0.95, LOG);
 
@@ -180,6 +181,8 @@ void CorrelationsTest::test_logistic_correlation()
     for(Index i = size - (size/2); i < size; i++) y[i] = 1;
 
     correlation = logistic_correlation(thread_pool_device, x, y);
+
+    cout << "logisitic correlation: " << correlation.r << endl;
 
     assert_true(correlation.r <= static_cast<type>(0.95), LOG);
 
@@ -218,7 +221,7 @@ void CorrelationsTest::test_logarithmic_correlation()
     Tensor<type, 1> x;
     Tensor<type, 1> y;
 
-    Index size;
+    Index size = 10;
 
     Correlation correlation;
 
@@ -226,34 +229,19 @@ void CorrelationsTest::test_logarithmic_correlation()
 
     // Perfect case
 
-    x.resize(10);
+    x.resize(size);
     x.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 
-    y.resize(10);
-    y.setValues({0, 0.30103, 0.477121, 0.60206, 0.69897, 0.778151, 0.845098, 0.90309, 0.954243, 1});
+    y.resize(size);
+    for(Index i = 0; i < size; i++) y[i] = 4 * log(x[i]);
 
     correlation = logarithmic_correlation(thread_pool_device, x, y);
 
     solution = 1;
 
     assert_true(abs(correlation.r - solution) <= static_cast<type>(1.0e-6), LOG);
-
-    assert_true(logarithmic_correlation(thread_pool_device, x, y).r - solution <= static_cast<type>(0.00001), LOG);
-
-    // Test missing values
-
-    size = 5;
-
-    x.resize(size);
-    x[0] = 1;
-    x[1] = 2;
-    x[2] = 3;
-    x[3] = 4;
-    x[4] = static_cast<type>(NAN);
-
-    y.resize(size);
-
-    for(Index i = 0; i < size; i++) y[i] = log(static_cast<type>(1.5)*x[i] + 2);
+    assert_true(correlation.b == static_cast<type>(4), LOG);
+    assert_true(correlation.a == static_cast<type>(0), LOG);
 }
 
 
@@ -276,11 +264,13 @@ void CorrelationsTest::test_exponential_correlation()
     initialize_sequential(x);
 
     y.resize(size);
-    for(Index i = 0; i < size; i++) y[i] = exp(static_cast<type>(2.5)*x[i] + static_cast<type>(1.4));
+    for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1) * exp(static_cast<type>(0.5)*x[i]);
 
     correlation = exponential_correlation(thread_pool_device, x, y);
 
     assert_true(correlation.r > static_cast<type>(0.999999), LOG);
+    assert_true(correlation.a == static_cast<type>(1), LOG);
+    assert_true(correlation.b == static_cast<type>(0.5), LOG);
 
     // Test missing values
 
@@ -290,10 +280,12 @@ void CorrelationsTest::test_exponential_correlation()
     x.setValues({1,2,3,4,NAN});
 
     y.resize(size);
-    for(Index i = 0; i < size; i++) y[i] = exp(static_cast<type>(2.5)*x[i] + static_cast<type>(1.4));
+    for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1.4) * exp(static_cast<type>(2.5)*x[i]);
 
     correlation = exponential_correlation(thread_pool_device, x, y);
+
     assert_true(abs(correlation.r - 1.0) < 1.0e-3, LOG);
+    assert_true(correlation.b == static_cast<type>(2.5), LOG);
 }
 
 
@@ -301,101 +293,31 @@ void CorrelationsTest::test_power_correlation()
 {
     cout << "test_power_regression\n";
 
-    Tensor<type, 1> x(5);
-    x.setValues({10, 16, 25, 40, 60});
-    Tensor<type, 1> y(5);
-    y.setValues({94, 118, 147, 180, 230});
+    Tensor<type, 1> x;
+    Tensor<type, 1> y;
 
-    type solution1 = static_cast<type>(30.213);
-    type solution2 = static_cast<type>(0.491);
-    type solution3 = static_cast<type>(0.998849);
+    Index size;
+
+    // Test
+
+    size = 10;
+
+    x.resize(size);
+    for(Index i = 0; i < size; i++)
+    {
+        x[i] = i+1;
+    }
+
+    y.resize(size);
+    for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1) * pow(x[i], 2);
 
     Correlation correlation = power_correlation(thread_pool_device,x,y);
 
     // Test
 
-    assert_true(correlation.a - solution1 <= static_cast<type>(0.01), LOG);
-    assert_true(correlation.b - solution2 <= static_cast<type>(0.01), LOG);
-    assert_true(correlation.r - solution3 <= static_cast<type>(0.01), LOG);
-
-    x.resize(6);
-    x.setValues({10, 16, 25, 40, 60, NAN});
-    y.resize(6);
-    y.setValues({94, 118, 147, 180, 230, 100});
-
-    solution1 = static_cast<type>(30.213);
-    solution2 = static_cast<type>(0.491);
-    solution3 = static_cast<type>(0.998849);
-
-    // Test
-
-    correlation = power_correlation(thread_pool_device, x,y);
-
-    assert_true(correlation.a - solution1 <= 0.01, LOG);
-    assert_true(correlation.b - solution2 <= 0.01, LOG);
-    assert_true(correlation.r - solution3 <= 0.01, LOG);
-}
-
-
-void CorrelationsTest::test_contingency_table()
-{
-    cout << "test_contingency_table\n";
-
-    Tensor<string, 1> x(4);
-    x.setValues({"a", "b", "b", "a" });
-    Tensor<string, 1> y(4);
-    y.setValues({"c", "c", "d", "d" });
-
-//    assert_true(contingency_table(x, y) == matrix, LOG);
-
-}
-
-
-void CorrelationsTest::test_chi_square_test()
-{
-    cout << "test_chi_square_test\n";
-
-//    Tensor<string, 1> x({"a", "b", "b", "a" });
-//    Tensor<string, 1> y({"c", "c", "d", "d" });
-
-//    assert_true(abs(chi_square_test(contingency_table(x, y).to_type_matrix()) - 0.0) < 1.0e-3, LOG);
-
-}
-
-
-void CorrelationsTest::test_karl_pearson_correlation()
-{
-    cout << "test_karl_pearson_correlation\n";
-
-    Tensor<type, 2> matrix1(4,2);
-    Tensor<type, 2> matrix2(4,2);
-
-//    matrix1.set_values(0, {1, 0, 1, 0});
-//    matrix1.set_column(1, {0, 1, 0, 1});
-
-//    matrix2.set_column(0, {1, 0, 1, 0});
-//    matrix2.set_column(1, {0, 1, 0, 1});
-
-    const type solution = 1;
-
-//    const type correlation = karl_pearson_correlation(matrix1, matrix2);
-
-//    assert_true(abs(correlation - solution) <= 0.001, LOG);
-
-    matrix1.resize(5,2);
-    matrix2.resize(5,2);
-
-//    matrix1.set_column(0, {1, 0, 1, 0, 0});
-//    matrix1.set_column(1, {0, 1, NAN, 1, NAN});
-
-//    matrix2.set_column(0, {1, 0, 1, 0, 0});
-//    matrix2.set_column(1, {0, NAN, 0, 1, 1});
-
-//    const type solution = 1;
-
-//    const type correlation = karl_pearson_correlation(matrix1, matrix2);
-
-//    assert_true(abs(correlation - solution) <= 0.001, LOG);
+    assert_true(correlation.r > static_cast<type>(0.999999), LOG);
+    assert_true(correlation.a == static_cast<type>(1), LOG);
+    assert_true(correlation.b == static_cast<type>(2), LOG);
 }
 
 
@@ -442,25 +364,20 @@ void CorrelationsTest::run_test_case()
 
 //   test_linear_regression();
 
-   test_logistic_correlation();
-/*
-   test_logarithmic_correlation();
+//   test_logistic_correlation();
 
-   test_exponential_correlation();
+//   test_logarithmic_correlation();
 
-   test_power_correlation();
+//   test_exponential_correlation();
 
-   test_contingency_table();
-
-   test_chi_square_test();
-
-   test_karl_pearson_correlation();
+//   test_power_correlation();
 
    // Time series correlation methods
 
-   test_autocorrelations();
-   test_cross_correlations();
-*/
+//   test_autocorrelations();
+
+//   test_cross_correlations();
+
    cout << "End of correlation analysis test case.\n\n";
 }
 

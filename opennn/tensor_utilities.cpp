@@ -353,6 +353,17 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
     }
 }
 
+Index count_NAN(const Tensor<type, 1>& x)
+{
+    Index NAN_number = 0;
+
+    for(Index i = 0; i < x.size(); i++)
+    {
+        if(::isnan(x(i))) NAN_number++;
+    }
+
+    return NAN_number;
+}
 
 }
 

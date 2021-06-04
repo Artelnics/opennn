@@ -42,12 +42,6 @@ public:
 
     void test_power_correlation();
 
-    void test_contingency_table();
-
-    void test_chi_square_test();
-
-    void test_karl_pearson_correlation();
-
     // Time series correlation methods
 
     void test_autocorrelations();

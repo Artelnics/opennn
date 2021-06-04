@@ -5972,7 +5972,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
-                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input, target);
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input, target);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
@@ -6383,7 +6383,7 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
             }
             else if(type_i == Categorical && type_j == Categorical)
             {
-                correlations(i,j) = karl_pearson_correlation(thread_pool_device, input_i, input_j).r;
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_i, input_j).r;
             }
             else if(type_i == Numeric && type_j == Binary)
             {

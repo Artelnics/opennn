@@ -89,8 +89,6 @@ struct Correlation
 
     Correlation multiple_logistic_correlation(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-    Correlation karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
-
     // Time series correlation methods
 
     Tensor<type, 1> autocorrelations(const ThreadPoolDevice*,
@@ -106,23 +104,11 @@ struct Correlation
 
     Tensor<type, 1> logistic(const type&, const type&, const Tensor<type, 1>&);
 
-    // Contingency tables
-
-    type chi_square_test(const Tensor<type, 2>&);
-
     // Missing values methods
 
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
     pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-    Index count_NAN(const Tensor<type, 1>&);
-
-    // Other methods
-
-    Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>&);
-    Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>&);
-
-    vector<int> get_indices_sorted(Tensor<type, 1>&);
 }
 
 
