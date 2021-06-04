@@ -105,6 +105,58 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix,
 
 }
 
+Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>& x)
+{
+    const Tensor<type, 0> minimum = x.minimum();
+    const Tensor<type, 0> maximum = x.maximum();
+
+    const type min_range = -1;
+    const type max_range = 1;
+
+    const type slope = (max_range-min_range)/(maximum()-minimum());
+    const type intercept = (min_range*maximum()-max_range*minimum())/(maximum()-minimum());
+
+    Tensor<type, 1> scaled_x(x.size());
+
+    for(Index i = 0; i < scaled_x.size(); i++)
+    {
+        scaled_x(i) = slope*x(i)+intercept;
+    }
+
+    return scaled_x;
+}
+
+
+Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
+{
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
+
+    Tensor<type, 2> scaled_x(rows_number, columns_number);
+
+    const Tensor<type, 1> columns_minimums = OpenNN::columns_minimums(x);
+
+    const Tensor<type, 1> columns_maximums = OpenNN::columns_maximums(x);
+
+    const type min_range = -1;
+    const type max_range = 1;
+
+    for(Index j = 0; j < columns_number; j++)
+    {
+        const type minimum = columns_minimums(j);
+        const type maximum = columns_maximums(j);
+
+        const type slope = (max_range-min_range)/(maximum-minimum);
+        const type intercept = (min_range*maximum-max_range*minimum)/(maximum-minimum);
+
+        for(Index i = 0; i < rows_number; i++)
+        {
+            scaled_x(i,j) = slope*x(i,j)+intercept;
+        }
+    }
+
+    return scaled_x;
+}
 
 void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
 {
