@@ -95,9 +95,9 @@ public:
    void test_calculate_testing_samples_descriptives();
    void test_calculate_input_variables_descriptives();
    void test_calculate_variables_means();
-   void test_calculate_training_targets_mean();
+
+   void test_calculate_used_targets_mean();
    void test_calculate_selection_targets_mean();
-   void test_calculate_testing_targets_mean();
 
    // Correlation methods
 
@@ -126,7 +126,6 @@ public:
 
    void test_unscale_data();
 
-
    // Pattern recognition methods
 
    void test_calculate_target_columns_distribution();
@@ -148,7 +147,6 @@ public:
 
    // Serialization methods
 
-
    void test_print_data_preview();
 
    void test_read_csv();
@@ -166,18 +164,18 @@ public:
    void test_read_wine_csv();
    void test_read_binary_csv();
 
-   //Trasform methods
+   // Trasform methods
 
    void test_transform_time_series();
 
-   //Principal components mehtod
+   // Principal components mehtod
 
    void test_calculate_training_negatives();
    void test_calculate_selection_negatives();
    void test_scrub_missing_values();
    void test_impute_missing_values_mean();
 
-   //Check if constant
+   // Check if constant
 
    void test_is_constant_numeric();
 
@@ -188,6 +186,16 @@ public:
   private:
 
    DataSet data_set;
+
+   Tensor<type, 2> data;
+
+   Tensor<Index, 1> training_indices;
+   Tensor<Index, 1> selection_indices;
+   Tensor<Index, 1> testing_indices;
+
+   Tensor<Index, 1> input_variables_indices;
+   Tensor<Index, 1> target_variables_indices;
+
 };
 
 #endif
