@@ -831,9 +831,9 @@ void DataSetTest::test_calculate_LOF_outliers()
 }
 
 
-void DataSetTest::test_unuse_LOF_outliers()
+void DataSetTest::test_unuse_local_outlier_factor_outliers()
 {
-   cout << "test_unuse_LOF_outliers\n";
+   cout << "test_unuse_local_outlier_factor_outliers\n";
 }
 
 
