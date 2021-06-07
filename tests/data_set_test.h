@@ -72,7 +72,7 @@ public:
    // Data methods
 
    void test_set_data();
-   void test_empty();
+   void test_is_empty();
 
    // Data resizing methods
 
@@ -85,7 +85,7 @@ public:
 
    // Initialization methods
 
-   void test_initialize_data();
+   void test_set_data_constant();
 
    // Statistics methods
 
@@ -114,7 +114,6 @@ public:
 
    // Filtering methods
 
-   void test_filter_column();
    void test_filter_data();
 
    // Data scaling
@@ -123,12 +122,11 @@ public:
 
    void test_unscale_data();
 
-   // Pattern recognition methods
+   // Classification methods
 
-   void test_calculate_target_columns_distribution();
-   void test_unuse_most_populated_target();
+   void test_calculate_target_distribution();
 
-   void test_clean_Tukey_outliers();
+   void test_calculate_Tukey_outliers();
 
    void test_calculate_euclidean_distance();
    void test_calculate_distance_matrix();

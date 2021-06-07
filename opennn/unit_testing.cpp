@@ -14,7 +14,6 @@ UnitTesting::UnitTesting()
     tests_passed_count = 0;
     tests_failed_count = 0;
 
-    numerical_differentiation_tests = true;
     random_tests_number = 0;
 }
 
@@ -58,12 +57,6 @@ Index UnitTesting::get_random_tests_number() const
 }
 
 
-bool UnitTesting::get_numerical_differentiation_tests() const
-{
-    return numerical_differentiation_tests;
-}
-
-
 /// Returns the display messages to the screen value of this object.
 
 const bool& UnitTesting::get_display() const
@@ -96,12 +89,6 @@ void UnitTesting::set_tests_passed_count(const Index& new_tests_passed_count)
 void UnitTesting::set_tests_failed_count(const Index& new_tests_failed_count)
 {
     tests_failed_count = new_tests_failed_count;
-}
-
-
-void UnitTesting::set_numerical_differentiation_tests(const bool& new_numerical_differentiation_tests)
-{
-    numerical_differentiation_tests = new_numerical_differentiation_tests;
 }
 
 

@@ -626,7 +626,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 
 //   const Tensor<type, 2> outputs = long_short_term_memory_layer.calculate_outputs(inputs);
 //   const Tensor<type, 2> outputs_parameters = long_short_term_memory_layer.calculate_outputs(inputs, parameters);
-//   const Tensor<type, 2> outputs_2 = long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights);
+//   const Tensor<type, 2> outputs = long_short_term_memory_layer.calculate_outputs(inputs, biases, weights, recurrent_weights);
 
 //   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(0) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(0), LOG);
 //   assert_true(long_short_term_memory_layer.calculate_outputs(inputs)(1) == long_short_term_memory_layer.calculate_outputs(inputs, parameters)(1), LOG);

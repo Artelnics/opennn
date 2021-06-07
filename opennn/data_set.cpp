@@ -75,17 +75,7 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 
 DataSet::DataSet(const string& data_file_name, const char& separator, const bool& new_has_columns_names)
 {
-    set();
-
-    set_default();
-
-    set_data_file_name(data_file_name);
-
-    set_separator(separator);
-
-    set_has_columns_names(new_has_columns_names);
-
-    read_csv();
+    set(data_file_name, separator, new_has_columns_names);
 }
 
 
@@ -4620,6 +4610,23 @@ void DataSet::set()
 }
 
 
+void DataSet::set(const string& data_file_name, const char& separator, const bool& new_has_columns_names)
+{
+    set();
+
+    set_default();
+
+    set_data_file_name(data_file_name);
+
+    set_separator(separator);
+
+    set_has_columns_names(new_has_columns_names);
+
+    read_csv();
+
+}
+
+
 /// Sets all variables from a data matrix.
 /// @param new_data Data matrix.
 
@@ -5375,13 +5382,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
         {
             if(columns(i).column_use != UnusedVariable)
             {
-                cout << "Column: " << columns(i).name << endl;
-
                 box_plots(used_column_index) = box_plot(data.chip(variable_index, 1), used_samples_indices);
-
-                cout << "min: " << box_plots(used_column_index).minimum << endl;
-                cout << "max: " << box_plots(used_column_index).maximum << endl;
-
 
                 used_column_index++;
             }
@@ -6162,159 +6163,6 @@ void DataSet::print_top_input_target_columns_correlations() const
     {
         cout << "Correlation:  " << (*it).first << "  between  " << (*it).second << "" << endl;
     }
-}
-
-
-/// Calculates the regressions between all outputs and all inputs.
-/// It returns a matrix with the data stored in Correlation format, where the number of rows is the input number
-/// and number of columns is the target number.
-/// Each element contains the correlation between a single input and a single target.
-
-Tensor<Correlation, 2> DataSet::calculate_input_target_columns_regressions() const
-{
-    const Index input_columns_number = get_input_columns_number();
-    const Index target_columns_number = get_target_columns_number();
-
-    const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
-    Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
-
-    Tensor<Correlation, 2> regressions(input_columns_number, target_columns_number);
-
-    for(Index i = 0; i < input_columns_number; i++)
-    {
-        cout << endl;
-
-        const Index input_index = input_columns_indices(i);
-
-        Tensor<type, 2> input = get_column_data(input_index);
-
-        const ColumnType input_type = columns(input_index).type;
-
-        cout << "Calculating " << columns(input_index).name;
-
-        for(Index j = 0; j < target_columns_number; j++)
-        {
-            const Index target_index = target_columns_indices(j);
-
-            Tensor<type, 2> target = get_column_data(target_index);
-
-            const ColumnType target_type = columns(target_index).type;
-
-            cout << " - " << columns(target_columns_indices(j)).name << " regression. \n" ;
-
-            if(input_type == Numeric && target_type == Numeric)
-            {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
-
-                const Correlation linear_correlation
-                        = OpenNN::linear_correlation(thread_pool_device, input_column, target_column);
-
-                const Correlation exponential_correlation
-                        = OpenNN::exponential_correlation(thread_pool_device, input_column, target_column);
-
-                const Correlation logarithmic_correlation
-                        = OpenNN::logarithmic_correlation(thread_pool_device, input_column, target_column);
-
-                const Correlation power_correlation
-                        = OpenNN::power_correlation(thread_pool_device, input_column, target_column);
-
-                Correlation strongest_correlation = linear_correlation;
-
-                if(abs(exponential_correlation.r) > abs(strongest_correlation.r))
-                    strongest_correlation = exponential_correlation;
-
-                if(abs(logarithmic_correlation.r) > abs(strongest_correlation.r))
-                    strongest_correlation = logarithmic_correlation;
-
-                if(abs(power_correlation.r) > abs(strongest_correlation.r))
-                    strongest_correlation = power_correlation;
-
-                regressions(i,j) = strongest_correlation;
-            }
-            else if(input_type == Binary && target_type == Binary)
-            {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
-
-                regressions(i,j) = linear_correlation(thread_pool_device, input_column, target_column);
-            }
-            else if(input_type == Numeric && target_type == Binary)
-            {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
-
-                regressions(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
-            }
-            else if(input_type == Binary && target_type == Numeric)
-            {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
-
-                regressions(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
-            }
-            else if(input_type == Categorical && target_type == Categorical)
-            {
-                // Nothing
-
-                regressions(i,j).a = 0;
-                regressions(i,j).b = 0;
-                regressions(i,j).r = 0;
-            }
-            else if(input_type == Categorical && target_type == Numeric)
-            {
-                // Nothing
-
-                regressions(i,j).a = 0;
-                regressions(i,j).b = 0;
-                regressions(i,j).r = 0;
-            }
-            else if(input_type == Numeric && target_type == Categorical)
-            {
-                // Nothing
-
-                regressions(i,j).a = 0;
-                regressions(i,j).b = 0;
-                regressions(i,j).r = 0;
-            }
-            else if(input_type == Binary && target_type == Categorical)
-            {
-                // nothing
-
-                regressions(i,j).a = 0;
-                regressions(i,j).b = 0;
-                regressions(i,j).r = 0;
-            }
-            else if(input_type == Categorical && target_type == Binary)
-            {
-                // nothing
-
-                regressions(i,j).a = 0;
-                regressions(i,j).b = 0;
-                regressions(i,j).r = 0;
-            }
-            else if(input_type == DateTime && target_type == DateTime)
-            {
-                // nothing
-
-                regressions(i,j).a = 0;
-                regressions(i,j).b = 0;
-                regressions(i,j).r = 0;
-            }
-            else
-            {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "Tensor<type, 2> calculate_input_target_columns_regressions() const method.\n"
-                       << "Case not found: Column " << columns(input_index).name << " and Column " << columns(target_index).name << ".\n";
-
-                throw logic_error(buffer.str());
-            }
-        }
-    }
-
-    return regressions;
 }
 
 
@@ -9806,82 +9654,6 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
 }
 
 
-/// Filter data set variable using a rank.
-/// The values within the variable must be between minimum and maximum.
-/// @param variable_index Index number where the variable to be filtered is located.
-/// @param minimum Value that determine the lower limit.
-/// @param maximum Value that determine the upper limit.
-/// Returns a indices vector.
-/// @todo
-
-Tensor<Index, 1> DataSet::filter_column(const Index& variable_index, const type& minimum, const type& maximum)
-{
-    const Index samples_number = get_samples_number();
-
-    Tensor<type, 1> filtered_indices(samples_number);
-
-    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-
-    const Tensor<Index, 1> current_samples_indices = used_samples_indices;
-
-    const Index current_samples_number = current_samples_indices.size();
-
-    for(Index i = 0; i < current_samples_number; i++)
-    {
-        const Index index = current_samples_indices(i);
-
-        if(data(index,variable_index) < minimum || data(index,variable_index) > maximum)
-        {
-            filtered_indices(index) = 1.0;
-
-            set_sample_use(index, UnusedSample);
-        }
-    }
-
-//        return filtered_indices.get_indices_greater_than(0.5);
-
-    return Tensor<Index, 1>();
-}
-
-
-/// Filter data set variable using a rank.
-/// The values within the variable must be between minimum and maximum.
-/// @param variable_name String name where the variable to be filtered is located.
-/// @param minimum Value that determine the lower limit.
-/// @param maximum Value that determine the upper limit.
-/// Returns a indices vector.
-/// @todo
-
-Tensor<Index, 1> DataSet::filter_column(const string& variable_name, const type& minimum, const type& maximum)
-{
-    const Index variable_index = get_variable_index(variable_name);
-
-    const Index samples_number = get_samples_number();
-
-    Tensor<type, 1> filtered_indices(samples_number);
-
-    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-
-    const Index current_samples_number = used_samples_indices.size();
-
-    for(Index i = 0; i < current_samples_number; i++)
-    {
-        const Index index = used_samples_indices(i);
-
-        if(data(index,variable_index) < minimum || data(index,variable_index) > maximum)
-        {
-            filtered_indices(index) = 1.0;
-
-            set_sample_use(index, UnusedSample);
-        }
-    }
-
-//        return filtered_indices.get_indices_greater_than(0.5);
-
-    return Tensor<Index, 1>();
-}
-
-
 /// Sets all the samples with missing values to "Unused".
 
 void DataSet::impute_missing_values_unuse()
@@ -9892,10 +9664,7 @@ void DataSet::impute_missing_values_unuse()
 
     for(Index i = 0; i <samples_number; i++)
     {
-        if(has_nan_row(i))
-        {
-            set_sample_use(i, "Unused");
-        }
+        if(has_nan_row(i)) set_sample_use(i, "Unused");
     }
 }
 

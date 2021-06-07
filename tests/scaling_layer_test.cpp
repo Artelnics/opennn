@@ -45,7 +45,7 @@ void ScalingLayerTest::test_constructor()
 
 void ScalingLayerTest::test_get_inputs_number()
 {
-   cout << "test_get_neurons_number\n";
+   cout << "test_get_inputs_number\n";
 
    Tensor<Descriptives, 1> descriptives;
 
@@ -74,6 +74,8 @@ void ScalingLayerTest::test_get_neurons_number()
 
    // Test
 
+   scaling_layer.set();
+
    assert_true(scaling_layer.get_neurons_number() == 0, LOG);
    assert_true(scaling_layer.get_neurons_number() == scaling_layer.get_inputs_number(), LOG);
 
@@ -94,6 +96,8 @@ void ScalingLayerTest::test_get_descriptives()
    cout << "test_get_descriptives\n";
 
    Tensor<Descriptives, 1> descriptives;
+
+   Descriptives item_descriptives;
 
    // Test
 
@@ -127,27 +131,24 @@ void ScalingLayerTest::test_get_descriptives()
 
    // Test
 
-   Tensor<Descriptives, 1> descriptives1(1);
-   scaling_layer.set(descriptives1);
+   descriptives.resize(1);
+   scaling_layer.set(descriptives);
 
-   Descriptives get_des_2;
-   get_des_2 = scaling_layer.get_descriptives(0);
+   item_descriptives = scaling_layer.get_descriptives(0);
 
-   assert_true(abs(get_des_2.minimum + 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(get_des_2.maximum - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(get_des_2.mean - 0) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(get_des_2.standard_deviation - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(item_descriptives.minimum + 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(item_descriptives.maximum - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(item_descriptives.mean - 0) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(item_descriptives.standard_deviation - 1) < static_cast<type>(1e-3), LOG);
 
    // Test
 
-   Descriptives get_des_3;
-   get_des_3 = scaling_layer.get_descriptives(0);
+   item_descriptives = scaling_layer.get_descriptives(0);
 
-   assert_true(abs(get_des_3.minimum - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(get_des_3.maximum - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(get_des_3.mean - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(get_des_3.standard_deviation - 0) < static_cast<type>(1e-3), LOG);
-
+   assert_true(abs(item_descriptives.minimum - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(item_descriptives.maximum - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(item_descriptives.mean - 1) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(item_descriptives.standard_deviation - 0) < static_cast<type>(1e-3), LOG);
 }
 
 
@@ -155,9 +156,11 @@ void ScalingLayerTest::test_get_descriptives_matrix()
 {
    cout << "test_get_descriptives_matrix\n";
 
+   Tensor<Descriptives, 1> descriptives;(1);
+
    // Test
 
-   Tensor<Descriptives, 1> descriptives(1);
+   descriptives.resize(1);
 
    scaling_layer.set(descriptives);
 
@@ -865,10 +868,10 @@ void ScalingLayerTest::test_calculate_outputs()
    scaling_layer.set_scalers(MeanStandardDeviation);
 
    inputs.resize(1,1);
-   Tensor<type, 2> outputs_2 = scaling_layer.calculate_outputs(inputs);
-   assert_true(outputs_2.dimension(0) == 1, LOG);
-   assert_true(outputs_2.dimension(1) == 1, LOG);
-   assert_true(abs(outputs_2(0) - inputs(0)) < static_cast<type>(1e-3), LOG);
+   outputs = scaling_layer.calculate_outputs(inputs);
+   assert_true(outputs.dimension(0) == 1, LOG);
+   assert_true(outputs.dimension(1) == 1, LOG);
+   assert_true(abs(outputs(0) - inputs(0)) < static_cast<type>(1e-3), LOG);
 
    // Test 2_1
 
@@ -880,13 +883,13 @@ void ScalingLayerTest::test_calculate_outputs()
 
    inputs.resize(1,2);
    inputs.setConstant(0);
-   outputs_2 = scaling_layer.calculate_outputs(inputs);
+   outputs = scaling_layer.calculate_outputs(inputs);
 
-   assert_true(outputs_2.dimension(0) == 1, LOG);
-   assert_true(outputs_2.dimension(1) == 2, LOG);
+   assert_true(outputs.dimension(0) == 1, LOG);
+   assert_true(outputs.dimension(1) == 2, LOG);
 
-   assert_true(abs(outputs_2(0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(outputs_2(1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs(0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(outputs(1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 
    // Test 3_0
 

@@ -41,7 +41,6 @@ public:
    Index get_tests_passed_count() const;
    Index get_tests_failed_count() const;
 
-   bool get_numerical_differentiation_tests() const;
    Index get_random_tests_number() const;
 
    const bool& get_display() const;
@@ -52,7 +51,6 @@ public:
    void set_tests_passed_count(const Index&);
    void set_tests_failed_count(const Index&);
 
-   void set_numerical_differentiation_tests(const bool&);
    void set_random_tests_number(const Index&);
 
    void set_message(const string&);
@@ -85,10 +83,6 @@ protected:
    /// Number of tests which have failed the test case.
 
    Index tests_failed_count;
-
-   /// True if test using numerical differentiation are to be performed.
-
-   bool numerical_differentiation_tests;
 
    /// Number of iterations in random tests loops.
 

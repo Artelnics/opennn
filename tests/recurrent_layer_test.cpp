@@ -200,14 +200,18 @@ void RecurrentLayerTest::test_get_parameters()
 {
    cout << "test_get_parameters\n";
 
+   Tensor<type, 1> parameters;
 
+   Tensor<type, 1> biases;
+   Tensor<type, 2> input_weights;
+   Tensor<type, 2> recurrent_weights;
 
    // Test
 
    recurrent_layer.set(1, 1);
    recurrent_layer.set_parameters_constant(1.0);
 
-   Tensor<type, 1> parameters = recurrent_layer.get_parameters();
+   recurrent_layer.get_parameters();
 
    assert_true(parameters.size() == 3, LOG);
    assert_true(parameters(0) == 1.0, LOG);
@@ -222,7 +226,6 @@ void RecurrentLayerTest::test_get_parameters()
 
    recurrent_layer.initialize_recurrent_weights(-0.48);
 
-
    parameters = recurrent_layer.get_parameters();
 
    assert_true(parameters.size() == 28, LOG);
@@ -233,9 +236,9 @@ void RecurrentLayerTest::test_get_parameters()
 
    // Test
 
-   Tensor<type, 1> biases(2);
-   Tensor<type, 2> input_weights(3, 2);
-   Tensor<type, 2> recurrent_weights(2,2);
+   biases.resize(2);
+   input_weights.resize(3, 2);
+   recurrent_weights.resize(2,2);
 
    recurrent_layer.set(3,  2);
    biases(0) = 0.41;
@@ -269,8 +272,6 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
    Tensor<type, 2> numerical_activation_derivative;
    Tensor<type, 0> maximum_difference;
 
-    numerical_differentiation_tests = true;
-
    // Test
 
    recurrent_layer.set(1, 1);
@@ -302,8 +303,6 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 
    // Test
 
-   if(numerical_differentiation_tests)
-   {
       recurrent_layer.set(2, 4);
 
       combinations.resize(1,4);
@@ -336,12 +335,9 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 
 //      assert_true(absolute_value(activations_derivatives - numerical_activation_derivative) < 1.0e-3, LOG);
 
-   }
 
    // Test
 
-   if(numerical_differentiation_tests)
-   {
       recurrent_layer.set(4, 2);
 
       parameters.resize(14);
@@ -392,8 +388,6 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 //      activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
 //      numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
 //      assert_true(absolute_value((activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
-   }
-
 }
 
 
@@ -406,13 +400,15 @@ void RecurrentLayerTest::test_calculate_outputs()
 
    Tensor<type, 1> parameters;
 
-   Index samples = 3;
+   Index samples;
 
    Tensor<type, 2> new_weights;
    Tensor<type, 2> new_recurrent_weights;
    Tensor<type, 1> new_biases;
 
    // Test
+
+   samples = 3;
 
    recurrent_layer.set(2,2);
 
