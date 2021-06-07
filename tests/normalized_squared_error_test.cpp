@@ -52,7 +52,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
    Tensor<string, 1> uses;
 
    Tensor<type, 1> targets_mean;
-   Tensor<type, 2> targets;
+   Tensor<type, 2> target_data;
 
    type normalization_coefficient;
 
@@ -69,7 +69,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 
    data_set.set_columns_uses(uses);
 
-   targets = data_set.get_target_data();
+   target_data = data_set.get_target_data();
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, outputs_number});
    neural_network.set_parameters_random();
@@ -77,7 +77,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
    data_set.set(samples_number, inputs_number, outputs_number);
    data_set.set_data_random();
 
-   normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(targets, targets_mean);
+   normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
 
    assert_true(normalization_coefficient > 0, LOG);
 }
