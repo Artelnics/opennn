@@ -136,7 +136,7 @@ public:
    void test_calculate_average_reachability();
 
    void test_calculate_LOF_outliers();
-   void test_unuse_LOF_outliers();
+   void test_unuse_local_outlier_factor_outliers();
 
    // Data generation
 

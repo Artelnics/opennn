@@ -55,7 +55,7 @@ int main(void)
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);*/
 
         t0 = clock();
-        Tensor<Index, 1> outliers = data_set.calculate_LocalOutlierFactor_outliers(K, data_set.get_used_samples_number(), contamination);
+        Tensor<Index, 1> outliers = data_set.calculate_local_outlier_factor_outliers(K, data_set.get_used_samples_number(), contamination);
         t1 = clock();
 
         double time = (double(t1-t0)/CLOCKS_PER_SEC);
@@ -116,7 +116,7 @@ int main(void)
             }
         }
 
-        cout<<"RESULTS FOR: "<< name<<" dataset"<<endl;
+        cout<<"RESULTS FOR: "<< name<<" data_set"<<endl;
         cout<<"Precision:"<<truePositives/(truePositives+falseNegatives)<<endl;
         cout<<"Recall:"<<truePositives/(truePositives+falsePositives)<<endl;
         cout<<"Detected Number of Outlier:"<< count<<endl;

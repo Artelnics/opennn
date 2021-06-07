@@ -547,7 +547,6 @@ void GeneticAlgorithm::perform_selection()
 
     // Roulette wheel
 
-
     do
     {
         const type pointer = static_cast<type>(rand()/(RAND_MAX+1.0))*cumulative_fitness(individuals_number-1);
