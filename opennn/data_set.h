@@ -377,6 +377,7 @@ public:
    void set(const DataSet&);
    void set(const tinyxml2::XMLDocument&);
    void set(const string&);
+   void set(const string&, const char&, const bool&);
 
    void set_default();
 
@@ -576,14 +577,7 @@ public:
 
    void print_top_input_target_columns_correlations() const;
 
-   // Inputs-targets regressions
-
-   Tensor<Correlation, 2> calculate_input_target_columns_regressions() const;
-
    // Filtering methods
-
-   Tensor<Index, 1> filter_column(const Index&, const type&, const type&);
-   Tensor<Index, 1> filter_column(const string&, const type&, const type&);
 
    Tensor<Index, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&);
 

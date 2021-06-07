@@ -161,6 +161,20 @@ BoxPlot::BoxPlot(const type& new_minimum,
 }
 
 
+void BoxPlot::set(const type& new_minimum,
+                 const type& new_first_cuartile,
+                 const type& new_median,
+                 const type& new_third_quartile,
+                 const type& new_maximum)
+{
+    minimum = new_minimum;
+    first_quartile = new_first_cuartile;
+    median = new_median;
+    third_quartile = new_third_quartile;
+    maximum = new_maximum;
+}
+
+
 /// Saves to a file the minimum, maximum, mean and standard deviation
 /// of the descriptives structure.
 /// @param file_name Name of descriptives data file.
@@ -1358,27 +1372,27 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>&
 
 BoxPlot box_plot(const Tensor<type, 1>& vector)
 {
-    BoxPlot boxplot;
+    BoxPlot box_plot;
 
     if(vector.dimension(0) == 0) {
-        boxplot.minimum = NAN;
-        boxplot.first_quartile = NAN;
-        boxplot.median = NAN;
-        boxplot.third_quartile = NAN;
-        boxplot.maximum = NAN;
-        return boxplot;
+        box_plot.minimum = NAN;
+        box_plot.first_quartile = NAN;
+        box_plot.median = NAN;
+        box_plot.third_quartile = NAN;
+        box_plot.maximum = NAN;
+        return box_plot;
     }
 
 
     const Tensor<type, 1> quartiles = OpenNN::quartiles(vector);
 
-    boxplot.minimum = minimum(vector);
-    boxplot.first_quartile = quartiles(0);
-    boxplot.median = quartiles(1);
-    boxplot.third_quartile = quartiles(2);
-    boxplot.maximum = maximum(vector);
+    box_plot.minimum = minimum(vector);
+    box_plot.first_quartile = quartiles(0);
+    box_plot.median = quartiles(1);
+    box_plot.third_quartile = quartiles(2);
+    box_plot.maximum = maximum(vector);
 
-    return boxplot;
+    return box_plot;
 }
 
 
@@ -1388,19 +1402,19 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
 
 BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
-    BoxPlot boxplot;
+    BoxPlot box_plot;
 
-    if(vector.dimension(0) == 0 || indices.dimension(0) == 0) return boxplot;
+    if(vector.dimension(0) == 0 || indices.dimension(0) == 0) return box_plot;
 
     const Tensor<type, 1> quartiles = OpenNN::quartiles(vector, indices);
 
-    boxplot.minimum = minimum(vector, indices);
-    boxplot.first_quartile = quartiles(0);
-    boxplot.median = quartiles(1);
-    boxplot.third_quartile = quartiles(2);
-    boxplot.maximum = maximum(vector, indices);
+    box_plot.minimum = minimum(vector, indices);
+    box_plot.first_quartile = quartiles(0);
+    box_plot.median = quartiles(1);
+    box_plot.third_quartile = quartiles(2);
+    box_plot.maximum = maximum(vector, indices);
 
-    return boxplot;
+    return box_plot;
 }
 
 

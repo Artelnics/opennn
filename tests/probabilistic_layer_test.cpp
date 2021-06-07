@@ -622,12 +622,13 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
 
-
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 2> biases;
 
     Tensor<type, 2> inputs;
     Tensor<type, 1> parameters;
+
+    Tensor<type,2> outputs;
 
     // Test
 
@@ -646,9 +647,9 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 
-    Tensor<type,2>outputs = probabilistic_layer.calculate_outputs(inputs);
+    outputs = probabilistic_layer.calculate_outputs(inputs);
 
-    Tensor<type,1>perceptron_sol(4);
+    Tensor<type,1> perceptron_sol(4);
     perceptron_sol.setValues({7,-5,1,7});
 
     Tensor<type,0>div = perceptron_sol.exp().sum();
@@ -665,14 +666,14 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
 
-    Tensor<type,2>outputs_2 = probabilistic_layer.calculate_outputs(inputs);
+    outputs = probabilistic_layer.calculate_outputs(inputs);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 4, LOG);
-    assert_true(static_cast<Index>(outputs_2(0,0)) == 1, LOG);
-    assert_true(static_cast<Index>(outputs_2(1,0)) == 0, LOG);
-    assert_true(static_cast<Index>(outputs_2(2,0)) == 0, LOG);
+    assert_true(static_cast<Index>(outputs(0,0)) == 1, LOG);
+    assert_true(static_cast<Index>(outputs(1,0)) == 0, LOG);
+    assert_true(static_cast<Index>(outputs(2,0)) == 0, LOG);
 
     // Test
 
@@ -759,9 +760,7 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
 {
     cout << "test_calculate_error_gradient\n";
 
-    ProbabilisticLayer probabilistic_layer(2,2);
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+    ProbabilisticLayer probabilistic_layer;
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs(1,2);
@@ -772,6 +771,11 @@ void ProbabilisticLayerTest::test_calculate_error_gradient()
     ProbabilisticLayerBackPropagation back_propagation;
 
     // Test
+
+    probabilistic_layer.set(2,2);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 
     parameters.setValues({1,1,1,1,1,1});
     probabilistic_layer.set_parameters(parameters);

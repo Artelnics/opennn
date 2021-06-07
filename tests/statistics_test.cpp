@@ -87,16 +87,19 @@ void StatisticsTest::test_has_mean_zero_standard_deviation_one()
     assert_true(descriptives.has_mean_zero_standard_deviation_one(), LOG);
 
     // Test
-    Descriptives descriptives_1(-4.0 ,5.0 ,1.0 ,1.0);
-    assert_true(!descriptives_1.has_mean_zero_standard_deviation_one(), LOG);
+
+    descriptives.set(-4.0 ,5.0 ,1.0 ,1.0);
+    assert_true(!descriptives.has_mean_zero_standard_deviation_one(), LOG);
 
     // Test
-    Descriptives descriptives_2(-4.0 ,5.0 ,0.0 ,2.0);
-    assert_true(!descriptives_2.has_mean_zero_standard_deviation_one(), LOG);
+
+    descriptives.set(-4.0 ,5.0 ,0.0 ,2.0);
+    assert_true(!descriptives.has_mean_zero_standard_deviation_one(), LOG);
 
     // Test
-    Descriptives descriptives_3(-4.0 ,5.0 ,2.0 ,2.0);
-    assert_true(!descriptives_3.has_mean_zero_standard_deviation_one(), LOG);
+
+    descriptives.set(-4.0 ,5.0 ,2.0 ,2.0);
+    assert_true(!descriptives.has_mean_zero_standard_deviation_one(), LOG);
 }
 
 
@@ -104,21 +107,24 @@ void StatisticsTest::test_has_minimum_minus_one_maximum_one()
 {
     cout << "test_set_has_minimum_minus_one_maximum_one\n";
 
+    Descriptives descriptives;
+
     //Test_0
-    Descriptives descriptives(-1.0 ,1.0 ,0.0 ,1.0);
+
+    descriptives.set(-1.0 ,1.0 ,0.0 ,1.0);
     assert_true(descriptives.has_minimum_minus_one_maximum_one(), LOG);
 
     //Test_1
-    Descriptives descriptives_1(-2.0 ,1.0 ,0.0 ,1.0);
-    assert_true(!descriptives_1.has_minimum_minus_one_maximum_one(), LOG);
+    descriptives.set(-2.0 ,1.0 ,0.0 ,1.0);
+    assert_true(!descriptives.has_minimum_minus_one_maximum_one(), LOG);
 
     //Test_2
-    Descriptives descriptives_2(-1.0 ,2.0 ,0.0 ,1.0);
-    assert_true(!descriptives_2.has_minimum_minus_one_maximum_one(), LOG);
+    descriptives.set(-1.0 ,2.0 ,0.0 ,1.0);
+    assert_true(!descriptives.has_minimum_minus_one_maximum_one(), LOG);
 
     //Test_3
-    Descriptives descriptives_3(-2.0 ,2.0 ,0.0 ,1.0);
-    assert_true(!descriptives_3.has_minimum_minus_one_maximum_one(), LOG);
+    descriptives.set(-2.0 ,2.0 ,0.0 ,1.0);
+    assert_true(!descriptives.has_minimum_minus_one_maximum_one(), LOG);
 }
 
 
@@ -142,35 +148,43 @@ void StatisticsTest::test_count_empty_bins()
 {
     cout << "test_count_empty_bins\n";
 
+    Tensor<type, 1> centers;
+    Tensor<Index, 1> frecuencies;
+
     // Test
+
     Histogram histogram;
     assert_true(histogram.count_empty_bins() == 0, LOG);
 
     // Test
-    Tensor<type, 1> centers_1(3);
-    centers_1.setValues({1,2,3});
-    Tensor<Index, 1> frecuencies_1(3);
-    frecuencies_1.setValues({1,1,0});
 
-    Histogram histogram_1(centers_1,frecuencies_1);
+    centers.resize(3);
+    centers.setValues({1,2,3});
+
+    frecuencies.resize(3);
+    frecuencies.setValues({1,1,0});
+
+    Histogram histogram_1(centers,frecuencies);
     assert_true(histogram_1.count_empty_bins() == 1, LOG);
 
     // Test
-    Tensor<type, 1> centers_2(3);
-    centers_2.setZero();
-    Tensor<Index, 1> frecuencies_2(3);
-    frecuencies_2.setZero();
+    centers.resize(3);
+    centers.setZero();
 
-    Histogram histogram_2(centers_2,frecuencies_2);
+    frecuencies.resize(3);
+    frecuencies.setZero();
+
+    Histogram histogram_2(centers,frecuencies);
     assert_true(histogram_2.count_empty_bins() == 3, LOG);
 
     // Test
-    Tensor<type, 1> centers_3(3);
-    centers_3.setValues({1,2,3});
-    Tensor<Index, 1> frecuencies_3(3);
-    frecuencies_3.setZero();
+    centers.resize(3);
+    centers.setValues({1,2,3});
 
-    Histogram histogram_3(centers_3,frecuencies_3);
+    frecuencies.resize(3);
+    frecuencies.setZero();
+
+    Histogram histogram_3(centers,frecuencies);
     assert_true(histogram_3.count_empty_bins() == 3, LOG);
 }
 
@@ -184,30 +198,30 @@ void StatisticsTest::test_calculate_minimum_frequency()
     assert_true(histogram.calculate_minimum_frequency() == 0, LOG);
 
     // Test
-    Tensor<type, 1> centers_1(3);
-    centers_1.setValues({1,2,3});
-    Tensor<Index, 1> frecuencies_1(3);
-    frecuencies_1.setValues({1,1,0});
+    Tensor<type, 1> centers(3);
+    centers.setValues({1,2,3});
+    Tensor<Index, 1> frecuencies(3);
+    frecuencies.setValues({1,1,0});
 
-    Histogram histogram_1(centers_1,frecuencies_1);
+    Histogram histogram_1(centers,frecuencies);
     assert_true(histogram_1.calculate_minimum_frequency() == 0, LOG);
 
     // Test
-    Tensor<type, 1> centers_2(3);
-    centers_2.setZero();
-    Tensor<Index, 1> frecuencies_2(3);
-    frecuencies_2.setZero();
+    centers.resize(3);
+    centers.setZero();
+    frecuencies.resize(3);
+    frecuencies.setZero();
 
-    Histogram histogram_2(centers_2,frecuencies_2);
+    Histogram histogram_2(centers,frecuencies);
     assert_true(histogram_2.calculate_minimum_frequency() == 0, LOG);
 
     // Test
-    Tensor<type, 1> centers_3(3);
-    centers_3.setValues({1,2,3});
-    Tensor<Index, 1> frecuencies_3(3);
-    frecuencies_3.setValues({5,4,10});
+    centers.resize(3);
+    centers.setValues({1,2,3});
+    frecuencies.resize(3);
+    frecuencies.setValues({5,4,10});
 
-    Histogram histogram_3(centers_3,frecuencies_3);
+    Histogram histogram_3(centers,frecuencies);
     assert_true(histogram_3.calculate_minimum_frequency() == 4, LOG);
 }
 
@@ -221,21 +235,21 @@ void StatisticsTest::test_calculate_maximum_frequency()
     assert_true(histogram.calculate_maximum_frequency() == 0, LOG);
 
     // Test
-    Tensor<type, 1> centers_1(3);
-    centers_1.setValues({1,2,3});
-    Tensor<Index, 1> frecuencies_1(3);
-    frecuencies_1.setValues({1,0,1});
+    Tensor<type, 1> centers(3);
+    centers.setValues({1,2,3});
+    Tensor<Index, 1> frecuencies(3);
+    frecuencies.setValues({1,0,1});
 
-    Histogram histogram_1(centers_1,frecuencies_1);
+    Histogram histogram_1(centers,frecuencies);
     assert_true(histogram_1.calculate_maximum_frequency() == 1, LOG);
 
     // Test
-    Tensor<type, 1> centers_2(3);
-    centers_2.setValues({1,3,5});
-    Tensor<Index, 1> frecuencies_2(3);
-    frecuencies_2.setValues({5,21,8});
+    centers.resize(3);
+    centers.setValues({1,3,5});
+    frecuencies.resize(3);
+    frecuencies.setValues({5,21,8});
 
-    Histogram histogram_2(centers_2,frecuencies_2);
+    Histogram histogram_2(centers,frecuencies);
     assert_true(histogram_2.calculate_maximum_frequency() == 21, LOG);
 
 }
@@ -250,30 +264,31 @@ void StatisticsTest::test_calculate_most_populated_bin()
     assert_true(histogram.calculate_most_populated_bin() == 0, LOG);
 
     // Test
-    Tensor<type, 1> centers_1(3);
-    centers_1.setValues({1,2,3});
-    Tensor<Index, 1> frecuencies_1(3);
-    frecuencies_1.setValues({0,0,1});
+    Tensor<type, 1> centers(3);
+    centers.setValues({1,2,3});
+    Tensor<Index, 1> frecuencies(3);
+    frecuencies.setValues({0,0,1});
 
-    Histogram histogram_1(centers_1,frecuencies_1);
+    Histogram histogram_1(centers,frecuencies);
     assert_true(histogram_1.calculate_most_populated_bin() == 2, LOG);
 
     // Test
-    Tensor<type, 1> centers_2(3);
-    centers_2.setZero();
-    Tensor<Index, 1> frecuencies_2(3);
-    frecuencies_2.setZero();
+    centers.resize(3);
+    centers.setZero();
+    frecuencies.resize(3);
+    frecuencies.setZero();
 
-    Histogram histogram_2(centers_2,frecuencies_2);
+    Histogram histogram_2(centers,frecuencies);
     assert_true(histogram_2.calculate_most_populated_bin() == 0, LOG);
 
     // Test
-    Tensor<type, 1> centers_3(3);
-    centers_3.setValues({1,5,9});
-    Tensor<Index, 1> frecuencies_3(3);
-    frecuencies_3.setValues({5,4,10});
+    centers.resize(3);
+    centers.setValues({1,5,9});
 
-    Histogram histogram_3(centers_3,frecuencies_3);
+    frecuencies.resize(3);
+    frecuencies.setValues({5,4,10});
+
+    Histogram histogram_3(centers,frecuencies);
     assert_true(histogram_3.calculate_most_populated_bin() == 2, LOG);
 
 }
@@ -303,12 +318,12 @@ void StatisticsTest::test_calculate_minimal_centers()
     assert_true(::isnan(histogram_0.calculate_minimal_centers()(0)), LOG);
 
     // Test
-    Tensor<type, 1> centers_1(3);
-    centers_1.setValues({1,2,3});
-    Tensor<Index, 1> frecuencies_1(3);
-    frecuencies_1.setValues({0,0,1});
+    Tensor<type, 1> centers(3);
+    centers.setValues({1,2,3});
+    Tensor<Index, 1> frecuencies(3);
+    frecuencies.setValues({0,0,1});
 
-    Histogram histogram_1(centers_1,frecuencies_1);
+    Histogram histogram_1(centers,frecuencies);
 
     assert_true(static_cast<Index>(histogram_1.calculate_minimal_centers()(0)) == 1, LOG);
     assert_true(static_cast<Index>(histogram_1.calculate_minimal_centers()(1)) == 2, LOG);
@@ -337,12 +352,12 @@ void StatisticsTest::test_calculate_maximal_centers()
     assert_true(::isnan(histogram_0.calculate_maximal_centers()(0)), LOG);
 
     // Test
-    Tensor<type, 1> centers_1(3);
-    centers_1.setValues({1,2,3});
-    Tensor<Index, 1> frecuencies_1(3);
-    frecuencies_1.setValues({1,1,0});
+    Tensor<type, 1> centers(3);
+    centers.setValues({1,2,3});
+    Tensor<Index, 1> frecuencies(3);
+    frecuencies.setValues({1,1,0});
 
-    Histogram histogram_1(centers_1,frecuencies_1);
+    Histogram histogram_1(centers,frecuencies);
 
     assert_true(static_cast<Index>(histogram_1.calculate_maximal_centers()(0)) == 1, LOG);
     assert_true(static_cast<Index>(histogram_1.calculate_maximal_centers()(1)) == 2, LOG);
@@ -358,12 +373,12 @@ void StatisticsTest::test_calculate_bin()
     assert_true(histogram.calculate_bin(0) == 0, LOG);
 
     // Test
-    Tensor<type, 1> centers_1(3);
-    centers_1.setValues({2,4,6});
-    Tensor<Index, 1> frecuencies_1(3);
-    frecuencies_1.setValues({0,0,0});
+    Tensor<type, 1> centers(3);
+    centers.setValues({2,4,6});
+    Tensor<Index, 1> frecuencies(3);
+    frecuencies.setValues({0,0,0});
 
-    Histogram histogram_1(centers_1,frecuencies_1);
+    Histogram histogram_1(centers,frecuencies);
 
     assert_true(histogram_1.calculate_bin(6) == 2, LOG);
 
@@ -398,21 +413,21 @@ void StatisticsTest::test_calculate_frequency()
     assert_true(histogram.calculate_frequency(0) == 0, LOG);
 
     // Test
-    Tensor<type, 1> centers_1(3);
-    centers_1.setValues({1,2,3});
-    Tensor<Index, 1> frecuencies_1(3);
-    frecuencies_1.setValues({0,1,2});
+    Tensor<type, 1> centers(3);
+    centers.setValues({1,2,3});
+    Tensor<Index, 1> frecuencies(3);
+    frecuencies.setValues({0,1,2});
 
-    Histogram histogram_1(centers_1,frecuencies_1);
+    Histogram histogram_1(centers,frecuencies);
     assert_true(histogram_1.calculate_frequency(2) == 1, LOG);
 
     // Test
-    Tensor<type, 1> centers_2(3);
-    centers_2.setZero();
-    Tensor<Index, 1> frecuencies_2(3);
-    frecuencies_2.setZero();
+    centers.resize(3);
+    centers.setZero();
+    frecuencies.resize(3);
+    frecuencies.setZero();
 
-    Histogram histogram_2(centers_2,frecuencies_2);
+    Histogram histogram_2(centers,frecuencies);
     assert_true(histogram_2.calculate_frequency(0) == 0, LOG);
 
     // Test
@@ -580,8 +595,8 @@ void StatisticsTest::test_standard_deviation()
 
    assert_true(static_cast<Index>(standard_deviation(vector)) < static_cast<type>(1.0e-6), LOG);
 
-
    // Test
+
    vector.resize(2);
    type standard_deviation;
    vector.setValues({1, 1.0});
@@ -765,7 +780,6 @@ void StatisticsTest::test_calculate_asymmetry()
     cout << "test_calculate_asymmetry\n";
 
     Tensor<type, 1> vector;
-    Tensor<type, 1> vector_missing_values;
 
     // Test
     vector.resize(3);
@@ -798,15 +812,15 @@ void StatisticsTest::test_calculate_asymmetry()
     vector[2] = 3.0;
     vector[3] = 9.0;
 
-    vector_missing_values.resize(5);
-    vector_missing_values[0] = 1.0;
-    vector_missing_values[1] = 5.0;
-    vector_missing_values[2] = static_cast<type>(NAN);
-    vector_missing_values[3] = 3.0;
-    vector_missing_values[4] = 9.0;
+    vector.resize(5);
+    vector[0] = 1.0;
+    vector[1] = 5.0;
+    vector[2] = static_cast<type>(NAN);
+    vector[3] = 3.0;
+    vector[4] = 9.0;
 
     type asymmetry = OpenNN::asymmetry(vector);
-    type asymmetry_missing_values = OpenNN::asymmetry(vector_missing_values);
+    type asymmetry_missing_values = OpenNN::asymmetry(vector);
 
     assert_true(abs(asymmetry - asymmetry_missing_values) < static_cast<type>(1.0e-3), LOG);
 
@@ -818,7 +832,6 @@ void StatisticsTest::test_calculate_kurtosis()
     cout << "test_calculate_kurtosis\n";
 
     Tensor<type, 1> vector;
-    Tensor<type, 1> vector_missing_values;
 
     // Test
 
@@ -835,15 +848,15 @@ void StatisticsTest::test_calculate_kurtosis()
     vector[2] = 3.0;
     vector[3] = 9.0;
 
-    vector_missing_values.resize(5);
-    vector_missing_values[0] = 1.0;
-    vector_missing_values[1] = 5.0;
-    vector_missing_values[2] = static_cast<type>(NAN);
-    vector_missing_values[3] = 3.0;
-    vector_missing_values[4] = 9.0;
+    vector.resize(5);
+    vector[0] = 1.0;
+    vector[1] = 5.0;
+    vector[2] = static_cast<type>(NAN);
+    vector[3] = 3.0;
+    vector[4] = 9.0;
 
     type kurtosis = OpenNN::kurtosis(vector);
-    type kurtosis_missing_values = OpenNN::kurtosis(vector_missing_values);
+    type kurtosis_missing_values = OpenNN::kurtosis(vector);
 
     assert_true(abs(kurtosis - kurtosis_missing_values) < static_cast<type>(1.0e-3), LOG);
 }
@@ -853,143 +866,155 @@ void StatisticsTest::test_quartiles()
 {
    cout << "test_quartiles\n";
 
+   Tensor<type, 1> vector;
+   Tensor<type, 1> quartiles;
+
    // Test
-   Tensor<type, 1> vector(1);
+
+   vector.resize(1);
    vector.setZero();
 
-   Tensor<type, 1> quartiles = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
    assert_true(static_cast<Index>(quartiles(0)) < static_cast<type>(1.0e-6), LOG);
    assert_true(static_cast<Index>(quartiles(1)) < static_cast<type>(1.0e-6), LOG);
    assert_true(static_cast<Index>(quartiles(2)) < static_cast<type>(1.0e-6), LOG);
 
    // Test
+
    vector.resize(2);
    vector.setValues({0,1});
 
-   Tensor<type, 1> quartiles1 = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles1(0) - static_cast<type>(0.25) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles1(1) - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles1(2) - static_cast<type>(0.75) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(0) - static_cast<type>(0.25) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(1) - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(2) - static_cast<type>(0.75) < static_cast<type>(1.0e-6), LOG);
 
    // Test
+
    vector.resize(3);
    vector.setValues({0,1,2});
 
-   Tensor<type, 1> quartiles2 = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles2(0) - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles2(1) - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles2(2) - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(0) - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(1) - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(2) - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
 
    // Test 
+
    vector.resize(4);
    vector.setValues({0,1,2,3});
 
-   Tensor<type, 1> quartiles3 = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles3(0) - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles3(1) - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles3(2) - static_cast<type>(2.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(0) - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(1) - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(2) - static_cast<type>(2.5) < static_cast<type>(1.0e-6), LOG);
 
    // Test 5
+
    vector.resize(5);
    vector.setValues({0,1,2,3,4});
 
-   Tensor<type, 1> quartiles4 = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles4[0] - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles4[1] - static_cast<type>(2.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles4[2] - static_cast<type>(3.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[1] - static_cast<type>(2.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[2] - static_cast<type>(3.5) < static_cast<type>(1.0e-6), LOG);
 
    // Test 6
+
    vector.resize(6);
    vector.setValues({0,1,2,3,4,5});
 
-   Tensor<type, 1> quartiles5 = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles5[0] - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles5[1] - static_cast<type>(2.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles5[2] - static_cast<type>(4.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[1] - static_cast<type>(2.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[2] - static_cast<type>(4.0) < static_cast<type>(1.0e-6), LOG);
 
    // Test 7
+
    vector.resize(7);
    vector.setValues({0,1,2,3,4,5,6});
 
-   Tensor<type, 1> quartiles6 = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles6[0] - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles6[1] - static_cast<type>(3.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles6[2] - static_cast<type>(5.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[1] - static_cast<type>(3.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[2] - static_cast<type>(5.0) < static_cast<type>(1.0e-6), LOG);
 
    // Test 8
+
    vector.resize(8);
    vector.setValues({0,1,2,3,4,5,6,7});
 
-   Tensor<type, 1> quartiles7 = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles7[0] - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles7[1] - static_cast<type>(3.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles7[2] - static_cast<type>(5.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[1] - static_cast<type>(3.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[2] - static_cast<type>(5.5) < static_cast<type>(1.0e-6), LOG);
 
    // Test 9
    vector.resize(9);
    vector.setValues({0,1,2,3,4,5,6,7,8});
 
-   Tensor<type, 1> quartiles8 = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles8[0] - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles8[1] - static_cast<type>(4.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles8[2] - static_cast<type>(6.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[1] - static_cast<type>(4.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[2] - static_cast<type>(6.5) < static_cast<type>(1.0e-6), LOG);
 
    // Test 10
    vector.resize(9);
    vector.setValues({1,4,6,2,0,3,4,7,10});
 
-   Tensor<type, 1> quartiles9 = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles9[0] - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles9[1] - static_cast<type>(4.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles9[2] - static_cast<type>(6.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[1] - static_cast<type>(4.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[2] - static_cast<type>(6.5) < static_cast<type>(1.0e-6), LOG);
 
    // Test 11
+
    vector.resize(20);
    vector.setValues({12,14,50,76,12,34,56,74,89,60,96,24,53,25,67,84,92,45,62,86});
 
-   Tensor<type, 1> quartiles10 = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles10[0] - static_cast<type>(29.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles10[1] - static_cast<type>(58.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles10[2] - static_cast<type>(80.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(29.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[1] - static_cast<type>(58.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[2] - static_cast<type>(80.0) < static_cast<type>(1.0e-6), LOG);
 
    // Test missing values:
 
    // Test
-   Tensor<type, 1> vector_m;
-   vector_m.resize(5);
-   vector_m[0] = 1;
-   vector_m[1] = 2;
-   vector_m[2] = 3;
-   vector_m[3] = static_cast<type>(NAN);
-   vector_m[4] = 4;
 
-   Tensor<type, 1> quartiles_missing_values = OpenNN::quartiles(vector_m);
+   vector.resize(5);
+   vector[0] = 1;
+   vector[1] = 2;
+   vector[2] = 3;
+   vector[3] = static_cast<type>(NAN);
+   vector[4] = 4;
+
+   Tensor<type, 1> quartiles_missing_values = OpenNN::quartiles(vector);
 
    assert_true(quartiles_missing_values(0) - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
    assert_true(quartiles_missing_values(1) - static_cast<type>(2.5) < static_cast<type>(1.0e-6), LOG);
    assert_true(quartiles_missing_values(2) - static_cast<type>(3.5) < static_cast<type>(1.0e-6), LOG);
 
    // Test
-   vector_m.resize(6);
-   vector_m[0] = 1;
-   vector_m[1] = 2;
-   vector_m[2] = 3;
-   vector_m[3] = static_cast<type>(NAN);
-   vector_m[4] = 4;
-   vector_m[5] = 5;
+   vector.resize(6);
+   vector[0] = 1;
+   vector[1] = 2;
+   vector[2] = 3;
+   vector[3] = static_cast<type>(NAN);
+   vector[4] = 4;
+   vector[5] = 5;
 
-   Tensor<type, 1> quartiles_missing_values2 = OpenNN::quartiles(vector_m);
+   Tensor<type, 1> quartiles_missing_values2 = OpenNN::quartiles(vector);
 
    assert_true(quartiles_missing_values2(0) - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
    assert_true(quartiles_missing_values2(1) - static_cast<type>(3.0) < static_cast<type>(1.0e-6), LOG);
@@ -1053,11 +1078,11 @@ void StatisticsTest::test_histogram()
 
 //   Histogram histogram_2(vector, 10);
 
-//   centers_2 = histogram_2.centers;
-//   frequencies_2 = histogram_2.frequencies;
+//   centers = histogram_2.centers;
+//   frequencies = histogram_2.frequencies;
 
 //   Tensor<Index, 0> sum_frec_2;
-//   sum_frec_2 = frequencies_2.sum();
+//   sum_frec_2 = frequencies.sum();
    //assert_true(sum_frec_2(0) == 20, LOG); // <--- failed
 
 }
@@ -1066,6 +1091,9 @@ void StatisticsTest::test_histogram()
 void StatisticsTest::test_histograms()
 {
     cout << "test_histograms\n";
+
+    Tensor<Histogram, 1> histograms;
+
 
     Tensor<type, 2> matrix(3,3);
     matrix(0,0) = 1.0;
@@ -1078,15 +1106,14 @@ void StatisticsTest::test_histograms()
     matrix(2,1) = 3.0;
     matrix(2,2) = 3.0;
 
-    Tensor<Histogram, 1> histogram(matrix.dimension(1));
+    histograms = OpenNN::histograms(matrix, 3);
 
-    histogram = histograms(matrix, 3);
     Tensor<Index, 1> solution(3);
     solution.setValues({1, 1, 1});
 
-    //assert_true(histogram[0].frequencies == solution, LOG);
-    //assert_true(histogram[1].frequencies == solution, LOG);
-    //assert_true(histogram[2].frequencies == solution, LOG);
+//    assert_true(histograms[0].frequencies == 1, LOG);
+//    assert_true(histograms[1].frequencies == 1, LOG);
+//    assert_true(histograms[2].frequencies == 1, LOG);
 }
 
 
@@ -1274,44 +1301,48 @@ void StatisticsTest::test_box_plot()
 
     Tensor<type, 1> vector;
 
-    // Test
-
-    BoxPlot boxplot_0 = box_plot(vector);
-
-    assert_true(boxplot_0.minimum - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
-    assert_true(boxplot_0.first_quartile - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
-    assert_true(boxplot_0.median - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
-    assert_true(boxplot_0.third_quartile - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
-    assert_true(boxplot_0.maximum - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    BoxPlot box_plot;
+    BoxPlot solution;
 
     // Test
+
+    box_plot = OpenNN::box_plot(vector);
+
+    assert_true(box_plot.minimum - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    assert_true(box_plot.first_quartile - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    assert_true(box_plot.median - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    assert_true(box_plot.third_quartile - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    assert_true(box_plot.maximum - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+
+    // Test
+
     vector.resize(8);
     vector.setValues({2.0, 2.0, 3.0, 5.0, 6.0, 7.0, 8.0, 9.0});
 
-    BoxPlot boxplot = box_plot(vector);
+    box_plot = OpenNN::box_plot(vector);
 
-    BoxPlot solution(2.0, 2.5, 5.5, 7.5, 9.0);
+    solution.set(2.0, 2.5, 5.5, 7.5, 9.0);
 
-    assert_true(boxplot.minimum - solution.minimum < static_cast<type>(1.0e-6), LOG);
-    assert_true(boxplot.first_quartile - solution.first_quartile < static_cast<type>(1.0e-6), LOG);
-    assert_true(boxplot.median - solution.median < static_cast<type>(1.0e-6), LOG);
-    assert_true(boxplot.third_quartile - solution.third_quartile < static_cast<type>(1.0e-6), LOG);
-    assert_true(boxplot.maximum - solution.maximum < static_cast<type>(1.0e-6), LOG);
+    assert_true(box_plot.minimum - solution.minimum < static_cast<type>(1.0e-6), LOG);
+    assert_true(box_plot.first_quartile - solution.first_quartile < static_cast<type>(1.0e-6), LOG);
+    assert_true(box_plot.median - solution.median < static_cast<type>(1.0e-6), LOG);
+    assert_true(box_plot.third_quartile - solution.third_quartile < static_cast<type>(1.0e-6), LOG);
+    assert_true(box_plot.maximum - solution.maximum < static_cast<type>(1.0e-6), LOG);
 
     // Test missing values
 
-    Tensor<type, 1> vector_m(9);
-    vector_m.setValues({2.0, 2.0, 3.0, 5.0, 6.0, 7.0, static_cast<type>(NAN), 8.0, 9.0});
+    vector.resize(9);
+    vector.setValues({2.0, 2.0, 3.0, 5.0, 6.0, 7.0, static_cast<type>(NAN), 8.0, 9.0});
 
-    BoxPlot boxplot_m = box_plot(vector_m);
+    box_plot = OpenNN::box_plot(vector);
 
-    BoxPlot solution_m(2.0, 2.5, 5.5, 7.5, 9.0);
+    solution.set(2.0, 2.5, 5.5, 7.5, 9.0);
 
-    assert_true((boxplot_m.minimum - solution_m.minimum) < static_cast<type>(1.0e-6), LOG);
-    assert_true((boxplot_m.first_quartile - solution_m.first_quartile) < static_cast<type>(1.0e-6), LOG);
-    assert_true((boxplot_m.median - solution_m.median) < static_cast<type>(1.0e-6), LOG);
-    assert_true((boxplot_m.third_quartile - solution_m.third_quartile) < static_cast<type>(1.0e-6), LOG);
-    assert_true((boxplot_m.maximum - solution_m.maximum) < static_cast<type>(1.0e-6), LOG);
+    assert_true((box_plot.minimum - solution.minimum) < static_cast<type>(1.0e-6), LOG);
+    assert_true((box_plot.first_quartile - solution.first_quartile) < static_cast<type>(1.0e-6), LOG);
+    assert_true((box_plot.median - solution.median) < static_cast<type>(1.0e-6), LOG);
+    assert_true((box_plot.third_quartile - solution.third_quartile) < static_cast<type>(1.0e-6), LOG);
+    assert_true((box_plot.maximum - solution.maximum) < static_cast<type>(1.0e-6), LOG);
 
     //Histogram_missing_values
 
@@ -1333,9 +1364,6 @@ void StatisticsTest::test_box_plot()
 
     //Normal histogram
 
-    Tensor<type, 1> centers_2;
-    Tensor<Index, 1> frequencies_2;
-
     vector.resize(4);
 
     vector[0] = 1;
@@ -1345,17 +1373,19 @@ void StatisticsTest::test_box_plot()
 
 //    graphic_2 = histogram(vector, 4);
 
-//    centers_2 = graphic_2.centers;
-//    frequencies_2 = graphic_2.frequencies;
+//    centers = graphic_2.centers;
+//    frequencies = graphic_2.frequencies;
 
-//    assert_true(centers_2 == centers , LOG);
-//    assert_true(frequencies_2 == frequencies, LOG);
+//    assert_true(centers == centers , LOG);
+//    assert_true(frequencies == frequencies, LOG);
 }
 
 
 void StatisticsTest::test_percentiles()
 {
     cout << "test_percentiles\n";
+
+    Tensor<type, 1> vector;
 
     // Test
 
@@ -1365,7 +1395,7 @@ void StatisticsTest::test_percentiles()
 
     // Test
 
-    Tensor<type, 1> vector(10);
+    vector.resize(10);
 
     vector.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
 
@@ -1413,45 +1443,45 @@ void StatisticsTest::test_percentiles()
 
     vector.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 15, 19, 32});
 
-    Tensor<type, 1> percentiles_3 = OpenNN::percentiles(vector);
+    Tensor<type, 1> percentiles = OpenNN::percentiles(vector);
 
     Tensor<type, 1> solution_3(10);
     solution_3.setValues({1, 2, 4, 5, 6.5, 8, 9, 15, 19, 32});
 
-    assert_true((percentiles_3[0] - solution_3[0]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_3[1] - solution_3[1]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_3[2] - solution_3[2]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_3[3] - solution_3[3]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_3[4] - solution_3[4]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_3[5] - solution_3[5]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_3[6] - solution_3[6]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_3[7] - solution_3[7]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_3[8] - solution_3[8]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_3[9] - solution_3[9]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[0] - solution_3[0]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[1] - solution_3[1]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[2] - solution_3[2]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[3] - solution_3[3]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[4] - solution_3[4]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[5] - solution_3[5]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[6] - solution_3[6]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[7] - solution_3[7]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[8] - solution_3[8]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[9] - solution_3[9]) < static_cast<type>(1.0e-7), LOG);
 
     // Test missing values
 
-    Tensor<type, 1> vector_m(21); //@todo
+    vector.resize(21); //@todo
 
-    vector_m.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20});
+    vector.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20});
 
-    vector_m[20] = static_cast<type>(NAN);
+    vector[20] = static_cast<type>(NAN);
 
-    Tensor<type, 1> percentiles_m = OpenNN::percentiles(vector);
+    percentiles = OpenNN::percentiles(vector);
 
-    Tensor<type, 1> solution_m(10);
-    solution_m.setValues({2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5, 16.5, 18.5, 20});
+    solution.resize(10);
+    solution.setValues({2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5, 16.5, 18.5, 20});
 
-    assert_true((percentiles_m[0] - solution_m[0]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_m[1] - solution_m[1]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_m[2] - solution_m[2]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_m[3] - solution_m[3]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_m[4] - solution_m[4]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_m[5] - solution_m[5]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_m[6] - solution_m[6]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_m[7] - solution_m[7]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_m[8] - solution_m[8]) < static_cast<type>(1.0e-7), LOG);
-    assert_true((percentiles_m[9] - solution_m[9]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[0] - solution[0]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[1] - solution[1]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[2] - solution[2]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[3] - solution[3]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[4] - solution[4]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[5] - solution[5]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[6] - solution[6]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[7] - solution[7]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[8] - solution[8]) < static_cast<type>(1.0e-7), LOG);
+    assert_true((percentiles[9] - solution[9]) < static_cast<type>(1.0e-7), LOG);
 
 }
 
