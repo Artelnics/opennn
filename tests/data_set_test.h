@@ -90,9 +90,6 @@ public:
    // Statistics methods
 
    void test_calculate_variables_descriptives();
-   void test_calculate_training_samples_descriptives();
-   void test_calculate_selection_samples_descriptives();
-   void test_calculate_testing_samples_descriptives();
    void test_calculate_input_variables_descriptives();
    void test_calculate_variables_means();
 
