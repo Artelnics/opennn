@@ -151,66 +151,68 @@ void CorrelationsTest::test_logistic_correlation()
 
     cout << "correlation r: " << correlation.r << endl;
 
-    assert_true(correlation.r <= 0.95, LOG);
+    assert_true(correlation.r >= 0.95, LOG);
 
-    y.setConstant(1.0);
+    system("pause");
 
-    for(Index i = size - (size/2); i < size; i++) y[i] = 0;
+//    y.setConstant(1.0);
 
-    correlation = logistic_correlation(thread_pool_device, x, y);
+//    for(Index i = size - (size/2); i < size; i++) y[i] = 0;
 
-    assert_true(correlation.r >= -0.99, LOG);
+//    correlation = logistic_correlation(thread_pool_device, x, y);
 
-    y.setConstant(0.0);
+//    assert_true(correlation.r >= -0.99, LOG);
 
-    correlation = logistic_correlation(thread_pool_device, x, y);
+//    y.setConstant(0.0);
 
-    assert_true(abs(correlation.r) < numeric_limits<type>::min(), LOG);
+//    correlation = logistic_correlation(thread_pool_device, x, y);
 
-    // Test
+//    assert_true(abs(correlation.r) < numeric_limits<type>::min(), LOG);
 
-    size = 100;
+//    // Test
 
-    x.resize(size);
-    initialize_sequential(x);
+//    size = 100;
 
-    y.resize(size);
+//    x.resize(size);
+//    initialize_sequential(x);
 
-    for(Index i = 0; i < size/2; i++) y[i] = 0;
+//    y.resize(size);
 
-    for(Index i = size - (size/2); i < size; i++) y[i] = 1;
+//    for(Index i = 0; i < size/2; i++) y[i] = 0;
 
-    correlation = logistic_correlation(thread_pool_device, x, y);
+//    for(Index i = size - (size/2); i < size; i++) y[i] = 1;
 
-    cout << "logisitic correlation: " << correlation.r << endl;
+//    correlation = logistic_correlation(thread_pool_device, x, y);
 
-    assert_true(correlation.r <= static_cast<type>(0.95), LOG);
+//    cout << "logisitic correlation: " << correlation.r << endl;
 
-    // Test
+//    assert_true(correlation.r <= static_cast<type>(0.95), LOG);
 
-    for(Index i = 0; i < size/2; i++) y[i] = 1.0;
+//    // Test
 
-    for(Index i = size - (size/2); i < size; i++) y[i] = 0.0;
+//    for(Index i = 0; i < size/2; i++) y[i] = 1.0;
 
-    correlation = logistic_correlation(thread_pool_device, x, y);
+//    for(Index i = size - (size/2); i < size; i++) y[i] = 0.0;
 
-    assert_true(correlation.r >= static_cast<type>(-0.95), LOG);
+//    correlation = logistic_correlation(thread_pool_device, x, y);
 
-    // Test
+//    assert_true(correlation.r >= static_cast<type>(-0.95), LOG);
 
-    y.setConstant(0.0);
+//    // Test
 
-    correlation = logistic_correlation(thread_pool_device, x,y);
+//    y.setConstant(0.0);
 
-    assert_true(abs(correlation.r) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+//    correlation = logistic_correlation(thread_pool_device, x,y);
 
-    // Test
+//    assert_true(abs(correlation.r) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 
-    for(Index i = 0; i < size; i++) i%2 == 0 ? y[i] = 0.0 : y[i] = 1.0;
+//    // Test
 
-    correlation = logistic_correlation(thread_pool_device, x, y);
+//    for(Index i = 0; i < size; i++) i%2 == 0 ? y[i] = 0.0 : y[i] = 1.0;
 
-    assert_true(abs(correlation.r) < numeric_limits<type>::min(), LOG);
+//    correlation = logistic_correlation(thread_pool_device, x, y);
+
+//    assert_true(abs(correlation.r) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -364,7 +366,7 @@ void CorrelationsTest::run_test_case()
 
 //   test_linear_regression();
 
-//   test_logistic_correlation();
+   test_logistic_correlation();
 
 //   test_logarithmic_correlation();
 

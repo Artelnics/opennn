@@ -42,7 +42,7 @@ struct Correlation
 
     virtual ~Correlation() {}
 
-    string write_regression_type() const
+    string write_correlation_type() const
     {
         switch(correlation_type)
         {
@@ -56,6 +56,15 @@ struct Correlation
         }
 
         return string();
+    }
+
+    void print()
+    {
+        cout << "Correlation" << endl;
+        cout << "Type: " << write_correlation_type() << endl;
+        cout << "a: " << a << endl;
+        cout << "b: " << b << endl;
+        cout << "r: " << r << endl;
     }
 
     /// Independent coefficient of the logistic function.
@@ -99,10 +108,6 @@ struct Correlation
                                        const Tensor<type, 1>&,
                                        const Tensor<type, 1>&,
                                        const Index&);
-
-    // Logistic function methods
-
-    Tensor<type, 1> logistic(const type&, const type&, const Tensor<type, 1>&);
 
     // Missing values methods
 
