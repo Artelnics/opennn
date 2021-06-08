@@ -9234,18 +9234,18 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 {
     const Index samples_number = time_series_data.dimension(0);
 
-        if(lags_number > samples_number)
-        {
-            ostringstream buffer;
+    if(lags_number > samples_number)
+    {
+        ostringstream buffer;
 
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Tensor<type, 3> calculate_cross_correlations(const Index& lags_number) const method.\n"
-                   << "Lags number(" << lags_number
-                   << ") is greater than the number of samples("
-                   << samples_number << ") \n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<type, 2> calculate_cross_correlations(const Index& lags_number) const method.\n"
+               << "Lags number(" << lags_number
+               << ") is greater than the number of samples("
+               << samples_number << ") \n";
 
-            throw logic_error(buffer.str());
-        }
+        throw logic_error(buffer.str());
+    }
 
     const Index columns_number = get_time_series_columns_number();
 
@@ -9265,8 +9265,10 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
     {
         if(i < input_columns_number)
         {
-            Index column_index = input_columns_indices(i);
-            ColumnType input_column_type = time_series_columns(column_index).type;
+            const Index column_index = input_columns_indices(i);
+
+            const ColumnType input_column_type = time_series_columns(column_index).type;
+
             if(input_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
@@ -9274,12 +9276,15 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
         }
         else
         {
-            Index column_index = target_columns_indices(counter);
-            ColumnType target_column_type = time_series_columns(column_index).type;
+            const Index column_index = target_columns_indices(counter);
+
+            const ColumnType target_column_type = time_series_columns(column_index).type;
+
             if(target_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
             }
+
             counter++;
         }
     }
@@ -9338,18 +9343,18 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 {    
     const Index samples_number = time_series_data.dimension(0);
 
-        if(lags_number > samples_number)
-        {
-            ostringstream buffer;
+    if(lags_number > samples_number)
+    {
+        ostringstream buffer;
 
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Tensor<type, 3> calculate_cross_correlations(const Index& lags_number) const method.\n"
-                   << "Lags number(" << lags_number
-                   << ") is greater than the number of samples("
-                   << samples_number << ") \n";
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<type, 3> calculate_cross_correlations(const Index& lags_number) const method.\n"
+               << "Lags number(" << lags_number
+               << ") is greater than the number of samples("
+               << samples_number << ") \n";
 
-            throw logic_error(buffer.str());
-        }
+        throw logic_error(buffer.str());
+    }
 
     const Index columns_number = get_time_series_columns_number();
 

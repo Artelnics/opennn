@@ -487,17 +487,31 @@ void DataSetTest::test_calculate_autocorrelations()
 
     Tensor<type, 2> autocorrelations;
 
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
+
+
+    Index lags_number;
+    Index steps_ahead_number;
+
     // Test
 
-    data.resize(4,3);
-    data.setValues({{5,2,8}, {7,8,7}, {3,6,4}, {8,1,6}});
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
 
-    data_set.set_data(data);
-    data_set.set_lags_number(4);
-    data_set.set_steps_ahead_number(1);
+    lags_number = 1;
+    steps_ahead_number = 1;
+
+    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set_lags_number(lags_number);
+    data_set.set_steps_ahead_number(steps_ahead_number);
     data_set.transform_time_series();
 
-    autocorrelations = data_set.calculate_autocorrelations(data_set.get_lags_number());
+    autocorrelations = data_set.calculate_autocorrelations(lags_number);
+
+    cout << autocorrelations << endl;system("pause");
 
     assert_true(autocorrelations.dimension(1) == 10, LOG);
     assert_true(autocorrelations.dimension(0) == 2, LOG);
@@ -1785,9 +1799,15 @@ void DataSetTest::test_is_empty()
 {
     cout << "test_is_empty\n";
 
-    data.resize(9,9);
+    // Test
 
-    data_set.set(data);
+    data_set.set();
+
+    assert_true(data_set.is_empty(), LOG);
+
+    // Test
+
+    data_set.set(1,1,1);
 
     assert_true(data_set.is_empty(), LOG);
 }
