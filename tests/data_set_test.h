@@ -180,9 +180,13 @@ public:
 
   private:
 
-   DataSet data_set;
+   Index inputs_number;
+   Index targets_number;
+   Index samples_number;
 
    Tensor<type, 2> data;
+
+   DataSet data_set;
 
    Tensor<Index, 1> training_indices;
    Tensor<Index, 1> selection_indices;

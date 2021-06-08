@@ -57,7 +57,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
    Tensor<Index,1> samples_indices;
    Tensor<Index,1> inputs_indices;
-   Tensor<Index,1> targets_indices;
+   Tensor<Index,1> target_variables_indices;
 
    // Test
 
@@ -84,10 +84,10 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
    samples_indices = data_set.get_used_samples_indices();
    inputs_indices = data_set.get_input_variables_indices();
-   targets_indices = data_set.get_target_variables_indices();
+   target_variables_indices = data_set.get_target_variables_indices();
 
    batch.set(samples_number, &data_set);
-   batch.fill(samples_indices, inputs_indices, targets_indices);
+   batch.fill(samples_indices, inputs_indices, target_variables_indices);
 
    forward_propagation.set(samples_number, &neural_network);
    neural_network.forward_propagate(batch, forward_propagation);
@@ -131,7 +131,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    Tensor<Index,1> samples_indices;
    Tensor<Index,1> inputs_indices;
-   Tensor<Index,1> targets_indices;
+   Tensor<Index,1> target_variables_indices;
 
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
@@ -155,9 +155,12 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    Tensor<type, 1> parameters;
 
+   Tensor<type, 2> inputs;
+
+   Tensor<type, 2> outputs;
 
    // Test trivial
-{
+
        neural_network.set(NeuralNetwork::Classification, {1, 1});
 
        neural_network.set_parameters_constant(1);
@@ -181,10 +184,10 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
        samples_indices = data_set.get_used_samples_indices();
        inputs_indices = data_set.get_input_variables_indices();
-       targets_indices = data_set.get_target_variables_indices();
+       target_variables_indices = data_set.get_target_variables_indices();
 
        batch.set(samples_number, &data_set);
-       batch.fill(samples_indices, inputs_indices, targets_indices);
+       batch.fill(samples_indices, inputs_indices, target_variables_indices);
 
        forward_propagation.set(samples_number, &neural_network);
        neural_network.forward_propagate(batch, forward_propagation);
@@ -198,12 +201,11 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
        assert_true(back_propagation.gradient(0)-1.1499 < 1e-3, LOG); // @todo 1e-2 precission
        assert_true(back_propagation.gradient(1)-0 < 1e-3, LOG);
-}
 
    neural_network.set();
 
    // Test perceptron and probabilistic
-{
+
    samples_number = 10;
    inputs_number = 3;
    outputs_number = 1;
@@ -211,11 +213,12 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-   Tensor<type, 2> inputs(samples_number,inputs_number);
+   inputs.resize(samples_number,inputs_number);
 
    inputs.setRandom();
 
-   Tensor<type, 2> outputs(samples_number, outputs_number);
+   outputs.resize(samples_number, outputs_number);
+
 //   outputs[0] = 1.0;
 //   outputs[1] = 0.0;
 
@@ -254,12 +257,12 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
    maximum_difference = (error_gradient - numerical_error_gradient).abs().maximum();
 
    assert_true(maximum_difference(0) < 1.0e-3, LOG);
-}
+
+
+   // Test lstm
 
    neural_network.set();
 
-   // Test lstm
-{
    samples_number = 10;
    inputs_number = 3;
    outputs_number = 1;
@@ -267,11 +270,11 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    data_set.set(samples_number, inputs_number, outputs_number);
 
-   Tensor<type, 2> inputs(samples_number,inputs_number);
+   inputs.resize(samples_number,inputs_number);
 
    inputs.setRandom();
 
-   Tensor<type, 2> outputs(samples_number, outputs_number);
+   outputs.resize(samples_number, outputs_number);
 
 //   outputs[0] = 1.0;
 //   outputs[1] = 0.0;
@@ -309,12 +312,11 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
    maximum_difference = (error_gradient - numerical_error_gradient).abs().sum();
 
    assert_true(maximum_difference(0) < 1.0e-3, LOG);
-}
 
 //   neural_network.set();
 
    // Test recurrent
-{
+
 //   samples_number = 10;
 //   inputs_number = 3;
 //   outputs_number = 1;
@@ -363,10 +365,9 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
    maximum_difference = (error_gradient - numerical_error_gradient).abs().sum();
 
    assert_true(maximum_difference(0) < 1.0e-3, LOG);
-}
 
    // Test convolutional
-{
+
 //   samples_number = 5;
 //   inputs_number = 147;
 //   outputs_number = 1;
@@ -460,7 +461,6 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
        assert_true(maximum_difference(0) < 1.0e-3, LOG);
 }
-}
 
 
 void WeightedSquaredErrorTest::test_calculate_squared_errors()
@@ -511,7 +511,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    Tensor<Index, 1> samples_indices;
    Tensor<Index, 1> input_indices;
-   Tensor<Index, 1> targets_indices;
+   Tensor<Index, 1> target_variables_indices;
 
    Index samples_number;
    Index inputs_number;
@@ -521,44 +521,43 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    Tensor<type, 2> numerical_squared_errors_jacobian;
 
    // Test probabilistic (binary)
-   {
-       samples_number = 2;
-       inputs_number = 2;
-       hidden_neurons_number = 3;
-       outputs_number = 1;
 
-       data_set.set(samples_number, inputs_number, outputs_number);
+   samples_number = 2;
+   inputs_number = 2;
+   hidden_neurons_number = 3;
+   outputs_number = 1;
 
-       data_set.set_data_binary_random();
+   data_set.set(samples_number, inputs_number, outputs_number);
 
-       data_set.set_training();
+   data_set.set_data_binary_random();
 
-       samples_indices = data_set.get_training_samples_indices();
-       input_indices = data_set.get_input_variables_indices();
-       targets_indices = data_set.get_target_variables_indices();
+   data_set.set_training();
 
-       neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons_number, outputs_number});
+   samples_indices = data_set.get_training_samples_indices();
+   input_indices = data_set.get_input_variables_indices();
+   target_variables_indices = data_set.get_target_variables_indices();
 
-       neural_network.set_parameters_random();
+   neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons_number, outputs_number});
 
-       weighted_squared_error.set_normalization_coefficient();
+   neural_network.set_parameters_random();
 
-       batch.set(samples_number, &data_set);
-       batch.fill(samples_indices, input_indices, targets_indices);
+   weighted_squared_error.set_normalization_coefficient();
 
-       forward_propagation.set(samples_number, &neural_network);
-       neural_network.forward_propagate(batch, forward_propagation);
+   batch.set(samples_number, &data_set);
+   batch.fill(samples_indices, input_indices, target_variables_indices);
 
-       back_propagation.set(samples_number, &weighted_squared_error);
-       weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+   forward_propagation.set(samples_number, &neural_network);
+   neural_network.forward_propagate(batch, forward_propagation);
 
-       back_propagation_lm.set(samples_number, &weighted_squared_error);
+   back_propagation.set(samples_number, &weighted_squared_error);
+   weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+   back_propagation_lm.set(samples_number, &weighted_squared_error);
 //       weighted_squared_error.back_propagate(batch, forward_propagation, weighted_squared_error);
 
-       numerical_squared_errors_jacobian = weighted_squared_error.calculate_Jacobian_numerical_differentiation();
+   numerical_squared_errors_jacobian = weighted_squared_error.calculate_Jacobian_numerical_differentiation();
 
-       assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
-   }
+   assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
 }
 
 

@@ -110,6 +110,7 @@ NeuralNetwork::~NeuralNetwork()
 
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
+/*
     if(layer_pointer->get_type_string() == "Convolutional")
     {
         ostringstream buffer;
@@ -120,7 +121,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         throw logic_error(buffer.str());
     }
-
+*/
     const Layer::Type layer_type = layer_pointer->get_type();
 
     if(check_layer_type(layer_type))

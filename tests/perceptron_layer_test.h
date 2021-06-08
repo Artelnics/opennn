@@ -121,7 +121,14 @@ public:
 
 private:
 
-   PerceptronLayer perceptron_layer;
+   Index inputs_number;
+   Index neurons_number;
+   Index batch_size;
+
+    PerceptronLayer perceptron_layer;
+
+    PerceptronLayerForwardPropagation forward_propagation;
+    PerceptronLayerBackPropagation back_propagation;
 
     NumericalDifferentiation numerical_differentiation;
 };

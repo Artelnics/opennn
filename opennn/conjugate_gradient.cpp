@@ -814,7 +814,7 @@ TrainingResults ConjugateGradient::perform_training()
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
     const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> targets_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
@@ -828,8 +828,8 @@ TrainingResults ConjugateGradient::perform_training()
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
     DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
-    training_batch.fill(training_samples_indices, inputs_indices, targets_indices);
-    selection_batch.fill(selection_samples_indices, inputs_indices, targets_indices);
+    training_batch.fill(training_samples_indices, inputs_indices, target_variables_indices);
+    selection_batch.fill(selection_samples_indices, inputs_indices, target_variables_indices);
 
     // Neural network
 

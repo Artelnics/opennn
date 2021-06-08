@@ -308,7 +308,6 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     {
     }
 
-
     Tensor<type, 4> delta;
 
     Tensor<type, 4> biases_derivatives;

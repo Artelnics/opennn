@@ -60,12 +60,11 @@ Index count_tokens(const string& s, const char& c)
 
 Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
-
 //    const string new_string = get_trimmed(str);
+
     const Index tokens_number = count_tokens(str, separator);
 
     Tensor<string, 1> tokens(tokens_number);
-
 
     // Skip delimiters at beginning.
 
@@ -80,25 +79,28 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
 
     while(string::npos != pos || string::npos != lastPos)
     {
-
-        if((lastPos-old_pos != 1) && index!= 0){
+        if((lastPos-old_pos != 1) && index!= 0)
+        {
             tokens[index] = "";
             index++;
             old_pos = old_pos+1;
             continue;
         }
-        else{
-        // Found a token, add it to the vector
-        tokens[index] = str.substr(lastPos, pos - lastPos);
+        else
+        {
+            // Found a token, add it to the vector
 
+            tokens[index] = str.substr(lastPos, pos - lastPos);
         }
 
         old_pos = pos;
 
         // Skip delimiters. Note the "not_of"
+
         lastPos = str.find_first_not_of(separator, pos);
 
         // Find next "non-delimiter"
+
         pos = str.find_first_of(separator, lastPos);
 
         index++;
@@ -226,7 +228,7 @@ bool is_numeric_string(const string& str)
             return  false;
         }
     }
-    catch(exception)
+    catch(const exception&)
     {
         return false;
     }
@@ -691,13 +693,15 @@ bool contains_substring(const string& str, const string& sub_str)
 
 void trim(string& str)
 {
-    //prefixing spaces
+    // Prefixing spaces
 
     str.erase(0, str.find_first_not_of(' '));
+    str.erase(0, str.find_first_not_of('\t'));
 
-    //surfixing spaces
+    // Surfixing spaces
 
     str.erase(str.find_last_not_of(' ') + 1);
+    str.erase(str.find_last_not_of('\t') + 1);
 }
 
 

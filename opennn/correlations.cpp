@@ -284,16 +284,16 @@ Correlation logistic_correlation(const ThreadPoolDevice* thread_pool_device, con
 
     // Filter missing values
 
-    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
+    const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1>& new_x = filter_vectors.first;
-    const Tensor<type, 1>& new_y = filter_vectors.second;
+    const Tensor<type, 1>& x_filter = filter_vectors.first;
+    const Tensor<type, 1>& y_filter = filter_vectors.second;
 
     // Inputs: scaled_x; Targets: sorted_y
 
     const Index input_variables_number = 1;
     const Index target_variables_number = 1;
-    const Index samples_number = new_x.dimension(0);
+    const Index samples_number = x_filter.dimension(0);
 
     Tensor<type, 2> data(samples_number, input_variables_number+target_variables_number);
 
@@ -301,10 +301,10 @@ Correlation logistic_correlation(const ThreadPoolDevice* thread_pool_device, con
     {
         if(j < input_variables_number)
             for(Index i = 0; i < samples_number; i++)
-                data(i,j) = new_x(i);
+                data(i,j) = x_filter(i);
         else
             for(Index i = 0; i < samples_number; i++)
-                data(i,j) = new_y(i);
+                data(i,j) = y_filter(i);
     }
 
     DataSet data_set(data);
@@ -314,16 +314,9 @@ Correlation logistic_correlation(const ThreadPoolDevice* thread_pool_device, con
     neural_network.set_parameters_random();
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
-
-//    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-
-//    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+    training_strategy.set_display(false);
 
     training_strategy.get_loss_index_pointer()->set_regularization_method("NO_REGULARIZATION");
-
-//    training_strategy.set_display(false);
-
-//    training_strategy.set_display_period(1);
 
     training_strategy.perform_training();
 
@@ -331,12 +324,8 @@ Correlation logistic_correlation(const ThreadPoolDevice* thread_pool_device, con
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-    Tensor<type, 1> yyy(samples_number);
-    for(Index i = 0; i < samples_number; i++) yyy(i) = outputs(i,0);
-
-    cout << "inputs: " << inputs << endl;
-    cout << "yyy: " << yyy << endl;
-    cout << "new_y: " << new_y << endl;
+    Tensor<type, 1> y_output(samples_number);
+    for(Index i = 0; i < samples_number; i++) y_output(i) = outputs(i,0);
 
     // Logistic correlation
 
@@ -349,15 +338,11 @@ Correlation logistic_correlation(const ThreadPoolDevice* thread_pool_device, con
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
-//    const Tensor<type, 1> logistic_y = logistic(correlation.a, correlation.b, new_x);
-
-    correlation.r = linear_correlation(thread_pool_device, yyy, new_y, false).r;
+    correlation.r = linear_correlation(thread_pool_device, y_filter, y_output, false).r;
 
     if(correlation.b < 0) correlation.r *= (-1);
 
     correlation.correlation_type = Logistic;
-
-    correlation.print();
 
     return correlation;
 }
@@ -621,11 +606,11 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, con
 
         for(Index j = 0; j < this_size - i; j++)
         {
-            column_x[j] = x(j);
-            column_y[j] = x[j + i];
+            column_x(j) = x(j);
+            column_y(j) = x(j + i);
         }
 
-        autocorrelation[i] = linear_correlation(thread_pool_device, column_x, column_y, false).r;
+        autocorrelation(i) = linear_correlation(thread_pool_device, column_x, column_y, false).r;
     }
 
     return autocorrelation;
@@ -665,8 +650,8 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
 
         for(Index j = 0; j < this_size - i; j++)
         {
-            column_x[j] = x(j);
-            column_y[j] = y[j + i];
+            column_x(j) = x(j);
+            column_y(j) = y(j + i);
         }
 
         cross_correlation[i] = linear_correlation(thread_pool_device, column_x, column_y, false).r;
