@@ -699,7 +699,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
     const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> targets_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
     const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
@@ -737,8 +737,8 @@ TrainingResults QuasiNewtonMethod::perform_training()
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
     DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
-    training_batch.fill(training_samples_indices, inputs_indices, targets_indices);
-    selection_batch.fill(selection_samples_indices, inputs_indices, targets_indices);
+    training_batch.fill(training_samples_indices, inputs_indices, target_indices);
+    selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
 
     // Loss index
 
@@ -814,7 +814,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
-            if(display) cout << "Epoch " << epoch << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
 
             cout << optimization_data.parameters_increment << endl;
 
@@ -838,7 +838,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(training_back_propagation.loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << "; Loss goal reached: " << training_back_propagation.loss << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_back_propagation.loss << endl;
 
             stop_training = true;
 
@@ -846,7 +846,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << "; Gradient norm goal reached: " << gradient_norm << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -854,7 +854,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Epoch " << epoch << "; Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -862,7 +862,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << "; Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -870,7 +870,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << "; Maximum training time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
 
             stop_training = true;
 

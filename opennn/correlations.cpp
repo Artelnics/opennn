@@ -75,12 +75,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     s_yy.device(*thread_pool_device) = y_filter.square().sum();
     s_xy.device(*thread_pool_device) = (y_filter*x_filter).sum();
 
-    cout << "s_x: " << s_x << endl;
-    cout << "s_y: " << s_y << endl;
-    cout << "s_xx: " << s_xx << endl;
-    cout << "s_yy: " << s_yy << endl;
-    cout << "s_xy: " << s_xy << endl;
-
     if(abs(s_x()) < numeric_limits<type>::min()
     && abs(s_y()) < numeric_limits<type>::min()
     && abs(s_xx()) < numeric_limits<type>::min()
@@ -321,15 +315,28 @@ Correlation logistic_correlation(const ThreadPoolDevice* thread_pool_device, con
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+//    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+//    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
 
     training_strategy.get_loss_index_pointer()->set_regularization_method("NO_REGULARIZATION");
 
-    training_strategy.set_display(false);
+//    training_strategy.set_display(false);
+
+//    training_strategy.set_display_period(1);
 
     training_strategy.perform_training();
+
+    const Tensor<type, 2> inputs = data_set.get_input_data();
+
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+
+    Tensor<type, 1> yyy(samples_number);
+    for(Index i = 0; i < samples_number; i++) yyy(i) = outputs(i,0);
+
+    cout << "inputs: " << inputs << endl;
+    cout << "yyy: " << yyy << endl;
+    cout << "new_y: " << new_y << endl;
 
     // Logistic correlation
 
@@ -342,19 +349,15 @@ Correlation logistic_correlation(const ThreadPoolDevice* thread_pool_device, con
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
-    cout << "correlation.a: " << correlation.a << endl;
-    cout << "correlation.b: " << correlation.b << endl;
+//    const Tensor<type, 1> logistic_y = logistic(correlation.a, correlation.b, new_x);
 
-    const Tensor<type, 1> logistic_y = logistic(correlation.a, correlation.b, new_x);
-
-//    cout << "logistic_y: " << endl << logistic_y << endl;
-//    cout << "new_y: " << endl << new_y << endl;
-
-    correlation.r = linear_correlation(thread_pool_device, logistic_y, new_y, false).r;
+    correlation.r = linear_correlation(thread_pool_device, yyy, new_y, false).r;
 
     if(correlation.b < 0) correlation.r *= (-1);
 
     correlation.correlation_type = Logistic;
+
+    correlation.print();
 
     return correlation;
 }
@@ -600,16 +603,6 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 
     return make_pair(new_x, new_y);
 }
 
-/// Calculate the logistic function with specific parameters 'a' and 'b'.
-/// @param a Parameter a.
-/// @param b Parameter b.
-
-Tensor<type, 1> logistic(const type& a, const type& b, const Tensor<type, 1>& x)
-{
-    const Tensor<type, 1> combination = b*x+a;
-
-    return (1 + combination.exp().inverse()).inverse();
-}
 
 /// Calculates autocorrelation for a given number of maximum lags.
 /// @param x Vector containing the data.
