@@ -137,23 +137,31 @@ void CorrelationsTest::test_logistic_correlation()
 
     // Test
 
-    size = 100;
+    size = 20;
 
     x.resize(size);
-    initialize_sequential(x);
+    x.setValues({-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9});
 
     y.resize(size);
-    y.setConstant(0.0);
-
-    for(Index i = size - size/2; i < size; i++) y[i] = 1;
+    y.setValues({0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1});
 
     correlation = logistic_correlation(thread_pool_device, x, y);
 
-    cout << "correlation r: " << correlation.r << endl;
+    assert_true(abs(correlation.r) <= 0.1, LOG);
 
-    assert_true(correlation.r >= 0.95, LOG);
+    // Test
 
-    system("pause");
+    size = 10;
+
+    x.resize(size);
+    x.setValues({-5,-4,-3,-2,-1,0,1,2,3,4});
+
+    y.resize(size);
+    y.setValues({0,0,0,0,0,1,1,1,1,1});
+
+    correlation = logistic_correlation(thread_pool_device, x, y);
+
+    assert_true(correlation.r >= 0.999, LOG);
 
 //    y.setConstant(1.0);
 
@@ -223,13 +231,15 @@ void CorrelationsTest::test_logarithmic_correlation()
     Tensor<type, 1> x;
     Tensor<type, 1> y;
 
-    Index size = 10;
+    Index size;
 
     Correlation correlation;
 
     type solution;
 
     // Perfect case
+
+    size = 10;
 
     x.resize(size);
     x.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
@@ -241,7 +251,7 @@ void CorrelationsTest::test_logarithmic_correlation()
 
     solution = 1;
 
-    assert_true(abs(correlation.r - solution) <= static_cast<type>(1.0e-6), LOG);
+    assert_true(abs(correlation.r - solution) <= numeric_limits<type>::min(), LOG);
     assert_true(correlation.b == static_cast<type>(4), LOG);
     assert_true(correlation.a == static_cast<type>(0), LOG);
 }
@@ -305,10 +315,7 @@ void CorrelationsTest::test_power_correlation()
     size = 10;
 
     x.resize(size);
-    for(Index i = 0; i < size; i++)
-    {
-        x[i] = i+1;
-    }
+    for(Index i = 0; i < size; i++) x[i] = i+1;
 
     y.resize(size);
     for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1) * pow(x[i], 2);
@@ -362,23 +369,23 @@ void CorrelationsTest::run_test_case()
 
    // Correlation methods
 
-//   test_linear_correlation();
+   test_linear_correlation();
 
-//   test_linear_regression();
+   test_linear_regression();
 
    test_logistic_correlation();
 
-//   test_logarithmic_correlation();
+   test_logarithmic_correlation();
 
-//   test_exponential_correlation();
+   test_exponential_correlation();
 
-//   test_power_correlation();
+   test_power_correlation();
 
    // Time series correlation methods
 
-//   test_autocorrelations();
+   test_autocorrelations();
 
-//   test_cross_correlations();
+   test_cross_correlations();
 
    cout << "End of correlation analysis test case.\n\n";
 }

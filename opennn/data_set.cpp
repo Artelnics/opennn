@@ -8720,8 +8720,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
 /// Returns a vector containing the number of samples of each class in the data set.
 /// If the number of target variables is one then the number of classes is two.
-/// If the number of target variables is greater than one then the number of classes is equal to the number
-/// of target variables.
+/// If the number of target variables is greater than one then the number of classes is equal to the number of target variables.
 /// @todo Return class_distribution is wrong
 
 Tensor<Index, 1> DataSet::calculate_target_distribution() const
@@ -8745,7 +8744,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
         {
             if(!::isnan(data(static_cast<Index>(sample_index),target_index)))
             {
-                if(data(static_cast<Index>(sample_index),target_index) < static_cast<type>(0.5))
+                if(data(static_cast<Index>(sample_index), target_index) < static_cast<type>(0.5))
                 {
                     negatives++;
                 }
@@ -9777,6 +9776,7 @@ void DataSet::read_csv()
 
         read_csv_3_complete();
     }
+
 }
 
 
@@ -9836,7 +9836,7 @@ void DataSet::read_csv_1()
     Index lines_count = 0;
 
     while(file.good())
-    {
+    {        
         getline(file, line);
 
         trim(line);

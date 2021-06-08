@@ -71,7 +71,7 @@ struct Descriptives {
 
   void save(const string &file_name) const;
 
-  void print(const string& = "Basic descriptives:") const;
+  void print(const string& = "Descriptives:") const;
 
   /// Name of variable
 

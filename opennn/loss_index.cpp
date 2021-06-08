@@ -1080,9 +1080,9 @@ Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
 
     const Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> input_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> targets_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    batch.fill(samples_indices, input_indices, targets_indices);
+    batch.fill(samples_indices, input_indices, target_variables_indices);
 
     NeuralNetworkForwardPropagation forward_propagation(samples_number, neural_network_pointer);
 
@@ -1144,9 +1144,9 @@ Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation()
     const Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
 
     const Tensor<Index, 1> input_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> targets_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    batch.fill(samples_indices, input_indices, targets_indices);
+    batch.fill(samples_indices, input_indices, target_variables_indices);
 
     NeuralNetworkForwardPropagation forward_propagation(samples_number, neural_network_pointer);
 

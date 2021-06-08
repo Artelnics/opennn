@@ -460,7 +460,7 @@ void StatisticsTest::test_minimum()
    vector.resize(3);
    vector.setValues({0.0, 1.0, 9.0});
 
-   assert_true(minimum(vector) - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(minimum(vector) - static_cast<type>(0.0) < numeric_limits<type>::min(), LOG);
 
    // Test
 
@@ -470,8 +470,8 @@ void StatisticsTest::test_minimum()
    vector.resize(3);
    vector.setValues({-1,2,3});
 
-   assert_true(minimum(vector) - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(minimum(vector) - static_cast<type>(-1.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(minimum(vector) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+   assert_true(minimum(vector) - static_cast<type>(-1.0) < numeric_limits<type>::min(), LOG);
 
 }
 
@@ -491,7 +491,7 @@ void StatisticsTest::test_maximum()
    vector.resize(3);
    vector.setValues({0.0, 1.0, 9.0});
 
-   assert_true(maximum(vector) - static_cast<type>(9.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(maximum(vector) - static_cast<type>(9.0) < numeric_limits<type>::min(), LOG);
 
    // Test
 
@@ -501,8 +501,8 @@ void StatisticsTest::test_maximum()
    vector.resize(3);
    vector.setValues({-1,-2,-3});
 
-   assert_true(maximum(vector) - static_cast<type>(3.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(maximum(vector) - static_cast<type>(-1.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(maximum(vector) - static_cast<type>(3.0) < numeric_limits<type>::min(), LOG);
+   assert_true(maximum(vector) - static_cast<type>(-1.0) < numeric_limits<type>::min(), LOG);
 
 }
 
@@ -518,35 +518,40 @@ void StatisticsTest::test_mean()
 
    matrix.resize(3,3);
    matrix.setZero();
-   assert_true(mean(matrix)(0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(mean(matrix)(0) < numeric_limits<type>::min(), LOG);
 
    // Test
+
    matrix.resize(3,3);
    matrix.setValues({{0,1,-2},{0,1,8},{0,1,6}});
 
-   assert_true(mean(matrix)(0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(mean(matrix)(1) - static_cast<type>(1) < static_cast<type>(1.0e-6), LOG);
-   assert_true(mean(matrix)(2) - static_cast<type>(4) < static_cast<type>(1.0e-6), LOG);
+   assert_true(mean(matrix)(0) < numeric_limits<type>::min(), LOG);
+   assert_true(mean(matrix)(1) - static_cast<type>(1) < numeric_limits<type>::min(), LOG);
+   assert_true(mean(matrix)(2) - static_cast<type>(4) < numeric_limits<type>::min(), LOG);
 
    // Test
+
    vector.resize(2);
    vector.setValues({1, 1.0});
 
-   assert_true(mean(vector) - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(mean(vector) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+
+   // Test
 
    vector.resize(2);
    vector[0] = -1.0;
    vector[1] = 1.0;
-   assert_true(mean(vector) - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(mean(vector) - static_cast<type>(0.0) < numeric_limits<type>::min(), LOG);
 
    // Test missing values
+
    vector.resize(5);
-   vector.resize(4);
 
    vector.setValues({1.0, NAN, 2.0, 3.0, 4.0});
-   vector.setValues({1.0, 2.0, 3.0, 4.0});
 
-   assert_true(abs(mean(vector) - mean(vector)) < static_cast<type>(1.0e-6), LOG);
+   assert_true(abs(mean(vector) - 0) < numeric_limits<type>::min(), LOG);
+
+   // Test
 
    vector.resize(4);
    vector[0] = 1;
@@ -554,11 +559,11 @@ void StatisticsTest::test_mean()
    vector[2] = static_cast<type>(NAN);
    vector[3] = 1;
 
-   assert_true(mean(vector) - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(mean(vector) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 
-   // Test empty matrix+
+   // Test empty matrix
 
-   matrix.resize(0,0);
+   matrix.resize(0, 0);
 
    assert_true(::isnan(mean(matrix,2)), LOG);
 
@@ -571,39 +576,41 @@ void StatisticsTest::test_standard_deviation()
 
    Tensor<type, 1> vector;
 
-   type standard_deviation_missing_values;
+   type standard_deviation;
 
    // Test
 
-   assert_true(standard_deviation(vector) - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+//   assert_true(OpenNN::standard_deviation(vector) - static_cast<type>(0.0) < numeric_limits<type>::min(), LOG);
 
    // Test
 
    vector.resize(4);
    vector.setValues({2,4,8,10});
 
+   assert_true(OpenNN::standard_deviation(vector) - sqrt(static_cast<type>(40)/static_cast<type>(3)) < numeric_limits<type>::min(), LOG);
+
+   // Test
+
    vector.resize(4);
    vector.setValues({-11,-11,-11,-11});
 
-   assert_true(standard_deviation(vector) - sqrt(static_cast<type>(40)/static_cast<type>(3)) < static_cast<type>(1.0e-6), LOG);
-   assert_true(standard_deviation(vector) - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(OpenNN::standard_deviation(vector) - static_cast<type>(0.0) < numeric_limits<type>::min(), LOG);
 
    // Test
 
    vector.resize(3);
    vector.setZero();
 
-   assert_true(static_cast<Index>(standard_deviation(vector)) < static_cast<type>(1.0e-6), LOG);
+   assert_true(static_cast<Index>(OpenNN::standard_deviation(vector)) < numeric_limits<type>::min(), LOG);
 
    // Test
 
    vector.resize(2);
-   type standard_deviation;
    vector.setValues({1, 1.0});
 
    standard_deviation = OpenNN::standard_deviation(vector);
 
-   assert_true(abs(static_cast<Index>(standard_deviation)) < static_cast<type>(1.0e-6), LOG);
+   assert_true(abs(static_cast<Index>(standard_deviation)) < numeric_limits<type>::min(), LOG);
 
    // Test 
    vector.resize(2);
@@ -612,40 +619,18 @@ void StatisticsTest::test_standard_deviation()
 
    standard_deviation = OpenNN::standard_deviation(vector);
 
-   assert_true(abs(standard_deviation- sqrt(static_cast<type>(2))) < static_cast<type>(1.0e-6), LOG);
+   assert_true(abs(standard_deviation- sqrt(static_cast<type>(2))) < numeric_limits<type>::min(), LOG);
 
-   // Test missing values
-
-
-   // Test 5
+   // Test
 
    vector.resize(1);
    vector[0] = static_cast<type>(NAN);
 
-   standard_deviation_missing_values = OpenNN::standard_deviation(vector);
+   standard_deviation = OpenNN::standard_deviation(vector);
 
-   assert_true(standard_deviation_missing_values < static_cast<type>(1.0e-6), LOG);
-
-   // Test 6
-   vector.resize(5);
-   vector[0] = 1.0;
-   vector[1] = static_cast<type>(NAN);
-   vector[2] = 2.0;
-   vector[3] = 3.0;
-   vector[4] = 4.0;
-
-   vector.resize(4);
-   vector[0] = 1.0;
-   vector[1] = 2.0;
-   vector[2] = 3.0;
-   vector[3] = 4.0;
-
-   assert_true(abs(OpenNN::standard_deviation(vector) - OpenNN::standard_deviation(vector)) < static_cast<type>(1.0e-6) , LOG);
-
+   assert_true(standard_deviation < numeric_limits<type>::min(), LOG);
 }
 
-
-/// @todo <--- Zero  //<--- Missing values
 
 void StatisticsTest::test_median()
 {
@@ -670,25 +655,18 @@ void StatisticsTest::test_median()
 
     // Test
     vector.resize(4);
-    vector[0] = 1.0;
-    vector[1] = 2.0;
-    vector[2] = 3.0;
-    vector[3] = 4.0;
+    vector.setValues({1,2,3,4});
 
     assert_true(abs(median(vector) - static_cast<type>(2.5)) < static_cast<type>(1.0e-3), LOG);
 
     // Test 
     vector.resize(5);
-    vector[0] = 1.0;
-    vector[1] = 2.0;
-    vector[2] = 3.0;
-    vector[3] = 4.0;
-    vector[4] = 5.0;
+    vector.setValues({1,2,3,4,5});
 
     assert_true(abs(median(vector) - static_cast<type>(3)) < static_cast<type>(1.0e-3), LOG);
 
     // Test 5
-    matrix.resize(3,2);
+    matrix.resize(3,2);    
     matrix(0, 0) = 1.0;
     matrix(0, 1) = 1.0;
     matrix(1, 0) = 2.0;
@@ -726,7 +704,7 @@ void StatisticsTest::test_variance()
 {
     cout << "test_variance\n";
 
-    Tensor<type, 1> vector;
+    Tensor<type, 1> vector;    
 
     // Test
 
@@ -742,22 +720,22 @@ void StatisticsTest::test_variance()
     vector.resize(4);
     vector.setValues({-11,-11,-11,-11});
 
-    assert_true(variance(vector) - static_cast<type>(40)/static_cast<type>(3) < static_cast<type>(1.0e-6), LOG);
-    assert_true(variance(vector) - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    assert_true(variance(vector) - static_cast<type>(40)/static_cast<type>(3) < numeric_limits<type>::min(), LOG);
+    assert_true(variance(vector) - static_cast<type>(0.0) < numeric_limits<type>::min(), LOG);
 
     // Test
     vector.resize(1);
     vector.resize(1);
     vector[0] = 1;
 
-    assert_true(abs(variance(vector) - static_cast<type>(0.0)) < static_cast<type>(1.0e-6), LOG);
+    assert_true(abs(variance(vector) - static_cast<type>(0.0)) < numeric_limits<type>::min(), LOG);
 
     // Test 
     vector.resize(3);
     vector[0] = 2.0;
     vector[1] = 1.0;
     vector[2] = 2.0;
-    assert_true(abs(variance(vector) - static_cast<type>(1)/static_cast<type>(3)) < static_cast<type>(1.0e-6), LOG);
+    assert_true(abs(variance(vector) - static_cast<type>(1)/static_cast<type>(3)) < numeric_limits<type>::min(), LOG);
 
     // Test variance missing values
 
@@ -770,12 +748,12 @@ void StatisticsTest::test_variance()
     vector[0] = 1.0;
     vector[1] = 2.0;
 
-    assert_true(abs(variance(vector) - variance(vector)) < static_cast<type>(1.0e-6), LOG);
-    assert_true(abs(variance(vector) - static_cast<type>(0.5)) < static_cast<type>(1.0e-6), LOG);
+    assert_true(abs(variance(vector) - variance(vector)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(variance(vector) - static_cast<type>(0.5)) < numeric_limits<type>::min(), LOG);
 }
 
 
-void StatisticsTest::test_calculate_asymmetry()
+void StatisticsTest::test_asymmetry()
 {
     cout << "test_calculate_asymmetry\n";
 
@@ -820,14 +798,13 @@ void StatisticsTest::test_calculate_asymmetry()
     vector[4] = 9.0;
 
     type asymmetry = OpenNN::asymmetry(vector);
-    type asymmetry_missing_values = OpenNN::asymmetry(vector);
 
-    assert_true(abs(asymmetry - asymmetry_missing_values) < static_cast<type>(1.0e-3), LOG);
+//    assert_true(abs(asymmetry - asymmetry_missing_values) < static_cast<type>(1.0e-3), LOG);
 
 }
 
 
-void StatisticsTest::test_calculate_kurtosis()
+void StatisticsTest::test_kurtosis()
 {
     cout << "test_calculate_kurtosis\n";
 
@@ -856,9 +833,6 @@ void StatisticsTest::test_calculate_kurtosis()
     vector[4] = 9.0;
 
     type kurtosis = OpenNN::kurtosis(vector);
-    type kurtosis_missing_values = OpenNN::kurtosis(vector);
-
-    assert_true(abs(kurtosis - kurtosis_missing_values) < static_cast<type>(1.0e-3), LOG);
 }
 
 
@@ -876,9 +850,9 @@ void StatisticsTest::test_quartiles()
 
    quartiles = OpenNN::quartiles(vector);
 
-   assert_true(static_cast<Index>(quartiles(0)) < static_cast<type>(1.0e-6), LOG);
-   assert_true(static_cast<Index>(quartiles(1)) < static_cast<type>(1.0e-6), LOG);
-   assert_true(static_cast<Index>(quartiles(2)) < static_cast<type>(1.0e-6), LOG);
+   assert_true(static_cast<Index>(quartiles(0)) < numeric_limits<type>::min(), LOG);
+   assert_true(static_cast<Index>(quartiles(1)) < numeric_limits<type>::min(), LOG);
+   assert_true(static_cast<Index>(quartiles(2)) < numeric_limits<type>::min(), LOG);
 
    // Test
 
@@ -887,9 +861,9 @@ void StatisticsTest::test_quartiles()
 
    quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles(0) - static_cast<type>(0.25) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles(1) - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles(2) - static_cast<type>(0.75) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(0) - static_cast<type>(0.25) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles(1) - static_cast<type>(0.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles(2) - static_cast<type>(0.75) < numeric_limits<type>::min(), LOG);
 
    // Test
 
@@ -898,9 +872,9 @@ void StatisticsTest::test_quartiles()
 
    quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles(0) - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles(1) - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles(2) - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(0) - static_cast<type>(0.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles(1) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles(2) - static_cast<type>(1.5) < numeric_limits<type>::min(), LOG);
 
    // Test 
 
@@ -909,9 +883,9 @@ void StatisticsTest::test_quartiles()
 
    quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles(0) - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles(1) - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles(2) - static_cast<type>(2.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(0) - static_cast<type>(0.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles(1) - static_cast<type>(1.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles(2) - static_cast<type>(2.5) < numeric_limits<type>::min(), LOG);
 
    // Test 5
 
@@ -920,9 +894,9 @@ void StatisticsTest::test_quartiles()
 
    quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles[0] - static_cast<type>(0.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[1] - static_cast<type>(2.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[2] - static_cast<type>(3.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(0.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[1] - static_cast<type>(2.0) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[2] - static_cast<type>(3.5) < numeric_limits<type>::min(), LOG);
 
    // Test 6
 
@@ -931,9 +905,9 @@ void StatisticsTest::test_quartiles()
 
    quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles[0] - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[1] - static_cast<type>(2.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[2] - static_cast<type>(4.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[1] - static_cast<type>(2.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[2] - static_cast<type>(4.0) < numeric_limits<type>::min(), LOG);
 
    // Test 7
 
@@ -942,9 +916,9 @@ void StatisticsTest::test_quartiles()
 
    quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles[0] - static_cast<type>(1.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[1] - static_cast<type>(3.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[2] - static_cast<type>(5.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[1] - static_cast<type>(3.0) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[2] - static_cast<type>(5.0) < numeric_limits<type>::min(), LOG);
 
    // Test 8
 
@@ -953,9 +927,9 @@ void StatisticsTest::test_quartiles()
 
    quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles[0] - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[1] - static_cast<type>(3.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[2] - static_cast<type>(5.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(1.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[1] - static_cast<type>(3.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[2] - static_cast<type>(5.5) < numeric_limits<type>::min(), LOG);
 
    // Test 9
    vector.resize(9);
@@ -963,9 +937,9 @@ void StatisticsTest::test_quartiles()
 
    quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles[0] - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[1] - static_cast<type>(4.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[2] - static_cast<type>(6.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(1.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[1] - static_cast<type>(4.0) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[2] - static_cast<type>(6.5) < numeric_limits<type>::min(), LOG);
 
    // Test 10
    vector.resize(9);
@@ -973,9 +947,9 @@ void StatisticsTest::test_quartiles()
 
    quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles[0] - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[1] - static_cast<type>(4.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[2] - static_cast<type>(6.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(1.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[1] - static_cast<type>(4.0) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[2] - static_cast<type>(6.5) < numeric_limits<type>::min(), LOG);
 
    // Test 11
 
@@ -984,9 +958,9 @@ void StatisticsTest::test_quartiles()
 
    quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles[0] - static_cast<type>(29.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[1] - static_cast<type>(58.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles[2] - static_cast<type>(80.0) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles[0] - static_cast<type>(29.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[1] - static_cast<type>(58.0) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles[2] - static_cast<type>(80.0) < numeric_limits<type>::min(), LOG);
 
    // Test missing values:
 
@@ -999,11 +973,11 @@ void StatisticsTest::test_quartiles()
    vector[3] = static_cast<type>(NAN);
    vector[4] = 4;
 
-   Tensor<type, 1> quartiles_missing_values = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles_missing_values(0) - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles_missing_values(1) - static_cast<type>(2.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles_missing_values(2) - static_cast<type>(3.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(0) - static_cast<type>(1.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles(1) - static_cast<type>(2.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles(2) - static_cast<type>(3.5) < numeric_limits<type>::min(), LOG);
 
    // Test
    vector.resize(6);
@@ -1014,11 +988,11 @@ void StatisticsTest::test_quartiles()
    vector[4] = 4;
    vector[5] = 5;
 
-   Tensor<type, 1> quartiles_missing_values2 = OpenNN::quartiles(vector);
+   quartiles = OpenNN::quartiles(vector);
 
-   assert_true(quartiles_missing_values2(0) - static_cast<type>(1.5) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles_missing_values2(1) - static_cast<type>(3.0) < static_cast<type>(1.0e-6), LOG);
-   assert_true(quartiles_missing_values2(2) - static_cast<type>(4.5) < static_cast<type>(1.0e-6), LOG);
+   assert_true(quartiles(0) - static_cast<type>(1.5) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles(1) - static_cast<type>(3.0) < numeric_limits<type>::min(), LOG);
+   assert_true(quartiles(2) - static_cast<type>(4.5) < numeric_limits<type>::min(), LOG);
 
 }
 
@@ -1308,11 +1282,11 @@ void StatisticsTest::test_box_plot()
 
     box_plot = OpenNN::box_plot(vector);
 
-    assert_true(box_plot.minimum - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
-    assert_true(box_plot.first_quartile - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
-    assert_true(box_plot.median - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
-    assert_true(box_plot.third_quartile - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
-    assert_true(box_plot.maximum - static_cast<type>(0.0) < static_cast<type>(1.0e-6), LOG);
+    assert_true(box_plot.minimum - static_cast<type>(0.0) < numeric_limits<type>::min(), LOG);
+    assert_true(box_plot.first_quartile - static_cast<type>(0.0) < numeric_limits<type>::min(), LOG);
+    assert_true(box_plot.median - static_cast<type>(0.0) < numeric_limits<type>::min(), LOG);
+    assert_true(box_plot.third_quartile - static_cast<type>(0.0) < numeric_limits<type>::min(), LOG);
+    assert_true(box_plot.maximum - static_cast<type>(0.0) < numeric_limits<type>::min(), LOG);
 
     // Test
 
@@ -1323,11 +1297,11 @@ void StatisticsTest::test_box_plot()
 
     solution.set(2.0, 2.5, 5.5, 7.5, 9.0);
 
-    assert_true(box_plot.minimum - solution.minimum < static_cast<type>(1.0e-6), LOG);
-    assert_true(box_plot.first_quartile - solution.first_quartile < static_cast<type>(1.0e-6), LOG);
-    assert_true(box_plot.median - solution.median < static_cast<type>(1.0e-6), LOG);
-    assert_true(box_plot.third_quartile - solution.third_quartile < static_cast<type>(1.0e-6), LOG);
-    assert_true(box_plot.maximum - solution.maximum < static_cast<type>(1.0e-6), LOG);
+    assert_true(box_plot.minimum - solution.minimum < numeric_limits<type>::min(), LOG);
+    assert_true(box_plot.first_quartile - solution.first_quartile < numeric_limits<type>::min(), LOG);
+    assert_true(box_plot.median - solution.median < numeric_limits<type>::min(), LOG);
+    assert_true(box_plot.third_quartile - solution.third_quartile < numeric_limits<type>::min(), LOG);
+    assert_true(box_plot.maximum - solution.maximum < numeric_limits<type>::min(), LOG);
 
     // Test missing values
 
@@ -1338,11 +1312,11 @@ void StatisticsTest::test_box_plot()
 
     solution.set(2.0, 2.5, 5.5, 7.5, 9.0);
 
-    assert_true((box_plot.minimum - solution.minimum) < static_cast<type>(1.0e-6), LOG);
-    assert_true((box_plot.first_quartile - solution.first_quartile) < static_cast<type>(1.0e-6), LOG);
-    assert_true((box_plot.median - solution.median) < static_cast<type>(1.0e-6), LOG);
-    assert_true((box_plot.third_quartile - solution.third_quartile) < static_cast<type>(1.0e-6), LOG);
-    assert_true((box_plot.maximum - solution.maximum) < static_cast<type>(1.0e-6), LOG);
+    assert_true((box_plot.minimum - solution.minimum) < numeric_limits<type>::min(), LOG);
+    assert_true((box_plot.first_quartile - solution.first_quartile) < numeric_limits<type>::min(), LOG);
+    assert_true((box_plot.median - solution.median) < numeric_limits<type>::min(), LOG);
+    assert_true((box_plot.third_quartile - solution.third_quartile) < numeric_limits<type>::min(), LOG);
+    assert_true((box_plot.maximum - solution.maximum) < numeric_limits<type>::min(), LOG);
 
     //Histogram_missing_values
 
@@ -1548,11 +1522,11 @@ void StatisticsTest::run_test_case()
 
    // Assymetry
 
-   test_calculate_asymmetry();
+   test_asymmetry();
 
    // Kurtosis
 
-   test_calculate_kurtosis();
+   test_kurtosis();
 
    // Standard deviation
 

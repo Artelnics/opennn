@@ -47,8 +47,6 @@ public:
     void test_autocorrelations();
     void test_cross_correlations();
 
-    // Contingency table
-
     // Unit testing methods
 
     void run_test_case();

@@ -1738,7 +1738,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
             outputs(i,j) = hidden_states(j);
     }
 
-    return  outputs;
+    return outputs;
 }
 
 
