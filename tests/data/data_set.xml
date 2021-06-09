@@ -1,0 +1,42 @@
+<DataSet>
+   <DataFile>
+      <FileType>csv</FileType>
+      <DataFileName>../data/data.dat</DataFileName>
+      <Separator>Space</Separator>
+      <ColumnsNames>0</ColumnsNames>
+      <RowsLabels>0</RowsLabels>
+      <MissingValuesLabel>NaN</MissingValuesLabel>
+      <LagsNumber>0</LagsNumber>
+      <StepsAhead>0</StepsAhead>
+      <TimeIndex>0</TimeIndex>
+   </DataFile>
+   <Columns>
+      <ColumnsNumber>2</ColumnsNumber>
+      <Column Item="1">
+         <Name>x</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="2">
+         <Name>y</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+   </Columns>
+   <Samples>
+      <SamplesNumber>3</SamplesNumber>
+      <SamplesUses>0 0 0</SamplesUses>
+   </Samples>
+   <MissingValues>
+      <MissingValuesMethod>Unuse</MissingValuesMethod>
+      <MissingValuesNumber>0</MissingValuesNumber>
+   </MissingValues>
+   <PreviewData>
+      <PreviewSize>3</PreviewSize>
+      <Row Item="1">1,2</Row>
+      <Row Item="2">3,4</Row>
+      <Row Item="3">5,6</Row>
+   </PreviewData>
+</DataSet>
