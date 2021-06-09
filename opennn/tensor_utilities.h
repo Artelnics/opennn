@@ -66,11 +66,11 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
 
 Index count_NAN(const Tensor<type, 1>&);
 
-void check_size(const string&, const string&, const string&, const Tensor<type, 1>&, const Index&);
+void check_size(const Tensor<type, 1>&, const Index&, const string&);
 
-void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&);
+void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const string&);
 
-void check_columns_number(const Tensor<type, 2>&, const Index&);
+void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
 
 }
 

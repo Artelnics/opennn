@@ -367,17 +367,13 @@ Index count_NAN(const Tensor<type, 1>& x)
 }
 
 
-void check_size(const string& class_name, const string& method_name, const string& vector_name,
-                const Tensor<type, 1>& vector, const Index& size)
+void check_size(const Tensor<type, 1>& vector, const Index& size, const string& log)
 {
     if(vector.size() != size)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: \n"
-               << "Class " << class_name << "\n"
-               << "Method " << method_name << "\n"
-               << "Vector " << vector_name << "\n"
+        buffer << "OpenNN Exception: " << log
                << "Size of vector is " << vector.size() << ", but must be " << size << ".";
 
         throw logic_error(buffer.str());
@@ -385,13 +381,13 @@ void check_size(const string& class_name, const string& method_name, const strin
 }
 
 
-void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, const Index& columns_number)
+void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, const Index& columns_number, const string& log)
 {
     if(matrix.dimension(0) != rows_number)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: \n"
+        buffer << "OpenNN Exception: " << log
                << "Number of rows in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << ".";
 
         throw logic_error(buffer.str());
@@ -401,20 +397,21 @@ void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, c
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: \n"
+        buffer << "OpenNN Exception: " << log
                << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << ".";
 
         throw logic_error(buffer.str());
     }
 }
 
-void check_columns_number(const Tensor<type, 2>& matrix, const Index& columns_number)
+
+void check_columns_number(const Tensor<type, 2>& matrix, const Index& columns_number, const string& log)
 {
     if(matrix.dimension(1) != columns_number)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: \n"
+        buffer << "OpenNN Exception: " << log
                << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << ".";
 
         throw logic_error(buffer.str());

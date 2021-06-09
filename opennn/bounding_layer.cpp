@@ -118,8 +118,6 @@ const Tensor<type, 1>& BoundingLayer::get_lower_bounds() const
 
 type BoundingLayer::get_lower_bound(const Index& i) const
 {
-
-
 #ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
@@ -363,23 +361,8 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
 
 void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 {
-
-
 #ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    if(new_upper_bounds.size() != neurons_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: BoundingLayer class.\n"
-               << "void set_upper_bound(const Tensor<type, 1>&) method.\n"
-               << "Size must be equal to number of bounding neurons.\n";
-
-        throw logic_error(buffer.str());
-    }
-
+check_size(new_upper_bounds, get_neurons_number(), LOG);
 #endif
 
     // Set upper bound of neurons
@@ -396,8 +379,6 @@ void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bound)
 {
     const Index neurons_number = get_neurons_number();
-
-
 
 #ifdef OPENNN_DEBUG
 
@@ -457,37 +438,7 @@ void BoundingLayer::set_default()
 Tensor<type, 2> BoundingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
 #ifdef OPENNN_DEBUG
-
-    const Index inputs_dimensions_number = inputs.rank();
-
-    if(inputs_dimensions_number != 2)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: BoundingLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-               << "Number of dimensions (" << inputs_dimensions_number << ") must be 2.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index inputs_number = get_inputs_number();
-
-    const Index inputs_columns_number = inputs.dimension(1);
-
-    if(inputs_columns_number != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: BoundingLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-               << "Number of columns ("
-               << inputs_columns_number << ") must be equal to number of inputs ("
-               << inputs_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
+check_columns_number(inputs, get_inputs_number(), LOG);
 #endif
 
     switch(bounding_method)

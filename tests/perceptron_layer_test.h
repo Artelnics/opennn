@@ -99,14 +99,6 @@ public:
 
    void test_forward_propagate();
 
-   // Hidden delta
-
-   void test_calculate_hidden_delta();
-
-   // Gradient
-
-   void test_calculate_error_gradient();
-
    // Expression methods
 
    void test_write_expression();

@@ -290,7 +290,7 @@ struct LayerForwardPropagation
 
     virtual void set(const Index&, Layer*) {}
 
-    virtual void print() const = 0;
+    virtual void print() const {}
 
     Index batch_samples_number = 0;
 

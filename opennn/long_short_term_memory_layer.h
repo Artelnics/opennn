@@ -148,29 +148,29 @@ public:
 
    // Parameters initialization methods
 
-   void initialize_biases(const type&);
+   void set_biases_constant(const type&);
 
-   void initialize_forget_biases(const type&);
-   void initialize_input_biases(const type&);
-   void initialize_state_biases(const type&);
-   void initialize_output_biases(const type&);
+   void set_forget_biases_constant(const type&);
+   void set_input_biases_constant(const type&);
+   void set_state_biases_constant(const type&);
+   void set_output_biases_constant(const type&);
 
-   void initialize_weights(const type&);
+   void set_weights_constant(const type&);
 
-   void initialize_forget_weights(const type&);
-   void initialize_input_weights(const type&);
-   void initialize_state_weights(const type&);
-   void initialize_output_weights(const type&);
+   void set_forget_weights_constant(const type&);
+   void set_input_weights_constant(const type&);
+   void set_state_weights_constant(const type&);
+   void set_output_weights_constant(const type&);
 
-   void initialize_recurrent_weights(const type&);
+   void set_recurrent_weights_constant(const type&);
 
-   void initialize_forget_recurrent_weights(const type&);
-   void initialize_input_recurrent_weights(const type&);
-   void initialize_state_recurrent_weights(const type&);
-   void initialize_output_recurrent_weights(const type&);
+   void set_forget_recurrent_weights_constant(const type&);
+   void set_input_recurrent_weights_constant(const type&);
+   void set_state_recurrent_weights_constant(const type&);
+   void set_output_recurrent_weights_constant(const type&);
 
-   void initialize_hidden_states(const type&);
-   void initialize_cell_states(const type&);
+   void set_hidden_states_constant(const type&);
+   void set_cell_states_constant(const type&);
 
    void set_parameters_constant(const type&);
 

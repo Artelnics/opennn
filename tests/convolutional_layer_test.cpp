@@ -1551,81 +1551,6 @@ void ConvolutionalLayerTest::test_forward_propagate()
 }
 
 
-void ConvolutionalLayerTest::test_calculate_error_gradient()
-{
-    cout << "test_calculate_error_gradient\n";
-
-//
-//    Tensor<type, 4> inputs_4d(1, 3, 5, 5);
-//    Tensor<type, 4> kernels(1, 3, 3, 3);
-//    Tensor<type, 1> biases(1);
-//    Tensor<type, 2> outputs;
-
-//    inputs_4d.setConstant(1.f);
-//    kernels.setConstant(1.f/27);
-//    biases.setZero();
-
-//    Tensor<type, 2> output_delta;
-
-//    Tensor<type, 2> output_delta;
-
-//    convolutional_layer.set(inputs_4d, kernels, biases);
-
-//    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
-//    Tensor<type, 4> numerical_activations = numerical_differentiation.calculate_derivatives(convolutional_layer,
-//                                                                                            &ConvolutionalLayer::calculate_error_gradient,
-//                                                                                            0,
-//                                                                                            kernels);
-
-//    LayerForwardPropagation forward_propagation(1, &convolutional_layer);
-//    convolutional_layer.forward_propagate(inputs_4d, forward_propagation);
-//    LayerBackPropagation back_propagation(1, &convolutional_layer);
-
-//    PerceptronLayer perceptron_layer(2,2, 0,PerceptronLayer::Linear);
-
-//    Tensor<type, 1> parameters(6);
-//    Tensor<type, 2> inputs(1,2);
-
-//    Tensor<type, 2> output_delta(1,2);
-
-//    Tensor<type, 2> output_delta(1,2);
-
-    // Test
-
-//    parameters.setConstant(1);
-//    perceptron_layer.set_parameters(parameters);
-
-//    inputs.setValues({{0,1}});
-
-//    LayerForwardPropagation forward_propagation(1, &perceptron_layer);
-//    perceptron_layer.forward_propagate(inputs, forward_propagation);
-
-//    LayerBackPropagation back_propagation(1, &perceptron_layer);
-
-//    output_delta.setValues({{2,-2}});
-
-//    perceptron_layer.calculate_output_delta(forward_propagation,output_delta, output_delta);
-
-//    back_propagation.delta = output_delta;
-
-//    perceptron_layer.calculate_error_gradient(inputs, forward_propagation, back_propagation);
-
-//    assert_true(back_propagation.biases_derivatives.rank() == 1, LOG);
-//    assert_true(back_propagation.biases_derivatives.dimension(0) == 2, LOG);
-//    assert_true(abs(back_propagation.biases_derivatives(0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-//    assert_true(abs(back_propagation.biases_derivatives(1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-
-//    assert_true(back_propagation.synaptic_weights_derivatives.rank() == 2, LOG);
-//    assert_true(back_propagation.synaptic_weights_derivatives.dimension(0) == 2, LOG);
-//    assert_true(back_propagation.synaptic_weights_derivatives.dimension(1) == 2, LOG);
-//    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,0)) < static_cast<type>(1e-3), LOG);
-//    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,1)) < static_cast<type>(1e-3), LOG);
-//    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-//    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-//
-}
-
-
 void ConvolutionalLayerTest::run_test_case()
 {
    cout << "Running convolutional layer test case...\n";
@@ -1660,6 +1585,7 @@ void ConvolutionalLayerTest::run_test_case()
    test_calculate_outputs();
 
    // Padding
+
    test_insert_padding();
 
    // Get methods
@@ -1668,15 +1594,9 @@ void ConvolutionalLayerTest::run_test_case()
    test_get_outputs_dimensions();
    test_get_parameters_number();
 
-   // Combinations
-
    // Forward propagate
 
    test_forward_propagate();
-
-   // Gradient
-
-   test_calculate_error_gradient();
 
    cout << "End of convolutional layer test case.\n\n";
 }
