@@ -16,10 +16,6 @@
 class UnscalingLayerTest : public UnitTesting
 {
 
-#define STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public:
 
    explicit UnscalingLayerTest();
@@ -42,7 +38,7 @@ public:
    // Statistics
 
    void test_get_descriptives();
-   void test_get_descriptives_matrix();
+
 
    void test_get_minimums();
    void test_get_maximums();
@@ -101,6 +97,8 @@ public:
 private:
 
    UnscalingLayer unscaling_layer;
+
+   Tensor<Descriptives, 1> descriptives;
 
 };
 

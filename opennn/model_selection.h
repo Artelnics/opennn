@@ -76,11 +76,11 @@ public:
 
     // Set methods
 
+    void set(TrainingStrategy*);
+
     void set_default();
 
     void set_display(const bool&);
-
-    void set_training_strategy_pointer(TrainingStrategy*);
 
     void set_neurons_selection_method(const NeuronsSelectionMethod&);
     void set_neurons_selection_method(const string&);

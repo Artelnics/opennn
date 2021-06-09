@@ -208,17 +208,23 @@ void RecurrentLayerTest::test_get_parameters()
 
    // Test
 
-   recurrent_layer.set(1, 1);
+   inputs_number = 1;
+   neurons_number = 1;
+
+   recurrent_layer.set(inputs_number, neurons_number);
    recurrent_layer.set_parameters_constant(1.0);
 
-   recurrent_layer.get_parameters();
+   parameters = recurrent_layer.get_parameters();
 
    assert_true(parameters.size() == 3, LOG);
    assert_true(parameters(0) == 1.0, LOG);
 
    // Test
 
-   recurrent_layer.set(2, 4);
+   inputs_number = 2;
+   neurons_number = 4;
+
+   recurrent_layer.set(inputs_number, neurons_number);
 
    recurrent_layer.set_biases_constant(1.0);
 

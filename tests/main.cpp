@@ -307,7 +307,7 @@ int main()
         tests_passed_count += quasi_Newton_method_test.get_tests_passed_count();
         tests_failed_count += quasi_Newton_method_test.get_tests_failed_count();
       }
-      else if(test == "levenberg_marquardt_algorithm" || test == "levenberg_marquardt_algorithm")
+      else if(test == "levenberg_marquardt_algorithm" || test == "lma")
       {
         LevenbergMarquardtAlgorithmTest Levenberg_Marquardt_algorithm_test;
         Levenberg_Marquardt_algorithm_test.run_test_case();
@@ -317,21 +317,24 @@ int main()
       }
       else if(test == "stochastic_gradient_descent" || test == "sgd")
       {
+          /*
         StochasticGradientDescentTest stochastic_gradient_descent_test;
         stochastic_gradient_descent_test.run_test_case();
         tests_count += stochastic_gradient_descent_test.get_tests_count();
         tests_passed_count += stochastic_gradient_descent_test.get_tests_passed_count();
         tests_failed_count += stochastic_gradient_descent_test.get_tests_failed_count();
+        */
       }
       else if(test == "training_strategy" || test == "ts")
       {
+
         TrainingStrategyTest training_strategy_test;
         training_strategy_test.run_test_case();
         tests_count += training_strategy_test.get_tests_count();
         tests_passed_count += training_strategy_test.get_tests_passed_count();
         tests_failed_count += training_strategy_test.get_tests_failed_count();
-      }
 
+      }
       else if(test == "model_selection" || test == "ms")
       {
         ModelSelectionTest model_selection_test;
@@ -575,6 +578,7 @@ int main()
           tests_passed_count += Levenberg_Marquardt_algorithm_test.get_tests_passed_count();
           tests_failed_count += Levenberg_Marquardt_algorithm_test.get_tests_failed_count();
 
+          // Stochastic gradient descent
 
           StochasticGradientDescentTest stochastic_gradient_descent_test;
           stochastic_gradient_descent_test.run_test_case();
@@ -583,13 +587,13 @@ int main()
           tests_failed_count += stochastic_gradient_descent_test.get_tests_failed_count();
 
           // training_strategy
-
+/*
           TrainingStrategyTest training_strategy_test;
           training_strategy_test.run_test_case();
           tests_count += training_strategy_test.get_tests_count();
           tests_passed_count += training_strategy_test.get_tests_passed_count();
           tests_failed_count += training_strategy_test.get_tests_failed_count();
-
+*/
           // M O D E L   S E L E C T I O N   T E S T S
 
           // model selection

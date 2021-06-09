@@ -81,7 +81,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     OptimizationAlgorithmData optimization_data;
 
     // Test
-
+/*
 //    triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
 
 //    Tensor<Index, 1> samples_indices(0, 1, data_set.get_samples_number()-1);
@@ -174,7 +174,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 //    assert_true(triplet.U.first <= triplet.B.first, LOG);
 //    assert_true(triplet.A.second >= triplet.U.second, LOG);
 //    assert_true(triplet.U.second <= triplet.B.second, LOG);
-
+*/
 }
 
 
@@ -223,7 +223,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
    Index targets_number;
 
    Index neurons_number;
-
+/*
    data_set.set(1, 1, 1);
    Tensor<Index, 1> indices(3);
    indices.setValues({1,1,data_set.get_samples_number()-1});
@@ -246,6 +246,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
 //   assert_true(directional_point.first >= 0.0, LOG);
 //   assert_true(directional_point.second < loss, LOG);
+*/
 }
 
 

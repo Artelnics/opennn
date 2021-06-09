@@ -36,6 +36,9 @@
 
 #include <omp.h>
 
+#define name(x) #x
+
+
 namespace OpenNN
 {
     typedef float type;

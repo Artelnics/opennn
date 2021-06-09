@@ -607,7 +607,7 @@ void NeuralNetworkTest::test_set_inputs_number()
    Index inputs_number = 0;
 
    Tensor<bool, 1> inputs;
-
+/*
    // Test
 
    neural_network.set(NeuralNetwork::Classification, {1,0,1});
@@ -627,14 +627,14 @@ void NeuralNetworkTest::test_set_inputs_number()
    assert_true(neural_network.get_inputs_number() == 3, LOG);
    assert_true(neural_network.get_layer_pointer(0)->get_inputs_number() == 3, LOG); //CC -> Scaling layer nmb assert
 
-   // Test 1_0
+   // Test
 
    inputs.resize(0);
    neural_network.set_inputs_number(inputs);
 
    assert_true(neural_network.get_inputs_number() == 0, LOG);
 
-   // Test 1_1
+   // Test
 
    inputs.resize(2);
    inputs.setValues({true,false});
@@ -642,14 +642,14 @@ void NeuralNetworkTest::test_set_inputs_number()
    neural_network.set_inputs_number(inputs);
    assert_true(neural_network.get_inputs_number() == 1, LOG);
 
-   // Test 1_2
+   // Test
 
    inputs.resize(2);
    inputs.setValues({true,true});
 
    neural_network.set_inputs_number(inputs);
    assert_true(neural_network.get_inputs_number() ==2 , LOG);
-
+*/
 }
 
 
@@ -1158,7 +1158,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer;
 
    // Test
-
+/*
    neural_network.set(NeuralNetwork::Approximation, {3,3,3});
    neural_network.set_parameters_constant(0);
 
@@ -1338,6 +1338,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    assert_true(outputs.dimension(1) == outputs_number, LOG);
    assert_true(abs(outputs(0,0) - 0) < static_cast<type>(1e-5), LOG);
    assert_true(abs(outputs(1,0) - 0) < static_cast<type>(1e-5), LOG);
+*/
 }
 
 
@@ -1504,7 +1505,7 @@ void NeuralNetworkTest::test_forward_propagate()
     Tensor<Index,1> target_variables_indices;
 
     // Test
-
+/*
     inputs_number = 2;
     outputs_number = 1;
 
@@ -1640,6 +1641,7 @@ void NeuralNetworkTest::test_forward_propagate()
 //    assert_true(abs(probabilistic_activations_3_1(0,0) - 1) < static_cast<type>(1e-3)
 //             && abs(probabilistic_activations_3_1(1,0) - 1) < static_cast<type>(1e-3)
 //             && abs(probabilistic_activations_3_1(2,0) - 1) < static_cast<type>(1e-3), LOG);
+*/
 }
 
 

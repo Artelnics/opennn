@@ -11,6 +11,9 @@
 
 ModelSelectionTest::ModelSelectionTest() : UnitTesting() 
 {
+    training_strategy.set(&neural_network, &data_set);
+
+    model_selection.set(&training_strategy);
 }
 
 
@@ -23,12 +26,12 @@ void ModelSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    ModelSelection ms1(&training_strategy);
-    assert_true(ms1.has_training_strategy(), LOG);
+    ModelSelection model_selection_1(&training_strategy);
+    assert_true(model_selection_1.has_training_strategy(), LOG);
 
-    ModelSelection ms2;
+    ModelSelection model_selection_2;
 
-    assert_true(!ms2.has_training_strategy(), LOG);
+    assert_true(!model_selection_2.has_training_strategy(), LOG);
 }
 
 
@@ -36,9 +39,9 @@ void ModelSelectionTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    ModelSelection* ms = new ModelSelection;
+    ModelSelection* model_selection_pointer = new ModelSelection;
 
-    delete ms;
+    delete model_selection_pointer;
 }
 
 
@@ -50,11 +53,11 @@ void ModelSelectionTest::test_get_training_strategy_pointer()
 }
 
 
-void ModelSelectionTest::test_set_training_strategy_pointer()
+void ModelSelectionTest::test_set()
 {
     cout << "test_set_training_strategy_pointer\n";
 
-    model_selection.set_training_strategy_pointer(&training_strategy);
+    model_selection.set(&training_strategy);
 
     assert_true(model_selection.get_training_strategy_pointer() != nullptr, LOG);
 }
@@ -64,17 +67,11 @@ void ModelSelectionTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
 
-    DataSet data_set;
-
     data_set.generate_sum_data(20,2);
 
-    NeuralNetwork nn(NeuralNetwork::Approximation, {1, 2, 1});
-
-    TrainingStrategy training_strategy(&nn, &data_set);
+    neural_network.set(NeuralNetwork::Approximation, {1, 2, 1});
 
     training_strategy.set_display(false);
-
-    ModelSelection model_selection(&training_strategy);
 
     model_selection.set_display(false);
 
@@ -99,9 +96,7 @@ void ModelSelectionTest::test_to_XML()
 {
     cout << "test_to_XML\n";
 
-    ModelSelection ms;
-
-    ms.save("../data/model_selection.xml");
+    model_selection.save("../data/model_selection.xml");
 }
 
 
@@ -111,9 +106,7 @@ void ModelSelectionTest::test_save()
 
     string file_name = "../data/model_selection1.xml";
 
-    ModelSelection ms;
-
-    ms.save(file_name);
+    model_selection.save(file_name);
 }
 
 
@@ -124,15 +117,13 @@ void ModelSelectionTest::test_load()
     string file_name = "../data/model_selection.xml";
     string file_name2 = "../data/model_selection2.xml";
 
-    ModelSelection ms;
-
-    ms.set_neurons_selection_method(ModelSelection::GROWING_NEURONS);
+    model_selection.set_neurons_selection_method(ModelSelection::GROWING_NEURONS);
 
     // Test
 
-    ms.save(file_name);
-    ms.load(file_name);
-    ms.save(file_name2);
+    model_selection.save(file_name);
+    model_selection.load(file_name);
+    model_selection.save(file_name2);
 
 }
 
@@ -152,7 +143,7 @@ void ModelSelectionTest::run_test_case()
 
     // Set methods
 
-    test_set_training_strategy_pointer();
+    test_set();
 
     // Model selection methods
 

@@ -491,6 +491,13 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                             const Tensor<type, 2>& synaptic_weights,
                             Tensor<type, 2>& combinations) const
 {
+#ifdef OPENNN_DEBUG
+    check_columns_number(inputs, get_inputs_number());
+    check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number());
+    check_dimensions(biases, 1, get_neurons_number());
+    check_dimensions(combinations, inputs.dimension(0), get_neurons_number());
+#endif
+
     const Index batch_samples_number = inputs.dimension(0);
     const Index biases_number = get_biases_number();
 
@@ -505,25 +512,10 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
-     #ifdef OPENNN_DEBUG
-
-     const Index neurons_number = get_neurons_number();
-
-     const Index combinations_columns_number = combinations.dimension(1);
-
-     if(combinations_columns_number != neurons_number)
-     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-               << "Number of combinations columns (" << combinations_columns_number
-               << ") must be equal to number of neurons (" << neurons_number << ").\n";
-
-        throw logic_error(buffer.str());
-     }
-
-     #endif
+#ifdef OPENNN_DEBUG
+    check_columns_number(combinations, get_neurons_number());
+    check_dimensions(activations, combinations.dimension(0), get_neurons_number());
+#endif
 
      switch(activation_function)
      {
@@ -605,36 +597,8 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
 
 Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
-
 #ifdef OPENNN_DEBUG
-    const Index inputs_dimensions_number = inputs.rank();
-
-    if(inputs_dimensions_number != 2)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-               << "Number of dimensions (" << inputs_dimensions_number << ") must be equal to 2.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index inputs_number = get_inputs_number();
-
-    const Index inputs_columns_number = inputs.dimension(1);
-
-    if(inputs_columns_number != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-               << "Number of columns (" << inputs_columns_number << ") must be equal to number of inputs (" << inputs_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
+    check_columns_number(inputs, get_inputs_number());
 #endif
 
     const Index batch_size = inputs.dimension(0);
@@ -654,21 +618,7 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                         LayerForwardPropagation* forward_propagation)
 {
 #ifdef OPENNN_DEBUG
-
-    const Index inputs_number = get_inputs_number();
-
-    if(inputs_number != inputs.dimension(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) method.\n"
-               << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs ("
-               << inputs_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
+    check_columns_number(inputs, get_inputs_number());
 #endif
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
@@ -689,25 +639,14 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                         Tensor<type, 1> potential_parameters,
                                         LayerForwardPropagation* forward_propagation)
 {
+#ifdef OPENNN_DEBUG
+    check_columns_number(inputs, get_inputs_number());
+//    check_size(name(this), potential_parameters, get_parameters_number()*10);
+#endif
+
     const Index neurons_number = get_neurons_number();
 
     const Index inputs_number = get_inputs_number();
-
-#ifdef OPENNN_DEBUG
-
-    if(inputs_number != inputs.dimension(1))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>&, ForwardPropagation&) method.\n"
-               << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs ("
-               << inputs_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
 
     const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), neurons_number, 1);
 
@@ -1566,7 +1505,6 @@ string PerceptronLayer::write_activations_python() const
         case HardSigmoid:
             ///@todo
             break;
-
         }
     }
 

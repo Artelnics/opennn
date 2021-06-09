@@ -63,7 +63,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    type gradient_norm = 0;
 
    // Test
-
+/*
    samples_number = 1;
    inputs_number = 1;
    targets_number = 1;
@@ -73,7 +73,6 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
    neural_network.set_parameters_random();
-
 
 //   old_loss = sum_squared_error.calculate_training_loss();
 
@@ -151,6 +150,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 //   gradient_norm = l2_norm(gradient);
 
    assert_true(gradient_norm < gradient_norm_goal, LOG);
+*/
 }
 
 
