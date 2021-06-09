@@ -980,6 +980,7 @@ void StatisticsTest::test_quartiles()
    assert_true(quartiles(2) - static_cast<type>(3.5) < numeric_limits<type>::min(), LOG);
 
    // Test
+
    vector.resize(6);
    vector[0] = 1;
    vector[1] = 2;

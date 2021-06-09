@@ -799,7 +799,7 @@ void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void set_inputs_number(const Index&) method.\n"
-               << "The number of inputs(" << new_inputs_number << ") must be greater than 0.\n";
+               << "The number of inputs (" << new_inputs_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1350,7 +1350,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
-{
+{   
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
@@ -2314,7 +2314,8 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
             if(!output_element->GetText())
             {
                 outputs_names(i) = "";
-            }else
+            }
+            else
             {
                 outputs_names(i) = output_element->GetText();
             }
@@ -2327,6 +2328,8 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
 
 void NeuralNetwork::print() const
 {
+    cout << "Neural network" << endl;
+
     const Index layers_number = get_layers_number();
 
     cout << "Layers number: " << layers_number << endl;

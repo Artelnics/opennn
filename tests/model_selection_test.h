@@ -14,10 +14,6 @@
 class ModelSelectionTest : public UnitTesting 
 {
 
-#define	STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public:
 
    explicit ModelSelectionTest();
@@ -35,7 +31,7 @@ public:
 
    // Set methods
 
-   void test_set_training_strategy_pointer();
+   void test_set();
 
    // Model selection methods
 

@@ -16,10 +16,6 @@
 class SumSquaredErrorTest : public UnitTesting 
 {
 
-#define	STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public: 
 
    explicit SumSquaredErrorTest(); 
@@ -38,7 +34,7 @@ public:
 
    void test_calculate_output_delta();
    void test_calculate_error_gradient();
-   void test_calculate_Jacobian_gradient();
+   void test_calculate_error_gradient_lm();
 
    // Squared errors methods
 

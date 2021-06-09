@@ -24,7 +24,7 @@ ModelSelection::ModelSelection()
 
 ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
 {
-    set_training_strategy_pointer(new_training_strategy_pointer);
+    set(new_training_strategy_pointer);
 
     set_default();
 }
@@ -233,7 +233,7 @@ void ModelSelection::set_inputs_selection_method(const string& new_inputs_select
 /// Sets a new training strategy pointer.
 /// @param new_training_strategy_pointer Pointer to a training strategy object.
 
-void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_training_strategy_pointer)
+void ModelSelection::set(TrainingStrategy* new_training_strategy_pointer)
 {
     training_strategy_pointer = new_training_strategy_pointer;
 

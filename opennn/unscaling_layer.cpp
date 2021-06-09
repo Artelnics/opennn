@@ -73,29 +73,6 @@ Tensor<Descriptives, 1> UnscalingLayer::get_descriptives() const
 }
 
 
-/// Returns a single matrix with the descriptives of all unscaling neurons.
-/// The number of rows is the number of unscaling neurons,
-/// and the number of columns is 4(minimum, maximum, mean and standard deviation).
-
-Tensor<type, 2> UnscalingLayer::get_descriptives_matrix() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 2> descriptives_matrix(neurons_number, 4);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-
-        descriptives_matrix(i,0) = descriptives(i).minimum;
-        descriptives_matrix(i,1) = descriptives(i).maximum;
-        descriptives_matrix(i,2) = descriptives(i).mean;
-        descriptives_matrix(i,3) = descriptives(i).standard_deviation;
-    }
-
-    return descriptives_matrix;
-}
-
-
 /// Returns a vector with the minimum values of all unscaling neurons.
 /// The size is the number of neurons in the layer.
 

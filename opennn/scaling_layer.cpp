@@ -91,28 +91,6 @@ Descriptives ScalingLayer::get_descriptives(const Index& index) const
 }
 
 
-/// Returns a single matrix with the descriptives of all scaling neurons.
-/// The number of rows is the number of scaling neurons.
-/// The number of columns is four(minimum, maximum, mean and standard deviation).
-
-Tensor<type, 2> ScalingLayer::get_descriptives_matrix() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 2> statistics_matrix(neurons_number, 4);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        statistics_matrix(i,0) = descriptives(i).minimum;
-        statistics_matrix(i,1) = descriptives(i).maximum;
-        statistics_matrix(i,2) = descriptives(i).mean;
-        statistics_matrix(i,3) = descriptives(i).standard_deviation;
-    }
-
-    return statistics_matrix;
-}
-
-
 /// Returns a single matrix with the minimums of all scaling neurons.
 
 Tensor<type, 1> ScalingLayer::get_minimums() const

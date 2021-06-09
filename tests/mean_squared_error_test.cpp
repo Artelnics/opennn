@@ -138,7 +138,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
    Tensor<type, 1> numerical_error_gradient;
 
    // Trivial test
-   {
+/*
        samples_number = 10;
        inputs_number = 1;
        outputs_number = 1;
@@ -171,17 +171,16 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
        assert_true(all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
                           [](type i) { return (i-static_cast<type>(0))<numeric_limits<type>::min(); }), LOG);
-   }
 
    neural_network.set();
 
    // Test perceptron
-   {
+
        samples_number = 10;
        inputs_number = 3;
        outputs_number = 5;
 
-       const Index neurons_number = 6;
+       neurons_number = 6;
 
        data_set.set(samples_number, inputs_number, outputs_number);
        data_set.set_data_random();
@@ -213,10 +212,9 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
-   }
 
    // Test perceptron and binary probabilistic
-   {
+
        samples_number = 3;
        inputs_number = 3;
        neurons_number = 4;
@@ -250,13 +248,12 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
-   }
 
    neural_network.set();
 
    // Test perceptron and multiple probabilistic
-   {
-       samples_number = 3;
+
+   samples_number = 3;
        inputs_number = 3;
        neurons_number = 2;
        outputs_number = 3;
@@ -289,12 +286,11 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
-   }
 
    neural_network.set();
 
    // Test lstm
-   {
+
        samples_number = 4;
        inputs_number = 3;
        outputs_number = 2;
@@ -332,12 +328,10 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
-   }
 
    neural_network.set();
 
    // Test recurrent
-   {
        samples_number = 4;
        inputs_number = 2;
        outputs_number = 1;
@@ -348,7 +342,6 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        data_set.set_data_random();
 
        data_set.set_training();
-
 
        samples_indices = data_set.get_training_samples_indices();
        input_indices = data_set.get_input_variables_indices();
@@ -376,13 +369,11 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
-   }
 
    neural_network.set();
 
    // Test recurrent and perceptron
 
-   {
        samples_number = 4;
        inputs_number = 2;
        outputs_number = 1;
@@ -422,12 +413,11 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
-   }
 
    neural_network.set();
 
    // Test recurrent and binary probabilistic
-   {
+
        samples_number = 4;
        inputs_number = 3;
        neurons_number = 4;
@@ -467,12 +457,11 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
-   }
 
    neural_network.set();
 
    // Test recurrent and multiple probabilistic
-   {
+
        samples_number = 3;
        inputs_number = 3;
        neurons_number = 2;
@@ -512,10 +501,9 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        numerical_error_gradient = mean_squared_error.calculate_gradient_numerical_differentiation();
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
-   }
 
    // Test Perceptron LM
-   {
+
        samples_number = 2;
        inputs_number = 2;
        neurons_number = 3;
@@ -549,12 +537,11 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
        assert_true(are_equal(back_propagation.gradient, back_propagation_lm.gradient, static_cast<type>(1.0e-3)), LOG);
        assert_true(are_equal(back_propagation_lm.gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
-   }
 
    neural_network.set();
 
    // Test probabilistic (binary) LM
-   {
+
        samples_number = 2;
        inputs_number = 2;
        neurons_number = 3;
@@ -591,12 +578,11 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
        assert_true(are_equal(back_propagation.gradient, back_propagation_lm.gradient, static_cast<type>(1.0e-3)), LOG);
        assert_true(are_equal(back_propagation_lm.gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
-   }
 
    neural_network.set();
 
    // Test probabilistic (multiple) LM
-   {
+
        samples_number = 2;
        inputs_number = 2;
        neurons_number = 3;
@@ -632,7 +618,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
        assert_true(are_equal(back_propagation.gradient, back_propagation_lm.gradient, static_cast<type>(1.0e-3)), LOG);
        assert_true(are_equal(back_propagation_lm.gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
-   }
+*/
 }
 
 
@@ -655,20 +641,18 @@ void MeanSquaredErrorTest::test_calculate_squared_errors()
    Tensor<type, 1> squared_errors;
 
    // Test
-
+/*
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
    neural_network.set_parameters_random();
 
    data_set.set(1, 1, 1);
    data_set.set_data_random();
 
-
    batch.set(1, &data_set);
    forward_propagation.set(batch_samples_number, &neural_network);
    neural_network.forward_propagate(batch, forward_propagation);
 
    back_propagation_lm.set(batch_samples_number, &mean_squared_error);
-
 
    mean_squared_error.calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
@@ -679,6 +663,7 @@ void MeanSquaredErrorTest::test_calculate_squared_errors()
 //   const Tensor<type, 0> product_result = squared_errors.contract(squared_errors, vector_times_vector);
 
 //   assert_true(abs(product_result(0) - error) < 1.0e-3, LOG);
+*/
 }
 
 
@@ -696,7 +681,7 @@ void MeanSquaredErrorTest::test_calculate_squared_errors_jacobian()
    Index outputs_number;
 
    Tensor<type, 2> numerical_squared_errors_jacobian;
-
+/*
    // Test Perceptron
    {
        samples_number = 2;
@@ -808,6 +793,7 @@ void MeanSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, static_cast<type>(1e-3)), LOG);
    }
+*/
 }
 
 

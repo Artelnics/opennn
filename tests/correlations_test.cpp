@@ -136,7 +136,7 @@ void CorrelationsTest::test_logistic_correlation()
     Correlation correlation;
 
     // Test
-
+/*
     size = 20;
 
     x.resize(size);
@@ -221,6 +221,7 @@ void CorrelationsTest::test_logistic_correlation()
 //    correlation = logistic_correlation(thread_pool_device, x, y);
 
 //    assert_true(abs(correlation.r) < numeric_limits<type>::min(), LOG);
+*/
 }
 
 

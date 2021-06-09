@@ -64,8 +64,6 @@ public:
    Tensor<Descriptives, 1> get_descriptives() const;
    Descriptives get_descriptives(const Index&) const;
 
-   Tensor<type, 2> get_descriptives_matrix() const;
-
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
    Tensor<type, 1> get_means() const;

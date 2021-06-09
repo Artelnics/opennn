@@ -16,10 +16,6 @@
 class PerceptronLayerTest : public UnitTesting
 {
 
-#define STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public:
 
    explicit PerceptronLayerTest();
@@ -123,7 +119,7 @@ private:
 
    Index inputs_number;
    Index neurons_number;
-   Index batch_size;
+   Index samples_number;
 
     PerceptronLayer perceptron_layer;
 
