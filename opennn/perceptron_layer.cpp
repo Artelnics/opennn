@@ -492,10 +492,10 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                             Tensor<type, 2>& combinations) const
 {
 #ifdef OPENNN_DEBUG
-    check_columns_number(inputs, get_inputs_number());
-    check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number());
-    check_dimensions(biases, 1, get_neurons_number());
-    check_dimensions(combinations, inputs.dimension(0), get_neurons_number());
+    check_columns_number(inputs, get_inputs_number(), LOG);
+    check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number(), LOG);
+    check_dimensions(biases, 1, get_neurons_number(), LOG);
+    check_dimensions(combinations, inputs.dimension(0), get_neurons_number(), LOG);
 #endif
 
     const Index batch_samples_number = inputs.dimension(0);
@@ -513,8 +513,8 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
 #ifdef OPENNN_DEBUG
-    check_columns_number(combinations, get_neurons_number());
-    check_dimensions(activations, combinations.dimension(0), get_neurons_number());
+    check_columns_number(combinations, get_neurons_number(), LOG);
+    check_dimensions(activations, combinations.dimension(0), get_neurons_number(), LOG);
 #endif
 
      switch(activation_function)
@@ -548,25 +548,11 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
                                                         Tensor<type, 2>& activations,
                                                         Tensor<type, 2>& activations_derivatives) const
 {
-     #ifdef OPENNN_DEBUG
-
-     const Index neurons_number = get_neurons_number();
-
-     const Index combinations_columns_number = combinations.dimension(1);
-
-     if(combinations_columns_number != neurons_number)
-     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-               << "Number of combinations columns (" << combinations_columns_number
-               << ") must be equal to number of neurons (" << neurons_number << ").\n";
-
-        throw logic_error(buffer.str());
-     }
-
-     #endif
+#ifdef OPENNN_DEBUG
+check_columns_number(combinations, get_neurons_number(), LOG);
+check_dimensions(activations, combinations.dimension(0), get_neurons_number(), LOG);
+check_dimensions(activations_derivatives, combinations.dimension(0), get_neurons_number(), LOG);
+#endif
 
      switch(activation_function)
      {
@@ -598,7 +584,7 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
 Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
 #ifdef OPENNN_DEBUG
-    check_columns_number(inputs, get_inputs_number());
+    check_columns_number(inputs, get_inputs_number(), LOG);
 #endif
 
     const Index batch_size = inputs.dimension(0);
@@ -618,7 +604,7 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                         LayerForwardPropagation* forward_propagation)
 {
 #ifdef OPENNN_DEBUG
-    check_columns_number(inputs, get_inputs_number());
+    check_columns_number(inputs, get_inputs_number(), LOG);
 #endif
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
@@ -640,8 +626,8 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                         LayerForwardPropagation* forward_propagation)
 {
 #ifdef OPENNN_DEBUG
-    check_columns_number(inputs, get_inputs_number());
-//    check_size(name(this), potential_parameters, get_parameters_number()*10);
+    check_columns_number(inputs, get_inputs_number(), LOG);
+    check_size(potential_parameters, get_parameters_number(), LOG);
 #endif
 
     const Index neurons_number = get_neurons_number();
@@ -1016,53 +1002,10 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
 string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
 #ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index inputs_number = get_inputs_number();
-    const Index inputs_name_size = inputs_names.size();
-
-    if(inputs_name_size != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
-               << "Size of inputs name must be equal to number of layer inputs.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index outputs_name_size = outputs_names.size();
-
-    if(outputs_name_size != neurons_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-               << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
-               << "Size of outputs name must be equal to number of perceptrons.\n";
-
-        throw logic_error(buffer.str());
-    }
-
+//    check_size(inputs_names, get_inputs_number(), LOG);
+//    check_size(outputs_names, get_neurons_number(), LOG);
 #endif
 
-    switch(perceptron_layer_type)
-    {
-         case HiddenLayer:
-            return write_hidden_layer_expression(inputs_names, outputs_names);
-
-         case OutputLayer:
-            return write_output_layer_expression(inputs_names, outputs_names);
-    }
-
-    return string();
-}
-
-
-string PerceptronLayer::write_hidden_layer_expression(const Tensor<string, 1> & inputs_names, const Tensor<string, 1> & outputs_names) const
-{
     ostringstream buffer;
 
     for(Index j = 0; j < outputs_names.size(); j++)
@@ -1074,28 +1017,6 @@ string PerceptronLayer::write_hidden_layer_expression(const Tensor<string, 1> & 
         for(Index i = 0; i < inputs_names.size() - 1; i++)
         {
 
-           buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ") +";
-        }
-
-        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") );\n";
-    }
-
-    return buffer.str();
-}
-
-
-string PerceptronLayer::write_output_layer_expression(const Tensor<string, 1> & inputs_names, const Tensor<string, 1> & outputs_names) const
-{
-    ostringstream buffer;
-
-    for(Index j = 0; j < outputs_names.size(); j++)
-    {
-        const Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
-
-        buffer << outputs_names[j] << " = " << write_activation_function_expression() << "( " << biases(0,j) << " +";
-
-        for(Index i = 0; i < inputs_names.size() - 1; i++)
-        {
            buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ") +";
         }
 
@@ -1542,7 +1463,6 @@ string PerceptronLayer::write_expression_python() const
 
     return buffer.str();
 }
-
 
 }
 

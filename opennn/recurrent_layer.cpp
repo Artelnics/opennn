@@ -246,38 +246,27 @@ string RecurrentLayer::write_activation_function() const
 {
     switch(activation_function)
     {
-    case Logistic:
-        return "Logistic";
+    case Logistic: return "Logistic";
 
-    case HyperbolicTangent:
-        return "HyperbolicTangent";
+    case HyperbolicTangent: return "HyperbolicTangent";
 
-    case Threshold:
-        return "Threshold";
+    case Threshold: return "Threshold";
 
-    case SymmetricThreshold:
-        return "SymmetricThreshold";
+    case SymmetricThreshold: return "SymmetricThreshold";
 
-    case Linear:
-        return "Linear";
+    case Linear: return "Linear";
 
-    case RectifiedLinear:
-        return "RectifiedLinear";
+    case RectifiedLinear: return "RectifiedLinear";
 
-    case ScaledExponentialLinear:
-        return "ScaledExponentialLinear";
+    case ScaledExponentialLinear: return "ScaledExponentialLinear";
 
-    case SoftPlus:
-        return "SoftPlus";
+    case SoftPlus: return "SoftPlus";
 
-    case SoftSign:
-        return "SoftSign";
+    case SoftSign: return "SoftSign";
 
-    case HardSigmoid:
-        return "HardSigmoid";
+    case HardSigmoid: return "HardSigmoid";
 
-    case ExponentialLinear:
-        return "ExponentialLinear";
+    case ExponentialLinear: return "ExponentialLinear";
     }
 
     return string();
@@ -421,22 +410,7 @@ void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_
 void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
 #ifdef OPENNN_DEBUG
-
-    const Index parameters_number = get_parameters_number();
-
-    const Index new_parameters_size = new_parameters.size();
-
-    if(new_parameters_size != parameters_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-               << "void set_parameters(const Tensor<type, 1>&) method.\n"
-               << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters (" << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
+check_size(new_parameters, get_parameters_number(), LOG);
 #endif
 
     const Index biases_number = get_biases_number();
@@ -543,7 +517,7 @@ void RecurrentLayer::set_display(const bool& new_display)
 /// Initializes the hidden states of in the layer of neurons with a given value.
 /// @param value Hidden states initialization value.
 
-void RecurrentLayer::initialize_hidden_states(const type& value)
+void RecurrentLayer::set_hidden_states_constant(const type& value)
 {
     hidden_states.setConstant(value);
 }
@@ -561,7 +535,7 @@ void RecurrentLayer::set_biases_constant(const type& value)
 /// Initializes the input weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Input weights initialization value.
 
-void RecurrentLayer::initialize_input_weights(const type& value)
+void RecurrentLayer::set_input_weights_constant(const type& value)
 {
     input_weights.setConstant(value);
 }
@@ -570,7 +544,7 @@ void RecurrentLayer::initialize_input_weights(const type& value)
 /// Initializes the recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Synaptic weights initialization value.
 
-void RecurrentLayer::initialize_recurrent_weights(const type& value)
+void RecurrentLayer::set_recurrent_weights_constant(const type& value)
 {
     recurrent_weights.setConstant(value);
 }
@@ -637,11 +611,14 @@ void RecurrentLayer::set_parameters_random()
 
 
 void RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs,
-                                                    const Tensor<type, 2>& input_weights,
-                                                    const Tensor<type, 2>& recurrent_weights,
-                                                    const Tensor<type, 1>& biases,
-                                                    Tensor<type, 1>& combinations) const
+                                            const Tensor<type, 2>& input_weights,
+                                            const Tensor<type, 2>& recurrent_weights,
+                                            const Tensor<type, 1>& biases,
+                                            Tensor<type, 1>& combinations) const
 {
+
+
+
     combinations.device(*thread_pool_device) = inputs.contract(input_weights, AT_B);
 
     combinations.device(*thread_pool_device) += biases;
@@ -654,48 +631,33 @@ void RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations_1
                                            Tensor<type, 1>& activations_1d) const
 {
 #ifdef OPENNN_DEBUG
-
-const Index neurons_number = get_neurons_number();
-
-const Index combinations_columns_number = combinations_1d.dimension(0);
-
-if(combinations_columns_number != neurons_number)
-{
-ostringstream buffer;
-
-buffer << "OpenNN Exception: RecurrentLayer class.\n"
-       << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-       << "Number of combinations columns (" << combinations_columns_number
-       << ") must be equal to number of neurons (" << neurons_number << ").\n";
-
-throw logic_error(buffer.str());
-}
-
+    check_size(combinations_1d, get_neurons_number(), LOG);
+    check_size(activations_1d, get_neurons_number(), LOG);
 #endif
 
     switch(activation_function)
     {
-        case Linear: return linear(combinations_1d, activations_1d);
+        case Linear:  linear(combinations_1d, activations_1d); return;
 
-        case Logistic: return logistic(combinations_1d, activations_1d);
+        case Logistic: logistic(combinations_1d, activations_1d); return;
 
-        case HyperbolicTangent: return hyperbolic_tangent(combinations_1d, activations_1d);
+        case HyperbolicTangent: hyperbolic_tangent(combinations_1d, activations_1d); return;
 
-        case Threshold: return threshold(combinations_1d, activations_1d);
+        case Threshold: threshold(combinations_1d, activations_1d); return;
 
-        case SymmetricThreshold: return symmetric_threshold(combinations_1d, activations_1d);
+        case SymmetricThreshold: symmetric_threshold(combinations_1d, activations_1d); return;
 
-        case RectifiedLinear: return rectified_linear(combinations_1d, activations_1d);
+        case RectifiedLinear: rectified_linear(combinations_1d, activations_1d); return;
 
-        case ScaledExponentialLinear: return scaled_exponential_linear(combinations_1d, activations_1d);
+        case ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, activations_1d); return;
 
-        case SoftPlus: return soft_plus(combinations_1d, activations_1d);
+        case SoftPlus: soft_plus(combinations_1d, activations_1d); return;
 
-        case SoftSign: return soft_sign(combinations_1d, activations_1d);
+        case SoftSign: soft_sign(combinations_1d, activations_1d); return;
 
-        case HardSigmoid: return hard_sigmoid(combinations_1d, activations_1d);
+        case HardSigmoid: hard_sigmoid(combinations_1d, activations_1d); return;
 
-        case ExponentialLinear: return exponential_linear(combinations_1d, activations_1d);
+        case ExponentialLinear: exponential_linear(combinations_1d, activations_1d); return;
     }
 }
 
@@ -753,6 +715,10 @@ void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 1>& co
 
 void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, LayerForwardPropagation* forward_propagation)
 {
+#ifdef OPENNN_DEBUG
+check_columns_number(inputs, get_inputs_number(), LOG);
+#endif
+
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
     const Index samples_number = inputs.dimension(0);

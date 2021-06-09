@@ -621,28 +621,12 @@ void LongShortTermMemoryLayer::set_output_recurrent_weights(const Tensor<type, 2
 
 void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
+#ifdef OPENNN_DEBUG
+check_size(new_parameters, get_parameters_number(), LOG);
+#endif
+
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
-
-#ifdef OPENNN_DEBUG
-
-    const Index parameters_number = get_parameters_number();
-
-    const Index new_parameters_size = new_parameters.size();
-
-    if(new_parameters_size != parameters_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void set_parameters(const Tensor<type, 1>&) method.\n"
-               << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters ("
-               << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
 
     Index current_index = index;
 
@@ -899,7 +883,7 @@ void LongShortTermMemoryLayer::set_display(const bool& new_display)
 /// Initializes the biases of all the neurons in the layer with a given value.
 /// @param value Biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_biases(const type& value)
+void LongShortTermMemoryLayer::set_biases_constant(const type& value)
 {
     forget_biases.setConstant(value);
     input_biases.setConstant(value);
@@ -911,7 +895,7 @@ void LongShortTermMemoryLayer::initialize_biases(const type& value)
 /// Initializes the forget biases of all the neurons in the layer with a given value.
 /// @param value Forget biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_forget_biases(const type& value)
+void LongShortTermMemoryLayer::set_forget_biases_constant(const type& value)
 {
     forget_biases.setConstant(value);
 }
@@ -920,7 +904,7 @@ void LongShortTermMemoryLayer::initialize_forget_biases(const type& value)
 /// Initializes the input biases of all the neurons in the layer with a given value.
 /// @param value Input biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_input_biases(const type& value)
+void LongShortTermMemoryLayer::set_input_biases_constant(const type& value)
 {
     input_biases.setConstant(value);
 }
@@ -929,7 +913,7 @@ void LongShortTermMemoryLayer::initialize_input_biases(const type& value)
 /// Initializes the state biases of all the neurons in the layer with a given value.
 /// @param value State biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_state_biases(const type& value)
+void LongShortTermMemoryLayer::set_state_biases_constant(const type& value)
 {
     state_biases.setConstant(value);
 }
@@ -938,7 +922,7 @@ void LongShortTermMemoryLayer::initialize_state_biases(const type& value)
 /// Initializes the oputput biases of all the neurons in the layer with a given value.
 /// @param value Output biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_output_biases(const type& value)
+void LongShortTermMemoryLayer::set_output_biases_constant(const type& value)
 {
     output_biases.setConstant(value);
 }
@@ -947,7 +931,7 @@ void LongShortTermMemoryLayer::initialize_output_biases(const type& value)
 /// Initializes the weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_weights(const type& value)
+void LongShortTermMemoryLayer::set_weights_constant(const type& value)
 {
     forget_weights.setConstant(value);
     input_weights.setConstant(value);
@@ -959,7 +943,7 @@ void LongShortTermMemoryLayer::initialize_weights(const type& value)
 /// Initializes the forget weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Forget weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_forget_weights(const type& value)
+void LongShortTermMemoryLayer::set_forget_weights_constant(const type& value)
 {
     forget_weights.setConstant(value);
 }
@@ -968,7 +952,7 @@ void LongShortTermMemoryLayer::initialize_forget_weights(const type& value)
 /// Initializes the input weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Input weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_input_weights(const type& value)
+void LongShortTermMemoryLayer::set_input_weights_constant(const type& value)
 {
     input_weights.setConstant(value);
 }
@@ -977,7 +961,7 @@ void LongShortTermMemoryLayer::initialize_input_weights(const type& value)
 /// Initializes the state weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value State weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_state_weights(const type& value)
+void LongShortTermMemoryLayer::set_state_weights_constant(const type& value)
 {
     state_weights.setConstant(value);
 }
@@ -986,7 +970,7 @@ void LongShortTermMemoryLayer::initialize_state_weights(const type& value)
 /// Initializes the output weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Output weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_output_weights(const type&  value)
+void LongShortTermMemoryLayer::set_output_weights_constant(const type&  value)
 {
     output_weights.setConstant(value);
 }
@@ -995,7 +979,7 @@ void LongShortTermMemoryLayer::initialize_output_weights(const type&  value)
 /// Initializes the recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_recurrent_weights(const type& value)
+void LongShortTermMemoryLayer::set_recurrent_weights_constant(const type& value)
 {
     forget_recurrent_weights.setConstant(value);
     input_recurrent_weights.setConstant(value);
@@ -1007,7 +991,7 @@ void LongShortTermMemoryLayer::initialize_recurrent_weights(const type& value)
 /// Initializes the forget recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Forget recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_forget_recurrent_weights(const type& value)
+void LongShortTermMemoryLayer::set_forget_recurrent_weights_constant(const type& value)
 {
     forget_recurrent_weights.setConstant(value);
 }
@@ -1016,7 +1000,7 @@ void LongShortTermMemoryLayer::initialize_forget_recurrent_weights(const type& v
 /// Initializes the input recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Input recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_input_recurrent_weights(const type& value)
+void LongShortTermMemoryLayer::set_input_recurrent_weights_constant(const type& value)
 {
     input_recurrent_weights.setConstant(value);
 }
@@ -1025,7 +1009,7 @@ void LongShortTermMemoryLayer::initialize_input_recurrent_weights(const type& va
 /// Initializes the state recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value State recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_state_recurrent_weights(const type& value)
+void LongShortTermMemoryLayer::set_state_recurrent_weights_constant(const type& value)
 {
     state_recurrent_weights.setConstant(value);
 }
@@ -1034,7 +1018,7 @@ void LongShortTermMemoryLayer::initialize_state_recurrent_weights(const type& va
 /// Initializes the output recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Output recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_output_recurrent_weights(const type&  value)
+void LongShortTermMemoryLayer::set_output_recurrent_weights_constant(const type&  value)
 {
     output_recurrent_weights.setConstant(value);
 }
@@ -1043,7 +1027,7 @@ void LongShortTermMemoryLayer::initialize_output_recurrent_weights(const type&  
 /// Initializes hidden states of the layer with a given value.
 /// @param value Hidden states initialization value.
 
-void LongShortTermMemoryLayer::initialize_hidden_states(const type& value)
+void LongShortTermMemoryLayer::set_hidden_states_constant(const type& value)
 {
     hidden_states.setConstant(value);
 }
@@ -1052,7 +1036,7 @@ void LongShortTermMemoryLayer::initialize_hidden_states(const type& value)
 /// Initializes cell states of the layer with a given value.
 /// @param value Cell states initialization value.
 
-void LongShortTermMemoryLayer::initialize_cell_states(const type& value)
+void LongShortTermMemoryLayer::set_cell_states_constant(const type& value)
 {
     cell_states.setConstant(value);
 }
@@ -1191,20 +1175,7 @@ void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1>& inp
                                                       Tensor<type, 1>& combinations) const
 {
 #ifdef OPENNN_DEBUG
-
-    const Index inputs_number = get_inputs_number();
-
-    if(inputs.size() != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void calculate_combinations() const method.\n"
-               << "Size of layer inputs (" << inputs.size() << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
+check_size(inputs, get_inputs_number(), LOG);
 #endif
 
     combinations.device(*thread_pool_device) = inputs.contract(weights, AT_B);
@@ -1216,59 +1187,33 @@ void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1>& inp
 void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
 #ifdef OPENNN_DEBUG
-
-    const Index neurons_number = get_neurons_number();
-
-    const Index combinations_columns_number = combinations.dimension(1);
-
-    if(combinations_columns_number != neurons_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
-               << "void calculate_activations() const method.\n"
-               << "Number of columns (" << combinations_columns_number << ") of combinations must be equal to number of neurons ("
-               <<neurons_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
+check_columns_number(combinations, get_neurons_number(), LOG);
+check_dimensions(activations, combinations.dimension(0), get_neurons_number(), LOG);
 #endif
 
     switch(activation_function)
     {
-    case Linear: linear(combinations, activations);
-        break;
+    case Linear: linear(combinations, activations); return;
 
-    case Logistic: logistic(combinations, activations);
-        break;
+    case Logistic: logistic(combinations, activations); return;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations, activations);
-        break;
+    case HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
 
-    case Threshold: threshold(combinations, activations);
-        break;
+    case Threshold: threshold(combinations, activations); return;
 
-    case SymmetricThreshold: symmetric_threshold(combinations, activations);
-        break;
+    case SymmetricThreshold: symmetric_threshold(combinations, activations); return;
 
-    case RectifiedLinear: rectified_linear(combinations, activations);
-        break;
+    case RectifiedLinear: rectified_linear(combinations, activations); return;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations);
-        break;
+    case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
 
-    case SoftPlus: soft_plus(combinations, activations);
-        break;
+    case SoftPlus: soft_plus(combinations, activations); return;
 
-    case SoftSign: soft_sign(combinations, activations);
-        break;
+    case SoftSign: soft_sign(combinations, activations); return;
 
-    case HardSigmoid: hard_sigmoid(combinations, activations);
-        break;
+    case HardSigmoid: hard_sigmoid(combinations, activations); return;
 
-    case ExponentialLinear: exponential_linear(combinations, activations);
-        break;
+    case ExponentialLinear: exponential_linear(combinations, activations); return;
     }
 }
 
@@ -1296,38 +1241,27 @@ void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& comb
 
     switch(activation_function)
     {
-    case Linear: linear(combinations_1d, activations_1d);
-        break;
+    case Linear: linear(combinations_1d, activations_1d); return;
 
-    case Logistic: logistic(combinations_1d, activations_1d);
-        break;
+    case Logistic: logistic(combinations_1d, activations_1d); return;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations_1d, activations_1d);
-        break;
+    case HyperbolicTangent: hyperbolic_tangent(combinations_1d, activations_1d); return;
 
-    case Threshold: threshold(combinations_1d, activations_1d);
-        break;
+    case Threshold: threshold(combinations_1d, activations_1d); return;
 
-    case SymmetricThreshold: symmetric_threshold(combinations_1d, activations_1d);
-        break;
+    case SymmetricThreshold: symmetric_threshold(combinations_1d, activations_1d); return;
 
-    case RectifiedLinear: rectified_linear(combinations_1d, activations_1d);
-        break;
+    case RectifiedLinear: rectified_linear(combinations_1d, activations_1d); return;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, activations_1d);
-        break;
+    case ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, activations_1d); return;
 
-    case SoftPlus: soft_plus(combinations_1d, activations_1d);
-        break;
+    case SoftPlus: soft_plus(combinations_1d, activations_1d); return;
 
-    case SoftSign: soft_sign(combinations_1d, activations_1d);
-        break;
+    case SoftSign: soft_sign(combinations_1d, activations_1d); return;
 
-    case HardSigmoid: hard_sigmoid(combinations_1d, activations_1d);
-        break;
+    case HardSigmoid: hard_sigmoid(combinations_1d, activations_1d); return;
 
-    case ExponentialLinear: exponential_linear(combinations_1d, activations_1d);
-        break;
+    case ExponentialLinear: exponential_linear(combinations_1d, activations_1d); return;
     }
 }
 
@@ -1357,38 +1291,27 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
 
     switch(activation_function)
     {
-    case Linear: linear(combinations_1d, activations_1d);
-        break;
+    case Linear: linear(combinations_1d, activations_1d); break;
 
-    case Logistic: logistic(combinations_1d, activations_1d);
-        break;
+    case Logistic: logistic(combinations_1d, activations_1d); break;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations_1d, activations_1d);
-        break;
+    case HyperbolicTangent: hyperbolic_tangent(combinations_1d, activations_1d); break;
 
-    case Threshold: threshold(combinations_1d, activations_1d);
-        break;
+    case Threshold: threshold(combinations_1d, activations_1d); break;
 
-    case SymmetricThreshold: symmetric_threshold(combinations_1d, activations_1d);
-        break;
+    case SymmetricThreshold: symmetric_threshold(combinations_1d, activations_1d); break;
 
-    case RectifiedLinear: rectified_linear(combinations_1d, activations_1d);
-        break;
+    case RectifiedLinear: rectified_linear(combinations_1d, activations_1d); break;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, activations_1d);
-        break;
+    case ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, activations_1d); break;
 
-    case SoftPlus: soft_plus(combinations_1d, activations_1d);
-        break;
+    case SoftPlus: soft_plus(combinations_1d, activations_1d); break;
 
-    case SoftSign: soft_sign(combinations_1d, activations_1d);
-        break;
+    case SoftSign: soft_sign(combinations_1d, activations_1d); break;
 
-    case HardSigmoid: hard_sigmoid(combinations_1d, activations_1d);
-        break;
+    case HardSigmoid: hard_sigmoid(combinations_1d, activations_1d); break;
 
-    case ExponentialLinear: exponential_linear(combinations_1d, activations_1d);
-        break;
+    case ExponentialLinear: exponential_linear(combinations_1d, activations_1d); break;
     }
 
     return activations_1d;
@@ -1419,38 +1342,27 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
 
     switch(recurrent_activation_function)
     {
-    case Linear: linear(combinations, activations);
-        break;
+    case Linear: linear(combinations, activations); break;
 
-    case Logistic: logistic(combinations, activations);
-        break;
+    case Logistic: logistic(combinations, activations); break;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations, activations);
-        break;
+    case HyperbolicTangent: hyperbolic_tangent(combinations, activations); break;
 
-    case Threshold: threshold(combinations, activations);
-        break;
+    case Threshold: threshold(combinations, activations); break;
 
-    case SymmetricThreshold: symmetric_threshold(combinations, activations);
-        break;
+    case SymmetricThreshold: symmetric_threshold(combinations, activations); break;
 
-    case RectifiedLinear: rectified_linear(combinations, activations);
-        break;
+    case RectifiedLinear: rectified_linear(combinations, activations); break;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations);
-        break;
+    case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); break;
 
-    case SoftPlus: soft_plus(combinations, activations);
-        break;
+    case SoftPlus: soft_plus(combinations, activations); break;
 
-    case SoftSign: soft_sign(combinations, activations);
-        break;
+    case SoftSign: soft_sign(combinations, activations); break;
 
-    case HardSigmoid: hard_sigmoid(combinations, activations);
-        break;
+    case HardSigmoid: hard_sigmoid(combinations, activations); break;
 
-    case ExponentialLinear: exponential_linear(combinations, activations);
-        break;
+    case ExponentialLinear: exponential_linear(combinations, activations); break;
     }
 }
 
@@ -1480,38 +1392,27 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
 
     switch(recurrent_activation_function)
     {
-    case Linear: linear(combinations_1d, recurrent_activations_1d);
-        break;
+    case Linear: linear(combinations_1d, recurrent_activations_1d); break;
 
-    case Logistic: logistic(combinations_1d, recurrent_activations_1d);
-        break;
+    case Logistic: logistic(combinations_1d, recurrent_activations_1d); break;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations_1d, recurrent_activations_1d);
-        break;
+    case HyperbolicTangent: hyperbolic_tangent(combinations_1d, recurrent_activations_1d); break;
 
-    case Threshold: threshold(combinations_1d, recurrent_activations_1d);
-        break;
+    case Threshold: threshold(combinations_1d, recurrent_activations_1d); break;
 
-    case SymmetricThreshold: symmetric_threshold(combinations_1d, recurrent_activations_1d);
-        break;
+    case SymmetricThreshold: symmetric_threshold(combinations_1d, recurrent_activations_1d); break;
 
-    case RectifiedLinear: rectified_linear(combinations_1d, recurrent_activations_1d);
-        break;
+    case RectifiedLinear: rectified_linear(combinations_1d, recurrent_activations_1d); break;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, recurrent_activations_1d);
-        break;
+    case ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, recurrent_activations_1d); break;
 
-    case SoftPlus: soft_plus(combinations_1d, recurrent_activations_1d);
-        break;
+    case SoftPlus: soft_plus(combinations_1d, recurrent_activations_1d); break;
 
-    case SoftSign: soft_sign(combinations_1d, recurrent_activations_1d);
-        break;
+    case SoftSign: soft_sign(combinations_1d, recurrent_activations_1d); break;
 
-    case HardSigmoid: hard_sigmoid(combinations_1d, recurrent_activations_1d);
-        break;
+    case HardSigmoid: hard_sigmoid(combinations_1d, recurrent_activations_1d); break;
 
-    case ExponentialLinear: exponential_linear(combinations_1d, recurrent_activations_1d);
-        break;
+    case ExponentialLinear: exponential_linear(combinations_1d, recurrent_activations_1d); break;
     }
 }
 

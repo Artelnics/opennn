@@ -154,17 +154,18 @@ void SumSquaredErrorTest::test_calculate_error()
    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
    forward_propagation.set(samples_number, &neural_network);
-   neural_network.forward_propagate(batch, forward_propagation);
 /*
+   neural_network.forward_propagate(batch, forward_propagation);
+
    back_propagation.set(samples_number, &sum_squared_error);
    sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
    sum_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
    assert_true(back_propagation.error == 0.0, LOG);
-*/
+
    // Test
-/*
+
    samples_number = 9;
    inputs_number = 3;
    targets_number = 2;
@@ -238,7 +239,11 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    Tensor<type, 1> numerical_gradient;
 
    // Test
-/*
+
+   inputs_number = 2;
+   targets_number = 2;
+   samples_number = 2;
+
    data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_constant(0.0);
    data_set.set_training();
@@ -246,9 +251,6 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    training_samples_indices = data_set.get_training_samples_indices();
    input_variables_indices = data_set.get_input_variables_indices();
    target_variables_indices = data_set.get_target_variables_indices();
-
-   inputs_number = 2;
-   targets_number = 2;
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
 
@@ -258,17 +260,12 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
    forward_propagation.set(samples_number, &neural_network);
+   neural_network.forward_propagate(batch, forward_propagation);
+
    back_propagation.set(samples_number, &sum_squared_error);
 
-   neural_network.forward_propagate(batch, forward_propagation);
    sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
    sum_squared_error.calculate_output_delta(batch, forward_propagation, back_propagation);
-
-   //back_propagation.neural_network.layers(0)->delta;
-
-//   assert_true(back_propagation.neural_network.layers(1).delta == 0.0, LOG);
-//   assert_true(back_propagation.output_delta(1) == 0.0, LOG);
 
    // Test
 
@@ -284,6 +281,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    input_variables_indices = data_set.get_input_variables_indices();
    target_variables_indices = data_set.get_target_variables_indices();
 
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
    neural_network.set_parameters_constant(0.0);
 
    batch.set(samples_number, &data_set);
@@ -291,14 +289,14 @@ void SumSquaredErrorTest::test_calculate_output_delta()
 
    forward_propagation.set(samples_number, &neural_network);
    neural_network.forward_propagate(batch, forward_propagation);
-
+/*
    back_propagation.set(samples_number, &sum_squared_error);
    sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
    sum_squared_error.calculate_output_delta(batch, forward_propagation, back_propagation);
 
    numerical_gradient = sum_squared_error.calculate_gradient_numerical_differentiation();
-
+/*
 //   assert_true(abs(back_propagation.output_delta(0)-numerical_gradient(4)) < static_cast<type>(1e-3), LOG);
 //   assert_true(abs(back_propagation.output_delta(1)-numerical_gradient(5)) < static_cast<type>(1e-3), LOG);
 
@@ -352,7 +350,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    neural_network.set();
 
    recurrent_layer_pointer->set(inputs_number, outputs_number);
-   recurrent_layer_pointer->initialize_hidden_states(0.0);
+   recurrent_layer_pointer->set_hidden_states_constant(0.0);
    recurrent_layer_pointer->set_timesteps(10);
    neural_network.add_layer(recurrent_layer_pointer);
 
@@ -502,7 +500,7 @@ void SumSquaredErrorTest::test_calculate_error_gradient()
 
     recurrent_layer_pointer->set(inputs_number, neurons_number);
 
-    recurrent_layer_pointer->initialize_hidden_states(0.0);
+    recurrent_layer_pointer->set_hidden_states_constant(0.0);
     recurrent_layer_pointer->set_timesteps(10);
 
     neural_network.add_layer(recurrent_layer_pointer);

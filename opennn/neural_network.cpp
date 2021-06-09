@@ -1369,40 +1369,41 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         switch(trainable_layers_pointers(i-1)->get_type())
         {
         case Layer::Perceptron:
-        {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                            forward_propagation.layers(i));
-        }
-            break;
+
+        trainable_layers_pointers(i)
+                ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                                        forward_propagation.layers(i));
+        break;
 
         case Layer::Probabilistic:
-        {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                            forward_propagation.layers(i));
-        }
-            break;
+
+        trainable_layers_pointers(i)
+                ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                                        forward_propagation.layers(i));
+        break;
 
         case Layer::Recurrent:
-        {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                            forward_propagation.layers(i));
 
-        }
-            break;
+        trainable_layers_pointers(i)
+                ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                                        forward_propagation.layers(i));
+
+        break;
 
         case Layer::LongShortTermMemory:
-        {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                            forward_propagation.layers(i));
-        }
-            break;
 
-        case Layer::Convolutional:
-        {
-            //trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-            //                                                forward_propagation.layers(i));
-        }
-            break;
+        trainable_layers_pointers(i)
+                ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                                        forward_propagation.layers(i));
+        break;
+
+        case Layer::Pooling: /// @todo
+
+        break;
+
+        case Layer::Convolutional: /// @todo
+
+        break;
 
         default: break;
         }

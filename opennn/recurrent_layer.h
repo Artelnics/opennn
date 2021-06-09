@@ -137,12 +137,12 @@ public:
 
    // Parameters initialization methods
 
-   void initialize_hidden_states(const type&);
+   void set_hidden_states_constant(const type&);
 
    void set_biases_constant(const type&);
 
-   void initialize_input_weights(const type&);
-   void initialize_recurrent_weights(const type&);
+   void set_input_weights_constant(const type&);
+   void set_recurrent_weights_constant(const type&);
    void initialize_input_weights_Glorot(const type&, const type&);
 
    void set_parameters_constant(const type&);
