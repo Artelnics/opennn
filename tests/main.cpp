@@ -587,13 +587,13 @@ int main()
           tests_failed_count += stochastic_gradient_descent_test.get_tests_failed_count();
 
           // training_strategy
-/*
+
           TrainingStrategyTest training_strategy_test;
           training_strategy_test.run_test_case();
           tests_count += training_strategy_test.get_tests_count();
           tests_passed_count += training_strategy_test.get_tests_passed_count();
           tests_failed_count += training_strategy_test.get_tests_failed_count();
-*/
+
           // M O D E L   S E L E C T I O N   T E S T S
 
           // model selection

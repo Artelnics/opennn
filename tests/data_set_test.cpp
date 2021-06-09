@@ -10,7 +10,7 @@
 
 DataSetTest::DataSetTest() : UnitTesting() 
 {
-    data_set.set_display(false);
+//    data_set.set_display(false);
 }
 
 
@@ -438,7 +438,10 @@ void DataSetTest::test_calculate_variables_descriptives()
    data_set.set_separator(' ');
    data_set.set_missing_values_label("?");
 
-   data_string = "-1000 ? 0 \n 3 4 ? \n ? 4 1";
+   data_string = data_string
+           + "-1000 ? 0 \n"
+           + " 3 4 ? \n"
+           + " ? 4 1";
 
    file.open(data_file_name.c_str());
    file << data_string;
@@ -1001,7 +1004,7 @@ void DataSetTest::test_read_csv()
    assert_true((data(1,1) - 4.0 ) < numeric_limits<type>::min(), LOG);
 */
    // Test
-/*
+
    data_set.set_has_columns_names(false);
    data_set.set_separator(',');
 
@@ -1019,9 +1022,9 @@ void DataSetTest::test_read_csv()
 
    assert_true(data_set.get_samples_number() == 4, LOG);
    assert_true(data_set.get_variables_number() == 7, LOG);
-*/
+
    // Test
-/*
+
    data_set.set_has_columns_names(false);
    data_set.set_separator(',');
 
@@ -1057,9 +1060,9 @@ void DataSetTest::test_read_csv()
    assert_true((data(3,4) - 0) < numeric_limits<type>::min(), LOG);
    assert_true((data(3,5) - 0) < numeric_limits<type>::min(), LOG);
    assert_true((data(3,6) - 1) < numeric_limits<type>::min(), LOG);
-*/
+
    // Test
-/*
+
    data_set.set_has_columns_names(true);
    data_set.set_separator(',');
    data_set.set_missing_values_label("NaN");
@@ -1103,7 +1106,7 @@ void DataSetTest::test_read_csv()
    assert_true(data(2,4) == 0.0, LOG);
    assert_true(data(2,5) == 1.0, LOG);
    assert_true(data(2,6) == 0.0, LOG);
-*/
+
    // Test
 
    data_set.set_has_columns_names(false);
@@ -1122,7 +1125,7 @@ void DataSetTest::test_read_csv()
    data_set.read_csv();
 
    // Test
-/*
+
    data_set.set_separator(' ');
 
    data_string = "1 2\n3 4\n5 6\n";
@@ -1142,9 +1145,9 @@ void DataSetTest::test_read_csv()
 
    assert_true(data_set.get_variable_name(0) == "x", LOG);
    assert_true(data_set.get_variable_name(1) == "y", LOG);
-*/
+
    // Test
-/*
+
    data_set.set_has_columns_names(false);
    data_set.set_separator(' ');
 
@@ -1167,9 +1170,9 @@ void DataSetTest::test_read_csv()
    assert_true(data(0,1) == 1.0, LOG);
    assert_true(data(1,1) == 0.0, LOG);
    assert_true(data(2,1) == 1.0, LOG);
-*/
+
    // Test
-/*
+
    data_set.set_separator('\t');
    data_set.set_missing_values_label("NaN");
 
@@ -1199,7 +1202,7 @@ void DataSetTest::test_read_csv()
 
    assert_true(data.dimension(0) == 10, LOG);
    assert_true(data.dimension(1) == 7, LOG);
-*/
+
 }
 
 
@@ -1271,9 +1274,13 @@ void DataSetTest::test_read_empty_csv()
 {
     cout << "test_read_empty_csv\n";
 
+    data_set.set();
+
     try
     {
         data_set.set("../../datasets/empty.csv",',',false);
+
+        data_set.print();system("pause");
 
         assert_true(data_set.get_samples_number() == 1, LOG);
         assert_true(data_set.get_variables_number() == 0, LOG);
@@ -1338,13 +1345,6 @@ void DataSetTest::test_read_mnsit_csv()
 
     assert_true(data_set.get_samples_number() == 100, LOG);
     assert_true(data_set.get_variables_number() == 785, LOG);
-    assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
-    assert_true(data_set.get_column_type(1) == DataSet::Binary, LOG);
-    assert_true(data_set.get_column_type(2) == DataSet::Binary, LOG);
-    assert_true(data_set.get_column_type(3) == DataSet::Binary, LOG);
-    assert_true(data_set.get_column_type(4) == DataSet::Binary, LOG);
-    assert_true(data_set.get_column_type(20) == DataSet::Binary, LOG);
-
 }
 
 
@@ -1364,7 +1364,7 @@ void DataSetTest::test_read_one_variable_csv()
 void DataSetTest::test_read_pollution_csv()
 {
     cout << "test_read_pollution_csv\n";
-/*
+
     data_set.set("../../datasets/pollution.csv",',',true);
 
     assert_true(data_set.get_samples_number() == 1000, LOG);
@@ -1382,14 +1382,14 @@ void DataSetTest::test_read_pollution_csv()
     assert_true(data_set.get_column_type(10) == DataSet::Numeric, LOG);
     assert_true(data_set.get_column_type(11) == DataSet::Numeric, LOG);
     assert_true(data_set.get_column_type(12) == DataSet::Numeric, LOG);
-*/
+
 }
 
 
 void DataSetTest::test_read_urinary_inflammations_csv()
 {
     cout << "test_read_urinary_inflammations_csv\n";
-/*
+
     data_set.set("../../datasets/urinary_inflammations.csv",';',true);
 
     assert_true(data_set.get_samples_number() == 120, LOG);
@@ -1402,14 +1402,14 @@ void DataSetTest::test_read_urinary_inflammations_csv()
     assert_true(data_set.get_column_type(5) == DataSet::Binary, LOG);
     assert_true(data_set.get_column_type(6) == DataSet::Binary, LOG);
     assert_true(data_set.get_column_type(7) == DataSet::Binary, LOG);
-*/
+
 }
 
 
 void DataSetTest::test_read_wine_csv()
 {
     cout << "test_read_wine_csv\n";
-/*
+
     data_set.set("../../datasets/wine.data",',',false);
 
     assert_true(data_set.get_samples_number() == 178, LOG);
@@ -1428,14 +1428,14 @@ void DataSetTest::test_read_wine_csv()
     assert_true(data_set.get_column_type(11) == DataSet::Numeric, LOG);
     assert_true(data_set.get_column_type(12) == DataSet::Numeric, LOG);
     assert_true(data_set.get_column_type(13) == DataSet::Numeric, LOG);
-*/
+
 }
 
 
 void DataSetTest::test_read_binary_csv()
 {
     cout << "test_read_binary_csv\n";
-/*
+
     data_set.set("../../datasets/binary.csv",',',false);
 
     assert_true(data_set.get_samples_number() == 8, LOG);
@@ -1443,7 +1443,7 @@ void DataSetTest::test_read_binary_csv()
     assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
     assert_true(data_set.get_column_type(1) == DataSet::Numeric, LOG);
     assert_true(data_set.get_column_type(2) == DataSet::Binary, LOG);
-*/
+
 }
 
 void DataSetTest::test_print_data_preview()

@@ -4607,6 +4607,14 @@ void DataSet::set()
     data_file_name = "";
 
     data.resize(0,0);
+
+    time_series_data.resize(0,0);
+
+    columns.resize(0);
+
+    samples_uses.resize(0);
+
+    set_default();
 }
 
 
@@ -9418,7 +9426,9 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
         if(time_series_columns(i).column_use != VariableUse::UnusedVariable && time_series_columns(i).type == ColumnType::Numeric)
         {
             input_i = get_time_series_column_data(i);
-            cout << "Calculating " << time_series_columns(i).name << " cross correlations:" << endl;
+
+            if(display) cout << "Calculating " << time_series_columns(i).name << " cross correlations:" << endl;
+
             counter_j = 0;
         }
         else
@@ -9431,7 +9441,8 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
             if(time_series_columns(j).column_use != VariableUse::UnusedVariable && time_series_columns(j).type == ColumnType::Numeric)
             {
                 input_j = get_time_series_column_data(j);
-                cout << "   -VS- " << time_series_columns(j).name << endl;
+
+                if(display) cout << "   -VS- " << time_series_columns(j).name << endl;
 
             }
             else
