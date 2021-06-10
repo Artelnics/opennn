@@ -133,11 +133,19 @@ private:
 
    bool nesterov;
 
+   /// Number of samples per training batch.
+
+   Index batch_samples_number = 1000;
+
    // Stopping criteria
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
    type training_loss_goal = 0;
+
+   /// Maximum selection error allowed
+
+   Index maximum_selection_failures = numeric_limits<Index>::max();
 
    /// Maximum epochs number
 
@@ -146,14 +154,6 @@ private:
    /// Maximum training time. It is used as a stopping criterion.
 
    type maximum_time = 3600;
-
-   /// Maximum selection error allowed
-
-   Index maximum_selection_failures = 1000;
-
-   /// Number of samples per training batch.
-
-   Index batch_samples_number = 1000;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
