@@ -2127,7 +2127,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
         const type normal_distribution = static_cast<type>(0.5)
                 * static_cast<type>(erfc((mean - sorted_vector(i)))/static_cast<type>((standard_deviation*static_cast<type>(sqrt(2)))));
 
-        const type uniform_distribution = (sorted_vector(i)-minimum)/(maximum-minimum);
+        const type uniform_distribution = (sorted_vector(i)-minimum)/(maximum - minimum);
 
         type empirical_distribution;
 
@@ -2812,7 +2812,7 @@ type uniform_distribution_distance(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-        uniform_distribution = (sorted_vector(i)-minimum)/(maximum-minimum);
+        uniform_distribution = (sorted_vector(i)-minimum)/(maximum - minimum);
         counter = 0;
 
         for(Index j = 0; j < n; j++)

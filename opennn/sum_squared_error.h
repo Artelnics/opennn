@@ -79,7 +79,6 @@ public:
 
    string get_error_type() const;
    string get_error_type_text() const;
-
       
    void from_XML(const tinyxml2::XMLDocument&);
 

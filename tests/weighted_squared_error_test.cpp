@@ -444,7 +444,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    cout << "test_calculate_squared_errors_jacobian\n";
 
    Tensor<Index, 1> samples_indices;
-   Tensor<Index, 1> input_indices;
+   Tensor<Index, 1> input_variables_indices;
    Tensor<Index, 1> target_variables_indices;
 
    Index samples_number;
@@ -468,7 +468,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    data_set.set_training();
 
    samples_indices = data_set.get_training_samples_indices();
-   input_indices = data_set.get_input_variables_indices();
+   input_variables_indices = data_set.get_input_variables_indices();
    target_variables_indices = data_set.get_target_variables_indices();
 
    neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons_number, outputs_number});
@@ -478,7 +478,7 @@ void WeightedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    weighted_squared_error.set_normalization_coefficient();
 
    batch.set(samples_number, &data_set);
-   batch.fill(samples_indices, input_indices, target_variables_indices);
+   batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
    forward_propagation.set(samples_number, &neural_network);
    neural_network.forward_propagate(batch, forward_propagation);

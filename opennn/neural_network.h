@@ -71,6 +71,8 @@ public:
 
    // APPENDING LAYERS
 
+   void delete_layers();
+
    void add_layer(Layer*);
 
    bool check_layer_type(const Layer::Type);
@@ -120,7 +122,6 @@ public:
    void set(const Tensor<Index, 1>&, const Index&, const Tensor<Index, 1>&, const Index&);
 
    void set(const string&);
-   void set(const NeuralNetwork&);
 
    void set_layers_pointers(Tensor<Layer*, 1>&);
 

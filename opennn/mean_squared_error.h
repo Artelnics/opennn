@@ -79,8 +79,6 @@ public:
 
    // Serialization methods
 
-      
-
    void write_XML(tinyxml2::XMLPrinter &) const;
 
    string get_error_type() const;

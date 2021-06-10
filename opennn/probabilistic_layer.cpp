@@ -534,21 +534,21 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 
 void ProbabilisticLayer::set_parameters_random()
 {
-    const type minimum = -1;
-    const type maximum = 1;
+    const type minimum = -0.1;
+    const type maximum =  0.1;
 
     for(Index i = 0; i < biases.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        biases(i) = minimum +(maximum-minimum)*random;
+        biases(i) = minimum + (maximum - minimum)*random;
     }
 
     for(Index i = 0; i < synaptic_weights.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        synaptic_weights(i) = minimum +(maximum-minimum)*random;
+        synaptic_weights(i) = minimum + (maximum - minimum)*random;
     }
 }
 

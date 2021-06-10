@@ -578,8 +578,8 @@ void RecurrentLayer::set_parameters_constant(const type& value)
 
 void RecurrentLayer::set_parameters_random()
 {
-    const type maximum = 1;
-    const type minimum = -1;
+    const type minimum = -0.1;
+    const type maximum =  0.1;
 
     // Biases
 
@@ -587,7 +587,7 @@ void RecurrentLayer::set_parameters_random()
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        biases(i) = minimum + (maximum-minimum)*random;
+        biases(i) = minimum + (maximum - minimum)*random;
     }
 
     // Weights
@@ -596,7 +596,7 @@ void RecurrentLayer::set_parameters_random()
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        input_weights(i) = minimum + (maximum-minimum)*random;
+        input_weights(i) = minimum + (maximum - minimum)*random;
     }
 
     // Recurrent weights
@@ -605,7 +605,7 @@ void RecurrentLayer::set_parameters_random()
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        recurrent_weights(i) = minimum + (maximum-minimum)*random;
+        recurrent_weights(i) = minimum + (maximum - minimum)*random;
     }
 }
 
@@ -615,10 +615,7 @@ void RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs,
                                             const Tensor<type, 2>& recurrent_weights,
                                             const Tensor<type, 1>& biases,
                                             Tensor<type, 1>& combinations) const
-{
-
-
-
+{   
     combinations.device(*thread_pool_device) = inputs.contract(input_weights, AT_B);
 
     combinations.device(*thread_pool_device) += biases;

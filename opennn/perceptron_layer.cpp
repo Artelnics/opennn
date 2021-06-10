@@ -467,21 +467,21 @@ void PerceptronLayer::set_parameters_constant(const type& value)
 
 void PerceptronLayer::set_parameters_random()
 {
-    const type minimum = -1;
-    const type maximum = 1;
+    const type minimum = -0.1;
+    const type maximum =  0.1;
 
     for(Index i = 0; i < biases.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        biases(i) = minimum +(maximum-minimum)*random;
+        biases(i) = minimum + (maximum - minimum)*random;
     }
 
     for(Index i = 0; i < synaptic_weights.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        synaptic_weights(i) = minimum +(maximum-minimum)*random;
+        synaptic_weights(i) = minimum + (maximum - minimum)*random;
     }
 }
 
@@ -493,8 +493,8 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 {
 #ifdef OPENNN_DEBUG
     check_columns_number(inputs, get_inputs_number(), LOG);
+    //    check_dimensions(biases, 1, get_neurons_number(), LOG);
     check_dimensions(synaptic_weights, get_inputs_number(), get_neurons_number(), LOG);
-    check_dimensions(biases, 1, get_neurons_number(), LOG);
     check_dimensions(combinations, inputs.dimension(0), get_neurons_number(), LOG);
 #endif
 
@@ -832,7 +832,7 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPr
 void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation* next_forward_propagation,
                                                            ProbabilisticLayerBackPropagationLM* next_back_propagation,
                                                            PerceptronLayerBackPropagationLM* back_propagation) const
-{
+{           
     const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
 
     const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();

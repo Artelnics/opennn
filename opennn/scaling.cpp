@@ -146,8 +146,8 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
         const type minimum = columns_minimums(j);
         const type maximum = columns_maximums(j);
 
-        const type slope = (max_range-min_range)/(maximum-minimum);
-        const type intercept = (min_range*maximum-max_range*minimum)/(maximum-minimum);
+        const type slope = (max_range-min_range)/(maximum - minimum);
+        const type intercept = (min_range*maximum-max_range*minimum)/(maximum - minimum);
 
         for(Index i = 0; i < rows_number; i++)
         {
