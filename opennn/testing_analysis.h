@@ -215,7 +215,7 @@ public:
    void print_linear_regression_correlations() const;
 
    Tensor<LinearRegressionAnalysis, 1> perform_linear_regression_analysis() const;
-   void perform_linear_regression_analysis_void() const;
+   void print_linear_regression_analysis() const;
 
    // Binary classifcation methods
 

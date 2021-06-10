@@ -198,9 +198,8 @@ void ConjugateGradientTest::test_perform_training()
 
    type training_loss_goal;
 
-   type minimum_parameters_increment_norm;
+   
    type minimum_loss_decrease;
-   type gradient_norm_goal;
 /*
    TrainingResults training_results;
 

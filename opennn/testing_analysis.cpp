@@ -316,9 +316,14 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
 }
 
 
-void TestingAnalysis::perform_linear_regression_analysis_void() const
+void TestingAnalysis::print_linear_regression_analysis() const
 {
-    perform_linear_regression_analysis();
+    const Tensor<LinearRegressionAnalysis, 1> linear_regression_analysis = perform_linear_regression_analysis();
+
+    for(Index i = 0; i < linear_regression_analysis.size(); i++)
+    {
+        linear_regression_analysis(i).print();
+    }
 }
 
 

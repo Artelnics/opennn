@@ -130,8 +130,6 @@ void GradientDescentTest::test_perform_training()
 
    neural_network.set_parameters_constant(-1.0);
 
-   type gradient_norm_goal = 0.1;
-
    gradient_descent.set_minimum_parameters_increment_norm(0.0);
    gradient_descent.set_loss_goal(0.0);
    gradient_descent.set_minimum_loss_decrease(0.0);

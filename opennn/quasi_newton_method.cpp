@@ -97,14 +97,6 @@ const Index& QuasiNewtonMethod::get_epochs_number() const
 }
 
 
-/// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
-
-const type& QuasiNewtonMethod::get_minimum_parameters_increment_norm() const
-{
-    return minimum_parameters_increment_norm;
-}
-
-
 /// Returns the minimum loss improvement during training.
 
 const type& QuasiNewtonMethod::get_minimum_loss_decrease() const
@@ -119,15 +111,6 @@ const type& QuasiNewtonMethod::get_minimum_loss_decrease() const
 const type& QuasiNewtonMethod::get_loss_goal() const
 {
     return training_loss_goal;
-}
-
-
-/// Returns the goal value for the norm of the error function gradient.
-/// This is used as a stopping criterion when training a neural network
-
-const type& QuasiNewtonMethod::get_gradient_norm_goal() const
-{
-    return gradient_norm_goal;
 }
 
 
@@ -227,12 +210,9 @@ void QuasiNewtonMethod::set_default()
 
     // Stopping criteria
 
-    minimum_parameters_increment_norm = static_cast<type>(0.0);
-
-    minimum_loss_decrease = -numeric_limits<type>::max();
+    minimum_loss_decrease = 0;
     training_loss_goal = 0;
-    gradient_norm_goal = 0;
-    maximum_selection_failures = 1000000;
+    maximum_selection_failures = numeric_limits<Index>::max();
 
     maximum_epochs_number = 1000;
     maximum_time = 3600.0;
@@ -241,32 +221,6 @@ void QuasiNewtonMethod::set_default()
 
     display = true;
     display_period = 10;
-}
-
-
-/// Sets a new value for the minimum parameters increment norm stopping criterion.
-/// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training.
-
-void QuasiNewtonMethod::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void new_minimum_parameters_increment_norm(const type&) method.\n"
-               << "Minimum parameters increment norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error learning rate
-
-    minimum_parameters_increment_norm = new_minimum_parameters_increment_norm;
 }
 
 
@@ -286,33 +240,6 @@ void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_d
 void QuasiNewtonMethod::set_loss_goal(const type& new_loss_goal)
 {
     training_loss_goal = new_loss_goal;
-}
-
-
-/// Sets a new the goal value for the norm of the error function gradient.
-/// This is used as a stopping criterion when training a neural network
-/// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
-
-void QuasiNewtonMethod::set_gradient_norm_goal(const type& new_gradient_norm_goal)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_gradient_norm_goal < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_gradient_norm_goal(const type&) method.\n"
-               << "Gradient norm goal must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set gradient norm goal
-
-    gradient_norm_goal = new_gradient_norm_goal;
 }
 
 
@@ -774,7 +701,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);        
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
@@ -810,19 +737,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        // Stopping Criteria
-
-        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
-        {
-            if(display) cout << "Epoch " << epoch << endl << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
-
-            cout << optimization_data.parameters_increment << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumParametersIncrementNorm;
-        }
-
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
 
         if(loss_decrease < minimum_loss_decrease)
@@ -843,14 +757,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
             stop_training = true;
 
             results.stopping_condition = LossGoal;
-        }
-        else if(gradient_norm <= gradient_norm_goal)
-        {
-            if(display) cout << "Epoch " << epoch << endl << "Gradient norm goal reached: " << gradient_norm << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = GradientNormGoal;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
@@ -935,17 +841,6 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     learning_rate_algorithm.write_XML(file_stream);
 
-    // Minimum parameters increment norm
-
-    file_stream.OpenElement("MinimumParametersIncrementNorm");
-
-    buffer.str("");
-    buffer << minimum_parameters_increment_norm;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     // Minimum loss decrease
 
     file_stream.OpenElement("MinimumLossDecrease");
@@ -963,17 +858,6 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << training_loss_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Gradient norm goal
-
-    file_stream.OpenElement("GradientNormGoal");
-
-    buffer.str("");
-    buffer << gradient_norm_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1055,12 +939,6 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 
     labels_values(2,1) = to_string(learning_rate_algorithm.get_learning_rate_tolerance());
 
-    // Minimum parameters increment norm
-
-    labels_values(3,0) = "Minimum parameters increment norm";
-
-    labels_values(3,1) = to_string(minimum_parameters_increment_norm);
-
     // Minimum loss decrease
 
     labels_values(4,0) = "Minimum loss decrease";
@@ -1072,12 +950,6 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
     labels_values(5,0) = "Loss goal";
 
     labels_values(5,1) = to_string(training_loss_goal);
-
-    // Gradient norm goal
-
-    labels_values(6,0) = "Gradient norm goal";
-
-    labels_values(6,1) = to_string(gradient_norm_goal);
 
     // Maximum selection error increases
 
@@ -1152,25 +1024,6 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Minimum parameters increment norm
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumParametersIncrementNorm");
-
-        if(element)
-        {
-            const type new_minimum_parameters_increment_norm = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_minimum_parameters_increment_norm(new_minimum_parameters_increment_norm);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
     // Minimum loss decrease
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumLossDecrease");
@@ -1201,25 +1054,6 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_loss_goal(new_loss_goal);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Gradient norm goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("GradientNormGoal");
-
-        if(element)
-        {
-            const type new_gradient_norm_goal = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_gradient_norm_goal(new_gradient_norm_goal);
             }
             catch(const logic_error& e)
             {

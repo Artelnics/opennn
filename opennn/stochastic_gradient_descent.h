@@ -139,10 +139,6 @@ private:
 
    type training_loss_goal = 0;
 
-   /// gradient norm goal. It is used as a stopping criterion.
-
-   type gradient_norm_goal = 0;
-
    /// Maximum epochs number
 
    Index maximum_epochs_number = 10000;

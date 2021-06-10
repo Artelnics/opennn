@@ -42,14 +42,6 @@ LevenbergMarquardtAlgorithm::~LevenbergMarquardtAlgorithm()
 }
 
 
-/// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
-
-const type& LevenbergMarquardtAlgorithm::get_minimum_parameters_increment_norm() const
-{
-    return minimum_parameters_increment_norm;
-}
-
-
 /// Returns the minimum loss improvement during training.
 
 const type& LevenbergMarquardtAlgorithm::get_minimum_loss_decrease() const
@@ -64,15 +56,6 @@ const type& LevenbergMarquardtAlgorithm::get_minimum_loss_decrease() const
 const type& LevenbergMarquardtAlgorithm::get_loss_goal() const
 {
     return training_loss_goal;
-}
-
-
-/// Returns the goal value for the norm of the loss function gradient.
-/// This is used as a stopping criterion when training a neural network.
-
-const type& LevenbergMarquardtAlgorithm::get_gradient_norm_goal() const
-{
-    return gradient_norm_goal;
 }
 
 
@@ -153,11 +136,8 @@ void LevenbergMarquardtAlgorithm::set_default()
 {
     // Stopping criteria
 
-    minimum_parameters_increment_norm = static_cast<type>(0.0);
-
-    minimum_loss_decrease = -numeric_limits<type>::max();
+    minimum_loss_decrease = 0;
     training_loss_goal = 0;
-    gradient_norm_goal = 0;
     maximum_selection_failures = 1000;
 
     maximum_epochs_number = 1000;
@@ -270,30 +250,6 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 }
 
 
-/// Sets a new value for the minimum parameters increment norm stopping criterion.
-/// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training.
-
-void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void new_minimum_parameters_increment_norm(const type&) method.\n"
-               << "Minimum parameters increment norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    minimum_parameters_increment_norm = new_minimum_parameters_increment_norm;
-}
-
-
 /// Sets a new minimum loss improvement during training.
 /// @param new_minimum_loss_decrease Minimum improvement in the loss between two iterations.
 
@@ -310,31 +266,6 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type& new_mini
 void LevenbergMarquardtAlgorithm::set_loss_goal(const type& new_loss_goal)
 {
     training_loss_goal = new_loss_goal;
-}
-
-
-/// Sets a new the goal value for the norm of the loss function gradient.
-/// This is used as a stopping criterion when training a neural network.
-/// @param new_gradient_norm_goal Goal value for the norm of the loss function gradient.
-
-void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const type& new_gradient_norm_goal)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_gradient_norm_goal < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void set_gradient_norm_goal(const type&) method.\n"
-               << "Gradient norm goal must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    gradient_norm_goal = new_gradient_norm_goal;
 }
 
 
@@ -583,17 +514,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        // Stopping Criteria
-
-        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
-        {
-            if(display) cout << "Epoch " << epoch << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumParametersIncrementNorm;
-        }
-
         if(training_back_propagation_lm.loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << "Loss goal reached: " << training_back_propagation_lm.loss << endl;
@@ -615,15 +535,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         }
 
         old_loss = training_back_propagation_lm.loss;
-
-        if(gradient_norm <= gradient_norm_goal)
-        {
-            if(display) cout << "Epoch " << epoch << "Gradient norm goal reached: " << gradient_norm << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = GradientNormGoal;
-        }
 
         if(selection_failures >= maximum_selection_failures)
         {
@@ -799,12 +710,6 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
     labels_values(0,1) = to_string(damping_parameter_factor);
 
-    // Minimum parameters increment norm
-
-    labels_values(1,0) = "Minimum parameters increment norm";
-
-    labels_values(1,1) = to_string(minimum_parameters_increment_norm);
-
     // Minimum loss decrease
 
     labels_values(2,0) = "Minimum loss decrease";
@@ -816,12 +721,6 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
     labels_values(3,0) = "Loss goal";
 
     labels_values(3,1) = to_string(training_loss_goal);
-
-    // Gradient norm goal
-
-    labels_values(4,0) = "Gradient norm goal";
-
-    labels_values(4,1) = to_string(gradient_norm_goal);
 
     // Maximum selection error increases
 
@@ -866,17 +765,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     file_stream.CloseElement();
 
-    // Minimum parameters increment norm
-
-    file_stream.OpenElement("MinimumParametersIncrementNorm");
-
-    buffer.str("");
-    buffer << minimum_parameters_increment_norm;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     // Minimum loss decrease
 
     file_stream.OpenElement("MinimumLossDecrease");
@@ -894,17 +782,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     buffer.str("");
     buffer << training_loss_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Gradient norm goal
-
-    file_stream.OpenElement("GradientNormGoal");
-
-    buffer.str("");
-    buffer << gradient_norm_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -996,26 +873,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         }
     }
 
-    // Minimum parameters increment norm
-
-    const tinyxml2::XMLElement* minimum_parameters_increment_norm_element
-            = root_element->FirstChildElement("MinimumParametersIncrementNorm");
-
-    if(minimum_parameters_increment_norm_element)
-    {
-        const type new_minimum_parameters_increment_norm
-                = static_cast<type>(atof(minimum_parameters_increment_norm_element->GetText()));
-
-        try
-        {
-            set_minimum_parameters_increment_norm(new_minimum_parameters_increment_norm);
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
     // Minimum loss decrease
 
     const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
@@ -1045,24 +902,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         try
         {
             set_loss_goal(new_loss_goal);
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Gradient norm goal
-
-    const tinyxml2::XMLElement* gradient_norm_goal_element = root_element->FirstChildElement("GradientNormGoal");
-
-    if(gradient_norm_goal_element)
-    {
-        const type new_gradient_norm_goal = static_cast<type>(atof(gradient_norm_goal_element->GetText()));
-
-        try
-        {
-            set_gradient_norm_goal(new_gradient_norm_goal);
         }
         catch(const logic_error& e)
         {

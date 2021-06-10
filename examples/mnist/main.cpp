@@ -63,13 +63,10 @@ int main()
 
         // Neural network
 
-        cout << "input_variables_number" << input_variables_number <<endl;
-        cout << "target_variables_number" << target_variables_number <<endl;
-
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, 50, target_variables_number});
 
         PerceptronLayer* perceptron_layer_pointer = neural_network.get_first_perceptron_layer_pointer();
-        perceptron_layer_pointer->set_activation_function("RectifiedLinear");
+//        perceptron_layer_pointer->set_activation_function("RectifiedLinear");
 
         Tensor<Layer*, 1> layers_pointers = neural_network.get_trainable_layers_pointers();
 
@@ -88,7 +85,7 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::CROSS_ENTROPY_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.set_display_period(10);
 

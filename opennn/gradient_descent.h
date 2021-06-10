@@ -64,13 +64,11 @@ public:
 
    string get_hardware_use() const;
 
-   // Stopping criteria
-
-   const type& get_minimum_parameters_increment_norm() const;
+   // Stopping criteria   
 
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
-   const type& get_gradient_norm_goal() const;
+
    const Index& get_maximum_selection_failures() const;
 
    const Index& get_maximum_epochs_number() const;
@@ -88,11 +86,11 @@ public:
 
    void set_maximum_epochs_number(const Index&);
 
-   void set_minimum_parameters_increment_norm(const type&);
+   
 
    void set_minimum_loss_decrease(const type&);
    void set_loss_goal(const type&);
-   void set_gradient_norm_goal(const type&);
+
    void set_maximum_selection_failures(const Index&);
 
    void set_maximum_time(const type&);
@@ -129,11 +127,7 @@ private:
 
    const type first_learning_rate = static_cast<type>(0.01);
 
-   // Stopping criteria
-
-   /// Norm of the parameters increment vector at which training stops.
-
-   type minimum_parameters_increment_norm;
+   // Stopping criteria 
 
    /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
 
@@ -142,10 +136,6 @@ private:
    /// Goal value for the loss. It is used as a stopping criterion.
 
    type training_loss_goal;
-
-   /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
-
-   type gradient_norm_goal;
 
    /// Maximum number of epochs at which the selection error increases.
    /// This is an early stopping method for improving selection.
