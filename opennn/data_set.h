@@ -718,10 +718,6 @@ public:
 
    void fix_repeated_names();
 
-   // scaling
-
-   void set_min_max_range(const type min, const type max);
-
    // Eigen methods
 
    Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&) const;
@@ -732,72 +728,9 @@ public:
 
    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
 
-
    bool get_has_rows_labels() const;
 
    void shuffle();
-
-private:
-
-   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
-   ThreadPoolDevice* thread_pool_device = nullptr;
-
-   /// Data file name.
-
-   string data_file_name;
-
-   /// Separator character.
-
-   Separator separator = Comma;
-
-   /// Missing values label.
-
-   string missing_values_label = "NA";
-
-   /// Number of lags.
-
-   Index lags_number;
-
-   /// Number of steps ahead.
-
-   Index steps_ahead;
-
-   /// Min Max Range Scaling
-
-   type min_range = -1;
-   type max_range = 1;
-
-   /// Data Matrix.
-   /// The number of rows is the number of samples.
-   /// The number of columns is the number of variables.
-
-   Tensor<type, 2> data;
-
-   /// Time series data matrix.
-   /// The number of rows is the number of samples before time series transformation.
-   /// The number of columns is the number of variables before time series transformation.
-
-   Tensor<type, 2> time_series_data;
-
-   Tensor<Column, 1> time_series_columns;
-
-   /// Display messages to screen.
-
-   bool display = true;
-
-   /// Index where  variable is located for forecasting applications.
-
-   Index time_index;
-
-   /// Missing values method object.
-
-   MissingValuesMethod missing_values_method = Unuse;
-
-   // Samples
-
-   Tensor<SampleUse, 1> samples_uses;
-
-   // Variables
 
    // Reader
 
@@ -813,23 +746,84 @@ private:
 
    void check_special_characters(const string&) const;
 
-   /// Header which contains variables name.
+private:
 
-   bool has_columns_names = false;
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
+   ThreadPoolDevice* thread_pool_device = nullptr;
+
+   // DATA
+
+   /// Data Matrix.
+   /// The number of rows is the number of samples.
+   /// The number of columns is the number of variables.
+
+   Tensor<type, 2> data;
+
+   // Samples
+
+   Tensor<SampleUse, 1> samples_uses;
+
+   Tensor<string, 1> rows_labels;
+
+   // Columns
+
+   Tensor<Column, 1> columns;
 
    Tensor<Index, 1> input_variables_dimensions;
 
-   Tensor<Column, 1> columns;
+   // DATA FILE
+
+   /// Data file name.
+
+   string data_file_name;
+
+   /// Separator character.
+
+   Separator separator = Comma;
+
+   /// Missing values label.
+
+   string missing_values_label = "NA";
+
+   /// Header which contains variables name.
+
+   bool has_columns_names = false;
 
    /// Header which contains the rows label.
 
    bool has_rows_labels = false;
 
-   Tensor<string, 1> rows_labels;
+   Tensor<Tensor<string, 1>, 1> data_file_preview;
+
+   // TIME SERIES
+
+   /// Index where time variable is located for forecasting applications.
+
+   Index time_index;
+
+   /// Number of lags.
+
+   Index lags_number = 0;
+
+   /// Number of steps ahead.
+
+   Index steps_ahead = 0;
+
+   /// Time series data matrix.
+   /// The number of rows is the number of samples before time series transformation.
+   /// The number of columns is the number of variables before time series transformation.
+
+   Tensor<type, 2> time_series_data;
+
+   Tensor<Column, 1> time_series_columns;
 
    Index gmt = 0;
 
-   Tensor<Tensor<string, 1>, 1> data_file_preview;
+   // MISSING VALUES
+
+   /// Missing values method.
+
+   MissingValuesMethod missing_values_method = Unuse;
 
    /// Missing values
 
@@ -838,6 +832,10 @@ private:
    Tensor<Index, 1> columns_missing_values_number;
 
    Index rows_missing_values_number;
+
+   /// Display messages to screen.
+
+   bool display = true;
 
    const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
 

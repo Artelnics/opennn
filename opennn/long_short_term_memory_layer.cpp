@@ -1073,8 +1073,8 @@ void LongShortTermMemoryLayer::set_parameters_constant(const type& value)
 
 void LongShortTermMemoryLayer::set_parameters_random()
 {
-    const type minimum = -1;
-    const type maximum = 1;
+    const type minimum = -0.1;
+    const type maximum = 0.1;
 
     // Biases
 
@@ -1082,28 +1082,28 @@ void LongShortTermMemoryLayer::set_parameters_random()
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        forget_biases(i) = minimum + (maximum-minimum)*random;
+        forget_biases(i) = minimum + (maximum - minimum)*random;
     }
 
     for(Index i = 0; i < input_biases.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        input_biases(i) = minimum + (maximum-minimum)*random;
+        input_biases(i) = minimum + (maximum - minimum)*random;
     }
 
     for(Index i = 0; i < state_biases.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        state_biases(i) = minimum + (maximum-minimum)*random;
+        state_biases(i) = minimum + (maximum - minimum)*random;
     }
 
     for(Index i = 0; i < output_biases.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        output_biases(i) = minimum + (maximum-minimum)*random;
+        output_biases(i) = minimum + (maximum - minimum)*random;
     }
 
     // Weights
@@ -1112,28 +1112,28 @@ void LongShortTermMemoryLayer::set_parameters_random()
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        forget_weights(i) = minimum + (maximum-minimum)*random;
+        forget_weights(i) = minimum + (maximum - minimum)*random;
     }
 
     for(Index i = 0; i < input_weights.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        input_weights(i) = minimum + (maximum-minimum)*random;
+        input_weights(i) = minimum + (maximum - minimum)*random;
     }
 
     for(Index i = 0; i < state_weights.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        state_weights(i) = minimum + (maximum-minimum)*random;
+        state_weights(i) = minimum + (maximum - minimum)*random;
     }
 
     for(Index i = 0; i < output_weights.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        output_weights(i) = minimum + (maximum-minimum)*random;
+        output_weights(i) = minimum + (maximum - minimum)*random;
     }
 
     // Recurrent weights
@@ -1142,28 +1142,28 @@ void LongShortTermMemoryLayer::set_parameters_random()
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        forget_recurrent_weights(i) = minimum + (maximum-minimum)*random;
+        forget_recurrent_weights(i) = minimum + (maximum - minimum)*random;
     }
 
     for(Index i = 0; i < input_recurrent_weights.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        input_recurrent_weights(i) = minimum + (maximum-minimum)*random;
+        input_recurrent_weights(i) = minimum + (maximum - minimum)*random;
     }
 
     for(Index i = 0; i < state_recurrent_weights.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        state_recurrent_weights(i) = minimum + (maximum-minimum)*random;
+        state_recurrent_weights(i) = minimum + (maximum - minimum)*random;
     }
 
     for(Index i = 0; i < output_recurrent_weights.size(); i++)
     {
         const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
-        output_recurrent_weights(i) = minimum + (maximum-minimum)*random;
+        output_recurrent_weights(i) = minimum + (maximum - minimum)*random;
     }
 }
 

@@ -94,6 +94,12 @@ NeuralNetwork::NeuralNetwork(const Tensor<Layer*, 1>& new_layers_pointers)
 
 NeuralNetwork::~NeuralNetwork()
 {
+    delete_layers();
+}
+
+
+void NeuralNetwork::delete_layers()
+{
     const Index layers_number = get_layers_number();
 
     for(Index i = 0;  i < layers_number; i++)
@@ -102,6 +108,8 @@ NeuralNetwork::~NeuralNetwork()
 
         layers_pointers[i] = nullptr;
     }
+
+    layers_pointers.resize(0);
 }
 
 
@@ -110,18 +118,52 @@ NeuralNetwork::~NeuralNetwork()
 
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
-/*
+    if(has_bounding_layer())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "NeuralNetwork::add_layer() method.\n"
+               << "No layers can be added after a bounding layer.\n";
+
+        print();
+
+        throw logic_error(buffer.str());
+    }
+
+    if(has_probabilistic_layer())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "NeuralNetwork::add_layer() method.\n"
+               << "No layers can be added after a probabilistic layer.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(layer_pointer->get_type_string() == "Pooling")
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "NeuralNetwork::add_layer() method.\n"
+               << "Pooling Layer is not available yet. It will be included in future versions.\n";
+
+        throw logic_error(buffer.str());
+    }
+
     if(layer_pointer->get_type_string() == "Convolutional")
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "NeuralNetwork::add_layer() method.\n"
-               << "Convolutional Layer is not available yet. It will be included in future versions.!!\n";
+               << "Convolutional Layer is not available yet. It will be included in future versions.\n";
 
         throw logic_error(buffer.str());
     }
-*/
+
     const Layer::Type layer_type = layer_pointer->get_type();
 
     if(check_layer_type(layer_type))
@@ -587,7 +629,7 @@ void NeuralNetwork::set()
 
     outputs_names.resize(0);
 
-    layers_pointers.resize(0);
+    delete_layers();
 
     set_default();
 }
@@ -599,7 +641,7 @@ void NeuralNetwork::set()
 
 void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)
 {
-    layers_pointers.resize(0);
+    delete_layers();
 
     if(architecture.size() <= 1) return;
 
@@ -703,7 +745,7 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
                         const Tensor<Index, 1>& filters_dimensions,
                         const Index& outputs_number)
 {
-    layers_pointers.resize(0);
+    delete_layers();
 
     ScalingLayer* scaling_layer = new ScalingLayer(input_variables_dimensions);
     this->add_layer(scaling_layer);
@@ -742,29 +784,9 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
 void NeuralNetwork::set(const string& file_name)
 {
-    layers_pointers.resize(0);
+    delete_layers();
 
     load(file_name);
-}
-
-
-/// Sets the members of this neural network object with those from other neural network object.
-/// @param other_neural_network Neural network object to be copied.
-
-void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
-{
-    layers_pointers.resize(0);
-
-    if(this == &other_neural_network) return;
-
-    inputs_names = other_neural_network.inputs_names;
-
-    outputs_names = other_neural_network.outputs_names;
-
-    layers_pointers = other_neural_network.layers_pointers;
-
-    display = other_neural_network.display;
-
 }
 
 
@@ -1631,7 +1653,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 
     for(Index i = 0; i < points_number; i++)
     {
-        inputs(direction) = minimum + (maximum-minimum)*static_cast<type>(i)/static_cast<type>(points_number-1);
+        inputs(direction) = minimum + (maximum - minimum)*static_cast<type>(i)/static_cast<type>(points_number-1);
 
         for(Index j = 0; j < inputs_number; j++)
         {

@@ -83,9 +83,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                               LossIndexBackPropagation& back_propagation) const
 {
      #ifdef OPENNN_DEBUG
-
      check();
-
      #endif
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -217,14 +215,11 @@ void MeanSquaredError::calculate_gradient(const DataSetBatch& batch,
 }
 
 
-
 void MeanSquaredError::calculate_hessian_approximation(const DataSetBatch& batch,
                                                        LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
      #ifdef OPENNN_DEBUG
-
      check();
-
      #endif
 
      const Index batch_samples_number = batch.inputs_2d.dimension(0);

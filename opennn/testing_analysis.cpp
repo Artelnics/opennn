@@ -3579,8 +3579,6 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
         throw logic_error(buffer.str());
     }
 
-
-
     const Index targets_number = data_set_pointer->get_target_variables_number();
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -3845,6 +3843,18 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
     binary_classification_test[14] = markedness;
 
     return binary_classification_test;
+}
+
+
+void TestingAnalysis::print_binary_classification_tests() const
+{
+    const Tensor<type, 1> binary_classification_tests = calculate_binary_classification_tests();
+
+    cout << "Binary classification tests: " << endl;
+    cout << "Classification accuracy : " << binary_classification_tests[0] << endl;
+    cout << "Error rate              : " << binary_classification_tests[1] << endl;
+    cout << "Sensitivity             : " << binary_classification_tests[2] << endl;
+    cout << "Specificity             : " << binary_classification_tests[3] << endl;
 }
 
 

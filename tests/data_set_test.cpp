@@ -1280,8 +1280,6 @@ void DataSetTest::test_read_empty_csv()
     {
         data_set.set("../../datasets/empty.csv",',',false);
 
-        data_set.print();system("pause");
-
         assert_true(data_set.get_samples_number() == 1, LOG);
         assert_true(data_set.get_variables_number() == 0, LOG);
     }
@@ -1290,7 +1288,6 @@ void DataSetTest::test_read_empty_csv()
         //Exception, File is empty
         assert_true(true,LOG);
     }
-
 }
 
 

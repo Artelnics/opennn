@@ -133,6 +133,7 @@ DataSet::Column::Column(const string& new_name,
 DataSet::Column::~Column()
 {}
 
+
 void DataSet::Column::set_scaler(const Scaler& new_scaler)
 {
     scaler = new_scaler;
@@ -4604,17 +4605,21 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
 void DataSet::set()
 {
-    data_file_name = "";
+//    NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
+//    ThreadPoolDevice* thread_pool_device = nullptr;
 
     data.resize(0,0);
 
-    time_series_data.resize(0,0);
+    samples_uses.resize(0);
 
     columns.resize(0);
 
-    samples_uses.resize(0);
+    time_series_data.resize(0,0);
 
-    set_default();
+    time_series_columns.resize(0);
+
+
+    columns_missing_values_number.resize(0);
 }
 
 
@@ -6727,15 +6732,6 @@ void DataSet::set_data_binary_random()
 }
 
 
-/// Sets max and min scaling range for minmaxscaling.
-/// @param min and max for scaling range.
-
-void DataSet::set_min_max_range(const type min, const type max)
-{
-    min_range = min;
-    max_range = max;
-}
-
 /// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
 
 void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -6749,7 +6745,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("DataFile");
 
     // File type ?
-
     {
         file_stream.OpenElement("FileType");
 

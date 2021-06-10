@@ -74,7 +74,6 @@ public:
        {
        }
 
-
        void print() const
        {
            cout << "Linear regression analysis" << endl;
@@ -221,6 +220,8 @@ public:
    // Binary classifcation methods
 
    Tensor<type, 1> calculate_binary_classification_tests() const;
+
+   void print_binary_classification_tests() const;
 
    type calculate_logloss() const;
 
