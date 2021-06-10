@@ -416,7 +416,7 @@ Correlation multiple_logistic_correlation(const ThreadPoolDevice* thread_pool_de
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
     training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 

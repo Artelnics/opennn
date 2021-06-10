@@ -85,14 +85,6 @@ string ConjugateGradient::write_training_direction_method() const
 }
 
 
-/// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
-
-const type& ConjugateGradient::get_minimum_parameters_increment_norm() const
-{
-    return minimum_parameters_increment_norm;    
-}
-
-
 /// Returns the minimum loss improvement during training.
 
 const type& ConjugateGradient::get_minimum_loss_decrease() const
@@ -107,15 +99,6 @@ const type& ConjugateGradient::get_minimum_loss_decrease() const
 const type& ConjugateGradient::get_loss_goal() const
 {
     return training_loss_goal;
-}
-
-
-/// Returns the goal value for the norm of the error function gradient.
-/// This is used as a stopping criterion when training a neural network
-
-const type& ConjugateGradient::get_gradient_norm_goal() const
-{
-    return gradient_norm_goal;
 }
 
 
@@ -237,9 +220,8 @@ void ConjugateGradient::set_default()
 
     minimum_parameters_increment_norm = 0;
 
-    minimum_loss_decrease = -numeric_limits<type>::max();
+    minimum_loss_decrease = 0;
     training_loss_goal = 0;
-    gradient_norm_goal = 0;
     maximum_selection_failures = 1000000;
 
     maximum_epochs_number = 1000;
@@ -250,32 +232,6 @@ void ConjugateGradient::set_default()
     display_period = 10;
 
     training_direction_method = FR;
-}
-
-
-/// Sets a new value for the minimum parameters increment norm stopping criterion.
-/// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training.
-
-void ConjugateGradient::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void new_minimum_parameters_increment_norm(const type&) method.\n"
-               << "Minimum parameters increment norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error learning rate
-
-    minimum_parameters_increment_norm = new_minimum_parameters_increment_norm;
 }
 
 
@@ -295,33 +251,6 @@ void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_d
 void ConjugateGradient::set_loss_goal(const type& new_loss_goal)
 {
     training_loss_goal = new_loss_goal;
-}
-
-
-/// Sets a new the goal value for the norm of the error function gradient.
-/// This is used as a stopping criterion when training a neural network
-/// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
-
-void ConjugateGradient::set_gradient_norm_goal(const type& new_gradient_norm_goal)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_gradient_norm_goal < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_gradient_norm_goal(const type&) method.\n"
-               << "Gradient norm goal must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set gradient norm goal
-
-    gradient_norm_goal = new_gradient_norm_goal;
 }
 
 
@@ -930,15 +859,6 @@ TrainingResults ConjugateGradient::perform_training()
             results.stopping_condition = LossGoal;
         }
 
-        if(gradient_norm <= gradient_norm_goal)
-        {
-            if(display) cout << "Epoch " << epoch << endl << "Gradient norm goal reached: " << gradient_norm << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = GradientNormGoal;
-        }
-
         if(has_selection && selection_failures >= maximum_selection_failures)
         {
             if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
@@ -1069,12 +989,6 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 
     labels_values(5,1) = to_string(training_loss_goal);
 
-    // Gradient norm goal
-
-    labels_values(6,0) = "Gradient norm goal";
-
-    labels_values(6,1) = to_string(gradient_norm_goal);
-
     // Maximum selection error increases
 
     labels_values(7,0) = "Maximum selection error increases";
@@ -1159,21 +1073,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Gradient norm goal
-
-    {
-        file_stream.OpenElement("GradientNormGoal");
-
-        buffer.str("");
-        buffer << gradient_norm_goal;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
-
     // Maximum selection error increases
-
     {
         file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
@@ -1186,7 +1086,6 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Maximum iterations number
-
     {
         file_stream.OpenElement("MaximumEpochsNumber");
 
@@ -1281,26 +1180,6 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Minimum parameters increment norm
-    {
-        const tinyxml2::XMLElement* minimum_parameters_increment_norm_element
-                = root_element->FirstChildElement("MinimumParametersIncrementNorm");
-
-        if(minimum_parameters_increment_norm_element)
-        {
-            const type new_minimum_parameters_increment_norm = static_cast<type>(atof(minimum_parameters_increment_norm_element->GetText()));
-
-            try
-            {
-                set_minimum_parameters_increment_norm(new_minimum_parameters_increment_norm);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
     // Minimum loss decrease
     {
         const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
@@ -1331,25 +1210,6 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_loss_goal(new_loss_goal);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Gradient norm goal
-    {
-        const tinyxml2::XMLElement* gradient_norm_goal_element = root_element->FirstChildElement("GradientNormGoal");
-
-        if(gradient_norm_goal_element)
-        {
-            const type new_gradient_norm_goal = static_cast<type>(atof(gradient_norm_goal_element->GetText()));
-
-            try
-            {
-                set_gradient_norm_goal(new_gradient_norm_goal);
             }
             catch(const logic_error& e)
             {

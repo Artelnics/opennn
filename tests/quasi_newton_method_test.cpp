@@ -253,8 +253,6 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    neural_network.set_parameters_constant(3.1415927);
 
-   type gradient_norm_goal = 100.0;
-
    quasi_newton_method.set_minimum_parameters_increment_norm(0.0);
    quasi_newton_method.set_loss_goal(0.0);
    quasi_newton_method.set_minimum_loss_decrease(0.0);

@@ -149,17 +149,13 @@ private:
 
    type training_loss_goal = 0;
 
-   /// gradient norm goal. It is used as a stopping criterion.
-
-   type gradient_norm_goal = 0;
-
-   /// Maximum epochs number
+   /// Maximum epochs number.
 
    Index maximum_epochs_number = 10000;
 
-   /// Maximum selection error allowed
+   /// Maximum number of times when selection error increases.
 
-   Index maximum_selection_failures = 1000;
+   Index maximum_selection_failures = numeric_limits<Index>::max();
 
    /// Maximum training time. It is used as a stopping criterion.
 
@@ -168,10 +164,6 @@ private:
    /// Training and selection batch size.
 
    Index batch_samples_number = 1000;
-
-   /// Hardware use.
-
-   string hardware_use = "Multi-core";
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"

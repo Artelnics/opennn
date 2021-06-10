@@ -33,13 +33,19 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//        training_strategy.perform_training();
+        // @todo fails training_strategy.set_loss_method(TrainingStrategy::MINKOWSKI_ERROR);
+
+        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+
+        training_strategy.set_display_period(1);
+
+        training_strategy.perform_training();
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         testing_analysis.print_binary_classification_tests();
 
-        neural_network.save_expression_python("../../data/breast_cancer.py");
+        neural_network.save_expression_python("../data/breast_cancer.py");
 
          cout << "End breast cancer application" << endl;
 

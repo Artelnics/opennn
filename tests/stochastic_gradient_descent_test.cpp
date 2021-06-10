@@ -105,8 +105,6 @@ void StochasticGradientDescentTest::test_perform_training()
 
    neural_network.set_parameters_constant(-1.0);
 
-   type gradient_norm_goal = 0.1;
-
    stochastic_gradient_descent.set_loss_goal(0.0);
    stochastic_gradient_descent.set_maximum_epochs_number(1000);
    stochastic_gradient_descent.set_maximum_time(1000.0);

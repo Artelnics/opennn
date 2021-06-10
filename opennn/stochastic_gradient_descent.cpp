@@ -112,7 +112,6 @@ void StochasticGradientDescent::set_default()
     // Stopping criteria
 
     training_loss_goal = 0;
-    gradient_norm_goal = 0;
     maximum_time = 3600.0;
     maximum_epochs_number = 10000;
 
@@ -555,15 +554,6 @@ TrainingResults StochasticGradientDescent::perform_training()
             stop_training = true;
 
             results.stopping_condition  = LossGoal;
-        }
-
-        if(gradient_norm <= gradient_norm_goal)
-        {
-            if(display) cout << "Epoch " << epoch << endl << "Gradient norm goal reached: " << gradient_norm << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = GradientNormGoal;
         }
 
         if(selection_failures >= maximum_selection_failures)

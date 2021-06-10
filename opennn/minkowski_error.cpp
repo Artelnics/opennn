@@ -116,7 +116,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    Tensor<type, 0> p_norm_derivative =
+    const Tensor<type, 0> p_norm_derivative =
             (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
 
      switch(output_layer_back_propagation->layer_pointer->get_type())
@@ -126,7 +126,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
          PerceptronLayerBackPropagation* perceptron_layer_back_propagation
          = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
-         if(p_norm_derivative() - 0 < std::numeric_limits<type>::min())
+         if(abs(p_norm_derivative()) < numeric_limits<type>::min())
          {
              perceptron_layer_back_propagation->delta.setZero();
          }
@@ -146,7 +146,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
          ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
          = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
-         if(p_norm_derivative() - 0 < std::numeric_limits<type>::min())
+         if(abs(p_norm_derivative()) < numeric_limits<type>::min())
          {
              probabilistic_layer_back_propagation->delta.setZero();
          }
@@ -166,7 +166,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
          RecurrentLayerBackPropagation* recurrent_layer_back_propagation
          = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
 
-         if(p_norm_derivative() - 0 < std::numeric_limits<type>::min())
+         if(abs(p_norm_derivative()) < numeric_limits<type>::min())
          {
              recurrent_layer_back_propagation->delta.setZero();
          }
@@ -186,7 +186,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
          LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
          = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
 
-         if(p_norm_derivative() - 0 < std::numeric_limits<type>::min())
+         if(abs(p_norm_derivative()) < numeric_limits<type>::min())
          {
              long_short_term_memory_layer_back_propagation->delta.setZero();
          }

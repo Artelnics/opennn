@@ -263,6 +263,16 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
 
     norm.device(*thread_pool_device) = vector.square().sum().sqrt();
 
+    if(isnan(norm(0)))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: l2 norm of vector is not a number" << endl;
+        //       << vector;
+
+        throw logic_error(buffer.str());
+    }
+
     return norm(0);
 }
 
