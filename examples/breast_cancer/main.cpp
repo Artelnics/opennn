@@ -33,11 +33,9 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        // @todo fails training_strategy.set_loss_method(TrainingStrategy::MINKOWSKI_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::MINKOWSKI_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
-
-        training_strategy.set_display_period(1);
+        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
         training_strategy.perform_training();
 

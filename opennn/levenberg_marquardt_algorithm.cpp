@@ -364,6 +364,15 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
+    if(loss_index_pointer->get_error_type() == "MINKOWSKI_ERROR")
+    {
+        throw logic_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
+    }
+    else if(loss_index_pointer->get_error_type() == "CROSS_ENTROPY_ERROR")
+    {
+        throw logic_error("Levenberg-Marquard algorithm cannot work with cross entropy error.");
+    }
+
     ostringstream buffer;
 
     // Control sentence

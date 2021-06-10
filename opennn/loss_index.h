@@ -235,7 +235,7 @@ public:
    void regularization_from_XML(const tinyxml2::XMLDocument&);
    void write_regularization_XML(tinyxml2::XMLPrinter&) const;
 
-   string get_error_type() const;
+   virtual string get_error_type() const;
    virtual string get_error_type_text() const;
 
    string write_regularization_method() const;
