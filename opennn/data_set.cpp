@@ -8877,6 +8877,80 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 }
 
 
+Tensor<Index, 1> DataSet::select_outliers_via_contamination(const Tensor<type, 1>& outlier_ranks,
+                                                            const type & contamination,
+                                                            bool higher) const
+{
+    const Index samples_number = get_used_samples_number();
+
+    Tensor<Tensor<type, 1>, 1> ordered_ranks(samples_number);
+
+    Tensor<Index, 1> outlier_indexes(samples_number);
+    outlier_indexes.setZero();
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        ordered_ranks(i) = Tensor<type, 1>(2);
+        ordered_ranks(i)(0) = i;
+        ordered_ranks(i)(1) = outlier_ranks(i);
+    }
+
+    sort(ordered_ranks.data(), ordered_ranks.data() + samples_number,
+        [](Tensor<type, 1> & a, Tensor<type, 1> & b) -> bool
+    {
+        return a(1) < b(1);
+    });
+
+    if(higher)
+    {
+        for(Index i = (1-contamination)*samples_number; i < samples_number; i++)
+            outlier_indexes(static_cast<Index>(ordered_ranks(i)(0))) = 1;
+    }
+    else
+    {
+        for(Index i = 0; i < contamination*samples_number; i++)
+            outlier_indexes(static_cast<Index>(ordered_ranks(i)(0))) = 1;
+    }
+
+    return outlier_indexes;
+}
+
+
+
+Tensor<Index, 1> DataSet::select_outliers_via_standard_deviation(const Tensor<type, 1>& outlier_ranks,
+                                                                 const type & deviation_factor,
+                                                                 bool higher) const
+{
+    const Index samples_number = get_used_samples_number();
+    const type mean_ranks = mean(outlier_ranks);
+    const type std_ranks = standard_deviation(outlier_ranks);
+
+    Tensor<Index, 1> outlier_indexes(samples_number);
+    outlier_indexes.setZero();
+
+
+    if(higher)
+    {
+        for(Index i = 0; i < samples_number; i++)
+        {
+            if(outlier_ranks(i) > mean_ranks + deviation_factor*std_ranks)
+                outlier_indexes(i) = 1;
+        }
+    }
+    else
+    {
+        for(Index i = 0; i < samples_number; i++)
+        {
+            if(outlier_ranks(i) < mean_ranks - deviation_factor*std_ranks)
+                outlier_indexes(i) = 1;
+        }
+    }
+
+
+    return outlier_indexes;
+}
+
+
 type DataSet::calculate_euclidean_distance(const Tensor<Index, 1>& variables_indices,
                                            const Index& sample_index,
                                            const Index& other_sample_index) const
@@ -8908,7 +8982,7 @@ Tensor<type, 2> DataSet::calculate_distance_matrix(const Tensor<Index,1>& indice
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < indices.size() ; i++)
+    for(Index i = 0; i < samples_number ; i++)
     {
         for(Index k = 0; k < i; k++)
         {
@@ -8917,117 +8991,7 @@ Tensor<type, 2> DataSet::calculate_distance_matrix(const Tensor<Index,1>& indice
                     = calculate_euclidean_distance(input_variables_indices, indices(i), indices(k));
         }
     }
-
     return distance_matrix;
-}
-
-
-Tensor<Tensor<type, 1>, 1> DataSet::get_kd_tree_data() const
-{
-    const Index used_samples_number = get_used_samples_number();
-    const Index input_variables_number = get_input_variables_number();
-
-    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    Tensor<Tensor<type, 1>, 1> kd_tree_data(used_samples_number);
-
-    for(Index i = 0; i < used_samples_number; i++)
-    {
-        kd_tree_data(i) = Tensor<type, 1>(input_variables_number+1);
-
-        kd_tree_data(i)(0) = used_samples_indices(i); // Storing index
-
-        for(Index j = 0; j < input_variables_number; j++)
-            kd_tree_data(i)(j+1) = data(used_samples_indices(i), input_variables_indices(j));
-    }
-
-    return kd_tree_data;
-}
-
-
-Tensor<list<Index>, 1> DataSet::calculate_kd_tree_neighbors(const Index& k_neighbors, const Index& min_samples_leaf) const
-{
-    const Index used_samples_number = get_used_samples_number();
-
-    Tensor<Tensor<type, 1>, 1> tree = get_kd_tree_data();
-
-    const Index depths = max(floor(log2(static_cast<type>(used_samples_number)/static_cast<type>(min_samples_leaf))),
-                       static_cast<type>(0.0));
-
-    Tensor<Tensor<Index, 1>, 1> bounding_limits(depths+1);
-
-    bounding_limits(0) = Tensor<Index, 1>(2);
-    bounding_limits(0)(0) = 0;
-    bounding_limits(0)(1) = used_samples_number;
-
-    for(Index i = 1; i <= depths; i++)
-    {
-        bounding_limits(i) = Tensor<Index, 1>(pow(2, i)+1);
-        bounding_limits(i)(0) = 0;
-
-        for(Index j = 1; j < bounding_limits(i).size()-1; j = j+2)
-        {
-            bounding_limits(i)(j) = (bounding_limits(i-1)(j/2+1) - bounding_limits(i-1)(j/2))/2
-                                   + bounding_limits(i-1)(j/2);
-
-            bounding_limits(i)(j+1) = bounding_limits(i-1)(j/2+1);
-        }
-    }
-
-    auto specific_sort = [&tree](const Index & first, const Index & last, const Index & split_variable)
-    {
-        sort(tree.data() + first, tree.data() + last,
-            [&split_variable](const Tensor<type, 1> & a, const Tensor<type, 1> & b) -> bool
-        {
-            return a(split_variable) > b(split_variable);
-        });
-    };
-
-    if(depths != 0) specific_sort(0, used_samples_number, 1);
-
-    Index split_variable = 2;
-
-    for(Index i = 1; i <= depths; i++, split_variable++){
-
-        split_variable = split_variable == tree(0).size() ? 1 : split_variable;
-        specific_sort(bounding_limits(i)(0), bounding_limits(i)(1), split_variable);
-
-        #pragma omp parallel for
-        for(Index j = 1; j < (Index)bounding_limits(i).size()-1; j++)
-            specific_sort(bounding_limits(i)(j)+1, bounding_limits(i)(j+1), split_variable);
-    }
-
-    Tensor<list<Index>, 1> k_nearest_neighbors(used_samples_number);
-
-    const Index leafs_number = pow(2, depths);
-
-    Tensor<Tensor<Index, 1>, 1> bounding_boxes(leafs_number);
-
-    //Tensor<type, 2> distance_matrix(XXX)
-
-    for(Index i = 0; i < leafs_number; i++) // Each bounding box
-    {
-        const Index first = bounding_limits(depths)(i);
-        const Index last = bounding_limits(depths)(i+1);
-        bounding_boxes(i) = Tensor<Index, 1>(last - first);
-
-        for(Index j = 0; j < last - first; j++)
-            bounding_boxes(i)(j) = tree(first+j)(0);
-
-        const Tensor<type, 2> distance_matrix = calculate_distance_matrix(bounding_boxes(i));
-
-        Tensor<list<Index>, 1> box_nearest_neighbors = calculate_k_nearest_neighbors(distance_matrix, k_neighbors);
-
-        for(Index j = 0; j < last - first; j++)
-        {
-            for(auto & element : box_nearest_neighbors(j)) element = bounding_boxes(i)(element);
-
-            k_nearest_neighbors(bounding_boxes(i)(j)) = move(box_nearest_neighbors(j));
-        }
-    }
-
-    return k_nearest_neighbors;
 }
 
 
@@ -9072,6 +9036,142 @@ Tensor<list<Index>, 1> DataSet::calculate_k_nearest_neighbors(const Tensor<type,
 }
 
 
+Tensor<Tensor<type, 1>, 1> DataSet::get_kd_tree_data() const
+{
+    const Index used_samples_number = get_used_samples_number();
+    const Index input_variables_number = get_input_variables_number();
+
+    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+
+    Tensor<Tensor<type, 1>, 1> kd_tree_data(used_samples_number);
+
+    for(Index i = 0; i < used_samples_number; i++)
+    {
+        kd_tree_data(i) = Tensor<type, 1>(input_variables_number+1);
+
+        kd_tree_data(i)(0) = used_samples_indices(i); // Storing index
+
+        for(Index j = 0; j < input_variables_number; j++)
+            kd_tree_data(i)(j+1) = data(used_samples_indices(i), input_variables_indices(j));
+    }
+
+    return kd_tree_data;
+}
+
+
+Tensor<Tensor<Index, 1>, 1> DataSet::create_bounding_limits_kd_tree(const Index& depth) const
+{
+
+    Tensor<Tensor<Index, 1>, 1> bounding_limits(depth+1);
+
+    bounding_limits(0) = Tensor<Index, 1>(2);
+    bounding_limits(0)(0) = 0;
+    bounding_limits(0)(1) = get_used_samples_number();
+
+
+    for(Index i = 1; i <= depth; i++)
+    {
+        bounding_limits(i) = Tensor<Index, 1>(pow(2, i)+1);
+        bounding_limits(i)(0) = 0;
+
+        for(Index j = 1; j < bounding_limits(i).size()-1; j = j+2)
+        {
+            bounding_limits(i)(j) = (bounding_limits(i-1)(j/2+1) - bounding_limits(i-1)(j/2))/2
+                                   + bounding_limits(i-1)(j/2);
+
+            bounding_limits(i)(j+1) = bounding_limits(i-1)(j/2+1);
+        }
+    }
+    return bounding_limits;
+}
+
+
+void DataSet::create_kd_tree(Tensor<Tensor<type, 1>, 1>& tree, const Tensor<Tensor<Index, 1>, 1>& bounding_limits) const
+{
+    const Index depth = bounding_limits.size()-1;
+    const Index input_variables = tree(0).size();
+
+    auto specific_sort = [&tree](const Index & first, const Index & last, const Index & split_variable)
+    {
+        sort(tree.data() + first, tree.data() + last,
+            [&split_variable](const Tensor<type, 1> & a, const Tensor<type, 1> & b) -> bool
+        {
+            return a(split_variable) > b(split_variable);
+        });
+    };
+
+    specific_sort(bounding_limits(0)(0), bounding_limits(0)(1), 1);
+
+    Index split_variable = 2;
+
+    for(Index i = 1; i <= depth; i++, split_variable++)
+    {
+        split_variable = max(split_variable % input_variables, static_cast<Index>(1));
+
+        specific_sort(bounding_limits(i)(0), bounding_limits(i)(1), split_variable);
+
+        #pragma omp parallel for
+        for(Index j = 1; j < (Index)bounding_limits(i).size()-1; j++)
+            specific_sort(bounding_limits(i)(j)+1, bounding_limits(i)(j+1), split_variable);
+    }
+}
+
+
+Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<Tensor<type, 1>, 1>& tree,
+                                                                   const Tensor<Index, 1>& leaves_indices,
+                                                                   const Index& depth,
+                                                                   const Index& k_neighbors) const
+{
+    const Index used_samples_number = get_used_samples_number();
+    const Index leaves_number = pow(2, depth);
+
+    Tensor<Index, 1> bounding_box;
+
+    Tensor<type, 2> distance_matrix;
+    Tensor<list<Index>, 1> k_nearest_neighbors(used_samples_number);
+
+    for(Index i = 0; i < leaves_number; i++) // Each bounding box
+    {
+        const Index first = leaves_indices(i);
+        const Index last = leaves_indices(i+1);
+        bounding_box = Tensor<Index, 1>(last-first);
+
+        for(Index j = 0; j < last - first; j++)
+            bounding_box(j) = tree(first+j)(0);
+
+        Tensor<type, 2> distance_matrix = calculate_distance_matrix(bounding_box);
+        Tensor<list<Index>, 1> box_nearest_neighbors = calculate_k_nearest_neighbors(distance_matrix, k_neighbors);
+
+        for(Index j = 0; j < last - first; j++)
+        {
+            for(auto & element : box_nearest_neighbors(j))
+                element = bounding_box(element);
+
+            k_nearest_neighbors(bounding_box(j)) = move(box_nearest_neighbors(j));
+        }
+    }
+    return k_nearest_neighbors;
+}
+
+
+Tensor<list<Index>, 1> DataSet::calculate_kd_tree_neighbors(const Index& k_neighbors, const Index& min_samples_leaf) const
+{
+    const Index used_samples_number = get_used_samples_number();
+
+    Tensor<Tensor<type, 1>, 1> tree = get_kd_tree_data();
+
+    const Index depth = max(floor(log2(static_cast<type>(used_samples_number)/static_cast<type>(min_samples_leaf))),
+                       static_cast<type>(0.0));
+
+    Tensor<Tensor<Index, 1>, 1> bounding_limits = create_bounding_limits_kd_tree(depth);
+
+    create_kd_tree(tree, bounding_limits);
+
+    return calculate_bounding_boxes_neighbors(tree, bounding_limits(depth), depth, k_neighbors);
+}
+
+
 Tensor<type, 1> DataSet::calculate_average_reachability(Tensor<list<Index>, 1>& k_nearest_indexes,
                                                         const Index& k) const
 {
@@ -9106,6 +9206,29 @@ Tensor<type, 1> DataSet::calculate_average_reachability(Tensor<list<Index>, 1>& 
 
     return average_reachability;
 }
+
+
+Tensor<type, 1> DataSet::calculate_local_outlier_factor(Tensor<list<Index>, 1>& k_nearest_indexes,
+                                                        const Tensor<type, 1>& average_reachabilities,
+                                                        const Index & k) const
+{
+    const Index samples_number = get_used_samples_number();
+    Tensor<type, 1> LOF_value(samples_number);
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        type sum = 0;
+
+        for(auto & neighbor_index : k_nearest_indexes(i))
+            sum += average_reachabilities(i) / average_reachabilities(neighbor_index);
+
+        LOF_value(i) = sum/k ;
+    }
+    return LOF_value;
+}
+
 
 
 /// Calculate the outliers from the data set using the LocalOutlierFactor method.
@@ -9151,13 +9274,13 @@ Tensor<Index, 1> DataSet::calculate_local_outlier_factor_outliers(const Index& k
 
     if(min_samples_leaf == 0 && samples_number > 5000)
     {
-        min_samples_leaf_fix = 0.05 * samples_number;
-        k = min(k, min_samples_leaf_fix);
+        min_samples_leaf_fix = 200;
+        k = min(k, min_samples_leaf_fix-1);
         kdtree = true;
     }
     else if(min_samples_leaf!=0 && min_samples_leaf < samples_number/2)
     {
-        k = min(k, min_samples_leaf_fix);
+        k = min(k, min_samples_leaf_fix-1);
         kdtree = true;
     }
 
@@ -9166,58 +9289,262 @@ Tensor<Index, 1> DataSet::calculate_local_outlier_factor_outliers(const Index& k
     kdtree ? k_nearest_indexes = calculate_kd_tree_neighbors(k, min_samples_leaf_fix)
            : k_nearest_indexes = calculate_k_nearest_neighbors(calculate_distance_matrix(get_used_samples_indices()), k);
 
+
     const Tensor<type, 1> average_reachabilities = calculate_average_reachability(k_nearest_indexes, k);
 
-    Tensor<type, 1> LOF_value(samples_number);
 
-    #pragma omp parallel for
+    const Tensor<type, 1> LOF_value = calculate_local_outlier_factor(k_nearest_indexes, average_reachabilities, k);
 
+
+    Tensor<Index, 1> outlier_indexes;
+
+    (contamination > 0) ? outlier_indexes = select_outliers_via_contamination(LOF_value, contamination, true)
+                        : outlier_indexes = select_outliers_via_standard_deviation(LOF_value, 2.0, true);
+
+    return outlier_indexes;
+}
+
+
+void DataSet::calculate_min_max_indices_list(list<Index>& elements, const Index& variable_index, type& min, type& max) const
+{
+    type value;
+    min = max = data(elements.front(), variable_index);
+    for(auto & sample_index : elements)
+    {
+        value = data(sample_index, variable_index);
+        if(min > value) min = value;
+        else if(max < value) max = value;
+    }
+
+}
+
+
+Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& tree_simulation, list<Index>& tree_index) const
+{
+    const Index current_tree_index = tree_index.front();
+    const Index current_variable = tree(current_tree_index, 1);
+    const type division_value = tree(current_tree_index, 0);
+
+    list<Index> current_node_samples  = tree_simulation.front();
+
+
+    list<Index> one_side_samples;
+    list<Index> other_side_samples;
+
+    Index delta_next_depth_nodes = 0;
+    Index one_side_count = 0;
+    Index other_side_count = 0;
+
+
+    for(auto & sample_index : current_node_samples)
+    {
+        if(data(sample_index, current_variable) < division_value)
+        {
+            one_side_count++;
+            one_side_samples.push_back(sample_index);
+        }
+        else
+        {
+            other_side_count++;
+            other_side_samples.push_back(sample_index);
+        }
+    }
+
+    if(one_side_count != 0)
+    {
+        if(one_side_count != 1)
+        {
+            tree_simulation.push_back(one_side_samples);
+            tree_index.push_back(current_tree_index*2+1);
+            delta_next_depth_nodes++;
+        }
+
+        if(other_side_count != 1)
+        {
+            tree_simulation.push_back(other_side_samples);
+            tree_index.push_back(current_tree_index*2+2);
+            delta_next_depth_nodes++;
+        }
+        tree(current_tree_index*2+1, 2) = one_side_count;
+        tree(current_tree_index*2+2, 2) = other_side_count;
+    }
+
+
+    return delta_next_depth_nodes;
+}
+
+
+Tensor<type, 2> DataSet::create_isolation_tree(const Tensor<Index, 1>& indices, const Index& max_depth) const
+{
+    const Index used_samples_number = indices.size();
+
+    const Index variables_number = get_input_variables_number();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+
+    list<list<Index>> tree_simulation;
+    list<Index> tree_index;
+    list<Index> current_node_samples;
+
+    Tensor<type, 2> tree(pow(2, max_depth+1) - 1, 3);
+    tree.setConstant(numeric_limits<type>::infinity());
+
+    for(Index i = 0; i < used_samples_number; i++)
+        current_node_samples.push_back(indices(i));
+
+    tree_simulation.push_back(current_node_samples);
+    tree(0, 2) = used_samples_number;
+    tree_index.push_back(0);
+
+    current_node_samples.clear();
+
+    Index current_depth_nodes = 1;
+    Index next_depth_nodes = 0;
+    Index current_variable_index = input_variables_indices(rand() % variables_number);
+    Index current_depth = 0;
+
+    Index current_index;
+
+    type min, max;
+    while(current_depth < max_depth && !(tree_simulation.empty()))
+    {
+        current_node_samples = tree_simulation.front();
+        current_index = tree_index.front();
+
+        calculate_min_max_indices_list(current_node_samples, current_variable_index, min, max);
+        tree(current_index, 0) = static_cast<type>((max-min)*(rand()/static_cast<type>(RAND_MAX))) + min;
+        tree(current_index, 1) = current_variable_index;
+        next_depth_nodes += split_isolation_tree(tree, tree_simulation, tree_index);
+
+
+        tree_simulation.pop_front();
+        tree_index.pop_front();
+
+        current_depth_nodes--;
+
+        if(current_depth_nodes == 0)
+        {
+            current_depth++;
+            swap(current_depth_nodes, next_depth_nodes);
+            current_variable_index = input_variables_indices(rand() % variables_number);
+        }
+    }
+
+    return tree;
+}
+
+
+Tensor<Tensor<type, 2>, 1> DataSet::create_isolation_forest(const Index& trees_number, const Index& sub_set_size, const Index& max_depth) const
+{
+    const Tensor<Index, 1> indices = get_used_samples_indices();
+    const Index samples_number = get_used_samples_number();
+    Tensor<Tensor<type, 2>, 1> forest(trees_number);
+
+
+
+    for(Index i = 0; i < trees_number; i++)
+    {
+        Tensor<Index, 1> sub_set_indices(sub_set_size);
+        Tensor<Index, 1> aux_indices = indices;
+        random_shuffle(aux_indices.data(), aux_indices.data()+samples_number);
+
+        for(Index j = 0; j < sub_set_size; j++)
+            sub_set_indices(j) = aux_indices(j);
+
+        forest(i) = create_isolation_tree(sub_set_indices, max_depth);
+
+    }
+    return forest;
+}
+
+
+type DataSet::calculate_tree_path(const Tensor<type, 2>& tree, const Index& sample_index,
+                                  const Index& tree_depth) const
+{
+    Index current_index = 0;
+    Index current_depth = 0;
+    const Index tree_length = tree.dimensions()[0];
+
+    type samples;
+    type value;
+
+    while(current_depth < tree_depth)
+    {
+        if(tree(current_index, 2) == 1)
+        {
+            return current_depth;
+        }
+        else if(current_index*2 >= tree_length ||
+                (tree(current_index*2+1, 2) == numeric_limits<type>::infinity())
+                ) //Next node doesn't exist or node is leaf
+        {
+            samples = tree(current_index, 2);
+            return log(samples-1)-(2.0 *(samples-1))/samples +0.5772 + current_depth;
+        }
+
+
+        value = data(sample_index, static_cast<Index>(tree(current_index, 1)));
+
+        (value < tree(current_index, 0)) ? current_index = current_index*2 + 1
+                                         : current_index = current_index*2 + 2;
+
+        current_depth++;
+    }
+
+    samples = tree(current_index, 2);
+    if(samples == 1)
+        return current_depth;
+    else
+        return log(samples-1)-(2.0 *(samples-1))/samples + 0.5772 + current_depth;
+}
+
+
+Tensor<type, 1> DataSet::calculate_average_forest_paths(const Tensor<Tensor<type, 2>, 1>& forest, const Index& tree_depth) const
+{
+    const Index samples_number = get_used_samples_number();
+    const Index n_trees = forest.dimensions()[0];
+    Tensor<type, 1> average_paths(samples_number);
+    average_paths.setZero();
+
+    # pragma omp parallel for
     for(Index i = 0; i < samples_number; i++)
     {
-        type sum = 0;
+        for(Index j = 0; j < n_trees; j++)
+            average_paths(i) += calculate_tree_path(forest(j), i, tree_depth);
 
-        for(auto & neighbor_index : k_nearest_indexes(i))
-            sum += average_reachabilities(i) / average_reachabilities(neighbor_index);
-
-        LOF_value(i) = sum/k ;
+        average_paths(i) /= n_trees;
     }
+    return average_paths;
+}
 
-    Tensor<Index, 1> outlier_indexes(samples_number);
-    outlier_indexes.setZero();
 
-    if(contamination > 0)
+Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_trees, const Index& subs_set_samples,
+                                                              const type& contamination) const
+{
+    /*
+    if(contamination < 0.0 && contamination > 0.5)
     {
-        Tensor<Tensor<type, 1>, 1> ordered_LOF(samples_number);
+        ostringstream buffer;
 
-        for(Index i = 0; i < samples_number; i++)
-        {
-            ordered_LOF(i) = Tensor<type, 1>(2);
-            ordered_LOF(i)(0) = i;
-            ordered_LOF(i)(1) = LOF_value(i);
-        }
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<Index, 1> DataSet::calculate_LOF_outliers(const Index&, const type&) method.\n"
+               << "Outlier contamination(" << contamination
+               << ") should be a value between 0.0 and 0.5\n";
 
-        sort(ordered_LOF.data(), ordered_LOF.data() + samples_number,
-            [](Tensor<type, 1> & a, Tensor<type, 1> & b) -> bool
-        {
-            return a(1) < b(1);
-        });
-
-        for(Index i = (1-contamination)*samples_number; i < samples_number; i++)
-            outlier_indexes(static_cast<Index>(ordered_LOF(i)(0))) = 1;
+        throw logic_error(buffer.str());
     }
-    else
-    {
-        const type mean_lof = mean(LOF_value);
-        const type std_lof = standard_deviation(LOF_value);
+    */
 
-        for(Index i = 0; i < samples_number; i++)
-        {
-            if(LOF_value(i) > mean_lof + 2*std_lof)
-            {
-                outlier_indexes(i) = 1;
-            }
-        }
-    }
+    const Index samples_number = get_used_samples_number();
+    const Index fixed_subs_set_samples = min(samples_number, subs_set_samples);
+    const Index max_depth = ceil(log2(fixed_subs_set_samples))*2;
+    const Tensor<Tensor<type, 2>, 1> forest = create_isolation_forest(n_trees, fixed_subs_set_samples, max_depth);
+
+    const Tensor<type, 1> average_paths = calculate_average_forest_paths(forest, max_depth);
+
+    Tensor<Index, 1> outlier_indexes;
+
+    (contamination > 0) ? outlier_indexes = select_outliers_via_contamination(average_paths, contamination, false)
+                        : outlier_indexes = select_outliers_via_standard_deviation(average_paths, 2.0, false);
 
     return outlier_indexes;
 }
