@@ -74,34 +74,31 @@ public:
 
    type calculate_time_series_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   // Error methods
+   // Back propagation
      
    void calculate_error(const DataSetBatch&,
                         const NeuralNetworkForwardPropagation&,
                         LossIndexBackPropagation&) const;
 
-   void calculate_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagationLM&) const;
-
-   // Gradient methods
-
    void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
                                LossIndexBackPropagation&) const;
 
-   void calculate_output_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagationLM& ) const;
+    // Back propagation LM
 
-   void calculate_gradient(const DataSetBatch&,
+   void calculate_error_lm(const DataSetBatch&,
+                           const NeuralNetworkForwardPropagation&,
                            LossIndexBackPropagationLM&) const;
 
-   // Hessian method
+   void calculate_output_delta_lm(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagationLM&) const;
 
-   void calculate_hessian_approximation(const DataSetBatch&,
+   void calculate_error_gradient_lm(const DataSetBatch&,
+                              LossIndexBackPropagationLM&) const;
+
+   void calculate_error_hessian_lm(const DataSetBatch&,
                                         LossIndexBackPropagationLM&) const;
-
 
    // Serialization methods
 

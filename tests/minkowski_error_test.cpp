@@ -65,7 +65,7 @@ void MinkowskiErrorTest::test_calculate_error()
    Tensor<type, 2> data;
 
    Tensor<Index,1> training_samples_indices;
-   Tensor<Index,1> inputs_indices;
+   Tensor<Index,1> input_variables_indices;
    Tensor<Index,1> target_variables_indices;
 
    // Test
@@ -82,14 +82,14 @@ void MinkowskiErrorTest::test_calculate_error()
    targets_number = 1;
 
    training_samples_indices = data_set.get_training_samples_indices();
-   inputs_indices = data_set.get_input_variables_indices();
+   input_variables_indices = data_set.get_input_variables_indices();
    target_variables_indices = data_set.get_target_variables_indices();
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
    neural_network.set_parameters_constant(0);
 
    batch.set(samples_number, &data_set);
-   batch.fill(training_samples_indices, inputs_indices, target_variables_indices);
+   batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
    forward_propagation.set(samples_number, &neural_network);
    neural_network.forward_propagate(batch, forward_propagation);

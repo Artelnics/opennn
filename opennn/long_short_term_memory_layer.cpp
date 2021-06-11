@@ -1890,11 +1890,11 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2>&inputs, L
 
         memcpy(long_short_term_memory_layer_forward_propagation->hidden_states_activations.data() + copy_index,
                hidden_states.data(),
-               static_cast<size_t>(neurons_number)*sizeof (type));
+               static_cast<size_t>(neurons_number)*sizeof(type));
 
         memcpy(long_short_term_memory_layer_forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
                long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof (type));
+               static_cast<size_t>(neurons_number)*sizeof(type));
 
         copy_index += neurons_number;
     }
@@ -2028,11 +2028,11 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
         memcpy(long_short_term_memory_layer_forward_propagation->hidden_states_activations.data() + copy_index,
                hidden_states.data(),
-               static_cast<size_t>(neurons_number)*sizeof (type));
+               static_cast<size_t>(neurons_number)*sizeof(type));
 
         memcpy(long_short_term_memory_layer_forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
                long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof (type));
+               static_cast<size_t>(neurons_number)*sizeof(type));
 
         copy_index += neurons_number;
     }
@@ -2251,11 +2251,11 @@ void LongShortTermMemoryLayer::calculate_forget_weights_error_gradient(const Ten
 
         memcpy(forward_propagation->current_cell_state_activations.data(),
                forward_propagation->cell_states_activations.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof (type));
+               static_cast<size_t>(neurons_number)*sizeof(type));
 
         memcpy(forward_propagation->current_hidden_states_derivatives.data(),
                forward_propagation->hidden_states_activations_derivatives.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof (type));
+               static_cast<size_t>(neurons_number)*sizeof(type));
 
         if(sample%timesteps == 0)
         {

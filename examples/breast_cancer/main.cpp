@@ -33,7 +33,7 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::MINKOWSKI_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 
         training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
@@ -45,9 +45,9 @@ int main()
 
         neural_network.save_expression_python("../data/breast_cancer.py");
 
-         cout << "End breast cancer application" << endl;
+        cout << "End breast cancer application" << endl;
 
-         return 0;
+        return 0;
     }
     catch(exception& e)
     {

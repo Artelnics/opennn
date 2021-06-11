@@ -8065,13 +8065,11 @@ void DataSet::print_data_preview() const
 
         for(int i = 0; i< second_sample.dimension(0); i++)
         {
-
             cout  << second_sample(i) << "  ";
         }
 
         cout << endl;
     }
-
 
     if(samples_number > 2)
     {
@@ -8081,7 +8079,6 @@ void DataSet::print_data_preview() const
 
         for(int i = 0; i< last_sample.dimension(0); i++)
         {
-
             cout  << last_sample(i) << "  ";
         }
 

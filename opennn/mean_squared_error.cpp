@@ -62,7 +62,7 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 }
 
 
-void MeanSquaredError::calculate_error(const DataSetBatch& batch,
+void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation&,
                      LossIndexBackPropagationLM& back_propagation) const
 {
@@ -70,7 +70,8 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
-    sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
+//    sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
+    sum_squared_error.device(*thread_pool_device) = back_propagation.squared_errors.sum();
 
     const type coefficient = static_cast<type>(batch_samples_number);
 
@@ -137,14 +138,12 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 }
 
 
-void MeanSquaredError::calculate_output_delta(const DataSetBatch&,
-                                              NeuralNetworkForwardPropagation&,
-                                              LossIndexBackPropagationLM& loss_index_back_propagation) const
+void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
+                                                 NeuralNetworkForwardPropagation&,
+                                                 LossIndexBackPropagationLM& loss_index_back_propagation) const
 {
 #ifdef OPENNN_DEBUG
-
     check();
-
 #endif
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -162,7 +161,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch&,
 
         memcpy(perceptron_layer_back_propagation->delta.data(),
                loss_index_back_propagation.errors.data(),
-               static_cast<size_t>(loss_index_back_propagation.errors.size())*sizeof (type));
+               static_cast<size_t>(loss_index_back_propagation.errors.size())*sizeof(type));
 
         divide_columns(perceptron_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
     }
@@ -175,7 +174,7 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch&,
 
         memcpy(probabilistic_layer_back_propagation->delta.data(),
                loss_index_back_propagation.errors.data(),
-               static_cast<size_t>(loss_index_back_propagation.errors.size())*sizeof (type));
+               static_cast<size_t>(loss_index_back_propagation.errors.size())*sizeof(type));
 
         divide_columns(probabilistic_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
     }
@@ -194,8 +193,8 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch&,
 }
 
 
-void MeanSquaredError::calculate_gradient(const DataSetBatch& batch,
-                                          LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
+                                             LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -215,7 +214,7 @@ void MeanSquaredError::calculate_gradient(const DataSetBatch& batch,
 }
 
 
-void MeanSquaredError::calculate_hessian_approximation(const DataSetBatch& batch,
+void MeanSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
                                                        LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
      #ifdef OPENNN_DEBUG

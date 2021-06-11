@@ -39,9 +39,7 @@ public:
 
    void test_calculate_error_gradient_lm();
 
-   // Squared errors methods
-
-   void test_calculate_squared_errors_jacobian();
+   void test_back_propagate_lm_approximation_random();
 
    // Unit testing methods
 
@@ -73,6 +71,7 @@ private:
    LossIndexBackPropagationLM back_propagation_lm;
 
    Tensor<type, 1> gradient_numerical_differentiation;
+   Tensor<type, 2> jacobian_numerical_differentiation;
 
 };
 

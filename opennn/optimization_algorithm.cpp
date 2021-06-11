@@ -412,17 +412,11 @@ string TrainingResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-    case OptimizationAlgorithm::MinimumParametersIncrementNorm:
-        return "Minimum parameters increment norm";
-
     case OptimizationAlgorithm::MinimumLossDecrease:
         return "Minimum loss decrease";
 
     case OptimizationAlgorithm::LossGoal:
         return "Loss goal";
-
-    case OptimizationAlgorithm::GradientNormGoal:
-        return "Gradient norm goal";
 
     case OptimizationAlgorithm::MaximumSelectionErrorIncreases:
         return "Maximum selection error increases";

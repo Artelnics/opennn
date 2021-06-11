@@ -371,7 +371,7 @@ TrainingResults GradientDescent::perform_training()
     const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
-    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
@@ -380,14 +380,8 @@ TrainingResults GradientDescent::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();
     Tensor<Descriptives, 1> target_variables_descriptives;
-
-    DataSetBatch training_batch(training_samples_number, data_set_pointer);
-    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
-
-    training_batch.fill(training_samples_indices, inputs_indices, target_variables_indices);
-    selection_batch.fill(selection_samples_indices, inputs_indices, target_variables_indices);
 
     // Neural network
 
@@ -412,6 +406,12 @@ TrainingResults GradientDescent::perform_training()
 
     NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     // Loss index
 

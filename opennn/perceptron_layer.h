@@ -176,27 +176,29 @@ public:
                                              ProbabilisticLayerBackPropagation*,
                                              PerceptronLayerBackPropagation*) const;
 
-   void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagationLM*,
-                               LayerBackPropagationLM*) const;
+   // Delta LM
 
-   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
-                                          PerceptronLayerBackPropagationLM*,
-                                          PerceptronLayerBackPropagationLM*) const;
+   void calculate_hidden_delta_lm(LayerForwardPropagation*,
+                                  LayerBackPropagationLM*,
+                                  LayerBackPropagationLM*) const;
 
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
-                                             ProbabilisticLayerBackPropagationLM*,
+   void calculate_hidden_delta_perceptron_lm(PerceptronLayerForwardPropagation*,
+                                             PerceptronLayerBackPropagationLM*,
                                              PerceptronLayerBackPropagationLM*) const;
+
+   void calculate_hidden_delta_probabilistic_lm(ProbabilisticLayerForwardPropagation*,
+                                                ProbabilisticLayerBackPropagationLM*,
+                                                PerceptronLayerBackPropagationLM*) const;
 
    // Squared errors methods
 
-   void calculate_squared_errors_Jacobian(const Tensor<type, 2>&,
-                                          LayerForwardPropagation*,
-                                          LayerBackPropagationLM*);
+   void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
+                                             LayerForwardPropagation*,
+                                             LayerBackPropagationLM*);
 
-   void insert_squared_errors_Jacobian(LayerBackPropagationLM*,
-                                       const Index&,
-                                       Tensor<type, 2>&) const;
+   void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
+                                          const Index&,
+                                          Tensor<type, 2>&) const;
 
    // Gradient methods
 
