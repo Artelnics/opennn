@@ -372,7 +372,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->calculate_input_variables_descriptives();
 
     // Set neural network stuff
 

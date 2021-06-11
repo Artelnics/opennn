@@ -462,15 +462,15 @@ struct NeuralNetworkBackPropagationLM
             switch (trainable_layers_pointers(i)->get_type())
             {
             case Layer::Perceptron:
-            {
-                layers(i) = new PerceptronLayerBackPropagationLM(new_batch_samples_number, trainable_layers_pointers(i));
-            }
+
+            layers(i) = new PerceptronLayerBackPropagationLM(new_batch_samples_number, trainable_layers_pointers(i));
+
             break;
 
             case Layer::Probabilistic:
-            {
-                layers(i) = new ProbabilisticLayerBackPropagationLM(new_batch_samples_number, trainable_layers_pointers(i));
-            }
+
+            layers(i) = new ProbabilisticLayerBackPropagationLM(new_batch_samples_number, trainable_layers_pointers(i));
+
             break;
 
             default:

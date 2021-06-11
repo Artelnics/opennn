@@ -625,8 +625,8 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
-    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
@@ -634,7 +634,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+    Tensor<Descriptives, 1> input_variables_descriptives;
     Tensor<Descriptives, 1> target_variables_descriptives;
 
     // Neural network
@@ -649,6 +649,8 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     if(neural_network_pointer->has_scaling_layer())
     {
+        input_variables_descriptives = data_set_pointer->scale_input_variables();
+
         ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
         scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
     }
@@ -662,10 +664,10 @@ TrainingResults QuasiNewtonMethod::perform_training()
     }
 
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
-    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+    training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    training_batch.fill(training_samples_indices, inputs_indices, target_indices);
-    selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     // Loss index
 

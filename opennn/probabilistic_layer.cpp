@@ -798,9 +798,9 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
 }
 
 
-void ProbabilisticLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
-                                                           LayerForwardPropagation* forward_propagation,
-                                                           LayerBackPropagationLM* back_propagation)
+void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>& inputs,
+                                                              LayerForwardPropagation* forward_propagation,
+                                                              LayerBackPropagationLM* back_propagation)
 {
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
             static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
@@ -868,9 +868,9 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>
 }
 
 
-void ProbabilisticLayer::insert_squared_errors_Jacobian(LayerBackPropagationLM * back_propagation ,
-                                                        const Index & index,
-                                                        Tensor<type, 2> & squared_errors_Jacobian) const
+void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM * back_propagation ,
+                                                           const Index & index,
+                                                           Tensor<type, 2>& squared_errors_Jacobian) const
 {
     ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
             static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation);
@@ -882,7 +882,6 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian(LayerBackPropagationLM *
            probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data(),
            static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
 }
-
 
 
 /// Serializes the probabilistic layer object into a XML document of the TinyXML library without keep the DOM tree in memory.

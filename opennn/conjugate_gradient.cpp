@@ -742,7 +742,7 @@ TrainingResults ConjugateGradient::perform_training()
     const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
-    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
@@ -751,14 +751,8 @@ TrainingResults ConjugateGradient::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();
     Tensor<Descriptives, 1> target_variables_descriptives;
-
-    DataSetBatch training_batch(training_samples_number, data_set_pointer);
-    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
-
-    training_batch.fill(training_samples_indices, inputs_indices, target_variables_indices);
-    selection_batch.fill(selection_samples_indices, inputs_indices, target_variables_indices);
 
     // Neural network
 
@@ -777,6 +771,12 @@ TrainingResults ConjugateGradient::perform_training()
         UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
     }
+
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
@@ -884,15 +884,6 @@ TrainingResults ConjugateGradient::perform_training()
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
-        }
-
-        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
-        {
-            if(display) cout << "Epoch " << epoch << endl << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
@@ -1033,19 +1024,6 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Learning rate algorithm
 
     learning_rate_algorithm.write_XML(file_stream);
-
-    // Minimum parameters increment norm
-
-    {
-        file_stream.OpenElement("MinimumParametersIncrementNorm");
-
-        buffer.str("");
-        buffer << minimum_parameters_increment_norm;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
 
     // Minimum loss decrease
 

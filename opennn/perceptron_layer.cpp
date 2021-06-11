@@ -776,9 +776,9 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 }
 
 
-void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
-                                             LayerBackPropagationLM* next_layer_back_propagation,
-                                             LayerBackPropagationLM* layer_back_propagation) const
+void PerceptronLayer::calculate_hidden_delta_lm(LayerForwardPropagation* next_layer_forward_propagation,
+                                                LayerBackPropagationLM* next_layer_back_propagation,
+                                                LayerBackPropagationLM* layer_back_propagation) const
 {
     PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagationLM*>(layer_back_propagation);
@@ -793,9 +793,9 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
         PerceptronLayerBackPropagationLM* next_perceptron_layer_back_propagation =
                 static_cast<PerceptronLayerBackPropagationLM*>(next_layer_back_propagation);
 
-        calculate_hidden_delta_perceptron(next_perceptron_layer_forward_propagation,
-                                          next_perceptron_layer_back_propagation,
-                                          perceptron_layer_back_propagation);
+        calculate_hidden_delta_perceptron_lm(next_perceptron_layer_forward_propagation,
+                                             next_perceptron_layer_back_propagation,
+                                             perceptron_layer_back_propagation);
     }
         break;
 
@@ -807,9 +807,9 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
         ProbabilisticLayerBackPropagationLM* next_probabilistic_layer_back_propagation =
                 static_cast<ProbabilisticLayerBackPropagationLM*>(next_layer_back_propagation);
 
-        calculate_hidden_delta_probabilistic(next_probabilistic_layer_forward_propagation,
-                                             next_probabilistic_layer_back_propagation,
-                                             perceptron_layer_back_propagation);
+        calculate_hidden_delta_probabilistic_lm(next_probabilistic_layer_forward_propagation,
+                                                next_probabilistic_layer_back_propagation,
+                                                perceptron_layer_back_propagation);
     }
         break;
 
@@ -818,9 +818,9 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
 }
 
 
-void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation* next_forward_propagation,
-                                                        PerceptronLayerBackPropagationLM* next_back_propagation,
-                                                        PerceptronLayerBackPropagationLM* back_propagation) const
+void PerceptronLayer::calculate_hidden_delta_perceptron_lm(PerceptronLayerForwardPropagation* next_forward_propagation,
+                                                           PerceptronLayerBackPropagationLM* next_back_propagation,
+                                                           PerceptronLayerBackPropagationLM* back_propagation) const
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
@@ -829,9 +829,9 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPr
 }
 
 
-void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation* next_forward_propagation,
-                                                           ProbabilisticLayerBackPropagationLM* next_back_propagation,
-                                                           PerceptronLayerBackPropagationLM* back_propagation) const
+void PerceptronLayer::calculate_hidden_delta_probabilistic_lm(ProbabilisticLayerForwardPropagation* next_forward_propagation,
+                                                              ProbabilisticLayerBackPropagationLM* next_back_propagation,
+                                                              PerceptronLayerBackPropagationLM* back_propagation) const
 {           
     const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
 
@@ -900,9 +900,9 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 }
 
 
-void PerceptronLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
-                                                        LayerForwardPropagation* forward_propagation,
-                                                        LayerBackPropagationLM* back_propagation)
+void PerceptronLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>& inputs,
+                                                           LayerForwardPropagation* forward_propagation,
+                                                           LayerBackPropagationLM* back_propagation)
 {
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
@@ -941,9 +941,9 @@ void PerceptronLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>& i
 }
 
 
-void PerceptronLayer::insert_squared_errors_Jacobian(LayerBackPropagationLM * back_propagation ,
-                                                     const Index & index,
-                                                     Tensor<type, 2> & squared_errors_Jacobian) const
+void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM * back_propagation ,
+                                                        const Index & index,
+                                                        Tensor<type, 2>& squared_errors_Jacobian) const
 {
     PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
             static_cast<PerceptronLayerBackPropagationLM*>(back_propagation);

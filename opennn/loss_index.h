@@ -148,16 +148,6 @@ public:
 
    bool has_selection() const;
 
-   // GRADIENT METHODS
-
-   virtual void calculate_output_delta(const DataSetBatch&,
-                                       NeuralNetworkForwardPropagation&,
-                                       LossIndexBackPropagation&) const = 0;
-
-   virtual void calculate_output_delta(const DataSetBatch&,
-                                       NeuralNetworkForwardPropagation&,
-                                       LossIndexBackPropagationLM&) const {}
-
    // Numerical differentiation
 
    type calculate_eta() const;
@@ -165,45 +155,69 @@ public:
 
    Tensor<type, 1> calculate_gradient_numerical_differentiation();
 
-   Tensor<type, 2> calculate_Jacobian_numerical_differentiation();
+   Tensor<type, 2> calculate_jacobian_numerical_differentiation();
+
+   // Back propagation
 
    void calculate_errors(const DataSetBatch&,
                          const NeuralNetworkForwardPropagation&,
                          LossIndexBackPropagation&) const;
 
-   void calculate_errors(const DataSetBatch&,
-                         const NeuralNetworkForwardPropagation&,
-                         LossIndexBackPropagationLM&) const;
-
-   virtual void calculate_squared_errors(const DataSetBatch&,
-                                         const NeuralNetworkForwardPropagation&,
-                                         LossIndexBackPropagationLM&) const;
-
    virtual void calculate_error(const DataSetBatch&,
                                 const NeuralNetworkForwardPropagation&,
                                 LossIndexBackPropagation&) const = 0;
 
-   virtual void calculate_error(const DataSetBatch&,
-                                const NeuralNetworkForwardPropagation&,
-                                LossIndexBackPropagationLM&) const {} 
+   virtual void calculate_output_delta(const DataSetBatch&,
+                                       NeuralNetworkForwardPropagation&,
+                                       LossIndexBackPropagation&) const = 0;
+
+   void calculate_layers_delta(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagation&) const;
+
+   void calculate_error_gradient(const DataSetBatch&,
+                                 const NeuralNetworkForwardPropagation&,
+                                 LossIndexBackPropagation&) const;
 
    void back_propagate(const DataSetBatch&,
                        NeuralNetworkForwardPropagation&,
                        LossIndexBackPropagation&) const;
 
-   void back_propagate(const DataSetBatch&,
-                       NeuralNetworkForwardPropagation&,
-                       LossIndexBackPropagationLM&) const;
+   // Back propagation LM
 
-   void calculate_squared_errors_jacobian(const DataSetBatch&,
+   void calculate_errors_lm(const DataSetBatch&,
+                            const NeuralNetworkForwardPropagation&,
+                            LossIndexBackPropagationLM&) const; // general
+
+   virtual void calculate_squared_errors_lm(const DataSetBatch&,
+                                            const NeuralNetworkForwardPropagation&,
+                                            LossIndexBackPropagationLM&) const;
+
+   virtual void calculate_error_lm(const DataSetBatch&,
+                                   const NeuralNetworkForwardPropagation&,
+                                   LossIndexBackPropagationLM&) const {}
+
+   virtual void calculate_output_delta_lm(const DataSetBatch&,
                                           NeuralNetworkForwardPropagation&,
-                                          LossIndexBackPropagationLM&) const;
+                                          LossIndexBackPropagationLM&) const {}
 
-   virtual void calculate_gradient(const DataSetBatch&,
-                                   LossIndexBackPropagationLM&) const;
+   void calculate_layers_delta_lm(const DataSetBatch&,
+                                  NeuralNetworkForwardPropagation&,
+                                  LossIndexBackPropagationLM&) const;
 
-   virtual void calculate_hessian_approximation(const DataSetBatch&,
+   virtual void calculate_error_gradient_lm(const DataSetBatch&,
+                                      LossIndexBackPropagationLM&) const;
+
+   void calculate_squared_errors_jacobian_lm(const DataSetBatch&,
+                                             NeuralNetworkForwardPropagation&,
+                                             LossIndexBackPropagationLM&) const;
+
+   virtual void calculate_error_hessian_lm(const DataSetBatch&,
                                                 LossIndexBackPropagationLM&) const {}
+
+   void back_propagate_lm(const DataSetBatch&,
+                          NeuralNetworkForwardPropagation&,
+                          LossIndexBackPropagationLM&) const;
 
    // Regularization methods
 
@@ -211,20 +225,6 @@ public:
 
    void calculate_regularization_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
    void calculate_regularization_hessian(const Tensor<type, 1>&, Tensor<type, 2>&) const;
-
-   // Delta methods
-
-   void calculate_layers_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const;
-
-   void calculate_layers_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagationLM&) const;
-
-   void calculate_error_gradient(const DataSetBatch&,
-                                 const NeuralNetworkForwardPropagation&,
-                                 LossIndexBackPropagation&) const;
 
    // Serialization methods
 
@@ -273,6 +273,8 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
    const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
+
+   const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/loss_index_cuda.h"

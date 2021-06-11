@@ -33,8 +33,8 @@ public:
 
    // Squared errors methods 
 
-   void test_calculate_squared_errors();
-   void test_calculate_squared_errors_jacobian();
+   
+   
 
    // Unit testing methods
 

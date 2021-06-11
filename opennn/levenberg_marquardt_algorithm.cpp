@@ -401,7 +401,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
-    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
@@ -410,15 +410,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
-
+    Tensor<Descriptives, 1> input_variables_descriptives;
     Tensor<Descriptives, 1> target_variables_descriptives;
-
-    DataSetBatch training_batch(training_samples_number, data_set_pointer);
-    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
-
-    training_batch.fill(training_samples_indices, inputs_indices, target_variables_indices);
-    selection_batch.fill(selection_samples_indices, inputs_indices, target_variables_indices);
 
     // Neural network
 
@@ -429,6 +422,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     if(neural_network_pointer->has_scaling_layer())
     {
+        input_variables_descriptives = data_set_pointer->scale_input_variables();
+
         ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
         scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
     }
@@ -440,6 +435,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
     }
+
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
@@ -483,9 +484,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // Loss index
 
-        loss_index_pointer->back_propagate(training_batch,
-                                           training_forward_propagation,
-                                           training_back_propagation_lm);
+        loss_index_pointer->back_propagate_lm(training_batch,
+                                              training_forward_propagation,
+                                              training_back_propagation_lm);
 
         results.training_error_history(epoch) = training_back_propagation_lm.error;
 
@@ -496,13 +497,13 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             neural_network_pointer->forward_propagate(selection_batch,
                                                       selection_forward_propagation);
 
-            loss_index_pointer->calculate_squared_errors(selection_batch,
+            loss_index_pointer->calculate_squared_errors_lm(selection_batch,
                                                          selection_forward_propagation,
                                                          selection_back_propagation_lm);
 
-            loss_index_pointer->calculate_error(selection_batch,
-                                                selection_forward_propagation,
-                                                selection_back_propagation_lm);
+            loss_index_pointer->calculate_error_lm(selection_batch,
+                                                   selection_forward_propagation,
+                                                   selection_back_propagation_lm);
 
             results.selection_error_history(epoch) = selection_back_propagation_lm.error;
 
@@ -579,7 +580,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             if(has_selection) results.resize_selection_error_history(epoch+1);
             else results.resize_selection_error_history(0);
 
-
             results.gradient_norm = gradient_norm;
 
             results.elapsed_time = write_time(elapsed_time);
@@ -595,7 +595,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                           optimization_data);
     }
 
-    data_set_pointer->unscale_input_variables(input_variables_descriptives);
+    if(neural_network_pointer->has_scaling_layer())
+        data_set_pointer->unscale_input_variables(input_variables_descriptives);
 
     if(neural_network_pointer->has_unscaling_layer())
         data_set_pointer->unscale_target_variables(target_variables_descriptives);
@@ -636,8 +637,8 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
-        loss_index_pointer->calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
-        loss_index_pointer->calculate_error(batch, forward_propagation, back_propagation_lm);
+        loss_index_pointer->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        loss_index_pointer->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
         const type new_loss = back_propagation_lm.error
                 + regularization_weight*loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);

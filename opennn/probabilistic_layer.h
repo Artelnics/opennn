@@ -166,13 +166,13 @@ public:
 
    // Squared errors methods
 
-   void calculate_squared_errors_Jacobian(const Tensor<type, 2>&,
-                                          LayerForwardPropagation*,
-                                          LayerBackPropagationLM*);
+   void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
+                                             LayerForwardPropagation*,
+                                             LayerBackPropagationLM*);
 
-   void insert_squared_errors_Jacobian(LayerBackPropagationLM*,
-                                       const Index&,
-                                       Tensor<type, 2>&) const;
+   void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
+                                          const Index&,
+                                          Tensor<type, 2>&) const;
 
    // Expression methods
 

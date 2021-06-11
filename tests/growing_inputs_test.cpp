@@ -65,7 +65,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     inputs_selection_results = growing_inputs.perform_inputs_selection();
 
-//    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
+//    assert_true(gir->optimal_input_variables_indices[0] == 0, LOG);
 
     // Test
 
@@ -79,7 +79,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     inputs_selection_results = growing_inputs.perform_inputs_selection();
 
-//    assert_true(gir->optimal_inputs_indices[0] == 0, LOG);
+//    assert_true(gir->optimal_input_variables_indices[0] == 0, LOG);
 }
 
 

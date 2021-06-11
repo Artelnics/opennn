@@ -1501,7 +1501,7 @@ void NeuralNetworkTest::test_forward_propagate()
     DataSetBatch batch;
 
     Tensor<Index,1> training_samples_indices;
-    Tensor<Index,1> inputs_indices;
+    Tensor<Index,1> input_variables_indices;
     Tensor<Index,1> target_variables_indices;
 
     // Test
@@ -1518,11 +1518,11 @@ void NeuralNetworkTest::test_forward_propagate()
     data_set.set_training();
 
     training_samples_indices = data_set.get_training_samples_indices();
-    inputs_indices = data_set.get_input_variables_indices();
+    input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
     batch.set(5, &data_set);
-    batch.fill(training_samples_indices, inputs_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number, outputs_number});
 
@@ -1577,11 +1577,11 @@ void NeuralNetworkTest::test_forward_propagate()
     data_set.set_training();
 
     training_samples_indices = data_set.get_training_samples_indices();
-    inputs_indices = data_set.get_input_variables_indices();
+    input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
     batch.set(3, &data_set);
-    batch.fill(training_samples_indices, inputs_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     neural_network.set();
 
