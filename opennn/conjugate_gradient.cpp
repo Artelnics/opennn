@@ -218,8 +218,6 @@ void ConjugateGradient::set_default()
 {
     // Stopping criteria
 
-    minimum_parameters_increment_norm = 0;
-
     minimum_loss_decrease = 0;
     training_loss_goal = 0;
     maximum_selection_failures = 1000000;
@@ -942,61 +940,47 @@ string ConjugateGradient::write_optimization_algorithm_type() const
 
 Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(10, 2);
+    Tensor<string, 2> labels_values(8, 2);
 
     // Training direction method
 
     labels_values(0,0) = "Training direction method";
-
     labels_values(0,1) = write_training_direction_method();
 
     // Learning rate method
 
     labels_values(1,0) = "Learning rate method";
-
     labels_values(1,1) = learning_rate_algorithm.write_learning_rate_method();
 
     // Learning rate tolerance
 
     labels_values(2,0) = "Learning rate tolerance";
-
     labels_values(2,1) = to_string(learning_rate_algorithm.get_learning_rate_tolerance());
-
-    // Minimum parameters increment norm
-
-    labels_values(3,0) = "Minimum parameters increment norm";
-
-    labels_values(3,1) = to_string(minimum_parameters_increment_norm);
 
     // Minimum loss decrease
 
-    labels_values(4,0) = "Minimum loss decrease";
-
-    labels_values(4,1) = to_string(minimum_loss_decrease);
+    labels_values(3,0) = "Minimum loss decrease";
+    labels_values(3,1) = to_string(minimum_loss_decrease);
 
     // Loss goal
 
-    labels_values(5,0) = "Loss goal";
-
-    labels_values(5,1) = to_string(training_loss_goal);
+    labels_values(4,0) = "Loss goal";
+    labels_values(4,1) = to_string(training_loss_goal);
 
     // Maximum selection error increases
 
-    labels_values(7,0) = "Maximum selection error increases";
-
-    labels_values(7,1) = to_string(maximum_selection_failures);
+    labels_values(5,0) = "Maximum selection error increases";
+    labels_values(5,1) = to_string(maximum_selection_failures);
 
     // Maximum epochs number
 
-    labels_values(8,0) = "Maximum epochs number";
-
-    labels_values(8,1) = to_string(maximum_epochs_number);
+    labels_values(6,0) = "Maximum epochs number";
+    labels_values(6,1) = to_string(maximum_epochs_number);
 
     // Maximum time
 
-    labels_values(9,0) = "Maximum time";
-
-    labels_values(9,1) = write_time(maximum_time);
+    labels_values(7,0) = "Maximum time";
+    labels_values(7,1) = write_time(maximum_time);
 
     return labels_values;
 }

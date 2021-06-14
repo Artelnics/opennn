@@ -578,51 +578,42 @@ string GradientDescent::write_optimization_algorithm_type() const
 
 Tensor<string, 2> GradientDescent::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(9, 2);
+    Tensor<string, 2> labels_values(7, 2);
 
     // Learning rate method
 
     labels_values(0,0) = "Learning rate method";
-
-    const string learning_rate_method = learning_rate_algorithm.write_learning_rate_method();
-
-    labels_values(0,1) = learning_rate_method;
+    labels_values(0,1) = learning_rate_algorithm.write_learning_rate_method();
 
     // Loss tolerance
 
     labels_values(1,0) = "Learning rate tolerance";
-
     labels_values(1,1) = to_string(learning_rate_algorithm.get_learning_rate_tolerance());
 
     // Minimum loss decrease
 
-    labels_values(3,0) = "Minimum loss decrease";
-
-    labels_values(3,1) = to_string(minimum_loss_decrease);
+    labels_values(2,0) = "Minimum loss decrease";
+    labels_values(2,1) = to_string(minimum_loss_decrease);
 
     // Loss goal
 
-    labels_values(4,0) = "Loss goal";
-
-    labels_values(4,1) = to_string(training_loss_goal);
+    labels_values(3,0) = "Loss goal";
+    labels_values(3,1) = to_string(training_loss_goal);
 
     // Maximum selection error increases
 
-    labels_values(6,0) = "Maximum selection error increases";
-
-    labels_values(6,1) = to_string(maximum_selection_failures);
+    labels_values(4,0) = "Maximum selection error increases";
+    labels_values(4,1) = to_string(maximum_selection_failures);
 
     // Maximum epochs number
 
-    labels_values(7,0) = "Maximum epochs number";
-
-    labels_values(7,1) = to_string(maximum_epochs_number);
+    labels_values(5,0) = "Maximum epochs number";
+    labels_values(5,1) = to_string(maximum_epochs_number);
 
     // Maximum time
 
-    labels_values(8,0) = "Maximum time";
-
-    labels_values(8,1) = write_time(maximum_time);
+    labels_values(6,0) = "Maximum time";
+    labels_values(6,1) = write_time(maximum_time);
 
     return labels_values;
 }

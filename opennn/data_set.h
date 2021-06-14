@@ -409,7 +409,7 @@ public:
    void set_columns(const Tensor<Column, 1>&);
 
    void set_default_columns_uses();
-   void set_default_classification_columns_uses();
+   void set_default_columns_uses_classification();
 
    void set_default_columns_names();
 

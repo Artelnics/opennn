@@ -892,56 +892,38 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 
     ostringstream buffer;
 
-    Tensor<string, 1> labels(18);
-    Tensor<string, 1> values(18);
+    Tensor<string, 1> labels(6);
+    Tensor<string, 1> values(6);
 
     // Population size
 
     labels(0) = "Population size";
-
-    buffer.str("");
-    buffer << individuals_number;
-    values(0) = buffer.str();
+    values(0) = to_string(individuals_number);
 
     // Elitism size
 
     labels(1) = "Elitism size";
-
-    buffer.str("");
-    buffer << elitism_size;
-    values(1) = buffer.str();
+    values(1) = to_string(elitism_size);
 
     // Mutation rate
 
-    labels(3) = "Mutation rate";
-
-    buffer.str("");
-    buffer << mutation_rate;
-    values(3) = buffer.str();
+    labels(2) = "Mutation rate";
+    values(2) = to_string(mutation_rate);
 
     // Selection loss goal
 
-    labels(4) = "Selection loss goal";
-
-    buffer.str("");
-    buffer << selection_error_goal;
-    values(4) = buffer.str();
+    labels(3) = "Selection loss goal";
+    values(3) = to_string(selection_error_goal);
 
     // Maximum Generations number
 
-    labels(5) = "Maximum Generations number";
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-    values(5) = buffer.str();
+    labels(4) = "Maximum Generations number";
+    values(4) = to_string(maximum_epochs_number);
 
     // Maximum time
 
-    labels(6) = "Maximum time";
-
-    buffer.str("");
-    buffer << maximum_time;
-    values(6) = buffer.str();
+    labels(5) = "Maximum time";
+    values(5) = to_string(maximum_time);
 
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;

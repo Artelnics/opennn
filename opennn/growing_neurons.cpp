@@ -321,8 +321,8 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 {
     ostringstream buffer;
 
-    Tensor<string, 1> labels(10);
-    Tensor<string, 1> values(10);
+    Tensor<string, 1> labels(8);
+    Tensor<string, 1> values(8);
 
     // Minimum neurons number
 

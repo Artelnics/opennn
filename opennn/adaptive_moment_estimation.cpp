@@ -483,70 +483,50 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
     Tensor<string, 2> labels_values(9, 2);
 
-    Index row_index = 0;
-
     // Initial learning rate
 
-    labels_values(row_index,0) = "Initial learning rate";
-    labels_values(row_index,1) = to_string(initial_learning_rate);
-
-    row_index++;
+    labels_values(0,0) = "Initial learning rate";
+    labels_values(0,1) = to_string(initial_learning_rate);
 
     // Initial decay
 
-    labels_values(row_index,0) = "Initial decay";
-    labels_values(row_index,1) = to_string(initial_decay);
-
-    row_index++;
+    labels_values(1,0) = "Initial decay";
+    labels_values(1,1) = to_string(initial_decay);
 
     // Beta 1
 
-    labels_values(row_index,0) = "Beta 1";
-    labels_values(row_index,1) = to_string(beta_1);
-
-    row_index++;
+    labels_values(2,0) = "Beta 1";
+    labels_values(2,1) = to_string(beta_1);
 
     // Beta 2
 
-    labels_values(row_index,0) = "Beta 2";
-    labels_values(row_index,1) = to_string(beta_2);
-
-    row_index++;
+    labels_values(3,0) = "Beta 2";
+    labels_values(3,1) = to_string(beta_2);
 
     // Epsilon
 
-    labels_values(row_index,0) = "Epsilon";
-    labels_values(row_index,1) = to_string(epsilon);
-
-    row_index++;
+    labels_values(4,0) = "Epsilon";
+    labels_values(4,1) = to_string(epsilon);
 
     // Training loss goal
 
-    labels_values(row_index,0) = "Training loss goal";
-    labels_values(row_index,1) = to_string(training_loss_goal);
-
-    row_index++;
+    labels_values(5,0) = "Training loss goal";
+    labels_values(5,1) = to_string(training_loss_goal);
 
     // Maximum epochs number
 
-    labels_values(row_index,0) = "Maximum epochs number";
-    labels_values(row_index,1) = to_string(maximum_epochs_number);
-
-    row_index++;
+    labels_values(6,0) = "Maximum epochs number";
+    labels_values(6,1) = to_string(maximum_epochs_number);
 
     // Maximum time
 
-    labels_values(row_index,0) = "Maximum time";
-    labels_values(row_index,1) = write_time(maximum_time);
-
-    row_index++;
+    labels_values(7,0) = "Maximum time";
+    labels_values(7,1) = write_time(maximum_time);
 
     // Batch samples number
 
-    labels_values(row_index,0) = "Batch samples number";
-    labels_values(row_index,1) = to_string(batch_samples_number);
-
-    row_index++;
+    labels_values(8,0) = "Batch samples number";
+    labels_values(8,1) = to_string(batch_samples_number);
 
     return labels_values;
 }
