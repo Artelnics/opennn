@@ -159,10 +159,6 @@ private:
 
    // Stopping criteria
 
-   /// Norm of the parameters increment vector at which training stops.
-
-   type minimum_parameters_increment_norm = 0;
-
    /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
 
    type minimum_loss_decrease = 0;

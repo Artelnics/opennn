@@ -800,6 +800,7 @@ void DataSet::transform_time_series_columns()
     if(has_time_columns())
     {
         // @todo check if there are more than one time column
+
         new_columns.resize((columns_number-1)*(lags_number+steps_ahead));
     }
     else
@@ -816,10 +817,7 @@ void DataSet::transform_time_series_columns()
     {
         column_index = i%columns_number;
 
-        if(time_series_columns(column_index).type == DateTime)
-        {
-            continue;
-        }
+        if(time_series_columns(column_index).type == DateTime) continue;
 
         if(i < lags_number*columns_number)
         {
@@ -1958,7 +1956,7 @@ void DataSet::set_default_columns_uses()
 /// This method sets the n columns of the data_set by default,
 /// i.e. until column n-1 are Input and column n is Target.
 
-void DataSet::set_default_classification_columns_uses()
+void DataSet::set_default_columns_uses_classification()
 {
     const Index size = columns.size();
 
