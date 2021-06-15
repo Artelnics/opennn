@@ -661,7 +661,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
         for(Index i = 0; i < size-1; i++)
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
-            perceptron_layer_pointer->set_name("Perceptron_layer_" + to_string(i+1));
+            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
 
             this->add_layer(perceptron_layer_pointer);
 
@@ -682,7 +682,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
-            perceptron_layer_pointer->set_name("Perceptron_layer_" + to_string(i+1));
+            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
 
             this->add_layer(perceptron_layer_pointer);
         }
@@ -702,7 +702,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
-            perceptron_layer_pointer->set_name("Perceptron_layer_" + to_string(i));
+            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i));
 
             this->add_layer(perceptron_layer_pointer);
 
