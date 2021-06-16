@@ -73,9 +73,9 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 /// @param data_file_name Data file file name.
 /// @param separator Data file file name.
 
-DataSet::DataSet(const string& data_file_name, const char& separator, const bool& new_has_columns_names)
+DataSet::DataSet(const string& data_file_name, const char& separator, const bool& has_columns_names)
 {
-    set(data_file_name, separator, new_has_columns_names);
+    set(data_file_name, separator, has_columns_names);
 }
 
 
@@ -167,8 +167,8 @@ void DataSet::Column::set_scaler(const string& new_scaler)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void set_use(const string&) method.\n"
-               << "Unknown use: " << new_scaler << "\n";
+               << "void set_scaler(const string&) method.\n"
+               << "Unknown scaler: " << new_scaler << "\n";
 
         throw logic_error(buffer.str());
     }
@@ -183,7 +183,7 @@ void DataSet::Column::set_use(const VariableUse& new_column_use)
 {
     column_use = new_column_use;
 
-    for(Index i = 0; i < categories_uses.size(); i ++)
+    for(Index i = 0; i < categories_uses.size(); i++)
     {
         categories_uses(i) = new_column_use;
     }
@@ -217,7 +217,7 @@ void DataSet::Column::set_use(const string& new_column_use)
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void set_use(const string&) method.\n"
-               << "Unknown use: " << new_column_use << "\n";
+               << "Unknown column use: " << new_column_use << "\n";
 
         throw logic_error(buffer.str());
     }
@@ -1613,7 +1613,7 @@ void DataSet::set_sample_use(const Index& index, const string& new_use)
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void set_sample_use(const string&) method.\n"
-               << "Unknown use: " << new_use << "\n";
+               << "Unknown sample use: " << new_use << "\n";
 
         throw logic_error(buffer.str());
     }
@@ -1700,7 +1700,7 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
                    << "void set_samples_uses(const Tensor<string, 1>&) method.\n"
-                   << "Unknown use: " << new_uses(i) << ".\n";
+                   << "Unknown sample use: " << new_uses(i) << ".\n";
 
             throw logic_error(buffer.str());
         }
@@ -1910,15 +1910,15 @@ void DataSet::set_columns(const Tensor<Column, 1>& new_columns)
 
 void DataSet::set_default_columns_uses()
 {
-    const Index size = columns.size();
+    const Index columns_number = columns.size();
 
     bool target = false;
 
-    if(size == 0)
+    if(columns_number == 0)
     {
         return;
     }
-    else if(size == 1)
+    else if(columns_number == 1)
     {
         columns(0).set_use(UnusedVariable);
     }
@@ -1928,9 +1928,11 @@ void DataSet::set_default_columns_uses()
 
         for(Index i = columns.size()-1; i >= 0; i--)
         {
-            if(columns(i).type == Constant) continue;
-            if(columns(i).type == Binary) continue;
-            if(columns(i).type == Categorical) continue;
+            if(columns(i).type == Constant)
+            {
+                columns(i).set_use(UnusedVariable);
+                continue;
+            }
 
             if(columns(i).type == DateTime)
             {
@@ -1944,55 +1946,6 @@ void DataSet::set_default_columns_uses()
 
                 target = true;
 
-                continue;
-            }
-        }
-
-        input_variables_dimensions.resize(1);
-    }
-}
-
-
-/// This method sets the n columns of the data_set by default,
-/// i.e. until column n-1 are Input and column n is Target.
-
-void DataSet::set_default_columns_uses_classification()
-{
-    const Index size = columns.size();
-
-    bool target = false;
-
-    if(size == 0)
-    {
-        return;
-    }
-    else if(size == 1)
-    {
-        columns(0).set_use(UnusedVariable);
-    }
-    else
-    {
-        set_input();
-
-        for(Index i = columns.size()-1; i >= 0; i--)
-        {
-            if(columns(i).type == Constant) continue;
-
-            if(columns(i).type == Binary && !target)
-            {
-                columns(i).set_use(Target);
-                target = true;
-                continue;
-            }
-            else if(columns(i).type == Categorical && !target)
-            {
-                columns(i).set_use(Target);
-                target = true;
-                continue;
-            }
-            else if(columns(i).type == DateTime)
-            {
-                columns(i).set_use(UnusedVariable);
                 continue;
             }
         }
@@ -3532,7 +3485,7 @@ void DataSet::set_columns_scalers(const Scaler& scalers)
 }
 
 
-Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type,1>& column) const
+Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type, 1>& column) const
 
 {
     const Index rows_number = column.dimension(0);
@@ -4635,6 +4588,8 @@ void DataSet::set(const string& data_file_name, const char& separator, const boo
 
     read_csv();
 
+    set_default_columns_scalers();
+    set_default_columns_uses();
 }
 
 
@@ -5232,15 +5187,16 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
 
     for(Index i = 0; i < input_columns_number; i++)
     {
-        const Index index = input_columns_indices(i);
+        const Index input_column_index = input_columns_indices(i);
 
         for(Index j = 0; j < target_columns_number; j++)
         {
-            if(columns(index).column_use != UnusedVariable && abs(correlations(i,j).r) < minimum_correlation)
+            if(columns(input_column_index).column_use != UnusedVariable
+            && abs(correlations(i,j).r) < minimum_correlation)
             {
-                columns(index).set_use(UnusedVariable);
+                columns(input_column_index).set_use(UnusedVariable);
 
-                unused_columns = push_back(unused_columns, columns(index).name);
+                unused_columns = push_back(unused_columns, columns(input_column_index).name);
             }
         }
     }
@@ -5933,141 +5889,21 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
     {
         const Index input_index = input_columns_indices(i);
 
-        Tensor<type, 2> input = get_column_data(input_index);
-
-        const ColumnType input_type = columns(input_index).type;
+        const Tensor<type, 2> input_column_data = get_column_data(input_index);
 
         for(Index j = 0; j < target_columns_number; j++)
         {
             const Index target_index = target_columns_indices(j);
 
-            Tensor<type, 2> target = get_column_data(target_index);
+            const Tensor<type, 2> target_column_data = get_column_data(target_index);
 
-            const ColumnType target_type = columns(target_index).type;
-
-            if(input_type == Numeric && target_type == Numeric)
-            {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
-
-                const Correlation linear_correlation
-                        = OpenNN::linear_correlation(thread_pool_device, input_column, target_column);
-
-                const Correlation exponential_correlation
-                        = OpenNN::exponential_correlation(thread_pool_device, input_column, target_column);
-
-                const Correlation logarithmic_correlation
-                        = OpenNN::logarithmic_correlation(thread_pool_device, input_column, target_column);
-
-                const Correlation power_correlation
-                        = OpenNN::power_correlation(thread_pool_device, input_column, target_column);
-
-                Correlation strongest_correlation = linear_correlation;
-
-                if(abs(exponential_correlation.r) > abs(strongest_correlation.r))
-                    strongest_correlation = exponential_correlation;
-
-                if(abs(logarithmic_correlation.r) > abs(strongest_correlation.r))
-                    strongest_correlation = logarithmic_correlation;
-
-                if(abs(power_correlation.r) > abs(strongest_correlation.r))
-                    strongest_correlation = power_correlation;
-
-                correlations(i,j) = strongest_correlation;
-            }
-            else if(input_type == Binary && target_type == Binary)
-            {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
-
-                correlations(i,j) = linear_correlation(thread_pool_device, input_column, target_column);
-            }
-            else if(input_type == Categorical && target_type == Categorical)
-            {
-                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input, target);
-            }
-            else if(input_type == Numeric && target_type == Binary)
-            {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
-
-                correlations(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
-            }
-            else if(input_type == Binary && target_type == Numeric)
-            {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
-
-                correlations(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
-            }
-            else if(input_type == Categorical && target_type == Numeric)
-            {
-                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
-
-                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input, target);
-            }
-            else if(input_type == Numeric && target_type == Categorical)
-            {
-                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-
-                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, target, input);
-            }
-            else if(input_type == Binary && target_type == Categorical)
-            {
-                const TensorMap<Tensor<type, 1>> input_column(input.data(), input.dimension(0));
-
-                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, target, input);
-            }
-            else if(input_type == Categorical && target_type == Binary)
-            {
-                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input, target);
-            }
-            else if(input_type == DateTime || target_type == DateTime)
-            {
-                correlations(i,j).r = 0;
-            }
-            else
-            {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "Tensor<type, 2> calculate_input_target_columns_correlations() const method.\n"
-                       << "Case not found: Column " << columns(input_index).name << " and Column " << columns(target_index).name << ".\n";
-
-                throw logic_error(buffer.str());
-            }
+            correlations(i,j) = OpenNN::correlation(thread_pool_device, input_column_data, target_column_data);
 
             cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
         }
     }
 
     return correlations;
-}
-
-
-/// Calculates the correlations between all outputs and all inputs.
-/// It returns a matrix with the number of rows is the input number
-/// and number of columns is the target number.
-/// Each element contains the correlation between a single input and a single target.
-
-Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() const
-{
-    const Tensor<Correlation, 2> correlations = calculate_input_target_columns_correlations();
-
-    const Index rows_number = correlations.dimension(0);
-    const Index columns_number = correlations.dimension(1);
-
-    Tensor<type, 2> correlations_values(rows_number, columns_number);
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            correlations_values(i,j) = correlations(i,j).r;
-        }
-    }
-
-    return correlations_values;
 }
 
 
@@ -6152,7 +5988,7 @@ void DataSet::print_top_input_target_columns_correlations() const
     const Tensor<string, 1> inputs_names = get_input_variables_names();
     const Tensor<string, 1> targets_name = get_target_variables_names();
 
-    const Tensor<type, 2> correlations = calculate_input_target_columns_correlations_values();
+    const Tensor<type, 2> correlations = get_correlation_values(calculate_input_target_columns_correlations());
 
     Tensor<type, 1> target_correlations(inputs_number);
 
@@ -6180,119 +6016,29 @@ void DataSet::print_top_input_target_columns_correlations() const
 /// Calculate the correlation between each input in the data set.
 /// Returns a matrix with the correlation values between variables in the data set.
 
-Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
+Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
 {
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
 
     const Index input_columns_number = get_input_columns_number();
 
-    Tensor<type, 2> correlations(input_columns_number, input_columns_number);
-    correlations.setConstant(1);
+    Tensor<Correlation, 2> correlations(input_columns_number, input_columns_number);
 
     for(Index i = 0; i < input_columns_number; i++)
     {
         const Index current_input_index_i = input_columns_indices(i);
 
-        const ColumnType type_i = columns(current_input_index_i).type;
-
-        Tensor<type, 2> input_i = get_column_data(current_input_index_i);
+        const Tensor<type, 2> input_i = get_column_data(current_input_index_i);
 
         cout << "Calculating " << columns(current_input_index_i).name << " correlations. " << endl;
-
-        #pragma omp parallel for
 
         for(Index j = i; j < input_columns_number; j++)
         {
             const Index current_input_index_j = input_columns_indices(j);
 
-            const ColumnType type_j = columns(current_input_index_j).type;
+            const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
 
-            Tensor<type, 2> input_j = get_column_data(current_input_index_j);
-
-            if(current_input_index_i == current_input_index_j)
-            {
-                correlations(i,j) = 1;
-                continue;
-            }
-
-            if(type_i == Numeric && type_j == Numeric)
-            {
-                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
-                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
-
-                const type linear_correlation = OpenNN::linear_correlation(thread_pool_device, current_input_i, current_input_j).r;
-                const type exponential_correlation = OpenNN::exponential_correlation(thread_pool_device, current_input_i, current_input_j).r;
-                const type logarithmic_correlation = OpenNN::logarithmic_correlation(thread_pool_device, current_input_i, current_input_j).r;
-                const type power_correlation = OpenNN::power_correlation(thread_pool_device, current_input_i, current_input_j).r;
-
-                type strongest_correlation = linear_correlation;
-
-                if(fabsf(exponential_correlation) > fabsf(strongest_correlation)) strongest_correlation = exponential_correlation;
-                if(fabsf(logarithmic_correlation) > fabsf(strongest_correlation)) strongest_correlation = logarithmic_correlation;
-                if(fabsf(power_correlation) > fabsf(strongest_correlation)) strongest_correlation = power_correlation;
-
-                correlations(i,j) = strongest_correlation;
-            }
-            else if(type_i == Binary && type_j == Binary)
-            {
-                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
-                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
-
-                correlations(i,j) = linear_correlation(thread_pool_device, current_input_i, current_input_j).r;
-            }
-            else if(type_i == Categorical && type_j == Categorical)
-            {
-                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_i, input_j).r;
-            }
-            else if(type_i == Numeric && type_j == Binary)
-            {
-                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
-                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
-
-                correlations(i,j) = logistic_correlation(thread_pool_device, current_input_i, current_input_j).r;
-            }
-            else if(type_i == Binary && type_j == Numeric)
-            {
-                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
-                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
-
-                correlations(i,j) = logistic_correlation(thread_pool_device, current_input_i, current_input_j).r;
-            }
-            else if(type_i == Categorical && type_j == Numeric)
-            {
-                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
-
-                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_i, input_j).r;
-            }
-            else if(type_i == Numeric && type_j == Categorical)
-            {
-                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
-
-                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_j, input_i).r;
-            }
-            else if(type_i == Categorical && type_j == Binary)
-            {
-                const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
-
-                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_i, input_j).r;
-            }
-            else if(type_i == Binary && type_j == Categorical)
-            {
-                const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
-
-                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_j, input_i).r;
-            }
-            else
-            {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "Tensor<type, 2> calculate_inputs_correlations() const method.\n"
-                       << "Case not found: Column " << columns(input_columns_indices(i)).name << " and Column " << columns(input_columns_indices(j)).name << ".\n";
-
-                throw logic_error(buffer.str());
-            }
-
+            correlations(i,j) = OpenNN::correlation(thread_pool_device, input_i, input_j);
         }
     }
 
@@ -6312,7 +6058,7 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
 
 void DataSet::print_inputs_correlations() const
 {
-    const Tensor<type, 2> inputs_correlations = calculate_input_columns_correlations();
+    const Tensor<type, 2> inputs_correlations = get_correlation_values(calculate_input_columns_correlations());
 
     cout << inputs_correlations << endl;
 }
@@ -6343,7 +6089,7 @@ void DataSet::print_top_inputs_correlations() const
 
     const Tensor<string, 1> variables_name = get_input_variables_names();
 
-    const Tensor<type, 2> variables_correlations = calculate_input_columns_correlations();
+    const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_columns_correlations());
 
     const Index correlations_number = variables_number*(variables_number-1)/2;
 

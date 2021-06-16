@@ -80,6 +80,19 @@ bool is_false(const Tensor<bool, 1>& tensor)
 }
 
 
+bool is_binary(const Tensor<type, 2>& matrix)
+{
+    const Index size = matrix.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(matrix(i) != 0 && matrix(i) != 1) return false;
+    }
+
+    return true;
+}
+
+
 bool is_constant(const Tensor<type, 1>& vector)
 {
     const Index size = vector.size();
@@ -427,6 +440,91 @@ void check_columns_number(const Tensor<type, 2>& matrix, const Index& columns_nu
         throw logic_error(buffer.str());
     }
 }
+
+Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+{
+    const Index rows_number = x.size();
+    const Index columns_number = 2;
+
+    Tensor<type, 2> data(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        data(i, 0) = x(i);
+        data(i, 1) = y(i);
+    }
+
+    return data;
+}
+
+
+Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>& x, const Tensor<type, 2>& y)
+{
+    const Index rows_number = x.size();
+    const Index columns_number = 1 + y.dimension(1);
+
+    Tensor<type, 2> data(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        data(i, 0) = x(i);
+
+        for(Index j = 0; j < y.dimension(1); j++)
+        {
+            data(i, 1+j) = y(i,j);
+        }
+    }
+
+    return data;
+}
+
+
+Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>& x, const Tensor<type, 1>& y)
+{
+    const Index rows_number = x.size();
+    const Index columns_number = x.dimension(1) + 1;
+
+    Tensor<type, 2> data(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < x.dimension(1); j++)
+        {
+            data(i, j) = x(i,j);
+        }
+
+        data(i, columns_number-1) = y(i);
+    }
+
+    return data;
+}
+
+
+Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
+{
+    const Index rows_number = x.size();
+    const Index columns_number = x.dimension(1) + x.dimension(2);
+
+    Tensor<type, 2> data(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < x.dimension(1); j++)
+        {
+            data(i, j) = x(i,j);
+        }
+
+        for(Index j = 0; j < y.dimension(1); j++)
+        {
+            data(i, x.dimension(1) + j) = y(i,j);
+        }
+
+        data(i, columns_number-1) = y(i);
+    }
+
+    return data;
+}
+
 
 }
 

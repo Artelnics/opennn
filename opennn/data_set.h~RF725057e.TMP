@@ -439,7 +439,7 @@ public:
 
    // Columns other methods
 
-   Tensor<type, 2> transform_binary_column(const Tensor<type, 1>&) const;
+   Tensor<type, 2> transform_binary_column(const Tensor<type,1>&) const;
 
    // Variables set methods
 
@@ -561,7 +561,7 @@ public:
 
    // Inputs correlations
 
-   Tensor<Correlation, 2> calculate_input_columns_correlations() const;
+   Tensor<type, 2> calculate_input_columns_correlations() const;
 
    void print_inputs_correlations() const;
 
@@ -570,6 +570,7 @@ public:
    // Inputs-targets correlations
 
    Tensor<Correlation, 2> calculate_input_target_columns_correlations() const;
+   Tensor<type, 2> calculate_input_target_columns_correlations_values() const;
 
    void print_input_target_columns_correlations() const;
 
