@@ -186,7 +186,7 @@ Tensor<type, 2> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) co
     const Index biases_number = get_biases_number();
     const Index input_weights_number = get_input_weights_number();
 
-    Tensor<type,1> new_biases(biases_number);
+    Tensor<type, 1> new_biases(biases_number);
 
     new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({input_weights_number}), Eigen::array<Eigen::Index, 1>({biases_number}));
 

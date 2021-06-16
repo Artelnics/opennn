@@ -143,10 +143,10 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_derivative
 
    // Test
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,2});
 
-   Tensor<type,1> d2 = numerical_differentiation.calculate_forward_differences_derivatives(*this, &NumericalDifferentiationTest::f2, x_1d);
+   Tensor<type, 1> d2 = numerical_differentiation.calculate_forward_differences_derivatives(*this, &NumericalDifferentiationTest::f2, x_1d);
 
    assert_true(abs(d2(0) - 2) < static_cast<type>(1e-2), LOG);
    assert_true(abs(d2(1) - 4) < static_cast<type>(1e-2), LOG);
@@ -165,14 +165,14 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_derivative
 
    Index dummy_index = 3;
 
-   Tensor<type,1> d4 = numerical_differentiation.calculate_forward_differences_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_1d);
+   Tensor<type, 1> d4 = numerical_differentiation.calculate_forward_differences_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_1d);
 
    assert_true(abs(d4(0) - 6) < static_cast<type>(1e-2), LOG);
    assert_true(abs(d4(1) - 12) < static_cast<type>(1e-2), LOG);
 
    // Test 5
 
-//   Tensor<type,1> d5 = nd.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
+//   Tensor<type, 1> d5 = nd.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
 
 //   assert_true(abs(d5(0) - 6) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d5(1) - 12) < static_cast<type>(1e-2), LOG);
@@ -197,10 +197,10 @@ void NumericalDifferentiationTest::test_calculate_central_differences_derivative
 
    // Test
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,2});
 
-   Tensor<type,1> d2 = numerical_differentiation.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f2, x_1d);
+   Tensor<type, 1> d2 = numerical_differentiation.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f2, x_1d);
 
    assert_true(abs(d2(0) - 2) < static_cast<type>(1e-3), LOG);
    assert_true(abs(d2(1) - 4) < static_cast<type>(1e-3), LOG);
@@ -219,14 +219,14 @@ void NumericalDifferentiationTest::test_calculate_central_differences_derivative
 
    Index dummy_index = 3;
 
-   Tensor<type,1> d4 = numerical_differentiation.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_1d);
+   Tensor<type, 1> d4 = numerical_differentiation.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_1d);
 
    assert_true(abs(d4(0) - 6) < static_cast<type>(1e-2), LOG);
    assert_true(abs(d4(1) - 12) < static_cast<type>(1e-2), LOG);
 
    // Test 5
 
-//   Tensor<type,1> d5 = nd.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
+//   Tensor<type, 1> d5 = nd.calculate_central_differences_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
 
 //   assert_true(abs(d5(0) - 6) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d5(1) - 12) < static_cast<type>(1e-2), LOG);
@@ -255,7 +255,7 @@ void NumericalDifferentiationTest::test_calculate_derivatives()
 
    // Test 2_0
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,2});
 
    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
@@ -320,7 +320,7 @@ void NumericalDifferentiationTest::test_calculate_derivatives()
 
 //   nd.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
 
-//   Tensor<type,1> d5 = nd.calculate_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
+//   Tensor<type, 1> d5 = nd.calculate_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
 
 //   assert_true(abs(d5(0) - 6) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d5(1) - 12) < static_cast<type>(1e-2), LOG);
@@ -329,7 +329,7 @@ void NumericalDifferentiationTest::test_calculate_derivatives()
 
 //   nd.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 
-//   Tensor<type,1> d5 = nd.calculate_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
+//   Tensor<type, 1> d5 = nd.calculate_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
 
 //   assert_true(abs(d5(0) - 6) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d5(1) - 12) < static_cast<type>(1e-2), LOG);
@@ -355,22 +355,22 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_second_der
 
    // Test
 
-   Tensor<type,1> x_2(2);
+   Tensor<type, 1> x_2(2);
    x_2.setValues({1,2});
 
-//   Tensor<type,1> d2 = nd.calculate_forward_differences_second_derivatives(*this, &NumericalDifferentiationTest::f2, x_2);
+//   Tensor<type, 1> d2 = nd.calculate_forward_differences_second_derivatives(*this, &NumericalDifferentiationTest::f2, x_2);
 
 //   assert_true(abs(d2(0) - 2) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d2(1) - 2) < static_cast<type>(1e-2), LOG);
 
    // Test
 
-   Tensor<type,1> x_3(2);
+   Tensor<type, 1> x_3(2);
    x_3.setValues({1,2});
 
    Index dummy_index = 1;
 
-//   Tensor<type,1> d3 = nd.calculate_forward_differences_second_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_3);
+//   Tensor<type, 1> d3 = nd.calculate_forward_differences_second_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_3);
 
 //   assert_true(abs(d3(0) - 2) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d3(1) - 2) < static_cast<type>(1e-2), LOG);
@@ -395,22 +395,22 @@ void NumericalDifferentiationTest::test_calculate_central_differences_second_der
 
    // Test
 
-   Tensor<type,1> x_2(2);
+   Tensor<type, 1> x_2(2);
    x_2.setValues({1,2});
 
-//   Tensor<type,1> d2 = nd.calculate_central_differences_second_derivatives(*this, &NumericalDifferentiationTest::f2, x_2);
+//   Tensor<type, 1> d2 = nd.calculate_central_differences_second_derivatives(*this, &NumericalDifferentiationTest::f2, x_2);
 
 //   assert_true(abs(d2(0) - 2) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d2(1) - 2) < static_cast<type>(1e-2), LOG);
 
    // Test
 
-//   Tensor<type,1> x_3(2);
+//   Tensor<type, 1> x_3(2);
 //   x_3.setValues({1,2});
 
 //   Index dummy_index = 1;
 
-//   Tensor<type,1> d3 = nd.calculate_central_differences_second_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_3);
+//   Tensor<type, 1> d3 = nd.calculate_central_differences_second_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_3);
 
 //   assert_true(abs(d3(0) - 2) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d3(1) - 2) < static_cast<type>(1e-2), LOG);
@@ -451,19 +451,19 @@ void NumericalDifferentiationTest::test_calculate_second_derivatives()
 
    // Test 2_0
 
-//   Tensor<type,1> x_2(2);
+//   Tensor<type, 1> x_2(2);
 //   x_2.setValues({1,2});
 
 //   nd.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
 
-//   Tensor<type,1> d2 = nd.calculate_second_derivatives(*this, &NumericalDifferentiationTest::f2, x_2);
+//   Tensor<type, 1> d2 = nd.calculate_second_derivatives(*this, &NumericalDifferentiationTest::f2, x_2);
 
 //   assert_true(abs(d2(0) - 2) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d2(1) - 2) < static_cast<type>(1e-2), LOG);
 
    // Test 2_1
 
-//   Tensor<type,1> x_2(2);
+//   Tensor<type, 1> x_2(2);
 //   x_2.setValues({1,2});
 
 //   nd.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
@@ -475,21 +475,21 @@ void NumericalDifferentiationTest::test_calculate_second_derivatives()
 
    // Test 3_0
 
-//   Tensor<type,1> x_3(2);
+//   Tensor<type, 1> x_3(2);
 //   x_3.setValues({1,2});
 
 //   nd.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
 
 //   Index dummy_index = 1;
 
-//   Tensor<type,1> d3 = nd.calculate_second_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_3);
+//   Tensor<type, 1> d3 = nd.calculate_second_derivatives(*this, &NumericalDifferentiationTest::f2_1, dummy_index, x_3);
 
 //   assert_true(abs(d3(0) - 2) < static_cast<type>(1e-2), LOG);
 //   assert_true(abs(d3(1) - 2) < static_cast<type>(1e-2), LOG);
 
    // Test 3_1
 
-//   Tensor<type,1> x_3(2);
+//   Tensor<type, 1> x_3(2);
 //   x_3.setValues({1,2});
 
 //   nd.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
@@ -509,7 +509,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_gradient()
 
    // Test
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,2});
 
    Tensor<type, 1> derivatives = numerical_differentiation.calculate_forward_differences_gradient(*this, &NumericalDifferentiationTest::f4, x_1d);
@@ -526,10 +526,10 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_gradient()
 
    // Test
 
-   Tensor<type,1> x3_1d(2);
+   Tensor<type, 1> x3_1d(2);
    x3_1d.setValues({1,2});
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({2,3});
 
    Tensor<type, 1> d3 = numerical_differentiation.calculate_forward_differences_gradient(*this, &NumericalDifferentiationTest::f4_3, dummy, x3_1d);
@@ -562,7 +562,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_gradient()
 
    // Test
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,2});
 
    Tensor<type, 1> derivatives = numerical_differentiation.calculate_central_differences_gradient(*this, &NumericalDifferentiationTest::f4, x_1d);
@@ -579,10 +579,10 @@ void NumericalDifferentiationTest::test_calculate_central_differences_gradient()
 
    // Test
 
-   Tensor<type,1> x3_1d(2);
+   Tensor<type, 1> x3_1d(2);
    x3_1d.setValues({1,2});
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({2,3});
 
    Tensor<type, 1> d3 = numerical_differentiation.calculate_central_differences_gradient(*this, &NumericalDifferentiationTest::f4_3, dummy, x3_1d);
@@ -615,7 +615,7 @@ void NumericalDifferentiationTest::test_calculate_training_loss_gradient()
 
    // Test 1_0
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,2});
 
    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
@@ -650,10 +650,10 @@ void NumericalDifferentiationTest::test_calculate_training_loss_gradient()
 
    // Test 3_
 
-   Tensor<type,1> x3_1d(2);
+   Tensor<type, 1> x3_1d(2);
    x3_1d.setValues({1,2});
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({2,3});
 
    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
@@ -713,7 +713,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_hessian()
 
    // Test
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,1});
 
    Tensor<type, 2> H = numerical_differentiation.calculate_forward_differences_hessian(*this, &NumericalDifferentiationTest::f4_5, x_1d);
@@ -727,7 +727,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_hessian()
 
    // Test
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({1,2});
 
    Tensor<type, 2> H2 = numerical_differentiation.calculate_forward_differences_hessian(*this, &NumericalDifferentiationTest::f4_6, dummy, x_1d);
@@ -758,7 +758,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_hessian()
 
    // Test
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,1});
 
    Tensor<type, 2> H = numerical_differentiation.calculate_central_differences_hessian(*this, &NumericalDifferentiationTest::f4_5, x_1d);
@@ -772,7 +772,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_hessian()
 
    // Test
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({1,2});
 
    Tensor<type, 2> H2 = numerical_differentiation.calculate_central_differences_hessian(*this, &NumericalDifferentiationTest::f4_6, dummy, x_1d);
@@ -803,7 +803,7 @@ void NumericalDifferentiationTest::test_calculate_hessian()
 
    // Test 1_0
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,1});
 
    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
@@ -830,7 +830,7 @@ void NumericalDifferentiationTest::test_calculate_hessian()
 
    // Test 2_0
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({1,2});
 
    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
@@ -887,7 +887,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_Jacobian()
 
    // Test
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,1});
 
    Tensor<type, 2> J = numerical_differentiation.calculate_forward_differences_Jacobian(*this, &NumericalDifferentiationTest::f2, x_1d);
@@ -901,7 +901,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_Jacobian()
 
    // Test
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({1,2});
 
    Tensor<type, 2> J2 = numerical_differentiation.calculate_forward_differences_Jacobian(*this, &NumericalDifferentiationTest::f2_2, dummy, x_1d);
@@ -926,7 +926,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_Jacobian()
 
    // Test 
 
-   Tensor<type,1>dummy_vec(2);
+   Tensor<type, 1>dummy_vec(2);
    dummy_vec.setValues({-1,-2});
 
    Tensor<type, 2> J4 = numerical_differentiation.calculate_forward_differences_Jacobian(*this, &NumericalDifferentiationTest::f5, 1, dummy_vec, x_1d);
@@ -957,7 +957,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_Jacobian()
 
    // Test
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,1});
 
    Tensor<type, 2> J = numerical_differentiation.calculate_central_differences_Jacobian(*this, &NumericalDifferentiationTest::f2, x_1d);
@@ -971,7 +971,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_Jacobian()
 
    // Test
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({1,2});
 
    Tensor<type, 2> J2 = numerical_differentiation.calculate_central_differences_Jacobian(*this, &NumericalDifferentiationTest::f2_2, dummy, x_1d);
@@ -996,7 +996,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_Jacobian()
 
    // Test 
 
-   Tensor<type,1>dummy_vec(2);
+   Tensor<type, 1>dummy_vec(2);
    dummy_vec.setValues({-1,-2});
 
    Tensor<type, 2> J4 = numerical_differentiation.calculate_central_differences_Jacobian(*this, &NumericalDifferentiationTest::f5, 1, dummy_vec, x_1d);
@@ -1026,7 +1026,7 @@ void NumericalDifferentiationTest::test_calculate_Jacobian()
 
    // Test 1_0
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,1});
 
    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
@@ -1049,7 +1049,7 @@ void NumericalDifferentiationTest::test_calculate_Jacobian()
 
    // Test 2_0
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({1,2});
 
    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
@@ -1092,7 +1092,7 @@ void NumericalDifferentiationTest::test_calculate_Jacobian()
 
    // Test 4_0
 
-   Tensor<type,1>dummy_vec(2);
+   Tensor<type, 1>dummy_vec(2);
    dummy_vec.setValues({-1,-2});
 
    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
@@ -1143,7 +1143,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_hessian_fo
 
    // Test
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,1});
 
    Tensor<Tensor<type, 2>, 1> H = numerical_differentiation.calculate_forward_differences_hessian(*this, &NumericalDifferentiationTest::f2, x_1d);
@@ -1166,7 +1166,7 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_hessian_fo
 
    // Test
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({1,1});
 
    Tensor<Tensor<type, 2>, 1> H2 = numerical_differentiation.calculate_forward_differences_hessian(*this, &NumericalDifferentiationTest::f2_2, dummy, x_1d);
@@ -1235,7 +1235,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_hessian_fo
 
    // Test
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,1});
 
    Tensor<Tensor<type, 2>, 1> H = numerical_differentiation.calculate_central_differences_hessian(*this, &NumericalDifferentiationTest::f2, x_1d);
@@ -1258,7 +1258,7 @@ void NumericalDifferentiationTest::test_calculate_central_differences_hessian_fo
 
    // Test
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({1,1});
 
    Tensor<Tensor<type, 2>, 1> H2
@@ -1329,7 +1329,7 @@ void NumericalDifferentiationTest::test_calculate_hessian_form()
 
    // Test 1_0
 
-   Tensor<type,1> x_1d(2);
+   Tensor<type, 1> x_1d(2);
    x_1d.setValues({1,1});
 
    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
@@ -1366,7 +1366,7 @@ void NumericalDifferentiationTest::test_calculate_hessian_form()
 
    // Test 2_0
 
-   Tensor<type,1>dummy(2);
+   Tensor<type, 1>dummy(2);
    dummy.setValues({1,1});
 
    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
@@ -1489,10 +1489,10 @@ void NumericalDifferentiationTest::test_calculate_central_differences_hessian_ma
 {
     cout << "test_calculate_central_differences_hessian_matrices\n";
 
-    Tensor<type,1>dummy(2);
+    Tensor<type, 1>dummy(2);
     dummy.setValues({-1,-1});
 
-    Tensor<type,1> x_1d(2);
+    Tensor<type, 1> x_1d(2);
     x_1d.setValues({3,4});
 
 //    Tensor<type, 1> H = nd.calculate_central_differences_hessian_matrices(*this, &NumericalDifferentiationTest::f5, 2, dummy, x_1d);

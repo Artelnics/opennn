@@ -657,11 +657,11 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
     outputs = probabilistic_layer.calculate_outputs(inputs);
 
-    Tensor<type,1> perceptron_sol(4);
+    Tensor<type, 1> perceptron_sol(4);
     perceptron_sol.setValues({7,-5,1,7});
 
     Tensor<type,0>div = perceptron_sol.exp().sum();
-    Tensor<type,1>sol_ = perceptron_sol.exp() / div(0);
+    Tensor<type, 1>sol_ = perceptron_sol.exp() / div(0);
 
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
@@ -703,7 +703,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
     outputs = probabilistic_layer.calculate_outputs(inputs);
 
-    Tensor<type,1>perceptron_sol_3(4);
+    Tensor<type, 1>perceptron_sol_3(4);
     perceptron_sol.setValues({7,-5,1,7});
 
     div = perceptron_sol.exp().sum();

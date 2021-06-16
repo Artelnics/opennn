@@ -313,7 +313,7 @@ struct Histogram
      Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix);
 
      // NAN methods
-     Index count_nan(const Tensor<type,1>&);
+     Index count_nan(const Tensor<type, 1>&);
 }
 
 #endif // STATISTICS_H

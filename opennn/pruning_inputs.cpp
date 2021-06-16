@@ -191,7 +191,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     Tensor<string, 1> input_columns_names;
 
-    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
+    const Tensor<type, 2> correlations = get_correlation_values(data_set_pointer->calculate_input_target_columns_correlations());
 
     const Tensor<type, 1> total_correlations = correlations.abs().sum(rows_sum);
 

@@ -132,7 +132,7 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 {
     const Index biases_number = biases.size();
 
-    Tensor<type,1> new_biases(biases_number);
+    Tensor<type, 1> new_biases(biases_number);
 
     new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({biases_number}));
 

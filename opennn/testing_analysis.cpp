@@ -302,7 +302,7 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
         const Tensor<type, 1> targets = testing_targets.chip(i,1);
         const Tensor<type, 1> outputs = testing_outputs.chip(i,1);
 
-        const Correlation linear_correlation = OpenNN::linear_correlation(thread_pool_device, outputs, targets, false);
+        const Correlation linear_correlation = OpenNN::linear_correlation(thread_pool_device, outputs, targets);
 
         linear_regression_results[i].targets = targets;
         linear_regression_results[i].outputs = outputs;
@@ -1615,6 +1615,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
         {
             decision_threshold = 0.5;
         }
+
+        cout << "decision_threshold" << endl;
+        cout << decision_threshold << endl;
 
         return calculate_confusion_binary_classification(targets, outputs, decision_threshold);
     }

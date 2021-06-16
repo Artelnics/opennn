@@ -164,8 +164,8 @@ void LearningRateAlgorithm::set_default()
 
     // TRAINING PARAMETERS
 
-    learning_rate_tolerance = numeric_limits<type>::epsilon();//static_cast<type>(1.0e-9);
-    loss_tolerance = numeric_limits<type>::epsilon();//static_cast<type>(1.0e-9);
+    learning_rate_tolerance = 1.0e-6;//numeric_limits<type>::epsilon();//static_cast<type>(1.0e-9);
+    loss_tolerance = 1.0e-6;//numeric_limits<type>::epsilon();//static_cast<type>(1.0e-9);
 }
 
 
@@ -274,7 +274,6 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
     LossIndexBackPropagation& back_propagation,
     OptimizationAlgorithmData& optimization_data) const
 {
-
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
 #ifdef OPENNN_DEBUG
@@ -534,7 +533,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         triplet.B.second = back_propagation.error + regularization_weight*regularization;
 
-    } while(abs(triplet.A.second - triplet.B.second) < numeric_limits<type>::min());
+    } while(abs(triplet.A.second - triplet.B.second) < 1.0e-6/*numeric_limits<type>::min()*/);
 
 
     if(triplet.A.second > triplet.B.second)
@@ -677,7 +676,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 /// @param triplet Triplet containing a minimum.
 
 type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& triplet) const
-{
+{ 
     const type a = triplet.A.first;
     const type u = triplet.U.first;
     const type b = triplet.B.first;

@@ -86,7 +86,7 @@ struct Correlation
 
     // Correlation methods
 
-    Correlation linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&, const bool& = true);
+    Correlation linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     Correlation logarithmic_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
@@ -94,9 +94,15 @@ struct Correlation
 
     Correlation power_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Correlation logistic_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    Correlation logistic_correlation_vector_vector(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Correlation multiple_logistic_correlation(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
+    Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 2>&);
+
+    Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 1>&);
+
+    Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
+
+    Correlation correlation(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     // Time series correlation methods
 
@@ -109,11 +115,14 @@ struct Correlation
                                        const Tensor<type, 1>&,
                                        const Index&);
 
+    Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>&);
+
     // Missing values methods
 
-    pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&);
-
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_matrix_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
 }
 
 

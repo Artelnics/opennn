@@ -75,54 +75,6 @@ void CorrelationsTest::test_linear_correlation()
     assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 }
 
-void CorrelationsTest::test_linear_regression()
-{
-    cout << "test_linear_regression\n";
-
-    Index size;
-
-    Tensor<type, 1> x;
-    Tensor<type, 1> y;
-
-    // Perfect case
-
-    size = 10;
-
-    x.resize(size);
-    x.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-
-    y.resize(size);
-    y.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-
-    assert_true(linear_correlation(thread_pool_device, x, y).a  < numeric_limits<type>::min(), LOG);
-    assert_true(linear_correlation(thread_pool_device, x, y).b - 1 < numeric_limits<type>::min(), LOG);
-    assert_true(linear_correlation(thread_pool_device, x, y).r - 1 < numeric_limits<type>::min(), LOG);
-
-    // Constant case
-
-    x.resize(size);
-    x.setValues({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-
-    y.resize(size);
-    y.setValues({1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
-
-    assert_true(linear_correlation(thread_pool_device, x, y).a - y(0) < numeric_limits<type>::min(), LOG);
-    assert_true(linear_correlation(thread_pool_device, x, y).b < numeric_limits<type>::min(), LOG);
-    assert_true(linear_correlation(thread_pool_device, x, y).r - 1 < numeric_limits<type>::min(), LOG);
-
-    // Test
-
-    x.resize(size);
-    x.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
-
-    y.resize(size);
-    y.setValues({2, 5, 8, 11, 14, 17, 20, 23, 26, 29});
-
-    assert_true(linear_correlation(thread_pool_device, x, y).a == 2, LOG);
-    assert_true(linear_correlation(thread_pool_device, x, y).b == 3, LOG);
-    assert_true(linear_correlation(thread_pool_device, x, y).r == 1, LOG);
-
-}
 
 void CorrelationsTest::test_logistic_correlation()
 {
@@ -371,8 +323,6 @@ void CorrelationsTest::run_test_case()
    // Correlation methods
 
    test_linear_correlation();
-
-   test_linear_regression();
 
    test_logistic_correlation();
 

@@ -3070,7 +3070,9 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 2>& matrix)
     const Index columns_number = matrix.dimension(1);
 
     type minimum = matrix(0,0);
+
     Tensor<Index, 1> minimal_indices(2);
+    minimal_indices.setZero();
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -3099,6 +3101,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
     type maximum = matrix(0,0);
 
     Tensor<Index, 1> maximal_indices(2);
+    maximal_indices.setZero();
 
     for(Index i = 0; i < rows_number; i++)
     {

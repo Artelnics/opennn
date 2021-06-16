@@ -19,9 +19,8 @@ namespace OpenNN
 /// @param y Vector of the dependent variable.
 
 Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
-                            const Tensor<type, 1>& x,
-                            const Tensor<type, 1>& y,
-                            const bool& scale_data)
+                               const Tensor<type, 1>& x,
+                               const Tensor<type, 1>& y)
 {
 #ifdef OPENNN_DEBUG
 
@@ -53,10 +52,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         return linear_correlation;
     }
 
-    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
-
-//    const Tensor<type, 1> x_filter = scale_data ? scale_minimum_maximum(filter_vectors.first) : filter_vectors.first;
-//    const Tensor<type, 1> y_filter = scale_data ? scale_minimum_maximum(filter_vectors.second) : filter_vectors.second;
+    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
     const Tensor<type, 1> x_filter = filter_vectors.first;
     const Tensor<type, 1> y_filter = filter_vectors.second;
@@ -144,7 +140,6 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device, 
     // Check negative values from x
 
     Correlation logarithmic_correlation;   
-    logarithmic_correlation.correlation_type = Logarithmic;
 
     for(Index i = 0; i < x.dimension(0); i++)
     {
@@ -156,7 +151,9 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device, 
         }
     }
 
-    logarithmic_correlation = linear_correlation(thread_pool_device, x.log(), y, false);
+    logarithmic_correlation = linear_correlation(thread_pool_device, x.log(), y);
+
+    logarithmic_correlation.correlation_type = Logarithmic;
 
     return logarithmic_correlation;
 }
@@ -187,7 +184,6 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device, 
     // Check negative values from y
 
     Correlation exponential_correlation;
-    exponential_correlation.correlation_type = Exponential;
 
     for(Index i = 0; i < y.dimension(0); i++)
     {
@@ -199,7 +195,9 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device, 
         }
     }
 
-    exponential_correlation = linear_correlation(thread_pool_device, x, y.log(), false);
+    exponential_correlation = linear_correlation(thread_pool_device, x, y.log());
+
+    exponential_correlation.correlation_type = Exponential;
 
     exponential_correlation.a = exp(exponential_correlation.a);
     exponential_correlation.b = exponential_correlation.b;
@@ -234,7 +232,6 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device, const 
     // Check negative values from x and y
 
     Correlation power_correlation;
-    power_correlation.correlation_type = Power;
 
     for(Index i = 0; i < x.dimension(0); i++)
     {
@@ -253,7 +250,9 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device, const 
         }
     }
 
-    power_correlation = linear_correlation(thread_pool_device, x.log(), y.log(), false);
+    power_correlation = linear_correlation(thread_pool_device, x.log(), y.log());
+
+    power_correlation.correlation_type = Power;
 
     power_correlation.a = exp(power_correlation.a);
 
@@ -265,180 +264,98 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device, const 
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-Correlation logistic_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef OPENNN_DEBUG
+    Correlation correlation;
 
-    ostringstream buffer;
-
-    if(y.size() != x.size())
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "type logistic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Filter missing values
-
-    const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
-
-    const Tensor<type, 1>& x_filter = filter_vectors.first;
-    const Tensor<type, 1>& y_filter = filter_vectors.second;
-
-    // Inputs: scaled_x; Targets: sorted_y
-
-    const Index input_variables_number = 1;
-    const Index target_variables_number = 1;
-    const Index samples_number = x_filter.dimension(0);
-
-    Tensor<type, 2> data(samples_number, input_variables_number+target_variables_number);
-
-    for(Index j = 0; j < input_variables_number+target_variables_number; j++)
-    {
-        if(j < input_variables_number)
-            for(Index i = 0; i < samples_number; i++)
-                data(i,j) = x_filter(i);
-        else
-            for(Index i = 0; i < samples_number; i++)
-                data(i,j) = y_filter(i);
-    }
+    const Tensor<type, 2> data = assemble_vector_vector(x, y);
 
     DataSet data_set(data);
     data_set.set_training();
 
-    NeuralNetwork neural_network(NeuralNetwork::Classification, {1,1});
+    data_set.set_columns_scalers(MinimumMaximum);
+
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
+
+    static_cast<PerceptronLayer*>(neural_network.get_layers_pointers()(1))->set_activation_function(PerceptronLayer::Logistic);
+
     neural_network.set_parameters_random();
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
 
+    training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
     training_strategy.get_loss_index_pointer()->set_regularization_method("NO_REGULARIZATION");
+
+    training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
     training_strategy.perform_training();
 
     const Tensor<type, 2> inputs = data_set.get_input_data();
-
+    const Tensor<type, 2> targets = data_set.get_target_data();
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
-
-    Tensor<type, 1> y_output(samples_number);
-    for(Index i = 0; i < samples_number; i++) y_output(i) = outputs(i,0);
 
     // Logistic correlation
 
+    const Eigen::array<Index, 1> vector{{x.size()}};
+
+    correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
+
+    correlation.correlation_type = Logistic;
+
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
-
-    // Regression results
-
-    Correlation correlation;
 
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
-    correlation.r = linear_correlation(thread_pool_device, y_filter, y_output, false).r;
-
     if(correlation.b < 0) correlation.r *= (-1);
-
-    correlation.correlation_type = Logistic;
 
     return correlation;
 }
 
 
-Correlation multiple_logistic_correlation(const ThreadPoolDevice* thread_pool_device,
-                                                  const Tensor<type, 2>& x,
+Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_pool_device,
+                                                  const Tensor<type, 1>& x,
                                                   const Tensor<type, 2>& y)
 {
-#ifdef OPENNN_DEBUG
+    Correlation logistic_correlations;
 
-    ostringstream buffer;
+    const Tensor<type, 2> data = OpenNN::assemble_vector_matrix(x, y);
 
-    if(y.size() != x.dimension(0))
-    {
-        buffer << "OpenNN Exception: Correlations.\n"
-               << "type logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
-               << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
+    Tensor<Index, 1> input_columns_indices(1);
+    input_columns_indices(0) = 0;
 
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Filter missing values
-
-    pair<Tensor<type, 2>, Tensor<type, 2>> filter_vectors = filter_missing_values(x,y);
-
-    const Tensor<type, 2>& new_x = filter_vectors.first;
-    const Tensor<type, 2>& new_y = filter_vectors.second;
-
-    // Scale data
-
-    const Tensor<type, 2> scaled_x = scale_minimum_maximum(new_x);
-    const Tensor<type, 2> scaled_y = scale_minimum_maximum(new_y);
-
-    const Index input_variables_number = scaled_x.dimension(1);
-    const Index target_variables_number = new_y.dimension(1);
-    const Index samples_number = scaled_x.dimension(0);
-
-    Tensor<type, 2> data(samples_number, input_variables_number+target_variables_number);
-
-    for(Index j = 0; j <input_variables_number+target_variables_number; j++)
-    {
-        if(j < input_variables_number)
-        {
-            for(Index i = 0; i < samples_number; i++)
-            {
-                data(i,j) = scaled_x(i,j);
-            }
-        }
-        else
-        {
-            for(Index i = 0; i < samples_number; i++)
-            {
-                data(i,j) = new_y(i,j-input_variables_number);
-            }
-        }
-    }
+    Tensor<Index, 1> target_columns_indices(y.dimension(1));
+    for(Index i = 0; i < y.dimension(1); i++) target_columns_indices(i) = 1+i;
 
     DataSet data_set(data);
+
+    data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
+
     data_set.set_training();
 
-    NeuralNetwork neural_network;
+    const Index input_variables_number = data_set.get_input_variables_number();
+    const Index target_variables_number = data_set.get_target_variables_number();
+    const Index samples_number = data_set.get_samples_number();
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, PerceptronLayer::Logistic);
-
-    neural_network.add_layer(perceptron_layer);
-
-    neural_network.set_parameters_random();
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, target_variables_number});
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
-
-    training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-    training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
-    training_strategy.get_loss_index_pointer()->set_regularization_method("L2_NORM");
-    training_strategy.get_loss_index_pointer()->set_regularization_weight(static_cast<type>(0.01));
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
     training_strategy.set_display(false);
-    training_strategy.get_optimization_algorithm_pointer()->set_display(false);
 
     training_strategy.perform_training();
 
     // Logistic correlation
 
-    Correlation logistic_correlations;
+    const Tensor<type, 2> inputs = data_set.get_input_data();
+    const Tensor<type, 2> targets = data_set.get_target_data();
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-    const Tensor<type, 1> bias = perceptron_layer->get_biases().chip(0,1);
-    const Tensor<type, 2> weights = perceptron_layer->get_synaptic_weights();
+    const Eigen::array<Index, 1> vector{{targets.size()}};
 
-    /// @todo
-//    const Tensor<type, 2> logistic_y = logistic(thread_pool_device, bias, weights, scaled_x);
-
-//    logistic_correlations.r = linear_correlation(thread_pool_device, logistic_y.chip(0,1), scaled_y.chip(0,1), false).r;
+    logistic_correlations.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     logistic_correlations.correlation_type = Logistic;
 
@@ -446,54 +363,147 @@ Correlation multiple_logistic_correlation(const ThreadPoolDevice* thread_pool_de
 }
 
 
-/// Calculate the chi squared test statistic of a contingency table
-/// @param matrix Matrix that represent the contingency table
-
-type chi_square_test(const Tensor<type, 2>& matrix)
+Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice*, const Tensor<type, 2>& x, const Tensor<type, 1>& y)
 {
-    // Eigen stuff
+    Correlation correlation;
 
-    const Eigen::array<int, 1> rows = {Eigen::array<int, 1>({1})};
-    const Eigen::array<int, 1> columns = {Eigen::array<int, 1>({0})};
+    const Tensor<type, 2> data = OpenNN::assemble_matrix_vector(x, y);
 
-    const Tensor<type, 1> sum_columns = matrix.sum(columns);
-    const Tensor<type, 1> sum_rows = matrix.sum(rows);
+    DataSet data_set(data);
+    data_set.set_training();
 
-    const Tensor<type, 0> total = sum_columns.sum();
+    const Index input_variables_number = data_set.get_input_variables_number();
+    const Index target_variables_number = data_set.get_target_variables_number();
+    const Index samples_number = data_set.get_samples_number();
 
-    Tensor<type, 2> row_colum(sum_rows.size(),sum_columns.size());
+    NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, target_variables_number});
 
-    for(Index i = 0; i < sum_columns.size(); i++)
-    {
-        for(Index j = 0; j < sum_rows.size(); j++)
-        {
-            row_colum(j,i) = sum_columns[i]*sum_rows[j];
-        }
-    }
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    const Tensor<type, 2> ei = row_colum/total(0);
+    training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
 
-    const Tensor<type, 2> squared = (matrix.cast<type>()-ei)*(matrix.cast<type>()-ei);
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-    Tensor<type, 2> chi(sum_rows.size(),sum_columns.size());
+    training_strategy.set_display(false);
 
-    for(Index i = 0; i < sum_rows.size(); i++)
-    {
-        for(Index j = 0; j < sum_columns.size(); j ++)
-        {
-            chi(i,j) = squared(i,j)/ei(i,j);
-        }
-    }
+    training_strategy.perform_training();
 
-    const Tensor<type, 0> chi_sum = chi.sum();
-
-    return chi_sum(0);
+    return correlation;
 }
+
+
+Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice*, const Tensor<type, 2>& x, const Tensor<type, 2>& y)
+{
+    Correlation correlation;
+
+    const Tensor<type, 2> data = OpenNN::assemble_matrix_matrix(x, y);
+
+    DataSet data_set(data);
+    data_set.set_training();
+
+    const Index input_variables_number = data_set.get_input_variables_number();
+    const Index target_variables_number = data_set.get_target_variables_number();
+    const Index samples_number = data_set.get_samples_number();
+
+    NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, target_variables_number});
+
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+
+    training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
+
+    training_strategy.set_display(false);
+
+    training_strategy.perform_training();
+
+    return correlation;
+}
+
+
+Correlation correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& x, const Tensor<type, 2>& y)
+{
+    Correlation correlation;
+
+    const Index x_rows = x.dimension(0);
+    const Index x_columns = x.dimension(1);
+    const Index y_rows = y.dimension(0);
+    const Index y_columns = y.dimension(1);
+
+    const bool x_binary = is_binary(x);
+    const bool y_binary = is_binary(y);
+
+    const Eigen::array<Index, 1> vector{{x_rows}};
+
+    if(x_columns == 1 && y_columns == 1)
+    {
+        if(!x_binary && !y_binary)
+        {
+            const Correlation linear_correlation
+                    = OpenNN::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+
+            const Correlation exponential_correlation
+                    = OpenNN::exponential_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+
+            const Correlation logarithmic_correlation
+                    = OpenNN::logarithmic_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+
+            const Correlation power_correlation
+                    = OpenNN::power_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+
+            Correlation strongest_correlation = linear_correlation;
+
+            if(abs(exponential_correlation.r) > abs(strongest_correlation.r))
+                strongest_correlation = exponential_correlation;
+
+            if(abs(logarithmic_correlation.r) > abs(strongest_correlation.r))
+                strongest_correlation = logarithmic_correlation;
+
+            if(abs(power_correlation.r) > abs(strongest_correlation.r))
+                strongest_correlation = power_correlation;
+
+            return strongest_correlation;
+        }
+        else if(!x_binary && y_binary)
+        {
+            return OpenNN::logistic_correlation_vector_vector(thread_pool_device, x.reshape(vector), y.reshape(vector));
+        }
+        else if(x_binary && !y_binary)
+        {
+            return OpenNN::logistic_correlation_vector_vector(thread_pool_device, y.reshape(vector), x.reshape(vector));
+        }
+        else if(x_binary && y_binary)
+        {
+            return OpenNN::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+        }
+    }
+    else if(x_columns != 1 && y_columns == 1)
+    {
+        return OpenNN::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
+    }
+    else if(x_columns == 1 && y_columns != 1)
+    {
+        return OpenNN::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
+    }
+    else if(x_columns != 1 && y_columns != 1)
+    {
+        return OpenNN::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
+    }
+    else
+    {
+        throw logic_error("Correlations Exception: Unknown case.");
+    }
+
+    return correlation;
+}
+
 
 
 /// Filter the missing values of two vectors
 
-pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     Index new_size = 0;
 
@@ -528,11 +538,11 @@ pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values(const Tensor<type, 
 }
 
 
-pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
+pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    Index rows_number = x.dimension(0);
-    Index x_columns_number = x.dimension(1);
-    Index y_columns_number = y.dimension(1);
+    const Index rows_number = x.dimension(0);
+    const Index x_columns_number = x.dimension(1);
+    const Index y_columns_number = y.dimension(1);
 
     Index new_rows_number = 0;
 
@@ -610,7 +620,7 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, con
             column_y(j) = x(j + i);
         }
 
-        autocorrelation(i) = linear_correlation(thread_pool_device, column_x, column_y, false).r;
+        autocorrelation(i) = linear_correlation(thread_pool_device, column_x, column_y).r;
     }
 
     return autocorrelation;
@@ -654,10 +664,29 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
             column_y(j) = y(j + i);
         }
 
-        cross_correlation[i] = linear_correlation(thread_pool_device, column_x, column_y, false).r;
+        cross_correlation[i] = linear_correlation(thread_pool_device, column_x, column_y).r;
     }
 
     return cross_correlation;
+}
+
+
+Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlations)
+{
+    const Index rows_number = correlations.dimension(0);
+    const Index columns_number = correlations.dimension(1);
+
+    Tensor<type, 2> values(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+            values(i,j) = correlations(i,j).r;
+        }
+    }
+
+    return values;
 }
 
 
