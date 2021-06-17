@@ -5191,8 +5191,9 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
 
         for(Index j = 0; j < target_columns_number; j++)
         {
-            if(columns(input_column_index).column_use != UnusedVariable
-            && abs(correlations(i,j).r) < minimum_correlation)
+            if(!isnan(correlations(i,j).r)
+            && abs(correlations(i,j).r) < minimum_correlation
+            && columns(input_column_index).column_use != UnusedVariable)
             {
                 columns(input_column_index).set_use(UnusedVariable);
 
