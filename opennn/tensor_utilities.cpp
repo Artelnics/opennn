@@ -278,12 +278,13 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
 
     if(isnan(norm(0)))
     {
-        ostringstream buffer;
+        cout << "OpenNN Warning: l2 norm of vector is not a number" << endl;
 
-        buffer << "OpenNN Exception: l2 norm of vector is not a number" << endl;
-        //       << vector;
+//        ostringstream buffer;
 
-        throw logic_error(buffer.str());
+//        buffer << "OpenNN Exception: l2 norm of vector is not a number" << endl;
+
+//        throw logic_error(buffer.str());
     }
 
     return norm(0);
@@ -502,8 +503,8 @@ Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>& x, const Tensor<ty
 
 Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    const Index rows_number = x.size();
-    const Index columns_number = x.dimension(1) + x.dimension(2);
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1) + y.dimension(1);
 
     Tensor<type, 2> data(rows_number, columns_number);
 
@@ -511,18 +512,34 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<ty
     {
         for(Index j = 0; j < x.dimension(1); j++)
         {
-            data(i, j) = x(i,j);
+            data(i,j) = x(i,j);
         }
 
         for(Index j = 0; j < y.dimension(1); j++)
         {
             data(i, x.dimension(1) + j) = y(i,j);
         }
-
-        data(i, columns_number-1) = y(i);
     }
 
     return data;
+}
+
+
+/// Returns true if any value is less or equal than a given value, and false otherwise.
+
+bool is_less_than(const Tensor<type, 1>& column, const type& value)
+{
+    const Tensor<bool, 1> if_sentence = column <= column.constant(value);
+
+    Tensor<bool, 1> sentence(column.size());
+    sentence.setConstant(true);
+
+    Tensor<bool, 1> else_sentence(column.size());
+    else_sentence.setConstant(false);
+
+    const Tensor<bool, 0> is_less = (if_sentence.select(sentence, else_sentence)).any();
+
+    return is_less(0);
 }
 
 

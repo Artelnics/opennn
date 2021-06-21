@@ -420,7 +420,6 @@ public:
    void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
    void set_input_columns_unused();
 
-
    void set_input_columns(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
 
    void set_column_use(const Index&, const VariableUse&);
@@ -482,8 +481,6 @@ public:
    // Check methods
 
    bool is_empty() const;
-
-   bool is_less_than(const Tensor<type, 1>&, const type&) const;
 
    bool is_sample_used(const Index&) const;
    bool is_sample_unused(const Index&) const;
@@ -873,7 +870,6 @@ private:
    type calculate_tree_path(const Tensor<type, 2>&, const Index&, const Index&) const;
 
    Tensor<type, 1> calculate_average_forest_paths(const Tensor<Tensor<type, 2>, 1>&, const Index&) const;
-
 
 };
 
