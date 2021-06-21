@@ -578,8 +578,8 @@ void RecurrentLayer::set_parameters_constant(const type& value)
 
 void RecurrentLayer::set_parameters_random()
 {
-    const type minimum = -0.1;
-    const type maximum =  0.1;
+    const type minimum = -0.2;
+    const type maximum =  0.2;
 
     // Biases
 

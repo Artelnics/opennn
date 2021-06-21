@@ -1918,23 +1918,19 @@ void DataSet::set_default_columns_uses()
     {
         return;
     }
+
     else if(columns_number == 1)
     {
         columns(0).set_use(UnusedVariable);
     }
+
     else
     {
         set_input();
 
         for(Index i = columns.size()-1; i >= 0; i--)
         {
-            if(columns(i).type == Constant)
-            {
-                columns(i).set_use(UnusedVariable);
-                continue;
-            }
-
-            if(columns(i).type == DateTime)
+            if(columns(i).type == Constant || columns(i).type == DateTime)
             {
                 columns(i).set_use(UnusedVariable);
                 continue;
@@ -1961,30 +1957,11 @@ void DataSet::set_default_columns_uses()
 
 void DataSet::set_default_columns_names()
 {
-    const Index size = columns.size();
+    const Index columns_number = columns.size();
 
-    if(size == 0 || size == 1)
+    for(Index i = 0; i < columns_number; i++)
     {
-        return;
-    }
-    else
-    {
-        Index input_index = 1;
-        Index target_index = 2;
-
-        for(Index i = 0; i < size; i++)
-        {
-            if(columns(i).column_use == Input)
-            {
-                columns(i).name = "input_" + to_string(input_index+1);
-                input_index++;
-            }
-            else if(columns(i).column_use == Target)
-            {
-                columns(i).name = "target_" + to_string(target_index+1);
-                target_index++;
-            }
-        }
+        columns(i).name = "column_" + to_string(1+i);
     }
 }
 
@@ -3616,24 +3593,6 @@ bool DataSet::is_empty() const
     }
 
     return false;
-}
-
-
-/// Returns true if any value is less or equal than a given value, and false otherwise.
-
-bool DataSet::is_less_than(const Tensor<type, 1>& column, const type& value) const
-{
-    const Tensor<bool, 1> if_sentence = column <= column.constant(value);
-
-    Tensor<bool, 1> sentence(column.size());
-    sentence.setConstant(true);
-
-    Tensor<bool, 1> else_sentence(column.size());
-    else_sentence.setConstant(false);
-
-    Tensor<bool, 0> is_less = (if_sentence.select(sentence, else_sentence)).any();
-
-    return is_less(0);
 }
 
 

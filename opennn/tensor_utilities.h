@@ -74,6 +74,9 @@ void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const 
 
 void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
 
+bool is_less_than(const Tensor<type, 1>&, const type&);
+
+
 Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
 Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);

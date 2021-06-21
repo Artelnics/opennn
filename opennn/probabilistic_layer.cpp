@@ -534,8 +534,8 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 
 void ProbabilisticLayer::set_parameters_random()
 {
-    const type minimum = -0.1;
-    const type maximum =  0.1;
+    const type minimum = -0.2;
+    const type maximum =  0.2;
 
     for(Index i = 0; i < biases.size(); i++)
     {

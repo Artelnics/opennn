@@ -282,7 +282,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     //neural_network.set_parameters_random();
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
-    //training_strategy.set_display(false);
+    training_strategy.set_display(false);
 
     training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
     training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
@@ -350,7 +350,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
-    //training_strategy.set_display(false);
+    training_strategy.set_display(false);
 
     training_strategy.perform_training();
 
@@ -373,77 +373,40 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice* thread_pool_device,
                                                const Tensor<type, 2>& x, const Tensor<type, 1>& y)
 {
-    cout << "HELLO" << endl;
-
-
     return OpenNN::logistic_correlation_vector_matrix(thread_pool_device, y, x);
-/*
-    Correlation correlation;
-
-    const Tensor<type, 2> data = OpenNN::assemble_matrix_vector(x, y);
-
-    DataSet data_set(data);
-    data_set.set_training();
-
-    const Index input_variables_number = data_set.get_input_variables_number();
-    const Index target_variables_number = data_set.get_target_variables_number();
-    const Index samples_number = data_set.get_samples_number();
-
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, target_variables_number});
-    static_cast<PerceptronLayer*>(neural_network.get_layers_pointers()(1))->set_activation_function(PerceptronLayer::Logistic);
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
-    training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
-
-    training_strategy.set_display(false);
-
-    training_strategy.perform_training();
-
-    // Logistic correlation
-
-    const Tensor<type, 2> inputs = data_set.get_input_data();
-    const Tensor<type, 2> targets = data_set.get_target_data();
-    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
-
-    const Eigen::array<Index, 1> vector{{targets.size()}};
-
-    correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
-
-    correlation.correlation_type = Logistic;
-
-    return correlation;
-*/
 }
 
 
 Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     Correlation correlation;
-
+/*
     const Tensor<type, 2> data = OpenNN::assemble_matrix_matrix(x, y);
+
+    Tensor<Index, 1> input_columns_indices(1);
+    for(Index i = 0; i < x.dimension(1); i++) input_columns_indices(i) = i;
+
+    Tensor<Index, 1> target_columns_indices(y.dimension(1));
+    for(Index i = 0; i < y.dimension(1); i++) target_columns_indices(i) = x.dimension(1) + i;
 
     DataSet data_set(data);
     data_set.set_training();
+
+    data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
 
     const Index input_variables_number = data_set.get_input_variables_number();
     const Index target_variables_number = data_set.get_target_variables_number();
     const Index samples_number = data_set.get_samples_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, target_variables_number});
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, 1, target_variables_number});
     static_cast<PerceptronLayer*>(neural_network.get_layers_pointers()(1))->set_activation_function(PerceptronLayer::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+    training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
 
     training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
-
-    cout << "Hello" << endl;
 
 //    training_strategy.set_display(false);
 
@@ -459,6 +422,11 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
+    correlation.correlation_type = Logistic;
+*/
+    correlation.a = 0;
+    correlation.b = 0;
+    correlation.r = 0;
     correlation.correlation_type = Logistic;
 
     return correlation;
@@ -540,7 +508,6 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device, const Tensor
 
     return correlation;
 }
-
 
 
 /// Filter the missing values of two vectors
