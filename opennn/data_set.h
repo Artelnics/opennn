@@ -86,7 +86,7 @@ public:
 
    /// Enumeration of the learning tasks.
 
-   enum ProjectType{Approximation, Classification, Forecasting, ImageApproximation, ImageClassification};
+   enum ProjectType{Approximation, Classification, Forecasting, ImageClassification};
 
    /// This enumeration represents the possible uses of an sample
    /// (training, selection, testing or unused).
@@ -894,7 +894,7 @@ struct DataSetBatch
 
     void set(const Index&, DataSet*);
 
-    void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+    void fill(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     void print() const;
 
