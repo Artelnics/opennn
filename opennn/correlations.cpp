@@ -339,10 +339,11 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     const Index input_variables_number = data_set.get_input_variables_number();
     const Index target_variables_number = data_set.get_target_variables_number();
-    const Index samples_number = data_set.get_samples_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, target_variables_number});
-    static_cast<PerceptronLayer*>(neural_network.get_layers_pointers()(1))->set_activation_function(PerceptronLayer::Logistic);
+    NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, target_variables_number});
+    static_cast<ProbabilisticLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_activation_function(ProbabilisticLayer::Logistic);
+
+    neural_network.set_parameters_random();
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
@@ -350,7 +351,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
-    training_strategy.set_display(false);
+    training_strategy.set_display(true);
 
     training_strategy.perform_training();
 

@@ -771,6 +771,19 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
     }
     else // Multiple gradient
     {
+        const Index step = neurons_number*neurons_number;
+
+        for(Index i = 0; i < samples_number; i++)
+        {
+            probabilistic_layer_back_propagation->delta_row = probabilistic_layer_back_propagation->delta.chip(i,0);
+
+            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(probabilistic_layer_forward_propagation->activations_derivatives.data() + i*step,
+                                                                        neurons_number, neurons_number);
+
+            probabilistic_layer_back_propagation->error_combinations_derivatives.chip(i,0) =
+                    probabilistic_layer_back_propagation->delta_row.contract(activations_derivatives_matrix, AT_B);
+        }
+
         probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
                 (probabilistic_layer_back_propagation->error_combinations_derivatives).sum(Eigen::array<Index, 1>({0}));
 

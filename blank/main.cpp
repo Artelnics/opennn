@@ -33,19 +33,6 @@ int main()
 
         // Write your code here
 
-        DataSet data_set("C:/irisflowers.csv", ',', true);
-
-//        cout << get_correlation_values(data_set.calculate_input_columns_correlations())<< endl;
-        cout << get_correlation_values(data_set.calculate_input_target_columns_correlations())<< endl;
-
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {4,3});
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-//        training_strategy.perform_training();
-
-
-
         cout << "Good bye!" << endl;
 
         return 0;

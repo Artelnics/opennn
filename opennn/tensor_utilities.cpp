@@ -278,7 +278,7 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
 
     if(isnan(norm(0)))
     {
-        cout << "OpenNN Warning: l2 norm of vector is not a number" << endl;
+        cout << "OpenNN Warning: l2 norm of vector is NaN" << endl;
 
 //        ostringstream buffer;
 
