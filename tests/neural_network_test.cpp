@@ -173,11 +173,11 @@ void NeuralNetworkTest::test_add_layer()
 
    // CONVOLUTIONAL
 
-   neural_network.set();
+//   neural_network.set();
 
-   neural_network.add_layer(convolutional_layer_pointer);
-   assert_true(neural_network.get_layers_number() == 1, LOG);
-   assert_true(neural_network.get_layer_pointer(0)->get_type() == Layer::Convolutional, LOG);
+//   neural_network.add_layer(convolutional_layer_pointer);
+//   assert_true(neural_network.get_layers_number() == 1, LOG);
+//   assert_true(neural_network.get_layer_pointer(0)->get_type() == Layer::Convolutional, LOG);
 
    // PERCEPTRON
 
@@ -190,11 +190,11 @@ void NeuralNetworkTest::test_add_layer()
 
    // POOLING
 
-   neural_network.set();
+//   neural_network.set();
 
-   neural_network.add_layer(pooling_layer_pointer);
-   assert_true(neural_network.get_layers_number() == 1, LOG);
-   assert_true(neural_network.get_layer_pointer(0)->get_type() == Layer::Pooling, LOG);
+//   neural_network.add_layer(pooling_layer_pointer);
+//   assert_true(neural_network.get_layers_number() == 1, LOG);
+//   assert_true(neural_network.get_layer_pointer(0)->get_type() == Layer::Pooling, LOG);
 
    // PROBABILISTIC
 
@@ -1436,13 +1436,14 @@ void NeuralNetworkTest::test_save()
 void NeuralNetworkTest::test_load()
 {
    cout << "test_load\n";
-
+/*
    const string file_name = "../data/neural_network.xml";
 
    // Empty neural network
 
    neural_network.save(file_name);
    neural_network.load(file_name);
+*/
 }
 
 

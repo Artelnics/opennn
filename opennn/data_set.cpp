@@ -9221,23 +9221,10 @@ Tensor<type, 1> DataSet::calculate_average_forest_paths(const Tensor<Tensor<type
 }
 
 
-Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_trees, const Index& subs_set_samples,
+Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_trees,
+                                                              const Index& subs_set_samples,
                                                               const type& contamination) const
 {
-    /*
-    if(contamination < 0.0 && contamination > 0.5)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Index, 1> DataSet::calculate_LOF_outliers(const Index&, const type&) method.\n"
-               << "Outlier contamination(" << contamination
-               << ") should be a value between 0.0 and 0.5\n";
-
-        throw logic_error(buffer.str());
-    }
-    */
-
     const Index samples_number = get_used_samples_number();
     const Index fixed_subs_set_samples = min(samples_number, subs_set_samples);
     const Index max_depth = ceil(log2(fixed_subs_set_samples))*2;
@@ -9247,8 +9234,8 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
 
     Tensor<Index, 1> outlier_indexes;
 
-    (contamination > 0) ? outlier_indexes = select_outliers_via_contamination(average_paths, contamination, false)
-                        : outlier_indexes = select_outliers_via_standard_deviation(average_paths, 2.0, false);
+    contamination > 0 ? outlier_indexes = select_outliers_via_contamination(average_paths, contamination, false)
+                      : outlier_indexes = select_outliers_via_standard_deviation(average_paths, 2.0, false);
 
     return outlier_indexes;
 }
@@ -9402,9 +9389,11 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     for(Index i = 0; i < input_target_columns_number; i++)
     {
         if(i < input_columns_number)
-        {
-            Index column_index = input_columns_indices(i);
-            ColumnType input_column_type = time_series_columns(column_index).type;
+        {            
+            const Index column_index = input_columns_indices(i);
+
+            const ColumnType input_column_type = time_series_columns(column_index).type;
+
             if(input_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
@@ -9412,8 +9401,10 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
         }
         else
         {
-            Index column_index = target_columns_indices(counter);
+            const Index column_index = target_columns_indices(counter);
+
             ColumnType target_column_type = time_series_columns(column_index).type;
+
             if(target_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
@@ -9774,21 +9765,21 @@ void DataSet::scrub_missing_values()
     switch(missing_values_method)
     {
     case Unuse:
-    {
+
         impute_missing_values_unuse();
-    }
+
         break;
 
     case Mean:
-    {
+
         impute_missing_values_mean();
-    }
+
         break;
 
     case Median:
-    {
+
         impute_missing_values_median();
-    }
+
         break;
     }
 }
@@ -10460,7 +10451,6 @@ void DataSet::read_csv_3_complete()
             }
             else if(columns(column_index).type == Numeric)
             {
-
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
                     data(sample_index, variable_index) = static_cast<type>(NAN);

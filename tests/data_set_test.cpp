@@ -820,29 +820,6 @@ void DataSetTest::test_unuse_local_outlier_factor_outliers()
 }
 
 
-void DataSetTest::test_is_constant_numeric()
-{
-    cout << "test_is_constant_numeric\n";
-
-    data_set.set_has_columns_names(false);
-
-    data_set.set_data_file_name("../../datasets/constant_variables.csv");
-
-    data_set.set_separator(DataSet::Comma);
-
-    data_set.read_csv();
-
-    assert_true(data_set.get_column_type(0) == 0, LOG);
-    assert_true(data_set.get_column_type(1) == 4, LOG);
-    assert_true(data_set.get_column_type(2) == 1, LOG);
-    assert_true(data_set.get_column_type(3) == 4, LOG);
-    assert_true(data_set.get_column_type(4) == 1, LOG);
-    assert_true(data_set.get_column_type(5) == 4, LOG);
-    assert_true(data_set.get_column_type(6) == 0, LOG);
-
-}
-
-
 void DataSetTest::test_read_csv() 
 {
    cout << "test_read_csv\n";
@@ -2215,10 +2192,6 @@ void DataSetTest::run_test_case()
    test_set_time_index();
    test_save_time_series_data_binary();
    test_has_time_columns();
-
-   // Test if constant variables
-
-   test_is_constant_numeric();
 
    // Test print data preview
 
