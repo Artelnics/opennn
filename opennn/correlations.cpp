@@ -351,7 +351,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
-    training_strategy.set_display(true);
+    training_strategy.set_display(false);
 
     training_strategy.perform_training();
 

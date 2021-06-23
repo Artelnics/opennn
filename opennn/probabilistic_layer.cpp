@@ -564,9 +564,9 @@ void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, co
 
 
 void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
-                            const Tensor<type, 2>& biases,
-                            const Tensor<type, 2>& synaptic_weights,
-                            Tensor<type, 2>& combinations) const
+                                                const Tensor<type, 2>& biases,
+                                                const Tensor<type, 2>& synaptic_weights,
+                                                Tensor<type, 2>& combinations) const
 {
     const Index batch_samples_number = inputs.dimension(0);
     const Index biases_number = get_neurons_number();
@@ -584,12 +584,12 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
-     #ifdef OPENNN_DEBUG
+#ifdef OPENNN_DEBUG
 
-     const Index dimensions_number = combinations.rank();
+    const Index dimensions_number = combinations.rank();
 
-     if(dimensions_number != 2)
-     {
+    if(dimensions_number != 2)
+    {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
@@ -597,14 +597,14 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
                << "Dimensions of combinations (" << dimensions_number << ") must be 2.\n";
 
         throw logic_error(buffer.str());
-     }
+    }
 
-     const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-     const Index combinations_columns_number = combinations.dimension(1);
+    const Index combinations_columns_number = combinations.dimension(1);
 
-     if(combinations_columns_number != neurons_number)
-     {
+    if(combinations_columns_number != neurons_number)
+    {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
@@ -612,43 +612,43 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
                << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
         throw logic_error(buffer.str());
-     }
+    }
 
-     #endif
+#endif
 
-     switch(activation_function)
-     {
-         case Binary: binary(combinations, activations); return;
+    switch(activation_function)
+    {
+    case Binary: binary(combinations, activations); return;
 
-         case Logistic: logistic(combinations, activations); return;
+    case Logistic: logistic(combinations, activations); return;
 
-         case Competitive: competitive(combinations, activations); return;
+    case Competitive: competitive(combinations, activations); return;
 
-         case Softmax: softmax(combinations, activations); return;
-     }
+    case Softmax: softmax(combinations, activations); return;
+    }
 
-     ostringstream buffer;
+    ostringstream buffer;
 
-     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-            << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-            << "Unknown probabilistic method.\n";
+    buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+           << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+           << "Unknown probabilistic method.\n";
 
-     throw logic_error(buffer.str());
+    throw logic_error(buffer.str());
 }
 
 
 void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations,
-                                       Tensor<type, 2>& activations,
-                                       Tensor<type, 3>& activations_derivatives) const
+                                                           Tensor<type, 2>& activations,
+                                                           Tensor<type, 3>& activations_derivatives) const
 {
-     #ifdef OPENNN_DEBUG
+#ifdef OPENNN_DEBUG
 
-     const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-     const Index combinations_columns_number = combinations.dimension(1);
+    const Index combinations_columns_number = combinations.dimension(1);
 
-     if(combinations_columns_number != neurons_number)
-     {
+    if(combinations_columns_number != neurons_number)
+    {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
@@ -657,17 +657,17 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
                << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
         throw logic_error(buffer.str());
-     }
+    }
 
-     #endif
+#endif
 
-     switch(activation_function)
-     {
-         case Logistic: logistic_derivatives(combinations, activations, activations_derivatives); return;
+    switch(activation_function)
+    {
+    case Logistic: logistic_derivatives(combinations, activations, activations_derivatives); return;
 
-         case Softmax: softmax_derivatives(combinations, activations, activations_derivatives); return;
+    case Softmax: softmax_derivatives(combinations, activations, activations_derivatives); return;
 
-         default: return;
+    default: return;
     }
 }
 
@@ -771,24 +771,37 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
     }
     else // Multiple gradient
     {
-        const Index step = neurons_number*neurons_number;
-
-        for(Index i = 0; i < samples_number; i++)
+        if(activation_function == Softmax)
         {
-            probabilistic_layer_back_propagation->delta_row = probabilistic_layer_back_propagation->delta.chip(i,0);
+            const Index step = neurons_number*neurons_number;
 
-            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(probabilistic_layer_forward_propagation->activations_derivatives.data() + i*step,
-                                                                        neurons_number, neurons_number);
+            for(Index i = 0; i < samples_number; i++)
+            {
+                probabilistic_layer_back_propagation->delta_row = probabilistic_layer_back_propagation->delta.chip(i,0);
 
-            probabilistic_layer_back_propagation->error_combinations_derivatives.chip(i,0) =
-                    probabilistic_layer_back_propagation->delta_row.contract(activations_derivatives_matrix, AT_B);
+                TensorMap< Tensor<type, 2> > activations_derivatives_matrix(probabilistic_layer_forward_propagation->activations_derivatives.data() + i*step,
+                                                                            neurons_number, neurons_number);
+
+                probabilistic_layer_back_propagation->error_combinations_derivatives.chip(i,0) =
+                        probabilistic_layer_back_propagation->delta_row.contract(activations_derivatives_matrix, AT_B);
+            }
+
+            probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
+                    (probabilistic_layer_back_propagation->error_combinations_derivatives).sum(Eigen::array<Index, 1>({0}));
+
+            probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
+                    inputs.contract(probabilistic_layer_back_propagation->error_combinations_derivatives, AT_B);
         }
+        else
+        {
+            TensorMap< Tensor<type, 2> > activations_derivatives(probabilistic_layer_forward_propagation->activations_derivatives.data(), samples_number, neurons_number);
 
-        probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
-                (probabilistic_layer_back_propagation->error_combinations_derivatives).sum(Eigen::array<Index, 1>({0}));
+            probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
+                    (probabilistic_layer_back_propagation->delta*activations_derivatives).sum(Eigen::array<Index, 1>({0}));
 
-        probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
-                inputs.contract(probabilistic_layer_back_propagation->error_combinations_derivatives, AT_B);
+            probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
+                    inputs.contract((probabilistic_layer_back_propagation->delta*activations_derivatives), AT_B);
+        }
     }
 }
 
@@ -828,7 +841,31 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
 
     probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.setZero();
 
-    if(neurons_number == 1) // Binary
+    if(activation_function == Softmax)
+    {
+        Index parameter_index = 0;
+
+        for(Index sample = 0; sample < samples_number; sample++)
+        {
+            parameter_index = 0;
+
+            for(Index neuron = 0; neuron < neurons_number; neuron++)
+            {
+                for(Index input = 0; input <  inputs_number; input++)
+                {
+                    probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
+                            probabilistic_layer_back_propagation_lm->error_combinations_derivatives(sample, neuron) *
+                            inputs(sample, input);
+
+                    parameter_index++;
+                }
+
+                probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neuron) =
+                        probabilistic_layer_back_propagation_lm->error_combinations_derivatives(sample, neuron);
+            }
+        }
+    }
+    else
     {
         Index parameter_index = 0;
 
@@ -851,30 +888,6 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
                 probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neuron) =
                         probabilistic_layer_back_propagation_lm->delta(sample, neuron) *
                         probabilistic_layer_forward_propagation->activations_derivatives(sample, neuron, 0);
-            }
-        }
-    }
-    else // Multiple
-    {
-        Index parameter_index = 0;
-
-        for(Index sample = 0; sample < samples_number; sample++)
-        {
-            parameter_index = 0;
-
-            for(Index neuron = 0; neuron < neurons_number; neuron++)
-            {
-                for(Index input = 0; input <  inputs_number; input++)
-                {
-                    probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
-                            probabilistic_layer_back_propagation_lm->error_combinations_derivatives(sample, neuron) *
-                            inputs(sample, input);
-
-                    parameter_index++;
-                }
-
-                probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neuron) =
-                        probabilistic_layer_back_propagation_lm->error_combinations_derivatives(sample, neuron);
             }
         }
     }
@@ -1136,7 +1149,7 @@ string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inpu
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
 string ProbabilisticLayer::write_logistic_expression(const Tensor<string, 1>& inputs_names,
-        const Tensor<string, 1>& outputs_names) const
+                                                     const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
@@ -1186,7 +1199,7 @@ string ProbabilisticLayer::write_softmax_expression(const Tensor<string, 1>& inp
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
 string ProbabilisticLayer::write_no_probabilistic_expression(const Tensor<string, 1>& inputs_names,
-        const Tensor<string, 1>& outputs_names) const
+                                                             const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
@@ -1213,7 +1226,7 @@ string ProbabilisticLayer::write_combinations_c() const
 
         for(Index j = 0; j < inputs_number; j++)
         {
-             buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
+            buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
         }
 
         buffer << ";" << endl;
@@ -1284,26 +1297,26 @@ string ProbabilisticLayer::write_combinations_python() const
 {
     ostringstream buffer;
 
-     const Index inputs_number = get_inputs_number();
-     const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 
-     buffer << "\t\tcombinations = [None] * "<<neurons_number<<"\n" << endl;
+    buffer << "\t\tcombinations = [None] * "<<neurons_number<<"\n" << endl;
 
-     for(Index i = 0; i < neurons_number; i++)
-     {
-         buffer << "\t\tcombinations[" << i << "] = " << biases(i);
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\tcombinations[" << i << "] = " << biases(i);
 
-         for(Index j = 0; j < inputs_number; j++)
-         {
-              buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
-         }
+        for(Index j = 0; j < inputs_number; j++)
+        {
+            buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
+        }
 
-         buffer << " " << endl;
-     }
+        buffer << " " << endl;
+    }
 
-     buffer << "\t\t" << endl;
+    buffer << "\t\t" << endl;
 
-     return buffer.str();
+    return buffer.str();
 }
 
 
@@ -1388,7 +1401,7 @@ string ProbabilisticLayer::write_combinations(const Tensor<string, 1>& inputs_na
 
         for(Index j = 0; j < inputs_number; j++)
         {
-             buffer << " +" << synaptic_weights(j, i) << "*" << inputs_names(j) << "";
+            buffer << " +" << synaptic_weights(j, i) << "*" << inputs_names(j) << "";
         }
 
         buffer << " " << endl;
@@ -1411,15 +1424,15 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& outputs_na
         switch(activation_function)
         {
         case Binary:
-            {
-                buffer << "\tif" << "probabilistic_layer_combinations_" << to_string(i) << " < 0.5, " << outputs_names(i) << "= 0.0. Else " << outputs_names(i) << " = 1.0\n";
-            }
+        {
+            buffer << "\tif" << "probabilistic_layer_combinations_" << to_string(i) << " < 0.5, " << outputs_names(i) << "= 0.0. Else " << outputs_names(i) << " = 1.0\n";
+        }
             break;
 
         case Logistic:
-            {
-                buffer <<  outputs_names(i) << " = 1.0/(1.0 + exp(-" <<  "probabilistic_layer_combinations_" << to_string(i) << ");\n";
-            }
+        {
+            buffer <<  outputs_names(i) << " = 1.0/(1.0 + exp(-" <<  "probabilistic_layer_combinations_" << to_string(i) << ");\n";
+        }
             break;
 
         case Competitive:

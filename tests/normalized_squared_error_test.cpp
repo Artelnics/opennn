@@ -186,6 +186,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
     Tensor<type, 1> error_gradient;
     Tensor<type, 1> numerical_error_gradient;
+
+    normalized_squared_error.set_regularization_method(NormalizedSquaredError::RegularizationMethod::NoRegularization);
+
 /*
     // Trivial test
 
@@ -313,7 +316,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
         assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
     }
-
+*/
     // Test multiple probabilistic
 
     {
@@ -335,7 +338,11 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
         neural_network.set(NeuralNetwork::Classification, {inputs_number, outputs_number});
 
+        neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+
         neural_network.set_parameters_random();
+
+        Tensor<type, 1> parameters = neural_network.get_parameters();
 
         normalized_squared_error.set_normalization_coefficient();
 
@@ -352,11 +359,14 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
         numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
+        cout << "probabilistic Error gradient: " << error_gradient << endl;
+        cout << "numerical error gradient: " << numerical_error_gradient << endl;
+
         assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
     }
 
     // Test perceptron and multiple probabilistic
-
+/*
     neural_network.set();
 
     samples_number = 3;
@@ -398,7 +408,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
     assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
 
     neural_network.set();
-    /*
+
    // Test lstm
 
        samples_number = 4;
@@ -816,7 +826,7 @@ void NormalizedSquaredErrorTest::run_test_case()
     cout << "Running normalized squared error test case...\n";
 
     // Constructor and destructor methods
-
+/*
    test_constructor();
 
    test_calculate_normalization_coefficient();
@@ -824,7 +834,7 @@ void NormalizedSquaredErrorTest::run_test_case()
    // Error methods
 
    test_calculate_error();
-
+*/
     test_calculate_error_gradient();
 
     cout << "End of normalized squared error test case.\n\n";
