@@ -408,66 +408,11 @@ void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
 }
 
 
-void LossIndex::calculate_squared_errors_lm(const DataSetBatch& batch,
-                                            const NeuralNetworkForwardPropagation& forward_propagation,
+void LossIndex::calculate_squared_errors_lm(const DataSetBatch& ,
+                                            const NeuralNetworkForwardPropagation& ,
                                             LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
-
-    const Layer* output_layer_pointer = output_layer_forward_propagation->layer_pointer;   
-
-    const Tensor<type, 2>& targets = batch.targets_2d;
-
-    switch(output_layer_pointer->get_type())
-    {
-    case Layer::Perceptron:
-    {
-        PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-                = static_cast<PerceptronLayerForwardPropagation*>(output_layer_forward_propagation);
-
-        const Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->activations;
-
-        loss_index_back_propagation_lm.squared_errors.device(*thread_pool_device) = (outputs - targets).square().sum(rows_sum);
-    }
-        break;
-
-    case Layer::Probabilistic:
-    {
-        ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-                = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
-
-        const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
-
-        loss_index_back_propagation_lm.squared_errors.device(*thread_pool_device) = (outputs - targets).square().sum(rows_sum);
-    }
-        break;
-
-    case Layer::Recurrent:
-    {
-        RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
-                = static_cast<RecurrentLayerForwardPropagation*>(output_layer_forward_propagation);
-
-        const Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->activations;
-
-        loss_index_back_propagation_lm.squared_errors.device(*thread_pool_device) = (outputs - targets).square().sum(rows_sum);
-    }
-        break;
-
-    case Layer::LongShortTermMemory:
-    {
-        LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
-                = static_cast<LongShortTermMemoryLayerForwardPropagation*>(output_layer_forward_propagation);
-
-        const Tensor<type, 2>& outputs = long_short_term_memory_layer_forward_propagation->activations;
-
-        loss_index_back_propagation_lm.squared_errors.device(*thread_pool_device) = (outputs - targets).square().sum(rows_sum);
-    }
-        break;
-
-    default: break;
-    }
+    loss_index_back_propagation_lm.squared_errors.device(*thread_pool_device) = loss_index_back_propagation_lm.errors.square().sum(rows_sum);
 }
 
 
@@ -1154,6 +1099,7 @@ Tensor<type, 2> LossIndex::calculate_jacobian_numerical_differentiation()
     back_propagation_lm.set(samples_number, this);
 
     neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
+    calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
     calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
 
     type h;
@@ -1172,12 +1118,14 @@ Tensor<type, 2> LossIndex::calculate_jacobian_numerical_differentiation()
 
         parameters_backward(j) -= h;
         neural_network_pointer->forward_propagate(batch, parameters_backward, forward_propagation);
+        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
         calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
         error_terms_backward = back_propagation_lm.squared_errors;
         parameters_backward(j) += h;
 
         parameters_forward(j) += h;
         neural_network_pointer->forward_propagate(batch, parameters_forward, forward_propagation);
+        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
         calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
         error_terms_forward = back_propagation_lm.squared_errors;
         parameters_forward(j) -= h;

@@ -497,9 +497,13 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             neural_network_pointer->forward_propagate(selection_batch,
                                                       selection_forward_propagation);
 
+            loss_index_pointer->calculate_errors_lm(selection_batch,
+                                                    selection_forward_propagation,
+                                                    selection_back_propagation_lm);
+
             loss_index_pointer->calculate_squared_errors_lm(selection_batch,
-                                                         selection_forward_propagation,
-                                                         selection_back_propagation_lm);
+                                                            selection_forward_propagation,
+                                                            selection_back_propagation_lm);
 
             loss_index_pointer->calculate_error_lm(selection_batch,
                                                    selection_forward_propagation,
@@ -637,6 +641,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
+        loss_index_pointer->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
         loss_index_pointer->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
         loss_index_pointer->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
