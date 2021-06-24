@@ -833,12 +833,22 @@ void DataSet::transform_time_series_columns()
         else
         {
             new_columns(new_column_index).name = columns(column_index).name + "_ahead_" + to_string(ahead_index);
-            new_columns(new_column_index).set_use(Target);
 
             new_columns(new_column_index).type = columns(column_index).type;
             new_columns(new_column_index).categories = columns(column_index).categories;
-            new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
-            new_columns(new_column_index).categories_uses.setConstant(Target);
+
+            if(new_columns(new_column_index).type == Constant)
+            {
+                new_columns(new_column_index).set_use(UnusedVariable);
+                new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
+                new_columns(new_column_index).categories_uses.setConstant(UnusedVariable);
+            }
+            else
+            {
+                new_columns(new_column_index).set_use(Target);
+                new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
+                new_columns(new_column_index).categories_uses.setConstant(Target);
+            }
 
             new_column_index++;
         }
@@ -7965,6 +7975,8 @@ void DataSet::transform_time_series()
     transform_time_series_columns();
 
     split_samples_sequential();
+
+    unuse_constant_columns();
 }
 
 
