@@ -275,11 +275,9 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     data_set.set_columns_scalers(MinimumMaximum);
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
+    NeuralNetwork neural_network(NeuralNetwork::Classification, {1,1});
 
-    static_cast<PerceptronLayer*>(neural_network.get_layers_pointers()(1))->set_activation_function(PerceptronLayer::Logistic);
-
-    //neural_network.set_parameters_random();
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
@@ -288,9 +286,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
     training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
-
-//    training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_minimum_loss_decrease(-1);
-//    training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_maximum_epochs_number(1000);
 
     training_strategy.perform_training();
 
@@ -341,9 +336,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Index target_variables_number = data_set.get_target_variables_number();
 
     NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, target_variables_number});
-    static_cast<ProbabilisticLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_activation_function(ProbabilisticLayer::Logistic);
-
-    neural_network.set_parameters_random();
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
@@ -381,35 +374,34 @@ Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice* thread_po
 Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     Correlation correlation;
-/*
+
     const Tensor<type, 2> data = OpenNN::assemble_matrix_matrix(x, y);
 
     Tensor<Index, 1> input_columns_indices(1);
-    for(Index i = 0; i < x.dimension(1); i++) input_columns_indices(i) = i;
+    input_columns_indices(0) = 0;
 
     Tensor<Index, 1> target_columns_indices(y.dimension(1));
-    for(Index i = 0; i < y.dimension(1); i++) target_columns_indices(i) = x.dimension(1) + i;
+    for(Index i = 0; i < y.dimension(1); i++) target_columns_indices(i) = 1+i;
 
     DataSet data_set(data);
-    data_set.set_training();
 
     data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
 
+    data_set.set_training();
+
     const Index input_variables_number = data_set.get_input_variables_number();
     const Index target_variables_number = data_set.get_target_variables_number();
-    const Index samples_number = data_set.get_samples_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, 1, target_variables_number});
-    static_cast<PerceptronLayer*>(neural_network.get_layers_pointers()(1))->set_activation_function(PerceptronLayer::Logistic);
+    NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, target_variables_number});
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-
     training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-//    training_strategy.set_display(false);
+    training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+
+    training_strategy.set_display(false);
 
     training_strategy.perform_training();
 
@@ -424,11 +416,6 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     correlation.correlation_type = Logistic;
-*/
-    correlation.a = 0;
-    correlation.b = 0;
-    correlation.r = 0;
-    correlation.correlation_type = Logistic;
 
     return correlation;
 }
@@ -440,7 +427,6 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device, const Tensor
 
     const Index x_rows = x.dimension(0);
     const Index x_columns = x.dimension(1);
-    const Index y_rows = y.dimension(0);
     const Index y_columns = y.dimension(1);
 
     const bool x_binary = is_binary(x);
