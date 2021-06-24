@@ -189,7 +189,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
     normalized_squared_error.set_regularization_method(NormalizedSquaredError::RegularizationMethod::NoRegularization);
 
-/*
+    /*
     // Trivial test
 
     {
@@ -316,7 +316,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
         assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
     }
-*/
+
     // Test multiple probabilistic
 
     {
@@ -366,7 +366,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
     }
 
     // Test perceptron and multiple probabilistic
-/*
+
     neural_network.set();
 
     samples_number = 3;
@@ -402,8 +402,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
     error_gradient = back_propagation.gradient;
 
     numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
-
-
 
     assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
 
@@ -667,7 +665,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        neural_network.forward_propagate(batch, forward_propagation);
        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation_lm);
+       normalized_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
@@ -709,7 +707,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
        back_propagation_lm.set(samples_number, &normalized_squared_error);
-       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation_lm);
+       normalized_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
@@ -740,6 +738,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
        neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
+       neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
        neural_network.set_parameters_random();
 
@@ -752,7 +751,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        neural_network.forward_propagate(batch, forward_propagation);
        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-       normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation_lm);
+       normalized_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
@@ -826,7 +825,7 @@ void NormalizedSquaredErrorTest::run_test_case()
     cout << "Running normalized squared error test case...\n";
 
     // Constructor and destructor methods
-/*
+    /*
    test_constructor();
 
    test_calculate_normalization_coefficient();

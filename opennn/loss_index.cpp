@@ -412,7 +412,7 @@ void LossIndex::calculate_squared_errors_lm(const DataSetBatch& ,
                                             const NeuralNetworkForwardPropagation& ,
                                             LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-    loss_index_back_propagation_lm.squared_errors.device(*thread_pool_device) = loss_index_back_propagation_lm.errors.square().sum(rows_sum);
+    loss_index_back_propagation_lm.squared_errors.device(*thread_pool_device) = loss_index_back_propagation_lm.errors.square().sum(rows_sum).sqrt();
 }
 
 
@@ -480,6 +480,9 @@ void LossIndex::back_propagate_lm(const DataSetBatch& batch,
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
+        cout << "regularization" << endl;
+        system("pause");
+
         const type regularization = calculate_regularization(loss_index_back_propagation_lm.parameters);
 
         loss_index_back_propagation_lm.loss += regularization_weight*regularization;

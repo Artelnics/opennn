@@ -70,8 +70,7 @@ void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
-//    sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
-    sum_squared_error.device(*thread_pool_device) = back_propagation.squared_errors.sum();
+    sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
     const type coefficient = static_cast<type>(batch_samples_number);
 
