@@ -244,7 +244,7 @@ void WeightedSquaredError::calculate_error_lm(const DataSetBatch& batch,
                                               LossIndexBackPropagationLM &back_propagation) const
 {
     Tensor<type, 0> error;
-    error.device(*thread_pool_device) = back_propagation.squared_errors.contract(back_propagation.squared_errors, AT_B);
+    error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();

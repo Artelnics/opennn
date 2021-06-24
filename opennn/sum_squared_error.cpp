@@ -57,7 +57,7 @@ void SumSquaredError::calculate_error_lm(const DataSetBatch&,
 {
     Tensor<type, 0> sum_squared_error;
 
-    sum_squared_error.device(*thread_pool_device) = back_propagation.squared_errors.sum();
+    sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
 
     back_propagation.error = sum_squared_error(0);
 }
@@ -209,7 +209,7 @@ void SumSquaredError::calculate_error_hessian_lm(const DataSetBatch&,
 
      #endif
 
-     const type coefficient = (static_cast<type>(2.0));
+     const type coefficient = static_cast<type>(2.0);
 
      loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
              = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);

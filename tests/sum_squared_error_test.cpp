@@ -352,12 +352,20 @@ void SumSquaredErrorTest::test_back_propagate_lm_approximation_random()
 {
     cout << "test_back_propagate_lm_approximation_random\n";
 
+    sum_squared_error.set_regularization_method(SumSquaredError::RegularizationMethod::NoRegularization);
+
     // Test
 
-    samples_number = 1 + rand()%10;
-    inputs_number = 1 + rand()%10;
-    outputs_number = 1 + rand()%10;
-    neurons_number = 1 + rand()%10;
+//    samples_number = 1 + rand()%10;
+//    inputs_number = 1 + rand()%10;
+//    outputs_number = 1 + rand()%10;
+//    neurons_number = 1 + rand()%10;
+
+    samples_number = 3;
+    inputs_number = 3;
+    outputs_number = 4;
+    neurons_number = 2;
+
 
     data_set.set(samples_number, inputs_number, outputs_number);
 
@@ -391,16 +399,13 @@ void SumSquaredErrorTest::test_back_propagate_lm_approximation_random()
 
     assert_true(back_propagation_lm.error >= 0, LOG);
 
+    assert_true(abs(back_propagation.error-back_propagation_lm.error) < 1.0e-4, LOG);
+
     assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, 1.0e-2), LOG);
 
     jacobian_numerical_differentiation = sum_squared_error.calculate_jacobian_numerical_differentiation();
 
-//    cout << back_propagation.error << endl;
-//    cout << back_propagation_lm.error << endl;
-
-    cout << back_propagation_lm.squared_errors_jacobian.sum() << endl;
-    cout << jacobian_numerical_differentiation.sum() << endl;
-    system("pause");
+    assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, 1.0e-2), LOG);
 }
 
 
@@ -409,7 +414,7 @@ void SumSquaredErrorTest::run_test_case()
    cout << "Running sum squared error test case...\n";
 
    // Constructor and destructor methods
-
+/*
    test_constructor();
 
    test_back_propagate_approximation_zero();
@@ -420,7 +425,7 @@ void SumSquaredErrorTest::run_test_case()
 
    test_back_propagate_forecasting_zero();
    test_back_propagate_forecasting_random();
-
+*/
    test_back_propagate_lm_approximation_random();
 
 /*
