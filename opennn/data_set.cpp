@@ -4269,7 +4269,7 @@ Tensor<type, 2> DataSet::get_time_series_column_data(const Index& column_index) 
 /// @param column_index Index of the column.
 /// @param rows_indices Rows of the indices.
 
-Tensor<type, 2> DataSet::get_column_data(const Index& column_index, Tensor<Index, 1>& rows_indices) const
+Tensor<type, 2> DataSet::get_column_data(const Index& column_index, const Tensor<Index, 1>& rows_indices) const
 {
     return get_subtensor_data(rows_indices, get_variable_indices(column_index));
 }
@@ -5853,19 +5853,21 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
     const Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
 
+    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
+
     Tensor<Correlation, 2> correlations(input_columns_number, target_columns_number);
 
     for(Index i = 0; i < input_columns_number; i++)
     {
         const Index input_index = input_columns_indices(i);
 
-        const Tensor<type, 2> input_column_data = get_column_data(input_index);
+        const Tensor<type, 2> input_column_data = get_column_data(input_index, used_samples_indices);
 
         for(Index j = 0; j < target_columns_number; j++)
         {
             const Index target_index = target_columns_indices(j);
 
-            const Tensor<type, 2> target_column_data = get_column_data(target_index);
+            const Tensor<type, 2> target_column_data = get_column_data(target_index, used_samples_indices);
 
             correlations(i,j) = OpenNN::correlation(thread_pool_device, input_column_data, target_column_data);
 
