@@ -280,7 +280,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
-    training_strategy.set_display(true);
+    training_strategy.set_display(false);
     training_strategy.set_display_period(1);
 
     training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
