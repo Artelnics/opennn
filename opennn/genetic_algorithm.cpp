@@ -263,7 +263,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 
 #endif
 
-    const Index new_genes_number = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer()->get_inputs_number();
+    const Index new_genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_columns_number();
 
     population.resize(new_individuals_number, new_genes_number);
 
