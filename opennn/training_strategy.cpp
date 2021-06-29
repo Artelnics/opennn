@@ -63,6 +63,14 @@ TrainingStrategy::~TrainingStrategy()
 }
 
 
+/// Returns a pointer to the DataSet class.
+
+DataSet* TrainingStrategy::get_data_set_pointer()
+{
+    return data_set_pointer;
+}
+
+
 /// Returns a pointer to the NeuralNetwork class.
 
 NeuralNetwork* TrainingStrategy::get_neural_network_pointer() const

@@ -480,9 +480,6 @@ void LossIndex::back_propagate_lm(const DataSetBatch& batch,
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        cout << "regularization" << endl;
-        system("pause");
-
         const type regularization = calculate_regularization(loss_index_back_propagation_lm.parameters);
 
         loss_index_back_propagation_lm.loss += regularization_weight*regularization;
