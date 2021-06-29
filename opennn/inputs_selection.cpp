@@ -156,7 +156,7 @@ void InputsSelection::set_default()
     maximum_correlation = 1.0;
     minimum_correlation = 0;
 
-    maximum_time = 3600.0;
+    maximum_time = 36000.0;
 }
 
 
