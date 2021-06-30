@@ -267,6 +267,8 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 
     population.resize(new_individuals_number, new_genes_number);
 
+    parameters.resize(new_individuals_number);
+
     training_errors.resize(new_individuals_number);
     selection_errors.resize(new_individuals_number);
 
