@@ -427,6 +427,9 @@ void GeneticAlgorithm::evaluate_population()
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
+    cout << "Population: " << endl << population << endl;
+    system("pause");
+
     for(Index i = 0; i < individuals_number; i++)
     {
         individual = population.chip(i, 0);
@@ -448,17 +451,35 @@ void GeneticAlgorithm::evaluate_population()
             }
         }
 
+        cout << "before set_input_target_columns" << endl;
+
+        cout << "individual: " << individual << endl;
+
+        cout << "original input columns indices: " << original_input_columns_indices << endl;
+
         data_set_pointer->set_input_target_columns(input_columns_indices, original_target_columns_indices);
+
+        cout << "set_input_target_columns" << endl;
 
         inputs_names = data_set_pointer->get_input_variables_names();
 
+        cout << "get_input_variables_names" << endl;
+
         neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+
+        cout << "set_inputs_number" << endl;
 
         neural_network_pointer->set_inputs_names(inputs_names);
 
+        cout << "set_inputs_names" << endl;
+
         neural_network_pointer->set_parameters_random();
 
+        cout << "set_parameters_random" << endl;
+
         training_results = training_strategy_pointer->perform_training();
+
+        cout << "perform_training" << endl;
 
         // Set stuff
 
@@ -563,8 +584,8 @@ void GeneticAlgorithm::perform_selection()
         for(Index i = 1; i < individuals_number; i++)
         {
             if(cumulative_fitness(i-1) < pointer
-            && pointer < cumulative_fitness(i)
-            && !selection(i))
+                    && pointer < cumulative_fitness(i)
+                    && !selection(i))
             {
                 selection(i) = true;
                 selection_count++;
@@ -763,7 +784,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     initialize_population();
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
-    {        
+    {
         if(display) cout << "Generation: " << epoch + 1 << endl;
 
         evaluate_population();
