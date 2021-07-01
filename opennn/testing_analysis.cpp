@@ -1438,7 +1438,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         target = targets(i,0);
         output = outputs(i,0);
 
-        if(target >= decision_threshold && output >= decision_threshold)
+        if(target > decision_threshold && output > decision_threshold)
         {
             true_positive++;
         }
@@ -1446,7 +1446,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         {
             false_negative++;
         }
-        else if(target < decision_threshold && output >= decision_threshold)
+        else if(target <= decision_threshold && output > decision_threshold)
         {
             false_positive++;
         }
