@@ -3210,9 +3210,6 @@ void DataSet::set_columns_unused()
 
 void DataSet::set_input_target_columns(const Tensor<Index, 1>& input_columns, const Tensor<Index, 1>& target_columns)
 {
-    cout << "input_columns: " << input_columns << endl;
-    cout << "target_columns: " << target_columns << endl;
-
     set_columns_unused();
 
     for(Index i = 0; i < input_columns.size(); i++)
