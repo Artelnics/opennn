@@ -1616,9 +1616,6 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
             decision_threshold = 0.5;
         }
 
-        cout << "decision_threshold" << endl;
-        cout << decision_threshold << endl;
-
         return calculate_confusion_binary_classification(targets, outputs, decision_threshold);
     }
     else
