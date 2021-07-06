@@ -276,6 +276,8 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
     fitness.setConstant(-1.0);
 
     selection.resize(new_individuals_number);
+
+    if(elitism_size > new_individuals_number) elitism_size = new_individuals_number;
 }
 
 
@@ -427,9 +429,6 @@ void GeneticAlgorithm::evaluate_population()
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
-    cout << "Population: " << endl << population << endl;
-    system("pause");
-
     for(Index i = 0; i < individuals_number; i++)
     {
         individual = population.chip(i, 0);
@@ -451,35 +450,17 @@ void GeneticAlgorithm::evaluate_population()
             }
         }
 
-        cout << "before set_input_target_columns" << endl;
-
-        cout << "individual: " << individual << endl;
-
-        cout << "original input columns indices: " << original_input_columns_indices << endl;
-
         data_set_pointer->set_input_target_columns(input_columns_indices, original_target_columns_indices);
-
-        cout << "set_input_target_columns" << endl;
 
         inputs_names = data_set_pointer->get_input_variables_names();
 
-        cout << "get_input_variables_names" << endl;
-
         neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
-
-        cout << "set_inputs_number" << endl;
 
         neural_network_pointer->set_inputs_names(inputs_names);
 
-        cout << "set_inputs_names" << endl;
-
         neural_network_pointer->set_parameters_random();
 
-        cout << "set_parameters_random" << endl;
-
         training_results = training_strategy_pointer->perform_training();
-
-        cout << "perform_training" << endl;
 
         // Set stuff
 
@@ -552,7 +533,7 @@ void GeneticAlgorithm::perform_selection()
 
     const Index individuals_number = get_individuals_number();
 
-    const Index selected_individuals_number = static_cast<Index>(individuals_number/2);
+    const Index selected_individuals_number = static_cast<Index>((individuals_number-elitism_size)/2);
 
     const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
 
@@ -560,15 +541,7 @@ void GeneticAlgorithm::perform_selection()
 
     Index selection_count = 0;
 
-    // Elitism selection
-
-    for(Index i = 0; i < elitism_size ; i++)
-    {
-        selection(fitness_rank(i)) = true;
-        selection_count++;
-    }
-
-    // Roulette wheel
+    // Roulette wheel selection
 
     do
     {
@@ -656,8 +629,26 @@ void GeneticAlgorithm::perform_crossover()
 
     Tensor<bool, 2> new_population(individuals_number, genes_number);
 
+    Index new_individual_index = 0;
+
+    Tensor<Index, 1> fitness_rank = calculate_rank_greater(fitness);
+
+    for(Index i = 0; i < elitism_size ; i++)
+    {
+        new_individual_index = fitness_rank(i);
+
+        for(Index j = 0; j < genes_number; j++)
+        {
+            new_population(offspring_count, j) = population(new_individual_index, j);
+        }
+
+        offspring_count++;
+    }
+
     for(Index i = 0; i < individuals_number; i++)
     {
+        if(offspring_count > individuals_number-1) break;
+
         if(!selection(i)) continue;
 
         parent_1_index = i;
@@ -683,6 +674,8 @@ void GeneticAlgorithm::perform_crossover()
             }
         }
 
+        // Prevent no inputs
+
         if(is_false(offspring_1))
             offspring_1(static_cast<Index>(rand())%genes_number) = true;
 
@@ -692,10 +685,52 @@ void GeneticAlgorithm::perform_crossover()
         for(Index j = 0; j < genes_number; j++)
         {
             new_population(offspring_count, j) = offspring_1(j);
-            new_population(offspring_count+1, j) = offspring_2(j);
+
+            // In case of even population size, this checks the size
+
+            if(offspring_count + 1 <= individuals_number-1) new_population(offspring_count+1, j) = offspring_2(j);
         }
 
         offspring_count += 2;
+    }
+
+    // In case of odd population size, fill the last offspring of the new population
+
+    if(offspring_count == individuals_number-1)
+    {
+        for(Index i = 0; i < individuals_number; i++)
+        {
+            if(!selection(i)) continue;
+
+            parent_1_index = i;
+
+            do{
+                parent_2_index = static_cast<Index>(rand())%individuals_number;
+            }while(selection(parent_2_index) && parent_1_index != parent_2_index);
+
+            parent_1 = population.chip(parent_1_index, 0);
+            parent_2 = population.chip(parent_2_index, 0);
+
+            for(Index j = 0; j < genes_number; j++)
+            {
+                if(rand()%2 == 0)
+                {
+                    offspring_1(j) = parent_1[j];
+                }
+                else
+                {
+                    offspring_1(j) = parent_2[j];
+                }
+            }
+
+            if(is_false(offspring_1))
+                offspring_1(static_cast<Index>(rand())%genes_number) = true;
+
+            for(Index j = 0; j < genes_number; j++)
+            {
+                new_population(offspring_count, j) = offspring_1(j);
+            }
+        }
     }
 
     population = new_population;
