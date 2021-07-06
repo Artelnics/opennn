@@ -6014,6 +6014,11 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
             const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
 
             correlations(i,j) = OpenNN::correlation(thread_pool_device, input_i, input_j);
+
+            if(correlations(i,j).r > 1)
+            {
+                correlations(i,j).r = 1;
+            }
         }
     }
 
