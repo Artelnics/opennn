@@ -535,13 +535,30 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 {
     ostringstream buffer;
 
-    const Index size = training_error_history.size();        
-
     Tensor<string, 2> final_results(6, 2);
 
-    // Final training error
-
     final_results(0,0) = "Training error";
+    final_results(1,0) = "Selection error";
+    final_results(2,0) = "Gradient norm";
+    final_results(3,0) = "Epochs number";
+    final_results(4,0) = "Elapsed time";
+    final_results(5,0) = "Stopping criterion";
+
+    const Index size = training_error_history.size();
+
+    if(size == 0)
+    {
+        final_results(0,1) = "NA";
+        final_results(1,1) = "NA";
+        final_results(2,1) = "NA";
+        final_results(3,1) = "NA";
+        final_results(4,1) = "NA";
+        final_results(5,1) = "NA";
+
+        return final_results;
+    }
+
+    // Final training error
 
     buffer.str("");
     buffer << setprecision(precision) << training_error_history(size-1);
@@ -550,7 +567,6 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     // Final selection error
 
-    final_results(1,0) = "Selection error";
 
     buffer.str("");
 
@@ -562,7 +578,6 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     // Final gradient norm
 
-    final_results(2,0) = "Gradient norm";
 
     buffer.str("");
     buffer << setprecision(precision) << gradient_norm;
@@ -571,7 +586,6 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     // Epochs number
 
-    final_results(3,0) = "Epochs number";
 
     buffer.str("");
     buffer << training_error_history.size()-1;
@@ -580,7 +594,6 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     // Elapsed time
 
-    final_results(4,0) = "Elapsed time";
 
     buffer.str("");
     buffer << setprecision(precision) << elapsed_time;
@@ -589,7 +602,6 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     // Stopping criteria
 
-    final_results(5,0) = "Stopping criterion";
 
     final_results(5,1) = write_stopping_condition();
 
