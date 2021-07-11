@@ -195,7 +195,6 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
 /// Stopping criteria:
 /// <ul>
 /// <li> Loss goal: -numeric_limits<type>::max().
-/// <li> Gradient norm goal: 0.0.
 /// <li> Maximum training time: 1.0e6.
 /// <li> Maximum number of epochs: 100.
 /// </ul>
@@ -793,8 +792,6 @@ TrainingResults ConjugateGradient::perform_training()
     type old_loss = 0;
     type loss_decrease = numeric_limits<type>::max();
 
-    type gradient_norm = 0;
-
     bool stop_training = false;
 
     Index selection_failures = 0;
@@ -818,8 +815,6 @@ TrainingResults ConjugateGradient::perform_training()
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
-        gradient_norm = l2_norm(thread_pool_device, training_back_propagation.gradient);
-
         if(has_selection)
         {
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
@@ -841,7 +836,6 @@ TrainingResults ConjugateGradient::perform_training()
         {
             cout << "Training error: " << training_back_propagation.error << endl;
             if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
-            cout << "Gradient norm: " << gradient_norm << endl;
             cout << "Learning rate: " << optimization_data.learning_rate << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
@@ -902,8 +896,6 @@ TrainingResults ConjugateGradient::perform_training()
             results.resize_training_error_history(epoch+1);
             if(has_selection) results.resize_selection_error_history(epoch+1);
             else results.resize_selection_error_history(0);
-
-            results.gradient_norm = gradient_norm;
 
             results.elapsed_time = write_time(elapsed_time);
 

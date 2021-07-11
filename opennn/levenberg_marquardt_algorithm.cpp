@@ -123,7 +123,6 @@ const type& LevenbergMarquardtAlgorithm::get_maximum_damping_parameter() const
 /// Stopping criteria:
 /// <ul>
 /// <li> Loss goal: 1.0e-6.
-/// <li> Gradient norm goal: 1.0e-6.
 /// <li> Maximum training time: 1000 secondata_set.
 /// <li> Maximum number of epochs: 1000.
 /// </ul>
@@ -454,8 +453,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     Index selection_failures = 0;
 
-    type gradient_norm = 0;
-
     LossIndexBackPropagationLM training_back_propagation_lm(training_samples_number, loss_index_pointer);
     LossIndexBackPropagationLM selection_back_propagation_lm(selection_samples_number, loss_index_pointer);
 
@@ -490,8 +487,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         results.training_error_history(epoch) = training_back_propagation_lm.error;
 
-        gradient_norm = l2_norm(thread_pool_device, training_back_propagation_lm.gradient);
-
         if(has_selection)
         {
             neural_network_pointer->forward_propagate(selection_batch,
@@ -523,7 +518,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         {
             cout << "Training error: " << training_back_propagation_lm.error << endl;
             if(has_selection) cout << "Selection error: " << selection_back_propagation_lm.error << endl;
-            cout << "Gradient norm: " << gradient_norm << endl;
             cout << "Damping parameter: " << damping_parameter << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
@@ -583,8 +577,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
             else results.resize_selection_error_history(0);
-
-            results.gradient_norm = gradient_norm;
 
             results.elapsed_time = write_time(elapsed_time);
 
@@ -696,8 +688,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
             }
         }
     }
-
-    optimization_data.parameters_increment_norm = l2_norm(thread_pool_device, optimization_data.parameters_increment);
 
     // Set parameters
 

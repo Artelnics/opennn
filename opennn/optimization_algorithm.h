@@ -278,14 +278,6 @@ struct TrainingResults
 
     Tensor<type, 1> selection_error_history;
 
-    /// Final neural network parameters norm.
-
-    type parameters_norm;
-
-    /// Final gradient norm.
-
-    type gradient_norm;
-
     /// Elapsed time of the training process.
 
     string elapsed_time;

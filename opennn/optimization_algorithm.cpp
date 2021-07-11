@@ -539,10 +539,9 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     final_results(0,0) = "Training error";
     final_results(1,0) = "Selection error";
-    final_results(2,0) = "Gradient norm";
-    final_results(3,0) = "Epochs number";
-    final_results(4,0) = "Elapsed time";
-    final_results(5,0) = "Stopping criterion";
+    final_results(2,0) = "Epochs number";
+    final_results(3,0) = "Elapsed time";
+    final_results(4,0) = "Stopping criterion";
 
     const Index size = training_error_history.size();
 
@@ -553,7 +552,6 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
         final_results(2,1) = "NA";
         final_results(3,1) = "NA";
         final_results(4,1) = "NA";
-        final_results(5,1) = "NA";
 
         return final_results;
     }
@@ -567,7 +565,6 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     // Final selection error
 
-
     buffer.str("");
 
     selection_error_history.size() == 0
@@ -576,34 +573,23 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     final_results(1,1) = buffer.str();
 
-    // Final gradient norm
-
-
-    buffer.str("");
-    buffer << setprecision(precision) << gradient_norm;
-
-    final_results(2,1) = buffer.str();
-
     // Epochs number
-
 
     buffer.str("");
     buffer << training_error_history.size()-1;
 
-    final_results(3,1) = buffer.str();
+    final_results(2,1) = buffer.str();
 
     // Elapsed time
-
 
     buffer.str("");
     buffer << setprecision(precision) << elapsed_time;
 
-    final_results(4,1) = buffer.str();
+    final_results(3,1) = buffer.str();
 
     // Stopping criteria
 
-
-    final_results(5,1) = write_stopping_condition();
+    final_results(4,1) = write_stopping_condition();
 
     return final_results;
 }

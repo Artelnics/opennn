@@ -294,7 +294,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     type selection_error = 0;
 
     Index selection_failures = 0;
-    type gradient_norm = 0;
 
     // Optimization algorithm
 
@@ -349,8 +348,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             update_parameters(training_back_propagation, optimization_data);
         }
 
-        gradient_norm = l2_norm(thread_pool_device, training_back_propagation.gradient);
-
         // Loss
 
         training_loss /= static_cast<type>(batches_number);
@@ -399,7 +396,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         {
             cout << "Training error: " << training_error << endl;
             if(has_selection) cout << "Selection error: " << selection_error << endl;
-            cout << "Gradient norm: " << gradient_norm << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
@@ -718,6 +714,12 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_samples_number)
 {
     batch_samples_number = new_batch_samples_number;
+}
+
+
+void AdaptiveMomentEstimation::set_default()
+{
+    display_period = 100;
 }
 
 

@@ -208,8 +208,6 @@ struct GradientDescentData : public OptimizationAlgorithmData
 
     Tensor<type, 1> parameters_increment;
 
-    type parameters_increment_norm = numeric_limits<type>::max();
-
     // Optimization algorithm data
 
     Index epoch = 0;
