@@ -272,8 +272,8 @@ void GradientDescent::update_parameters(
 {
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
 
-    if(is_zero(optimization_data.training_direction))
-        throw logic_error("Training direction is zero");
+    if(is_zero(optimization_data.training_direction)) return;
+        //throw logic_error("Training direction is zero");
 
     // Get initial learning_rate
 
@@ -315,14 +315,12 @@ void GradientDescent::update_parameters(
                         = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)-1);
 
                 back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
-//                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)-1);
 
                 optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
             else if(back_propagation.gradient(i) < 0)
             {
                 back_propagation.parameters(i) += numeric_limits<type>::epsilon();
-//                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)+1);
 
                 optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
             }
@@ -330,8 +328,6 @@ void GradientDescent::update_parameters(
 
         optimization_data.learning_rate = optimization_data.old_learning_rate;
     }
-
-    optimization_data.parameters_increment_norm = l2_norm(thread_pool_device, optimization_data.parameters_increment);
 
     // Update parameters
 
@@ -419,8 +415,6 @@ TrainingResults GradientDescent::perform_training()
 
     loss_index_pointer->set_normalization_coefficient();
 
-    type gradient_norm = 0;
-
     LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
@@ -429,8 +423,6 @@ TrainingResults GradientDescent::perform_training()
     GradientDescentData optimization_data(this);
 
     Index selection_failures = 0;
-
-    type parameters_increment_norm = numeric_limits<type>::max();
 
     bool stop_training = false;
 
@@ -458,14 +450,14 @@ TrainingResults GradientDescent::perform_training()
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
-        gradient_norm = l2_norm(thread_pool_device, training_back_propagation.gradient);
-
         if(has_selection)
         {
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
             loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+
+            results.selection_error_history(epoch) = selection_back_propagation.error;
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
@@ -481,7 +473,6 @@ TrainingResults GradientDescent::perform_training()
         {
             cout << "Training error: " << training_back_propagation.error << endl;
             if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
-            cout << "Gradient norm: " << gradient_norm << endl;
             cout << "Learning rate: " << optimization_data.learning_rate << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
@@ -544,8 +535,6 @@ TrainingResults GradientDescent::perform_training()
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
             else results.resize_selection_error_history(0);
-
-            results.gradient_norm = gradient_norm;
 
             results.elapsed_time = write_time(elapsed_time);
 

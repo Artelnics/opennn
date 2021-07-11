@@ -117,7 +117,7 @@ void StochasticGradientDescent::set_default()
 
     // UTILITIES
 
-    display_period = 1000;
+    display_period = 100;
 }
 
 
@@ -418,7 +418,6 @@ TrainingResults StochasticGradientDescent::perform_training()
     type selection_error = 0;
 
     Index selection_failures = 0;
-    type gradient_norm = 0;
 
     // Optimization algorithm
 
@@ -474,8 +473,6 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             update_parameters(training_back_propagation, optimization_data);
         }
-
-        gradient_norm = l2_norm(thread_pool_device, training_back_propagation.gradient);
 
         // Loss
 

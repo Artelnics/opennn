@@ -574,8 +574,6 @@ void QuasiNewtonMethod::update_parameters(
         optimization_data.learning_rate = optimization_data.initial_learning_rate;
     }
 
-    optimization_data.parameters_increment_norm = l2_norm(thread_pool_device, optimization_data.parameters_increment);
-
     // Update stuff
 
     optimization_data.old_gradient = back_propagation.gradient;
@@ -671,8 +669,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     // Loss index
 
-    type gradient_norm = 0;
-
     loss_index_pointer->set_normalization_coefficient();
 
     LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
@@ -709,8 +705,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         results.training_error_history(epoch) = training_back_propagation.error;
 
-        gradient_norm = l2_norm(thread_pool_device, training_back_propagation.gradient);
-
         // Selection error
 
         if(has_selection)
@@ -734,7 +728,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
         {
             cout << "Training error: " << training_back_propagation.error << endl;
             if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl;
-            cout << "Gradient norm: " << gradient_norm << endl;
             cout << "Learning rate: " << optimization_data.learning_rate << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
@@ -790,8 +783,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
             results.resize_training_error_history(epoch+1);
             if(has_selection) results.resize_selection_error_history(epoch+1);
             else results.resize_selection_error_history(0);
-
-            results.gradient_norm = gradient_norm;
 
             results.elapsed_time = write_time(elapsed_time);
 

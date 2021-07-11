@@ -255,8 +255,6 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 
     Tensor<type, 1> parameters_increment;
 
-    type parameters_increment_norm = numeric_limits<type>::max();
-
     // Loss index data
 
 //    type old_loss = 0;
