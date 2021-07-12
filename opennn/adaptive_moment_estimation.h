@@ -47,7 +47,7 @@ struct AdaptiveMomentEstimationData;
 /// \cite 1 C. Barranquero "High performance optimization algorithms for neural networks."
 /// \ref https://www.opennn.net/files/high_performance_optimization_algorithms_for_neural_networks.pdf .
 ///
-/// \cite 2 D. P. Kingma and J. L. Ba, "ADAM: A Method for Stochastic Optimization." arXiv preprint arXiv:1412.6980v8 (2014).
+/// \cite 2 D. P. Kingma and J. L. Ba, "Adam: A Method for Stochastic Optimization." arXiv preprint arXiv:1412.6980v8 (2014).
 
 class AdaptiveMomentEstimation : public OptimizationAlgorithm
 {

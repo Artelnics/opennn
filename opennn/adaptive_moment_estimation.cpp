@@ -449,11 +449,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             break;
         }
 
-        // Update stuff
-
         if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
-
-        if(stop_training) break;
     }
 
     data_set_pointer->unscale_input_variables(input_variables_descriptives);
