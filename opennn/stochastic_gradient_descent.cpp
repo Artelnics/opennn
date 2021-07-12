@@ -344,8 +344,8 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
     Index batch_size_training = 0;
     Index batch_size_selection = 0;
@@ -369,8 +369,6 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();
     Tensor<Descriptives, 1> target_variables_descriptives;
-
-    const Tensor<Descriptives, 1> variables_descriptives = data_set_pointer->scale_data();
 
     DataSetBatch batch_training(batch_size_training, data_set_pointer);
     DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
@@ -575,8 +573,6 @@ TrainingResults StochasticGradientDescent::perform_training()
         }
 
         // Update stuff
-
-        if(stop_training) break;
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
     }
