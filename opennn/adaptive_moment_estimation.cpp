@@ -324,12 +324,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         training_loss = 0;
         training_error = 0;
 
-        optimization_data.iteration = 0;
+        optimization_data.iteration = 1;
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
-            optimization_data.iteration++;
-
             // Data set
 
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
@@ -745,6 +743,8 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
 
     back_propagation.parameters.device(*thread_pool_device) -=
             optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);          
+
+    optimization_data.iteration++;
 
     // Update parameters
 
