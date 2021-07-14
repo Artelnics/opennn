@@ -1090,15 +1090,21 @@ string ScalingLayer::write_expression_c() const
         }
         else if(scalers(i) == MeanStandardDeviation)
         {
-            const type slope = static_cast<type>(2)/descriptives(i).standard_deviation;
+            const type standard_deviation = descriptives(i).standard_deviation;
 
-            const type intercept = -static_cast<type>(2)*descriptives(i).mean/descriptives(i).standard_deviation;
+            const type mean = descriptives(i).mean;
 
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
+            buffer << "\toutputs[" << i << "] = (inputs[" << i << "]-"<<mean<<")/"<<standard_deviation<<";\n";
         }
         else if(scalers(i) == StandardDeviation)
         {
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << " ;" << endl;
+            const type standard_deviation = descriptives(i).standard_deviation;
+
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]/" << standard_deviation << " ;" << endl;
+        }
+        else if(scalers(i) == Logarithm)
+        {
+            buffer << "\toutputs[" << i << "] = log(inputs[" << i << "])"<< " ;" << endl;
         }
         else
         {

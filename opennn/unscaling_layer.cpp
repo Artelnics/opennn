@@ -756,6 +756,12 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
                     outputs(i,j) = inputs(i,j)*slope + intercept;
                 }
+                else if(scalers(j) == StandardDeviation)
+                {
+                    const type standard_deviation = descriptives(j).standard_deviation;
+
+                    outputs(i,j) = inputs(i,j)*standard_deviation;
+                }
                 else if(scalers(j) == Logarithm)
                 {
                     outputs(i,j) = exp(inputs(i,j));
@@ -1112,16 +1118,21 @@ string UnscalingLayer::write_expression_c() const
         }
         else if(scalers(i) == MeanStandardDeviation)
         {
-            const type slope = descriptives(i).standard_deviation/static_cast<type>(2);
+            const type standard_deviation = descriptives(i).standard_deviation;
 
-            const type intercept = descriptives(i).mean;
+            const type mean = descriptives(i).mean;
 
-            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<";\n";
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<standard_deviation<<"+"<<mean<<";\n";
+        }
+        else if(scalers(i) == StandardDeviation)
+        {
+            const type standard_deviation = descriptives(i).standard_deviation;
+
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "]*"<<standard_deviation<<";\n";
         }
         else if(scalers(i) == Logarithm)
         {
-            buffer << "\toutputs[" << i << "] = 0.5*exp( inputs[" << i << "] -1)*("
-                   << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
+            buffer << "\toutputs[" << i << "] =exp( inputs[" << i << "]);";
         }
         else
         {
