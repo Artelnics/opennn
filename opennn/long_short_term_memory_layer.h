@@ -282,6 +282,10 @@ public:
    string write_recurrent_activation_function_expression() const;
    string write_activation_function_expression() const;
 
+   string write_expression_c() const;
+   string write_combinations_c() const;
+//   string write_activations_c() const;
+
    // Serialization methods
 
    void from_XML(const tinyxml2::XMLDocument&);
