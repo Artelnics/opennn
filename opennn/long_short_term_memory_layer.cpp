@@ -3966,6 +3966,160 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
        return buffer.str();
 }
 
+string LongShortTermMemoryLayer::write_expression_c() const
+{
+    ostringstream buffer;
+
+    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+    buffer << write_combinations_c();
+
+//    buffer << write_activations_c();
+
+    buffer << "\n\treturn activations;\n}" << endl;
+
+    return buffer.str();
+}
+
+
+string LongShortTermMemoryLayer::write_combinations_c() const
+{
+    ostringstream buffer;
+
+    const Index neurons_number = get_neurons_number();
+    const Index inputs_number =  get_inputs_number();
+
+    // Forget gate
+
+    buffer << "\tvector<float> forget_gate_combinations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tforget_gate_combinations[" << i << "] = " << forget_biases(i);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+            buffer << " inputs[" << i << "] * (" << forget_weights(i,j) << ") + ";
+        }
+
+        for(Index k = 0; k < neurons_number-1; k++)
+        {
+            buffer << hidden_states(k+1) << " * (" << forget_recurrent_weights(i,k) << ") + ";
+        }
+
+        buffer << hidden_states(neurons_number) << " * (" << forget_recurrent_weights(i,neurons_number-1) << ")); \n" << endl;
+    }
+
+    buffer << endl;
+
+
+    // Input gate
+
+    buffer << "\tvector<float> input_gate_combinations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tinput_gate_combinations[" << i << "] = " << input_biases(i);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+            buffer << "inputs[" << i << "] * (" << input_weights(i,j) << ") + ";
+        }
+
+        for(Index k = 0; k < neurons_number-1; k++)
+        {
+            buffer << hidden_states(k+1) << " * (" << input_recurrent_weights(i,k) << ") + ";
+        }
+
+        buffer << hidden_states(neurons_number) << " * (" << input_recurrent_weights(i, neurons_number-1) << ")); \n" << endl;
+    }
+
+    buffer << endl;
+
+
+    // State gate
+
+    buffer << "\tvector<float> state_gate_combinations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tstate_gate_combinations[" << i << "] = " << state_biases(i);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+            buffer << "inputs[" << i << "] * (" << state_weights(i,j) << ") + ";
+        }
+
+        for(Index k = 0; k < neurons_number-1; k++)
+        {
+            buffer << hidden_states(k+1) << " * (" << state_recurrent_weights(i,k) << ") + ";
+        }
+
+        buffer << hidden_states(neurons_number) << " * (" << state_recurrent_weights(i, neurons_number-1) << ")); \n" << endl;
+    }
+
+    buffer << endl;
+
+
+    // Output gate
+
+    buffer << "\tvector<float> output_gate_combinations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\toutput_gate_combinations[" << i << "] = " << output_biases(i);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+            buffer << "inputs[" << i << "] * (" << output_weights(i,j) << ") + ";
+        }
+
+        for(Index k = 0; k < neurons_number-1; k++)
+        {
+            buffer << hidden_states(k+1) << " * (" << output_recurrent_weights(i,k) << ") + ";
+        }
+
+        buffer << hidden_states(neurons_number) << " * (" << output_recurrent_weights(i, neurons_number-1) << ")); \n" << endl;
+    }
+
+
+    // Cell State
+
+    buffer << "\tvector<float> cell_state(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tcell_state[" << i << "] = forget_gate[" << i << "] * cell_state[" << i << "] + input_gate[" << i << "] * state_gate[" << i << "]; \n" << endl;
+    }
+
+
+    // Hidden state
+
+    buffer << "\tvector<float> hidden_state(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\thidden_state[" << i << "] = output_gate[" << i << "] * write_activation_function_expression() * (cell_state[" << i << "])\n" << endl;
+    }
+
+
+    // LSTM output
+
+    buffer << "\tvector<float> long_short_term_memory_output(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tlong_short_term_memory_output[" << i << "] = hidden_state[" << i << "]\n" << endl;
+    }
+
+    return buffer.str();
+}
+
+//string LongShortTermMemoryLayer::write_activations_c() const
+//{
+
+//}
+
 
 void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
