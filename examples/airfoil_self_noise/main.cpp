@@ -51,10 +51,6 @@ int main()
 
         model_selection.perform_inputs_selection();
 
-
-
-
-
 */
         cout << "Good bye!" << endl;
 
