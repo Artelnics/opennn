@@ -1297,7 +1297,6 @@ string PerceptronLayer::write_activations_c() const
 
         switch(activation_function)
         {
-
         case HyperbolicTangent:
             buffer << "tanh(combinations[" << i << "]);\n";
             break;
@@ -1341,7 +1340,6 @@ string PerceptronLayer::write_activations_c() const
         case HardSigmoid:
             ///@todo
             break;
-
         }
     }
 
