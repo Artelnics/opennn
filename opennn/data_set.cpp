@@ -10326,7 +10326,7 @@ void DataSet::read_csv_2_complete()
             const string message =
                 "Sample " + to_string(lines_count+1) + " error:\n"
                 "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of columns (" + to_string(raw_columns_number) + ").\n"
-                "Please check the format of the data file.";
+                "Please check the format of the data file (e.g: Use of commas both as decimal and column separator)";
 
             throw logic_error(message);
         }
