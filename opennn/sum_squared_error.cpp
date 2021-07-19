@@ -83,7 +83,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
 
      switch(output_layer_pointer->get_type())
      {
-     case Layer::Perceptron:
+     case Layer::Type::Perceptron:
      {
          PerceptronLayerBackPropagation* perceptron_layer_back_propagation
          = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
@@ -92,7 +92,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
      }
          break;
 
-     case Layer::Probabilistic:
+     case Layer::Type::Probabilistic:
      {
          ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
          = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
@@ -101,7 +101,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
      }
          break;
 
-     case Layer::Recurrent:
+     case Layer::Type::Recurrent:
      {
          RecurrentLayerBackPropagation* recurrent_layer_back_propagation
          = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
@@ -110,7 +110,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
      }
          break;
 
-     case Layer::LongShortTermMemory:
+     case Layer::Type::LongShortTermMemory:
      {
          LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
          = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
@@ -142,7 +142,7 @@ void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
     switch(output_layer_pointer->get_type())
     {
-    case Layer::Perceptron:
+    case Layer::Type::Perceptron:
     {
         PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation
                 = static_cast<PerceptronLayerBackPropagationLM*>(output_layer_back_propagation);
@@ -155,7 +155,7 @@ void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
     }
         break;
 
-    case Layer::Probabilistic:
+    case Layer::Type::Probabilistic:
     {
         ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation
                 = static_cast<ProbabilisticLayerBackPropagationLM*>(output_layer_back_propagation);

@@ -109,6 +109,16 @@ struct Descriptives {
 
 struct BoxPlot {
 
+    type minimum = 0;
+
+    type first_quartile = 0;
+
+    type median = 0;
+
+    type third_quartile = 0;
+
+    type maximum = 0;
+
   // Default constructor.
 
   explicit BoxPlot() {}
@@ -121,16 +131,6 @@ struct BoxPlot {
 
 
   void set(const type&, const type&, const type&, const type&, const type& );
-
-  type minimum = 0;
-
-  type first_quartile = 0;
-
-  type median = 0;
-
-  type third_quartile = 0;
-
-  type maximum = 0;
 };
 
 

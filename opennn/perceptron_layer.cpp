@@ -19,7 +19,7 @@ PerceptronLayer::PerceptronLayer() : Layer()
 {
     set();
 
-    layer_type = Perceptron;
+    layer_type = Type::Perceptron;
 }
 
 
@@ -35,7 +35,7 @@ PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& ne
 {
     set(new_inputs_number, new_neurons_number, new_activation_function);
 
-    layer_type = Perceptron;
+    layer_type = Type::Perceptron;
 
     layer_name = "perceptron_layer";
 }
@@ -274,7 +274,7 @@ void PerceptronLayer::set_default()
 
     display = true;
 
-    layer_type = Perceptron;
+    layer_type = Type::Perceptron;
 }
 
 
@@ -661,7 +661,7 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
 
     switch(next_layer_back_propagation->layer_pointer->get_type())
     {
-    case Perceptron:
+    case Type::Perceptron:
     {
         PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
                 static_cast<PerceptronLayerForwardPropagation*>(next_layer_forward_propagation);
@@ -675,7 +675,7 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
     }
         break;
 
-    case Probabilistic:
+    case Type::Probabilistic:
     {
         ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
                 static_cast<ProbabilisticLayerForwardPropagation*>(next_layer_forward_propagation);
@@ -793,7 +793,7 @@ void PerceptronLayer::calculate_hidden_delta_lm(LayerForwardPropagation* next_la
 
     switch(next_layer_back_propagation->layer_pointer->get_type())
     {
-    case Perceptron:
+    case Type::Perceptron:
     {
         PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
                 static_cast<PerceptronLayerForwardPropagation*>(next_layer_forward_propagation);
@@ -807,7 +807,7 @@ void PerceptronLayer::calculate_hidden_delta_lm(LayerForwardPropagation* next_la
     }
         break;
 
-    case Probabilistic:
+    case Type::Probabilistic:
     {
         ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
                 static_cast<ProbabilisticLayerForwardPropagation*>(next_layer_forward_propagation);

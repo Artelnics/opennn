@@ -214,25 +214,25 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
     {
         const Type layer_type = next_layer_pointer->get_type();
 
-        if(layer_type == Convolutional)
+        if(layer_type == Type::Convolutional)
         {
             ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
 
             return calculate_hidden_delta_convolutional(convolutional_layer, activations, activations_derivatives, next_layer_delta);
         }
-        else if(layer_type == Pooling)
+        else if(layer_type == Type::Pooling)
         {
             PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(next_layer_pointer);
 
             return calculate_hidden_delta_pooling(pooling_layer, activations, activations_derivatives, next_layer_delta);
         }
-        else if(layer_type == Perceptron)
+        else if(layer_type == Type::Perceptron)
         {
             PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(next_layer_pointer);
 
             return calculate_hidden_delta_perceptron(perceptron_layer, activations, activations_derivatives, next_layer_delta);
         }
-        else if(layer_type == Probabilistic)
+        else if(layer_type == Type::Probabilistic)
         {
             ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
@@ -789,7 +789,7 @@ void PoolingLayer::set_pooling_method(const PoolingMethod& new_pooling_method)
 
 void PoolingLayer::set_default()
 {
-    layer_type = Layer::Pooling;
+    layer_type = Layer::Type::Pooling;
 }
 }
 

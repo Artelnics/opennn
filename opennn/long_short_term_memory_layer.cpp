@@ -21,7 +21,7 @@ LongShortTermMemoryLayer::LongShortTermMemoryLayer() : Layer()
 {
     set();
 
-    layer_type = LongShortTermMemory;
+    layer_type = Type::LongShortTermMemory;
 }
 
 
@@ -36,7 +36,7 @@ LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_numbe
 {
     set(new_inputs_number, new_neurons_number);
 
-    layer_type = LongShortTermMemory;
+    layer_type = Type::LongShortTermMemory;
 }
 
 
@@ -436,7 +436,7 @@ void LongShortTermMemoryLayer::set(const LongShortTermMemoryLayer& other_neuron_
 void LongShortTermMemoryLayer::set_default()
 {
     layer_name = "long_short_term_memory_layer";
-    layer_type = LongShortTermMemory;
+    layer_type = Type::LongShortTermMemory;
 }
 
 
@@ -1652,7 +1652,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* n
 
     switch(next_back_propagation->layer_pointer->get_type())
     {
-    case Perceptron:
+    case Type::Perceptron:
     {
         PerceptronLayerForwardPropagation* next_perceptron_layer_forward_propagation =
                 static_cast<PerceptronLayerForwardPropagation*>(next_forward_propagation);
@@ -1666,7 +1666,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* n
     }
         break;
 
-    case Probabilistic:
+    case Type::Probabilistic:
     {
         ProbabilisticLayerForwardPropagation* next_probabilistic_layer_forward_propagation =
                 static_cast<ProbabilisticLayerForwardPropagation*>(next_forward_propagation);

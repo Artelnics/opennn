@@ -405,7 +405,7 @@ void ScalingLayer::set_default()
 
     set_display(true);
 
-    layer_type = Scaling;
+    layer_type = Type::Scaling;
 }
 
 
