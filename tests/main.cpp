@@ -14,7 +14,7 @@
 // OpenNN tests includes
 
 #include "opennn_tests.h"
-#include "unit_testing.h"
+#include "../opennn/unit_testing.h"
 
 using namespace OpenNN;
 

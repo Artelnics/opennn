@@ -9,7 +9,7 @@
 #ifndef MODELSELECTIONTEST_H
 #define MODELSELECTIONTEST_H
 
-#include "unit_testing.h"
+#include "../opennn/unit_testing.h"
 
 class ModelSelectionTest : public UnitTesting 
 {
