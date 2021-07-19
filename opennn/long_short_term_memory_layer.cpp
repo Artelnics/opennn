@@ -3974,9 +3974,7 @@ string LongShortTermMemoryLayer::write_expression_c() const
 
     buffer << write_combinations_c();
 
-//    buffer << write_activations_c();
-
-    buffer << "\n\treturn activations;\n}" << endl;
+    buffer << "\n\treturn long_short_term_memory_output;\n}" << endl;
 
     return buffer.str();
 }
@@ -3989,13 +3987,14 @@ string LongShortTermMemoryLayer::write_combinations_c() const
     const Index neurons_number = get_neurons_number();
     const Index inputs_number =  get_inputs_number();
 
+
     // Forget gate
 
     buffer << "\tvector<float> forget_gate_combinations(" << neurons_number << ");\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\tforget_gate_combinations[" << i << "] = " << forget_biases(i);
+        buffer << "\tforget_gate_combinations[" << i << "] = " << forget_biases(i) << " + ";
 
         for(Index j = 0; j < inputs_number; j++)
         {
@@ -4007,7 +4006,64 @@ string LongShortTermMemoryLayer::write_combinations_c() const
             buffer << hidden_states(k+1) << " * (" << forget_recurrent_weights(i,k) << ") + ";
         }
 
-        buffer << hidden_states(neurons_number) << " * (" << forget_recurrent_weights(i,neurons_number-1) << ")); \n" << endl;
+        buffer << hidden_states(neurons_number) << " * (" << forget_recurrent_weights(i,neurons_number-1) << "); \n";
+    }
+
+    buffer << endl;
+
+
+    buffer << "\tvector<float> forget_gate_activations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tforget_gate_activations[" << i << "] = ";
+
+        switch(recurrent_activation_function)
+        {
+        case HyperbolicTangent:
+            buffer << "tanh(forget_gate_combinations[" << i << "]);\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "forget_gate_combinations[" << i << "] < 0.0 ? 0.0 : forget_gate_combinations[" << i << "];\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + exp(-forget_gate_combinations[" << i << "]));\n";
+            break;
+
+        case Threshold:
+            buffer << "forget_gate_combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "forget_gate_combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
+            break;
+
+        case Linear:
+            buffer << "forget_gate_combinations[" << i << "];\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "forget_gate_combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(forget_gate_combinations[" << i << "]) - 1.0) : 1.0507*forget_gate_combinations[" << i << "];\n";
+            break;
+
+        case SoftPlus:
+            buffer << "log(1.0 + exp(forget_gate_combinations[" << i << "]));\n";
+            break;
+
+        case SoftSign:
+            buffer << "forget_gate_combinations[" << i << "] < 0.0 ? forget_gate_combinations[" << i << "]/(1.0 - forget_gate_combinations[" << i << "] ) : forget_gate_combinations[" << i << "]/(1.0 + forget_gate_combinations[" << i << "] );\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "forget_gate_combinations[" << i << "] < 0.0 ? 1.0*(exp(forget_gate_combinations[" << i << "]) - 1.0) : forget_gate_combinations[" << i << "];\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+        }
     }
 
     buffer << endl;
@@ -4019,7 +4075,7 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\tinput_gate_combinations[" << i << "] = " << input_biases(i);
+        buffer << "\tinput_gate_combinations[" << i << "] = " << input_biases(i) << " + ";
 
         for(Index j = 0; j < inputs_number; j++)
         {
@@ -4031,7 +4087,64 @@ string LongShortTermMemoryLayer::write_combinations_c() const
             buffer << hidden_states(k+1) << " * (" << input_recurrent_weights(i,k) << ") + ";
         }
 
-        buffer << hidden_states(neurons_number) << " * (" << input_recurrent_weights(i, neurons_number-1) << ")); \n" << endl;
+        buffer << hidden_states(neurons_number) << " * (" << input_recurrent_weights(i, neurons_number-1) << "); \n";
+    }
+
+    buffer << endl;
+
+
+    buffer << "\tvector<float> input_gate_activations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tinput_gate_activations[" << i << "] = ";
+
+        switch(recurrent_activation_function)
+        {
+        case HyperbolicTangent:
+            buffer << "tanh(input_gate_combinations[" << i << "]);\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "input_gate_combinations[" << i << "] < 0.0 ? 0.0 : input_gate_combinations[" << i << "];\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + exp(-input_gate_combinations[" << i << "]));\n";
+            break;
+
+        case Threshold:
+            buffer << "input_gate_combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "input_gate_combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
+            break;
+
+        case Linear:
+            buffer << "input_gate_combinations[" << i << "];\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "input_gate_combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(input_gate_combinations[" << i << "]) - 1.0) : 1.0507*input_gate_combinations[" << i << "];\n";
+            break;
+
+        case SoftPlus:
+            buffer << "log(1.0 + exp(input_gate_combinations[" << i << "]));\n";
+            break;
+
+        case SoftSign:
+            buffer << "input_gate_combinations[" << i << "] < 0.0 ? input_gate_combinations[" << i << "]/(1.0 - input_gate_combinations[" << i << "] ) : input_gate_combinations[" << i << "]/(1.0 + input_gate_combinations[" << i << "] );\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "input_gate_combinations[" << i << "] < 0.0 ? 1.0*(exp(input_gate_combinations[" << i << "]) - 1.0) : input_gate_combinations[" << i << "];\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+        }
     }
 
     buffer << endl;
@@ -4043,7 +4156,7 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\tstate_gate_combinations[" << i << "] = " << state_biases(i);
+        buffer << "\tstate_gate_combinations[" << i << "] = " << state_biases(i) << " + ";
 
         for(Index j = 0; j < inputs_number; j++)
         {
@@ -4055,7 +4168,64 @@ string LongShortTermMemoryLayer::write_combinations_c() const
             buffer << hidden_states(k+1) << " * (" << state_recurrent_weights(i,k) << ") + ";
         }
 
-        buffer << hidden_states(neurons_number) << " * (" << state_recurrent_weights(i, neurons_number-1) << ")); \n" << endl;
+        buffer << hidden_states(neurons_number) << " * (" << state_recurrent_weights(i, neurons_number-1) << "); \n";
+    }
+
+    buffer << endl;
+
+
+    buffer << "\tvector<float> state_gate_activations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tstate_gate_activations[" << i << "] = ";
+
+        switch(activation_function)
+        {
+        case HyperbolicTangent:
+            buffer << "tanh(state_gate_combinations[" << i << "]);\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "state_gate_combinations[" << i << "] < 0.0 ? 0.0 : state_gate_combinations[" << i << "];\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + exp(-state_gate_combinations[" << i << "]));\n";
+            break;
+
+        case Threshold:
+            buffer << "state_gate_combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "state_gate_combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
+            break;
+
+        case Linear:
+            buffer << "state_gate_combinations[" << i << "];\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "state_gate_combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(state_gate_combinations[" << i << "]) - 1.0) : 1.0507*state_gate_combinations[" << i << "];\n";
+            break;
+
+        case SoftPlus:
+            buffer << "log(1.0 + exp(state_gate_combinations[" << i << "]));\n";
+            break;
+
+        case SoftSign:
+            buffer << "state_gate_combinations[" << i << "] < 0.0 ? state_gate_combinations[" << i << "]/(1.0 - state_gate_combinations[" << i << "] ) : state_gate_combinations[" << i << "]/(1.0 + state_gate_combinations[" << i << "] );\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "state_gate_combinations[" << i << "] < 0.0 ? 1.0*(exp(state_gate_combinations[" << i << "]) - 1.0) : state_gate_combinations[" << i << "];\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+        }
     }
 
     buffer << endl;
@@ -4067,7 +4237,7 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\toutput_gate_combinations[" << i << "] = " << output_biases(i);
+        buffer << "\toutput_gate_combinations[" << i << "] = " << output_biases(i) << " + ";
 
         for(Index j = 0; j < inputs_number; j++)
         {
@@ -4079,8 +4249,67 @@ string LongShortTermMemoryLayer::write_combinations_c() const
             buffer << hidden_states(k+1) << " * (" << output_recurrent_weights(i,k) << ") + ";
         }
 
-        buffer << hidden_states(neurons_number) << " * (" << output_recurrent_weights(i, neurons_number-1) << ")); \n" << endl;
+        buffer << hidden_states(neurons_number) << " * (" << output_recurrent_weights(i, neurons_number-1) << "); \n";
     }
+
+    buffer << endl;
+
+
+    buffer << "\tvector<float> output_gate_activations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\toutput_gate_activations[" << i << "] = ";
+
+        switch(recurrent_activation_function)
+        {
+        case HyperbolicTangent:
+            buffer << "tanh(output_gate_combinations[" << i << "]);\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "output_gate_combinations[" << i << "] < 0.0 ? 0.0 : output_gate_combinations[" << i << "];\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + exp(-output_gate_combinations[" << i << "]));\n";
+            break;
+
+        case Threshold:
+            buffer << "output_gate_combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "output_gate_combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
+            break;
+
+        case Linear:
+            buffer << "output_gate_combinations[" << i << "];\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "output_gate_combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(output_gate_combinations[" << i << "]) - 1.0) : 1.0507*output_gate_combinations[" << i << "];\n";
+            break;
+
+        case SoftPlus:
+            buffer << "log(1.0 + exp(output_gate_combinations[" << i << "]));\n";
+            break;
+
+        case SoftSign:
+            buffer << "output_gate_combinations[" << i << "] < 0.0 ? output_gate_combinations[" << i << "]/(1.0 - output_gate_combinations[" << i << "] ) : output_gate_combinations[" << i << "]/(1.0 + output_gate_combinations[" << i << "] );\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "output_gate_combinations[" << i << "] < 0.0 ? 1.0*(exp(output_gate_combinations[" << i << "]) - 1.0) : output_gate_combinations[" << i << "];\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+        }
+    }
+
+    buffer << endl;
 
 
     // Cell State
@@ -4089,8 +4318,67 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\tcell_state[" << i << "] = forget_gate[" << i << "] * cell_state[" << i << "] + input_gate[" << i << "] * state_gate[" << i << "]; \n" << endl;
+        buffer << "\tcell_state[" << i << "] = forget_gate_activations[" << i << "] * cell_state[" << i << "] + input_gate_activations[" << i << "] * state_gate_activations[" << i << "]; \n";
     }
+
+    buffer << endl;
+
+
+    buffer << "\tvector<float> cell_state_activations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tcell_state_activations[" << i << "] = ";
+
+        switch(activation_function)
+        {
+        case HyperbolicTangent:
+            buffer << "tanh(cell_state[" << i << "]);\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "cell_state[" << i << "] < 0.0 ? 0.0 : cell_state[" << i << "];\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + exp(-cell_state[" << i << "]));\n";
+            break;
+
+        case Threshold:
+            buffer << "cell_state[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "cell_state[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
+            break;
+
+        case Linear:
+            buffer << "cell_state[" << i << "];\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "cell_state[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(cell_state[" << i << "]) - 1.0) : 1.0507*cell_state[" << i << "];\n";
+            break;
+
+        case SoftPlus:
+            buffer << "log(1.0 + exp(cell_state[" << i << "]));\n";
+            break;
+
+        case SoftSign:
+            buffer << "cell_state[" << i << "] < 0.0 ? cell_state[" << i << "]/(1.0 - cell_state[" << i << "] ) : cell_state[" << i << "]/(1.0 + cell_state[" << i << "] );\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "cell_state[" << i << "] < 0.0 ? 1.0*(exp(cell_state[" << i << "]) - 1.0) : cell_state[" << i << "];\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+        }
+    }
+
+    buffer << endl;
 
 
     // Hidden state
@@ -4099,8 +4387,10 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\thidden_state[" << i << "] = output_gate[" << i << "] * write_activation_function_expression() * (cell_state[" << i << "])\n" << endl;
+        buffer << "\thidden_state[" << i << "] = output_gate_activations[" << i << "] * cell_state_activations[" << i << "];\n";
     }
+
+    buffer << endl;
 
 
     // LSTM output
@@ -4109,17 +4399,11 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\tlong_short_term_memory_output[" << i << "] = hidden_state[" << i << "]\n" << endl;
+        buffer << "\tlong_short_term_memory_output[" << i << "] = hidden_state[" << i << "];\n";
     }
 
     return buffer.str();
 }
-
-//string LongShortTermMemoryLayer::write_activations_c() const
-//{
-
-//}
-
 
 void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 {

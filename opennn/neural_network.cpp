@@ -2506,6 +2506,34 @@ string NeuralNetwork::write_expression_c() const
 
     buffer << "using namespace std;\n" << endl;
 
+    if(ProjectType::Forecasting)
+    {
+        LongShortTermMemoryLayer* long_short_term_memory_pointer = get_long_short_term_memory_layer_pointer();
+        Index timestep = long_short_term_memory_pointer->get_timesteps();
+        Index neurons_number = long_short_term_memory_pointer->get_neurons_number();
+
+        buffer << "class LSTMNetwork\n";
+        buffer << "{\n" << endl;
+        buffer << "public:\n" << endl;
+        buffer << "    LSTMNetwork()\n";
+        buffer << "    {\n";
+        buffer << "        hidden_states.resize(" << neurons_number << ");\n";
+        buffer << "        cell_states.resize(" << neurons_number << ");\n";
+        buffer << "    }\n" << endl;
+        buffer << "    vector<vector<float>> neural_network_batch(const vector<vector<float>>& inputs);\n";
+        buffer << "    {\n";
+        buffer << "        vector<vector<float>> outputs(inputs.size());\n" << endl;
+        buffer << "        for(size_t i; i < inputs.size(); i++)\n";
+        buffer << "        {\n";
+        buffer << "            outputs[i] = neural_network(inputs[i]);\n";
+        buffer << "        }\n" << endl;
+        buffer << "        return outputs;\n";
+        buffer << "    }\n" << endl << endl;
+        buffer << "private:\n" << endl;
+        buffer << "    vector<float> hidden_states;\n";
+        buffer << "    vector<float> cell_states;\n" << endl << endl;
+    }
+
     for(Index i = 0; i < layers_number; i++)
     {
         buffer << layers_pointers[i]->write_expression_c() << endl;
@@ -2526,6 +2554,8 @@ string NeuralNetwork::write_expression_c() const
     }
 
     buffer << "\n\treturn outputs;\n}" << endl;
+
+    if(ProjectType::Forecasting) buffer << "\n};\n" << endl;
 
     buffer << "int main(){return 0;}" << endl;
 
