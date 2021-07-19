@@ -130,6 +130,7 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
 
     Index old_pos;
 
+
     while(string::npos != position || string::npos != last_position)
     {
         // Found a token, add it to the vector

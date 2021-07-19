@@ -19,7 +19,7 @@ RecurrentLayer::RecurrentLayer() : Layer()
 {
     set();
 
-    layer_type = Recurrent;
+    layer_type = Type::Recurrent;
 }
 
 
@@ -34,7 +34,7 @@ RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, const Index& new_
 {
     set(new_inputs_number, new_neurons_number);
 
-    layer_type = Recurrent;
+    layer_type = Type::Recurrent;
 }
 
 
@@ -340,7 +340,7 @@ void RecurrentLayer::set_default()
 
     display = true;
 
-    layer_type = Recurrent;
+    layer_type = Type::Recurrent;
 }
 
 
@@ -850,7 +850,7 @@ void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_
 
     switch(next_layer_back_propagation->layer_pointer->get_type())
     {
-    case Perceptron:
+    case Type::Perceptron:
     {
         PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
                 static_cast<PerceptronLayerForwardPropagation*>(next_layer_forward_propagation);
@@ -864,7 +864,7 @@ void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_
     }
         break;
 
-    case Probabilistic:
+    case Type::Probabilistic:
     {
         ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
                 static_cast<ProbabilisticLayerForwardPropagation*>(next_layer_forward_propagation);

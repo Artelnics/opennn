@@ -146,7 +146,18 @@ void CorrelationsTest::test_logistic_correlation()
 
 //    cout << "logisitic correlation: " << correlation.r << endl;
 
+<<<<<<< HEAD
 //    assert_true(correlation.r <= static_cast<type>(0.95), LOG);
+=======
+    for(Index i = 0; i < size; i++)
+    {
+        y[i] = exp(static_cast<type>(2.5)*x[i] + static_cast<type>(1.4));
+    }
+
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+>>>>>>> 48e44e7615ae2d0cb2250b4a51bd0d47afdc1934
 
 //    // Test
 
