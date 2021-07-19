@@ -1854,7 +1854,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
             count(j)++;
         }
     }
-
+/*
     const Tensor<double, 1> mean = sums/count;
 
     Tensor<double, 1> standard_deviation(columns_indices_size);
@@ -1879,7 +1879,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
         descriptives(i).mean = mean(i);
         descriptives(i).standard_deviation = standard_deviation(i);
     }
-
+    */
     return descriptives;
 }
 

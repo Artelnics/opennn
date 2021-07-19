@@ -249,7 +249,7 @@ struct NeuronsSelectionResults
 
    /// Stopping condition of the algorithm.
 
-   NeuronsSelection::StoppingCondition stopping_condition;
+   NeuronsSelection::StoppingCondition stopping_condition = NeuronsSelection::MaximumTime;
 
    /// Elapsed time during the loss of the algortihm.
 

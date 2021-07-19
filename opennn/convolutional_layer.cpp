@@ -21,7 +21,7 @@ namespace OpenNN
 
 ConvolutionalLayer::ConvolutionalLayer() : Layer()
 {
-    layer_type = Layer::Convolutional;
+    layer_type = Layer::Type::Convolutional;
 }
 
 
@@ -35,7 +35,7 @@ ConvolutionalLayer::ConvolutionalLayer() : Layer()
 ConvolutionalLayer::ConvolutionalLayer(const Tensor<Index, 1>& new_inputs_dimensions,
                                        const Tensor<Index, 1>& new_kernels_dimensions) : Layer()
 {
-    layer_type = Layer::Convolutional;
+    layer_type = Layer::Type::Convolutional;
 
     set(new_inputs_dimensions, new_kernels_dimensions);
 }
@@ -361,7 +361,7 @@ void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
 
     const Type next_layer_type = next_layer_pointer->get_type();
 
-    if(next_layer_type == Convolutional)
+    if(next_layer_type == Type::Convolutional)
     {
         ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
 
@@ -371,7 +371,7 @@ void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
 //                                             next_layer_delta,
 //                                             hidden_delta);
     }
-    else if(next_layer_type == Pooling)
+    else if(next_layer_type == Type::Pooling)
     {
         PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(next_layer_pointer);
 
@@ -381,7 +381,7 @@ void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                        next_layer_delta,
                                        hidden_delta);
     }
-    else if(next_layer_type == Perceptron)
+    else if(next_layer_type == Type::Perceptron)
     {
         PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(next_layer_pointer);
 
@@ -392,7 +392,7 @@ void ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_pointer,
 //                                          hidden_delta);
 
     }
-    else if(next_layer_type == Probabilistic)
+    else if(next_layer_type == Type::Probabilistic)
     {
         ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 

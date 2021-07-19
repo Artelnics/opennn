@@ -291,31 +291,31 @@ struct NeuralNetworkForwardPropagation
         {
             switch (trainable_layers_pointers(i)->get_type())
             {
-            case Layer::Perceptron:
+            case Layer::Type::Perceptron:
             {
                 layers(i) = new PerceptronLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
-            case Layer::Probabilistic:
+            case Layer::Type::Probabilistic:
             {
                 layers(i) = new ProbabilisticLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
-            case Layer::Recurrent:
+            case Layer::Type::Recurrent:
             {
                 layers(i) = new RecurrentLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
-            case Layer::LongShortTermMemory:
+            case Layer::Type::LongShortTermMemory:
             {
                 layers(i) = new LongShortTermMemoryLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
-            case Layer::Convolutional:
+            case Layer::Type::Convolutional:
             {
                 layers(i) = new ConvolutionalLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
@@ -375,31 +375,31 @@ struct NeuralNetworkBackPropagation
         {
             switch (trainable_layers_pointers(i)->get_type())
             {
-            case Layer::Perceptron:
+            case Layer::Type::Perceptron:
             {
                 layers(i) = new PerceptronLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
-            case Layer::Probabilistic:
+            case Layer::Type::Probabilistic:
             {
                 layers(i) = new ProbabilisticLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
-            case Layer::Recurrent:
+            case Layer::Type::Recurrent:
             {
                 layers(i) = new RecurrentLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
-            case Layer::LongShortTermMemory:
+            case Layer::Type::LongShortTermMemory:
             {
                 layers(i) = new LongShortTermMemoryLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
-            case Layer::Convolutional:
+            case Layer::Type::Convolutional:
             {
                 layers(i) = new ConvolutionalLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
@@ -461,13 +461,13 @@ struct NeuralNetworkBackPropagationLM
         {
             switch (trainable_layers_pointers(i)->get_type())
             {
-            case Layer::Perceptron:
+            case Layer::Type::Perceptron:
 
             layers(i) = new PerceptronLayerBackPropagationLM(new_batch_samples_number, trainable_layers_pointers(i));
 
             break;
 
-            case Layer::Probabilistic:
+            case Layer::Type::Probabilistic:
 
             layers(i) = new ProbabilisticLayerBackPropagationLM(new_batch_samples_number, trainable_layers_pointers(i));
 

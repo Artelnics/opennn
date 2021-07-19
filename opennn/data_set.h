@@ -117,7 +117,7 @@ public:
 
        Column(const string&,
               const VariableUse&,
-              const ColumnType& = Numeric,
+              const ColumnType& = ColumnType::Numeric,
               const Scaler& = MeanStandardDeviation,
               const Tensor<string, 1>& = Tensor<string, 1>(),
               const Tensor<VariableUse, 1>& = Tensor<VariableUse, 1>());

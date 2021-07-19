@@ -34,31 +34,31 @@ string Layer::get_type_string() const
 {
     switch(layer_type)
     {
-    case Perceptron:
+    case Type::Perceptron:
         return "Perceptron";
 
-    case Bounding:
+    case Type::Bounding:
         return "Bounding";
 
-    case Pooling:
+    case Type::Pooling:
         return "Pooling";
 
-    case Probabilistic:
+    case Type::Probabilistic:
         return "Probabilistic";
 
-    case Convolutional:
+    case Type::Convolutional:
         return "Convolutional";
 
-    case LongShortTermMemory:
+    case Type::LongShortTermMemory:
         return "LongShortTermMemory";
 
-    case Recurrent:
+    case Type::Recurrent:
         return "Recurrent";
 
-    case Scaling:
+    case Type::Scaling:
         return "Scaling";
 
-    case Unscaling:
+    case Type::Unscaling:
         return "Unscaling";
     }
 

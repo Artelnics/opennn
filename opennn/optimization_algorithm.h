@@ -134,8 +134,8 @@ protected:
    // UTILITIES
 
    ///Hardware use
-   string hardware_use = "Multi-core";
 
+   string hardware_use = "Multi-core";
 
    /// Number of iterations between the training showing progress.
 
@@ -254,7 +254,7 @@ struct TrainingResults
 
     /// Stopping condition of the algorithm.
 
-    OptimizationAlgorithm::StoppingCondition stopping_condition;
+    OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::MaximumTime;
 
     /// Writes final results of the training.
 

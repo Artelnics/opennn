@@ -32,7 +32,7 @@ namespace OpenNN
 
 /// The enum CorrelationMethod represents the different regression methods provided by OpenNN.
 
-enum CorrelationMethod{Linear, Logistic, Logarithmic, Exponential, Power, KarlPearson, OneWayAnova};
+enum class CorrelationMethod{Linear, Logistic, Logarithmic, Exponential, Power};
 
 /// This structure provides the results obtained from the regression analysis.
 
@@ -46,13 +46,11 @@ struct Correlation
     {
         switch(correlation_type)
         {
-            case Linear: return "linear";
-            case Logistic: return "logistic";
-            case Logarithmic: return "logarithmic";
-            case Exponential: return "exponential";
-            case Power: return "power";
-            case KarlPearson: return "KarlPearson";
-            case OneWayAnova: return "one-way-anova";
+        case CorrelationMethod::Linear: return "linear";
+        case CorrelationMethod::Logistic: return "logistic";
+        case CorrelationMethod::Logarithmic: return "logarithmic";
+        case CorrelationMethod::Exponential: return "exponential";
+        case CorrelationMethod::Power: return "power";
         }
 
         return string();
@@ -81,7 +79,7 @@ struct Correlation
 
     /// Regression method type.
 
-    CorrelationMethod correlation_type;
+    CorrelationMethod correlation_type = CorrelationMethod::Linear;
 };
 
     // Correlation methods
