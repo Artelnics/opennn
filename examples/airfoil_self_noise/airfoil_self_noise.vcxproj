@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\mnist\mnist.vcxproj" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6E9A8F74-7B08-469D-B1A9-078E5469D109}</ProjectGuid>
     <RootNamespace>AirfoilSelfNoise</RootNamespace>

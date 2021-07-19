@@ -14,7 +14,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6E9A8F74-7B08-469D-B1A9-078E5469D109}</ProjectGuid>
+    <ProjectGuid>{E5316C8E-958B-4516-8FED-35CE23A07B0E}</ProjectGuid>
     <RootNamespace>AirfoilSelfNoise</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
