@@ -369,7 +369,7 @@ void ProbabilisticLayer::set_default()
 {
     layer_name = "probabilistic_layer";
 
-    layer_type = Probabilistic;
+    layer_type = Type::Probabilistic;
 
     const Index neurons_number = get_neurons_number();
 
