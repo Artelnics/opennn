@@ -52,10 +52,7 @@ int main()
         model_selection.perform_inputs_selection();
 
 
-
-
-
-
+        system("pause");
 
         cout << "Good bye!" << endl;
 

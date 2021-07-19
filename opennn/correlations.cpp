@@ -41,7 +41,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     Correlation linear_correlation;
 
-    linear_correlation.correlation_type = Linear;
+    linear_correlation.correlation_type = CorrelationMethod::Linear;
 
     if(is_constant(y))
     {
@@ -153,7 +153,7 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device, 
 
     logarithmic_correlation = linear_correlation(thread_pool_device, x.log(), y);
 
-    logarithmic_correlation.correlation_type = Logarithmic;
+    logarithmic_correlation.correlation_type = CorrelationMethod::Logarithmic;
 
     return logarithmic_correlation;
 }
@@ -197,7 +197,7 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device, 
 
     exponential_correlation = linear_correlation(thread_pool_device, x, y.log());
 
-    exponential_correlation.correlation_type = Exponential;
+    exponential_correlation.correlation_type = CorrelationMethod::Exponential;
 
     exponential_correlation.a = exp(exponential_correlation.a);
     exponential_correlation.b = exponential_correlation.b;
@@ -252,7 +252,7 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device, const 
 
     power_correlation = linear_correlation(thread_pool_device, x.log(), y.log());
 
-    power_correlation.correlation_type = Power;
+    power_correlation.correlation_type = CorrelationMethod::Power;
 
     power_correlation.a = exp(power_correlation.a);
 
@@ -300,7 +300,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
-    correlation.correlation_type = Logistic;
+    correlation.correlation_type = CorrelationMethod::Logistic;
 
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
@@ -359,7 +359,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
-    correlation.correlation_type = Logistic;
+    correlation.correlation_type = CorrelationMethod::Logistic;
 
     return correlation;
 }
@@ -416,7 +416,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
-    correlation.correlation_type = Logistic;
+    correlation.correlation_type = CorrelationMethod::Logistic;
 
     return correlation;
 }
