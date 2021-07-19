@@ -284,7 +284,6 @@ public:
 
    string write_expression_c() const;
    string write_combinations_c() const;
-//   string write_activations_c() const;
 
    // Serialization methods
 
