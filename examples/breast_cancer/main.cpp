@@ -27,8 +27,10 @@ int main()
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        DataSet data_set;
+        /*
         DataSet data_set("../data/breast_cancer.csv", ';', true);
-/*
+
         NeuralNetwork neural_network(NeuralNetwork::Classification, {9, 6, 1});
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
