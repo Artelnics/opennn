@@ -58,7 +58,7 @@ public:
 
     /// This enumeration represents the possible types of layers.
 
-    enum Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
+    enum class Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
               LongShortTermMemory,Recurrent, Unscaling, Bounding};
 
     // Constructor
@@ -180,7 +180,7 @@ protected:
 
     /// Layer type.
 
-    Type layer_type = Perceptron;
+    Type layer_type = Type::Perceptron;
 
     // activations 1d (Time Series)
 

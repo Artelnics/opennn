@@ -200,15 +200,15 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
 {
     const Index layers_number = layers_pointers.size();
 
-    if(layers_number > 1 && (layer_type == Layer::Recurrent || layer_type == Layer::LongShortTermMemory))
+    if(layers_number > 1 && (layer_type == Layer::Type::Recurrent || layer_type == Layer::Type::LongShortTermMemory))
     {
         return false;
     }
-    else if(layers_number == 1 && (layer_type == Layer::Recurrent || layer_type == Layer::LongShortTermMemory))
+    else if(layers_number == 1 && (layer_type == Layer::Type::Recurrent || layer_type == Layer::Type::LongShortTermMemory))
     {
         const Layer::Type first_layer_type = layers_pointers[0]->get_type();
 
-        if(first_layer_type != Layer::Scaling) return false;
+        if(first_layer_type != Layer::Type::Scaling) return false;
     }
 
     return true;
@@ -224,7 +224,7 @@ bool NeuralNetwork::has_scaling_layer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Scaling) return true;
+        if(layers_pointers[i]->get_type() == Layer::Type::Scaling) return true;
     }
 
     return false;
@@ -240,7 +240,7 @@ bool NeuralNetwork::has_long_short_term_memory_layer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::LongShortTermMemory) return true;
+        if(layers_pointers[i]->get_type() == Layer::Type::LongShortTermMemory) return true;
     }
 
     return false;
@@ -256,7 +256,7 @@ bool NeuralNetwork::has_convolutional_layer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Convolutional) return true;
+        if(layers_pointers[i]->get_type() == Layer::Type::Convolutional) return true;
     }
 
     return false;
@@ -272,7 +272,7 @@ bool NeuralNetwork::has_recurrent_layer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Recurrent) return true;
+        if(layers_pointers[i]->get_type() == Layer::Type::Recurrent) return true;
     }
 
     return false;
@@ -288,7 +288,7 @@ bool NeuralNetwork::has_unscaling_layer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Unscaling) return true;
+        if(layers_pointers[i]->get_type() == Layer::Type::Unscaling) return true;
     }
 
     return false;
@@ -304,7 +304,7 @@ bool NeuralNetwork::has_bounding_layer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Bounding) return true;
+        if(layers_pointers[i]->get_type() == Layer::Type::Bounding) return true;
     }
 
     return false;
@@ -320,7 +320,7 @@ bool NeuralNetwork::has_probabilistic_layer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Probabilistic) return true;
+        if(layers_pointers[i]->get_type() == Layer::Type::Probabilistic) return true;
     }
 
     return false;
@@ -428,9 +428,9 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() != Layer::Scaling
-        && layers_pointers[i]->get_type() != Layer::Unscaling
-        && layers_pointers[i]->get_type() != Layer::Bounding)
+        if(layers_pointers[i]->get_type() != Layer::Type::Scaling
+        && layers_pointers[i]->get_type() != Layer::Type::Unscaling
+        && layers_pointers[i]->get_type() != Layer::Type::Bounding)
         {
             trainable_layers_pointers[index] = layers_pointers[i];
             index++;
@@ -455,9 +455,9 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() != Layer::Scaling
-        && layers_pointers[i]->get_type() != Layer::Unscaling
-        && layers_pointers[i]->get_type() != Layer::Bounding)
+        if(layers_pointers[i]->get_type() != Layer::Type::Scaling
+        && layers_pointers[i]->get_type() != Layer::Type::Unscaling
+        && layers_pointers[i]->get_type() != Layer::Type::Bounding)
         {
             trainable_layers_indices[trainable_layer_index] = i;
             trainable_layer_index++;
@@ -476,7 +476,7 @@ ScalingLayer* NeuralNetwork::get_scaling_layer_pointer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Scaling)
+        if(layers_pointers[i]->get_type() == Layer::Type::Scaling)
         {
             return dynamic_cast<ScalingLayer*>(layers_pointers[i]);
         }
@@ -500,7 +500,7 @@ UnscalingLayer* NeuralNetwork::get_unscaling_layer_pointer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Unscaling)
+        if(layers_pointers[i]->get_type() == Layer::Type::Unscaling)
         {
             return dynamic_cast<UnscalingLayer*>(layers_pointers[i]);
         }
@@ -524,7 +524,7 @@ BoundingLayer* NeuralNetwork::get_bounding_layer_pointer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Bounding)
+        if(layers_pointers[i]->get_type() == Layer::Type::Bounding)
         {
             return dynamic_cast<BoundingLayer*>(layers_pointers[i]);
         }
@@ -548,7 +548,7 @@ ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer_pointer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Probabilistic)
+        if(layers_pointers[i]->get_type() == Layer::Type::Probabilistic)
         {
             return dynamic_cast<ProbabilisticLayer*>(layers_pointers[i]);
         }
@@ -571,7 +571,7 @@ LongShortTermMemoryLayer* NeuralNetwork::get_long_short_term_memory_layer_pointe
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::LongShortTermMemory)
+        if(layers_pointers[i]->get_type() == Layer::Type::LongShortTermMemory)
         {
             return dynamic_cast<LongShortTermMemoryLayer*>(layers_pointers[i]);
         }
@@ -595,7 +595,7 @@ RecurrentLayer* NeuralNetwork::get_recurrent_layer_pointer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Recurrent)
+        if(layers_pointers[i]->get_type() == Layer::Type::Recurrent)
         {
             return dynamic_cast<RecurrentLayer*>(layers_pointers[i]);
         }
@@ -896,7 +896,7 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer_pointer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers(i)->get_type() == Layer::Perceptron)
+        if(layers_pointers(i)->get_type() == Layer::Type::Perceptron)
         {
             return static_cast<PerceptronLayer*>(layers_pointers[i]);
         }
@@ -942,9 +942,9 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_neurons_numbers() const
 
     for(Index i = 0; i < layers_pointers.size(); i++)
     {
-        if(layers_pointers(i)->get_type() != Layer::Scaling
-                && layers_pointers(i)->get_type() != Layer::Unscaling
-                && layers_pointers(i)->get_type() != Layer::Bounding)
+        if(layers_pointers(i)->get_type() != Layer::Type::Scaling
+                && layers_pointers(i)->get_type() != Layer::Type::Unscaling
+                && layers_pointers(i)->get_type() != Layer::Type::Bounding)
         {
             layers_neurons_number(count) = layers_pointers[i]->get_neurons_number();
 
@@ -967,9 +967,9 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_inputs_numbers() const
 
     for(Index i = 0; i < layers_pointers.size(); i++)
     {
-        if(layers_pointers(i)->get_type() != Layer::Scaling
-                && layers_pointers(i)->get_type() != Layer::Unscaling
-                && layers_pointers(i)->get_type() != Layer::Bounding)
+        if(layers_pointers(i)->get_type() != Layer::Type::Scaling
+                && layers_pointers(i)->get_type() != Layer::Type::Unscaling
+                && layers_pointers(i)->get_type() != Layer::Type::Bounding)
         {
             layers_neurons_number(count) = layers_pointers[i]->get_inputs_number();
 
@@ -991,9 +991,9 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_synaptic_weight_numbers() c
 
     for(Index i = 0; i < layers_pointers.size(); i++)
     {
-        if(layers_pointers(i)->get_type() != Layer::Scaling
-                && layers_pointers(i)->get_type() != Layer::Unscaling
-                && layers_pointers(i)->get_type() != Layer::Bounding)
+        if(layers_pointers(i)->get_type() != Layer::Type::Scaling
+                && layers_pointers(i)->get_type() != Layer::Type::Unscaling
+                && layers_pointers(i)->get_type() != Layer::Type::Bounding)
         {
             layers_neurons_number(count) = layers_pointers[i]->get_synaptic_weights_number();
 
@@ -1211,9 +1211,9 @@ Index NeuralNetwork::get_trainable_layers_number() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers(i)->get_type() != Layer::Scaling
-        && layers_pointers(i)->get_type() != Layer::Unscaling
-        && layers_pointers(i)->get_type() != Layer::Bounding)
+        if(layers_pointers(i)->get_type() != Layer::Type::Scaling
+        && layers_pointers(i)->get_type() != Layer::Type::Unscaling
+        && layers_pointers(i)->get_type() != Layer::Type::Bounding)
         {
             count++;
         }               
@@ -1231,7 +1231,7 @@ Index NeuralNetwork::get_perceptron_layers_number() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers(i)->get_type() == Layer::Perceptron)
+        if(layers_pointers(i)->get_type() == Layer::Type::Perceptron)
         {
             count++;
         }
@@ -1249,7 +1249,7 @@ Index NeuralNetwork::get_probabilistic_layers_number() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers(i)->get_type() == Layer::Probabilistic)
+        if(layers_pointers(i)->get_type() == Layer::Type::Probabilistic)
         {
             count++;
         }
@@ -1267,7 +1267,7 @@ Index NeuralNetwork::get_long_short_term_memory_layers_number() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers(i)->get_type() == Layer::LongShortTermMemory)
+        if(layers_pointers(i)->get_type() == Layer::Type::LongShortTermMemory)
         {
             count++;
         }
@@ -1284,7 +1284,7 @@ Index NeuralNetwork::get_recurrent_layers_number() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers(i)->get_type() == Layer::Recurrent)
+        if(layers_pointers(i)->get_type() == Layer::Type::Recurrent)
         {
             count++;
         }
@@ -1377,7 +1377,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
 
-    if(trainable_layers_pointers(0)->get_type() == Layer::Convolutional)
+    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional)
     {
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, forward_propagation.layers(0));
     }
@@ -1390,21 +1390,21 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     {
         switch(trainable_layers_pointers(i-1)->get_type())
         {
-        case Layer::Perceptron:
+        case Layer::Type::Perceptron:
 
         trainable_layers_pointers(i)
                 ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                         forward_propagation.layers(i));
         break;
 
-        case Layer::Probabilistic:
+        case Layer::Type::Probabilistic:
 
         trainable_layers_pointers(i)
                 ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                         forward_propagation.layers(i));
         break;
 
-        case Layer::Recurrent:
+        case Layer::Type::Recurrent:
 
         trainable_layers_pointers(i)
                 ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
@@ -1412,18 +1412,18 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         break;
 
-        case Layer::LongShortTermMemory:
+        case Layer::Type::LongShortTermMemory:
 
         trainable_layers_pointers(i)
                 ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                         forward_propagation.layers(i));
         break;
 
-        case Layer::Pooling: /// @todo
+        case Layer::Type::Pooling: /// @todo
 
         break;
 
-        case Layer::Convolutional: /// @todo
+        case Layer::Type::Convolutional: /// @todo
 
         break;
 
@@ -1450,7 +1450,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data(), parameters_number);
 
-    if(trainable_layers_pointers(0)->get_type() == Layer::Convolutional)
+    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional)
     {
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, potential_parameters, forward_propagation.layers(0));
     }
@@ -1469,7 +1469,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         switch(trainable_layers_pointers(i-1)->get_type())
         {
-        case Layer::Perceptron:
+        case Layer::Type::Perceptron:
         {
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
@@ -1478,7 +1478,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         }
             break;
 
-        case Layer::Probabilistic:
+        case Layer::Type::Probabilistic:
         {
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
@@ -1487,7 +1487,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         }
             break;
 
-        case Layer::Recurrent:
+        case Layer::Type::Recurrent:
         {
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
@@ -1496,7 +1496,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         }
             break;
 
-        case Layer::LongShortTermMemory:
+        case Layer::Type::LongShortTermMemory:
         {
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
@@ -1505,7 +1505,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         }
             break;
 
-        case Layer::Convolutional:
+        case Layer::Type::Convolutional:
         {
             //trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
             //                                                potential_parameters,
@@ -1598,7 +1598,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
     // First layer output
 
-    if(layers_pointers(1)->get_type() == Layer::Convolutional)
+    if(layers_pointers(1)->get_type() == Layer::Type::Convolutional)
     {
         outputs_4d = layers_pointers(0)->calculate_outputs_4D(inputs);
     }
@@ -1609,13 +1609,13 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
     for(Index i = 1; i < layers_number; i++)
     {
-        if(layers_pointers(i + 1)->get_type() == Layer::Convolutional)
+        if(layers_pointers(i + 1)->get_type() == Layer::Type::Convolutional)
         {
             outputs_4d = layers_pointers(i)->calculate_outputs_4D(outputs_4d);
         }
         else
         {
-            if(layers_pointers(i)->get_type() != Layer::Convolutional && layers_pointers(i)->get_type() != Layer::Pooling)
+            if(layers_pointers(i)->get_type() != Layer::Type::Convolutional && layers_pointers(i)->get_type() != Layer::Type::Pooling)
             {
                 outputs = layers_pointers(i)->calculate_outputs(outputs);
             }

@@ -125,7 +125,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
 
     switch(output_layer_back_propagation->layer_pointer->get_type())
     {
-    case Layer::Perceptron:
+    case Layer::Type::Perceptron:
     {
         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
                 = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
@@ -145,7 +145,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     }
         break;
 
-    case Layer::Probabilistic:
+    case Layer::Type::Probabilistic:
     {
         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
                 = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
@@ -165,7 +165,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     }
         break;
 
-    case Layer::Recurrent:
+    case Layer::Type::Recurrent:
     {
         RecurrentLayerBackPropagation* recurrent_layer_back_propagation
                 = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
@@ -185,7 +185,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     }
         break;
 
-    case Layer::LongShortTermMemory:
+    case Layer::Type::LongShortTermMemory:
     {
         LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
                 = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);

@@ -376,7 +376,7 @@ void UnscalingLayer::set_default()
 
     set_display(true);
 
-    layer_type = Unscaling;
+    layer_type = Type::Unscaling;
 }
 
 /// Sets max and min scaling range for minmaxscaling.

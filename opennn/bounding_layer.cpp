@@ -428,7 +428,7 @@ void BoundingLayer::set_default()
 
     bounding_method = Bounding;
 
-    layer_type = Layer::Bounding;
+    layer_type = Layer::Type::Bounding;
 }
 
 

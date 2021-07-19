@@ -326,7 +326,7 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
 
     switch(forward_propagation.layers(trainable_layers_number-1)->layer_pointer->get_type())
     {
-    case Layer::Perceptron:
+    case Layer::Type::Perceptron:
     {
         back_propagation.errors.device(*thread_pool_device) =
                 static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
@@ -334,7 +334,7 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
     }
         break;
 
-    case Layer::Probabilistic:
+    case Layer::Type::Probabilistic:
     {
         back_propagation.errors.device(*thread_pool_device) =
                 static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
@@ -342,7 +342,7 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
     }
         break;
 
-    case Layer::Recurrent:
+    case Layer::Type::Recurrent:
     {
         back_propagation.errors.device(*thread_pool_device) =
                 static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
@@ -350,7 +350,7 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
     }
         break;
 
-    case Layer::LongShortTermMemory:
+    case Layer::Type::LongShortTermMemory:
     {
         back_propagation.errors.device(*thread_pool_device) =
                 static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
@@ -371,7 +371,7 @@ void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
 
     switch(neural_network_forward_propagation.layers(trainable_layers_number-1)->layer_pointer->get_type())
     {
-    case Layer::Perceptron:
+    case Layer::Type::Perceptron:
 
         loss_index_back_propagation.errors.device(*thread_pool_device) =
                 static_cast<PerceptronLayerForwardPropagation*>(neural_network_forward_propagation.layers(trainable_layers_number-1))->activations -
@@ -379,7 +379,7 @@ void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
 
         break;
 
-    case Layer::Probabilistic:
+    case Layer::Type::Probabilistic:
 
         loss_index_back_propagation.errors.device(*thread_pool_device) =
                 static_cast<ProbabilisticLayerForwardPropagation*>(neural_network_forward_propagation.layers(trainable_layers_number-1))->activations -
@@ -387,7 +387,7 @@ void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
 
         break;
 
-    case Layer::Recurrent:
+    case Layer::Type::Recurrent:
 
         loss_index_back_propagation.errors.device(*thread_pool_device) =
                 static_cast<RecurrentLayerForwardPropagation*>(neural_network_forward_propagation.layers(trainable_layers_number-1))->activations -
@@ -395,7 +395,7 @@ void LossIndex::calculate_errors_lm(const DataSetBatch& batch,
 
         break;
 
-    case Layer::LongShortTermMemory:
+    case Layer::Type::LongShortTermMemory:
 
         loss_index_back_propagation.errors.device(*thread_pool_device) =
                 static_cast<LongShortTermMemoryLayerForwardPropagation*>(neural_network_forward_propagation.layers(trainable_layers_number-1))->activations -
@@ -523,7 +523,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 
     // Layer 0
 
-    if(trainable_layers_pointers(0)->get_type() != Layer::Perceptron && trainable_layers_pointers(0)->get_type() != Layer::Probabilistic)
+    if(trainable_layers_pointers(0)->get_type() != Layer::Type::Perceptron && trainable_layers_pointers(0)->get_type() != Layer::Type::Probabilistic)
     {
         ostringstream buffer;
 
@@ -552,7 +552,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
     {
         switch (forward_propagation.layers(i-1)->layer_pointer->get_type())
         {
-        case Layer::Perceptron:
+        case Layer::Type::Perceptron:
         {
             PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
                     = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1));
@@ -569,7 +569,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
         }
             break;
 
-        case Layer::Probabilistic:
+        case Layer::Type::Probabilistic:
         {
             ostringstream buffer;
 
@@ -771,7 +771,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
     const Tensor<Index, 1> trainable_layers_parameters_number
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-    if(trainable_layers_pointers(0)->get_type() == Layer::Convolutional)
+    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional)
     {
         trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_4d,
                                                                forward_propagation.layers(0),
@@ -796,7 +796,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
     {
         switch(forward_propagation.layers(i-1)->layer_pointer->get_type())
         {
-        case Layer::Perceptron:
+        case Layer::Type::Perceptron:
         {
             PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
                     = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1));
@@ -808,7 +808,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
         }
             break;
 
-        case Layer::Probabilistic:
+        case Layer::Type::Probabilistic:
         {
             ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
                     = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1));
@@ -820,7 +820,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
         }
             break;
 
-        case Layer::Recurrent:
+        case Layer::Type::Recurrent:
         {
             RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
                     = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1));
@@ -832,7 +832,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
         }
             break;
 
-        case Layer::LongShortTermMemory:
+        case Layer::Type::LongShortTermMemory:
         {
             LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
                     = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1));
@@ -844,7 +844,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
         }
             break;
 
-        case Layer::Convolutional:
+        case Layer::Type::Convolutional:
         {
             // @todo
 
@@ -855,7 +855,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
         }
             break;
 
-        case Layer::Pooling:
+        case Layer::Type::Pooling:
         {
             // @todo
         }
