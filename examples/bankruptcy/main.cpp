@@ -19,7 +19,6 @@
 #include <chrono>
 #include <stdint.h>
 #include <limits.h>
-#include <statistics.h>
 #include <regex>
 
 // Systems Complementaries
@@ -31,7 +30,7 @@
 
 // OpenNN includes
 
-#include "../opennn/opennn.h"
+#include "../../opennn/opennn.h"
 
 using namespace OpenNN;
 using namespace std;
