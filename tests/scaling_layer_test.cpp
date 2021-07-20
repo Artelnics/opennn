@@ -27,7 +27,7 @@ void ScalingLayerTest::test_constructor()
 
    ScalingLayer scaling_layer_1;
 
-   assert_true(scaling_layer_1.get_type() == Layer::Scaling, LOG);
+   assert_true(scaling_layer_1.get_type() == Layer::Type::Scaling, LOG);
    assert_true(scaling_layer_1.get_descriptives().size() == 0, LOG);
 
    ScalingLayer scaling_layer_2(3);
@@ -441,8 +441,8 @@ void ScalingLayerTest::test_set_default()
 
    assert_true(scaling_layer.get_scaling_methods()(0) == MinimumMaximum, LOG);
    assert_true(scaling_layer.get_display(), LOG);
-   assert_true(scaling_layer.get_type() == Layer::Scaling, LOG);
-   assert_true(scaling_layer.get_type() == 0, LOG);
+   assert_true(scaling_layer.get_type() == Layer::Type::Scaling, LOG);
+//   assert_true(scaling_layer.get_type() == 0, LOG);
    assert_true(abs(sl_descriptives(0).minimum + 1) < numeric_limits<type>::min(), LOG);
    assert_true(abs(sl_descriptives(0).maximum - 1) < numeric_limits<type>::min(), LOG);
    assert_true(abs(sl_descriptives(0).mean - 0) < numeric_limits<type>::min(), LOG);

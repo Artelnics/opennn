@@ -27,7 +27,7 @@ void UnscalingLayerTest::test_constructor()
 
    UnscalingLayer unscaling_layer_1;
 
-   assert_true(unscaling_layer_1.get_type() == Layer::Unscaling, LOG);
+   assert_true(unscaling_layer_1.get_type() == Layer::Type::Unscaling, LOG);
    assert_true(unscaling_layer_1.get_descriptives().size() == 0, LOG);
 
    // Test
@@ -331,8 +331,8 @@ void UnscalingLayerTest::test_set_default()
 
    unscaling_layer.set_default();
 
-   assert_true(unscaling_layer.get_type() == Layer::Unscaling, LOG);
-   assert_true(unscaling_layer.get_type() == 7, LOG);
+   assert_true(unscaling_layer.get_type() == Layer::Type::Unscaling, LOG);
+//   assert_true(unscaling_layer.get_type() == 7, LOG);
 
    assert_true(unscaling_layer.write_unscaling_method_text()(0) == "minimum and maximum", LOG);
 }

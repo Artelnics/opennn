@@ -4314,11 +4314,9 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
     // Cell State
 
-    buffer << "\tvector<float> cell_state(" << neurons_number << ");\n" << endl;
-
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\tcell_state[" << i << "] = forget_gate_activations[" << i << "] * cell_state[" << i << "] + input_gate_activations[" << i << "] * state_gate_activations[" << i << "]; \n";
+        buffer << "\tcell_states[" << i << "] = forget_gate_activations[" << i << "] * cell_states[" << i << "] + input_gate_activations[" << i << "] * state_gate_activations[" << i << "]; \n";
     }
 
     buffer << endl;
@@ -4333,43 +4331,43 @@ string LongShortTermMemoryLayer::write_combinations_c() const
         switch(activation_function)
         {
         case HyperbolicTangent:
-            buffer << "tanh(cell_state[" << i << "]);\n";
+            buffer << "tanh(cell_states[" << i << "]);\n";
             break;
 
         case RectifiedLinear:
-            buffer << "cell_state[" << i << "] < 0.0 ? 0.0 : cell_state[" << i << "];\n";
+            buffer << "cell_states[" << i << "] < 0.0 ? 0.0 : cell_states[" << i << "];\n";
             break;
 
         case Logistic:
-            buffer << "1.0/(1.0 + exp(-cell_state[" << i << "]));\n";
+            buffer << "1.0/(1.0 + exp(-cell_states[" << i << "]));\n";
             break;
 
         case Threshold:
-            buffer << "cell_state[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
+            buffer << "cell_states[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
             break;
 
         case SymmetricThreshold:
-            buffer << "cell_state[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
+            buffer << "cell_states[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
             break;
 
         case Linear:
-            buffer << "cell_state[" << i << "];\n";
+            buffer << "cell_states[" << i << "];\n";
             break;
 
         case ScaledExponentialLinear:
-            buffer << "cell_state[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(cell_state[" << i << "]) - 1.0) : 1.0507*cell_state[" << i << "];\n";
+            buffer << "cell_states[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(cell_states[" << i << "]) - 1.0) : 1.0507*cell_states[" << i << "];\n";
             break;
 
         case SoftPlus:
-            buffer << "log(1.0 + exp(cell_state[" << i << "]));\n";
+            buffer << "log(1.0 + exp(cell_states[" << i << "]));\n";
             break;
 
         case SoftSign:
-            buffer << "cell_state[" << i << "] < 0.0 ? cell_state[" << i << "]/(1.0 - cell_state[" << i << "] ) : cell_state[" << i << "]/(1.0 + cell_state[" << i << "] );\n";
+            buffer << "cell_states[" << i << "] < 0.0 ? cell_states[" << i << "]/(1.0 - cell_states[" << i << "] ) : cell_states[" << i << "]/(1.0 + cell_states[" << i << "] );\n";
             break;
 
         case ExponentialLinear:
-            buffer << "cell_state[" << i << "] < 0.0 ? 1.0*(exp(cell_state[" << i << "]) - 1.0) : cell_state[" << i << "];\n";
+            buffer << "cell_states[" << i << "] < 0.0 ? 1.0*(exp(cell_states[" << i << "]) - 1.0) : cell_states[" << i << "];\n";
             break;
 
         case HardSigmoid:
@@ -4383,11 +4381,9 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
     // Hidden state
 
-    buffer << "\tvector<float> hidden_state(" << neurons_number << ");\n" << endl;
-
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\thidden_state[" << i << "] = output_gate_activations[" << i << "] * cell_state_activations[" << i << "];\n";
+        buffer << "\thidden_states[" << i << "] = output_gate_activations[" << i << "] * cell_state_activations[" << i << "];\n";
     }
 
     buffer << endl;
@@ -4399,7 +4395,7 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\tlong_short_term_memory_output[" << i << "] = hidden_state[" << i << "];\n";
+        buffer << "\tlong_short_term_memory_output[" << i << "] = hidden_states[" << i << "];\n";
     }
 
     return buffer.str();

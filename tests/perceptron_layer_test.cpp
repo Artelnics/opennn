@@ -29,7 +29,7 @@ void PerceptronLayerTest::test_constructor()
 
     assert_true(perceptron_layer_1.get_inputs_number() == 0, LOG);
     assert_true(perceptron_layer_1.get_neurons_number() == 0, LOG);
-    assert_true(perceptron_layer_1.get_type() == Layer::Perceptron, LOG);
+    assert_true(perceptron_layer_1.get_type() == Layer::Type::Perceptron, LOG);
 
     // Architecture constructor
 
@@ -244,7 +244,7 @@ void PerceptronLayerTest::test_set_default()
    perceptron_layer.set_default();
 
    assert_true(perceptron_layer.get_display(), LOG);
-   assert_true(perceptron_layer.get_type() == OpenNN::Layer::Perceptron, LOG);
+   assert_true(perceptron_layer.get_type() == OpenNN::Layer::Type::Perceptron, LOG);
 }
 
 
