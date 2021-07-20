@@ -3778,9 +3778,9 @@ const Index& DataSet::get_steps_ahead() const
 
 /// Returns the indices of the time variables in the data set.
 
-const Index& DataSet::get_time_index() const
+const string& DataSet::get_time_column() const
 {
-    return time_index;
+    return time_column;
 }
 
 
@@ -4978,9 +4978,9 @@ void DataSet::set_steps_ahead_number(const Index& new_steps_ahead_number)
 /// Sets the new position where the time data is located in the data set.
 /// @param new_time_index Position where the time data is located.
 
-void DataSet::set_time_index(const Index& new_time_index)
+void DataSet::set_time_column(const string& new_time_column)
 {
-    time_index = new_time_index;
+    time_column = new_time_column;
 }
 
 
@@ -6549,12 +6549,12 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Time Index
+    // Time Column
     {
-        file_stream.OpenElement("TimeIndex");
+        file_stream.OpenElement("TimeColumn");
 
         buffer.str("");
-        buffer << get_time_index();
+        buffer << get_time_column();
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -6993,24 +6993,24 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_steps_ahead_number(new_steps_ahead);
     }
 
-    // Time index
+    // Time column
 
-    const tinyxml2::XMLElement* time_index_element = data_file_element->FirstChildElement("TimeIndex");
+    const tinyxml2::XMLElement* time_column_element = data_file_element->FirstChildElement("TimeColumn");
 
-    if(!time_index_element)
+    if(!time_column_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Time index element is nullptr.\n";
+               << "Time column element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-    if(time_index_element->GetText())
+    if(time_column_element->GetText())
     {
-        const Index new_time_index = static_cast<Index>(atoi(time_index_element->GetText()));
+        const string new_time_column = time_column_element->GetText();
 
-        set_time_index(new_time_index);
+        set_time_column(new_time_column);
     }
 
     // Columns
