@@ -357,7 +357,7 @@ public:
 
    const Index& get_lags_number() const;
    const Index& get_steps_ahead() const;
-   const Index& get_time_index() const;
+   const string& get_time_column() const;
    Index get_time_series_time_column_index() const;
 
    static Tensor<string, 1> get_default_columns_names(const Index&);
@@ -472,7 +472,7 @@ public:
 
    void set_lags_number(const Index&);
    void set_steps_ahead_number(const Index&);
-   void set_time_index(const Index&);
+   void set_time_column(const string&);
 
    void set_gmt(Index&);
 
@@ -788,7 +788,7 @@ private:
 
    /// Index where time variable is located for forecasting applications.
 
-   Index time_index;
+   string time_column;
 
    /// Number of lags.
 
