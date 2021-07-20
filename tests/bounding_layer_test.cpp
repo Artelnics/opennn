@@ -52,7 +52,7 @@ void BoundingLayerTest::test_get_type()
 {
    cout << "test_get_type\n";
 
-   assert_true(bounding_layer.get_type() == Layer::Bounding, LOG);
+   assert_true(bounding_layer.get_type() == Layer::Type::Bounding, LOG);
 }
 
 

@@ -2520,7 +2520,7 @@ string NeuralNetwork::write_expression_c() const
         buffer << "        hidden_states.resize(" << neurons_number << ");\n";
         buffer << "        cell_states.resize(" << neurons_number << ");\n";
         buffer << "    }\n" << endl;
-        buffer << "    vector<vector<float>> neural_network_batch(const vector<vector<float>>& inputs);\n";
+        buffer << "    vector<vector<float>> neural_network_batch(const vector<vector<float>>& inputs)\n";
         buffer << "    {\n";
         buffer << "        vector<vector<float>> outputs(inputs.size());\n" << endl;
         buffer << "        for(size_t i; i < inputs.size(); i++)\n";
