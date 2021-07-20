@@ -1,0 +1,3 @@
+﻿main.obj : error LNK2001: símbolo externo "public: virtual __cdecl OpenNN::DataSet::~DataSet(void)" (??1DataSet@OpenNN@@UEAA@XZ) sin resolver
+main.obj : error LNK2001: símbolo externo "public: __cdecl OpenNN::DataSet::DataSet(void)" (??0DataSet@OpenNN@@QEAA@XZ) sin resolver
+C:\opennn\x64\Release\breast_cancer.exe : fatal error LNK1120: 2 externos sin resolver
