@@ -14,13 +14,13 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
-CONFIG += c++11
+#CONFIG += c++11
 
 CONFIG(debug, debug|release) {
     DEFINES += OPENNN_DEBUG
 }
 
-#DEFINES += __Cpp11__
+DEFINES += __Cpp11__
 
 # OpenMP library
 
@@ -46,7 +46,7 @@ win32:!win32-g++{
 
 # Eigen library
 
-#INCLUDEPATH += ../eigen
+INCLUDEPATH += ../eigen
 
 HEADERS += \
     numerical_differentiation.h \
@@ -150,25 +150,3 @@ SOURCES += \
     testing_analysis.cpp \
     response_optimization.cpp \
     unit_testing.cpp
-
-#Add-ons available under Commercial Licenses
-
-#DEFINES += __OPENNN_CUDA__
-
-#contains(DEFINES, __OPENNN_CUDA__){
-#    include(../../Artelnics/opennn_cuda/cuda_config.pri)
-#    include(../../Artelnics/opennn_cuda/cuda_path.pri)
-#}
-
-#win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../openblas/lib/ -llibopenblas
-#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../openblas/lib/ -llibopenblasd
-#else:unix: LIBS += -L$$PWD/../../openblas/lib/ -llibopenblas
-
-#INCLUDEPATH += $$PWD/../../openblas/include
-#DEPENDPATH += $$PWD/../../openblas/include
-
-#win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/liblibopenblas.a
-#else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/liblibopenblasd.a
-#else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/libopenblas.lib
-#else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/libopenblasd.lib
-#else:unix: PRE_TARGETDEPS += $$PWD/../../openblas/lib/liblibopenblas.a

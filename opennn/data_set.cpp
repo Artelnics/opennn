@@ -9162,13 +9162,14 @@ Tensor<Tensor<type, 2>, 1> DataSet::create_isolation_forest(const Index& trees_n
     const Index samples_number = get_used_samples_number();
     Tensor<Tensor<type, 2>, 1> forest(trees_number);
 
-
+    std::random_device rng;
+    std::mt19937 urng(rng());
 
     for(Index i = 0; i < trees_number; i++)
     {
         Tensor<Index, 1> sub_set_indices(sub_set_size);
         Tensor<Index, 1> aux_indices = indices;
-        random_shuffle(aux_indices.data(), aux_indices.data()+samples_number);
+        std::shuffle(aux_indices.data(), aux_indices.data()+samples_number, urng);
 
         for(Index j = 0; j < sub_set_size; j++)
             sub_set_indices(j) = aux_indices(j);
