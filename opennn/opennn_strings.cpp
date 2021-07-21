@@ -332,9 +332,10 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     const string format_11 = "(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])";
     const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
+    const string format_14 = "(201[0-9]|202[0-9]|19[0-9][0-9])+";
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13);
+                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14);
 
     regex_search(date, matchs, regular_expression);
 
@@ -635,7 +636,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         time_structure.tm_hour = stoi(matchs[48].str());
         time_structure.tm_min = stoi(matchs[49].str());
         time_structure.tm_sec = stoi(matchs[50].str());
-
     }
     else if(matchs[51] != "") // mm/dd/yyyy hh:mm:ss [AP]M
     {
@@ -650,6 +650,15 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         else{
             time_structure.tm_hour = stoi(matchs[54].str());
         }
+    }
+    else if(matchs[58] != "") // yyyy
+    {
+        time_structure.tm_year = stoi(matchs[58].str())-1900;
+        time_structure.tm_mon = 1;
+        time_structure.tm_mday = 1;
+        time_structure.tm_hour = 0;
+        time_structure.tm_min = 0;
+        time_structure.tm_sec = 0;
     }
     else if(is_numeric_string(date)){
     }
