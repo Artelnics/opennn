@@ -1609,12 +1609,12 @@ void DataSetTest::test_set_time_index()
     data_set.transform_time_series();
 
     Index old_time_index;
-    old_time_index = data_set.get_time_index();
+//    old_time_index = data_set.get_time_index();
 
-    data_set.set_time_index(1000);
+//    data_set.set_time_index(1000);
 
     Index new_time_index;
-    new_time_index = data_set.get_time_index();
+//    new_time_index = data_set.get_time_index();
 
     // set_time_index and get_time_index tests
 
