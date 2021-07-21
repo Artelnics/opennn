@@ -2523,8 +2523,13 @@ string NeuralNetwork::write_expression_c() const
         buffer << "    vector<vector<float>> neural_network_batch(const vector<vector<float>>& inputs)\n";
         buffer << "    {\n";
         buffer << "        vector<vector<float>> outputs(inputs.size());\n" << endl;
-        buffer << "        for(size_t i; i < inputs.size(); i++)\n";
+        buffer << "        for(size_t i = 0; i < inputs.size(); i++)\n";
         buffer << "        {\n";
+        buffer << "            if(i % " << timestep << " == 0)\n";
+        buffer << "            {\n";
+        buffer << "                fill(hidden_states.begin(), hidden_states.end(), 0.0);\n";
+        buffer << "                fill(cell_states.begin(), cell_states.end(), 0.0);\n";
+        buffer << "            }\n" << endl;
         buffer << "            outputs[i] = neural_network(inputs[i]);\n";
         buffer << "        }\n" << endl;
         buffer << "        return outputs;\n";
