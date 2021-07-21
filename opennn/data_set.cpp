@@ -3279,6 +3279,15 @@ void DataSet::set_column_type(const Index& index, const ColumnType& new_type)
    columns[index].type = new_type;
 }
 
+
+void DataSet::set_column_type(const string& name, const ColumnType& new_type)
+{
+    const Index index = get_column_index(name);
+
+    set_column_type(index, new_type);
+}
+
+
 /// This method set the name of a single variable.
 /// @param index Index of variable.
 /// @param new_name Name of variable.
@@ -9996,6 +10005,11 @@ void DataSet::read_csv_1()
             columns(column_index).type = Categorical;
             column_index++;
         }
+    }
+
+    if(time_column != "")
+    {
+        set_column_type(time_column, DataSet::ColumnType::DateTime);
     }
 }
 

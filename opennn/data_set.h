@@ -426,6 +426,7 @@ public:
    void set_column_use(const string&, const VariableUse&);
 
    void set_column_type(const Index&, const ColumnType&);
+   void set_column_type(const string&, const ColumnType&);
 
    void set_columns_names(const Tensor<string, 1>&);
 
