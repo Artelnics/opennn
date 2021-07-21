@@ -60,7 +60,7 @@ Index count_tokens(const string& s, const char& c)
 
 Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
-//    const string new_string = get_trimmed(str);
+    //    const string new_string = get_trimmed(str);
 
     const Index tokens_number = count_tokens(str, separator);
 
@@ -276,7 +276,7 @@ bool is_date_time_string(const string& str)
 {
     if(is_numeric_string(str))return false;
 
-	const string format_1 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_1 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_2 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
     const string format_3 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
     const string format_4 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
@@ -294,7 +294,7 @@ bool is_date_time_string(const string& str)
                                    + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13);
 
     if(regex_match(str, regular_expression))
-    {   
+    {
         return true;
     }
     else
@@ -332,7 +332,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     const string format_11 = "(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])";
     const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
-    const string format_14 = "(201[0-9]|202[0-9]|19[0-9][0-9])+";
+    const string format_14 = "(201[0-9]|202[0-9]|19[0-9][0-9])";
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
                                    + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14);
@@ -651,14 +651,16 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_hour = stoi(matchs[54].str());
         }
     }
-    else if(matchs[58] != "") // yyyy
+    else if(matchs[57] != "") // yyyy
     {
-        time_structure.tm_year = stoi(matchs[58].str())-1900;
-        time_structure.tm_mon = 1;
+        time_structure.tm_year = stoi(matchs[57].str())-1900;
+        time_structure.tm_mon = 0;
         time_structure.tm_mday = 1;
         time_structure.tm_hour = 0;
         time_structure.tm_min = 0;
         time_structure.tm_sec = 0;
+
+        return mktime(&time_structure);
     }
     else if(is_numeric_string(date)){
     }
@@ -673,12 +675,14 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         throw logic_error(buffer.str());
     }
 
-    if(is_numeric_string(date)){
+    if(is_numeric_string(date))
+    {
         time_t time_t_date = stoi(date);
         return time_t_date;
     }
-    else{
-    return mktime(&time_structure);
+    else
+    {
+        return mktime(&time_structure);
     }
 }
 
