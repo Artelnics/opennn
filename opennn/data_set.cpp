@@ -10520,8 +10520,6 @@ void DataSet::read_csv_3_complete()
                 {
                     data(sample_index, variable_index) = static_cast<type>(date_to_timestamp(tokens(j), gmt));
 
-                    cout << data(sample_index, variable_index) << endl;
-
                     variable_index++;
                 }
             }
