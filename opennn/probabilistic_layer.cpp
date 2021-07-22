@@ -1397,7 +1397,7 @@ string ProbabilisticLayer::write_combinations(const Tensor<string, 1>& inputs_na
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        buffer << "\t" << "probabilistic_layer_combinations_" << to_string(i) << " = " << biases(i);
+        buffer << "probabilistic_layer_combinations_" << to_string(i) << " = " << biases(i);
 
         for(Index j = 0; j < inputs_number; j++)
         {
