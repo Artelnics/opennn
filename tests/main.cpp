@@ -233,7 +233,7 @@ int main()
         tests_count += mean_squared_error_test.get_tests_count();
         tests_passed_count += mean_squared_error_test.get_tests_passed_count();
         tests_failed_count += mean_squared_error_test.get_tests_failed_count();
-      }
+      }*/
       else if(test == "normalized_squared_error" || test == "nse")
       {
         NormalizedSquaredErrorTest normalized_squared_error_test;
@@ -241,7 +241,7 @@ int main()
         tests_count += normalized_squared_error_test.get_tests_count();
         tests_passed_count += normalized_squared_error_test.get_tests_passed_count();
         tests_failed_count += normalized_squared_error_test.get_tests_failed_count();
-      }
+      }/*
       else if(test == "weighted_squared_error" || test == "wse")
       {
         WeightedSquaredErrorTest weighted_squared_error_test;
@@ -660,7 +660,7 @@ int main()
           tests_passed_count += testing_analysis_test.get_tests_passed_count();
           tests_failed_count += testing_analysis_test.get_tests_failed_count();
       }
-
+*/
       else
       {
          cout << "Unknown test: " << test << endl;
@@ -682,7 +682,7 @@ int main()
       {
          cout << "Test NOT OK. " << tests_failed_count << " tests failed" << endl;
       }
-*/
+
       return 0;
    }
    catch(exception& e)
