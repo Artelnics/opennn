@@ -3995,7 +3995,6 @@ string LongShortTermMemoryLayer::write_combinations_c() const
     const Index neurons_number = get_neurons_number();
     const Index inputs_number =  get_inputs_number();
 
-
     // Forget gate
 
     buffer << "\tvector<float> forget_gate_combinations(" << neurons_number << ");\n" << endl;
@@ -4404,6 +4403,450 @@ string LongShortTermMemoryLayer::write_combinations_c() const
     for(Index i = 0; i < neurons_number; i++)
     {
         buffer << "\tlong_short_term_memory_output[" << i << "] = hidden_states[" << i << "];\n";
+    }
+
+    return buffer.str();
+}
+
+string LongShortTermMemoryLayer::write_expression_python() const
+{
+    ostringstream buffer;
+
+    buffer << "\tdef " << layer_name << "(self,inputs):\n" << endl;
+
+    buffer << write_combinations_python();
+
+    buffer << "\n\t\treturn long_short_term_memory_output;\n" << endl;
+
+    return buffer.str();
+}
+
+string LongShortTermMemoryLayer::write_combinations_python() const
+{
+    ostringstream buffer;
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    // Forget gate
+
+    buffer << "\t\tforget_gate_combinations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\tforget_gate_combinations[" << i << "] = " << forget_biases(i) << " + ";
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+             buffer << "inputs[" << j << "] * (" << forget_weights(j,i) << ") + ";
+        }
+
+        for(Index k = 0; k < neurons_number-1; k++)
+        {
+             buffer << "self.hidden_states[" << k << "] * (" << forget_recurrent_weights(k,i) << ") + ";
+        }
+
+        buffer << "self.hidden_states[" << neurons_number-1 << "] * (" << forget_recurrent_weights(neurons_number-1,i) << ")";
+
+        buffer << " " << endl;
+    }
+
+    buffer << "\t\t" << endl;
+
+
+    buffer << "\t\tforget_gate_activations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\tforget_gate_activations[" << i << "] = ";
+
+        switch(recurrent_activation_function)
+        {
+        case HyperbolicTangent:
+            buffer << "np.tanh(forget_gate_combinations[" << i << "])\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "np.maximum(0.0, forget_gate_combinations[" << i << "])\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + np.exp(-forget_gate_combinations[" << i << "]))\n";
+            break;
+
+        case Threshold:
+            buffer << "1.0 if forget_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "1.0 if forget_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
+            break;
+
+        case Linear:
+            buffer << "forget_gate_combinations[" << i << "]\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "1.0507*1.67326*(np.exp(forget_gate_combinations[" << i << "]) - 1.0) if forget_gate_combinations[" << i << "] < 0.0 else 1.0507*forget_gate_combinations[" << i << "]\n";
+            break;
+
+        case SoftPlus:
+            buffer << "np.log(1.0 + np.exp(forget_gate_combinations[" << i << "]))\n";
+            break;
+
+        case SoftSign:
+            buffer << "forget_gate_combinations[" << i << "]/(1.0 - forget_gate_combinations[" << i << "] ) if forget_gate_combinations[" << i << "] < 0.0 else forget_gate_combinations[" << i << "]/(1.0 + forget_gate_combinations[" << i << "] )\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "1.0*(np.exp(forget_gate_combinations[" << i << "]) - 1.0) if forget_gate_combinations[" << i << "] < 0.0 else forget_gate_combinations[" << i << "]\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+        }
+    }
+
+
+    buffer << "\t\t" << endl;
+
+    // Input gate
+
+    buffer << "\t\tinput_gate_combinations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\tinput_gate_combinations[" << i << "] = " << input_biases(i) << " + ";
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+             buffer << "inputs[" << j << "] * (" << input_weights(j,i) << ") + ";
+        }
+
+        for(Index k = 0; k < neurons_number-1; k++)
+        {
+             buffer << "self.hidden_states[" << k << "] * (" << input_recurrent_weights(k,i) << ") + ";
+        }
+
+        buffer << "self.hidden_states[" << neurons_number-1 << "] * (" << input_recurrent_weights(neurons_number-1,i) << ")";
+
+        buffer << " " << endl;
+    }
+
+
+    buffer << "\t\t" << endl;
+
+    buffer << "\t\tinput_gate_activations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\tinput_gate_activations[" << i << "] = ";
+
+        switch(recurrent_activation_function)
+        {
+        case HyperbolicTangent:
+            buffer << "np.tanh(input_gate_combinations[" << i << "])\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "np.maximum(0.0, input_gate_combinations[" << i << "])\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + np.exp(-input_gate_combinations[" << i << "]))\n";
+            break;
+
+        case Threshold:
+            buffer << "1.0 if input_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "1.0 if input_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
+            break;
+
+        case Linear:
+            buffer << "input_gate_combinations[" << i << "]\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "1.0507*1.67326*(np.exp(input_gate_combinations[" << i << "]) - 1.0) if input_gate_combinations[" << i << "] < 0.0 else 1.0507*input_gate_combinations[" << i << "]\n";
+            break;
+
+        case SoftPlus:
+            buffer << "np.log(1.0 + np.exp(input_gate_combinations[" << i << "]))\n";
+            break;
+
+        case SoftSign:
+            buffer << "input_gate_combinations[" << i << "]/(1.0 - input_gate_combinations[" << i << "] ) if input_gate_combinations[" << i << "] < 0.0 else input_gate_combinations[" << i << "]/(1.0 + input_gate_combinations[" << i << "] )\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "1.0*(np.exp(input_gate_combinations[" << i << "]) - 1.0) if input_gate_combinations[" << i << "] < 0.0 else input_gate_combinations[" << i << "]\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+        }
+    }
+
+    buffer << "\t\t" << endl;
+
+
+    // State gate
+
+    buffer << "\t\tstate_gate_combinations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\tstate_gate_combinations[" << i << "] = " << state_biases(i) << " + ";
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+             buffer << "inputs[" << j << "] * (" << state_weights(j,i) << ") + ";
+        }
+
+        for(Index k = 0; k < neurons_number-1; k++)
+        {
+             buffer << "self.hidden_states[" << k << "] * (" << state_recurrent_weights(k,i) << ") + ";
+        }
+
+        buffer << "self.hidden_states[" << neurons_number-1 << "] * (" << state_recurrent_weights(neurons_number-1,i) << ")";
+
+        buffer << " " << endl;
+    }
+
+
+    buffer << "\t\t" << endl;
+
+    buffer << "\t\tstate_gate_activations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\tstate_gate_activations[" << i << "] = ";
+
+        switch(activation_function)
+        {
+        case HyperbolicTangent:
+            buffer << "np.tanh(state_gate_combinations[" << i << "])\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "np.maximum(0.0, state_gate_combinations[" << i << "])\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + np.exp(-state_gate_combinations[" << i << "]))\n";
+            break;
+
+        case Threshold:
+            buffer << "1.0 if state_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "1.0 if state_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
+            break;
+
+        case Linear:
+            buffer << "state_gate_combinations[" << i << "]\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "1.0507*1.67326*(np.exp(state_gate_combinations[" << i << "]) - 1.0) if state_gate_combinations[" << i << "] < 0.0 else 1.0507*state_gate_combinations[" << i << "]\n";
+            break;
+
+        case SoftPlus:
+            buffer << "np.log(1.0 + np.exp(state_gate_combinations[" << i << "]))\n";
+            break;
+
+        case SoftSign:
+            buffer << "state_gate_combinations[" << i << "]/(1.0 - state_gate_combinations[" << i << "] ) if state_gate_combinations[" << i << "] < 0.0 else state_gate_combinations[" << i << "]/(1.0 + state_gate_combinations[" << i << "] )\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "1.0*(np.exp(state_gate_combinations[" << i << "]) - 1.0) if state_gate_combinations[" << i << "] < 0.0 else state_gate_combinations[" << i << "]\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+        }
+    }
+
+    buffer << "\t\t" << endl;
+
+
+    // Output gate
+
+    buffer << "\t\toutput_gate_combinations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\toutput_gate_combinations[" << i << "] = " << output_biases(i) << " + ";
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+             buffer << "inputs[" << j << "] * (" << output_weights(j,i) << ") + ";
+        }
+
+        for(Index k = 0; k < neurons_number-1; k++)
+        {
+             buffer << "self.hidden_states[" << k << "] * (" << output_recurrent_weights(k,i) << ") + ";
+        }
+
+        buffer << "self.hidden_states[" << neurons_number-1 << "] * (" << output_recurrent_weights(neurons_number-1,i) << ")";
+
+        buffer << " " << endl;
+    }
+
+
+    buffer << "\t\t" << endl;
+
+    buffer << "\t\toutput_gate_activations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\toutput_gate_activations[" << i << "] = ";
+
+        switch(activation_function)
+        {
+        case HyperbolicTangent:
+            buffer << "np.tanh(output_gate_combinations[" << i << "])\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "np.maximum(0.0, output_gate_combinations[" << i << "])\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + np.exp(-output_gate_combinations[" << i << "]))\n";
+            break;
+
+        case Threshold:
+            buffer << "1.0 if output_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "1.0 if output_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
+            break;
+
+        case Linear:
+            buffer << "output_gate_combinations[" << i << "]\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "1.0507*1.67326*(np.exp(output_gate_combinations[" << i << "]) - 1.0) if output_gate_combinations[" << i << "] < 0.0 else 1.0507*output_gate_combinations[" << i << "]\n";
+            break;
+
+        case SoftPlus:
+            buffer << "np.log(1.0 + np.exp(output_gate_combinations[" << i << "]))\n";
+            break;
+
+        case SoftSign:
+            buffer << "output_gate_combinations[" << i << "]/(1.0 - output_gate_combinations[" << i << "] ) if output_gate_combinations[" << i << "] < 0.0 else output_gate_combinations[" << i << "]/(1.0 + output_gate_combinations[" << i << "] )\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "1.0*(np.exp(output_gate_combinations[" << i << "]) - 1.0) if output_gate_combinations[" << i << "] < 0.0 else output_gate_combinations[" << i << "]\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+        }
+    }
+
+    buffer << "\t\t" << endl;
+
+
+    // Cell states
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\tself.cell_states[" << i << "] = forget_gate_activations[" << i << "] * self.cell_states[" << i << "] + input_gate_activations[" << i << "] * state_gate_activations[" << i << "] \n";
+    }
+
+    buffer << " " << endl;
+
+    buffer << "\t\t" << endl;
+
+    buffer << "\t\tcell_state_activations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\tcell_state_activations[" << i << "] = ";
+
+        switch(activation_function)
+        {
+        case HyperbolicTangent:
+            buffer << "np.tanh(self.cell_states[" << i << "])\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "np.maximum(0.0, self.cell_states[" << i << "])\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + np.exp(-self.cell_states[" << i << "]))\n";
+            break;
+
+        case Threshold:
+            buffer << "1.0 if self.cell_states[" << i << "] >= 0.0 else 0.0\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "1.0 if self.cell_states[" << i << "] >= 0.0 else -1.0\n";
+            break;
+
+        case Linear:
+            buffer << "self.cell_states[" << i << "]\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "1.0507*1.67326*(np.exp(self.cell_states[" << i << "]) - 1.0) if self.cell_states[" << i << "] < 0.0 else 1.0507*self.cell_states[" << i << "]\n";
+            break;
+
+        case SoftPlus:
+            buffer << "np.log(1.0 + np.exp(self.cell_states[" << i << "]))\n";
+            break;
+
+        case SoftSign:
+            buffer << "self.cell_states[" << i << "]/(1.0 - self.cell_states[" << i << "] ) if self.cell_states[" << i << "] < 0.0 else self.cell_states[" << i << "]/(1.0 + self.cell_states[" << i << "] )\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "1.0*(np.exp(self.cell_states[" << i << "]) - 1.0) if self.cell_states[" << i << "] < 0.0 else self.cell_states[" << i << "]\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+        }
+    }
+
+    buffer << "\t\t" << endl;
+
+
+    // Hidden state
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\tself.hidden_states[" << i << "] = output_gate_activations[" << i << "] * cell_state_activations[" << i << "]\n";
+    }
+
+    buffer << " " << endl;
+
+    buffer << "\t\t" << endl;
+
+
+    // LSTM output
+
+    buffer << "\t\tlong_short_term_memory_output = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\t\tlong_short_term_memory_output[" << i << "] = self.hidden_states[" << i << "]\n";
     }
 
     return buffer.str();

@@ -285,6 +285,9 @@ public:
    string write_expression_c() const;
    string write_combinations_c() const;
 
+   string write_expression_python() const;
+   string write_combinations_python() const;
+
    // Serialization methods
 
    void from_XML(const tinyxml2::XMLDocument&);
