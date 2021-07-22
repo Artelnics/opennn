@@ -27,7 +27,6 @@ int main()
 {
     try
     {
-
         cout << "OpenNN. Yacht Resistance Production Example." << endl;
 
         // Neural network

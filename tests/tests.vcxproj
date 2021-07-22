@@ -19,7 +19,84 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="bounding_layer_test.cpp" />
+    <ClCompile Include="conjugate_gradient_test.cpp" />
+    <ClCompile Include="convolutional_layer_test.cpp" />
+    <ClCompile Include="correlations_test.cpp" />
+    <ClCompile Include="cross_entropy_error_test.cpp" />
+    <ClCompile Include="data_set_test.cpp" />
+    <ClCompile Include="genetic_algorithm_test.cpp" />
+    <ClCompile Include="gradient_descent_test.cpp" />
+    <ClCompile Include="growing_inputs_test.cpp" />
+    <ClCompile Include="growing_neurons_test.cpp" />
+    <ClCompile Include="inputs_selection_test.cpp" />
+    <ClCompile Include="learning_rate_algorithm_test.cpp" />
+    <ClCompile Include="levenberg_marquardt_algorithm_test.cpp" />
+    <ClCompile Include="long_short_term_memory_layer_test.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="mean_squared_error_test.cpp" />
+    <ClCompile Include="minkowski_error_test.cpp" />
+    <ClCompile Include="model_selection_test.cpp" />
+    <ClCompile Include="neural_network_test.cpp" />
+    <ClCompile Include="neurons_selection_test.cpp" />
+    <ClCompile Include="normalized_squared_error_test.cpp" />
+    <ClCompile Include="numerical_differentiation_test.cpp" />
+    <ClCompile Include="perceptron_layer_test.cpp" />
+    <ClCompile Include="pooling_layer_test.cpp" />
+    <ClCompile Include="probabilistic_layer_test.cpp" />
+    <ClCompile Include="pruning_inputs_test.cpp" />
+    <ClCompile Include="quasi_newton_method_test.cpp" />
+    <ClCompile Include="recurrent_layer_test.cpp" />
+    <ClCompile Include="scaling_layer_test.cpp" />
+    <ClCompile Include="scaling_test.cpp" />
+    <ClCompile Include="statistics_test.cpp" />
+    <ClCompile Include="stochastic_gradient_descent_test.cpp" />
+    <ClCompile Include="sum_squared_error_test.cpp" />
+    <ClCompile Include="tensor_utilities_test.cpp" />
+    <ClCompile Include="testing_analysis_test.cpp" />
+    <ClCompile Include="training_strategy_test.cpp" />
+    <ClCompile Include="unscaling_layer_test.cpp" />
+    <ClCompile Include="weighted_squared_error_test.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bounding_layer_test.h" />
+    <ClInclude Include="conjugate_gradient_test.h" />
+    <ClInclude Include="convolutional_layer_test.h" />
+    <ClInclude Include="correlations_test.h" />
+    <ClInclude Include="cross_entropy_error_test.h" />
+    <ClInclude Include="data_set_test.h" />
+    <ClInclude Include="genetic_algorithm_test.h" />
+    <ClInclude Include="gradient_descent_test.h" />
+    <ClInclude Include="growing_inputs_test.h" />
+    <ClInclude Include="growing_neurons_test.h" />
+    <ClInclude Include="inputs_selection_test.h" />
+    <ClInclude Include="learning_rate_algorithm_test.h" />
+    <ClInclude Include="levenberg_marquardt_algorithm_test.h" />
+    <ClInclude Include="long_short_term_memory_layer_test.h" />
+    <ClInclude Include="mean_squared_error_test.h" />
+    <ClInclude Include="minkowski_error_test.h" />
+    <ClInclude Include="model_selection_test.h" />
+    <ClInclude Include="neural_network_test.h" />
+    <ClInclude Include="neurons_selection_test.h" />
+    <ClInclude Include="normalized_squared_error_test.h" />
+    <ClInclude Include="numerical_differentiation_test.h" />
+    <ClInclude Include="opennn_tests.h" />
+    <ClInclude Include="perceptron_layer_test.h" />
+    <ClInclude Include="pooling_layer_test.h" />
+    <ClInclude Include="probabilistic_layer_test.h" />
+    <ClInclude Include="pruning_inputs_test.h" />
+    <ClInclude Include="quasi_newton_method_test.h" />
+    <ClInclude Include="recurrent_layer_test.h" />
+    <ClInclude Include="scaling_layer_test.h" />
+    <ClInclude Include="scaling_test.h" />
+    <ClInclude Include="statistics_test.h" />
+    <ClInclude Include="stochastic_gradient_descent_test.h" />
+    <ClInclude Include="sum_squared_error_test.h" />
+    <ClInclude Include="tensor_utilities_test.h" />
+    <ClInclude Include="testing_analysis_test.h" />
+    <ClInclude Include="training_strategy_test.h" />
+    <ClInclude Include="unscaling_layer_test.h" />
+    <ClInclude Include="weighted_squared_error_test.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A3656628-2646-4F45-887A-DF284ED6A11B}</ProjectGuid>
@@ -67,10 +144,18 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\opennn-build\$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\opennn-build\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\opennn-build\$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\opennn-build\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -85,7 +170,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalLibraryDirectories>$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>C:\opennn-build\$(Configuration)\opennn.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\opennn-build\$(Platform)\$(Configuration)\opennn.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -99,7 +184,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>C:\opennn-build\$(Configuration)\opennn.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\opennn-build\$(Platform)\$(Configuration)\opennn.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -116,7 +201,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>C:\opennn-build\$(Configuration)\opennn.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\opennn-build\$(Platform)\$(Configuration)\opennn.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(Configuration)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -133,7 +218,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalDependencies>C:\opennn-build\$(Configuration)\opennn.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\..\opennn-build\$(Platform)\$(Configuration)\opennn.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(Configuration)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

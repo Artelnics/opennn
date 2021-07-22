@@ -164,13 +164,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>C:\opennn-build\$(Configuration)\</OutDir>
-    <IntDir>C:\opennn-build\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\..\opennn-build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\..\opennn-build\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>C:\opennn-build\$(Configuration)\</OutDir>
-    <IntDir>C:\opennn-build\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\..\opennn-build\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\..\opennn-build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

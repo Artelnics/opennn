@@ -36,93 +36,71 @@ using namespace OpenNN;
 using namespace std;
 using namespace chrono;
 
-
-
 int main(void)
 {
     try
     {
-//        cout << "OpenNN. Bankruptcy Example." << endl;
+        cout << "OpenNN. Bankruptcy Example." << endl;
 
-//        srand(static_cast<unsigned>(time(nullptr)));
+        srand(static_cast<unsigned>(time(nullptr)));
 
-//        // Dataset
+        // Dataset
 
-//        DataSet data_set("../data/bankruptcy.csv", ';', true);
+        DataSet data_set("../data/bankruptcy.csv", ';', true);
 
-//        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
-//        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
 
-//        data_set.split_samples_random();
+        // Neural network
 
-//        const Index input_variables_number = data_set.get_input_variables_number();
-//        const Index target_variables_number = data_set.get_target_variables_number();
+        const Index hidden_neurons_number = 3;
 
-//        Tensor<string, 1> scaling_inputs_methods(input_variables_number);
-//        scaling_inputs_methods.setConstant("MinimumMaximum");
+        Tensor<Index, 1> architecture(3);
+        architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
-//        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
+        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
 
-//        // Neural network
+        // Training strategy
 
-//        const Index hidden_neurons_number = 3;
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//        Tensor<Index, 1> architecture(3);
-//        architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
+        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
-//        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+        AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
 
-//        neural_network.set_inputs_names(inputs_names);
-//        neural_network.set_outputs_names(targets_names);
+        adam->set_loss_goal(1.0e-3);
+        adam->set_maximum_epochs_number(10000);
+        adam->set_display_period(1000);
 
-//        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+        training_strategy.perform_training();
 
-//        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-//        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
+        // Testing analysis
 
-//        // Training strategy
+        Tensor<type, 2> inputs(3,6);
 
-//        TrainingStrategy training_strategy(&neural_network, &data_set);
+        inputs.setValues({{1,0,0,0,0,0},
+                          {1,1,1,0.5,0.5,1},
+                          {0,1,0,1,0,1}});
 
-//        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
-//        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+        cout << "Inputs: " << endl;
+        cout << inputs << endl;
 
-//        AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
+        cout << "Outputs: " << endl;
+        cout << neural_network.calculate_outputs(inputs) << endl;
 
-//        adam->set_loss_goal(1.0e-3);
-//        adam->set_maximum_epochs_number(10000);
-//        adam->set_display_period(1000);
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-//        training_strategy.perform_training();
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
-//        // Testing analysis
+        cout << "Confusion: " << endl;
+        cout << confusion << endl;
 
-//        Tensor<type, 2> inputs(3,6);
+        // Save results
 
-//        inputs.setValues({{1,0,0,0,0,0},
-//                          {1,1,1,0.5,0.5,1},
-//                          {0,1,0,1,0,1}});
-
-//        cout << "inputs: " << endl;
-//        cout << inputs << endl;
-
-//        cout << "outputs: " << endl;
-//        cout << neural_network.calculate_outputs(inputs) << endl;
-
-//        data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
-
-//        TestingAnalysis testing_analysis(&neural_network, &data_set);
-
-//        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-
-//        cout << "Confusion: " << endl;
-//        cout << confusion << endl;
-
-//        // Save results
-
-//        data_set.save("../data/data_set.xml");
-//        neural_network.save("../data/neural_network.xml");
-//        training_strategy.save("../data/training_strategy.xml");
+        data_set.save("../data/data_set.xml");
+        neural_network.save("../data/neural_network.xml");
+        training_strategy.save("../data/training_strategy.xml");
 
         return 0;
     }
