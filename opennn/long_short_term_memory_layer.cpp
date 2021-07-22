@@ -1180,13 +1180,7 @@ check_size(inputs, get_inputs_number(), LOG);
 
     combinations.device(*thread_pool_device) = inputs.contract(weights, AT_B);
 
-    cout << "inputs: " << inputs << endl;
-    cout << "combinations: " << combinations << endl;
-    cout << "biases: " << biases << endl;
-
     combinations.device(*thread_pool_device) += biases;
-
-    cout << "combinations: " << combinations << endl;
 
     combinations.device(*thread_pool_device) += hidden_states.contract(recurrent_weights, AT_B);
 }
