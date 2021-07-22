@@ -2686,6 +2686,13 @@ string NeuralNetwork::write_expression_python() const
         buffer << "\t\tself.hidden_states = " + to_string(get_recurrent_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
     }
 
+    if(has_long_short_term_memory_layer())
+    {
+        buffer << "\t\tself.timestep = "+to_string(get_long_short_term_memory_layer_pointer()->get_timesteps())+"\n " << endl;
+        buffer << "\t\tself.hidden_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
+        buffer << "\t\tself.cell_states = " + to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
+    }
+
     buffer << "\t\tself.parameters_number = " + to_string(get_parameters_number()) + "\n " << endl;
 
     for(Index i = 0; i  < layers_number; i++)
@@ -2712,11 +2719,20 @@ string NeuralNetwork::write_expression_python() const
 
     if(has_recurrent_layer())
     {
-
         buffer << "\t\t\tif(i%self.timestep==0):\n" << endl;
 
         buffer << "\t\t\t\tself.hidden_states = "+to_string(get_recurrent_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
     }
+
+    if(has_long_short_term_memory_layer())
+    {
+        buffer << "\t\t\tif(i%self.timestep==0):\n" << endl;
+
+        buffer << "\t\t\t\tself.hidden_states = "+to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
+
+        buffer << "\t\t\t\tself.cell_states = "+to_string(get_long_short_term_memory_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
+    }
+
 
     buffer << "\t\t\tinputs = list(input_batch[i])\n" << endl;
 

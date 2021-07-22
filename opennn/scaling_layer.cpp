@@ -1140,7 +1140,7 @@ string ScalingLayer::write_expression_python() const
     {
         if(scalers(i) == NoScaling)
         {
-            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]" << endl;
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]\n" << endl;
         }
         else if(scalers(i) == MinimumMaximum)
         {
@@ -1152,15 +1152,19 @@ string ScalingLayer::write_expression_python() const
         }
         else if(scalers(i) == MeanStandardDeviation)
         {
-            const type slope = static_cast<type>(2)/descriptives(i).standard_deviation;
+            const type standard_deviation = descriptives(i).standard_deviation;
 
-            const type intercept = -static_cast<type>(2)*descriptives(i).mean/descriptives(i).standard_deviation;
+            const type mean = descriptives(i).mean;
 
-            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
+            buffer << "\t\toutputs[" << i << "] = (inputs[" << i << "]-"<<mean<<")/"<<standard_deviation<<"\n";
         }
         else if(scalers(i) == StandardDeviation)
         {
-            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << " " << endl;
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]/" << descriptives(i).standard_deviation << "\n " << endl;
+        }
+        else if(scalers(i) == Logarithm)
+        {
+            buffer << "\t\toutputs[" << i << "] = np.log(inputs[" << i << "])\n"<< endl;
         }
         else
         {

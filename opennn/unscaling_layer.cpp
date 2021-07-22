@@ -1176,26 +1176,37 @@ string UnscalingLayer::write_expression_python() const
         }
         else if(scalers(i) == MinimumMaximum)
         {
-            const type slope = (descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
+            if(abs(descriptives(i).minimum - descriptives(i).maximum) < numeric_limits<type>::min())
+            {
+               buffer << "\toutputs[" << i << "] = " << descriptives(i).minimum <<"\n";
+            }
+            else
+            {
+                const type slope = (descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
-            const type intercept
-                    = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
+                const type intercept
+                        = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
 
-            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
+                buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
+            }
         }
         else if(scalers(i) == MeanStandardDeviation)
         {
-            const type slope = descriptives(i).standard_deviation/static_cast<type>(2);
+            const type standard_deviation = descriptives(i).standard_deviation;
 
-            const type intercept = descriptives(i).mean;
+            const type mean = descriptives(i).mean;
 
-            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<slope<<"+"<<intercept<<"\n";
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<standard_deviation<<"+"<<mean<<"\n";
+        }
+        else if(scalers(i) ==  StandardDeviation)
+        {
+            const type standard_deviation = descriptives(i).standard_deviation;
 
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]*"<<standard_deviation<<"\n";
         }
         else if(scalers(i) == Logarithm)
         {
-            buffer << "\t\toutputs[" << i << "] = 0.5*exp( inputs[" << i << "] -1)*("
-                   << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << descriptives[i].minimum;
+            buffer << "\t\toutputs[" << i << "] = np.exp( inputs[" << i << "])\n";
         }
         else
         {
