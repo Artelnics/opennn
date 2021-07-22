@@ -26,9 +26,7 @@ int main()
         cout << "OpenNN. Breast Cancer Application." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
-
-        DataSet data_set;
-        /*
+       
         DataSet data_set("../data/breast_cancer.csv", ';', true);
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, {9, 6, 1});
@@ -46,7 +44,7 @@ int main()
         testing_analysis.print_binary_classification_tests();
 
         neural_network.save_expression_python("../data/breast_cancer.py");
-*/
+
         cout << "End breast cancer application" << endl;
 
         system("pause");

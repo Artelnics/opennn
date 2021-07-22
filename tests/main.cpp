@@ -14,7 +14,7 @@
 // OpenNN tests includes
 
 #include "opennn_tests.h"
-#include "../opennn/unit_testing.h"
+#include "../opennn/opennn.h"
 
 using namespace OpenNN;
 
@@ -99,7 +99,7 @@ int main()
          tests_passed_count += correlations_test.get_tests_passed_count();
          tests_failed_count += correlations_test.get_tests_failed_count();
       }
-
+/*
       else if(test == "data_set" || test == "ds")
       {
          DataSetTest data_set_test;
@@ -317,13 +317,13 @@ int main()
       }
       else if(test == "stochastic_gradient_descent" || test == "sgd")
       {
-          /*
+       
         StochasticGradientDescentTest stochastic_gradient_descent_test;
         stochastic_gradient_descent_test.run_test_case();
         tests_count += stochastic_gradient_descent_test.get_tests_count();
         tests_passed_count += stochastic_gradient_descent_test.get_tests_passed_count();
         tests_failed_count += stochastic_gradient_descent_test.get_tests_failed_count();
-        */
+       
       }
       else if(test == "training_strategy" || test == "ts")
       {
@@ -682,7 +682,7 @@ int main()
       {
          cout << "Test NOT OK. " << tests_failed_count << " tests failed" << endl;
       }
-
+*/
       return 0;
    }
    catch(exception& e)

@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "perceptron_layer_test.h"
-#include "loss_index.h"
 
 PerceptronLayerTest::PerceptronLayerTest() : UnitTesting()
 {

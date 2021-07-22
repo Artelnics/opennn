@@ -19,7 +19,6 @@
 #include <chrono>
 #include <stdint.h>
 #include <limits.h>
-#include <statistics.h>
 #include <regex>
 
 // Systems Complementaries
@@ -31,13 +30,11 @@
 
 // OpenNN includes
 
-#include "../opennn/opennn.h"
+#include "../../opennn/opennn.h"
 
 using namespace OpenNN;
 using namespace std;
 using namespace chrono;
-
-
 
 int main(void)
 {
@@ -49,18 +46,10 @@ int main(void)
 
         DataSet data_set("../data/vehicle_insurances.csv", ';', true);
 
-        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
-        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
-
         data_set.split_samples_random();
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
-
-        Tensor<string, 1> scaling_inputs_methods(input_variables_number);
-        scaling_inputs_methods.setConstant("MinimumMaximum");
-
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
 
         // Neural network
 
@@ -70,14 +59,6 @@ int main(void)
         architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
-
-        neural_network.set_inputs_names(inputs_names);
-        neural_network.set_outputs_names(targets_names);
-
-        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
 
         // Training strategy
 
@@ -100,13 +81,11 @@ int main(void)
 
         inputs.setValues({{1,1,33,0,2,1,23412,120}});
 
-        cout << "inputs: " << endl;
+        cout << "Inputs: " << endl;
         cout << inputs << endl;
 
-        cout << "outputs: " << endl;
+        cout << "Outputs: " << endl;
         cout << neural_network.calculate_outputs(inputs) << endl;
-
-        data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
