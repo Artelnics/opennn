@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   R O S E N B R O C K   A P P L I C A T I O N
+//   B L A N K   A P P L I C A T I O N
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -30,32 +30,8 @@ int main()
         cout << "OpenNN. Blank application." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
-
-        DataSet data_set("C:/Users/Usuario/Documents/R_100000_samples_101_variables.csv", ',', true);
-
-        const Index inputs_number = data_set.get_input_variables_number();
-        const Index targets_number = data_set.get_target_variables_number();
-        const Index neurons_number = 100;
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        ModelSelection model_selection(&training_strategy);
-
-        model_selection.set_inputs_selection_method(ModelSelection::InputsSelectionMethod::GENETIC_ALGORITHM);
-
-        GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
-
-        genetic_algorithm_pointer->set_individuals_number(10);
-
-        model_selection.perform_inputs_selection();
-
-
-
-
-
-
+        
+        // Write your code here
 
         cout << "Good bye!" << endl;
 
