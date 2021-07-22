@@ -33,18 +33,18 @@ int main()
 
         // Data Set
 
-        const Index samples = 10000;
-        const Index variables = 10;
-        const Index hidden_neurons_number = 10;
+        const Index samples_number = 1000000;
+        const Index inputs_number = 1000;
+        const Index outputs_number = 1;
+        const Index hidden_neurons_number = inputs_number;
 
-        DataSet data_set("C:/rosenbrock.csv", ',', true);
+        DataSet data_set;// ("C:/rosenbrock.csv", ',', true);
+
+        data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
 
         data_set.set_training();
 
         // Neural network
-
-        const Index inputs_number = data_set.get_input_variables_number();
-        const Index outputs_number = data_set.get_target_variables_number();
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});     
 
@@ -53,22 +53,11 @@ int main()
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
-
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
+        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
-        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(1);
 
-        training_strategy.set_display_period(10);
-        //training_strategy.set_maximum_epochs_number(1000000);
-
-        training_strategy.get_quasi_Newton_method_pointer()->set_minimum_loss_decrease(-1000);
-/*
-        LevenbergMarquardtAlgorithm* optimization_algorithm_pointer = training_strategy.get_Levenberg_Marquardt_algorithm_pointer();
-
-        optimization_algorithm_pointer->set_minimum_loss_decrease(-1000);
-        optimization_algorithm_pointer->set_display_period(1000);
-        optimization_algorithm_pointer->set_maximum_epochs_number(10000);
-*/
         training_strategy.perform_training();
 
         cout << "End Rosenbrock" << endl;
