@@ -5042,58 +5042,15 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 
     Tensor<string, 1> constant_columns(0);
 
-    Index variable_index = 0;
-
     for(Index i = 0; i < columns_number; i++)
     {
-
-
-        if(columns(i).column_use == Input)
+        if(columns(i).type == Constant)
         {
-
-            if(columns(i).type == Categorical)
-            {
-
-                const Index categories_number = columns(i).categories.size();
-
-                bool is_constant = true;
-
-                for(Index j = 0; j < categories_number; j++)
-                {
-
-                    const type column_standard_deviation = standard_deviation(data.chip(variable_index+j,1), used_samples_indices);
-                    if((column_standard_deviation - 0) > numeric_limits<type>::min())
-                    {
-                        is_constant = false;
-                        break;
-                    }
-
-                }
-
-                if(is_constant) columns(i).set_use(UnusedVariable);
-
-                constant_columns = push_back(constant_columns, columns(i).name);
-
-            }
-            else
-            {
-
-                const type column_standard_deviation = standard_deviation(data.chip(variable_index,1), used_samples_indices);
-
-                if((column_standard_deviation - 0) < numeric_limits<type>::min())
-
-                {
-                    columns(i).set_use(UnusedVariable);
-
-                    constant_columns = push_back(constant_columns, columns(i).name);
-
-                }
-            }
+            columns(i).set_use(UnusedVariable);
+            constant_columns = push_back(constant_columns, columns(i).name);
         }
-
-        columns(i).type == Categorical ? variable_index += columns(i).categories.size() : variable_index++;
-
     }
+
     return constant_columns;
 }
 
@@ -5741,6 +5698,16 @@ Tensor<Descriptives, 1> DataSet::calculate_target_variables_descriptives() const
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     return descriptives(data, used_indices, target_variables_indices);
+}
+
+
+Tensor<Descriptives, 1> DataSet::calculate_testing_target_variables_descriptives() const
+{
+    const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
+
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+
+    return descriptives(data, testing_indices, target_variables_indices);
 }
 
 
