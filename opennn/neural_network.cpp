@@ -2506,7 +2506,7 @@ string NeuralNetwork::write_expression_c() const
 
     buffer << "using namespace std;\n" << endl;
 
-    if(ProjectType::Forecasting)
+    if(has_long_short_term_memory_layer())
     {
         LongShortTermMemoryLayer* long_short_term_memory_pointer = get_long_short_term_memory_layer_pointer();
         Index timestep = long_short_term_memory_pointer->get_timesteps();
@@ -2560,7 +2560,7 @@ string NeuralNetwork::write_expression_c() const
 
     buffer << "\n\treturn outputs;\n}" << endl;
 
-    if(ProjectType::Forecasting) buffer << "\n};\n" << endl;
+    if(has_long_short_term_memory_layer()) buffer << "\n};\n" << endl;
 
     buffer << "int main(){return 0;}" << endl;
 
