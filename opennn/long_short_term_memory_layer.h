@@ -316,7 +316,7 @@ protected:
    /// Activation function variable.
 
    ActivationFunction activation_function = HyperbolicTangent;
-   ActivationFunction recurrent_activation_function = Linear;
+   ActivationFunction recurrent_activation_function = HardSigmoid;
 
    Index batch;
    Index variables;
