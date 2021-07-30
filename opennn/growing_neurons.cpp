@@ -65,7 +65,7 @@ void GrowingNeurons::set_default()
 
     neurons_increment = 1;
 
-    maximum_selection_failures = numeric_limits<Index>::max();
+    maximum_selection_failures = 100;
 
     maximum_time = 3600;
 }

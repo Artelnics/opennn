@@ -65,7 +65,7 @@ const Index& GrowingInputs::get_maximum_selection_failures() const
 
 void GrowingInputs::set_default()
 {
-    maximum_selection_failures = numeric_limits<Index>::max();
+    maximum_selection_failures = 100;
 
     if(training_strategy_pointer == nullptr || !training_strategy_pointer->has_neural_network())
     {
@@ -77,7 +77,7 @@ void GrowingInputs::set_default()
 
         const Index inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
 
-        maximum_selection_failures = numeric_limits<Index>::max();//static_cast<Index>(max(3.,inputs_number/5.));
+        maximum_selection_failures = 100;
 
         maximum_inputs_number = inputs_number;
     }
