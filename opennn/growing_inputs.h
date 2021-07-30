@@ -93,7 +93,7 @@ private:
 
     /// Maximum number of epochs at which the selection error increases.
 
-    Index maximum_selection_failures = 10;
+    Index maximum_selection_failures = 100;
 };
 
 }

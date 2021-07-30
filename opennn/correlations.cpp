@@ -54,16 +54,16 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
-    const Tensor<type, 1> x_filter = filter_vectors.first;
-    const Tensor<type, 1> y_filter = filter_vectors.second;
+    const Tensor<double, 1> x_filter = filter_vectors.first.cast<double>();
+    const Tensor<double, 1> y_filter = filter_vectors.second.cast<double>();
 
-    Tensor<type, 0> s_x;
-    Tensor<type, 0> s_y;
+    Tensor<double, 0> s_x;
+    Tensor<double, 0> s_y;
 
-    Tensor<type, 0> s_xx;
-    Tensor<type, 0> s_yy;
+    Tensor<double, 0> s_xx;
+    Tensor<double, 0> s_yy;
 
-    Tensor<type, 0> s_xy;
+    Tensor<double, 0> s_xy;
 
     s_x.device(*thread_pool_device) = x_filter.sum();
     s_y.device(*thread_pool_device) = y_filter.sum();
@@ -71,11 +71,11 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     s_yy.device(*thread_pool_device) = y_filter.square().sum();
     s_xy.device(*thread_pool_device) = (y_filter*x_filter).sum();
 
-    if(abs(s_x()) < numeric_limits<type>::min()
-    && abs(s_y()) < numeric_limits<type>::min()
-    && abs(s_xx()) < numeric_limits<type>::min()
-    && abs(s_yy()) < numeric_limits<type>::min()
-    && abs(s_xy()) < numeric_limits<type>::min())
+    if(abs(s_x()) < numeric_limits<double>::min()
+    && abs(s_y()) < numeric_limits<double>::min()
+    && abs(s_xx()) < numeric_limits<double>::min()
+    && abs(s_yy()) < numeric_limits<double>::min()
+    && abs(s_xy()) < numeric_limits<double>::min())
     {
         linear_correlation.a = 0;
 
@@ -88,20 +88,20 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         const Index n = x_filter.size();
 
         linear_correlation.a =
-            (s_y() * s_xx() - s_x() * s_xy())/(static_cast<type>(n) * s_xx() - s_x() * s_x());
+            (s_y() * s_xx() - s_x() * s_xy())/(static_cast<double>(n) * s_xx() - s_x() * s_x());
 
         linear_correlation.b =
-            ((static_cast<type>(n) * s_xy()) - (s_x() * s_y())) /((static_cast<type>(n) * s_xx()) - (s_x() * s_x()));
+            ((static_cast<double>(n) * s_xy()) - (s_x() * s_y())) /((static_cast<double>(n) * s_xx()) - (s_x() * s_x()));
 
-        if(sqrt((static_cast<type>(n) * s_xx() - s_x() * s_x()) *(static_cast<type>(n) * s_yy() - s_y() * s_y())) < numeric_limits<type>::min())
+        if(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())) < numeric_limits<double>::min())
         {
             linear_correlation.r = 1.0;
         }
         else
         {
             linear_correlation.r =
-                (static_cast<type>(n) * s_xy() - s_x() * s_y()) /
-                sqrt((static_cast<type>(n) * s_xx() - s_x() * s_x()) *(static_cast<type>(n) * s_yy() - s_y() * s_y()));
+                (static_cast<double>(n) * s_xy() - s_x() * s_y()) /
+                sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y()));
         }
     }
 
