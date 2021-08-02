@@ -511,9 +511,31 @@ string BoundingLayer::write_expression_c() const
 
     buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
 
-    for(Index i = 0; i < neurons_number; i++)
+
+    if(bounding_method == Bounding)
     {
-        buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
+        for(Index i = 0; i < neurons_number; i++)
+        {
+            buffer << "\tif(inputs[" << i << "] < " << lower_bounds[i] << ")" << endl;
+            buffer << "\t{" << endl;
+            buffer << "\t    outputs[" << i << "] = " << lower_bounds[i] << endl;
+            buffer << "\t}" << endl;
+            buffer << "\telse if(inputs[" << i << "] > " << upper_bounds[i] << ")" << endl;
+            buffer << "\t{" << endl;
+            buffer << "\t    outputs[" << i << "] = " << upper_bounds[i] << endl;
+            buffer << "\t}" << endl;
+            buffer << "\telse" << endl;
+            buffer << "\t{" << endl;
+            buffer << "\t    outputs[" << i << "] = inputs[" << i << "];" << endl;
+            buffer << "\t}" << endl;
+        }
+    }
+    else
+    {
+        for(Index i = 0; i < neurons_number; i++)
+        {
+            buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
+        }
     }
 
     buffer << "\n\treturn outputs;\n}" << endl;
@@ -536,9 +558,24 @@ string BoundingLayer::write_expression_python() const
 
     buffer << "\t\toutputs = [None] * "<<neurons_number<<"\n" << endl;
 
-    for(Index i = 0; i < neurons_number; i++)
+    if(bounding_method == Bounding)
     {
-        buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]" << endl;
+        for(Index i = 0; i < neurons_number; i++)
+        {
+            buffer << "\t\tif inputs[" << i << "] < " << lower_bounds[i] << ":\n" << endl;
+            buffer << "\t\t\toutputs[" << i << "] = " << lower_bounds[i] << "\n" << endl;
+            buffer << "\t\telif inputs[" << i << "] >" << upper_bounds[i] << ":\n" << endl;
+            buffer << "\t\t\toutputs[" << i << "] = " << upper_bounds[i] << "\n" << endl;
+            buffer << "\t\telse:\n" << endl;
+            buffer << "\t\t\toutputs[" << i << "] = inputs[" << i << "]\n"<< endl;
+        }
+    }
+    else
+    {
+        for(Index i = 0; i < neurons_number; i++)
+        {
+            buffer << "\t\toutputs[" << i << "] = inputs[" << i << "]" << endl;
+        }
     }
 
     buffer << "\n\t\treturn outputs\n" << endl;
