@@ -58,9 +58,28 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     data.resize(21,2);
 
-    data.setValues({{-1,0},{-0.9f,0},{-0.9f,0},{-0.7f,0},{-0.6f,0},{-0.5,0},{-0.4f,0},
-                    {-0.3f,0},{-0.2f,0},{-0.1f,0},{0.0,0},{0.1f,0},{0.2f,0},{0.3f,0},{0.4f,0},
-                   {0.5f,0},{0.6f,0},{0.7f,0},{0.8f,0},{0.9f,0},{1,0}});
+    data.setValues({
+        {type(-1),type(0)},
+        {type(-0.9f),type(0)},
+        {type(-0.9f),type(0)},
+        {type(-0.7f),type(0)},
+        {type(-0.6f),type(0)},
+        {type(-0.5),type(0)},
+        {type(-0.4f),type(0)},
+        {type(-0.3f),type(0)},
+        {type(-0.2f),type(0)},
+        {type(-0.1f),type(0)},
+        {type(0.0),type(0)},
+        {type(0.1f),type(0)},
+        {type(0.2f),type(0)},
+        {type(0.3f),type(0)},
+        {type(0.4f),type(0)},
+        {type(0.5f),type(0)},
+        {type(0.6f),type(0)},
+        {type(0.7f),type(0)},
+        {type(0.8f),type(0)},
+        {type(0.9f),type(0)},
+        {type(1),type(0)}});
 
     data_set.set(data);
 
@@ -70,7 +89,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     data_set.set_columns_uses(uses);
 
     neural_network.set(NeuralNetwork::Approximation, {1,3,1});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0));
 
     training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 
@@ -80,7 +99,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     growing_neurons.set_trials_number(1);
     growing_neurons.set_maximum_neurons_number(7);
-    growing_neurons.set_selection_error_goal(1.0e-3f);
+    growing_neurons.set_selection_error_goal(type(1.0e-3f));
     growing_neurons.set_display(false);
 
     neurons_selection_results = growing_neurons.perform_neurons_selection();
@@ -91,14 +110,33 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     // Test
 
-    data.setValues({{-1,1},{-0.9f, -0.9f},{-0.9f,-0.8f},{-0.7f,-0.7f},{-0.6f,-0.6f},{-0.5,-0.5},{-0.4f, -0.4f},
-                    {-0.3f,-0.3f},{-0.2f,-0.2f},{-0.1f,-0.1f},{0.0,0.0},{0.1f,0.1f},{0.2f,0.2f},{0.3f,0.3f},{0.4f,0.4f},
-                   {0.5,0.5},{0.6f,0.6f},{0.7f,0.7f},{0.8f,0.8f},{0.9f,0.9f},{1,1}});
+    data.setValues({
+        {type(-1),type(1)},
+        {type(-0.9f), type(-0.9f)},
+        {type(-0.9f),type(-0.8f)},
+        {type(-0.7f),type(-0.7f)},
+        {type(-0.6f),type(-0.6f)},
+        {type(-0.5),type(-0.5)},
+        {type(-0.4f), type(-0.4f)},
+        {type(-0.3f),type(-0.3f)},
+        {type(-0.2f),type(-0.2f)},
+        {type(-0.1f),type(-0.1f)},
+        {type(0.0),type(0.0)},
+        {type(0.1f),type(0.1f)},
+        {type(0.2f),type(0.2f)},
+        {type(0.3f),type(0.3f)},
+        {type(0.4f),type(0.4f)},
+        {type(0.5),type(0.5)},
+        {type(0.6f),type(0.6f)},
+        {type(0.7f),type(0.7f)},
+        {type(0.8f),type(0.8f)},
+        {type(0.9f),type(0.9f)},
+        {type(1),type(1)}});
 
     data_set.set(data);
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0));
 
     training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 
@@ -108,7 +146,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     growing_neurons.set_trials_number(1);
     growing_neurons.set_maximum_neurons_number(7);
-    growing_neurons.set_selection_error_goal(0.0);
+    growing_neurons.set_selection_error_goal(type(0.0));
     growing_neurons.set_maximum_selection_failures(1);
     growing_neurons.set_display(false);
 

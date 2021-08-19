@@ -288,10 +288,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
-    type training_error = 0;
-    type training_loss = 0;
+    type training_error = type(0);
+    type training_loss = type(0);
 
-    type selection_error = 0;
+    type selection_error = type(0);
 
     Index selection_failures = 0;
 
@@ -303,7 +303,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     time_t beginning_time, current_time;
     time(&beginning_time);
-    type elapsed_time = 0;
+    type elapsed_time = type(0);
 
     bool shuffle = false;
 
@@ -321,8 +321,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         const Index batches_number = training_batches.dimension(0);
 
-        training_loss = 0;
-        training_error = 0;
+        training_loss = type(0);
+        training_error = type(0);
 
         optimization_data.iteration = 1;
 
@@ -357,7 +357,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         {
             selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
 
-            selection_error = 0;
+            selection_error = type(0);
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
@@ -476,32 +476,32 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
     // Initial learning rate
 
     labels_values(0,0) = "Initial learning rate";
-    labels_values(0,1) = to_string(initial_learning_rate);
+    labels_values(0,1) = to_string(double(initial_learning_rate));
 
     // Initial decay
 
     labels_values(1,0) = "Initial decay";
-    labels_values(1,1) = to_string(initial_decay);
+    labels_values(1,1) = to_string(double(initial_decay));
 
     // Beta 1
 
     labels_values(2,0) = "Beta 1";
-    labels_values(2,1) = to_string(beta_1);
+    labels_values(2,1) = to_string(double(beta_1));
 
     // Beta 2
 
     labels_values(3,0) = "Beta 2";
-    labels_values(3,1) = to_string(beta_2);
+    labels_values(3,1) = to_string(double(beta_2));
 
     // Epsilon
 
     labels_values(4,0) = "Epsilon";
-    labels_values(4,1) = to_string(epsilon);
+    labels_values(4,1) = to_string(double(epsilon));
 
     // Training loss goal
 
     labels_values(5,0) = "Training loss goal";
-    labels_values(5,1) = to_string(training_loss_goal);
+    labels_values(5,1) = to_string(double(training_loss_goal));
 
     // Maximum epochs number
 
@@ -729,17 +729,17 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
                               AdaptiveMomentEstimationData& optimization_data)
 {  
     const type learning_rate =
-            initial_learning_rate*
-            sqrt(1 - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
-            (1 - pow(beta_1, static_cast<type>(optimization_data.iteration)));
+        type(initial_learning_rate*
+            sqrt(type(1) - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
+            (type(1) - pow(beta_1, static_cast<type>(optimization_data.iteration))));
 
     optimization_data.gradient_exponential_decay.device(*thread_pool_device)
             = optimization_data.gradient_exponential_decay*beta_1
-            + back_propagation.gradient*(1 - beta_1);
+            + back_propagation.gradient*(type(1) - beta_1);
 
     optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
             = optimization_data.square_gradient_exponential_decay*beta_2
-            + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
+            + back_propagation.gradient*back_propagation.gradient*(type(1) - beta_2);
 
     back_propagation.parameters.device(*thread_pool_device) -=
             optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);          

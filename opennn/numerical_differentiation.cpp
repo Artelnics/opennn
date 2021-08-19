@@ -189,7 +189,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) 
 
     for(Index i = 0; i < n; i++)
     {
-        h(i) = sqrt(eta)*(1 + abs(x(i)));
+        h(i) = sqrt(eta)*(type(1) + abs(x(i)));
     }
 
     return h;
@@ -213,7 +213,7 @@ Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) 
 
     for(Index i = 0; i < n; i++)
     {
-        h(i) = sqrt(eta)*(1 + y(i));
+        h(i) = sqrt(eta)*(type(1) + y(i));
     }
 
     return h;
@@ -234,7 +234,7 @@ Tensor<type, 4> NumericalDifferentiation::calculate_h(const Tensor<type, 4>& x) 
 
     for(Index i = 0; i < n; i++)
     {
-        h(i) = sqrt(eta)*(1 + y(i));
+        h(i) = sqrt(eta)*(type(1) + y(i));
     }
 
     return h;
@@ -265,14 +265,14 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
     const Index size = x.size();
 
     Tensor<type, 1> derivatives(size);
-    derivatives[0] = 0;
+    derivatives[0] = type(0);
 
     for(Index i = 1; i < size; i++)
     {
         const type numerator = y(i) - y[i-1];
         const type denominator = x(i) - x[i-1];
 
-        if(abs(denominator) > numeric_limits<float>::min())
+        if(abs(denominator) > type(NUMERIC_LIMITS_MIN))
         {
             derivatives(i) = numerator/denominator;
         }

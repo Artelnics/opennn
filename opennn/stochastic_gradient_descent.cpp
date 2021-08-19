@@ -105,14 +105,14 @@ void StochasticGradientDescent::set_default()
     // TRAINING OPERATORS
 
     initial_learning_rate = static_cast<type>(0.01);
-    initial_decay = 0;
-    momentum = 0;
+    initial_decay = type(0);
+    momentum = type(0);
     nesterov = false;
 
     // Stopping criteria
 
-    training_loss_goal = 0;
-    maximum_time = 3600.0;
+    training_loss_goal = type(0);
+    maximum_time = type(3600.0);
     maximum_epochs_number = 10000;
 
     // UTILITIES
@@ -283,11 +283,11 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back_propagation,
                       StochasticGradientDescentData& optimization_data)
 {
-    const type learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay);
+    const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
 
     optimization_data.parameters_increment.device(*thread_pool_device) = back_propagation.gradient*(-learning_rate);
 
-    if(momentum > 0)
+    if(momentum > type(0))
     {
         optimization_data.parameters_increment.device(*thread_pool_device) += momentum*optimization_data.last_parameters_increment;
 
@@ -410,10 +410,10 @@ TrainingResults StochasticGradientDescent::perform_training()
     LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
-    type training_error = 0;
-    type training_loss = 0;
+    type training_error = type(0);
+    type training_loss = type(0);
 
-    type selection_error = 0;
+    type selection_error = type(0);
 
     Index selection_failures = 0;
 
@@ -425,7 +425,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     time_t beginning_time, current_time;
     time(&beginning_time);
-    type elapsed_time = 0;
+    type elapsed_time = type(0);
 
     bool shuffle = false;
 
@@ -443,8 +443,8 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         const Index batches_number = training_batches.dimension(0);
 
-        training_loss = 0;
-        training_error = 0;
+        training_loss = type(0);
+        training_error = type(0);
 
         optimization_data.iteration = 0;
 
@@ -483,7 +483,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         {
             selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
 
-            selection_error = 0;
+            selection_error = type(0);
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
@@ -603,22 +603,22 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
     // Initial learning rate
 
     labels_values(0,0) = "Inital learning rate";
-    labels_values(0,1) = to_string(initial_learning_rate);
+    labels_values(0,1) = to_string(double(initial_learning_rate));
 
     // Initial decay
 
     labels_values(1,0) = "Inital decay";
-    labels_values(1,1) = to_string(initial_decay);
+    labels_values(1,1) = to_string(double(initial_decay));
 
     // Momentum
 
     labels_values(2,0) = "Apply momentum";    
-    momentum > 0 ? labels_values(2,1) = "true" : labels_values(2,1) = "false";
+    momentum > type(0) ? labels_values(2,1) = "true" : labels_values(2,1) = "false";
 
     // Training loss goal
 
     labels_values(3,0) = "Training loss goal";
-    labels_values(3,1) = to_string(training_loss_goal);
+    labels_values(3,1) = to_string(double(training_loss_goal));
 
     // Maximum epochs number
 

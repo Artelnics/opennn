@@ -149,14 +149,14 @@ void InputsSelection::set_default()
 
     // Stopping criteria
 
-    selection_error_goal = 0;
+    selection_error_goal = type(0);
 
     maximum_epochs_number = 1000;
 
-    maximum_correlation = 1.0;
-    minimum_correlation = 0;
+    maximum_correlation = type(1);
+    minimum_correlation = type(0);
 
-    maximum_time = 36000.0;
+    maximum_time = type(36000.0);
 }
 
 

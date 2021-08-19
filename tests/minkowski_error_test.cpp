@@ -46,9 +46,9 @@ void MinkowskiErrorTest::test_get_Minkowski_parameter()
 {
    cout << "test_get_Minkowski_parameter\n"; 
 
-   minkowski_error.set_Minkowski_parameter(1.0);
+   minkowski_error.set_Minkowski_parameter(type(1.0));
    
-   assert_true(minkowski_error.get_Minkowski_parameter() == 1.0, LOG);
+   assert_true(minkowski_error.get_Minkowski_parameter() == type(1.0), LOG);
 }
 
 
@@ -71,9 +71,9 @@ void MinkowskiErrorTest::test_calculate_error()
    // Test
 
    data_set.set(1, 1, 1);
-   data_set.set_data_constant(0.0);
+   data_set.set_data_constant(type(0));
 
-   minkowski_error.set_Minkowski_parameter(1.5);
+   minkowski_error.set_Minkowski_parameter(type(1.5));
 
    // Test trivial
 
@@ -86,7 +86,7 @@ void MinkowskiErrorTest::test_calculate_error()
    target_variables_indices = data_set.get_target_variables_indices();
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-   neural_network.set_parameters_constant(0);
+   neural_network.set_parameters_constant(type(0));
 
    batch.set(samples_number, &data_set);
    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -99,11 +99,11 @@ void MinkowskiErrorTest::test_calculate_error()
 
    minkowski_error.calculate_error(batch, forward_propagation, back_propagation);
 
-   assert_true(back_propagation.error == 0.0, LOG);
+   assert_true(back_propagation.error == type(0.0), LOG);
 
    // Test
 
-   neural_network.set_parameters_constant(1);
+   neural_network.set_parameters_constant(type(1));
 
    forward_propagation.set(samples_number, &neural_network);
    back_propagation.set(samples_number, &minkowski_error);
@@ -113,7 +113,7 @@ void MinkowskiErrorTest::test_calculate_error()
 
    minkowski_error.calculate_error(batch, forward_propagation, back_propagation);
 
-   assert_true(back_propagation.error - 0.761 < 1.0e-3, LOG);
+   assert_true(back_propagation.error - type(0.761) < type(1.0e-3), LOG);
 }
 
 
@@ -150,7 +150,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
        outputs_number = 1;
 
        data_set.set(samples_number, inputs_number, outputs_number);
-       data_set.set_data_constant(0.0);
+       data_set.set_data_constant(type(0));
        data_set.set_training();
 
        samples_indices = data_set.get_training_samples_indices();
@@ -160,7 +160,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
        perceptron_layer_1->set(inputs_number, outputs_number);
        neural_network.add_layer(perceptron_layer_1);
 
-       neural_network.set_parameters_constant(0.0);
+       neural_network.set_parameters_constant(type(0));
 
        batch.set(samples_number, &data_set);
        batch.fill(samples_indices, input_variables_indices, target_variables_indices);
@@ -177,7 +177,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
        assert_true(all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
-                          [](type i) { return (i-static_cast<type>(0))<numeric_limits<type>::min(); }), LOG);
+                          [](type i) { return (i-static_cast<type>(0))<NUMERIC_LIMITS_MIN; }), LOG);
    }
 
    neural_network.set();

@@ -121,7 +121,7 @@ struct ResponseOptimizationResults
 
     Tensor<type, 1> optimal_variables;
 
-    type optimum_objective = 0;
+    type optimum_objective = type(0);
 
     void print() const
     {

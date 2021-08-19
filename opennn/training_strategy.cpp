@@ -959,7 +959,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
         }
         else
         {
-            Minkowski_error.set_Minkowski_parameter(1.5);
+            Minkowski_error.set_Minkowski_parameter(type(1.5));
         }
 
         // Cross entropy error
@@ -1005,8 +1005,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
         }
         else
         {
-            weighted_squared_error.set_positives_weight(1);
-            weighted_squared_error.set_negatives_weight(1);
+            weighted_squared_error.set_positives_weight(type(1));
+            weighted_squared_error.set_negatives_weight(type(1));
         }
 
         // Regularization

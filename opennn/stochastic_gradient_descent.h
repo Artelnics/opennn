@@ -141,7 +141,7 @@ private:
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
-   type training_loss_goal = 0;
+   type training_loss_goal = type(0);
 
    /// Maximum selection error allowed
 
@@ -153,7 +153,7 @@ private:
 
    /// Maximum training time. It is used as a stopping criterion.
 
-   type maximum_time = 3600;
+   type maximum_time = type(3600);
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"

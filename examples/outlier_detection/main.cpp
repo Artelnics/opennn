@@ -29,7 +29,7 @@ int main(void)
 //         shuttle                  0.07                49097
 //         SkDataSet0-4             0.15                500
 //         Outlier2Dimensions       0.1                 300
-
+/*
         srand(static_cast<unsigned>(time(nullptr)));
         unsigned t0, t1;
         string name = "ionosphere";
@@ -39,7 +39,7 @@ int main(void)
         //K = (data_set.get_used_samples_number()*3.5)/100;
         //K = K < 20 ? 20 : K;
         //K = K > 500 ? 500 : K;
-        type contamination = 0;
+        type contamination = type(0);
 
 
         Tensor<type, 2> true_outlier = data_set.get_column_data("outlier");
@@ -57,12 +57,12 @@ int main(void)
         double time = (double(t1-t0)/CLOCKS_PER_SEC);
         cout<<"Execution time:" << time << endl;
 
-        type truePositives = 0;
-        type falseNegatives = 0;
-        type trueNegatives = 0;
-        type falsePositives = 0;
+        type truePositives = type(0);
+        type falseNegatives = type(0);
+        type trueNegatives = type(0);
+        type falsePositives = type(0);
 
-        type count = 0;
+        Index count = 0;
 
         for(Index i = 0; i < outliers.size(); i++)
         {
@@ -72,7 +72,8 @@ int main(void)
             }
         }
 
-        type count2 = 0;
+        Index count2 = 0;
+
         for(Index i = 0; i < true_outlier.size(); i++)
         {
             if(true_outlier(i)==1)
@@ -80,7 +81,6 @@ int main(void)
                 count2++;
             }
         }
-
 
 
         for(Index i = 0; i < outliers.size(); i++)
@@ -97,7 +97,7 @@ int main(void)
         cout << "Detected Number of Outlier:" << count << endl;
         cout << "True Number of true outlier:" << count2 << endl;
         cout << "Total Number of Points:" <<data_set.get_used_samples_number() << endl;
-
+*/
         return 0;
     }
     catch(exception& e)

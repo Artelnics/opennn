@@ -84,13 +84,13 @@ void GrowingInputs::set_default()
 
     minimum_inputs_number = 1;
 
-    minimum_correlation = 0.0;
+    minimum_correlation = type(0);
 
     trials_number = 3;
 
     maximum_epochs_number = 1000;
 
-    maximum_time = 3600.0;
+    maximum_time = type(3600.0);
 }
 
 
@@ -224,7 +224,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     // Model selection
 
     time_t beginning_time, current_time;
-    type elapsed_time = 0;
+    type elapsed_time = type(0);
 
     time(&beginning_time);
 

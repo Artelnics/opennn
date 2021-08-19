@@ -103,8 +103,8 @@ int main()
         cout << "Confusion matrix: " << endl;
         cout << confusion << endl;
 
-        cout << "Accuracy: " << multiple_classification_tests(0)*100 << "%" << endl;
-        cout << "Error: " << multiple_classification_tests(1)*100 << "%" << endl;
+        cout << "Accuracy: " << multiple_classification_tests(0)*type(100) << "%" << endl;
+        cout << "Error: " << multiple_classification_tests(1)*type(100) << "%" << endl;
 
         return 0;
     }

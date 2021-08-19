@@ -116,7 +116,7 @@ Tensor<type, 4> PoolingLayer::calculate_average_pooling_outputs(const Tensor<typ
             {
                 for(Index column_index = 0; column_index < outputs_columns_number; column_index ++)
                 {
-                    outputs(image_index, channel_index, row_index, column_index) = 0;
+                    outputs(image_index, channel_index, row_index, column_index) = type(0);
 
                     for(Index window_row = 0; window_row < pool_rows_number; window_row ++)
                     {
@@ -130,7 +130,7 @@ Tensor<type, 4> PoolingLayer::calculate_average_pooling_outputs(const Tensor<typ
                         }
                     }
 
-                    outputs(image_index, channel_index, row_index, column_index) /= pool_rows_number*pool_columns_number;
+                    outputs(image_index, channel_index, row_index, column_index) /= type(pool_rows_number*pool_columns_number);
                 }
             }
         }
@@ -283,7 +283,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_convolutional(Convolutional
             const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
             const Index column_index = tensor_index%output_columns_number;
 
-            type sum = 0;
+            type sum = type(0);
 
             const Index lower_row_index = (row_index - next_layers_filter_rows)/next_layers_row_stride + 1;
             const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -317,7 +317,6 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
         const Tensor<type, 4>&,
         const Tensor<type, 4>& next_layer_delta) const
 {
-
         switch(next_layer_pointer->get_pooling_method())
         {
             case OpenNN::PoolingLayer::PoolingMethod::NoPooling:
@@ -358,7 +357,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
                     const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
                     const Index column_index = tensor_index%output_columns_number;
 
-                    type sum = 0;
+                    type sum = type(0);
 
                     const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
                     const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -414,7 +413,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
                     const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
                     const Index column_index = tensor_index%output_columns_number;
 
-                    type sum = 0;
+                    type sum = type(0);
 
                     const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
                     const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -449,7 +448,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
                                         max_value = activations_current_submatrix(submatrix_row_index, submatrix_column_index);
 
                                         //multiply_not_multiply.resize(next_layers_pool_rows, next_layers_pool_columns, 0.0);
-                                        //multiply_not_multiply(submatrix_row_index, submatrix_column_index) = 1.0;
+                                        //multiply_not_multiply(submatrix_row_index, submatrix_column_index) = type(1);
                                     }
                                 }
                             }
@@ -501,12 +500,12 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer*
 
     for(Index tensor_index = 0; tensor_index < size; tensor_index++)
     {
-        Index image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
-        Index channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
-        Index row_index = (tensor_index/output_columns_number)%output_rows_number;
-        Index column_index = tensor_index%output_columns_number;
+        //Index image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+        //Index channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+        //Index row_index = (tensor_index/output_columns_number)%output_rows_number;
+        //Index column_index = tensor_index%output_columns_number;
 
-        type sum = 0;
+        //type sum = type(0);
 
         for(Index sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
         {
@@ -517,7 +516,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer*
             //sum += delta_element*weight;
         }
 
-        hidden_delta(image_index, channel_index, row_index, column_index) = sum;
+        //hidden_delta(image_index, channel_index, row_index, column_index) = sum;
     }
 
     return hidden_delta;
@@ -552,12 +551,12 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilistic
 
     for(Index tensor_index = 0; tensor_index < size; tensor_index++)
     {
-        const Index image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
-        const Index channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
-        const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
-        const Index column_index = tensor_index%output_columns_number;
+        //const Index image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+        //const Index channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+        //const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
+        //const Index column_index = tensor_index%output_columns_number;
 
-        type sum = 0;
+        //type sum = type(0);
 
         for(Index sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
         {
@@ -568,7 +567,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilistic
             // sum += delta_element*weight;
         }
 
-        hidden_delta(image_index, channel_index, row_index, column_index) = sum;
+        //hidden_delta(image_index, channel_index, row_index, column_index) = sum;
     }
 
     return hidden_delta;

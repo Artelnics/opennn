@@ -135,12 +135,12 @@ void LevenbergMarquardtAlgorithm::set_default()
 {
     // Stopping criteria
 
-    minimum_loss_decrease = 0;
-    training_loss_goal = 0;
+    minimum_loss_decrease = type(0);
+    training_loss_goal = type(0);
     maximum_selection_failures = 1000;
 
     maximum_epochs_number = 1000;
-    maximum_time = 3600.0;
+    maximum_time = type(3600.0);
 
     // UTILITIES
 
@@ -150,7 +150,7 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     damping_parameter = static_cast<type>(1.0e-3);
 
-    damping_parameter_factor = 10.0;
+    damping_parameter_factor = type(10.0);
 
     minimum_damping_parameter = static_cast<type>(1.0e-6);
     maximum_damping_parameter = static_cast<type>(1.0e6);
@@ -448,7 +448,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     loss_index_pointer->set_normalization_coefficient();
 
-    type old_loss = 0;
+    type old_loss = type(0);
     type loss_decrease = numeric_limits<type>::max();
 
     Index selection_failures = 0;
@@ -462,7 +462,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     time_t beginning_time, current_time;
     time(&beginning_time);
-    type elapsed_time = 0;
+    type elapsed_time = type(0);
 
     LevenbergMarquardtAlgorithmData optimization_data(this);
 
@@ -626,7 +626,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
         sum_diagonal(back_propagation_lm.hessian, damping_parameter);
 
         optimization_data.parameters_increment
-                = perform_Householder_QR_decomposition(back_propagation_lm.hessian,(-1)*back_propagation_lm.gradient);
+                = perform_Householder_QR_decomposition(back_propagation_lm.hessian,(type(-1))*back_propagation_lm.gradient);
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation_lm.parameters + optimization_data.parameters_increment;
@@ -666,20 +666,20 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if(abs(back_propagation_lm.gradient(i)) < numeric_limits<type>::min())
+            if(abs(back_propagation_lm.gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
                 back_propagation_lm.parameters(i) = back_propagation_lm.parameters(i);
 
-                optimization_data.parameters_increment(i) = 0;
+                optimization_data.parameters_increment(i) = type(0);
             }
-            else if(back_propagation_lm.gradient(i) > 0)
+            else if(back_propagation_lm.gradient(i) > type(0))
             {
                 back_propagation_lm.parameters(i) -= numeric_limits<type>::epsilon();
                         //= nextafter(back_propagation_lm.parameters(i), back_propagation_lm.parameters(i)-1);
 
                 optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
-            else if(back_propagation_lm.gradient(i) < 0)
+            else if(back_propagation_lm.gradient(i) < type(0))
             {
                 back_propagation_lm.parameters(i) += numeric_limits<type>::epsilon();
                         //= nextafter(back_propagation_lm.parameters(i), back_propagation_lm.parameters(i)+1);
@@ -712,17 +712,17 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
     // Damping parameter factor
 
     labels_values(0,0) = "Damping parameter factor";
-    labels_values(0,1) = to_string(damping_parameter_factor);
+    labels_values(0,1) = to_string(double(damping_parameter_factor));
 
     // Minimum loss decrease
 
     labels_values(2,0) = "Minimum loss decrease";
-    labels_values(2,1) = to_string(minimum_loss_decrease);
+    labels_values(2,1) = to_string(double(minimum_loss_decrease));
 
     // Loss goal
 
     labels_values(3,0) = "Loss goal";
-    labels_values(3,1) = to_string(training_loss_goal);
+    labels_values(3,1) = to_string(double(training_loss_goal));
 
     // Maximum selection error increases
 

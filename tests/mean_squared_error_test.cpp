@@ -63,13 +63,13 @@ void MeanSquaredErrorTest::test_calculate_error()
    targets_number = 1;
 
    data_set.set(samples_number, inputs_number, targets_number);
-   data_set.set_data_constant(0.0);
+   data_set.set_data_constant(type(0));
    data_set.set_training();
 
    batch.set(samples_number, &data_set);
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
-   neural_network.set_parameters_constant(0.0);
+   neural_network.set_parameters_constant(type(0));
 
    forward_propagation.set(samples_number, &neural_network);
    neural_network.forward_propagate(batch, forward_propagation);
@@ -79,7 +79,7 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    mean_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
-   assert_true(back_propagation.error == 0.0, LOG);
+   assert_true(back_propagation.error == type(0.0), LOG);
 
    // Test
 
@@ -90,7 +90,9 @@ void MeanSquaredErrorTest::test_calculate_error()
    data_set.set(samples_number, inputs_number, targets_number);
 
    data.resize(1, 3);
-   data.setValues({{1, 2, 3}});
+   
+   data.setValues({{type(1), type(2), type(3)}});
+   
    data_set.set_data(data);
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
@@ -105,9 +107,9 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    mean_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
-   assert_true(abs(back_propagation.error - 1) < 1.0e-3, LOG);
+   assert_true(abs(back_propagation.error - type(1)) < type(1.0e-3), LOG);
 
-   assert_true(back_propagation.error == 1.0, LOG);
+   assert_true(back_propagation.error == type(1.0), LOG);
 }
 
 
@@ -144,14 +146,14 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
        outputs_number = 1;
 
        data_set.set(samples_number, inputs_number, outputs_number);
-       data_set.set_data_constant(0.0);
+       data_set.set_data_constant(type(0));
        data_set.set_training();
 
        samples_indices = data_set.get_training_samples_indices();
        input_variables_indices = data_set.get_input_variables_indices();
        target_variables_indices = data_set.get_target_variables_indices();
 
-       neural_network.set_parameters_constant(0.0);
+       neural_network.set_parameters_constant(type(0));
 
        perceptron_layer_1->set(inputs_number, outputs_number);
        neural_network.add_layer(perceptron_layer_1);
@@ -170,7 +172,7 @@ void MeanSquaredErrorTest::test_calculate_error_gradient()
 
        assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
        assert_true(all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
-                          [](type i) { return (i-static_cast<type>(0))<numeric_limits<type>::min(); }), LOG);
+                          [](type i) { return (i-static_cast<type>(0))<NUMERIC_LIMITS_MIN; }), LOG);
 
    neural_network.set();
 

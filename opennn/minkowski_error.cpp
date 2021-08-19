@@ -58,7 +58,7 @@ type MinkowskiError::get_Minkowski_parameter() const
 
 void MinkowskiError::set_default()
 {
-    minkowski_parameter = 1.5;
+    minkowski_parameter = type(1.5);
 
     display = true;
 }
@@ -72,7 +72,7 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 {
     // Control sentence
 
-    if(new_Minkowski_parameter < static_cast<Index>(1.0) || new_Minkowski_parameter > static_cast<type>(2.0))
+    if(new_Minkowski_parameter < type(1) || new_Minkowski_parameter > type(2.0))
     {
         ostringstream buffer;
 
@@ -119,7 +119,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
     const Tensor<type, 0> p_norm_derivative =
-            (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
+            (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter - type(1));
 
     const Index batch_samples_number = batch.get_samples_number();
 
@@ -130,17 +130,17 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
                 = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
-        if(abs(p_norm_derivative()) < numeric_limits<type>::min())
+        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
         {
             perceptron_layer_back_propagation->delta.setZero();
         }
         else
         {
             perceptron_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             perceptron_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (1/batch_samples_number)*perceptron_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1/batch_samples_number))*perceptron_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;
@@ -150,17 +150,17 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
                 = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
-        if(abs(p_norm_derivative()) < numeric_limits<type>::min())
+        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
         {
             probabilistic_layer_back_propagation->delta.setZero();
         }
         else
         {
             probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             probabilistic_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (1/batch_samples_number)*probabilistic_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1/batch_samples_number))*probabilistic_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;
@@ -170,17 +170,17 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
         RecurrentLayerBackPropagation* recurrent_layer_back_propagation
                 = static_cast<RecurrentLayerBackPropagation*>(output_layer_back_propagation);
 
-        if(abs(p_norm_derivative()) < numeric_limits<type>::min())
+        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
         {
             recurrent_layer_back_propagation->delta.setZero();
         }
         else
         {
             recurrent_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             recurrent_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (1/batch_samples_number)*recurrent_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1/batch_samples_number))*recurrent_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;
@@ -190,17 +190,17 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
         LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation
                 = static_cast<LongShortTermMemoryLayerBackPropagation*>(output_layer_back_propagation);
 
-        if(abs(p_norm_derivative()) < numeric_limits<type>::min())
+        if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
         {
             long_short_term_memory_layer_back_propagation->delta.setZero();
         }
         else
         {
             long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device)
-                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+                    = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (1/batch_samples_number)*long_short_term_memory_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1/batch_samples_number))*long_short_term_memory_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;
@@ -278,7 +278,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
     {
         const tinyxml2::XMLElement* parameter_element = root_element->FirstChildElement("MinkowskiParameter");
 
-        type new_Minkowski_parameter = 1.5;
+        type new_Minkowski_parameter = type(1.5);
 
         if(parameter_element)
         {

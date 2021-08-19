@@ -46,8 +46,8 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     if(is_constant(y))
     {
         linear_correlation.a = y(0);
-        linear_correlation.b = 0;
-        linear_correlation.r = 1;
+        linear_correlation.b = type(0);
+        linear_correlation.r = type(1);
 
         return linear_correlation;
     }
@@ -71,37 +71,37 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     s_yy.device(*thread_pool_device) = y_filter.square().sum();
     s_xy.device(*thread_pool_device) = (y_filter*x_filter).sum();
 
-    if(abs(s_x()) < numeric_limits<double>::min()
-    && abs(s_y()) < numeric_limits<double>::min()
-    && abs(s_xx()) < numeric_limits<double>::min()
-    && abs(s_yy()) < numeric_limits<double>::min()
-    && abs(s_xy()) < numeric_limits<double>::min())
+    if(abs(s_x()) < NUMERIC_LIMITS_MIN
+    && abs(s_y()) < NUMERIC_LIMITS_MIN
+    && abs(s_xx()) < NUMERIC_LIMITS_MIN
+    && abs(s_yy()) < NUMERIC_LIMITS_MIN
+    && abs(s_xy()) < NUMERIC_LIMITS_MIN)
     {
-        linear_correlation.a = 0;
+        linear_correlation.a = type(0);
 
-        linear_correlation.b = 0;
+        linear_correlation.b = type(0);
 
-        linear_correlation.r = 1.0;
+        linear_correlation.r = type(1);
     }
     else
     {
         const Index n = x_filter.size();
 
         linear_correlation.a =
-            (s_y() * s_xx() - s_x() * s_xy())/(static_cast<double>(n) * s_xx() - s_x() * s_x());
+            type((s_y() * s_xx() - s_x() * s_xy())/(static_cast<double>(n) * s_xx() - s_x() * s_x()));
 
         linear_correlation.b =
-            ((static_cast<double>(n) * s_xy()) - (s_x() * s_y())) /((static_cast<double>(n) * s_xx()) - (s_x() * s_x()));
+            type(((static_cast<double>(n) * s_xy()) - (s_x() * s_y())) /((static_cast<double>(n) * s_xx()) - (s_x() * s_x())));
 
-        if(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())) < numeric_limits<double>::min())
+        if(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())) < NUMERIC_LIMITS_MIN)
         {
-            linear_correlation.r = 1.0;
+            linear_correlation.r = type(1);
         }
         else
         {
             linear_correlation.r =
-                (static_cast<double>(n) * s_xy() - s_x() * s_y()) /
-                sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y()));
+                type((static_cast<double>(n) * s_xy() - s_x() * s_y()) /
+                sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())));
         }
     }
 
@@ -143,9 +143,9 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device, 
 
     for(Index i = 0; i < x.dimension(0); i++)
     {
-        if(!::isnan(x(i)) && x(i) <= 0)
+        if(!isnan(x(i)) && x(i) <= type(0))
         {
-            logarithmic_correlation.r = NAN;
+            logarithmic_correlation.r = type(NAN);
 
             return logarithmic_correlation;
         }
@@ -187,9 +187,9 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device, 
 
     for(Index i = 0; i < y.dimension(0); i++)
     {
-        if(!::isnan(y(i)) && y(i) <= 0)
+        if(!isnan(y(i)) && y(i) <= type(0))
         {
-            exponential_correlation.r = NAN;
+            exponential_correlation.r = type(NAN);
 
             return exponential_correlation;
         }
@@ -235,16 +235,16 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device, const 
 
     for(Index i = 0; i < x.dimension(0); i++)
     {
-        if(!::isnan(x(i)) && x(i) <= 0)
+        if(!isnan(x(i)) && x(i) <= type(0))
         {
-            power_correlation.r = NAN;
+            power_correlation.r = type(NAN);
 
             return power_correlation;
         }
 
-        if(!::isnan(y(i)) && y(i) <= 0)
+        if(!isnan(y(i)) && y(i) <= type(0))
         {
-            power_correlation.r = NAN;
+            power_correlation.r = type(NAN);
 
             return power_correlation;
         }
@@ -307,7 +307,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
-    if(correlation.b < 0) correlation.r *= (-1);
+    if(correlation.b < type(0)) correlation.r *= type(-1);
 
     return correlation;
 }
@@ -506,7 +506,7 @@ pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const
 
     for(Index i = 0; i < x.size(); i++)
     {
-        if(!::isnan(x(i)) && !::isnan(y(i))) new_size++;
+        if(!isnan(x(i)) && !isnan(y(i))) new_size++;
     }
 
     if(new_size == x.size())
@@ -522,7 +522,7 @@ pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const
 
     for(Index i = 0; i < x.size(); i++)
     {
-        if(!::isnan(x(i)) && !::isnan(y(i)))
+        if(!isnan(x(i)) && !isnan(y(i)))
         {
             new_x(index) = x(i);
             new_y(index) = y(i);
@@ -549,7 +549,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
     {
         not_NAN_row(i) = true;
 
-        if(isnan(y(i)))
+        if(float(isnan(y(i))))
         {
             not_NAN_row(i) = false;
         }
@@ -557,7 +557,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
         {
             for(Index j = 0; j < x_columns_number; j++)
             {
-                if(isnan(x(i,j)))
+                if(float(isnan(x(i,j))))
                 {
                     not_NAN_row(i) = false;
                     break;
@@ -645,9 +645,6 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
 
     Tensor<type, 1> cross_correlation(maximum_lags_number);
 
-    const Tensor<type, 0> this_mean = x.mean();
-    const Tensor<type, 0> y_mean = y.mean();
-
     const Index this_size = x.size();
 
     for(Index i = 0; i < maximum_lags_number; i++)
@@ -685,7 +682,6 @@ Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlation
 
     return values;
 }
-
 
 }
 

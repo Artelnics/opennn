@@ -119,7 +119,7 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const;
 
    void update_parameters(LossIndexBackPropagation& ,
-                         AdaptiveMomentEstimationData& );
+                         AdaptiveMomentEstimationData&);
 
 private:
 
@@ -131,7 +131,7 @@ private:
 
    /// Learning rate decay over each update.
 
-   type initial_decay = 0;
+   type initial_decay = type(0);
 
    /// Exponential decay over gradient estimates.
 
@@ -149,7 +149,7 @@ private:
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
-   type training_loss_goal = 0;
+   type training_loss_goal = type(0);
 
    /// Maximum epochs number.
 
@@ -161,7 +161,7 @@ private:
 
    /// Maximum training time. It is used as a stopping criterion.
 
-   type maximum_time = 3600;
+   type maximum_time = type(3600);
 
    /// Training and selection batch size.
 

@@ -95,10 +95,10 @@ void GeneticAlgorithmTest::test_perform_fitness_assignment()
 
     selection_errors.resize(4);
 
-    selection_errors(0) = 1;
-    selection_errors(1) = 2;
-    selection_errors(2) = 3;
-    selection_errors(3) = 4;
+    selection_errors(0) = type(1);
+    selection_errors(1) = type(2);
+    selection_errors(2) = type(3);
+    selection_errors(3) = type(4);
 
     genetic_algorithm.set_selection_errors(selection_errors);
 
@@ -129,7 +129,7 @@ void GeneticAlgorithmTest::test_perform_selection()
     genetic_algorithm.set_individuals_number(4);
 
     fitness.resize(4);
-    fitness.setValues({1, 2, 3, 4});
+    fitness.setValues({type(1), type(2), type(3), type(4)});
 
     genetic_algorithm.set_fitness(fitness);
 
@@ -182,10 +182,10 @@ void GeneticAlgorithmTest::test_perform_crossover()
     genetic_algorithm.set_population(population);
 
     fitness.resize(4);
-    fitness[0] = 1;
-    fitness[1] = 2;
-    fitness[2] = 3;
-    fitness[3] = 4;
+    fitness[0] = type(1);
+    fitness[1] = type(2);
+    fitness[2] = type(3);
+    fitness[3] = type(4);
 
     genetic_algorithm.set_fitness(fitness);
 
@@ -241,7 +241,7 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     genetic_algorithm.set_population(population);
 
-    genetic_algorithm.set_mutation_rate(1);
+    genetic_algorithm.set_mutation_rate(type(1));
 
     genetic_algorithm.perform_mutation();
 
@@ -251,7 +251,7 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     genetic_algorithm.set_population(population);
 
-    genetic_algorithm.set_mutation_rate(0);
+    genetic_algorithm.set_mutation_rate(type(0));
 
     genetic_algorithm.perform_mutation();
 
@@ -279,7 +279,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     for(Index i = 0; i < 20; i++)
     {
         data(i,0) = static_cast<type>(i);
-        data(i,1) = 10.0;
+        data(i,1) = type(10.0);
         data(i,2) = static_cast<type>(i);
     }
 
@@ -291,7 +291,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     genetic_algorithm.set_individuals_number(10);
 
-    genetic_algorithm.set_selection_error_goal(1);
+    genetic_algorithm.set_selection_error_goal(type(1));
 
     inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
@@ -305,15 +305,15 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     for(Index i = 0; i < 10; i++)
     {
         data(i,0) = (type)j;
-        data(i,1) = rand();
-        data(i,2) = 1.0;
+        data(i,1) = type(rand());
+        data(i,2) = type(1);
         j+=1;
     }
     for(Index i = 10; i < 20; i++)
     {
         data(i,0) = (type)i;
-        data(i,1) = rand();
-        data(i,2) = 0.0;
+        data(i,1) = type(rand());
+        data(i,2) = type(0.0);
     }
 
     data_set.set(data);
@@ -326,7 +326,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     genetic_algorithm.set_individuals_number(10);
 
-    genetic_algorithm.set_selection_error_goal(0.0);
+    genetic_algorithm.set_selection_error_goal(type(0.0));
 //    genetic_algorithm.set_maximum_iterations_number(1);
 
     inputs_selection_results = genetic_algorithm.perform_inputs_selection();
