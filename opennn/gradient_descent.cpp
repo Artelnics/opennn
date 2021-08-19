@@ -305,14 +305,11 @@ void GradientDescent::update_parameters(
         {
             if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
-                back_propagation.parameters(i) = back_propagation.parameters(i);
-
                 optimization_data.parameters_increment(i) = type(0);
             }
             else if(back_propagation.gradient(i) > type(0))
             {
-                back_propagation.parameters(i) -= type(NEXT_AFTER);
-                //        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i) - type(1));
+                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
 
                 optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
