@@ -188,7 +188,7 @@ struct OptimizationAlgorithmData
 
     Tensor<type, 1> potential_parameters;
     Tensor<type, 1> training_direction;
-    type initial_learning_rate = 0;
+    type initial_learning_rate = type(0);
 };
 
 
@@ -205,10 +205,10 @@ struct TrainingResults
     explicit TrainingResults(const Index& epochs_number)
     {
         training_error_history.resize(1+epochs_number);
-        training_error_history.setConstant(-1.0);
+        training_error_history.setConstant(type(-1.0));
 
         selection_error_history.resize(1+epochs_number);
-        selection_error_history.setConstant(-1.0);
+        selection_error_history.setConstant(type(-1.0));
     }
 
     /// Destructor.
@@ -246,7 +246,7 @@ struct TrainingResults
 
         cout << "Training error: " << training_error_history(epochs_number-1) << endl;
 
-        if(abs(training_error_history(epochs_number-1) + 1.0)  < numeric_limits<type>::min())
+        if(abs(training_error_history(epochs_number-1) + type(1))  < type(NUMERIC_LIMITS_MIN))
             cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
 
         cout << "Stopping condition: " << write_stopping_condition() << endl;
@@ -254,7 +254,8 @@ struct TrainingResults
 
     /// Stopping condition of the algorithm.
 
-    OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::MaximumTime;
+    OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::
+        MaximumTime;
 
     /// Writes final results of the training.
 

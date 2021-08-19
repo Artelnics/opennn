@@ -78,18 +78,18 @@ void ScalingTest::test_unscale_data_mean_standard_deviation()
    cout << "test_unscale_data_mean_standard_deviation\n";
 
    Tensor<type, 2> matrix(3,1);
-   matrix(0,0) = 2.0;
-   matrix(1,0) = 5.0;
-   matrix(2,0) = 77.0;
+   matrix(0,0) = type(2.0);
+   matrix(1,0) = type(5.0);
+   matrix(2,0) = type(77.0);
 
    DataSet data(matrix);
 
    Tensor<Descriptives, 1> descrriptives(1);
    Descriptives descriptives;
-   descriptives.set_minimum(5.0);
-   descriptives.set_maximum(9.0);
-   descriptives.set_mean(8.0);
-   descriptives.set_standard_deviation(2.0);
+   descriptives.set_minimum(type(5.0));
+   descriptives.set_maximum(type(9.0));
+   descriptives.set_mean(type(8.0));
+   descriptives.set_standard_deviation(type(2.0));
    descrriptives[0] = descriptives ;
 
    Tensor<type, 2> unescale_matrix(3,1);
@@ -112,19 +112,19 @@ void ScalingTest::test_unscale_data_minimum_maximum()
    cout << "test_unscale_data_minimum_maximum\n";
 
    Tensor<type, 2> matrix (3,1);
-   matrix(0,0) = 2.0;
-   matrix(1,0) = 5.0;
-   matrix(2,0) = 77.0;
+   matrix(0,0) = type(2.0);
+   matrix(1,0) = type(5.0);
+   matrix(2,0) = type(77.0);
 
    DataSet data;
    data.set(matrix);
 
    Tensor<Descriptives, 1> descrriptives(1);
    Descriptives descriptives;
-   descriptives.set_minimum(5.0);
-   descriptives.set_maximum(9.0);
-   descriptives.set_mean(8.0);
-   descriptives.set_standard_deviation(2.0);
+   descriptives.set_minimum(type(5.0));
+   descriptives.set_maximum(type(9.0));
+   descriptives.set_mean(type(8.0));
+   descriptives.set_standard_deviation(type(2.0));
    descrriptives[0] = descriptives ;
 
    Tensor<type, 2> unescale_matrix(3,1);
@@ -134,9 +134,9 @@ void ScalingTest::test_unscale_data_minimum_maximum()
    //data.unscale_data_minimum_maximum(descriptives);
 
    Tensor<type, 2> matrix_solution (3,1);
-   matrix_solution(0,0) = 7.0;
-   matrix_solution(1,0) = 7.0;
-   matrix_solution(2,0) = 7.0;
+   matrix_solution(0,0) = type(7.0);
+   matrix_solution(1,0) = type(7.0);
+   matrix_solution(2,0) = type(7.0);
 
    //assert_true(data.get_data() == matrix_solution, LOG);
 }

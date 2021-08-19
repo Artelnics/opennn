@@ -158,7 +158,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
     const Index target_samples_number = targets_t_1.dimension(0);
     const Index target_varaibles_number = targets_t_1.dimension(1);
 
-    type normalization_coefficient = 0;
+    type normalization_coefficient = type(0);
 
     for(Index i = 0; i < target_samples_number; i++)
     {
@@ -224,8 +224,8 @@ void NormalizedSquaredError::set_default()
     }
     else
     {
-        normalization_coefficient = NAN;
-        selection_normalization_coefficient = NAN;
+        normalization_coefficient = type(NAN);
+        selection_normalization_coefficient = type(NAN);
     }
 }
 
@@ -259,7 +259,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
     const Index size = targets.dimension(0);
 
-    type normalization_coefficient = 0;
+    type normalization_coefficient = type(0);
 
     for(Index i = 0; i < size; i++)
     {
@@ -268,7 +268,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
         normalization_coefficient += norm(0);
     }
 
-    if(static_cast<type>(normalization_coefficient - 0) < numeric_limits<type>::min()) normalization_coefficient = 1;
+    if(static_cast<type>(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) normalization_coefficient = type(1);
 
     return normalization_coefficient;
 }
@@ -468,7 +468,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const DataSetBatch& bat
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
@@ -489,7 +489,7 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const DataSetBatch& batc
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.hessian.device(*thread_pool_device) =
             loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);

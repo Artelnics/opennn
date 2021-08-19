@@ -340,8 +340,8 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
     // Reduce the interval
 
-    while(fabs(triplet.A.first - triplet.B.first) > learning_rate_tolerance
-       || fabs(triplet.A.second - triplet.B.second) > loss_tolerance)
+    while(abs(triplet.A.first - triplet.B.first) > learning_rate_tolerance
+       || abs(triplet.A.second - triplet.B.second) > loss_tolerance)
     {
         try
         {
@@ -484,7 +484,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         throw logic_error(buffer.str());
     }
 
-    if(optimization_data.initial_learning_rate < numeric_limits<type>::min())
+    if(optimization_data.initial_learning_rate < type(NUMERIC_LIMITS_MIN))
     {
         buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
                << "Triplet calculate_bracketing_triplet() const method.\n"
@@ -501,7 +501,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     // Left point
 
-    triplet.A.first = 0;
+    triplet.A.first = type(0);
     triplet.A.second = loss;
 
     // Right point       

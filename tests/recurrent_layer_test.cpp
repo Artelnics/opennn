@@ -118,14 +118,14 @@ void RecurrentLayerTest::test_get_biases()
    recurrent_layer.set(inputs_number, neurons_number);
 
    biases.resize(neurons_number);
-   biases.setConstant(1);
+   biases.setConstant(type(1));
 
    recurrent_layer.set_biases(biases);
 
    assert_true(biases(0) == recurrent_layer.get_biases()(0), LOG);
    assert_true(biases(1) == recurrent_layer.get_biases()(1), LOG);
    assert_true(biases.size() == recurrent_layer.get_biases().size(), LOG);
-   assert_true(biases(0) == 1, LOG);
+   assert_true(biases(0) == type(1), LOG);
 }
 
 
@@ -137,9 +137,9 @@ void RecurrentLayerTest::test_get_weights()
 
    recurrent_layer.set(3, 2);
 
-   recurrent_layer.set_parameters_constant(4.0);
+   recurrent_layer.set_parameters_constant(type(4.0));
 
-   assert_true(recurrent_layer.get_input_weights()(0) == 4.0, LOG);
+   assert_true(recurrent_layer.get_input_weights()(0) == type(4.0), LOG);
 }
 
 
@@ -153,16 +153,14 @@ void RecurrentLayerTest::test_get_recurrent_weights()
 
    recurrent_layer.set(1,2);
 
-   recurrent_layer.set_parameters_constant(-1.0);
+   recurrent_layer.set_parameters_constant(type(-1));
 
    recurrent_weights = recurrent_layer.get_recurrent_weights();
 
    assert_true(recurrent_weights.size() == 4, LOG);
    assert_true(recurrent_weights.dimension(0) == 2, LOG);
    assert_true(recurrent_weights.dimension(1) == 2, LOG);
-   assert_true(recurrent_weights(0,0) == -1, LOG);
-
-   assert_true(recurrent_weights(0) == -1.0, LOG);
+   assert_true(recurrent_weights(0,0) == type(-1), LOG);
 }
 
 
@@ -212,12 +210,12 @@ void RecurrentLayerTest::test_get_parameters()
    neurons_number = 1;
 
    recurrent_layer.set(inputs_number, neurons_number);
-   recurrent_layer.set_parameters_constant(1.0);
+   recurrent_layer.set_parameters_constant(type(1));
 
    parameters = recurrent_layer.get_parameters();
 
    assert_true(parameters.size() == 3, LOG);
-   assert_true(parameters(0) == 1.0, LOG);
+   assert_true(parameters(0) == type(1.0), LOG);
 
    // Test
 
@@ -226,19 +224,19 @@ void RecurrentLayerTest::test_get_parameters()
 
    recurrent_layer.set(inputs_number, neurons_number);
 
-   recurrent_layer.set_biases_constant(1.0);
+   recurrent_layer.set_biases_constant(type(1.0));
 
-   recurrent_layer.set_input_weights_constant(0.5);
+   recurrent_layer.set_input_weights_constant(type(0.5));
 
-   recurrent_layer.set_recurrent_weights_constant(-0.48);
+   recurrent_layer.set_recurrent_weights_constant(type(-0.48));
 
    parameters = recurrent_layer.get_parameters();
 
    assert_true(parameters.size() == 28, LOG);
 
-   assert_true(abs(parameters(0) - 0.5) < numeric_limits<type>::epsilon(), LOG);
-   assert_true(abs(parameters(8) - 1.0) < numeric_limits<type>::epsilon(), LOG);
-   assert_true(abs(parameters(24) - -0.48) < numeric_limits<type>::epsilon(), LOG);
+   assert_true(abs(parameters(0) - type(0.5)) < numeric_limits<type>::epsilon(), LOG);
+   assert_true(abs(parameters(8) - type(1.0)) < numeric_limits<type>::epsilon(), LOG);
+   assert_true(abs(parameters(24) - type(-0.48)) < numeric_limits<type>::epsilon(), LOG);
 
    // Test
 
@@ -247,8 +245,8 @@ void RecurrentLayerTest::test_get_parameters()
    recurrent_weights.resize(2,2);
 
    recurrent_layer.set(3,  2);
-   biases(0) = 0.41;
-   biases(1) = -0.70;
+   biases(0) = type(0.41);
+   biases(1) = type(-0.70);
    recurrent_layer.set_biases(biases);
 
 //   input_weights.set_column(0,Tensor<type, 1> );
@@ -291,21 +289,21 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
-   assert_true(activations_derivatives(0) == 0.25, LOG);
+   assert_true(activations_derivatives(0) == type(0.25), LOG);
 
    recurrent_layer.set_activation_function(RecurrentLayer::HyperbolicTangent);
 //   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
-   assert_true(activations_derivatives(0) == 1.0, LOG);
+   assert_true(activations_derivatives(0) == type(1.0), LOG);
 
    recurrent_layer.set_activation_function(RecurrentLayer::Linear);
 //   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
-   assert_true(activations_derivatives(0) == 1.0, LOG);
+   assert_true(activations_derivatives(0) == type(1.0), LOG);
 
    // Test
 
@@ -419,18 +417,18 @@ void RecurrentLayerTest::test_calculate_outputs()
    recurrent_layer.set(2,2);
 
    inputs.resize(samples,2);
-   inputs.setConstant(1.0);
+   inputs.setConstant(type(1));
 
    recurrent_layer.set_activation_function("SoftPlus");
 
    recurrent_layer.set_timesteps(3);
 
    new_weights.resize(2,2);
-   new_weights.setConstant(1.0);
+   new_weights.setConstant(type(1));
    new_recurrent_weights.resize(2,2);
-   new_recurrent_weights.setConstant(1.0);
+   new_recurrent_weights.setConstant(type(1));
    new_biases.resize(2);
-   new_biases.setConstant(1.0);
+   new_biases.setConstant(type(1));
 
    recurrent_layer.set_biases(new_biases);
    recurrent_layer.set_input_weights(new_weights);

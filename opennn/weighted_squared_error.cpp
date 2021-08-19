@@ -77,10 +77,10 @@ void WeightedSquaredError::set_default()
     }
     else
     {
-        negatives_weight = -1.0;
-        positives_weight = -1.0;
+        negatives_weight = type(-1.0);
+        positives_weight = type(-1.0);
 
-        normalization_coefficient = -1.0;
+        normalization_coefficient = type(-1.0);
     }
 }
 
@@ -128,8 +128,8 @@ void WeightedSquaredError::set_weights()
 
     if(data_set_pointer->get_target_variables_number() == 0)
     {
-        positives_weight = 1.0;
-        negatives_weight = 1.0;
+        positives_weight = type(1);
+        negatives_weight = type(1);
     }
     else if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
     {
@@ -140,19 +140,19 @@ void WeightedSquaredError::set_weights()
 
         if(positives == 0 || negatives == 0)
         {
-            positives_weight = 1.0;
-            negatives_weight = 1.0;
+            positives_weight = type(1);
+            negatives_weight = type(1);
 
             return;
         }
 
-        negatives_weight = 1.0;
+        negatives_weight = type(1);
         positives_weight = static_cast<type>(negatives)/static_cast<type>(positives);
     }
     else
     {
-        positives_weight = 1.0;
-        negatives_weight = 1.0;
+        positives_weight = type(1);
+        negatives_weight = type(1);
     }
 }
 
@@ -179,7 +179,7 @@ void WeightedSquaredError::set_normalization_coefficient()
 
         const Index negatives = data_set_pointer->calculate_used_negatives(target_variables_indices[0]);
 
-        normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
+        normalization_coefficient = type(negatives)*negatives_weight*static_cast<type>(0.5);
     }
     else
     {
@@ -216,8 +216,8 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
     const Tensor<type, 2>& targets = batch.targets_2d;
     const Tensor<type, 2>& outputs = probabilistic_layer_back_propagation->activations;
 
-    const Tensor<bool, 2> if_sentence = targets == targets.constant(1);
-    const Tensor<bool, 2> else_sentence = targets == targets.constant(0);
+    const Tensor<bool, 2> if_sentence = targets == targets.constant(type(1));
+    const Tensor<bool, 2> else_sentence = targets == targets.constant(type(0));
 
     Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
     f_1 = back_propagation.errors.square()*positives_weight;
@@ -226,7 +226,7 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
     f_2 = back_propagation.errors.square()*negatives_weight;
 
     Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
-    f_3 = outputs.constant(0);
+    f_3 = outputs.constant(type(0));
 
     const Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
@@ -279,8 +279,8 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
     const type coefficient = static_cast<type>(2.0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-    const Tensor<bool, 2> if_sentence = targets == targets.constant(1);
-    const Tensor<bool, 2> else_sentence = targets == targets.constant(0);
+    const Tensor<bool, 2> if_sentence = targets == targets.constant(type(1));
+    const Tensor<bool, 2> else_sentence = targets == targets.constant(type(0));
 
     Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
     f_1 = (coefficient*positives_weight)*back_propagation.errors;
@@ -289,7 +289,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     f_2 = coefficient*negatives_weight*back_propagation.errors;
 
     Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
-    f_3 = targets.constant(0);
+    f_3 = targets.constant(type(0));
 
     probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = if_sentence.select(f_1, else_sentence.select(f_2, f_3));
 }
@@ -307,7 +307,7 @@ void WeightedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
@@ -328,7 +328,7 @@ void WeightedSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);
@@ -484,8 +484,8 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2>& x, 
 
 #endif
 
-    const Tensor<bool, 2> if_sentence = y == y.constant(1);
-    const Tensor<bool, 2> else_sentence = y == y.constant(0);
+    const Tensor<bool, 2> if_sentence = y == y.constant(type(1));
+    const Tensor<bool, 2> else_sentence = y == y.constant(type(0));
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
 
@@ -497,7 +497,7 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2>& x, 
 
     f_2 = (x - y).square()*negatives_weight;
 
-    f_3 = x.constant(0);
+    f_3 = x.constant(type(0));
 
     const Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
@@ -520,7 +520,7 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
 
-    const Tensor<bool, 2> if_sentence = outputs == outputs.constant(1);
+    const Tensor<bool, 2> if_sentence = outputs == outputs.constant(type(1));
 
     Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
     f_1 = (outputs - targets)*positives_weight;

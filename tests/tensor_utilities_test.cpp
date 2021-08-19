@@ -28,7 +28,7 @@ void TensorUtilitiesTest::test_calculate_rank()
     // Test
 
     vector.resize(3);
-    vector.setValues({4,2,3});
+    vector.setValues({ type(4),type(2),type(3)});
 
     rank = calculate_rank_greater(vector);
 

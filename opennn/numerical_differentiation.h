@@ -134,7 +134,7 @@ public:
     	 }   	     
       }
 
-      return 0.0;
+      return type(0);
    }
 
 
@@ -494,7 +494,7 @@ public:
 
       const type y = (t.*f)(x);
        
-      return (y_forward_2 - 2*y_forward + y)/pow(h, 2);
+      return (y_forward_2 - type(2)*y_forward + y)/pow(h, type(2));
    }
 
 
@@ -526,7 +526,7 @@ public:
 
       const type y_backward_2 = (t.*f)(x_backward_2);
     
-      const type d2 = (-y_forward_2 + 16.0*y_forward -30.0*y + 16.0*y_backward - y_backward_2)/(12.0*pow(h, 2));
+      const type d2 = (-y_forward_2 + type(16.0)*y_forward - type(30.0)*y + type(16.0)*y_backward - y_backward_2)/(type(12.0)*pow(h, type(2)));
 
       return d2;
    }
@@ -553,7 +553,7 @@ public:
     	 }   	    
       }
 
-      return 0.0;
+      return type(0);
    }
 
 
@@ -584,7 +584,7 @@ public:
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
-
+/*
    template<class T> 
    Tensor<type, 1> calculate_central_differences_second_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {      
@@ -606,7 +606,7 @@ public:
 
       return (y_forward_2*-1.0 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0);
    }
-
+*/
 
    /// Returns the second derivative of a vector function acording to the numerical differentiation method to be used. 
    /// @param t : Object constructor containing the member method to differentiate.  
@@ -678,7 +678,7 @@ public:
 
               y_forward_2 = (t.*f)(dummy_1, x1_forward_2, dummy_2, x2_forward_2);
 
-              M(i,j) = (y_forward_2 - 2*y_forward + y)/(h1*h2);
+              M(i,j) = (y_forward_2 - type(2)*y_forward + y)/(h1*h2);
 
               x2_forward(j) -= h2;
 
@@ -726,7 +726,7 @@ public:
    /// @param f: Pointer to the member method.
    /// @param dummy: Dummy integer for the method prototype. 
    /// @param x: Input vector. 
-
+/*
    template<class T> 
    Tensor<type, 1> calculate_central_differences_second_derivatives(const T& t,
                                                                     Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const,
@@ -750,7 +750,7 @@ public:
 
       return (y_forward_2*-1 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0);
    }
-
+*/
 
    /// Returns the second derivatives of a vector function acording to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&) const. 
@@ -851,7 +851,7 @@ public:
          y_backward = (t.*f)(x_backward);
          x_backward(i) += h;
 
-         g(i) = (y_forward - y_backward)/(2.0*h);
+         g(i) = (y_forward - y_backward)/(type(2.0)*h);
 
       }
 
@@ -1432,7 +1432,7 @@ public:
          y_forward_2i = (t.*f)(x_forward_2i);
          x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
-         H(i,i) = (y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
+         H(i,i) = (y_forward_2i - type(2)*y_forward_i + y)/pow(h_i, type(2));
 
          for(Index j = i; j < n; j++)
          {
@@ -1526,7 +1526,7 @@ public:
          y_forward_2i = (t.*f)(x_forward_2i);
          x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
-         H(i,i) = (-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
+         H(i,i) = (-y_forward_2i + type(16.0)*y_forward_i - type(30.0)*y + type(16.0)*y_backward_i - y_backward_2i)/(type(12.0)*pow(h_i, type(2)));
 
          for(Index j = i; j < n; j++)
          {
@@ -1556,7 +1556,7 @@ public:
             x_forward_i_backward_j(i) -= h_i;
             x_forward_i_backward_j(j) += h_j;
  
-            H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
+            H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(type(4.0)*h_i*h_j);
          }
       }
 
@@ -1640,7 +1640,7 @@ public:
          y_forward_2i = (t.*f)(dummy, x_forward_2i);
          x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
-         H(i,i) = (y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
+         H(i,i) = (y_forward_2i - type(2)*y_forward_i + y)/pow(h_i, type(2));
 
          for(Index j = i; j < n; j++)
          {
@@ -1736,7 +1736,7 @@ public:
          y_forward_2i = (t.*f)(dummy, x_forward_2i);
          x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
-         H(i,i) = (-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
+         H(i,i) = (-y_forward_2i + type(16.0)*y_forward_i - type(30.0)*y + type(16.0)*y_backward_i - y_backward_2i)/(type(12.0)*pow(h_i, type(2)));
 
          for(Index j = i; j < n; j++)
          {
@@ -1766,7 +1766,7 @@ public:
             x_forward_i_backward_j(i) -= h_i;
             x_forward_i_backward_j(j) += h_j;
  
-            H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
+            H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(type(4.0)*h_i*h_j);
          }
       }
 
@@ -1852,7 +1852,7 @@ public:
          y_forward_2i = (t.*f)(dummy, x_forward_2i);
          x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
-         H(i,i) = (y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
+         H(i,i) = (y_forward_2i - type(2)*y_forward_i + y)/pow(h_i, type(2));
 
          for(Index j = i; j < n; j++)
          {
@@ -1948,7 +1948,7 @@ public:
          y_forward_2i = (t.*f)(dummy, x_forward_2i);
          x_forward_2i(i) -= static_cast<type>(2.0)*h_i;
 
-         H(i,i) = (-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
+         H(i,i) = (-y_forward_2i + type(16.0)*y_forward_i - type(30.0)*y + type(16.0)*y_backward_i - y_backward_2i)/(type(12.0)*pow(h_i, type(2)));
 
          for(Index j = i; j < n; j++)
          {
@@ -1978,7 +1978,7 @@ public:
             x_forward_i_backward_j(i) -= h_i;
             x_forward_i_backward_j(j) += h_j;
  
-            H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
+            H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(type(4.0)*h_i*h_j);
          }
       }
 
@@ -2688,7 +2688,7 @@ public:
             y_forward_2j = (t.*f)(x_forward_2j);
             x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H(i)(j,j) = (y_forward_2j(i) - static_cast<type>(2.0)*y_forward_j(i) + y(i))/pow(h_j, 2);
+            H(i)(j,j) = (y_forward_2j(i) - static_cast<type>(2.0)*y_forward_j(i) + y(i))/pow(h_j, type(2));
 
             for(Index k = j; k < n; k++)
 			{
@@ -2788,7 +2788,7 @@ public:
             y_forward_2j = (t.*f)(x_forward_2j);
             x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H(i)(j,j) = (-y_forward_2j(i) + 16.0*y_forward_j(i) -30.0*y(i) + 16.0*y_backward_j(i) - y_backward_2j(i))/(12.0*pow(h_j, 2));
+            H(i)(j,j) = (-y_forward_2j(i) + type(16.0)*y_forward_j(i) - type(30.0)*y(i) + type(16.0)*y_backward_j(i) - y_backward_2j(i))/(type(12.0)*pow(h_j, type(2)));
 
             for(Index k = j; k < n; k++)
             {
@@ -2818,7 +2818,7 @@ public:
                x_forward_j_backward_k(j) -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(4.0*h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(type(4.0)*h_j*h_k);
             }
          }
 	  
@@ -2912,7 +2912,7 @@ public:
             y_forward_2j = (t.*f)(dummy_vector, x_forward_2j);
             x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H(i)(j,j) = (y_forward_2j(i) - 2.0*y_forward_j(i) + y(i))/pow(h_j, 2);
+            H(i)(j,j) = (y_forward_2j(i) - type(2.0)*y_forward_j(i) + y(i))/pow(h_j, type(2));
 
 	        for(Index k = j; k < n; k++)
 		    {
@@ -3016,7 +3016,7 @@ public:
             y_forward_2j = (t.*f)(dummy_vector, x_forward_2j);
             x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H(i)(j,j) = (-y_forward_2j(i) + 16.0*y_forward_j(i) -30.0*y(i) + 16.0*y_backward_j(i) - y_backward_2j(i))/(12.0*pow(h_j, 2));
+            H(i)(j,j) = (-y_forward_2j(i) + type(16.0)*y_forward_j(i) - type(30.0)*y(i) + type(16.0)*y_backward_j(i) - y_backward_2j(i))/(type(12.0)*pow(h_j, type(2)));
 
             for(Index k = j; k < n; k++)
             {
@@ -3046,7 +3046,7 @@ public:
                x_forward_j_backward_k(j) -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(4.0*h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(type(4.0)*h_j*h_k);
             }
          }
 	  
@@ -3142,7 +3142,7 @@ public:
             y_forward_2j = (t.*f)(dummy, x_forward_2j);
             x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H(i)(j,j) = (y_forward_2j(i) - 2.0*y_forward_j(i) + y(i))/pow(h_j, 2);
+            H(i)(j,j) = (y_forward_2j(i) - type(2.0)*y_forward_j(i) + y(i))/pow(h_j, type(2));
 
 	         for(Index k = j; k < n; k++)
 			   {
@@ -3245,7 +3245,7 @@ public:
             y_forward_2j = (t.*f)(dummy, x_forward_2j);
             x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H(i)(j,j) = (-y_forward_2j(i) + 16.0*y_forward_j(i) -30.0*y(i) + 16.0*y_backward_j(i) - y_backward_2j(i))/(12.0*pow(h_j, 2));
+            H(i)(j,j) = (-y_forward_2j(i) + type(16.0)*y_forward_j(i) - type(30.0)*y(i) + type(16.0)*y_backward_j(i) - y_backward_2j(i))/(type(12.0)*pow(h_j, type(2)));
 
             for(Index k = j; k < n; k++)
             {
@@ -3275,7 +3275,7 @@ public:
                x_forward_j_backward_k(j) -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(4.0*h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(type(4.0)*h_j*h_k);
             }
          }
 	  
@@ -3372,7 +3372,7 @@ public:
             y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
             x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H(i)(j,j) = (y_forward_2j(i) - 2.0*y_forward_j(i) + y(i))/pow(h_j, 2);
+            H(i)(j,j) = (y_forward_2j(i) - type(2.0)*y_forward_j(i) + y(i))/pow(h_j, type(2));
 
 	        for(Index k = j; k < n; k++)
 		    {
@@ -3477,7 +3477,7 @@ public:
             y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
             x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-            H(i)(j,j) = (-y_forward_2j(i) + 16.0*y_forward_j(i) -30.0*y(i) + 16.0*y_backward_j(i) - y_backward_2j(i))/(12.0*pow(h_j, 2));
+            H(i)(j,j) = (-y_forward_2j(i) + type(16.0)*y_forward_j(i) - type(30.0)*y(i) + type(16.0)*y_backward_j(i) - y_backward_2j(i))/(type(12.0)*pow(h_j, type(2)));
 
             for(Index k = j; k < n; k++)
             {
@@ -3507,7 +3507,7 @@ public:
                x_forward_j_backward_k(j) -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(4.0*h_j*h_k);
+               H(i)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(type(4.0)*h_j*h_k);
             }
          }
 	  
@@ -3629,7 +3629,7 @@ public:
                    y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
                    x_forward_2j(j) -= static_cast<type>(2.0)*h_j;
 
-                   H(i)(j,j) = (-y_forward_2j(i) + 16.0*y_forward_j(i) -30.0*y(i) + 16.0*y_backward_j(i) - y_backward_2j(i))/(12.0*pow(h_j, 2));
+                   H(i)(j,j) = (-y_forward_2j(i) + type(16.0)*y_forward_j(i) - type(30.0)*y(i) + type(16.0)*y_backward_j(i) - y_backward_2j(i))/(type(12.0)*pow(h_j, type(2)));
 
                    for(Index k = j; k < s; k++)
                    {
@@ -3659,7 +3659,7 @@ public:
                        x_forward_j_backward_k(j) -= h_j;
                        x_forward_j_backward_k[k] += h_k;
 
-                       H(i,t)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(4.0*h_j*h_k);
+                       H(i,t)(j,k) = (y_forward_jk(i) - y_forward_j_backward_k(i) - y_backward_j_forward_k(i) + y_backward_jk(i))/(type(4.0)*h_j*h_k);
                    }
                }
 
@@ -3675,7 +3675,6 @@ public:
 
        return H;
    }
-
 
 private:
 

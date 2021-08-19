@@ -67,23 +67,23 @@ void BoundingLayerTest::test_calculate_outputs()
    // Test
 
    bounding_layer.set(1);
-   bounding_layer.set_lower_bound(0, -1.0);
-   bounding_layer.set_upper_bound(0,  1.0);
+   bounding_layer.set_lower_bound(0, type(-1.0));
+   bounding_layer.set_upper_bound(0, type(1));
    bounding_layer.set_bounding_method("Bounding");
 
    inputs.resize(1, 1);
-   inputs(0) = -2.0;
+   inputs(0) = type(-2.0);
    outputs = bounding_layer.calculate_outputs(inputs);
 
    assert_true(outputs.rank() == 2, LOG);
-   assert_true(outputs(0) == -1.0, LOG);
+   assert_true(outputs(0) == type(-1.0), LOG);
 
    // Test
 
-   inputs(0) = 2.0;
+   inputs(0) = type(2.0);
    outputs = bounding_layer.calculate_outputs(inputs);
    assert_true(outputs.rank() == 2, LOG);
-   assert_true(outputs(0) == 1.0, LOG);
+   assert_true(outputs(0) == type(1), LOG);
 }
 
 

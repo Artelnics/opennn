@@ -217,12 +217,12 @@ void ConjugateGradient::set_default()
 {
     // Stopping criteria
 
-    minimum_loss_decrease = 0;
-    training_loss_goal = 0;
+    minimum_loss_decrease = type(0);
+    training_loss_goal = type(0);
     maximum_selection_failures = 1000000;
 
     maximum_epochs_number = 1000;
-    maximum_time = 3600.0;
+    maximum_time = type(3600.0);
 
     // UTILITIES
 
@@ -368,7 +368,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
 #endif
 
-    type FR_parameter = 0;
+    type FR_parameter = type(0);
 
     Tensor<type, 0> numerator;
     Tensor<type, 0> denominator;
@@ -378,9 +378,9 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
     // Prevent a possible division by 0
 
-    if(abs(denominator(0)) < numeric_limits<type>::min())
+    if(abs(denominator(0)) < type(NUMERIC_LIMITS_MIN))
     {
-        FR_parameter = 0;
+        FR_parameter = type(0);
     }
     else
     {
@@ -391,11 +391,11 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
     if(FR_parameter < static_cast<type>(0.0))
     {
-        FR_parameter = 0;
+        FR_parameter = type(0);
     }
     else if(FR_parameter > static_cast<type>(1.0))
     {
-        FR_parameter = 1;
+        FR_parameter = type(1);
     }
 
     return FR_parameter;
@@ -449,7 +449,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
 #endif
 
-    type PR_parameter = 0;
+    type PR_parameter = type(0);
 
     Tensor<type, 0> numerator;
     Tensor<type, 0> denominator;
@@ -459,9 +459,9 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
     // Prevent a possible division by 0
 
-    if(abs(denominator(0)) < numeric_limits<type>::min())
+    if(abs(denominator(0)) < type(NUMERIC_LIMITS_MIN))
     {
-        PR_parameter = 0;
+        PR_parameter = type(0);
     }
     else
     {
@@ -472,11 +472,11 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
     if(PR_parameter < static_cast<type>(0.0))
     {
-        PR_parameter = 0;
+        PR_parameter = type(0);
     }
     else if(PR_parameter > static_cast<type>(1.0))
     {
-        PR_parameter = 1.0;
+        PR_parameter = type(1);
     }
 
     return PR_parameter;
@@ -726,7 +726,7 @@ TrainingResults ConjugateGradient::perform_training()
 
     time_t beginning_time, current_time;
     time(&beginning_time);
-    type elapsed_time = 0;
+    type elapsed_time = type(0);
 
     // Data set
 
@@ -789,7 +789,7 @@ TrainingResults ConjugateGradient::perform_training()
 
     // Optimization algorithm
 
-    type old_loss = 0;
+    type old_loss = type(0);
     type loss_decrease = numeric_limits<type>::max();
 
     bool stop_training = false;
@@ -947,17 +947,17 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
     // Learning rate tolerance
 
     labels_values(2,0) = "Learning rate tolerance";
-    labels_values(2,1) = to_string(learning_rate_algorithm.get_learning_rate_tolerance());
+    labels_values(2,1) = to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
 
     // Minimum loss decrease
 
     labels_values(3,0) = "Minimum loss decrease";
-    labels_values(3,1) = to_string(minimum_loss_decrease);
+    labels_values(3,1) = to_string(double(minimum_loss_decrease));
 
     // Loss goal
 
     labels_values(4,0) = "Loss goal";
-    labels_values(4,1) = to_string(training_loss_goal);
+    labels_values(4,1) = to_string(double(training_loss_goal));
 
     // Maximum selection error increases
 
@@ -1358,7 +1358,7 @@ void ConjugateGradient::update_parameters(
     optimization_data.training_slope.device(*thread_pool_device)
             = (back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
 
-    if(optimization_data.training_slope(0) >= 0)
+    if(optimization_data.training_slope(0) >= type(0))
     {
         calculate_gradient_descent_training_direction(
                     back_propagation.gradient,
@@ -1380,7 +1380,7 @@ void ConjugateGradient::update_parameters(
     optimization_data.learning_rate = directional_point.first;
     back_propagation.loss = directional_point.second;
 
-    if(abs(optimization_data.learning_rate) > 0)
+    if(abs(optimization_data.learning_rate) > type(0))
     {
         optimization_data.parameters_increment.device(*thread_pool_device)
                 = optimization_data.training_direction*optimization_data.learning_rate;
@@ -1393,23 +1393,23 @@ void ConjugateGradient::update_parameters(
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if(abs(back_propagation.gradient(i)) < numeric_limits<type>::min())
+            if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
                 back_propagation.parameters(i) = back_propagation.parameters(i);
 
-                optimization_data.parameters_increment(i) = 0;
+                optimization_data.parameters_increment(i) = type(0);
             }
-            else if(back_propagation.gradient(i) > 0)
+            else if(back_propagation.gradient(i) > type(0))
             {
-                back_propagation.parameters(i)
-                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)-1);
+                back_propagation.parameters(i) -= type(NEXT_AFTER);
+                //        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i) - type(1));
 
                 optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
-            else if(back_propagation.gradient(i) < 0)
+            else if(back_propagation.gradient(i) < type(0))
             {
-                back_propagation.parameters(i)
-                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)+1);
+                back_propagation.parameters(i) += type(NEXT_AFTER);
+                //        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i) + type(1));
 
                 optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
             }

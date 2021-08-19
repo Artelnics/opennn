@@ -1073,8 +1073,8 @@ void LongShortTermMemoryLayer::set_parameters_constant(const type& value)
 
 void LongShortTermMemoryLayer::set_parameters_random()
 {
-    const type minimum = -0.2;
-    const type maximum =  0.2;
+    const type minimum = type(-0.2);
+    const type maximum = type(0.2);
 
     // Biases
 

@@ -79,19 +79,19 @@ struct Descriptives {
 
   /// Smallest value of a set, function, etc.
 
-  type minimum = 0;
+  type minimum = type(0);
 
   /// Biggest value of a set, function, etc.
 
-  type maximum = 0;
+  type maximum = type(0);
 
   /// Mean value of a set, function, etc.
 
-  type mean = 0;
+  type mean = type(0);
 
   /// Standard deviation value of a set, function, etc.
 
-  type standard_deviation = 0;
+  type standard_deviation = type(0);
 
 };
 
@@ -109,15 +109,15 @@ struct Descriptives {
 
 struct BoxPlot {
 
-    type minimum = 0;
+    type minimum = type(0);
 
-    type first_quartile = 0;
+    type first_quartile = type(0);
 
-    type median = 0;
+    type median = type(0);
 
-    type third_quartile = 0;
+    type third_quartile = type(0);
 
-    type maximum = 0;
+    type maximum = type(0);
 
   // Default constructor.
 
@@ -125,12 +125,12 @@ struct BoxPlot {
 
   // Values constructor.
 
-  explicit BoxPlot(const type&, const type&, const type&, const type&, const type& );
+  explicit BoxPlot(const type&, const type&, const type&, const type&, const type&);
 
   virtual ~BoxPlot() {}
 
 
-  void set(const type&, const type&, const type&, const type&, const type& );
+  void set(const type&, const type&, const type&, const type&, const type&);
 };
 
 
@@ -275,7 +275,7 @@ struct Histogram
 
      // Histograms
      Histogram histogram(const Tensor<type, 1>&, const Index&  = 10);
-     Histogram histogram_centered(const Tensor<type, 1>&, const type& = 0.0, const Index&  = 10);
+     Histogram histogram_centered(const Tensor<type, 1>&, const type& = type(0), const Index&  = 10);
      Histogram histogram(const Tensor<bool, 1>&);
      Histogram histogram(const Tensor<Index, 1>&, const Index&  = 10);
      Tensor<Histogram, 1> histograms(const Tensor<type, 2>&, const Index& = 10);
@@ -292,12 +292,12 @@ struct Histogram
 
      // Minimal indices
      Index minimal_index(const Tensor<type, 1>&);
-     Tensor<Index, 1> minimal_indices(const Tensor<type, 1>&, const Index& );
+     Tensor<Index, 1> minimal_indices(const Tensor<type, 1>&, const Index&);
      Tensor<Index, 1> minimal_indices(const Tensor<type, 2>&);
 
      // Maximal indices
      Index maximal_index(const Tensor<type, 1>&);
-     Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index& );
+     Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index&);
      Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
      Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>&, const Index&);
      Tensor<type, 1> variation_percentage(const Tensor<type, 1>&);

@@ -86,12 +86,12 @@ private:
 
    type f1_1(const type& var_x) const
    {
-       return pow(var_x,2);
+       return pow(var_x, type(2));
    }
 
    type f1_2(const type& var_x) const
    {
-       return pow(var_x,3);
+       return pow(var_x, type(3));
    }
 
    Tensor<type, 1> f2(const Tensor<type, 1>& vector_x) const
@@ -101,12 +101,12 @@ private:
 
    Tensor<type, 1> f2_1(const Index& cte, const Tensor<type, 1>& vector_x) const
    {
-       return cte*vector_x.square();
+       return type(cte)*vector_x.square();
    }
 
    Tensor<type, 1> f2_2(const Index& cte, const Tensor<type, 2>& matrix_x) const
    {
-       return cte*matrix_x.maximum();
+       return  type(cte)*matrix_x.maximum();
    }
 
    Tensor<type, 1> f2_2(const Tensor<type, 1>& dummy, const Tensor<type, 1>& vector_x) const
@@ -145,7 +145,7 @@ private:
 
    type f4_2(const Index& dummy, const Tensor<type, 1>& vector_x) const
    {
-       Tensor<type, 0> sum_ = dummy*vector_x.square().sum();
+       Tensor<type, 0> sum_ = type(dummy)*vector_x.square().sum();
 
        return sum_(0);
    }
@@ -159,9 +159,12 @@ private:
 
    type f4_4(const Tensor<Index,1>& dummy, const Tensor<type, 1>& vector_x) const
    {
+       /*
        Tensor<type, 0> sum_ = (vector_x * dummy).sum();
 
        return sum_(0);
+       */
+       return type(NAN);
    }
 
    type f4_5(const Tensor<type, 1>& vector_x) const
@@ -180,14 +183,14 @@ private:
 
    type f4_7(const Index& dummy, const Tensor<type, 1>& vector_x) const
    {
-       Tensor<type, 0> prod_ = dummy*vector_x.square().prod();
+       Tensor<type, 0> prod_ = type(dummy)*vector_x.square().prod();
 
        return prod_(0);
    }
 
    Tensor<type, 1> f5(const Index& dummy_int, const Tensor<type, 1>& dummy_vec, const Tensor<type, 1>& vector_x) const
    {
-       Tensor<type, 1> prod_ = dummy_int*vector_x.square() + dummy_vec*vector_x.square();
+       Tensor<type, 1> prod_ = type(dummy_int)*vector_x.square() + dummy_vec*vector_x.square();
 
        return prod_;
    }
@@ -198,13 +201,13 @@ private:
 
        for(Index i = 0; i < vector_x.size(); i++)
        {
-       if(vector_x(i) == 0)
+       if(vector_x(i) == type(0))
        {
-           func_(i) = dummy_int_1 * vector_x(i) * vector_x(i);
+           func_(i) = type(dummy_int_1) * vector_x(i) * vector_x(i);
        }
        else
        {
-           func_(i) = dummy_int_2 * vector_x(i) * vector_x(i);
+           func_(i) = type(dummy_int_2) * vector_x(i) * vector_x(i);
        }
        }
 

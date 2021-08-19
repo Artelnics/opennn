@@ -124,13 +124,13 @@ void GradientDescent::set_default()
 {
     // Stopping criteria
 
-    minimum_loss_decrease = 0;
+    minimum_loss_decrease = type(0);
 
-    training_loss_goal = 0;
+    training_loss_goal = type(0);
     maximum_selection_failures = numeric_limits<Index>::max();
 
     maximum_epochs_number = 1000;
-    maximum_time = 3600;
+    maximum_time = type(3600);
 
     // UTILITIES
 
@@ -290,7 +290,7 @@ void GradientDescent::update_parameters(
     optimization_data.learning_rate = directional_point.first;
     back_propagation.loss = directional_point.second;
 
-    if(abs(optimization_data.learning_rate) > 0)
+    if(abs(optimization_data.learning_rate) > type(0))
     {
         optimization_data.parameters_increment.device(*thread_pool_device)
                 = optimization_data.training_direction*optimization_data.learning_rate;
@@ -303,22 +303,20 @@ void GradientDescent::update_parameters(
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if(abs(back_propagation.gradient(i)) < numeric_limits<type>::min())
+            if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
                 back_propagation.parameters(i) = back_propagation.parameters(i);
 
-                optimization_data.parameters_increment(i) = 0;
+                optimization_data.parameters_increment(i) = type(0);
             }
-            else if(back_propagation.gradient(i) > 0)
+            else if(back_propagation.gradient(i) > type(0))
             {
-                back_propagation.parameters(i)
-                        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i)-1);
-
-                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
+                back_propagation.parameters(i) -= type(NEXT_AFTER);
+                //        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i) - type(1));
 
                 optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
-            else if(back_propagation.gradient(i) < 0)
+            else if(back_propagation.gradient(i) < type(0))
             {
                 back_propagation.parameters(i) += numeric_limits<type>::epsilon();
 
@@ -426,14 +424,14 @@ TrainingResults GradientDescent::perform_training()
 
     bool stop_training = false;
 
-    type old_loss = 0;
+    type old_loss = type(0);
     type loss_decrease = numeric_limits<type>::max();
 
     // Main loop
 
     time_t beginning_time, current_time;
     time(&beginning_time);
-    type elapsed_time = 0;
+    type elapsed_time = type(0);
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
@@ -577,17 +575,17 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
     // Loss tolerance
 
     labels_values(1,0) = "Learning rate tolerance";
-    labels_values(1,1) = to_string(learning_rate_algorithm.get_learning_rate_tolerance());
+    labels_values(1,1) = to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
 
     // Minimum loss decrease
 
     labels_values(2,0) = "Minimum loss decrease";
-    labels_values(2,1) = to_string(minimum_loss_decrease);
+    labels_values(2,1) = to_string(double(minimum_loss_decrease));
 
     // Loss goal
 
     labels_values(3,0) = "Loss goal";
-    labels_values(3,1) = to_string(training_loss_goal);
+    labels_values(3,1) = to_string(double(training_loss_goal));
 
     // Maximum selection error increases
 

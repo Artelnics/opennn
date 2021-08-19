@@ -73,22 +73,22 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
     // Test
 
 //    inputs.resize(({1,1,4,4}));
-//    inputs(0,0,0,0) = 1.0;
+//    inputs(0,0,0,0) = type(1);
 //    inputs(0,0,0,1) = 2.0;
 //    inputs(0,0,0,2) = 3.0;
 //    inputs(0,0,0,3) = 4.0;
 //    inputs(0,0,1,0) = 16.0;
 //    inputs(0,0,1,1) = 9.0;
 //    inputs(0,0,1,2) = 4.0;
-//    inputs(0,0,1,3) = 1.0;
-//    inputs(0,0,2,0) = 1.0;
+//    inputs(0,0,1,3) = type(1);
+//    inputs(0,0,2,0) = type(1);
 //    inputs(0,0,2,1) = 8.0;
 //    inputs(0,0,2,2) = 27.0;
 //    inputs(0,0,2,3) = 64.0;
 //    inputs(0,0,3,0) = 256.0;
 //    inputs(0,0,3,1) = 81.0;
 //    inputs(0,0,3,2) = 16.0;
-//    inputs(0,0,3,3) = 1.0;
+//    inputs(0,0,3,3) = type(1);
 
 //    pooling_layer.set_pool_size(2, 2);
 //    pooling_layer.set_row_stride(1);
@@ -113,22 +113,22 @@ void PoolingLayerTest::test_calculate_average_pooling_outputs()
     // Test
 
 //    inputs.resize(({1,1,4,4}));
-//    inputs(0,0,0,0) = 1.0;
+//    inputs(0,0,0,0) = type(1);
 //    inputs(0,0,0,1) = 2.0;
 //    inputs(0,0,0,2) = 3.0;
 //    inputs(0,0,0,3) = 4.0;
 //    inputs(0,0,1,0) = 16.0;
 //    inputs(0,0,1,1) = 9.0;
 //    inputs(0,0,1,2) = 4.0;
-//    inputs(0,0,1,3) = 1.0;
-//    inputs(0,0,2,0) = 1.0;
+//    inputs(0,0,1,3) = type(1);
+//    inputs(0,0,2,0) = type(1);
 //    inputs(0,0,2,1) = 8.0;
 //    inputs(0,0,2,2) = 27.0;
 //    inputs(0,0,2,3) = 64.0;
 //    inputs(0,0,3,0) = 256.0;
 //    inputs(0,0,3,1) = 81.0;
 //    inputs(0,0,3,2) = 16.0;
-//    inputs(0,0,3,3) = 1.0;
+//    inputs(0,0,3,3) = type(1);
 
 //    pooling_layer.set_pool_size(3, 3);
 //    pooling_layer.set_row_stride(1);
@@ -189,22 +189,22 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
     // Test
 
 //    inputs.resize(({1,1,4,4}));
-//    inputs(0,0,0,0) = 1.0;
+//    inputs(0,0,0,0) = type(1);
 //    inputs(0,0,0,1) = 2.0;
 //    inputs(0,0,0,2) = 3.0;
 //    inputs(0,0,0,3) = 4.0;
 //    inputs(0,0,1,0) = 16.0;
 //    inputs(0,0,1,1) = 9.0;
 //    inputs(0,0,1,2) = 4.0;
-//    inputs(0,0,1,3) = 1.0;
-//    inputs(0,0,2,0) = 1.0;
+//    inputs(0,0,1,3) = type(1);
+//    inputs(0,0,2,0) = type(1);
 //    inputs(0,0,2,1) = 8.0;
 //    inputs(0,0,2,2) = 27.0;
 //    inputs(0,0,2,3) = 64.0;
 //    inputs(0,0,3,0) = 256.0;
 //    inputs(0,0,3,1) = 81.0;
 //    inputs(0,0,3,2) = 16.0;
-//    inputs(0,0,3,3) = 1.0;
+//    inputs(0,0,3,3) = type(1);
 
 //    pooling_layer.set_pool_size(2, 2);
 //    pooling_layer.set_row_stride(1);
@@ -229,7 +229,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
     // Test
 
 //    inputs.resize(({1,1,4,4}));
-//    inputs(0,0,0,0) = 1.0;
+//    inputs(0,0,0,0) = type(1);
 //    inputs(0,0,0,1) = 2.0;
 //    inputs(0,0,0,2) = 3.0;
 //    inputs(0,0,0,3) = 4.0;
@@ -237,7 +237,7 @@ void PoolingLayerTest::test_calculate_max_pooling_outputs()
 //    inputs(0,0,1,1) = -9.0;
 //    inputs(0,0,1,2) = -4.0;
 //    inputs(0,0,1,3) = -1.0;
-//    inputs(0,0,2,0) = 1.0;
+//    inputs(0,0,2,0) = type(1);
 //    inputs(0,0,2,1) = 8.0;
 //    inputs(0,0,2,2) = 27.0;
 //    inputs(0,0,2,3) = 64.0;

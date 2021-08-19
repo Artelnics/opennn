@@ -174,10 +174,10 @@ void NeuronsSelection::set_default()
 
     // Stopping criteria
 
-    selection_error_goal = 0;
+    selection_error_goal = type(0);
 
     maximum_epochs_number = 1000;
-    maximum_time = 3600;
+    maximum_time = type(3600);
 }
 
 

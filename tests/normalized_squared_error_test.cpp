@@ -116,8 +116,8 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    data.resize(2, 2);
    data(0,0) = -1.0;
    data(0,1) = -1.0;
-   data(1,0) = 1.0;
-   data(1,1) = 1.0;
+   data(1,0) = type(1);
+   data(1,1) = type(1);
 
    data_set.set_data(data);
    data_set.set_training();
@@ -200,7 +200,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
         outputs_number = 1;
 
         data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_constant(0.0);
+        data_set.set_data_constant(type(0));
         data_set.set_training();
 
         samples_indices = data_set.get_training_samples_indices();
@@ -210,7 +210,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
         perceptron_layer_1->set(inputs_number, outputs_number);
         neural_network.add_layer(perceptron_layer_1);
 
-        neural_network.set_parameters_constant(0.0);
+        neural_network.set_parameters_constant(type(0));
 
         normalized_squared_error.set_normalization_coefficient(1.0);
 
@@ -230,7 +230,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
         assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
 
         assert_true(all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
-                           [](type i) { return (i-static_cast<type>(0))<numeric_limits<type>::min(); }), LOG);
+                           [](type i) { return (i-static_cast<type>(0))<NUMERIC_LIMITS_MIN; }), LOG);
     }
 
     // Test perceptron

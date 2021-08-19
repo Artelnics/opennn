@@ -32,10 +32,10 @@ void divide_columns(Tensor<type, 2>&, const Tensor<type, 1>&);
 bool is_zero(const Tensor<type, 1>&);
 bool is_constant(const Tensor<type, 1>&);
 
-bool is_equal(const Tensor<type, 2>&, const type&, const type& = 0.0);
+bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));
 
-bool are_equal(const Tensor<type, 1>&, const Tensor<type, 1>&, const type& = 0.0);
-bool are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = 0.0);
+bool are_equal(const Tensor<type, 1>&, const Tensor<type, 1>&, const type& = type(0));
+bool are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = type(0));
 
 bool is_false(const Tensor<bool, 1>&);
 

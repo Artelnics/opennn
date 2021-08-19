@@ -255,29 +255,29 @@ void PerceptronLayerTest::test_get_biases()
 
    // Test  
    perceptron_layer.set();
-   perceptron_layer.set_parameters_constant(0);
+   perceptron_layer.set_parameters_constant(type(0));
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 0, LOG);
 
    // Test
    perceptron_layer.set(0, 0);
-   perceptron_layer.set_parameters_constant(0);
+   perceptron_layer.set_parameters_constant(type(0));
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 0, LOG);
 
    // Test
    perceptron_layer.set(1, 1);
-   perceptron_layer.set_parameters_constant(0);
+   perceptron_layer.set_parameters_constant(type(0));
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 1, LOG);
-   assert_true(biases(0,0) < numeric_limits<type>::min(), LOG);
+   assert_true(biases(0,0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
    perceptron_layer.set(4, 5);
-   perceptron_layer.set_parameters_constant(0);
+   perceptron_layer.set_parameters_constant(type(0));
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 5, LOG);
@@ -287,10 +287,18 @@ void PerceptronLayerTest::test_get_biases()
    // Test  1
 
    biases.resize(1, 4);
-   biases.setValues({{9},{8},{7},{6}});
+
+   biases.setValues({
+       {type(9)},
+       {type(8)},
+       {type(7)},
+       {type(6)}});
 
    Tensor<type, 2> synaptic_weights(2, 4);
-   synaptic_weights.setValues({{11, 12, 13, 14},{21, 22, 23, 24}});
+
+   synaptic_weights.setValues({
+       {type(11), type(12), type(13), type(14)},
+       {type(21), type(22), type(23), type(24)}});
 
    Tensor<type, 1> parameters(12);
    perceptron_layer.set(2, 4);
@@ -302,10 +310,10 @@ void PerceptronLayerTest::test_get_biases()
    biases = perceptron_layer.get_biases(parameters);
 
    assert_true(biases.size() == 4, LOG);
-   assert_true(abs(biases(0,0) - 9) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(biases(0,1) - 8) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(biases(0,2) - 7) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(biases(0,3) - 6) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(biases(0,0) - type(9)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(biases(0,1) - type(8)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(biases(0,2) - type(7)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(biases(0,3) - type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    assert_true(parameters.size() == 12, LOG);
 }
@@ -320,34 +328,42 @@ void PerceptronLayerTest::test_get_synaptic_weights()
    // Test
    perceptron_layer.set(1, 1);
 
-   perceptron_layer.set_parameters_constant(0.0);
+   perceptron_layer.set_parameters_constant(type(0));
 
    synaptic_weights = perceptron_layer.get_synaptic_weights();
 
    assert_true(synaptic_weights.dimension(0) == 1, LOG);
    assert_true(synaptic_weights.dimension(1) == 1, LOG);
-   assert_true(synaptic_weights(0,0) < numeric_limits<type>::min(), LOG);
+   assert_true(synaptic_weights(0,0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
    perceptron_layer.set(1, 2);
 
-   perceptron_layer.set_parameters_constant(0.0);
+   perceptron_layer.set_parameters_constant(type(0));
 
    synaptic_weights = perceptron_layer.get_synaptic_weights();
 
    assert_true(synaptic_weights.dimension(0) == 1, LOG);
    assert_true(synaptic_weights.dimension(1) == 2, LOG);
-   assert_true(synaptic_weights(0,0) < numeric_limits<type>::min(), LOG);
-   assert_true(synaptic_weights(0,1) < numeric_limits<type>::min(), LOG);
+   assert_true(synaptic_weights(0,0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(synaptic_weights(0,1) < type(NUMERIC_LIMITS_MIN), LOG);
 
    cout << "test_get_synaptic_weight_with_parameters\n";
 
    // Test
    Tensor<type, 2> biases(1, 4);
-   biases.setValues({{9},{-8},{7},{-6}});
+
+   biases.setValues({
+       {type(9)},
+       {type(-8)},
+       {type(7)},
+       {type(-6)}});
 
    synaptic_weights.resize(2, 4);
-   synaptic_weights.setValues({{-11, 12, -13, 14},{21, -22, 23, -24}});
+
+   synaptic_weights.setValues({
+       {type(-11), type(12), type(-13), type(14)},
+       {type(21), type(-22), type(23), type(-24)}});
 
    Tensor<type, 1> parameters(12);
    perceptron_layer.set(2, 4);
@@ -360,10 +376,10 @@ void PerceptronLayerTest::test_get_synaptic_weights()
 
    assert_true(synaptic_weights.size() == 8, LOG);
 
-   assert_true(abs(synaptic_weights(0,0) + 11) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(synaptic_weights(0,1) - 12) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(synaptic_weights(1,0) - 21) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(synaptic_weights(1,3) + 24) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(synaptic_weights(0,0) + type(11)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(synaptic_weights(0,1) - type(12)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(synaptic_weights(1,0) - type(21)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(synaptic_weights(1,3) + type(24)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
@@ -371,13 +387,13 @@ void PerceptronLayerTest::test_get_synaptic_weights()
    Index neurons_number = 1;
 
    Tensor<type, 2> synaptic_weights_3(1, 3);
-   synaptic_weights_3.setValues({{1.0, -0.75, 0.25}});
+   synaptic_weights_3.setValues({{type(1.0), type(-0.75), type(0.25)}});
 
    Tensor<type, 2> biases_3(1, 1);
-   biases_3.setValues({{-0.5}});
+   biases_3.setValues({{type(-0.5)}});
 
    Tensor<type, 2> inputs(1, 3);
-   inputs.setValues({{-0.8, 0.2, -0.4}});
+   inputs.setValues({{type(-0.8), type(0.2), type(-0.4)}});
 
    perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::HyperbolicTangent);
 
@@ -387,10 +403,10 @@ void PerceptronLayerTest::test_get_synaptic_weights()
    Tensor<type, 2> new_biases = perceptron_layer.get_biases();
    Tensor<type, 2> new_synaptic_weights = perceptron_layer.get_synaptic_weights();
 
-   assert_true(new_biases(0,0) == -0.5, LOG);
-   assert_true(new_synaptic_weights(0,0) == 1.0, LOG);
-   assert_true(new_synaptic_weights(0,1) == -0.75, LOG);
-   assert_true(new_synaptic_weights(0,2) == 0.25, LOG);
+   assert_true(new_biases(0,0) == type(-0.5), LOG);
+   assert_true(new_synaptic_weights(0,0) == type(1.0), LOG);
+   assert_true(new_synaptic_weights(0,1) == type(-0.75), LOG);
+   assert_true(new_synaptic_weights(0,2) == type(0.25), LOG);
 
 }
 
@@ -412,20 +428,27 @@ void PerceptronLayerTest::test_get_parameters()
 
    // Test
    perceptron_layer.set(1, 1);
-   perceptron_layer.set_parameters_constant(2.0);
+   perceptron_layer.set_parameters_constant(type(2.0));
 
    parameters = perceptron_layer.get_parameters();
 
    assert_true(parameters.size() == 2, LOG);
-   assert_true(abs(parameters(0) - 2) < numeric_limits<type>::min(), LOG);
+   assert_true(abs(parameters(0) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
    biases.resize(1, 4);
-   biases.setValues({{9},{-8},{7},{-6}});
+   biases.setValues({
+       {type(9)},
+       {type(-8)},
+       {type(7)},
+       {type(-6)}});
 
    synaptic_weights.resize(2, 4);
-   synaptic_weights.setValues({{-11, 12, -13, 14},{21, -22, 23, -24}});
+
+   synaptic_weights.setValues({
+       {type(-11), type(12), type(-13), type(14)},
+       {type(21), type(-22), type(23), type(-24)}});
 
    perceptron_layer.set_synaptic_weights(synaptic_weights);
    perceptron_layer.set_biases(biases);
@@ -433,12 +456,12 @@ void PerceptronLayerTest::test_get_parameters()
    parameters = perceptron_layer.get_parameters();
 
    assert_true(parameters.size() == 12, LOG);
-   assert_true(abs(parameters(0) - 9) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(3) + 6) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(4) + 11) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(7) + 22) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(8) + 13) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(11) + 24) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(0) - type(9)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(3) + type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(4) + type(11)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(7) + type(22)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(8) + type(13)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(11) + type(24)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
@@ -447,13 +470,13 @@ void PerceptronLayerTest::test_get_parameters()
    layers_number = 1;
 
    synaptic_weights.resize(1, 3);
-   synaptic_weights.setValues({{1.0, -0.75, 0.25}});
+   synaptic_weights.setValues({{type(1.0), type(-0.75), type(0.25)}});
 
    biases.resize(1, 1);
-   biases.setValues({{-0.5}});
+   biases.setValues({{type(-0.5)}});
 
    inputs.resize(1, 3);
-   inputs.setValues({{-0.8, 0.2, -0.4}});
+   inputs.setValues({{type(-0.8), type(0.2), type(-0.4)}});
 
    perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::HyperbolicTangent);
 
@@ -463,10 +486,10 @@ void PerceptronLayerTest::test_get_parameters()
    biases = perceptron_layer.get_biases();
    synaptic_weights = perceptron_layer.get_synaptic_weights();
 
-   assert_true(biases(0,0) == -0.5, LOG);
-   assert_true(synaptic_weights(0,0) == 1.0, LOG);
-   assert_true(synaptic_weights(0,1) == -0.75, LOG);
-   assert_true(synaptic_weights(0,2) == 0.25, LOG);
+   assert_true(biases(0,0) == type(-0.5), LOG);
+   assert_true(synaptic_weights(0,0) == type(1.0), LOG);
+   assert_true(synaptic_weights(0,1) == type(-0.75), LOG);
+   assert_true(synaptic_weights(0,2) == type(0.25), LOG);
 
    parameters_number = perceptron_layer.get_parameters_number();
 
@@ -474,10 +497,10 @@ void PerceptronLayerTest::test_get_parameters()
 
    parameters = perceptron_layer.get_parameters();
 
-   assert_true(parameters(0) == -0.5, LOG);
-   assert_true(parameters(1) == 1.0, LOG);
-   assert_true(parameters(2) == -0.75, LOG);
-   assert_true(parameters(3) == 0.25, LOG);
+   assert_true(parameters(0) == type(-0.5), LOG);
+   assert_true(parameters(1) == type(1.0), LOG);
+   assert_true(parameters(2) == type(-0.75), LOG);
+   assert_true(parameters(3) == type(0.25), LOG);
 }
 
 
@@ -499,38 +522,42 @@ void PerceptronLayerTest::test_set_biases()
 
     assert_true(perceptron_layer.get_biases_number() == 4, LOG);
 
-    assert_true(abs(perceptron_layer.get_biases()(0)) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_biases()(3)) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(3)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
     perceptron_layer.set(1, 4);
 
-    biases.setValues({{9},{-8},{7},{-6}});
+    biases.setValues({
+        {type(9)},
+        {type(-8)},
+        {type(7)},
+        {type(-6)}});
 
     perceptron_layer.set_biases(biases);
 
     assert_true(perceptron_layer.get_biases_number() == 4, LOG);
 
-    assert_true(abs(perceptron_layer.get_biases()(0) - 9) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_biases()(3) + 6) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(0) - type(9)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(3) + type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
     perceptron_layer.set(2, 3);
 
     biases.resize(2, 3);
-    biases.setValues({{9,1,-8},{7,3,-6}});
+    biases.setValues({{type(9),type(1),type(-8)},{type(7),type(3),type(-6)}});
 
     perceptron_layer.set_biases(biases);
 
     assert_true(perceptron_layer.get_biases_number() == 6, LOG);
 
-    assert_true(abs(perceptron_layer.get_biases()(0,0) - 9) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_biases()(0,1) - 1) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_biases()(0,2) + 8) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_biases()(1,0) - 7) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_biases()(1,1) - 3) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_biases()(1,2) + 6) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(0,0) - type(9)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(0,1) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(0,2) + type(8)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(1,0) - type(7)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(1,1) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(1,2) + type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
@@ -554,33 +581,37 @@ void PerceptronLayerTest::test_set_synaptic_weights()
 
     assert_true(perceptron_layer.get_synaptic_weights().size() == 2, LOG);
 
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(0)) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(1)) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
-    synaptic_weights.setValues({{-11},{21}});
+    synaptic_weights.setValues({{type(-11)},{type(21)}});
 
     perceptron_layer.set_synaptic_weights(synaptic_weights);
 
     assert_true(perceptron_layer.get_synaptic_weights().size() == 2, LOG);
 
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(0) + 11) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(1) - 21) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(0) + type(11)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(1) - type(21)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
     Tensor<type, 2> synaptic_weights_1(3,2);
 
-    synaptic_weights_1.setValues({{1,-2},{3,-4},{5,-6}});
+    synaptic_weights_1.setValues({
+        {type(1),type(-2)},
+        {type(3),type(-4)},
+        {type(5),type(-6)}});
+
     perceptron_layer.set_synaptic_weights(synaptic_weights_1);
 
     assert_true(perceptron_layer.get_synaptic_weights().size() == 6, LOG);
 
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(0,0) - 1) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(0,1) + 2) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(1,0) - 3) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(1,1) + 4) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(2,0) - 5) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(2,1) + 6) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(0,1) + type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(1,0) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(1,1) + type(4)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(2,0) - type(5)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(2,1) + type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -614,10 +645,10 @@ void PerceptronLayerTest::test_set_inputs_number()
     perceptron_layer.set(1,1);
 
     biases.resize(2, 2);
-    biases.setValues({{7,3},{-1,1}});
+    biases.setValues({{type(7),type(3)},{type(-1),type(1)}});
 
     synaptic_weights.resize(1, 2);
-    synaptic_weights.setValues({{-11},{21}});
+    synaptic_weights.setValues({{type(-11)},{type(21)}});
 
     perceptron_layer.set_biases(biases);
     perceptron_layer.set_synaptic_weights(synaptic_weights);
@@ -636,10 +667,17 @@ void PerceptronLayerTest::test_set_inputs_number()
     perceptron_layer.set(2, 2);
 
     biases.resize(1, 4);
-    biases.setValues({{9},{-8},{7},{-6}});
+    biases.setValues({
+        {type(9)},
+        {type(-8)},
+        {type(7)},
+        {type(-6)}});
 
     synaptic_weights.resize(2, 4);
-    synaptic_weights.setValues({{-11, 12, -13, 14},{21, -22, 23, -24}});
+
+    synaptic_weights.setValues({
+        {type(-11), type(12), type(-13), type(14)},
+        {type(21), type(-22), type(23), type(-24)}});
 
     perceptron_layer.set_biases(biases);
     perceptron_layer.set_synaptic_weights(synaptic_weights);
@@ -687,10 +725,18 @@ void PerceptronLayerTest::test_set_perceptrons_number()
     perceptron_layer.set(3, 2);
 
     Tensor<type, 2> biases_1(1, 4);
-    biases_1.setValues({{9},{-8},{7},{-6}});
+
+    biases_1.setValues({
+        {type(9)},
+        {type(-8)},
+        {type(7)},
+        {type(-6)}});
 
     Tensor<type, 2> synaptic_weights_1(2, 4);
-    synaptic_weights_1.setValues({{-11, 12, -13, 14},{21, -22, 23, -24}});
+
+    synaptic_weights_1.setValues({
+        {type(-11), type(12), type(-13), type(14)},
+        {type(21), type(-22), type(23), type(-24)}});
 
     perceptron_layer.set_synaptic_weights(synaptic_weights_1);
 
@@ -721,9 +767,8 @@ void PerceptronLayerTest::test_set_parameters()
 
     perceptron_layer.set_parameters(parameters_0);
 
-    assert_true(abs(perceptron_layer.get_biases()(0)) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(0) - parameters_0(0)) < static_cast<type>(1e-5), LOG);
-
+    assert_true(abs(perceptron_layer.get_biases()(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(0) - parameters_0(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -731,12 +776,12 @@ void PerceptronLayerTest::test_set_parameters()
 
     Tensor<type, 1> parameters(4);
 
-    parameters.setValues({11,12,21,22});
+    parameters.setValues({ type(11),type(12),type(21),type(22)});
 
     perceptron_layer.set_parameters(parameters);
 
-    assert_true(abs(perceptron_layer.get_biases()(0) - parameters(0)) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(perceptron_layer.get_synaptic_weights()(0) - parameters(2))  < static_cast<type>(1e-5), LOG);
+    assert_true(abs(perceptron_layer.get_biases()(0) - parameters(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(perceptron_layer.get_synaptic_weights()(0) - parameters(2))  < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -802,7 +847,7 @@ void PerceptronLayerTest::test_set_parameters_constant()
    // Test
 
    perceptron_layer.set(2, 1);
-   perceptron_layer.set_parameters_constant(0);
+   perceptron_layer.set_parameters_constant(type(0));
 
    parameters = perceptron_layer.get_parameters();
 
@@ -812,7 +857,7 @@ void PerceptronLayerTest::test_set_parameters_constant()
    // Test
 
    perceptron_layer.set(1, 1);
-   perceptron_layer.set_parameters_constant(5);
+   perceptron_layer.set_parameters_constant(type(5));
 
    parameters = perceptron_layer.get_parameters();
 
@@ -825,12 +870,10 @@ void PerceptronLayerTest::test_set_synaptic_weights_constant()
 {
    cout << "test_set_synaptic_weights_constant\n";
 
-
-
    Tensor<type, 2> synaptic_weights;
 
    perceptron_layer.set(1, 1);
-   perceptron_layer.set_synaptic_weights_constant(5);
+   perceptron_layer.set_synaptic_weights_constant(type(5));
 
    synaptic_weights = perceptron_layer.get_synaptic_weights();
 
@@ -877,13 +920,13 @@ void PerceptronLayerTest::test_calculate_combinations()
    samples_number = 1;
 
    perceptron_layer.set(inputs_number, neurons_number);
-   perceptron_layer.set_parameters_constant(0.0);
+   perceptron_layer.set_parameters_constant(type(0));
 
    inputs.resize(samples_number, inputs_number);
    inputs.setZero();
 
    combinations.resize(samples_number, neurons_number);
-   combinations.setConstant(3.1416);
+   combinations.setConstant(type(3.1416));
 
    biases = perceptron_layer.get_biases();
    synaptic_weights = perceptron_layer.get_synaptic_weights();
@@ -892,16 +935,16 @@ void PerceptronLayerTest::test_calculate_combinations()
 
    // Test
 
-   biases.setConstant(1.0);
-   synaptic_weights.setConstant(2.0);
+   biases.setConstant(type(1));
+   synaptic_weights.setConstant(type(2));
 
-   inputs.setConstant(3.0);
+   inputs.setConstant(type(3));
 
    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
 
    assert_true(combinations.rank() == 2, LOG);
    assert_true(combinations.dimension(0) == 1, LOG);
-   assert_true(abs(combinations(0,0) - 7) < static_cast<type>(1e-5) , LOG);
+   assert_true(abs(combinations(0,0) - type(7)) < static_cast<type>(1e-5) , LOG);
 
     // Test
 
@@ -910,10 +953,10 @@ void PerceptronLayerTest::test_calculate_combinations()
    samples_number = 1;
 
    perceptron_layer.set(inputs_number, neurons_number);
-   perceptron_layer.set_parameters_constant(1);
+   perceptron_layer.set_parameters_constant(type(1));
 
    inputs.resize(samples_number, inputs_number);
-   inputs.setConstant(1.0);
+   inputs.setConstant(type(1));
 
    combinations.resize(samples_number, neurons_number);
    combinations.setZero();
@@ -923,7 +966,7 @@ void PerceptronLayerTest::test_calculate_combinations()
    assert_true(combinations.rank() == 2, LOG);
    assert_true(combinations.dimension(0) == samples_number, LOG);
    assert_true(combinations.dimension(1) == neurons_number, LOG);
-   assert_true(abs(combinations(0,0) - 3) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(combinations(0,0) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
@@ -933,12 +976,12 @@ void PerceptronLayerTest::test_calculate_combinations()
    perceptron_layer.set(3, 4);
 
    synaptic_weights.resize(3, 4);
-   synaptic_weights.setConstant(1.0);
+   synaptic_weights.setConstant(type(1));
    biases.resize(1,4);
-   biases.setConstant(2.0);
+   biases.setConstant(type(2));
 
    inputs.resize(2,3);
-   inputs.setConstant(0.5);
+   inputs.setConstant(type(0.5));
 
    perceptron_layer.set_synaptic_weights(synaptic_weights);
    perceptron_layer.set_biases(biases);
@@ -948,7 +991,7 @@ void PerceptronLayerTest::test_calculate_combinations()
    assert_true(combinations.rank() == 2, LOG);
    assert_true(combinations.dimension(0) == 2, LOG);
    assert_true(combinations.dimension(1) == 4, LOG);
-   assert_true(abs(combinations(0,0) - static_cast<type>(3.5)) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(combinations(0,0) - static_cast<type>(3.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
@@ -959,15 +1002,15 @@ void PerceptronLayerTest::test_calculate_combinations()
    perceptron_layer.set(inputs_number, neurons_number);
 
    synaptic_weights.resize(inputs_number, neurons_number);
-   synaptic_weights.setConstant(1.0);
+   synaptic_weights.setConstant(type(1));
    perceptron_layer.set_synaptic_weights(synaptic_weights);
 
    biases.resize(1, neurons_number);
-   biases.setConstant(1.0);
+   biases.setConstant(type(1));
    perceptron_layer.set_biases(biases);
 
    inputs.resize(samples_number, inputs_number);
-   inputs.setValues({{0.5, 0.5}});
+   inputs.setValues({{type(0.5), type(0.5)}});
 
    combinations.resize(samples_number, neurons_number);
    combinations.setZero();
@@ -988,21 +1031,21 @@ void PerceptronLayerTest::test_calculate_combinations()
    perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::HyperbolicTangent);
 
    synaptic_weights.resize(inputs_number, neurons_number);
-   synaptic_weights.setValues({{1.0}});
+   synaptic_weights.setValues({{type(1.0)}});
    perceptron_layer.set_synaptic_weights(synaptic_weights);
 
    synaptic_weights.resize(inputs_number, neurons_number);
-   biases.setValues({{-0.5}});
+   biases.setValues({{type(-0.5)}});
    perceptron_layer.set_biases(biases);
 
    inputs.resize(samples_number, inputs_number);
-   inputs.setValues({{-0.8}});
+   inputs.setValues({{type(-0.8)}});
 
    biases = perceptron_layer.get_biases();
    synaptic_weights = perceptron_layer.get_synaptic_weights();
 
-   assert_true(biases(0, 0) == -0.5, LOG);
-   assert_true(synaptic_weights(0, 0) == 1.0, LOG);
+   assert_true(biases(0, 0) == type(-0.5), LOG);
+   assert_true(synaptic_weights(0, 0) == type(1.0), LOG);
 
    // Test
 
@@ -1012,8 +1055,8 @@ void PerceptronLayerTest::test_calculate_combinations()
 
    parameters = perceptron_layer.get_parameters();
 
-   assert_true(parameters(0) == -0.5, LOG);
-   assert_true(parameters(1) == 1.0, LOG);
+   assert_true(parameters(0) == type(-0.5), LOG);
+   assert_true(parameters(1) == type(1.0), LOG);
 
    // Test
 
@@ -1040,7 +1083,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     assert_true(combinations.dimension(0) == 1, LOG);
     assert_true(combinations.dimension(1) == 1, LOG);
 
-    assert_true(static_cast<type>(combinations(0,0)) - static_cast<type>(-1.55) < static_cast<type>(1e-5), LOG);
+    assert_true(static_cast<type>(combinations(0,0)) - static_cast<type>(-1.55) < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
@@ -1064,13 +1107,13 @@ void PerceptronLayerTest::test_calculate_activations()
    samples_number = 1;
 
    perceptron_layer.set(inputs_number, neurons_number);
-   perceptron_layer.set_parameters_constant(1.0);
+   perceptron_layer.set_parameters_constant(type(1));
 
    biases = perceptron_layer.get_biases();
    synaptic_weights = perceptron_layer.get_synaptic_weights();
 
    inputs.resize(samples_number, inputs_number);
-   inputs.setConstant(1);
+   inputs.setConstant(type(1));
 
    combinations.resize(samples_number, neurons_number);
    perceptron_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
@@ -1092,10 +1135,10 @@ void PerceptronLayerTest::test_calculate_activations()
    samples_number = 4;
 
    perceptron_layer.set(inputs_number, neurons_number);
-   perceptron_layer.set_parameters_constant(2);
+   perceptron_layer.set_parameters_constant(type(2));
 
    inputs.resize(samples_number, inputs_number);
-   inputs.setConstant(2);
+   inputs.setConstant(type(2));
 
    combinations.resize(samples_number, neurons_number);
    perceptron_layer.calculate_combinations(inputs, perceptron_layer.get_biases(), perceptron_layer.get_synaptic_weights(), combinations);
@@ -1115,10 +1158,10 @@ void PerceptronLayerTest::test_calculate_activations()
    perceptron_layer.set(2, 2);
    parameters.resize(6);
 
-   parameters.setConstant(0.0);
+   parameters.setConstant(type(0));
 
    combinations.resize(1,2);
-   combinations.setConstant(0.0);
+   combinations.setConstant(type(0));
 
    perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
    perceptron_layer.calculate_activations(combinations, activations);
@@ -1133,10 +1176,10 @@ void PerceptronLayerTest::test_calculate_activations()
    perceptron_layer.set(1, 2);
    parameters.resize(4);
 
-   parameters.setConstant(0.0);
+   parameters.setConstant(type(0));
 
    combinations.resize(1,2);
-   combinations.setConstant(0.0);
+   combinations.setConstant(type(0));
 
    perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
    perceptron_layer.calculate_activations(combinations, activations);
@@ -1151,7 +1194,7 @@ void PerceptronLayerTest::test_calculate_activations()
    perceptron_layer.set(2, 2);
    parameters.resize(6);
 
-   parameters.setConstant(0.0);
+   parameters.setConstant(type(0));
 
    combinations.resize(1,2);
    combinations.setConstant(-2.0);
@@ -1167,7 +1210,7 @@ void PerceptronLayerTest::test_calculate_activations()
    // Test
 
    perceptron_layer.set(1, 2);
-   perceptron_layer.set_parameters_constant(0.0);
+   perceptron_layer.set_parameters_constant(type(0));
 
    combinations.resize(2,2);
    combinations.setConstant(4.0);
@@ -1186,7 +1229,7 @@ void PerceptronLayerTest::test_calculate_activations()
    // Test
 
    perceptron_layer.set(3, 2);
-   perceptron_layer.set_parameters_constant(1);
+   perceptron_layer.set_parameters_constant(type(1));
 
    inputs.resize(1,3);
    inputs.setConstant(0.5);
@@ -1198,7 +1241,7 @@ void PerceptronLayerTest::test_calculate_activations()
    assert_true(combinations.rank() == 2, LOG);
    assert_true(combinations.dimension(0) == 1, LOG);
    assert_true(combinations.dimension(1) == 2, LOG);
-   assert_true(abs(combinations(0,0) - static_cast<type>(2.5)) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(combinations(0,0) - static_cast<type>(2.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
    perceptron_layer.calculate_activations(combinations, activations);
@@ -1213,15 +1256,15 @@ void PerceptronLayerTest::test_calculate_activations()
 
    perceptron_layer.set_activation_function(PerceptronLayer::Logistic);
    perceptron_layer.calculate_activations(combinations, activations);
-   assert_true(abs(activations(0,0) - static_cast<type>(1.0/(1.0+exp(-2.5)))) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(activations(0,0) - static_cast<type>(1.0/(1.0+exp(-2.5)))) < type(NUMERIC_LIMITS_MIN), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
    perceptron_layer.calculate_activations(combinations, activations);
-   assert_true(abs(activations(0,0) - static_cast<type>(tanh(2.5))) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(activations(0,0) - static_cast<type>(tanh(2.5))) < type(NUMERIC_LIMITS_MIN), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
    perceptron_layer.calculate_activations(combinations, activations);
-   assert_true(abs(activations(0,0) - static_cast<type>(2.5)) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(activations(0,0) - static_cast<type>(2.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 */
 }
 
@@ -1239,11 +1282,11 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    // Test
 
    perceptron_layer.set(1,1);
-   perceptron_layer.set_parameters_constant(1);
+   perceptron_layer.set_parameters_constant(type(1));
 
-   inputs.setConstant(1);
+   inputs.setConstant(type(1));
 
-   combinations.setConstant(1);
+   combinations.setConstant(type(1));
 
    activations_derivatives.setZero();
 
@@ -1253,13 +1296,13 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
-   assert_true(abs(activations(0,0) - 1) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(activations_derivatives(0,0) - 0) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(activations(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(activations_derivatives(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
-   assert_true(abs(activations(0,0) - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(activations_derivatives(0,0) - 0) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(activations(0,0) - type(1)) < static_cast<type>(1e-3), LOG);
+   assert_true(abs(activations_derivatives(0,0)) < static_cast<type>(1e-3), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::Logistic);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
@@ -1273,8 +1316,8 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
-   assert_true(abs(activations(0,0) - 1) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(activations_derivatives(0,0) - 1) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(activations(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(activations_derivatives(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    perceptron_layer.set_activation_function(PerceptronLayer::RectifiedLinear);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
@@ -1309,10 +1352,10 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    // Test
 
    perceptron_layer.set(2, 4);
-   perceptron_layer.set_parameters_constant(1);
+   perceptron_layer.set_parameters_constant(type(1));
 
    combinations.resize(1,4);
-   combinations.setValues({{1.56f, -0.68f, 0.91f, -1.99f}});
+   combinations.setValues({{type(1.56f), type(-0.68f), type(0.91f), type(-1.99f)}});
 
    activations.resize(1,4);
 
@@ -1446,9 +1489,12 @@ void PerceptronLayerTest::test_calculate_outputs()
     biases.resize(1, neurons_number);
     inputs.resize(1, inputs_number);
 
-    inputs.setConstant(1);
-    biases.setConstant(1);
-    synaptic_weights.setValues({{1,-1,0,1},{2,-2,0,2},{3,-3,0,3}});
+    inputs.setConstant(type(1));
+    biases.setConstant(type(1));
+    synaptic_weights.setValues({
+        {type(1),type(-1),type(0),type(1)},
+        {type(2),type(-2),type(0),type(2)},
+        {type(3),type(-3),type(0),type(3)}});
 
     perceptron_layer.set_synaptic_weights(synaptic_weights);
     perceptron_layer.set_biases(biases);
@@ -1470,18 +1516,24 @@ void PerceptronLayerTest::test_calculate_outputs()
     neurons_number = 4;
 
     biases.resize(1, neurons_number);
-    biases.setValues({{9},{-8},{7},{-6}});
+    biases.setValues({
+        {type(9)},
+        {type(-8)},
+        {type(7)},
+        {type(-6)}});
 
     synaptic_weights.resize(2, 4);
 
     synaptic_weights.resize(2, 4);
-    synaptic_weights.setValues({{-11, 12, -13, 14},{21, -22, 23, -24}});
+    synaptic_weights.setValues({
+        {type(-11), type(12), type(-13), type(14)},
+        {type(21), type(-22), type(23), type(-24)}});
 
     perceptron_layer.set_synaptic_weights(synaptic_weights);
     perceptron_layer.set_biases(biases);
 
     inputs.resize(1, 2);
-    inputs.setConstant(1);
+    inputs.setConstant(type(1));
 
     perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
 
@@ -1497,47 +1549,49 @@ void PerceptronLayerTest::test_calculate_outputs()
    // Test
 
    perceptron_layer.set(3, 2);
-   perceptron_layer.set_parameters_constant(0.0);
+   perceptron_layer.set_parameters_constant(type(0));
 
    inputs.resize(1,3);
-   inputs.setConstant(0.0);
+   inputs.setConstant(type(0));
 
    outputs = perceptron_layer.calculate_outputs(inputs);
 
    assert_true(outputs.rank() == 2, LOG);
    assert_true(outputs.dimension(0) == 1, LOG);
    assert_true(outputs.dimension(1) == 2, LOG);
-   assert_true(abs(outputs(0,0) - 0) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test 
 
    perceptron_layer.set(4, 2);
    parameters.resize(10);
-   parameters.setValues({-1,2,-3,4,-5,6,-7,8,-9,10});
+
+   parameters.setValues({type(-1),type(2),type(-3),type(4),type(-5),type(6),type(-7),type(8),type(-9),type(10) });
+   
    perceptron_layer.set_parameters(parameters);
 
    inputs.resize(1,4);
-   inputs.setValues({{4,-3,2,-1}});
+   inputs.setValues({{type(4),type(-3),type(2),type(-1)}});
 
    outputs = perceptron_layer.calculate_outputs(inputs);
 
    assert_true(outputs.rank() == 2, LOG);
    assert_true(outputs.dimension(0) == 1, LOG);
    assert_true(outputs.dimension(1) == 2, LOG);
-   assert_true(abs(outputs(0,0) + 1) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(outputs(0,0) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test 5
 
    inputs.resize(1,1);
-   inputs.setConstant((3.0));
+   inputs.setConstant(type(3.0));
 
    perceptron_layer.set(1, 1);
-   perceptron_layer.set_parameters_constant(-2.0);
+   perceptron_layer.set_parameters_constant(type(-2.0));
 
    outputs = perceptron_layer.calculate_outputs(inputs);
 
    parameters.resize(2);
-   parameters.setConstant(1.0);
+   parameters.setConstant(type(1));
 
    // Test
 
@@ -1567,10 +1621,10 @@ void PerceptronLayerTest::test_forward_propagate()
     neurons_number = 2;
 
     perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::Linear);
-    perceptron_layer.set_parameters_constant(1);
+    perceptron_layer.set_parameters_constant(type(1));
 
     inputs.resize(samples_number, inputs_number);
-    inputs.setConstant(1);
+    inputs.setConstant(type(1));
 
     forward_propagation.set(samples_number, &perceptron_layer);
     perceptron_layer.forward_propagate(inputs, &forward_propagation);
@@ -1593,10 +1647,10 @@ void PerceptronLayerTest::test_forward_propagate()
     neurons_number = 2;
 
     perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::HyperbolicTangent);
-    perceptron_layer.set_parameters_constant(1);
+    perceptron_layer.set_parameters_constant(type(1));
 
     inputs.resize(samples_number, inputs_number);
-    inputs.setConstant(1);
+    inputs.setConstant(type(1));
 
     potential_parameters = perceptron_layer.get_parameters();
 

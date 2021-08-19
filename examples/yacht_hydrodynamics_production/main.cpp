@@ -41,7 +41,7 @@ int main()
         type beam_draught_ratio;
         type lenght_beam_ratio;
         type Froude_number;
-
+/*
         cout << "Enter longitudinal position of the center of buoyancy (-5-0):" << endl;
         cin >> longitudinal_position_center_buoyancy;
 
@@ -59,7 +59,7 @@ int main()
 
         cout << "Enter Froude number (0.125-0.45):" << endl;
         cin >> Froude_number;
-
+*/
         Tensor<type, 2> inputs(1, 6);
 
         inputs.setValues({{longitudinal_position_center_buoyancy,
@@ -70,7 +70,7 @@ int main()
 
         const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-        double residuary_resistance = outputs(0, 0);
+        type residuary_resistance = outputs(0, 0);
 
         cout << "Residuary resistance per unit weight of displacement:\n"
              << residuary_resistance << endl;
