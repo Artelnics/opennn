@@ -44,7 +44,7 @@ void CrossEntropyErrorTest::test_calculate_error_binary_classification()
     samples_number = 1;
 
     data_set.set(1, 1, 1);
-    data_set.set_data_constant(0);
+    data_set.set_data_constant(type(0));
     data_set.set_training();
 
     training_samples_indices = data_set.get_training_samples_indices();
@@ -55,7 +55,7 @@ void CrossEntropyErrorTest::test_calculate_error_binary_classification()
     batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     neural_network.set(NeuralNetwork::Classification, {1, 1});
-    neural_network.set_parameters_constant(1);
+    neural_network.set_parameters_constant(type(1));
 
     forward_propagation.set(1, &neural_network);
     neural_network.forward_propagate(batch, forward_propagation);
@@ -65,13 +65,13 @@ void CrossEntropyErrorTest::test_calculate_error_binary_classification()
 
     cross_entropy_error.calculate_error(batch, forward_propagation, back_propagation);
 
-    assert_true(back_propagation.error < 1e-3, LOG);
+    assert_true(back_propagation.error < type(1e-3), LOG);
 
     // Test
 
-    data_set.set_data_constant(1);
+    data_set.set_data_constant(type(1));
 
-    neural_network.set_parameters_constant(1);
+    neural_network.set_parameters_constant(type(1));
 
     batch.set(samples_number, &data_set);
     batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -82,7 +82,7 @@ void CrossEntropyErrorTest::test_calculate_error_binary_classification()
 
     cross_entropy_error.calculate_error(batch, forward_propagation, back_propagation);
 
-    assert_true(back_propagation.error < 1e-3, LOG);
+    assert_true(back_propagation.error < type(1e-3), LOG);
 
 }
 
@@ -107,7 +107,7 @@ void CrossEntropyErrorTest::test_calculate_error_multiple_classification()
     targets_number = 1;
 
     data_set.set(1, 2, 1);
-    data_set.set_data_constant(0);
+    data_set.set_data_constant(type(0));
     data_set.set_training();
 
     training_samples_indices = data_set.get_training_samples_indices();
@@ -115,7 +115,7 @@ void CrossEntropyErrorTest::test_calculate_error_multiple_classification()
     target_variables_indices = data_set.get_target_variables_indices();
 
     neural_network.set(NeuralNetwork::Classification, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(0);
+    neural_network.set_parameters_constant(type(0));
 
     batch.set(samples_number, &data_set);
     batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -128,7 +128,7 @@ void CrossEntropyErrorTest::test_calculate_error_multiple_classification()
 
     cross_entropy_error.calculate_error(batch, forward_propagation, back_propagation);
 
-    assert_true(abs(back_propagation.error - 0.693) < 1e-3, LOG);
+    assert_true(abs(back_propagation.error - type(0.693)) < type(1e-3), LOG);
 
     // Test multiple
 
@@ -136,7 +136,7 @@ void CrossEntropyErrorTest::test_calculate_error_multiple_classification()
     targets_number = 2;
 
     data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_constant(0);
+    data_set.set_data_constant(type(0));
     data_set.set_training();
 
     training_samples_indices = data_set.get_training_samples_indices();
@@ -144,7 +144,7 @@ void CrossEntropyErrorTest::test_calculate_error_multiple_classification()
     target_variables_indices = data_set.get_target_variables_indices();
 
     neural_network.set(NeuralNetwork::Classification, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(0);
+    neural_network.set_parameters_constant(type(0));
 
     batch.set(samples_number, &data_set);
     batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
@@ -155,7 +155,7 @@ void CrossEntropyErrorTest::test_calculate_error_multiple_classification()
     back_propagation.set(samples_number, &cross_entropy_error);
     cross_entropy_error.calculate_error(batch, forward_propagation, back_propagation);
 
-    assert_true(back_propagation.error < 1e-3, LOG);
+    assert_true(back_propagation.error < type(1e-3), LOG);
 }
 
 
@@ -198,8 +198,8 @@ void CrossEntropyErrorTest::test_calculate_error_gradient_binary_classification(
     data.resize(samples_number, inputs_number+outputs_number);
     data.setRandom();
 
-    data(0, 1) = 1;
-    data(1, 1) = 0;
+    data(0, 1) = type(1);
+    data(1, 1) = type(0);
 
     data_set.set_data(data);
 
@@ -227,7 +227,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient_binary_classification(
 
     numerical_error_gradient = cross_entropy_error.calculate_gradient_numerical_differentiation();
 
-    assert_true(are_equal(back_propagation.gradient, numerical_error_gradient, 1.0e-3), LOG);
+    assert_true(are_equal(back_propagation.gradient, numerical_error_gradient, type(1.0e-3)), LOG);
 }
 
 
@@ -298,7 +298,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient_recurrent()
 
    maximum_difference = (error_gradient - numerical_error_gradient).abs().maximum();
 
-   assert_true(maximum_difference(0) < 1.0e-3, LOG);
+   assert_true(maximum_difference(0) < type(1.0e-3), LOG);
 }
 
 
@@ -352,7 +352,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient_long_short_term_memory
 
     maximum_difference = (error_gradient - numerical_error_gradient).abs().maximum();
 
-    assert_true(maximum_difference(0) < 1.0e-3, LOG);
+    assert_true(maximum_difference(0) < type(1.0e-3), LOG);
 }
 
 
@@ -445,7 +445,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient_convolutional()
 
     maximum_diference = (numerical_error_gradient - error_gradient).abs().maximum();
 
-    assert_true(maximum_diference(0) < 1e-3, LOG);
+    assert_true(maximum_diference(0) < type(1e-3), LOG);
 
 }
 

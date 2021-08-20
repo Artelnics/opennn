@@ -372,7 +372,7 @@ void UnscalingLayer::set_default()
 
     set_scalers(MinimumMaximum);
 
-    set_min_max_range(-1, 1);
+    set_min_max_range(type(-1), type(1));
 
     set_display(true);
 
@@ -720,7 +720,7 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     {
         for(Index j = 0; j < neurons_number; j++)
         {
-            if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
+            if(abs(descriptives(j).minimum - descriptives(j).maximum) < type(NUMERIC_LIMITS_MIN))
             {
                 if(display)
                 {
@@ -1103,7 +1103,7 @@ string UnscalingLayer::write_expression_c() const
         }
         else if(scalers(i) == MinimumMaximum)
         {
-            if(abs(descriptives(i).minimum - descriptives(i).maximum) < numeric_limits<type>::min())
+            if(abs(descriptives(i).minimum - descriptives(i).maximum) < type(NUMERIC_LIMITS_MIN))
             {
                 buffer << "\toutputs[" << i << "] = " << descriptives(i).minimum <<";\n";
             }
@@ -1176,7 +1176,7 @@ string UnscalingLayer::write_expression_python() const
         }
         else if(scalers(i) == MinimumMaximum)
         {
-            if(abs(descriptives(i).minimum - descriptives(i).maximum) < numeric_limits<type>::min())
+            if(abs(descriptives(i).minimum - descriptives(i).maximum) < type(NUMERIC_LIMITS_MIN))
             {
                buffer << "\toutputs[" << i << "] = " << descriptives(i).minimum <<"\n";
             }

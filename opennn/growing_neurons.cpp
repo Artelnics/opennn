@@ -67,7 +67,7 @@ void GrowingNeurons::set_default()
 
     maximum_selection_failures = 100;
 
-    maximum_time = 3600;
+    maximum_time = type(3600);
 }
 
 
@@ -165,7 +165,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     time_t beginning_time, current_time;
 
-    type elapsed_time = 0;    
+    type elapsed_time = type(0);
 
     TrainingResults training_results;
 
@@ -637,7 +637,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_time = atoi(element->GetText());
+            const type new_maximum_time = type(atoi(element->GetText()));
 
             try
             {

@@ -401,7 +401,7 @@ void ScalingLayer::set_default()
 
     set_scalers(MeanStandardDeviation);
 
-    set_min_max_range(-1, 1);
+    set_min_max_range(type(-1), type(1));
 
     set_display(true);
 
@@ -777,7 +777,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     {
         for(Index j = 0; j < neurons_number; j++)
         {
-            if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
+            if(abs(descriptives(j).minimum - descriptives(j).maximum) < type(NUMERIC_LIMITS_MIN))
             {
                 if(display)
                 {
@@ -873,7 +873,7 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
             const Index row_index = (j/(inputs.dimension(1)))%inputs.dimension(2);
             const Index column_index = (j/(inputs.dimension(1) * inputs.dimension(2)))%inputs.dimension(3);
 
-            if(abs(descriptives(j).minimum - descriptives(j).maximum) < numeric_limits<type>::min())
+            if(abs(descriptives(j).minimum - descriptives(j).maximum) < type(NUMERIC_LIMITS_MIN))
             {
                 if(display)
                 {
@@ -905,7 +905,7 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
                 }
                 else if(scalers(j) == Logarithm)
                 {
-                    outputs(i, channel_index, row_index, column_index) = std::log(inputs(i, channel_index, row_index, column_index));
+                    outputs(i, channel_index, row_index, column_index) = log(inputs(i, channel_index, row_index, column_index));
                 }
                 else
                 {

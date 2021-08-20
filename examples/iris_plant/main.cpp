@@ -60,9 +60,9 @@ int main()
 
         Tensor<type, 2> inputs(3, 4);
 
-        inputs.setValues({{5.1,3.5,1.4,0.2},
-                          {6.4,3.2,4.5,1.5},
-                          {6.3,2.7,4.9,1.8}});
+        inputs.setValues({{type(5.1),type(3.5),type(1.4),type(0.2)},
+                          {type(6.4),type(3.2),type(4.5),type(1.5)},
+                          {type(6.3),type(2.7),type(4.9),type(1.8)}});
 
         cout << "Inputs: " << endl;
         cout << inputs << endl;

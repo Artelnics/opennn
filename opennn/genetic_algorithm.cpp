@@ -113,7 +113,7 @@ void GeneticAlgorithm::set_default()
     selection_errors.resize(individuals_number);
 
     fitness.resize(individuals_number);
-    fitness.setConstant(-1.0);
+    fitness.setConstant(type(-1.0));
 
     selection.resize(individuals_number);
 
@@ -273,7 +273,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
     selection_errors.resize(new_individuals_number);
 
     fitness.resize(new_individuals_number);
-    fitness.setConstant(-1.0);
+    fitness.setConstant(type(-1.0));
 
     selection.resize(new_individuals_number);
 
@@ -494,7 +494,7 @@ void GeneticAlgorithm::perform_fitness_assignment()
 
     for(Index i = 0; i < individuals_number; i++)
     {
-        fitness(rank(i)) = i+1;
+        fitness(rank(i)) = type(i+1);
     }
 }
 
@@ -812,7 +812,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     bool stop = false;
 
     time_t beginning_time, current_time;
-    type elapsed_time = 0;
+    type elapsed_time = type(0);
 
     time(&beginning_time);
 
@@ -853,8 +853,9 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
         if(display)
-        {
+        {            
             cout << endl;
+
             cout << "Generation mean training error: " << training_errors.mean() << endl;
             cout << "Generation mean selection error: " << selection_errors.mean() << endl;
 
@@ -966,12 +967,12 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
     // Mutation rate
 
     labels(2) = "Mutation rate";
-    values(2) = to_string(mutation_rate);
+    values(2) = to_string(double(mutation_rate));
 
     // Selection loss goal
 
     labels(3) = "Selection loss goal";
-    values(3) = to_string(selection_error_goal);
+    values(3) = to_string(double(selection_error_goal));
 
     // Maximum Generations number
 
@@ -981,7 +982,7 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
     // Maximum time
 
     labels(5) = "Maximum time";
-    values(5) = to_string(maximum_time);
+    values(5) = to_string(double(maximum_time));
 
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;
@@ -1248,7 +1249,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_maximum_time = atoi(element->GetText());
+            const type new_maximum_time = type(atoi(element->GetText()));
 
             try
             {

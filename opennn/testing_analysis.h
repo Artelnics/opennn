@@ -59,11 +59,11 @@ public:
     {
        /// Target data from data set and output data from neural network.
 
-       type correlation = 0;
+       type correlation = type(0);
 
-       type intercept = 0;
+       type intercept = type(0);
 
-       type slope = 0;
+       type slope = type(0);
 
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
@@ -205,7 +205,7 @@ public:
    type calculate_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    type calculate_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    type calculate_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>& = Tensor<type, 1>()) const;
-   type calculate_Minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type = 1.5) const;
+   type calculate_Minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type = type(1.5)) const;
 
    // Linear regression analysis methods
 

@@ -306,7 +306,7 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
 
     hidden_states.resize(new_neurons_number); // memory
 
-    hidden_states.setConstant(0.0);
+    hidden_states.setConstant(type(0));
 
     set_parameters_random();
 
@@ -578,8 +578,8 @@ void RecurrentLayer::set_parameters_constant(const type& value)
 
 void RecurrentLayer::set_parameters_random()
 {
-    const type minimum = -0.2;
-    const type maximum =  0.2;
+    const type minimum = type(-0.2);
+    const type maximum = type(0.2);
 
     // Biases
 

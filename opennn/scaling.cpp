@@ -18,17 +18,17 @@ void scale_minimum_maximum_binary(Tensor<type, 2>& matrix,
 {
     const Index rows_number = matrix.dimension(0);
 
-    type slope = 0;
-    type intercept = 0;
+    type slope = type(0);
+    type intercept = type(0);
 
     if(value_1 > value_2)
     {
-        slope = 1/(value_1-value_2);
+        slope = type(1)/(value_1-value_2);
         intercept = -value_2/(value_1-value_2);
     }
     else
     {
-        slope = 1/(value_2 - value_1);
+        slope = type(1)/(value_2 - value_1);
 
         intercept = -value_1/(value_2-value_1);
     }
@@ -49,12 +49,12 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
                                    const Index& column_index,
                                    const Descriptives& column_descriptives)
 {
-    const type slope = (column_descriptives.standard_deviation -0) < static_cast<type>(1e-3) ?
-                0 :
+    const type slope = (column_descriptives.standard_deviation) < static_cast<type>(1e-3) ?
+                type(0) :
                 static_cast<type>(1)/column_descriptives.standard_deviation;
 
-    const type intercept = (column_descriptives.standard_deviation -0) < static_cast<type>(1e-3) ?
-                0 :
+    const type intercept = (column_descriptives.standard_deviation) < static_cast<type>(1e-3) ?
+        type(0) :
                 -static_cast<type>(1)*column_descriptives.mean/column_descriptives.standard_deviation;
 
     for(Index i = 0; i < matrix.dimension(0); i++)
@@ -88,15 +88,15 @@ void scale_standard_deviation(Tensor<type, 2>& matrix,
 void scale_minimum_maximum(Tensor<type, 2>& matrix,
                            const Index& column_index,
                            const Descriptives& column_descriptives,
-                           const Index& min_range, const Index& max_range)
+                           const type& min_range, const type& max_range)
 {
     const type slope = abs(column_descriptives.maximum-column_descriptives.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                (max_range-min_range)/(column_descriptives.maximum-column_descriptives.minimum);
+        type(0) :
+                type(max_range-min_range)/(column_descriptives.maximum-column_descriptives.minimum);
 
     const type intercept = abs(column_descriptives.maximum-column_descriptives.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                (min_range*column_descriptives.maximum-max_range*column_descriptives.minimum)/(column_descriptives.maximum-column_descriptives.minimum);
+        type(0) :
+                type(min_range*column_descriptives.maximum-max_range*column_descriptives.minimum)/(column_descriptives.maximum-column_descriptives.minimum);
 
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
@@ -110,8 +110,8 @@ Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>& x)
     const Tensor<type, 0> minimum = x.minimum();
     const Tensor<type, 0> maximum = x.maximum();
 
-    const type min_range = -1;
-    const type max_range = 1;
+    const type min_range = type(-1);
+    const type max_range = type(1);
 
     const type slope = (max_range-min_range)/(maximum()-minimum());
     const type intercept = (min_range*maximum()-max_range*minimum())/(maximum()-minimum());
@@ -138,8 +138,8 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 
     const Tensor<type, 1> columns_maximums = OpenNN::columns_maximums(x);
 
-    const type min_range = -1;
-    const type max_range = 1;
+    const type min_range = type(-1);
+    const type max_range = type(1);
 
     for(Index j = 0; j < columns_number; j++)
     {
@@ -164,7 +164,7 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
 
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
-        if(!::isnan(matrix(i,column_index)) && matrix(i,column_index) <= 0)
+        if(!isnan(matrix(i,column_index)) && matrix(i,column_index) <= type(0))
         {
             ostringstream buffer;
 
@@ -178,7 +178,7 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
 
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
-        matrix(i,column_index) = std::log(matrix(i,column_index));
+        matrix(i,column_index) = log(matrix(i,column_index));
     }
 }
 
@@ -191,15 +191,15 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
 void unscale_minimum_maximum(Tensor<type, 2>& matrix,
                              const Index& column_index,
                              const Descriptives& column_descriptives,
-                             const Index& min_range, const Index& max_range)
+                             const type& min_range, const type& max_range)
 {
     const type slope = abs(max_range-min_range) < static_cast<type>(1e-3)
-            ? 0
-            : (column_descriptives.maximum-column_descriptives.minimum)/(max_range-min_range);
+            ? type(0)
+            : (column_descriptives.maximum-column_descriptives.minimum)/type(max_range-min_range);
 
     const type intercept = abs(max_range-min_range) < static_cast<type>(1e-3)
-            ? 0
-            : -(min_range*column_descriptives.maximum-max_range*column_descriptives.minimum)/(max_range-min_range);
+            ? type(0)
+            : -(min_range*column_descriptives.maximum-max_range*column_descriptives.minimum)/type(max_range-min_range);
 
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
@@ -215,10 +215,10 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix,
 
 void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& column_index, const Descriptives& column_descriptives)
 {
-    const type slope = abs(column_descriptives.mean - 0) < static_cast<type>(1e-3) ? 0
+    const type slope = abs(column_descriptives.mean) < static_cast<type>(1e-3) ? type(0)
             : column_descriptives.standard_deviation;
 
-    const type intercept = abs(column_descriptives.mean-0) < static_cast<type>(1e-3)
+    const type intercept = abs(column_descriptives.mean) < static_cast<type>(1e-3)
             ? column_descriptives.minimum
             : column_descriptives.mean;
 
@@ -236,13 +236,13 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& colum
 
 void unscale_standard_deviation(Tensor<type, 2>& matrix, const Index& column_index, const Descriptives& column_descriptives)
 {
-    const type slope = abs(column_descriptives.mean-0) < static_cast<type>(1e-3)
-            ? 0
+    const type slope = abs(column_descriptives.mean) < static_cast<type>(1e-3)
+            ? type(0)
             : column_descriptives.standard_deviation/static_cast<type>(2);
 
-    const type intercept = abs(column_descriptives.mean-0) < static_cast<type>(1e-3)
+    const type intercept = abs(column_descriptives.mean) < static_cast<type>(1e-3)
             ? column_descriptives.minimum
-            : 0;
+            : type(0);
 
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
@@ -260,7 +260,7 @@ void unscale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
 {
     for(Index i = 0; i < matrix.dimension(0); i++)
     {
-        matrix(i, column_index) = std::exp(matrix(i, column_index));
+        matrix(i, column_index) = exp(matrix(i, column_index));
     }
 }
 }

@@ -41,8 +41,8 @@ int main()
 
         for(Index i = 0; i < correlation_results.size(); i++)
         {
-            if(abs(correlation_results(i).r - 1) < numeric_limits<type>::min()
-            || abs(correlation_results(i).r + 1) < numeric_limits<type>::min())
+            if(abs(correlation_results(i).r - type(1)) < type(NUMERIC_LIMITS_MIN)
+            || abs(correlation_results(i).r + type(1)) < type(NUMERIC_LIMITS_MIN))
 
             cout << "Gene " << i << " correlation: " << correlation_results(i).r << endl;
         }

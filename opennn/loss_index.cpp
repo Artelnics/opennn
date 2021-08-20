@@ -649,14 +649,14 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
 {
     switch(regularization_method)
     {
-        case NoRegularization: return 0.0;
+        case NoRegularization: return type(0);
 
         case L1: return l1_norm(thread_pool_device, parameters);
 
         case L2: return l2_norm(thread_pool_device, parameters);
     }
 
-    return 0.0;
+    return type(0);
 }
 
 
@@ -1066,7 +1066,7 @@ Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
 
        parameters_backward(i) += h;
 
-       gradient_numerical_differentiation(i) = (error_forward - error_backward)/(2*h);
+       gradient_numerical_differentiation(i) = (error_forward - error_backward)/(type(2)*h);
     }
 
     return gradient_numerical_differentiation;

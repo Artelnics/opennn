@@ -69,7 +69,7 @@ int main(void)
 
         AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
 
-        adam->set_loss_goal(1.0e-3);
+        adam->set_loss_goal(type(1.0e-3));
         adam->set_maximum_epochs_number(10000);
         adam->set_display_period(1000);
 
@@ -79,9 +79,9 @@ int main(void)
 
         Tensor<type, 2> inputs(3,6);
 
-        inputs.setValues({{1,0,0,0,0,0},
-                          {1,1,1,0.5,0.5,1},
-                          {0,1,0,1,0,1}});
+        inputs.setValues({{type(1),type(0),type(0),type(0),type(0),type(0)},
+                          {type(1),type(1),type(1),type(0.5),type(0.5),type(1)},
+                          {type(0),type(1),type(0),type(1),type(0),type(1)}});
 
         cout << "Inputs: " << endl;
         cout << inputs << endl;
@@ -108,7 +108,7 @@ int main(void)
     {
         cout << e.what() << endl;
 
-        return 1;
+        return type(1);
     }
 }
 

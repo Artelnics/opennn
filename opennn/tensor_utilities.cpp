@@ -16,7 +16,7 @@ namespace OpenNN
 
 void initialize_sequential(Tensor<type, 1>& vector)
 {
-    for(Index i = 0; i < vector.size(); i++) vector(i) = i;
+    for(Index i = 0; i < vector.size(); i++) vector(i) = type(i);
 }
 
 
@@ -48,7 +48,7 @@ void divide_columns(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
     {
         for(Index i = 0; i < rows_number; i++)
         {
-           matrix(i,j) /= vector(i) == 0 ? 1 : vector(i);
+           matrix(i,j) /= vector(i) == type(0) ? type(1) : vector(i);
         }
     }
 }
@@ -60,7 +60,7 @@ bool is_zero(const Tensor<type, 1>& tensor)
 
     for(Index i = 0; i < size; i++)
     {
-        if(abs(tensor[i]) > numeric_limits<type>::min()) return false;
+        if(abs(tensor[i]) > type(NUMERIC_LIMITS_MIN)) return false;
     }
 
     return true;
@@ -86,7 +86,7 @@ bool is_binary(const Tensor<type, 2>& matrix)
 
     for(Index i = 0; i < size; i++)
     {
-        if(matrix(i) != 0 && matrix(i) != 1) return false;
+        if(matrix(i) != type(0) && matrix(i) != type(1)) return false;
     }
 
     return true;
@@ -101,7 +101,7 @@ bool is_constant(const Tensor<type, 1>& vector)
     {
         for(Index j = 0; j < size; j++)
         {
-            if((vector(i) - vector(j)) != 0) return false;
+            if((vector(i) - vector(j)) != type(0)) return false;
         }
     }
 
@@ -295,7 +295,7 @@ void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<t
 {
     const type norm = l2_norm(thread_pool_device, vector);
 
-    if(norm < numeric_limits<type>::min())
+    if(norm < type(NUMERIC_LIMITS_MIN))
     {
         gradient.setZero();
 
@@ -310,7 +310,7 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<ty
 {
     const type norm = l2_norm(thread_pool_device, vector);
 
-    if(norm < numeric_limits<type>::min())
+    if(norm < type(NUMERIC_LIMITS_MIN))
     {
         hessian.setZero();
 
@@ -384,7 +384,7 @@ Index count_NAN(const Tensor<type, 1>& x)
 
     for(Index i = 0; i < x.size(); i++)
     {
-        if(::isnan(x(i))) NAN_number++;
+        if(isnan(x(i))) NAN_number++;
     }
 
     return NAN_number;

@@ -115,7 +115,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     // Test
 
-//    neural_network.set_parameters_constant(0.0);
+//    neural_network.set_parameters_constant(type(0));
 
 //    loss = sum_squared_error.calculate_training_loss();
 //    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
@@ -125,7 +125,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     // Test
 
-//    neural_network.set_parameters_constant(1.0);
+//    neural_network.set_parameters_constant(type(1));
 
 //    loss = sum_squared_error.calculate_training_loss();
 //    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
@@ -195,7 +195,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 
 //   LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 
-//   neural_network.set_parameters_constant(1.0);
+//   neural_network.set_parameters_constant(type(1));
 
 //   type loss = sum_squared_error.calculate_training_loss();
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
@@ -209,7 +209,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 //   pair<type,type> directional_point
 //   = tra.calculate_golden_section_directional_point(loss, training_direction, initial_learning_rate);
 
-//   assert_true(directional_point.first >= 0.0, LOG);
+//   assert_true(directional_point.first >= type(0), LOG);
 //   assert_true(directional_point.second < loss, LOG);
 }
 
@@ -230,7 +230,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
 
-   neural_network.set_parameters_constant(1.0);
+   neural_network.set_parameters_constant(type(1));
 
 //   type loss = sum_squared_error.calculate_training_loss();
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
@@ -244,7 +244,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 //   pair<type,type> directional_point
 //   = tra.calculate_Brent_method_directional_point(loss, training_direction, initial_learning_rate);
 
-//   assert_true(directional_point.first >= 0.0, LOG);
+//   assert_true(directional_point.first >= type(0), LOG);
 //   assert_true(directional_point.second < loss, LOG);
 */
 }

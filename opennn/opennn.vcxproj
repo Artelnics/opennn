@@ -31,6 +31,7 @@
     <ClInclude Include="gradient_descent.h" />
     <ClInclude Include="growing_inputs.h" />
     <ClInclude Include="growing_neurons.h" />
+    <ClInclude Include="half.hpp" />
     <ClInclude Include="inputs_selection.h" />
     <ClInclude Include="layer.h" />
     <ClInclude Include="learning_rate_algorithm.h" />

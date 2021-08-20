@@ -49,10 +49,10 @@ void GradientDescentTest::test_perform_training()
    // Test
 /*
    data_set.set(1,1,1);
-   data_set.set_data_constant(0.0);
+   data_set.set_data_constant(type(0));
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-   neural_network.set_parameters_constant(0.0);
+   neural_network.set_parameters_constant(type(0));
 
    gradient_descent.set_maximum_epochs_number(1);
    gradient_descent.perform_training();
@@ -81,12 +81,12 @@ void GradientDescentTest::test_perform_training()
 
    // Minimum parameters increment norm
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1));
 
    type minimum_parameters_increment_norm = 0.1;
 
    gradient_descent.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-   gradient_descent.set_loss_goal(0.0);
+   gradient_descent.set_loss_goal(type(0));
    gradient_descent.set_minimum_loss_decrease(0.0);
    gradient_descent.set_gradient_norm_goal(0.0);
    gradient_descent.set_maximum_epochs_number(1000);
@@ -96,7 +96,7 @@ void GradientDescentTest::test_perform_training()
 
    // Loss goal
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1));
 
    type training_loss_goal = 0.1;
 
@@ -113,12 +113,12 @@ void GradientDescentTest::test_perform_training()
 
    // Minimum loss increase
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1));
 
    type minimum_loss_decrease = 0.1;
 
    gradient_descent.set_minimum_parameters_increment_norm(0.0);
-   gradient_descent.set_loss_goal(0.0);
+   gradient_descent.set_loss_goal(type(0));
    gradient_descent.set_minimum_loss_decrease(minimum_loss_decrease);
    gradient_descent.set_gradient_norm_goal(0.0);
    gradient_descent.set_maximum_epochs_number(1000);
@@ -128,10 +128,10 @@ void GradientDescentTest::test_perform_training()
 
    // Gradient norm goal
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1));
 
    gradient_descent.set_minimum_parameters_increment_norm(0.0);
-   gradient_descent.set_loss_goal(0.0);
+   gradient_descent.set_loss_goal(type(0));
    gradient_descent.set_minimum_loss_decrease(0.0);
    gradient_descent.set_gradient_norm_goal(gradient_norm_goal);
    gradient_descent.set_maximum_epochs_number(1000);

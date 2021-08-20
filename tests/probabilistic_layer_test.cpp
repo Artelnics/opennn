@@ -103,7 +103,7 @@ void ProbabilisticLayerTest::test_get_biases()
    // Test
 
    probabilistic_layer.set();
-   probabilistic_layer.set_parameters_constant(0);
+   probabilistic_layer.set_parameters_constant(type(0));
 
    biases_number = probabilistic_layer.get_biases_number();
    biases = probabilistic_layer.get_biases();
@@ -114,22 +114,24 @@ void ProbabilisticLayerTest::test_get_biases()
    // Test
 
    probabilistic_layer.set(1, 1);
-   probabilistic_layer.set_parameters_constant(0);
+   probabilistic_layer.set_parameters_constant(type(0));
 
    biases_number = probabilistic_layer.get_biases_number();
    biases = probabilistic_layer.get_biases();
 
    assert_true(biases_number == 1, LOG);
    assert_true(biases.size() == 1, LOG);
-   assert_true(biases(0) < numeric_limits<type>::min(), LOG);
+   assert_true(biases(0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test  1
 
    biases.resize(1, 4);
-   biases.setValues({{9},{8},{7},{6}});
+   biases.setValues({{type(9)},{type(8)},{type(7)},{type(6)}});
 
    synaptic_weights.resize(2, 4);
-   synaptic_weights.setValues({{11, 12, 13, 14},{21, 22, 23, 24}});
+   synaptic_weights.setValues({
+       {type(11), type(12), type(13), type(14)},
+       {type(21), type(22), type(23), type(24)}});
 
    parameters.resize(12);
    probabilistic_layer.set(2, 4);
@@ -141,8 +143,8 @@ void ProbabilisticLayerTest::test_get_biases()
    biases = probabilistic_layer.get_biases(parameters);
 
    assert_true(biases.size() == 4, LOG);
-   assert_true(abs(biases(0,0) - 9) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(biases(0,3) - 6) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(biases(0,0) - type(9)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(biases(0,3) - type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -158,21 +160,23 @@ void ProbabilisticLayerTest::test_get_synaptic_weights()
 
     probabilistic_layer.set(1, 1);
 
-    probabilistic_layer.set_parameters_constant(0.0);
+    probabilistic_layer.set_parameters_constant(type(0));
 
     synaptic_weights = probabilistic_layer.get_synaptic_weights();
 
     assert_true(synaptic_weights.dimension(0) == 1, LOG);
     assert_true(synaptic_weights.dimension(1) == 1, LOG);
-    assert_true(synaptic_weights(0,0) < numeric_limits<type>::min(), LOG);
+    assert_true(synaptic_weights(0,0) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
     biases.resize(1, 4);
-    biases.setValues({{9},{-8},{7},{-6}});
+    biases.setValues({{type(9)},{type(-8)},{type(7)},{type(-6)}});
 
     synaptic_weights.resize(2, 4);
-    synaptic_weights.setValues({{-11, 12, -13, 14},{21, -22, 23, -24}});
+    synaptic_weights.setValues({
+        {type(-11), type(12), type(-13), type(14)},
+        {type(21), type(-22), type(23), type(-24)}});
 
     parameters.resize(12);
     probabilistic_layer.set(2, 4);
@@ -185,8 +189,8 @@ void ProbabilisticLayerTest::test_get_synaptic_weights()
 
     assert_true(synaptic_weights.size() == 8, LOG);
 
-    assert_true(abs(synaptic_weights(0,0) + 11) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(synaptic_weights(1,3) + 24) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(synaptic_weights(0,0) + type(11)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(synaptic_weights(1,3) + type(24)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -201,20 +205,20 @@ void ProbabilisticLayerTest::test_get_parameters()
    // Test
 
    probabilistic_layer.set(1, 1);
-   probabilistic_layer.set_parameters_constant(1.0);
+   probabilistic_layer.set_parameters_constant(type(1));
 
    parameters = probabilistic_layer.get_parameters();
 
    assert_true(parameters.size() == 2, LOG);
-   assert_true(abs(parameters(0) - 1) < numeric_limits<type>::min(), LOG);
+   assert_true(abs(parameters(0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
    biases.resize(1, 4);
-   biases.setValues({{9},{-8},{7},{-6}});
+   biases.setValues({{type(9)},{type(-8)},{type(7)},{type(-6)}});
 
    synaptic_weights.resize(2, 4);
-   synaptic_weights.setValues({{-11, 12, -13, 14},{21, -22, 23, -24}});
+   synaptic_weights.setValues({{type(-11), type(12), type(-13), type(14)},{type(21), type(-22), type(23), type(-24)}});
 
    probabilistic_layer.set_synaptic_weights(synaptic_weights);
    probabilistic_layer.set_biases(biases);
@@ -222,9 +226,10 @@ void ProbabilisticLayerTest::test_get_parameters()
    parameters = probabilistic_layer.get_parameters();
 
    assert_true(parameters.size() == 12, LOG);
-   assert_true(abs(parameters(0) - 9) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(4) + 11) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(7) + 22) < static_cast<type>(1e-5), LOG);
+
+   assert_true(abs(parameters(0) - type(9)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(4) + type(11)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(7) + type(22)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -232,9 +237,9 @@ void ProbabilisticLayerTest::test_get_decision_threshold()
 {
    cout << "test_get_decision_threshold\n";
 
-   probabilistic_layer.set_decision_threshold(0.5);
+   probabilistic_layer.set_decision_threshold(type(0.5));
 
-   assert_true(abs(probabilistic_layer.get_decision_threshold() - static_cast<type>(0.5)) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(probabilistic_layer.get_decision_threshold() - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -258,7 +263,7 @@ void ProbabilisticLayerTest::test_set_default()
    probabilistic_layer.set_default();
 
    assert_true(probabilistic_layer.get_activation_function() == OpenNN::ProbabilisticLayer::Softmax, LOG);
-   assert_true(abs(probabilistic_layer.get_decision_threshold() - 0.5) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(probabilistic_layer.get_decision_threshold() - type(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(probabilistic_layer.get_display(), LOG);
 
    probabilistic_layer.set_neurons_number(1);
@@ -287,8 +292,8 @@ void ProbabilisticLayerTest::test_set_biases()
 
     assert_true(probabilistic_layer.get_biases_number() == 4, LOG);
 
-    assert_true(abs(probabilistic_layer.get_biases()(0)) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(probabilistic_layer.get_biases()(3)) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(probabilistic_layer.get_biases()(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(probabilistic_layer.get_biases()(3)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -310,8 +315,8 @@ void ProbabilisticLayerTest::test_set_synaptic_weights()
 
     assert_true(probabilistic_layer.get_synaptic_weights().size() == 2, LOG);
 
-    assert_true(abs(probabilistic_layer.get_synaptic_weights()(0)) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(probabilistic_layer.get_synaptic_weights()(1)) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(probabilistic_layer.get_synaptic_weights()(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(probabilistic_layer.get_synaptic_weights()(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -323,12 +328,12 @@ void ProbabilisticLayerTest::test_set_parameters()
 
     Tensor<type, 1> parameters(4);
 
-    parameters.setValues({11,12,21,22});
+    parameters.setValues({ type(11),type(12),type(21),type(22)});
 
     probabilistic_layer.set_parameters(parameters);
 
-    assert_true(probabilistic_layer.get_biases()(0) - parameters(0) < static_cast<type>(1e-5), LOG);
-    assert_true(probabilistic_layer.get_synaptic_weights()(0) - parameters(2)  < static_cast<type>(1e-5), LOG);
+    assert_true(probabilistic_layer.get_biases()(0) - parameters(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(probabilistic_layer.get_synaptic_weights()(0) - parameters(2)  < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -340,7 +345,7 @@ void ProbabilisticLayerTest::test_set_decision_threshold()
 
    probabilistic_layer.set_decision_threshold(static_cast<type>(0.7));
 
-   assert_true(abs(probabilistic_layer.get_decision_threshold() - static_cast<type>(0.7)) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(probabilistic_layer.get_decision_threshold() - static_cast<type>(0.7)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -435,18 +440,18 @@ void ProbabilisticLayerTest::test_calculate_combinations()
    Tensor<type, 2> inputs(1,1);
    Tensor<type, 2> combinations(1,1);
 
-   biases.setConstant(1.0);
-   synaptic_weights.setConstant(2.0);
+   biases.setConstant(type(1));
+   synaptic_weights.setConstant(type(2));
 
    probabilistic_layer.set(1,1);
-   inputs.setConstant(3.0);
+   inputs.setConstant(type(3));
 
    probabilistic_layer.calculate_combinations(inputs, biases, synaptic_weights, combinations);
 
    assert_true(combinations.rank() == 2, LOG);
    assert_true(combinations.dimension(0) == 1, LOG);
    assert_true(combinations.dimension(1) == 1, LOG);
-   assert_true(abs(combinations(0,0) - 7) < static_cast<type>(1e-5) , LOG);
+   assert_true(abs(combinations(0,0) - type(7)) < static_cast<type>(1e-5) , LOG);
 
 }
 
@@ -471,10 +476,10 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
    probabilistic_layer.set(inputs_number, neurons_number);
 
-   probabilistic_layer.set_parameters_constant(1);
+   probabilistic_layer.set_parameters_constant(type(1));
 
    inputs.resize(samples_number, inputs_number);
-   inputs.setConstant(-1);
+   inputs.setConstant(type(-1));
 
    combinations.resize(samples_number, neurons_number);
    probabilistic_layer.calculate_combinations(inputs, probabilistic_layer.get_biases(), probabilistic_layer.get_synaptic_weights(), combinations);
@@ -498,7 +503,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
    assert_true(activations.rank() == 2, LOG);
    assert_true(activations.dimension(0) == 1, LOG);
    assert_true(activations.dimension(1) == 1, LOG);
-   assert_true(activations(0,0) - static_cast<type>(0.5) < static_cast<type>(1e-5), LOG);
+   assert_true(activations(0,0) - static_cast<type>(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 /*
@@ -570,7 +575,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     probabilistic_layer.set(1,3);
 
     combinations.resize(1,3);
-    combinations.setValues({{1, 2, 3}});
+    combinations.setValues({{type(1), type(2), type(3)}});
     activations.resize(1,3);
     activations_derivatives.resize(3,3,1);
 
@@ -593,7 +598,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     probabilistic_layer.set(1,4);
 
     combinations.resize(1,4);
-    combinations.setValues({{-1, 2, -3, -4}});
+    combinations.setValues({{type(-1), type(2), type(-3), type(-4)}});
     activations.resize(1,4);
     activations_derivatives.resize(4,4,1);
 
@@ -609,7 +614,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     probabilistic_layer.set(1,1);
 
     combinations.resize(1,1);
-    combinations.setValues({{-1.55f}});
+    combinations.setValues({{type(-1.55f)}});
     activations.resize(1,1);
     activations_derivatives.resize(1,1,1);
 
@@ -646,9 +651,12 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     biases.resize(1, 4);
     inputs.resize(1, 3);
 
-    inputs.setConstant(1);
-    biases.setConstant(1);
-    synaptic_weights.setValues({{1,-1,0,1},{2,-2,0,2},{3,-3,0,3}});
+    inputs.setConstant(type(1));
+    biases.setConstant(type(1));
+    synaptic_weights.setValues({
+        {type(1),type(-1),type(0),type(1)},
+        {type(2),type(-2),type(0),type(2)},
+        {type(3),type(-3),type(0),type(3)}});
 
     probabilistic_layer.set_synaptic_weights(synaptic_weights);
     probabilistic_layer.set_biases(biases);
@@ -658,7 +666,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     outputs = probabilistic_layer.calculate_outputs(inputs);
 
     Tensor<type, 1> perceptron_sol(4);
-    perceptron_sol.setValues({7,-5,1,7});
+    perceptron_sol.setValues({ type(7),type(-5),type(1),type(7)});
 
     Tensor<type,0>div = perceptron_sol.exp().sum();
     Tensor<type, 1>sol_ = perceptron_sol.exp() / div(0);
@@ -686,25 +694,28 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     // Test
 
     biases.resize(1, 4);
-    biases.setValues({{9},{-8},{7},{-6}});
+    biases.setValues({{type(9)},{type(-8)},{type(7)},{type(-6)}});
 
     synaptic_weights.resize(2, 4);
 
     synaptic_weights.resize(2, 4);
-    synaptic_weights.setValues({{-11, 12, -13, 14},{21, -22, 23, -24}});
+
+    synaptic_weights.setValues({
+        {type(-11), type(12), type(-13), type(14)},
+        {type(21), type(-22), type(23), type(-24)}});
 
     probabilistic_layer.set_synaptic_weights(synaptic_weights);
     probabilistic_layer.set_biases(biases);
 
     inputs.resize(1, 2);
-    inputs.setConstant(1);
+    inputs.setConstant(type(1));
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
 
     outputs = probabilistic_layer.calculate_outputs(inputs);
 
     Tensor<type, 1>perceptron_sol_3(4);
-    perceptron_sol.setValues({7,-5,1,7});
+    perceptron_sol.setValues({type(7),type(-5),type(1),type(7)});
 
     div = perceptron_sol.exp().sum();
     sol_ = perceptron_sol.exp() / div(0);
@@ -719,17 +730,17 @@ void ProbabilisticLayerTest::test_calculate_outputs()
    // Test  3
 
    probabilistic_layer.set(3, 2);
-   probabilistic_layer.set_parameters_constant(0.0);
+   probabilistic_layer.set_parameters_constant(type(0));
 
    inputs.resize(1,3);
-   inputs.setConstant(0.0);
+   inputs.setConstant(type(0));
 
    outputs = probabilistic_layer.calculate_outputs(inputs);
 
    assert_true(outputs.rank() == 2, LOG);
    assert_true(outputs.dimension(0) == 1, LOG);
    assert_true(outputs.dimension(1) == 2, LOG);
-   assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
@@ -745,8 +756,8 @@ void ProbabilisticLayerTest::test_forward_propagate()
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs(1,2);
 
-    probabilistic_layer.set_parameters_constant(1);
-    inputs.setConstant(1);
+    probabilistic_layer.set_parameters_constant(type(1));
+    inputs.setConstant(type(1));
 
     ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(1, &probabilistic_layer);
 

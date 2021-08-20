@@ -25,9 +25,9 @@ DEFINES += __Cpp11__
 # OpenMP library
 
 win32:!win32-g++{
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
-QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
-LIBS += -fopenmp -pthread #-lgomp
+#QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
+#QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
+#LIBS += -fopenmp -pthread #-lgomp
 }else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
 QMAKE_LFLAGS += -fopenmp -lgomp
 LIBS += -fopenmp -pthread -lgomp
