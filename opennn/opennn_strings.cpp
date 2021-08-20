@@ -182,7 +182,7 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 
             buffer << tokens[i];
 
-            type_vector(i) = stof(buffer.str());
+            type_vector(i) = type(stof(buffer.str()));
         }
         catch(const logic_error&)
         {
@@ -203,16 +203,13 @@ bool is_numeric_string(const string& str)
 
     istringstream iss(str.data());
 
-    type dTestSink;
+    float dTestSink;
 
     iss >> dTestSink;
 
     // was any input successfully consumed/converted?
 
-    if(!iss)
-    {
-        return false;
-    }
+    if(!iss) return false;
 
     // was all the input successfully consumed/converted?
 
@@ -262,7 +259,7 @@ bool is_constant_numeric(const Tensor<type, 1>& str)
 
     for(int i = 1; i < str.size(); i++)
     {
-        if(abs(str[i]-a0) > 1e-3 || ::isnan(str[i]) || ::isnan(a0)) return false;
+        if(abs(str[i]-a0) > type(1e-3) || isnan(str[i]) || isnan(a0)) return false;
     }
 
     return true;

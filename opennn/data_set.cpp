@@ -982,10 +982,10 @@ Tensor<type, 1> DataSet::get_samples_uses_percentages() const
     const Index testing_samples_number = get_testing_samples_number();
     const Index unused_samples_number = get_unused_samples_number();
 
-    const type training_samples_percentage = training_samples_number*100/static_cast<type>(samples_number);
-    const type selection_samples_percentage = selection_samples_number*100/static_cast<type>(samples_number);
-    const type testing_samples_percentage = testing_samples_number*100/static_cast<type>(samples_number);
-    const type unused_samples_percentage = unused_samples_number*100/static_cast<type>(samples_number);
+    const type training_samples_percentage = type(training_samples_number*100)/static_cast<type>(samples_number);
+    const type selection_samples_percentage = type(selection_samples_number*100)/static_cast<type>(samples_number);
+    const type testing_samples_percentage = type(testing_samples_number*100)/static_cast<type>(samples_number);
+    const type unused_samples_percentage = type(unused_samples_number*100)/static_cast<type>(samples_number);
 
     Tensor<type, 1> samples_uses_percentage(4);
 
@@ -1017,14 +1017,14 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
     {
         if(columns(i).type == Numeric)
         {
-            if(::isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-            else sample_string += to_string(data(sample_index, variable_index));
+            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+            else sample_string += to_string(double(data(sample_index, variable_index)));
 
             variable_index++;
         }
         else if(columns(i).type == Binary)
         {
-            if(::isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
             else sample_string += columns(i).categories(static_cast<Index>(data(sample_index, variable_index)));
 
             variable_index++;
@@ -1033,14 +1033,14 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
         {
             // @todo do something
 
-            if(::isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-            else sample_string += to_string(data(sample_index, variable_index));
+            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+            else sample_string += to_string(double(data(sample_index, variable_index)));
 
             variable_index++;
         }
         else if(columns(i).type == Categorical)
         {
-            if(::isnan(data(sample_index, variable_index)))
+            if(isnan(data(sample_index, variable_index)))
             {
                 sample_string += missing_values_label;
             }
@@ -1050,7 +1050,7 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
 
                 for(Index j = 0; j < categories_number; j++)
                 {
-                    if(abs(data(sample_index, variable_index+j) - static_cast<type>(1)) < numeric_limits<type>::min())
+                    if(abs(data(sample_index, variable_index+j) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN))
                     {
                         sample_string += columns(i).categories(j);
                         break;
@@ -1738,8 +1738,8 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     // Get number of samples for training, selection and testing
 
-    const Index selection_samples_number = static_cast<Index>(selection_samples_ratio*used_samples_number/total_ratio);
-    const Index testing_samples_number = static_cast<Index>(testing_samples_ratio*used_samples_number/total_ratio);
+    const Index selection_samples_number = static_cast<Index>(selection_samples_ratio*type(used_samples_number)/type(total_ratio));
+    const Index testing_samples_number = static_cast<Index>(testing_samples_ratio* type(used_samples_number)/ type(total_ratio));
     const Index training_samples_number = used_samples_number - selection_samples_number - testing_samples_number;
 
     const Index sum_samples_number = training_samples_number + selection_samples_number + testing_samples_number;
@@ -1843,8 +1843,8 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 
     // Get number of samples for training, selection and testing
 
-    const Index selection_samples_number = static_cast<Index>(selection_samples_ratio*used_samples_number/total_ratio);
-    const Index testing_samples_number = static_cast<Index>(testing_samples_ratio*used_samples_number/total_ratio);
+    const Index selection_samples_number = static_cast<Index>(selection_samples_ratio* type(used_samples_number)/ type(total_ratio));
+    const Index testing_samples_number = static_cast<Index>(testing_samples_ratio* type(used_samples_number)/ type(total_ratio));
     const Index training_samples_number = used_samples_number - selection_samples_number - testing_samples_number;
 
     const Index sum_samples_number = training_samples_number + selection_samples_number + testing_samples_number;
@@ -3491,18 +3491,18 @@ Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type, 1>& column) 
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(abs(column(i) - static_cast<type>(1)) < numeric_limits<type>::min())
+        if(abs(column(i) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN))
         {
             new_column(i,1) = static_cast<type>(1);
         }
-        else if(abs(column(i)) < numeric_limits<type>::min())
+        else if(abs(column(i)) < type(NUMERIC_LIMITS_MIN))
         {
             new_column(i,0) = static_cast<type>(1);
         }
         else
         {
-            new_column(i,0) = NAN;
-            new_column(i,1) = NAN;
+            new_column(i,0) = type(NAN);
+            new_column(i,1) = type(NAN);
         }
     }
 
@@ -3529,7 +3529,7 @@ void DataSet::set_binary_simple_columns()
 
             for(Index row_index = 0; row_index < data.dimension(0); row_index++)
             {
-                if(!::isnan(data(row_index, variable_index))
+                if(!isnan(data(row_index, variable_index))
                 && data(row_index, variable_index) != values(0)
                 && data(row_index, variable_index) != values(1))
                 {
@@ -3539,7 +3539,7 @@ void DataSet::set_binary_simple_columns()
                 }
 
                 if(row_index == (data.dimension(0)-1)){
-                    if(different_values==1){
+                    if(different_values == 1){
                         is_binary = false;
                         break;
                     }
@@ -3558,12 +3558,12 @@ void DataSet::set_binary_simple_columns()
                 scale_minimum_maximum_binary(data, values(0), values(1), column_index);
                 columns(column_index).categories.resize(2);
 
-                if(values(0) == 0 && values(1) == 1)
+                if(values(0) == type(0) && values(1) == type(1))
                 {
                     columns(column_index).categories(0) = "Negative (0)";
                     columns(column_index).categories(1) = "Positive (1)";
                 }
-                else if(values(0) == 1 && values(1) == 0)
+                else if(values(0) == type(1) && values(1) == type(0))
                 {
                     columns(column_index).categories(0) = "Positive (1)";
                     columns(column_index).categories(1) = "Negative (0)";
@@ -5200,7 +5200,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                 {
                     for(Index k = 0; k < used_samples_number; k++)
                     {
-                        if(abs(data(used_samples_indices(k), variable_index) - 1) < numeric_limits<type>::min())
+                        if(abs(data(used_samples_indices(k), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
                         {
                             categories_frequencies(j)++;
                         }
@@ -5230,7 +5230,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 
                 for(Index j = 0; j < used_samples_number; j++)
                 {
-                    if(fabsf(data(used_samples_indices(j), variable_index) - 1) < numeric_limits<type>::min())
+                    if(abs(data(used_samples_indices(j), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
                     {
                         binary_frequencies(0)++;
                     }
@@ -5321,11 +5321,11 @@ Index DataSet::calculate_used_negatives(const Index& target_index) const
     {
         const Index training_index = used_indices(i);
 
-        if(fabsf(data(training_index, target_index)) < numeric_limits<type>::min())
+        if(abs(data(training_index, target_index)) < type(NUMERIC_LIMITS_MIN))
         {
             negatives++;
         }
-        else if(fabsf(data(training_index, target_index) - static_cast<type>(1)) > static_cast<type>(1.0e-3))
+        else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN))
         {
             ostringstream buffer;
 
@@ -5356,11 +5356,11 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
     {
         const Index training_index = training_indices(i);
 
-        if(fabsf(data(training_index, target_index)) < numeric_limits<type>::min())
+        if(abs(data(training_index, target_index)) < type(NUMERIC_LIMITS_MIN))
         {
             negatives++;
         }
-        else if(fabsf(data(training_index, target_index) - static_cast<type>(1)) > static_cast<type>(1.0e-3))
+        else if(abs(data(training_index, target_index) - static_cast<type>(1)) > static_cast<type>(1.0e-3))
         {
             ostringstream buffer;
 
@@ -5391,11 +5391,11 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
     {
         const Index selection_index = selection_indices(i);
 
-        if(fabsf(data(selection_index, target_index)) < numeric_limits<type>::min())
+        if(abs(data(selection_index, target_index)) < type(NUMERIC_LIMITS_MIN))
         {
             negatives++;
         }
-        else if(fabsf(data(selection_index, target_index) - 1) > numeric_limits<type>::min())
+        else if(abs(data(selection_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN))
         {
             ostringstream buffer;
 
@@ -5426,7 +5426,7 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
     {
         const Index testing_index = testing_indices(i);
 
-        if(data(testing_index, target_index) < numeric_limits<type>::min())
+        if(data(testing_index, target_index) < type(NUMERIC_LIMITS_MIN))
         {
             negatives++;
         }
@@ -5505,7 +5505,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples
     {
         Index sample_index = used_samples_indices(i);
 
-        if(abs(data(sample_index, target_index) - 1) < numeric_limits<type>::min()) positive_samples_number++;
+        if(abs(data(sample_index, target_index) - type(1)) < type(NUMERIC_LIMITS_MIN)) positive_samples_number++;
     }
 
     // Get used positive samples indices
@@ -5517,7 +5517,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples
     {
         Index sample_index = used_samples_indices(i);
 
-        if(abs(data(sample_index, target_index) - 1) < numeric_limits<type>::min())
+        if(abs(data(sample_index, target_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
         {
             positive_used_samples_indices(positive_sample_index) = sample_index;
             positive_sample_index++;
@@ -5564,7 +5564,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_samples
     {
         Index sample_index = used_samples_indices(i);
 
-        if(data(sample_index, target_index) < numeric_limits<type>::min()) negative_samples_number++;
+        if(data(sample_index, target_index) < type(NUMERIC_LIMITS_MIN)) negative_samples_number++;
     }
 
     // Get used negative samples indices
@@ -5576,7 +5576,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_samples
     {
         Index sample_index = used_samples_indices(i);
 
-        if(data(sample_index, target_index) < numeric_limits<type>::min())
+        if(data(sample_index, target_index) < type(NUMERIC_LIMITS_MIN))
         {
             negative_used_samples_indices(negative_sample_index) = sample_index;
             negative_sample_index++;
@@ -5606,7 +5606,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_categories(const
     {
         Index sample_index = used_samples_indices(i);
 
-        if(abs(data(sample_index, class_index) - 1) < numeric_limits<type>::min()) class_samples_number++;
+        if(abs(data(sample_index, class_index) - type(1)) < type(NUMERIC_LIMITS_MIN)) class_samples_number++;
     }
 
     // Get used class samples indices
@@ -5619,7 +5619,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_categories(const
     {
         Index sample_index = used_samples_indices(i);
 
-        if(abs(data(sample_index, class_index) - 1) < numeric_limits<type>::min())
+        if(abs(data(sample_index, class_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
         {
             class_used_samples_indices(class_sample_index) = sample_index;
             class_sample_index++;
@@ -5760,6 +5760,7 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
     const Index variables_number = variables_indices.size();
 
     Tensor<type, 1> means(variables_number);
+    means.setZero();
 
     #pragma omp parallel for
 
@@ -5767,7 +5768,7 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
     {
         const Index variable_index = variables_indices(i);
 
-        const Tensor<type, 0> mean = data.chip(variable_index,1).mean();
+        Tensor<type, 0> mean = data.chip(variable_index, 1).mean();
 
         means(i) = mean(0);
     }
@@ -5859,7 +5860,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
 
 bool DataSet::has_nan() const
 {
-    for(Index i = 0; i < data.size(); i++) if(::isnan(data(i))) return true;
+    for(Index i = 0; i < data.size(); i++) if(isnan(data(i))) return true;
 
     return false;
 }
@@ -5871,7 +5872,7 @@ bool DataSet::has_nan_row(const Index& row_index) const
 {
     for(Index j = 0; j < data.dimension(1); j++)
     {
-        if(::isnan(data(row_index,j))) return true;
+        if(isnan(data(row_index,j))) return true;
     }
 
     return false;
@@ -5988,9 +5989,9 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
 
             correlations(i,j) = OpenNN::correlation(thread_pool_device, input_i, input_j);
 
-            if(correlations(i,j).r > 1)
+            if(correlations(i,j).r > type(1))
             {
-                correlations(i,j).r = 1;
+                correlations(i,j).r = type(1);
             }
         }
     }
@@ -6423,7 +6424,7 @@ void DataSet::set_data_binary_random()
         for(Index j = input_variables_number; j < variables_number; j++)
         {
             if(target_variables_number == 1) data(i,j) = static_cast<type>(target_variable_index);
-            else data(i,j) = j == target_variable_index ? 1 : 0;
+            else data(i,j) = (j == target_variable_index) ? type(1) : type(0);
         }
     }
 }
@@ -8276,11 +8277,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 }
                 else if(is_float)
                 {
-                    input_data(line_number, variable_index) = strtof(tokens(token_index).data(), NULL);
+                    input_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), NULL));
                 }
                 else
                 {
-                    input_data(line_number, variable_index) = stof(tokens(token_index));
+                    input_data(line_number, variable_index) = type(stof(tokens(token_index)));
                 }
 
                 variable_index++;
@@ -8294,11 +8295,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 }
                 else if(columns(i).categories.size() > 0 && tokens(token_index) == columns(i).categories(0))
                 {
-                    input_data(line_number, variable_index) = 1.0;
+                    input_data(line_number, variable_index) = type(1);
                 }
                 else if(tokens(token_index) == columns(i).name)
                 {
-                    input_data(line_number, variable_index) = 1.0;
+                    input_data(line_number, variable_index) = type(1);
                 }
 
                 variable_index++;
@@ -8314,7 +8315,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                     }
                     else if(tokens(token_index) == columns(i).categories(k))
                     {
-                        input_data(line_number, variable_index) = 1.0;
+                        input_data(line_number, variable_index) = type(1);
                     }
 
                     variable_index++;
@@ -8343,11 +8344,11 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 }
                 else if(is_float)
                 {
-                    input_data(line_number, variable_index) = strtof(tokens(token_index).data(), NULL);
+                    input_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), NULL));
                 }
                 else
                 {
-                    input_data(line_number, variable_index) = stof(tokens(token_index));
+                    input_data(line_number, variable_index) = type(stof(tokens(token_index)));
                 }
 
                 variable_index++;
@@ -8384,7 +8385,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 for(Index i = 0; i < samples_number; i++)
                 {
-                    if(::isnan(input_data(i, j)))
+                    if(isnan(input_data(i, j)))
                     {
                         input_data(i,j) = means(j);
                     }
@@ -8404,7 +8405,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
             {
                 for(Index i = 0; i < samples_number; i++)
                 {
-                    if(::isnan(input_data(i, j)))
+                    if(isnan(input_data(i, j)))
                     {
                         input_data(i,j) = medians(j);
                     }
@@ -8441,7 +8442,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
 
         for(Index sample_index = 0; sample_index < static_cast<Index>(samples_number); sample_index++)
         {
-            if(!::isnan(data(static_cast<Index>(sample_index),target_index)))
+            if(!isnan(data(static_cast<Index>(sample_index),target_index)))
             {
                 if(data(static_cast<Index>(sample_index), target_index) < static_cast<type>(0.5))
                 {
@@ -8469,7 +8470,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
                 {
                     if(data(i,target_variables_indices(j)) == static_cast<type>(NAN)) continue;
 
-                    if(data(i,target_variables_indices(j)) > 0.5) class_distribution(j)++;
+                    if(data(i,target_variables_indices(j)) > type(0.5)) class_distribution(j)++;
                 }
             }
         }
@@ -8590,7 +8591,7 @@ Tensor<Index, 1> DataSet::select_outliers_via_contamination(const Tensor<type, 1
     for(Index i = 0; i < samples_number; i++)
     {
         ordered_ranks(i) = Tensor<type, 1>(2);
-        ordered_ranks(i)(0) = i;
+        ordered_ranks(i)(0) = type(i);
         ordered_ranks(i)(1) = outlier_ranks(i);
     }
 
@@ -8602,18 +8603,17 @@ Tensor<Index, 1> DataSet::select_outliers_via_contamination(const Tensor<type, 1
 
     if(higher)
     {
-        for(Index i = (1-contamination)*samples_number; i < samples_number; i++)
+        for(Index i = Index((type(1) - contamination)*type(samples_number)); i < samples_number; i++)
             outlier_indexes(static_cast<Index>(ordered_ranks(i)(0))) = 1;
     }
     else
     {
-        for(Index i = 0; i < contamination*samples_number; i++)
+        for(Index i = 0; i < Index(contamination*type(samples_number)); i++)
             outlier_indexes(static_cast<Index>(ordered_ranks(i)(0))) = 1;
     }
 
     return outlier_indexes;
 }
-
 
 
 Tensor<Index, 1> DataSet::select_outliers_via_standard_deviation(const Tensor<type, 1>& outlier_ranks,
@@ -8656,7 +8656,7 @@ type DataSet::calculate_euclidean_distance(const Tensor<Index, 1>& variables_ind
 {
     const Index input_variables_number = variables_indices.size();
 
-    type distance = 0.0;
+    type distance = type(0);
     type error;
 
     for(Index i = 0; i < input_variables_number; i++)
@@ -8749,7 +8749,7 @@ Tensor<Tensor<type, 1>, 1> DataSet::get_kd_tree_data() const
     {
         kd_tree_data(i) = Tensor<type, 1>(input_variables_number+1);
 
-        kd_tree_data(i)(0) = used_samples_indices(i); // Storing index
+        kd_tree_data(i)(0) = type(used_samples_indices(i)); // Storing index
 
         for(Index j = 0; j < input_variables_number; j++)
             kd_tree_data(i)(j+1) = data(used_samples_indices(i), input_variables_indices(j));
@@ -8822,10 +8822,11 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
                                                                    const Index& depth,
                                                                    const Index& k_neighbors) const
 {
+/*
     const Index used_samples_number = get_used_samples_number();
     const Index leaves_number = pow(2, depth);
 
-    Tensor<Index, 1> bounding_box;
+    Tensor<type, 1> bounding_box;
 
     Tensor<type, 2> distance_matrix;
     Tensor<list<Index>, 1> k_nearest_neighbors(used_samples_number);
@@ -8834,7 +8835,7 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
     {
         const Index first = leaves_indices(i);
         const Index last = leaves_indices(i+1);
-        bounding_box = Tensor<Index, 1>(last-first);
+        bounding_box = Tensor<type, 1>(last-first);
 
         for(Index j = 0; j < last - first; j++)
             bounding_box(j) = tree(first+j)(0);
@@ -8850,17 +8851,21 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
             k_nearest_neighbors(bounding_box(j)) = move(box_nearest_neighbors(j));
         }
     }
+
     return k_nearest_neighbors;
+*/
+    return Tensor<list<Index>, 1>();
 }
 
 
 Tensor<list<Index>, 1> DataSet::calculate_kd_tree_neighbors(const Index& k_neighbors, const Index& min_samples_leaf) const
 {
+/*
     const Index used_samples_number = get_used_samples_number();
 
     Tensor<Tensor<type, 1>, 1> tree = get_kd_tree_data();
 
-    const Index depth = max(floor(log2(static_cast<type>(used_samples_number)/static_cast<type>(min_samples_leaf))),
+    const Index depth = max(floor(log(static_cast<type>(used_samples_number)/static_cast<type>(min_samples_leaf))),
                        static_cast<type>(0.0));
 
     Tensor<Tensor<Index, 1>, 1> bounding_limits = create_bounding_limits_kd_tree(depth);
@@ -8868,6 +8873,8 @@ Tensor<list<Index>, 1> DataSet::calculate_kd_tree_neighbors(const Index& k_neigh
     create_kd_tree(tree, bounding_limits);
 
     return calculate_bounding_boxes_neighbors(tree, bounding_limits(depth), depth, k_neighbors);
+*/
+    return Tensor<list<Index>, 1>();
 }
 
 
@@ -8900,7 +8907,7 @@ Tensor<type, 1> DataSet::calculate_average_reachability(Tensor<list<Index>, 1>& 
             average_reachability(i) += max(distance_between_points, distance_2_k_neighbor);
         }
 
-        average_reachability(i) /= k;
+        average_reachability(i) /= type(k);
     }
 
     return average_reachability;
@@ -8918,7 +8925,7 @@ Tensor<type, 1> DataSet::calculate_local_outlier_factor(Tensor<list<Index>, 1>& 
 
     for(Index i = 0; i < samples_number; i++)
     {
-        type sum = 0;
+        type sum = type(0);
 
         for(auto & neighbor_index : k_nearest_indexes(i))
             sum += average_reachabilities(i) / average_reachabilities(neighbor_index);
@@ -8953,7 +8960,7 @@ Tensor<Index, 1> DataSet::calculate_local_outlier_factor_outliers(const Index& k
         throw logic_error(buffer.str());
     }
 
-    if(contamination < 0 && contamination > 0.5)
+    if(contamination < type(0) && contamination > type(0.5))
     {
         ostringstream buffer;
 
@@ -8997,8 +9004,9 @@ Tensor<Index, 1> DataSet::calculate_local_outlier_factor_outliers(const Index& k
 
     Tensor<Index, 1> outlier_indexes;
 
-    (contamination > 0) ? outlier_indexes = select_outliers_via_contamination(LOF_value, contamination, true)
-                        : outlier_indexes = select_outliers_via_standard_deviation(LOF_value, 2.0, true);
+    contamination > type(0) 
+        ? outlier_indexes = select_outliers_via_contamination(LOF_value, contamination, true)
+                        : outlier_indexes = select_outliers_via_standard_deviation(LOF_value, type(2.0), true);
 
     return outlier_indexes;
 }
@@ -9014,18 +9022,17 @@ void DataSet::calculate_min_max_indices_list(list<Index>& elements, const Index&
         if(min > value) min = value;
         else if(max < value) max = value;
     }
-
 }
 
 
 Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& tree_simulation, list<Index>& tree_index) const
 {
+/*
     const Index current_tree_index = tree_index.front();
-    const Index current_variable = tree(current_tree_index, 1);
+    const type current_variable = tree(current_tree_index, 1);
     const type division_value = tree(current_tree_index, 0);
 
     list<Index> current_node_samples  = tree_simulation.front();
-
 
     list<Index> one_side_samples;
     list<Index> other_side_samples;
@@ -9064,12 +9071,15 @@ Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& t
             tree_index.push_back(current_tree_index*2+2);
             delta_next_depth_nodes++;
         }
-        tree(current_tree_index*2+1, 2) = one_side_count;
-        tree(current_tree_index*2+2, 2) = other_side_count;
+
+        tree(current_tree_index*2+1, 2) = type(one_side_count);
+        tree(current_tree_index*2+2, 2) = type(other_side_count);
     }
 
 
     return delta_next_depth_nodes;
+*/
+    return Index();
 }
 
 
@@ -9091,7 +9101,7 @@ Tensor<type, 2> DataSet::create_isolation_tree(const Tensor<Index, 1>& indices, 
         current_node_samples.push_back(indices(i));
 
     tree_simulation.push_back(current_node_samples);
-    tree(0, 2) = used_samples_number;
+    tree(0, 2) = type(used_samples_number);
     tree_index.push_back(0);
 
     current_node_samples.clear();
@@ -9104,16 +9114,19 @@ Tensor<type, 2> DataSet::create_isolation_tree(const Tensor<Index, 1>& indices, 
     Index current_index;
 
     type min, max;
+
     while(current_depth < max_depth && !(tree_simulation.empty()))
     {
         current_node_samples = tree_simulation.front();
         current_index = tree_index.front();
 
         calculate_min_max_indices_list(current_node_samples, current_variable_index, min, max);
-        tree(current_index, 0) = static_cast<type>((max-min)*(rand()/static_cast<type>(RAND_MAX))) + min;
-        tree(current_index, 1) = current_variable_index;
-        next_depth_nodes += split_isolation_tree(tree, tree_simulation, tree_index);
 
+        tree(current_index, 0) = static_cast<type>((max-min)*(type(rand())/static_cast<type>(RAND_MAX))) + min;
+
+        tree(current_index, 1) = type(current_variable_index);
+
+        next_depth_nodes += split_isolation_tree(tree, tree_simulation, tree_index);
 
         tree_simulation.pop_front();
         tree_index.pop_front();
@@ -9169,16 +9182,17 @@ type DataSet::calculate_tree_path(const Tensor<type, 2>& tree, const Index& samp
 
     while(current_depth < tree_depth)
     {
-        if(tree(current_index, 2) == 1)
+        if(tree(current_index, 2) == type(1))
         {
-            return current_depth;
+            return type(current_depth);
         }
         else if(current_index*2 >= tree_length ||
                 (tree(current_index*2+1, 2) == numeric_limits<type>::infinity())
                 ) //Next node doesn't exist or node is leaf
         {
             samples = tree(current_index, 2);
-            return log(samples-1)-(2.0 *(samples-1))/samples +0.5772 + current_depth;
+
+            return type(log(samples- type(1)) - (type(2) *(samples- type(1)))/samples + type(0.5772) + type(current_depth));
         }
 
 
@@ -9191,10 +9205,10 @@ type DataSet::calculate_tree_path(const Tensor<type, 2>& tree, const Index& samp
     }
 
     samples = tree(current_index, 2);
-    if(samples == 1)
-        return current_depth;
+    if(samples == type(1))
+        return type(current_depth);
     else
-        return log(samples-1)-(2.0 *(samples-1))/samples + 0.5772 + current_depth;
+        return type(log(samples- type(1))-(type(2.0) *(samples- type(1)))/samples + type(0.5772) + type(current_depth));
 }
 
 
@@ -9211,7 +9225,7 @@ Tensor<type, 1> DataSet::calculate_average_forest_paths(const Tensor<Tensor<type
         for(Index j = 0; j < n_trees; j++)
             average_paths(i) += calculate_tree_path(forest(j), i, tree_depth);
 
-        average_paths(i) /= n_trees;
+        average_paths(i) /= type(n_trees);
     }
     return average_paths;
 }
@@ -9230,8 +9244,9 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
 
     Tensor<Index, 1> outlier_indexes;
 
-    contamination > 0 ? outlier_indexes = select_outliers_via_contamination(average_paths, contamination, false)
-                      : outlier_indexes = select_outliers_via_standard_deviation(average_paths, 2.0, false);
+    contamination > type(0) 
+            ? outlier_indexes = select_outliers_via_contamination(average_paths, contamination, false)
+                      : outlier_indexes = select_outliers_via_standard_deviation(average_paths, type(2.0), false);
 
     return outlier_indexes;
 }
@@ -9547,21 +9562,21 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 
     for(Index i = 0; i < samples_number; i++)
     {
-        type rosenbrock = 0;
+        type rosenbrock(0);
 
         for(Index j = 0; j < inputs_number-1; j++)
         {
             const type value = data(i,j);
             const type next_value = data(i,j+1);
 
-            rosenbrock += (1 - value)*(1 - value)
-                + 100*(next_value-value*value)*(next_value-value*value);
+            rosenbrock += (type(1) - value)*(type(1) - value) + type(100)*(next_value-value*value)*(next_value-value*value);
         }
 
         data(i, inputs_number) = rosenbrock;
     }
 
     set_default_columns_uses();
+
 }
 
 
@@ -9644,13 +9659,13 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
 
             if(isnan(data(sample_index, variable_index))) continue;
 
-            if(fabsf(data(sample_index, variable_index) - minimums(i)) <= static_cast<type>(1e-3)
-                    || fabsf(data(sample_index, variable_index) - maximums(i)) <= static_cast<type>(1e-3)) continue;
+            if(abs(data(sample_index, variable_index) - minimums(i)) <= type(NUMERIC_LIMITS_MIN)
+            || abs(data(sample_index, variable_index) - maximums(i)) <= type(NUMERIC_LIMITS_MIN)) continue;
 
             if(data(sample_index,variable_index) < minimums(i)
                     || data(sample_index,variable_index) > maximums(i))
             {
-                filtered_indices(sample_index) = 1.0;
+                filtered_indices(sample_index) = type(1);
 
                 set_sample_use(sample_index, UnusedSample);
             }
@@ -9719,7 +9734,7 @@ void DataSet::impute_missing_values_mean()
         {
             current_sample = used_samples_indices(i);
 
-            if(::isnan(data(current_sample, current_variable)))
+            if(isnan(data(current_sample, current_variable)))
             {
                 data(current_sample,current_variable) = means(j);
             }
@@ -9746,7 +9761,7 @@ void DataSet::impute_missing_values_median()
     {
         for(Index i = 0 ; i < samples_number ; i++)
         {
-            if(::isnan(data(used_samples_indices(i),used_variables_indices(j)))) data(used_samples_indices(i),used_variables_indices(j)) = medians(j);
+            if(isnan(data(used_samples_indices(i),used_variables_indices(j)))) data(used_samples_indices(i),used_variables_indices(j)) = medians(j);
         }
     }
 }
@@ -10150,12 +10165,12 @@ void DataSet::read_csv_3_simple()
             }
             else if(is_float)
             {
-                data(sample_index, column_index) = strtof(tokens(j).data(), NULL);
+                data(sample_index, column_index) = type(strtof(tokens(j).data(), NULL));
                 column_index++;
             }
             else
             {
-                data(sample_index, column_index) = stof(tokens(j));
+                data(sample_index, column_index) = type(stof(tokens(j)));
                 column_index++;
             }
         }
@@ -10500,7 +10515,7 @@ void DataSet::read_csv_3_complete()
                     }
                     else if(tokens(j) == columns(column_index).categories(k))
                     {
-                        data(sample_index, variable_index) = 1.0;
+                        data(sample_index, variable_index) = type(1);
                     }
 
                     variable_index++;
@@ -10514,11 +10529,11 @@ void DataSet::read_csv_3_complete()
                 }
                 else if(columns(column_index).categories.size() > 0 && tokens(j) == columns(column_index).categories(0))
                 {
-                    data(sample_index, variable_index) = 1.0;
+                    data(sample_index, variable_index) = type(1);
                 }
                 else if(tokens(j) == columns(column_index).name)
                 {
-                    data(sample_index, variable_index) = 1.0;
+                    data(sample_index, variable_index) = type(1);
                 }
 
                 variable_index++;
@@ -10997,7 +11012,7 @@ void DataSet::initialize_sequential(Tensor<Index, 1>& new_tensor,
 void DataSet::intialize_sequential(Tensor<type, 1>& new_tensor,
         const type& start, const type& step, const type& end) const
 {
-    const Index new_size = (end-start)/step+1;
+    const Index new_size = Index((end-start)/type(step) + type(1));
 
     new_tensor.resize(new_size);
     new_tensor(0) = start;

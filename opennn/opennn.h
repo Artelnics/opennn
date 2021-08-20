@@ -10,6 +10,7 @@
 #define OPENNN_H
 
 #include "config.h"
+#include "half.hpp"
 
 // Data set
 

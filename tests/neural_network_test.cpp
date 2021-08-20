@@ -70,12 +70,12 @@ void NeuralNetworkTest::test_constructor()
   // Test / Convolutional layer constructor
 
   Tensor<Index, 1> new_inputs_dimensions(1);
-  new_inputs_dimensions.setConstant(1);
+  new_inputs_dimensions.setConstant(type(1));
 
   Index new_blocks_number = 1;
 
   Tensor<Index, 1> new_filters_dimensions(1);
-  new_filters_dimensions.setConstant(1);
+  new_filters_dimensions.setConstant(type(1));
 
   Index new_outputs_number = 1;
 
@@ -537,12 +537,12 @@ void NeuralNetworkTest::test_set()
    // Test / Convolutional layer set
 
    Tensor<Index, 1> new_inputs_dimensions(1);
-   new_inputs_dimensions.setConstant(1);
+   new_inputs_dimensions.setConstant(type(1));
 
    Index new_blocks_number = 1;
 
    Tensor<Index, 1> new_filters_dimensions(1);
-   new_filters_dimensions.setConstant(1);
+   new_filters_dimensions.setConstant(type(1));
 
    Index new_outputs_number = 1;
 
@@ -807,79 +807,79 @@ void NeuralNetworkTest::test_get_parameters()
    neural_network.set(NeuralNetwork::Approximation, {1,2,1});
 
    perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
-   perceptron_layer_pointer->set_biases_constant(0);
-   perceptron_layer_pointer->set_synaptic_weights_constant(1);
+   perceptron_layer_pointer->set_biases_constant(type(0));
+   perceptron_layer_pointer->set_synaptic_weights_constant(type(1));
 
    perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
-   perceptron_layer_pointer->set_biases_constant(2);
-   perceptron_layer_pointer->set_synaptic_weights_constant(3);
+   perceptron_layer_pointer->set_biases_constant(type(2));
+   perceptron_layer_pointer->set_synaptic_weights_constant(type(3));
 
    parameters = neural_network.get_parameters();
 
    assert_true(parameters.size() == 7, LOG);
    assert_true(neural_network.get_parameters_number() == parameters.size(), LOG);
-   assert_true(abs(parameters(1) - 0) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(5) - 3) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(5) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1,1,1,1});
 
    perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
-   perceptron_layer_pointer->set_biases_constant(0);
-   perceptron_layer_pointer->set_synaptic_weights_constant(1);
+   perceptron_layer_pointer->set_biases_constant(type(0));
+   perceptron_layer_pointer->set_synaptic_weights_constant(type(1));
 
    perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
-   perceptron_layer_pointer->set_biases_constant(2);
-   perceptron_layer_pointer->set_synaptic_weights_constant(3);
+   perceptron_layer_pointer->set_biases_constant(type(2));
+   perceptron_layer_pointer->set_synaptic_weights_constant(type(3));
 
    perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
-   perceptron_layer_pointer->set_biases_constant(4);
-   perceptron_layer_pointer->set_synaptic_weights_constant(5);
+   perceptron_layer_pointer->set_biases_constant(type(4));
+   perceptron_layer_pointer->set_synaptic_weights_constant(type(5));
 
    parameters = neural_network.get_parameters();
 
    assert_true(parameters.size() == 6, LOG);
    assert_true(neural_network.get_parameters_number() == parameters.size(), LOG);
-   assert_true(abs(parameters(0) - 0) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(1) - 1) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(2) - 2) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(3) - 3) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(4) - 4) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(5) - 5) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(1) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(2) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(3) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(4) - type(4)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(5) - type(5)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1,1,1,1,1});
 
    perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
-   perceptron_layer_pointer->set_biases_constant(0);
-   perceptron_layer_pointer->set_synaptic_weights_constant(1);
+   perceptron_layer_pointer->set_biases_constant(type(0));
+   perceptron_layer_pointer->set_synaptic_weights_constant(type(1));
 
    perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
-   perceptron_layer_pointer->set_biases_constant(2);
-   perceptron_layer_pointer->set_synaptic_weights_constant(3);
+   perceptron_layer_pointer->set_biases_constant(type(2));
+   perceptron_layer_pointer->set_synaptic_weights_constant(type(3));
 
    perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
-   perceptron_layer_pointer->set_biases_constant(4);
-   perceptron_layer_pointer->set_synaptic_weights_constant(5);
+   perceptron_layer_pointer->set_biases_constant(type(4));
+   perceptron_layer_pointer->set_synaptic_weights_constant(type(5));
 
    perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(4));
-   perceptron_layer_pointer->set_biases_constant(6);
-   perceptron_layer_pointer->set_synaptic_weights_constant(7);
+   perceptron_layer_pointer->set_biases_constant(type(6));
+   perceptron_layer_pointer->set_synaptic_weights_constant(type(7));
 
    parameters = neural_network.get_parameters();
 
    assert_true(parameters.size() == 8, LOG);
    assert_true(neural_network.get_parameters_number() == parameters.size(), LOG);
-   assert_true(abs(parameters(0) - 0) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(1) - 1) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(2) - 2) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(3) - 3) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(4) - 4) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(5) - 5) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(6) - 6) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(7) - 7) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(1) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(2) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(3) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(4) - type(4)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(5) - type(5)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(6) - type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(7) - type(7)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -904,7 +904,7 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
     // Test
 
     neural_network.set(NeuralNetwork::Approximation, {1,2,1});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0.0));
     parameters = neural_network.get_parameters();
     trainable_layers_parameters = neural_network.get_trainable_layers_parameters(parameters);
 
@@ -917,26 +917,26 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
     assert_true(trainable_layers_parameters(0).size() == neural_network.get_trainable_layers_parameters_numbers()(0) , LOG);
     assert_true(trainable_layers_parameters(1).size() == neural_network.get_trainable_layers_parameters_numbers()(1), LOG);
 
-    assert_true(abs(trainable_layers_parameters(0)(0)) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(trainable_layers_parameters(0)(3)) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(trainable_layers_parameters(1)(0)) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(trainable_layers_parameters(1)(2)) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(trainable_layers_parameters(0)(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(trainable_layers_parameters(0)(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(trainable_layers_parameters(1)(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(trainable_layers_parameters(1)(2)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
     neural_network.set(NeuralNetwork::Approximation, {1,1,1,1});
 
     perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
-    perceptron_layer_pointer->set_biases_constant(0);
-    perceptron_layer_pointer->set_synaptic_weights_constant(1);
+    perceptron_layer_pointer->set_biases_constant(type(0));
+    perceptron_layer_pointer->set_synaptic_weights_constant(type(1));
 
     perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
-    perceptron_layer_pointer->set_biases_constant(2);
-    perceptron_layer_pointer->set_synaptic_weights_constant(3);
+    perceptron_layer_pointer->set_biases_constant(type(2));
+    perceptron_layer_pointer->set_synaptic_weights_constant(type(3));
 
     perceptron_layer_pointer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
-    perceptron_layer_pointer->set_biases_constant(4);
-    perceptron_layer_pointer->set_synaptic_weights_constant(5);
+    perceptron_layer_pointer->set_biases_constant(type(4));
+    perceptron_layer_pointer->set_synaptic_weights_constant(type(5));
 
     parameters = neural_network.get_parameters();
     trainable_layers_parameters = neural_network.get_trainable_layers_parameters(parameters);
@@ -952,12 +952,12 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
     assert_true(neural_network.get_trainable_layers_parameters_numbers()(1) == 2, LOG);
     assert_true(neural_network.get_trainable_layers_parameters_numbers()(2) == 2, LOG);
 
-    assert_true(abs(trainable_layers_parameters(0)(0) - 0) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(trainable_layers_parameters(0)(1) - 1) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(trainable_layers_parameters(1)(0) - 2) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(trainable_layers_parameters(1)(1) - 3) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(trainable_layers_parameters(2)(0) - 4) < static_cast<type>(1e-5), LOG);
-    assert_true(abs(trainable_layers_parameters(2)(1) - 5) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(trainable_layers_parameters(0)(0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(trainable_layers_parameters(0)(1) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(trainable_layers_parameters(1)(0) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(trainable_layers_parameters(1)(1) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(trainable_layers_parameters(2)(0) - type(4)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(trainable_layers_parameters(2)(1) - type(5)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -992,17 +992,17 @@ void NeuralNetworkTest::test_set_parameters()
 
    // Test
 
-   parameters.setValues({1,2,3,4,5,6});
+   parameters.setValues({type(1),type(2),type(3),type(4),type(5),type(6)});
 
    neural_network.set_parameters(parameters);
    parameters = neural_network.get_parameters();
 
-   assert_true(abs(parameters(0) - 1) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(1) - 2) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(2) - 3) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(3) - 4) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(4) - 5) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(5) - 6) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(1) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(2) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(3) - type(4)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(4) - type(5)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(5) - type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -1016,23 +1016,23 @@ void NeuralNetworkTest::test_set_parameters_constant()
 
    // Test
 
-   neural_network.set_parameters_constant(1);
+   neural_network.set_parameters_constant(type(1));
    parameters = neural_network.get_parameters();
 
    assert_true(parameters.size() == 7, LOG);
    assert_true(neural_network.get_parameters_number() == parameters.size(), LOG);
-   assert_true(abs(parameters(1) - 1) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(5) - 1) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(1) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(5) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
-   neural_network.set_parameters_constant(3);
+   neural_network.set_parameters_constant(type(3));
    parameters = neural_network.get_parameters();
 
    assert_true(parameters.size() == 7, LOG);
    assert_true(neural_network.get_parameters_number() == parameters.size(), LOG);
-   assert_true(abs(parameters(1) - 3) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(5) - 3) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(1) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(5) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -1058,7 +1058,7 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
 {
    cout << "test_calculate_parameters_norm\n";
 
-   type parameters_norm = 0;
+   type parameters_norm = type(0);
 
    // Test
 
@@ -1066,27 +1066,27 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
 
    parameters_norm = neural_network.calculate_parameters_norm();
 
-   assert_true(abs(parameters_norm - 0) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters_norm) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1,1,1,1});
 
-   neural_network.set_parameters_constant(1.0);
+   neural_network.set_parameters_constant(type(1));
 
    parameters_norm = neural_network.calculate_parameters_norm();
 
-   assert_true(abs(parameters_norm - static_cast<type>(sqrt(6))) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters_norm - static_cast<type>(sqrt(6))) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1,1,1,1,1});
 
-   neural_network.set_parameters_constant(1.0);
+   neural_network.set_parameters_constant(type(1));
 
    parameters_norm = neural_network.calculate_parameters_norm();
 
-   assert_true(abs(parameters_norm - static_cast<type>(sqrt(8))) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters_norm - static_cast<type>(sqrt(8))) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -1111,27 +1111,27 @@ void NeuralNetworkTest::test_perturbate_parameters()
 
    parameters_number = neural_network.get_parameters_number();
    parameters.resize(parameters_number);
-   parameters.setConstant(1);
+   parameters.setConstant(type(1));
 
    neural_network.set_parameters(parameters);
    parameters = neural_network.get_parameters();
 
-   neural_network.perturbate_parameters(0.5);
+   neural_network.perturbate_parameters(type(0.5));
    parameters = neural_network.get_parameters();
 
    assert_true(parameters.size() == 4, LOG);
    assert_true(parameters.size() == parameters_number, LOG);
-   assert_true(abs(parameters(0) - static_cast<type>(1.5)) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(parameters(3) - static_cast<type>(1.5)) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(0) - static_cast<type>(1.5)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(parameters(3) - static_cast<type>(1.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
-   parameters.setConstant(0);
+   parameters.setConstant(type(0));
 
    neural_network.set_parameters(parameters);
    parameters = neural_network.get_parameters();
 
-   neural_network.perturbate_parameters(0.5);
+   neural_network.perturbate_parameters(type(0.5));
    parameters = neural_network.get_parameters();
 
    assert_true(parameters.size() == 0, LOG);
@@ -1160,44 +1160,44 @@ void NeuralNetworkTest::test_calculate_outputs()
    // Test
 /*
    neural_network.set(NeuralNetwork::Approximation, {3,3,3});
-   neural_network.set_parameters_constant(0);
+   neural_network.set_parameters_constant(type(0));
 
    inputs.resize(1,3);
 
-   inputs.setConstant(1);
+   inputs.setConstant(type(1));
 
    outputs = neural_network.calculate_outputs(inputs);
 
    assert_true(outputs.rank() == 2, LOG);
    assert_true(outputs.size() == 3, LOG);
-   assert_true(abs(outputs(0,0)) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(outputs(0,1)) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(outputs(0,2)) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(outputs(0,1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(outputs(0,2)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {2, 1, 5});
 
-   neural_network.set_parameters_constant(0);
+   neural_network.set_parameters_constant(type(0));
 
    inputs.resize(1, 2);
 
-   inputs.setConstant(0);
+   inputs.setConstant(type(0));
 
    outputs = neural_network.calculate_outputs(inputs);
 
    assert_true(outputs.size() == 5, LOG);
-   assert_true(abs(outputs(0,0) - 0) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(outputs(0,1) - 0) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(outputs(0,2) - 0) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(outputs(0,3) - 0) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(outputs(0,4) - 0) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(outputs(0,1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(outputs(0,2)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(outputs(0,3)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(outputs(0,4)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {1, 2});
 
-   neural_network.set_parameters_constant(1);
+   neural_network.set_parameters_constant(type(1));
 
    inputs.resize(1, 1);
 
@@ -1206,8 +1206,8 @@ void NeuralNetworkTest::test_calculate_outputs()
    outputs = neural_network.calculate_outputs(inputs);
 
    assert_true(outputs.size() == 2, LOG);
-   assert_true(abs(outputs(0,0) - 2) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(outputs(0,1) - tanh(3)) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(outputs(0,0) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(outputs(0,1) - tanh(3)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test 
 
@@ -1215,9 +1215,9 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    inputs.resize(1, 4);
 
-   inputs.setConstant(0);
+   inputs.setConstant(type(0));
 
-   neural_network.set_parameters_constant(1);
+   neural_network.set_parameters_constant(type(1));
 
    outputs = neural_network.calculate_outputs(inputs);
 
@@ -1236,10 +1236,10 @@ void NeuralNetworkTest::test_calculate_outputs()
    outputs_number = neural_network.get_outputs_number();
 
    inputs.resize(1, inputs_number);
-   inputs.setConstant(0.0);
+   inputs.setConstant(type(0));
 
    parameters.resize(parameters_number);
-   parameters.setConstant(0.0);
+   parameters.setConstant(type(0));
 
    neural_network.set_parameters(parameters);
 
@@ -1257,10 +1257,10 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, outputs_number});
 
-   neural_network.set_parameters_constant(0);
+   neural_network.set_parameters_constant(type(0));
 
    inputs.resize(1, 1);
-   inputs.setConstant(0);
+   inputs.setConstant(type(0));
 
    outputs = neural_network.calculate_outputs(inputs);
 
@@ -1271,10 +1271,10 @@ void NeuralNetworkTest::test_calculate_outputs()
 
    neural_network.set(NeuralNetwork::Classification, {1,1});
 
-   neural_network.set_parameters_constant(0);
+   neural_network.set_parameters_constant(type(0));
 
    inputs.resize(1, 1);
-   inputs.setConstant(0);
+   inputs.setConstant(type(0));
 
    outputs = neural_network.calculate_outputs(inputs);
 
@@ -1306,7 +1306,7 @@ void NeuralNetworkTest::test_calculate_outputs()
    neural_network.set_parameters_constant(-5);
 
    inputs.resize(batch_size, inputs_number);
-   inputs.setConstant(-1);
+   inputs.setConstant(type(-1));
 
    outputs = neural_network.calculate_outputs(inputs);
 
@@ -1325,19 +1325,19 @@ void NeuralNetworkTest::test_calculate_outputs()
    outputs_number = neural_network.get_outputs_number();
 
    inputs.resize(2, inputs_number);
-   inputs.setConstant(0);
+   inputs.setConstant(type(0));
 
    parameters_number = neural_network.get_parameters_number();
    parameters.resize(parameters_number);
-   parameters.setConstant(0);
+   parameters.setConstant(type(0));
 
    neural_network.set_parameters(parameters);
 
    outputs = neural_network.calculate_outputs(inputs);
 
    assert_true(outputs.dimension(1) == outputs_number, LOG);
-   assert_true(abs(outputs(0,0) - 0) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(outputs(1,0) - 0) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(outputs(1,0)) < type(NUMERIC_LIMITS_MIN), LOG);
 */
 }
 
@@ -1359,46 +1359,48 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
    // Test
 
    neural_network.set(NeuralNetwork::Approximation, {3, 4, 2});
-   neural_network.set_parameters_constant(0.0);
+   neural_network.set_parameters_constant(type(0));
 
    inputs.resize(2,3);
-   inputs.setValues({{-5,-1,-3},{7,3,1}});
+   inputs.setValues(
+       {{type(-5),type(-1),-type(3)},
+       {type(7),type(3),type(1)}});
 
    point.resize(3);
-   point.setValues({0,0,0});
+   point.setValues({type(0),type(0),type(0)});
 
-   directional_inputs = neural_network.calculate_directional_inputs(0,point,0,0,0);
+   directional_inputs = neural_network.calculate_directional_inputs(0, point, type(0), type(0), 0);
 
    assert_true(directional_inputs.rank() == 2, LOG);
    assert_true(directional_inputs.dimension(0) == 0, LOG);
 
    // Test
 
-   point.setValues({1, 2, 3});
+   point.setValues({type(1), type(2), type(3)});
 
-   directional_inputs = neural_network.calculate_directional_inputs(2,point,-1,1,3);
+   directional_inputs = neural_network.calculate_directional_inputs(2, point, type(-1), type(1), 3);
 
    assert_true(directional_inputs.rank() == 2, LOG);
    assert_true(directional_inputs.dimension(0) == 3, LOG);
    assert_true(directional_inputs.dimension(1) == 3, LOG);
-   assert_true(abs(directional_inputs(0,2) + 1) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(directional_inputs(1,2) - 0) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(directional_inputs(2,2) - 1) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(directional_inputs(0,2) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(directional_inputs(1,2) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(directional_inputs(2,2) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
-   point.setValues({1, 2, 3});
+   point.setValues({type(1), type(2), type(3)});
 
-   directional_inputs = neural_network.calculate_directional_inputs(0, point, -4, 0, 5);
+   directional_inputs = neural_network.calculate_directional_inputs(0, point, type(-4), type(0), 5);
 
    assert_true(directional_inputs.rank() == 2, LOG);
    assert_true(directional_inputs.dimension(0) == 5, LOG);
    assert_true(directional_inputs.dimension(1) == 3, LOG);
-   assert_true(abs(directional_inputs(0,0) + 4) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(directional_inputs(1,0) + 3) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(directional_inputs(2,0) + 2) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(directional_inputs(3,0) + 1) < static_cast<type>(1e-5), LOG);
-   assert_true(abs(directional_inputs(4,0) + 0) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(directional_inputs(0,0) + type(4)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(directional_inputs(1,0) + type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(directional_inputs(2,0) + type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(directional_inputs(3,0) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(directional_inputs(4,0) + type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -1532,11 +1534,11 @@ void NeuralNetworkTest::test_forward_propagate()
     perceptron_layer->set_activation_function(PerceptronLayer::Type::Logistic);
 
     Tensor<type, 2> biases_perceptron(neurons_number, 1);
-    biases_perceptron.setConstant(1);
+    biases_perceptron.setConstant(type(1));
     perceptron_layer->set_biases(biases_perceptron);
 
     Tensor<type, 2> synaptic_weights_perceptron(inputs_number, neurons_number);
-    synaptic_weights_perceptron.setConstant(1);
+    synaptic_weights_perceptron.setConstant(type(1));
     perceptron_layer->set_synaptic_weights(synaptic_weights_perceptron);
 
     NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
@@ -1599,14 +1601,14 @@ void NeuralNetworkTest::test_forward_propagate()
     biases_pl.setConstant(5);
     perceptron_layer_3->set_biases(biases_pl);
     Tensor<type, 2> synaptic_weights_pl(inputs_number, neurons_number_3_0);
-    synaptic_weights_pl.setConstant(-1);
+    synaptic_weights_pl.setConstant(type(-1));
     perceptron_layer_3->set_synaptic_weights(synaptic_weights_pl);
 
     Tensor<type, 2> biases_pbl(neurons_number, 1);
     biases_pbl.setConstant(3);
     probabilistic_layer_3->set_biases(biases_pbl);
     Tensor<type, 2> synaptic_pbl(neurons_number_3_0, neurons_number_3_1);
-    synaptic_pbl.setConstant(1);
+    synaptic_pbl.setConstant(type(1));
     probabilistic_layer_3->set_synaptic_weights(synaptic_pbl);
 
     Tensor<Layer*, 1> layers_pointers(2);

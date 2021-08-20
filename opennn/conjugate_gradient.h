@@ -161,11 +161,11 @@ private:
 
    /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
 
-   type minimum_loss_decrease = 0;
+   type minimum_loss_decrease = type(0);
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
-   type training_loss_goal = 0;
+   type training_loss_goal = type(0);
 
    /// Maximum number of epochs at which the selection error increases.
    /// This is an early stopping method for improving selection.
@@ -206,8 +206,8 @@ struct ConjugateGradientData : public OptimizationAlgorithmData
 
     Index epoch = 0;
 
-    type learning_rate = 0;
-    type old_learning_rate = 0;
+    type learning_rate = type(0);
+    type old_learning_rate = type(0);
 
     Tensor<type, 0> training_slope;
 };

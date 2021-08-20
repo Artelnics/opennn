@@ -214,8 +214,8 @@ struct GradientDescentData : public OptimizationAlgorithmData
 
     Tensor<type, 0> training_slope;
 
-    type learning_rate = 0;
-    type old_learning_rate = 0;
+    type learning_rate = type(0);
+    type old_learning_rate = type(0);
 };
 
 }

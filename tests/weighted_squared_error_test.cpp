@@ -67,7 +67,9 @@ void WeightedSquaredErrorTest::test_calculate_error()
    neurons_number = 1;
 
    data.resize(2, 2);
-   data.setValues({{0,0},{1,1}});
+   data.setValues({
+       {type(0),type(0)},
+       {type(1),type(1)}});
    data_set.set(data);
 
    data_set.set_training();
@@ -78,7 +80,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
    neural_network.set(NeuralNetwork::Classification, {1, 2});
 
-   neural_network.set_parameters_constant(1);
+   neural_network.set_parameters_constant(type(1));
 
    weighted_squared_error.set_weights();
 
@@ -101,17 +103,17 @@ void WeightedSquaredErrorTest::test_calculate_error()
    data(0,0) = 0.0;
    data(0,1) = 0.0;
    data(0,2) = 0.0;
-   data(1,0) = 1.0;
-   data(1,1) = 1.0;
-   data(1,2) = 1.0;
-   data(2,0) = 1.0;
+   data(1,0) = type(1);
+   data(1,1) = type(1);
+   data(1,2) = type(1);
+   data(2,0) = type(1);
    data(2,1) = 0.0;
    data(2,2) = 0.0;
    data_set.set_data(data);
 
   neural_network.set(NeuralNetwork::Approximation, {3, 1});
 
-  neural_network.set_parameters_constant(0.0);
+  neural_network.set_parameters_constant(type(0));
 
   weighted_squared_error.set_weights();
 
@@ -167,8 +169,8 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
    data.resize(2, 2);
    data(0,0) = 0.0;
    data(0,1) = 0.0;
-   data(1,0) = 1.0;
-   data(1,1) = 1.0;
+   data(1,0) = type(1);
+   data(1,1) = type(1);
 
    data_set.set_data(data);
    data_set.set_training();
@@ -179,7 +181,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    neural_network.set(NeuralNetwork::Classification, {1, 1});
 
-   neural_network.set_parameters_constant(1);
+   neural_network.set_parameters_constant(type(1));
 
    weighted_squared_error.set_weights();
 
@@ -196,8 +198,8 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
    numerical_error_gradient = weighted_squared_error.calculate_gradient_numerical_differentiation();
 
-   assert_true(back_propagation.gradient(0)-1.1499 < 1e-3, LOG); // @todo 1e-2 precission
-   assert_true(back_propagation.gradient(1)-0 < 1e-3, LOG);
+   assert_true(back_propagation.gradient(0)-1.1499 < type(1e-3), LOG); // @todo 1e-2 precission
+   assert_true(back_propagation.gradient(1)-0 < type(1e-3), LOG);
 
    // Test perceptron and probabilistic
 
@@ -316,7 +318,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
 
 //   for(Index i = 2; i < samples_number; i++)
 //   {
-//        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < numeric_limits<type>::min())
+//        if((static_cast<Index>(inputs.calculate_row_sum(i))%2)) < NUMERIC_LIMITS_MIN)
 //        {
 //            outputs[i] = 0.0;
 //        }

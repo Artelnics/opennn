@@ -113,9 +113,9 @@ private:
 
    /// Coefficient of normalization for the calculation of the training error.
 
-   type normalization_coefficient = NAN;
+   type normalization_coefficient = type(NAN);
 
-   type selection_normalization_coefficient = NAN;
+   type selection_normalization_coefficient = type(NAN);
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/normalized_squared_error_cuda.h"

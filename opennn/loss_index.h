@@ -319,9 +319,9 @@ struct LossIndexBackPropagation
 
         neural_network.set(batch_samples_number, neural_network_pointer);
 
-        error = 0;
+        error = type(0);
 
-        loss = 0;
+        loss = type(0);
 
         errors.resize(batch_samples_number, outputs_number);
 
@@ -330,7 +330,7 @@ struct LossIndexBackPropagation
         gradient.resize(parameters_number);
 
         regularization_gradient.resize(parameters_number);
-        regularization_gradient.setConstant(0);
+        regularization_gradient.setConstant(type(0));
     }
 
     void print() const
@@ -408,9 +408,9 @@ struct LossIndexBackPropagationLM
 
         parameters = neural_network_pointer->get_parameters();
 
-        error = 0;
+        error = type(0);
 
-        loss = 0;
+        loss = type(0);
 
         gradient.resize(parameters_number);
 

@@ -69,7 +69,9 @@ void TrainingStrategyTest::test_perform_training()
     targets_number = 1;
 
     data.resize(samples_number, inputs_number+targets_number);
-    data.setValues({{0,1},{0,1}});
+    data.setValues({
+        {type(0),type(1)},
+        {type(0),type(1)}});
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data(data);

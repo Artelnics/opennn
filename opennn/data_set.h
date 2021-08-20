@@ -509,7 +509,7 @@ public:
 
    Tensor<Index, 1> unuse_repeated_samples();
 
-   Tensor<string, 1> unuse_uncorrelated_columns(const type& = 0.25);
+   Tensor<string, 1> unuse_uncorrelated_columns(const type& = type(0.25));
 
    // Initialization methods
 
@@ -603,21 +603,21 @@ public:
 
    // Tuckey outlier detection
 
-   Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = 1.5) const;
+   Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = type(1.5)) const;
 
-   void unuse_Tukey_outliers(const type& = 1.5);
+   void unuse_Tukey_outliers(const type& = type(1.5));
 
    // Local outlier factor
 
-   Tensor<Index, 1> calculate_local_outlier_factor_outliers(const Index& = 20, const Index& = 0, const type& = 0.0) const;
+   Tensor<Index, 1> calculate_local_outlier_factor_outliers(const Index& = 20, const Index& = 0, const type& = type(0)) const;
 
-   void unuse_local_outlier_factor_outliers(const Index& = 20, const type& = 1.5);
+   void unuse_local_outlier_factor_outliers(const Index& = 20, const type& = type(1.5));
 
    // Isolation Forest outlier
 
-   Tensor<Index, 1> calculate_isolation_forest_outliers(const Index& = 100, const Index& = 256, const type& = 0.0) const;
+   Tensor<Index, 1> calculate_isolation_forest_outliers(const Index& = 100, const Index& = 256, const type& = type(0)) const;
 
-   void unuse_isolation_forest_outliers(const Index& = 20, const type& = 1.5);
+   void unuse_isolation_forest_outliers(const Index& = 20, const type& = type(1.5));
 
    // Time series methods
 
@@ -833,9 +833,9 @@ private:
 
    // Local Outlier Factor
 
-   Tensor<Index, 1> select_outliers_via_standard_deviation(const Tensor<type, 1>&, const type & = 2.0, bool = true) const;
+   Tensor<Index, 1> select_outliers_via_standard_deviation(const Tensor<type, 1>&, const type & = type(2.0), bool = true) const;
 
-   Tensor<Index, 1> select_outliers_via_contamination(const Tensor<type, 1>&, const type & = 0.05, bool = true) const;
+   Tensor<Index, 1> select_outliers_via_contamination(const Tensor<type, 1>&, const type & = type(0.05), bool = true) const;
 
    type calculate_euclidean_distance(const Tensor<Index, 1>&, const Index&, const Index&) const;
 

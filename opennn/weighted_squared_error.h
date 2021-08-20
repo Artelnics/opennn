@@ -113,11 +113,11 @@ private:
 
    /// Weight for the positives for the calculation of the error.
 
-   type positives_weight = NAN;
+   type positives_weight = type(NAN);
 
    /// Weight for the negatives for the calculation of the error.
 
-   type negatives_weight = NAN;
+   type negatives_weight = type(NAN);
 
    /// Coefficient of normalization
 

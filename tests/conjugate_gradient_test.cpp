@@ -76,8 +76,8 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
 
    PR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
 
-   assert_true(PR_parameter >= 0.0, LOG);
-   assert_true(PR_parameter <= 1.0, LOG);
+   assert_true(PR_parameter >= type(0), LOG);
+   assert_true(PR_parameter <= type(1), LOG);
 }
 
 
@@ -94,8 +94,8 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 
    FR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
 
-   assert_true(FR_parameter >= 0.0, LOG);
-   assert_true(FR_parameter <= 1.0, LOG);
+   assert_true(FR_parameter >= type(0), LOG);
+   assert_true(FR_parameter <= type(1), LOG);
 
 }
 
@@ -206,16 +206,16 @@ void ConjugateGradientTest::test_perform_training()
    // Test
 /*
    data_set.set(1, 1, 1);
-   data_set.set_data_constant(0.0);
+   data_set.set_data_constant(type(0));
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-   neural_network.set_parameters_constant(0.0);
+   neural_network.set_parameters_constant(type(0));
 
    training_results = conjugate_gradient.perform_training();
 
    // Test
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1));
 
    conjugate_gradient.set_maximum_epochs_number(1);
 
@@ -225,12 +225,12 @@ void ConjugateGradientTest::test_perform_training()
 
    // Minimum parameters increment norm
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1));
 
    minimum_parameters_increment_norm = 0.1;
 
    conjugate_gradient.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-   conjugate_gradient.set_loss_goal(0.0);
+   conjugate_gradient.set_loss_goal(type(0));
    conjugate_gradient.set_minimum_loss_decrease(0.0);
    conjugate_gradient.set_gradient_norm_goal(0.0);
    conjugate_gradient.set_maximum_epochs_number(1000);
@@ -242,7 +242,7 @@ void ConjugateGradientTest::test_perform_training()
 
    // Loss goal
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1));
 
    training_loss_goal = 0.1;
 
@@ -259,12 +259,12 @@ void ConjugateGradientTest::test_perform_training()
 
    // Minimum loss decrease
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1));
 
    minimum_loss_decrease = 0.1;
 
    conjugate_gradient.set_minimum_parameters_increment_norm(0.0);
-   conjugate_gradient.set_loss_goal(0.0);
+   conjugate_gradient.set_loss_goal(type(0));
    conjugate_gradient.set_minimum_loss_decrease(minimum_loss_decrease);
    conjugate_gradient.set_gradient_norm_goal(0.0);
    conjugate_gradient.set_maximum_epochs_number(1000);
@@ -276,12 +276,12 @@ void ConjugateGradientTest::test_perform_training()
 
    // Gradient norm goal 
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1));
 
    gradient_norm_goal = 0.1;
 
    conjugate_gradient.set_minimum_parameters_increment_norm(0.0);
-   conjugate_gradient.set_loss_goal(0.0);
+   conjugate_gradient.set_loss_goal(type(0));
    conjugate_gradient.set_minimum_loss_decrease(0.0);
    conjugate_gradient.set_gradient_norm_goal(gradient_norm_goal);
    conjugate_gradient.set_maximum_epochs_number(1000);

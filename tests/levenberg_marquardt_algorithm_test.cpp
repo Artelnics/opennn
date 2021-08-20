@@ -87,7 +87,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    minimum_parameters_increment_norm = 100.0;
 
    levenberg_marquardt_algorithm.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-   levenberg_marquardt_algorithm.set_loss_goal(0.0);
+   levenberg_marquardt_algorithm.set_loss_goal(type(0));
    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
    levenberg_marquardt_algorithm.set_gradient_norm_goal(0.0);
    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
@@ -121,7 +121,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    minimum_loss_decrease = 100.0;
 
    levenberg_marquardt_algorithm.set_minimum_parameters_increment_norm(0.0);
-   levenberg_marquardt_algorithm.set_loss_goal(0.0);
+   levenberg_marquardt_algorithm.set_loss_goal(type(0));
    levenberg_marquardt_algorithm.set_minimum_loss_decrease(minimum_loss_decrease);
    levenberg_marquardt_algorithm.set_gradient_norm_goal(0.0);
    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
@@ -136,7 +136,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    gradient_norm_goal = 1.0e6;
 
    levenberg_marquardt_algorithm.set_minimum_parameters_increment_norm(0.0);
-   levenberg_marquardt_algorithm.set_loss_goal(0.0);
+   levenberg_marquardt_algorithm.set_loss_goal(type(0));
    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
    levenberg_marquardt_algorithm.set_gradient_norm_goal(gradient_norm_goal);
    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
@@ -182,7 +182,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
 
 //   levenberg_marquardt_algorithm.perform_Householder_QR_decomposition(a, b);
 
-   assert_true(is_equal(a, 1.0), LOG);
+   assert_true(is_equal(a, type(1.0)), LOG);
    assert_true(is_zero(b), LOG);
 
    // Test

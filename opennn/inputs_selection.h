@@ -179,10 +179,10 @@ struct InputsSelectionResults
     void set(const Index& maximum_epochs_number)
     {
         training_error_history.resize(maximum_epochs_number);
-        training_error_history.setConstant(-1);
+        training_error_history.setConstant(type(-1));
 
         selection_error_history.resize(maximum_epochs_number);
-        selection_error_history.setConstant(-1);
+        selection_error_history.setConstant(type(-1));
     }
 
    virtual ~InputsSelectionResults() {}

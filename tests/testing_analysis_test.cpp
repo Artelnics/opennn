@@ -69,11 +69,11 @@ void TestingAnalysisTest::test_calculate_error_data()
     targets_number = 1;
 
     data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_constant(0.0);
+    data_set.set_data_constant(type(0));
     data_set.set_testing();
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_error_data();
 
@@ -101,11 +101,11 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
     targets_number = 1;
 
     data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_constant(0.0);
+    data_set.set_data_constant(type(0));
     data_set.set_testing();
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_percentage_error_data();
 
@@ -138,11 +138,11 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
     targets_number = 1;
 
     data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_constant(0.0);
+    data_set.set_data_constant(type(0));
     data_set.set_testing();
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
@@ -171,11 +171,11 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
     targets_number = 1;
 
     data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_constant(0.0);
+    data_set.set_data_constant(type(0));
     data_set.set_testing();
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_percentage_errors_descriptives();
 
@@ -201,11 +201,11 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
     targets_number = 1;
 
     data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_constant(0.0);
+    data_set.set_data_constant(type(0));
     data_set.set_testing();
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0));
 
     error_data_statistics = testing_analysis.calculate_error_data_descriptives();
 
@@ -237,11 +237,11 @@ void TestingAnalysisTest::test_print_error_data_descriptives()
     targets_number = 1;
 
     data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_constant(0.0);
+    data_set.set_data_constant(type(0));
     data_set.set_testing();
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0));
 
     testing_analysis.print_error_data_descriptives();
 }
@@ -264,11 +264,11 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
     targets_number = 1;
 
     data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_constant(0.0);
+    data_set.set_data_constant(type(0));
     data_set.set_testing();
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0));
 
     error_data_histograms = testing_analysis.calculate_error_data_histograms();
 
@@ -294,11 +294,11 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
     targets_number = 1;
 
     data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_constant(0.0);
+    data_set.set_data_constant(type(0));
     data_set.set_testing();
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0));
 
     maximal_errors = testing_analysis.calculate_maximal_errors(2);
 
@@ -326,11 +326,11 @@ void TestingAnalysisTest::test_linear_regression()
    targets_number = 1;
 
    data_set.set(samples_number, inputs_number, targets_number);
-   data_set.set_data_constant(0.0);
+   data_set.set_data_constant(type(0));
    data_set.set_testing();
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
-   neural_network.set_parameters_constant(0.0);
+   neural_network.set_parameters_constant(type(0));
 
    linear_correlation = testing_analysis.linear_correlation();
 
@@ -355,14 +355,14 @@ void TestingAnalysisTest::test_print_linear_regression_correlation()
 
    data_set.set(samples_number, inputs_number, targets_number);
 
-   data_set.set_data_constant(0.0);
+   data_set.set_data_constant(type(0));
 
    data_set.set_testing();
 
    // Neural Network
 
    neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
-   neural_network.set_parameters_constant(0.0);
+   neural_network.set_parameters_constant(type(0));
 
    // Testing Analysis
 
@@ -395,14 +395,14 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     data_set.set(samples_number, inputs_number, targets_number);
 
-    data_set.set_data_constant(0.0);
+    data_set.set_data_constant(type(0));
 
     data_set.set_testing();
 
     // Neural Network
 
     neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
-    neural_network.set_parameters_constant(0.0);
+    neural_network.set_parameters_constant(type(0));
 
     // Testing Analysis
 
@@ -413,11 +413,11 @@ void TestingAnalysisTest::test_perform_linear_regression()
     linear_regression_analysis = testing_analysis.perform_linear_regression_analysis();
 
     Tensor<type, 1> test(1);
-    test.setValues({0});
+    test.setValues({ type(0)});
 
     assert_true(linear_regression_analysis.size() == 1 , LOG);
     assert_true(linear_regression_analysis[0].targets(0) == test(0) , LOG);
-    assert_true(linear_regression_analysis[0].correlation == 1.0 , LOG);
+    assert_true(linear_regression_analysis[0].correlation == type(1.0) , LOG);
 }
 
 
@@ -435,15 +435,15 @@ void TestingAnalysisTest::test_calculate_confusion()
    actual.resize(4, 3);
    predicted.resize(4, 3);
 
-   actual(0,0) = 1; actual(0,1) = 0; actual(0,2) = 0;
-   actual(1,0) = 0; actual(1,1) = 1; actual(1,2) = 0;
-   actual(2,0) = 0; actual(2,1) = 1; actual(2,2) = 0;
-   actual(3,0) = 0; actual(3,1) = 0; actual(3,2) = 1;
+   actual(0,0) = type(1); actual(0,1) = type(0); actual(0,2) = type(0);
+   actual(1,0) = type(0); actual(1,1) = type(1); actual(1,2) = type(0);
+   actual(2,0) = type(0); actual(2,1) = type(1); actual(2,2) = type(0);
+   actual(3,0) = type(0); actual(3,1) = type(0); actual(3,2) = type(1);
 
-   predicted(0,0) = 1; predicted(0,1) = 0; predicted(0,2) = 0;
-   predicted(1,0) = 0; predicted(1,1) = 1; predicted(1,2) = 0;
-   predicted(2,0) = 0; predicted(2,1) = 1; predicted(2,2) = 0;
-   predicted(3,0) = 0; predicted(3,1) = 0; predicted(3,2) = 1;
+   predicted(0,0) = type(1); predicted(0,1) = type(0); predicted(0,2) = type(0);
+   predicted(1,0) = type(0); predicted(1,1) = type(1); predicted(1,2) = type(0);
+   predicted(2,0) = type(0); predicted(2,1) = type(1); predicted(2,2) = type(0);
+   predicted(3,0) = type(0); predicted(3,1) = type(0); predicted(3,2) = type(1);
 
    Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_multiple_classification(actual, predicted);
 
@@ -469,14 +469,14 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 
    data_set.set(samples_number, inputs_number, targets_number);
 
-   data_set.set_data_constant(0.0);
+   data_set.set_data_constant(type(0));
 
    data_set.set_testing();
 
    // Neural Network
 
    neural_network.set(NeuralNetwork::Classification, {1, 1, 1});
-   neural_network.set_parameters_constant(0.0);
+   neural_network.set_parameters_constant(type(0));
 
    // Testing Analysis
 
@@ -494,18 +494,18 @@ void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
 
     // Test
 
-    type x = 1.5;
-    type y = 2.5;
+    type x = type(1.5);
+    type y = type(2.5);
 
     wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(x, y);
 
-    assert_true(abs(wilcoxon_parameter) <= numeric_limits<type>::min(), LOG);
+    assert_true(abs(wilcoxon_parameter) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
     wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(y ,x);
 
-    assert_true(abs(wilcoxon_parameter - 1) <= numeric_limits<type>::min(), LOG);
+    assert_true(abs(wilcoxon_parameter - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -513,7 +513,7 @@ void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
 
     wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(x, y);
 
-    assert_true(abs(wilcoxon_parameter - 0.5) <= numeric_limits<type>::min(), LOG);
+    assert_true(abs(wilcoxon_parameter - type(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -530,42 +530,42 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     targets.resize(4,1);
 
-    targets(0,0) = 0.0;
-    targets(1,0) = 0.0;
-    targets(2,0) = 1.0;
-    targets(3,0) = 1.0;
+    targets(0,0) = type(0.0);
+    targets(1,0) = type(0.0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(1);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = 0.0;
-    outputs(1,0) = 0.0;
-    outputs(2,0) = 1.0;
-    outputs(3,0) = 1.0;
+    outputs(0,0) = type(0.0);
+    outputs(1,0) = type(0.0);
+    outputs(2,0) = type(1);
+    outputs(3,0) = type(1);
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
     assert_true(roc_curve.dimension(1) == 3, LOG);
     assert_true(roc_curve.dimension(0) == 5, LOG);
 
-    assert_true(roc_curve(0, 0) <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(0, 1) <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(1, 0) <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(1, 1)-1 <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(2, 0) <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(2, 1) - 1.0 <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(3, 0) <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(3, 1) - 1.0 <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(4, 0) - 1.0 <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(4, 1) - 1.0 <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(0, 0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(0, 1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(1, 0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(1, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(2, 0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(2, 1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(3, 0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(3, 1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(4, 0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(4, 1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
     targets.resize(4,1);
 
-    targets(0,0) = 0.0;
-    targets(1,0) = 1.0;
-    targets(2,0) = 1.0;
-    targets(3,0) = 0.0;
+    targets(0,0) = type(0.0);
+    targets(1,0) = type(1);
+    targets(2,0) = type(1);
+    targets(3,0) = type(0.0);
 
     outputs.resize(4,1);
 
@@ -579,16 +579,16 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     assert_true(roc_curve.dimension(1) == 3, LOG);
     assert_true(roc_curve.dimension(0) == 5, LOG);
 
-    assert_true(roc_curve(0, 0) <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(0, 1) <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(1, 0) <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(1, 1) - 0.5 <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(2, 0) - 0.5 <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(2, 1) - 0.5 <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(3, 0) - 1.0 <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(3, 1) - 0.5 <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(4, 0) - 1.0 <= numeric_limits<type>::min(), LOG);
-    assert_true(roc_curve(4, 1) - 1.0 <= numeric_limits<type>::min(), LOG);
+    assert_true(roc_curve(0, 0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(0, 1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(1, 0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(1, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(2, 0) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(2, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(3, 0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(3, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(4, 0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(4, 1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -605,50 +605,50 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     targets.resize(4,1);
 
-    targets(0,0) = 0.0;
-    targets(1,0) = 0.0;
-    targets(2,0) = 1.0;
-    targets(3,0) = 1.0;
+    targets(0,0) = type(0);
+    targets(1,0) = type(0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(1);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = 0.0;
-    outputs(1,0) = 0.0;
-    outputs(2,0) = 1.0;
-    outputs(3,0) = 1.0;
+    outputs(0,0) = type(0);
+    outputs(1,0) = type(0);
+    outputs(2,0) = type(1);
+    outputs(3,0) = type(1);
 
     area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
 
-    assert_true(area_under_curve - 1.0 <= numeric_limits<type>::min(), LOG);
+    assert_true(area_under_curve - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
     targets.resize(4,1);
 
-    targets(0,0) = 0.0;
-    targets(1,0) = 0.0;
-    targets(2,0) = 1.0;
-    targets(3,0) = 1.0;
+    targets(0,0) = type(0);
+    targets(1,0) = type(0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(1);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = 0.0;
-    outputs(1,0) = 1.0;
-    outputs(2,0) = 0.0;
-    outputs(3,0) = 1.0;
+    outputs(0,0) = type(0);
+    outputs(1,0) = type(1);
+    outputs(2,0) = type(0);
+    outputs(3,0) = type(1);
 
     area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
 
-    assert_true(area_under_curve == 0.5, LOG);
+    assert_true(area_under_curve == type(0.5), LOG);
 
     // Test
 
     targets.resize(4,1);
 
-    targets(0,0) = 0.0;
-    targets(1,0) = 0.0;
-    targets(2,0) = 1.0;
-    targets(3,0) = 1.0;
+    targets(0,0) = type(0.0);
+    targets(1,0) = type(0.0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(1);
 
     outputs.resize(4,1);
 
@@ -659,27 +659,27 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
 
-    assert_true(area_under_curve == 0.5, LOG);
+    assert_true(area_under_curve == type(0.5), LOG);
 
     // Test
 
     targets.resize(4,1);
 
-    targets(0,0) = 0.0;
-    targets(1,0) = 0.0;
-    targets(2,0) = 1.0;
-    targets(3,0) = 1.0;
+    targets(0,0) = type(0.0);
+    targets(1,0) = type(0.0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(1);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = 1.0;
-    outputs(1,0) = 1.0;
-    outputs(2,0) = 0.0;
-    outputs(3,0) = 0.0;
+    outputs(0,0) = type(1);
+    outputs(1,0) = type(1);
+    outputs(2,0) = type(0.0);
+    outputs(3,0) = type(0.0);
 
     area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
 
-    assert_true(area_under_curve <= numeric_limits<type>::min(), LOG);
+    assert_true(area_under_curve < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
@@ -697,51 +697,51 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     targets.resize(4,1);
 
-    targets(0,0) = 0.0;
-    targets(1,0) = 0.0;
-    targets(2,0) = 1.0;
-    targets(3,0) = 1.0;
+    targets(0,0) = type(0.0);
+    targets(1,0) = type(0.0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(1);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = 0.0;
-    outputs(1,0) = 0.0;
-    outputs(2,0) = 1.0;
-    outputs(3,0) = 1.0;
+    outputs(0,0) = type(0.0);
+    outputs(1,0) = type(0.0);
+    outputs(2,0) = type(1);
+    outputs(3,0) = type(1);
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(targets, outputs);
 
-    assert_true(optimal_threshold == 1.0, LOG);
+    assert_true(optimal_threshold == type(1.0), LOG);
 
     // Test
 
     targets.resize(4,1);
 
-    targets(0,0) = 0.0;
-    targets(1,0) = 0.0;
-    targets(2,0) = 1.0;
-    targets(3,0) = 1.0;
+    targets(0,0) = type(0.0);
+    targets(1,0) = type(0.0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(1);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = 1.0;
-    outputs(1,0) = 1.0;
-    outputs(2,0) = 0.0;
-    outputs(3,0) = 0.0;
+    outputs(0,0) = type(1);
+    outputs(1,0) = type(1);
+    outputs(2,0) = type(0.0);
+    outputs(3,0) = type(0.0);
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(targets, outputs);
 
-    assert_true(optimal_threshold == 0.0, LOG);
+    assert_true(optimal_threshold == type(0.0), LOG);
 
     // Test
 
     targets.resize(5,1);
 
-    targets(0,0) = 0.0;
-    targets(1,0) = 1.0;
-    targets(2,0) = 0.0;
-    targets(3,0) = 1.0;
-    targets(4,0) = 0.0;
+    targets(0,0) = type(0.0);
+    targets(1,0) = type(1);
+    targets(2,0) = type(0.0);
+    targets(3,0) = type(1);
+    targets(4,0) = type(0.0);
 
     outputs.resize(5,1);
 
@@ -753,7 +753,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(targets, outputs);
 
-    assert_true(optimal_threshold - 0.62 <= numeric_limits<type>::min(), LOG);
+    assert_true(optimal_threshold - type(0.62) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -768,10 +768,10 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
 
     targets.resize(4,1);
 
-    targets(0,0) = 1.0;
-    targets(1,0) = 0.0;
-    targets(2,0) = 1.0;
-    targets(3,0) = 0.0;
+    targets(0,0) = type(1);
+    targets(1,0) = type(0.0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(0.0);
 
     outputs.resize(4,1);
 
@@ -784,10 +784,10 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
 
     assert_true(cumulative_gain.dimension(1) == 2, LOG);
     assert_true(cumulative_gain.dimension(0) == 21, LOG);
-    assert_true(cumulative_gain(0, 0) == 0.0, LOG);
-    assert_true(cumulative_gain(0, 1) == 0.0, LOG);
-    assert_true(cumulative_gain(20, 0) - 1.0 < 1.0e-6, LOG);
-    assert_true(cumulative_gain(20, 1) == 1.0, LOG);
+    assert_true(cumulative_gain(0, 0) == type(0.0), LOG);
+    assert_true(cumulative_gain(0, 1) == type(0.0), LOG);
+    assert_true(cumulative_gain(20, 0) - type(1.0) < type(1.0e-6), LOG);
+    assert_true(cumulative_gain(20, 1) == type(1.0), LOG);
  }
 
 
@@ -806,10 +806,10 @@ void TestingAnalysisTest::test_calculate_lift_chart()
 
     targets.resize(4,1);
 
-    targets(0,0) = 1.0;
-    targets(1,0) = 0.0;
-    targets(2,0) = 1.0;
-    targets(3,0) = 0.0;
+    targets(0,0) = type(1);
+    targets(1,0) = type(0.0);
+    targets(2,0) = type(1);
+    targets(3,0) = type(0.0);
 
     outputs.resize(4,1);
 
@@ -840,16 +840,16 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
 
     targets.resize(10, 1);
 
-    targets(0, 0) = 1.0;
-    targets(1, 0) = 0.0;
-    targets(2, 0) = 1.0;
-    targets(3, 0) = 1.0;
-    targets(4, 0) = 1.0;
-    targets(5, 0) = 1.0;
-    targets(6, 0) = 1.0;
-    targets(7, 0) = 0.0;
-    targets(8, 0) = 1.0;
-    targets(9, 0) = 0.0;
+    targets(0, 0) = type(1);
+    targets(1, 0) = type(0.0);
+    targets(2, 0) = type(1);
+    targets(3, 0) = type(1);
+    targets(4, 0) = type(1);
+    targets(5, 0) = type(1);
+    targets(6, 0) = type(1);
+    targets(7, 0) = type(0.0);
+    targets(8, 0) = type(1);
+    targets(9, 0) = type(0.0);
 
     outputs.resize(10, 1);
 
@@ -884,22 +884,22 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 0.0;
-    targets(1, 0) = 1.0;
-    targets(2, 0) = 0.0;
-    targets(3, 0) = 1.0;
+    targets(0, 0) = type(0.0);
+    targets(1, 0) = type(1);
+    targets(2, 0) = type(0.0);
+    targets(3, 0) = type(1);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 0.0;
-    outputs(1, 0) = 1.0;
-    outputs(2, 0) = 1.0;
-    outputs(3, 0) = 0.0;
+    outputs(0, 0) = type(0.0);
+    outputs(1, 0) = type(1);
+    outputs(2, 0) = type(1);
+    outputs(3, 0) = type(0.0);
 
     Tensor<Index, 1> testing_indices(4);
     testing_indices.setValues({0, 1, 2, 3});
 
-    const type threshold = 0.5;
+    const type threshold = type(0.5);
 
     true_positives_indices = testing_analysis.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
@@ -910,17 +910,17 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 0.0;
-    targets(1, 0) = 0.0;
-    targets(2, 0) = 0.0;
-    targets(3, 0) = 0.0;
+    targets(0, 0) = type(0.0);
+    targets(1, 0) = type(0.0);
+    targets(2, 0) = type(0.0);
+    targets(3, 0) = type(0.0);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 1.0;
-    outputs(1, 0) = 1.0;
-    outputs(2, 0) = 1.0;
-    outputs(3, 0) = 1.0;
+    outputs(0, 0) = type(1);
+    outputs(1, 0) = type(1);
+    outputs(2, 0) = type(1);
+    outputs(3, 0) = type(1);
 
     true_positives_indices = testing_analysis.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
@@ -932,17 +932,17 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 1.0;
-    targets(1, 0) = 1.0;
-    targets(2, 0) = 1.0;
-    targets(3, 0) = 1.0;
+    targets(0, 0) = type(1);
+    targets(1, 0) = type(1);
+    targets(2, 0) = type(1);
+    targets(3, 0) = type(1);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 1.0;
-    outputs(1, 0) = 1.0;
-    outputs(2, 0) = 1.0;
-    outputs(3, 0) = 1.0;
+    outputs(0, 0) = type(1);
+    outputs(1, 0) = type(1);
+    outputs(2, 0) = type(1);
+    outputs(3, 0) = type(1);
 
     true_positives_indices = testing_analysis.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
@@ -967,21 +967,21 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 0.0;
-    targets(1, 0) = 1.0;
-    targets(2, 0) = 0.0;
-    targets(3, 0) = 1.0;
+    targets(0, 0) = type(0.0);
+    targets(1, 0) = type(1);
+    targets(2, 0) = type(0.0);
+    targets(3, 0) = type(1);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 0.0;
-    outputs(1, 0) = 1.0;
-    outputs(2, 0) = 1.0;
-    outputs(3, 0) = 0.0;
+    outputs(0, 0) = type(0.0);
+    outputs(1, 0) = type(1);
+    outputs(2, 0) = type(1);
+    outputs(3, 0) = type(0.0);
 
     Tensor<Index, 1> testing_indices(4);
     testing_indices.setValues({0, 1, 2, 3});
-    const type threshold = 0.5;
+    const type threshold = type(0.5);
 
     false_positives_indices = testing_analysis.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
 
@@ -992,17 +992,17 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 0.0;
-    targets(1, 0) = 0.0;
-    targets(2, 0) = 0.0;
-    targets(3, 0) = 0.0;
+    targets(0, 0) = type(0.0);
+    targets(1, 0) = type(0.0);
+    targets(2, 0) = type(0.0);
+    targets(3, 0) = type(0.0);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 1.0;
-    outputs(1, 0) = 1.0;
-    outputs(2, 0) = 1.0;
-    outputs(3, 0) = 1.0;
+    outputs(0, 0) = type(1);
+    outputs(1, 0) = type(1);
+    outputs(2, 0) = type(1);
+    outputs(3, 0) = type(1);
 
     false_positives_indices = testing_analysis.calculate_false_positive_samples(targets, outputs, testing_indices, threshold);
 
@@ -1016,17 +1016,17 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 1.0;
-    targets(1, 0) = 1.0;
-    targets(2, 0) = 1.0;
-    targets(3, 0) = 1.0;
+    targets(0, 0) = type(1);
+    targets(1, 0) = type(1);
+    targets(2, 0) = type(1);
+    targets(3, 0) = type(1);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 1.0;
-    outputs(1, 0) = 0.0;
-    outputs(2, 0) = 1.0;
-    outputs(3, 0) = 1.0;
+    outputs(0, 0) = type(1);
+    outputs(1, 0) = type(0.0);
+    outputs(2, 0) = type(1);
+    outputs(3, 0) = type(1);
 
     false_positives_indices = testing_analysis.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
 
@@ -1051,21 +1051,21 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 0.0;
-    targets(1, 0) = 1.0;
-    targets(2, 0) = 0.0;
-    targets(3, 0) = 1.0;
+    targets(0, 0) = type(0.0);
+    targets(1, 0) = type(1);
+    targets(2, 0) = type(0.0);
+    targets(3, 0) = type(1);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 0.0;
-    outputs(1, 0) = 1.0;
-    outputs(2, 0) = 1.0;
-    outputs(3, 0) = 0.0;
+    outputs(0, 0) = type(0.0);
+    outputs(1, 0) = type(1);
+    outputs(2, 0) = type(1);
+    outputs(3, 0) = type(0.0);
 
     Tensor<Index, 1> testing_indices(4);
     testing_indices.setValues({0, 1, 2, 3});
-    const type threshold = 0.5;
+    const type threshold = type(0.5);
 
     false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
@@ -1076,17 +1076,17 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 1.0;
-    targets(1, 0) = 1.0;
-    targets(2, 0) = 0.0;
-    targets(3, 0) = 0.0;
+    targets(0, 0) = type(1);
+    targets(1, 0) = type(1);
+    targets(2, 0) = type(0.0);
+    targets(3, 0) = type(0.0);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 1.0;
-    outputs(1, 0) = 1.0;
-    outputs(2, 0) = 0.0;
-    outputs(3, 0) = 0.0;
+    outputs(0, 0) = type(1);
+    outputs(1, 0) = type(1);
+    outputs(2, 0) = type(0.0);
+    outputs(3, 0) = type(0.0);
 
     false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
@@ -1100,17 +1100,17 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 1.0;
-    targets(1, 0) = 1.0;
-    targets(2, 0) = 1.0;
-    targets(3, 0) = 1.0;
+    targets(0, 0) = type(1);
+    targets(1, 0) = type(1);
+    targets(2, 0) = type(1);
+    targets(3, 0) = type(1);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 0.0;
-    outputs(1, 0) = 0.0;
-    outputs(2, 0) = 0.0;
-    outputs(3, 0) = 0.0;
+    outputs(0, 0) = type(0.0);
+    outputs(1, 0) = type(0.0);
+    outputs(2, 0) = type(0.0);
+    outputs(3, 0) = type(0.0);
 
     false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
@@ -1135,21 +1135,21 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 0.0;
-    targets(1, 0) = 0.0;
-    targets(2, 0) = 0.0;
-    targets(3, 0) = 0.0;
+    targets(0, 0) = type(0.0);
+    targets(1, 0) = type(0.0);
+    targets(2, 0) = type(0.0);
+    targets(3, 0) = type(0.0);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 0.0;
-    outputs(1, 0) = 0.0;
-    outputs(2, 0) = 0.0;
-    outputs(3, 0) = 0.0;
+    outputs(0, 0) = type(0.0);
+    outputs(1, 0) = type(0.0);
+    outputs(2, 0) = type(0.0);
+    outputs(3, 0) = type(0.0);
 
     Tensor<Index, 1> testing_indices(4);
     testing_indices.setValues({0, 1, 2, 3});
-    const type threshold = 0.5;
+    const type threshold = type(0.5);
 
     true_negatives_indices = testing_analysis.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
@@ -1163,17 +1163,17 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 1.0;
-    targets(1, 0) = 0.0;
-    targets(2, 0) = 1.0;
-    targets(3, 0) = 0.0;
+    targets(0, 0) = type(1);
+    targets(1, 0) = type(0.0);
+    targets(2, 0) = type(1);
+    targets(3, 0) = type(0.0);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 0.0;
-    outputs(1, 0) = 1.0;
-    outputs(2, 0) = 1.0;
-    outputs(3, 0) = 1.0;
+    outputs(0, 0) = type(0.0);
+    outputs(1, 0) = type(1);
+    outputs(2, 0) = type(1);
+    outputs(3, 0) = type(1);
 
     true_negatives_indices = testing_analysis.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
@@ -1185,17 +1185,17 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = 0.0;
-    targets(1, 0) = 0.0;
-    targets(2, 0) = 1.0;
-    targets(3, 0) = 0.0;
+    targets(0, 0) = type(0.0);
+    targets(1, 0) = type(0.0);
+    targets(2, 0) = type(1);
+    targets(3, 0) = type(0.0);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = 0.0;
-    outputs(1, 0) = 1.0;
-    outputs(2, 0) = 1.0;
-    outputs(3, 0) = 1.0;
+    outputs(0, 0) = type(0.0);
+    outputs(1, 0) = type(1);
+    outputs(2, 0) = type(1);
+    outputs(3, 0) = type(1);
 
     true_negatives_indices = testing_analysis.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
@@ -1219,27 +1219,27 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 
     targets.resize(9, 3);
 
-    targets(0,0) = 1; targets(0,1) = 0; targets(0,2) = 0;
-    targets(1,0) = 0; targets(1,1) = 1; targets(1,2) = 0;
-    targets(2,0) = 0; targets(2,1) = 0; targets(2,2) = 1;
-    targets(3,0) = 1; targets(3,1) = 0; targets(3,2) = 0;
-    targets(4,0) = 0; targets(4,1) = 1; targets(4,2) = 0;
-    targets(5,0) = 0; targets(5,1) = 0; targets(5,2) = 1;
-    targets(6,0) = 1; targets(6,1) = 0; targets(6,2) = 0;
-    targets(7,0) = 0; targets(7,1) = 1; targets(7,2) = 0;
-    targets(8,0) = 0; targets(8,1) = 0; targets(8,2) = 1;
+    targets(0,0) = type(1); targets(0,1) = type(0); targets(0,2) = type(0);
+    targets(1,0) = type(0); targets(1,1) = type(1); targets(1,2) = type(0);
+    targets(2,0) = type(0); targets(2,1) = type(0); targets(2,2) = type(1);
+    targets(3,0) = type(1); targets(3,1) = type(0); targets(3,2) = type(0);
+    targets(4,0) = type(0); targets(4,1) = type(1); targets(4,2) = type(0);
+    targets(5,0) = type(0); targets(5,1) = type(0); targets(5,2) = type(1);
+    targets(6,0) = type(1); targets(6,1) = type(0); targets(6,2) = type(0);
+    targets(7,0) = type(0); targets(7,1) = type(1); targets(7,2) = type(0);
+    targets(8,0) = type(0); targets(8,1) = type(0); targets(8,2) = type(1);
 
     outputs.resize(9, 3);
 
-    outputs(0,0) = 1; outputs(0,1) = 0; outputs(0,2) = 0;
-    outputs(1,0) = 0; outputs(1,1) = 1; outputs(1,2) = 0;
-    outputs(2,0) = 0; outputs(2,1) = 0; outputs(2,2) = 1;
-    outputs(3,0) = 0; outputs(3,1) = 1; outputs(3,2) = 0;
-    outputs(4,0) = 1; outputs(4,1) = 0; outputs(4,2) = 0;
-    outputs(5,0) = 0; outputs(5,1) = 1; outputs(5,2) = 0;
-    outputs(6,0) = 0; outputs(6,1) = 0; outputs(6,2) = 1;
-    outputs(7,0) = 0; outputs(7,0) = 0; outputs(7,2) = 1;
-    outputs(8,0) = 1; outputs(8,1) = 0; outputs(8,2) = 0;
+    outputs(0,0) = type(1); outputs(0,1) = type(0); outputs(0,2) = type(0);
+    outputs(1,0) = type(0); outputs(1,1) = type(1); outputs(1,2) = type(0);
+    outputs(2,0) = type(0); outputs(2,1) = type(0); outputs(2,2) = type(1);
+    outputs(3,0) = type(0); outputs(3,1) = type(1); outputs(3,2) = type(0);
+    outputs(4,0) = type(1); outputs(4,1) = type(0); outputs(4,2) = type(0);
+    outputs(5,0) = type(0); outputs(5,1) = type(1); outputs(5,2) = type(0);
+    outputs(6,0) = type(0); outputs(6,1) = type(0); outputs(6,2) = type(1);
+    outputs(7,0) = type(0); outputs(7,0) = type(0); outputs(7,2) = type(1);
+    outputs(8,0) = type(1); outputs(8,1) = type(0); outputs(8,2) = type(0);
 
     testing_indices.resize(9);
     testing_indices.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8});

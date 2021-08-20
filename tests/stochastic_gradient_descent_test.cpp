@@ -67,11 +67,11 @@ void StochasticGradientDescentTest::test_perform_training()
 
    // Minimum parameters increment norm
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1.0));
 
-   stochastic_gradient_descent.set_loss_goal(0.0);
+   stochastic_gradient_descent.set_loss_goal(type(0.0));
    stochastic_gradient_descent.set_maximum_epochs_number(1000);
-   stochastic_gradient_descent.set_maximum_time(1000.0);
+   stochastic_gradient_descent.set_maximum_time(type(1000.0));
 
    training_results = stochastic_gradient_descent.perform_training();
 
@@ -79,13 +79,13 @@ void StochasticGradientDescentTest::test_perform_training()
 
    // Loss goal
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1.0));
 
-   type training_loss_goal = 0.1;
+   type training_loss_goal = type(0.1);
 
    stochastic_gradient_descent.set_loss_goal(training_loss_goal);
    stochastic_gradient_descent.set_maximum_epochs_number(1000);
-   stochastic_gradient_descent.set_maximum_time(1000.0);
+   stochastic_gradient_descent.set_maximum_time(type(1000.0));
 
    training_results = stochastic_gradient_descent.perform_training();
 
@@ -93,21 +93,21 @@ void StochasticGradientDescentTest::test_perform_training()
 
    // Minimum loss increase
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1));
 
-   stochastic_gradient_descent.set_loss_goal(0.0);
+   stochastic_gradient_descent.set_loss_goal(type(0));
    stochastic_gradient_descent.set_maximum_epochs_number(1000);
-   stochastic_gradient_descent.set_maximum_time(1000.0);
+   stochastic_gradient_descent.set_maximum_time(type(1000.0));
 
    training_results = stochastic_gradient_descent.perform_training();
 
    // Gradient norm goal
 
-   neural_network.set_parameters_constant(-1.0);
+   neural_network.set_parameters_constant(type(-1));
 
-   stochastic_gradient_descent.set_loss_goal(0.0);
+   stochastic_gradient_descent.set_loss_goal(type(0));
    stochastic_gradient_descent.set_maximum_epochs_number(1000);
-   stochastic_gradient_descent.set_maximum_time(1000.0);
+   stochastic_gradient_descent.set_maximum_time(type(1000.0));
 
    training_results = stochastic_gradient_descent.perform_training();
 
