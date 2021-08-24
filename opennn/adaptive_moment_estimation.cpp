@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+ //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   A D A P T I V E   M O M E N T   E S T I M A T I O N
