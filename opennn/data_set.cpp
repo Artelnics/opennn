@@ -103,7 +103,7 @@ DataSet::Column::Column()
 {
     name = "";
     column_use = Input;
-    type = Numeric;
+    type = ColumnType::Numeric;
     categories.resize(0);
     categories_uses.resize(0);
 
@@ -231,23 +231,23 @@ void DataSet::Column::set_type(const string& new_column_type)
 {
     if(new_column_type == "Numeric")
     {
-        type = Numeric;
+        type = ColumnType::Numeric;
     }
     else if(new_column_type == "Binary")
     {
-        type = Binary;
+        type = ColumnType::Binary;
     }
     else if(new_column_type == "Categorical")
     {
-        type = Categorical;
+        type = ColumnType::Categorical;
     }
     else if(new_column_type == "DateTime")
     {
-        type = DateTime;
+        type = ColumnType::DateTime;
     }
     else if(new_column_type == "Constant")
     {
-        type = Constant;
+        type = ColumnType::Constant;
     }
     else
     {
@@ -422,7 +422,7 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
         set_type(new_type);
     }
 
-    if(type == Categorical)
+    if(type == ColumnType::Categorical)
     {
         // Categories
 
@@ -531,19 +531,19 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("Type");
 
-    if(type == Numeric)
+    if(type == ColumnType::Numeric)
     {
         file_stream.PushText("Numeric");
     }
-    else if(type == Binary)
+    else if(type == ColumnType::Binary)
     {
         file_stream.PushText("Binary");
     }
-    else if(type == Categorical)
+    else if(type == ColumnType::Categorical)
     {
         file_stream.PushText("Categorical");
     }
-    else if(type == Constant)
+    else if(type == ColumnType::Constant)
     {
         file_stream.PushText("Constant");
     }
@@ -5281,7 +5281,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Numeric || columns(i).type == Binary)
+        if(columns(i).type == ColumnType::Numeric || columns(i).type == ColumnType::Binary)
         {
             if(columns(i).column_use != UnusedVariable)
             {
@@ -5292,7 +5292,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 
             variable_index++;
         }
-        else if(columns(i).type == Categorical)
+        else if(columns(i).type == ColumnType::Categorical)
         {
             variable_index += columns(i).get_categories_number();
         }
@@ -7698,11 +7698,11 @@ void DataSet::print_columns_types() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Numeric) cout << "Numeric ";
-        else if(columns(i).type == Binary) cout << "Binary ";
-        else if(columns(i).type == Categorical) cout << "Categorical ";
-        else if(columns(i).type == DateTime) cout << "DateTime ";
-        else if(columns(i).type == Constant) cout << "Constant ";
+        if(columns(i).type == ColumnType::Numeric) cout << "Numeric ";
+        else if(columns(i).type == ColumnType::Binary) cout << "Binary ";
+        else if(columns(i).type == ColumnType::Categorical) cout << "Categorical ";
+        else if(columns(i).type == ColumnType::DateTime) cout << "DateTime ";
+        else if(columns(i).type == ColumnType::Constant) cout << "Constant ";
     }
 
     cout << endl;
@@ -10211,16 +10211,16 @@ void DataSet::read_csv_3_simple()
 
             variable_index++;
         }
-        else if(columns(column).type == DateTime)
+        else if(columns(column).type == ColumnType::DateTime)
         {
             columns(column).column_use = UnusedVariable;
             variable_index++;
         }
-        else if(columns(column).type == Constant)
+        else if(columns(column).type == ColumnType::Constant)
         {
             variable_index++;
         }
-        else if(columns(column).type == Binary)
+        else if(columns(column).type == ColumnType::Binary)
         {
             if(columns(column).get_categories_number() == 1)
             {
