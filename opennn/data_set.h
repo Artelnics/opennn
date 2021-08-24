@@ -101,7 +101,7 @@ public:
    /// This enumeration represents the data type of a column
    /// (numeric, binary, categorical or time).
 
-   enum ColumnType{Numeric, Binary, Categorical, DateTime, Constant};
+   enum class ColumnType{Numeric, Binary, Categorical, DateTime, Constant};
 
    // Structs
 
