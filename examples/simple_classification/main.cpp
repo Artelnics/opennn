@@ -33,7 +33,7 @@ int main()
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, {2, 10, 1});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {2, 10, 1});
 
         // Training strategy
 

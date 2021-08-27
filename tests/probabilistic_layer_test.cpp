@@ -262,7 +262,7 @@ void ProbabilisticLayerTest::test_set_default()
 
    probabilistic_layer.set_default();
 
-   assert_true(probabilistic_layer.get_activation_function() == OpenNN::ProbabilisticLayer::Softmax, LOG);
+   assert_true(probabilistic_layer.get_activation_function() == OpenNN::ProbabilisticLayer::ActivationFunction::Softmax, LOG);
    assert_true(abs(probabilistic_layer.get_decision_threshold() - type(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(probabilistic_layer.get_display(), LOG);
 
@@ -270,7 +270,7 @@ void ProbabilisticLayerTest::test_set_default()
 
    probabilistic_layer.set_default();
 
-   assert_true(probabilistic_layer.get_activation_function() == OpenNN::ProbabilisticLayer::Logistic, LOG);
+   assert_true(probabilistic_layer.get_activation_function() == OpenNN::ProbabilisticLayer::ActivationFunction::Logistic, LOG);
 }
 
 
@@ -357,28 +357,28 @@ void ProbabilisticLayerTest::test_write_activation_function()
 
    probabilistic_layer.set(1, 1);
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Binary);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Binary);
    assert_true(probabilistic_layer.write_activation_function() == "Binary", LOG);
 
    // Test
 
    probabilistic_layer.set(1, 1);
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
    assert_true(probabilistic_layer.write_activation_function() == "Logistic", LOG);
 
    // Test
 
    probabilistic_layer.set(1, 2);
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
    assert_true(probabilistic_layer.write_activation_function() == "Competitive", LOG);
 
    // Test
 
    probabilistic_layer.set(1, 2);
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
    assert_true(probabilistic_layer.write_activation_function() == "Softmax", LOG);
 }
 
@@ -391,28 +391,28 @@ void ProbabilisticLayerTest::test_write_activation_function_text()
 
     probabilistic_layer.set(1, 1);
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Binary);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Binary);
     assert_true(probabilistic_layer.write_activation_function_text() == "binary", LOG);
 
     // Test
 
     probabilistic_layer.set(1, 1);
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
     assert_true(probabilistic_layer.write_activation_function_text() == "logistic", LOG);
 
     // Test
 
     probabilistic_layer.set(1, 2);
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
     assert_true(probabilistic_layer.write_activation_function_text() == "competitive", LOG);
 
     // Test
 
     probabilistic_layer.set(1, 2);
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     assert_true(probabilistic_layer.write_activation_function_text() == "softmax", LOG);
 }
 
@@ -421,11 +421,11 @@ void ProbabilisticLayerTest::test_set_activation_function()
 {
    cout << "test_set_activation_function\n";
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
-   assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::Softmax, LOG);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+   assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Softmax, LOG);
 
    probabilistic_layer.set_activation_function("Softmax");
-   assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::Softmax, LOG);
+   assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Softmax, LOG);
 }
 
 
@@ -484,7 +484,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
    combinations.resize(samples_number, neurons_number);
    probabilistic_layer.calculate_combinations(inputs, probabilistic_layer.get_biases(), probabilistic_layer.get_synaptic_weights(), combinations);
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Binary);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Binary);
 
    activations.resize(samples_number, neurons_number);
    probabilistic_layer.calculate_activations(combinations, activations);
@@ -496,7 +496,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
    // Test
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
    probabilistic_layer.calculate_activations(combinations, activations);
 
@@ -579,7 +579,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     activations.resize(1,3);
     activations_derivatives.resize(3,3,1);
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
     assert_true(activations_derivatives.rank() == 3, LOG);
@@ -618,7 +618,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     activations.resize(1,1);
     activations_derivatives.resize(1,1,1);
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
     probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
     assert_true(abs(activations(0,0) - static_cast<type>(0.175)) < static_cast<type>(1e-2), LOG);
@@ -661,7 +661,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     probabilistic_layer.set_synaptic_weights(synaptic_weights);
     probabilistic_layer.set_biases(biases);
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
     outputs = probabilistic_layer.calculate_outputs(inputs);
 
@@ -680,7 +680,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
     // Test 1_2
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
 
     outputs = probabilistic_layer.calculate_outputs(inputs);
 
@@ -710,7 +710,7 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     inputs.resize(1, 2);
     inputs.setConstant(type(1));
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
     outputs = probabilistic_layer.calculate_outputs(inputs);
 
@@ -751,7 +751,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     ProbabilisticLayer probabilistic_layer(2,2);
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
     Tensor<type, 1> parameters(6);
     Tensor<type, 2> inputs(1,2);
@@ -781,7 +781,7 @@ void ProbabilisticLayerTest::test_write_expression()
 
    ProbabilisticLayer probabilistic_layer(2,2);
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
    Tensor<string, 1> inputs_names(2);
    inputs_names.setValues({"Uno_in","Dos_in"});

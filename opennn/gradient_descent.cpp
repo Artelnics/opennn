@@ -305,14 +305,11 @@ void GradientDescent::update_parameters(
         {
             if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
-                back_propagation.parameters(i) = back_propagation.parameters(i);
-
                 optimization_data.parameters_increment(i) = type(0);
             }
             else if(back_propagation.gradient(i) > type(0))
             {
-                back_propagation.parameters(i) -= type(NEXT_AFTER);
-                //        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i) - type(1));
+                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
 
                 optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
@@ -484,7 +481,7 @@ TrainingResults GradientDescent::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = LossGoal;
+            results.stopping_condition = StoppingCondition::LossGoal;
         }
 
         else if(selection_failures >= maximum_selection_failures)
@@ -493,7 +490,7 @@ TrainingResults GradientDescent::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumSelectionErrorIncreases;
+            results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
 
         else if(epoch == maximum_epochs_number)
@@ -502,7 +499,7 @@ TrainingResults GradientDescent::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumEpochsNumber;
+            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
 
         else if(elapsed_time >= maximum_time)
@@ -511,7 +508,7 @@ TrainingResults GradientDescent::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumTime;
+            results.stopping_condition = StoppingCondition::MaximumTime;
         }
 
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
@@ -522,7 +519,7 @@ TrainingResults GradientDescent::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MinimumLossDecrease;
+            results.stopping_condition = StoppingCondition::MinimumLossDecrease;
         }
 
         old_loss = training_back_propagation.loss;

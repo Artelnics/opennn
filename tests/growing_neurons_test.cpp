@@ -84,16 +84,16 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     data_set.set(data);
 
     Tensor<DataSet::VariableUse, 1> uses(2);
-    uses.setValues({DataSet::Input, DataSet::Target});
+    uses.setValues({DataSet::VariableUse::Input, DataSet::VariableUse::Target});
 
     data_set.set_columns_uses(uses);
 
-    neural_network.set(NeuralNetwork::Approximation, {1,3,1});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1,3,1});
     neural_network.set_parameters_constant(type(0));
 
-    training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
 
-    training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
     training_strategy.set_display(false);
 
@@ -106,7 +106,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
 
-    assert_true(neurons_selection_results.stopping_condition == NeuronsSelection::SelectionErrorGoal, LOG);
+    assert_true(neurons_selection_results.stopping_condition == NeuronsSelection::StoppingCondition::SelectionErrorGoal, LOG);
 
     // Test
 
@@ -135,12 +135,12 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     data_set.set(data);
 
-    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
     neural_network.set_parameters_constant(type(0));
 
-    training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
 
-    training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
     training_strategy.set_display(false);
 
@@ -154,7 +154,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
 
-    assert_true(neurons_selection_results.stopping_condition == NeuronsSelection::MaximumEpochs, LOG);
+    assert_true(neurons_selection_results.stopping_condition == NeuronsSelection::StoppingCondition::MaximumEpochs, LOG);
 
 }
 

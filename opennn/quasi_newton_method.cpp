@@ -74,10 +74,10 @@ string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
 {
     switch(inverse_hessian_approximation_method)
     {
-    case DFP:
+    case InverseHessianApproximationMethod::DFP:
         return "DFP";
 
-    case BFGS:
+    case InverseHessianApproximationMethod::BFGS:
         return "BFGS";
     }
 
@@ -172,11 +172,11 @@ void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& n
 {
     if(new_inverse_hessian_approximation_method_name == "DFP")
     {
-        inverse_hessian_approximation_method = DFP;
+        inverse_hessian_approximation_method = InverseHessianApproximationMethod::DFP;
     }
     else if(new_inverse_hessian_approximation_method_name == "BFGS")
     {
-        inverse_hessian_approximation_method = BFGS;
+        inverse_hessian_approximation_method = InverseHessianApproximationMethod::BFGS;
     }
     else
     {
@@ -204,7 +204,7 @@ void QuasiNewtonMethod::set_display(const bool& new_display)
 
 void QuasiNewtonMethod::set_default()
 {
-    inverse_hessian_approximation_method = BFGS;
+    inverse_hessian_approximation_method = InverseHessianApproximationMethod::BFGS;
 
     learning_rate_algorithm.set_default();
 
@@ -308,12 +308,12 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
 {
     switch(inverse_hessian_approximation_method)
     {
-    case DFP:
+    case InverseHessianApproximationMethod::DFP:
         calculate_DFP_inverse_hessian(optimization_data);
 
         return;
 
-    case BFGS:
+    case InverseHessianApproximationMethod::BFGS:
         calculate_BFGS_inverse_hessian(optimization_data);
 
         return;
@@ -551,21 +551,17 @@ void QuasiNewtonMethod::update_parameters(
         {
             if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
-                back_propagation.parameters(i) = back_propagation.parameters(i);
-
                 optimization_data.parameters_increment(i) = type(0);
             }
             else if(back_propagation.gradient(i) > type(0))
             {
-                back_propagation.parameters(i) = -numeric_limits<type>::epsilon();
-                //        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i) - type(1));
+                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
 
                 optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
             else if(back_propagation.gradient(i) < type(0))
             {
-                back_propagation.parameters(i) += -numeric_limits<type>::epsilon();
-                //        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i) + type(1));
+                back_propagation.parameters(i) += numeric_limits<type>::epsilon();
 
                 optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
             }
@@ -740,7 +736,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MinimumLossDecrease;
+            results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease;
         }
 
         old_loss = training_back_propagation.loss;
@@ -751,7 +747,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = LossGoal;
+            results.stopping_condition = OptimizationAlgorithm::StoppingCondition::LossGoal;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
@@ -759,7 +755,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumSelectionErrorIncreases;
+            results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumSelectionErrorIncreases;
         }
         else if(epoch == maximum_epochs_number)
         {
@@ -767,7 +763,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumEpochsNumber;
+            results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumEpochsNumber;
         }
         else if(elapsed_time >= maximum_time)
         {
@@ -775,7 +771,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumTime;
+            results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumTime;
         }
 
         if(stop_training)

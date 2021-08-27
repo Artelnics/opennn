@@ -31,7 +31,7 @@ ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Ind
 
     if(new_neurons_number > 1)
     {
-        activation_function = Softmax;
+        activation_function = ActivationFunction::Softmax;
     }
 }
 
@@ -92,19 +92,19 @@ const ProbabilisticLayer::ActivationFunction& ProbabilisticLayer::get_activation
 
 string ProbabilisticLayer::write_activation_function() const
 {
-    if(activation_function == Binary)
+    if(activation_function == ActivationFunction::Binary)
     {
         return "Binary";
     }
-    else if(activation_function == Logistic)
+    else if(activation_function == ActivationFunction::Logistic)
     {
         return "Logistic";
     }
-    else if(activation_function == Competitive)
+    else if(activation_function == ActivationFunction::Competitive)
     {
         return "Competitive";
     }
-    else if(activation_function == Softmax)
+    else if(activation_function == ActivationFunction::Softmax)
     {
         return "Softmax";
     }
@@ -126,19 +126,19 @@ string ProbabilisticLayer::write_activation_function() const
 
 string ProbabilisticLayer::write_activation_function_text() const
 {
-    if(activation_function == Binary)
+    if(activation_function == ActivationFunction::Binary)
     {
         return "binary";
     }
-    else if(activation_function == Logistic)
+    else if(activation_function == ActivationFunction::Logistic)
     {
         return "logistic";
     }
-    else if(activation_function == Competitive)
+    else if(activation_function == ActivationFunction::Competitive)
     {
         return "competitive";
     }
-    else if(activation_function == Softmax)
+    else if(activation_function == ActivationFunction::Softmax)
     {
         return "softmax";
     }
@@ -375,11 +375,11 @@ void ProbabilisticLayer::set_default()
 
     if(neurons_number == 1)
     {
-        activation_function = Logistic;
+        activation_function = ActivationFunction::Logistic;
     }
     else
     {
-        activation_function = Softmax;
+        activation_function = ActivationFunction::Softmax;
     }
 
     decision_threshold = type(0.5);
@@ -456,19 +456,19 @@ void ProbabilisticLayer::set_activation_function(const string& new_activation_fu
 {
     if(new_activation_function == "Binary")
     {
-        set_activation_function(Binary);
+        set_activation_function(ActivationFunction::Binary);
     }
     else if(new_activation_function == "Logistic")
     {
-        set_activation_function(Logistic);
+        set_activation_function(ActivationFunction::Logistic);
     }
     else if(new_activation_function == "Competitive")
     {
-        set_activation_function(Competitive);
+        set_activation_function(ActivationFunction::Competitive);
     }
     else if(new_activation_function == "Softmax")
     {
-        set_activation_function(Softmax);
+        set_activation_function(ActivationFunction::Softmax);
     }
     else
     {
@@ -618,13 +618,13 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
 
     switch(activation_function)
     {
-    case Binary: binary(combinations, activations); return;
+    case ActivationFunction::Binary: binary(combinations, activations); return;
 
-    case Logistic: logistic(combinations, activations); return;
+    case ActivationFunction::Logistic: logistic(combinations, activations); return;
 
-    case Competitive: competitive(combinations, activations); return;
+    case ActivationFunction::Competitive: competitive(combinations, activations); return;
 
-    case Softmax: softmax(combinations, activations); return;
+    case ActivationFunction::Softmax: softmax(combinations, activations); return;
     }
 
     ostringstream buffer;
@@ -663,9 +663,9 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
 
     switch(activation_function)
     {
-    case Logistic: logistic_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::Logistic: logistic_derivatives(combinations, activations, activations_derivatives); return;
 
-    case Softmax: softmax_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::Softmax: softmax_derivatives(combinations, activations, activations_derivatives); return;
 
     default: return;
     }
@@ -771,7 +771,7 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
     }
     else // Multiple gradient
     {
-        if(activation_function == Softmax)
+        if(activation_function == ActivationFunction::Softmax)
         {
             const Index step = neurons_number*neurons_number;
 
@@ -841,7 +841,7 @@ void ProbabilisticLayer::calculate_squared_errors_Jacobian_lm(const Tensor<type,
 
     probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.setZero();
 
-    if(activation_function == Softmax)
+    if(activation_function == ActivationFunction::Softmax)
     {
         Index parameter_index = 0;
 
@@ -1248,22 +1248,22 @@ string ProbabilisticLayer::write_activations_c() const
     {
         switch(activation_function)
         {
-        case Binary:
+        case ActivationFunction::Binary:
             buffer << "\tactivations[" << i << "] = combinations[" << i << "] < 0.5 ? 0.0 : 1.0;\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "\tactivations[" << i << "] = 1.0/(1.0 + exp(-combinations[" << i << "]));\n";
             break;
 
-        case Competitive:
+        case ActivationFunction::Competitive:
             ///@todo
 
             buffer << "";
 
             break;
 
-        case Softmax:
+        case ActivationFunction::Softmax:
 
             if(i == 0)
             {
@@ -1332,15 +1332,15 @@ string ProbabilisticLayer::write_activations_python() const
     {
         switch(activation_function)
         {
-        case Binary:
+        case ActivationFunction::Binary:
             buffer << "\t\tactivations[" << i << "] = 0.0 if combinations[" << i << "] < 0.5 else 1.0\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "\t\tactivations[" << i << "] = 1.0/(1.0 + np.exp(-combinations[" << i << "]));\n";
             break;
 
-        case Competitive:
+        case ActivationFunction::Competitive:
 
             if(i == 0)
             {
@@ -1357,7 +1357,7 @@ string ProbabilisticLayer::write_activations_python() const
 
             break;
 
-        case Softmax:
+        case ActivationFunction::Softmax:
 
             if(i == 0)
             {
@@ -1423,19 +1423,19 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& outputs_na
     {
         switch(activation_function)
         {
-        case Binary:
+        case ActivationFunction::Binary:
         {
             buffer << "\tif" << "probabilistic_layer_combinations_" << to_string(i) << " < 0.5, " << outputs_names(i) << "= 0.0. Else " << outputs_names(i) << " = 1.0\n";
         }
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
         {
             buffer <<  outputs_names(i) << " = 1.0/(1.0 + exp(-" <<  "probabilistic_layer_combinations_" << to_string(i) << ");\n";
         }
             break;
 
-        case Competitive:
+        case ActivationFunction::Competitive:
             if(i == 0)
             {
                 buffer << "\tfor each probabilistic_layer_combinations_i:"<<endl;
@@ -1451,7 +1451,7 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& outputs_na
 
             break;
 
-        case Softmax:
+        case ActivationFunction::Softmax:
 
             if(i == 0)
             {

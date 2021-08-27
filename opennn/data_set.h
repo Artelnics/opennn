@@ -78,30 +78,30 @@ public:
 
    /// Enumeration of available separators for the data file.
 
-   enum Separator{Space, Tab, Comma, Semicolon};
+   enum class Separator{Space, Tab, Comma, Semicolon};
 
    /// Enumeration of available methods for missing values in the data.
 
-   enum MissingValuesMethod{Unuse, Mean, Median};
+   enum class MissingValuesMethod{Unuse, Mean, Median};
 
    /// Enumeration of the learning tasks.
 
-   enum ProjectType{Approximation, Classification, Forecasting, ImageClassification};
+   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification};
 
    /// This enumeration represents the possible uses of an sample
    /// (training, selection, testing or unused).
 
-   enum SampleUse{Training, Selection, Testing, UnusedSample};
+   enum class SampleUse{Training, Selection, Testing, UnusedSample};
 
    /// This enumeration represents the possible uses of an variable
    /// (input, target, time or unused).
 
-   enum VariableUse{Id, Input, Target, Time, UnusedVariable};
+   enum class VariableUse{Id, Input, Target, Time, UnusedVariable};
 
    /// This enumeration represents the data type of a column
    /// (numeric, binary, categorical or time).
 
-   enum ColumnType{Numeric, Binary, Categorical, DateTime, Constant};
+   enum class ColumnType{Numeric, Binary, Categorical, DateTime, Constant};
 
    // Structs
 
@@ -118,7 +118,7 @@ public:
        Column(const string&,
               const VariableUse&,
               const ColumnType& = ColumnType::Numeric,
-              const Scaler& = MeanStandardDeviation,
+              const Scaler& = Scaler::MeanStandardDeviation,
               const Tensor<string, 1>& = Tensor<string, 1>(),
               const Tensor<VariableUse, 1>& = Tensor<VariableUse, 1>());
 
@@ -771,7 +771,7 @@ private:
 
    /// Separator character.
 
-   Separator separator = Comma;
+   Separator separator = Separator::Comma;
 
    /// Missing values label.
 
@@ -815,7 +815,7 @@ private:
 
    /// Missing values method.
 
-   MissingValuesMethod missing_values_method = Unuse;
+   MissingValuesMethod missing_values_method = MissingValuesMethod::Unuse;
 
    /// Missing values
 

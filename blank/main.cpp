@@ -8,10 +8,14 @@
 
 // System includes
 
-#include "iostream"
-#include <stdio.h>
-#include <vector>
+#include <cstring>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <time.h>
 
+<<<<<<< HEAD
 using namespace std;
 
 int main()
@@ -19,8 +23,88 @@ int main()
     cout << "Hello, OpenNN!" << endl;
 
     return 0;
+=======
+// OpenNN includes
 
+#include "../opennn/opennn.h"
+
+using namespace OpenNN;
+using namespace std;
+using namespace Eigen;
+
+int main()
+{
+    try
+    {
+        cout << "OpenNN. Blank application." << endl;
+
+        srand(static_cast<unsigned>(time(nullptr)));
+
+        DataSet ds("C:/Users/Usuario/Documents/Waste_monthly.csv", ',', true);
+
+
+
+        ds.set_lags_number(2);
+        ds.set_steps_ahead_number(1);
+
+        ds.transform_time_series();
+
+        ds.split_samples_sequential();
+
+        const Index columns_number = ds.get_columns_number();
+
+        ds.set_column_use(columns_number-1, DataSet::VariableUse::UnusedVariable);
+        ds.set_column_use(columns_number-2, DataSet::VariableUse::UnusedVariable);
+        ds.set_column_use(columns_number-3, DataSet::VariableUse::UnusedVariable);
+
+        const Index inputs_number = ds.get_input_variables_number();
+        const Index targets_number = ds.get_target_variables_number();
+
+        const Index neurons_number = 3;
+
+        ScalingLayer sl(inputs_number);
+
+        LongShortTermMemoryLayer lstm(inputs_number, neurons_number);
+        lstm.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::Linear);
+        lstm.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
+        lstm.set_timesteps(2);
+
+        PerceptronLayer pl(neurons_number, targets_number);
+        pl.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+
+        UnscalingLayer ul(inputs_number);
+
+        NeuralNetwork nn;
+
+        nn.add_layer(&sl);
+        nn.add_layer(&lstm);
+        nn.add_layer(&pl);
+        nn.add_layer(&ul);
+
+        TrainingStrategy ts(&nn, &ds);
+
+        ts.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        ts.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+
+        ts.perform_training();
+
+        cout << "outputs: " << endl << nn.calculate_outputs(ds.get_input_data()) << endl;
+
+
+
+        cout << "Good bye!" << endl;
+
+        return 0;
+    }
+    catch(exception& e)
+    {
+        cerr << e.what() << endl;
+>>>>>>> 0eb6daa6fad6f93d30eb560e07894b8a06c88eaf
+
+        return 1;
+    }
 }
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) Artificial Intelligence Techniques SL.

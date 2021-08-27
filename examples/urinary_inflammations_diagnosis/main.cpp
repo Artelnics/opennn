@@ -48,7 +48,7 @@ int main()
 
         const Index hidden_neurons_number = 6;
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 

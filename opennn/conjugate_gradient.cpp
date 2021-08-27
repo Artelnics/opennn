@@ -74,10 +74,10 @@ string ConjugateGradient::write_training_direction_method() const
 {
     switch(training_direction_method)
     {
-    case PR:
+    case TrainingDirectionMethod::PR:
         return "PR";
 
-    case FR:
+    case TrainingDirectionMethod::FR:
         return "FR";
     }
 
@@ -160,12 +160,12 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
 {
     if(new_training_direction_method_name == "PR")
     {
-        training_direction_method = PR;
+        training_direction_method = TrainingDirectionMethod::PR;
 
     }
     else if(new_training_direction_method_name == "FR")
     {
-        training_direction_method = FR;
+        training_direction_method = TrainingDirectionMethod::FR;
     }
     else
     {
@@ -228,7 +228,7 @@ void ConjugateGradient::set_default()
 
     display_period = 10;
 
-    training_direction_method = FR;
+    training_direction_method = TrainingDirectionMethod::FR;
 }
 
 
@@ -698,11 +698,11 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
 
     switch(training_direction_method)
     {
-    case FR:
+    case TrainingDirectionMethod::FR:
         calculate_FR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
 
         return;
-    case PR:
+    case TrainingDirectionMethod::PR:
         calculate_PR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
         return;
     }
@@ -848,7 +848,7 @@ TrainingResults ConjugateGradient::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = LossGoal;
+            results.stopping_condition = StoppingCondition::LossGoal;
         }
 
         if(has_selection && selection_failures >= maximum_selection_failures)
@@ -857,7 +857,7 @@ TrainingResults ConjugateGradient::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumSelectionErrorIncreases;
+            results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
 
         if(epoch == maximum_epochs_number)
@@ -866,7 +866,7 @@ TrainingResults ConjugateGradient::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumEpochsNumber;
+            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
 
         if(elapsed_time >= maximum_time)
@@ -875,7 +875,7 @@ TrainingResults ConjugateGradient::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumTime;
+            results.stopping_condition = StoppingCondition::MaximumTime;
         }
 
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
@@ -886,7 +886,7 @@ TrainingResults ConjugateGradient::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MinimumLossDecrease;
+            results.stopping_condition = StoppingCondition::MinimumLossDecrease;
         }
 
         old_loss = training_back_propagation.loss;
@@ -1395,21 +1395,17 @@ void ConjugateGradient::update_parameters(
         {
             if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
             {
-                back_propagation.parameters(i) = back_propagation.parameters(i);
-
                 optimization_data.parameters_increment(i) = type(0);
             }
             else if(back_propagation.gradient(i) > type(0))
             {
-                back_propagation.parameters(i) -= type(NEXT_AFTER);
-                //        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i) - type(1));
+                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();;
 
                 optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
             else if(back_propagation.gradient(i) < type(0))
             {
-                back_propagation.parameters(i) += type(NEXT_AFTER);
-                //        = nextafter(back_propagation.parameters(i), back_propagation.parameters(i) + type(1));
+                back_propagation.parameters(i) += numeric_limits<type>::epsilon();;
 
                 optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
             }

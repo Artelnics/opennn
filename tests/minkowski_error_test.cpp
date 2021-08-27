@@ -85,7 +85,7 @@ void MinkowskiErrorTest::test_calculate_error()
    input_variables_indices = data_set.get_input_variables_indices();
    target_variables_indices = data_set.get_target_variables_indices();
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
    neural_network.set_parameters_constant(type(0));
 
    batch.set(samples_number, &data_set);
@@ -241,7 +241,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
        input_variables_indices = data_set.get_input_variables_indices();
        target_variables_indices = data_set.get_target_variables_indices();
 
-       neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
+       neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
@@ -283,7 +283,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
        batch.set(samples_number, &data_set);
        batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
-       neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
+       neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
@@ -538,7 +538,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
        input_variables_indices = data_set.get_input_variables_indices();
        target_variables_indices = data_set.get_target_variables_indices();
 
-       neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, outputs_number});
+       neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
@@ -583,7 +583,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 
        batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
-       neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
+       neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
@@ -621,7 +621,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
        input_variables_indices = data_set.get_input_variables_indices();
        target_variables_indices = data_set.get_target_variables_indices();
 
-       neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
+       neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
