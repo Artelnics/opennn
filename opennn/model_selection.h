@@ -54,11 +54,11 @@ public:
 
     /// Enumeration of all the available neurons selection algorithms.
 
-    enum NeuronsSelectionMethod{GROWING_NEURONS};
+    enum class NeuronsSelectionMethod{GROWING_NEURONS};
 
     /// Enumeration of all the available inputs selection algorithms.
 
-    enum InputsSelectionMethod{GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM};
+    enum class InputsSelectionMethod{GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM};
 
     // Get methods
 

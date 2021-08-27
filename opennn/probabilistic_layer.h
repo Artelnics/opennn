@@ -65,7 +65,7 @@ public:
 
    /// Enumeration of available methods for interpreting variables as probabilities.
 
-   enum ActivationFunction{Binary, Logistic, Competitive, Softmax};
+   enum class ActivationFunction{Binary, Logistic, Competitive, Softmax};
 
    // Get methods
 
@@ -214,7 +214,7 @@ protected:
 
    /// Activation function variable.
 
-   ActivationFunction activation_function = Logistic;
+   ActivationFunction activation_function = ActivationFunction::Logistic;
 
    type decision_threshold;
 

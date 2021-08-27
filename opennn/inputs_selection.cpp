@@ -381,25 +381,25 @@ string InputsSelectionResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-    case InputsSelection::MaximumTime:
+    case InputsSelection::StoppingCondition::MaximumTime:
         return "MaximumTime";
 
-    case InputsSelection::SelectionErrorGoal:
+    case InputsSelection::StoppingCondition::SelectionErrorGoal:
         return "SelectionErrorGoal";
 
-    case InputsSelection::MaximumInputs:
+    case InputsSelection::StoppingCondition::MaximumInputs:
         return "MaximumInputs";
 
-    case InputsSelection::MinimumInputs:
+    case InputsSelection::StoppingCondition::MinimumInputs:
         return "MinimumInputs";
 
-    case InputsSelection::MaximumEpochs:
+    case InputsSelection::StoppingCondition::MaximumEpochs:
         return "MaximumEpochs";
 
-    case InputsSelection::MaximumSelectionFailures:
+    case InputsSelection::StoppingCondition::MaximumSelectionFailures:
         return "MaximumSelectionFailures";
 
-    case InputsSelection::CorrelationGoal:
+    case InputsSelection::StoppingCondition::CorrelationGoal:
         return "CorrelationGoal";
     }
 
@@ -478,11 +478,11 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& us
 
     while(i < uses.size())
     {
-        if(uses[i] == DataSet::Input && inputs_number == j)
+        if(uses[i] == DataSet::VariableUse::Input && inputs_number == j)
         {
             break;
         }
-        else if(uses[i] == DataSet::Input)
+        else if(uses[i] == DataSet::VariableUse::Input)
         {
             i++;
             j++;

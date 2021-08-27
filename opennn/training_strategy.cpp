@@ -22,9 +22,9 @@ TrainingStrategy::TrainingStrategy()
 
     neural_network_pointer = nullptr;
 
-    set_loss_method(NORMALIZED_SQUARED_ERROR);
+    set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
 
-    set_optimization_method(QUASI_NEWTON_METHOD);
+    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
 
     LossIndex* loss_index_pointer = get_loss_index_pointer();
 
@@ -45,8 +45,8 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
 
     neural_network_pointer = new_neural_network_pointer;
 
-    set_optimization_method(QUASI_NEWTON_METHOD);
-    set_loss_method(NORMALIZED_SQUARED_ERROR);
+    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
+    set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
 
     set_loss_index_neural_network_pointer(neural_network_pointer);
     set_loss_index_data_set_pointer(data_set_pointer);
@@ -85,17 +85,17 @@ LossIndex* TrainingStrategy::get_loss_index_pointer()
 {
     switch(loss_method)
     {
-        case SUM_SQUARED_ERROR: return &sum_squared_error;
+        case LossMethod::SUM_SQUARED_ERROR: return &sum_squared_error;
 
-        case MEAN_SQUARED_ERROR: return &mean_squared_error;
+        case LossMethod::MEAN_SQUARED_ERROR: return &mean_squared_error;
 
-        case NORMALIZED_SQUARED_ERROR: return &normalized_squared_error;
+        case LossMethod::NORMALIZED_SQUARED_ERROR: return &normalized_squared_error;
 
-        case MINKOWSKI_ERROR: return &Minkowski_error;
+        case LossMethod::MINKOWSKI_ERROR: return &Minkowski_error;
 
-        case WEIGHTED_SQUARED_ERROR: return &weighted_squared_error;
+        case LossMethod::WEIGHTED_SQUARED_ERROR: return &weighted_squared_error;
 
-        case CROSS_ENTROPY_ERROR: return &cross_entropy_error;
+        case LossMethod::CROSS_ENTROPY_ERROR: return &cross_entropy_error;
     }
 
     return nullptr;
@@ -108,17 +108,17 @@ OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
 {
     switch(optimization_method)
     {
-        case GRADIENT_DESCENT: return &gradient_descent;
+    case OptimizationMethod::GRADIENT_DESCENT: return &gradient_descent;
 
-        case CONJUGATE_GRADIENT: return &conjugate_gradient;
+        case OptimizationMethod::CONJUGATE_GRADIENT: return &conjugate_gradient;
 
-        case STOCHASTIC_GRADIENT_DESCENT: return &stochastic_gradient_descent;
+        case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT: return &stochastic_gradient_descent;
 
-        case ADAPTIVE_MOMENT_ESTIMATION: return &adaptive_moment_estimation;
+        case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION: return &adaptive_moment_estimation;
 
-        case QUASI_NEWTON_METHOD: return &quasi_Newton_method;
+        case OptimizationMethod::QUASI_NEWTON_METHOD: return &quasi_Newton_method;
 
-        case LEVENBERG_MARQUARDT_ALGORITHM: return &Levenberg_Marquardt_algorithm;
+        case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM: return &Levenberg_Marquardt_algorithm;
     }
 
     return nullptr;
@@ -274,22 +274,22 @@ string TrainingStrategy::write_loss_method() const
 {
     switch(loss_method)
     {
-    case SUM_SQUARED_ERROR:
+    case LossMethod::SUM_SQUARED_ERROR:
         return "SUM_SQUARED_ERROR";
 
-    case MEAN_SQUARED_ERROR:
+    case LossMethod::MEAN_SQUARED_ERROR:
         return "MEAN_SQUARED_ERROR";
 
-    case NORMALIZED_SQUARED_ERROR:
+    case LossMethod::NORMALIZED_SQUARED_ERROR:
         return "NORMALIZED_SQUARED_ERROR";
 
-    case MINKOWSKI_ERROR:
+    case LossMethod::MINKOWSKI_ERROR:
         return "MINKOWSKI_ERROR";
 
-    case WEIGHTED_SQUARED_ERROR:
+    case LossMethod::WEIGHTED_SQUARED_ERROR:
         return "WEIGHTED_SQUARED_ERROR";
 
-    case CROSS_ENTROPY_ERROR:
+    case LossMethod::CROSS_ENTROPY_ERROR:
         return "CROSS_ENTROPY_ERROR";
     }
 
@@ -302,27 +302,27 @@ string TrainingStrategy::write_loss_method() const
 
 string TrainingStrategy::write_optimization_method() const
 {
-    if(optimization_method == GRADIENT_DESCENT)
+    if(optimization_method == OptimizationMethod::GRADIENT_DESCENT)
     {
         return "GRADIENT_DESCENT";
     }
-    else if(optimization_method == CONJUGATE_GRADIENT)
+    else if(optimization_method == OptimizationMethod::CONJUGATE_GRADIENT)
     {
         return "CONJUGATE_GRADIENT";
     }
-    else if(optimization_method == QUASI_NEWTON_METHOD)
+    else if(optimization_method == OptimizationMethod::QUASI_NEWTON_METHOD)
     {
         return "QUASI_NEWTON_METHOD";
     }
-    else if(optimization_method == LEVENBERG_MARQUARDT_ALGORITHM)
+    else if(optimization_method == OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM)
     {
         return "LEVENBERG_MARQUARDT_ALGORITHM";
     }
-    else if(optimization_method == STOCHASTIC_GRADIENT_DESCENT)
+    else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
     {
         return "STOCHASTIC_GRADIENT_DESCENT";
     }
-    else if(optimization_method == ADAPTIVE_MOMENT_ESTIMATION)
+    else if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
     {
         return "ADAPTIVE_MOMENT_ESTIMATION";
     }
@@ -344,27 +344,27 @@ string TrainingStrategy::write_optimization_method() const
 
 string TrainingStrategy::write_optimization_method_text() const
 {
-    if(optimization_method == GRADIENT_DESCENT)
+    if(optimization_method == OptimizationMethod::GRADIENT_DESCENT)
     {
         return "gradient descent";
     }
-    else if(optimization_method == CONJUGATE_GRADIENT)
+    else if(optimization_method == OptimizationMethod::CONJUGATE_GRADIENT)
     {
         return "conjugate gradient";
     }
-    else if(optimization_method == QUASI_NEWTON_METHOD)
+    else if(optimization_method == OptimizationMethod::QUASI_NEWTON_METHOD)
     {
         return "quasi-Newton method";
     }
-    else if(optimization_method == LEVENBERG_MARQUARDT_ALGORITHM)
+    else if(optimization_method == OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM)
     {
         return "Levenberg-Marquardt algorithm";
     }
-    else if(optimization_method == STOCHASTIC_GRADIENT_DESCENT)
+    else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
     {
         return "stochastic gradient descent";
     }
-    else if(optimization_method == ADAPTIVE_MOMENT_ESTIMATION)
+    else if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
     {
         return "adaptive moment estimation";
     }
@@ -387,22 +387,22 @@ string TrainingStrategy::write_loss_method_text() const
 {
     switch(loss_method)
     {
-    case SUM_SQUARED_ERROR:
+    case LossMethod::SUM_SQUARED_ERROR:
         return "Sum squared error";
 
-    case MEAN_SQUARED_ERROR:
+    case LossMethod::MEAN_SQUARED_ERROR:
         return "Mean squared error";
 
-    case NORMALIZED_SQUARED_ERROR:
+    case LossMethod::NORMALIZED_SQUARED_ERROR:
         return "Normalized squared error";
 
-    case MINKOWSKI_ERROR:
+    case LossMethod::MINKOWSKI_ERROR:
         return "Minkowski error";
 
-    case WEIGHTED_SQUARED_ERROR:
+    case LossMethod::WEIGHTED_SQUARED_ERROR:
         return "Weighted squared error";
 
-    case CROSS_ENTROPY_ERROR:
+    case LossMethod::CROSS_ENTROPY_ERROR:
         return "Cross entropy error";
     }
 
@@ -425,7 +425,7 @@ const bool& TrainingStrategy::get_display() const
 
 void TrainingStrategy::set()
 {
-    set_optimization_method(QUASI_NEWTON_METHOD);
+    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
 
     set_default();
 }
@@ -447,27 +447,27 @@ void TrainingStrategy::set_loss_method(const string& new_loss_method)
 {
     if(new_loss_method == "SUM_SQUARED_ERROR")
     {
-        set_loss_method(SUM_SQUARED_ERROR);
+        set_loss_method(LossMethod::SUM_SQUARED_ERROR);
     }
     else if(new_loss_method == "MEAN_SQUARED_ERROR")
     {
-        set_loss_method(MEAN_SQUARED_ERROR);
+        set_loss_method(LossMethod::MEAN_SQUARED_ERROR);
     }
     else if(new_loss_method == "NORMALIZED_SQUARED_ERROR")
     {
-        set_loss_method(NORMALIZED_SQUARED_ERROR);
+        set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
     }
     else if(new_loss_method == "MINKOWSKI_ERROR")
     {
-        set_loss_method(MINKOWSKI_ERROR);
+        set_loss_method(LossMethod::MINKOWSKI_ERROR);
     }
     else if(new_loss_method == "WEIGHTED_SQUARED_ERROR")
     {
-        set_loss_method(WEIGHTED_SQUARED_ERROR);
+        set_loss_method(LossMethod::WEIGHTED_SQUARED_ERROR);
     }
     else if(new_loss_method == "CROSS_ENTROPY_ERROR")
     {
-        set_loss_method(CROSS_ENTROPY_ERROR);
+        set_loss_method(LossMethod::CROSS_ENTROPY_ERROR);
     }
     else
     {
@@ -510,27 +510,27 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
 {
     if(new_optimization_method == "GRADIENT_DESCENT")
     {
-        set_optimization_method(GRADIENT_DESCENT);
+        set_optimization_method(OptimizationMethod::GRADIENT_DESCENT);
     }
     else if(new_optimization_method == "CONJUGATE_GRADIENT")
     {
-        set_optimization_method(CONJUGATE_GRADIENT);
+        set_optimization_method(OptimizationMethod::CONJUGATE_GRADIENT);
     }
     else if(new_optimization_method == "QUASI_NEWTON_METHOD")
     {
-        set_optimization_method(QUASI_NEWTON_METHOD);
+        set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
     }
     else if(new_optimization_method == "LEVENBERG_MARQUARDT_ALGORITHM")
     {
-        set_optimization_method(LEVENBERG_MARQUARDT_ALGORITHM);
+        set_optimization_method(OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
     }
     else if(new_optimization_method == "STOCHASTIC_GRADIENT_DESCENT")
     {
-        set_optimization_method(STOCHASTIC_GRADIENT_DESCENT);
+        set_optimization_method(OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
     }
     else if(new_optimization_method == "ADAPTIVE_MOMENT_ESTIMATION")
     {
-        set_optimization_method(ADAPTIVE_MOMENT_ESTIMATION);
+        set_optimization_method(OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
     }
     else
     {
@@ -736,21 +736,21 @@ TrainingResults TrainingStrategy::perform_training()
 
     switch(optimization_method)
     {
-    case GRADIENT_DESCENT:
+    case OptimizationMethod::GRADIENT_DESCENT:
     {
         gradient_descent.set_display(display);
 
         return gradient_descent.perform_training();
     }
 
-    case CONJUGATE_GRADIENT:
+    case OptimizationMethod::CONJUGATE_GRADIENT:
     {
         conjugate_gradient.set_display(display);
 
         return conjugate_gradient.perform_training();
     }
 
-    case QUASI_NEWTON_METHOD:
+    case OptimizationMethod::QUASI_NEWTON_METHOD:
     {
         quasi_Newton_method.set_display(display);
 
@@ -758,22 +758,21 @@ TrainingResults TrainingStrategy::perform_training()
 
     }
 
-    case LEVENBERG_MARQUARDT_ALGORITHM:
+    case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
     {
         Levenberg_Marquardt_algorithm.set_display(display);
 
         return Levenberg_Marquardt_algorithm.perform_training();
     }
 
-    case STOCHASTIC_GRADIENT_DESCENT:
+    case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
     {
         stochastic_gradient_descent.set_display(display);
 
         return stochastic_gradient_descent.perform_training();
-
     }
 
-    case ADAPTIVE_MOMENT_ESTIMATION:
+    case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
     {
         adaptive_moment_estimation.set_display(display);
 
@@ -876,12 +875,12 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     switch(loss_method)
     {
-    case MEAN_SQUARED_ERROR : mean_squared_error.write_regularization_XML(file_stream); break;
-    case NORMALIZED_SQUARED_ERROR : normalized_squared_error.write_regularization_XML(file_stream); break;
-    case MINKOWSKI_ERROR : Minkowski_error.write_regularization_XML(file_stream); break;
-    case CROSS_ENTROPY_ERROR : cross_entropy_error.write_regularization_XML(file_stream); break;
-    case WEIGHTED_SQUARED_ERROR : weighted_squared_error.write_regularization_XML(file_stream); break;
-    case SUM_SQUARED_ERROR : sum_squared_error.write_regularization_XML(file_stream); break;
+    case LossMethod::MEAN_SQUARED_ERROR : mean_squared_error.write_regularization_XML(file_stream); break;
+    case LossMethod::NORMALIZED_SQUARED_ERROR : normalized_squared_error.write_regularization_XML(file_stream); break;
+    case LossMethod::MINKOWSKI_ERROR : Minkowski_error.write_regularization_XML(file_stream); break;
+    case LossMethod::CROSS_ENTROPY_ERROR : cross_entropy_error.write_regularization_XML(file_stream); break;
+    case LossMethod::WEIGHTED_SQUARED_ERROR : weighted_squared_error.write_regularization_XML(file_stream); break;
+    case LossMethod::SUM_SQUARED_ERROR : sum_squared_error.write_regularization_XML(file_stream); break;
     }
 
     file_stream.CloseElement();

@@ -51,7 +51,7 @@ public:
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum StoppingCondition{MinimumLossDecrease, LossGoal,
+    enum class StoppingCondition{MinimumLossDecrease, LossGoal,
                            MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
 
    // Get methods
@@ -254,8 +254,7 @@ struct TrainingResults
 
     /// Stopping condition of the algorithm.
 
-    OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::
-        MaximumTime;
+    OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumTime;
 
     /// Writes final results of the training.
 

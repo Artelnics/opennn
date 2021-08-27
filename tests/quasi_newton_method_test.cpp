@@ -44,11 +44,11 @@ void QuasiNewtonMethodTest::test_get_inverse_hessian_approximation_method()
 {
    cout << "test_get_inverse_hessian_approximation_method\n";
 
-   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
-   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::DFP, LOG);
+   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::DFP);
+   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::InverseHessianApproximationMethod::DFP, LOG);
 
-   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::BFGS);
-   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::BFGS, LOG);
+   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::BFGS);
+   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::InverseHessianApproximationMethod::BFGS, LOG);
 }
 
 
@@ -56,8 +56,8 @@ void QuasiNewtonMethodTest::test_set_inverse_hessian_approximation_method()
 {
    cout << "test_set_training_direction_method\n";
 
-   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::BFGS);
-   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::BFGS, LOG);
+   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::BFGS);
+   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::InverseHessianApproximationMethod::BFGS, LOG);
 }
 
 
@@ -76,7 +76,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
    data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
    // Test
 
@@ -100,7 +100,7 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation()
 
    Index neurons_number;
 /*
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
    sum_squared_error.set_regularization_method(LossIndex::L2);
 
@@ -142,9 +142,9 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
    data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
-   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
+   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::DFP);
 
    neural_network.set_parameters_constant(type(1));
 
@@ -152,7 +152,7 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 
 //   assert_true(inverse_hessian_approximation == inverse_hessian, LOG);
 
-   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
+   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::DFP);
 
    neural_network.set_parameters_constant(type(1));
 
@@ -182,7 +182,7 @@ void QuasiNewtonMethodTest::test_perform_training()
 /*
    data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_random();
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
    quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
 
     // Test

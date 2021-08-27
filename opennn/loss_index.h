@@ -63,7 +63,7 @@ public:
 
    /// Enumeration of available regularization methods.
 
-   enum RegularizationMethod{L1, L2, NoRegularization};
+   enum class RegularizationMethod{L1, L2, NoRegularization};
 
    /// Returns a pointer to the neural network object associated to the error term.
 
@@ -259,7 +259,7 @@ protected:
 
    /// Pointer to a regularization method object.
 
-   RegularizationMethod regularization_method = L2;
+   RegularizationMethod regularization_method = RegularizationMethod::L2;
 
    /// Regularization weight value.
 
@@ -358,9 +358,9 @@ struct LossIndexBackPropagation
 
     NeuralNetworkBackPropagation neural_network;
 
-    type error;
+    type error = type(0);
 
-    type loss;
+    type loss = type(0);
 
     Tensor<type, 2> errors;
 
@@ -459,8 +459,8 @@ struct LossIndexBackPropagationLM
 
     Index batch_samples_number = 0;
 
-    type error;
-    type loss;
+    type error = type(0);
+    type loss = type(0);
 
     Tensor<type, 1> parameters;
 

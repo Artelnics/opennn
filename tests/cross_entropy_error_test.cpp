@@ -54,7 +54,7 @@ void CrossEntropyErrorTest::test_calculate_error_binary_classification()
     batch.set(samples_number, &data_set);
     batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    neural_network.set(NeuralNetwork::Classification, {1, 1});
+    neural_network.set(NeuralNetwork::ProjectType::Classification, {1, 1});
     neural_network.set_parameters_constant(type(1));
 
     forward_propagation.set(1, &neural_network);
@@ -114,7 +114,7 @@ void CrossEntropyErrorTest::test_calculate_error_multiple_classification()
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
-    neural_network.set(NeuralNetwork::Classification, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, targets_number});
     neural_network.set_parameters_constant(type(0));
 
     batch.set(samples_number, &data_set);
@@ -143,7 +143,7 @@ void CrossEntropyErrorTest::test_calculate_error_multiple_classification()
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
-    neural_network.set(NeuralNetwork::Classification, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, targets_number});
     neural_network.set_parameters_constant(type(0));
 
     batch.set(samples_number, &data_set);
@@ -212,7 +212,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient_binary_classification(
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
-    neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
 
     neural_network.set_parameters_random();
 
@@ -336,7 +336,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient_long_short_term_memory
 
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::Forecasting, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, neurons_number, outputs_number});
 
     long_short_term_memory_layer_pointer->set(inputs_number, neurons_number);
     neural_network.add_layer(long_short_term_memory_layer_pointer);

@@ -58,7 +58,7 @@ public:
 
    /// Enumeration of the available training operators for obtaining the approximation to the inverse hessian.
 
-   enum InverseHessianApproximationMethod{DFP, BFGS};
+   enum class InverseHessianApproximationMethod{DFP, BFGS};
 
    // Constructors
 
@@ -81,8 +81,6 @@ public:
    const Index& get_epochs_number() const;
 
    // Stopping criteria
-
-
 
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;

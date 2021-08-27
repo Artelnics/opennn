@@ -102,12 +102,12 @@ const bool& DataSet::get_display() const
 DataSet::Column::Column()
 {
     name = "";
-    column_use = Input;
-    type = Numeric;
+    column_use = VariableUse::Input;
+    type = ColumnType::Numeric;
     categories.resize(0);
     categories_uses.resize(0);
 
-    scaler = MeanStandardDeviation;
+    scaler = Scaler::MeanStandardDeviation;
 }
 
 
@@ -144,23 +144,23 @@ void DataSet::Column::set_scaler(const string& new_scaler)
 {
     if(new_scaler == "NoScaling")
     {
-        set_scaler(NoScaling);
+        set_scaler(Scaler::NoScaling);
     }
     else if(new_scaler == "MinimumMaximum")
     {
-        set_scaler(MinimumMaximum);
+        set_scaler(Scaler::MinimumMaximum);
     }
     else if(new_scaler == "MeanStandardDeviation")
     {
-        set_scaler(MeanStandardDeviation);
+        set_scaler(Scaler::MeanStandardDeviation);
     }
     else if(new_scaler == "StandardDeviation")
     {
-        set_scaler(StandardDeviation);
+        set_scaler(Scaler::StandardDeviation);
     }
     else if(new_scaler == "Logarithm")
     {
-        set_scaler(Logarithm);
+        set_scaler(Scaler::Logarithm);
     }
     else
     {
@@ -197,19 +197,19 @@ void DataSet::Column::set_use(const string& new_column_use)
 {
     if(new_column_use == "Input")
     {
-        set_use(Input);
+        set_use(VariableUse::Input);
     }
     else if(new_column_use == "Target")
     {
-        set_use(Target);
+        set_use(VariableUse::Target);
     }
     else if(new_column_use == "Time")
     {
-        set_use(Time);
+        set_use(VariableUse::Time);
     }
     else if(new_column_use == "Unused")
     {
-        set_use(UnusedVariable);
+        set_use(VariableUse::UnusedVariable);
     }
     else
     {
@@ -231,23 +231,23 @@ void DataSet::Column::set_type(const string& new_column_type)
 {
     if(new_column_type == "Numeric")
     {
-        type = Numeric;
+        type = ColumnType::Numeric;
     }
     else if(new_column_type == "Binary")
     {
-        type = Binary;
+        type = ColumnType::Binary;
     }
     else if(new_column_type == "Categorical")
     {
-        type = Categorical;
+        type = ColumnType::Categorical;
     }
     else if(new_column_type == "DateTime")
     {
-        type = DateTime;
+        type = ColumnType::DateTime;
     }
     else if(new_column_type == "Constant")
     {
-        type = Constant;
+        type = ColumnType::Constant;
     }
     else
     {
@@ -301,20 +301,20 @@ void DataSet::Column::set_categories_uses(const Tensor<string, 1>& new_categorie
     {
         if(new_categories_uses(i) == "Input")
         {
-            categories_uses(i) = Input;
+            categories_uses(i) = VariableUse::Input;
         }
         else if(new_categories_uses(i) == "Target")
         {
-            categories_uses(i) = Target;
+            categories_uses(i) = VariableUse::Target;
         }
         else if(new_categories_uses(i) == "Time")
         {
-            categories_uses(i) = Time;
+            categories_uses(i) = VariableUse::Time;
         }
         else if(new_categories_uses(i) == "Unused"
                 || new_categories_uses(i) == "UnusedVariable")
         {
-            categories_uses(i) = UnusedVariable;
+            categories_uses(i) = VariableUse::UnusedVariable;
         }
         else
         {
@@ -422,7 +422,7 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
         set_type(new_type);
     }
 
-    if(type == Categorical)
+    if(type == ColumnType::Categorical)
     {
         // Categories
 
@@ -481,23 +481,23 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("Scaler");
 
-    if(scaler == NoScaling)
+    if(scaler == Scaler::NoScaling)
     {
         file_stream.PushText("NoScaling");
     }
-    else if(scaler == MinimumMaximum)
+    else if(scaler == Scaler::MinimumMaximum)
     {
         file_stream.PushText("MinimumMaximum");
     }
-    else if(scaler == MeanStandardDeviation)
+    else if(scaler == Scaler::MeanStandardDeviation)
     {
         file_stream.PushText("MeanStandardDeviation");
     }
-    else if(scaler == StandardDeviation)
+    else if(scaler == Scaler::StandardDeviation)
     {
         file_stream.PushText("StandardDeviation");
     }
-    else if(scaler == Logarithm)
+    else if(scaler == Scaler::Logarithm)
     {
         file_stream.PushText("Logarithm");
     }
@@ -508,15 +508,15 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("ColumnUse");
 
-    if(column_use == Input)
+    if(column_use == VariableUse::Input)
     {
         file_stream.PushText("Input");
     }
-    else if(column_use == Target)
+    else if(column_use == VariableUse::Target)
     {
         file_stream.PushText("Target");
     }
-    else if(column_use == UnusedVariable)
+    else if(column_use == VariableUse::UnusedVariable)
     {
         file_stream.PushText("Unused");
     }
@@ -531,19 +531,19 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("Type");
 
-    if(type == Numeric)
+    if(type == ColumnType::Numeric)
     {
         file_stream.PushText("Numeric");
     }
-    else if(type == Binary)
+    else if(type == ColumnType::Binary)
     {
         file_stream.PushText("Binary");
     }
-    else if(type == Categorical)
+    else if(type == ColumnType::Categorical)
     {
         file_stream.PushText("Categorical");
     }
-    else if(type == Constant)
+    else if(type == ColumnType::Constant)
     {
         file_stream.PushText("Constant");
     }
@@ -554,7 +554,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    if(type == Categorical || type == Binary)
+    if(type == ColumnType::Categorical || type == ColumnType::Binary)
     {
         if(categories.size() == 0) return;
 
@@ -580,15 +580,15 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < categories_uses.size(); i++)
         {
-            if(categories_uses(i) == Input)
+            if(categories_uses(i) == VariableUse::Input)
             {
                 file_stream.PushText("Input");
             }
-            else if(categories_uses(i) == Target)
+            else if(categories_uses(i) == VariableUse::Target)
             {
                 file_stream.PushText("Target");
             }
-            else if(categories_uses(i) == Time)
+            else if(categories_uses(i) == VariableUse::Time)
             {
                 file_stream.PushText("Time");
             }
@@ -616,34 +616,34 @@ void DataSet::Column::print() const
 
     switch (column_use)
     {
-    case Input:
+    case VariableUse::Input:
     {
         cout << "Input" << endl;
     }
         break;
 
-    case Target:
+    case VariableUse::Target:
     {
         cout << "Target" << endl;
 
     }
         break;
 
-    case UnusedVariable:
+    case VariableUse::UnusedVariable:
     {
         cout << "Unused" << endl;
 
     }
         break;
 
-    case Time:
+    case VariableUse::Time:
     {
         cout << "Time" << endl;
 
     }
         break;
 
-    case Id:
+    case VariableUse::Id:
     {
         cout << "Id" << endl;
     }
@@ -654,13 +654,13 @@ void DataSet::Column::print() const
 
     switch (type)
     {
-    case Numeric:
+    case ColumnType::Numeric:
     {
         cout << "Numeric" << endl;
     }
         break;
 
-    case Binary:
+    case ColumnType::Binary:
     {
         cout << "Binary" << endl;
 
@@ -668,7 +668,7 @@ void DataSet::Column::print() const
     }
         break;
 
-    case Categorical:
+    case ColumnType::Categorical:
     {
         cout << "Categorical" << endl;
 
@@ -676,14 +676,14 @@ void DataSet::Column::print() const
     }
         break;
 
-    case DateTime:
+    case ColumnType::DateTime:
     {
         cout << "DateTime" << endl;
 
     }
         break;
 
-    case Constant:
+    case ColumnType::Constant:
     {
         cout << "Constant" << endl;
     }
@@ -694,23 +694,23 @@ void DataSet::Column::print() const
 
     switch (scaler)
     {
-    case NoScaling:
+    case Scaler::NoScaling:
         cout << "NoScaling" << endl;
         break;
 
-    case MinimumMaximum:
+    case Scaler::MinimumMaximum:
         cout << "MinimumMaximum" << endl;
         break;
 
-    case MeanStandardDeviation:
+    case Scaler::MeanStandardDeviation:
         cout << "MeanStandardDeviation" << endl;
         break;
 
-    case StandardDeviation:
+    case Scaler::StandardDeviation:
         cout << "StandardDeviation" << endl;
         break;
 
-    case Logarithm:
+    case Scaler::Logarithm:
         cout << "Logarithm" << endl;
         break;
     }
@@ -719,7 +719,7 @@ void DataSet::Column::print() const
 
 Index DataSet::Column::get_variables_number() const
 {
-    if(type == Categorical)
+    if(type == ColumnType::Categorical)
     {
         return categories.size();
     }
@@ -746,7 +746,7 @@ Index DataSet::Column::get_used_categories_number() const
 
     for(Index i = 0; i < categories.size(); i++)
     {
-        if(categories_uses(i) != UnusedVariable) used_categories_number++;
+        if(categories_uses(i) != VariableUse::UnusedVariable) used_categories_number++;
     }
 
     return used_categories_number;
@@ -759,12 +759,12 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 {
     Tensor<string, 1> used_variables_names;
 
-    if(type != Categorical && column_use != UnusedVariable)
+    if(type != ColumnType::Categorical && column_use != VariableUse::UnusedVariable)
     {
         used_variables_names.resize(1);
         used_variables_names.setConstant(name);
     }
-    else if(type == Categorical)
+    else if(type == ColumnType::Categorical)
     {
         used_variables_names.resize(get_used_categories_number());
 
@@ -772,7 +772,7 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
         for(Index i = 0; i < categories.size(); i++)
         {
-            if(categories_uses(i) != UnusedVariable)
+            if(categories_uses(i) != VariableUse::UnusedVariable)
             {
                 used_variables_names(category_index) = categories(i);
 
@@ -817,12 +817,12 @@ void DataSet::transform_time_series_columns()
     {
         column_index = i%columns_number;
 
-        if(time_series_columns(column_index).type == DateTime) continue;
+        if(time_series_columns(column_index).type == ColumnType::DateTime) continue;
 
         if(i < lags_number*columns_number)
         {
             new_columns(new_column_index).name = columns(column_index).name + "_lag_" + to_string(lag_index);
-            new_columns(new_column_index).set_use(Input);
+            new_columns(new_column_index).set_use(VariableUse::Input);
 
             new_columns(new_column_index).type = columns(column_index).type;
             new_columns(new_column_index).categories = columns(column_index).categories;
@@ -837,17 +837,17 @@ void DataSet::transform_time_series_columns()
             new_columns(new_column_index).type = columns(column_index).type;
             new_columns(new_column_index).categories = columns(column_index).categories;
 
-            if(new_columns(new_column_index).type == Constant)
+            if(new_columns(new_column_index).type == ColumnType::Constant)
             {
-                new_columns(new_column_index).set_use(UnusedVariable);
+                new_columns(new_column_index).set_use(VariableUse::UnusedVariable);
                 new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
-                new_columns(new_column_index).categories_uses.setConstant(UnusedVariable);
+                new_columns(new_column_index).categories_uses.setConstant(VariableUse::UnusedVariable);
             }
             else
             {
-                new_columns(new_column_index).set_use(Target);
+                new_columns(new_column_index).set_use(VariableUse::Target);
                 new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
-                new_columns(new_column_index).categories_uses.setConstant(Target);
+                new_columns(new_column_index).categories_uses.setConstant(VariableUse::Target);
             }
 
             new_column_index++;
@@ -885,7 +885,7 @@ void DataSet::transform_time_series_data()
 
     for(Index j = 0; j < old_variables_number; j++)
     {
-        if(columns(get_column_index(j)).type == DateTime)
+        if(columns(get_column_index(j)).type == ColumnType::DateTime)
         {
             index++;
             continue;
@@ -909,7 +909,7 @@ void DataSet::transform_time_series_data()
 
 bool DataSet::is_sample_used(const Index& index) const
 {
-    if(samples_uses(index) == UnusedSample)
+    if(samples_uses(index) == SampleUse::UnusedSample)
     {
         return false;
     }
@@ -925,7 +925,7 @@ bool DataSet::is_sample_used(const Index& index) const
 
 bool DataSet::is_sample_unused(const Index& index) const
 {
-    if(samples_uses(index) == UnusedSample)
+    if(samples_uses(index) == SampleUse::UnusedSample)
     {
         return true;
     }
@@ -948,15 +948,15 @@ Tensor<Index, 1> DataSet::get_samples_uses_numbers() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) == Training)
+        if(samples_uses(i) == SampleUse::Training)
         {
             count(0)++;
         }
-        else if(samples_uses(i) == Selection)
+        else if(samples_uses(i) == SampleUse::Selection)
         {
             count(1)++;
         }
-        else if(samples_uses(i) == Testing)
+        else if(samples_uses(i) == SampleUse::Testing)
         {
             count(2)++;
         }
@@ -1015,21 +1015,21 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Numeric)
+        if(columns(i).type == ColumnType::Numeric)
         {
             if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
             else sample_string += to_string(double(data(sample_index, variable_index)));
 
             variable_index++;
         }
-        else if(columns(i).type == Binary)
+        else if(columns(i).type == ColumnType::Binary)
         {
             if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
             else sample_string += columns(i).categories(static_cast<Index>(data(sample_index, variable_index)));
 
             variable_index++;
         }
-        else if(columns(i).type == DateTime)
+        else if(columns(i).type == ColumnType::DateTime)
         {
             // @todo do something
 
@@ -1038,7 +1038,7 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
 
             variable_index++;
         }
-        else if(columns(i).type == Categorical)
+        else if(columns(i).type == ColumnType::Categorical)
         {
             if(isnan(data(sample_index, variable_index)))
             {
@@ -1082,7 +1082,7 @@ Tensor<Index, 1> DataSet::get_training_samples_indices() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) == Training)
+        if(samples_uses(i) == SampleUse::Training)
         {
             training_indices(count) = i;
             count++;
@@ -1107,7 +1107,7 @@ Tensor<Index, 1> DataSet::get_selection_samples_indices() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) == Selection)
+        if(samples_uses(i) == SampleUse::Selection)
         {
             selection_indices(count) = i;
             count++;
@@ -1132,7 +1132,7 @@ Tensor<Index, 1> DataSet::get_testing_samples_indices() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) == Testing)
+        if(samples_uses(i) == SampleUse::Testing)
         {
             testing_indices(count) = i;
             count++;
@@ -1157,7 +1157,7 @@ Tensor<Index, 1> DataSet::get_used_samples_indices() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) != UnusedSample)
+        if(samples_uses(i) != SampleUse::UnusedSample)
         {
             used_indices(index) = i;
             index++;
@@ -1182,7 +1182,7 @@ Tensor<Index, 1> DataSet::get_unused_samples_indices() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) == UnusedSample)
+        if(samples_uses(i) == SampleUse::UnusedSample)
         {
             unused_indices(count) = i;
             count++;
@@ -1387,7 +1387,7 @@ Index DataSet::get_training_samples_number() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) == Training)
+        if(samples_uses(i) == SampleUse::Training)
         {
             training_samples_number++;
         }
@@ -1407,7 +1407,7 @@ Index DataSet::get_selection_samples_number() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) == Selection)
+        if(samples_uses(i) == SampleUse::Selection)
         {
             selection_samples_number++;
         }
@@ -1427,7 +1427,7 @@ Index DataSet::get_testing_samples_number() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) == Testing)
+        if(samples_uses(i) == SampleUse::Testing)
         {
             testing_samples_number++;
         }
@@ -1460,7 +1460,7 @@ Index DataSet::get_unused_samples_number() const
 
     for(Index i = 0; i < samples_number; i++)
     {
-        if(samples_uses(i) == UnusedSample)
+        if(samples_uses(i) == SampleUse::UnusedSample)
         {
             unused_samples_number++;
         }
@@ -1478,7 +1478,7 @@ void DataSet::set_training()
 
     for(Index i = 0; i < samples_number; i++)
     {
-        samples_uses(i) = Training;
+        samples_uses(i) = SampleUse::Training;
     }
 }
 
@@ -1491,7 +1491,7 @@ void DataSet::set_selection()
 
     for(Index i = 0; i < samples_number; i++)
     {
-        samples_uses(i) = Selection;
+        samples_uses(i) = SampleUse::Selection;
     }
 }
 
@@ -1504,7 +1504,7 @@ void DataSet::set_testing()
 
     for(Index i = 0; i < samples_number; i++)
     {
-        samples_uses(i) = Testing;
+        samples_uses(i) = SampleUse::Testing;
     }
 }
 
@@ -1520,7 +1520,7 @@ void DataSet::set_training(const Tensor<Index, 1>& indices)
     {
         index = indices(i);
 
-        samples_uses(index) = Training;
+        samples_uses(index) = SampleUse::Training;
     }
 }
 
@@ -1536,7 +1536,7 @@ void DataSet::set_selection(const Tensor<Index, 1>& indices)
     {
         index = indices(i);
 
-        samples_uses(index) = Selection;
+        samples_uses(index) = SampleUse::Selection;
     }
 }
 
@@ -1552,7 +1552,7 @@ void DataSet::set_testing(const Tensor<Index, 1>& indices)
     {
         index = indices(i);
 
-        samples_uses(index) = Testing;
+        samples_uses(index) = SampleUse::Testing;
     }
 }
 
@@ -1565,7 +1565,7 @@ void DataSet::set_samples_unused()
 
     for(Index i = 0; i < samples_number; i++)
     {
-        samples_uses(i) = UnusedSample;
+        samples_uses(i) = SampleUse::UnusedSample;
     }
 }
 
@@ -1579,7 +1579,7 @@ void DataSet::set_samples_unused(const Tensor<Index, 1>& indices)
     {
         const Index index = indices(i);
 
-        samples_uses(index) = UnusedSample;
+        samples_uses(index) = SampleUse::UnusedSample;
     }
 }
 
@@ -1603,19 +1603,19 @@ void DataSet::set_sample_use(const Index& index, const string& new_use)
 {
     if(new_use == "Training")
     {
-        samples_uses(index) = Training;
+        samples_uses(index) = SampleUse::Training;
     }
     else if(new_use == "Selection")
     {
-        samples_uses(index) = Selection;
+        samples_uses(index) = SampleUse::Selection;
     }
     else if(new_use == "Testing")
     {
-        samples_uses(index) = Testing;
+        samples_uses(index) = SampleUse::Testing;
     }
     else if(new_use == "Unused")
     {
-        samples_uses(index) = UnusedSample;
+        samples_uses(index) = SampleUse::UnusedSample;
     }
     else
     {
@@ -1692,19 +1692,19 @@ void DataSet::set_samples_uses(const Tensor<string, 1>& new_uses)
     {
         if(new_uses(i).compare("Training") == 0 || new_uses(i).compare("0") == 0)
         {
-            samples_uses(i) = Training;
+            samples_uses(i) = SampleUse::Training;
         }
         else if(new_uses(i).compare("Selection") == 0 || new_uses(i).compare("1") == 0)
         {
-            samples_uses(i) = Selection;
+            samples_uses(i) = SampleUse::Selection;
         }
         else if(new_uses(i).compare("Testing") == 0 || new_uses(i).compare("2") == 0)
         {
-            samples_uses(i) = Testing;
+            samples_uses(i) = SampleUse::Testing;
         }
         else if(new_uses(i).compare("Unused") == 0 || new_uses(i).compare("3") == 0)
         {
-            samples_uses(i) = UnusedSample;
+            samples_uses(i) = SampleUse::UnusedSample;
         }
         else
         {
@@ -1767,7 +1767,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     for(Index i = 0; i < samples_uses.size(); i++)
     {
-        if(samples_uses(i) == UnusedSample) count ++;
+        if(samples_uses(i) == SampleUse::UnusedSample) count ++;
     }
 
     Index i = 0;
@@ -1781,9 +1781,9 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     {
         index = indices(i);
 
-        if(samples_uses(index) != UnusedSample)
+        if(samples_uses(index) != SampleUse::UnusedSample)
         {
-            samples_uses(index)= Training;
+            samples_uses(index)= SampleUse::Training;
             count_training++;
         }
 
@@ -1798,9 +1798,9 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     {
         index = indices(i);
 
-        if(samples_uses(index) != UnusedSample)
+        if(samples_uses(index) != SampleUse::UnusedSample)
         {
-            samples_uses(index) = Selection;
+            samples_uses(index) = SampleUse::Selection;
             count_selection++;
         }
 
@@ -1815,9 +1815,9 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     {
         index = indices(i);
 
-        if(samples_uses(index) != UnusedSample)
+        if(samples_uses(index) != SampleUse::UnusedSample)
         {
-            samples_uses(index) = Testing;
+            samples_uses(index) = SampleUse::Testing;
             count_testing++;
         }
 
@@ -1868,9 +1868,9 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 
     while(count_training != training_samples_number)
     {
-        if(samples_uses(i) != UnusedSample)
+        if(samples_uses(i) != SampleUse::UnusedSample)
         {
-            samples_uses(i) = Training;
+            samples_uses(i) = SampleUse::Training;
             count_training++;
         }
 
@@ -1883,9 +1883,9 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 
     while(count_selection != selection_samples_number)
     {
-        if(samples_uses(i) != UnusedSample)
+        if(samples_uses(i) != SampleUse::UnusedSample)
         {
-            samples_uses(i) = Selection;
+            samples_uses(i) = SampleUse::Selection;
             count_selection++;
         }
 
@@ -1898,9 +1898,9 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 
     while(count_testing != testing_samples_number)
     {
-        if(samples_uses(i) != UnusedSample)
+        if(samples_uses(i) != SampleUse::UnusedSample)
         {
-            samples_uses(i) = Testing;
+            samples_uses(i) = SampleUse::Testing;
             count_testing++;
         }
 
@@ -1931,7 +1931,7 @@ void DataSet::set_default_columns_uses()
 
     else if(columns_number == 1)
     {
-        columns(0).set_use(UnusedVariable);
+        columns(0).set_use(VariableUse::UnusedVariable);
     }
 
     else
@@ -1940,15 +1940,15 @@ void DataSet::set_default_columns_uses()
 
         for(Index i = columns.size()-1; i >= 0; i--)
         {
-            if(columns(i).type == Constant || columns(i).type == DateTime)
+            if(columns(i).type == ColumnType::Constant || columns(i).type == ColumnType::DateTime)
             {
-                columns(i).set_use(UnusedVariable);
+                columns(i).set_use(VariableUse::UnusedVariable);
                 continue;
             }
 
             if(!target)
             {
-                columns(i).set_use(Target);
+                columns(i).set_use(VariableUse::Target);
 
                 target = true;
 
@@ -2034,7 +2034,7 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             for(Index i = 0; i < (columns(i).categories_uses).size(); i++)
             {
@@ -2081,7 +2081,7 @@ string DataSet::get_variable_name(const Index& variable_index) const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             for(Index j = 0; j < columns(i).get_categories_number(); j++)
             {
@@ -2125,7 +2125,7 @@ Tensor<string, 1> DataSet::get_variables_names() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             for(Index j = 0; j < columns(i).categories.size(); j++)
             {
@@ -2158,7 +2158,7 @@ Tensor<string, 1> DataSet::get_time_series_variables_names() const
 
     for(Index i = 0; i < time_series_columns.size(); i++)
     {
-        if(time_series_columns(i).type == Categorical)
+        if(time_series_columns(i).type == ColumnType::Categorical)
         {
             for(Index j = 0; j < time_series_columns(i).categories.size(); j++)
             {
@@ -2278,7 +2278,7 @@ Tensor<Index, 1> DataSet::get_input_columns_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).column_use == Input)
+        if(columns(i).column_use == VariableUse::Input)
         {
             input_columns_indices(index) = i;
             index++;
@@ -2299,7 +2299,7 @@ Tensor<Index, 1> DataSet::get_input_time_series_columns_indices() const
 
     for(Index i = 0; i < time_series_columns.size(); i++)
     {
-        if(time_series_columns(i).column_use == Input)
+        if(time_series_columns(i).column_use == VariableUse::Input)
         {
             input_columns_indices(index) = i;
             index++;
@@ -2322,7 +2322,7 @@ Tensor<Index, 1> DataSet::get_target_columns_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).column_use == Target)
+        if(columns(i).column_use == VariableUse::Target)
         {
             target_columns_indices(index) = i;
             index++;
@@ -2343,7 +2343,7 @@ Tensor<Index, 1> DataSet::get_target_time_series_columns_indices() const
 
     for(Index i = 0; i < time_series_columns.size(); i++)
     {
-        if(time_series_columns(i).column_use == Target)
+        if(time_series_columns(i).column_use == VariableUse::Target)
         {
             target_columns_indices(index) = i;
             index++;
@@ -2367,7 +2367,7 @@ Tensor<Index, 1> DataSet::get_unused_columns_indices() const
     for(Index i = 0; i < unused_columns_number; i++)
     {
 
-        if(columns(i).column_use == UnusedVariable)
+        if(columns(i).column_use == VariableUse::UnusedVariable)
         {
             unused_columns_indices(index) = i;
             index++;
@@ -2392,9 +2392,9 @@ Tensor<Index, 1> DataSet::get_used_columns_indices() const
 
     for(Index i = 0; i < variables_number; i++)
     {
-        if(columns(i).column_use  == Input
-                || columns(i).column_use  == Target
-                || columns(i).column_use  == Time)
+        if(columns(i).column_use  == VariableUse::Input
+                || columns(i).column_use  == VariableUse::Target
+                || columns(i).column_use  == VariableUse::Time)
         {
             used_indices(index) = i;
             index++;
@@ -2512,7 +2512,7 @@ Tensor<string, 1> DataSet::get_input_columns_names() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).column_use == Input)
+        if(columns(i).column_use == VariableUse::Input)
         {
             input_columns_names(index) = columns(i).name;
             index++;
@@ -2535,7 +2535,7 @@ Tensor<string, 1> DataSet::get_target_columns_names() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).column_use == Target)
+        if(columns(i).column_use == VariableUse::Target)
         {
             target_columns_names(index) = columns(i).name;
             index++;
@@ -2559,7 +2559,7 @@ Tensor<string, 1> DataSet::get_used_columns_names() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).column_use != UnusedVariable)
+        if(columns(i).column_use != VariableUse::UnusedVariable)
         {
             names(index) = columns(i).name;
             index++;
@@ -2578,7 +2578,7 @@ Index DataSet::get_input_columns_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).column_use == Input)
+        if(columns(i).column_use == VariableUse::Input)
         {
             input_columns_number++;
         }
@@ -2594,7 +2594,7 @@ Index DataSet::get_input_time_series_columns_number() const
 
     for(Index i = 0; i < time_series_columns.size(); i++)
     {
-        if(time_series_columns(i).column_use == Input)
+        if(time_series_columns(i).column_use == VariableUse::Input)
         {
             input_columns_number++;
         }
@@ -2612,7 +2612,7 @@ Index DataSet::get_target_columns_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).column_use == Target)
+        if(columns(i).column_use == VariableUse::Target)
         {
             target_columns_number++;
         }
@@ -2628,7 +2628,7 @@ Index DataSet::get_target_time_series_columns_number() const
 
     for(Index i = 0; i < time_series_columns.size(); i++)
     {
-        if(time_series_columns(i).column_use == Target)
+        if(time_series_columns(i).column_use == VariableUse::Target)
         {
             target_columns_number++;
         }
@@ -2646,7 +2646,7 @@ Index DataSet::get_time_columns_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).column_use == Time)
+        if(columns(i).column_use == VariableUse::Time)
         {
             time_columns_number++;
         }
@@ -2664,7 +2664,7 @@ Index DataSet::get_unused_columns_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).column_use == UnusedVariable)
+        if(columns(i).column_use == VariableUse::UnusedVariable)
         {
             unused_columns_number++;
         }
@@ -2682,7 +2682,7 @@ Index DataSet::get_used_columns_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).column_use != UnusedVariable)
+        if(columns(i).column_use != VariableUse::UnusedVariable)
         {
             used_columns_number++;
         }
@@ -2723,7 +2723,7 @@ Tensor<DataSet::Column, 1> DataSet::get_input_columns() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).column_use == Input)
+        if(columns(i).column_use == VariableUse::Input)
         {
             input_columns(input_index) = columns(i);
             input_index++;
@@ -2744,7 +2744,7 @@ Tensor<bool, 1> DataSet::get_input_columns_binary() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).column_use == Input)
+        if(columns(i).column_use == VariableUse::Input)
             input_columns_binary(i) = true;
         else
             input_columns_binary(i) = false;
@@ -2765,7 +2765,7 @@ Tensor<DataSet::Column, 1> DataSet::get_target_columns() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).column_use == Target)
+        if(columns(i).column_use == VariableUse::Target)
         {
             target_columns(target_index) = columns(i);
             target_index++;
@@ -2817,7 +2817,7 @@ Index DataSet::get_variables_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             variables_number += columns(i).categories.size();
         }
@@ -2838,7 +2838,7 @@ Index DataSet::get_time_series_variables_number() const
 
     for(Index i = 0; i < time_series_columns.size(); i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             variables_number += time_series_columns(i).categories.size();
         }
@@ -2862,14 +2862,14 @@ Index DataSet::get_input_variables_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             for(Index j = 0; j < columns(i).categories_uses.size(); j++)
             {
-                if(columns(i).categories_uses(j) == Input) inputs_number++;
+                if(columns(i).categories_uses(j) == VariableUse::Input) inputs_number++;
             }
         }
-        else if(columns(i).column_use == Input)
+        else if(columns(i).column_use == VariableUse::Input)
         {
             inputs_number++;
         }
@@ -2887,15 +2887,15 @@ Index DataSet::get_target_variables_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             for(Index j = 0; j < columns(i).categories_uses.size(); j++)
             {
-                if(columns(i).categories_uses(j) == Target) targets_number++;
+                if(columns(i).categories_uses(j) == VariableUse::Target) targets_number++;
             }
 
         }
-        else if(columns(i).column_use == Target)
+        else if(columns(i).column_use == VariableUse::Target)
         {
             targets_number++;
         }
@@ -2913,15 +2913,15 @@ Index DataSet::get_unused_variables_number() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             for(Index j = 0; j < columns(i).categories_uses.size(); j++)
             {
-                if(columns(i).categories_uses(j) == UnusedVariable) unused_number++;
+                if(columns(i).categories_uses(j) == VariableUse::UnusedVariable) unused_number++;
             }
 
         }
-        else if(columns(i).column_use == UnusedVariable)
+        else if(columns(i).column_use == VariableUse::UnusedVariable)
         {
             unused_number++;
         }
@@ -2966,13 +2966,13 @@ Tensor<Index, 1> DataSet::get_unused_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             const Index current_categories_number = columns(i).get_categories_number();
 
             for(Index j = 0; j < current_categories_number; j++)
             {
-                if(columns(i).categories_uses(j) == UnusedVariable)
+                if(columns(i).categories_uses(j) == VariableUse::UnusedVariable)
                 {
                     unused_indices(unused_index) = unused_variable_index;
                     unused_index++;
@@ -2981,7 +2981,7 @@ Tensor<Index, 1> DataSet::get_unused_variables_indices() const
                 unused_variable_index++;
             }
         }
-        else if(columns(i).column_use == UnusedVariable)
+        else if(columns(i).column_use == VariableUse::UnusedVariable)
         {
             unused_indices(unused_index) = i;
             unused_index++;
@@ -3010,13 +3010,13 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             const Index current_categories_number = columns(i).get_categories_number();
 
             for(Index j = 0; j < current_categories_number; j++)
             {
-                if(columns(i).categories_uses(j) != UnusedVariable)
+                if(columns(i).categories_uses(j) != VariableUse::UnusedVariable)
                 {
                     used_indices(used_index) = used_variable_index;
                     used_index++;
@@ -3025,7 +3025,7 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
                 used_variable_index++;
             }
         }
-        else if(columns(i).column_use != UnusedVariable)
+        else if(columns(i).column_use != VariableUse::UnusedVariable)
         {
             used_indices(used_index) = used_variable_index;
             used_index++;
@@ -3058,13 +3058,13 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
     for(Index i = 0; i < columns.size(); i++)
     {
 
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             const Index current_categories_number = columns(i).get_categories_number();
 
             for(Index j = 0; j < current_categories_number; j++)
             {
-                if(columns(i).categories_uses(j) == Input)
+                if(columns(i).categories_uses(j) == VariableUse::Input)
                 {
                     input_variables_indices(input_index) = input_variable_index;
                     input_index++;
@@ -3073,7 +3073,7 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
                 input_variable_index++;
             }
         }
-        else if(columns(i).column_use == Input) // Binary, numeric
+        else if(columns(i).column_use == VariableUse::Input) // Binary, numeric
         {
             input_variables_indices(input_index) = input_variable_index;
             input_index++;
@@ -3104,13 +3104,13 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
 
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             const Index current_categories_number = columns(i).get_categories_number();
 
             for(Index j = 0; j < current_categories_number; j++)
             {
-                if(columns(i).categories_uses(j) == Target)
+                if(columns(i).categories_uses(j) == VariableUse::Target)
                 {
                     target_variables_indices(target_index) = target_variable_index;
                     target_index++;
@@ -3119,7 +3119,7 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
                 target_variable_index++;
             }
         }
-        else if(columns(i).column_use == Target) // Binary, numeric
+        else if(columns(i).column_use == VariableUse::Target) // Binary, numeric
         {
             target_variables_indices(target_index) = target_variable_index;
             target_index++;
@@ -3203,7 +3203,7 @@ void DataSet::set_columns_unused()
 
     for(Index i = 0; i < columns_number; i++)
     {
-        set_column_use(i, UnusedVariable);
+        set_column_use(i, VariableUse::UnusedVariable);
     }
 }
 
@@ -3214,12 +3214,12 @@ void DataSet::set_input_target_columns(const Tensor<Index, 1>& input_columns, co
 
     for(Index i = 0; i < input_columns.size(); i++)
     {
-        set_column_use(input_columns(i), Input);
+        set_column_use(input_columns(i), VariableUse::Input);
     }
 
     for(Index i = 0; i < target_columns.size(); i++)
     {
-        set_column_use(target_columns(i), Target);
+        set_column_use(target_columns(i), VariableUse::Target);
     }
 }
 
@@ -3232,7 +3232,7 @@ void DataSet::set_input_columns_unused()
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).column_use == DataSet::Input) set_column_use(i, UnusedVariable);
+        if(columns(i).column_use == DataSet::VariableUse::Input) set_column_use(i, VariableUse::UnusedVariable);
     }
 }
 
@@ -3242,8 +3242,8 @@ void DataSet::set_input_columns(const Tensor<Index, 1>& input_columns_indices, c
 {
     for(Index i = 0; i < input_columns_indices.size(); i++)
     {                
-        if(input_columns_use(i)) set_column_use(input_columns_indices(i), Input);
-        else set_column_use(input_columns_indices(i), UnusedVariable);
+        if(input_columns_use(i)) set_column_use(input_columns_indices(i), VariableUse::Input);
+        else set_column_use(input_columns_indices(i), VariableUse::UnusedVariable);
     }
 }
 
@@ -3256,7 +3256,7 @@ void DataSet::set_column_use(const Index& index, const VariableUse& new_use)
 {
     columns(index).column_use = new_use;
 
-    if(columns(index).type == Categorical)
+    if(columns(index).type == ColumnType::Categorical)
     {
         columns(index).set_categories_uses(new_use);
     }
@@ -3317,7 +3317,7 @@ void DataSet::set_variable_name(const Index& variable_index, const string& new_v
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             for(Index j = 0; j < columns(i).get_categories_number(); j++)
             {
@@ -3379,7 +3379,7 @@ void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             for(Index j = 0; j < columns(i).get_categories_number(); j++)
             {
@@ -3429,9 +3429,9 @@ void DataSet::set_input()
 {
     for(Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == Constant) continue;
+        if(columns(i).type == ColumnType::Constant) continue;
 
-        columns(i).set_use(Input);
+        columns(i).set_use(VariableUse::Input);
     }
 }
 
@@ -3442,7 +3442,7 @@ void DataSet::set_target()
 {
     for(Index i = 0; i < columns.size(); i++)
     {
-        columns(i).set_use(Target);
+        columns(i).set_use(VariableUse::Target);
     }
 }
 
@@ -3453,7 +3453,7 @@ void DataSet::set_variables_unused()
 {
     for(Index i = 0; i < columns.size(); i++)
     {
-        columns(i).set_use(UnusedVariable);
+        columns(i).set_use(VariableUse::UnusedVariable);
     }
 }
 
@@ -3520,7 +3520,7 @@ void DataSet::set_binary_simple_columns()
 
     for(Index column_index = 0; column_index < columns.size(); column_index++)
     {
-        if(columns(column_index).type == Numeric)
+        if(columns(column_index).type == ColumnType::Numeric)
         {
             Tensor<type, 1> values(3);
             values.setRandom();
@@ -3554,7 +3554,7 @@ void DataSet::set_binary_simple_columns()
 
             if(is_binary)
             {
-                columns(column_index).type = Binary;
+                columns(column_index).type = ColumnType::Binary;
                 scale_minimum_maximum_binary(data, values(0), values(1), column_index);
                 columns(column_index).categories.resize(2);
 
@@ -3582,7 +3582,7 @@ void DataSet::set_binary_simple_columns()
 
             variable_index++;
         }
-        else if(columns(column_index).type == Categorical)
+        else if(columns(column_index).type == ColumnType::Categorical)
         {
             variable_index += columns(column_index).get_categories_number();
         }
@@ -3721,16 +3721,16 @@ char DataSet::get_separator_char() const
 {
     switch(separator)
     {
-    case Space:
+    case Separator::Space:
         return ' ';
 
-    case Tab:
+    case Separator::Tab:
         return '\t';
 
-    case Comma:
+    case Separator::Comma:
         return ',';
 
-    case Semicolon:
+    case Separator::Semicolon:
         return ';';
     }
 
@@ -3744,16 +3744,16 @@ string DataSet::get_separator_string() const
 {
     switch(separator)
     {
-    case Space:
+    case Separator::Space:
         return "Space";
 
-    case Tab:
+    case Separator::Tab:
         return "Tab";
 
-    case Comma:
+    case Separator::Comma:
         return "Comma";
 
-    case Semicolon:
+    case Separator::Semicolon:
         return "Semicolon";
     }
 
@@ -3797,7 +3797,7 @@ Index DataSet::get_time_series_time_column_index() const
 {
     for(Index i = 0; i < time_series_columns.size(); i++)
     {
-        if(time_series_columns(i).type == DateTime) return i;
+        if(time_series_columns(i).type == ColumnType::DateTime) return i;
     }
 
     return static_cast<Index>(NAN);
@@ -3811,23 +3811,23 @@ Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_met
 {
     if(scaling_unscaling_method == "NoScaling")
     {
-        return NoScaling;
+        return Scaler::NoScaling;
     }
     else if(scaling_unscaling_method == "MinimumMaximum")
     {
-        return MinimumMaximum;
+        return Scaler::MinimumMaximum;
     }
     else if(scaling_unscaling_method == "Logarithmic")
     {
-        return Logarithm;
+        return Scaler::Logarithm;
     }
     else if(scaling_unscaling_method == "MeanStandardDeviation")
     {
-        return MeanStandardDeviation;
+        return Scaler::MeanStandardDeviation;
     }
     else if(scaling_unscaling_method == "StandardDeviation")
     {
-        return StandardDeviation;
+        return Scaler::StandardDeviation;
     }
     else
     {
@@ -4168,7 +4168,7 @@ Index DataSet::get_column_index(const Index& variable_index) const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             total_variables_number += columns(i).get_categories_number();
         }
@@ -4200,7 +4200,7 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& column_index) const
 
     for(Index i = 0; i < column_index; i++)
     {
-        if(columns(i).type == Categorical)
+        if(columns(i).type == ColumnType::Categorical)
         {
             index += columns(i).categories.size();
         }
@@ -4210,7 +4210,7 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& column_index) const
         }
     }
 
-    if(columns(column_index).type == Categorical)
+    if(columns(column_index).type == ColumnType::Categorical)
     {
         Tensor<Index, 1> variable_indices(columns(column_index).categories.size());
 
@@ -4240,7 +4240,7 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
     Index columns_number = 1;
     const Index rows_number = data.dimension(0);
 
-    if(columns(column_index).type == Categorical)
+    if(columns(column_index).type == ColumnType::Categorical)
     {
         columns_number = columns(column_index).get_categories_number();
     }
@@ -4261,7 +4261,7 @@ Tensor<type, 2> DataSet::get_time_series_column_data(const Index& column_index) 
 
     const Index rows_number = time_series_data.dimension(0);
 
-    if(time_series_columns(column_index).type == Categorical)
+    if(time_series_columns(column_index).type == ColumnType::Categorical)
     {
         columns_number = time_series_columns(column_index).get_categories_number();
     }
@@ -4630,13 +4630,13 @@ void DataSet::set(const Index& new_samples_number, const Index& new_variables_nu
     for(Index index = 0; index < new_variables_number-1; index++)
     {
         columns(index).name = "column_" + to_string(index+1);
-        columns(index).column_use = Input;
-        columns(index).type = Numeric;
+        columns(index).column_use = VariableUse::Input;
+        columns(index).type = ColumnType::Numeric;
     }
 
     columns(new_variables_number-1).name = "column_" + to_string(new_variables_number);
-    columns(new_variables_number-1).column_use = Target;
-    columns(new_variables_number-1).type = Numeric;
+    columns(new_variables_number-1).column_use = VariableUse::Target;
+    columns(new_variables_number-1).type = ColumnType::Numeric;
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
@@ -4667,14 +4667,14 @@ void DataSet::set(const Index& new_samples_number,
         if(i < new_inputs_number)
         {
             columns(i).name = "column_" + to_string(i+1);
-            columns(i).column_use = Input;
-            columns(i).type = Numeric;
+            columns(i).column_use = VariableUse::Input;
+            columns(i).type = ColumnType::Numeric;
         }
         else
         {
             columns(i).name = "column_" + to_string(i+1);
-            columns(i).column_use = Target;
-            columns(i).type = Numeric;
+            columns(i).column_use = VariableUse::Target;
+            columns(i).type = ColumnType::Numeric;
         }
     }
 
@@ -4753,7 +4753,7 @@ void DataSet::set_default()
 
     has_columns_names = false;
 
-    separator = Comma;
+    separator = Separator::Comma;
 
     missing_values_label = "NA";
 
@@ -4842,19 +4842,19 @@ void DataSet::set_separator(const char& new_separator)
 {
     if(new_separator == ' ')
     {
-        separator = Space;
+        separator = Separator::Space;
     }
     else if(new_separator == '\t')
     {
-        separator = Tab;
+        separator = Separator::Tab;
     }
     else if(new_separator == ',')
     {
-        separator = Comma;
+        separator = Separator::Comma;
     }
     else if(new_separator == ';')
     {
-        separator = Semicolon;
+        separator = Separator::Semicolon;
     }
     else
     {
@@ -4876,19 +4876,19 @@ void DataSet::set_separator(const string& new_separator_string)
 {
     if(new_separator_string == "Space")
     {
-        separator = Space;
+        separator = Separator::Space;
     }
     else if(new_separator_string == "Tab")
     {
-        separator = Tab;
+        separator = Separator::Tab;
     }
     else if(new_separator_string == "Comma")
     {
-        separator = Comma;
+        separator = Separator::Comma;
     }
     else if(new_separator_string == "Semicolon")
     {
-        separator = Semicolon;
+        separator = Separator::Semicolon;
     }
     else
     {
@@ -4941,15 +4941,15 @@ void DataSet::set_missing_values_method(const string & new_missing_values_method
 {
     if(new_missing_values_method == "Unuse")
     {
-        missing_values_method = Unuse;
+        missing_values_method = MissingValuesMethod::Unuse;
     }
     else if(new_missing_values_method == "Mean")
     {
-        missing_values_method = Mean;
+        missing_values_method = MissingValuesMethod::Mean;
     }
     else if(new_missing_values_method == "Median")
     {
-        missing_values_method = Median;
+        missing_values_method = MissingValuesMethod::Median;
     }
     else
     {
@@ -5044,9 +5044,9 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Constant)
+        if(columns(i).type == ColumnType::Constant)
         {
-            columns(i).set_use(UnusedVariable);
+            columns(i).set_use(VariableUse::UnusedVariable);
             constant_columns = push_back(constant_columns, columns(i).name);
         }
     }
@@ -5092,10 +5092,10 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
         {
             sample_j = get_sample_data(j);
 
-            if(get_sample_use(j) != UnusedSample
+            if(get_sample_use(j) != SampleUse::UnusedSample
                     && equal(sample_i.data(), sample_i.data()+sample_i.size(), sample_j.data()))
             {
-                set_sample_use(j, UnusedSample);
+                set_sample_use(j, SampleUse::UnusedSample);
 
                 repeated_samples = push_back(repeated_samples, j);
             }
@@ -5128,9 +5128,9 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
         {
             if(!isnan(correlations(i,j).r)
             && abs(correlations(i,j).r) < minimum_correlation
-            && columns(input_column_index).column_use != UnusedVariable)
+            && columns(input_column_index).column_use != VariableUse::UnusedVariable)
             {
-                columns(input_column_index).set_use(UnusedVariable);
+                columns(input_column_index).set_use(VariableUse::UnusedVariable);
 
                 unused_columns = push_back(unused_columns, columns(input_column_index).name);
             }
@@ -5161,9 +5161,9 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Numeric)
+        if(columns(i).type == ColumnType::Numeric)
         {
-            if(columns(i).column_use == UnusedVariable)
+            if(columns(i).column_use == VariableUse::UnusedVariable)
             {
                 variable_index++;
             }
@@ -5182,11 +5182,11 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                 used_column_index++;
             }
         }
-        else if(columns(i).type == Categorical)
+        else if(columns(i).type == ColumnType::Categorical)
         {
             const Index categories_number = columns(i).get_categories_number();
 
-            if(columns(i).column_use == UnusedVariable)
+            if(columns(i).column_use == VariableUse::UnusedVariable)
             {
                 variable_index += categories_number;
             }
@@ -5217,9 +5217,9 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                 used_column_index++;
             }
         }
-        else if(columns(i).type == Binary)
+        else if(columns(i).type == ColumnType::Binary)
         {
-            if(columns(i).column_use == UnusedVariable)
+            if(columns(i).column_use == VariableUse::UnusedVariable)
             {
                 variable_index++;
             }
@@ -5281,9 +5281,9 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Numeric || columns(i).type == Binary)
+        if(columns(i).type == ColumnType::Numeric || columns(i).type == ColumnType::Binary)
         {
-            if(columns(i).column_use != UnusedVariable)
+            if(columns(i).column_use != VariableUse::UnusedVariable)
             {
                 box_plots(used_column_index) = box_plot(data.chip(variable_index, 1), used_samples_indices);
 
@@ -5292,7 +5292,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 
             variable_index++;
         }
-        else if(columns(i).type == Categorical)
+        else if(columns(i).type == ColumnType::Categorical)
         {
             variable_index += columns(i).get_categories_number();
         }
@@ -6106,23 +6106,23 @@ Tensor<Descriptives, 1> DataSet::scale_data()
 
         switch(columns(column_index).scaler)
         {
-        case NoScaling:
+        case Scaler::NoScaling:
             // Do nothing
         break;
 
-        case MinimumMaximum:
+        case Scaler::MinimumMaximum:
             scale_minimum_maximum(data, i, variables_descriptives(i));
         break;
 
-        case MeanStandardDeviation:
+        case Scaler::MeanStandardDeviation:
             scale_mean_standard_deviation(data, i, variables_descriptives(i));
         break;
 
-        case StandardDeviation:
+        case Scaler::StandardDeviation:
             scale_standard_deviation(data, i, variables_descriptives(i));
         break;
 
-        case Logarithm:
+        case Scaler::Logarithm:
             scale_logarithmic(data, i);
         break;
 
@@ -6132,7 +6132,7 @@ Tensor<Descriptives, 1> DataSet::scale_data()
 
             buffer << "OpenNN Exception: DataSet class\n"
                    << "void scale_data() method.\n"
-                   << "Unknown scaler: " << columns(i).scaler << "\n";
+                   << "Unknown scaler: " << int(columns(i).scaler) << "\n";
 
             throw logic_error(buffer.str());
         }
@@ -6151,23 +6151,23 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
     {
         switch(columns(i).scaler)
         {
-        case NoScaling:
+        case Scaler::NoScaling:
             // Do nothing
         break;
 
-        case MinimumMaximum:
+        case Scaler::MinimumMaximum:
             unscale_minimum_maximum(data, i, variables_descriptives(i));
         break;
 
-        case MeanStandardDeviation:
+        case Scaler::MeanStandardDeviation:
             unscale_mean_standard_deviation(data, i, variables_descriptives(i));
         break;
 
-        case StandardDeviation:
+        case Scaler::StandardDeviation:
             unscale_standard_deviation(data, i, variables_descriptives(i));
         break;
 
-        case Logarithm:
+        case Scaler::Logarithm:
             unscale_logarithmic(data, i);
         break;
 
@@ -6177,7 +6177,7 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
 
             buffer << "OpenNN Exception: DataSet class\n"
                    << "void unscale_data() method.\n"
-                   << "Unknown scaler: " << columns(i).scaler << "\n";
+                   << "Unknown scaler: " << int(columns(i).scaler) << "\n";
 
             throw logic_error(buffer.str());
         }
@@ -6202,23 +6202,23 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
     {
         switch(input_variables_scalers(i))
         {
-        case NoScaling:
+        case Scaler::NoScaling:
             // Do nothing
         break;
 
-        case MinimumMaximum:
+        case Scaler::MinimumMaximum:
             scale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
         break;
 
-        case MeanStandardDeviation:
+        case Scaler::MeanStandardDeviation:
             scale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
         break;
 
-        case StandardDeviation:
+        case Scaler::StandardDeviation:
             scale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
         break;
 
-        case Logarithm:
+        case Scaler::Logarithm:
             scale_logarithmic(data, input_variables_indices(i));
         break;
 
@@ -6228,7 +6228,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
 
             buffer << "OpenNN Exception: DataSet class\n"
                    << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown scaling and unscaling method: " << input_variables_scalers(i) << "\n";
+                   << "Unknown scaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
 
             throw logic_error(buffer.str());
         }
@@ -6257,23 +6257,23 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
     {
         switch(target_variables_scalers(i))
         {
-        case NoScaling:
+        case Scaler::NoScaling:
             // Do nothing
         break;
 
-        case MinimumMaximum:
+        case Scaler::MinimumMaximum:
             scale_minimum_maximum(data, target_variables_indices(i), target_variables_descriptives(i));
         break;
 
-        case MeanStandardDeviation:
+        case Scaler::MeanStandardDeviation:
             scale_mean_standard_deviation(data, target_variables_indices(i), target_variables_descriptives(i));
         break;
 
-        case StandardDeviation:
+        case Scaler::StandardDeviation:
             scale_standard_deviation(data, target_variables_indices(i), target_variables_descriptives(i));
         break;
 
-        case Logarithm:
+        case Scaler::Logarithm:
             scale_logarithmic(data, target_variables_indices(i));
         break;
 
@@ -6283,7 +6283,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
 
             buffer << "OpenNN Exception: DataSet class\n"
                    << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown scaling and unscaling method: " << target_variables_scalers(i) << "\n";
+                   << "Unknown scaling and unscaling method: " << int(target_variables_scalers(i)) << "\n";
 
             throw logic_error(buffer.str());
         }
@@ -6309,19 +6309,19 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
     {
         switch(input_variables_scalers(i))
         {
-        case NoScaling:
+        case Scaler::NoScaling:
             // Do nothing
         break;
 
-        case MinimumMaximum:
+        case Scaler::MinimumMaximum:
             unscale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
         break;
 
-        case MeanStandardDeviation:
+        case Scaler::MeanStandardDeviation:
             unscale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
         break;
 
-        case StandardDeviation:
+        case Scaler::StandardDeviation:
             unscale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
         break;
 
@@ -6331,7 +6331,7 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
 
             buffer << "OpenNN Exception: DataSet class\n"
                    << "void unscale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown unscaling and unscaling method: " << input_variables_scalers(i) << "\n";
+                   << "Unknown unscaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
 
             throw logic_error(buffer.str());
         }
@@ -6353,18 +6353,18 @@ void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_de
     {
         switch(target_variables_scalers(i))
         {
-        case NoScaling:
+        case Scaler::NoScaling:
             break;
 
-        case MinimumMaximum:
+        case Scaler::MinimumMaximum:
             unscale_minimum_maximum(data, target_variables_indices(i), targets_descriptives(i));
             break;
 
-        case MeanStandardDeviation:
+        case Scaler::MeanStandardDeviation:
             unscale_mean_standard_deviation(data, target_variables_indices(i), targets_descriptives(i));
             break;
 
-        case Logarithm:
+        case Scaler::Logarithm:
             unscale_logarithmic(data, target_variables_indices(i));
             break;
 
@@ -6665,7 +6665,9 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < samples_number; i++)
         {
-            buffer << samples_uses(i);
+            SampleUse sample_use = samples_uses(i);
+
+            buffer << Index(sample_use);
 
             if(i < (samples_number-1)) buffer << " ";
         }
@@ -6688,11 +6690,11 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("MissingValuesMethod");
 
-        if(missing_values_method == Mean)
+        if(missing_values_method == MissingValuesMethod::Mean)
         {
             file_stream.PushText("Mean");
         }
-        else if(missing_values_method == Median)
+        else if(missing_values_method == MissingValuesMethod::Median)
         {
             file_stream.PushText("Median");
         }
@@ -7124,7 +7126,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 columns(i).set_type(new_type);
             }
 
-            if(columns(i).type == Categorical || columns(i).type == Binary)
+            if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary)
             {
                 // Categories
 
@@ -7307,7 +7309,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                     time_series_columns(i).set_type(time_series_new_type);
                 }
 
-                if(time_series_columns(i).type == Categorical || time_series_columns(i).type == Binary)
+                if(time_series_columns(i).type == ColumnType::Categorical || time_series_columns(i).type == ColumnType::Binary)
                 {
                     // Categories
 
@@ -7698,11 +7700,11 @@ void DataSet::print_columns_types() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == Numeric) cout << "Numeric ";
-        else if(columns(i).type == Binary) cout << "Binary ";
-        else if(columns(i).type == Categorical) cout << "Categorical ";
-        else if(columns(i).type == DateTime) cout << "DateTime ";
-        else if(columns(i).type == Constant) cout << "Constant ";
+        if(columns(i).type == ColumnType::Numeric) cout << "Numeric ";
+        else if(columns(i).type == ColumnType::Binary) cout << "Binary ";
+        else if(columns(i).type == ColumnType::Categorical) cout << "Categorical ";
+        else if(columns(i).type == ColumnType::DateTime) cout << "DateTime ";
+        else if(columns(i).type == ColumnType::Constant) cout << "Constant ";
     }
 
     cout << endl;
@@ -7715,9 +7717,9 @@ void DataSet::print_columns_uses() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).column_use == Input) cout << "Input ";
-        else if(columns(i).column_use == Target) cout << "Target ";
-        else if(columns(i).column_use == UnusedVariable) cout << "Unused ";
+        if(columns(i).column_use == VariableUse::Input) cout << "Input ";
+        else if(columns(i).column_use == VariableUse::Target) cout << "Target ";
+        else if(columns(i).column_use == VariableUse::UnusedVariable) cout << "Unused ";
     }
 
     cout << endl;
@@ -8258,17 +8260,17 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 continue;
             }
 
-            if(columns(i).column_use == UnusedVariable)
+            if(columns(i).column_use == VariableUse::UnusedVariable)
             {
                 token_index++;
                 continue;
             }
-            else if(columns(i).column_use != Input)
+            else if(columns(i).column_use != VariableUse::Input)
             {
                 continue;
             }
 
-            if(columns(i).type == Numeric)
+            if(columns(i).type == ColumnType::Numeric)
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
@@ -8286,7 +8288,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
                 variable_index++;
             }
-            else if(columns(i).type == Binary)
+            else if(columns(i).type == ColumnType::Binary)
             {
                 if(tokens(token_index) == missing_values_label)
                 {
@@ -8304,7 +8306,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
                 variable_index++;
             }
-            else if(columns(i).type == Categorical)
+            else if(columns(i).type == ColumnType::Categorical)
             {
                 for(Index k = 0; k < columns(i).get_categories_number(); k++)
                 {
@@ -8321,7 +8323,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                     variable_index++;
                 }
             }
-            else if(columns(i).type == DateTime)
+            else if(columns(i).type == ColumnType::DateTime)
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
@@ -8335,7 +8337,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
                 variable_index++;
             }
-            else if(columns(i).type == Constant)
+            else if(columns(i).type == ColumnType::Constant)
             {
                 if(tokens(token_index) == missing_values_label || tokens(token_index).empty())
                 {
@@ -8464,7 +8466,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
 
         for(Index i = 0; i < samples_number; i++)
         {
-            if(get_sample_use(i) != UnusedSample)
+            if(get_sample_use(i) != SampleUse::UnusedSample)
             {
                 for(Index j = 0; j < targets_number; j++)
                 {
@@ -8509,18 +8511,18 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).column_use == UnusedVariable && columns(i).type == Categorical)
+        if(columns(i).column_use == VariableUse::UnusedVariable && columns(i).type == ColumnType::Categorical)
         {
             variable_index += columns(i).get_categories_number();
             continue;
         }
-        else if(columns(i).column_use == UnusedVariable) // Numeric, Binary or DateTime
+        else if(columns(i).column_use == VariableUse::UnusedVariable) // Numeric, Binary or DateTime
         {
             variable_index++;
             continue;
         }
 
-        if(columns(i).type == Categorical || columns(i).type == Binary || columns(i).type == DateTime)
+        if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary || columns(i).type == ColumnType::DateTime)
         {
             used_column_index++;
             columns(i).get_categories_number() == 0 ? variable_index++ : variable_index += columns(i).get_categories_number();
@@ -9655,7 +9657,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
         {
             sample_index = used_samples_indices(j);
 
-            if(get_sample_use(sample_index) == UnusedSample) continue;
+            if(get_sample_use(sample_index) == SampleUse::UnusedSample) continue;
 
             if(isnan(data(sample_index, variable_index))) continue;
 
@@ -9667,7 +9669,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
             {
                 filtered_indices(sample_index) = type(1);
 
-                set_sample_use(sample_index, UnusedSample);
+                set_sample_use(sample_index, SampleUse::UnusedSample);
             }
         }
     }
@@ -9775,19 +9777,19 @@ void DataSet::scrub_missing_values()
 {
     switch(missing_values_method)
     {
-    case Unuse:
+    case MissingValuesMethod::Unuse:
 
         impute_missing_values_unuse();
 
         break;
 
-    case Mean:
+    case MissingValuesMethod::Mean:
 
         impute_missing_values_mean();
 
         break;
 
-    case Median:
+    case MissingValuesMethod::Median:
 
         impute_missing_values_median();
 
@@ -9964,14 +9966,16 @@ void DataSet::read_csv_1()
         if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
         || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
         || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
-        || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label)
+        || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
+/*
         || (data_file_preview(0)(i).find("time") != string::npos && is_numeric_string(data_file_preview(1)(i)) && is_numeric_string(data_file_preview(2)(i))
                                                                  && is_numeric_string(data_file_preview(lines_number-2)(i))
                                                                  && is_numeric_string(data_file_preview(lines_number-2)(i)) ))
+*/
         {
 
 
-            columns(column_index).type = DateTime;
+            columns(column_index).type = ColumnType::DateTime;
             column_index++;
         }
         else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
@@ -9979,12 +9983,12 @@ void DataSet::read_csv_1()
                 || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
                 || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(1)(i).empty()))
         {
-            columns(column_index).type = Numeric;
+            columns(column_index).type = ColumnType::Numeric;
             column_index++;
         }
         else
         {
-            columns(column_index).type = Categorical;
+            columns(column_index).type = ColumnType::Categorical;
             column_index++;
         }
     }
@@ -10080,7 +10084,7 @@ void DataSet::read_csv_2_simple()
     set_default_columns_uses();
 
     samples_uses.resize(samples_count);
-    samples_uses.setConstant(Training);
+    samples_uses.setConstant(SampleUse::Training);
 
     split_samples_random();
 }
@@ -10195,7 +10199,7 @@ void DataSet::read_csv_3_simple()
 
     for(Index column = 0; column < get_columns_number(); column++)
     {
-        if(columns(column).type == Numeric)
+        if(columns(column).type == ColumnType::Numeric)
         {
             // @todo avoid chip
 
@@ -10203,37 +10207,37 @@ void DataSet::read_csv_3_simple()
 
             if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
             {
-                columns(column).type = Constant;
-                columns(column).column_use = UnusedVariable;
+                columns(column).type = ColumnType::Constant;
+                columns(column).column_use = VariableUse::UnusedVariable;
             }
 
             variable_index++;
         }
-        else if(columns(column).type == DateTime)
+        else if(columns(column).type == ColumnType::DateTime)
         {
-            columns(column).column_use = UnusedVariable;
+            columns(column).column_use = VariableUse::UnusedVariable;
             variable_index++;
         }
-        else if(columns(column).type == Constant)
+        else if(columns(column).type == ColumnType::Constant)
         {
             variable_index++;
         }
-        else if(columns(column).type == Binary)
+        else if(columns(column).type == ColumnType::Binary)
         {
             if(columns(column).get_categories_number() == 1)
             {
-                columns(column).type = Constant;
-                columns(column).column_use = UnusedVariable;
+                columns(column).type = ColumnType::Constant;
+                columns(column).column_use = VariableUse::UnusedVariable;
             }
 
             variable_index++;
         }
-        else if(columns(column).type == Categorical)
+        else if(columns(column).type == ColumnType::Categorical)
         {
             if(columns(column).get_categories_number() == 1)
             {
-                columns(column).type = Constant;
-                columns(column).column_use = UnusedVariable;
+                columns(column).type = ColumnType::Constant;
+                columns(column).column_use = VariableUse::UnusedVariable;
             }
 
             variable_index += columns(column).get_categories_number();
@@ -10276,9 +10280,9 @@ void DataSet::read_csv_2_complete()
 
     for(unsigned j = 0; j < columns_number; j++)
     {
-        if(columns(j).type != Categorical)
+        if(columns(j).type != ColumnType::Categorical)
         {
-            columns(j).column_use = Input;
+            columns(j).column_use = VariableUse::Input;
         }
     }
 
@@ -10334,7 +10338,7 @@ void DataSet::read_csv_2_complete()
 
             trim(tokens(j));
 
-            if(columns(column_index).type == Categorical)
+            if(columns(column_index).type == ColumnType::Categorical)
             {
                 if(find(columns(column_index).categories.data(), columns(column_index).categories.data() + columns(column_index).categories.size(), tokens(j)) == (columns(column_index).categories.data() + columns(column_index).categories.size()))
                 {
@@ -10360,11 +10364,11 @@ void DataSet::read_csv_2_complete()
 
     for(Index j = 0; j < columns_number; j++)
     {
-        if(columns(j).type == Categorical)
+        if(columns(j).type == ColumnType::Categorical)
         {
             if(columns(j).categories.size() == 2)
             {
-                columns(j).type = Binary;
+                columns(j).type = ColumnType::Binary;
             }
         }
     }
@@ -10384,7 +10388,7 @@ void DataSet::read_csv_2_complete()
 
     samples_uses.resize(static_cast<Index>(samples_number));
 
-    samples_uses.setConstant(Training);
+    samples_uses.setConstant(SampleUse::Training);
 
     split_samples_random();
 }
@@ -10465,7 +10469,7 @@ void DataSet::read_csv_3_complete()
                 rows_labels(sample_index) = tokens(j);
                 continue;
             }
-            else if(columns(column_index).type == Numeric)
+            else if(columns(column_index).type == ColumnType::Numeric)
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
@@ -10491,7 +10495,7 @@ void DataSet::read_csv_3_complete()
                     }
                 }
             }
-            else if(columns(column_index).type == DateTime)
+            else if(columns(column_index).type == ColumnType::DateTime)
             {
                 if(tokens(j) == missing_values_label || tokens(j).empty())
                 {
@@ -10505,7 +10509,7 @@ void DataSet::read_csv_3_complete()
                     variable_index++;
                 }
             }
-            else if(columns(column_index).type == Categorical)
+            else if(columns(column_index).type == ColumnType::Categorical)
             {
                 for(Index k = 0; k < columns(column_index).get_categories_number(); k++)
                 {
@@ -10521,7 +10525,7 @@ void DataSet::read_csv_3_complete()
                     variable_index++;
                 }
             }
-            else if(columns(column_index).type == Binary)
+            else if(columns(column_index).type == ColumnType::Binary)
             {
                 if(tokens(j) == missing_values_label)
                 {
@@ -10567,47 +10571,47 @@ void DataSet::read_csv_3_complete()
 
     for(Index column = 0; column < get_columns_number(); column++)
     {
-        if(columns(column).type == Numeric)
+        if(columns(column).type == ColumnType::Numeric)
         {
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
             if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
             {
-                columns(column).type = Constant;
-                columns(column).column_use = UnusedVariable;
+                columns(column).type = ColumnType::Constant;
+                columns(column).column_use = VariableUse::UnusedVariable;
             }
 
             variable_index++;
         }
-        else if(columns(column).type == DateTime)
+        else if(columns(column).type == ColumnType::DateTime)
         {
-            columns(column).column_use = UnusedVariable;
+            columns(column).column_use = VariableUse::UnusedVariable;
             variable_index++;
         }
-        else if(columns(column).type == Constant)
+        else if(columns(column).type == ColumnType::Constant)
         {
-            columns(column).column_use = UnusedVariable;
+            columns(column).column_use = VariableUse::UnusedVariable;
 
             variable_index++;
         }
-        else if(columns(column).type == Binary)
+        else if(columns(column).type == ColumnType::Binary)
         {
             if(columns(column).get_categories_number() == 1)
             {
-                columns(column).type = Constant;
-                columns(column).column_use = UnusedVariable;
-                columns(column).set_categories_uses(UnusedVariable);
+                columns(column).type = ColumnType::Constant;
+                columns(column).column_use = VariableUse::UnusedVariable;
+                columns(column).set_categories_uses(VariableUse::UnusedVariable);
             }
 
             variable_index++;
         }
-        else if(columns(column).type == Categorical)
+        else if(columns(column).type == ColumnType::Categorical)
         {
             if(columns(column).get_categories_number() == 1)
             {
-                columns(column).type = Constant;
-                columns(column).column_use = UnusedVariable;
-                columns(column).set_categories_uses(UnusedVariable);
+                columns(column).type = ColumnType::Constant;
+                columns(column).column_use = VariableUse::UnusedVariable;
+                columns(column).set_categories_uses(VariableUse::UnusedVariable);
             }
 
             variable_index += columns(column).get_categories_number();
@@ -10634,7 +10638,7 @@ void DataSet::check_separators(const string& line) const
         throw logic_error(message);
     }
 
-    if(separator == Space)
+    if(separator == Separator::Space)
     {
         if(line.find(',') != string::npos)
         {
@@ -10651,7 +10655,7 @@ void DataSet::check_separators(const string& line) const
             throw logic_error(message);
         }
     }
-    else if(separator == Tab)
+    else if(separator == Separator::Tab)
     {
         if(line.find(',') != string::npos)
         {
@@ -10668,7 +10672,7 @@ void DataSet::check_separators(const string& line) const
             throw logic_error(message);
         }
     }
-    else if(separator == Comma)
+    else if(separator == Separator::Comma)
     {
         if(line.find(";") != string::npos)
         {
@@ -10678,7 +10682,7 @@ void DataSet::check_separators(const string& line) const
             throw logic_error(message);
         }
     }
-    else if(separator == Semicolon)
+    else if(separator == Separator::Semicolon)
     {
         if(line.find(",") != string::npos)
         {
@@ -10719,7 +10723,7 @@ bool DataSet::has_binary_columns() const
 
     for(Index i = 0; i < variables_number; i++)
     {
-        if(columns(i).type == Binary) return true;
+        if(columns(i).type == ColumnType::Binary) return true;
     }
 
     return false;
@@ -10732,7 +10736,7 @@ bool DataSet::has_categorical_columns() const
 
     for(Index i = 0; i < variables_number; i++)
     {
-        if(columns(i).type == Categorical) return true;
+        if(columns(i).type == ColumnType::Categorical) return true;
     }
 
     return false;
@@ -10745,7 +10749,7 @@ bool DataSet::has_time_columns() const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == DateTime) return true;
+        if(columns(i).type == ColumnType::DateTime) return true;
     }
 
     return false;
@@ -10758,7 +10762,7 @@ bool DataSet::has_time_time_series_columns() const
 
     for(Index i = 0; i < time_series_columns_number; i++)
     {
-        if(time_series_columns(i).type == DateTime) return true;
+        if(time_series_columns(i).type == ColumnType::DateTime) return true;
     }
 
     return false;
@@ -10947,7 +10951,7 @@ void DataSet::fix_repeated_names()
                     {
                         const Index column_index = get_column_index(i);
 
-                        if(columns(column_index).type != Categorical) continue;
+                        if(columns(column_index).type != ColumnType::Categorical) continue;
 
                         variables_names(i) = variables_names(i) + "_" + columns(column_index).name;
                     }

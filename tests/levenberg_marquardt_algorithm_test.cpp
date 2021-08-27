@@ -69,7 +69,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    data_set.set(1, 1, 1);
    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
    neural_network.set_parameters_random();
 
 //   old_loss = sum_squared_error.calculate_training_loss();

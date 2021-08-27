@@ -29,13 +29,13 @@ int main()
        
         DataSet data_set("../data/breast_cancer.csv", ';', true);
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, {9, 6, 1});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {9, 6, 1});
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
         training_strategy.perform_training();
 

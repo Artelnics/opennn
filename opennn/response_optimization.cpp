@@ -27,10 +27,10 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
     inputs_conditions.resize(inputs_number);
-    inputs_conditions.setConstant(Between);
+    inputs_conditions.setConstant(Condition::Between);
 
     outputs_conditions.resize(outputs_number);
-    outputs_conditions.setConstant(Minimum);
+    outputs_conditions.setConstant(Condition::Minimum);
 
     inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
     inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
@@ -114,7 +114,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
 
     switch(condition)
     {
-    case Minimum:
+    case Condition::Minimum:
 
         if(values.size() != 0)
         {
@@ -127,7 +127,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
 
         return;
 
-    case Maximum:
+    case Condition::Maximum:
 
         if(values.size() != 0)
         {
@@ -140,7 +140,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
 
         return;
 
-    case EqualTo:
+    case Condition::EqualTo:
 
         if(values.size() != 1)
         {
@@ -156,7 +156,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
 
         return;
 
-    case LessEqualTo:
+    case Condition::LessEqualTo:
 
         if(values.size() != 1)
         {
@@ -171,7 +171,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
 
         return;
 
-    case GreaterEqualTo:
+    case Condition::GreaterEqualTo:
 
         if(values.size() != 1)
         {
@@ -186,7 +186,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
 
         return;
 
-    case Between:
+    case Condition::Between:
 
         if(values.size() != 2)
         {
@@ -213,7 +213,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
     switch(condition)
     {
-    case Minimum:
+    case Condition::Minimum:
 
         if(values.size() != 0)
         {
@@ -226,7 +226,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
         return;
 
-    case Maximum:
+    case Condition::Maximum:
 
         if(values.size() != 0)
         {
@@ -239,7 +239,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
         return;
 
-    case EqualTo:
+    case Condition::EqualTo:
 
         if(values.size() != 1)
         {
@@ -255,7 +255,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
         return;
 
-    case LessEqualTo:
+    case Condition::LessEqualTo:
 
         if(values.size() != 1)
         {
@@ -270,7 +270,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
         return;
 
-    case GreaterEqualTo:
+    case Condition::GreaterEqualTo:
 
         if(values.size() != 1)
         {
@@ -285,7 +285,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
         return;
 
-    case Between:
+    case Condition::Between:
 
         if(values.size() != 2)
         {
@@ -348,29 +348,29 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
     {
         if(conditions_string[i] == "Minimize")
         {
-            conditions[i] = Minimum;
+            conditions[i] = Condition::Minimum;
         }
         else if(conditions_string[i] == "Maximize")
         {
-            conditions[i] = Maximum;
+            conditions[i] = Condition::Maximum;
         }
         else if(conditions_string[i] == "=")
         {
-            conditions[i] = EqualTo;
+            conditions[i] = Condition::EqualTo;
         }
         else if(conditions_string[i] == "Between")
         {
-            conditions[i] = Between;
+            conditions[i] = Condition::Between;
         }
         else if(conditions_string[i] == ">="
                 || conditions_string[i] == ">")
         {
-            conditions[i] = GreaterEqualTo;
+            conditions[i] = Condition::GreaterEqualTo;
         }
         else if(conditions_string[i] == "<="
                 || conditions_string[i] == "<")
         {
-            conditions[i] = LessEqualTo;
+            conditions[i] = Condition::LessEqualTo;
         }
     }
 
@@ -396,21 +396,21 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
 
         switch(current_condition)
         {
-        case Minimum:
+        case Condition::Minimum:
 
             values_conditions[i].resize(0);
 
             index++;
             break;
 
-        case Maximum:
+        case Condition::Maximum:
 
             values_conditions[i].resize(0);
 
             index++;
             break;
 
-        case EqualTo:
+        case Condition::EqualTo:
 
             current_values.resize(1);
             current_values[0] = values[index];
@@ -420,7 +420,7 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
 
             break;
 
-        case LessEqualTo:
+        case Condition::LessEqualTo:
 
             current_values.resize(1);
             current_values[0] = values[index];
@@ -430,7 +430,7 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
 
             break;
 
-        case GreaterEqualTo:
+        case Condition::GreaterEqualTo:
 
             current_values.resize(1);
             current_values[0] = values[index];
@@ -441,7 +441,7 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
 
             break;
 
-        case Between:
+        case Condition::Between:
 
             current_values.resize(2);
             current_values[0] = values[index];
@@ -518,11 +518,11 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
     {
         for(Index j = 0; j < inputs_number; j++)
         {
-            if(inputs_conditions[j] == Minimum)
+            if(inputs_conditions[j] == Condition::Minimum)
             {
                 objective[i] += envelope(i,j);
             }
-            else if(inputs_conditions[j] == Maximum)
+            else if(inputs_conditions[j] == Condition::Maximum)
             {
                 objective[i] += -envelope(i,j);
             }
@@ -530,11 +530,11 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 
         for(Index j = 0; j < outputs_number; j++)
         {
-            if(outputs_conditions[j] == Minimum)
+            if(outputs_conditions[j] == Condition::Minimum)
             {
                 objective[i] += envelope(i, inputs_number+j);
             }
-            else if(outputs_conditions[j] == Maximum)
+            else if(outputs_conditions[j] == Condition::Maximum)
             {
                 objective[i] += -envelope(i, inputs_number+j);
             }

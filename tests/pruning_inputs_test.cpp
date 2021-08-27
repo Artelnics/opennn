@@ -62,7 +62,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
     data_set.split_samples_random();
 
-    neural_network.set(NeuralNetwork::Approximation, {2,6,1});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,6,1});
 
     inputs_selection_results = pruning_inputs.perform_inputs_selection();
 
@@ -72,7 +72,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
     data_set.generate_sum_data(40,3);
 
-    neural_network.set(NeuralNetwork::Approximation, {2,6,1});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,6,1});
 
     inputs_selection_results = pruning_inputs.perform_inputs_selection();
 
