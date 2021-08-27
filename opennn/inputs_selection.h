@@ -55,7 +55,7 @@ public:
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumInputs, MinimumInputs, MaximumEpochs,
+    enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumInputs, MinimumInputs, MaximumEpochs,
                            MaximumSelectionFailures, CorrelationGoal};
 
     // Get methods

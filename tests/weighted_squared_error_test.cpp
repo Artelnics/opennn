@@ -78,7 +78,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
    input_variables_indices = data_set.get_input_variables_indices();
    target_variables_indices = data_set.get_target_variables_indices();
 
-   neural_network.set(NeuralNetwork::Classification, {1, 2});
+   neural_network.set(NeuralNetwork::ProjectType::Classification, {1, 2});
 
    neural_network.set_parameters_constant(type(1));
 
@@ -111,7 +111,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
    data(2,2) = 0.0;
    data_set.set_data(data);
 
-  neural_network.set(NeuralNetwork::Approximation, {3, 1});
+  neural_network.set(NeuralNetwork::ProjectType::Approximation, {3, 1});
 
   neural_network.set_parameters_constant(type(0));
 
@@ -179,7 +179,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
    input_variables_indices = data_set.get_input_variables_indices();
    target_variables_indices = data_set.get_target_variables_indices();
 
-   neural_network.set(NeuralNetwork::Classification, {1, 1});
+   neural_network.set(NeuralNetwork::ProjectType::Classification, {1, 1});
 
    neural_network.set_parameters_constant(type(1));
 

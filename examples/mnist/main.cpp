@@ -49,9 +49,9 @@ int main()
             cout << "Column " << i << ": " << endl;
             cout << "   Name: " << columns(i).name << endl;
 
-            if(columns(i).column_use == OpenNN::DataSet::Input) cout << "   Use: input" << endl;
-            else if(columns(i).column_use == OpenNN::DataSet::Target) cout << "   Use: target" << endl;
-            else if(columns(i).column_use == OpenNN::DataSet::UnusedVariable) cout << "   Use: unused" << endl;
+            if(columns(i).column_use == OpenNN::DataSet::VariableUse::Input) cout << "   Use: input" << endl;
+            else if(columns(i).column_use == OpenNN::DataSet::VariableUse::Target) cout << "   Use: target" << endl;
+            else if(columns(i).column_use == OpenNN::DataSet::VariableUse::UnusedVariable) cout << "   Use: unused" << endl;
 
             if(columns(i).type == OpenNN::DataSet::ColumnType::Categorical) cout << "   Categories: " << columns(i).categories << endl;
 
@@ -83,9 +83,9 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::CROSS_ENTROPY_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.set_display_period(10);
 

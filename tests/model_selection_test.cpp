@@ -69,7 +69,7 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     data_set.generate_sum_data(20,2);
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 2, 1});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1, 2, 1});
 
     training_strategy.set_display(false);
 
@@ -85,8 +85,8 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     results = model_selection.perform_neurons_selection();
 
-    assert_true(model_selection.get_inputs_selection_method() == ModelSelection::GROWING_INPUTS, LOG);
-    assert_true(model_selection.get_neurons_selection_method() == ModelSelection::GROWING_NEURONS, LOG);
+    assert_true(model_selection.get_inputs_selection_method() == ModelSelection::InputsSelectionMethod::GROWING_INPUTS, LOG);
+    assert_true(model_selection.get_neurons_selection_method() == ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS, LOG);
 //    assert_true(results.growing_neurons_results_pointer->optimum_selection_error != 0.0, LOG);
 //    assert_true(results.growing_neurons_results_pointer->optimal_neurons_number >= 1 , LOG);
 }
@@ -117,7 +117,7 @@ void ModelSelectionTest::test_load()
     string file_name = "../data/model_selection.xml";
     string file_name2 = "../data/model_selection2.xml";
 
-    model_selection.set_neurons_selection_method(ModelSelection::GROWING_NEURONS);
+    model_selection.set_neurons_selection_method(ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS);
 
     // Test
 

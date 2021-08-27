@@ -60,7 +60,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {3,2,1});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {3,2,1});
 
     genetic_algorithm.set_individuals_number(10);
 
@@ -89,7 +89,7 @@ void GeneticAlgorithmTest::test_perform_fitness_assignment()
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {3,2,1});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {3,2,1});
 
     genetic_algorithm.set_individuals_number(4);
 
@@ -124,7 +124,7 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {3,2,1});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {3,2,1});
 
     genetic_algorithm.set_individuals_number(4);
 
@@ -168,7 +168,7 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {2,2,1});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,2,1});
 
     genetic_algorithm.set_individuals_number(4);
 
@@ -235,7 +235,7 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {1,2,1});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1,2,1});
 
     genetic_algorithm.set_individuals_number(4);
 
@@ -285,7 +285,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     data_set.set(data);
 
-    neural_network.set(NeuralNetwork::Approximation, {2,6,1});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,6,1});
 
     genetic_algorithm.set_display(false);
 
@@ -296,7 +296,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
 //    assert_true(ga_results->selection_error < 1, LOG);
-    assert_true(inputs_selection_results.stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
+    assert_true(inputs_selection_results.stopping_condition == InputsSelection::StoppingCondition::SelectionErrorGoal, LOG);
 
     // Test
 
@@ -322,7 +322,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     data_set.set_default_columns_uses();
 
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    neural_network.set(NeuralNetwork::ProjectType::Approximation, architecture);
 
     genetic_algorithm.set_individuals_number(10);
 

@@ -273,20 +273,20 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     DataSet data_set(data);
     data_set.set_training();
 
-    data_set.set_columns_scalers(MinimumMaximum);
+    data_set.set_columns_scalers(Scaler::MinimumMaximum);
 
-    NeuralNetwork neural_network(NeuralNetwork::Classification, {1,1});
+    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {1,1});
 
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::Logistic);
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
     training_strategy.set_display_period(1);
 
-    training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-    training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
     training_strategy.perform_training();
 
@@ -336,14 +336,14 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Index input_variables_number = data_set.get_input_variables_number();
     const Index target_variables_number = data_set.get_target_variables_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, target_variables_number});
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::Logistic);
+    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number});
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-    training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
     training_strategy.set_display(false);
 
@@ -393,14 +393,14 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     const Index input_variables_number = data_set.get_input_variables_number();
     const Index target_variables_number = data_set.get_target_variables_number();
 
-    NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, target_variables_number});
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::Logistic);
+    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number});
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-    training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
     training_strategy.set_display(false);
 

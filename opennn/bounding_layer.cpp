@@ -68,11 +68,11 @@ const BoundingLayer::BoundingMethod& BoundingLayer::get_bounding_method() const
 
 string BoundingLayer::write_bounding_method() const
 {
-    if(bounding_method == Bounding)
+    if(bounding_method == BoundingMethod::Bounding)
     {
         return "Bounding";
     }
-    else if(bounding_method == NoBounding)
+    else if(bounding_method == BoundingMethod::NoBounding)
     {
         return "NoBounding";
     }
@@ -188,7 +188,7 @@ type BoundingLayer::get_upper_bound(const Index& i) const
 
 void BoundingLayer::set()
 {
-    bounding_method = Bounding;
+    bounding_method = BoundingMethod::Bounding;
 
     lower_bounds.resize(0);
     upper_bounds.resize(0);
@@ -272,11 +272,11 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
 {
     if(new_method_string == "NoBounding")
     {
-        bounding_method = NoBounding;
+        bounding_method = BoundingMethod::NoBounding;
     }
     else if(new_method_string == "Bounding")
     {
-        bounding_method = Bounding;
+        bounding_method = BoundingMethod::Bounding;
     }
     else
     {
@@ -426,7 +426,7 @@ void BoundingLayer::set_default()
 {
     layer_name = "bounding_layer";
 
-    bounding_method = Bounding;
+    bounding_method = BoundingMethod::Bounding;
 
     layer_type = Layer::Type::Bounding;
 }
@@ -443,9 +443,9 @@ check_columns_number(inputs, get_inputs_number(), LOG);
 
     switch(bounding_method)
     {
-        case NoBounding: return inputs;
+        case BoundingMethod::NoBounding: return inputs;
 
-        case Bounding:
+        case BoundingMethod::Bounding:
         {
             const Index rows_number = inputs.dimension(0);
             const Index columns_number = inputs.dimension(1);
@@ -478,7 +478,7 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
 
     buffer.precision(10);
 
-    if(bounding_method == Bounding)
+    if(bounding_method == BoundingMethod::Bounding)
     {
         const Index neurons_number = get_neurons_number();
 
@@ -512,7 +512,7 @@ string BoundingLayer::write_expression_c() const
     buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
 
 
-    if(bounding_method == Bounding)
+    if(bounding_method == BoundingMethod::Bounding)
     {
         for(Index i = 0; i < neurons_number; i++)
         {
@@ -558,7 +558,7 @@ string BoundingLayer::write_expression_python() const
 
     buffer << "\t\toutputs = [None] * "<<neurons_number<<"\n" << endl;
 
-    if(bounding_method == Bounding)
+    if(bounding_method == BoundingMethod::Bounding)
     {
         for(Index i = 0; i < neurons_number; i++)
         {
@@ -642,12 +642,12 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("UseBoundingLayer");
 
-    if(bounding_method == Bounding)
+    if(bounding_method == BoundingMethod::Bounding)
     {
         buffer.str("");
         buffer << 1;
     }
-    else if(bounding_method == NoBounding)
+    else if(bounding_method == BoundingMethod::NoBounding)
     {
         buffer.str("");
         buffer << 0;
@@ -786,11 +786,11 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
             if(new_method == 1)
             {
-                bounding_method = Bounding;
+                bounding_method = BoundingMethod::Bounding;
             }
             else if(new_method == 0)
             {
-                bounding_method = NoBounding;
+                bounding_method = BoundingMethod::NoBounding;
             }
             else
             {

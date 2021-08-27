@@ -284,21 +284,21 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
    activations.resize(1,1);
    activations_derivatives.resize(1,1);
 
-   recurrent_layer.set_activation_function(RecurrentLayer::Logistic);
+   recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Logistic);
 //   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
    assert_true(activations_derivatives(0) == type(0.25), LOG);
 
-   recurrent_layer.set_activation_function(RecurrentLayer::HyperbolicTangent);
+   recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
 //   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
    assert_true(activations_derivatives(0) == type(1.0), LOG);
 
-   recurrent_layer.set_activation_function(RecurrentLayer::Linear);
+   recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Linear);
 //   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
@@ -315,7 +315,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
       combinations(0,2) = static_cast<type>(0.91);
       combinations(0,3) = static_cast<type>(-1.99);
 
-      recurrent_layer.set_activation_function(RecurrentLayer::Logistic);
+      recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Logistic);
 
 //      recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 

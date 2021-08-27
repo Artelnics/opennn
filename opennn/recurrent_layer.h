@@ -48,7 +48,7 @@ public:
 
     /// Enumeration of the available activation functions for the recurrent layer.
 
-    enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent,
+    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent,
                             Linear, RectifiedLinear, ExponentialLinear,
                             ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
@@ -238,7 +238,7 @@ protected:
 
    /// Activation function variable.
 
-   ActivationFunction activation_function = HyperbolicTangent;
+   ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
    Tensor<type, 1> hidden_states;
 

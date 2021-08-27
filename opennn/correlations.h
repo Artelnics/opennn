@@ -30,7 +30,7 @@
 namespace OpenNN
 {
 
-/// The enum CorrelationMethod represents the different regression methods provided by OpenNN.
+/// This enumeration represents the different regression methods provided by OpenNN.
 
 enum class CorrelationMethod{Linear, Logistic, Logarithmic, Exponential, Power};
 

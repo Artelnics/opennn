@@ -53,14 +53,14 @@ public:
 
     /// Enumeration of available activation functions for the perceptron neuron model.
 
-    enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear,
+    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear,
                             ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
    // Constructors
 
    explicit PerceptronLayer();
 
-   explicit PerceptronLayer(const Index&, const Index&, const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
+   explicit PerceptronLayer(const Index&, const Index&, const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
    // Destructor
    
@@ -99,7 +99,7 @@ public:
    // Set methods
 
    void set();
-   void set(const Index&, const Index&, const PerceptronLayer::ActivationFunction& = PerceptronLayer::HyperbolicTangent);
+   void set(const Index&, const Index&, const PerceptronLayer::ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
    void set_default();
    void set_name(const string&);

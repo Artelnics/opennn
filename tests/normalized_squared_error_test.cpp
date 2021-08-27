@@ -71,7 +71,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 
    target_data = data_set.get_target_data();
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, outputs_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
    neural_network.set_parameters_random();
 
    data_set.set(samples_number, inputs_number, outputs_number);
@@ -106,7 +106,7 @@ void NormalizedSquaredErrorTest::test_calculate_error()
     /*
    data_set.set(1, 1, 1);
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 2});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {1, 2});
 
    samples_number = 1;
    inputs_number = 1;
@@ -144,7 +144,7 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    outputs_number = 5;
    neurons_number = 3;
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, outputs_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
    neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
@@ -297,7 +297,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
 
         neural_network.set_parameters_random();
 
@@ -338,7 +338,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        neural_network.set(NeuralNetwork::Classification, {inputs_number, outputs_number});
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
 
         neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
@@ -386,7 +386,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
-    neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
+    neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
 
     neural_network.set_parameters_random();
 
@@ -712,7 +712,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
-       neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, outputs_number});
+       neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
@@ -751,7 +751,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        input_variables_indices = data_set.get_input_variables_indices();
        target_variables_indices = data_set.get_target_variables_indices();
 
-       neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
+       neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 
@@ -797,7 +797,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
-       neural_network.set(NeuralNetwork::Classification, {inputs_number, neurons_number, outputs_number});
+       neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
        neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
        neural_network.set_parameters_random();

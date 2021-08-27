@@ -405,7 +405,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumEpochsNumber;
+            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
 
         if(elapsed_time >= maximum_time)
@@ -414,7 +414,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumTime;
+            results.stopping_condition = StoppingCondition::MaximumTime;
         }
 
         if(training_loss <= training_loss_goal)
@@ -423,7 +423,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition  = LossGoal;
+            results.stopping_condition  = StoppingCondition::LossGoal;
         }
 
         if(selection_failures >= maximum_selection_failures)
@@ -432,7 +432,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumSelectionErrorIncreases;
+            results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
 
         if(stop_training)

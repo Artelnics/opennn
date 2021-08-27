@@ -876,7 +876,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             if(display) cout << "Epoch " << epoch << endl << "Maximum time reached: " << write_time(elapsed_time) << endl;
 
-            inputs_selection_results.stopping_condition = InputsSelection::MaximumTime;
+            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
         }
 
         if(selection_errors(optimal_individual_index) <= selection_error_goal) //???
@@ -885,7 +885,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             if(display) cout << "Epoch  " << epoch << endl << "Selection error reached: " << selection_errors(optimal_individual_index) << endl;
 
-            inputs_selection_results.stopping_condition = InputsSelection::SelectionErrorGoal;
+            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
         }
 
         if(epoch >= maximum_epochs_number-1)
@@ -894,7 +894,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
 
-            inputs_selection_results.stopping_condition = InputsSelection::MaximumEpochs;
+            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
         }
 
         if(stop)
