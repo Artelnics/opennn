@@ -71,7 +71,7 @@ public:
 
     /// Enumeration of available error terms in OpenNN.
 
-    enum LossMethod
+    enum class LossMethod
     {
         SUM_SQUARED_ERROR,
         MEAN_SQUARED_ERROR,
@@ -83,7 +83,7 @@ public:
 
     /// Enumeration of all the available types of optimization algorithms.
 
-    enum OptimizationMethod
+    enum class OptimizationMethod
     {
         GRADIENT_DESCENT,
         CONJUGATE_GRADIENT,

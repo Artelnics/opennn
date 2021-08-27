@@ -44,7 +44,7 @@ public:
 
     /// Enumeration of available activation functions for the long-short term memory layer.
 
-    enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent,
+    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent,
                             Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear,
                             SoftPlus, SoftSign, HardSigmoid};
 
@@ -315,8 +315,8 @@ protected:
 
    /// Activation function variable.
 
-   ActivationFunction activation_function = HyperbolicTangent;
-   ActivationFunction recurrent_activation_function = HardSigmoid;
+   ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
+   ActivationFunction recurrent_activation_function = ActivationFunction::HardSigmoid;
 
    Index batch;
    Index variables;

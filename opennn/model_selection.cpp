@@ -128,9 +128,9 @@ GeneticAlgorithm* ModelSelection::get_genetic_algorithm_pointer()
 
 void ModelSelection::set_default()
 {
-    set_neurons_selection_method(GROWING_NEURONS);
+    set_neurons_selection_method(NeuronsSelectionMethod::GROWING_NEURONS);
 
-    set_inputs_selection_method(GROWING_INPUTS);
+    set_inputs_selection_method(InputsSelectionMethod::GROWING_INPUTS);
 
     display = true;
 }
@@ -176,7 +176,7 @@ void ModelSelection::set_neurons_selection_method(const string& new_neurons_sele
 {
     if(new_neurons_selection_method == "GROWING_NEURONS")
     {
-        set_neurons_selection_method(GROWING_NEURONS);
+        set_neurons_selection_method(NeuronsSelectionMethod::GROWING_NEURONS);
     }
     else
     {
@@ -207,15 +207,15 @@ void ModelSelection::set_inputs_selection_method(const string& new_inputs_select
 {
     if(new_inputs_selection_method == "GROWING_INPUTS")
     {
-        set_inputs_selection_method(GROWING_INPUTS);
+        set_inputs_selection_method(InputsSelectionMethod::GROWING_INPUTS);
     }
     else if(new_inputs_selection_method == "PRUNING_INPUTS")
     {
-        set_inputs_selection_method(PRUNING_INPUTS);
+        set_inputs_selection_method(InputsSelectionMethod::PRUNING_INPUTS);
     }
     else if(new_inputs_selection_method == "GENETIC_ALGORITHM")
     {
-        set_inputs_selection_method(GENETIC_ALGORITHM);
+        set_inputs_selection_method(InputsSelectionMethod::GENETIC_ALGORITHM);
     }
     else
     {
@@ -336,7 +336,7 @@ NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {
     switch(neurons_selection_method)
     {
-    case GROWING_NEURONS:
+    case NeuronsSelectionMethod::GROWING_NEURONS:
         return growing_neurons.perform_neurons_selection();
     }
     return NeuronsSelectionResults();
@@ -351,13 +351,13 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
 {
     switch(inputs_selection_method)
     {
-    case GROWING_INPUTS:
+    case InputsSelectionMethod::GROWING_INPUTS:
         return growing_inputs.perform_inputs_selection();
 
-    case PRUNING_INPUTS:
+    case InputsSelectionMethod::PRUNING_INPUTS:
         return pruning_inputs.perform_inputs_selection();
 
-    case GENETIC_ALGORITHM:
+    case InputsSelectionMethod::GENETIC_ALGORITHM:
         return genetic_algorithm.perform_inputs_selection();
     }
 
@@ -540,7 +540,7 @@ string ModelSelection::write_neurons_selection_method() const
 {
     switch(neurons_selection_method)
     {
-    case GROWING_NEURONS:
+    case NeuronsSelectionMethod::GROWING_NEURONS:
         return "GROWING_NEURONS";
     }
 
@@ -552,13 +552,13 @@ string ModelSelection::write_inputs_selection_method() const
 {
     switch(inputs_selection_method)
     {
-    case GROWING_INPUTS:
+    case InputsSelectionMethod::GROWING_INPUTS:
         return "GROWING_INPUTS";
 
-    case PRUNING_INPUTS:
+    case InputsSelectionMethod::PRUNING_INPUTS:
         return "PRUNING_INPUTS";
 
-    case GENETIC_ALGORITHM:
+    case InputsSelectionMethod::GENETIC_ALGORITHM:
         return "GENETIC_ALGORITHM";
     }
 

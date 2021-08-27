@@ -51,7 +51,7 @@ public:
 
    /// Enumeration of the available training operators for obtaining the training direction.
 
-   enum TrainingDirectionMethod{PR, FR};
+   enum class TrainingDirectionMethod{PR, FR};
 
    // DEFAULT CONSTRUCTOR
 
@@ -151,7 +151,7 @@ private:
 
    /// Applied method for calculating the conjugate gradient direction.
 
-   TrainingDirectionMethod training_direction_method = ConjugateGradient::FR;
+   TrainingDirectionMethod training_direction_method = ConjugateGradient::TrainingDirectionMethod::FR;
 
    /// Learning rate algorithm object for one-dimensional minimization. 
 

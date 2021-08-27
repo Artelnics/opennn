@@ -46,7 +46,7 @@ public:
 
    /// Available training operators for obtaining the perform_training rate.
 
-   enum LearningRateMethod{GoldenSection, BrentMethod};
+   enum class LearningRateMethod{GoldenSection, BrentMethod};
 
    // Constructors
 

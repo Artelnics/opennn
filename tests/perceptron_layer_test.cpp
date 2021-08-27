@@ -32,7 +32,7 @@ void PerceptronLayerTest::test_constructor()
 
     // Architecture constructor
 
-    PerceptronLayer perceptron_layer_3(10, 3, PerceptronLayer::Linear);
+    PerceptronLayer perceptron_layer_3(10, 3, PerceptronLayer::ActivationFunction::Linear);
     assert_true(perceptron_layer_3.write_activation_function() == "Linear", LOG);
     assert_true(perceptron_layer_3.get_inputs_number() == 10, LOG);
     assert_true(perceptron_layer_3.get_neurons_number() == 3, LOG);
@@ -40,7 +40,7 @@ void PerceptronLayerTest::test_constructor()
     assert_true(perceptron_layer_3.get_synaptic_weights_number() == 30, LOG);
     assert_true(perceptron_layer_3.get_parameters_number() == 33, LOG);
 
-    PerceptronLayer perceptron_layer_4(0, 0, PerceptronLayer::Logistic);
+    PerceptronLayer perceptron_layer_4(0, 0, PerceptronLayer::ActivationFunction::Logistic);
     assert_true(perceptron_layer_4.write_activation_function() == "Logistic", LOG);
     assert_true(perceptron_layer_4.get_inputs_number() == 0, LOG);
     assert_true(perceptron_layer_4.get_neurons_number() == 0, LOG);
@@ -48,7 +48,7 @@ void PerceptronLayerTest::test_constructor()
     assert_true(perceptron_layer_4.get_synaptic_weights_number() == 0, LOG);
     assert_true(perceptron_layer_4.get_parameters_number() == 0, LOG);
 
-    PerceptronLayer perceptron_layer_5(1, 1, PerceptronLayer::Linear);
+    PerceptronLayer perceptron_layer_5(1, 1, PerceptronLayer::ActivationFunction::Linear);
     assert_true(perceptron_layer_5.write_activation_function() == "Linear", LOG);
     assert_true(perceptron_layer_5.get_inputs_number() == 1, LOG);
     assert_true(perceptron_layer_5.get_neurons_number() == 1, LOG);
@@ -102,38 +102,38 @@ void PerceptronLayerTest::test_get_activation_function()
 
    perceptron_layer.set();
 
-   perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
-   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::Threshold, LOG);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
+   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ActivationFunction::Threshold, LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
-   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::SymmetricThreshold, LOG);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SymmetricThreshold);
+   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ActivationFunction::SymmetricThreshold, LOG);
+   
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
+   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ActivationFunction::Logistic, LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::Logistic);
-   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::Logistic, LOG);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
+   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ActivationFunction::HyperbolicTangent, LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
-   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::HyperbolicTangent, LOG);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ActivationFunction::Linear, LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::Linear);
-   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::Linear, LOG);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::RectifiedLinear);
+   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ActivationFunction::RectifiedLinear, LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::RectifiedLinear);
-   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::RectifiedLinear, LOG);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ExponentialLinear);
+   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ActivationFunction::ExponentialLinear, LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::ExponentialLinear);
-   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ExponentialLinear, LOG);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ScaledExponentialLinear);
+   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ActivationFunction::ScaledExponentialLinear, LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::ScaledExponentialLinear);
-   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ScaledExponentialLinear, LOG);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
+   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ActivationFunction::SoftPlus, LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::SoftPlus);
-   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::SoftPlus, LOG);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftSign);
+   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ActivationFunction::SoftSign, LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::SoftSign);
-   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::SoftSign, LOG);
-
-   perceptron_layer.set_activation_function(PerceptronLayer::HardSigmoid);
-   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::HardSigmoid, LOG);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HardSigmoid);
+   assert_true(perceptron_layer.get_activation_function() == PerceptronLayer::ActivationFunction::HardSigmoid, LOG);
 }
 
 
@@ -143,34 +143,34 @@ void PerceptronLayerTest::test_write_activation_function()
 
    perceptron_layer.set();
 
-   perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
    assert_true(perceptron_layer.write_activation_function() == "Threshold", LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SymmetricThreshold);
    assert_true(perceptron_layer.write_activation_function() == "SymmetricThreshold", LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::Logistic);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
    assert_true(perceptron_layer.write_activation_function() == "Logistic", LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
    assert_true(perceptron_layer.write_activation_function() == "HyperbolicTangent", LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::Linear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
    assert_true(perceptron_layer.write_activation_function() == "Linear", LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::RectifiedLinear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::RectifiedLinear);
    assert_true(perceptron_layer.write_activation_function() == "RectifiedLinear", LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::ExponentialLinear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ExponentialLinear);
    assert_true(perceptron_layer.write_activation_function() == "ExponentialLinear", LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::SoftPlus);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
    assert_true(perceptron_layer.write_activation_function() == "SoftPlus", LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::SoftSign);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftSign);
    assert_true(perceptron_layer.write_activation_function() == "SoftSign", LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::HardSigmoid);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HardSigmoid);
    assert_true(perceptron_layer.write_activation_function() == "HardSigmoid", LOG);
 }
 
@@ -395,7 +395,7 @@ void PerceptronLayerTest::test_get_synaptic_weights()
    Tensor<type, 2> inputs(1, 3);
    inputs.setValues({{type(-0.8), type(0.2), type(-0.4)}});
 
-   perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::HyperbolicTangent);
+   perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
    perceptron_layer.set_biases(biases_3);
    perceptron_layer.set_synaptic_weights(synaptic_weights_3);
@@ -478,7 +478,7 @@ void PerceptronLayerTest::test_get_parameters()
    inputs.resize(1, 3);
    inputs.setValues({{type(-0.8), type(0.2), type(-0.4)}});
 
-   perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::HyperbolicTangent);
+   perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
    perceptron_layer.set_biases(biases);
    perceptron_layer.set_synaptic_weights(synaptic_weights);
@@ -788,52 +788,51 @@ void PerceptronLayerTest::test_set_parameters()
 void PerceptronLayerTest::test_set_activation_function()
 {
    cout << "test_set_activation_function\n";
-
-
-
+/*
    string new_activation_function_name = "Threshold";
-   perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
    assert_true(perceptron_layer.get_activation_function() == 0, LOG);
 
    new_activation_function_name = "SymmetricThreshold";
-   perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SymmetricThreshold);
    assert_true(perceptron_layer.get_activation_function() == 1, LOG);
 
    new_activation_function_name = "Logistic";
-   perceptron_layer.set_activation_function(PerceptronLayer::Logistic);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
    assert_true(perceptron_layer.get_activation_function() == 2, LOG);
 
    new_activation_function_name = "HyperbolicTangent";
-   perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
    assert_true(perceptron_layer.get_activation_function() == 3, LOG);
 
    new_activation_function_name = "Linear";
-   perceptron_layer.set_activation_function(PerceptronLayer::Linear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
    assert_true(perceptron_layer.get_activation_function() == 4, LOG);
 
    new_activation_function_name = "RectifiedLinear";
-   perceptron_layer.set_activation_function(PerceptronLayer::RectifiedLinear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::RectifiedLinear);
    assert_true(perceptron_layer.get_activation_function() == 5, LOG);
 
    new_activation_function_name = "ExponentialLinear";
-   perceptron_layer.set_activation_function(PerceptronLayer::ExponentialLinear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ExponentialLinear);
    assert_true(perceptron_layer.get_activation_function() == 6, LOG);
 
    new_activation_function_name = "ScaledExponentialLinear";
-   perceptron_layer.set_activation_function(PerceptronLayer::ScaledExponentialLinear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ScaledExponentialLinear);
    assert_true(perceptron_layer.get_activation_function() == 7, LOG);
 
    new_activation_function_name = "SoftPlus";
-   perceptron_layer.set_activation_function(PerceptronLayer::SoftPlus);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
    assert_true(perceptron_layer.get_activation_function() == 8, LOG);
 
    new_activation_function_name = "SoftSign";
-   perceptron_layer.set_activation_function(PerceptronLayer::SoftSign);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftSign);
    assert_true(perceptron_layer.get_activation_function() == 9, LOG);
 
    new_activation_function_name = "HardSigmoid";
-   perceptron_layer.set_activation_function(PerceptronLayer::HardSigmoid);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HardSigmoid);
    assert_true(perceptron_layer.get_activation_function() == 10, LOG);
+   */
 }
 
 
@@ -1028,7 +1027,7 @@ void PerceptronLayerTest::test_calculate_combinations()
    neurons_number = 1;
    samples_number = 1;
 
-   perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::HyperbolicTangent);
+   perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
    synaptic_weights.resize(inputs_number, neurons_number);
    synaptic_weights.setValues({{type(1.0)}});
@@ -1120,7 +1119,7 @@ void PerceptronLayerTest::test_calculate_activations()
 
    activations.resize(samples_number, neurons_number);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::Linear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
    perceptron_layer.calculate_activations(combinations, activations);
 
    assert_true(activations.rank() == 2, LOG);
@@ -1145,7 +1144,7 @@ void PerceptronLayerTest::test_calculate_activations()
 
    activations.resize(samples_number, neurons_number);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::Linear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
    perceptron_layer.calculate_activations(combinations, activations);
 
    assert_true(activations.rank() == 2, LOG);
@@ -1290,7 +1289,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
    activations_derivatives.setZero();
 
-   perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    assert_true(activations_derivatives.rank() == 2, LOG);
@@ -1299,52 +1298,52 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    assert_true(abs(activations(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(abs(activations_derivatives(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SymmetricThreshold);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(abs(activations(0,0) - type(1)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0)) < static_cast<type>(1e-3), LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::Logistic);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(abs(activations(0,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.196)) < static_cast<type>(1e-3), LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(abs(activations(0,0) - static_cast<type>(0.761)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.41997)) < static_cast<type>(1e-3), LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::Linear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(abs(activations(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(abs(activations_derivatives(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::RectifiedLinear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::RectifiedLinear);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(abs(activations(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::ExponentialLinear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ExponentialLinear);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(abs(activations(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(1)) < static_cast<type>(1e-3), LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::ScaledExponentialLinear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ScaledExponentialLinear);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(abs(activations(0,0) - static_cast<type>(1.05)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(1.05)) < static_cast<type>(1e-3), LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::SoftPlus);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(abs(activations(0,0) - static_cast<type>(1.313)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.731)) < static_cast<type>(1e-3), LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::SoftSign);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftSign);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(abs(activations(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
 
-   perceptron_layer.set_activation_function(PerceptronLayer::HardSigmoid);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HardSigmoid);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(abs(activations(0,0) - static_cast<type>(0.7)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_derivatives(0,0) - static_cast<type>(0.2)) < static_cast<type>(1e-3), LOG);
@@ -1363,10 +1362,10 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    activations_derivatives.setZero();
 
    // Test
-   perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+   numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::NumericalDifferentiationMethod::CentralDifferences);
    Tensor<type, 2> numerical_activation_derivative(1,4);
    numerical_activation_derivative
            = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
@@ -1374,7 +1373,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test
-   perceptron_layer.set_activation_function(PerceptronLayer::SymmetricThreshold);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SymmetricThreshold);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    numerical_activation_derivative
@@ -1383,7 +1382,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test
-   perceptron_layer.set_activation_function(PerceptronLayer::Logistic);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    numerical_activation_derivative
@@ -1392,7 +1391,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test
-   perceptron_layer.set_activation_function(PerceptronLayer::HyperbolicTangent);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    numerical_activation_derivative
@@ -1401,7 +1400,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test
-   perceptron_layer.set_activation_function(PerceptronLayer::Linear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    numerical_activation_derivative
@@ -1410,7 +1409,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test
-   perceptron_layer.set_activation_function(PerceptronLayer::RectifiedLinear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::RectifiedLinear);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    numerical_activation_derivative
@@ -1419,7 +1418,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test
-   perceptron_layer.set_activation_function(PerceptronLayer::ExponentialLinear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ExponentialLinear);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    numerical_activation_derivative
@@ -1428,7 +1427,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test
-   perceptron_layer.set_activation_function(PerceptronLayer::ScaledExponentialLinear);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ScaledExponentialLinear);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    numerical_activation_derivative
@@ -1437,17 +1436,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
 
    // Test
-   perceptron_layer.set_activation_function(PerceptronLayer::SoftPlus);
-   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
-
-   numerical_activation_derivative
-           = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
-
-   assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
-
-   // Test
-
-   perceptron_layer.set_activation_function(PerceptronLayer::SoftSign);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    numerical_activation_derivative
@@ -1457,7 +1446,17 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
 
    // Test
 
-   perceptron_layer.set_activation_function(PerceptronLayer::HardSigmoid);
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftSign);
+   perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
+
+   numerical_activation_derivative
+           = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
+
+   assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
+
+   // Test
+
+   perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HardSigmoid);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
    numerical_activation_derivative
@@ -1499,7 +1498,7 @@ void PerceptronLayerTest::test_calculate_outputs()
     perceptron_layer.set_synaptic_weights(synaptic_weights);
     perceptron_layer.set_biases(biases);
 
-    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
     outputs = perceptron_layer.calculate_outputs(inputs);
 
@@ -1535,7 +1534,7 @@ void PerceptronLayerTest::test_calculate_outputs()
     inputs.resize(1, 2);
     inputs.setConstant(type(1));
 
-    perceptron_layer.set_activation_function(PerceptronLayer::Threshold);
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
 
     outputs = perceptron_layer.calculate_outputs(inputs);
 
@@ -1620,7 +1619,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_number = 2;
     neurons_number = 2;
 
-    perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::Linear);
+    perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::Linear);
     perceptron_layer.set_parameters_constant(type(1));
 
     inputs.resize(samples_number, inputs_number);
@@ -1646,7 +1645,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_number = 2;
     neurons_number = 2;
 
-    perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::HyperbolicTangent);
+    perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
     perceptron_layer.set_parameters_constant(type(1));
 
     inputs.resize(samples_number, inputs_number);
@@ -1684,7 +1683,7 @@ void PerceptronLayerTest::test_write_expression()
 
    string expression;
 
-   perceptron_layer.set(2,2, PerceptronLayer::Logistic);
+   perceptron_layer.set(2,2, PerceptronLayer::ActivationFunction::Logistic);
 
    expression = perceptron_layer.write_expression(inputs_names,outputs_names);
 

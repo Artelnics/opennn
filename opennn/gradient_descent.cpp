@@ -481,7 +481,7 @@ TrainingResults GradientDescent::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = LossGoal;
+            results.stopping_condition = StoppingCondition::LossGoal;
         }
 
         else if(selection_failures >= maximum_selection_failures)
@@ -490,7 +490,7 @@ TrainingResults GradientDescent::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumSelectionErrorIncreases;
+            results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
 
         else if(epoch == maximum_epochs_number)
@@ -499,7 +499,7 @@ TrainingResults GradientDescent::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumEpochsNumber;
+            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
 
         else if(elapsed_time >= maximum_time)
@@ -508,7 +508,7 @@ TrainingResults GradientDescent::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumTime;
+            results.stopping_condition = StoppingCondition::MaximumTime;
         }
 
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
@@ -519,7 +519,7 @@ TrainingResults GradientDescent::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MinimumLossDecrease;
+            results.stopping_condition = StoppingCondition::MinimumLossDecrease;
         }
 
         old_loss = training_back_propagation.loss;

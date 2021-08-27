@@ -45,7 +45,7 @@ int main()
 
         const Index hidden_neurons_number = 6;
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         // Training strategy
 

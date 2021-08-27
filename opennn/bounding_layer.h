@@ -50,7 +50,7 @@ public:
 
    /// Enumeration of available methods for bounding the output variables.
 
-   enum BoundingMethod{NoBounding, Bounding};
+   enum class BoundingMethod{NoBounding, Bounding};
 
    // Check methods
 
@@ -118,7 +118,7 @@ protected:
 
    /// Method used to bound the values.
 
-   BoundingMethod bounding_method = Bounding;
+   BoundingMethod bounding_method = BoundingMethod::Bounding;
 
    /// Lower bounds of output variables
 

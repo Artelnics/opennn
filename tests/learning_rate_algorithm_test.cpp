@@ -52,11 +52,11 @@ void LearningRateAlgorithmTest::test_get_learning_rate_method()
 {
    cout << "test_get_learning_rate_method\n";
 
-   learning_rate_algorithm.set_learning_rate_method(LearningRateAlgorithm::GoldenSection);
-   assert_true(learning_rate_algorithm.get_learning_rate_method() == LearningRateAlgorithm::GoldenSection, LOG);
+   learning_rate_algorithm.set_learning_rate_method(LearningRateAlgorithm::LearningRateMethod::GoldenSection);
+   assert_true(learning_rate_algorithm.get_learning_rate_method() == LearningRateAlgorithm::LearningRateMethod::GoldenSection, LOG);
 
-   learning_rate_algorithm.set_learning_rate_method(LearningRateAlgorithm::BrentMethod);
-   assert_true(learning_rate_algorithm.get_learning_rate_method() == LearningRateAlgorithm::BrentMethod, LOG);
+   learning_rate_algorithm.set_learning_rate_method(LearningRateAlgorithm::LearningRateMethod::BrentMethod);
+   assert_true(learning_rate_algorithm.get_learning_rate_method() == LearningRateAlgorithm::LearningRateMethod::BrentMethod, LOG);
 }
 
 
@@ -86,7 +86,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    Tensor<Index, 1> samples_indices(0, 1, data_set.get_samples_number()-1);
 
-    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
 //    LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 
@@ -140,7 +140,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    samples_indices.set(0, 1, data_set.get_samples_number()-1);  
 
-//    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+//    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 //    neural_network.set_parameters_random();
 
 //    loss = sum_squared_error.calculate_training_loss();
@@ -161,7 +161,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    samples_indices.set(0, 1, data_set.get_samples_number()-1);
 
-//    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+//    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 //    neural_network.set_parameters_random();
 
 //    loss = sum_squared_error.calculate_training_loss();
@@ -191,7 +191,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
    data_set.set(1, 1, 1);
 //   Tensor<Index, 1> indices(1,1,data_set.get_samples_number()-1);
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
 //   LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 
@@ -228,7 +228,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
    Tensor<Index, 1> indices(3);
    indices.setValues({1,1,data_set.get_samples_number()-1});
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
    neural_network.set_parameters_constant(type(1));
 

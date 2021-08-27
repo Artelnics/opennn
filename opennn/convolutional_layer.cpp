@@ -60,9 +60,9 @@ void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<ty
 {
     switch(convolution_type)
     {
-        case Valid: padded_output = inputs; return;
+        case ConvolutionType::Valid: padded_output = inputs; return;
 
-        case Same:
+        case ConvolutionType::Same:
         {
                 Eigen::array<pair<int, int>, 4> paddings;
                 const int pad = int(0.5 *(get_kernels_rows_number() - 1));
@@ -135,27 +135,27 @@ void ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& inputs, Te
 {
     switch(activation_function)
     {
-        case Linear: linear(inputs, activations); return;
+        case ActivationFunction::Linear: linear(inputs, activations); return;
 
-        case Logistic: logistic(inputs, activations); return;
+        case ActivationFunction::Logistic: logistic(inputs, activations); return;
 
-        case HyperbolicTangent: hyperbolic_tangent(inputs, activations); return;
+        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(inputs, activations); return;
 
-        case Threshold: threshold(inputs, activations); return;
+        case ActivationFunction::Threshold: threshold(inputs, activations); return;
 
-        case SymmetricThreshold: symmetric_threshold(inputs, activations); return;
+        case ActivationFunction::SymmetricThreshold: symmetric_threshold(inputs, activations); return;
 
-        case RectifiedLinear: rectified_linear(inputs, activations); return;
+        case ActivationFunction::RectifiedLinear: rectified_linear(inputs, activations); return;
 
-        case ScaledExponentialLinear: scaled_exponential_linear(inputs, activations); return;
+        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(inputs, activations); return;
 
-        case SoftPlus: soft_plus(inputs, activations); return;
+        case ActivationFunction::SoftPlus: soft_plus(inputs, activations); return;
 
-        case SoftSign: soft_sign(inputs, activations); return;
+        case ActivationFunction::SoftSign: soft_sign(inputs, activations); return;
 
-        case HardSigmoid: hard_sigmoid(inputs, activations); return;
+        case ActivationFunction::HardSigmoid: hard_sigmoid(inputs, activations); return;
 
-        case ExponentialLinear: exponential_linear(inputs, activations); return;
+        case ActivationFunction::ExponentialLinear: exponential_linear(inputs, activations); return;
     }
 }
 
@@ -166,27 +166,27 @@ void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>
 {
     switch(activation_function)
     {
-        case Linear: linear_derivatives(combinations_4d, activations, activations_derivatives); return;
+        case ActivationFunction::Linear: linear_derivatives(combinations_4d, activations, activations_derivatives); return;
 
-        case Logistic: logistic_derivatives(combinations_4d, activations, activations_derivatives); return;
+        case ActivationFunction::Logistic: logistic_derivatives(combinations_4d, activations, activations_derivatives); return;
 
-        case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_4d, activations, activations_derivatives); return;
+        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_4d, activations, activations_derivatives); return;
 
-        case Threshold: threshold_derivatives(combinations_4d, activations, activations_derivatives); return;
+        case ActivationFunction::Threshold: threshold_derivatives(combinations_4d, activations, activations_derivatives); return;
 
-        case SymmetricThreshold: symmetric_threshold_derivatives(combinations_4d, activations, activations_derivatives); return;
+        case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations_4d, activations, activations_derivatives); return;
 
-        case RectifiedLinear: rectified_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
+        case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
 
-        case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
+        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
 
-        case SoftPlus: soft_plus_derivatives(combinations_4d, activations, activations_derivatives); return;
+        case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations_4d, activations, activations_derivatives); return;
 
-        case SoftSign: soft_sign_derivatives(combinations_4d, activations, activations_derivatives); return;
+        case ActivationFunction::SoftSign: soft_sign_derivatives(combinations_4d, activations, activations_derivatives); return;
 
-        case HardSigmoid: hard_sigmoid_derivatives(combinations_4d, activations, activations_derivatives); return;
+        case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_4d, activations, activations_derivatives); return;
 
-        case ExponentialLinear: exponential_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
+        case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
     }
 }
 
@@ -988,12 +988,12 @@ Index ConvolutionalLayer::get_padding_width() const
 {
     switch(convolution_type)
     {
-    case Valid:
+    case ConvolutionType::Valid:
     {
         return 0;
     }
 
-    case Same:
+    case ConvolutionType::Same:
     {
         return column_stride*(input_variables_dimensions[2] - 1) - input_variables_dimensions[2] + get_kernels_columns_number();
     }
@@ -1009,12 +1009,12 @@ Index ConvolutionalLayer::get_padding_height() const
 {
     switch(convolution_type)
     {
-    case Valid:
+    case ConvolutionType::Valid:
     {
         return 0;
     }
 
-    case Same:
+    case ConvolutionType::Same:
     {
         return row_stride*(input_variables_dimensions[1] - 1) - input_variables_dimensions[1] + get_kernels_rows_number();
     }
