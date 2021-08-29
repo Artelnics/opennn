@@ -618,10 +618,10 @@ public:
    {
       switch(numerical_differentiation_method)
       {
-         case ForwardDifferences:
+         case NumericalDifferentiationMethod::ForwardDifferences:
             return calculate_forward_differences_second_derivatives(t, f, x);
 
-         case CentralDifferences:
+         case NumericalDifferentiationMethod::CentralDifferences:
             return calculate_central_differences_second_derivatives(t, f, x);
       }
 
@@ -764,12 +764,12 @@ public:
    {
       switch(numerical_differentiation_method)
       {
-         case ForwardDifferences:
+         case NumericalDifferentiationMethod::ForwardDifferences:
          {
             return calculate_forward_differences_second_derivatives(t, f, dummy, x);
       	 }
 
-         case CentralDifferences:
+         case NumericalDifferentiationMethod::CentralDifferences:
          {
             return calculate_central_differences_second_derivatives(t, f, dummy, x);
     	 }
@@ -974,12 +974,12 @@ public:
    {
       switch(numerical_differentiation_method)
       {
-         case ForwardDifferences:
+         case NumericalDifferentiationMethod::ForwardDifferences:
          {
             return calculate_forward_differences_gradient(t, f, x);
       	 }
 
-         case CentralDifferences:
+         case NumericalDifferentiationMethod::CentralDifferences:
          {
             return calculate_central_differences_gradient(t, f, x);
     	 }
@@ -2007,12 +2007,12 @@ public:
    {
       switch(numerical_differentiation_method)
       {
-         case ForwardDifferences:
+         case NumericalDifferentiationMethod::ForwardDifferences:
          {
             return calculate_forward_differences_hessian(t, f, dummy, x);
       	 }
 
-         case CentralDifferences:
+         case NumericalDifferentiationMethod::CentralDifferences:
          {
             return calculate_central_differences_hessian(t, f, dummy, x);
     	 }
