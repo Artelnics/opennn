@@ -713,10 +713,16 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 
     const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();
 
+    const Index batch_samples_number = back_propagation->batch_samples_number;
+
+    const Index next_neurons_number = probabilistic_layer_pointer->get_biases_number();
+
     if(probabilistic_layer_pointer->get_neurons_number() == 1) // Binary
     {
+        TensorMap< Tensor<type, 2> > activations_derivatives_2d(next_forward_propagation->activations_derivatives.data(),
+                                                                 batch_samples_number, next_neurons_number);
         back_propagation->delta.device(*thread_pool_device) =
-                (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
+                (next_back_propagation->delta*activations_derivatives_2d).contract(next_synaptic_weights, A_BT);
     }
     else // Multiple
     {
