@@ -15,15 +15,6 @@
 #include <string>
 #include <time.h>
 
-<<<<<<< HEAD
-using namespace std;
-
-int main()
-{
-    cout << "Hello, OpenNN!" << endl;
-
-    return 0;
-=======
 // OpenNN includes
 
 #include "../opennn/opennn.h"
@@ -41,8 +32,6 @@ int main()
         srand(static_cast<unsigned>(time(nullptr)));
 
         DataSet ds("C:/Users/Usuario/Documents/Waste_monthly.csv", ',', true);
-
-
 
         ds.set_lags_number(2);
         ds.set_steps_ahead_number(1);
@@ -99,7 +88,6 @@ int main()
     catch(exception& e)
     {
         cerr << e.what() << endl;
->>>>>>> 0eb6daa6fad6f93d30eb560e07894b8a06c88eaf
 
         return 1;
     }
