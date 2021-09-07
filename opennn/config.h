@@ -49,3 +49,4 @@ namespace OpenNN
     typedef float type;
 }
 
+using namespace std;

@@ -23,7 +23,7 @@ ConjugateGradient::ConjugateGradient()
 }
 
 
-/// Destructor.
+/// Constructor.
 /// It creates a conjugate gradient optimization algorithm associated to a loss index object.
 /// It also initializes the rest of class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -211,7 +211,6 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
 /// <li> Reserve training error history: false.
 /// <li> Reserve training direction norm history: false.
 /// </ul>
-///
 
 void ConjugateGradient::set_default()
 {
