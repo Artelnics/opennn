@@ -968,6 +968,7 @@ type standard_deviation(const Tensor<type, 1>& vector)
 
 /// Returns the standard deviation of the elements in the vector.
 /// @param vector Vector to be evaluated.
+/// @param indices Indices of vector.
 
 type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
@@ -1803,6 +1804,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
 /// Returns the basic descriptives of given columns for given rows.
 /// The format is a vector of descriptives structures.
 /// The size of that vector is equal to the number of given columns.
+/// @param matrix Used matrix.
 /// @param row_indices Indices of the rows for which the descriptives are to be computed.
 /// @param columns_indices Indices of the columns for which the descriptives are to be computed.
 
@@ -2219,6 +2221,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix)
 
 /// Returns a vector with the mean values of given columns.
 /// The size of the vector is equal to the size of the column indices vector.
+/// @param matrix Matrix for which we want the mean values of certain columns.
 /// @param columns_indices Indices of columns.
 
 Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& columns_indices)
@@ -2538,6 +2541,7 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 
 /// Returns a vector with the median values of given columns.
 /// The size of the vector is equal to the size of the column indices vector.
+/// @param matrix Matrix for which we want the median values of certain columns.
 /// @param columns_indices Indices of columns.
 
 
@@ -2577,6 +2581,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 
 /// Returns a vector with the median values of given columns for given rows.
 /// The size of the vector is equal to the size of the column indices vector.
+/// @param matrix Matrix for which we want the median values of certain columns and rows.
 /// @param row_indices Indices of rows.
 /// @param columns_indices Indices of columns.
 
@@ -2970,6 +2975,7 @@ Index maximal_index(const Tensor<type, 1>& vector)
 
 
 /// Returns the indices of the smallest elements in the vector.
+/// @param vector Vector for which we want the indices of the smallest elements.
 /// @param number Number of minimal indices to be computed.
 
 Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& number)
@@ -3016,6 +3022,7 @@ if(number > size)
 
 
 /// Returns the indices of the largest elements in the vector.
+/// @param vector Vector for which we want the indices of the largest elements.
 /// @param number Number of maximal indices to be computed.
 /// @todo Clean variables names minim, vector_!!!
 

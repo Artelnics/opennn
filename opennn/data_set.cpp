@@ -1977,8 +1977,8 @@ void DataSet::set_default_columns_names()
 
 
 /// Sets the name of a single column.
-/// @param index Index of column.
-/// @param new_use Use for that column.
+/// @param column_index Index of column.
+/// @param new_name Use for that column.
 
 void DataSet::set_column_name(const Index& column_index, const string& new_name)
 {
@@ -2054,7 +2054,7 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
 
 
 /// Returns the name of a single variable in the data set.
-/// @param index Index of variable.
+/// @param variable_index Index of variable.
 
 string DataSet::get_variable_name(const Index& variable_index) const
 {
@@ -3289,8 +3289,8 @@ void DataSet::set_column_type(const string& name, const ColumnType& new_type)
 
 
 /// This method set the name of a single variable.
-/// @param index Index of variable.
-/// @param new_name Name of variable.
+/// @param variable_index Index of variable.
+/// @param new_variable_name Name of variable.
 
 void DataSet::set_variable_name(const Index& variable_index, const string& new_variable_name)
 {
@@ -3350,7 +3350,7 @@ void DataSet::set_variable_name(const Index& variable_index, const string& new_v
 
 /// Sets new names for the variables in the data set from a vector of strings.
 /// The size of that vector must be equal to the total number of variables.
-/// @param new_names Name of variables.
+/// @param new_variables_names Name of variables.
 
 void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
 {
@@ -4870,7 +4870,7 @@ void DataSet::set_separator(const char& new_separator)
 
 
 /// Sets a new separator from a string.
-/// @param new_separator Char with the separator value.
+/// @param new_separator_string Char with the separator value.
 
 void DataSet::set_separator(const string& new_separator_string)
 {
@@ -4985,7 +4985,7 @@ void DataSet::set_steps_ahead_number(const Index& new_steps_ahead_number)
 
 
 /// Sets the new position where the time data is located in the data set.
-/// @param new_time_index Position where the time data is located.
+/// @param new_time_column Position where the time data is located.
 
 void DataSet::set_time_column(const string& new_time_column)
 {
@@ -9256,7 +9256,7 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
 /// Returns a matrix with the values of autocorrelation for every variable in the data set.
 /// The number of rows is equal to the number of
 /// The number of columns is the maximum lags number.
-/// @param maximum_lags_number Maximum lags number for which autocorrelation is calculated.
+/// @param lags_number Maximum lags number for which autocorrelation is calculated.
 
 Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) const
 {

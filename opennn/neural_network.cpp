@@ -114,7 +114,7 @@ void NeuralNetwork::delete_layers()
 
 
 /// Add a new layer to the Neural Network model.
-/// @param layer The layer that will be added.
+/// @param layer_pointer The layer that will be added.
 
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
@@ -1368,7 +1368,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
 /// Calculates the forward propagation in the neural network.
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
-/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
+/// @param foward_propagation NeuralNetwork class structure that saves the necessary parameters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
@@ -1435,8 +1435,8 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
 /// Calculates the forward propagation in the neural network.
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
-/// @param paramters Parameters of neural network.
-/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
+/// @param parameters Parameters of neural network.
+/// @param forward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       Tensor<type, 1>& parameters,

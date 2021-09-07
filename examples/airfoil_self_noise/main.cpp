@@ -51,6 +51,13 @@ int main()
 
         model_selection.perform_inputs_selection();
 
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+        const Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> linear_regression_analysis
+                = testing_analysis.perform_linear_regression_analysis();
+
+        linear_regression_analysis(0).print();
+
         cout << "Good bye!" << endl;
 
         system("pause");

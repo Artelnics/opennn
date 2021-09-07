@@ -101,7 +101,7 @@ void AdaptiveMomentEstimation::set_loss_index_pointer(LossIndex* new_loss_index_
 
 
 /// Sets a new learning rate.
-/// @param new_learning_rate.
+/// @param new_learning_rate Type to set.
 
 void AdaptiveMomentEstimation::set_initial_learning_rate(const type& new_learning_rate)
 {
@@ -110,7 +110,7 @@ void AdaptiveMomentEstimation::set_initial_learning_rate(const type& new_learnin
 
 
 /// Sets beta 1 generally close to 1.
-/// @param new_beta_1.
+/// @param new_beta_1 Type to set.
 
 void AdaptiveMomentEstimation::set_beta_1(const type& new_beta_1)
 {
@@ -119,7 +119,7 @@ void AdaptiveMomentEstimation::set_beta_1(const type& new_beta_1)
 
 
 /// Sets beta 2 generally close to 1.
-/// @param new_beta_2.
+/// @param new_beta_2 Type to set.
 
 void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
 {
@@ -128,7 +128,7 @@ void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
 
 
 /// Sets epsilon.
-/// @param epsilon.
+/// @param epsilon Type to set.
 
 void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 {
@@ -137,7 +137,7 @@ void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 
 
 /// Set the a new maximum for the epochs number.
-/// @param new_maximum_epochs number New maximum epochs number.
+/// @param new_maximum_epochs_number New maximum epochs number.
 
 void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {

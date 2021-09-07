@@ -42,8 +42,9 @@ void scale_minimum_maximum_binary(Tensor<type, 2>& matrix,
 
 /// Scales the given input variables with given mean and standard deviation values.
 /// It updates the input variable of the matrix matrix.
-/// @param column_descriptives vector of descriptives structures for the input variables.
+/// @param matrix Matrix to be scaled.
 /// @param column_index Index of the input to be scaled.
+/// @param column_descriptives Vector of descriptives structures for the input variables.
 
 void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
                                    const Index& column_index,
@@ -66,8 +67,9 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
 
 /// Scales the given input variables with given standard deviation values.
 /// It updates the input variable of the matrix matrix.
-/// @param inputs_statistics vector of descriptives structures for the input variables.
+/// @param matrix Matrix to be scaled.
 /// @param column_index Index of the input to be scaled.
+/// @param column_descriptives Vector of descriptives structures for the input variables.
 
 void scale_standard_deviation(Tensor<type, 2>& matrix,
                                      const Index& column_index,
@@ -82,8 +84,11 @@ void scale_standard_deviation(Tensor<type, 2>& matrix,
 
 /// Scales the given input variable with given minimum and maximum values.
 /// It updates the input variables of the matrix matrix.
-/// @param column_descriptives vector with the descriptives of the input variable.
+/// @param matrix Matrix to be scaled.
 /// @param column_index Index of the input to be scaled.
+/// @param column_descriptives Vector with the descriptives of the input variable.
+/// @param min_range Minimum value to scale.
+/// @param max_range Maximum value to scale.
 
 void scale_minimum_maximum(Tensor<type, 2>& matrix,
                            const Index& column_index,
@@ -210,8 +215,9 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix,
 
 /// Uncales the given input variables with given mean and standard deviation values.
 /// It updates the input variable of the matrix matrix.
-/// @param column_descriptives vector of descriptives structures for the input variables.
+/// @param matrix Matrix to be unscaled.
 /// @param column_index Index of the input to be scaled.
+/// @param column_descriptives Vector of descriptives structures for the input variables.
 
 void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& column_index, const Descriptives& column_descriptives)
 {
@@ -231,8 +237,9 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& colum
 
 /// Unscales the given input variables with given standard deviation values.
 /// It updates the input variable of the matrix matrix.
-/// @param inputs_statistics vector of descriptives structures for the input variables.
+/// @param matrix Matrix to be unscaled.
 /// @param column_index Index of the input to be scaled.
+/// @param column_descriptives Vector of descriptives structures for the input variables.
 
 void unscale_standard_deviation(Tensor<type, 2>& matrix, const Index& column_index, const Descriptives& column_descriptives)
 {
@@ -253,7 +260,7 @@ void unscale_standard_deviation(Tensor<type, 2>& matrix, const Index& column_ind
 
 /// Unscales the given input variables with given logarithmic values.
 /// It updates the input variable of the matrix matrix.
-/// @param inputs_statistics vector of descriptives structures for the input variables.
+/// @param matrix Matrix to be unscaled.
 /// @param column_index Index of the input to be scaled.
 
 void unscale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
