@@ -211,7 +211,7 @@ void LossIndex::set_default()
     non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
-    regularization_method = L2;
+    regularization_method = RegularizationMethod::L2;
 }
 
 
@@ -222,15 +222,15 @@ void LossIndex::set_regularization_method(const string& new_regularization_metho
 {
     if(new_regularization_method == "L1_NORM")
     {
-        set_regularization_method(L1);
+        set_regularization_method(RegularizationMethod::L1);
     }
     else if(new_regularization_method == "L2_NORM")
     {
-        set_regularization_method(L2);
+        set_regularization_method(RegularizationMethod::L2);
     }
     else if(new_regularization_method == "NO_REGULARIZATION")
     {
-        set_regularization_method(NoRegularization);
+        set_regularization_method(RegularizationMethod::NoRegularization);
     }
     else
     {
@@ -626,13 +626,13 @@ string LossIndex::write_regularization_method() const
 {
     switch(regularization_method)
     {
-    case NoRegularization:
+    case RegularizationMethod::NoRegularization:
         return "NO_REGULARIZATION";
 
-    case L1:
+    case RegularizationMethod::L1:
         return "L1_NORM";
 
-    case L2:
+    case RegularizationMethod::L2:
         return "L2_NORM";
     }
 
@@ -649,11 +649,11 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
 {
     switch(regularization_method)
     {
-        case NoRegularization: return type(0);
+        case RegularizationMethod::NoRegularization: return type(0);
 
-        case L1: return l1_norm(thread_pool_device, parameters);
+        case RegularizationMethod::L1: return l1_norm(thread_pool_device, parameters);
 
-        case L2: return l2_norm(thread_pool_device, parameters);
+        case RegularizationMethod::L2: return l2_norm(thread_pool_device, parameters);
     }
 
     return type(0);
@@ -670,9 +670,9 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
 {
     switch(regularization_method)
     {
-    case L1: l1_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
+    case RegularizationMethod::L1: l1_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
 
-    case L2: l2_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
+    case RegularizationMethod::L2: l2_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
 
     default: return;
     }
@@ -689,9 +689,9 @@ void LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& paramete
 {
     switch(regularization_method)
     {
-    case L1: l1_norm_hessian(thread_pool_device, parameters, regularization_hessian); return;
+    case RegularizationMethod::L1: l1_norm_hessian(thread_pool_device, parameters, regularization_hessian); return;
 
-    case L2: l2_norm_hessian(thread_pool_device, parameters, regularization_hessian); return;
+    case RegularizationMethod::L2: l2_norm_hessian(thread_pool_device, parameters, regularization_hessian); return;
 
     default: return;
     }
@@ -935,19 +935,19 @@ void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     switch(regularization_method)
     {
-    case L1:
+    case RegularizationMethod::L1:
     {
         file_stream.PushAttribute("Type", "L1_NORM");
     }
     break;
 
-    case L2:
+    case RegularizationMethod::L2:
     {
         file_stream.PushAttribute("Type", "L2_NORM");
     }
     break;
 
-    case NoRegularization:
+    case RegularizationMethod::NoRegularization:
     {
         file_stream.PushAttribute("Type", "NO_REGULARIZATION");
     }

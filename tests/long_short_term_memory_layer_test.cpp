@@ -107,20 +107,20 @@ void LongShortTermMemoryLayerTest::test_get_activation_function()
 {
    cout << "test_get_activation_function\n";
 
-   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::Logistic);
-   assert_true(long_short_term_memory_layer.get_activation_function() == LongShortTermMemoryLayer::Logistic, LOG);
+   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::Logistic);
+   assert_true(long_short_term_memory_layer.get_activation_function() == LongShortTermMemoryLayer::ActivationFunction::Logistic, LOG);
 
-   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::HyperbolicTangent);
-   assert_true(long_short_term_memory_layer.get_activation_function() == LongShortTermMemoryLayer::HyperbolicTangent, LOG);
+   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
+   assert_true(long_short_term_memory_layer.get_activation_function() == LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent, LOG);
 
-   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::Threshold);
-   assert_true(long_short_term_memory_layer.get_activation_function() == LongShortTermMemoryLayer::Threshold, LOG);
+   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::Threshold);
+   assert_true(long_short_term_memory_layer.get_activation_function() == LongShortTermMemoryLayer::ActivationFunction::Threshold, LOG);
 
-   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::SymmetricThreshold);
-   assert_true(long_short_term_memory_layer.get_activation_function() == LongShortTermMemoryLayer::SymmetricThreshold, LOG);
+   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::SymmetricThreshold);
+   assert_true(long_short_term_memory_layer.get_activation_function() == LongShortTermMemoryLayer::ActivationFunction::SymmetricThreshold, LOG);
 
-   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::Linear);
-   assert_true(long_short_term_memory_layer.get_activation_function() == LongShortTermMemoryLayer::Linear, LOG);
+   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::Linear);
+   assert_true(long_short_term_memory_layer.get_activation_function() == LongShortTermMemoryLayer::ActivationFunction::Linear, LOG);
 }
 
 
@@ -130,19 +130,19 @@ void LongShortTermMemoryLayerTest::test_write_activation_function()
 
    long_short_term_memory_layer.set(1, 1);
 
-   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::Logistic);
+   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::Logistic);
    assert_true(long_short_term_memory_layer.write_activation_function() == "Logistic", LOG);
 
-   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::HyperbolicTangent);
+   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
    assert_true(long_short_term_memory_layer.write_activation_function() == "HyperbolicTangent", LOG);
 
-   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::Threshold);
+   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::Threshold);
    assert_true(long_short_term_memory_layer.write_activation_function() == "Threshold", LOG);
 
-   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::SymmetricThreshold);
+   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::SymmetricThreshold);
    assert_true(long_short_term_memory_layer.write_activation_function() == "SymmetricThreshold", LOG);
 
-   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::Linear);
+   long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::Linear);
    assert_true(long_short_term_memory_layer.write_activation_function() == "Linear", LOG);
 }
 
@@ -153,20 +153,20 @@ void LongShortTermMemoryLayerTest::test_get_recurrent_activation_function()
 
    long_short_term_memory_layer.set(1, 1);
 
-   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::Logistic);
-   assert_true(long_short_term_memory_layer.get_recurrent_activation_function() == LongShortTermMemoryLayer::Logistic, LOG);
+   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::Logistic);
+   assert_true(long_short_term_memory_layer.get_recurrent_activation_function() == LongShortTermMemoryLayer::ActivationFunction::Logistic, LOG);
 
-   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::HyperbolicTangent);
-   assert_true(long_short_term_memory_layer.get_recurrent_activation_function() == LongShortTermMemoryLayer::HyperbolicTangent, LOG);
+   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
+   assert_true(long_short_term_memory_layer.get_recurrent_activation_function() == LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent, LOG);
 
-   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::Threshold);
-   assert_true(long_short_term_memory_layer.get_recurrent_activation_function() == LongShortTermMemoryLayer::Threshold, LOG);
+   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::Threshold);
+   assert_true(long_short_term_memory_layer.get_recurrent_activation_function() == LongShortTermMemoryLayer::ActivationFunction::Threshold, LOG);
 
-   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::SymmetricThreshold);
-   assert_true(long_short_term_memory_layer.get_recurrent_activation_function() == LongShortTermMemoryLayer::SymmetricThreshold, LOG);
+   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::SymmetricThreshold);
+   assert_true(long_short_term_memory_layer.get_recurrent_activation_function() == LongShortTermMemoryLayer::ActivationFunction::SymmetricThreshold, LOG);
 
-   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::Linear);
-   assert_true(long_short_term_memory_layer.get_recurrent_activation_function() == LongShortTermMemoryLayer::Linear, LOG);
+   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::Linear);
+   assert_true(long_short_term_memory_layer.get_recurrent_activation_function() == LongShortTermMemoryLayer::ActivationFunction::Linear, LOG);
 }
 
 
@@ -176,19 +176,19 @@ void LongShortTermMemoryLayerTest::test_write_recurrent_activation_function()
 
    long_short_term_memory_layer.set(1, 1);
 
-   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::Logistic);
+   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::Logistic);
    assert_true(long_short_term_memory_layer.write_recurrent_activation_function() == "Logistic", LOG);
 
-   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::HyperbolicTangent);
+   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
    assert_true(long_short_term_memory_layer.write_recurrent_activation_function() == "HyperbolicTangent", LOG);
 
-   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::Threshold);
+   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::Threshold);
    assert_true(long_short_term_memory_layer.write_recurrent_activation_function() == "Threshold", LOG);
 
-   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::SymmetricThreshold);
+   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::SymmetricThreshold);
    assert_true(long_short_term_memory_layer.write_recurrent_activation_function() == "SymmetricThreshold", LOG);
 
-   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::Linear);
+   long_short_term_memory_layer.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::Linear);
    assert_true(long_short_term_memory_layer.write_recurrent_activation_function() == "Linear", LOG);
 }
 

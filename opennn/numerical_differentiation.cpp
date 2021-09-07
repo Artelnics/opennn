@@ -42,12 +42,12 @@ string NumericalDifferentiation::write_numerical_differentiation_method() const
 {
     switch(numerical_differentiation_method)
     {
-    case ForwardDifferences:
+    case NumericalDifferentiationMethod::ForwardDifferences:
     {
         return "ForwardDifferences";
     }
 
-    case CentralDifferences:
+    case NumericalDifferentiationMethod::CentralDifferences:
     {
         return "CentralDifferences";
     }
@@ -105,11 +105,11 @@ void NumericalDifferentiation::set_numerical_differentiation_method(const string
 {
     if(new_numerical_differentiation_method == "ForwardDifferences")
     {
-        numerical_differentiation_method = ForwardDifferences;
+        numerical_differentiation_method = NumericalDifferentiationMethod::ForwardDifferences;
     }
     else if(new_numerical_differentiation_method == "CentralDifferences")
     {
-        numerical_differentiation_method = CentralDifferences;
+        numerical_differentiation_method = NumericalDifferentiationMethod::CentralDifferences;
     }
     else
     {
@@ -151,7 +151,7 @@ void NumericalDifferentiation::set_precision_digits(const Index& new_precision_d
 
 void NumericalDifferentiation::set_default()
 {
-    numerical_differentiation_method = CentralDifferences;
+    numerical_differentiation_method = NumericalDifferentiationMethod::CentralDifferences;
 
     precision_digits = 6;
 

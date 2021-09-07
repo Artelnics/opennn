@@ -234,7 +234,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     for(Index i = 1; i <= maximum_epochs_number; i++)
     {
-        data_set_pointer->set_column_use(correlations_rank_descending[i-1], DataSet::Input);
+        data_set_pointer->set_column_use(correlations_rank_descending[i-1], DataSet::VariableUse::Input);
 
         const Index input_columns_number = data_set_pointer->get_input_columns_number();
         const Index input_variables_number = data_set_pointer->get_input_variables_number();
@@ -319,7 +319,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 if(display) cout << "Epoch " << epoch << endl << "Maximum time reached: " << write_time(elapsed_time) << endl;
 
-                inputs_selection_results.stopping_condition = InputsSelection::MaximumTime;
+                inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
             }
             else if(inputs_selection_results.optimum_selection_error <= selection_error_goal)
             {
@@ -327,7 +327,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 if(display) cout << "\nSelection error reached: " << inputs_selection_results.optimum_selection_error << endl;
 
-                inputs_selection_results.stopping_condition = InputsSelection::SelectionErrorGoal;
+                inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
             }
             else if(epoch >= maximum_epochs_number)
             {
@@ -335,7 +335,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 if(display) cout << "\nMaximum number of epochs reached." << endl;
 
-                inputs_selection_results.stopping_condition = InputsSelection::MaximumEpochs;
+                inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
             }
             else if(selection_failures >= maximum_selection_failures)
             {
@@ -343,7 +343,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 if(display) cout << "\nMaximum selection failures ("<<selection_failures<<") reached." << endl;
 
-                inputs_selection_results.stopping_condition = InputsSelection::MaximumSelectionFailures;
+                inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
             }
             else if(input_columns_number >= maximum_inputs_number || input_columns_number >= original_input_columns_number)
             {
@@ -351,7 +351,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 if(display) cout << "\nMaximum inputs (" << input_columns_number << ") reached." << endl;
 
-                inputs_selection_results.stopping_condition = InputsSelection::MaximumInputs;
+                inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
             }
 
             if(stop)

@@ -98,10 +98,10 @@ string LearningRateAlgorithm::write_learning_rate_method() const
 {
     switch(learning_rate_method)
     {
-    case GoldenSection:
+    case LearningRateMethod::GoldenSection:
         return "GoldenSection";
 
-    case BrentMethod:
+    case LearningRateMethod::BrentMethod:
         return "BrentMethod";
     }
 
@@ -160,7 +160,7 @@ void LearningRateAlgorithm::set_default()
 
     // TRAINING OPERATORS
 
-    learning_rate_method = BrentMethod;
+    learning_rate_method = LearningRateMethod::BrentMethod;
 
     // TRAINING PARAMETERS
 
@@ -205,11 +205,11 @@ void LearningRateAlgorithm::set_learning_rate_method(const string& new_learning_
 {
     if(new_learning_rate_method == "GoldenSection")
     {
-        learning_rate_method = GoldenSection;
+        learning_rate_method = LearningRateMethod::GoldenSection;
     }
     else if(new_learning_rate_method == "BrentMethod")
     {
-        learning_rate_method = BrentMethod;
+        learning_rate_method = LearningRateMethod::BrentMethod;
     }
     else
     {
@@ -347,9 +347,9 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         {
             switch(learning_rate_method)
             {
-                case GoldenSection: V.first = calculate_golden_section_learning_rate(triplet); break;
+                case LearningRateMethod::GoldenSection: V.first = calculate_golden_section_learning_rate(triplet); break;
 
-                case BrentMethod: V.first = calculate_Brent_method_learning_rate(triplet); break;
+                case LearningRateMethod::BrentMethod: V.first = calculate_Brent_method_learning_rate(triplet); break;
             }
         }
         catch(const logic_error& error)

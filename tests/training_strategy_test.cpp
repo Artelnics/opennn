@@ -76,8 +76,8 @@ void TrainingStrategyTest::test_perform_training()
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data(data);
 
-    neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
-    training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
     neural_network.set_parameters_random();
 
     training_strategy.set_maximum_epochs_number(10);
@@ -109,7 +109,7 @@ void TrainingStrategyTest::test_from_XML()
 {
    cout << "test_from_XML\n";
 
-   training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
+   training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
 
    training_strategy.set_default();
 
@@ -138,7 +138,7 @@ void TrainingStrategyTest::test_save()
 
    string file_name = "../data/training_strategy.xml";
 
-   training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
+   training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
 
    training_strategy.save(file_name);
 }

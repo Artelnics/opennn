@@ -75,13 +75,13 @@ Tensor<type, 4> PoolingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 
     switch(pooling_method)
     {
-    case NoPooling:
+    case PoolingMethod::NoPooling:
         return calculate_no_pooling_outputs(inputs);
 
-    case MaxPooling:
+    case PoolingMethod::MaxPooling:
         return calculate_max_pooling_outputs(inputs);
 
-    case AveragePooling:
+    case PoolingMethod::AveragePooling:
         return calculate_average_pooling_outputs(inputs);
     }
 
@@ -208,7 +208,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
         const Tensor<type, 4>& activations_derivatives,
         const Tensor<type, 4>& next_layer_delta) const
 {
-    if(pooling_method == NoPooling) return next_layer_delta;
+    if(pooling_method == PoolingMethod::NoPooling) return next_layer_delta;
 
     else
     {

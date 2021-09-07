@@ -42,7 +42,7 @@ public:
 
     /// Enumeration of available methods for pooling data.
 
-    enum PoolingMethod {NoPooling, MaxPooling, AveragePooling};
+    enum class PoolingMethod{NoPooling, MaxPooling, AveragePooling};
 
     // Constructors
 
@@ -164,7 +164,7 @@ protected:
 
     Index column_stride = 1;
 
-    PoolingMethod pooling_method = AveragePooling;
+    PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/pooling_layer_cuda.h"

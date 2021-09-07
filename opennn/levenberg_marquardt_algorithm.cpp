@@ -528,7 +528,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = LossGoal;
+            results.stopping_condition = StoppingCondition::LossGoal;
         }
 
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss;
@@ -539,7 +539,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MinimumLossDecrease;
+            results.stopping_condition = StoppingCondition::MinimumLossDecrease;
         }
 
         old_loss = training_back_propagation_lm.loss;
@@ -550,7 +550,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumSelectionErrorIncreases;
+            results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
 
         if(epoch == maximum_epochs_number)
@@ -559,7 +559,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumEpochsNumber;
+            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
 
         if(elapsed_time >= maximum_time)
@@ -568,7 +568,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             stop_training = true;
 
-            results.stopping_condition = MaximumTime;
+            results.stopping_condition = StoppingCondition::MaximumTime;
         }
 
         if(stop_training)

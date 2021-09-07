@@ -211,10 +211,10 @@ void UnscalingLayerTest::test_write_scalers()
     Scaler minimum_maximum = Scaler::MinimumMaximum;
 
     Scaler mean_standard_deviation = Scaler::MeanStandardDeviation;
+    
+    Scaler logarithmic = Scaler::Logarithm;
 
-    Scaler logarithmic = Logarithm;
-
-    unscaling_layer.set_scalers(NoScaling);
+    unscaling_layer.set_scalers(Scaler::NoScaling);
     assert_true(unscaling_layer.write_unscaling_methods()(0) == "NoUnscaling", LOG);
 
     unscaling_layer.set_scalers(minimum_maximum);
@@ -228,7 +228,7 @@ void UnscalingLayerTest::test_write_scalers()
 
     // Test
 
-    unscaling_layer.set_scalers(NoScaling);
+    unscaling_layer.set_scalers(Scaler::NoScaling);
     assert_true(unscaling_layer.write_unscaling_method_text()(0) == "no unscaling", LOG);
 
     unscaling_layer.set_scalers(minimum_maximum);
@@ -498,7 +498,7 @@ void UnscalingLayerTest::test_set_unscaling_method()
    unscaling_layer.set_scalers(Scaler::MeanStandardDeviation);
    assert_true(unscaling_layer.write_unscaling_method_text()(0) == "mean and standard deviation", LOG);
 
-   unscaling_layer.set_scalers(Logarithm);
+   unscaling_layer.set_scalers(Scaler::Logarithm);
    assert_true(unscaling_layer.write_unscaling_method_text()(0) == "logarithmic", LOG);
 
 }
@@ -537,7 +537,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    // Test 0_0
 
    unscaling_layer.set(1);
-   unscaling_layer.set_scalers(NoScaling);
+   unscaling_layer.set_scalers(Scaler::NoScaling);
 
    inputs.resize(1,1);
    outputs = unscaling_layer.calculate_outputs(inputs);
@@ -548,7 +548,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    // Test 0_1
 
    unscaling_layer.set(3);
-   unscaling_layer.set_scalers(NoScaling);
+   unscaling_layer.set_scalers(Scaler::NoScaling);
 
    inputs.resize(1,3);
    inputs.setConstant(type(0));
@@ -563,7 +563,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    // Test 1_0
 
    unscaling_layer.set(1);
-   unscaling_layer.set_scalers(MinimumMaximum);
+   unscaling_layer.set_scalers(Scaler::MinimumMaximum);
 
    inputs.resize(1,1);
    outputs = unscaling_layer.calculate_outputs(inputs);
@@ -575,7 +575,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    // Test 1_1
 
    unscaling_layer.set(2);
-   unscaling_layer.set_scalers(MinimumMaximum);
+   unscaling_layer.set_scalers(Scaler::MinimumMaximum);
 
    minimums_maximums.resize(2,4);
    minimums_maximums.setValues({
@@ -594,7 +594,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    // Test 2_0
 
    unscaling_layer.set(1);
-   unscaling_layer.set_scalers(MeanStandardDeviation);
+   unscaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
    inputs.resize(1,1);
    outputs = unscaling_layer.calculate_outputs(inputs);
@@ -605,7 +605,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    // Test 2_1
 
    unscaling_layer.set(2);
-   unscaling_layer.set_scalers(MeanStandardDeviation);
+   unscaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
    mean_standard_deviation.resize(2,4);
    mean_standard_deviation.setValues({
@@ -624,7 +624,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    // Test 3_0
 
    unscaling_layer.set(1);
-   unscaling_layer.set_scalers(Logarithm);
+   unscaling_layer.set_scalers(Scaler::Logarithm);
 
    inputs.resize(1,1);
    outputs = unscaling_layer.calculate_outputs(inputs);
@@ -636,7 +636,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    // Test 3_1
 
    unscaling_layer.set(2);
-   unscaling_layer.set_scalers(Logarithm);
+   unscaling_layer.set_scalers(Scaler::Logarithm);
 
    standard_deviation.resize(2,4);
    standard_deviation.setValues({{type(-1),type(1),type(-1),type(2)},{type(-1),type(1),type(1),type(4)}});
@@ -665,7 +665,7 @@ void UnscalingLayerTest::test_write_expression()
    // Test
 
    unscaling_layer.set(1);
-   unscaling_layer.set_scalers(NoScaling);
+   unscaling_layer.set_scalers(Scaler::NoScaling);
    inputs_names.setValues({"x"});
    outputs_names.setValues({"y"});
 
@@ -677,7 +677,7 @@ void UnscalingLayerTest::test_write_expression()
    // Test
 
    unscaling_layer.set(1);
-   unscaling_layer.set_scalers(MinimumMaximum);
+   unscaling_layer.set_scalers(Scaler::MinimumMaximum);
 
    expression = unscaling_layer.write_expression(inputs_names, outputs_names);
 
@@ -688,7 +688,7 @@ void UnscalingLayerTest::test_write_expression()
    // Test
 
    unscaling_layer.set(1);
-   unscaling_layer.set_scalers(MeanStandardDeviation);
+   unscaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
    expression = unscaling_layer.write_expression(inputs_names, outputs_names);
 
@@ -698,7 +698,7 @@ void UnscalingLayerTest::test_write_expression()
    // Test 
 
    unscaling_layer.set(1);
-   unscaling_layer.set_scalers(Logarithm);
+   unscaling_layer.set_scalers(Scaler::Logarithm);
 
    expression = unscaling_layer.write_expression(inputs_names, outputs_names);
 

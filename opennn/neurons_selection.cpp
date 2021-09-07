@@ -518,19 +518,19 @@ string NeuronsSelectionResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-        case NeuronsSelection::MaximumTime:
+    case NeuronsSelection::StoppingCondition::MaximumTime:
             return "MaximumTime";
 
-        case NeuronsSelection::SelectionErrorGoal:
+        case NeuronsSelection::StoppingCondition::SelectionErrorGoal:
             return "SelectionErrorGoal";
 
-        case NeuronsSelection::MaximumEpochs:
+        case NeuronsSelection::StoppingCondition::MaximumEpochs:
             return "MaximumEpochs";
 
-        case NeuronsSelection::MaximumSelectionFailures:
+        case NeuronsSelection::StoppingCondition::MaximumSelectionFailures:
             return "MaximumSelectionFailures";
 
-        case NeuronsSelection::MaximumNeurons:
+        case NeuronsSelection::StoppingCondition::MaximumNeurons:
             return "MaximumNeurons";
     }
 
