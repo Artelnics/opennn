@@ -13,28 +13,28 @@
             <Maximum>0.868056</Maximum>
             <Mean>0.497146</Mean>
             <StandardDeviation>0.190358</StandardDeviation>
-            <ScalingMethod>MinimumMaximum</ScalingMethod>
+            <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
          <ScalingNeuron Index="2">
             <Minimum>0.149351</Minimum>
             <Maximum>0.875</Maximum>
             <Mean>0.488018</Mean>
             <StandardDeviation>0.198204</StandardDeviation>
-            <ScalingMethod>MinimumMaximum</ScalingMethod>
+            <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
       </ScalingLayer>
       <PerceptronLayer>
-         <LayerName>perceptron_layer0</LayerName>
+         <LayerName>perceptron_layer_1</LayerName>
          <InputsNumber>2</InputsNumber>
          <NeuronsNumber>10</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>80.0221 100.942 -27.5201 54.114 -94.6595 35.7201 -58.77 70.8452 55.0612 -6.14748 26.3867 -73.1528 27.955 -58.4409 -186.692 152.727 -242.031 55.7108 -82.3016 102.887 56.8908 13.3236 -184.138 120.111 78.6646 -65.7619 -131.155 162.058 90.8408 -14.5926</Parameters>
+         <Parameters>-0.0553626 0.0500527 0.0541212 -0.0535371 -0.0539547 -0.055159 -0.05399 -0.0559819 0.0538082 -0.0564466 -0.284121 0.393168 0.287347 -0.396931 0.285623 -0.396737 -0.285073 0.394165 -0.284463 0.394741 -0.284111 0.394182 -0.284568 0.394337 -0.283431 0.394646 0.283855 -0.394204 -0.284477 0.393685</Parameters>
       </PerceptronLayer>
       <ProbabilisticLayer>
          <InputsNumber>10</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <ActivationFunction>Logistic</ActivationFunction>
-         <Parameters>-90.0598 70.512 144.18 284.931 119.573 -72.2747 19.1694 221.424 5.91975 297.373 42.3658</Parameters>
+         <Parameters>-0.248673 0.604046 -0.607294 -0.6078 0.607067 0.605086 0.604312 0.604541 0.605493 -0.605263 0.606772</Parameters>
          <DecisionThreshold>0.5</DecisionThreshold>
       </ProbabilisticLayer>
    </Layers>

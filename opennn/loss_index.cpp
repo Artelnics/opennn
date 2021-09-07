@@ -255,7 +255,7 @@ void LossIndex::set_regularization_method(const LossIndex::RegularizationMethod&
 
 
 /// Sets the object with the regularization weights.
-/// @param new_regularization_method New regularization weight.
+/// @param new_regularization_weight New regularization weight.
 
 void LossIndex::set_regularization_weight(const type& new_regularization_weight)
 {
@@ -501,9 +501,9 @@ void LossIndex::back_propagate_lm(const DataSetBatch& batch,
 /// The Jacobian elements are the partial derivatives of a single term with respect to a single parameter.
 /// The number of rows in the Jacobian matrix are the number of parameters, and the number of columns
 /// the number of terms composing the objective.
-/// @param inputs Tensor with inputs.
-/// @param layers_activations vector of tensors with layers activations.
-/// @param layers_delta vector of tensors with layers delta.
+/// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
+/// @param forward_propagation NeuralNetwork class structure that saves the necessary parameters for forward propagation.
+/// @param loss_index_back_propagation_lm Loss index class structure that saves the necessary parameters for back propagation.
 
 void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
                                                   NeuralNetworkForwardPropagation& forward_propagation,

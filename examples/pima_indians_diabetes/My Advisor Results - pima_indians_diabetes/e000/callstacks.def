@@ -1,0 +1,15 @@
+# callstacks file version: 7
+#    rowid	    parent	       rva	 loop	 system	                                function	binary	instance_start_rva	instance_size	instance_end_rva	finst_rowid	roi	is_inlined	jit_method_id	tripcounts_roi	flops_roi	cachesim_roi	data_transfer_roi
+         1	        -1	   1627652	    0	      0	                          mainCRTStartup	D:\opennn-build\x64\Release\pima_indians_diabetes.exe	1627652	18	0	3	0	0	0	0	0	0	0
+         2	        -1	    337488	    0	      1	                      RtlUserThreadStart	C:\WINDOWS\SYSTEM32\ntdll.dll	337456	72	0	1	0	0	0	0	0	0	0
+         3	         2	     94259	    0	      1	                     BaseThreadInitThunk	C:\WINDOWS\System32\KERNEL32.DLL	94240	67	0	2	0	0	0	0	0	0	0
+         4	         3	   1627539	    0	      0	                  __scrt_common_main_seh	D:\opennn-build\x64\Release\pima_indians_diabetes.exe	1627272	380	0	4	0	0	0	0	0	0	0
+         5	         4	      8284	    0	      0	                                    main	D:\opennn-build\x64\Release\pima_indians_diabetes.exe	8080	1760	0	5	0	0	0	0	0	0	0
+         6	         5	    112373	    0	      0	                OpenNN::DataSet::DataSet	D:\opennn-build\x64\Release\pima_indians_diabetes.exe	111984	413	0	6	0	0	0	0	0	0	0
+         7	         6	    127496	    0	      0	                    OpenNN::DataSet::set	D:\opennn-build\x64\Release\pima_indians_diabetes.exe	127440	614	0	7	0	0	0	0	0	0	0
+         8	         7	    128159	    0	      0	            OpenNN::DataSet::set_default	D:\opennn-build\x64\Release\pima_indians_diabetes.exe	128064	373	0	8	0	0	0	0	0	0	0
+         9	        11	     34897	    1	      0	[Loop at line 57 in Eigen::NonBlockingThreadPoolTempl<struct Eigen::StlThreadEnvironment>::NonBlockingThreadPoolTempl<struct Eigen::StlThreadEnvironment>]	D:\opennn-build\x64\Release\pima_indians_diabetes.exe	34768	262	0	9	0	0	0	0	0	0	0
+        10	         9	   1658346	    0	      0	                           beginthreadex	D:\opennn-build\x64\Release\pima_indians_diabetes.exe	1658240	212	0	11	0	0	0	0	0	0	0
+        11	         8	     34768	    0	      0	Eigen::NonBlockingThreadPoolTempl<struct Eigen::StlThreadEnvironment>::NonBlockingThreadPoolTempl<struct Eigen::StlThreadEnvironment>	D:\opennn-build\x64\Release\pima_indians_diabetes.exe	33712	1387	0	10	0	0	0	0	0	0	0
+        12	         8	     34897	    0	      0	Eigen::NonBlockingThreadPoolTempl<struct Eigen::StlThreadEnvironment>::NonBlockingThreadPoolTempl<struct Eigen::StlThreadEnvironment>	D:\opennn-build\x64\Release\pima_indians_diabetes.exe	33712	1387	0	10	0	0	0	0	0	0	0
+        13	        -1	         0	    0	      0	                [Unknown stack frame(s)]	n/a	0	0	0	13	0	0	0	0	0	0	0

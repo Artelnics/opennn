@@ -14,6 +14,7 @@ namespace OpenNN
 /// Returns the number of strings delimited by separator.
 /// If separator does not match anywhere in the string, this method returns 0.
 /// @param str String to be tokenized.
+/// @param separator Character that separates the string.
 
 Index count_tokens(string& str, const char& separator)
 {
@@ -57,6 +58,7 @@ Index count_tokens(const string& s, const char& c)
 /// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
+/// @param separator Character that separates the string.
 
 Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
@@ -113,6 +115,8 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
 /// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
+/// @param separator Character that separates the string.
+/// @param tokens Vector of strings to store the result.
 
 void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& tokens)
 {
@@ -837,6 +841,7 @@ bool is_mixed(const Tensor<string, 1>& v)
 
 
 /// Replaces a substring by another one in each element of this vector.
+/// @param vector Vector for which we want to replace a substring.
 /// @param find_what String to be replaced.
 /// @param replace_with String to be put instead.
 

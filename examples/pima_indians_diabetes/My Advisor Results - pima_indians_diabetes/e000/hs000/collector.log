@@ -1,0 +1,51 @@
+Collection status has changed. 1
+Collection has been started.
+Collection has stopped. Application exit code:  1
+Finalizing results
+Finalizing the result
+Clearing the database
+The database has been cleared, elapsed time is 0.347 seconds.
+Loading raw data to the database
+Loading 'systemcollector-14696-DESKTOP-5PN25MA.sc' file
+Loading '22096-22092.0.trace' file
+Updating precomputed scalar metrics
+Raw data has been loaded to the database, elapsed time is 0.267 seconds.
+Processing profile metrics and debug information
+Data transformations have been finished, elapsed time is 0.001 seconds.
+Setting data model parameters
+Resolving module symbols
+Resolving information for `ntdll.dll'
+Resolving information for `pima_indians_diabetes.exe'
+Resolving information for `KERNEL32.DLL'
+Warning: Cannot locate debugging information for file `C:\WINDOWS\SYSTEM32\ntdll.dll'.
+Warning: Cannot locate debugging information for file `C:\WINDOWS\System32\KERNEL32.DLL'.
+Resolving bottom user stack information
+Resolving thread name information
+Resolving call target names for dynamic code
+Symbol resolution has been finished, elapsed time is 0.727 seconds.
+Processing profile metrics and debug information
+Error: Error 0x40000024 (No data) -- No data is collected. Possible reasons:
+ - Workload is too small. No samples are collected.
+ - The application environment is not specified correctly.
+ - The executable file has been stripped so cannot be profiled with algorithm analysis types.
+ See the Troubleshooting help topic for more details.
+ Also consider checking the collection log for additional information. 
+Deferred data transformations have been finished, elapsed time is 0.025 seconds.
+Setting data model parameters
+Data model parameters have been set, elapsed time is 0.020 seconds.
+Precomputing frequently used data
+Precomputing frequently used data
+Updating precomputed scalar metrics
+Precomputing frequently used data has been finished, elapsed time is 0.046 seconds.
+Discarding redundant overtime data
+Saving the result
+Redundant overtime data has been discarded, elapsed time is 0.015 seconds.
+Raw collector data has been discarded, elapsed time is 0.000 seconds.
+Finalizing the result took 2.160 seconds.
+Preparing data for display of survey call tree
+Resolving module symbols
+Resolving information for dangling locations
+Resolving bottom user stack information
+Resolving thread name information
+Resolving call target names for dynamic code
+Precomputing frequently used data

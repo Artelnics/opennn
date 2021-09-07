@@ -67,6 +67,8 @@ int main()
 
         cout << "End" << endl;
 
+        system("pause");
+
         return 0;
     }
     catch(exception& e)
