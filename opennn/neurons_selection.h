@@ -53,7 +53,7 @@ public:
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons};
+    enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons};
 
     // Get methods
 
@@ -249,7 +249,7 @@ struct NeuronsSelectionResults
 
    /// Stopping condition of the algorithm.
 
-   NeuronsSelection::StoppingCondition stopping_condition = NeuronsSelection::MaximumTime;
+   NeuronsSelection::StoppingCondition stopping_condition = NeuronsSelection::StoppingCondition::MaximumTime;
 
    /// Elapsed time during the loss of the algortihm.
 

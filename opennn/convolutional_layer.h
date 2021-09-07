@@ -42,9 +42,9 @@ public:
 
     /// Enumeration of available activation functions for the convolutional layer.
 
-    enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
+    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
-    enum ConvolutionType{Valid, Same};
+    enum class ConvolutionType{Valid, Same};
 
     // Constructors
 
@@ -222,9 +222,9 @@ protected:
 
    Tensor<Index, 1> input_variables_dimensions;
 
-   ConvolutionType convolution_type = Valid;
+   ConvolutionType convolution_type = ConvolutionType::Valid;
 
-   ActivationFunction activation_function = RectifiedLinear;
+   ActivationFunction activation_function = ActivationFunction::RectifiedLinear;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/convolutional_layer_cuda.h"

@@ -140,7 +140,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             perceptron_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1/batch_samples_number))*perceptron_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1.0/batch_samples_number))*perceptron_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;
@@ -153,6 +153,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
         if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
         {
             probabilistic_layer_back_propagation->delta.setZero();
+
         }
         else
         {
@@ -160,7 +161,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             probabilistic_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1/batch_samples_number))*probabilistic_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1.0/batch_samples_number))*probabilistic_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;
@@ -180,7 +181,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             recurrent_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1/batch_samples_number))*recurrent_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1.0/batch_samples_number))*recurrent_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;
@@ -200,7 +201,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1/batch_samples_number))*long_short_term_memory_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1.0/batch_samples_number))*long_short_term_memory_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;

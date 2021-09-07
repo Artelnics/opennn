@@ -43,11 +43,11 @@ void ConjugateGradientTest::test_get_training_direction_method()
 {
    cout << "test_get_training_direction_method\n";
 
-   conjugate_gradient.set_training_direction_method(ConjugateGradient::PR);
+   conjugate_gradient.set_training_direction_method(ConjugateGradient::TrainingDirectionMethod::PR);
 
    ConjugateGradient::TrainingDirectionMethod training_direction_method = conjugate_gradient.get_training_direction_method();
 
-   assert_true(training_direction_method == ConjugateGradient::PR, LOG);
+   assert_true(training_direction_method == ConjugateGradient::TrainingDirectionMethod::PR, LOG);
 }
 
 
@@ -55,11 +55,11 @@ void ConjugateGradientTest::test_set_training_direction_method()
 {
    cout << "test_set_training_direction_method\n";
 
-   conjugate_gradient.set_training_direction_method(ConjugateGradient::FR);
-   assert_true(conjugate_gradient.get_training_direction_method() == ConjugateGradient::FR, LOG);
+   conjugate_gradient.set_training_direction_method(ConjugateGradient::TrainingDirectionMethod::FR);
+   assert_true(conjugate_gradient.get_training_direction_method() == ConjugateGradient::TrainingDirectionMethod::FR, LOG);
 
-   conjugate_gradient.set_training_direction_method(ConjugateGradient::PR);
-   assert_true(conjugate_gradient.get_training_direction_method() == ConjugateGradient::PR, LOG);
+   conjugate_gradient.set_training_direction_method(ConjugateGradient::TrainingDirectionMethod::PR);
+   assert_true(conjugate_gradient.get_training_direction_method() == ConjugateGradient::TrainingDirectionMethod::PR, LOG);
 }
 
 
@@ -124,7 +124,7 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
    data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
    parameters_number = neural_network.get_parameters_number();
 
@@ -164,7 +164,7 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
    data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
    parameters_number = neural_network.get_parameters_number();
 
@@ -208,7 +208,7 @@ void ConjugateGradientTest::test_perform_training()
    data_set.set(1, 1, 1);
    data_set.set_data_constant(type(0));
 
-   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
    neural_network.set_parameters_constant(type(0));
 
    training_results = conjugate_gradient.perform_training();

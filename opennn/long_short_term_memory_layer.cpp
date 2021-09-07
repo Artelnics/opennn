@@ -301,27 +301,27 @@ string LongShortTermMemoryLayer::write_activation_function() const
 {
     switch(activation_function)
     {
-    case Logistic: return "Logistic";
+    case ActivationFunction::Logistic: return "Logistic";
 
-    case HyperbolicTangent: return "HyperbolicTangent";
+    case ActivationFunction::HyperbolicTangent: return "HyperbolicTangent";
 
-    case Threshold: return "Threshold";
+    case ActivationFunction::Threshold: return "Threshold";
 
-    case SymmetricThreshold: return "SymmetricThreshold";
+    case ActivationFunction::SymmetricThreshold: return "SymmetricThreshold";
 
-    case Linear: return "Linear";
+    case ActivationFunction::Linear: return "Linear";
 
-    case RectifiedLinear: return "RectifiedLinear";
+    case ActivationFunction::RectifiedLinear: return "RectifiedLinear";
 
-    case ScaledExponentialLinear: return "ScaledExponentialLinear";
+    case ActivationFunction::ScaledExponentialLinear: return "ScaledExponentialLinear";
 
-    case SoftPlus: return "SoftPlus";
+    case ActivationFunction::SoftPlus: return "SoftPlus";
 
-    case SoftSign: return "SoftSign";
+    case ActivationFunction::SoftSign: return "SoftSign";
 
-    case HardSigmoid: return "HardSigmoid";
+    case ActivationFunction::HardSigmoid: return "HardSigmoid";
 
-    case ExponentialLinear: return "ExponentialLinear";
+    case ActivationFunction::ExponentialLinear: return "ExponentialLinear";
     }
 
     return string();
@@ -335,27 +335,27 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function() const
 {
     switch(recurrent_activation_function)
     {
-    case Logistic: return "Logistic";
+    case ActivationFunction::Logistic: return "Logistic";
 
-    case HyperbolicTangent: return "HyperbolicTangent";
+    case ActivationFunction::HyperbolicTangent: return "HyperbolicTangent";
 
-    case Threshold: return "Threshold";
+    case ActivationFunction::Threshold: return "Threshold";
 
-    case SymmetricThreshold: return "SymmetricThreshold";
+    case ActivationFunction::SymmetricThreshold: return "SymmetricThreshold";
 
-    case Linear: return "Linear";
+    case ActivationFunction::Linear: return "Linear";
 
-    case RectifiedLinear: return "RectifiedLinear";
+    case ActivationFunction::RectifiedLinear: return "RectifiedLinear";
 
-    case ScaledExponentialLinear: return "ScaledExponentialLinear";
+    case ActivationFunction::ScaledExponentialLinear: return "ScaledExponentialLinear";
 
-    case SoftPlus: return "SoftPlus";
+    case ActivationFunction::SoftPlus: return "SoftPlus";
 
-    case SoftSign: return "SoftSign";
+    case ActivationFunction::SoftSign: return "SoftSign";
 
-    case HardSigmoid: return "HardSigmoid";
+    case ActivationFunction::HardSigmoid: return "HardSigmoid";
 
-    case ExponentialLinear: return "ExponentialLinear";
+    case ActivationFunction::ExponentialLinear: return "ExponentialLinear";
     }
 
     return string();
@@ -734,47 +734,47 @@ void LongShortTermMemoryLayer::set_activation_function(const string& new_activat
 {
     if(new_activation_function_name == "Logistic")
     {
-        activation_function = Logistic;
+        activation_function = ActivationFunction::Logistic;
     }
     else if(new_activation_function_name == "HyperbolicTangent")
     {
-        activation_function = HyperbolicTangent;
+        activation_function = ActivationFunction::HyperbolicTangent;
     }
     else if(new_activation_function_name == "Threshold")
     {
-        activation_function = Threshold;
+        activation_function = ActivationFunction::Threshold;
     }
     else if(new_activation_function_name == "SymmetricThreshold")
     {
-        activation_function = SymmetricThreshold;
+        activation_function = ActivationFunction::SymmetricThreshold;
     }
     else if(new_activation_function_name == "Linear")
     {
-        activation_function = Linear;
+        activation_function = ActivationFunction::Linear;
     }
     else if(new_activation_function_name == "RectifiedLinear")
     {
-        activation_function = RectifiedLinear;
+        activation_function = ActivationFunction::RectifiedLinear;
     }
     else if(new_activation_function_name == "ScaledExponentialLinear")
     {
-        activation_function = ScaledExponentialLinear;
+        activation_function = ActivationFunction::ScaledExponentialLinear;
     }
     else if(new_activation_function_name == "SoftPlus")
     {
-        activation_function = SoftPlus;
+        activation_function = ActivationFunction::SoftPlus;
     }
     else if(new_activation_function_name == "SoftSign")
     {
-        activation_function = SoftSign;
+        activation_function = ActivationFunction::SoftSign;
     }
     else if(new_activation_function_name == "HardSigmoid")
     {
-        activation_function = HardSigmoid;
+        activation_function = ActivationFunction::HardSigmoid;
     }
     else if(new_activation_function_name == "ExponentialLinear")
     {
-        activation_function = ExponentialLinear;
+        activation_function = ActivationFunction::ExponentialLinear;
     }
     else
     {
@@ -806,47 +806,47 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& n
 {
     if(new_recurrent_activation_function_name == "Logistic")
     {
-        recurrent_activation_function = Logistic;
+        recurrent_activation_function = ActivationFunction::Logistic;
     }
     else if(new_recurrent_activation_function_name == "HyperbolicTangent")
     {
-        recurrent_activation_function = HyperbolicTangent;
+        recurrent_activation_function = ActivationFunction::HyperbolicTangent;
     }
     else if(new_recurrent_activation_function_name == "Threshold")
     {
-        recurrent_activation_function = Threshold;
+        recurrent_activation_function = ActivationFunction::Threshold;
     }
     else if(new_recurrent_activation_function_name == "SymmetricThreshold")
     {
-        recurrent_activation_function = SymmetricThreshold;
+        recurrent_activation_function = ActivationFunction::SymmetricThreshold;
     }
     else if(new_recurrent_activation_function_name == "Linear")
     {
-        recurrent_activation_function = Linear;
+        recurrent_activation_function = ActivationFunction::Linear;
     }
     else if(new_recurrent_activation_function_name == "RectifiedLinear")
     {
-        recurrent_activation_function = RectifiedLinear;
+        recurrent_activation_function = ActivationFunction::RectifiedLinear;
     }
     else if(new_recurrent_activation_function_name == "ScaledExponentialLinear")
     {
-        recurrent_activation_function = ScaledExponentialLinear;
+        recurrent_activation_function = ActivationFunction::ScaledExponentialLinear;
     }
     else if(new_recurrent_activation_function_name == "SoftPlus")
     {
-        recurrent_activation_function = SoftPlus;
+        recurrent_activation_function = ActivationFunction::SoftPlus;
     }
     else if(new_recurrent_activation_function_name == "SoftSign")
     {
-        recurrent_activation_function = SoftSign;
+        recurrent_activation_function = ActivationFunction::SoftSign;
     }
     else if(new_recurrent_activation_function_name == "HardSigmoid")
     {
-        recurrent_activation_function = HardSigmoid;
+        recurrent_activation_function = ActivationFunction::HardSigmoid;
     }
     else if(new_recurrent_activation_function_name == "ExponentialLinear")
     {
-        recurrent_activation_function = ExponentialLinear;
+        recurrent_activation_function = ActivationFunction::ExponentialLinear;
     }
     else
     {
@@ -1196,27 +1196,27 @@ check_dimensions(activations, combinations.dimension(0), get_neurons_number(), L
 
     switch(activation_function)
     {
-    case Linear: linear(combinations, activations); return;
+    case ActivationFunction::Linear: linear(combinations, activations); return;
 
-    case Logistic: logistic(combinations, activations); return;
+    case ActivationFunction::Logistic: logistic(combinations, activations); return;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
 
-    case Threshold: threshold(combinations, activations); return;
+    case ActivationFunction::Threshold: threshold(combinations, activations); return;
 
-    case SymmetricThreshold: symmetric_threshold(combinations, activations); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations, activations); return;
 
-    case RectifiedLinear: rectified_linear(combinations, activations); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
 
-    case SoftPlus: soft_plus(combinations, activations); return;
+    case ActivationFunction::SoftPlus: soft_plus(combinations, activations); return;
 
-    case SoftSign: soft_sign(combinations, activations); return;
+    case ActivationFunction::SoftSign: soft_sign(combinations, activations); return;
 
-    case HardSigmoid: hard_sigmoid(combinations, activations); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, activations); return;
 
-    case ExponentialLinear: exponential_linear(combinations, activations); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(combinations, activations); return;
     }
 }
 
@@ -1244,27 +1244,27 @@ void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& comb
 
     switch(activation_function)
     {
-    case Linear: linear(combinations_1d, activations_1d); return;
+    case ActivationFunction::Linear: linear(combinations_1d, activations_1d); return;
 
-    case Logistic: logistic(combinations_1d, activations_1d); return;
+    case ActivationFunction::Logistic: logistic(combinations_1d, activations_1d); return;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations_1d, activations_1d); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations_1d, activations_1d); return;
 
-    case Threshold: threshold(combinations_1d, activations_1d); return;
+    case ActivationFunction::Threshold: threshold(combinations_1d, activations_1d); return;
 
-    case SymmetricThreshold: symmetric_threshold(combinations_1d, activations_1d); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations_1d, activations_1d); return;
 
-    case RectifiedLinear: rectified_linear(combinations_1d, activations_1d); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(combinations_1d, activations_1d); return;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, activations_1d); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, activations_1d); return;
 
-    case SoftPlus: soft_plus(combinations_1d, activations_1d); return;
+    case ActivationFunction::SoftPlus: soft_plus(combinations_1d, activations_1d); return;
 
-    case SoftSign: soft_sign(combinations_1d, activations_1d); return;
+    case ActivationFunction::SoftSign: soft_sign(combinations_1d, activations_1d); return;
 
-    case HardSigmoid: hard_sigmoid(combinations_1d, activations_1d); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations_1d, activations_1d); return;
 
-    case ExponentialLinear: exponential_linear(combinations_1d, activations_1d); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(combinations_1d, activations_1d); return;
     }
 }
 
@@ -1294,27 +1294,27 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
 
     switch(activation_function)
     {
-    case Linear: linear(combinations_1d, activations_1d); break;
+    case ActivationFunction::Linear: linear(combinations_1d, activations_1d); break;
 
-    case Logistic: logistic(combinations_1d, activations_1d); break;
+    case ActivationFunction::Logistic: logistic(combinations_1d, activations_1d); break;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations_1d, activations_1d); break;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations_1d, activations_1d); break;
 
-    case Threshold: threshold(combinations_1d, activations_1d); break;
+    case ActivationFunction::Threshold: threshold(combinations_1d, activations_1d); break;
 
-    case SymmetricThreshold: symmetric_threshold(combinations_1d, activations_1d); break;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations_1d, activations_1d); break;
 
-    case RectifiedLinear: rectified_linear(combinations_1d, activations_1d); break;
+    case ActivationFunction::RectifiedLinear: rectified_linear(combinations_1d, activations_1d); break;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, activations_1d); break;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, activations_1d); break;
 
-    case SoftPlus: soft_plus(combinations_1d, activations_1d); break;
+    case ActivationFunction::SoftPlus: soft_plus(combinations_1d, activations_1d); break;
 
-    case SoftSign: soft_sign(combinations_1d, activations_1d); break;
+    case ActivationFunction::SoftSign: soft_sign(combinations_1d, activations_1d); break;
 
-    case HardSigmoid: hard_sigmoid(combinations_1d, activations_1d); break;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations_1d, activations_1d); break;
 
-    case ExponentialLinear: exponential_linear(combinations_1d, activations_1d); break;
+    case ActivationFunction::ExponentialLinear: exponential_linear(combinations_1d, activations_1d); break;
     }
 
     return activations_1d;
@@ -1345,27 +1345,27 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
 
     switch(recurrent_activation_function)
     {
-    case Linear: linear(combinations, activations); break;
+    case ActivationFunction::Linear: linear(combinations, activations); break;
 
-    case Logistic: logistic(combinations, activations); break;
+    case ActivationFunction::Logistic: logistic(combinations, activations); break;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations, activations); break;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); break;
 
-    case Threshold: threshold(combinations, activations); break;
+    case ActivationFunction::Threshold: threshold(combinations, activations); break;
 
-    case SymmetricThreshold: symmetric_threshold(combinations, activations); break;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations, activations); break;
 
-    case RectifiedLinear: rectified_linear(combinations, activations); break;
+    case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); break;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); break;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); break;
 
-    case SoftPlus: soft_plus(combinations, activations); break;
+    case ActivationFunction::SoftPlus: soft_plus(combinations, activations); break;
 
-    case SoftSign: soft_sign(combinations, activations); break;
+    case ActivationFunction::SoftSign: soft_sign(combinations, activations); break;
 
-    case HardSigmoid: hard_sigmoid(combinations, activations); break;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, activations); break;
 
-    case ExponentialLinear: exponential_linear(combinations, activations); break;
+    case ActivationFunction::ExponentialLinear: exponential_linear(combinations, activations); break;
     }
 }
 
@@ -1395,27 +1395,27 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
 
     switch(recurrent_activation_function)
     {
-    case Linear: linear(combinations_1d, recurrent_activations_1d); break;
+    case ActivationFunction::Linear: linear(combinations_1d, recurrent_activations_1d); break;
 
-    case Logistic: logistic(combinations_1d, recurrent_activations_1d); break;
+    case ActivationFunction::Logistic: logistic(combinations_1d, recurrent_activations_1d); break;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations_1d, recurrent_activations_1d); break;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations_1d, recurrent_activations_1d); break;
 
-    case Threshold: threshold(combinations_1d, recurrent_activations_1d); break;
+    case ActivationFunction::Threshold: threshold(combinations_1d, recurrent_activations_1d); break;
 
-    case SymmetricThreshold: symmetric_threshold(combinations_1d, recurrent_activations_1d); break;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations_1d, recurrent_activations_1d); break;
 
-    case RectifiedLinear: rectified_linear(combinations_1d, recurrent_activations_1d); break;
+    case ActivationFunction::RectifiedLinear: rectified_linear(combinations_1d, recurrent_activations_1d); break;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, recurrent_activations_1d); break;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations_1d, recurrent_activations_1d); break;
 
-    case SoftPlus: soft_plus(combinations_1d, recurrent_activations_1d); break;
+    case ActivationFunction::SoftPlus: soft_plus(combinations_1d, recurrent_activations_1d); break;
 
-    case SoftSign: soft_sign(combinations_1d, recurrent_activations_1d); break;
+    case ActivationFunction::SoftSign: soft_sign(combinations_1d, recurrent_activations_1d); break;
 
-    case HardSigmoid: hard_sigmoid(combinations_1d, recurrent_activations_1d); break;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations_1d, recurrent_activations_1d); break;
 
-    case ExponentialLinear: exponential_linear(combinations_1d, recurrent_activations_1d); break;
+    case ActivationFunction::ExponentialLinear: exponential_linear(combinations_1d, recurrent_activations_1d); break;
     }
 }
 
@@ -1445,27 +1445,27 @@ void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<ty
 
     switch(activation_function)
     {
-    case Linear: linear_derivatives(combinations, activations, activations_derivatives_2d); return;
+    case ActivationFunction::Linear: linear_derivatives(combinations, activations, activations_derivatives_2d); return;
 
-    case Logistic: logistic_derivatives(combinations, activations, activations_derivatives_2d); return;
+    case ActivationFunction::Logistic: logistic_derivatives(combinations, activations, activations_derivatives_2d); return;
 
-    case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, activations, activations_derivatives_2d); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, activations, activations_derivatives_2d); return;
 
-    case Threshold: threshold_derivatives(combinations, activations, activations_derivatives_2d); return;
+    case ActivationFunction::Threshold: threshold_derivatives(combinations, activations, activations_derivatives_2d); return;
 
-    case SymmetricThreshold: symmetric_threshold_derivatives(combinations, activations, activations_derivatives_2d); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations, activations, activations_derivatives_2d); return;
 
-    case RectifiedLinear: rectified_linear_derivatives(combinations, activations, activations_derivatives_2d); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations, activations, activations_derivatives_2d); return;
 
-    case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations, activations, activations_derivatives_2d); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations, activations, activations_derivatives_2d); return;
 
-    case SoftPlus: soft_plus_derivatives(combinations, activations, activations_derivatives_2d); return;
+    case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations, activations, activations_derivatives_2d); return;
 
-    case SoftSign: soft_sign_derivatives(combinations, activations, activations_derivatives_2d); return;
+    case ActivationFunction::SoftSign: soft_sign_derivatives(combinations, activations, activations_derivatives_2d); return;
 
-    case HardSigmoid: hard_sigmoid_derivatives(combinations, activations, activations_derivatives_2d); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations, activations, activations_derivatives_2d); return;
 
-    case ExponentialLinear: exponential_linear_derivatives(combinations, activations, activations_derivatives_2d); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations, activations, activations_derivatives_2d); return;
     }
 }
 
@@ -1496,27 +1496,27 @@ void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<ty
 
     switch(activation_function)
     {
-    case Linear: linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::Linear: linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case Logistic: logistic_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::Logistic: logistic_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case Threshold: threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::Threshold: threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case SymmetricThreshold: symmetric_threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case RectifiedLinear: rectified_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case SoftPlus: soft_plus_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case SoftSign: soft_sign_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::SoftSign: soft_sign_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case HardSigmoid: hard_sigmoid_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case ExponentialLinear: exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
     }
 }
 
@@ -1546,27 +1546,27 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(const
 
     switch(recurrent_activation_function)
     {
-    case Linear: linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::Linear: linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case Logistic: logistic_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::Logistic: logistic_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case Threshold: threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::Threshold: threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case SymmetricThreshold: symmetric_threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case RectifiedLinear: rectified_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case SoftPlus: soft_plus_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case SoftSign: soft_sign_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::SoftSign: soft_sign_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case HardSigmoid: hard_sigmoid_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
-    case ExponentialLinear: exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
     }
 }
 
@@ -4022,47 +4022,47 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
         switch(recurrent_activation_function)
         {
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "tanh(forget_gate_combinations[" << i << "]);\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "forget_gate_combinations[" << i << "] < 0.0 ? 0.0 : forget_gate_combinations[" << i << "];\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + exp(-forget_gate_combinations[" << i << "]));\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "forget_gate_combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "forget_gate_combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "forget_gate_combinations[" << i << "];\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "forget_gate_combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(forget_gate_combinations[" << i << "]) - 1.0) : 1.0507*forget_gate_combinations[" << i << "];\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "log(1.0 + exp(forget_gate_combinations[" << i << "]));\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "forget_gate_combinations[" << i << "] < 0.0 ? forget_gate_combinations[" << i << "]/(1.0 - forget_gate_combinations[" << i << "] ) : forget_gate_combinations[" << i << "]/(1.0 + forget_gate_combinations[" << i << "] );\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "forget_gate_combinations[" << i << "] < 0.0 ? 1.0*(exp(forget_gate_combinations[" << i << "]) - 1.0) : forget_gate_combinations[" << i << "];\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }
@@ -4103,47 +4103,47 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
         switch(recurrent_activation_function)
         {
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "tanh(input_gate_combinations[" << i << "]);\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "input_gate_combinations[" << i << "] < 0.0 ? 0.0 : input_gate_combinations[" << i << "];\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + exp(-input_gate_combinations[" << i << "]));\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "input_gate_combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "input_gate_combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "input_gate_combinations[" << i << "];\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "input_gate_combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(input_gate_combinations[" << i << "]) - 1.0) : 1.0507*input_gate_combinations[" << i << "];\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "log(1.0 + exp(input_gate_combinations[" << i << "]));\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "input_gate_combinations[" << i << "] < 0.0 ? input_gate_combinations[" << i << "]/(1.0 - input_gate_combinations[" << i << "] ) : input_gate_combinations[" << i << "]/(1.0 + input_gate_combinations[" << i << "] );\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "input_gate_combinations[" << i << "] < 0.0 ? 1.0*(exp(input_gate_combinations[" << i << "]) - 1.0) : input_gate_combinations[" << i << "];\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }
@@ -4184,47 +4184,47 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
         switch(activation_function)
         {
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "tanh(state_gate_combinations[" << i << "]);\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "state_gate_combinations[" << i << "] < 0.0 ? 0.0 : state_gate_combinations[" << i << "];\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + exp(-state_gate_combinations[" << i << "]));\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "state_gate_combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "state_gate_combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "state_gate_combinations[" << i << "];\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "state_gate_combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(state_gate_combinations[" << i << "]) - 1.0) : 1.0507*state_gate_combinations[" << i << "];\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "log(1.0 + exp(state_gate_combinations[" << i << "]));\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "state_gate_combinations[" << i << "] < 0.0 ? state_gate_combinations[" << i << "]/(1.0 - state_gate_combinations[" << i << "] ) : state_gate_combinations[" << i << "]/(1.0 + state_gate_combinations[" << i << "] );\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "state_gate_combinations[" << i << "] < 0.0 ? 1.0*(exp(state_gate_combinations[" << i << "]) - 1.0) : state_gate_combinations[" << i << "];\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }
@@ -4265,47 +4265,47 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
         switch(recurrent_activation_function)
         {
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "tanh(output_gate_combinations[" << i << "]);\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "output_gate_combinations[" << i << "] < 0.0 ? 0.0 : output_gate_combinations[" << i << "];\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + exp(-output_gate_combinations[" << i << "]));\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "output_gate_combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "output_gate_combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "output_gate_combinations[" << i << "];\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "output_gate_combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(output_gate_combinations[" << i << "]) - 1.0) : 1.0507*output_gate_combinations[" << i << "];\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "log(1.0 + exp(output_gate_combinations[" << i << "]));\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "output_gate_combinations[" << i << "] < 0.0 ? output_gate_combinations[" << i << "]/(1.0 - output_gate_combinations[" << i << "] ) : output_gate_combinations[" << i << "]/(1.0 + output_gate_combinations[" << i << "] );\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "output_gate_combinations[" << i << "] < 0.0 ? 1.0*(exp(output_gate_combinations[" << i << "]) - 1.0) : output_gate_combinations[" << i << "];\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }
@@ -4332,47 +4332,47 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
         switch(activation_function)
         {
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "tanh(cell_states[" << i << "]);\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "cell_states[" << i << "] < 0.0 ? 0.0 : cell_states[" << i << "];\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + exp(-cell_states[" << i << "]));\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "cell_states[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "cell_states[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "cell_states[" << i << "];\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "cell_states[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(cell_states[" << i << "]) - 1.0) : 1.0507*cell_states[" << i << "];\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "log(1.0 + exp(cell_states[" << i << "]));\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "cell_states[" << i << "] < 0.0 ? cell_states[" << i << "]/(1.0 - cell_states[" << i << "] ) : cell_states[" << i << "]/(1.0 + cell_states[" << i << "] );\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "cell_states[" << i << "] < 0.0 ? 1.0*(exp(cell_states[" << i << "]) - 1.0) : cell_states[" << i << "];\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }
@@ -4457,47 +4457,47 @@ string LongShortTermMemoryLayer::write_combinations_python() const
 
         switch(recurrent_activation_function)
         {
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "np.tanh(forget_gate_combinations[" << i << "])\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "np.maximum(0.0, forget_gate_combinations[" << i << "])\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + np.exp(-forget_gate_combinations[" << i << "]))\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "1.0 if forget_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "1.0 if forget_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "forget_gate_combinations[" << i << "]\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "1.0507*1.67326*(np.exp(forget_gate_combinations[" << i << "]) - 1.0) if forget_gate_combinations[" << i << "] < 0.0 else 1.0507*forget_gate_combinations[" << i << "]\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "np.log(1.0 + np.exp(forget_gate_combinations[" << i << "]))\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "forget_gate_combinations[" << i << "]/(1.0 - forget_gate_combinations[" << i << "] ) if forget_gate_combinations[" << i << "] < 0.0 else forget_gate_combinations[" << i << "]/(1.0 + forget_gate_combinations[" << i << "] )\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "1.0*(np.exp(forget_gate_combinations[" << i << "]) - 1.0) if forget_gate_combinations[" << i << "] < 0.0 else forget_gate_combinations[" << i << "]\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }
@@ -4540,47 +4540,47 @@ string LongShortTermMemoryLayer::write_combinations_python() const
 
         switch(recurrent_activation_function)
         {
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "np.tanh(input_gate_combinations[" << i << "])\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "np.maximum(0.0, input_gate_combinations[" << i << "])\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + np.exp(-input_gate_combinations[" << i << "]))\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "1.0 if input_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "1.0 if input_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "input_gate_combinations[" << i << "]\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "1.0507*1.67326*(np.exp(input_gate_combinations[" << i << "]) - 1.0) if input_gate_combinations[" << i << "] < 0.0 else 1.0507*input_gate_combinations[" << i << "]\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "np.log(1.0 + np.exp(input_gate_combinations[" << i << "]))\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "input_gate_combinations[" << i << "]/(1.0 - input_gate_combinations[" << i << "] ) if input_gate_combinations[" << i << "] < 0.0 else input_gate_combinations[" << i << "]/(1.0 + input_gate_combinations[" << i << "] )\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "1.0*(np.exp(input_gate_combinations[" << i << "]) - 1.0) if input_gate_combinations[" << i << "] < 0.0 else input_gate_combinations[" << i << "]\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }
@@ -4623,47 +4623,47 @@ string LongShortTermMemoryLayer::write_combinations_python() const
 
         switch(activation_function)
         {
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "np.tanh(state_gate_combinations[" << i << "])\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "np.maximum(0.0, state_gate_combinations[" << i << "])\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + np.exp(-state_gate_combinations[" << i << "]))\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "1.0 if state_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "1.0 if state_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "state_gate_combinations[" << i << "]\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "1.0507*1.67326*(np.exp(state_gate_combinations[" << i << "]) - 1.0) if state_gate_combinations[" << i << "] < 0.0 else 1.0507*state_gate_combinations[" << i << "]\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "np.log(1.0 + np.exp(state_gate_combinations[" << i << "]))\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "state_gate_combinations[" << i << "]/(1.0 - state_gate_combinations[" << i << "] ) if state_gate_combinations[" << i << "] < 0.0 else state_gate_combinations[" << i << "]/(1.0 + state_gate_combinations[" << i << "] )\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "1.0*(np.exp(state_gate_combinations[" << i << "]) - 1.0) if state_gate_combinations[" << i << "] < 0.0 else state_gate_combinations[" << i << "]\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }
@@ -4706,47 +4706,47 @@ string LongShortTermMemoryLayer::write_combinations_python() const
 
         switch(activation_function)
         {
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "np.tanh(output_gate_combinations[" << i << "])\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "np.maximum(0.0, output_gate_combinations[" << i << "])\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + np.exp(-output_gate_combinations[" << i << "]))\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "1.0 if output_gate_combinations[" << i << "] >= 0.0 else 0.0\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "1.0 if output_gate_combinations[" << i << "] >= 0.0 else -1.0\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "output_gate_combinations[" << i << "]\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "1.0507*1.67326*(np.exp(output_gate_combinations[" << i << "]) - 1.0) if output_gate_combinations[" << i << "] < 0.0 else 1.0507*output_gate_combinations[" << i << "]\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "np.log(1.0 + np.exp(output_gate_combinations[" << i << "]))\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "output_gate_combinations[" << i << "]/(1.0 - output_gate_combinations[" << i << "] ) if output_gate_combinations[" << i << "] < 0.0 else output_gate_combinations[" << i << "]/(1.0 + output_gate_combinations[" << i << "] )\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "1.0*(np.exp(output_gate_combinations[" << i << "]) - 1.0) if output_gate_combinations[" << i << "] < 0.0 else output_gate_combinations[" << i << "]\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }
@@ -4774,47 +4774,47 @@ string LongShortTermMemoryLayer::write_combinations_python() const
 
         switch(activation_function)
         {
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "np.tanh(self.cell_states[" << i << "])\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "np.maximum(0.0, self.cell_states[" << i << "])\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + np.exp(-self.cell_states[" << i << "]))\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "1.0 if self.cell_states[" << i << "] >= 0.0 else 0.0\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "1.0 if self.cell_states[" << i << "] >= 0.0 else -1.0\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "self.cell_states[" << i << "]\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "1.0507*1.67326*(np.exp(self.cell_states[" << i << "]) - 1.0) if self.cell_states[" << i << "] < 0.0 else 1.0507*self.cell_states[" << i << "]\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "np.log(1.0 + np.exp(self.cell_states[" << i << "]))\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "self.cell_states[" << i << "]/(1.0 - self.cell_states[" << i << "] ) if self.cell_states[" << i << "] < 0.0 else self.cell_states[" << i << "]/(1.0 + self.cell_states[" << i << "] )\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "1.0*(np.exp(self.cell_states[" << i << "]) - 1.0) if self.cell_states[" << i << "] < 0.0 else self.cell_states[" << i << "]\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }
@@ -5088,11 +5088,11 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function_expression(
 {
     switch(recurrent_activation_function)
     {
-    case HyperbolicTangent:
+    case ActivationFunction::HyperbolicTangent:
     {
         return "tanh";
     }
-    case Linear:
+    case ActivationFunction::Linear:
     {
         return string();
     }
@@ -5108,11 +5108,11 @@ string LongShortTermMemoryLayer::write_activation_function_expression() const
 {
     switch(activation_function)
     {
-    case HyperbolicTangent:
+    case ActivationFunction::HyperbolicTangent:
     {
         return "tanh";
     }
-    case Linear:
+    case ActivationFunction::Linear:
     {
         return string();
     }

@@ -181,37 +181,37 @@ string PerceptronLayer::write_activation_function() const
 {
     switch(activation_function)
     {
-    case Logistic:
+    case ActivationFunction::Logistic:
         return "Logistic";
 
-    case HyperbolicTangent:
+    case ActivationFunction::HyperbolicTangent:
         return "HyperbolicTangent";
 
-    case Threshold:
+    case ActivationFunction::Threshold:
         return "Threshold";
 
-    case SymmetricThreshold:
+    case ActivationFunction::SymmetricThreshold:
         return "SymmetricThreshold";
 
-    case Linear:
+    case ActivationFunction::Linear:
         return "Linear";
 
-    case RectifiedLinear:
+    case ActivationFunction::RectifiedLinear:
         return "RectifiedLinear";
 
-    case ScaledExponentialLinear:
+    case ActivationFunction::ScaledExponentialLinear:
         return "ScaledExponentialLinear";
 
-    case SoftPlus:
+    case ActivationFunction::SoftPlus:
         return "SoftPlus";
 
-    case SoftSign:
+    case ActivationFunction::SoftSign:
         return "SoftSign";
 
-    case HardSigmoid:
+    case ActivationFunction::HardSigmoid:
         return "HardSigmoid";
 
-    case ExponentialLinear:
+    case ActivationFunction::ExponentialLinear:
         return "ExponentialLinear";
     }
 
@@ -367,47 +367,47 @@ void PerceptronLayer::set_activation_function(const string& new_activation_funct
 {
     if(new_activation_function_name == "Logistic")
     {
-        activation_function = Logistic;
+        activation_function = ActivationFunction::Logistic;
     }
     else if(new_activation_function_name == "HyperbolicTangent")
     {
-        activation_function = HyperbolicTangent;
+        activation_function = ActivationFunction::HyperbolicTangent;
     }
     else if(new_activation_function_name == "Threshold")
     {
-        activation_function = Threshold;
+        activation_function = ActivationFunction::Threshold;
     }
     else if(new_activation_function_name == "SymmetricThreshold")
     {
-        activation_function = SymmetricThreshold;
+        activation_function = ActivationFunction::SymmetricThreshold;
     }
     else if(new_activation_function_name == "Linear")
     {
-        activation_function = Linear;
+        activation_function = ActivationFunction::Linear;
     }
     else if(new_activation_function_name == "RectifiedLinear")
     {
-        activation_function = RectifiedLinear;
+        activation_function = ActivationFunction::RectifiedLinear;
     }
     else if(new_activation_function_name == "ScaledExponentialLinear")
     {
-        activation_function = ScaledExponentialLinear;
+        activation_function = ActivationFunction::ScaledExponentialLinear;
     }
     else if(new_activation_function_name == "SoftPlus")
     {
-        activation_function = SoftPlus;
+        activation_function = ActivationFunction::SoftPlus;
     }
     else if(new_activation_function_name == "SoftSign")
     {
-        activation_function = SoftSign;
+        activation_function = ActivationFunction::SoftSign;
     }
     else if(new_activation_function_name == "HardSigmoid")
     {
-        activation_function = HardSigmoid;
+        activation_function = ActivationFunction::HardSigmoid;
     }
     else if(new_activation_function_name == "ExponentialLinear")
     {
-        activation_function = ExponentialLinear;
+        activation_function = ActivationFunction::ExponentialLinear;
     }
     else
     {
@@ -519,27 +519,27 @@ void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations,
 
     switch(activation_function)
     {
-    case Linear: linear(combinations, activations); return;
+    case ActivationFunction::Linear: linear(combinations, activations); return;
 
-    case Logistic: logistic(combinations, activations); return;
+    case ActivationFunction::Logistic: logistic(combinations, activations); return;
 
-    case HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
 
-    case Threshold: threshold(combinations, activations); return;
+    case ActivationFunction::Threshold: threshold(combinations, activations); return;
 
-    case SymmetricThreshold: symmetric_threshold(combinations, activations); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold(combinations, activations); return;
 
-    case RectifiedLinear: rectified_linear(combinations, activations); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(combinations, activations); return;
 
-    case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
 
-    case SoftPlus: soft_plus(combinations, activations); return;
+    case ActivationFunction::SoftPlus: soft_plus(combinations, activations); return;
 
-    case SoftSign: soft_sign(combinations, activations); return;
+    case ActivationFunction::SoftSign: soft_sign(combinations, activations); return;
 
-    case HardSigmoid: hard_sigmoid(combinations, activations); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, activations); return;
 
-    case ExponentialLinear: exponential_linear(combinations, activations); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(combinations, activations); return;
     }
 }
 
@@ -556,27 +556,27 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
 
     switch(activation_function)
     {
-    case Linear: linear_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::Linear: linear_derivatives(combinations, activations, activations_derivatives); return;
 
-    case Logistic: logistic_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::Logistic: logistic_derivatives(combinations, activations, activations_derivatives); return;
 
-    case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, activations, activations_derivatives); return;
 
-    case Threshold: threshold_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::Threshold: threshold_derivatives(combinations, activations, activations_derivatives); return;
 
-    case SymmetricThreshold: symmetric_threshold_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations, activations, activations_derivatives); return;
 
-    case RectifiedLinear: rectified_linear_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations, activations, activations_derivatives); return;
 
-    case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations, activations, activations_derivatives); return;
 
-    case SoftPlus: soft_plus_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations, activations, activations_derivatives); return;
 
-    case SoftSign: soft_sign_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::SoftSign: soft_sign_derivatives(combinations, activations, activations_derivatives); return;
 
-    case HardSigmoid: hard_sigmoid_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations, activations, activations_derivatives); return;
 
-    case ExponentialLinear: exponential_linear_derivatives(combinations, activations, activations_derivatives); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations, activations, activations_derivatives); return;
     }
 }
 
@@ -713,10 +713,16 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 
     const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();
 
+    const Index batch_samples_number = back_propagation->batch_samples_number;
+
+    const Index next_neurons_number = probabilistic_layer_pointer->get_biases_number();
+
     if(probabilistic_layer_pointer->get_neurons_number() == 1) // Binary
     {
+        TensorMap< Tensor<type, 2> > activations_derivatives_2d(next_forward_propagation->activations_derivatives.data(),
+                                                                 batch_samples_number, next_neurons_number);
         back_propagation->delta.device(*thread_pool_device) =
-                (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
+                (next_back_propagation->delta*activations_derivatives_2d).contract(next_synaptic_weights, A_BT);
     }
     else // Multiple
     {
@@ -1220,37 +1226,37 @@ string PerceptronLayer::write_activation_function_expression() const
 {
     switch(activation_function)
     {
-    case Threshold:
+    case ActivationFunction::Threshold:
         return "threshold";
 
-    case SymmetricThreshold:
+    case ActivationFunction::SymmetricThreshold:
         return "symmetric_threshold";
 
-    case Logistic:
+    case ActivationFunction::Logistic:
         return "logistic";
 
-    case HyperbolicTangent:
+    case ActivationFunction::HyperbolicTangent:
         return "tanh";
 
-    case Linear:
+    case ActivationFunction::Linear:
         return string();
 
-    case RectifiedLinear:
+    case ActivationFunction::RectifiedLinear:
         return "ReLU";
 
-    case ExponentialLinear:
+    case ActivationFunction::ExponentialLinear:
         return "ELU";
 
-    case ScaledExponentialLinear:
+    case ActivationFunction::ScaledExponentialLinear:
         return "SELU";
 
-    case SoftPlus:
+    case ActivationFunction::SoftPlus:
         return "soft_plus";
 
-    case SoftSign:
+    case ActivationFunction::SoftSign:
         return "soft_sign";
 
-    case HardSigmoid:
+    case ActivationFunction::HardSigmoid:
         return "hard_sigmoid";
     }
 
@@ -1297,47 +1303,47 @@ string PerceptronLayer::write_activations_c() const
 
         switch(activation_function)
         {
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "tanh(combinations[" << i << "]);\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "combinations[" << i << "] < 0.0 ? 0.0 : combinations[" << i << "];\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + exp(-combinations[" << i << "]));\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "combinations[" << i << "];\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(combinations[" << i << "]) - 1.0) : 1.0507*combinations[" << i << "];\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "log(1.0 + exp(combinations[" << i << "]));\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "combinations[" << i << "] < 0.0 ? combinations[" << i << "]/(1.0 - combinations[" << i << "] ) : combinations[" << i << "]/(1.0 + combinations[" << i << "] );\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "combinations[" << i << "] < 0.0 ? 1.0*(exp(combinations[" << i << "]) - 1.0) : combinations[" << i << "];\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }
@@ -1389,47 +1395,47 @@ string PerceptronLayer::write_activations_python() const
         switch(activation_function)
         {
 
-        case HyperbolicTangent:
+        case ActivationFunction::HyperbolicTangent:
             buffer << "np.tanh(combinations[" << i << "])\n";
             break;
 
-        case RectifiedLinear:
+        case ActivationFunction::RectifiedLinear:
             buffer << "np.maximum(0.0, combinations[" << i << "])\n";
             break;
 
-        case Logistic:
+        case ActivationFunction::Logistic:
             buffer << "1.0/(1.0 + np.exp(-combinations[" << i << "]))\n";
             break;
 
-        case Threshold:
+        case ActivationFunction::Threshold:
             buffer << "1.0 if combinations[" << i << "] >= 0.0 else 0.0\n";
             break;
 
-        case SymmetricThreshold:
+        case ActivationFunction::SymmetricThreshold:
             buffer << "1.0 if combinations[" << i << "] >= 0.0 else -1.0\n";
             break;
 
-        case Linear:
+        case ActivationFunction::Linear:
             buffer << "combinations[" << i << "]\n";
             break;
 
-        case ScaledExponentialLinear:
+        case ActivationFunction::ScaledExponentialLinear:
             buffer << "1.0507*1.67326*(np.exp(combinations[" << i << "]) - 1.0) if combinations[" << i << "] < 0.0 else 1.0507*combinations[" << i << "]\n";
             break;
 
-        case SoftPlus:
+        case ActivationFunction::SoftPlus:
             buffer << "np.log(1.0 + np.exp(combinations[" << i << "]))\n";
             break;
 
-        case SoftSign:
+        case ActivationFunction::SoftSign:
             buffer << "combinations[" << i << "]/(1.0 - combinations[" << i << "] ) if combinations[" << i << "] < 0.0 else combinations[" << i << "]/(1.0 + combinations[" << i << "] )\n";
             break;
 
-        case ExponentialLinear:
+        case ActivationFunction::ExponentialLinear:
             buffer << "1.0*(np.exp(combinations[" << i << "]) - 1.0) if combinations[" << i << "] < 0.0 else combinations[" << i << "]\n";
             break;
 
-        case HardSigmoid:
+        case ActivationFunction::HardSigmoid:
             ///@todo
             break;
         }

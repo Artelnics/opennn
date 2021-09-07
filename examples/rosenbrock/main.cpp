@@ -33,8 +33,8 @@ int main()
      
         // Data Set
 
-        const Index samples_number = 10000;
-        const Index inputs_number = 100;
+        const Index samples_number = 100000;
+        const Index inputs_number = 1000;
         const Index outputs_number = 1;
         const Index hidden_neurons_number = inputs_number;
 
@@ -46,17 +46,18 @@ int main()
         
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
-        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
-        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(1);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10);
 
         training_strategy.perform_training();
         

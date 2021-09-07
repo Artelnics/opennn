@@ -412,19 +412,19 @@ string TrainingResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-    case OptimizationAlgorithm::MinimumLossDecrease:
+    case OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease:
         return "Minimum loss decrease";
 
-    case OptimizationAlgorithm::LossGoal:
+    case OptimizationAlgorithm::StoppingCondition::LossGoal:
         return "Loss goal";
 
-    case OptimizationAlgorithm::MaximumSelectionErrorIncreases:
+    case OptimizationAlgorithm::StoppingCondition::MaximumSelectionErrorIncreases:
         return "Maximum selection error increases";
 
-    case OptimizationAlgorithm::MaximumEpochsNumber:
+    case OptimizationAlgorithm::StoppingCondition::MaximumEpochsNumber:
         return "Maximum number of epochs";
 
-    case OptimizationAlgorithm::MaximumTime:
+    case OptimizationAlgorithm::StoppingCondition::MaximumTime:
         return "Maximum training time";
     }
 

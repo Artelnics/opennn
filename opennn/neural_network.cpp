@@ -656,7 +656,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
     this->add_layer(scaling_layer_pointer);
 
-    if(model_type == Approximation)
+    if(model_type == ProjectType::Approximation)
     {
         for(Index i = 0; i < size-1; i++)
         {
@@ -665,7 +665,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
             this->add_layer(perceptron_layer_pointer);
 
-            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::Linear);
+            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
         }
 
         UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(outputs_number);
@@ -676,7 +676,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
         this->add_layer(bounding_layer_pointer);
     }
-    else if(model_type == Classification)
+    else if(model_type == ProjectType::Classification)
     {
         for(Index i = 0; i < size-2; i++)
         {
@@ -691,7 +691,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
         this->add_layer(probabilistic_layer_pointer);
     }
-    else if(model_type == Forecasting)
+    else if(model_type == ProjectType::Forecasting)
     {
         LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
 //        RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
@@ -706,7 +706,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
             this->add_layer(perceptron_layer_pointer);
 
-            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::Linear);
+            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
         }
 
         UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(architecture[size-1]);

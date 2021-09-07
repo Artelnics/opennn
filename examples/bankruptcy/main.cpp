@@ -58,14 +58,14 @@ int main(void)
         Tensor<Index, 1> architecture(3);
         architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, architecture);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
         AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
 

@@ -33,7 +33,7 @@ int main()
 
         DataSet data_set("../data/simple_function_regression.csv", ';', true);
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 3, 1});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {1, 3, 1});
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
