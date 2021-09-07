@@ -141,6 +141,91 @@
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.28.29910\bin\HostX86\x64</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.28.29910\bin\HostX86\x86</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\iCLS\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Intel\Intel(R) Management Engine Components\iCLS\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\DAL</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Intel\Intel(R) Management Engine Components\DAL</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\IPT</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Intel\Intel(R) Management Engine Components\IPT</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Intel\WiFi\bin\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Common Files\Intel\WirelessCommon\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\NVIDIA Corporation\Nsight Compute 2020.3.1\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\MATLAB\R2021a\bin</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Users\Artelnics\AppData\Local\Microsoft\WindowsApps</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Users\Artelnics\AppData\Local\Programs\Microsoft VS Code\bin</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Users\Artelnics\AppData\Local\GitHubDesktop\bin</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Users\Artelnics\AppData\Local\Programs\MiKTeX\miktex\bin\x64\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>D:\opennn</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
    </searchCategory>
    <searchCategory>
     <category type="u8_t">2</category>
@@ -151,6 +236,11 @@
     </searchDirectory>
     <searchDirectory>
      <name>C:\opennn</name>
+     <recursive type="bool">true</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>D:\opennn</name>
      <recursive type="bool">true</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
@@ -222,13 +312,37 @@
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
+    <searchDirectory>
+     <name>D:\opennn\examples\rosenbrock</name>
+     <recursive type="bool">true</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.28.29910\atlmfc\src\atl</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.28.29910\crt\src</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.28.29910\include</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.28.29910\atlmfc\include</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
    </searchCategory>
    <searchCategory>
     <category type="u8_t">4</category>
    </searchCategory>
   </searchDirs>
  </vs_search_dirs>
- <contextValues type="bag"/>
  <All_Configurations-All_Platforms>
   <target_settings>
    <selected_workload>
@@ -240,11 +354,11 @@
       <workload>
        <targetName>launch</targetName>
        <use_app_dir_as_work_dir type="bool">true</use_app_dir_as_work_dir>
-       <launch_app.app_to_launch>C:\opennn-build\x64\Release\rosenbrock.exe</launch_app.app_to_launch>
+       <launch_app.app_to_launch>D:\opennn-build\x64\Release\rosenbrock.exe</launch_app.app_to_launch>
        <launch_app.app_parameters></launch_app.app_parameters>
        <launch_app.environment></launch_app.environment>
-       <result_directory.path>C:\opennn\examples\rosenbrock\VTune Profiler Results\rosenbrock\r@@@{at}</result_directory.path>
-       <launch_app.working_folder>C:\opennn-build\x64\Release</launch_app.working_folder>
+       <result_directory.path>D:\opennn\examples\rosenbrock\VTune Profiler Results\rosenbrock\r@@@{at}</result_directory.path>
+       <launch_app.working_folder>D:\opennn-build\x64\Release</launch_app.working_folder>
        <context>
         <contextValue>
          <id>allowMultipleRuns</id>
@@ -345,7 +459,7 @@
    </workloads>
   </target_settings>
   <analysis_type_settings>
-   <selected_analysis_type_path>C:\Program Files (x86)\Intel\oneAPI\vtune\2021.5.0\config\analysis_type\survey.cfg</selected_analysis_type_path>
+   <selected_analysis_type_path>C:\Program Files (x86)\Intel\oneAPI\vtune\2021.5.0\config\analysis_type\pt_analysis.cfg</selected_analysis_type_path>
    <localhost>
     <launch>
      <at_start_point>
@@ -377,8 +491,34 @@
        </contextValue>
       </knob_values>
      </at_start_point>
+     <at_start_point>
+      <at_path>C:\Program Files (x86)\Intel\oneAPI\vtune\2021.5.0\config\analysis_type\pt_analysis.cfg</at_path>
+      <knob_values>
+       <contextValue>
+        <id>UIMaxRegionDuration</id>
+        <value type="double">100</value>
+       </contextValue>
+       <contextValue>
+        <id>UIiptRegionsToLoad</id>
+        <value type="s32_t">100</value>
+       </contextValue>
+       <contextValue>
+        <id>forceLoopAndFunctionMode</id>
+        <value type="bool">true</value>
+       </contextValue>
+       <contextValue>
+        <id>initialViewpoint</id>
+        <value>%HotspotsPtViewpointName</value>
+       </contextValue>
+       <contextValue>
+        <id>ringBuffer</id>
+        <value type="s32_t">0</value>
+       </contextValue>
+      </knob_values>
+     </at_start_point>
     </launch>
    </localhost>
   </analysis_type_settings>
  </All_Configurations-All_Platforms>
+ <contextValues type="bag"/>
 </root>
