@@ -23,6 +23,7 @@ ProbabilisticLayer::ProbabilisticLayer()
 
 /// Probabilistic neurons number constructor.
 /// It creates a probabilistic layer with a given size.
+/// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of neurons in the layer.
 
 ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Index& new_neurons_number)
@@ -254,6 +255,7 @@ void ProbabilisticLayer::set()
 
 /// Resizes the size of the probabilistic layer.
 /// It also sets the rest of class members to their default values.
+/// @param new_inputs_number New size for the inputs.
 /// @param new_neurons_number New size for the probabilistic layer.
 
 void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)

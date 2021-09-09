@@ -139,7 +139,7 @@ void GradientDescent::set_default()
 
 
 /// Set the a new maximum for the epochs number.
-/// @param new_maximum_epochs number New maximum epochs number.
+/// @param new_maximum_epochs_number New maximum epochs number.
 
 void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
@@ -220,6 +220,7 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
 /// Returns the gradient descent training direction,
 /// which is the negative of the normalized gradient.
 /// @param gradient Loss index gradient.
+/// @param training_direction Training direction.
 
 void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradient, Tensor<type, 1>& training_direction) const
 {

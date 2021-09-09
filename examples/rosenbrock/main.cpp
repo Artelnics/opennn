@@ -35,9 +35,11 @@ int main()
 
         #pragma omp parallel for reduction(+: sum)
 
-        for(int i = 0; i < 10000000;  i++)
+        for(int i = 0; i < 100000000000;  i++)
         {
-            sum += tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum);
+            double a = tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum);
+
+            sum+= a;
         }
 
         cout << sum << endl;

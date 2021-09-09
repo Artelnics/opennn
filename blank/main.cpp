@@ -1,26 +1,18 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-<<<<<<< HEAD
-//   BLANK PROJECT
-=======
 //   B L A N K   A P P L I C A T I O N
->>>>>>> ef5b0587e160bd6ea29d14f5226356124d1ff546
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 // System includes
 
-<<<<<<< HEAD
-=======
 #include <cstring>
->>>>>>> ef5b0587e160bd6ea29d14f5226356124d1ff546
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
-<<<<<<< HEAD
 #include <cstring>
 #include <time.h>
 #include <stdio.h>
@@ -36,6 +28,8 @@ using namespace Eigen;
 
 int main()
 {
+    try{
+/*
     //DataSet class
 
     DataSet data_set;
@@ -117,77 +111,7 @@ int main()
     Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
     Tensor<type, 1> confusion_matrix = testing_analysis.calculate_testing_errors();
-
-    return 0;
-=======
-#include <time.h>
-
-// OpenNN includes
-
-#include "../opennn/opennn.h"
-
-using namespace OpenNN;
-using namespace std;
-using namespace Eigen;
-
-int main()
-{
-    try
-    {
-        cout << "OpenNN. Blank application." << endl;
-
-        srand(static_cast<unsigned>(time(nullptr)));
-
-        DataSet ds("C:/Users/Usuario/Documents/Waste_monthly.csv", ',', true);
-
-        ds.set_lags_number(2);
-        ds.set_steps_ahead_number(1);
-
-        ds.transform_time_series();
-
-        ds.split_samples_sequential();
-
-        const Index columns_number = ds.get_columns_number();
-
-        ds.set_column_use(columns_number-1, DataSet::VariableUse::UnusedVariable);
-        ds.set_column_use(columns_number-2, DataSet::VariableUse::UnusedVariable);
-        ds.set_column_use(columns_number-3, DataSet::VariableUse::UnusedVariable);
-
-        const Index inputs_number = ds.get_input_variables_number();
-        const Index targets_number = ds.get_target_variables_number();
-
-        const Index neurons_number = 3;
-
-        ScalingLayer sl(inputs_number);
-
-        LongShortTermMemoryLayer lstm(inputs_number, neurons_number);
-        lstm.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::Linear);
-        lstm.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
-        lstm.set_timesteps(2);
-
-        PerceptronLayer pl(neurons_number, targets_number);
-        pl.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-
-        UnscalingLayer ul(inputs_number);
-
-        NeuralNetwork nn;
-
-        nn.add_layer(&sl);
-        nn.add_layer(&lstm);
-        nn.add_layer(&pl);
-        nn.add_layer(&ul);
-
-        TrainingStrategy ts(&nn, &ds);
-
-        ts.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        ts.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-
-        ts.perform_training();
-
-        cout << "outputs: " << endl << nn.calculate_outputs(ds.get_input_data()) << endl;
-
-
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;
@@ -195,7 +119,6 @@ int main()
     catch(exception& e)
     {
         cerr << e.what() << endl;
->>>>>>> ef5b0587e160bd6ea29d14f5226356124d1ff546
 
         return 1;
     }
