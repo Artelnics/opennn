@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
  <rdmgr>
-  <timestamp type="u64_t">1631009805</timestamp>
+  <timestamp type="u64_t">1631015792</timestamp>
   <hostname>DESKTOP-5PN25MA</hostname>
   <os>windows</os>
   <product>Intel® oneAPI VTune™ Profiler 2021.5.0</product>
@@ -15,8 +15,8 @@
   <CPUStepping type="s32_t">10</CPUStepping>
   <CPUBrandName>Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz</CPUBrandName>
   <isa>avx2</isa>
-  <collectionTimeBegin type="u64_t">1631009805</collectionTimeBegin>
-  <collectionTimeEnd type="u64_t">1631009813</collectionTimeEnd>
+  <collectionTimeBegin type="u64_t">1631015792</collectionTimeBegin>
+  <collectionTimeEnd type="u64_t">1631015913</collectionTimeEnd>
   <variables>
    <at>ps</at>
   </variables>

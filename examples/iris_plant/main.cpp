@@ -35,12 +35,10 @@ int main()
 
         DataSet data_set("D:/opennn/examples/iris_plant/data/iris_plant_original.csv", ';', true);
 
-<<<<<<< HEAD
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {4, 3, 3});
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-=======
         DataSet data_set("../data/iris_plant_original.csv", ';', true);
 
         const Index input_variables_number = data_set.get_input_variables_number();
@@ -58,7 +56,6 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
 
->>>>>>> ef5b0587e160bd6ea29d14f5226356124d1ff546
         training_strategy.perform_training();
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);

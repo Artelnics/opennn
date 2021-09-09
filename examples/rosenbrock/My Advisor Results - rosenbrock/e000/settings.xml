@@ -4,14 +4,21 @@
  <SurveyView int:survey_view_int_operations_mode="0">
   <BottomUpGrid>
    <ColumnStructure DefaultColumnLayout="Default"/>
+   <ColumnWidth int:fdFunctionName="475" int:fdLoopAnnotation="40" int:fdRecommendationPresence="96" int:fdTotalTime="81" int:fdSelfTime="74" int:fdCompilerOptInfoVectLoopTypeSplitting="96" int:fdCompilerOptInfoVectMsg="132" int:fdVectInfoInstSets="56" int:fdVectorGain="50" int:fdVectorLength="42" int:fdVectInfoInstClasses="132" int:fdVectInfoVectDataTypes="54" int:fdCompilerOptDetails="96" int:fdLocation="196"/>
   </BottomUpGrid>
   <TopDownGrid>
    <ColumnStructure DefaultColumnLayout="Top Down"/>
   </TopDownGrid>
+  <RooflineChart rooflineState="{&quot;threadCount4RoofIdx&quot;:3,&quot;stackViewVisible&quot;:false}"/>
+  <SourceView>
+   <ColumnWidth int:SnippetDefaultState="1"/>
+  </SourceView>
  </SurveyView>
- <workflow int:selected="0" boolean:accuracyEnable="true">
+ <workflow boolean:accuracyEnable="true" int:selected="0">
   <pmVectorization>
    <checked boolean:a1="true" boolean:a3="false" boolean:a6="false" boolean:a7="false"/>
   </pmVectorization>
  </workflow>
+ <FilterView boolean:VectorizedButtonChecked="true" boolean:NotVectorizedButtonChecked="true" boolean:FakeLoopButtonChecked="false" boolean:LibrariesButtonChecked="false" ModuleFilterValue="All Modules" SourceFilterValue="All Sources" LoopModeFilterValue="Loops And Functions" ThreadFilterValue="All Threads"/>
+ <SurveySourceView boolean:SourcePaneVisible="true" boolean:AsmPaneVisible="true" boolean:StackPaneVisible="true"/>
 </bag>

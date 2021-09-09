@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- <!DOCTYPE IntelParallelAdvisorSummaryCollection SYSTEM  "IntelParallelAdvisorSummaryCollection.dtd"> -->
+
+<IntelParallelAdvisorSummary version="" 
+                             kind="DATAKIND_SURVEY_EX" >
+  <hotspot filename="D:\opennn\eigen\Eigen\src\Core\products\GeneralBlockPanelKernel.h"
+           line_no="1196"
+           routine="Eigen::internal::gebp_kernel&lt;float,float,__int64,class Eigen::internal::blas_data_mapper&lt;float,__int64,0,0,1&gt;,8,4,0,0&gt;::operator()"
+           is_vectorized="1"
+           self_time="4.827354E+02"
+           total_time="4.827354E+02"
+           trip_counts=""
+           func_instance="313"
+           priority="0"/>
+  <hotspot filename="D:\opennn\eigen\Eigen\src\Core\products\GeneralBlockPanelKernel.h"
+           line_no="1166"
+           routine="Eigen::internal::gebp_kernel&lt;float,float,__int64,class Eigen::internal::blas_data_mapper&lt;float,__int64,0,0,1&gt;,8,4,0,0&gt;::operator()"
+           is_vectorized="0"
+           self_time="1.331440E+01"
+           total_time="4.963381E+02"
+           trip_counts=""
+           func_instance="315"
+           priority="0"/>
+  <hotspot filename="D:\opennn\eigen\unsupported\Eigen\CXX11\src\Tensor\TensorExecutor.h"
+           line_no="117"
+           routine="Eigen::internal::EvalRange&lt;struct Eigen::TensorEvaluator&lt;class Eigen::TensorAssignOp&lt;class Eigen::Tensor&lt;float,2,0,__int64&gt;,class Eigen::TensorCwiseUnaryOp&lt;struct Eigen::internal::scalar_tanh_op&lt;float&gt;,class Eigen::Tensor&lt;float,2,0,__int64&gt; const &gt; const &gt; const ,struct Eigen::ThreadPoolDevice&gt;,__int64,1&gt;::run"
+           is_vectorized="1"
+           self_time="6.646064E+00"
+           total_time="6.646064E+00"
+           trip_counts=""
+           func_instance="343"
+           priority="0"/>
+  <hotspot filename="D:\opennn\eigen\Eigen\src\Core\products\GeneralBlockPanelKernel.h"
+           line_no="1982"
+           routine="Eigen::internal::gemm_pack_rhs&lt;float,__int64,class Eigen::internal::TensorContractionSubMapper&lt;float,__int64,0,struct Eigen::TensorEvaluator&lt;class Eigen::TensorCwiseBinaryOp&lt;struct Eigen::internal::scalar_product_op&lt;float,float&gt;,class Eigen::Tensor&lt;float,2,0,__int64&gt; const ,class Eigen::Tensor&lt;float,2,0,__int64&gt; const &gt; const ,struct Eigen::ThreadPoolDevice&gt;,class std::array&lt;__int64,1&gt;,class std::array&lt;__int64,1&gt;,4,1,0,0&gt;,4,0,0,0&gt;::operator()"
+           is_vectorized="0"
+           self_time="6.104732E+00"
+           total_time="6.518508E+00"
+           trip_counts=""
+           func_instance="363"
+           priority="0"/>
+  <hotspot filename="D:\opennn\eigen\Eigen\src\Core\products\GeneralBlockPanelKernel.h"
+           line_no="1756"
+           routine="Eigen::internal::gemm_pack_lhs&lt;float,__int64,class Eigen::internal::TensorContractionSubMapper&lt;float,__int64,1,struct Eigen::TensorEvaluator&lt;class Eigen::Tensor&lt;float,2,0,__int64&gt; const ,struct Eigen::DefaultDevice&gt;,class std::array&lt;__int64,1&gt;,class std::array&lt;__int64,1&gt;,4,0,0,0&gt;,8,4,0,0,0&gt;::operator()"
+           is_vectorized="1"
+           self_time="5.817558E+00"
+           total_time="5.817558E+00"
+           trip_counts=""
+           func_instance="371"
+           priority="0"/>
+</IntelParallelAdvisorSummary >
