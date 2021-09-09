@@ -1,9 +1,51 @@
 <?xml version='1.0' encoding='UTF-8'?>
 
-<bag>
- <grouper name="dd_thread" axis="dd_thread" recommendedStorage="container">
+<bag xmlns:boolean="http://www.w3.org/2001/XMLSchema#boolean">
+ <grouper name="bandwidth_base_grouper" axis="dd_thread" recommendedStorage="container">
   <entries>
-   <entry instanceTable="cpu_data" correlationType="byPrimaryAxis">
+   <entry instanceTable="bandwidth_utilization_data" correlationType="global">
+    <groupings>
+     <grouping path="attr.bin"/>
+    </groupings>
+   </entry>
+   <entry instanceTable="pmu_data" correlationType="byPrimaryAxis">
+    <groupings>
+     <grouping path="attr.callsite.bottom_user_cs.code_loc.func_range.func_inst"/>
+     <grouping path="attr.callsite.bottom_user_cs.code_loc.mod_seg.mod_file"/>
+     <grouping path="attr.callsite.bottom_user_cs.type"/>
+     <grouping path="attr.callsite.type_cs.code_loc.func_range.func_inst.function.subtype"/>
+     <grouping path="attr.callsite.type_cs.code_loc.func_range.func_inst.function.type"/>
+     <grouping path="attr.cpu.core"/>
+     <grouping path="attr.event_type"/>
+    </groupings>
+    <standardMetrics>
+     <metric>count</metric>
+     <metric>instanceCount</metric>
+    </standardMetrics>
+    <customMetrics/>
+   </entry>
+  </entries>
+ </grouper>
+ <grouper name="bandwidth_global_grouper" recommendedStorage="container">
+  <entries>
+   <entry instanceTable="bandwidth_utilization_data" correlationType="global">
+    <groupings>
+     <grouping path="attr"/>
+    </groupings>
+    <standardMetrics>
+     <metric>time</metric>
+     <metric>count</metric>
+     <metric>instanceCount</metric>
+    </standardMetrics>
+    <customMetrics>
+     <metric metricDBPath="bandwidth_utilization_data::dd_bandwidth_utilization.value" metricType="double" metricAggregation="max">bandwidth_value</metric>
+    </customMetrics>
+   </entry>
+  </entries>
+ </grouper>
+ <grouper name="dd_package" axis="dd_package" recommendedStorage="container">
+  <entries>
+   <entry instanceTable="uncore_data" correlationType="byPrimaryAxis">
     <groupings>
      <grouping path="attr"/>
     </groupings>
@@ -14,6 +56,10 @@
     </standardMetrics>
     <customMetrics/>
    </entry>
+  </entries>
+ </grouper>
+ <grouper name="dd_thread" axis="dd_thread" recommendedStorage="container">
+  <entries>
    <entry instanceTable="cpu_usage_data" correlationType="global">
     <groupings>
      <grouping path="attr.utilization"/>
@@ -23,6 +69,117 @@
     <groupings>
      <grouping path="attr"/>
     </groupings>
+   </entry>
+   <entry instanceTable="pmu_data" correlationType="byPrimaryAxis">
+    <groupings>
+     <grouping path="attr.callsite"/>
+     <grouping path="attr.cpu"/>
+     <grouping path="attr.event_type"/>
+     <grouping path="attr.mem_access"/>
+     <grouping path="attr.tsx_info"/>
+    </groupings>
+    <standardMetrics>
+     <metric>time</metric>
+     <metric>count</metric>
+     <metric>instanceCount</metric>
+    </standardMetrics>
+    <customMetrics/>
+   </entry>
+  </entries>
+ </grouper>
+ <grouper name="dd_thread_detailed_summary" axis="dd_thread" recommendedSource="dd_thread" recommendedStorage="database">
+  <entries>
+   <entry instanceTable="cpu_usage_data" correlationType="global">
+    <groupings>
+     <grouping path="attr.utilization"/>
+    </groupings>
+   </entry>
+   <entry instanceTable="pmu_data" correlationType="byPrimaryAxis">
+    <groupings>
+     <grouping path="attr.callsite.bottom_user_cs.code_loc.func_range.func_inst"/>
+     <grouping path="attr.callsite.bottom_user_cs.code_loc.mod_seg.mod_file"/>
+     <grouping path="attr.callsite.bottom_user_cs.code_loc.src_loc.src_file"/>
+     <grouping path="attr.callsite.bottom_user_cs.type"/>
+     <grouping path="attr.callsite.type_cs.code_loc.func_range.func_inst.function.subtype"/>
+     <grouping path="attr.callsite.type_cs.code_loc.func_range.func_inst.function.type"/>
+     <grouping path="attr.cpu.core"/>
+     <grouping path="attr.event_type"/>
+    </groupings>
+    <standardMetrics>
+     <metric>count</metric>
+     <metric>instanceCount</metric>
+    </standardMetrics>
+    <customMetrics/>
+   </entry>
+  </entries>
+ </grouper>
+ <grouper name="dd_thread_detailed_summary_function_instance" axis="dd_thread" recommendedSource="dd_thread_detailed_summary" boolean:doNotGroupByAxis="true" recommendedStorage="database">
+  <entries>
+   <entry instanceTable="cpu_usage_data" correlationType="global">
+    <groupings>
+     <grouping path="attr.utilization"/>
+    </groupings>
+   </entry>
+   <entry instanceTable="pmu_data" correlationType="byPrimaryAxis">
+    <groupings>
+     <grouping path="attr.callsite.bottom_user_cs.code_loc.func_range.func_inst"/>
+     <grouping path="attr.callsite.bottom_user_cs.code_loc.src_loc.src_file"/>
+     <grouping path="attr.callsite.bottom_user_cs.type"/>
+     <grouping path="attr.callsite.type_cs.code_loc.func_range.func_inst.function.subtype"/>
+     <grouping path="attr.callsite.type_cs.code_loc.func_range.func_inst.function.type"/>
+     <grouping path="attr.event_type"/>
+    </groupings>
+    <standardMetrics>
+     <metric>count</metric>
+     <metric>instanceCount</metric>
+    </standardMetrics>
+    <customMetrics/>
+   </entry>
+  </entries>
+ </grouper>
+ <grouper name="dd_thread_detailed_summary_thread_core" axis="dd_thread" recommendedSource="dd_thread_detailed_summary" recommendedStorage="database">
+  <entries>
+   <entry instanceTable="cpu_usage_data" correlationType="global">
+    <groupings>
+     <grouping path="attr.utilization"/>
+    </groupings>
+   </entry>
+   <entry instanceTable="pmu_data" correlationType="byPrimaryAxis">
+    <groupings>
+     <grouping path="attr.callsite.bottom_user_cs.type"/>
+     <grouping path="attr.callsite.type_cs.code_loc.func_range.func_inst.function.subtype"/>
+     <grouping path="attr.callsite.type_cs.code_loc.func_range.func_inst.function.type"/>
+     <grouping path="attr.cpu.core"/>
+     <grouping path="attr.event_type"/>
+    </groupings>
+    <standardMetrics>
+     <metric>count</metric>
+     <metric>instanceCount</metric>
+    </standardMetrics>
+    <customMetrics/>
+   </entry>
+  </entries>
+ </grouper>
+ <grouper name="dd_thread_detailed_summary_thread_module" axis="dd_thread" recommendedSource="dd_thread_detailed_summary" recommendedStorage="database">
+  <entries>
+   <entry instanceTable="cpu_usage_data" correlationType="global">
+    <groupings>
+     <grouping path="attr.utilization"/>
+    </groupings>
+   </entry>
+   <entry instanceTable="pmu_data" correlationType="byPrimaryAxis">
+    <groupings>
+     <grouping path="attr.callsite.bottom_user_cs.code_loc.mod_seg.mod_file"/>
+     <grouping path="attr.callsite.bottom_user_cs.type"/>
+     <grouping path="attr.callsite.type_cs.code_loc.func_range.func_inst.function.subtype"/>
+     <grouping path="attr.callsite.type_cs.code_loc.func_range.func_inst.function.type"/>
+     <grouping path="attr.event_type"/>
+    </groupings>
+    <standardMetrics>
+     <metric>count</metric>
+     <metric>instanceCount</metric>
+    </standardMetrics>
+    <customMetrics/>
    </entry>
   </entries>
  </grouper>
@@ -43,14 +200,6 @@
  </grouper>
  <grouper name="global_time_interval_metrics" recommendedStorage="container">
   <entries>
-   <entry instanceTable="cpu_data" correlationType="global">
-    <standardMetrics>
-     <metric>time</metric>
-     <metric>count</metric>
-     <metric>instanceCount</metric>
-    </standardMetrics>
-    <customMetrics/>
-   </entry>
    <entry instanceTable="global_elapsed_time_data" correlationType="global">
     <standardMetrics>
      <metric>time</metric>
@@ -59,19 +208,8 @@
    </entry>
   </entries>
  </grouper>
- <grouper name="sched_and_counter_metrics" axis="dd_thread" recommendedStorage="container">
+ <grouper name="sched_and_counter_metrics" recommendedStorage="container">
   <entries>
-   <entry instanceTable="counter_data" correlationType="byPrimaryAxis">
-    <groupings>
-     <grouping path="attr"/>
-    </groupings>
-    <standardMetrics>
-     <metric>time</metric>
-     <metric>count</metric>
-     <metric>instanceCount</metric>
-    </standardMetrics>
-    <customMetrics/>
-   </entry>
    <entry instanceTable="cpu_usage_data" correlationType="global">
     <groupings>
      <grouping path="attr.utilization"/>
