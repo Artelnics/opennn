@@ -727,7 +727,7 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 
 
 /// Sets the number of rows of the layer's input.
-/// @param new_input_rows_number The desired rows number.
+/// @param new_input_variables_dimensions The desired rows number.
 
 void PoolingLayer::set_input_variables_dimensions(const Tensor<Index, 1>& new_input_variables_dimensions)
 {

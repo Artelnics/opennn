@@ -410,7 +410,8 @@ void ScalingLayer::set_default()
 
 
 /// Sets max and min scaling range for minmaxscaling.
-/// @param min and max for scaling range.
+/// @param min Minimum for scaling range.
+/// @param max Maximum for scaling range.
 
 void ScalingLayer::set_min_max_range(const type& min, const type& max)
 {

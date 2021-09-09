@@ -32,7 +32,7 @@ int main()
         cout << "OpenNN. Iris Plant Example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
-
+/*
         DataSet data_set("D:/opennn/examples/iris_plant/data/iris_plant_original.csv", ';', true);
 
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {4, 3, 3});
@@ -65,7 +65,7 @@ int main()
         neural_network.save_expression_python("D:/opennn/examples/iris_plant/data/neural_network.py");
 
         system("pause");
-
+*/
         return 0;
     }
     catch(exception& e)

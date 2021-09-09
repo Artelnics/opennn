@@ -484,7 +484,7 @@ void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_numbe
 
 
 /// Sets the forget biases of all lstm in the layer from a single vector.
-/// @param new_forget_biases New set of forget biases in the layer.
+/// @param new_biases New set of forget biases in the layer.
 
 void LongShortTermMemoryLayer::set_forget_biases(const Tensor<type, 1>& new_biases)
 {
@@ -619,6 +619,7 @@ void LongShortTermMemoryLayer::set_output_recurrent_weights(const Tensor<type, 2
 
 /// Sets the parameters of this layer.
 /// @param new_parameters Parameters vector for that layer.
+/// @index index Index for that layer.
 
 void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
