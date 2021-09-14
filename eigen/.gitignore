@@ -35,3 +35,4 @@ lapack/reference
 .*project
 .settings
 Makefile
+!ci/build.gitlab-ci.yml

@@ -93,8 +93,8 @@ protected:
    bool display = true;
 
    const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+   ThreadPool* thread_pool = new ThreadPool(n);
+   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 
 };
 

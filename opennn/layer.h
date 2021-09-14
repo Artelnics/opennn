@@ -67,8 +67,8 @@ public:
     {
         const int n = omp_get_max_threads();
 
-        non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+        thread_pool = new ThreadPool(n);
+        thread_pool_device = new ThreadPoolDevice(thread_pool, n);
     }
 
     // Destructor
@@ -171,7 +171,8 @@ public:
 
 protected:
 
-    NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
+    ThreadPool* thread_pool = nullptr;
+
     ThreadPoolDevice* thread_pool_device = nullptr;
 
     /// Layer name.

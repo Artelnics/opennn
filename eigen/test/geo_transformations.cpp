@@ -582,11 +582,6 @@ template<typename Scalar> void transform_alignment()
   VERIFY_IS_APPROX(p1->matrix(), p3->matrix());
   
   VERIFY_IS_APPROX( (*p1) * (*p1), (*p2)*(*p3));
-  
-  #if defined(EIGEN_VECTORIZE) && EIGEN_MAX_STATIC_ALIGN_BYTES>0
-  if(internal::packet_traits<Scalar>::Vectorizable)
-    VERIFY_RAISES_ASSERT((::new(reinterpret_cast<void*>(array3u)) Projective3a));
-  #endif
 }
 
 template<typename Scalar, int Dim, int Options> void transform_products()
@@ -666,13 +661,45 @@ template<typename Scalar, int Mode, int Options> void transformations_no_scale()
   VERIFY((m3 * m3.inverse()).isIdentity(test_precision<Scalar>()));
   // Verify implicit last row is initialized.
   VERIFY_IS_APPROX(Vector4(m3.row(3)), Vector4(0.0, 0.0, 0.0, 1.0));
+
+  VERIFY_IS_APPROX(t3.rotation(), t3.linear());
+  if(Mode==Isometry)
+    VERIFY(t3.rotation().data()==t3.linear().data());
 }
 
-void test_geo_transformations()
+template<typename Scalar, int Mode, int Options> void transformations_computed_scaling_continuity()
+{
+  typedef Matrix<Scalar, 3, 1> Vector3;
+  typedef Transform<Scalar, 3, Mode, Options> Transform3;
+  typedef Matrix<Scalar, 3, 3> Matrix3;
+
+  // Given: two transforms that differ by '2*eps'.
+  Scalar eps(1e-3);
+  Vector3 v0 = Vector3::Random().normalized(),
+    v1 = Vector3::Random().normalized(),
+    v3 = Vector3::Random().normalized();
+  Transform3 t0, t1;
+  // The interesting case is when their determinants have different signs.
+  Matrix3 rank2 = 50 * v0 * v0.adjoint() + 20 * v1 * v1.adjoint();
+  t0.linear() = rank2 + eps * v3 * v3.adjoint();
+  t1.linear() = rank2 - eps * v3 * v3.adjoint();
+
+  // When: computing the rotation-scaling parts
+  Matrix3 r0, s0, r1, s1;
+  t0.computeRotationScaling(&r0, &s0);
+  t1.computeRotationScaling(&r1, &s1);
+
+  // Then: the scaling parts should differ by no more than '2*eps'.
+  const Scalar c(2.1); // 2 + room for rounding errors
+  VERIFY((s0 - s1).norm() < c * eps);
+}
+
+EIGEN_DECLARE_TEST(geo_transformations)
 {
   for(int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST_1(( transformations<double,Affine,AutoAlign>() ));
     CALL_SUBTEST_1(( non_projective_only<double,Affine,AutoAlign>() ));
+    CALL_SUBTEST_1(( transformations_computed_scaling_continuity<double,Affine,AutoAlign>() ));   
     
     CALL_SUBTEST_2(( transformations<float,AffineCompact,AutoAlign>() ));
     CALL_SUBTEST_2(( non_projective_only<float,AffineCompact,AutoAlign>() ));

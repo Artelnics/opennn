@@ -9,7 +9,6 @@
 QT = # Do not use Qt
 
 CONFIG += console
-CONFIG += c++11
 
 mac{
     CONFIG-=app_bundle
@@ -103,20 +102,6 @@ HEADERS += \
     convolutional_layer_test.h \
     pooling_layer_test.h
 
-win32-g++{
-QMAKE_LFLAGS += -static-libgcc
-QMAKE_LFLAGS += -static-libstdc++
-QMAKE_LFLAGS += -static
-
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
-QMAKE_LFLAGS += -fopenmp -pthread -lgomp
-LIBS += -fopenmp -pthread -lgomp
-}
-
-win32:!win32-g++{
-#QMAKE_CXXFLAGS+= -arch:AVX
-#QMAKE_CFLAGS+= -arch:AVX
-}
 
 # OpenNN library
 
@@ -136,9 +121,9 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
 # OpenMP library
 
 win32:!win32-g++{
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
-QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
-LIBS += -fopenmp -pthread #-lgomp
+#QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
+#QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
+#LIBS += -fopenmp -pthread #-lgomp
 }else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
 QMAKE_LFLAGS += -fopenmp -lgomp
 LIBS += -fopenmp -pthread -lgomp

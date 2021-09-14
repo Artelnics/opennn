@@ -141,6 +141,69 @@ template<typename VectorType> void ref_vector(const VectorType& m)
   VERIFY_IS_APPROX(mat1, mat2);
 }
 
+template<typename Scalar, int Rows, int Cols>
+void ref_vector_fixed_sizes()
+{
+  typedef Matrix<Scalar,Rows,Cols,RowMajor> RowMajorMatrixType;
+  typedef Matrix<Scalar,Rows,Cols,ColMajor> ColMajorMatrixType;
+  typedef Matrix<Scalar,1,Cols> RowVectorType;
+  typedef Matrix<Scalar,Rows,1> ColVectorType;
+  typedef Matrix<Scalar,Cols,1> RowVectorTransposeType;
+  typedef Matrix<Scalar,1,Rows> ColVectorTransposeType;
+  typedef Stride<Dynamic, Dynamic> DynamicStride;
+
+  RowMajorMatrixType mr = RowMajorMatrixType::Random();
+  ColMajorMatrixType mc = ColMajorMatrixType::Random();
+
+  Index i = internal::random<Index>(0,Rows-1);
+  Index j = internal::random<Index>(0,Cols-1);
+
+  // Reference ith row.
+  Ref<RowVectorType, 0, DynamicStride> mr_ri = mr.row(i);
+  VERIFY_IS_EQUAL(mr_ri, mr.row(i));
+  Ref<RowVectorType, 0, DynamicStride> mc_ri = mc.row(i);
+  VERIFY_IS_EQUAL(mc_ri, mc.row(i));
+
+  // Reference jth col.
+  Ref<ColVectorType, 0, DynamicStride> mr_cj = mr.col(j);
+  VERIFY_IS_EQUAL(mr_cj, mr.col(j));
+  Ref<ColVectorType, 0, DynamicStride> mc_cj = mc.col(j);
+  VERIFY_IS_EQUAL(mc_cj, mc.col(j));
+
+  // Reference the transpose of row i.
+  Ref<RowVectorTransposeType, 0, DynamicStride> mr_rit = mr.row(i);
+  VERIFY_IS_EQUAL(mr_rit, mr.row(i).transpose());
+  Ref<RowVectorTransposeType, 0, DynamicStride> mc_rit = mc.row(i);
+  VERIFY_IS_EQUAL(mc_rit, mc.row(i).transpose());
+
+  // Reference the transpose of col j.
+  Ref<ColVectorTransposeType, 0, DynamicStride> mr_cjt = mr.col(j);
+  VERIFY_IS_EQUAL(mr_cjt, mr.col(j).transpose());
+  Ref<ColVectorTransposeType, 0, DynamicStride> mc_cjt = mc.col(j);
+  VERIFY_IS_EQUAL(mc_cjt, mc.col(j).transpose());
+  
+  // Const references without strides.
+  Ref<const RowVectorType> cmr_ri = mr.row(i);
+  VERIFY_IS_EQUAL(cmr_ri, mr.row(i));
+  Ref<const RowVectorType> cmc_ri = mc.row(i);
+  VERIFY_IS_EQUAL(cmc_ri, mc.row(i));
+
+  Ref<const ColVectorType> cmr_cj = mr.col(j);
+  VERIFY_IS_EQUAL(cmr_cj, mr.col(j));
+  Ref<const ColVectorType> cmc_cj = mc.col(j);
+  VERIFY_IS_EQUAL(cmc_cj, mc.col(j));
+
+  Ref<const RowVectorTransposeType> cmr_rit = mr.row(i);
+  VERIFY_IS_EQUAL(cmr_rit, mr.row(i).transpose());
+  Ref<const RowVectorTransposeType> cmc_rit = mc.row(i);
+  VERIFY_IS_EQUAL(cmc_rit, mc.row(i).transpose());
+
+  Ref<const ColVectorTransposeType> cmr_cjt = mr.col(j);
+  VERIFY_IS_EQUAL(cmr_cjt, mr.col(j).transpose());
+  Ref<const ColVectorTransposeType> cmc_cjt = mc.col(j);
+  VERIFY_IS_EQUAL(cmc_cjt, mc.col(j).transpose());
+}
+
 template<typename PlainObjectType> void check_const_correctness(const PlainObjectType&)
 {
   // verify that ref-to-const don't have LvalueBit
@@ -259,8 +322,8 @@ void test_ref_overloads()
 
 void test_ref_fixed_size_assert()
 {
-  Vector4f v4;
-  VectorXf vx(10);
+  Vector4f v4 = Vector4f::Random();
+  VectorXf vx = VectorXf::Random(10);
   VERIFY_RAISES_STATIC_ASSERT( Ref<Vector3f> y = v4; (void)y; );
   VERIFY_RAISES_STATIC_ASSERT( Ref<Vector3f> y = vx.head<4>(); (void)y; );
   VERIFY_RAISES_STATIC_ASSERT( Ref<const Vector3f> y = v4; (void)y; );
@@ -268,7 +331,7 @@ void test_ref_fixed_size_assert()
   VERIFY_RAISES_STATIC_ASSERT( Ref<const Vector3f> y = 2*v4; (void)y; );
 }
 
-void test_ref()
+EIGEN_DECLARE_TEST(ref)
 {
   for(int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST_1( ref_vector(Matrix<float, 1, 1>()) );
@@ -287,6 +350,9 @@ void test_ref()
     CALL_SUBTEST_4( ref_matrix(Matrix<std::complex<double>,10,15>()) );
     CALL_SUBTEST_5( ref_matrix(MatrixXi(internal::random<int>(1,10),internal::random<int>(1,10))) );
     CALL_SUBTEST_6( call_ref() );
+
+    CALL_SUBTEST_8( (ref_vector_fixed_sizes<float,3,5>()) );
+    CALL_SUBTEST_8( (ref_vector_fixed_sizes<float,15,10>()) );
   }
   
   CALL_SUBTEST_7( test_ref_overloads() );

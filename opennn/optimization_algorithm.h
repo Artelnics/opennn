@@ -120,7 +120,7 @@ public:
 
 protected:
 
-   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
+   ThreadPool* thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device;
 
    /// Pointer to a loss index for a neural network object.

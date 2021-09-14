@@ -83,7 +83,7 @@ DataSet::DataSet(const string& data_file_name, const char& separator, const bool
 
 DataSet::~DataSet()
 {
-    delete non_blocking_thread_pool;
+    delete thread_pool;
     delete thread_pool_device;
 }
 
@@ -4534,7 +4534,7 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
 void DataSet::set()
 {
-//    NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
+//    ThreadPool* thread_pool = nullptr;
 //    ThreadPoolDevice* thread_pool_device = nullptr;
 
     data.resize(0,0);
@@ -4744,12 +4744,12 @@ void DataSet::set_display(const bool& new_display)
 
 void DataSet::set_default()
 {
-    delete non_blocking_thread_pool;
+    delete thread_pool;
     delete thread_pool_device;
 
     const int n = omp_get_max_threads();
-    non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+    thread_pool = new ThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 
     has_columns_names = false;
 
@@ -4995,11 +4995,11 @@ void DataSet::set_time_column(const string& new_time_column)
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
-    if(non_blocking_thread_pool != nullptr) delete non_blocking_thread_pool;
+    if(thread_pool != nullptr) delete thread_pool;
     if(thread_pool_device != nullptr) delete thread_pool_device;
 
-    non_blocking_thread_pool = new NonBlockingThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, new_threads_number);
+    thread_pool = new ThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
 }
 
 
