@@ -22,11 +22,18 @@ CONFIG(debug, debug|release) {
 # OpenMP library
 
 win32:!win32-g++{
+<<<<<<< HEAD
 #QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
 #QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 #LIBS += -fopenmp -pthread #-lgomp
 }else:!macx{
 QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
+=======
+QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
+QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
+LIBS += -fopenmp -pthread #-lgomp
+}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
+>>>>>>> 1f190c10a38a0291b14448bb8bb532184bee027c
 QMAKE_LFLAGS += -fopenmp -lgomp
 LIBS += -fopenmp -pthread -lgomp
 }else: macx{

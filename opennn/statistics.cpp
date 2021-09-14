@@ -275,7 +275,7 @@ Histogram::Histogram(const Tensor<type, 1>& data,
 
 
 /// Probabilities constructor
-/// @param data Numerical probabilities data.
+/// @param probability_data Numerical probabilities data.
 
 Histogram::Histogram(const Tensor<type, 1>& probability_data)
 {

@@ -3482,7 +3482,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 /// Returns a vector of subvectors.
 /// The size of the vector is the number of targets.
 /// The size of the subvectors is the number of lags for which cross-correlation is calculated.
-/// @param maximum_lags_number Number of lags for which cross-correlation is calculated.
+/// @param lags_number Number of lags for which cross-correlation is calculated.
 
 Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correlation(const Index& lags_number) const
 {

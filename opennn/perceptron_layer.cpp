@@ -29,6 +29,7 @@ PerceptronLayer::PerceptronLayer() : Layer()
 /// This constructor also initializes the rest of class members to their default values.
 /// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of perceptrons in the layer.
+/// @param new_activation_function Activation function for the perceptron layer.
 
 PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& new_neurons_number,
                                  const PerceptronLayer::ActivationFunction& new_activation_function) : Layer()
@@ -245,6 +246,7 @@ void PerceptronLayer::set()
 /// It also sets the rest of members to their default values.
 /// @param new_inputs_number Number of inputs.
 /// @param new_neurons_number Number of perceptron neurons.
+/// @param new_activation_function Activation function for the perceptron layer.
 
 void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neurons_number,
                           const PerceptronLayer::ActivationFunction& new_activation_function)
@@ -361,7 +363,7 @@ void PerceptronLayer::set_activation_function(const PerceptronLayer::ActivationF
 
 /// Sets a new activation(or transfer) function in a single layer.
 /// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
-/// @param new_activation_function Activation function for that layer.
+/// @param new_activation_function_name Activation function for that layer.
 
 void PerceptronLayer::set_activation_function(const string& new_activation_function_name)
 {

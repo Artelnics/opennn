@@ -637,6 +637,7 @@ void NeuralNetwork::set()
 
 /// Sets a new neural network with a given neural network architecture.
 /// It also sets the rest of members to their default values.
+/// @param model_type Type of model.
 /// @param architecture Architecture of the neural network.
 
 void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)

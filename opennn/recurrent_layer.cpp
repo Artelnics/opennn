@@ -406,6 +406,7 @@ void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_
 
 /// Sets the parameters of this layer.
 /// @param new_parameters Parameters vector for that layer.
+/// @param index Index for this layer.
 
 void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
@@ -442,7 +443,7 @@ void RecurrentLayer::set_activation_function(const RecurrentLayer::ActivationFun
 
 /// Sets a new activation(or transfer) function in a single layer.
 /// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
-/// @param new_activation_function Activation function for that layer.
+/// @param new_activation_function_name Activation function for that layer.
 
 void RecurrentLayer::set_activation_function(const string& new_activation_function_name)
 {
