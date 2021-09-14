@@ -30,10 +30,26 @@ int main()
         cout << "OpenNN. Rosenbrock Example." << endl;
         
         srand(static_cast<unsigned>(time(nullptr)));
+<<<<<<< HEAD
      
         ThreadPool thread_pool(4);
         ThreadPoolDevice thread_pool_device(&thread_pool, 4);
 
+=======
+
+        double sum = 0;
+
+        #pragma omp parallel for reduction(+: sum)
+
+        for(int i = 0; i < 100000000000;  i++)
+        {
+            double a = tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum)*tanh(sum);
+
+            sum+= a;
+        }
+
+        cout << sum << endl;
+>>>>>>> 1f190c10a38a0291b14448bb8bb532184bee027c
 
         // Data Set
 
@@ -61,13 +77,11 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(1);
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(10);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(2);
 
         training_strategy.perform_training();
         
         cout << "End Rosenbrock" << endl;
-
-        system("pause");
 
         return 0;
     }

@@ -379,7 +379,8 @@ void UnscalingLayer::set_default()
 }
 
 /// Sets max and min scaling range for minmaxscaling.
-/// @param min and max for scaling range.
+/// @param min Minimum for scaling range.
+/// @param max Maximum for scaling range.
 
 void UnscalingLayer::set_min_max_range(const type min, const type max)
 {
@@ -480,7 +481,7 @@ void UnscalingLayer::set_scalers(const Tensor<Scaler,1>& new_unscaling_method)
 
 /// Sets the method to be used for unscaling the outputs from the neural network
 /// The argument is a string containing the name of the method("NoScaling", "MeanStandardDeviation", "MinimumMaximum" or "Logarithm").
-/// @param new_unscaling_method New unscaling method for the output variables.
+/// @param new_scaling_methods_string New unscaling method for the output variables.
 
 void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
 {

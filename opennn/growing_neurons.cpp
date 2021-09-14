@@ -73,7 +73,7 @@ void GrowingNeurons::set_default()
 
 /// Sets the number of the hidden perceptrons pointed in each iteration of the growing algorithm
 /// in the model neurons selection process.
-/// @param new_step number of hidden perceptrons pointed.
+/// @param new_neurons_increment Number of hidden perceptrons pointed.
 
 void GrowingNeurons::set_neurons_increment(const Index& new_neurons_increment)
 {

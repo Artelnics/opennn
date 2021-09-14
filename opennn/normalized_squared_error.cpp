@@ -205,7 +205,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
 
 /// Sets the normalization coefficient from selection samples.
-/// @param new_normalization_coefficient New normalization coefficient to be set.
+/// @param new_selection_normalization_coefficient New normalization coefficient to be set.
 
 void NormalizedSquaredError::set_selection_normalization_coefficient(const type& new_selection_normalization_coefficient)
 {
@@ -276,7 +276,6 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
 /// \brief NormalizedSquaredError::calculate_error
 /// \param batch
-/// \param forward_propagation
 /// \param back_propagation
 
 void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,

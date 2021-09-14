@@ -71,7 +71,8 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 /// It also sets a separator.
 /// Please mind about the file format. This is specified in the User's Guide.
 /// @param data_file_name Data file file name.
-/// @param separator Data file file name.
+/// @param separator Character set as separator.
+/// @param has_columns_names Whether the data set has column names.
 
 DataSet::DataSet(const string& data_file_name, const char& separator, const bool& has_columns_names)
 {
@@ -1211,7 +1212,10 @@ const Tensor<DataSet::SampleUse,1 >& DataSet::get_samples_uses() const
 
 
 /// Returns a vector, where each element is a vector that contains the indices of the different batches of the training samples.
+/// @param samples_indices Vector with indeces for samples.
+/// @param batch_samples_number Number of batch samples.
 /// @param shuffle Is a boleean.
+/// @param new_buffer_size Size for new buffer.
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 
 Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
@@ -9502,6 +9506,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 /// by constant data.
 /// @param samples_number Number of samples in the data_set.
 /// @param variables_number Number of variables in the data_set.
+/// @param value Constant data to generate the data_set.
 
 void DataSet::generate_constant_data(const Index& samples_number, const Index& variables_number, const type& value)
 {

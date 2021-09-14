@@ -298,11 +298,7 @@ void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QuasiNewtonMeht
 
 
 /// Calculates an approximation of the inverse hessian, accoring to the method used.
-/// @param old_parameters Another point of the error function.
-/// @param parameters Current point of the error function
-/// @param old_gradient Gradient at the other point.
-/// @param gradient Gradient at the current point.
-/// @param old_inverse_hessian Inverse hessian at the other point of the error function.
+/// @param optimization_data QuasiNewtonMethodData.
 
 void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehtodData& optimization_data) const
 {
@@ -381,11 +377,7 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left
 
 /// Returns an approximation of the inverse hessian matrix according to the Davidon-Fletcher-Powel
 /// (DFP) algorithm.
-/// @param old_parameters A previous set of parameters.
-/// @param old_gradient The gradient of the error function for that previous set of parameters.
-/// @param old_inverse_hessian The hessian of the error function for that previous set of parameters.
-/// @param parameters Actual set of parameters.
-/// @param gradient The gradient of the error function for the actual set of parameters.
+/// @param optimization_data QuasiNewtonMethodData.
 
 void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
 {
@@ -420,11 +412,7 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
 
 /// Returns an approximation of the inverse hessian matrix according to the
 /// Broyden-Fletcher-Goldfarb-Shanno(BGFS) algorithm.
-/// @param old_parameters A previous set of parameters.
-/// @param old_gradient The gradient of the error function for that previous set of parameters.
-/// @param old_inverse_hessian The hessian of the error function for that previous set of parameters.
-/// @param parameters Actual set of parameters.
-/// @param gradient The gradient of the error function for the actual set of parameters.
+/// @param optimization_data QuasiNewtonMethodData.
 /// @todo Add thread pool.
 
 void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const

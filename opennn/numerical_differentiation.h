@@ -609,7 +609,7 @@ public:
 */
 
    /// Returns the second derivative of a vector function acording to the numerical differentiation method to be used. 
-   /// @param t : Object constructor containing the member method to differentiate.  
+   /// @param t : Object constructor containing the member method to differentiate.
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
@@ -754,7 +754,7 @@ public:
 
    /// Returns the second derivatives of a vector function acording to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&) const. 
-   /// @param t : Object constructor containing the member method to differentiate.  
+   /// @param t : Object constructor containing the member method to differentiate.
    /// @param f: Pointer to the member method.
    /// @param dummy: Dummy integer for the method prototype. 
    /// @param x: Input vector. 

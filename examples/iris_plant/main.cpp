@@ -32,7 +32,7 @@ int main()
         cout << "OpenNN. Iris Plant Example." << endl;
 /*
         srand(static_cast<unsigned>(time(nullptr)));
-
+/*
         DataSet data_set("D:/opennn/examples/iris_plant/data/iris_plant_original.csv", ';', true);
 
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {4, 3, 3});

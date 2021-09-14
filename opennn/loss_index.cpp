@@ -660,11 +660,12 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
 }
 
 
-/// It calculate the regularization term using the gradient method.
+/// It calculates the regularization term using the gradient method.
 /// Returns the gradient of the regularization, according to the regularization type.
 /// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
-/// The size is thus the number of parameters
+/// The size is thus the number of parameters.
 /// @param parameters vector with the parameters to get the regularization term.
+/// @param regularization_gradient Gradient of the regularization.
 
 void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& parameters, Tensor<type, 1>& regularization_gradient) const
 {
@@ -684,6 +685,7 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
 /// That Hessian is the matrix of second partial derivatives of the regularization with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
 /// @param parameters vector with the parameters to get the regularization term.
+/// @param regularization_hessian Hessian of the regularization.
 
 void LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& parameters, Tensor<type, 2>& regularization_hessian) const
 {

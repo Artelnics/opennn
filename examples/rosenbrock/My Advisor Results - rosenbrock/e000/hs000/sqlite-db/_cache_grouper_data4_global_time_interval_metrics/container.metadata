@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<bag xmlns:unsignedLong="http://www.w3.org/2001/XMLSchema#unsignedLong">
+ <entry path="grouper" unsignedLong:size="1">
+  <indexFields>
+   <field path="cpu_data_scale"/>
+  </indexFields>
+  <int64Fields>
+   <field path="cpu_data_duration"/>
+   <field path="cpu_data_count"/>
+   <field path="cpu_data_inst_count"/>
+  </int64Fields>
+  <doubleFields/>
+ </entry>
+</bag>

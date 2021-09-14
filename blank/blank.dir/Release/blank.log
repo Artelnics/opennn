@@ -1,3 +1,0 @@
-﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\Microsoft.Common.CurrentVersion.targets(1947,5): warning : The referenced project 'C:\opennn\blank\opennn\opennn.vcxproj' does not exist.
-  main.cpp
-c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\blank\blank\main.cpp': No such file or directory

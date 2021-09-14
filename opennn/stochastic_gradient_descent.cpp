@@ -129,7 +129,7 @@ Index StochasticGradientDescent::get_batch_samples_number() const
 
 /// Set the initial value for the learning rate. If dacay is not active learning rate will be constant
 /// otherwise learning rate will decay over each update.
-/// @param new_initial_learning_rate initial learning rate value.
+/// @param new_learning_rate initial learning rate value.
 
 void StochasticGradientDescent::set_initial_learning_rate(const type& new_learning_rate)
 {
@@ -155,7 +155,7 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
 
 
 /// Set the initial value for the decay.
-/// @param new_initial_learning_rate initial value for the decay.
+/// @param new_dacay initial value for the decay.
 
 void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
 {
@@ -208,7 +208,7 @@ void StochasticGradientDescent::set_momentum(const type& new_momentum)
 
 
 /// Set nesterov, boolean. Whether to apply Nesterov momentum.
-/// @param new_momentum initial value for the mometum.
+/// @param new_nesterov_momentum initial value for the mometum.
 
 void StochasticGradientDescent::set_nesterov(const bool& new_nesterov_momentum)
 {
@@ -217,7 +217,7 @@ void StochasticGradientDescent::set_nesterov(const bool& new_nesterov_momentum)
 
 
 /// Set the a new maximum for the epochs number.
-/// @param new_maximum_epochs number New maximum epochs number.
+/// @param new_maximum_epochs_number New maximum epochs number.
 
 void StochasticGradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {

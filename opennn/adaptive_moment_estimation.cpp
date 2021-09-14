@@ -128,7 +128,7 @@ void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
 
 
 /// Sets epsilon.
-/// @param epsilon Type to set.
+/// @param new_epsilon Type to set.
 
 void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 {
