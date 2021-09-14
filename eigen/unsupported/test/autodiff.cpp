@@ -44,7 +44,7 @@ struct TestFunc1
   int m_inputs, m_values;
 
   TestFunc1() : m_inputs(InputsAtCompileTime), m_values(ValuesAtCompileTime) {}
-  TestFunc1(int inputs, int values) : m_inputs(inputs), m_values(values) {}
+  TestFunc1(int inputs_, int values_) : m_inputs(inputs_), m_values(values_) {}
 
   int inputs() const { return m_inputs; }
   int values() const { return m_values; }
@@ -369,7 +369,7 @@ double bug_1281() {
 
 #endif
 
-void test_autodiff()
+EIGEN_DECLARE_TEST(autodiff)
 {
   for(int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST_1( test_autodiff_scalar<1>() );

@@ -99,7 +99,7 @@ template<typename Scalar,int Size, int Cols> void trsolve(int size=Size,int cols
   }
 }
 
-void test_product_trsolve()
+EIGEN_DECLARE_TEST(product_trsolve)
 {
   for(int i = 0; i < g_repeat ; i++)
   {

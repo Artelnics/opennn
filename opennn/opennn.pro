@@ -14,13 +14,10 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
-#CONFIG += c++11
 
 CONFIG(debug, debug|release) {
     DEFINES += OPENNN_DEBUG
 }
-
-DEFINES += __Cpp11__
 
 # OpenMP library
 
@@ -28,21 +25,15 @@ win32:!win32-g++{
 #QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
 #QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 #LIBS += -fopenmp -pthread #-lgomp
-}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
+}else:!macx{
+QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
 QMAKE_LFLAGS += -fopenmp -lgomp
 LIBS += -fopenmp -pthread -lgomp
 }else: macx{
 INCLUDEPATH += /usr/local/opt/libomp/include
-LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
-
-win32:!win32-g++{
-#QMAKE_CXXFLAGS+= -arch:AVX
-#QMAKE_CFLAGS+= -arch:AVX
-}
-
-#macx{
+LIBS += /usr/local/opt/libomp/lib/libomp.dylib
 #INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
-#}
+}
 
 # Eigen library
 

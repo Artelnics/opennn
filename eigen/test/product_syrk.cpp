@@ -128,7 +128,7 @@ template<typename MatrixType> void syrk(const MatrixType& m)
   }
 }
 
-void test_product_syrk()
+EIGEN_DECLARE_TEST(product_syrk)
 {
   for(int i = 0; i < g_repeat ; i++)
   {
