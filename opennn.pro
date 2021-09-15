@@ -11,16 +11,10 @@
 TEMPLATE = subdirs
 
 SUBDIRS += opennn
-<<<<<<< HEAD
 SUBDIRS += tests
-#SUBDIRS += examples
-#SUBDIRS += blank
-=======
-
-#SUBDIRS += tests
 SUBDIRS += examples
 SUBDIRS += blank
->>>>>>> 1f190c10a38a0291b14448bb8bb532184bee027c
+
 
 CONFIG += ordered
 

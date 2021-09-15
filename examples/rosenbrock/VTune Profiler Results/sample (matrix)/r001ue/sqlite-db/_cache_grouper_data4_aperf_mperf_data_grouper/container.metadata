@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<bag xmlns:unsignedLong="http://www.w3.org/2001/XMLSchema#unsignedLong">
+ <entry path="grouper" unsignedLong:size="16">
+  <indexFields>
+   <field path="dd_hw_context"/>
+   <field path="aperf_mperf_data_attr"/>
+   <field path="aperf_mperf_data_scale"/>
+  </indexFields>
+  <int64Fields>
+   <field path="aperf_mperf_data_duration"/>
+   <field path="aperf_mperf_data_count"/>
+   <field path="aperf_mperf_data_inst_count"/>
+  </int64Fields>
+  <doubleFields/>
+ </entry>
+</bag>
