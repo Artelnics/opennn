@@ -15,7 +15,7 @@
 
 namespace OpenNN
 {
-
+/*
 /// Default constructor.
 /// It creates an empty ConvolutionalLayer object.
 
@@ -1381,7 +1381,7 @@ void ConvolutionalLayer::to_2d(const Tensor<type, 4>& input_4d, Tensor<type, 2>&
 
     output_2d = input_4d.reshape(dimensions);
 }
-
+*/
 }
 
 // OpenNN: Open Neural Networks Library.
