@@ -1,9 +1,9 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.opennn.net                                                                      #
+#   www.opennn.net                                                                                #
 #                                                                                                 #
-#   B A N K R U P T C Y   P R O J E C T                                                           #
+#   A I R F O I L   S E L F   N O I S E   P R O J E C T                                           #
 #                                                                                                 #
 #   Artificial Intelligence Techniques SL (Artelnics)                                             #
 #   artelnics@artelnics.com                                                                       #
@@ -18,7 +18,7 @@ mac{
     CONFIG-=app_bundle
 }
 
-TARGET = bankruptcy
+TARGET = airline_passengers
 
 DESTDIR = "$$PWD/bin"
 
@@ -29,9 +29,9 @@ QMAKE_LFLAGS += -static-libgcc
 QMAKE_LFLAGS += -static-libstdc++
 QMAKE_LFLAGS += -static
 
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
-QMAKE_LFLAGS += -fopenmp -pthread -lgomp
-LIBS += -fopenmp -pthread -lgomp
+#QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
+#QMAKE_LFLAGS += -fopenmp -pthread -lgomp
+#LIBS += -fopenmp -pthread -lgomp
 }
 
 # OpenNN library
@@ -61,4 +61,3 @@ LIBS += -fopenmp -pthread -lgomp
 }else: macx{
 INCLUDEPATH += /usr/local/opt/libomp/include
 LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
-

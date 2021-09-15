@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 
-project(bankruptcy)
+project(airfoil_self_noise)
 
 if(UNIX)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -12,6 +12,6 @@ if(WIN32)
 	set(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
 endif()
 
-add_executable(bankruptcy main.cpp)
+add_executable(airfoil_self_noise main.cpp)
 
-target_link_libraries(bankruptcy PUBLIC opennn)
+target_link_libraries(airfoil_self_noise PUBLIC opennn)

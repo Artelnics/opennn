@@ -16,7 +16,7 @@
       </Regularization>
    </LossIndex>
    <OptimizationAlgorithm>
-      <OptimizationMethod>ADAPTIVE_MOMENT_ESTIMATION</OptimizationMethod>
+      <OptimizationMethod>GRADIENT_DESCENT</OptimizationMethod>
       <GradientDescent>
          <LearningRateAlgorithm>
             <LearningRateMethod>BrentMethod</LearningRateMethod>
@@ -66,7 +66,7 @@
       <AdaptiveMomentEstimation>
          <BatchSize>1000</BatchSize>
          <ReturnMinimumSelectionErrorNN>0</ReturnMinimumSelectionErrorNN>
-         <LossGoal>0.001</LossGoal>
+         <LossGoal>0</LossGoal>
          <MaximumEpochsNumber>10000</MaximumEpochsNumber>
          <MaximumTime>3600</MaximumTime>
          <ReserveTrainingErrorHistory>1</ReserveTrainingErrorHistory>

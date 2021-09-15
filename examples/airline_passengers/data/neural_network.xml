@@ -1,0 +1,55 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>1</InputsNumber>
+      <Input Index="1"></Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Perceptron Unscaling Bounding</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>1</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>-1</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <LayerName>Perceptron_layer_1</LayerName>
+         <InputsNumber>1</InputsNumber>
+         <NeuronsNumber>12</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>0.00579174 -0.00923719 0.0036113 -0.00432969 0.00480544 -0.00427574 0.000137226 -0.0148643 -0.000624239 0.00494637 0.00402091 0.00865105 0.0703753 -0.150621 0.0173306 -0.0580116 -0.0272374 -0.0654304 0.0634266 -0.204804 0.0348438 -0.087008 0.0771491 0.11452</Parameters>
+      </PerceptronLayer>
+      <PerceptronLayer>
+         <LayerName>Perceptron_layer_2</LayerName>
+         <InputsNumber>12</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Linear</ActivationFunction>
+         <Parameters>0.0134395 0.0700213 -0.151784 0.0173042 -0.0575696 -0.0287691 -0.0658386 0.0632458 -0.2004 0.0344881 -0.0871112 0.0796907 0.113821</Parameters>
+      </PerceptronLayer>
+      <UnscalingLayer>
+         <UnscalingNeuronsNumber>1</UnscalingNeuronsNumber>
+         <Descriptives Index="1">
+            <Minimum>103.38</Minimum>
+            <Maximum>140.987</Maximum>
+            <Mean>124.836</Mean>
+            <StandardDeviation>6.89866</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </Descriptives>
+      </UnscalingLayer>
+      <BoundingLayer>
+         <BoundingNeuronsNumber>1</BoundingNeuronsNumber>
+         <Item Index="1">
+            <LowerBound>-3.40282e+38</LowerBound>
+            <UpperBound>3.40282e+38</UpperBound>
+         </Item>
+         <UseBoundingLayer>1</UseBoundingLayer>
+      </BoundingLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1">scaled_sound_pressure_level</Output>
+   </Outputs>
+</NeuralNetwork>
