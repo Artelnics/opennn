@@ -10,6 +10,7 @@ TEMPLATE = subdirs
 
 CONFIG += ordered
 
+SUBDIRS += airline_passengers
 SUBDIRS += rosenbrock
 SUBDIRS += simple_approximation
 SUBDIRS += simple_classification

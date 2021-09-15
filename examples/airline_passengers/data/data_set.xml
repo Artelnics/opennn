@@ -1,0 +1,64 @@
+<DataSet>
+   <DataFile>
+      <FileType>csv</FileType>
+      <DataFileName>../data/airfoil_self_noise.csv</DataFileName>
+      <Separator>Semicolon</Separator>
+      <ColumnsNames>1</ColumnsNames>
+      <RowsLabels>0</RowsLabels>
+      <MissingValuesLabel>NA</MissingValuesLabel>
+      <LagsNumber>0</LagsNumber>
+      <StepsAhead>0</StepsAhead>
+      <TimeIndex>140716014829586</TimeIndex>
+   </DataFile>
+   <Columns>
+      <ColumnsNumber>6</ColumnsNumber>
+      <Column Item="1">
+         <Name>frequency</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="2">
+         <Name>angle_of_attack</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="3">
+         <Name>chord_lenght</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="4">
+         <Name>free-stream_velocity</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="5">
+         <Name>suction_side_displacement_thickness</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="6">
+         <Name>scaled_sound_pressure_level</Name>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+   </Columns>
+   <TimeSeriesColumns>
+      <TimeSeriesColumnsNumber>0</TimeSeriesColumnsNumber>
+   </TimeSeriesColumns>
+   <Samples>
+      <SamplesNumber>1503</SamplesNumber>
+      <SamplesUses>0 2 2 1 0 0 2 0 0 1 0 0 2 0 0 0 0 1 0 0 2 0 1 0 0 0 0 1 1 0 0 0 1 0 0 0 1 2 1 0 2 0 0 2 0 0 0 0 1 0 0 0 0 2 0 1 0 0 0 0 2 0 2 2 0 0 2 0 0 0 1 1 0 0 2 0 0 1 1 0 0 2 0 0 2 0 0 2 0 0 0 0 0 0 0 2 0 0 0 0 0 1 2 0 0 0 0 1 2 0 0 0 2 0 0 0 0 2 0 2 0 0 0 0 1 0 0 2 1 0 2 0 0 0 2 2 0 2 0 1 0 2 0 0 0 0 2 0 0 0 0 2 1 1 0 0 1 0 0 0 0 0 1 0 0 0 0 1 2 2 0 0 0 0 0 1 2 0 2 0 0 0 0 0 0 1 1 2 1 2 0 1 0 1 1 1 2 0 0 0 0 0 0 0 2 1 0 2 0 2 0 0 2 1 0 1 1 0 0 0 0 2 0 0 0 0 2 1 0 1 0 0 1 2 0 0 2 1 1 0 2 0 1 0 1 1 0 1 1 0 0 1 1 0 1 0 0 0 1 1 0 0 0 0 0 0 0 0 2 1 1 1 0 2 2 0 0 0 2 1 0 2 0 0 0 0 0 0 1 2 0 2 2 1 0 0 0 2 0 1 2 1 1 0 0 2 0 2 2 0 0 0 1 1 2 0 0 1 0 2 2 0 1 1 0 0 0 2 0 2 0 1 0 1 1 1 2 0 0 0 0 0 2 0 0 2 0 1 1 0 1 1 0 0 0 0 1 0 1 2 0 0 0 0 0 0 0 0 1 1 0 0 0 0 1 1 0 1 0 1 0 0 0 0 0 2 0 0 0 1 2 0 0 0 0 0 1 2 0 0 0 1 2 1 0 0 1 2 2 1 1 0 1 0 0 0 0 0 1 0 1 1 1 0 0 1 0 0 2 0 1 0 1 1 0 2 0 0 2 1 0 0 0 0 0 0 0 0 1 0 1 1 0 0 2 0 0 0 0 0 1 1 0 2 0 0 2 0 1 2 0 1 2 0 0 0 0 0 0 0 0 0 0 1 1 0 2 0 0 0 0 2 1 2 2 0 0 0 1 0 2 0 0 2 0 2 1 0 1 0 0 2 0 0 2 1 0 0 0 0 0 2 0 0 1 0 0 1 0 0 1 2 2 2 0 0 0 0 0 1 0 2 0 1 0 0 1 1 2 2 0 0 1 0 0 2 0 0 0 0 1 2 0 0 0 2 0 2 0 0 0 0 1 0 1 0 1 2 0 0 0 0 0 1 0 0 1 0 0 0 2 1 0 0 1 1 0 0 0 0 2 0 0 0 0 0 0 0 0 0 2 1 2 0 1 1 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 2 1 0 1 0 1 0 0 0 1 1 0 1 0 0 2 0 2 1 2 0 0 2 0 1 0 0 0 0 0 2 0 0 0 2 0 0 0 0 0 0 1 1 0 1 2 0 0 0 0 1 0 2 1 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 2 2 0 2 0 0 0 0 0 0 2 0 1 0 1 0 0 2 1 2 0 0 0 0 1 0 0 0 1 1 0 2 2 0 2 0 0 1 0 0 1 0 2 1 0 0 2 2 0 1 0 0 0 0 0 0 1 2 1 2 2 0 2 0 0 1 0 0 0 1 2 2 2 1 0 0 1 0 0 1 0 2 0 0 0 1 0 0 0 0 2 0 0 0 0 2 2 1 0 0 0 2 0 0 2 2 1 1 1 0 0 0 0 1 1 1 0 0 0 0 1 0 0 2 0 2 0 2 0 0 1 2 0 1 1 0 0 1 0 1 0 0 0 2 2 2 0 1 1 1 2 0 2 2 2 1 0 2 0 0 0 0 0 1 0 2 1 1 0 0 2 2 0 0 0 2 1 0 1 0 2 0 2 2 0 0 2 0 0 0 1 1 0 0 2 2 0 1 1 1 0 0 0 0 2 0 0 2 0 0 1 0 1 0 1 0 1 0 2 0 0 2 0 0 0 0 2 0 0 1 1 1 0 1 0 0 0 1 2 0 1 0 0 1 0 2 2 1 2 0 1 2 2 2 2 1 2 0 0 2 0 1 1 0 0 0 0 0 2 0 0 0 2 1 0 0 0 0 0 2 0 1 0 0 2 0 0 0 0 1 0 0 2 0 2 0 0 2 0 0 2 0 1 2 0 0 1 0 2 0 1 0 0 0 0 2 0 1 2 0 0 2 1 1 1 2 0 2 0 2 0 2 0 0 1 0 2 0 0 2 0 0 2 0 0 2 0 2 0 1 0 0 0 0 1 2 0 1 0 0 2 0 1 0 0 0 0 1 0 2 2 1 1 0 1 0 0 2 2 0 0 0 0 0 2 0 0 0 0 0 2 0 1 2 2 1 0 0 2 0 0 1 0 2 1 2 0 0 1 2 0 0 0 2 2 1 2 0 0 0 0 0 0 2 0 0 0 0 2 0 0 1 0 1 0 1 0 2 0 0 0 2 1 2 2 2 2 0 0 2 0 2 2 0 0 0 2 0 0 0 0 0 0 0 0 1 0 0 0 1 0 0 0 1 0 2 0 0 1 2 0 0 0 1 2 0 0 1 2 2 1 0 1 2 2 0 0 1 2 0 0 0 0 0 0 0 2 0 0 0 1 0 2 0 0 0 0 0 0 2 1 0 1 0 0 2 0 0 2 0 0 0 1 0 0 1 2 1 0 0 2 0 1 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 0 0 0 1 2 0 1 2 0 0 2 0 0 0 0 0 1 1 0 1 0 0 0 0 0 0 2 1 0 0 1 0 0 0 0 1 0 0 0 2 2 1 0 0 0 0 2 0 0 2 0 0 0 0 0 0 1 1 2 0 2 0 0 0 2 2 1 1 0 0 0 0 2 0 0 2 0 0 0 0 0 0 1 0 2 0 2 1 0 0 0 1 0 2 2 1 1 2 0 0 2 0 1 1 0 2 1 0 0 0 0 0 0 0 1 2 0 0 2 2 0 1 0 0 0 0 2 1 1 1 0 2 2 1 0 2 2 0 2 0 0 0 1 0 1 2 0 0 1 0 0 2 0 0 0 2 2 0 0 0 0 0 2 2 1 2 2 0 0 2 2 0 0 2 2 0 0 0 0 0 2 2 0 1 0 2 1 1 0 2 1 0 1 0 0 0 0 0 0 0 2 0 2 1 0 1 0 0 0 0 0 1 0 2 1 0 2 1 0 0 0 0 0 2 1 1 0 0 0 1 0 0 0 0 0 2</SamplesUses>
+   </Samples>
+   <MissingValues>
+      <MissingValuesMethod>Unuse</MissingValuesMethod>
+      <MissingValuesNumber>0</MissingValuesNumber>
+   </MissingValues>
+   <PreviewData>
+      <PreviewSize>4</PreviewSize>
+      <Row Item="1">frequency,angle_of_attack,chord_lenght,free-stream_velocity,suction_side_displacement_thickness,scaled_sound_pressure_level</Row>
+      <Row Item="2">800,0,0.3048,71.3,0.00266337,126.201</Row>
+      <Row Item="3">1000,0,0.3048,71.3,0.00266337,125.201</Row>
+      <Row Item="4">6300,15.6,0.1016,39.6,0.0528487,104.204</Row>
+   </PreviewData>
+</DataSet>
