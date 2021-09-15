@@ -8,7 +8,7 @@
       <MissingValuesLabel>NaN</MissingValuesLabel>
       <LagsNumber>0</LagsNumber>
       <StepsAhead>0</StepsAhead>
-      <TimeIndex>0</TimeIndex>
+      <TimeColumn></TimeColumn>
    </DataFile>
    <Columns>
       <ColumnsNumber>2</ColumnsNumber>

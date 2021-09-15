@@ -49,23 +49,6 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
                      LossIndexBackPropagation& back_propagation) const
 {      
-#ifdef OPENNN_DEBUG
-
-    Layer* last_trainable_layer_pointer = forward_propagation.neural_network_pointer->get_last_trainable_layer_pointer();
-
-    if(last_trainable_layer_pointer->get_type() != Layer::Probabilistic)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: CrossEntropyError class.\n"
-               << "calculate_error() method.\n"
-               << "Last trainable layer is not probabilistic: " << last_trainable_layer_pointer->get_type_string() << endl;
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
     if(outputs_number == 1)

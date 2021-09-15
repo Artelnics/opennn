@@ -6,15 +6,11 @@
 #   Artificial Intelligence Techniques SL (Artelnics)                                             
 #   artelnics@artelnics.com                                                                       
 
-QT = # Do not use Qt
-
 CONFIG += console
 
-mac{
-    CONFIG-=app_bundle
-}
+mac{CONFIG-=app_bundle}
 
-TARGET = opennntests
+TARGET = tests
 
 TEMPLATE = app
 
@@ -103,6 +99,24 @@ HEADERS += \
     pooling_layer_test.h
 
 
+# OpenMP library
+
+win32{
+QMAKE_CXXFLAGS += -openmp
+QMAKE_LFLAGS += -openmp
+}
+
+unix:macx{
+INCLUDEPATH += /usr/local/opt/libomp/include
+LIBS += /usr/local/opt/libomp/lib/libomp.dylib
+}
+
+unix:!macx{
+QMAKE_CXXFLAGS+= -fopenmp
+QMAKE_LFLAGS += -fopenmp
+}
+
+
 # OpenNN library
 
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../opennn/release/ -lopennn
@@ -118,15 +132,3 @@ else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PW
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/debug/opennn.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
 
-# OpenMP library
-
-win32:!win32-g++{
-#QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
-#QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
-#LIBS += -fopenmp -pthread #-lgomp
-}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
-QMAKE_LFLAGS += -fopenmp -lgomp
-LIBS += -fopenmp -pthread -lgomp
-}else: macx{
-INCLUDEPATH += /usr/local/opt/libomp/include
-LIBS += /usr/local/opt/libomp/lib/libomp.dylib}

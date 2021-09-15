@@ -50,7 +50,7 @@ int main()
    "neural_network | nn\n"
    "neurons_selection | ns\n"
    "normalized_squared_error | nse\n"
-   "numerical_differentiation | ndf\n"
+   "numerical_differentiation | nd\n"
    "perceptron_layer | pl\n"
    "pooling_layer | pll\n"
    "probabilistic_layer | pbl\n"
@@ -99,7 +99,7 @@ int main()
          tests_passed_count += correlations_test.get_tests_passed_count();
          tests_failed_count += correlations_test.get_tests_failed_count();
       }
-/*
+
       else if(test == "data_set" || test == "ds")
       {
          DataSetTest data_set_test;
@@ -109,7 +109,7 @@ int main()
          tests_failed_count += data_set_test.get_tests_failed_count();
       }
 
-      else if(test == "numerical_differentiation" || test == "ndf")
+      else if(test == "numerical_differentiation" || test == "nd")
       {
          NumericalDifferentiationTest test_numerical_differentiation;
          test_numerical_differentiation.run_test_case();
@@ -233,7 +233,7 @@ int main()
         tests_count += mean_squared_error_test.get_tests_count();
         tests_passed_count += mean_squared_error_test.get_tests_passed_count();
         tests_failed_count += mean_squared_error_test.get_tests_failed_count();
-      }*/
+      }
       else if(test == "normalized_squared_error" || test == "nse")
       {
         NormalizedSquaredErrorTest normalized_squared_error_test;
@@ -241,7 +241,7 @@ int main()
         tests_count += normalized_squared_error_test.get_tests_count();
         tests_passed_count += normalized_squared_error_test.get_tests_passed_count();
         tests_failed_count += normalized_squared_error_test.get_tests_failed_count();
-      }/*
+      }
       else if(test == "weighted_squared_error" || test == "wse")
       {
         WeightedSquaredErrorTest weighted_squared_error_test;
@@ -660,7 +660,7 @@ int main()
           tests_passed_count += testing_analysis_test.get_tests_passed_count();
           tests_failed_count += testing_analysis_test.get_tests_failed_count();
       }
-*/
+
       else
       {
          cout << "Unknown test: " << test << endl;
