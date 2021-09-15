@@ -1257,11 +1257,11 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
         std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
-        for(Index i = 0; i > batch_size; i++)
+        for(Index i = 0; i < batch_size; i++)
         {
             batches(0,i) = samples_copy(i);
-
         }
+
         return batches;
 
     }
@@ -5086,8 +5086,6 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
     Tensor<type, 1> sample_i;
     Tensor<type, 1> sample_j;
 
-    #pragma omp parallel for private(sample_i, sample_j) schedule(dynamic)
-
     for(Index i = 0; i < static_cast<Index>(samples_number); i++)
     {
         sample_i = get_sample_data(i);
@@ -5097,7 +5095,7 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
             sample_j = get_sample_data(j);
 
             if(get_sample_use(j) != SampleUse::UnusedSample
-                    && equal(sample_i.data(), sample_i.data()+sample_i.size(), sample_j.data()))
+            && equal(sample_i.data(), sample_i.data()+sample_i.size(), sample_j.data()))
             {
                 set_sample_use(j, SampleUse::UnusedSample);
 
@@ -5772,7 +5770,7 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
     {
         const Index variable_index = variables_indices(i);
 
-        Tensor<type, 0> mean = data.chip(variable_index, 1).mean();
+        const Tensor<type, 0> mean = data.chip(variable_index, 1).mean();
 
         means(i) = mean(0);
     }
@@ -8593,7 +8591,7 @@ Tensor<Index, 1> DataSet::select_outliers_via_contamination(const Tensor<type, 1
 
     Tensor<Index, 1> outlier_indexes(samples_number);
     outlier_indexes.setZero();
-
+/*
     for(Index i = 0; i < samples_number; i++)
     {
         ordered_ranks(i) = Tensor<type, 1>(2);
@@ -8617,7 +8615,7 @@ Tensor<Index, 1> DataSet::select_outliers_via_contamination(const Tensor<type, 1
         for(Index i = 0; i < Index(contamination*type(samples_number)); i++)
             outlier_indexes(static_cast<Index>(ordered_ranks(i)(0))) = 1;
     }
-
+*/
     return outlier_indexes;
 }
 

@@ -8,7 +8,7 @@
 
 #ifndef CONVOLUTIONALLAYER_H
 #define CONVOLUTIONALLAYER_H
-
+/*
 // System includes
 
 #include <cmath>
@@ -299,7 +299,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     }
 
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    void set(const Index&, Layer*)
     {
     }
 
@@ -317,7 +317,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
 
 }
-
+*/
 #endif
 
 

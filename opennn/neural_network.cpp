@@ -755,17 +755,17 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
     for(Index i = 0; i < blocks_number; i++)
     {
-        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
-        add_layer(convolutional_layer);
+        //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
+        //add_layer(convolutional_layer);
 
-        outputs_dimensions = convolutional_layer->get_outputs_dimensions();
+        //outputs_dimensions = convolutional_layer->get_outputs_dimensions();
 
         // Pooling layer 1
 
-        PoolingLayer* pooling_layer_1 = new PoolingLayer(outputs_dimensions);
-        add_layer(pooling_layer_1);
+        //PoolingLayer* pooling_layer_1 = new PoolingLayer(outputs_dimensions);
+        //add_layer(pooling_layer_1);
 
-        outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
+        //outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
     }
 
     const Tensor<Index, 0> outputs_dimensions_sum = outputs_dimensions.sum();
@@ -1361,7 +1361,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
     Tensor<type, 1> parameters = get_parameters();
 
-    parameters = parameters + perturbation;
+    for (Index i = 0; i < parameters.size(); i++) parameters(i) += perturbation;
 
     set_parameters(parameters);
 }
@@ -1601,7 +1601,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
     if(layers_pointers(1)->get_type() == Layer::Type::Convolutional)
     {
-        outputs_4d = layers_pointers(0)->calculate_outputs_4D(inputs);
+        outputs_4d = layers_pointers(0)->calculate_outputs_4d(inputs);
     }
     else
     {
@@ -1612,10 +1612,11 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
     {
         if(layers_pointers(i + 1)->get_type() == Layer::Type::Convolutional)
         {
-            outputs_4d = layers_pointers(i)->calculate_outputs_4D(outputs_4d);
+            outputs_4d = layers_pointers(i)->calculate_outputs_4d(outputs_4d);
         }
         else
         {
+/*
             if(layers_pointers(i)->get_type() != Layer::Type::Convolutional && layers_pointers(i)->get_type() != Layer::Type::Pooling)
             {
                 outputs = layers_pointers(i)->calculate_outputs(outputs);
@@ -1624,6 +1625,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
             {
                 outputs = layers_pointers(i)->calculate_outputs_from4D(outputs_4d);
             }
+*/
         }
     }
 
@@ -2108,6 +2110,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         }
         else if(layers_types(i) == "Convolutional")
         {
+/*
             ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer();
 
             const tinyxml2::XMLElement* convolutional_element = start_element->NextSiblingElement("ConvolutionalLayer");
@@ -2126,6 +2129,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(convolutional_layer);
+*/
         }
         else if(layers_types(i) == "Perceptron")
         {
@@ -2150,6 +2154,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         }
         else if(layers_types(i) == "Pooling")
         {
+/*
             PoolingLayer* pooling_layer = new PoolingLayer();
 
             const tinyxml2::XMLElement* pooling_element = start_element->NextSiblingElement("PoolingLayer");
@@ -2168,6 +2173,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(pooling_layer);
+*/
         }
         else if(layers_types(i) == "Probabilistic")
         {

@@ -317,7 +317,7 @@ struct NeuralNetworkForwardPropagation
 
             case Layer::Type::Convolutional:
             {
-                layers(i) = new ConvolutionalLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                //layers(i) = new ConvolutionalLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
@@ -401,7 +401,7 @@ struct NeuralNetworkBackPropagation
 
             case Layer::Type::Convolutional:
             {
-                layers(i) = new ConvolutionalLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                //layers(i) = new ConvolutionalLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 

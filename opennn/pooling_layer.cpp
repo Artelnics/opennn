@@ -10,7 +10,7 @@
 
 namespace OpenNN
 {
-
+/*
 /// Default constructor.
 /// It creates an empty PoolingLayer object.
 
@@ -790,6 +790,7 @@ void PoolingLayer::set_default()
 {
     layer_type = Layer::Type::Pooling;
 }
+*/
 }
 
 // OpenNN: Open Neural Networks Library.
