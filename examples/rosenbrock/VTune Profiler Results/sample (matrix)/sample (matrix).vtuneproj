@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root>
+ <connectionOption>localhost</connectionOption>
+ <All_Configurations-All_Platforms>
+  <searchDirs>
+   <searchCategory>
+    <category type="u8_t">1</category>
+    <searchDirectory>
+     <name>C:\Users\ROBERTO\Documents\VTune\Samples\matrix</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">true</priority>
+    </searchDirectory>
+   </searchCategory>
+   <searchCategory>
+    <category type="u8_t">2</category>
+    <searchDirectory>
+     <name>C:\Users\ROBERTO\Documents\VTune\Samples\matrix</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">true</priority>
+    </searchDirectory>
+   </searchCategory>
+   <searchCategory>
+    <category type="u8_t">3</category>
+    <searchDirectory>
+     <name>C:\Users\ROBERTO\Documents\VTune\Samples\matrix\src</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">true</priority>
+    </searchDirectory>
+   </searchCategory>
+   <searchCategory>
+    <category type="u8_t">4</category>
+   </searchCategory>
+  </searchDirs>
+  <target_settings>
+   <selected_workload>
+    <localhost>launch</localhost>
+   </selected_workload>
+   <workloads>
+    <localhost>
+     <launch type="pointer" type_id="dasID_cctrl2::ApplicationWorkload" ptr_type="dasID_cctrl2::IWorkload">
+      <workload>
+       <targetName>launch</targetName>
+       <result_directory.path>C:\opennn\examples\rosenbrock\VTune Profiler Results\sample (matrix)\r@@@{at}</result_directory.path>
+       <use_app_dir_as_work_dir type="bool">true</use_app_dir_as_work_dir>
+       <launch_app.app_to_launch>C:\Users\ROBERTO\Documents\VTune\Samples\matrix\matrix.exe</launch_app.app_to_launch>
+       <launch_app.app_parameters></launch_app.app_parameters>
+       <launch.userappworkdir></launch.userappworkdir>
+       <launch_app.working_folder>C:\Users\ROBERTO\Documents\VTune\Samples\matrix</launch_app.working_folder>
+      </workload>
+     </launch>
+    </localhost>
+   </workloads>
+  </target_settings>
+ </All_Configurations-All_Platforms>
+ <contextValues type="bag"/>
+</root>

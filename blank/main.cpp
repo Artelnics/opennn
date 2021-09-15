@@ -27,10 +27,6 @@ using namespace Eigen;
 
 int main()
 {
-<<<<<<< HEAD
-    try
-    {
-=======
     try{
 /*
     //DataSet class
@@ -117,7 +113,6 @@ int main()
 */
         cout << "Good bye!" << endl;
 
->>>>>>> 1f190c10a38a0291b14448bb8bb532184bee027c
         return 0;
 
     }
