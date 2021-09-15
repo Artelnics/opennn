@@ -11,9 +11,9 @@
 TEMPLATE = subdirs
 
 SUBDIRS += opennn
-SUBDIRS += tests
-SUBDIRS += examples
+#SUBDIRS += examples
 SUBDIRS += blank
+SUBDIRS += tests
 
 
 CONFIG += ordered

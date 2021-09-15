@@ -400,7 +400,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
 
     const Index neurons_number = get_neurons_number();
 
-    if(neurons_number == 1 && new_activation_function == Competitive)
+    if(neurons_number == 1 && new_activation_function == ProbabilisticLayer::ActivationFunction::Competitive)
     {
         ostringstream buffer;
 
@@ -411,7 +411,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
         throw logic_error(buffer.str());
     }
 
-    if(neurons_number == 1 && new_activation_function == Softmax)
+    if(neurons_number == 1 && new_activation_function == ProbabilisticLayer::ActivationFunction::Softmax)
     {
         ostringstream buffer;
 
@@ -422,7 +422,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
         throw logic_error(buffer.str());
     }
 
-    if(neurons_number != 1 && new_activation_function == Binary)
+    if(neurons_number != 1 && new_activation_function == ProbabilisticLayer::ActivationFunction::Binary)
     {
         ostringstream buffer;
 
@@ -433,7 +433,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
         throw logic_error(buffer.str());
     }
 
-    if(neurons_number != 1 && new_activation_function == Logistic)
+    if(neurons_number != 1 && new_activation_function == ProbabilisticLayer::ActivationFunction::Logistic)
     {
         ostringstream buffer;
 

@@ -24,16 +24,6 @@ DESTDIR = "$$PWD/bin"
 
 SOURCES = main.cpp
 
-win32-g++{
-QMAKE_LFLAGS += -static-libgcc
-QMAKE_LFLAGS += -static-libstdc++
-QMAKE_LFLAGS += -static
-
-#QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
-#QMAKE_LFLAGS += -fopenmp -pthread -lgomp
-#LIBS += -fopenmp -pthread -lgomp
-}
-
 # OpenNN library
 
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../../opennn/release/ -lopennn

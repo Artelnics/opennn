@@ -6,34 +6,29 @@
 #   Artificial Intelligence Techniques SL (Artelnics)
 #   artelnics@artelnics.com
 
-QT = # Do not use qt
-
 TARGET = opennn
-#DESTDIR = "$$PWD/bin"
 
 TEMPLATE = lib
 
 CONFIG += staticlib
 
-CONFIG(debug, debug|release) {
-    DEFINES += OPENNN_DEBUG
-}
+CONFIG(debug, debug|release){DEFINES += OPENNN_DEBUG}
 
 # OpenMP library
 
-win32:!win32-g++{
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
-QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
-LIBS += -fopenmp -pthread #-lgomp
-}else:!macx{
-QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
-QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
-LIBS += -fopenmp -pthread #-lgomp
-}else: macx{
+win32{
+QMAKE_CXXFLAGS += -openmp
+QMAKE_LFLAGS += -openmp
+}
+
+unix:macx{
 INCLUDEPATH += /usr/local/opt/libomp/include
 LIBS += /usr/local/opt/libomp/lib/libomp.dylib
-#INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
+}
+
+unix:!macx{
+QMAKE_CXXFLAGS+= -fopenmp
+QMAKE_LFLAGS += -fopenmp
 }
 
 # Eigen library
