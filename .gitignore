@@ -86,6 +86,10 @@ Makefile.in
 *.x86_64
 *.hex
 
+# User files
+
+*.user
+
 # Debug files
 *.dSYM/
 ### JetBrains template
