@@ -37,22 +37,40 @@ int main()
 
         DataSet data_set("../data/iris_plant_original.csv", ';', true);
 
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
+
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
         // Neural network
 
-        const Index hidden_neurons_number = 3;
+        Tensor<Index, 1> architecture(3);
+        const Index hidden_neurons_number = 10;
+        architecture.setValues({input_variables_number,hidden_neurons_number,target_variables_number});
 
-        NeuralNetwork neural_network(NeuralNetwork::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+
+        neural_network.set_inputs_names(inputs_names);
+        neural_network.set_outputs_names(targets_names);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::CROSS_ENTROPY_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
+
+        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+
+        AdaptiveMomentEstimation* adam_method_pointer = training_strategy.get_adaptive_moment_estimation_pointer();
+        adam_method_pointer->set_maximum_epochs_number(10000);
+        adam_method_pointer->set_maximum_time(60);
+        adam_method_pointer->set_display_period(100);
+        adam_method_pointer->set_loss_goal(type(1.0e-1));
+
 
         training_strategy.perform_training();
+
 
         // Testing analysis
 

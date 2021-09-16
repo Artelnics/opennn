@@ -1,17 +1,15 @@
 <NeuralNetwork>
    <Inputs>
-      <InputsNumber>6</InputsNumber>
+      <InputsNumber>4</InputsNumber>
       <Input Index="1">sepal_lenght</Input>
       <Input Index="2">sepal_width</Input>
       <Input Index="3">petal_lenght</Input>
-      <Input Index="4">iris_setosa</Input>
-      <Input Index="5">iris_versicolor</Input>
-      <Input Index="6">iris_virginica</Input>
+      <Input Index="4">petal_width</Input>
    </Inputs>
    <Layers>
       <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
       <ScalingLayer>
-         <ScalingNeuronsNumber>6</ScalingNeuronsNumber>
+         <ScalingNeuronsNumber>4</ScalingNeuronsNumber>
          <ScalingNeuron Index="1">
             <Minimum>4.3</Minimum>
             <Maximum>7.9</Maximum>
@@ -34,44 +32,32 @@
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
          <ScalingNeuron Index="4">
-            <Minimum>0</Minimum>
-            <Maximum>1</Maximum>
-            <Mean>0.333333</Mean>
-            <StandardDeviation>0.472984</StandardDeviation>
-            <Scaler>MeanStandardDeviation</Scaler>
-         </ScalingNeuron>
-         <ScalingNeuron Index="5">
-            <Minimum>0</Minimum>
-            <Maximum>1</Maximum>
-            <Mean>0.333333</Mean>
-            <StandardDeviation>0.472984</StandardDeviation>
-            <Scaler>MeanStandardDeviation</Scaler>
-         </ScalingNeuron>
-         <ScalingNeuron Index="6">
-            <Minimum>0</Minimum>
-            <Maximum>1</Maximum>
-            <Mean>0.333333</Mean>
-            <StandardDeviation>0.472984</StandardDeviation>
+            <Minimum>0.1</Minimum>
+            <Maximum>2.5</Maximum>
+            <Mean>1.19933</Mean>
+            <StandardDeviation>0.762238</StandardDeviation>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
       </ScalingLayer>
       <PerceptronLayer>
-         <LayerName>Perceptron_layer_1</LayerName>
-         <InputsNumber>6</InputsNumber>
-         <NeuronsNumber>3</NeuronsNumber>
+         <LayerName>perceptron_layer_1</LayerName>
+         <InputsNumber>4</InputsNumber>
+         <NeuronsNumber>10</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>0.808051 -0.901862 -0.738978 -0.137501 0.233128 0.875576 -0.432395 0.296181 0.164928 0.00684303 0.0279776 -0.0950193 0.47241 -0.196155 -0.268482 0.0462208 -0.0988235 -0.477717 0.532404 -0.293018 -0.250419</Parameters>
+         <Parameters>0.395957 -0.374394 -0.52096 0.522812 0.364621 0.384518 -0.600615 0.412966 0.549809 0.401373 -0.125231 0.326583 -0.388694 -0.389443 -0.420275 0.36244 -0.533691 -0.274081 -0.0361089 0.0703434 0.549457 0.420585 0.146044 0.062207 -0.411823 -0.750093 0.504047 -0.437882 0.291139 0.340977 0.541423 -0.367351 0.498336 0.172826 0.0453112 -0.128768 0.396013 0.604464 0.0497757 0.19464 -0.500716 -0.42613 0.54521 -0.34135 0.36204 0.325535 0.0593159 0.046146 -0.53164 -0.39144</Parameters>
       </PerceptronLayer>
       <ProbabilisticLayer>
-         <InputsNumber>3</InputsNumber>
-         <NeuronsNumber>1</NeuronsNumber>
-         <ActivationFunction>Logistic</ActivationFunction>
-         <Parameters>2.23115 2.17447 -1.96864 -2.04471</Parameters>
+         <InputsNumber>10</InputsNumber>
+         <NeuronsNumber>3</NeuronsNumber>
+         <ActivationFunction>Softmax</ActivationFunction>
+         <Parameters>-0.122392 0.0803996 -0.0582235 0.45217 0.346158 -0.409535 0.427543 -0.399237 -0.354133 -0.433496 0.391537 -0.503915 0.454471 0.308758 -0.64641 -0.816637 0.532274 0.488053 0.684737 -0.628385 0.246522 0.673086 0.456811 -0.621868 -0.441797 0.620912 -0.547483 0.43949 0.351803 0.624807 -0.736667 0.231193 -0.585228</Parameters>
          <DecisionThreshold>0.5</DecisionThreshold>
       </ProbabilisticLayer>
    </Layers>
    <Outputs>
-      <OutputsNumber>1</OutputsNumber>
-      <Output Index="1">petal_width</Output>
+      <OutputsNumber>3</OutputsNumber>
+      <Output Index="1">iris_setosa</Output>
+      <Output Index="2">iris_versicolor</Output>
+      <Output Index="3">iris_virginica</Output>
    </Outputs>
 </NeuralNetwork>
