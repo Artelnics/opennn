@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+ //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   R O S E N B R O C K   A P P L I C A T I O N
