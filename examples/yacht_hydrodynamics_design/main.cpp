@@ -35,6 +35,7 @@ int main()
 
         DataSet data_set("../data/yachtresistance.csv", ';', true);
 
+        data_set.get_input_data();
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 

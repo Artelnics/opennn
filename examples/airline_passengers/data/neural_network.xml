@@ -1,0 +1,63 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>2</InputsNumber>
+      <Input Index="1">Passengers_lag_1</Input>
+      <Input Index="2">Passengers_lag_0</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Perceptron Unscaling Bounding</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>2</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>104</Minimum>
+            <Maximum>622</Maximum>
+            <Mean>278.458</Mean>
+            <StandardDeviation>119.767</StandardDeviation>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Minimum>104</Minimum>
+            <Maximum>622</Maximum>
+            <Mean>280.415</Mean>
+            <StandardDeviation>119.298</StandardDeviation>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer</LayerName>
+         <InputsNumber>2</InputsNumber>
+         <NeuronsNumber>10</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>0.0330065 -0.0333454 0.0336491 -0.0338421 -0.0335228 -0.0332087 0.0335995 -0.0339583 -0.0333522 -0.0332117 0.0830493 0.296817 -0.0827217 -0.297391 0.0830849 0.297368 -0.0827444 -0.297307 -0.0826635 -0.297969 -0.0827688 -0.296673 0.0825544 0.297259 -0.0824925 -0.297393 -0.0826598 -0.29676 -0.0825865 -0.296763</Parameters>
+      </PerceptronLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer</LayerName>
+         <InputsNumber>10</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>-0.0761012 0.332532 -0.332558 0.332942 -0.332951 -0.333413 -0.332074 0.332432 -0.332834 -0.331948 -0.331905</Parameters>
+      </PerceptronLayer>
+      <UnscalingLayer>
+         <UnscalingNeuronsNumber>1</UnscalingNeuronsNumber>
+         <Descriptives Index="1">
+            <Minimum>104</Minimum>
+            <Maximum>622</Maximum>
+            <Mean>282.627</Mean>
+            <StandardDeviation>119.176</StandardDeviation>
+            <Scaler>MinimumMaximum</Scaler>
+         </Descriptives>
+      </UnscalingLayer>
+      <BoundingLayer>
+         <BoundingNeuronsNumber>1</BoundingNeuronsNumber>
+         <Item Index="1">
+            <LowerBound>-3.40282e+38</LowerBound>
+            <UpperBound>3.40282e+38</UpperBound>
+         </Item>
+         <UseBoundingLayer>1</UseBoundingLayer>
+      </BoundingLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1">Passengers_ahead_1</Output>
+   </Outputs>
+</NeuralNetwork>

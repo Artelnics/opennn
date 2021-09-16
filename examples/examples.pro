@@ -10,7 +10,8 @@ TEMPLATE = subdirs
 
 CONFIG += ordered
 
-SUBDIRS += rosenbrock
+SUBDIRS += rosenbrock \
+    airline_passengers
 SUBDIRS += simple_approximation
 SUBDIRS += simple_classification
 SUBDIRS += airfoil_self_noise
