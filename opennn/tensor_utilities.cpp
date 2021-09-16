@@ -368,6 +368,7 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
 
         const type* value_pointer = nullptr;
         const Index* rows_indices_pointer = rows_indices.data();
+
         for(Index i = 0; i < rows_number; i++)
         {
             value_pointer = matrix_column_pointer + *rows_indices_pointer;
@@ -377,6 +378,7 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
         }
     }
 }
+
 
 Index count_NAN(const Tensor<type, 1>& x)
 {
