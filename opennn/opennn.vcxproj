@@ -132,6 +132,7 @@
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <PlatformToolset>Intel C++ Compiler 2021</PlatformToolset>
+    <UseInteloneMKL>Parallel</UseInteloneMKL>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -239,6 +240,8 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <OpenMPSupport>true</OpenMPSupport>
       <OpenMP>GenerateParallelCode</OpenMP>
+      <UseProcessorExtensions>AVX2</UseProcessorExtensions>
+      <OptimizeForWindowsApplication>false</OptimizeForWindowsApplication>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
