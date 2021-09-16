@@ -165,8 +165,9 @@ public:
    // Delta methods
 
    void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerBackPropagation*) const;
+       LayerBackPropagation*,
+       LayerForwardPropagation*,
+       LayerBackPropagation*) const;
 
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,
@@ -379,6 +380,8 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
         delta.resize(batch_samples_number, neurons_number);
 
+        delta_times_activations_derivatives.resize(batch_samples_number, neurons_number);
+
         biases_derivatives.resize(neurons_number);
 
         synaptic_weights_derivatives.resize(inputs_number, neurons_number);
@@ -397,6 +400,8 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
     }
 
     Tensor<type, 2> delta;
+
+    Tensor<type, 2> delta_times_activations_derivatives;
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;

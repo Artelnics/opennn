@@ -655,9 +655,13 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
 
 void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
-                                             LayerBackPropagation* next_layer_back_propagation,
-                                             LayerBackPropagation* layer_back_propagation) const
+    LayerBackPropagation* next_layer_back_propagation,
+    LayerForwardPropagation* layer_forward_propagation,
+    LayerBackPropagation* layer_back_propagation) const
 {
+    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
+        static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation);
+
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(layer_back_propagation);
 
@@ -674,6 +678,9 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
         calculate_hidden_delta_perceptron(next_perceptron_layer_forward_propagation,
                                           next_perceptron_layer_back_propagation,
                                           perceptron_layer_back_propagation);
+
+        perceptron_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device) =
+            perceptron_layer_back_propagation->delta * perceptron_layer_forward_propagation->activations_derivatives;
     }
         break;
 
@@ -693,6 +700,7 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
 
     default: return;
     }
+
 }
 
 
@@ -702,11 +710,8 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPr
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
-    next_back_propagation->delta.device(*thread_pool_device) = next_back_propagation->delta * next_forward_propagation->activations_derivatives;
-
     back_propagation->delta.device(*thread_pool_device) =
-        next_back_propagation->delta.contract(next_synaptic_weights, A_BT);
-
+        next_back_propagation->delta_times_activations_derivatives.contract(next_synaptic_weights, A_BT);
 /*
     back_propagation->delta.device(*thread_pool_device) =
             (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
@@ -990,13 +995,11 @@ void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(back_propagation);
 
-    perceptron_layer_back_propagation->delta.device(*thread_pool_device) = perceptron_layer_back_propagation->delta * perceptron_layer_forward_propagation->activations_derivatives;
-
     perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
-        perceptron_layer_back_propagation->delta.sum(Eigen::array<Index, 1>({ 0 }));
+        perceptron_layer_back_propagation->delta_times_activations_derivatives.sum(Eigen::array<Index, 1>({ 0 }));
 
     perceptron_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
-        inputs.contract(perceptron_layer_back_propagation->delta, AT_B);
+        inputs.contract(perceptron_layer_back_propagation->delta_times_activations_derivatives, AT_B);
 /*
     perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
             (perceptron_layer_back_propagation->delta*perceptron_layer_forward_propagation->activations_derivatives).sum(Eigen::array<Index, 1>({0}));

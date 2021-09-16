@@ -28,7 +28,7 @@ int main()
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
-        
+
         srand(static_cast<unsigned>(time(nullptr)));
      
         // Data Set
@@ -59,11 +59,13 @@ int main()
         training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(1);
         training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1000);
 
-        training_strategy.perform_training();
-        
-        system("pause");
+        TrainingResults training_results = training_strategy.perform_training();
+
+        training_results.print();
 
         cout << "End Rosenbrock" << endl;
+
+        system("pause");
 
         return 0;
     }
