@@ -1648,8 +1648,9 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
 
 void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-                                                      LayerBackPropagation* next_back_propagation,
-                                                      LayerBackPropagation* back_propagation) const
+    LayerBackPropagation* next_back_propagation,
+    LayerForwardPropagation* forward_propagation,
+    LayerBackPropagation* back_propagation) const
 {
     LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
             static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);

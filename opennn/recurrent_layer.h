@@ -174,8 +174,9 @@ public:
    void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, LayerForwardPropagation*);
 
    void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerBackPropagation*) const;
+       LayerBackPropagation*,
+       LayerForwardPropagation*,
+       LayerBackPropagation*) const;
 
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,

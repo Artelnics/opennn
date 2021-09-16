@@ -357,13 +357,14 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
+    const Index matrix_rows_number = matrix.dimension(0);
     const type* matrix_pointer = matrix.data();
 
     #pragma omp parallel for
 
     for(Index j = 0; j < columns_number; j++)
     {
-        const type* matrix_column_pointer = matrix_pointer + matrix.dimension(0)*columns_indices[j];
+        const type* matrix_column_pointer = matrix_pointer + matrix_rows_number*columns_indices[j];
         type* submatrix_column_pointer = submatrix_pointer + rows_number*j;
 
         const type* value_pointer = nullptr;

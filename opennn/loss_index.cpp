@@ -723,6 +723,7 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
         trainable_layers_pointers(i)
                 ->calculate_hidden_delta(forward_propagation.layers(i+1),
                                          back_propagation.neural_network.layers(i+1),
+                                         forward_propagation.layers(i),
                                          back_propagation.neural_network.layers(i));
     }
 }

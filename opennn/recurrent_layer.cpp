@@ -843,11 +843,12 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
 
 void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
-                                            LayerBackPropagation* next_layer_back_propagation,
-                                            LayerBackPropagation* current_layer_back_propagation) const
+    LayerBackPropagation* next_layer_back_propagation,
+    LayerForwardPropagation* layer_forward_propagation,
+    LayerBackPropagation* layer_back_propagation) const
 {
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
-            static_cast<RecurrentLayerBackPropagation*>(current_layer_back_propagation);
+            static_cast<RecurrentLayerBackPropagation*>(layer_back_propagation);
 
     switch(next_layer_back_propagation->layer_pointer->get_type())
     {

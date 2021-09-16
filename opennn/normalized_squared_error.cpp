@@ -342,7 +342,7 @@ void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
 
 void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                                    NeuralNetworkForwardPropagation&,
+                                                    NeuralNetworkForwardPropagation& forward_propagation,
                                                     LossIndexBackPropagation& back_propagation) const
 {
 #ifdef OPENNN_DEBUG
@@ -353,6 +353,7 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
+    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number - 1);
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
     Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
@@ -367,10 +368,16 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     {
     case Layer::Type::Perceptron:
     {
+        PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+            = static_cast<PerceptronLayerForwardPropagation*>(output_layer_forward_propagation);
+
         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
                 = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
         perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+
+        perceptron_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device)
+            = perceptron_layer_back_propagation->delta * perceptron_layer_forward_propagation->activations_derivatives;
     }
         break;
 

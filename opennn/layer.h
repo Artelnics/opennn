@@ -115,6 +115,7 @@ public:
 
     virtual void calculate_hidden_delta(LayerForwardPropagation*,
                                         LayerBackPropagation*,
+                                        LayerForwardPropagation*,
                                         LayerBackPropagation*) const {}
 
     virtual void calculate_hidden_delta_lm(LayerForwardPropagation*,

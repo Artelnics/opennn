@@ -718,6 +718,7 @@ void TrainingStrategy::set_default()
 
 TrainingResults TrainingStrategy::perform_training()
 {
+    
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
         fix_forecasting();
@@ -733,7 +734,7 @@ TrainingResults TrainingStrategy::perform_training()
 
         throw logic_error(buffer.str());
     }
-
+    
     switch(optimization_method)
     {
     case OptimizationMethod::GRADIENT_DESCENT:
@@ -755,7 +756,6 @@ TrainingResults TrainingStrategy::perform_training()
         quasi_Newton_method.set_display(display);
 
         return quasi_Newton_method.perform_training();
-
     }
 
     case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
@@ -779,7 +779,7 @@ TrainingResults TrainingStrategy::perform_training()
         return adaptive_moment_estimation.perform_training();
     }
     }
-
+    
     return TrainingResults(0);
 }
 

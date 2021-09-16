@@ -203,8 +203,9 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
    void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerBackPropagation*) const;
+       LayerBackPropagation*,
+       LayerForwardPropagation*,
+       LayerBackPropagation*) const;
 
 
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
