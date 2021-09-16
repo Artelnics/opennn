@@ -1,0 +1,75 @@
+<DataSet>
+   <DataFile>
+      <FileType>csv</FileType>
+      <DataFileName>../data/yachtresistance.csv</DataFileName>
+      <Separator>Semicolon</Separator>
+      <ColumnsNames>1</ColumnsNames>
+      <RowsLabels>0</RowsLabels>
+      <MissingValuesLabel>NA</MissingValuesLabel>
+      <LagsNumber>0</LagsNumber>
+      <StepsAhead>0</StepsAhead>
+      <TimeIndex>0</TimeIndex>
+   </DataFile>
+   <Columns>
+      <ColumnsNumber>7</ColumnsNumber>
+      <Column Item="1">
+         <Name>longitudinal_center_buoyancy</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="2">
+         <Name>prismatic_coefficient</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="3">
+         <Name>length_displacement_ratio</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="4">
+         <Name>beam_draught_ratio</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="5">
+         <Name>lenght_beam_ratio</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="6">
+         <Name>froude_number</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="7">
+         <Name>residuary_resistance</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+   </Columns>
+   <Samples>
+      <SamplesNumber>308</SamplesNumber>
+      <SamplesUses>1 1 2 0 0 1 2 0 1 2 0 0 0 0 2 0 2 0 0 0 2 0 2 0 2 1 0 0 0 1 2 0 1 0 1 2 1 0 2 1 0 2 1 2 0 0 1 0 0 2 0 0 0 1 0 2 0 0 2 0 0 0 0 0 0 1 2 0 2 2 2 2 0 2 0 1 0 0 0 0 0 2 2 0 0 0 0 0 2 1 1 2 0 0 1 0 1 0 1 2 2 0 0 0 0 0 0 0 2 0 2 0 0 2 0 0 0 0 0 0 2 2 0 0 0 0 0 1 2 0 1 0 0 2 2 2 0 0 0 0 0 1 0 0 1 1 0 0 1 0 1 2 1 0 0 0 0 0 0 2 0 0 0 0 0 1 0 2 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 1 1 2 1 2 1 0 2 0 0 1 2 0 0 0 0 2 0 0 0 0 0 0 2 0 0 1 0 0 0 0 2 1 2 0 0 0 0 1 0 0 2 0 0 1 0 1 2 0 1 0 0 1 2 0 0 0 0 0 0 1 1 1 0 0 0 0 1 0 1 2 0 2 1 1 0 0 0 2 2 0 0 0 1 2 0 0 1 0 0 0 2 2 0 1 0 0 1 0 1 1 2 1 0 1 0 0 0 0 1 0 0 0 1 0 0 0 2 2</SamplesUses>
+   </Samples>
+   <MissingValues>
+      <MissingValuesMethod>Unuse</MissingValuesMethod>
+      <MissingValuesNumber>2174721104304</MissingValuesNumber>
+      <ColumnsMissingValuesNumber></ColumnsMissingValuesNumber>
+      <RowsMissingValuesNumber>298259050896</RowsMissingValuesNumber>
+   </MissingValues>
+   <PreviewData>
+      <PreviewSize>4</PreviewSize>
+      <Row Item="1">longitudinal_center_buoyancy,prismatic_coefficient,length_displacement_ratio,beam_draught_ratio,lenght_beam_ratio,froude_number,residuary_resistance</Row>
+      <Row Item="2">-2.3,0.568,4.78,3.99,3.17,0.125,0.11</Row>
+      <Row Item="3">-2.3,0.568,4.78,3.99,3.17,0.15,0.27</Row>
+      <Row Item="4">-2.3,0.6,4.34,4.23,2.73,0.45,46.66</Row>
+   </PreviewData>
+</DataSet>
