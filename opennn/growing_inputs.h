@@ -28,9 +28,9 @@
 namespace OpenNN
 {
 
-/// This concrete class represents a growing inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
+/// This concrete class represents a growing inputs algorithm for the InputsSelection as part of the ModelSelection class.
 
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
+/// Neural Designer "Model Selection Algorithms in Predictive Analytics."
 /// \ref https://www.neuraldesigner.com/blog/model-selection
 
 class GrowingInputs : public InputsSelection
