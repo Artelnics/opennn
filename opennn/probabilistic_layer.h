@@ -228,6 +228,8 @@ protected:
 };
 #endif
 
+/// This structure contains information for the forward propagation of the probabilistic layer.
+
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {
     // Constructor
@@ -277,6 +279,8 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 3> activations_derivatives;
 };
 
+
+/// This structure contains second order information for the back propagation of the probabilistic layer.
 
 struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 {
@@ -328,6 +332,7 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 };
 
 
+/// This structure contains information for the back propagation of the probabilistic layer.
 
 struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 {

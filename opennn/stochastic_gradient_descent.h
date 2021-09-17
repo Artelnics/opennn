@@ -33,11 +33,11 @@ namespace OpenNN
 
 struct StochasticGradientDescentData;
 
-/// This concrete class represents the stochastic gradient descent optimization algorithm[1] for a loss index of a neural network.
+/// This concrete class represents the stochastic gradient descent optimization algorithm for the loss index of a neural network.
 
 /// It supports momentum, learning rate decay, and Nesterov momentum.
 ///
-/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
+/// \cite Neural Designer "5 Algorithms to Train a Neural Network."
 /// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 
 class StochasticGradientDescent : public OptimizationAlgorithm
@@ -161,6 +161,8 @@ private:
 
 };
 
+
+/// This structure contains the data for the stochastic gradient descent.
 
 struct StochasticGradientDescentData : public OptimizationAlgorithmData
 {

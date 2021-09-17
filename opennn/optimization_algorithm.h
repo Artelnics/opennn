@@ -36,6 +36,7 @@ namespace OpenNN
 struct TrainingResults;
 
 /// This abstract class represents the concept of optimization algorithm for a neural network in OpenNN library.
+
 /// Any derived class must implement the perform_training() method.
 
 class OptimizationAlgorithm
@@ -163,6 +164,8 @@ protected:
 
 };
 
+
+/// This structure contains the data for the optimization algorithm.
 
 struct OptimizationAlgorithmData
 {

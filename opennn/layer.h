@@ -281,6 +281,8 @@ protected:
 };
 #endif
 
+/// This structure contains information for the forward propagation of the layer.
+
 struct LayerForwardPropagation
 {
     /// Default constructor.
@@ -301,7 +303,7 @@ struct LayerForwardPropagation
 };
 
 
-/// This structure contains the back propagation for the layer.
+/// This structure contains information for the back propagation of the layer.
 
 struct LayerBackPropagation
 {
@@ -320,6 +322,8 @@ struct LayerBackPropagation
     Layer* layer_pointer = nullptr;
 };
 
+
+/// This structure contains second order information for the back propagation of the layer.
 
 struct LayerBackPropagationLM
 {

@@ -38,7 +38,8 @@ struct RecurrentLayerBackPropagation;
         #include "../../opennn-cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
 #endif
 
-/// This class represents a layer of neurons.
+/// This class represents a recurrent layer of neurons.
+
 /// Layers of neurons will be used to construct multilayer neurons.
 
 class RecurrentLayer : public Layer
@@ -253,6 +254,8 @@ protected:
 };
 #endif
 
+/// This structure contains information for the forward propagation of the recurrent layer.
+
 struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {
     explicit RecurrentLayerForwardPropagation() : LayerForwardPropagation()
@@ -301,6 +304,8 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 2> activations_derivatives;
 };
 
+
+/// This structure contains information for the back propagation of the recurrent layer.
 
 struct RecurrentLayerBackPropagation : LayerBackPropagation
 {

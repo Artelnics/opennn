@@ -39,8 +39,8 @@ namespace OpenNN
     struct NeuralNetworkForwardPropagation;
     struct NeuralNetworkBackPropagation;
 
-/// This class represents the concept of neural network in the OpenNN library
-///
+/// This class represents the concept of neural network in the OpenNN library.
+
 /// This neural network is used to span a function space for the problem at hand.
 
 class NeuralNetwork
@@ -258,6 +258,8 @@ protected:
 
 };
 
+/// This structure contains information for the forward propagation of the neural network.
+
 struct NeuralNetworkForwardPropagation
 {
     /// Default constructor.
@@ -348,6 +350,8 @@ struct NeuralNetworkForwardPropagation
 };
 
 
+/// This structure contains information for the back propagation of the neural network.
+
 struct NeuralNetworkBackPropagation
 {
     NeuralNetworkBackPropagation() {}
@@ -433,6 +437,8 @@ struct NeuralNetworkBackPropagation
     Tensor<LayerBackPropagation*, 1> layers;
 };
 
+
+/// This structure contains second order information for the back propagation of the neural network.
 
 struct NeuralNetworkBackPropagationLM
 {

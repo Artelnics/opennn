@@ -30,12 +30,11 @@
 namespace OpenNN
 {
 
-/// This class represents the concept of model selection[1] algorithm in OpenNN.
+/// This class represents the concept of model selection algorithm in OpenNN.
 
-///
 /// It is used for finding a network architecture with maximum generalization capabilities.
 ///
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
+/// Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
 
 class ModelSelection
 {

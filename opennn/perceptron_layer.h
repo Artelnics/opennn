@@ -257,6 +257,8 @@ protected:
 };
 #endif
 
+/// This structure contains information for the forward propagation of the perceptron layer.
+
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
     // Default constructor
@@ -304,6 +306,8 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 };
 
 
+/// This structure contains second order information for the back propagation of the perceptron layer.
+
 struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 {
     // Default constructor
@@ -350,7 +354,7 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
     Tensor<type, 2> squared_errors_Jacobian;
 };
 
-
+/// This structure contains information for the back propagation of the perceptron layer.
 
 struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
