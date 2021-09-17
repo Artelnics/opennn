@@ -30,9 +30,9 @@ namespace OpenNN
 {
 struct InputsSelectionResults;
 
-/// This concrete class represents a pruning inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
+/// This concrete class represents a pruning inputs algorithm for the InputsSelection as part of the ModelSelection class.
 
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
+/// Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
 
 class PruningInputs : public InputsSelection
 {

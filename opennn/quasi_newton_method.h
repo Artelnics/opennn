@@ -41,10 +41,9 @@ namespace OpenNN
 
 struct QuasiNewtonMehtodData;
 
-/// Class of optimization algorithm based on Newton's method.
-/// An approximate Hessian matrix is computed at each iteration of the algorithm based on the gradients.
+/// This concrete class represents a quasi-Newton optimization algorithm, used to minimize the loss function.
 
-/// This concrete class represents a quasi-Newton training algorithm[1], used to minimize loss function.
+/// An approximate Hessian matrix is computed at each iteration of the algorithm based on the gradients.
 ///
 /// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
 /// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
@@ -180,6 +179,8 @@ private:
    type maximum_time;
 };
 
+
+///  This structure contains the data for the Quasi-Newton method.
 
 struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 {

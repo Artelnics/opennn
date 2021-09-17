@@ -30,7 +30,6 @@ namespace OpenNN
 
 /// This class represents the sum squared peformance term functional. 
 
-///
 /// This is used as the error term in data modeling problems, such as function regression, 
 /// classification or time series prediction.
 

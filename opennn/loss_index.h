@@ -284,7 +284,8 @@ protected:
 };
 
 
-/// Set of loss value and gradient vector of the loss index.
+/// This structure contains a set of loss value and gradient vector of the loss index.
+
 /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
 struct LossIndexBackPropagation
@@ -373,9 +374,9 @@ struct LossIndexBackPropagation
 };
 
 
-/// A loss index composed of several terms, this structure represent the First Order for this function.
-
 /// This structure contains second order information about the loss function (loss, gradient and Hessian).
+
+/// A loss index is composed of several terms, this structure represent the First Order for this function.
 /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
 /// A method returning this structure might be implemented more efficiently than the loss,
 /// gradient and <i>Hessian</i> methods separately.

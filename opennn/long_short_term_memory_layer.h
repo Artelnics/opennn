@@ -34,7 +34,8 @@ struct LongShortTermMemoryLayerForwardPropagation;
 struct LongShortTermMemoryLayerBackPropagation;
 
 
-/// This class represents a layer of neurons.
+/// This class represents a layer of LSTM neurons.
+
 /// Layers of neurons will be used to construct multilayer neurons.
 
 class LongShortTermMemoryLayer : public Layer
@@ -336,6 +337,8 @@ protected:
 };
 
 
+/// This structure contains information for the forward propagation of the LSTM layer.
+
 struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 {
     explicit LongShortTermMemoryLayerForwardPropagation() : LayerForwardPropagation()
@@ -446,6 +449,8 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 2, RowMajor> hidden_states_activations_derivatives;
 };
 
+
+/// This structure contains information for the back propagation of the LSTM layer.
 
 struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 {

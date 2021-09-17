@@ -53,7 +53,7 @@ public:
 
    virtual ~TestingAnalysis();
 
-    /// Structure with the results from a linear regression analysis.
+    /// This structure contains the results of a linear regression analysis.
 
     struct LinearRegressionAnalysis
     {
@@ -85,7 +85,7 @@ public:
     };
 
 
-    /// Structure with the results from a roc curve analysis.
+    /// This structure contains the results of a roc curve analysis.
 
     struct RocAnalysisResults
     {
@@ -107,7 +107,7 @@ public:
     };
 
 
-    /// Structure with the results from Kolmogorov-Smirnov analysis.
+    /// This structure contains the results of a Kolmogorov-Smirnov analysis.
 
     struct KolmogorovSmirnovResults
     {
@@ -125,7 +125,7 @@ public:
     };
 
 
-    /// Structure with the binary classification rates
+    /// This structure contains the binary classification rates
 
     struct BinaryClassifcationRates
     {
