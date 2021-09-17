@@ -314,6 +314,8 @@ public:
 
    // Forecasting methods
 
+   type calculate_lag_1_mse() const;
+
    Tensor<Tensor<type, 1>, 1> calculate_error_autocorrelation(const Index& = 10) const;
 
    Tensor<Tensor<type, 1>, 1> calculate_inputs_errors_cross_correlation(const Index& = 10) const;

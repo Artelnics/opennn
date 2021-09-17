@@ -16,6 +16,7 @@
 #include <sstream>
 #include <string>
 #include <time.h>
+#include <math.h>
 
 // OpenNN includes
 
@@ -35,8 +36,10 @@ int main()
 
         DataSet data_set("../data/airline_passengers.csv", ',', true);
 
-        data_set.set_lags_number(2);
+        int lags_number = 2;
+        data_set.set_lags_number(lags_number);
         data_set.set_steps_ahead_number(1);
+        data_set.split_samples_sequential(type(0.7), type(0), type(0.3));
 
         data_set.transform_time_series();
 
@@ -45,33 +48,29 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
-       // data_set.print_data();
-
         data_set.set_columns_scalers(MinimumMaximum);
 
         // Neural network
 
-        const Index hidden_neurons_number = 10;
+        const Index hidden_neurons_number = 64;
 
-//        NeuralNetwork neural_network(NeuralNetwork::Approximation, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::Forecasting, {input_variables_number, hidden_neurons_number, target_variables_number});
 
-        NeuralNetwork neural_network;
+//        NeuralNetwork neural_network;
 
-        ScalingLayer scaling_layer(input_variables_number);
-        RecurrentLayer recurrent_layer(input_variables_number,hidden_neurons_number);
-        PerceptronLayer perceptron1_layer(input_variables_number,hidden_neurons_number);
-        PerceptronLayer perceptron_layer(hidden_neurons_number,target_variables_number);
-        UnscalingLayer unscaling_layer(target_variables_number);
-        BoundingLayer bounding_layer(target_variables_number);
+//        ScalingLayer scaling_layer(input_variables_number);
+//        RecurrentLayer recurrent_layer(input_variables_number,hidden_neurons_number);
+//        PerceptronLayer perceptron1_layer(input_variables_number,hidden_neurons_number);
+//        PerceptronLayer perceptron_layer(hidden_neurons_number,target_variables_number);
+//        UnscalingLayer unscaling_layer(target_variables_number);
+//        BoundingLayer bounding_layer(target_variables_number);
 
-        neural_network.add_layer(&scaling_layer);
-        neural_network.add_layer(&perceptron1_layer);
+//        neural_network.add_layer(&scaling_layer);
+//        //neural_network.add_layer(&perceptron1_layer);
 //        neural_network.add_layer(&recurrent_layer);
-        neural_network.add_layer(&perceptron_layer);
-        neural_network.add_layer(&unscaling_layer);
-        neural_network.add_layer(&bounding_layer);
-
-        neural_network.print();
+//        neural_network.add_layer(&perceptron_layer);
+//        neural_network.add_layer(&unscaling_layer);
+//        neural_network.add_layer(&bounding_layer);
 
         // Training strategy
 
@@ -81,56 +80,40 @@ int main()
 
         training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-//        AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
-//        adam->set_loss_goal(type(1.0e-3));
-//        adam->set_maximum_epochs_number(1000);
-//        adam->set_display_period(100);
-
         const TrainingResults training_results = training_strategy.perform_training();
 
-/*
-        // Model selection
-
-        ModelSelection model_selection(&training_strategy);
-
-        GrowingNeurons* growing_neurons_pointer = model_selection.get_growing_neurons_pointer();
-        growing_neurons_pointer->set_neurons_increment(5);
-        growing_neurons_pointer->set_maximum_neurons_number(50);
-
-//        model_selection.perform_neurons_selection();
-
-        model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
-
-//        model_selection.perform_inputs_selection();
-
-        GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
-        genetic_algorithm_pointer->set_elitism_size(0);
-        genetic_algorithm_pointer->set_individuals_number(4);
-        genetic_algorithm_pointer->set_maximum_epochs_number(20);
-
-        genetic_algorithm_pointer->perform_inputs_selection();
-
-*/
-        // Testing analysis
+        // Testing Analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Tensor<type, 1> confusion_matrix = testing_analysis.calculate_testing_errors();
+        Tensor<type,1> testing_errors = testing_analysis.calculate_testing_errors();
 
-        cout << "Testing Mean Squared Error:" << endl;
-        cout << confusion_matrix[1] << endl;
+        cout << "Testing MSE: " << endl;
+        cout << testing_errors(1) <<endl;
 
-//        const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis
-//                = testing_analysis.perform_linear_regression_analysis()[0];
+        cout << "Lag 1 MSE:" <<endl;
+        cout << testing_analysis.calculate_lag_1_mse() <<endl;
 
-//        linear_regression_analysis.print();
 
-        // Calculate outputs
+        // Calculate and export outputs
 
-        Tensor<type, 2> input_data = data_set.get_input_data();
-        Tensor<type, 2> output_data = neural_network.calculate_outputs(input_data);
+        data_set.get_training_input_data();
 
-        // Save results
+        Tensor<type, 2> testing_input_data = data_set.get_testing_input_data();
+        Tensor<type, 2> testing_output_data = neural_network.calculate_outputs(testing_input_data);
+
+        ofstream output_data_file;
+        output_data_file.open("output_LSTM.csv");
+
+        for(Index i= 0; i < lags_number; i++){
+            output_data_file << testing_input_data(i) << ";" << ""  <<endl;
+        }
+        for(Index i= lags_number; i < testing_input_data.dimensions()[0]; i++){
+            output_data_file << testing_input_data(i) << ";" << testing_output_data(i-lags_number) <<endl;
+        }
+
+
+        // Save network results
 
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_python("../data/neural_network.py");

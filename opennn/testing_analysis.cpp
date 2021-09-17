@@ -610,6 +610,8 @@ void TestingAnalysis::print_error_data_descriptives() const
 }
 
 
+
+
 /// Calculates histograms for the relative errors of all the output variables.
 /// The number of bins is set by the user.
 /// @param bins_number Number of bins in the histograms.
@@ -799,7 +801,7 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
 
     // Results
 
-    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
+    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum();
 
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/training_samples_number;
@@ -848,7 +850,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
     Tensor<type, 1> errors(6);
 
     // Results
-    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
+    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum();
 
     // SSE
     errors(0) = sum_squared_error(0);
@@ -910,7 +912,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_erro
 
     // Results
 
-    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
+    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum();
 
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/training_samples_number;
@@ -960,7 +962,7 @@ Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
 
     // Results
 
-    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
+    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum();
 
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/selection_samples_number;
@@ -1010,7 +1012,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_error
 
     // Results
 
-    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
+    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum();
 
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/selection_samples_number;
@@ -1062,7 +1064,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_err
 
     // Results
 
-    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
+    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum();
 
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/selection_samples_number;
@@ -1122,7 +1124,7 @@ Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
 
     // Results
 
-    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
+    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum();
 
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/testing_samples_number;
@@ -1183,7 +1185,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors(
 
     // Results
 
-    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
+    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum();
 
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/testing_samples_number;
@@ -1245,7 +1247,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
 
     // Results
 
-    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
+    const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum();
 
     errors(0) = sum_squared_error(0);
     errors(1) = errors(0)/testing_samples_number;
@@ -3395,6 +3397,22 @@ void TestingAnalysis::save_misclassified_samples_probability_histogram(const Ten
 
     Histogram misclassified_samples_histogram(misclassified_numerical_probabilities);
     misclassified_samples_histogram.save(histogram_file_name);
+}
+
+
+type TestingAnalysis::calculate_lag_1_mse() const
+{
+    type lag_1_mse = 0;
+
+    Tensor<type, 2> testing_input_data = data_set_pointer->get_testing_input_data();
+    const Index testing_samples_number = data_set_pointer->get_testing_samples_number();
+
+    for(Index i = 1; i < testing_samples_number; i++){
+        lag_1_mse = lag_1_mse + ( testing_input_data(i) - testing_input_data(i-1) ) * ( testing_input_data(i) - testing_input_data(i-1) );
+    }
+    lag_1_mse = lag_1_mse / testing_samples_number;
+
+    return lag_1_mse;
 }
 
 

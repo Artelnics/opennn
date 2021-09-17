@@ -160,6 +160,8 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 
     type normalization_coefficient = 0;
 
+#pragma omp parallel for reduction(+: normalization_coefficient)
+
     for(Index i = 0; i < target_samples_number; i++)
     {
         for(Index j = 0; j < target_varaibles_number; j++)
