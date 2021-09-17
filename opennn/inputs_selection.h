@@ -29,12 +29,11 @@ namespace OpenNN
 
 struct InputsSelectionResults;
 
-/// This abstract class represents the concept of inputs selection algorithm for a ModelSelection[1].
+/// This abstract class represents the concept of inputs selection algorithm for a ModelSelection.
 
-///
 /// Any derived class must implement the perform_inputs_selection() method.
 ///
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
+/// Neural Designer "Model Selection Algorithms in Predictive Analytics."
 /// \ref https://www.neuraldesigner.com/blog/model-selection
 
 class InputsSelection

@@ -30,9 +30,9 @@ namespace OpenNN
 
 struct GrowingNeuronsResults;
 
-/// This concrete class represents an growing neurons algorithm for the NeuronsSelection as part of the ModelSelection[1] class.
+/// This concrete class represents a growing neurons algorithm for the NeuronsSelection as part of the ModelSelection class.
 
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
+/// Neural Designer "Model Selection Algorithms in Predictive Analytics."
 /// \ref https://www.neuraldesigner.com/blog/model-selection
 
 class GrowingNeurons : public NeuronsSelection

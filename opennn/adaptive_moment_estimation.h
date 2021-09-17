@@ -38,8 +38,7 @@ namespace OpenNN
 
 struct AdaptiveMomentEstimationData;
 
-/// This concrete class represents the adaptive moment estimation(Adam) training algorithm,
-/// based on adaptive estimates of lower-order moments.
+/// This concrete class represents the adaptive moment estimation (Adam) optimization algorithm, based on adaptive estimates of lower-order moments.
 
 ///
 /// For more information visit:
@@ -173,6 +172,8 @@ private:
 
 };
 
+
+/// This structure contains the data for the adaptive moment estimation (Adam) optimization algorithm.
 
 struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 {

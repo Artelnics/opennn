@@ -26,7 +26,6 @@ namespace OpenNN
 
 /// This class represents the cross entropy error term, used for predicting probabilities.
 
-///
 /// This functional is used in classification problems.
 
 class CrossEntropyError : public LossIndex

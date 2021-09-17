@@ -29,15 +29,14 @@
 
 namespace OpenNN
 {
-/// This concrete class represents a genetic algorithm, inspired by the process of natural selection[1] such as mutation,
-/// crossover and selection.
 
-///
-/// This algorithm are commonly used in optimization and search problems. if the data_set has many inputs,
+/// This concrete class represents a genetic algorithm, inspired by the process of natural selection such as mutation, crossover and selection.
+
+/// This algorithm is commonly used in optimization and search problems. If the data set has many inputs,
 /// but we do not know how they affect the target,
 /// then this algorithm provides the best possible combination of variables to optimize the problem.
 ///
-/// \cite 1 Neural Designer "Genetic Algorithms for Feature Selection."
+/// \cite Neural Designer "Genetic Algorithms for Feature Selection."
 /// \ref https://www.neuraldesigner.com/blog/genetic_algorithms_for_feature_selection
 
 class GeneticAlgorithm : public InputsSelection

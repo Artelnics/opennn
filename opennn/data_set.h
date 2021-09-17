@@ -44,9 +44,8 @@ using namespace Eigen;
 namespace OpenNN
 {
 
-/// This class represents the concept of data set for data modelling problems, such as approximation, classification or forecasting.
+/// This class represents the concept of a data set for data modelling problems, such as approximation, classification or forecasting.
 
-///
 /// It basically consists of a data Matrix separated by columns.
 /// These columns can take different categories depending on the data hosted in them.
 ///
@@ -880,6 +879,8 @@ private:
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"
 #endif
+
+/// This structure contains the batches of the data set.
 
 struct DataSetBatch
 {
