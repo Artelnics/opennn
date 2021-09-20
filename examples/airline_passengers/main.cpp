@@ -52,25 +52,25 @@ int main()
 
         // Neural network
 
-        const Index hidden_neurons_number = 64;
+        const Index hidden_neurons_number = 32;
 
-        NeuralNetwork neural_network(NeuralNetwork::Forecasting, {input_variables_number, hidden_neurons_number, target_variables_number});
+//        NeuralNetwork neural_network(NeuralNetwork::Forecasting, {input_variables_number, hidden_neurons_number, target_variables_number});
 
-//        NeuralNetwork neural_network;
+        NeuralNetwork neural_network;
 
-//        ScalingLayer scaling_layer(input_variables_number);
-//        RecurrentLayer recurrent_layer(input_variables_number,hidden_neurons_number);
-//        PerceptronLayer perceptron1_layer(input_variables_number,hidden_neurons_number);
-//        PerceptronLayer perceptron_layer(hidden_neurons_number,target_variables_number);
-//        UnscalingLayer unscaling_layer(target_variables_number);
-//        BoundingLayer bounding_layer(target_variables_number);
+        ScalingLayer scaling_layer(input_variables_number);
+        RecurrentLayer recurrent_layer(input_variables_number,hidden_neurons_number);
+        PerceptronLayer perceptron1_layer(input_variables_number,hidden_neurons_number);
+        PerceptronLayer perceptron_layer(hidden_neurons_number,target_variables_number);
+        UnscalingLayer unscaling_layer(target_variables_number);
+        BoundingLayer bounding_layer(target_variables_number);
 
-//        neural_network.add_layer(&scaling_layer);
-//        //neural_network.add_layer(&perceptron1_layer);
-//        neural_network.add_layer(&recurrent_layer);
-//        neural_network.add_layer(&perceptron_layer);
-//        neural_network.add_layer(&unscaling_layer);
-//        neural_network.add_layer(&bounding_layer);
+        neural_network.add_layer(&scaling_layer);
+        //neural_network.add_layer(&perceptron1_layer);
+        neural_network.add_layer(&recurrent_layer);
+        neural_network.add_layer(&perceptron_layer);
+        neural_network.add_layer(&unscaling_layer);
+        neural_network.add_layer(&bounding_layer);
 
         // Training strategy
 
@@ -117,6 +117,9 @@ int main()
 
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_python("../data/neural_network.py");
+
+        const Index vector[5] = {1,2,3,4,5};
+        cout << vector[1] << endl;
 
         cout << "End Airline Passengers Example" << endl;
 
