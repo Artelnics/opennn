@@ -118,9 +118,6 @@ int main()
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_python("../data/neural_network.py");
 
-        const Index vector[5] = {1,2,3,4,5};
-        cout << vector[1] << endl;
-
         cout << "End Airline Passengers Example" << endl;
 
         return 0;

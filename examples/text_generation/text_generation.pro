@@ -18,7 +18,7 @@ mac{
     CONFIG-=app_bundle
 }
 
-TARGET = bankruptcy
+TARGET = text_generation
 
 DESTDIR = "$$PWD/bin"
 

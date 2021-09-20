@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.org
 //
-//   B A N K R U P T C Y
+//   T E X T   G E N E R A T I O N   E X A M P L E
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -37,19 +37,77 @@ using namespace OpenNN;
 using namespace std;
 using namespace chrono;
 
+string read_text(const string& filename)
+{
+    string text;
 
+    // Reads a CSV file into a vector of vector<int>
+    ifstream myFile(filename);
+
+    // Make sure the file is open
+    if(!myFile.is_open()) throw runtime_error("Could not open file");
+
+    string line;
+
+    // Read data, line by line
+    while(getline(myFile, line))
+    {
+        // Erase semicolons ";"
+        erase(line,' ');
+        text.append(line);
+    }
+
+    myFile.close();
+    return text;
+}
+
+string create_character_list(const string& text)
+{
+    string character_list;
+    for (auto i : text)
+    {
+        if( character_list.find(i) == string::npos)
+        {
+            character_list.append(&i);
+        }
+    }
+    return character_list;
+}
+
+Tensor<int,2> text_to_one_hot(const string& text, const string& character_list)
+{
+    Tensor<int,2> one_hot(text.length(),character_list.length());
+
+    int index;
+    for(Index i=0; i<text.length();i++)
+    {
+        for(Index j=0; j<character_list.length();j++)
+        {
+           one_hot(i,j)=0;
+        }
+        index = character_list.find(text[i]);
+        cout << index << endl;
+        one_hot(i,index)=1;
+        cout << one_hot(i,index)<< endl;
+    }
+
+    return one_hot;
+}
 
 int main(void)
 {
     try
     {
-//        cout << "OpenNN. Bankruptcy Example." << endl;
 
-//        srand(static_cast<unsigned>(time(nullptr)));
+        cout << "OpenNN. Text Generation Example." << endl;
 
 //        // Dataset
 
-//        DataSet data_set("../data/bankruptcy.csv", ';', true);
+        string text = read_text("../data/text_generation.csv");
+        string character_list = create_character_list(text);
+        cout << character_list <<endl;
+        Tensor<int, 2> one_hot = text_to_one_hot(text,character_list);
+
 
 //        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
 //        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
@@ -124,6 +182,8 @@ int main(void)
 //        data_set.save("../data/data_set.xml");
 //        neural_network.save("../data/neural_network.xml");
 //        training_strategy.save("../data/training_strategy.xml");
+
+        cout << "End Text Generation Example" << endl;
 
         return 0;
     }
