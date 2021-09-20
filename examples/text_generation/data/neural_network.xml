@@ -1,0 +1,77 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>6</InputsNumber>
+      <Input Index="1">industrial_risk</Input>
+      <Input Index="2"> management_risk</Input>
+      <Input Index="3"> financial_flexibility</Input>
+      <Input Index="4"> credibility</Input>
+      <Input Index="5"> competitiveness</Input>
+      <Input Index="6"> class</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>6</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.482</Mean>
+            <StandardDeviation>0.411526</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.386</Mean>
+            <StandardDeviation>0.410705</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="3">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.376</Mean>
+            <StandardDeviation>0.401583</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="4">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.47</Mean>
+            <StandardDeviation>0.415682</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="5">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.476</Mean>
+            <StandardDeviation>0.440682</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="6">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.428</Mean>
+            <StandardDeviation>0.495781</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer_0</LayerName>
+         <InputsNumber>6</InputsNumber>
+         <NeuronsNumber>3</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>1.0489 -0.277338 0.393689 -0.89612 -0.173073 0.26765 0.0200797 -0.302918 1.1923 0.304461 0.829209 -0.215374 -0.368434 0.827596 0.485095 -0.566895 1.66832 -0.97796 -0.217995 -0.360905 -0.266156</Parameters>
+      </PerceptronLayer>
+      <ProbabilisticLayer>
+         <InputsNumber>3</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Logistic</ActivationFunction>
+         <Parameters>-0.799796 -1.65748 -1.84139 1.38541</Parameters>
+         <DecisionThreshold>0.5</DecisionThreshold>
+      </ProbabilisticLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1"> operating_risk</Output>
+   </Outputs>
+</NeuralNetwork>
