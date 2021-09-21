@@ -32,31 +32,17 @@ vector<float> scaling_layer(const vector<float>& inputs)
 
 vector<float> perceptron_layer_1(const vector<float>& inputs)
 {
-	vector<float> combinations(10);
+	vector<float> combinations(3);
 
-	combinations[0] = 0.395957 -0.125231*inputs[0] +0.326583*inputs[1] -0.388694*inputs[2] -0.389443*inputs[3];
-	combinations[1] = -0.374394 -0.420275*inputs[0] +0.36244*inputs[1] -0.533691*inputs[2] -0.274081*inputs[3];
-	combinations[2] = -0.52096 -0.0361089*inputs[0] +0.0703434*inputs[1] +0.549457*inputs[2] +0.420585*inputs[3];
-	combinations[3] = 0.522812 +0.146044*inputs[0] +0.062207*inputs[1] -0.411823*inputs[2] -0.750093*inputs[3];
-	combinations[4] = 0.364621 +0.504047*inputs[0] -0.437882*inputs[1] +0.291139*inputs[2] +0.340977*inputs[3];
-	combinations[5] = 0.384518 +0.541423*inputs[0] -0.367351*inputs[1] +0.498336*inputs[2] +0.172826*inputs[3];
-	combinations[6] = -0.600615 +0.0453112*inputs[0] -0.128768*inputs[1] +0.396013*inputs[2] +0.604464*inputs[3];
-	combinations[7] = 0.412966 +0.0497757*inputs[0] +0.19464*inputs[1] -0.500716*inputs[2] -0.42613*inputs[3];
-	combinations[8] = 0.549809 +0.54521*inputs[0] -0.34135*inputs[1] +0.36204*inputs[2] +0.325535*inputs[3];
-	combinations[9] = 0.401373 +0.0593159*inputs[0] +0.046146*inputs[1] -0.53164*inputs[2] -0.39144*inputs[3];
+	combinations[0] = 0.781727 +0.300988*inputs[0] -0.544542*inputs[1] +0.908005*inputs[2] +0.784506*inputs[3];
+	combinations[1] = -1.32728 -0.270756*inputs[0] -0.340506*inputs[1] +1.56101*inputs[2] +0.847262*inputs[3];
+	combinations[2] = 1.36212 +0.276238*inputs[0] +0.344562*inputs[1] -1.59646*inputs[2] -0.85366*inputs[3];
 
-	vector<float> activations(10);
+	vector<float> activations(3);
 
 	activations[0] = tanh(combinations[0]);
 	activations[1] = tanh(combinations[1]);
 	activations[2] = tanh(combinations[2]);
-	activations[3] = tanh(combinations[3]);
-	activations[4] = tanh(combinations[4]);
-	activations[5] = tanh(combinations[5]);
-	activations[6] = tanh(combinations[6]);
-	activations[7] = tanh(combinations[7]);
-	activations[8] = tanh(combinations[8]);
-	activations[9] = tanh(combinations[9]);
 
 	return activations;
 }
@@ -65,9 +51,9 @@ vector<float> probabilistic_layer(const vector<float>& inputs)
 {
 	vector<float> combinations(3);
 
-	combinations[0] = -0.122392 +0.45217*inputs[0] +0.346158*inputs[1] -0.409535*inputs[2] +0.427543*inputs[3] -0.399237*inputs[4] -0.354133*inputs[5] -0.433496*inputs[6] +0.391537*inputs[7] -0.503915*inputs[8] +0.454471*inputs[9];
-	combinations[1] = 0.0803996 +0.308758*inputs[0] -0.64641*inputs[1] -0.816637*inputs[2] +0.532274*inputs[3] +0.488053*inputs[4] +0.684737*inputs[5] -0.628385*inputs[6] +0.246522*inputs[7] +0.673086*inputs[8] +0.456811*inputs[9];
-	combinations[2] = -0.0582235 -0.621868*inputs[0] -0.441797*inputs[1] +0.620912*inputs[2] -0.547483*inputs[3] +0.43949*inputs[4] +0.351803*inputs[5] +0.624807*inputs[6] -0.736667*inputs[7] +0.231193*inputs[8] -0.585228*inputs[9];
+	combinations[0] = 0.0786849 -1.90218*inputs[0] -0.814465*inputs[1] +0.75483*inputs[2];
+	combinations[1] = -0.317505 +1.90188*inputs[0] -1.21376*inputs[1] +1.26086*inputs[2];
+	combinations[2] = 0.238142 +0.392132*inputs[0] +1.83407*inputs[1] -1.82901*inputs[2];
 
 	vector<float> activations(3);
 
