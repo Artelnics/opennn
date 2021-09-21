@@ -36,10 +36,11 @@ int main()
 
         DataSet data_set("../data/airline_passengers.csv", ',', true);
 
-        int lags_number = 2;
+        const int lags_number = 2;
+
         data_set.set_lags_number(lags_number);
+
         data_set.set_steps_ahead_number(1);
-        data_set.split_samples_sequential(type(0.7), type(0), type(0.3));
 
         data_set.transform_time_series();
 
@@ -52,25 +53,9 @@ int main()
 
         // Neural network
 
-        const Index hidden_neurons_number = 32;
+        const Index hidden_neurons_number = 16;
 
-//        NeuralNetwork neural_network(NeuralNetwork::Forecasting, {input_variables_number, hidden_neurons_number, target_variables_number});
-
-        NeuralNetwork neural_network;
-
-        ScalingLayer scaling_layer(input_variables_number);
-        RecurrentLayer recurrent_layer(input_variables_number,hidden_neurons_number);
-        PerceptronLayer perceptron1_layer(input_variables_number,hidden_neurons_number);
-        PerceptronLayer perceptron_layer(hidden_neurons_number,target_variables_number);
-        UnscalingLayer unscaling_layer(target_variables_number);
-        BoundingLayer bounding_layer(target_variables_number);
-
-        neural_network.add_layer(&scaling_layer);
-        //neural_network.add_layer(&perceptron1_layer);
-        neural_network.add_layer(&recurrent_layer);
-        neural_network.add_layer(&perceptron_layer);
-        neural_network.add_layer(&unscaling_layer);
-        neural_network.add_layer(&bounding_layer);
+        NeuralNetwork neural_network(NeuralNetwork::Forecasting, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         // Training strategy
 
@@ -88,13 +73,6 @@ int main()
 
         Tensor<type,1> testing_errors = testing_analysis.calculate_testing_errors();
 
-        cout << "Testing MSE: " << endl;
-        cout << testing_errors(1) <<endl;
-
-        cout << "Lag 1 MSE:" <<endl;
-        cout << testing_analysis.calculate_lag_1_mse() <<endl;
-
-
         // Calculate and export outputs
 
         data_set.get_training_input_data();
@@ -111,7 +89,6 @@ int main()
         for(Index i= lags_number; i < testing_input_data.dimensions()[0]; i++){
             output_data_file << testing_input_data(i) << ";" << testing_output_data(i-lags_number) <<endl;
         }
-
 
         // Save network results
 
