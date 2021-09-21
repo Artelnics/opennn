@@ -50,9 +50,9 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
-//        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-//        const TrainingResults training_results = training_strategy.perform_training();
+        const TrainingResults training_results = training_strategy.perform_training();
 
         // Model selection
 
@@ -86,8 +86,8 @@ int main()
 
         // Save results
 
-//        neural_network.save("../data/neural_network.xml");
-//        neural_network.save_expression_python("../data/neural_network.py");
+        neural_network.save("../data/neural_network.xml");
+        neural_network.save_expression_python("../data/neural_network.py");
 
         cout << "End Airfoil Self-Noise Example" << endl;
 

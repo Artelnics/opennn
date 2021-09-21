@@ -859,6 +859,63 @@ void replace(string& source, const string& find_what, const string& replace_with
         position += replace_with.length();
     }
 }
+
+
+string create_character_list(const string& text)
+{
+    string character_list;
+
+    for(auto i : text)
+    {
+        if(character_list.find(i) == string::npos)
+        {
+            character_list.append(&i);
+        }
+    }
+    return character_list;
+}
+
+
+Tensor<type,2> text_to_one_hot(const string& text, const string& character_list)
+{
+    Tensor<type,2> one_hot( text.length(), character_list.length());
+
+    one_hot.setZero();
+
+    int hot_index;
+
+    for(Index i = 0; i < int( text.length() ); i++)
+    {
+        hot_index = character_list.find(text[i]);
+
+        one_hot(i, hot_index) = 1;
+    }
+
+    return one_hot;
+}
+
+
+string one_hot_to_text(Tensor<type,2>& one_hot, const string& character_list)
+{
+    string text;
+
+    const Tensor<type, 2>::Dimensions& dim = one_hot.dimensions();
+
+    for(Index i = 0; i < dim[0] ; i++)
+    {
+        for(Index j=0; j < dim[1]; j++)
+        {
+            if(one_hot(i,j)==1)
+            {
+                text.push_back(character_list[j]);
+            }
+        }
+    }
+
+    return text;
+}
+
+
 }
 
 // OpenNN: Open Neural Networks Library.

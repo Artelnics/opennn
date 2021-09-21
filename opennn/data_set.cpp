@@ -8441,6 +8441,40 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 }
 
 
+void DataSet::read_text()
+{
+    string text;
+
+    ifstream file(data_file_name.c_str());
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_input_csv() method.\n"
+               << "Cannot open input data file: " << data_file_name << " for filling input data file. \n";
+
+        throw logic_error(buffer.str());
+    }
+
+    string line;
+
+    while(getline(file, line))
+    {
+        erase(line,';');
+        text.append(line);
+    }
+
+    const string character_list = create_character_list(text);
+
+    //cout << character_list << endl;
+    Tensor<type,2> one_hot = text_to_one_hot(text, character_list);
+
+    set(one_hot);
+}
+
+
 /// Returns a vector containing the number of samples of each class in the data set.
 /// If the number of target variables is one then the number of classes is two.
 /// If the number of target variables is greater than one then the number of classes is equal to the number of target variables.

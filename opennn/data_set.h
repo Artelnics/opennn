@@ -672,6 +672,9 @@ public:
    void check_input_csv(const string&, const char&) const;
    Tensor<type, 2> read_input_csv(const string&, const char&, const string&, const bool&, const bool&) const;
 
+
+   void read_text();
+
    // Trasform methods
 
    void fill_time_series(const Index&);
