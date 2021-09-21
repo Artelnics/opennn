@@ -53,7 +53,7 @@ string read_text(const string& filename)
     while(getline(myFile, line))
     {
         // Erase semicolons ";"
-        erase(line,' ');
+        erase(line,';');
         text.append(line);
     }
 
@@ -74,25 +74,45 @@ string create_character_list(const string& text)
     return character_list;
 }
 
-Tensor<int,2> text_to_one_hot(const string& text, const string& character_list)
+Tensor<type,2> text_to_one_hot(const string& text, const string& character_list)
 {
-    Tensor<int,2> one_hot(text.length(),character_list.length());
+    Tensor<type,2> one_hot(text.length(),character_list.length());
 
-    int index;
-    for(Index i=0; i<text.length();i++)
+    int hot_index;
+    for(Index i=0; i<int(text.length());i++)
     {
-        for(Index j=0; j<character_list.length();j++)
+        for(Index j=0; j<int(character_list.length());j++)
         {
            one_hot(i,j)=0;
         }
-        index = character_list.find(text[i]);
-        cout << index << endl;
-        one_hot(i,index)=1;
-        cout << one_hot(i,index)<< endl;
+        hot_index = character_list.find(text[i]);
+        one_hot(i,hot_index)=1;
     }
-
+    cout << "Transformation text-onehot completed" <<endl;
     return one_hot;
 }
+
+string one_hot_to_text(Tensor<type,2>& &one_hot, const string& character_list)
+{
+    string text;
+
+    const Tensor<type, 2>::Dimensions& dim = one_hot.dimensions(); // dim[0] = text length, dim[1] = character list length
+
+    for(Index i=0; i<dim[0] ; i++)
+    {
+        for(Index j=0; j<dim[1]; j++)
+        {
+            if(one_hot(i,j)==1)
+            {
+                text.push_back(character_list[j]);
+            }
+        }
+    }
+    cout << "Transformation onehot-text completed" <<endl;
+    return text;
+}
+
+
 
 int main(void)
 {
@@ -101,58 +121,64 @@ int main(void)
 
         cout << "OpenNN. Text Generation Example." << endl;
 
-//        // Dataset
+        // Dataset
 
         string text = read_text("../data/text_generation.csv");
+
         string character_list = create_character_list(text);
-        cout << character_list <<endl;
-        Tensor<int, 2> one_hot = text_to_one_hot(text,character_list);
+        cout << "Character list length: " << character_list.length() <<endl;
 
+        Tensor<type, 2> one_hot = text_to_one_hot(text,character_list);
 
-//        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
-//        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
+        DataSet data_set(one_hot);
 
-//        data_set.split_samples_random();
+        int lags_number = 1;
+        data_set.set_lags_number(lags_number);
+        data_set.set_steps_ahead_number(1);
 
-//        const Index input_variables_number = data_set.get_input_variables_number();
-//        const Index target_variables_number = data_set.get_target_variables_number();
+        data_set.transform_time_series();
+        data_set.print();
 
-//        Tensor<string, 1> scaling_inputs_methods(input_variables_number);
-//        scaling_inputs_methods.setConstant("MinimumMaximum");
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
 
-//        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
+        cout << "Input variables number: " << input_variables_number << endl;
 
-//        // Neural network
+        cout << "Target variables number: " << target_variables_number << endl;
 
-//        const Index hidden_neurons_number = 3;
+        // Neural network
 
-//        Tensor<Index, 1> architecture(3);
-//        architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
+        const Index hidden_neurons_number = 1;
 
-//        NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+        Tensor<Index, 1> architecture(3);
+        architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
-//        neural_network.set_inputs_names(inputs_names);
-//        neural_network.set_outputs_names(targets_names);
+        //NeuralNetwork neural_network(NeuralNetwork::Forecasting, architecture);
 
-//        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+        NeuralNetwork neural_network;
 
-//        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-//        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
+        LongShortTermMemoryLayer lstm_layer(input_variables_number,hidden_neurons_number);
+        ProbabilisticLayer probabilistic_layer(hidden_neurons_number,target_variables_number);
 
-//        // Training strategy
+        neural_network.add_layer(&lstm_layer);
+        neural_network.add_layer(&probabilistic_layer);
 
-//        TrainingStrategy training_strategy(&neural_network, &data_set);
+        neural_network.print();
 
-//        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
-//        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+        // Training strategy
 
-//        AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//        adam->set_loss_goal(1.0e-3);
-//        adam->set_maximum_epochs_number(10000);
-//        adam->set_display_period(1000);
+        training_strategy.set_loss_method(TrainingStrategy::CROSS_ENTROPY_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
-//        training_strategy.perform_training();
+        AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
+
+        adam->set_loss_goal(1.0e-3);
+        adam->set_maximum_epochs_number(5);
+        adam->set_display_period(1);
+
+        training_strategy.perform_training();
 
 //        // Testing analysis
 

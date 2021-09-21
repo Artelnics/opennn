@@ -43,6 +43,10 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
+        data_set.print();
+        cout << input_variables_number << "";
+        cout << target_variables_number << endl;
+
         // Neural network
 
         Tensor<Index, 1> architecture(3);

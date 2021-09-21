@@ -42,15 +42,15 @@
       <PerceptronLayer>
          <LayerName>perceptron_layer_1</LayerName>
          <InputsNumber>4</InputsNumber>
-         <NeuronsNumber>10</NeuronsNumber>
+         <NeuronsNumber>3</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>0.395957 -0.374394 -0.52096 0.522812 0.364621 0.384518 -0.600615 0.412966 0.549809 0.401373 -0.125231 0.326583 -0.388694 -0.389443 -0.420275 0.36244 -0.533691 -0.274081 -0.0361089 0.0703434 0.549457 0.420585 0.146044 0.062207 -0.411823 -0.750093 0.504047 -0.437882 0.291139 0.340977 0.541423 -0.367351 0.498336 0.172826 0.0453112 -0.128768 0.396013 0.604464 0.0497757 0.19464 -0.500716 -0.42613 0.54521 -0.34135 0.36204 0.325535 0.0593159 0.046146 -0.53164 -0.39144</Parameters>
+         <Parameters>0.781727 -1.32728 1.36212 0.300988 -0.544542 0.908005 0.784506 -0.270756 -0.340506 1.56101 0.847262 0.276238 0.344562 -1.59646 -0.85366</Parameters>
       </PerceptronLayer>
       <ProbabilisticLayer>
-         <InputsNumber>10</InputsNumber>
+         <InputsNumber>3</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <ActivationFunction>Softmax</ActivationFunction>
-         <Parameters>-0.122392 0.0803996 -0.0582235 0.45217 0.346158 -0.409535 0.427543 -0.399237 -0.354133 -0.433496 0.391537 -0.503915 0.454471 0.308758 -0.64641 -0.816637 0.532274 0.488053 0.684737 -0.628385 0.246522 0.673086 0.456811 -0.621868 -0.441797 0.620912 -0.547483 0.43949 0.351803 0.624807 -0.736667 0.231193 -0.585228</Parameters>
+         <Parameters>0.0786849 -0.317505 0.238142 -1.90218 -0.814465 0.75483 1.90188 -1.21376 1.26086 0.392132 1.83407 -1.82901</Parameters>
          <DecisionThreshold>0.5</DecisionThreshold>
       </ProbabilisticLayer>
    </Layers>
