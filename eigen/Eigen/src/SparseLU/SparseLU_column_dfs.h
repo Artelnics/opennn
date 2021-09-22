@@ -30,7 +30,7 @@
 #ifndef SPARSELU_COLUMN_DFS_H
 #define SPARSELU_COLUMN_DFS_H
 
-template <typename Scalar, typename StorageIndex> class SparseLUImpl;
+template <typename Scalar, typename Index> class SparseLUImpl;
 namespace Eigen {
 
 namespace internal {
@@ -39,8 +39,8 @@ template<typename IndexVector, typename ScalarVector>
 struct column_dfs_traits : no_assignment_operator
 {
   typedef typename ScalarVector::Scalar Scalar;
-  typedef typename IndexVector::Scalar StorageIndex;
-  column_dfs_traits(Index jcol, Index& jsuper, typename SparseLUImpl<Scalar, StorageIndex>::GlobalLU_t& glu, SparseLUImpl<Scalar, StorageIndex>& luImpl)
+  typedef typename IndexVector::Scalar Index;
+  column_dfs_traits(Index jcol, Index& jsuper, typename SparseLUImpl<Scalar, Index>::GlobalLU_t& glu, SparseLUImpl<Scalar, Index>& luImpl)
    : m_jcol(jcol), m_jsuper_ref(jsuper), m_glu(glu), m_luImpl(luImpl)
  {}
   bool update_segrep(Index /*krep*/, Index /*jj*/)
@@ -57,8 +57,8 @@ struct column_dfs_traits : no_assignment_operator
   
   Index m_jcol;
   Index& m_jsuper_ref;
-  typename SparseLUImpl<Scalar, StorageIndex>::GlobalLU_t& m_glu;
-  SparseLUImpl<Scalar, StorageIndex>& m_luImpl;
+  typename SparseLUImpl<Scalar, Index>::GlobalLU_t& m_glu;
+  SparseLUImpl<Scalar, Index>& m_luImpl;
 };
 
 
@@ -89,10 +89,8 @@ struct column_dfs_traits : no_assignment_operator
  *         > 0 number of bytes allocated when run out of space
  * 
  */
-template <typename Scalar, typename StorageIndex>
-Index SparseLUImpl<Scalar,StorageIndex>::column_dfs(const Index m, const Index jcol, IndexVector& perm_r, Index maxsuper, Index& nseg,
-                                                    BlockIndexVector lsub_col, IndexVector& segrep, BlockIndexVector repfnz, IndexVector& xprune,
-                                                    IndexVector& marker, IndexVector& parent, IndexVector& xplore, GlobalLU_t& glu)
+template <typename Scalar, typename Index>
+Index SparseLUImpl<Scalar,Index>::column_dfs(const Index m, const Index jcol, IndexVector& perm_r, Index maxsuper, Index& nseg,  BlockIndexVector lsub_col, IndexVector& segrep, BlockIndexVector repfnz, IndexVector& xprune, IndexVector& marker, IndexVector& parent, IndexVector& xplore, GlobalLU_t& glu)
 {
   
   Index jsuper = glu.supno(jcol); 
@@ -112,13 +110,13 @@ Index SparseLUImpl<Scalar,StorageIndex>::column_dfs(const Index m, const Index j
     // krow was visited before, go to the next nonz; 
     if (kmark == jcol) continue;
     
-    dfs_kernel(StorageIndex(jcol), perm_r, nseg, glu.lsub, segrep, repfnz, xprune, marker2, parent,
+    dfs_kernel(jcol, perm_r, nseg, glu.lsub, segrep, repfnz, xprune, marker2, parent,
                    xplore, glu, nextl, krow, traits);
   } // for each nonzero ... 
   
-  Index fsupc;
-  StorageIndex nsuper = glu.supno(jcol);
-  StorageIndex jcolp1 = StorageIndex(jcol) + 1;
+  Index fsupc, jptr, jm1ptr, ito, ifrom, istop;
+  Index nsuper = glu.supno(jcol);
+  Index jcolp1 = jcol + 1;
   Index jcolm1 = jcol - 1;
   
   // check to see if j belongs in the same supernode as j-1
@@ -129,8 +127,8 @@ Index SparseLUImpl<Scalar,StorageIndex>::column_dfs(const Index m, const Index j
   else 
   {
     fsupc = glu.xsup(nsuper); 
-    StorageIndex jptr = glu.xlsub(jcol); // Not yet compressed
-    StorageIndex jm1ptr = glu.xlsub(jcolm1); 
+    jptr = glu.xlsub(jcol); // Not yet compressed
+    jm1ptr = glu.xlsub(jcolm1); 
     
     // Use supernodes of type T2 : see SuperLU paper
     if ( (nextl-jptr != jptr-jm1ptr-1) ) jsuper = emptyIdxLU;
@@ -148,13 +146,13 @@ Index SparseLUImpl<Scalar,StorageIndex>::column_dfs(const Index m, const Index j
     { // starts a new supernode 
       if ( (fsupc < jcolm1-1) ) 
       { // >= 3 columns in nsuper
-        StorageIndex ito = glu.xlsub(fsupc+1);
+        ito = glu.xlsub(fsupc+1);
         glu.xlsub(jcolm1) = ito; 
-        StorageIndex istop = ito + jptr - jm1ptr; 
-        xprune(jcolm1) = istop; // initialize xprune(jcol-1)
+        istop = ito + jptr - jm1ptr; 
+        xprune(jcolm1) = istop; // intialize xprune(jcol-1)
         glu.xlsub(jcol) = istop; 
         
-        for (StorageIndex ifrom = jm1ptr; ifrom < nextl; ++ifrom, ++ito)
+        for (ifrom = jm1ptr; ifrom < nextl; ++ifrom, ++ito)
           glu.lsub(ito) = glu.lsub(ifrom); 
         nextl = ito;  // = istop + length(jcol)
       }
@@ -166,8 +164,8 @@ Index SparseLUImpl<Scalar,StorageIndex>::column_dfs(const Index m, const Index j
   // Tidy up the pointers before exit
   glu.xsup(nsuper+1) = jcolp1; 
   glu.supno(jcolp1) = nsuper; 
-  xprune(jcol) = StorageIndex(nextl);  // Initialize upper bound for pruning
-  glu.xlsub(jcolp1) = StorageIndex(nextl); 
+  xprune(jcol) = nextl;  // Intialize upper bound for pruning
+  glu.xlsub(jcolp1) = nextl; 
   
   return 0; 
 }

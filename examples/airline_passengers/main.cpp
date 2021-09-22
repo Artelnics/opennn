@@ -30,7 +30,7 @@ int main()
         cout << "OpenNN. Blank application." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
-
+/*
         DataSet data_set("C:/Users/Usuario/Documents/R_100000_samples_101_variables.csv", ',', true);
 
         const Index inputs_number = data_set.get_input_variables_number();
@@ -61,7 +61,7 @@ int main()
         cout << "Good bye!" << endl;
 
         system("pause");
-
+*/
         return 0;
     }
     catch(exception& e)

@@ -64,7 +64,6 @@ HEADERS += \
     sum_squared_error.h\
     normalized_squared_error.h\
     minkowski_error.h \
-    mean_squared_error.h \
     weighted_squared_error.h\
     cross_entropy_error.h \
     training_strategy.h \
@@ -72,7 +71,6 @@ HEADERS += \
     quasi_newton_method.h \
     levenberg_marquardt_algorithm.h\
     gradient_descent.h \
-    stochastic_gradient_descent.h\
     adaptive_moment_estimation.h\
     conjugate_gradient.h\
     model_selection.h \
@@ -113,18 +111,15 @@ SOURCES += \
     stochastic_gradient_descent.cpp \
     training_strategy.cpp \
     optimization_algorithm.cpp \
-    data_set.cpp \
     sum_squared_error.cpp \
     normalized_squared_error.cpp \
     minkowski_error.cpp \
-    mean_squared_error.cpp \
     weighted_squared_error.cpp \
     cross_entropy_error.cpp \
     learning_rate_algorithm.cpp \
     quasi_newton_method.cpp \
     levenberg_marquardt_algorithm.cpp \
     gradient_descent.cpp \
-    stochastic_gradient_descent.cpp\
     adaptive_moment_estimation.cpp\
     conjugate_gradient.cpp \
     model_selection.cpp \

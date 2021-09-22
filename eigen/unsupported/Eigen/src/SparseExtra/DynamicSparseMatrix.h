@@ -33,11 +33,11 @@ namespace Eigen {
   */
 
 namespace internal {
-template<typename _Scalar, int _Options, typename _StorageIndex>
-struct traits<DynamicSparseMatrix<_Scalar, _Options, _StorageIndex> >
+template<typename _Scalar, int _Options, typename _Index>
+struct traits<DynamicSparseMatrix<_Scalar, _Options, _Index> >
 {
   typedef _Scalar Scalar;
-  typedef _StorageIndex StorageIndex;
+  typedef _Index Index;
   typedef Sparse StorageKind;
   typedef MatrixXpr XprKind;
   enum {
@@ -52,12 +52,10 @@ struct traits<DynamicSparseMatrix<_Scalar, _Options, _StorageIndex> >
 };
 }
 
-template<typename _Scalar, int _Options, typename _StorageIndex>
+template<typename _Scalar, int _Options, typename _Index>
  class  DynamicSparseMatrix
-  : public SparseMatrixBase<DynamicSparseMatrix<_Scalar, _Options, _StorageIndex> >
+  : public SparseMatrixBase<DynamicSparseMatrix<_Scalar, _Options, _Index> >
 {
-    typedef SparseMatrixBase<DynamicSparseMatrix> Base;
-    using Base::convert_index;
   public:
     EIGEN_SPARSE_PUBLIC_INTERFACE(DynamicSparseMatrix)
     // FIXME: why are these operator already alvailable ???
@@ -72,21 +70,21 @@ template<typename _Scalar, int _Options, typename _StorageIndex>
 
   protected:
 
-    typedef DynamicSparseMatrix<Scalar,(Flags&~RowMajorBit)|(IsRowMajor?RowMajorBit:0), StorageIndex> TransposedSparseMatrix;
+    typedef DynamicSparseMatrix<Scalar,(Flags&~RowMajorBit)|(IsRowMajor?RowMajorBit:0)> TransposedSparseMatrix;
 
     Index m_innerSize;
-    std::vector<internal::CompressedStorage<Scalar,StorageIndex> > m_data;
+    std::vector<internal::CompressedStorage<Scalar,Index> > m_data;
 
   public:
 
     inline Index rows() const { return IsRowMajor ? outerSize() : m_innerSize; }
     inline Index cols() const { return IsRowMajor ? m_innerSize : outerSize(); }
     inline Index innerSize() const { return m_innerSize; }
-    inline Index outerSize() const { return convert_index(m_data.size()); }
+    inline Index outerSize() const { return static_cast<Index>(m_data.size()); }
     inline Index innerNonZeros(Index j) const { return m_data[j].size(); }
 
-    std::vector<internal::CompressedStorage<Scalar,StorageIndex> >& _data() { return m_data; }
-    const std::vector<internal::CompressedStorage<Scalar,StorageIndex> >& _data() const { return m_data; }
+    std::vector<internal::CompressedStorage<Scalar,Index> >& _data() { return m_data; }
+    const std::vector<internal::CompressedStorage<Scalar,Index> >& _data() const { return m_data; }
 
     /** \returns the coefficient value at given position \a row, \a col
       * This operation involes a log(rho*outer_size) binary search.
@@ -123,7 +121,7 @@ template<typename _Scalar, int _Options, typename _StorageIndex>
     {
       Index res = 0;
       for (Index j=0; j<outerSize(); ++j)
-        res += m_data[j].size();
+        res += static_cast<Index>(m_data[j].size());
       return res;
     }
 
@@ -187,7 +185,7 @@ template<typename _Scalar, int _Options, typename _StorageIndex>
     /** Does nothing: provided for compatibility with SparseMatrix */
     inline void finalize() {}
 
-    /** Suppress all nonzeros which are smaller than \a reference under the tolerance \a epsilon */
+    /** Suppress all nonzeros which are smaller than \a reference under the tolerence \a epsilon */
     void prune(Scalar reference, RealScalar epsilon = NumTraits<RealScalar>::dummy_precision())
     {
       for (Index j=0; j<outerSize(); ++j)
@@ -199,7 +197,7 @@ template<typename _Scalar, int _Options, typename _StorageIndex>
     void resize(Index rows, Index cols)
     {
       const Index outerSize = IsRowMajor ? rows : cols;
-      m_innerSize = convert_index(IsRowMajor ? cols : rows);
+      m_innerSize = IsRowMajor ? cols : rows;
       setZero();
       if (Index(m_data.size()) != outerSize)
       {
@@ -224,43 +222,31 @@ template<typename _Scalar, int _Options, typename _StorageIndex>
       }
     }
 
-    /** The class DynamicSparseMatrix is deprecated */
+    /** The class DynamicSparseMatrix is deprectaed */
     EIGEN_DEPRECATED inline DynamicSparseMatrix()
       : m_innerSize(0), m_data(0)
     {
-      #ifdef EIGEN_SPARSE_CREATE_TEMPORARY_PLUGIN
-        EIGEN_SPARSE_CREATE_TEMPORARY_PLUGIN
-      #endif
       eigen_assert(innerSize()==0 && outerSize()==0);
     }
 
-    /** The class DynamicSparseMatrix is deprecated */
+    /** The class DynamicSparseMatrix is deprectaed */
     EIGEN_DEPRECATED inline DynamicSparseMatrix(Index rows, Index cols)
       : m_innerSize(0)
     {
-      #ifdef EIGEN_SPARSE_CREATE_TEMPORARY_PLUGIN
-        EIGEN_SPARSE_CREATE_TEMPORARY_PLUGIN
-      #endif
       resize(rows, cols);
     }
 
-    /** The class DynamicSparseMatrix is deprecated */
+    /** The class DynamicSparseMatrix is deprectaed */
     template<typename OtherDerived>
     EIGEN_DEPRECATED explicit inline DynamicSparseMatrix(const SparseMatrixBase<OtherDerived>& other)
       : m_innerSize(0)
     {
-      #ifdef EIGEN_SPARSE_CREATE_TEMPORARY_PLUGIN
-        EIGEN_SPARSE_CREATE_TEMPORARY_PLUGIN
-      #endif
-      Base::operator=(other.derived());
+    Base::operator=(other.derived());
     }
 
     inline DynamicSparseMatrix(const DynamicSparseMatrix& other)
       : Base(), m_innerSize(0)
     {
-      #ifdef EIGEN_SPARSE_CREATE_TEMPORARY_PLUGIN
-        EIGEN_SPARSE_CREATE_TEMPORARY_PLUGIN
-      #endif
       *this = other.derived();
     }
 
@@ -334,10 +320,10 @@ template<typename _Scalar, int _Options, typename _StorageIndex>
 #   endif
  };
 
-template<typename Scalar, int _Options, typename _StorageIndex>
-class DynamicSparseMatrix<Scalar,_Options,_StorageIndex>::InnerIterator : public SparseVector<Scalar,_Options,_StorageIndex>::InnerIterator
+template<typename Scalar, int _Options, typename _Index>
+class DynamicSparseMatrix<Scalar,_Options,_Index>::InnerIterator : public SparseVector<Scalar,_Options,_Index>::InnerIterator
 {
-    typedef typename SparseVector<Scalar,_Options,_StorageIndex>::InnerIterator Base;
+    typedef typename SparseVector<Scalar,_Options,_Index>::InnerIterator Base;
   public:
     InnerIterator(const DynamicSparseMatrix& mat, Index outer)
       : Base(mat.m_data[outer]), m_outer(outer)
@@ -345,16 +331,15 @@ class DynamicSparseMatrix<Scalar,_Options,_StorageIndex>::InnerIterator : public
 
     inline Index row() const { return IsRowMajor ? m_outer : Base::index(); }
     inline Index col() const { return IsRowMajor ? Base::index() : m_outer; }
-    inline Index outer() const { return m_outer; }
 
   protected:
     const Index m_outer;
 };
 
-template<typename Scalar, int _Options, typename _StorageIndex>
-class DynamicSparseMatrix<Scalar,_Options,_StorageIndex>::ReverseInnerIterator : public SparseVector<Scalar,_Options,_StorageIndex>::ReverseInnerIterator
+template<typename Scalar, int _Options, typename _Index>
+class DynamicSparseMatrix<Scalar,_Options,_Index>::ReverseInnerIterator : public SparseVector<Scalar,_Options,_Index>::ReverseInnerIterator
 {
-    typedef typename SparseVector<Scalar,_Options,_StorageIndex>::ReverseInnerIterator Base;
+    typedef typename SparseVector<Scalar,_Options,_Index>::ReverseInnerIterator Base;
   public:
     ReverseInnerIterator(const DynamicSparseMatrix& mat, Index outer)
       : Base(mat.m_data[outer]), m_outer(outer)
@@ -362,42 +347,10 @@ class DynamicSparseMatrix<Scalar,_Options,_StorageIndex>::ReverseInnerIterator :
 
     inline Index row() const { return IsRowMajor ? m_outer : Base::index(); }
     inline Index col() const { return IsRowMajor ? Base::index() : m_outer; }
-    inline Index outer() const { return m_outer; }
 
   protected:
     const Index m_outer;
 };
-
-namespace internal {
-
-template<typename _Scalar, int _Options, typename _StorageIndex>
-struct evaluator<DynamicSparseMatrix<_Scalar,_Options,_StorageIndex> >
-  : evaluator_base<DynamicSparseMatrix<_Scalar,_Options,_StorageIndex> >
-{
-  typedef _Scalar Scalar;
-  typedef DynamicSparseMatrix<_Scalar,_Options,_StorageIndex> SparseMatrixType;
-  typedef typename SparseMatrixType::InnerIterator InnerIterator;
-  typedef typename SparseMatrixType::ReverseInnerIterator ReverseInnerIterator;
-  
-  enum {
-    CoeffReadCost = NumTraits<_Scalar>::ReadCost,
-    Flags = SparseMatrixType::Flags
-  };
-  
-  evaluator() : m_matrix(0) {}
-  evaluator(const SparseMatrixType &mat) : m_matrix(&mat) {}
-  
-  operator SparseMatrixType&() { return m_matrix->const_cast_derived(); }
-  operator const SparseMatrixType&() const { return *m_matrix; }
-  
-  Scalar coeff(Index row, Index col) const { return m_matrix->coeff(row,col); }
-  
-  Index nonZerosEstimate() const { return m_matrix->nonZeros(); }
-
-  const SparseMatrixType *m_matrix;
-};
-
-}
 
 } // end namespace Eigen
 

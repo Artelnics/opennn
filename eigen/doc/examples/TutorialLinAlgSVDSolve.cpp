@@ -11,5 +11,5 @@ int main()
    VectorXf b = VectorXf::Random(3);
    cout << "Here is the right hand side b:\n" << b << endl;
    cout << "The least-squares solution is:\n"
-        << A.bdcSvd(ComputeThinU | ComputeThinV).solve(b) << endl;
+        << A.jacobiSvd(ComputeThinU | ComputeThinV).solve(b) << endl;
 }

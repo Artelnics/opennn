@@ -19,6 +19,7 @@
 template<typename MatrixType>
 void dontalign(const MatrixType& m)
 {
+  typedef typename MatrixType::Index Index;
   typedef typename MatrixType::Scalar Scalar;
   typedef Matrix<Scalar, MatrixType::RowsAtCompileTime, 1> VectorType;
   typedef Matrix<Scalar, MatrixType::RowsAtCompileTime, MatrixType::RowsAtCompileTime> SquareMatrixType;
@@ -44,7 +45,7 @@ void dontalign(const MatrixType& m)
   internal::aligned_delete(array, rows);
 }
 
-EIGEN_DECLARE_TEST(dontalign)
+void test_dontalign()
 {
 #if defined EIGEN_TEST_PART_1 || defined EIGEN_TEST_PART_5
   dontalign(Matrix3d());

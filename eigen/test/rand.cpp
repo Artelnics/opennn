@@ -31,7 +31,7 @@ template<typename Scalar> void check_all_in_range(Scalar x, Scalar y)
   {
     mask( check_in_range(x,y)-x )++;
   }
-  for(Index i=0; i<mask.size(); ++i)
+  for(DenseIndex i=0; i<mask.size(); ++i)
     if(mask(i)==0)
       std::cout << "WARNING: value " << x+i << " not reached." << std::endl;
   VERIFY( (mask>0).all() );
@@ -51,10 +51,10 @@ template<typename Scalar> void check_histogram(Scalar x, Scalar y, int bins)
     Scalar r = check_in_range(x,y);
     hist( int((int64(r)-int64(x))/divisor) )++;
   }
-  VERIFY( (((hist.cast<double>()/double(f))-1.0).abs()<0.03).all() );
+  VERIFY( (((hist.cast<double>()/double(f))-1.0).abs()<0.02).all() );
 }
 
-EIGEN_DECLARE_TEST(rand)
+void test_rand()
 {
   long long_ref = NumTraits<long>::highest()/10;
   signed char char_offset = (std::min)(g_repeat,64);

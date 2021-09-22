@@ -8,7 +8,7 @@
 
 #ifndef CONVOLUTIONALLAYERTEST_H
 #define CONVOLUTIONALLAYERTEST_H
-
+/*
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
@@ -75,8 +75,7 @@ private:
 
   NumericalDifferentiation numerical_differentiation;
 };
-
-
+*/
 #endif
 
 

@@ -45,24 +45,18 @@ namespace LevenbergMarquardtSpace {
 template<typename FunctorType, typename Scalar=double>
 class LevenbergMarquardt
 {
-    static Scalar sqrt_epsilon()
-    {
-      using std::sqrt;
-      return sqrt(NumTraits<Scalar>::epsilon());
-    }
-    
 public:
     LevenbergMarquardt(FunctorType &_functor)
         : functor(_functor) { nfev = njev = iter = 0;  fnorm = gnorm = 0.; useExternalScaling=false; }
 
     typedef DenseIndex Index;
-    
+
     struct Parameters {
         Parameters()
             : factor(Scalar(100.))
             , maxfev(400)
-            , ftol(sqrt_epsilon())
-            , xtol(sqrt_epsilon())
+            , ftol(std::sqrt(NumTraits<Scalar>::epsilon()))
+            , xtol(std::sqrt(NumTraits<Scalar>::epsilon()))
             , gtol(Scalar(0.))
             , epsfcn(Scalar(0.)) {}
         Scalar factor;
@@ -78,7 +72,7 @@ public:
 
     LevenbergMarquardtSpace::Status lmder1(
             FVectorType &x,
-            const Scalar tol = sqrt_epsilon()
+            const Scalar tol = std::sqrt(NumTraits<Scalar>::epsilon())
             );
 
     LevenbergMarquardtSpace::Status minimize(FVectorType &x);
@@ -89,12 +83,12 @@ public:
             FunctorType &functor,
             FVectorType &x,
             Index *nfev,
-            const Scalar tol = sqrt_epsilon()
+            const Scalar tol = std::sqrt(NumTraits<Scalar>::epsilon())
             );
 
     LevenbergMarquardtSpace::Status lmstr1(
             FVectorType  &x,
-            const Scalar tol = sqrt_epsilon()
+            const Scalar tol = std::sqrt(NumTraits<Scalar>::epsilon())
             );
 
     LevenbergMarquardtSpace::Status minimizeOptimumStorage(FVectorType  &x);
@@ -115,7 +109,6 @@ public:
 
     Scalar lm_param(void) { return par; }
 private:
-    
     FunctorType &functor;
     Index n;
     Index m;
@@ -179,7 +172,7 @@ LevenbergMarquardt<FunctorType,Scalar>::minimizeInit(FVectorType  &x)
     fjac.resize(m, n);
     if (!useExternalScaling)
         diag.resize(n);
-    eigen_assert( (!useExternalScaling || diag.size()==n) && "When useExternalScaling is set, the caller must provide a valid 'diag'");
+    eigen_assert( (!useExternalScaling || diag.size()==n) || "When useExternalScaling is set, the caller must provide a valid 'diag'");
     qtf.resize(n);
 
     /* Function Body */
@@ -215,7 +208,7 @@ LevenbergMarquardt<FunctorType,Scalar>::minimizeOneStep(FVectorType  &x)
 {
     using std::abs;
     using std::sqrt;
-
+    
     eigen_assert(x.size()==n); // check the caller is not cheating us
 
     /* calculate the jacobian matrix. */
@@ -398,7 +391,7 @@ LevenbergMarquardt<FunctorType,Scalar>::minimizeOptimumStorageInit(FVectorType  
     fjac.resize(n, n);
     if (!useExternalScaling)
         diag.resize(n);
-    eigen_assert( (!useExternalScaling || diag.size()==n) && "When useExternalScaling is set, the caller must provide a valid 'diag'");
+    eigen_assert( (!useExternalScaling || diag.size()==n) || "When useExternalScaling is set, the caller must provide a valid 'diag'");
     qtf.resize(n);
 
     /* Function Body */

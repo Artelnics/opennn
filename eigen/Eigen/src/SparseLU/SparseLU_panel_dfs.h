@@ -37,11 +37,11 @@ namespace internal {
 template<typename IndexVector>
 struct panel_dfs_traits
 {
-  typedef typename IndexVector::Scalar StorageIndex;
-  panel_dfs_traits(Index jcol, StorageIndex* marker)
+  typedef typename IndexVector::Scalar Index;
+  panel_dfs_traits(Index jcol, Index* marker)
     : m_jcol(jcol), m_marker(marker)
   {}
-  bool update_segrep(Index krep, StorageIndex jj)
+  bool update_segrep(Index krep, Index jj)
   {
     if(m_marker[krep]<m_jcol)
     {
@@ -53,13 +53,13 @@ struct panel_dfs_traits
   void mem_expand(IndexVector& /*glu.lsub*/, Index /*nextl*/, Index /*chmark*/) {}
   enum { ExpandMem = false };
   Index m_jcol;
-  StorageIndex* m_marker;
+  Index* m_marker;
 };
 
 
-template <typename Scalar, typename StorageIndex>
+template <typename Scalar, typename Index>
 template <typename Traits>
-void SparseLUImpl<Scalar,StorageIndex>::dfs_kernel(const StorageIndex jj, IndexVector& perm_r,
+void SparseLUImpl<Scalar,Index>::dfs_kernel(const Index jj, IndexVector& perm_r,
                    Index& nseg, IndexVector& panel_lsub, IndexVector& segrep,
                    Ref<IndexVector> repfnz_col, IndexVector& xprune, Ref<IndexVector> marker, IndexVector& parent,
                    IndexVector& xplore, GlobalLU_t& glu,
@@ -67,14 +67,14 @@ void SparseLUImpl<Scalar,StorageIndex>::dfs_kernel(const StorageIndex jj, IndexV
                   )
 {
   
-  StorageIndex kmark = marker(krow);
+  Index kmark = marker(krow);
       
   // For each unmarked krow of jj
   marker(krow) = jj; 
-  StorageIndex kperm = perm_r(krow); 
+  Index kperm = perm_r(krow); 
   if (kperm == emptyIdxLU ) {
     // krow is in L : place it in structure of L(*, jj)
-    panel_lsub(nextl_col++) = StorageIndex(krow);  // krow is indexed into A
+    panel_lsub(nextl_col++) = krow;  // krow is indexed into A
     
     traits.mem_expand(panel_lsub, nextl_col, kmark);
   }
@@ -83,9 +83,9 @@ void SparseLUImpl<Scalar,StorageIndex>::dfs_kernel(const StorageIndex jj, IndexV
     // krow is in U : if its supernode-representative krep
     // has been explored, update repfnz(*)
     // krep = supernode representative of the current row
-    StorageIndex krep = glu.xsup(glu.supno(kperm)+1) - 1; 
+    Index krep = glu.xsup(glu.supno(kperm)+1) - 1; 
     // First nonzero element in the current column:
-    StorageIndex myfnz = repfnz_col(krep); 
+    Index myfnz = repfnz_col(krep); 
     
     if (myfnz != emptyIdxLU )
     {
@@ -96,26 +96,26 @@ void SparseLUImpl<Scalar,StorageIndex>::dfs_kernel(const StorageIndex jj, IndexV
     else 
     {
       // Otherwise, perform dfs starting at krep
-      StorageIndex oldrep = emptyIdxLU; 
+      Index oldrep = emptyIdxLU; 
       parent(krep) = oldrep; 
       repfnz_col(krep) = kperm; 
-      StorageIndex xdfs =  glu.xlsub(krep); 
+      Index xdfs =  glu.xlsub(krep); 
       Index maxdfs = xprune(krep); 
       
-      StorageIndex kpar;
+      Index kpar;
       do 
       {
         // For each unmarked kchild of krep
         while (xdfs < maxdfs) 
         {
-          StorageIndex kchild = glu.lsub(xdfs); 
+          Index kchild = glu.lsub(xdfs); 
           xdfs++; 
-          StorageIndex chmark = marker(kchild); 
+          Index chmark = marker(kchild); 
           
           if (chmark != jj ) 
           {
             marker(kchild) = jj; 
-            StorageIndex chperm = perm_r(kchild); 
+            Index chperm = perm_r(kchild); 
             
             if (chperm == emptyIdxLU) 
             {
@@ -128,7 +128,7 @@ void SparseLUImpl<Scalar,StorageIndex>::dfs_kernel(const StorageIndex jj, IndexV
               // case kchild is in U :
               // chrep = its supernode-rep. If its rep has been explored, 
               // update its repfnz(*)
-              StorageIndex chrep = glu.xsup(glu.supno(chperm)+1) - 1; 
+              Index chrep = glu.xsup(glu.supno(chperm)+1) - 1; 
               myfnz = repfnz_col(chrep); 
               
               if (myfnz != emptyIdxLU) 
@@ -215,8 +215,8 @@ void SparseLUImpl<Scalar,StorageIndex>::dfs_kernel(const StorageIndex jj, IndexV
  * 
  */
 
-template <typename Scalar, typename StorageIndex>
-void SparseLUImpl<Scalar,StorageIndex>::panel_dfs(const Index m, const Index w, const Index jcol, MatrixType& A, IndexVector& perm_r, Index& nseg, ScalarVector& dense, IndexVector& panel_lsub, IndexVector& segrep, IndexVector& repfnz, IndexVector& xprune, IndexVector& marker, IndexVector& parent, IndexVector& xplore, GlobalLU_t& glu)
+template <typename Scalar, typename Index>
+void SparseLUImpl<Scalar,Index>::panel_dfs(const Index m, const Index w, const Index jcol, MatrixType& A, IndexVector& perm_r, Index& nseg, ScalarVector& dense, IndexVector& panel_lsub, IndexVector& segrep, IndexVector& repfnz, IndexVector& xprune, IndexVector& marker, IndexVector& parent, IndexVector& xplore, GlobalLU_t& glu)
 {
   Index nextl_col; // Next available position in panel_lsub[*,jj] 
   
@@ -227,7 +227,7 @@ void SparseLUImpl<Scalar,StorageIndex>::panel_dfs(const Index m, const Index w, 
   panel_dfs_traits<IndexVector> traits(jcol, marker1.data());
   
   // For each column in the panel 
-  for (StorageIndex jj = StorageIndex(jcol); jj < jcol + w; jj++) 
+  for (Index jj = jcol; jj < jcol + w; jj++) 
   {
     nextl_col = (jj - jcol) * m; 
     
@@ -241,7 +241,7 @@ void SparseLUImpl<Scalar,StorageIndex>::panel_dfs(const Index m, const Index w, 
       Index krow = it.row(); 
       dense_col(krow) = it.value();
       
-      StorageIndex kmark = marker(krow); 
+      Index kmark = marker(krow); 
       if (kmark == jj) 
         continue; // krow visited before, go to the next nonzero
       

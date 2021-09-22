@@ -9,17 +9,16 @@
 
 #include "sparse_solver.h"
 
-template<typename T, typename I_, int flag> void test_simplicial_cholesky_T()
+template<typename T> void test_simplicial_cholesky_T()
 {
-  typedef SparseMatrix<T,flag,I_> SparseMatrixType;
-  SimplicialCholesky<SparseMatrixType, Lower> chol_colmajor_lower_amd;
-  SimplicialCholesky<SparseMatrixType, Upper> chol_colmajor_upper_amd;
-  SimplicialLLT<     SparseMatrixType, Lower> llt_colmajor_lower_amd;
-  SimplicialLLT<     SparseMatrixType, Upper> llt_colmajor_upper_amd;
-  SimplicialLDLT<    SparseMatrixType, Lower> ldlt_colmajor_lower_amd;
-  SimplicialLDLT<    SparseMatrixType, Upper> ldlt_colmajor_upper_amd;
-  SimplicialLDLT<    SparseMatrixType, Lower, NaturalOrdering<I_> > ldlt_colmajor_lower_nat;
-  SimplicialLDLT<    SparseMatrixType, Upper, NaturalOrdering<I_> > ldlt_colmajor_upper_nat;
+  SimplicialCholesky<SparseMatrix<T>, Lower> chol_colmajor_lower_amd;
+  SimplicialCholesky<SparseMatrix<T>, Upper> chol_colmajor_upper_amd;
+  SimplicialLLT<SparseMatrix<T>, Lower> llt_colmajor_lower_amd;
+  SimplicialLLT<SparseMatrix<T>, Upper> llt_colmajor_upper_amd;
+  SimplicialLDLT<SparseMatrix<T>, Lower> ldlt_colmajor_lower_amd;
+  SimplicialLDLT<SparseMatrix<T>, Upper> ldlt_colmajor_upper_amd;
+  SimplicialLDLT<SparseMatrix<T>, Lower, NaturalOrdering<int> > ldlt_colmajor_lower_nat;
+  SimplicialLDLT<SparseMatrix<T>, Upper, NaturalOrdering<int> > ldlt_colmajor_upper_nat;
 
   check_sparse_spd_solving(chol_colmajor_lower_amd);
   check_sparse_spd_solving(chol_colmajor_upper_amd);
@@ -35,16 +34,12 @@ template<typename T, typename I_, int flag> void test_simplicial_cholesky_T()
   check_sparse_spd_determinant(ldlt_colmajor_lower_amd);
   check_sparse_spd_determinant(ldlt_colmajor_upper_amd);
   
-  check_sparse_spd_solving(ldlt_colmajor_lower_nat, (std::min)(300,EIGEN_TEST_MAX_SIZE), 1000);
-  check_sparse_spd_solving(ldlt_colmajor_upper_nat, (std::min)(300,EIGEN_TEST_MAX_SIZE), 1000);
+  check_sparse_spd_solving(ldlt_colmajor_lower_nat);
+  check_sparse_spd_solving(ldlt_colmajor_upper_nat);
 }
 
-EIGEN_DECLARE_TEST(simplicial_cholesky)
+void test_simplicial_cholesky()
 {
-  CALL_SUBTEST_11(( test_simplicial_cholesky_T<double,               int, ColMajor>() ));
-  CALL_SUBTEST_12(( test_simplicial_cholesky_T<std::complex<double>, int, ColMajor>() ));
-  CALL_SUBTEST_13(( test_simplicial_cholesky_T<double,          long int, ColMajor>() ));
-  CALL_SUBTEST_21(( test_simplicial_cholesky_T<double,               int, RowMajor>() ));
-  CALL_SUBTEST_22(( test_simplicial_cholesky_T<std::complex<double>, int, RowMajor>() ));
-  CALL_SUBTEST_23(( test_simplicial_cholesky_T<double,          long int, RowMajor>() ));
+  CALL_SUBTEST_1(test_simplicial_cholesky_T<double>());
+  CALL_SUBTEST_2(test_simplicial_cholesky_T<std::complex<double> >());
 }

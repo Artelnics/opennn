@@ -194,6 +194,7 @@ int main()
          tests_passed_count += probabilistic_layer_test.get_tests_passed_count();
          tests_failed_count += probabilistic_layer_test.get_tests_failed_count();
       }
+/*
       else if(test == "convolutional_layer" || test == "cl")
       {
          ConvolutionalLayerTest layer_test;
@@ -210,6 +211,7 @@ int main()
          tests_passed_count += layer_test.get_tests_passed_count();
          tests_failed_count += layer_test.get_tests_failed_count();
       }
+*/
       else if(test == "neural_network" || test == "nn")
       {
         NeuralNetworkTest neural_network_test;

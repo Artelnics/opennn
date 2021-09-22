@@ -23,6 +23,7 @@ void covar(
         Scalar tol = std::sqrt(NumTraits<Scalar>::epsilon()) )
 {
     using std::abs;
+    typedef DenseIndex Index;
     /* Local variables */
     Index i, j, k, l, ii, jj;
     bool sing;

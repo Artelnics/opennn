@@ -10,7 +10,7 @@
 #ifndef EIGEN_ARRAYWRAPPER_H
 #define EIGEN_ARRAYWRAPPER_H
 
-namespace Eigen {
+namespace Eigen { 
 
 /** \class ArrayWrapper
   * \ingroup Core_Module
@@ -32,8 +32,7 @@ struct traits<ArrayWrapper<ExpressionType> >
   // Let's remove NestByRefBit
   enum {
     Flags0 = traits<typename remove_all<typename ExpressionType::Nested>::type >::Flags,
-    LvalueBitFlag = is_lvalue<ExpressionType>::value ? LvalueBit : 0,
-    Flags = (Flags0 & ~(NestByRefBit | LvalueBit)) | LvalueBitFlag
+    Flags = Flags0 & ~NestByRefBit
   };
 };
 }
@@ -45,7 +44,6 @@ class ArrayWrapper : public ArrayBase<ArrayWrapper<ExpressionType> >
     typedef ArrayBase<ArrayWrapper> Base;
     EIGEN_DENSE_PUBLIC_INTERFACE(ArrayWrapper)
     EIGEN_INHERIT_ASSIGNMENT_OPERATORS(ArrayWrapper)
-    typedef typename internal::remove_all<ExpressionType>::type NestedExpression;
 
     typedef typename internal::conditional<
                        internal::is_lvalue<ExpressionType>::value,
@@ -53,58 +51,87 @@ class ArrayWrapper : public ArrayBase<ArrayWrapper<ExpressionType> >
                        const Scalar
                      >::type ScalarWithConstIfNotLvalue;
 
-    typedef typename internal::ref_selector<ExpressionType>::non_const_type NestedExpressionType;
+    typedef typename internal::nested<ExpressionType>::type NestedExpressionType;
 
-    using Base::coeffRef;
+    inline ArrayWrapper(ExpressionType& matrix) : m_expression(matrix) {}
 
-    EIGEN_DEVICE_FUNC
-    explicit EIGEN_STRONG_INLINE ArrayWrapper(ExpressionType& matrix) : m_expression(matrix) {}
+    inline Index rows() const { return m_expression.rows(); }
+    inline Index cols() const { return m_expression.cols(); }
+    inline Index outerStride() const { return m_expression.outerStride(); }
+    inline Index innerStride() const { return m_expression.innerStride(); }
 
-    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
-    inline Index rows() const EIGEN_NOEXCEPT { return m_expression.rows(); }
-    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
-    inline Index cols() const EIGEN_NOEXCEPT { return m_expression.cols(); }
-    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
-    inline Index outerStride() const EIGEN_NOEXCEPT { return m_expression.outerStride(); }
-    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
-    inline Index innerStride() const EIGEN_NOEXCEPT { return m_expression.innerStride(); }
-
-    EIGEN_DEVICE_FUNC
-    inline ScalarWithConstIfNotLvalue* data() { return m_expression.data(); }
-    EIGEN_DEVICE_FUNC
+    inline ScalarWithConstIfNotLvalue* data() { return m_expression.const_cast_derived().data(); }
     inline const Scalar* data() const { return m_expression.data(); }
 
-    EIGEN_DEVICE_FUNC
-    inline const Scalar& coeffRef(Index rowId, Index colId) const
+    inline CoeffReturnType coeff(Index rowId, Index colId) const
     {
-      return m_expression.coeffRef(rowId, colId);
+      return m_expression.coeff(rowId, colId);
     }
 
-    EIGEN_DEVICE_FUNC
+    inline Scalar& coeffRef(Index rowId, Index colId)
+    {
+      return m_expression.const_cast_derived().coeffRef(rowId, colId);
+    }
+
+    inline const Scalar& coeffRef(Index rowId, Index colId) const
+    {
+      return m_expression.const_cast_derived().coeffRef(rowId, colId);
+    }
+
+    inline CoeffReturnType coeff(Index index) const
+    {
+      return m_expression.coeff(index);
+    }
+
+    inline Scalar& coeffRef(Index index)
+    {
+      return m_expression.const_cast_derived().coeffRef(index);
+    }
+
     inline const Scalar& coeffRef(Index index) const
     {
-      return m_expression.coeffRef(index);
+      return m_expression.const_cast_derived().coeffRef(index);
+    }
+
+    template<int LoadMode>
+    inline const PacketScalar packet(Index rowId, Index colId) const
+    {
+      return m_expression.template packet<LoadMode>(rowId, colId);
+    }
+
+    template<int LoadMode>
+    inline void writePacket(Index rowId, Index colId, const PacketScalar& val)
+    {
+      m_expression.const_cast_derived().template writePacket<LoadMode>(rowId, colId, val);
+    }
+
+    template<int LoadMode>
+    inline const PacketScalar packet(Index index) const
+    {
+      return m_expression.template packet<LoadMode>(index);
+    }
+
+    template<int LoadMode>
+    inline void writePacket(Index index, const PacketScalar& val)
+    {
+      m_expression.const_cast_derived().template writePacket<LoadMode>(index, val);
     }
 
     template<typename Dest>
-    EIGEN_DEVICE_FUNC
     inline void evalTo(Dest& dst) const { dst = m_expression; }
 
-    EIGEN_DEVICE_FUNC
-    const typename internal::remove_all<NestedExpressionType>::type&
-    nestedExpression() const
+    const typename internal::remove_all<NestedExpressionType>::type& 
+    nestedExpression() const 
     {
       return m_expression;
     }
 
     /** Forwards the resizing request to the nested expression
       * \sa DenseBase::resize(Index)  */
-    EIGEN_DEVICE_FUNC
-    void resize(Index newSize) { m_expression.resize(newSize); }
+    void resize(Index newSize) { m_expression.const_cast_derived().resize(newSize); }
     /** Forwards the resizing request to the nested expression
       * \sa DenseBase::resize(Index,Index)*/
-    EIGEN_DEVICE_FUNC
-    void resize(Index rows, Index cols) { m_expression.resize(rows,cols); }
+    void resize(Index nbRows, Index nbCols) { m_expression.const_cast_derived().resize(nbRows,nbCols); }
 
   protected:
     NestedExpressionType m_expression;
@@ -130,8 +157,7 @@ struct traits<MatrixWrapper<ExpressionType> >
   // Let's remove NestByRefBit
   enum {
     Flags0 = traits<typename remove_all<typename ExpressionType::Nested>::type >::Flags,
-    LvalueBitFlag = is_lvalue<ExpressionType>::value ? LvalueBit : 0,
-    Flags = (Flags0 & ~(NestByRefBit | LvalueBit)) | LvalueBitFlag
+    Flags = Flags0 & ~NestByRefBit
   };
 };
 }
@@ -143,7 +169,6 @@ class MatrixWrapper : public MatrixBase<MatrixWrapper<ExpressionType> >
     typedef MatrixBase<MatrixWrapper<ExpressionType> > Base;
     EIGEN_DENSE_PUBLIC_INTERFACE(MatrixWrapper)
     EIGEN_INHERIT_ASSIGNMENT_OPERATORS(MatrixWrapper)
-    typedef typename internal::remove_all<ExpressionType>::type NestedExpression;
 
     typedef typename internal::conditional<
                        internal::is_lvalue<ExpressionType>::value,
@@ -151,54 +176,84 @@ class MatrixWrapper : public MatrixBase<MatrixWrapper<ExpressionType> >
                        const Scalar
                      >::type ScalarWithConstIfNotLvalue;
 
-    typedef typename internal::ref_selector<ExpressionType>::non_const_type NestedExpressionType;
+    typedef typename internal::nested<ExpressionType>::type NestedExpressionType;
 
-    using Base::coeffRef;
+    inline MatrixWrapper(ExpressionType& a_matrix) : m_expression(a_matrix) {}
 
-    EIGEN_DEVICE_FUNC
-    explicit inline MatrixWrapper(ExpressionType& matrix) : m_expression(matrix) {}
+    inline Index rows() const { return m_expression.rows(); }
+    inline Index cols() const { return m_expression.cols(); }
+    inline Index outerStride() const { return m_expression.outerStride(); }
+    inline Index innerStride() const { return m_expression.innerStride(); }
 
-    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
-    inline Index rows() const EIGEN_NOEXCEPT { return m_expression.rows(); }
-    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
-    inline Index cols() const EIGEN_NOEXCEPT { return m_expression.cols(); }
-    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
-    inline Index outerStride() const EIGEN_NOEXCEPT { return m_expression.outerStride(); }
-    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
-    inline Index innerStride() const EIGEN_NOEXCEPT { return m_expression.innerStride(); }
-
-    EIGEN_DEVICE_FUNC
-    inline ScalarWithConstIfNotLvalue* data() { return m_expression.data(); }
-    EIGEN_DEVICE_FUNC
+    inline ScalarWithConstIfNotLvalue* data() { return m_expression.const_cast_derived().data(); }
     inline const Scalar* data() const { return m_expression.data(); }
 
-    EIGEN_DEVICE_FUNC
+    inline CoeffReturnType coeff(Index rowId, Index colId) const
+    {
+      return m_expression.coeff(rowId, colId);
+    }
+
+    inline Scalar& coeffRef(Index rowId, Index colId)
+    {
+      return m_expression.const_cast_derived().coeffRef(rowId, colId);
+    }
+
     inline const Scalar& coeffRef(Index rowId, Index colId) const
     {
       return m_expression.derived().coeffRef(rowId, colId);
     }
 
-    EIGEN_DEVICE_FUNC
-    inline const Scalar& coeffRef(Index index) const
+    inline CoeffReturnType coeff(Index index) const
     {
-      return m_expression.coeffRef(index);
+      return m_expression.coeff(index);
     }
 
-    EIGEN_DEVICE_FUNC
-    const typename internal::remove_all<NestedExpressionType>::type&
-    nestedExpression() const
+    inline Scalar& coeffRef(Index index)
+    {
+      return m_expression.const_cast_derived().coeffRef(index);
+    }
+
+    inline const Scalar& coeffRef(Index index) const
+    {
+      return m_expression.const_cast_derived().coeffRef(index);
+    }
+
+    template<int LoadMode>
+    inline const PacketScalar packet(Index rowId, Index colId) const
+    {
+      return m_expression.template packet<LoadMode>(rowId, colId);
+    }
+
+    template<int LoadMode>
+    inline void writePacket(Index rowId, Index colId, const PacketScalar& val)
+    {
+      m_expression.const_cast_derived().template writePacket<LoadMode>(rowId, colId, val);
+    }
+
+    template<int LoadMode>
+    inline const PacketScalar packet(Index index) const
+    {
+      return m_expression.template packet<LoadMode>(index);
+    }
+
+    template<int LoadMode>
+    inline void writePacket(Index index, const PacketScalar& val)
+    {
+      m_expression.const_cast_derived().template writePacket<LoadMode>(index, val);
+    }
+
+    const typename internal::remove_all<NestedExpressionType>::type& 
+    nestedExpression() const 
     {
       return m_expression;
     }
 
     /** Forwards the resizing request to the nested expression
       * \sa DenseBase::resize(Index)  */
-    EIGEN_DEVICE_FUNC
-    void resize(Index newSize) { m_expression.resize(newSize); }
+    void resize(Index newSize) { m_expression.const_cast_derived().resize(newSize); }
     /** Forwards the resizing request to the nested expression
       * \sa DenseBase::resize(Index,Index)*/
-    EIGEN_DEVICE_FUNC
-    void resize(Index rows, Index cols) { m_expression.resize(rows,cols); }
+    void resize(Index nbRows, Index nbCols) { m_expression.const_cast_derived().resize(nbRows,nbCols); }
 
   protected:
     NestedExpressionType m_expression;

@@ -15,10 +15,12 @@
 template<typename MatrixType>
 void check_stddeque_matrix(const MatrixType& m)
 {
+  typedef typename MatrixType::Index Index;
+  
   Index rows = m.rows();
   Index cols = m.cols();
   MatrixType x = MatrixType::Random(rows,cols), y = MatrixType::Random(rows,cols);
-  std::deque<MatrixType,Eigen::aligned_allocator<MatrixType> > v(10, MatrixType::Zero(rows,cols)), w(20, y);
+  std::deque<MatrixType,Eigen::aligned_allocator<MatrixType> > v(10, MatrixType(rows,cols)), w(20, y);
   v.front() = x;
   w.front() = w.back();
   VERIFY_IS_APPROX(w.front(), w.back());
@@ -33,7 +35,7 @@ void check_stddeque_matrix(const MatrixType& m)
     ++wi;
   }
 
-  v.resize(21,MatrixType::Zero(rows,cols));  
+  v.resize(21);  
   v.back() = x;
   VERIFY_IS_APPROX(v.back(), x);
   v.resize(22,y);
@@ -46,8 +48,8 @@ template<typename TransformType>
 void check_stddeque_transform(const TransformType&)
 {
   typedef typename TransformType::MatrixType MatrixType;
-  TransformType x(MatrixType::Random()), y(MatrixType::Random()), ti=TransformType::Identity();
-  std::deque<TransformType,Eigen::aligned_allocator<TransformType> > v(10,ti), w(20, y);
+  TransformType x(MatrixType::Random()), y(MatrixType::Random());
+  std::deque<TransformType,Eigen::aligned_allocator<TransformType> > v(10), w(20, y);
   v.front() = x;
   w.front() = w.back();
   VERIFY_IS_APPROX(w.front(), w.back());
@@ -62,7 +64,7 @@ void check_stddeque_transform(const TransformType&)
     ++wi;
   }
 
-  v.resize(21,ti);
+  v.resize(21);
   v.back() = x;
   VERIFY_IS_APPROX(v.back(), x);
   v.resize(22,y);
@@ -75,8 +77,8 @@ template<typename QuaternionType>
 void check_stddeque_quaternion(const QuaternionType&)
 {
   typedef typename QuaternionType::Coefficients Coefficients;
-  QuaternionType x(Coefficients::Random()), y(Coefficients::Random()), qi=QuaternionType::Identity();
-  std::deque<QuaternionType,Eigen::aligned_allocator<QuaternionType> > v(10,qi), w(20, y);
+  QuaternionType x(Coefficients::Random()), y(Coefficients::Random());
+  std::deque<QuaternionType,Eigen::aligned_allocator<QuaternionType> > v(10), w(20, y);
   v.front() = x;
   w.front() = w.back();
   VERIFY_IS_APPROX(w.front(), w.back());
@@ -91,7 +93,7 @@ void check_stddeque_quaternion(const QuaternionType&)
     ++wi;
   }
 
-  v.resize(21,qi);
+  v.resize(21);
   v.back() = x;
   VERIFY_IS_APPROX(v.back(), x);
   v.resize(22,y);
@@ -100,7 +102,7 @@ void check_stddeque_quaternion(const QuaternionType&)
   VERIFY_IS_APPROX(v.back(), x);
 }
 
-EIGEN_DECLARE_TEST(stddeque)
+void test_stddeque()
 {
   // some non vectorizable fixed sizes
   CALL_SUBTEST_1(check_stddeque_matrix(Vector2f()));
