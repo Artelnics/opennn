@@ -10,13 +10,7 @@
 #ifndef EIGEN_RANDOMSETTER_H
 #define EIGEN_RANDOMSETTER_H
 
-#if defined(EIGEN_GOOGLEHASH_SUPPORT)
-// Ensure the ::google namespace exists, required for checking existence of 
-// ::google::dense_hash_map and ::google::sparse_hash_map.
-namespace google {}
-#endif
-
-namespace Eigen {
+namespace Eigen { 
 
 /** Represents a std::map
   *
@@ -62,26 +56,7 @@ template<typename Scalar> struct StdUnorderedMapTraits
 };
 #endif // EIGEN_UNORDERED_MAP_SUPPORT
 
-#if defined(EIGEN_GOOGLEHASH_SUPPORT)
-
-namespace google {
-  
-// Namespace work-around, since sometimes dense_hash_map and sparse_hash_map
-// are in the global namespace, and other times they are under ::google.
-using namespace ::google;
-
-template<typename KeyType, typename Scalar>
-struct DenseHashMap {
-  typedef dense_hash_map<KeyType, Scalar> type;
-};
-
-template<typename KeyType, typename Scalar>
-struct SparseHashMap {
-  typedef sparse_hash_map<KeyType, Scalar> type;
-};
-
-} // namespace google
-
+#ifdef _DENSE_HASH_MAP_H_
 /** Represents a google::dense_hash_map
   *
   * \see RandomSetter
@@ -89,7 +64,7 @@ struct SparseHashMap {
 template<typename Scalar> struct GoogleDenseHashMapTraits
 {
   typedef int KeyType;
-  typedef typename google::DenseHashMap<KeyType,Scalar>::type Type;
+  typedef google::dense_hash_map<KeyType,Scalar> Type;
   enum {
     IsSorted = 0
   };
@@ -97,7 +72,9 @@ template<typename Scalar> struct GoogleDenseHashMapTraits
   static void setInvalidKey(Type& map, const KeyType& k)
   { map.set_empty_key(k); }
 };
+#endif
 
+#ifdef _SPARSE_HASH_MAP_H_
 /** Represents a google::sparse_hash_map
   *
   * \see RandomSetter
@@ -105,7 +82,7 @@ template<typename Scalar> struct GoogleDenseHashMapTraits
 template<typename Scalar> struct GoogleSparseHashMapTraits
 {
   typedef int KeyType;
-  typedef typename google::SparseHashMap<KeyType,Scalar>::type Type;
+  typedef google::sparse_hash_map<KeyType,Scalar> Type;
   enum {
     IsSorted = 0
   };
@@ -118,10 +95,10 @@ template<typename Scalar> struct GoogleSparseHashMapTraits
   *
   * \brief The RandomSetter is a wrapper object allowing to set/update a sparse matrix with random access
   *
-  * \tparam SparseMatrixType the type of the sparse matrix we are updating
-  * \tparam MapTraits a traits class representing the map implementation used for the temporary sparse storage.
+  * \param SparseMatrixType the type of the sparse matrix we are updating
+  * \param MapTraits a traits class representing the map implementation used for the temporary sparse storage.
   *                  Its default value depends on the system.
-  * \tparam OuterPacketBits defines the number of rows (or columns) manage by a single map object
+  * \param OuterPacketBits defines the number of rows (or columns) manage by a single map object
   *                        as a power of two exponent.
   *
   * This class temporarily represents a sparse matrix object using a generic map implementation allowing for
@@ -157,17 +134,18 @@ template<typename Scalar> struct GoogleSparseHashMapTraits
   * GoogleSparseHashMapTraits, GnuHashMapTraits, and finally StdMapTraits.
   *
   * For performance and memory consumption reasons it is highly recommended to use one of
-  * Google's hash_map implementations. To enable the support for them, you must define
-  * EIGEN_GOOGLEHASH_SUPPORT. This will include both <google/dense_hash_map> and
-  * <google/sparse_hash_map> for you.
+  * the Google's hash_map implementation. To enable the support for them, you have two options:
+  *  - \#include <google/dense_hash_map> yourself \b before Eigen/Sparse header
+  *  - define EIGEN_GOOGLEHASH_SUPPORT
+  * In the later case the inclusion of <google/dense_hash_map> is made for you.
   *
-  * \see https://github.com/sparsehash/sparsehash
+  * \see http://code.google.com/p/google-sparsehash/
   */
 template<typename SparseMatrixType,
          template <typename T> class MapTraits =
-#if defined(EIGEN_GOOGLEHASH_SUPPORT)
+#if defined _DENSE_HASH_MAP_H_
           GoogleDenseHashMapTraits
-#elif defined(_HASH_MAP)
+#elif defined _HASH_MAP
           GnuHashMapTraits
 #else
           StdMapTraits
@@ -176,7 +154,7 @@ template<typename SparseMatrixType,
 class RandomSetter
 {
     typedef typename SparseMatrixType::Scalar Scalar;
-    typedef typename SparseMatrixType::StorageIndex StorageIndex;
+    typedef typename SparseMatrixType::Index Index;
 
     struct ScalarWrapper
     {
@@ -271,10 +249,10 @@ class RandomSetter
           }
         }
         // prefix sum
-        StorageIndex count = 0;
+        Index count = 0;
         for (Index j=0; j<mp_target->outerSize(); ++j)
         {
-          StorageIndex tmp = positions[j];
+          Index tmp = positions[j];
           mp_target->outerIndexPtr()[j] = count;
           positions[j] = count;
           count += tmp;
@@ -303,7 +281,7 @@ class RandomSetter
               mp_target->innerIndexPtr()[i+1] = mp_target->innerIndexPtr()[i];
               --i;
             }
-            mp_target->innerIndexPtr()[i+1] = internal::convert_index<StorageIndex>(inner);
+            mp_target->innerIndexPtr()[i+1] = inner;
             mp_target->valuePtr()[i+1] = it->second.value;
           }
         }
@@ -318,7 +296,7 @@ class RandomSetter
       const Index inner = SetterRowMajor ? col : row;
       const Index outerMajor = outer >> OuterPacketBits; // index of the packet/map
       const Index outerMinor = outer & OuterPacketMask;  // index of the inner vector in the packet
-      const KeyType key = internal::convert_index<KeyType>((outerMinor<<m_keyBitsOffset) | inner);
+      const KeyType key = (KeyType(outerMinor)<<m_keyBitsOffset) | inner;
       return m_hashmaps[outerMajor][key].value;
     }
 

@@ -13,6 +13,8 @@
 
 template<typename MatrixType> void verifyIsQuasiTriangular(const MatrixType& T)
 {
+  typedef typename MatrixType::Index Index;
+
   const Index size = T.cols();
   typedef typename MatrixType::Scalar Scalar;
 
@@ -80,7 +82,7 @@ template<typename MatrixType> void schur(int size = MatrixType::ColsAtCompileTim
   Atriangular.template triangularView<StrictlyLower>().setZero(); 
   rs3.setMaxIterations(1).compute(Atriangular); // triangular matrices do not need any iterations
   VERIFY_IS_EQUAL(rs3.info(), Success);
-  VERIFY_IS_APPROX(rs3.matrixT(), Atriangular); // approx because of scaling...
+  VERIFY_IS_EQUAL(rs3.matrixT(), Atriangular);
   VERIFY_IS_EQUAL(rs3.matrixU(), MatrixType::Identity(size, size));
 
   // Test computation of only T, not U
@@ -89,7 +91,7 @@ template<typename MatrixType> void schur(int size = MatrixType::ColsAtCompileTim
   VERIFY_IS_EQUAL(rs1.matrixT(), rsOnlyT.matrixT());
   VERIFY_RAISES_ASSERT(rsOnlyT.matrixU());
 
-  if (size > 2 && size < 20)
+  if (size > 2)
   {
     // Test matrix with NaN
     A(0,0) = std::numeric_limits<typename MatrixType::Scalar>::quiet_NaN();
@@ -98,7 +100,7 @@ template<typename MatrixType> void schur(int size = MatrixType::ColsAtCompileTim
   }
 }
 
-EIGEN_DECLARE_TEST(schur_real)
+void test_schur_real()
 {
   CALL_SUBTEST_1(( schur<Matrix4f>() ));
   CALL_SUBTEST_2(( schur<MatrixXd>(internal::random<int>(1,EIGEN_TEST_MAX_SIZE/4)) ));

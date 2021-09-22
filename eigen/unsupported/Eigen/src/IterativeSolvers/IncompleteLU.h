@@ -13,12 +13,8 @@
 namespace Eigen { 
 
 template <typename _Scalar>
-class IncompleteLU : public SparseSolverBase<IncompleteLU<_Scalar> >
+class IncompleteLU
 {
-  protected:
-    typedef SparseSolverBase<IncompleteLU<_Scalar> > Base;
-    using Base::m_isInitialized;
-    
     typedef _Scalar Scalar;
     typedef Matrix<Scalar,Dynamic,1> Vector;
     typedef typename Vector::Index Index;
@@ -27,10 +23,10 @@ class IncompleteLU : public SparseSolverBase<IncompleteLU<_Scalar> >
   public:
     typedef Matrix<Scalar,Dynamic,Dynamic> MatrixType;
 
-    IncompleteLU() {}
+    IncompleteLU() : m_isInitialized(false) {}
 
     template<typename MatrixType>
-    IncompleteLU(const MatrixType& mat)
+    IncompleteLU(const MatrixType& mat) : m_isInitialized(false)
     {
       compute(mat);
     }
@@ -75,15 +71,42 @@ class IncompleteLU : public SparseSolverBase<IncompleteLU<_Scalar> >
     }
 
     template<typename Rhs, typename Dest>
-    void _solve_impl(const Rhs& b, Dest& x) const
+    void _solve(const Rhs& b, Dest& x) const
     {
       x = m_lu.template triangularView<UnitLower>().solve(b);
       x = m_lu.template triangularView<Upper>().solve(x);
     }
 
+    template<typename Rhs> inline const internal::solve_retval<IncompleteLU, Rhs>
+    solve(const MatrixBase<Rhs>& b) const
+    {
+      eigen_assert(m_isInitialized && "IncompleteLU is not initialized.");
+      eigen_assert(cols()==b.rows()
+                && "IncompleteLU::solve(): invalid number of rows of the right hand side matrix b");
+      return internal::solve_retval<IncompleteLU, Rhs>(*this, b.derived());
+    }
+
   protected:
     FactorType m_lu;
+    bool m_isInitialized;
 };
+
+namespace internal {
+
+template<typename _MatrixType, typename Rhs>
+struct solve_retval<IncompleteLU<_MatrixType>, Rhs>
+  : solve_retval_base<IncompleteLU<_MatrixType>, Rhs>
+{
+  typedef IncompleteLU<_MatrixType> Dec;
+  EIGEN_MAKE_SOLVE_HELPERS(Dec,Rhs)
+
+  template<typename Dest> void evalTo(Dest& dst) const
+  {
+    dec()._solve(rhs(),dst);
+  }
+};
+
+} // end namespace internal
 
 } // end namespace Eigen
 

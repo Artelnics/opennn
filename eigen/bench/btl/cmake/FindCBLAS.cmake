@@ -2,7 +2,7 @@
 
 if (CBLAS_INCLUDES AND CBLAS_LIBRARIES)
   set(CBLAS_FIND_QUIETLY TRUE)
-endif ()
+endif (CBLAS_INCLUDES AND CBLAS_LIBRARIES)
 
 find_path(CBLAS_INCLUDES
   NAMES
@@ -23,7 +23,6 @@ find_file(CBLAS_LIBRARIES
   libcblas.so.3
   PATHS
   /usr/lib
-  /usr/lib64
   $ENV{CBLASDIR}/lib
   ${LIB_INSTALL_DIR}
 )

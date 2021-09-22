@@ -16,22 +16,28 @@
   *  where alpha and beta are scalars, x and y are n element vectors and
   *  A is an n by n hermitian matrix.
   */
-int EIGEN_BLAS_FUNC(hemv)(const char *uplo, const int *n, const RealScalar *palpha, const RealScalar *pa, const int *lda,
-                          const RealScalar *px, const int *incx, const RealScalar *pbeta, RealScalar *py, const int *incy)
+int EIGEN_BLAS_FUNC(hemv)(char *uplo, int *n, RealScalar *palpha, RealScalar *pa, int *lda, RealScalar *px, int *incx, RealScalar *pbeta, RealScalar *py, int *incy)
 {
-  typedef void (*functype)(int, const Scalar*, int, const Scalar*, Scalar*, Scalar);
-  static const functype func[2] = {
-    // array index: UP
-    (internal::selfadjoint_matrix_vector_product<Scalar,int,ColMajor,Upper,false,false>::run),
-    // array index: LO
-    (internal::selfadjoint_matrix_vector_product<Scalar,int,ColMajor,Lower,false,false>::run),
-  };
+  typedef void (*functype)(int, const Scalar*, int, const Scalar*, int, Scalar*, Scalar);
+  static functype func[2];
 
-  const Scalar* a = reinterpret_cast<const Scalar*>(pa);
-  const Scalar* x = reinterpret_cast<const Scalar*>(px);
+  static bool init = false;
+  if(!init)
+  {
+    for(int k=0; k<2; ++k)
+      func[k] = 0;
+
+    func[UP] = (internal::selfadjoint_matrix_vector_product<Scalar,int,ColMajor,Upper,false,false>::run);
+    func[LO] = (internal::selfadjoint_matrix_vector_product<Scalar,int,ColMajor,Lower,false,false>::run);
+
+    init = true;
+  }
+
+  Scalar* a = reinterpret_cast<Scalar*>(pa);
+  Scalar* x = reinterpret_cast<Scalar*>(px);
   Scalar* y = reinterpret_cast<Scalar*>(py);
-  Scalar alpha  = *reinterpret_cast<const Scalar*>(palpha);
-  Scalar beta   = *reinterpret_cast<const Scalar*>(pbeta);
+  Scalar alpha  = *reinterpret_cast<Scalar*>(palpha);
+  Scalar beta   = *reinterpret_cast<Scalar*>(pbeta);
 
   // check arguments
   int info = 0;
@@ -46,13 +52,13 @@ int EIGEN_BLAS_FUNC(hemv)(const char *uplo, const int *n, const RealScalar *palp
   if(*n==0)
     return 1;
 
-  const Scalar* actual_x = get_compact_vector(x,*n,*incx);
+  Scalar* actual_x = get_compact_vector(x,*n,*incx);
   Scalar* actual_y = get_compact_vector(y,*n,*incy);
 
   if(beta!=Scalar(1))
   {
-    if(beta==Scalar(0)) make_vector(actual_y, *n).setZero();
-    else                make_vector(actual_y, *n) *= beta;
+    if(beta==Scalar(0)) vector(actual_y, *n).setZero();
+    else                vector(actual_y, *n) *= beta;
   }
 
   if(alpha!=Scalar(0))
@@ -61,7 +67,7 @@ int EIGEN_BLAS_FUNC(hemv)(const char *uplo, const int *n, const RealScalar *palp
     if(code>=2 || func[code]==0)
       return 0;
 
-    func[code](*n, a, *lda, actual_x, actual_y, alpha);
+    func[code](*n, a, *lda, actual_x, 1, actual_y, alpha);
   }
 
   if(actual_x!=x) delete[] actual_x;
@@ -105,12 +111,19 @@ int EIGEN_BLAS_FUNC(hemv)(const char *uplo, const int *n, const RealScalar *palp
 int EIGEN_BLAS_FUNC(hpr)(char *uplo, int *n, RealScalar *palpha, RealScalar *px, int *incx, RealScalar *pap)
 {
   typedef void (*functype)(int, Scalar*, const Scalar*, RealScalar);
-  static const functype func[2] = {
-    // array index: UP
-    (internal::selfadjoint_packed_rank1_update<Scalar,int,ColMajor,Upper,false,Conj>::run),
-    // array index: LO
-    (internal::selfadjoint_packed_rank1_update<Scalar,int,ColMajor,Lower,false,Conj>::run),
-  };
+  static functype func[2];
+
+  static bool init = false;
+  if(!init)
+  {
+    for(int k=0; k<2; ++k)
+      func[k] = 0;
+
+    func[UP] = (internal::selfadjoint_packed_rank1_update<Scalar,int,ColMajor,Upper,false,Conj>::run);
+    func[LO] = (internal::selfadjoint_packed_rank1_update<Scalar,int,ColMajor,Lower,false,Conj>::run);
+
+    init = true;
+  }
 
   Scalar* x = reinterpret_cast<Scalar*>(px);
   Scalar* ap = reinterpret_cast<Scalar*>(pap);
@@ -149,12 +162,19 @@ int EIGEN_BLAS_FUNC(hpr)(char *uplo, int *n, RealScalar *palpha, RealScalar *px,
 int EIGEN_BLAS_FUNC(hpr2)(char *uplo, int *n, RealScalar *palpha, RealScalar *px, int *incx, RealScalar *py, int *incy, RealScalar *pap)
 {
   typedef void (*functype)(int, Scalar*, const Scalar*, const Scalar*, Scalar);
-  static const functype func[2] = {
-    // array index: UP
-    (internal::packed_rank2_update_selector<Scalar,int,Upper>::run),
-    // array index: LO
-    (internal::packed_rank2_update_selector<Scalar,int,Lower>::run),
-  };
+  static functype func[2];
+
+  static bool init = false;
+  if(!init)
+  {
+    for(int k=0; k<2; ++k)
+      func[k] = 0;
+
+    func[UP] = (internal::packed_rank2_update_selector<Scalar,int,Upper>::run);
+    func[LO] = (internal::packed_rank2_update_selector<Scalar,int,Lower>::run);
+
+    init = true;
+  }
 
   Scalar* x = reinterpret_cast<Scalar*>(px);
   Scalar* y = reinterpret_cast<Scalar*>(py);
@@ -197,12 +217,19 @@ int EIGEN_BLAS_FUNC(hpr2)(char *uplo, int *n, RealScalar *palpha, RealScalar *px
 int EIGEN_BLAS_FUNC(her)(char *uplo, int *n, RealScalar *palpha, RealScalar *px, int *incx, RealScalar *pa, int *lda)
 {
   typedef void (*functype)(int, Scalar*, int, const Scalar*, const Scalar*, const Scalar&);
-  static const functype func[2] = {
-    // array index: UP
-    (selfadjoint_rank1_update<Scalar,int,ColMajor,Upper,false,Conj>::run),
-    // array index: LO
-    (selfadjoint_rank1_update<Scalar,int,ColMajor,Lower,false,Conj>::run),
-  };
+  static functype func[2];
+
+  static bool init = false;
+  if(!init)
+  {
+    for(int k=0; k<2; ++k)
+      func[k] = 0;
+
+    func[UP] = (selfadjoint_rank1_update<Scalar,int,ColMajor,Upper,false,Conj>::run);
+    func[LO] = (selfadjoint_rank1_update<Scalar,int,ColMajor,Lower,false,Conj>::run);
+
+    init = true;
+  }
 
   Scalar* x = reinterpret_cast<Scalar*>(px);
   Scalar* a = reinterpret_cast<Scalar*>(pa);
@@ -244,12 +271,19 @@ int EIGEN_BLAS_FUNC(her)(char *uplo, int *n, RealScalar *palpha, RealScalar *px,
 int EIGEN_BLAS_FUNC(her2)(char *uplo, int *n, RealScalar *palpha, RealScalar *px, int *incx, RealScalar *py, int *incy, RealScalar *pa, int *lda)
 {
   typedef void (*functype)(int, Scalar*, int, const Scalar*, const Scalar*, Scalar);
-  static const functype func[2] = {
-    // array index: UP
-    (internal::rank2_update_selector<Scalar,int,Upper>::run),
-    // array index: LO
-    (internal::rank2_update_selector<Scalar,int,Lower>::run),
-  };
+  static functype func[2];
+
+  static bool init = false;
+  if(!init)
+  {
+    for(int k=0; k<2; ++k)
+      func[k] = 0;
+
+    func[UP] = (internal::rank2_update_selector<Scalar,int,Upper>::run);
+    func[LO] = (internal::rank2_update_selector<Scalar,int,Lower>::run);
+
+    init = true;
+  }
 
   Scalar* x = reinterpret_cast<Scalar*>(px);
   Scalar* y = reinterpret_cast<Scalar*>(py);

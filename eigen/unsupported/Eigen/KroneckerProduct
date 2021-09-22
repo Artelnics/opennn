@@ -13,8 +13,6 @@
 
 #include "../../Eigen/src/Core/util/DisableStupidWarnings.h"
 
-#include "../../Eigen/src/SparseCore/SparseUtil.h"
-
 namespace Eigen {
 
 /**

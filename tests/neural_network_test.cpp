@@ -144,9 +144,10 @@ void NeuralNetworkTest::test_add_layer()
    ProbabilisticLayer* probabilistic_layer_pointer = new ProbabilisticLayer;
    UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer;
    BoundingLayer* bounding_layer_pointer = new BoundingLayer;
+/*
    ConvolutionalLayer* convolutional_layer_pointer = new ConvolutionalLayer;
    PoolingLayer* pooling_layer_pointer = new PoolingLayer;
-
+*/
     // LSTM
 
    neural_network.set();
@@ -405,11 +406,11 @@ void NeuralNetworkTest::test_get_trainable_layers()
    // Test
 
    layers_pointers.resize(9);
-
+/*
    layers_pointers.setValues({new ScalingLayer, new ConvolutionalLayer, new PerceptronLayer,
                            new PoolingLayer, new ProbabilisticLayer, new LongShortTermMemoryLayer,
                            new RecurrentLayer, new UnscalingLayer, new BoundingLayer});
-
+*/
    neural_network.set_layers_pointers(layers_pointers);
 
    assert_true(neural_network.get_trainable_layers_pointers()(0)->get_type() == Layer::Type::Convolutional, LOG);
@@ -437,11 +438,11 @@ void NeuralNetworkTest::test_get_layers_type_pointers()
    // Test
 
    layers_pointers.resize(9);
-
+/*
    layers_pointers.setValues({new ScalingLayer, new ConvolutionalLayer, new PerceptronLayer,
                            new PoolingLayer, new ProbabilisticLayer, new LongShortTermMemoryLayer,
                            new RecurrentLayer, new UnscalingLayer, new BoundingLayer});
-
+*/
    neural_network.set_layers_pointers(layers_pointers);
 
    assert_true(neural_network.get_scaling_layer_pointer()->get_type() == Layer::Type::Scaling, LOG);
@@ -476,11 +477,11 @@ void NeuralNetworkTest::test_get_layer_pointer()
    // Test
 
    layers_pointers.resize(9);
-
+/*
    layers_pointers.setValues({new ScalingLayer, new ConvolutionalLayer, new PerceptronLayer,
                            new PoolingLayer, new ProbabilisticLayer, new LongShortTermMemoryLayer,
                            new RecurrentLayer, new UnscalingLayer, new BoundingLayer});
-
+*/
    neural_network.set_layers_pointers(layers_pointers);
 
    assert_true(neural_network.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
@@ -709,11 +710,11 @@ void NeuralNetworkTest::test_get_layers_number()
    // Test
 
    layers_pointers.resize(9);
-
+/*
    layers_pointers.setValues({new ScalingLayer, new ConvolutionalLayer, new PerceptronLayer,
                            new PoolingLayer, new ProbabilisticLayer, new LongShortTermMemoryLayer,
                            new RecurrentLayer, new UnscalingLayer, new BoundingLayer});
-
+*/
    neural_network.set_layers_pointers(layers_pointers);
 
    assert_true(neural_network.get_layers_number() == 9, LOG);

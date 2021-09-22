@@ -1,49 +1,7 @@
-*> \brief \b CBLAT1
-*
-*  =========== DOCUMENTATION ===========
-*
-* Online html documentation available at 
-*            http://www.netlib.org/lapack/explore-html/ 
-*
-*  Definition:
-*  ===========
-*
-*       PROGRAM CBLAT1
-* 
-*
-*> \par Purpose:
-*  =============
-*>
-*> \verbatim
-*>
-*>    Test program for the COMPLEX Level 1 BLAS.
-*>    Based upon the original BLAS test routine together with:
-*>
-*>    F06GAF Example Program Text
-*> \endverbatim
-*
-*  Authors:
-*  ========
-*
-*> \author Univ. of Tennessee 
-*> \author Univ. of California Berkeley 
-*> \author Univ. of Colorado Denver 
-*> \author NAG Ltd. 
-*
-*> \date April 2012
-*
-*> \ingroup complex_blas_testing
-*
-*  =====================================================================
       PROGRAM CBLAT1
-*
-*  -- Reference BLAS test routine (version 3.4.1) --
-*  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
-*  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-*     April 2012
-*
-*  =====================================================================
-*
+*     Test program for the COMPLEX    Level 1 BLAS.
+*     Based upon the original BLAS test routine together with:
+*     F06GAF Example Program Text
 *     .. Parameters ..
       INTEGER          NOUT
       PARAMETER        (NOUT=6)
@@ -156,8 +114,8 @@
      +                  (5.0E0,6.0E0), (5.0E0,6.0E0), (0.1E0,0.1E0),
      +                  (-0.6E0,0.1E0), (0.1E0,-0.3E0), (7.0E0,8.0E0),
      +                  (7.0E0,8.0E0), (7.0E0,8.0E0), (7.0E0,8.0E0),
-     +                  (7.0E0,8.0E0), (0.3E0,0.1E0), (0.5E0,0.0E0),
-     +                  (0.0E0,0.5E0), (0.0E0,0.2E0), (2.0E0,3.0E0),
+     +                  (7.0E0,8.0E0), (0.3E0,0.1E0), (0.1E0,0.4E0),
+     +                  (0.4E0,0.1E0), (0.1E0,0.2E0), (2.0E0,3.0E0),
      +                  (2.0E0,3.0E0), (2.0E0,3.0E0), (2.0E0,3.0E0)/
       DATA              ((CV(I,J,2),I=1,8),J=1,5)/(0.1E0,0.1E0),
      +                  (4.0E0,5.0E0), (4.0E0,5.0E0), (4.0E0,5.0E0),
@@ -171,10 +129,10 @@
      +                  (3.0E0,6.0E0), (-0.6E0,0.1E0), (4.0E0,7.0E0),
      +                  (0.1E0,-0.3E0), (7.0E0,2.0E0), (7.0E0,2.0E0),
      +                  (7.0E0,2.0E0), (0.3E0,0.1E0), (5.0E0,8.0E0),
-     +                  (0.5E0,0.0E0), (6.0E0,9.0E0), (0.0E0,0.5E0),
-     +                  (8.0E0,3.0E0), (0.0E0,0.2E0), (9.0E0,4.0E0)/
-      DATA              STRUE2/0.0E0, 0.5E0, 0.6E0, 0.7E0, 0.8E0/
-      DATA              STRUE4/0.0E0, 0.7E0, 1.0E0, 1.3E0, 1.6E0/
+     +                  (0.1E0,0.4E0), (6.0E0,9.0E0), (0.4E0,0.1E0),
+     +                  (8.0E0,3.0E0), (0.1E0,0.2E0), (9.0E0,4.0E0)/
+      DATA              STRUE2/0.0E0, 0.5E0, 0.6E0, 0.7E0, 0.7E0/
+      DATA              STRUE4/0.0E0, 0.7E0, 1.0E0, 1.3E0, 1.7E0/
       DATA              ((CTRUE5(I,J,1),I=1,8),J=1,5)/(0.1E0,0.1E0),
      +                  (1.0E0,2.0E0), (1.0E0,2.0E0), (1.0E0,2.0E0),
      +                  (1.0E0,2.0E0), (1.0E0,2.0E0), (1.0E0,2.0E0),
@@ -187,8 +145,8 @@
      +                  (0.11E0,-0.03E0), (-0.17E0,0.46E0),
      +                  (-0.17E0,-0.19E0), (7.0E0,8.0E0), (7.0E0,8.0E0),
      +                  (7.0E0,8.0E0), (7.0E0,8.0E0), (7.0E0,8.0E0),
-     +                  (0.19E0,-0.17E0), (0.20E0,-0.35E0),
-     +                  (0.35E0,0.20E0), (0.14E0,0.08E0),
+     +                  (0.19E0,-0.17E0), (0.32E0,0.09E0),
+     +                  (0.23E0,-0.24E0), (0.18E0,0.01E0),
      +                  (2.0E0,3.0E0), (2.0E0,3.0E0), (2.0E0,3.0E0),
      +                  (2.0E0,3.0E0)/
       DATA              ((CTRUE5(I,J,2),I=1,8),J=1,5)/(0.1E0,0.1E0),
@@ -204,9 +162,9 @@
      +                  (-0.17E0,0.46E0), (4.0E0,7.0E0),
      +                  (-0.17E0,-0.19E0), (7.0E0,2.0E0), (7.0E0,2.0E0),
      +                  (7.0E0,2.0E0), (0.19E0,-0.17E0), (5.0E0,8.0E0),
-     +                  (0.20E0,-0.35E0), (6.0E0,9.0E0),
-     +                  (0.35E0,0.20E0), (8.0E0,3.0E0),
-     +                  (0.14E0,0.08E0), (9.0E0,4.0E0)/
+     +                  (0.32E0,0.09E0), (6.0E0,9.0E0),
+     +                  (0.23E0,-0.24E0), (8.0E0,3.0E0),
+     +                  (0.18E0,0.01E0), (9.0E0,4.0E0)/
       DATA              ((CTRUE6(I,J,1),I=1,8),J=1,5)/(0.1E0,0.1E0),
      +                  (1.0E0,2.0E0), (1.0E0,2.0E0), (1.0E0,2.0E0),
      +                  (1.0E0,2.0E0), (1.0E0,2.0E0), (1.0E0,2.0E0),
@@ -219,8 +177,8 @@
      +                  (0.03E0,0.03E0), (-0.18E0,0.03E0),
      +                  (0.03E0,-0.09E0), (7.0E0,8.0E0), (7.0E0,8.0E0),
      +                  (7.0E0,8.0E0), (7.0E0,8.0E0), (7.0E0,8.0E0),
-     +                  (0.09E0,0.03E0), (0.15E0,0.00E0),
-     +                  (0.00E0,0.15E0), (0.00E0,0.06E0), (2.0E0,3.0E0),
+     +                  (0.09E0,0.03E0), (0.03E0,0.12E0),
+     +                  (0.12E0,0.03E0), (0.03E0,0.06E0), (2.0E0,3.0E0),
      +                  (2.0E0,3.0E0), (2.0E0,3.0E0), (2.0E0,3.0E0)/
       DATA              ((CTRUE6(I,J,2),I=1,8),J=1,5)/(0.1E0,0.1E0),
      +                  (4.0E0,5.0E0), (4.0E0,5.0E0), (4.0E0,5.0E0),
@@ -235,8 +193,8 @@
      +                  (-0.18E0,0.03E0), (4.0E0,7.0E0),
      +                  (0.03E0,-0.09E0), (7.0E0,2.0E0), (7.0E0,2.0E0),
      +                  (7.0E0,2.0E0), (0.09E0,0.03E0), (5.0E0,8.0E0),
-     +                  (0.15E0,0.00E0), (6.0E0,9.0E0), (0.00E0,0.15E0),
-     +                  (8.0E0,3.0E0), (0.00E0,0.06E0), (9.0E0,4.0E0)/
+     +                  (0.03E0,0.12E0), (6.0E0,9.0E0), (0.12E0,0.03E0),
+     +                  (8.0E0,3.0E0), (0.03E0,0.06E0), (9.0E0,4.0E0)/
       DATA              ITRUE3/0, 1, 2, 2, 2/
 *     .. Executable Statements ..
       DO 60 INCX = 1, 2
@@ -571,8 +529,7 @@
 *
 *     .. Parameters ..
       INTEGER          NOUT
-      REAL             ZERO
-      PARAMETER        (NOUT=6, ZERO=0.0E0)
+      PARAMETER        (NOUT=6)
 *     .. Scalar Arguments ..
       REAL             SFAC
       INTEGER          LEN
@@ -595,7 +552,7 @@
 *
       DO 40 I = 1, LEN
          SD = SCOMP(I) - STRUE(I)
-         IF (ABS(SFAC*SD) .LE. ABS(SSIZE(I))*EPSILON(ZERO))
+         IF (SDIFF(ABS(SSIZE(I))+ABS(SFAC*SD),ABS(SSIZE(I))).EQ.0.0E0)
      +       GO TO 40
 *
 *                             HERE    SCOMP(I) IS NOT CLOSE TO STRUE(I).
@@ -619,7 +576,7 @@
       SUBROUTINE STEST1(SCOMP1,STRUE1,SSIZE,SFAC)
 *     ************************* STEST1 *****************************
 *
-*     THIS IS AN INTERFACE SUBROUTINE TO ACCOMMODATE THE FORTRAN
+*     THIS IS AN INTERFACE SUBROUTINE TO ACCOMODATE THE FORTRAN
 *     REQUIREMENT THAT WHEN A DUMMY ARGUMENT IS AN ARRAY, THE
 *     ACTUAL ARGUMENT MUST ALSO BE AN ARRAY OR AN ARRAY ELEMENT.
 *

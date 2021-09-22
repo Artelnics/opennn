@@ -20,8 +20,8 @@ namespace Eigen {
  *  e.g. \f$ 1 + 3x^2 \f$ is stored as a vector \f$ [ 1, 0, 3 ] \f$.
  * \param[in] x : the value to evaluate the polynomial at.
  *
- * \note for stability:
- *   \f$ |x| \le 1 \f$
+ * <i><b>Note for stability:</b></i>
+ *  <dd> \f$ |x| \le 1 \f$ </dd>
  */
 template <typename Polynomials, typename T>
 inline
@@ -56,7 +56,7 @@ T poly_eval( const Polynomials& poly, const T& x )
     for( DenseIndex i=1; i<poly.size(); ++i ){
       val = val*inv_x + poly[i]; }
 
-    return numext::pow(x,(T)(poly.size()-1)) * val;
+    return std::pow(x,(T)(poly.size()-1)) * val;
   }
 }
 
@@ -67,8 +67,8 @@ T poly_eval( const Polynomials& poly, const T& x )
  *  by degrees i.e. poly[i] is the coefficient of degree i of the polynomial
  *  e.g. \f$ 1 + 3x^2 \f$ is stored as a vector \f$ [ 1, 0, 3 ] \f$.
  *
- *  \pre
- *   the leading coefficient of the input polynomial poly must be non zero
+ *  <i><b>Precondition:</b></i>
+ *  <dd> the leading coefficient of the input polynomial poly must be non zero </dd>
  */
 template <typename Polynomial>
 inline

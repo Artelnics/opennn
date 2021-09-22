@@ -14,7 +14,7 @@
 
 #include "main.h"
 
-#if EIGEN_HAS_CXX11
+#if EIGEN_GNUC_AT_LEAST(4,0) && !defined __ICC && !defined(__clang__)
 
 #ifdef min
 #undef min
@@ -24,9 +24,15 @@
 #undef max
 #endif
 
-#include <unordered_map>
+#include <tr1/unordered_map>
 #define EIGEN_UNORDERED_MAP_SUPPORT
+namespace std {
+  using std::tr1::unordered_map;
+}
+#endif
 
+#ifdef EIGEN_GOOGLEHASH_SUPPORT
+  #include <google/sparse_hash_map>
 #endif
 
 #include <Eigen/Cholesky>
@@ -47,15 +53,15 @@ enum {
  * \param zeroCoords and nonzeroCoords allows to get the coordinate lists of the non zero,
  *        and zero coefficients respectively.
  */
-template<typename Scalar,int Opt1,int Opt2,typename StorageIndex> void
+template<typename Scalar,int Opt1,int Opt2,typename Index> void
 initSparse(double density,
            Matrix<Scalar,Dynamic,Dynamic,Opt1>& refMat,
-           SparseMatrix<Scalar,Opt2,StorageIndex>& sparseMat,
+           SparseMatrix<Scalar,Opt2,Index>& sparseMat,
            int flags = 0,
-           std::vector<Matrix<StorageIndex,2,1> >* zeroCoords = 0,
-           std::vector<Matrix<StorageIndex,2,1> >* nonzeroCoords = 0)
+           std::vector<Matrix<Index,2,1> >* zeroCoords = 0,
+           std::vector<Matrix<Index,2,1> >* nonzeroCoords = 0)
 {
-  enum { IsRowMajor = SparseMatrix<Scalar,Opt2,StorageIndex>::IsRowMajor };
+  enum { IsRowMajor = SparseMatrix<Scalar,Opt2,Index>::IsRowMajor };
   sparseMat.setZero();
   //sparseMat.reserve(int(refMat.rows()*refMat.cols()*density));
   sparseMat.reserve(VectorXi::Constant(IsRowMajor ? refMat.rows() : refMat.cols(), int((1.5*density)*(IsRowMajor?refMat.cols():refMat.rows()))));
@@ -65,17 +71,14 @@ initSparse(double density,
     //sparseMat.startVec(j);
     for(Index i=0; i<sparseMat.innerSize(); i++)
     {
-      Index ai(i), aj(j);
+      int ai(i), aj(j);
       if(IsRowMajor)
         std::swap(ai,aj);
       Scalar v = (internal::random<double>(0,1) < density) ? internal::random<Scalar>() : Scalar(0);
       if ((flags&ForceNonZeroDiag) && (i==j))
       {
-        // FIXME: the following is too conservative
         v = internal::random<Scalar>()*Scalar(3.);
-        v = v*v;
-        if(numext::real(v)>0) v += Scalar(5);
-        else                  v -= Scalar(5);
+        v = v*v + Scalar(5.);
       }
       if ((flags & MakeLowerTriangular) && aj>ai)
         v = Scalar(0);
@@ -90,11 +93,11 @@ initSparse(double density,
         //sparseMat.insertBackByOuterInner(j,i) = v;
         sparseMat.insertByOuterInner(j,i) = v;
         if (nonzeroCoords)
-          nonzeroCoords->push_back(Matrix<StorageIndex,2,1> (ai,aj));
+          nonzeroCoords->push_back(Matrix<Index,2,1> (ai,aj));
       }
       else if (zeroCoords)
       {
-        zeroCoords->push_back(Matrix<StorageIndex,2,1> (ai,aj));
+        zeroCoords->push_back(Matrix<Index,2,1> (ai,aj));
       }
       refMat(ai,aj) = v;
     }
@@ -160,7 +163,7 @@ initSparse(double density,
 {
   sparseVec.reserve(int(refVec.size()*density));
   sparseVec.setZero();
-  for(int i=0; i<refVec.size(); i++)
+  for(Index i=0; i<refVec.size(); i++)
   {
     Scalar v = (internal::random<double>(0,1) < density) ? internal::random<Scalar>() : Scalar(0);
     if (v!=Scalar(0))

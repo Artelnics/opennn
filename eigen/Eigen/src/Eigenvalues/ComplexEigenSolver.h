@@ -60,7 +60,7 @@ template<typename _MatrixType> class ComplexEigenSolver
     /** \brief Scalar type for matrices of type #MatrixType. */
     typedef typename MatrixType::Scalar Scalar;
     typedef typename NumTraits<Scalar>::Real RealScalar;
-    typedef Eigen::Index Index; ///< \deprecated since Eigen 3.3
+    typedef typename MatrixType::Index Index;
 
     /** \brief Complex scalar type for #MatrixType.
       *
@@ -104,7 +104,7 @@ template<typename _MatrixType> class ComplexEigenSolver
       * according to the specified problem \a size.
       * \sa ComplexEigenSolver()
       */
-    explicit ComplexEigenSolver(Index size)
+    ComplexEigenSolver(Index size)
             : m_eivec(size, size),
               m_eivalues(size),
               m_schur(size),
@@ -122,8 +122,7 @@ template<typename _MatrixType> class ComplexEigenSolver
       *
       * This constructor calls compute() to compute the eigendecomposition.
       */
-    template<typename InputType>
-    explicit ComplexEigenSolver(const EigenBase<InputType>& matrix, bool computeEigenvectors = true)
+      ComplexEigenSolver(const MatrixType& matrix, bool computeEigenvectors = true)
             : m_eivec(matrix.rows(),matrix.cols()),
               m_eivalues(matrix.cols()),
               m_schur(matrix.rows()),
@@ -131,7 +130,7 @@ template<typename _MatrixType> class ComplexEigenSolver
               m_eigenvectorsOk(false),
               m_matX(matrix.rows(),matrix.cols())
     {
-      compute(matrix.derived(), computeEigenvectors);
+      compute(matrix, computeEigenvectors);
     }
 
     /** \brief Returns the eigenvectors of given matrix.
@@ -209,12 +208,11 @@ template<typename _MatrixType> class ComplexEigenSolver
       * Example: \include ComplexEigenSolver_compute.cpp
       * Output: \verbinclude ComplexEigenSolver_compute.out
       */
-    template<typename InputType>
-    ComplexEigenSolver& compute(const EigenBase<InputType>& matrix, bool computeEigenvectors = true);
+    ComplexEigenSolver& compute(const MatrixType& matrix, bool computeEigenvectors = true);
 
     /** \brief Reports whether previous computation was successful.
       *
-      * \returns \c Success if computation was successful, \c NoConvergence otherwise.
+      * \returns \c Success if computation was succesful, \c NoConvergence otherwise.
       */
     ComputationInfo info() const
     {
@@ -250,15 +248,14 @@ template<typename _MatrixType> class ComplexEigenSolver
     EigenvectorType m_matX;
 
   private:
-    void doComputeEigenvectors(RealScalar matrixnorm);
+    void doComputeEigenvectors(const RealScalar& matrixnorm);
     void sortEigenvalues(bool computeEigenvectors);
 };
 
 
 template<typename MatrixType>
-template<typename InputType>
 ComplexEigenSolver<MatrixType>& 
-ComplexEigenSolver<MatrixType>::compute(const EigenBase<InputType>& matrix, bool computeEigenvectors)
+ComplexEigenSolver<MatrixType>::compute(const MatrixType& matrix, bool computeEigenvectors)
 {
   check_template_parameters();
   
@@ -267,13 +264,13 @@ ComplexEigenSolver<MatrixType>::compute(const EigenBase<InputType>& matrix, bool
 
   // Do a complex Schur decomposition, A = U T U^*
   // The eigenvalues are on the diagonal of T.
-  m_schur.compute(matrix.derived(), computeEigenvectors);
+  m_schur.compute(matrix, computeEigenvectors);
 
   if(m_schur.info() == Success)
   {
     m_eivalues = m_schur.matrixT().diagonal();
     if(computeEigenvectors)
-      doComputeEigenvectors(m_schur.matrixT().norm());
+      doComputeEigenvectors(matrix.norm());
     sortEigenvalues(computeEigenvectors);
   }
 
@@ -284,11 +281,9 @@ ComplexEigenSolver<MatrixType>::compute(const EigenBase<InputType>& matrix, bool
 
 
 template<typename MatrixType>
-void ComplexEigenSolver<MatrixType>::doComputeEigenvectors(RealScalar matrixnorm)
+void ComplexEigenSolver<MatrixType>::doComputeEigenvectors(const RealScalar& matrixnorm)
 {
   const Index n = m_eivalues.size();
-
-  matrixnorm = numext::maxi(matrixnorm,(std::numeric_limits<RealScalar>::min)());
 
   // Compute X such that T = X D X^(-1), where D is the diagonal of T.
   // The matrix X is unit triangular.

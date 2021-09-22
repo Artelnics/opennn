@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "convolutional_layer_test.h"
-
+/*
 ConvolutionalLayerTest::ConvolutionalLayerTest() : UnitTesting()
 {
 }
@@ -1598,7 +1598,7 @@ void ConvolutionalLayerTest::run_test_case()
 
    cout << "End of convolutional layer test case.\n\n";
 }
-
+*/
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.

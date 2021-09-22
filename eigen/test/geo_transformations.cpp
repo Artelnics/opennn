@@ -12,17 +12,6 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 
-template<typename T>
-Matrix<T,2,1> angleToVec(T a)
-{
-  return Matrix<T,2,1>(std::cos(a), std::sin(a));
-}
-
-// This permits to workaround a bug in clang/llvm code generation.
-template<typename T>
-EIGEN_DONT_INLINE
-void dont_over_optimize(T& x) { volatile typename T::Scalar tmp = x(0); x(0) = tmp; }
-
 template<typename Scalar, int Mode, int Options> void non_projective_only()
 {
     /* this test covers the following files:
@@ -40,7 +29,7 @@ template<typename Scalar, int Mode, int Options> void non_projective_only()
 
   Transform3 t0, t1, t2;
 
-  Scalar a = internal::random<Scalar>(-Scalar(EIGEN_PI), Scalar(EIGEN_PI));
+  Scalar a = internal::random<Scalar>(-Scalar(M_PI), Scalar(M_PI));
 
   Quaternionx q1, q2;
 
@@ -108,14 +97,16 @@ template<typename Scalar, int Mode, int Options> void transformations()
           v1 = Vector3::Random();
   Matrix3 matrot1, m;
 
-  Scalar a = internal::random<Scalar>(-Scalar(EIGEN_PI), Scalar(EIGEN_PI));
-  Scalar s0 = internal::random<Scalar>(), s1 = internal::random<Scalar>();
+  Scalar a = internal::random<Scalar>(-Scalar(M_PI), Scalar(M_PI));
+  Scalar s0 = internal::random<Scalar>(),
+         s1 = internal::random<Scalar>();
   
   while(v0.norm() < test_precision<Scalar>()) v0 = Vector3::Random();
   while(v1.norm() < test_precision<Scalar>()) v1 = Vector3::Random();
+    
 
   VERIFY_IS_APPROX(v0, AngleAxisx(a, v0.normalized()) * v0);
-  VERIFY_IS_APPROX(-v0, AngleAxisx(Scalar(EIGEN_PI), v0.unitOrthogonal()) * v0);
+  VERIFY_IS_APPROX(-v0, AngleAxisx(Scalar(M_PI), v0.unitOrthogonal()) * v0);
   if(abs(cos(a)) > test_precision<Scalar>())
   {
     VERIFY_IS_APPROX(cos(a)*v0.squaredNorm(), v0.dot(AngleAxisx(a, v0.unitOrthogonal()) * v0));
@@ -141,16 +132,14 @@ template<typename Scalar, int Mode, int Options> void transformations()
   AngleAxisx aa = AngleAxisx(q1);
   VERIFY_IS_APPROX(q1 * v1, Quaternionx(aa) * v1);
   
-  // The following test is stable only if 2*angle != angle and v1 is not colinear with axis
-  if( (abs(aa.angle()) > test_precision<Scalar>()) && (abs(aa.axis().dot(v1.normalized()))<(Scalar(1)-Scalar(4)*test_precision<Scalar>())) )
+  if(abs(aa.angle()) > NumTraits<Scalar>::dummy_precision())
   {
     VERIFY( !(q1 * v1).isApprox(Quaternionx(AngleAxisx(aa.angle()*2,aa.axis())) * v1) );
   }
 
   aa.fromRotationMatrix(aa.toRotationMatrix());
   VERIFY_IS_APPROX(q1 * v1, Quaternionx(aa) * v1);
-  // The following test is stable only if 2*angle != angle and v1 is not colinear with axis
-  if( (abs(aa.angle()) > test_precision<Scalar>()) && (abs(aa.axis().dot(v1.normalized()))<(Scalar(1)-Scalar(4)*test_precision<Scalar>())) )
+  if(abs(aa.angle()) > NumTraits<Scalar>::dummy_precision())
   {
     VERIFY( !(q1 * v1).isApprox(Quaternionx(AngleAxisx(aa.angle()*2,aa.axis())) * v1) );
   }
@@ -169,7 +158,7 @@ template<typename Scalar, int Mode, int Options> void transformations()
   // TODO complete the tests !
   a = 0;
   while (abs(a)<Scalar(0.1))
-    a = internal::random<Scalar>(-Scalar(0.4)*Scalar(EIGEN_PI), Scalar(0.4)*Scalar(EIGEN_PI));
+    a = internal::random<Scalar>(-Scalar(0.4)*Scalar(M_PI), Scalar(0.4)*Scalar(M_PI));
   q1 = AngleAxisx(a, v0.normalized());
   Transform3 t0, t1, t2;
 
@@ -215,7 +204,7 @@ template<typename Scalar, int Mode, int Options> void transformations()
     tmat4.matrix()(3,3) = Scalar(1);
   VERIFY_IS_APPROX(tmat3.matrix(), tmat4.matrix());
 
-  Scalar a3 = internal::random<Scalar>(-Scalar(EIGEN_PI), Scalar(EIGEN_PI));
+  Scalar a3 = internal::random<Scalar>(-Scalar(M_PI), Scalar(M_PI));
   Vector3 v3 = Vector3::Random().normalized();
   AngleAxisx aa3(a3, v3);
   Transform3 t3(aa3);
@@ -227,15 +216,12 @@ template<typename Scalar, int Mode, int Options> void transformations()
   t4 *= aa3;
   VERIFY_IS_APPROX(t3.matrix(), t4.matrix());
 
-  do {
-    v3 = Vector3::Random();
-    dont_over_optimize(v3);
-  } while (v3.cwiseAbs().minCoeff()<NumTraits<Scalar>::epsilon());
+  v3 = Vector3::Random();
   Translation3 tv3(v3);
   Transform3 t5(tv3);
   t4 = tv3;
   VERIFY_IS_APPROX(t5.matrix(), t4.matrix());
-  t4.translate((-v3).eval());
+  t4.translate(-v3);
   VERIFY_IS_APPROX(t4.matrix(), MatrixType::Identity());
   t4 *= tv3;
   VERIFY_IS_APPROX(t5.matrix(), t4.matrix());
@@ -427,28 +413,12 @@ template<typename Scalar, int Mode, int Options> void transformations()
   VERIFY_IS_APPROX(r2d1f.template cast<Scalar>(),r2d1);
   Rotation2D<double> r2d1d = r2d1.template cast<double>();
   VERIFY_IS_APPROX(r2d1d.template cast<Scalar>(),r2d1);
+
+  t20 = Translation2(v20) * (Rotation2D<Scalar>(s0) * Eigen::Scaling(s0));
+  t21 = Translation2(v20) * Rotation2D<Scalar>(s0) * Eigen::Scaling(s0);
+  VERIFY_IS_APPROX(t20,t21);
   
-  for(int k=0; k<100; ++k)
-  {
-    Scalar angle = internal::random<Scalar>(-100,100);
-    Rotation2D<Scalar> rot2(angle);
-    VERIFY( rot2.smallestPositiveAngle() >= 0 );
-    VERIFY( rot2.smallestPositiveAngle() <= Scalar(2)*Scalar(EIGEN_PI) );
-    VERIFY_IS_APPROX( angleToVec(rot2.smallestPositiveAngle()), angleToVec(rot2.angle()) );
-    
-    VERIFY( rot2.smallestAngle() >= -Scalar(EIGEN_PI) );
-    VERIFY( rot2.smallestAngle() <=  Scalar(EIGEN_PI) );
-    VERIFY_IS_APPROX( angleToVec(rot2.smallestAngle()), angleToVec(rot2.angle()) );
-
-    Matrix<Scalar,2,2> rot2_as_mat(rot2);
-    Rotation2D<Scalar> rot3(rot2_as_mat);
-    VERIFY_IS_APPROX( angleToVec(rot2.smallestAngle()),  angleToVec(rot3.angle()) );
-  }
-
-  s0 = internal::random<Scalar>(-100,100);
-  s1 = internal::random<Scalar>(-100,100);
   Rotation2D<Scalar> R0(s0), R1(s1);
-  
   t20 = Translation2(v20) * (R0 * Eigen::Scaling(s0));
   t21 = Translation2(v20) * R0 * Eigen::Scaling(s0);
   VERIFY_IS_APPROX(t20,t21);
@@ -458,24 +428,9 @@ template<typename Scalar, int Mode, int Options> void transformations()
   VERIFY_IS_APPROX(t20,t21);
   
   VERIFY_IS_APPROX(s0, (R0.slerp(0, R1)).angle());
-  VERIFY_IS_APPROX( angleToVec(R1.smallestPositiveAngle()), angleToVec((R0.slerp(1, R1)).smallestPositiveAngle()) );
-  VERIFY_IS_APPROX(R0.smallestPositiveAngle(), (R0.slerp(0.5, R0)).smallestPositiveAngle());
-
-  if(std::cos(s0)>0)
-    VERIFY_IS_MUCH_SMALLER_THAN((R0.slerp(0.5, R0.inverse())).smallestAngle(), Scalar(1));
-  else
-    VERIFY_IS_APPROX(Scalar(EIGEN_PI), (R0.slerp(0.5, R0.inverse())).smallestPositiveAngle());
-  
-  // Check path length
-  Scalar l = 0;
-  int path_steps = 100;
-  for(int k=0; k<path_steps; ++k)
-  {
-    Scalar a1 = R0.slerp(Scalar(k)/Scalar(path_steps), R1).angle();
-    Scalar a2 = R0.slerp(Scalar(k+1)/Scalar(path_steps), R1).angle();
-    l += std::abs(a2-a1);
-  }
-  VERIFY(l<=Scalar(EIGEN_PI)*(Scalar(1)+NumTraits<Scalar>::epsilon()*Scalar(path_steps/2)));
+  VERIFY_IS_APPROX(s1, (R0.slerp(1, R1)).angle());
+  VERIFY_IS_APPROX(s0, (R0.slerp(0.5, R0)).angle());
+  VERIFY_IS_APPROX(Scalar(0), (R0.slerp(0.5, R0.inverse())).angle());
   
   // check basic features
   {
@@ -565,9 +520,9 @@ template<typename Scalar> void transform_alignment()
   typedef Transform<Scalar,3,Projective,AutoAlign> Projective3a;
   typedef Transform<Scalar,3,Projective,DontAlign> Projective3u;
 
-  EIGEN_ALIGN_MAX Scalar array1[16];
-  EIGEN_ALIGN_MAX Scalar array2[16];
-  EIGEN_ALIGN_MAX Scalar array3[16+1];
+  EIGEN_ALIGN16 Scalar array1[16];
+  EIGEN_ALIGN16 Scalar array2[16];
+  EIGEN_ALIGN16 Scalar array3[16+1];
   Scalar* array3u = array3+1;
 
   Projective3a *p1 = ::new(reinterpret_cast<void*>(array1)) Projective3a;
@@ -582,6 +537,11 @@ template<typename Scalar> void transform_alignment()
   VERIFY_IS_APPROX(p1->matrix(), p3->matrix());
   
   VERIFY_IS_APPROX( (*p1) * (*p1), (*p2)*(*p3));
+  
+  #if defined(EIGEN_VECTORIZE) && EIGEN_ALIGN_STATICALLY
+  if(internal::packet_traits<Scalar>::Vectorizable)
+    VERIFY_RAISES_ASSERT((::new(reinterpret_cast<void*>(array3u)) Projective3a));
+  #endif
 }
 
 template<typename Scalar, int Dim, int Options> void transform_products()
@@ -607,99 +567,11 @@ template<typename Scalar, int Dim, int Options> void transform_products()
   VERIFY_IS_APPROX((ac*p).matrix(), a_m*p_m);
 }
 
-template<typename Scalar, int Mode, int Options> void transformations_no_scale()
-{
-     /* this test covers the following files:
-     Cross.h Quaternion.h, Transform.h
-  */
-  typedef Matrix<Scalar,3,1> Vector3;
-  typedef Matrix<Scalar,4,1> Vector4;
-  typedef Quaternion<Scalar> Quaternionx;
-  typedef AngleAxis<Scalar> AngleAxisx;
-  typedef Transform<Scalar,3,Mode,Options> Transform3;
-  typedef Translation<Scalar,3> Translation3;
-  typedef Matrix<Scalar,4,4> Matrix4;
-
-  Vector3 v0 = Vector3::Random(),
-          v1 = Vector3::Random();
-
-  Transform3 t0, t1, t2;
-
-  Scalar a = internal::random<Scalar>(-Scalar(EIGEN_PI), Scalar(EIGEN_PI));
-
-  Quaternionx q1, q2;
-
-  q1 = AngleAxisx(a, v0.normalized());
-
-  t0 = Transform3::Identity();
-  VERIFY_IS_APPROX(t0.matrix(), Transform3::MatrixType::Identity());
-
-  t0.setIdentity();
-  t1.setIdentity();
-  v1 = Vector3::Ones();
-  t0.linear() = q1.toRotationMatrix();
-  t0.pretranslate(v0);
-  t1.linear() = q1.conjugate().toRotationMatrix();
-  t1.translate(-v0);
-
-  VERIFY((t0 * t1).matrix().isIdentity(test_precision<Scalar>()));
-
-  t1.fromPositionOrientationScale(v0, q1, v1);
-  VERIFY_IS_APPROX(t1.matrix(), t0.matrix());
-  VERIFY_IS_APPROX(t1*v1, t0*v1);
-
-  // translation * vector
-  t0.setIdentity();
-  t0.translate(v0);
-  VERIFY_IS_APPROX((t0 * v1).template head<3>(), Translation3(v0) * v1);
-
-  // Conversion to matrix.
-  Transform3 t3;
-  t3.linear() = q1.toRotationMatrix();
-  t3.translation() = v1;
-  Matrix4 m3 = t3.matrix();
-  VERIFY((m3 * m3.inverse()).isIdentity(test_precision<Scalar>()));
-  // Verify implicit last row is initialized.
-  VERIFY_IS_APPROX(Vector4(m3.row(3)), Vector4(0.0, 0.0, 0.0, 1.0));
-
-  VERIFY_IS_APPROX(t3.rotation(), t3.linear());
-  if(Mode==Isometry)
-    VERIFY(t3.rotation().data()==t3.linear().data());
-}
-
-template<typename Scalar, int Mode, int Options> void transformations_computed_scaling_continuity()
-{
-  typedef Matrix<Scalar, 3, 1> Vector3;
-  typedef Transform<Scalar, 3, Mode, Options> Transform3;
-  typedef Matrix<Scalar, 3, 3> Matrix3;
-
-  // Given: two transforms that differ by '2*eps'.
-  Scalar eps(1e-3);
-  Vector3 v0 = Vector3::Random().normalized(),
-    v1 = Vector3::Random().normalized(),
-    v3 = Vector3::Random().normalized();
-  Transform3 t0, t1;
-  // The interesting case is when their determinants have different signs.
-  Matrix3 rank2 = 50 * v0 * v0.adjoint() + 20 * v1 * v1.adjoint();
-  t0.linear() = rank2 + eps * v3 * v3.adjoint();
-  t1.linear() = rank2 - eps * v3 * v3.adjoint();
-
-  // When: computing the rotation-scaling parts
-  Matrix3 r0, s0, r1, s1;
-  t0.computeRotationScaling(&r0, &s0);
-  t1.computeRotationScaling(&r1, &s1);
-
-  // Then: the scaling parts should differ by no more than '2*eps'.
-  const Scalar c(2.1); // 2 + room for rounding errors
-  VERIFY((s0 - s1).norm() < c * eps);
-}
-
-EIGEN_DECLARE_TEST(geo_transformations)
+void test_geo_transformations()
 {
   for(int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST_1(( transformations<double,Affine,AutoAlign>() ));
     CALL_SUBTEST_1(( non_projective_only<double,Affine,AutoAlign>() ));
-    CALL_SUBTEST_1(( transformations_computed_scaling_continuity<double,Affine,AutoAlign>() ));   
     
     CALL_SUBTEST_2(( transformations<float,AffineCompact,AutoAlign>() ));
     CALL_SUBTEST_2(( non_projective_only<float,AffineCompact,AutoAlign>() ));
@@ -708,7 +580,7 @@ EIGEN_DECLARE_TEST(geo_transformations)
     CALL_SUBTEST_3(( transformations<double,Projective,AutoAlign>() ));
     CALL_SUBTEST_3(( transformations<double,Projective,DontAlign>() ));
     CALL_SUBTEST_3(( transform_alignment<double>() ));
-
+    
     CALL_SUBTEST_4(( transformations<float,Affine,RowMajor|AutoAlign>() ));
     CALL_SUBTEST_4(( non_projective_only<float,Affine,RowMajor>() ));
     
@@ -722,10 +594,7 @@ EIGEN_DECLARE_TEST(geo_transformations)
     CALL_SUBTEST_7(( transform_products<double,3,RowMajor|AutoAlign>() ));
     CALL_SUBTEST_7(( transform_products<float,2,AutoAlign>() ));
 
-    CALL_SUBTEST_8(( transform_associativity<double,2,ColMajor>(Rotation2D<double>(internal::random<double>()*double(EIGEN_PI))) ));
-    CALL_SUBTEST_8(( transform_associativity<double,3,ColMajor>(Quaterniond::UnitRandom()) ));
-
-    CALL_SUBTEST_9(( transformations_no_scale<double,Affine,AutoAlign>() ));
-    CALL_SUBTEST_9(( transformations_no_scale<double,Isometry,AutoAlign>() ));
+    CALL_SUBTEST_8(( transform_associativity<double,2,ColMajor>(Rotation2D<double>(internal::random<double>()*double(3.14))) ));
+    CALL_SUBTEST_8(( transform_associativity<double,3,ColMajor>(Quaterniond(Vector4d::Random().normalized())) ));
   }
 }

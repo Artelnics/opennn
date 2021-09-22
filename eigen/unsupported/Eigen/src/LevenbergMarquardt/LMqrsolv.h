@@ -19,17 +19,18 @@ namespace Eigen {
 
 namespace internal {
 
-template <typename Scalar,int Rows, int Cols, typename PermIndex>
+template <typename Scalar,int Rows, int Cols, typename Index>
 void lmqrsolv(
   Matrix<Scalar,Rows,Cols> &s,
-  const PermutationMatrix<Dynamic,Dynamic,PermIndex> &iPerm,
+  const PermutationMatrix<Dynamic,Dynamic,Index> &iPerm,
   const Matrix<Scalar,Dynamic,1> &diag,
   const Matrix<Scalar,Dynamic,1> &qtb,
   Matrix<Scalar,Dynamic,1> &x,
   Matrix<Scalar,Dynamic,1> &sdiag)
 {
+
     /* Local variables */
-    Index i, j, k;
+    Index i, j, k, l;
     Scalar temp;
     Index n = s.cols();
     Matrix<Scalar,Dynamic,1>  wa(n);
@@ -51,7 +52,7 @@ void lmqrsolv(
 
         /*        prepare the row of d to be eliminated, locating the */
         /*        diagonal element using p from the qr factorization. */
-        const PermIndex l = iPerm.indices()(j);
+        l = iPerm.indices()(j);
         if (diag[l] == 0.)
             break;
         sdiag.tail(n-j).setZero();
@@ -73,7 +74,7 @@ void lmqrsolv(
             qtbpj = -givens.s() * wa[k] + givens.c() * qtbpj;
             wa[k] = temp;
 
-            /*           accumulate the transformation in the row of s. */
+            /*           accumulate the tranformation in the row of s. */
             for (i = k+1; i<n; ++i) {
                 temp = givens.c() * s(i,k) + givens.s() * sdiag[i];
                 sdiag[i] = -givens.s() * s(i,k) + givens.c() * sdiag[i];

@@ -53,6 +53,7 @@ struct selfadjoint_product_selector<MatrixType,OtherType,UpLo,true>
   static void run(MatrixType& mat, const OtherType& other, const typename MatrixType::Scalar& alpha)
   {
     typedef typename MatrixType::Scalar Scalar;
+    typedef typename MatrixType::Index Index;
     typedef internal::blas_traits<OtherType> OtherBlasTraits;
     typedef typename OtherBlasTraits::DirectLinearAccessType ActualOtherType;
     typedef typename internal::remove_all<ActualOtherType>::type _ActualOtherType;
@@ -85,6 +86,7 @@ struct selfadjoint_product_selector<MatrixType,OtherType,UpLo,false>
   static void run(MatrixType& mat, const OtherType& other, const typename MatrixType::Scalar& alpha)
   {
     typedef typename MatrixType::Scalar Scalar;
+    typedef typename MatrixType::Index Index;
     typedef internal::blas_traits<OtherType> OtherBlasTraits;
     typedef typename OtherBlasTraits::DirectLinearAccessType ActualOtherType;
     typedef typename internal::remove_all<ActualOtherType>::type _ActualOtherType;
@@ -92,27 +94,15 @@ struct selfadjoint_product_selector<MatrixType,OtherType,UpLo,false>
 
     Scalar actualAlpha = alpha * OtherBlasTraits::extractScalarFactor(other.derived());
 
-    enum {
-      IsRowMajor = (internal::traits<MatrixType>::Flags&RowMajorBit) ? 1 : 0,
-      OtherIsRowMajor = _ActualOtherType::Flags&RowMajorBit ? 1 : 0
-    };
-
-    Index size = mat.cols();
-    Index depth = actualOther.cols();
-
-    typedef internal::gemm_blocking_space<IsRowMajor ? RowMajor : ColMajor,Scalar,Scalar,
-              MatrixType::MaxColsAtCompileTime, MatrixType::MaxColsAtCompileTime, _ActualOtherType::MaxColsAtCompileTime> BlockingType;
-
-    BlockingType blocking(size, size, depth, 1, false);
-
+    enum { IsRowMajor = (internal::traits<MatrixType>::Flags&RowMajorBit) ? 1 : 0 };
 
     internal::general_matrix_matrix_triangular_product<Index,
-      Scalar, OtherIsRowMajor ? RowMajor : ColMajor,   OtherBlasTraits::NeedToConjugate  && NumTraits<Scalar>::IsComplex,
-      Scalar, OtherIsRowMajor ? ColMajor : RowMajor, (!OtherBlasTraits::NeedToConjugate) && NumTraits<Scalar>::IsComplex,
-      IsRowMajor ? RowMajor : ColMajor, MatrixType::InnerStrideAtCompileTime, UpLo>
-      ::run(size, depth,
-            actualOther.data(), actualOther.outerStride(), actualOther.data(), actualOther.outerStride(),
-            mat.data(), mat.innerStride(), mat.outerStride(), actualAlpha, blocking);
+      Scalar, _ActualOtherType::Flags&RowMajorBit ? RowMajor : ColMajor,   OtherBlasTraits::NeedToConjugate  && NumTraits<Scalar>::IsComplex,
+      Scalar, _ActualOtherType::Flags&RowMajorBit ? ColMajor : RowMajor, (!OtherBlasTraits::NeedToConjugate) && NumTraits<Scalar>::IsComplex,
+      MatrixType::Flags&RowMajorBit ? RowMajor : ColMajor, UpLo>
+      ::run(mat.cols(), actualOther.cols(),
+            &actualOther.coeffRef(0,0), actualOther.outerStride(), &actualOther.coeffRef(0,0), actualOther.outerStride(),
+            mat.data(), mat.outerStride(), actualAlpha);
   }
 };
 
@@ -120,7 +110,7 @@ struct selfadjoint_product_selector<MatrixType,OtherType,UpLo,false>
 
 template<typename MatrixType, unsigned int UpLo>
 template<typename DerivedU>
-EIGEN_DEVICE_FUNC SelfAdjointView<MatrixType,UpLo>& SelfAdjointView<MatrixType,UpLo>
+SelfAdjointView<MatrixType,UpLo>& SelfAdjointView<MatrixType,UpLo>
 ::rankUpdate(const MatrixBase<DerivedU>& u, const Scalar& alpha)
 {
   selfadjoint_product_selector<MatrixType,DerivedU,UpLo>::run(_expression().const_cast_derived(), u.derived(), alpha);

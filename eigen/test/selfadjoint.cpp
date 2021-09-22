@@ -7,7 +7,6 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#define TEST_CHECK_STATIC_ASSERTIONS
 #include "main.h"
 
 // This file tests the basic selfadjointView API,
@@ -15,15 +14,14 @@
 
 template<typename MatrixType> void selfadjoint(const MatrixType& m)
 {
+  typedef typename MatrixType::Index Index;
   typedef typename MatrixType::Scalar Scalar;
 
   Index rows = m.rows();
   Index cols = m.cols();
 
   MatrixType m1 = MatrixType::Random(rows, cols),
-             m2 = MatrixType::Random(rows, cols),
-             m3(rows, cols),
-             m4(rows, cols);
+             m3(rows, cols);
 
   m1.diagonal() = m1.diagonal().real().template cast<Scalar>();
 
@@ -32,22 +30,10 @@ template<typename MatrixType> void selfadjoint(const MatrixType& m)
   VERIFY_IS_APPROX(MatrixType(m3.template triangularView<Upper>()), MatrixType(m1.template triangularView<Upper>()));
   VERIFY_IS_APPROX(m3, m3.adjoint());
 
+
   m3 = m1.template selfadjointView<Lower>();
   VERIFY_IS_APPROX(MatrixType(m3.template triangularView<Lower>()), MatrixType(m1.template triangularView<Lower>()));
   VERIFY_IS_APPROX(m3, m3.adjoint());
-
-  m3 = m1.template selfadjointView<Upper>();
-  m4 = m2;
-  m4 += m1.template selfadjointView<Upper>();
-  VERIFY_IS_APPROX(m4, m2+m3);
-
-  m3 = m1.template selfadjointView<Lower>();
-  m4 = m2;
-  m4 -= m1.template selfadjointView<Lower>();
-  VERIFY_IS_APPROX(m4, m2-m3);
-
-  VERIFY_RAISES_STATIC_ASSERT(m2.template selfadjointView<StrictlyUpper>());
-  VERIFY_RAISES_STATIC_ASSERT(m2.template selfadjointView<UnitLower>());
 }
 
 void bug_159()
@@ -56,7 +42,7 @@ void bug_159()
   EIGEN_UNUSED_VARIABLE(m)
 }
 
-EIGEN_DECLARE_TEST(selfadjoint)
+void test_selfadjoint()
 {
   for(int i = 0; i < g_repeat ; i++)
   {
