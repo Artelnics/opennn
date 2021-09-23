@@ -7,12 +7,16 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#ifndef EIGEN_MPL2_ONLY
 #define EIGEN_MPL2_ONLY
+#endif
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
 #include <Eigen/SparseLU>
 #include <Eigen/SparseQR>
+#include <Eigen/Sparse>
 #include <Eigen/IterativeLinearSolvers>
+#include <Eigen/Eigen>
 
 int main()
 {

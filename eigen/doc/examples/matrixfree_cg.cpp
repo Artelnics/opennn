@@ -2,179 +2,128 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/IterativeLinearSolvers>
+#include <unsupported/Eigen/IterativeSolvers>
 
 class MatrixReplacement;
-template<typename Rhs> class MatrixReplacement_ProductReturnType;
+using Eigen::SparseMatrix;
 
 namespace Eigen {
 namespace internal {
+  // MatrixReplacement looks-like a SparseMatrix, so let's inherits its traits:
   template<>
-  struct traits<MatrixReplacement> :  Eigen::internal::traits<Eigen::SparseMatrix<double> >
+  struct traits<MatrixReplacement> :  public Eigen::internal::traits<Eigen::SparseMatrix<double> >
   {};
-
-  template <typename Rhs>
-  struct traits<MatrixReplacement_ProductReturnType<Rhs> > {
-    // The equivalent plain objet type of the product. This type is used if the product needs to be evaluated into a temporary.
-    typedef Eigen::Matrix<typename Rhs::Scalar, Eigen::Dynamic, Rhs::ColsAtCompileTime> ReturnType;
-  };
 }
 }
 
-// Inheriting EigenBase should not be needed in the future.
+// Example of a matrix-free wrapper from a user type to Eigen's compatible type
+// For the sake of simplicity, this example simply wrap a Eigen::SparseMatrix.
 class MatrixReplacement : public Eigen::EigenBase<MatrixReplacement> {
 public:
-  // Expose some compile-time information to Eigen:
+  // Required typedefs, constants, and method:
   typedef double Scalar;
   typedef double RealScalar;
+  typedef int StorageIndex;
   enum {
     ColsAtCompileTime = Eigen::Dynamic,
-    RowsAtCompileTime = Eigen::Dynamic,
     MaxColsAtCompileTime = Eigen::Dynamic,
-    MaxRowsAtCompileTime = Eigen::Dynamic
+    IsRowMajor = false
   };
 
-  Index rows() const { return 4; }
-  Index cols() const { return 4; }
+  Index rows() const { return mp_mat->rows(); }
+  Index cols() const { return mp_mat->cols(); }
 
-  void resize(Index a_rows, Index a_cols)
-  {
-    // This method should not be needed in the future.
-    assert(a_rows==0 && a_cols==0 || a_rows==rows() && a_cols==cols());
-  }
-
-  // In the future, the return type should be Eigen::Product<MatrixReplacement,Rhs>
   template<typename Rhs>
-  MatrixReplacement_ProductReturnType<Rhs> operator*(const Eigen::MatrixBase<Rhs>& x) const {
-    return MatrixReplacement_ProductReturnType<Rhs>(*this, x.derived());
+  Eigen::Product<MatrixReplacement,Rhs,Eigen::AliasFreeProduct> operator*(const Eigen::MatrixBase<Rhs>& x) const {
+    return Eigen::Product<MatrixReplacement,Rhs,Eigen::AliasFreeProduct>(*this, x.derived());
   }
 
-};
+  // Custom API:
+  MatrixReplacement() : mp_mat(0) {}
 
-// The proxy class representing the product of a MatrixReplacement with a MatrixBase<>
-template<typename Rhs>
-class MatrixReplacement_ProductReturnType : public Eigen::ReturnByValue<MatrixReplacement_ProductReturnType<Rhs> > {
-public:
-  typedef MatrixReplacement::Index Index;
-  
-  // The ctor store references to the matrix and right-hand-side object (usually a vector).
-  MatrixReplacement_ProductReturnType(const MatrixReplacement& matrix, const Rhs& rhs)
-    : m_matrix(matrix), m_rhs(rhs)
-  {}
-  
-  Index rows() const { return m_matrix.rows(); }
-  Index cols() const { return m_rhs.cols(); }
-
-  // This function is automatically called by Eigen. It must evaluate the product of matrix * rhs into y.
-  template<typename Dest>
-  void evalTo(Dest& y) const
-  {
-    y.setZero(4);
-
-    y(0) += 2 * m_rhs(0); y(1) += 1 * m_rhs(0);
-    y(0) += 1 * m_rhs(1); y(1) += 2 * m_rhs(1); y(2) += 1 * m_rhs(1);
-    y(1) += 1 * m_rhs(2); y(2) += 2 * m_rhs(2); y(3) += 1 * m_rhs(2);
-    y(2) += 1 * m_rhs(3); y(3) += 2 * m_rhs(3);
+  void attachMyMatrix(const SparseMatrix<double> &mat) {
+    mp_mat = &mat;
   }
+  const SparseMatrix<double> my_matrix() const { return *mp_mat; }
 
-protected:
-  const MatrixReplacement& m_matrix;
-  typename Rhs::Nested m_rhs;
+private:
+  const SparseMatrix<double> *mp_mat;
 };
 
 
-/*****/
-
-// This class simply warp a diagonal matrix as a Jacobi preconditioner.
-// In the future such simple and generic wrapper should be shipped within Eigen itsel.
-template <typename _Scalar>
-class MyJacobiPreconditioner
-{
-    typedef _Scalar Scalar;
-    typedef Eigen::Matrix<Scalar,Eigen::Dynamic,1> Vector;
-    typedef typename Vector::Index Index;
-
-  public:
-    // this typedef is only to export the scalar type and compile-time dimensions to solve_retval
-    typedef Eigen::Matrix<Scalar,Eigen::Dynamic,Eigen::Dynamic> MatrixType;
-
-    MyJacobiPreconditioner() : m_isInitialized(false) {}
-
-    void setInvDiag(const Eigen::VectorXd &invdiag) {
-      m_invdiag=invdiag;
-      m_isInitialized=true;
-    }
-
-    Index rows() const { return m_invdiag.size(); }
-    Index cols() const { return m_invdiag.size(); }
-    
-    template<typename MatType>
-    MyJacobiPreconditioner& analyzePattern(const MatType& ) { return *this; }
-    
-    template<typename MatType>
-    MyJacobiPreconditioner& factorize(const MatType& mat) { return *this; }
-    
-    template<typename MatType>
-    MyJacobiPreconditioner& compute(const MatType& mat) { return *this; }
-
-    template<typename Rhs, typename Dest>
-    void _solve(const Rhs& b, Dest& x) const
-    {
-      x = m_invdiag.array() * b.array() ;
-    }
-
-    template<typename Rhs> inline const Eigen::internal::solve_retval<MyJacobiPreconditioner, Rhs>
-    solve(const Eigen::MatrixBase<Rhs>& b) const
-    {
-      eigen_assert(m_isInitialized && "MyJacobiPreconditioner is not initialized.");
-      eigen_assert(m_invdiag.size()==b.rows()
-                && "MyJacobiPreconditioner::solve(): invalid number of rows of the right hand side matrix b");
-      return Eigen::internal::solve_retval<MyJacobiPreconditioner, Rhs>(*this, b.derived());
-    }
-
-  protected:
-    Vector m_invdiag;
-    bool m_isInitialized;
-};
-
+// Implementation of MatrixReplacement * Eigen::DenseVector though a specialization of internal::generic_product_impl:
 namespace Eigen {
 namespace internal {
 
-template<typename _MatrixType, typename Rhs>
-struct solve_retval<MyJacobiPreconditioner<_MatrixType>, Rhs>
-  : solve_retval_base<MyJacobiPreconditioner<_MatrixType>, Rhs>
-{
-  typedef MyJacobiPreconditioner<_MatrixType> Dec;
-  EIGEN_MAKE_SOLVE_HELPERS(Dec,Rhs)
-
-  template<typename Dest> void evalTo(Dest& dst) const
+  template<typename Rhs>
+  struct generic_product_impl<MatrixReplacement, Rhs, SparseShape, DenseShape, GemvProduct> // GEMV stands for matrix-vector
+  : generic_product_impl_base<MatrixReplacement,Rhs,generic_product_impl<MatrixReplacement,Rhs> >
   {
-    dec()._solve(rhs(),dst);
-  }
-};
+    typedef typename Product<MatrixReplacement,Rhs>::Scalar Scalar;
+
+    template<typename Dest>
+    static void scaleAndAddTo(Dest& dst, const MatrixReplacement& lhs, const Rhs& rhs, const Scalar& alpha)
+    {
+      // This method should implement "dst += alpha * lhs * rhs" inplace,
+      // however, for iterative solvers, alpha is always equal to 1, so let's not bother about it.
+      assert(alpha==Scalar(1) && "scaling is not implemented");
+      EIGEN_ONLY_USED_FOR_DEBUG(alpha);
+
+      // Here we could simply call dst.noalias() += lhs.my_matrix() * rhs,
+      // but let's do something fancier (and less efficient):
+      for(Index i=0; i<lhs.cols(); ++i)
+        dst += rhs(i) * lhs.my_matrix().col(i);
+    }
+  };
 
 }
 }
-
-
-/*****/
-
 
 int main()
 {
+  int n = 10;
+  Eigen::SparseMatrix<double> S = Eigen::MatrixXd::Random(n,n).sparseView(0.5,1);
+  S = S.transpose()*S;
+
   MatrixReplacement A;
-  Eigen::VectorXd b(4), x;
-  b << 1, 1, 1, 1;
+  A.attachMyMatrix(S);
 
-  // solve Ax = b using CG with matrix-free version:
-  Eigen::ConjugateGradient < MatrixReplacement, Eigen::Lower|Eigen::Upper, MyJacobiPreconditioner<double> > cg;
+  Eigen::VectorXd b(n), x;
+  b.setRandom();
 
-  Eigen::VectorXd invdiag(4);
-  invdiag << 1./3., 1./4., 1./4., 1./3.;
+  // Solve Ax = b using various iterative solver with matrix-free version:
+  {
+    Eigen::ConjugateGradient<MatrixReplacement, Eigen::Lower|Eigen::Upper, Eigen::IdentityPreconditioner> cg;
+    cg.compute(A);
+    x = cg.solve(b);
+    std::cout << "CG:       #iterations: " << cg.iterations() << ", estimated error: " << cg.error() << std::endl;
+  }
 
-  cg.preconditioner().setInvDiag(invdiag);
-  cg.compute(A);
-  x = cg.solve(b);
+  {
+    Eigen::BiCGSTAB<MatrixReplacement, Eigen::IdentityPreconditioner> bicg;
+    bicg.compute(A);
+    x = bicg.solve(b);
+    std::cout << "BiCGSTAB: #iterations: " << bicg.iterations() << ", estimated error: " << bicg.error() << std::endl;
+  }
 
-  std::cout << "#iterations: " << cg.iterations() << std::endl;
-  std::cout << "estimated error: " << cg.error() << std::endl;
+  {
+    Eigen::GMRES<MatrixReplacement, Eigen::IdentityPreconditioner> gmres;
+    gmres.compute(A);
+    x = gmres.solve(b);
+    std::cout << "GMRES:    #iterations: " << gmres.iterations() << ", estimated error: " << gmres.error() << std::endl;
+  }
+
+  {
+    Eigen::DGMRES<MatrixReplacement, Eigen::IdentityPreconditioner> gmres;
+    gmres.compute(A);
+    x = gmres.solve(b);
+    std::cout << "DGMRES:   #iterations: " << gmres.iterations() << ", estimated error: " << gmres.error() << std::endl;
+  }
+
+  {
+    Eigen::MINRES<MatrixReplacement, Eigen::Lower|Eigen::Upper, Eigen::IdentityPreconditioner> minres;
+    minres.compute(A);
+    x = minres.solve(b);
+    std::cout << "MINRES:   #iterations: " << minres.iterations() << ", estimated error: " << minres.error() << std::endl;
+  }
 }
