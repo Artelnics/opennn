@@ -1263,7 +1263,6 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
         }
 
         return batches;
-
     }
     else
     {

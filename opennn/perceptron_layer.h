@@ -68,8 +68,6 @@ public:
 
    // Get methods
 
-   bool is_empty() const;
-
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
@@ -77,10 +75,10 @@ public:
 
    const Tensor<type, 2>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
-
+/*
    Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
    Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
-
+*/
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
    Index get_parameters_number() const;
