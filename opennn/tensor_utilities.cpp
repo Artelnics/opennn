@@ -349,18 +349,60 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
 }
 
 
+void fill_subcolumn(const Tensor<type, 2>& matrix,
+    const Tensor<Index, 1>& rows_indices,
+    const Index& column_index, const Index& submatrix_column_index, type* submatrix_pointer)
+{
+    const Index rows_number = rows_indices.size();
+
+    const type* matrix_column_pointer = matrix.data() + matrix.dimension(0) * column_index;
+    type* submatrix_column_pointer = submatrix_pointer + rows_number * submatrix_column_index;
+    const Index* rows_indices_pointer = rows_indices.data();
+
+    const type* value_pointer = matrix_column_pointer;
+
+    for (Index i = 0; i < rows_number; i++)
+    {
+//        *submatrix_column_pointer = *rows_indices_pointer;
+
+        value_pointer = matrix_column_pointer + *rows_indices_pointer;
+        rows_indices_pointer++;
+        *submatrix_column_pointer = *value_pointer;
+        submatrix_column_pointer++;
+    }
+}
+
+
+void fill_submatrix(const Tensor<type, 2>& matrix,
+    const Tensor<Index, 1>& rows_indices,
+    const Tensor<Index, 1>& columns_indices,
+    type* submatrix_pointer)
+{
+    const Index columns_number = columns_indices.size();
+
+    #pragma omp parallel for
+
+    for (Index j = 0; j < columns_number; j++)
+    {
+        fill_subcolumn(matrix, rows_indices, columns_indices(j), j, submatrix_pointer);
+    }
+}
+
+
+/*
 void fill_submatrix(const Tensor<type, 2>& matrix,
                     const Tensor<Index, 1>& rows_indices,
                     const Tensor<Index, 1>& columns_indices,
                     type* submatrix_pointer)
 {
+
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
     const Index matrix_rows_number = matrix.dimension(0);
     const type* matrix_pointer = matrix.data();
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
 
     for(Index j = 0; j < columns_number; j++)
     {
@@ -369,6 +411,8 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
 
         const type* value_pointer = nullptr;
         const Index* rows_indices_pointer = rows_indices.data();
+
+//        #pragma omp simd
 
         for(Index i = 0; i < rows_number; i++)
         {
@@ -379,7 +423,7 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
         }
     }
 }
-
+*/
 
 Index count_NAN(const Tensor<type, 1>& x)
 {

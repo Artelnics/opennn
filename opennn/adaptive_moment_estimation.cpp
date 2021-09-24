@@ -305,7 +305,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     time(&beginning_time);
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if(neural_network_pointer->has_long_short_term_memory_layer()
     || neural_network_pointer->has_recurrent_layer())
@@ -318,6 +318,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
+
+        //cout << training_batches << endl; system("pause");
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -416,7 +418,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
-
+/*
         if(training_loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_loss << endl;
@@ -425,7 +427,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.stopping_condition  = StoppingCondition::LossGoal;
         }
-
+*/
         if(selection_failures >= maximum_selection_failures)
         {
             if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
@@ -733,13 +735,16 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
             sqrt(type(1) - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
             (type(1) - pow(beta_1, static_cast<type>(optimization_data.iteration))));
 
+    const type factor_1 = type(1) - beta_1;
+    const type factor_2 = type(1) - beta_2;
+
     optimization_data.gradient_exponential_decay.device(*thread_pool_device)
         = optimization_data.gradient_exponential_decay*beta_1
-        + back_propagation.gradient*(type(1) - beta_1);
+        + back_propagation.gradient*factor_1;
 
     optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
             = optimization_data.square_gradient_exponential_decay*beta_2
-            + back_propagation.gradient*back_propagation.gradient*(type(1) - beta_2);
+            + back_propagation.gradient.square()*factor_2;
 
     back_propagation.parameters.device(*thread_pool_device) -=
             optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
@@ -748,7 +753,7 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
 
     // Update parameters
 
-    back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
+    loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
 }
 
 

@@ -108,7 +108,7 @@ const Tensor<type, 2>& PerceptronLayer::get_synaptic_weights() const
     return synaptic_weights;
 }
 
-
+/*
 Tensor<type, 2> PerceptronLayer::get_synaptic_weights(const Tensor<type, 1>& parameters) const
 {
     const Index inputs_number = get_inputs_number();
@@ -142,7 +142,7 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
     return new_biases.reshape(two_dim);
 
 }
-
+*/
 
 /// Returns a single vector with all the layer parameters.
 /// The format is a vector of real values.
@@ -508,7 +508,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
         fill_n(combinations.data() + i*batch_samples_number, batch_samples_number, biases(i));
     }
 
-    combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
+//    combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 }
 
 
@@ -710,8 +710,8 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPr
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
 
-    back_propagation->delta.device(*thread_pool_device) =
-        next_back_propagation->delta_times_activations_derivatives.contract(next_synaptic_weights, A_BT);
+//    back_propagation->delta.device(*thread_pool_device) =
+//        next_back_propagation->delta_times_activations_derivatives.contract(next_synaptic_weights, A_BT);
 /*
     back_propagation->delta.device(*thread_pool_device) =
             (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
@@ -998,8 +998,8 @@ void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
     perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
         perceptron_layer_back_propagation->delta_times_activations_derivatives.sum(Eigen::array<Index, 1>({ 0 }));
 
-    perceptron_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
-        inputs.contract(perceptron_layer_back_propagation->delta_times_activations_derivatives, AT_B);
+//    perceptron_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
+//        inputs.contract(perceptron_layer_back_propagation->delta_times_activations_derivatives, AT_B);
 /*
     perceptron_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
             (perceptron_layer_back_propagation->delta*perceptron_layer_forward_propagation->activations_derivatives).sum(Eigen::array<Index, 1>({0}));

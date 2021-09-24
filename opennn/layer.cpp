@@ -871,6 +871,7 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& combinations,
     activations_derivatives.device(*thread_pool_device) = if_sentence_2.select(f4, f5);
 }
 
+
 void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& combinations,
                                            Tensor<type, 2>& activations,
                                            Tensor<type, 2>& activations_derivatives) const
