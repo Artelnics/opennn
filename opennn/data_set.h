@@ -285,7 +285,7 @@ public:
 
    // Batches get methods
 
-   Tensor<Index, 2> get_batches(const Tensor<Index,1>&, const Index&, const bool&, const Index& buffer_size= 100) const;
+   Tensor<Tensor<Index, 1>, 1> get_batches(const Tensor<Index,1>&, const Index&, const bool&, const Index& buffer_size= 100) const;
 
    // Data get methods
 
@@ -717,7 +717,7 @@ public:
    void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
    void intialize_sequential(Tensor<type, 1>&, const type&, const type&, const type&) const;
 
-   Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
+   Tensor<Tensor<Index, 1>, 1> split_samples(const Tensor<Index, 1>&, const Index&) const;
 
    bool get_has_rows_labels() const;
 

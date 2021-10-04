@@ -1218,12 +1218,14 @@ const Tensor<DataSet::SampleUse,1 >& DataSet::get_samples_uses() const
 /// @param new_buffer_size Size for new buffer.
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 
-Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
+Tensor<Tensor<Index, 1>, 1> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                                       const Index& batch_samples_number,
                                       const bool& shuffle,
                                       const Index& new_buffer_size) const
 {
     if(!shuffle) return split_samples(samples_indices, batch_samples_number);
+
+    Tensor<Tensor<Index, 1>, 1> batches;
 
     std::random_device rng;
     std::mt19937 urng(rng());
@@ -1236,10 +1238,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
     // When samples_number is less than 100 (small sample)
 
-    if(buffer_size > samples_number)
-    {
-        buffer_size = samples_number;
-    }
+    if(buffer_size > samples_number) buffer_size = samples_number;
 
     // Check batch size and samples number
 
@@ -1251,7 +1250,8 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
         Tensor<Index,1> samples_copy(samples_indices);
 
-        Tensor<Index, 2> batches(batches_number, batch_size);
+        Tensor<Tensor<Index, 1>, 1> batches(batches_number);
+        for (Index i = 0; i < batches_number; i++) batches(i).resize(batch_size);
 
         // Shuffle
 
@@ -1259,7 +1259,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
         for(Index i = 0; i < batch_size; i++)
         {
-            batches(0,i) = samples_copy(i);
+            batches(0)(i) = samples_copy(i);
         }
 
         return batches;
@@ -1269,7 +1269,9 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
         batches_number = samples_number / batch_size;
     }
 
-    Tensor<Index, 2> batches(batches_number, batch_size);
+    //Tensor<Index, 2> batches(batches_number, batch_size);
+    batches.resize(batches_number);
+    for (Index i = 0; i < batches_number; i++) batches(i).resize(batch_size);
 
     Tensor<Index, 1> buffer(buffer_size);
 
@@ -1298,7 +1300,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                 {
                     for(Index j = 0; j < batch_size; j++)
                     {
-                        batches(k,j) = buffer(buffer_index);
+                        batches(k)(j) = buffer(buffer_index);
 
                         buffer_index++;
                     }
@@ -1313,7 +1315,7 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
             {
                 random_index = static_cast<Index>(rand()%buffer_size);
 
-                batches(i, j) = buffer(random_index);
+                batches(i)(j) = buffer(random_index);
 
                 buffer(random_index) = samples_indices(next_index);
 
@@ -1339,19 +1341,19 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                 {
                     for(Index j = 0; j < batch_size;j++)
                     {
-                        batches(i,j) = buffer(j);
+                        batches(i)(j) = buffer(j);
                     }
                 }
                 else //buffer_size < batch_size
                 {
                     for(Index j = 0; j < buffer_size; j++)
                     {
-                        batches(i,j) = buffer(j);
+                        batches(i)(j) = buffer(j);
                     }
 
                     for(Index j = buffer_size; j < batch_size; j++)
                     {
-                        batches(i,j) = samples_indices(next_index);
+                        batches(i)(j) = samples_indices(next_index);
 
                         next_index++;
                     }
@@ -1366,17 +1368,18 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
             {
                 random_index = static_cast<Index>(rand()%buffer_size);
 
-                batches(i, j) = buffer(random_index);
+                batches(i)(j) = buffer(random_index);
 
                 buffer(random_index) = samples_indices(next_index);
 
                 next_index++;
-
             }
         }
 
         return batches;
     }
+
+    return batches;
 }
 
 
@@ -11032,7 +11035,7 @@ void DataSet::intialize_sequential(Tensor<type, 1>& new_tensor,
 }
 
 
-Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices, const Index& new_batch_size) const
+Tensor<Tensor<Index, 1>, 1> DataSet::split_samples(const Tensor<Index, 1>& samples_indices, const Index& new_batch_size) const
 {
     const Index samples_number = samples_indices.dimension(0);
 
@@ -11049,17 +11052,21 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
         batches_number = samples_number / batch_size;
     }
 
-    Tensor<Index, 2> batches(batches_number, batch_size);
+    Tensor<Tensor<Index, 1>, 1> batches(batches_number);
+    for(Index i = 0; i < batches_number; i++) batches(i).resize(batch_size);
 
-    Index count = 0;
+    auto patches = samples_indices.extract_patches(Eigen::array<Index, 1>({batch_size}));
+
+
+    Index count = 0;    
 
     for(Index i = 0; i < batches_number; ++i)
     {
         for(Index j = 0; j < batch_size; ++j)
         {
-            batches(i,j) = samples_indices(count);
+            batches(i)(j) = samples_indices(i*batch_size + j);
 
-            count++;
+            //count++;
         }
     }
 
@@ -11068,8 +11075,8 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
 
 
 void DataSetBatch::fill(const Tensor<Index, 1>& samples,
-                          const Tensor<Index, 1>& inputs,
-                          const Tensor<Index, 1>& targets)
+                        const Tensor<Index, 1>& inputs,
+                        const Tensor<Index, 1>& targets)
 {
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
@@ -11077,7 +11084,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
     if(input_variables_dimensions.size() == 1)
     {
-        fill_submatrix(data, samples, inputs, inputs_2d.data());
+        fill_submatrix(data, samples, inputs, inputs_2d);
     }
     else if(input_variables_dimensions.size() == 4)
     {
@@ -11108,7 +11115,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         }
     }
 
-    fill_submatrix(data, samples, targets, targets_2d.data());
+     fill_submatrix(data, samples, targets, targets_2d);
 }
 
 

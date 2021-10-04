@@ -215,7 +215,7 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 
     const Tensor<type, 2>& targets = batch.targets_2d;
     const Tensor<type, 2>& outputs = probabilistic_layer_back_propagation->activations;
-
+/*
     const Tensor<bool, 2> if_sentence = targets == targets.constant(type(1));
     const Tensor<bool, 2> else_sentence = targets == targets.constant(type(0));
 
@@ -236,6 +236,7 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
     const type coefficient = (static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient;
 
     back_propagation.error = weighted_sum_squared_error(0)/coefficient;
+*/
 }
 
 
@@ -278,7 +279,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
     const type coefficient = static_cast<type>(2.0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
-
+    /*
     const Tensor<bool, 2> if_sentence = targets == targets.constant(type(1));
     const Tensor<bool, 2> else_sentence = targets == targets.constant(type(0));
 
@@ -292,6 +293,7 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     f_3 = targets.constant(type(0));
 
     probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = if_sentence.select(f_1, else_sentence.select(f_2, f_3));
+    */
 }
 
 
@@ -483,7 +485,7 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2>& x, 
     }
 
 #endif
-
+    /*
     const Tensor<bool, 2> if_sentence = y == y.constant(type(1));
     const Tensor<bool, 2> else_sentence = y == y.constant(type(0));
 
@@ -502,6 +504,9 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2>& x, 
     const Tensor<type, 0> weighted_sum_squared_error = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
     return weighted_sum_squared_error(0);
+    */
+
+    return 0;
 }
 
 
@@ -519,7 +524,7 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
-
+    /*
     const Tensor<bool, 2> if_sentence = outputs == outputs.constant(type(1));
 
     Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
@@ -529,6 +534,7 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
     f_2 = (outputs - targets)*negatives_weight;
 
     loss_index_back_propagation_lm.squared_errors = ((if_sentence.select(f_1, f_2)).sum(rows_sum).square()).sqrt();
+    */
 }
 
 }

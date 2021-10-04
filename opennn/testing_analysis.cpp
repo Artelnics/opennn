@@ -1352,7 +1352,7 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
     }
 
 #endif
-
+    /*
     type negatives_weight;
     type positives_weight;
 
@@ -1372,8 +1372,8 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
         negatives_weight = weights[1];
     }
 
-    const Tensor<bool, 2> if_sentence = targets == targets.constant(type(1));
-    const Tensor<bool, 2> else_sentence = targets == targets.constant(type(0));
+    const Tensor<bool, 2> if_sentence = (targets == targets.constant(type(1)));
+    const Tensor<bool, 2> else_sentence = (targets == targets.constant(type(0)));
 
     Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
 
@@ -1401,6 +1401,8 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
     const type normalization_coefficient = type(negatives)*negatives_weight*static_cast<type>(0.5);
 
     return sum_squared_error(0)/normalization_coefficient;
+    */
+    return 0;
 }
 
 

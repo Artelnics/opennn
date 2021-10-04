@@ -150,13 +150,15 @@ public:
       const Tensor<type, 1> h = calculate_h(x);
 
 	  const Tensor<type, 1> y = (t.*f)(x);
-
+/*
       const Tensor<type, 1> x_forward = x + h;     
 	  const Tensor<type, 1> y_forward = (t.*f)(x_forward);
 
 	  const Tensor<type, 1> d = (y_forward - y)/h;
 
       return d;
+*/
+      return Tensor<type, 1>();
    }
 
 
@@ -166,13 +168,15 @@ public:
       const Tensor<type, 2> h = calculate_h(x);
 
       const Tensor<type, 2> y = (t.*f)(x);
-
+      /*
       const Tensor<type, 2> x_forward = x + h;
       const Tensor<type, 2> y_forward = (t.*f)(x_forward);
 
       const Tensor<type, 2> d = (y_forward - y)/h;
 
       return d;
+      */
+      return Tensor<type, 2>();
    }
 
 
@@ -184,7 +188,7 @@ public:
    template<class T> 
    Tensor<type, 1> calculate_central_differences_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
-
+    /*
       const Tensor<type, 1> h = calculate_h(x);
      
       const Tensor<type, 1> x_forward = x + h;
@@ -198,6 +202,8 @@ public:
       const Tensor<type, 1> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
+      */
+      return Tensor<type, 1>();
    }
 
 
@@ -205,7 +211,7 @@ public:
    Tensor<type, 2> calculate_central_differences_derivatives(const T& t, Tensor<type, 2>(T::*f)(const Tensor<type, 2>&) const, const Tensor<type, 2>& x) const
    {
       const Tensor<type, 2> h = calculate_h(x);
-
+      /*
       const Tensor<type, 2> x_forward = x + h;
       const Tensor<type, 2> x_backward = x - h;
 
@@ -217,6 +223,8 @@ public:
       const Tensor<type, 2> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
+      */
+      return Tensor<type, 2>();
    }
 
 
@@ -297,7 +305,7 @@ public:
    Tensor<type, 1> calculate_forward_differences_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
    {
       const Tensor<type, 1> y = (t.*f)(dummy, x);
-
+      /*
       const Tensor<type, 1> h = calculate_h(x);     
       const Tensor<type, 1> x_forward = x + h;     
 
@@ -306,6 +314,8 @@ public:
       const Tensor<type, 1> d = (y_forward - y)/h;
 
       return d;
+      */
+      return Tensor<type, 1>();
    }
 
 
@@ -320,7 +330,7 @@ public:
    Tensor<type, 1> calculate_central_differences_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
    {
       const Tensor<type, 1> h = calculate_h(x);     
-
+      /*
       const Tensor<type, 1> x_forward = x + h;
       const Tensor<type, 1> x_backward = x - h;
 
@@ -330,6 +340,8 @@ public:
       const Tensor<type, 1> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
+      */
+      return Tensor<type, 1>();
    }
 
 
