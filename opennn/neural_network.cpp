@@ -2377,6 +2377,8 @@ void NeuralNetwork::print() const
 
 void NeuralNetwork::save(const string& file_name) const
 {
+    cout << "Saving neural network" << endl;
+
     FILE * file = fopen(file_name.c_str(), "w");
 
     tinyxml2::XMLPrinter printer(file);

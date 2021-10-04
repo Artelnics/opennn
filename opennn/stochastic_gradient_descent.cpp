@@ -376,8 +376,11 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Index training_batches_number = training_samples_number/batch_size_training;
     const Index selection_batches_number = selection_samples_number/batch_size_selection;
 
-    Tensor<Index, 2> training_batches(training_batches_number, batch_size_training);
-    Tensor<Index, 2> selection_batches(selection_batches_number, batch_size_selection);
+    Tensor<Tensor<Index, 1>, 1> training_batches(training_batches_number);
+    for (Index i = 0; i < training_batches_number; i++) training_batches(i).resize(batch_size_training);
+
+    Tensor<Tensor<Index, 1>, 1> selection_batches(selection_batches_number);
+    for (Index i = 0; i < selection_batches_number; i++) selection_batches(i).resize(batch_size_selection);
 
     // Neural network
 
@@ -454,7 +457,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             // Data set
 
-            batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+            batch_training.fill(training_batches(iteration), input_variables_indices, target_variables_indices);
 
             // Neural network
 
@@ -489,7 +492,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             {
                 // Data set
 
-                batch_selection.fill(selection_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
+                batch_selection.fill(selection_batches(iteration), input_variables_indices, target_variables_indices);
 
                 // Neural network
 

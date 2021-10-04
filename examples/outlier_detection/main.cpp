@@ -17,6 +17,8 @@ int main(void)
     try
     {
         cout << "Outliers test." << endl;
+
+
 //         NAME               CONTAMINATION           N POINTS
 //         arrhythmia               0.15                452
 //         cover                    0.01                286048

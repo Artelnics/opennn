@@ -25,7 +25,7 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
     const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
 
-//    #pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -42,7 +42,7 @@ void divide_columns(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
     const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
 
-//    #pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index j = 0; j < columns_number; j++)
     {
@@ -349,81 +349,18 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
 }
 
 
-void fill_subcolumn(const Tensor<type, 2>& matrix,
-    const Tensor<Index, 1>& rows_indices,
-    const Index& column_index, const Index& submatrix_column_index, type* submatrix_pointer)
-{
-    const Index rows_number = rows_indices.size();
-
-    const type* matrix_column_pointer = matrix.data() + matrix.dimension(0) * column_index;
-    type* submatrix_column_pointer = submatrix_pointer + rows_number * submatrix_column_index;
-    const Index* rows_indices_pointer = rows_indices.data();
-
-    const type* value_pointer = matrix_column_pointer;
-
-    for (Index i = 0; i < rows_number; i++)
-    {
-//        *submatrix_column_pointer = *rows_indices_pointer;
-
-        value_pointer = matrix_column_pointer + *rows_indices_pointer;
-        rows_indices_pointer++;
-        *submatrix_column_pointer = *value_pointer;
-        submatrix_column_pointer++;
-    }
-}
-
-
 void fill_submatrix(const Tensor<type, 2>& matrix,
     const Tensor<Index, 1>& rows_indices,
     const Tensor<Index, 1>& columns_indices,
-    type* submatrix_pointer)
+    Tensor<type, 2>& submatrix)
 {
-    const Index columns_number = columns_indices.size();
+    Map<const Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> matrix_map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
 
-    #pragma omp parallel for
+    Map<Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> submatrix_map(submatrix.data(), submatrix.dimension(0), submatrix.dimension(1));
 
-    for (Index j = 0; j < columns_number; j++)
-    {
-        fill_subcolumn(matrix, rows_indices, columns_indices(j), j, submatrix_pointer);
-    }
+    submatrix_map = matrix_map(rows_indices, columns_indices);
 }
 
-
-/*
-void fill_submatrix(const Tensor<type, 2>& matrix,
-                    const Tensor<Index, 1>& rows_indices,
-                    const Tensor<Index, 1>& columns_indices,
-                    type* submatrix_pointer)
-{
-
-    const Index rows_number = rows_indices.size();
-    const Index columns_number = columns_indices.size();
-
-    const Index matrix_rows_number = matrix.dimension(0);
-    const type* matrix_pointer = matrix.data();
-
-//    #pragma omp parallel for
-
-    for(Index j = 0; j < columns_number; j++)
-    {
-        const type* matrix_column_pointer = matrix_pointer + matrix_rows_number*columns_indices[j];
-        type* submatrix_column_pointer = submatrix_pointer + rows_number*j;
-
-        const type* value_pointer = nullptr;
-        const Index* rows_indices_pointer = rows_indices.data();
-
-//        #pragma omp simd
-
-        for(Index i = 0; i < rows_number; i++)
-        {
-            value_pointer = matrix_column_pointer + *rows_indices_pointer;
-            rows_indices_pointer++;
-            *submatrix_column_pointer = *value_pointer;
-            submatrix_column_pointer++;
-        }
-    }
-}
-*/
 
 Index count_NAN(const Tensor<type, 1>& x)
 {
