@@ -21,16 +21,6 @@ DESTDIR = "$$PWD/bin"
 
 SOURCES = main.cpp
 
-win32-g++{
-QMAKE_LFLAGS += -static-libgcc
-QMAKE_LFLAGS += -static-libstdc++
-QMAKE_LFLAGS += -static
-
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
-QMAKE_LFLAGS += -fopenmp -pthread -lgomp
-LIBS += -fopenmp -pthread -lgomp
-}
-
 # OpenMP library
 
 win32{
