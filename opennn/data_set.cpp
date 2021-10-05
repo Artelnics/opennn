@@ -9843,7 +9843,6 @@ void DataSet::read_text()
 
     while(getline(file, line))
     {
-        erase(line,';');
         text.append(line);
     }
 

@@ -1,0 +1,207 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>91</InputsNumber>
+      <Input Index="1">column_1_lag_0</Input>
+      <Input Index="2">column_2_lag_0</Input>
+      <Input Index="3">column_3_lag_0</Input>
+      <Input Index="4">column_4_lag_0</Input>
+      <Input Index="5">column_5_lag_0</Input>
+      <Input Index="6">column_6_lag_0</Input>
+      <Input Index="7">column_7_lag_0</Input>
+      <Input Index="8">column_8_lag_0</Input>
+      <Input Index="9">column_9_lag_0</Input>
+      <Input Index="10">column_10_lag_0</Input>
+      <Input Index="11">column_11_lag_0</Input>
+      <Input Index="12">column_12_lag_0</Input>
+      <Input Index="13">column_13_lag_0</Input>
+      <Input Index="14">column_14_lag_0</Input>
+      <Input Index="15">column_15_lag_0</Input>
+      <Input Index="16">column_16_lag_0</Input>
+      <Input Index="17">column_17_lag_0</Input>
+      <Input Index="18">column_18_lag_0</Input>
+      <Input Index="19">column_19_lag_0</Input>
+      <Input Index="20">column_20_lag_0</Input>
+      <Input Index="21">column_21_lag_0</Input>
+      <Input Index="22">column_22_lag_0</Input>
+      <Input Index="23">column_23_lag_0</Input>
+      <Input Index="24">column_24_lag_0</Input>
+      <Input Index="25">column_25_lag_0</Input>
+      <Input Index="26">column_26_lag_0</Input>
+      <Input Index="27">column_27_lag_0</Input>
+      <Input Index="28">column_28_lag_0</Input>
+      <Input Index="29">column_29_lag_0</Input>
+      <Input Index="30">column_30_lag_0</Input>
+      <Input Index="31">column_31_lag_0</Input>
+      <Input Index="32">column_32_lag_0</Input>
+      <Input Index="33">column_33_lag_0</Input>
+      <Input Index="34">column_34_lag_0</Input>
+      <Input Index="35">column_35_lag_0</Input>
+      <Input Index="36">column_36_lag_0</Input>
+      <Input Index="37">column_37_lag_0</Input>
+      <Input Index="38">column_38_lag_0</Input>
+      <Input Index="39">column_39_lag_0</Input>
+      <Input Index="40">column_40_lag_0</Input>
+      <Input Index="41">column_41_lag_0</Input>
+      <Input Index="42">column_42_lag_0</Input>
+      <Input Index="43">column_43_lag_0</Input>
+      <Input Index="44">column_44_lag_0</Input>
+      <Input Index="45">column_45_lag_0</Input>
+      <Input Index="46">column_46_lag_0</Input>
+      <Input Index="47">column_47_lag_0</Input>
+      <Input Index="48">column_48_lag_0</Input>
+      <Input Index="49">column_49_lag_0</Input>
+      <Input Index="50">column_50_lag_0</Input>
+      <Input Index="51">column_51_lag_0</Input>
+      <Input Index="52">column_52_lag_0</Input>
+      <Input Index="53">column_53_lag_0</Input>
+      <Input Index="54">column_54_lag_0</Input>
+      <Input Index="55">column_55_lag_0</Input>
+      <Input Index="56">column_56_lag_0</Input>
+      <Input Index="57">column_57_lag_0</Input>
+      <Input Index="58">column_58_lag_0</Input>
+      <Input Index="59">column_59_lag_0</Input>
+      <Input Index="60">column_60_lag_0</Input>
+      <Input Index="61">column_61_lag_0</Input>
+      <Input Index="62">column_62_lag_0</Input>
+      <Input Index="63">column_63_lag_0</Input>
+      <Input Index="64">column_64_lag_0</Input>
+      <Input Index="65">column_65_lag_0</Input>
+      <Input Index="66">column_66_lag_0</Input>
+      <Input Index="67">column_67_lag_0</Input>
+      <Input Index="68">column_68_lag_0</Input>
+      <Input Index="69">column_69_lag_0</Input>
+      <Input Index="70">column_70_lag_0</Input>
+      <Input Index="71">column_71_lag_0</Input>
+      <Input Index="72">column_72_lag_0</Input>
+      <Input Index="73">column_73_lag_0</Input>
+      <Input Index="74">column_74_lag_0</Input>
+      <Input Index="75">column_75_lag_0</Input>
+      <Input Index="76">column_76_lag_0</Input>
+      <Input Index="77">column_77_lag_0</Input>
+      <Input Index="78">column_78_lag_0</Input>
+      <Input Index="79">column_79_lag_0</Input>
+      <Input Index="80">column_80_lag_0</Input>
+      <Input Index="81">column_81_lag_0</Input>
+      <Input Index="82">column_82_lag_0</Input>
+      <Input Index="83">column_83_lag_0</Input>
+      <Input Index="84">column_84_lag_0</Input>
+      <Input Index="85">column_85_lag_0</Input>
+      <Input Index="86">column_86_lag_0</Input>
+      <Input Index="87">column_87_lag_0</Input>
+      <Input Index="88">column_88_lag_0</Input>
+      <Input Index="89">column_89_lag_0</Input>
+      <Input Index="90">column_90_lag_0</Input>
+      <Input Index="91">column_91_lag_0</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Perceptron Probabilistic</LayersTypes>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer</LayerName>
+         <InputsNumber>91</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>-3.04012e-41 2.34521e-41 -5.06527e-32 -1.40634e-41 2.02908e-42 5.55447e-41 1.7676e-41 -1.04817e-42 8.66046e-24 2.64005e-41 -2.16921e-42 3.62323e-34 -5.67932e-41 5.91768e-42 -2.62884e-41 -6.16571e-44 -8.60775e-13 1.97163e-42 5.8322e-42 3.29866e-42 1.35365e-41 3.25662e-42 -3.55523e-41 8.53391e-43 4.8611e-42 3.3484e-41 3.48223e-42 -4.49817e-42 -2.74844e-34 -4.49677e-42 -5.60519e-44 -6.40534e-42 -7.16466e-21 9.20233e-42 -8.12753e-44 9.01035e-43 -3.90121e-42 1.28821e-41 -8.7427e-42 2.30962e-41 3.6041e-23 -1.55894e-41 -1.23426e-41 3.03003e-41 3.36788e-41 -5.37031e-38 -1.36774e-40 -1.77292e-41 3.74842e-35 -2.20144e-42 -7.92658e-41 -6.94764e-42 3.59509e-35 2.74963e-41 -9.74697e-37 1.46155e-42 3.30059e-13 2.97646e-36 6.80565e-29 2.79433e-41 2.13695e-12 -9.14326e-40 1.24758e-41 -8.11212e-42 4.02537e-41 -3.95166e-42 -9.87931e-13 -8.28866e-21 -2.00666e-42 -2.50692e-42 2.04323e-41 6.40953e-39 -2.67961e-33 -9.50344e-13 -1.49967e-41 -4.81066e-42 -3.07319e-41 2.59618e-13 2.13152e-41 1.47157e-21 1.24015e-42 2.52094e-42 1.65423e-41 1.45368e-12 1.04397e-42 -4.0604e-41 3.87599e-42 -1.51301e-14 -8.49888e-42 -1.26881e-30 1.09441e-42 0.0108209</Parameters>
+      </PerceptronLayer>
+      <ProbabilisticLayer>
+         <InputsNumber>1</InputsNumber>
+         <NeuronsNumber>91</NeuronsNumber>
+         <ActivationFunction>Softmax</ActivationFunction>
+         <Parameters>-0.000341537 0.00140891 0.00901184 0.00139549 0.00141737 -0.000208937 0.00270363 0.00145874 0.00086098 0.00447619 -0.000389984 0.000346867 -4.216e-05 0.000140271 0.000597313 0.00216988 0.000657909 -1.64732e-05 0.000637166 0.00129363 5.05198e-05 2.68668e-05 -0.000358754 0.000291211 0.000265851 0.00166945 -0.000496788 -0.000677045 -7.626e-05 -0.000392529 -8.93762e-05 -0.000455887 -0.000364245 -0.000374537 -0.000465515 -0.000316788 -0.000372248 -0.000406192 -0.000413745 -0.000461115 -0.000299693 -0.000467081 -0.000299076 -0.000392083 -0.000377462 -0.000384607 -0.000375657 -0.000372555 -0.000437009 -0.000266913 -0.000383696 -0.000426325 -0.000355218 -0.000316357 -0.000411747 -0.000410807 -0.000401571 -0.000402531 -0.000355284 -0.000423055 -0.000392138 -0.000392351 -0.000391602 -0.000387879 -0.000379327 -0.000392491 -0.000392225 -0.000392133 -0.000391757 -0.000391523 -0.000393723 -0.000391259 -0.000391599 -0.000392174 -0.000390121 -0.00039056 -0.000360564 -0.000384839 -0.000403068 -0.000396524 -0.000405123 -0.000391584 -0.000391454 -0.000376171 -0.000392524 -0.000391683 -0.000374299 -0.000392551 -0.00039238 -0.000391283 -0.000393107 2.90335e-14 -6.88931e-14 -1.0383e-13 -2.20511e-15 1.43067e-14 2.23851e-16 -3.42106e-15 5.82161e-14 1.66937e-14 4.77063e-13 2.85711e-15 2.7129e-15 -1.0583e-14 8.79394e-14 1.1207e-15 -1.30416e-14 -1.04694e-15 -4.86587e-15 -6.55316e-14 -2.08871e-15 1.89118e-15 9.29326e-14 -3.99291e-15 2.15268e-15 5.23109e-15 -1.48654e-14 7.47053e-16 -5.78557e-16 3.04911e-14 -1.09367e-15 -7.16429e-15 4.40565e-15 -2.00796e-14 2.07813e-15 -5.68518e-15 -1.31947e-14 2.8649e-15 2.42536e-15 4.98724e-15 -1.07542e-15 6.89871e-16 -6.30852e-15 1.58525e-15 -7.56706e-15 2.77474e-15 -2.85403e-15 -9.61315e-15 -3.40505e-15 -3.32866e-15 -5.2276e-15 1.42522e-15 -2.98193e-15 3.30673e-15 -1.55581e-14 1.99232e-14 -2.97131e-16 5.71918e-15 8.02487e-15 6.03282e-15 6.95509e-15 7.39873e-15 -3.32427e-15 -1.10137e-15 1.78e-15 3.96742e-15 -2.4415e-15 3.18692e-15 1.88495e-15 -4.26455e-15 -4.01329e-15 2.02468e-15 3.67006e-15 -4.05658e-15 -7.72082e-15 4.05859e-15 5.82308e-15 1.30028e-14 -1.80386e-14 -1.68493e-15 -4.98257e-15 -1.41937e-15 7.15764e-16 3.07946e-14 8.553e-16 3.46515e-16 6.21095e-15 -5.81344e-16 -3.72435e-15 7.73429e-15 2.76647e-15 1.94031e-15</Parameters>
+         <DecisionThreshold>0.5</DecisionThreshold>
+      </ProbabilisticLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>91</OutputsNumber>
+      <Output Index="1">column_1_ahead_1</Output>
+      <Output Index="2">column_2_ahead_1</Output>
+      <Output Index="3">column_3_ahead_1</Output>
+      <Output Index="4">column_4_ahead_1</Output>
+      <Output Index="5">column_5_ahead_1</Output>
+      <Output Index="6">column_6_ahead_1</Output>
+      <Output Index="7">column_7_ahead_1</Output>
+      <Output Index="8">column_8_ahead_1</Output>
+      <Output Index="9">column_9_ahead_1</Output>
+      <Output Index="10">column_10_ahead_1</Output>
+      <Output Index="11">column_11_ahead_1</Output>
+      <Output Index="12">column_12_ahead_1</Output>
+      <Output Index="13">column_13_ahead_1</Output>
+      <Output Index="14">column_14_ahead_1</Output>
+      <Output Index="15">column_15_ahead_1</Output>
+      <Output Index="16">column_16_ahead_1</Output>
+      <Output Index="17">column_17_ahead_1</Output>
+      <Output Index="18">column_18_ahead_1</Output>
+      <Output Index="19">column_19_ahead_1</Output>
+      <Output Index="20">column_20_ahead_1</Output>
+      <Output Index="21">column_21_ahead_1</Output>
+      <Output Index="22">column_22_ahead_1</Output>
+      <Output Index="23">column_23_ahead_1</Output>
+      <Output Index="24">column_24_ahead_1</Output>
+      <Output Index="25">column_25_ahead_1</Output>
+      <Output Index="26">column_26_ahead_1</Output>
+      <Output Index="27">column_27_ahead_1</Output>
+      <Output Index="28">column_28_ahead_1</Output>
+      <Output Index="29">column_29_ahead_1</Output>
+      <Output Index="30">column_30_ahead_1</Output>
+      <Output Index="31">column_31_ahead_1</Output>
+      <Output Index="32">column_32_ahead_1</Output>
+      <Output Index="33">column_33_ahead_1</Output>
+      <Output Index="34">column_34_ahead_1</Output>
+      <Output Index="35">column_35_ahead_1</Output>
+      <Output Index="36">column_36_ahead_1</Output>
+      <Output Index="37">column_37_ahead_1</Output>
+      <Output Index="38">column_38_ahead_1</Output>
+      <Output Index="39">column_39_ahead_1</Output>
+      <Output Index="40">column_40_ahead_1</Output>
+      <Output Index="41">column_41_ahead_1</Output>
+      <Output Index="42">column_42_ahead_1</Output>
+      <Output Index="43">column_43_ahead_1</Output>
+      <Output Index="44">column_44_ahead_1</Output>
+      <Output Index="45">column_45_ahead_1</Output>
+      <Output Index="46">column_46_ahead_1</Output>
+      <Output Index="47">column_47_ahead_1</Output>
+      <Output Index="48">column_48_ahead_1</Output>
+      <Output Index="49">column_49_ahead_1</Output>
+      <Output Index="50">column_50_ahead_1</Output>
+      <Output Index="51">column_51_ahead_1</Output>
+      <Output Index="52">column_52_ahead_1</Output>
+      <Output Index="53">column_53_ahead_1</Output>
+      <Output Index="54">column_54_ahead_1</Output>
+      <Output Index="55">column_55_ahead_1</Output>
+      <Output Index="56">column_56_ahead_1</Output>
+      <Output Index="57">column_57_ahead_1</Output>
+      <Output Index="58">column_58_ahead_1</Output>
+      <Output Index="59">column_59_ahead_1</Output>
+      <Output Index="60">column_60_ahead_1</Output>
+      <Output Index="61">column_61_ahead_1</Output>
+      <Output Index="62">column_62_ahead_1</Output>
+      <Output Index="63">column_63_ahead_1</Output>
+      <Output Index="64">column_64_ahead_1</Output>
+      <Output Index="65">column_65_ahead_1</Output>
+      <Output Index="66">column_66_ahead_1</Output>
+      <Output Index="67">column_67_ahead_1</Output>
+      <Output Index="68">column_68_ahead_1</Output>
+      <Output Index="69">column_69_ahead_1</Output>
+      <Output Index="70">column_70_ahead_1</Output>
+      <Output Index="71">column_71_ahead_1</Output>
+      <Output Index="72">column_72_ahead_1</Output>
+      <Output Index="73">column_73_ahead_1</Output>
+      <Output Index="74">column_74_ahead_1</Output>
+      <Output Index="75">column_75_ahead_1</Output>
+      <Output Index="76">column_76_ahead_1</Output>
+      <Output Index="77">column_77_ahead_1</Output>
+      <Output Index="78">column_78_ahead_1</Output>
+      <Output Index="79">column_79_ahead_1</Output>
+      <Output Index="80">column_80_ahead_1</Output>
+      <Output Index="81">column_81_ahead_1</Output>
+      <Output Index="82">column_82_ahead_1</Output>
+      <Output Index="83">column_83_ahead_1</Output>
+      <Output Index="84">column_84_ahead_1</Output>
+      <Output Index="85">column_85_ahead_1</Output>
+      <Output Index="86">column_86_ahead_1</Output>
+      <Output Index="87">column_87_ahead_1</Output>
+      <Output Index="88">column_88_ahead_1</Output>
+      <Output Index="89">column_89_ahead_1</Output>
+      <Output Index="90">column_90_ahead_1</Output>
+      <Output Index="91">column_91_ahead_1</Output>
+   </Outputs>
+</NeuralNetwork>
