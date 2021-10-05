@@ -41,6 +41,11 @@ int main(void)
 {
     try
     {
+<<<<<<< HEAD
+=======
+        cout << "OpenNN Text Generation Example" << endl;
+
+>>>>>>> 7d0f1ec1566980ab8c31fa357010c7eb0acd4672
         // Dataset
 
         DataSet data_set;
@@ -62,6 +67,9 @@ int main(void)
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
+
+        cout << "Input variables number: " << input_variables_number << endl;
+        cout << "Target variables number: " << target_variables_number << endl;
 
         // Neural network
 
@@ -90,17 +98,16 @@ int main(void)
 
         AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
 
-        adam->set_loss_goal(1.0e-3);
         adam->set_maximum_epochs_number(5);
         adam->set_display_period(1);
 
         training_strategy.perform_training();
 
-//        // Save results
+        // Save results
 
-//        data_set.save("../data/data_set.xml");
-//        neural_network.save("../data/neural_network.xml");
-//        training_strategy.save("../data/training_strategy.xml");
+        data_set.save("../data/data_set.xml");
+        neural_network.save("../data/neural_network.xml");
+        training_strategy.save("../data/training_strategy.xml");
 
         cout << "End Text Generation Example" << endl;
 
