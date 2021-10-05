@@ -32,30 +32,6 @@ void BoundingLayerTest::test_constructor()
 }
 
 
-void BoundingLayerTest::test_get_neurons_number()
-{
-   cout << "test_get_neurons_number\n";
-
-   // Test
-
-   bounding_layer.set();
-   assert_true(bounding_layer.get_neurons_number() == 0, LOG);
-
-   // Test
-
-   bounding_layer.set(1);
-   assert_true(bounding_layer.get_neurons_number() == 1, LOG);
-}
-
-
-void BoundingLayerTest::test_get_type()
-{
-   cout << "test_get_type\n";
-
-   assert_true(bounding_layer.get_type() == Layer::Type::Bounding, LOG);
-}
-
-
 void BoundingLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
@@ -94,12 +70,6 @@ void BoundingLayerTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-
-   // Get methods
-
-   // Bounding layer architecture
-
-   test_get_neurons_number();
 
    // Lower and upper bounds
 

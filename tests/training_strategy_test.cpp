@@ -40,16 +40,6 @@ void TrainingStrategyTest::test_destructor()
 }
 
 
-void TrainingStrategyTest::test_get_loss_index_pointer()
-{
-   cout << "test_get_loss_index_pointer\n";
-
-   LossIndex* loss_index_pointer = training_strategy.get_loss_index_pointer();
-
-   assert_true(loss_index_pointer != nullptr, LOG);
-}
-
-
 void TrainingStrategyTest::test_perform_training()
 {
    cout << "test_perform_training\n";
@@ -167,8 +157,6 @@ void TrainingStrategyTest::run_test_case()
    test_destructor();
 
    // Get methods
-
-   test_get_loss_index_pointer();
 
    // Training methods
 

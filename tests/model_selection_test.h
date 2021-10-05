@@ -25,10 +25,6 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Get methods
-
-   void test_get_training_strategy_pointer();
-
    // Set methods
 
    void test_set();

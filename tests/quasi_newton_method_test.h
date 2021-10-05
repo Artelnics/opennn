@@ -26,10 +26,6 @@ public:
 
    void test_constructor();
 
-   // Get methods
-
-   void test_get_inverse_hessian_approximation_method();
-
    // Set methods
 
    void test_set_inverse_hessian_approximation_method();

@@ -40,13 +40,6 @@ public:
 
    void test_has_methods();
 
-   void test_get_inputs();
-   void test_get_outputs();
-
-   void test_get_trainable_layers();
-   void test_get_layers_type_pointers();
-   void test_get_layer_pointer();
-
    // Set methods
 
    void test_set();
@@ -58,25 +51,9 @@ public:
 
    void test_set_default();
 
-   // Layers
-
-   void test_get_layers_number();
-
-   // Architecture
-
-   void test_inputs_outputs_number();
-   void test_get_architecture();
-
    // Architecture
 
    void test_set_network();
-
-   // Parameters
-
-   // Parameters methods
-
-   void test_get_parameters();
-   void test_get_trainable_layers_parameters();
 
    void test_set_parameters();
 
@@ -110,7 +87,6 @@ public:
 
    // XML expression methods
 
-   void test_write_expression();
    void test_save_expression();
 
    // Serialization methods

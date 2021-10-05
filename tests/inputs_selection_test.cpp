@@ -46,16 +46,6 @@ void InputsSelectionTest::test_destructor()
 }
 
 
-void InputsSelectionTest::test_get_training_strategy_pointer()
-{
-    cout << "test_get_training_strategy_pointer\n";
-
-    GrowingInputs growing_inputs(&training_strategy);
-
-    assert_true(growing_inputs.get_training_strategy_pointer() != nullptr, LOG);
-}
-
-
 void InputsSelectionTest::test_set()
 {
     cout << "test_set\n";
@@ -74,10 +64,6 @@ void InputsSelectionTest::run_test_case()
 
     test_constructor();
     test_destructor();
-
-    // Get methods
-
-    test_get_training_strategy_pointer();
 
     // Set methods
 

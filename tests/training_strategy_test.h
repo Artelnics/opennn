@@ -28,10 +28,6 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Get methods
-
-   void test_get_loss_index_pointer();
-
    // Training methods
 
    void test_perform_training();

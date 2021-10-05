@@ -40,18 +40,6 @@ void QuasiNewtonMethodTest::test_constructor()
 }
 
 
-void QuasiNewtonMethodTest::test_get_inverse_hessian_approximation_method()
-{
-   cout << "test_get_inverse_hessian_approximation_method\n";
-
-   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::DFP);
-   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::InverseHessianApproximationMethod::DFP, LOG);
-
-   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::BFGS);
-   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::InverseHessianApproximationMethod::BFGS, LOG);
-}
-
-
 void QuasiNewtonMethodTest::test_set_inverse_hessian_approximation_method()
 {
    cout << "test_set_training_direction_method\n";
@@ -289,10 +277,6 @@ void QuasiNewtonMethodTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-
-   // Get methods
-
-   test_get_inverse_hessian_approximation_method();
 
    // Set methods
 

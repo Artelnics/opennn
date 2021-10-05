@@ -128,22 +128,6 @@ void StatisticsTest::test_has_minimum_minus_one_maximum_one()
 }
 
 
-void StatisticsTest::test_get_bins_number()
-{
-    cout << "test_get_bins_number\n";
-
-    // Test
-    Histogram histogram;
-    assert_true(histogram.get_bins_number() == 0, LOG);
-
-    // Test
-    const Index bins_number_1 = 50;
-
-    Histogram histogram_1(bins_number_1);
-    assert_true(histogram_1.get_bins_number() == 50, LOG);
-}
-
-
 void StatisticsTest::test_count_empty_bins()
 {
     cout << "test_count_empty_bins\n";
@@ -1554,7 +1538,6 @@ void StatisticsTest::run_test_case()
 
    // Histogram
 
-   test_get_bins_number();
    test_count_empty_bins();
    test_calculate_minimum_frequency();
    test_calculate_maximum_frequency();

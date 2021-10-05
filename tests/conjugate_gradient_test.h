@@ -25,10 +25,6 @@ public:
 
    void test_constructor();
 
-   // Get methods
-
-   void test_get_training_direction_method();
-
    // Set methods
 
    void test_set_training_direction_method();

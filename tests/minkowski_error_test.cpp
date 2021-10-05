@@ -42,16 +42,6 @@ void MinkowskiErrorTest::test_constructor()
 }
 
 
-void MinkowskiErrorTest::test_get_Minkowski_parameter()
-{
-   cout << "test_get_Minkowski_parameter\n"; 
-
-   minkowski_error.set_Minkowski_parameter(type(1.0));
-   
-   assert_true(minkowski_error.get_Minkowski_parameter() == type(1.0), LOG);
-}
-
-
 void MinkowskiErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
@@ -713,10 +703,6 @@ void MinkowskiErrorTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-
-   // Get methods
-
-   test_get_Minkowski_parameter();
 
    // Set methods
 

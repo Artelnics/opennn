@@ -26,28 +26,6 @@ public:
 
    void test_constructor();
 
-   // Inputs and perceptrons
-
-   void test_get_inputs_number();
-   void test_get_neurons_number();
-
-   void test_get_activation_function();
-   void test_write_activation_function();
-
-   void test_get_recurrent_activation_function();
-   void test_write_recurrent_activation_function();
-
-   void test_get_perceptrons();
-   void test_get_perceptron();
-
-   // Parameters
-
-   void test_get_parameters_number();
-
-   void test_get_parameters();
-
-   void test_get_perceptrons_parameters();
-
    // lstm layer parameters
 
    void test_set_biases();
