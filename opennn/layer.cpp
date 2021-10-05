@@ -1104,6 +1104,34 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                                  Tensor<type, 2>& activations,
                                  Tensor<type, 3>& activations_derivatives) const
 {
+/*
+    // 20 seconds!!!
+
+        const Index columns_number = combinations.dimension(1);
+
+        const Index rows_number = activations.dimension(0);
+
+        // Activations : 14 seconds
+
+        activations.device(*thread_pool_device) = combinations.exp().sum(Eigen::array<Index, 1>({1})).reshape(Eigen::array<Index,2>{rows_number,1}).broadcast(Eigen::array<Index, 2>({1, columns_number}));
+
+        activations.device(*thread_pool_device) = combinations.exp()/activations;
+
+
+        // Activations derivatives : 6 seconds
+
+        kronecker_product(activations, activations_derivatives);
+
+        #pragma omp parallel for
+
+        for(Index i = 0; i < activations_derivatives.dimension(2); i++)
+        {
+            for(Index j = 0; j < activations_derivatives.dimension(1); j++)
+            {
+                activations_derivatives(j,j,i) += activations(i,j);
+            }
+        }
+   */
      const Index dim = combinations.dimension(1);
 
      const Index rows_number = activations.dimension(0);
