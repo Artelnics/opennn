@@ -11,12 +11,14 @@
 #include <math.h>
 #include <vector>
 #include <numeric>
+#include <execution>
 
 // OpenNN includes
 
 #include "config.h"
 
 #include "../eigen/Eigen/Dense"
+#include "../eigen/unsupported/Eigen/KroneckerProduct"
 
 using namespace std;
 using namespace Eigen;
@@ -87,6 +89,11 @@ Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>&, const Tensor<type
 Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
 Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
+
+Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&);
+Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&);
+void kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&,Tensor<type,2>&);
+void kronecker_product(const Tensor<type, 2>&, Tensor<type, 3>&);
 
 }
 

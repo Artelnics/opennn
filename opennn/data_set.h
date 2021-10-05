@@ -668,6 +668,8 @@ public:
 
    void read_csv();
 
+   void read_text();
+
    void load_data_binary();
    void load_time_series_data_binary(const string&);
 
