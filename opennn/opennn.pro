@@ -18,6 +18,8 @@ CONFIG(debug, debug|release){DEFINES += OPENNN_DEBUG}
 # OpenMP library
 
 win32{
+QMAKE_CXXFLAGS += -bigobj
+
 QMAKE_CXXFLAGS += -openmp
 QMAKE_LFLAGS += -openmp
 }
