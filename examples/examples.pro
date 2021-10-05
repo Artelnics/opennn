@@ -18,6 +18,7 @@ SUBDIRS += breast_cancer
 SUBDIRS += iris_plant
 SUBDIRS += logical_operations
 SUBDIRS += yacht_hydrodynamics
+SUBDIRS += text_generation
 SUBDIRS += leukemia
 SUBDIRS += mnist
 SUBDIRS += outlier_detection
