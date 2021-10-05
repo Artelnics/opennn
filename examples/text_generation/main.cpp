@@ -37,44 +37,15 @@ using namespace OpenNN;
 using namespace std;
 using namespace chrono;
 
-static Eigen::IndexList<Eigen::type2index<0>> alongClass; // 1st dimension
-Eigen::IndexList<int, Eigen::type2index<1>> bcast;
-template<typename T>
-void ETensorLogSoftmax(const Tensor<T, 2>& input, Tensor<T, 2>& output) {
-  bcast.set(0, input.dimension(0));
-  Eigen::IndexList<Eigen::type2index<1>, typename Eigen::Index> dims2d;
-  dims2d.set(1, input.dimension(1));
-  // creating a real tensor is faster thant auto which would resolve to some TensorExpr
-  Eigen::Tensor<T,2> wMinusMax = input - input.maximum(alongClass).eval().reshape(dims2d).broadcast(bcast);
-
-  cout <<"wMinusMax:\n" <<  wMinusMax << endl;
-
-  output = wMinusMax - wMinusMax.exp().sum(alongClass).log().eval().reshape(dims2d).broadcast(bcast);
-}
-
 int main(void)
 {
     try
     {
-        Tensor<type,2> matrix(3,3);
-
-        Tensor<type,2> softmax(3,3);
-
-        matrix.setValues({{1,1,1},{2,2,2},{3,3,3}});
-
-        cout << matrix << endl;
-
-        tensor_softmax(matrix,softmax);
-
-        cout << softmax << endl;
-
-        system("pause");
-
         // Dataset
 
         DataSet data_set;
 
-        data_set.set_data_file_name("../data/text_generation.csv");
+        data_set.set_data_file_name("../data/el_quijote.txt");
 
         data_set.read_text();
 
@@ -96,11 +67,6 @@ int main(void)
 
         const Index hidden_neurons_number = 1;
 
-        Tensor<Index, 1> architecture(3);
-        architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
-
-        //NeuralNetwork neural_network(NeuralNetwork::Forecasting, architecture);
-
         NeuralNetwork neural_network;
 
         LongShortTermMemoryLayer lstm_layer(input_variables_number,hidden_neurons_number);
@@ -119,8 +85,8 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
         AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
 
