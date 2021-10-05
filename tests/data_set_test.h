@@ -27,32 +27,7 @@ public:
    void test_constructor();
    void test_destructor();  
 
-   // Get methods
-
-   void test_get_samples_number();
-   void test_get_variables_number();
-   void test_get_variables();
-   
-   void test_write_first_cell();
    void test_has_time_columns();
-
-   // Data methods
-
-   void test_get_data();
-   void test_get_training_data();
-   void test_get_selection_data();
-   void test_get_testing_data();
-   void test_get_input_data();
-   void test_get_target_data();
-   void test_get_time_series_columns();
-   void test_get_time_series_columns_number();
-   void test_get_time_series_column_data();
-   void test_get_time_series_columns_names();
-   void test_get_time_series_data();
-  
-   // Sample methods
-
-   void test_get_sample();
 
    // Set methods
    void test_set();

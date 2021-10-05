@@ -38,28 +38,6 @@ void LearningRateAlgorithmTest::test_constructor()
 }
 
 
-void LearningRateAlgorithmTest::test_get_loss_index_pointer()
-{
-   cout << "test_get_loss_index_pointer\n"; 
-   
-   LossIndex* loss_index_pointer = learning_rate_algorithm.get_loss_index_pointer();
-
-   assert_true(loss_index_pointer != nullptr, LOG);
-}
-
-
-void LearningRateAlgorithmTest::test_get_learning_rate_method()
-{
-   cout << "test_get_learning_rate_method\n";
-
-   learning_rate_algorithm.set_learning_rate_method(LearningRateAlgorithm::LearningRateMethod::GoldenSection);
-   assert_true(learning_rate_algorithm.get_learning_rate_method() == LearningRateAlgorithm::LearningRateMethod::GoldenSection, LOG);
-
-   learning_rate_algorithm.set_learning_rate_method(LearningRateAlgorithm::LearningRateMethod::BrentMethod);
-   assert_true(learning_rate_algorithm.get_learning_rate_method() == LearningRateAlgorithm::LearningRateMethod::BrentMethod, LOG);
-}
-
-
 void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
     cout << "test_calculate_bracketing_triplet\n";
@@ -257,14 +235,6 @@ void LearningRateAlgorithmTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-
-   // Get methods
-
-   test_get_loss_index_pointer();
-
-   // Training operators
-
-   test_get_learning_rate_method();
 
    // Training methods
 

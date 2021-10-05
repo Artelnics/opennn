@@ -29,14 +29,6 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Get methods
-
-   void test_get_parameters();
-
-   void test_get_outputs_dimensions();
-
-   void test_get_parameters_number();
-
    // Set methods
 
    void test_set();

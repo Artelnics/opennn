@@ -26,33 +26,6 @@ public:
 
    void test_constructor();
 
-   // Get methods
-
-   void test_get_dimensions();
-
-   // Multilayer perceptron architecture 
-
-   void test_get_inputs_number();
-   void test_get_neurons_number();
-
-   // Statistics
-
-   void test_get_descriptives();
-   
-   void test_get_minimums();
-   void test_get_maximums();
-   void test_get_means();
-   void test_get_standard_deviations();
-
-   // Variables scaling and unscaling
-
-   void test_get_scaling_method();
-   void test_write_scalers();
-
-   // Display messages
-
-   
-
    // Set methods
 
    void test_set();
@@ -114,10 +87,6 @@ public:
    void test_calculate_outputs();
    void test_calculate_minimum_maximum_output();
    void test_calculate_mean_standard_deviation_output();
-
-   // XML expression methods
-
-   void test_write_expression();
 
    // Serialization methods
 

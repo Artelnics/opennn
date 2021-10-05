@@ -29,25 +29,6 @@ public:
    // Inputs and perceptrons
 
    void test_is_empty();
-   void test_get_inputs_number();
-   void test_get_neurons_number();
-   void test_get_perceptrons();
-
-   // Parameters
-
-   void test_get_biases();
-   void test_get_synaptic_weights();
-   void test_get_parameters_number();
-   void test_get_parameters();
-
-   // Activation functions
-
-   void test_get_activation_function();
-   void test_write_activation_function();
-   
-   // Display messages
-
-   
 
    // Set methods
 
@@ -98,10 +79,6 @@ public:
    // Forward propagate
 
    void test_forward_propagate();
-
-   // Expression methods
-
-   void test_write_expression();
 
    // Unit testing methods
 

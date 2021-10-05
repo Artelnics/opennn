@@ -26,11 +26,6 @@ public:
 
    void test_constructor();
 
-   // Get methods
-
-   void test_get_neural_network_pointer();
-   void test_get_data_set_pointer();
-   
    // Error data methods
 
    void test_calculate_error_data();

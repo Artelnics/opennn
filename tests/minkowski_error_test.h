@@ -26,10 +26,6 @@ public:
 
    void test_constructor();
 
-   // Get methods
-
-   void test_get_Minkowski_parameter();
-
    // Error methods
 
    void test_calculate_error();

@@ -26,16 +26,6 @@ public:
 
    void test_constructor();
 
-   // Get methods
-
-   // Architecture
-
-   void test_get_neurons_number();
-   
-   // Variables bounds
-
-   void test_get_type();
-
    // Output methods
 
    void test_calculate_outputs();

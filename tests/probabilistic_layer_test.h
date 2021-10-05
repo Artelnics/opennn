@@ -26,25 +26,6 @@ public:
 
    void test_constructor();
 
-   // Get methods
-
-   void test_get_biases();
-   void test_get_synaptic_weights();
-   void test_get_parameters();
-   void test_get_decision_threshold();
-
-   // Probabilistic layer
-
-   void test_get_inputs_number();
-   void test_get_neurons_number();
-
-   // Output variables probabilistic postprocessing
-
-
-   // Display messages
-
-   
-
    // Set methods
 
    void test_set();
@@ -56,26 +37,14 @@ public:
 
    // Activation function
 
-
-   void test_write_activation_function();
-   void test_write_activation_function_text();
    void test_set_activation_function();
 
-
-   // Display messages
-
-   
-
-  // Probabilistic post-processing
+   // Probabilistic post-processing
 
    void test_calculate_combinations();
    void test_calculate_activations();
    void test_calculate_activations_derivatives();
    void test_calculate_outputs();
-
-   // Expression methods
-
-   void test_get_layer_expression();
 
    // Serialization methods
 
@@ -85,10 +54,6 @@ public:
    // Forward propagate
 
    void test_forward_propagate();
-
-   // Write expression
-
-   void test_write_expression();
 
    // Unit testing methods
 

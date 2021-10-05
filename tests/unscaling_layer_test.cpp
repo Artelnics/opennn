@@ -43,203 +43,6 @@ void UnscalingLayerTest::test_constructor()
    UnscalingLayer unscaling_layer_3(descriptives);
 
    assert_true(unscaling_layer_3.get_descriptives().size() == 2, LOG);
-
-}
-
-
-void UnscalingLayerTest::test_get_dimensions()
-{
-   cout << "test_get_dimensions\n";
-
-   unscaling_layer.set(1);
-
-   // Test
-
-   assert_true(unscaling_layer.get_neurons_number() == 1, LOG);
-
-   // Test
-
-   unscaling_layer.set(3);
-
-   assert_true(unscaling_layer.get_neurons_number() == 3, LOG);
-}
-
-
-void UnscalingLayerTest::test_get_neurons_number()
-{
-   cout << "test_get_neurons_number\n";
-
-   // Test
-
-   assert_true(unscaling_layer.get_neurons_number() == 0, LOG);
-   assert_true(unscaling_layer.get_neurons_number() == unscaling_layer.get_inputs_number(), LOG);
-
-   // Test
-
-   unscaling_layer.set(3);
-
-   descriptives.resize(3);
-   unscaling_layer.set_descriptives(descriptives);
-
-   assert_true(unscaling_layer.get_neurons_number() == 3, LOG);
-   assert_true(unscaling_layer.get_neurons_number() == unscaling_layer.get_inputs_number(), LOG);
-}
-
-
-void UnscalingLayerTest::test_get_inputs_number()
-{
-   cout << "test_get_inputs_number\n";
-
-   // Test
-
-   assert_true(unscaling_layer.get_inputs_number() == 0, LOG);
-   assert_true(unscaling_layer.get_inputs_number() == unscaling_layer.get_neurons_number(), LOG);
-
-   // Test
-
-   unscaling_layer.set(3);
-
-   descriptives.resize(3);
-   unscaling_layer.set_descriptives(descriptives);
-
-   assert_true(unscaling_layer.get_inputs_number() == 3, LOG);
-   assert_true(unscaling_layer.get_inputs_number() == unscaling_layer.get_neurons_number(), LOG);
-}
-
-
-void UnscalingLayerTest::test_get_descriptives()
-{
-   cout << "test_get_descriptives\n";
-
-    // Test 0
-/*
-    descriptives.resize(1);
-
-    unscaling_layer.set_descriptives(descriptives);
-
-    descriptives = unscaling_layer.get_descriptives();
-
-    assert_true(descriptives.dimension(0) == 1, LOG);
-    assert_true(abs(descriptives(0).minimum + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(descriptives(0).maximum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(descriptives(0).mean) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(descriptives(0).standard_deviation - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
-
-    Descriptives des_0(1,1,1,0);
-    Descriptives des_1(2,2,2,0);
-
-    descriptives.resize(2);
-    descriptives.setValues({des_0,des_1});
-
-    unscaling_layer.set_descriptives(descriptives);
-
-    descriptives = unscaling_layer.get_descriptives();
-
-    assert_true(descriptives.dimension(0) == 2, LOG);
-    assert_true(abs(descriptives(1).minimum - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(descriptives(1).maximum - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(descriptives(1).mean - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(descriptives(1).standard_deviation) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
-}
-
-
-void UnscalingLayerTest::test_get_minimums()
-{
-   cout << "test_get_minimums\n";
-
-   // Test
-
-   unscaling_layer.set(2);
-
-   descriptives.resize(2);
-
-   unscaling_layer.set_descriptives(descriptives);
-
-   assert_true(abs(unscaling_layer.get_minimums()(0) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(unscaling_layer.get_minimums()(1) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-   // Test
-
-   descriptives(0).minimum = type(1);
-   descriptives(1).minimum = type(-1);
-
-   unscaling_layer.set_descriptives(descriptives);
-
-   assert_true(abs(unscaling_layer.get_minimums()(0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(unscaling_layer.get_minimums()(1) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void UnscalingLayerTest::test_get_maximums()
-{
-   cout << "test_get_maximums\n";
-
-   // Test
-
-   unscaling_layer.set(2);
-
-   descriptives.resize(2);
-
-   unscaling_layer.set_descriptives(descriptives);
-
-   assert_true(abs(unscaling_layer.get_maximums()(0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(unscaling_layer.get_maximums()(1) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-   // Test
-
-   descriptives(0).maximum = type(1);
-   descriptives(1).maximum = type(-1);
-
-   unscaling_layer.set_descriptives(descriptives);
-
-   assert_true(abs(unscaling_layer.get_maximums()(0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(unscaling_layer.get_maximums()(1) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void UnscalingLayerTest::test_write_scalers()
-{
-    cout << "test_get_scaling_method_name\n";
-
-    unscaling_layer.set(1);
-
-    // Test
-
-    Scaler minimum_maximum = Scaler::MinimumMaximum;
-
-    Scaler mean_standard_deviation = Scaler::MeanStandardDeviation;
-    
-    Scaler logarithmic = Scaler::Logarithm;
-
-    unscaling_layer.set_scalers(Scaler::NoScaling);
-    assert_true(unscaling_layer.write_unscaling_methods()(0) == "NoUnscaling", LOG);
-
-    unscaling_layer.set_scalers(minimum_maximum);
-    assert_true(unscaling_layer.write_unscaling_methods()(0) == "MinimumMaximum", LOG);
-
-    unscaling_layer.set_scalers(mean_standard_deviation);
-    assert_true(unscaling_layer.write_unscaling_methods()(0) == "MeanStandardDeviation", LOG);
-
-    unscaling_layer.set_scalers(logarithmic);
-    assert_true(unscaling_layer.write_unscaling_methods()(0) == "Logarithm", LOG);
-
-    // Test
-
-    unscaling_layer.set_scalers(Scaler::NoScaling);
-    assert_true(unscaling_layer.write_unscaling_method_text()(0) == "no unscaling", LOG);
-
-    unscaling_layer.set_scalers(minimum_maximum);
-    assert_true(unscaling_layer.write_unscaling_method_text()(0) == "minimum and maximum", LOG);
-
-    unscaling_layer.set_scalers(mean_standard_deviation);
-    assert_true(unscaling_layer.write_unscaling_method_text()(0) == "mean and standard deviation", LOG);
-
-    unscaling_layer.set_scalers(logarithmic);
-    assert_true(unscaling_layer.write_unscaling_method_text()(0) == "logarithm", LOG);
-
 }
 
 
@@ -653,61 +456,6 @@ void UnscalingLayerTest::test_calculate_outputs()
 }
 
 
-void UnscalingLayerTest::test_write_expression()
-{
-   cout << "test_write_expression\n";
-
-   Tensor<string, 1> inputs_names(1);
-   Tensor<string, 1> outputs_names(1);
-
-   string expression;
-
-   // Test
-
-   unscaling_layer.set(1);
-   unscaling_layer.set_scalers(Scaler::NoScaling);
-   inputs_names.setValues({"x"});
-   outputs_names.setValues({"y"});
-
-   expression = unscaling_layer.write_expression(inputs_names, outputs_names);
-
-   assert_true(!expression.empty(), LOG);
-   assert_true(expression == "y = x;\n", LOG);
-
-   // Test
-
-   unscaling_layer.set(1);
-   unscaling_layer.set_scalers(Scaler::MinimumMaximum);
-
-   expression = unscaling_layer.write_expression(inputs_names, outputs_names);
-
-   assert_true(!expression.empty(), LOG);
-
-   assert_true(expression == "y = x*(1+1)/(1+1)-1+1*(1+1)/(1+1);\n", LOG);
-
-   // Test
-
-   unscaling_layer.set(1);
-   unscaling_layer.set_scalers(Scaler::MeanStandardDeviation);
-
-   expression = unscaling_layer.write_expression(inputs_names, outputs_names);
-
-   assert_true(!expression.empty(), LOG);
-   assert_true(expression == "y = -1+0.5*(x+1)*((1)-(-1);\n", LOG);
-
-   // Test 
-
-   unscaling_layer.set(1);
-   unscaling_layer.set_scalers(Scaler::Logarithm);
-
-   expression = unscaling_layer.write_expression(inputs_names, outputs_names);
-
-   assert_true(!expression.empty(), LOG);
-   assert_true(expression == "y = -1+0.5*(exp(x)+1)*((1)-(-1));\n", LOG);
-
-}
-
-
 void UnscalingLayerTest::run_test_case()
 {
    cout << "Running unscaling layer test case...\n";
@@ -715,24 +463,6 @@ void UnscalingLayerTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-
-   // Get methods
-
-   test_get_dimensions();
-
-   // Unscaling layer architecture
-
-   test_get_inputs_number();
-   test_get_neurons_number();
-
-   // Output variables descriptives
-
-   test_get_minimums();
-   test_get_maximums();
-
-   // Variables descriptives
-
-   test_get_descriptives();
 
    // Set methods
 
@@ -750,10 +480,6 @@ void UnscalingLayerTest::run_test_case()
    test_set_mean();
    test_set_standard_deviation();
 
-   // Variables scaling and unscaling
-
-   test_write_scalers();
-
    // Check methods
 
    test_is_empty();
@@ -761,10 +487,6 @@ void UnscalingLayerTest::run_test_case()
    // Output methods
 
    test_calculate_outputs();
-
-   // Expression methods
-
-   test_write_expression();
 
    cout << "End of unscaling layer test case.\n\n";
 }

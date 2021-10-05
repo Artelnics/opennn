@@ -67,7 +67,7 @@ public:
    // Descriptives struct
 
    // Histogram
-   void test_get_bins_number();
+
    void test_count_empty_bins();
    void test_calculate_minimum_frequency();
    void test_calculate_maximum_frequency();

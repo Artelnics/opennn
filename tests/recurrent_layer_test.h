@@ -30,19 +30,8 @@ public:
 
    void test_is_empty();
 
-   void test_get_inputs_number();
-   void test_get_neurons_number();
-
-   void test_get_perceptrons();
-   void test_get_perceptron();
-
    // Parameters
 
-   void test_get_biases();
-   void test_get_weights();
-   void test_get_recurrent_weights();
-   void test_get_parameters_number();
-   void test_get_parameters();
    void test_calculate_activations_derivatives();
    void test_calculate_outputs();
 

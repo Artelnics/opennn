@@ -32,26 +32,6 @@ void TestingAnalysisTest::test_constructor()
 }
 
 
-void TestingAnalysisTest::test_get_neural_network_pointer()
-{
-   cout << "test_get_neural_network_pointer\n";
-
-   testing_analysis.set_neural_network_pointer(&neural_network);
-   
-   assert_true(testing_analysis.get_neural_network_pointer() != nullptr, LOG);
-}
-
-
-void TestingAnalysisTest::test_get_data_set_pointer()
-{
-   cout << "test_get_data_set_pointer\n";
-
-   testing_analysis.set_data_set_pointer(&data_set);
-   
-   assert_true(testing_analysis.get_data_set_pointer() != nullptr, LOG);
-}
-
-
 void TestingAnalysisTest::test_calculate_error_data()
 {
     cout << "test_calculate_error_data\n";
@@ -1266,11 +1246,6 @@ void TestingAnalysisTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-
-   // Get methods
-   
-   test_get_neural_network_pointer();
-   test_get_data_set_pointer();
 
    // Error data methods
 

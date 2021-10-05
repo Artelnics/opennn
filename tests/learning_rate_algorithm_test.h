@@ -26,14 +26,6 @@ public:
 
    void test_constructor();
 
-   // Get methods
-
-   void test_get_loss_index_pointer();
-
-   // Training operators
-
-   void test_get_learning_rate_method();
-
    // Training methods
 
    void test_calculate_bracketing_triplet();

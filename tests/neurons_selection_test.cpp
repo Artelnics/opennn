@@ -43,28 +43,6 @@ void NeuronsSelectionTest::test_destructor()
 }
 
 
-void NeuronsSelectionTest::test_get_training_strategy_pointer()
-{
-    cout << "test_get_training_strategy_pointer\n";
-
-    GrowingNeurons growing_neurons(&training_strategy);
-
-    assert_true(growing_neurons.get_training_strategy_pointer() != nullptr, LOG);
-}
-
-
-void NeuronsSelectionTest::test_set_training_strategy_pointer()
-{
-    cout << "test_set_training_strategy_pointer\n";
-
-    GrowingNeurons growing_neurons;
-
-    growing_neurons.set_training_strategy_pointer(&training_strategy);
-
-    assert_true(growing_neurons.get_training_strategy_pointer() != nullptr, LOG);
-}
-
-
 void NeuronsSelectionTest::run_test_case()
 {
     cout << "Running neurons selection algorithm test case...\n";
@@ -73,14 +51,6 @@ void NeuronsSelectionTest::run_test_case()
 
     test_constructor();
     test_destructor();
-
-    // Get methods
-
-    test_get_training_strategy_pointer();
-
-    // Set methods
-
-    test_set_training_strategy_pointer();
 
     cout << "End of neurons selection algorithm test case.\n\n";
 }
