@@ -41,8 +41,6 @@ int main()
 
         data_set.transform_time_series();
 
-        data_set.print_data_preview();
-
         const Index inputs_number = data_set.get_input_variables_number();
         const Index targets_number = data_set.get_target_variables_number();
 
@@ -55,6 +53,9 @@ int main()
         // Training Strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.perform_training();
 
@@ -80,8 +81,6 @@ int main()
         linear_regression_analysis(0).print();
 
         cout << "Good bye!" << endl;
-
-        system("pause");
 
         return 0;
     }

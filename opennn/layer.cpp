@@ -1104,7 +1104,7 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                                  Tensor<type, 2>& activations,
                                  Tensor<type, 3>& activations_derivatives) const
 {
-/*
+
     // 20 seconds!!!
 
         const Index columns_number = combinations.dimension(1);
@@ -1131,7 +1131,8 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                 activations_derivatives(j,j,i) += activations(i,j);
             }
         }
-   */
+
+    /*
      const Index dim = combinations.dimension(1);
 
      const Index rows_number = activations.dimension(0);
@@ -1187,6 +1188,7 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
              }
          }
      }
+     */
 }
 
 

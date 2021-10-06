@@ -30,14 +30,8 @@ int main()
     try
     {
         cout << "OpenNN. Iris Plant Example." << endl;
-/*
+
         srand(static_cast<unsigned>(time(nullptr)));
-/*
-        DataSet data_set("D:/opennn/examples/iris_plant/data/iris_plant_original.csv", ';', true);
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {4, 3, 3});
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
 
         DataSet data_set("../data/iris_plant_original.csv", ';', true);
 
@@ -56,6 +50,8 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
 
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
         training_strategy.perform_training();
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
@@ -65,7 +61,7 @@ int main()
         neural_network.save_expression_python("D:/opennn/examples/iris_plant/data/neural_network.py");
 
         system("pause");
-*/
+
         return 0;
     }
     catch(exception& e)

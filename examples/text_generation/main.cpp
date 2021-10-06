@@ -41,11 +41,8 @@ int main(void)
 {
     try
     {
-<<<<<<< HEAD
-=======
         cout << "OpenNN Text Generation Example" << endl;
 
->>>>>>> 7d0f1ec1566980ab8c31fa357010c7eb0acd4672
         // Dataset
 
         DataSet data_set;
@@ -94,12 +91,7 @@ int main(void)
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-        AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
-
-        adam->set_maximum_epochs_number(5);
-        adam->set_display_period(1);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
         training_strategy.perform_training();
 

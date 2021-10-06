@@ -95,6 +95,8 @@ Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&);
 void kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&,Tensor<type,2>&);
 void kronecker_product(const Tensor<type, 2>&, Tensor<type, 3>&);
 
+void softmax(const Tensor<type, 2>&, Tensor<type, 2>&);
+
 }
 
 #endif
