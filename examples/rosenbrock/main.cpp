@@ -56,8 +56,8 @@ int main()
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(1);
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(3);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(10);
+//        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(3);
 
         TrainingResults training_results = training_strategy.perform_training();
 

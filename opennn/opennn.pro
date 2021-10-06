@@ -11,7 +11,7 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
-CONFIG += c++17
+#CONFIG += c++17
 
 CONFIG(debug, debug|release){DEFINES += OPENNN_DEBUG}
 

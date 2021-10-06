@@ -613,12 +613,41 @@ void kronecker_product(const Tensor<type, 2>& x, Tensor<type, 3>& y)
 
         product = kroneckerProduct(row_map, row_map);
 
-        copy(execution::par_unseq,
+        copy(/*execution::par_unseq,*/
              product.data(),product.data()+columns_number*columns_number,
              y.data()+i*columns_number*columns_number);
     }
 }
 
+void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y)
+{
+    const Index columns_number = x.dimension(1);
+
+    const Index rows_number = y.dimension(0);
+
+    // Activations
+
+    y = x.exp();
+
+    Tensor<type, 1> sums(rows_number);
+    sums.setZero();
+
+    for(Index i = 0; i< rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+            sums[i] +=  y(i,j);
+        }
+    }
+
+    for(Index i = 0; i< rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+            y(i, j) = y(i, j) / sums(i);
+        }
+    }
+}
 }
 
 
