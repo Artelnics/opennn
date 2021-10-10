@@ -156,7 +156,7 @@ private:
    type maximum_time = type(3600);
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/stochastic_gradient_descent_cuda.h"
 #endif
 
 };

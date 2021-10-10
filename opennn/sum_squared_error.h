@@ -84,7 +84,7 @@ public:
 private:
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/sum_squared_error_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/sum_squared_error_cuda.h"
 #endif
 
 };
