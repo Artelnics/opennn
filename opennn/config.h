@@ -30,7 +30,7 @@
 
 #ifdef OPENNN_CUDA
 
-#include "../../opennn-cuda/opennn_cuda/kernels.h"
+#include "../../opennn-cuda/opennn-cuda/kernel.cuh"
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include "cublas_v2.h"

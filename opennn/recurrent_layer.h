@@ -35,7 +35,7 @@ struct RecurrentLayerBackPropagation;
 
 
 #ifdef OPENNN_CUDA
-        #include "../../opennn-cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
+        #include "../../opennn-cuda/opennn-cuda/struct_recurrent_layer_cuda.h"
 #endif
 
 /// This class represents a recurrent layer of neurons.
@@ -249,7 +249,7 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/recurrent_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/recurrent_layer_cuda.h"
 #else
 };
 #endif

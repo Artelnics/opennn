@@ -40,7 +40,7 @@ struct LayerBackPropagation;
 struct LayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/struct_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/struct_layer_cuda.h"
 #endif
 
 
@@ -276,7 +276,7 @@ protected:
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"
 #else
 };
 #endif

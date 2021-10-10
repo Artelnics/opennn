@@ -879,7 +879,7 @@ private:
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/data_set_cuda.h"
 #endif
 
 /// This structure contains the batches of the data set.
