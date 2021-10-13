@@ -133,15 +133,15 @@ class EventCount {
     for (;;) {
       CheckState(state);
       const uint64_t waiters = (state & kWaiterMask) >> kWaiterShift;
-      const uint64_t signals = (state & kSignalMask) >> kSignalShift;
+      const uint64_t _signals = (state & kSignalMask) >> kSignalShift;
       // Easy case: no waiters.
-      if ((state & kStackMask) == kStackMask && waiters == signals) return;
+      if ((state & kStackMask) == kStackMask && waiters == _signals) return;
       uint64_t newstate;
       if (notifyAll) {
         // Empty wait stack and set signal to number of pre-wait threads.
         newstate =
             (state & kWaiterMask) | (waiters << kSignalShift) | kStackMask;
-      } else if (signals < waiters) {
+      } else if (_signals < waiters) {
         // There is a thread in pre-wait state, unblock it.
         newstate = state + kSignalInc;
       } else {
@@ -153,7 +153,7 @@ class EventCount {
       CheckState(newstate);
       if (state_.compare_exchange_weak(state, newstate,
                                        std::memory_order_acq_rel)) {
-        if (!notifyAll && (signals < waiters))
+        if (!notifyAll && (_signals < waiters))
           return;  // unblocked pre-wait thread
         if ((state & kStackMask) == kStackMask) return;
         Waiter* w = &waiters_[state & kStackMask];
@@ -209,12 +209,12 @@ class EventCount {
   static void CheckState(uint64_t state, bool waiter = false) {
     static_assert(kEpochBits >= 20, "not enough bits to prevent ABA problem");
     const uint64_t waiters = (state & kWaiterMask) >> kWaiterShift;
-    const uint64_t signals = (state & kSignalMask) >> kSignalShift;
-    eigen_plain_assert(waiters >= signals);
+    const uint64_t _signals = (state & kSignalMask) >> kSignalShift;
+    eigen_plain_assert(waiters >= _signals);
     eigen_plain_assert(waiters < (1 << kWaiterBits) - 1);
     eigen_plain_assert(!waiter || waiters > 0);
     (void)waiters;
-    (void)signals;
+    (void)_signals;
   }
 
   void Park(Waiter* w) {
