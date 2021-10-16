@@ -8,15 +8,12 @@ set(CPACK_GENERATOR "TGZ")
 set(CMAKE_SUPPRESS_REGENERATION true)
 set(VS_STARTUP_PROJECT opennn)
 
-#if(__OPENNN_OMP__)
-#    message("Using OpenMP")
-#    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")#${OpenMP_C_FLAGS}")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")#${OpenMP_CXX_FLAGS}")
-#    set(CMAEK_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-#endif()
+find_package(TBB REQUIRED tbb)
+link_libraries(TBB::tbb)
 
-# Uncomment next line to compile without using C++11
-# add_definitions(-D__Cpp11__)
+find_package(OpenMP REQUIRED)
+set(CMAKE_C_FLAGS "${OpenMP_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${OpenMP_CXX_FLAGS}")
 
 add_subdirectory(opennn)
 
