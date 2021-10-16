@@ -38,10 +38,12 @@ pruning_inputs.cpp
 quasi_newton_method.cpp
 recurrent_layer.cpp
 response_optimization.cpp
+scaling.cpp
 scaling_layer.cpp
 statistics.cpp
 stochastic_gradient_descent.cpp
 sum_squared_error.cpp
+tensor_utilities.cpp
 testing_analysis.cpp
 tinyxml2.cpp
 training_strategy.cpp
