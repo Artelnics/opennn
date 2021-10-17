@@ -901,6 +901,7 @@ void DataSet::transform_time_series_data()
     }
 
     samples_uses.resize(new_samples_number);
+    set_training();
 }
 
 
@@ -4645,12 +4646,13 @@ void DataSet::set(const Index& new_samples_number, const Index& new_variables_nu
     columns(new_variables_number-1).type = ColumnType::Numeric;
 
     samples_uses.resize(new_samples_number);
-    split_samples_random();
+    set_training();
 }
 
 
 /// Sets new numbers of samples and inputs and target variables in the data set.
 /// The variables in the data set are the number of inputs plus the number of targets.
+/// All the samples are set for training.
 /// @param new_samples_number Number of
 /// @param new_inputs_number Number of input variables.
 /// @param new_targets_number Number of target variables.
@@ -4687,8 +4689,7 @@ void DataSet::set(const Index& new_samples_number,
     input_variables_dimensions.resize(1);
 
     samples_uses.resize(new_samples_number);
-
-    split_samples_random();
+    set_training();
 }
 
 
@@ -7417,6 +7418,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const Index new_samples_number = static_cast<Index>(atoi(samples_number_element->GetText()));
 
         samples_uses.resize(new_samples_number);
+        set_training();
     }
 
     // Samples uses
