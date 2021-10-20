@@ -30,6 +30,43 @@ int main()
     try{
         cout << "Hello, OpenNN!" << endl;
 
+        cout << "OpenNN. Rosenbrock Example." << endl;
+
+        // Data Set
+
+        const Index samples_number = 1000;
+        const Index inputs_number = 10;
+        const Index outputs_number = 1;
+        const Index hidden_neurons_number = inputs_number;
+
+        DataSet data_set;// ("C:/rosenbrock.csv", ',', true);
+
+        data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
+
+        data_set.set_training();
+
+        // Neural network
+
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
+
+        // Training strategy
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
+        training_strategy.get_gradient_descent_pointer()->set_display_period(1);
+        training_strategy.get_gradient_descent_pointer()->set_maximum_epochs_number(3);
+
+        TrainingResults training_results = training_strategy.perform_training();
+
+        training_results.print();
+
+        cout << "End Rosenbrock" << endl;
+
+
         cout << "Good bye!" << endl;
 
         return 0;
