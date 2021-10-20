@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   G R A D I E N T   D E S C E N T   C L A S S
@@ -444,6 +444,9 @@ TrainingResults GradientDescent::perform_training()
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+
         results.training_error_history(epoch) = training_back_propagation.error;
 
         if(has_selection)
@@ -538,8 +541,6 @@ TrainingResults GradientDescent::perform_training()
         }
 
         if(epoch != 0 && epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
-
-        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
     }
 
     data_set_pointer->unscale_input_variables(input_variables_descriptives);

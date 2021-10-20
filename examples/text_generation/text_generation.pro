@@ -31,6 +31,8 @@ QMAKE_LFLAGS += -static
 
 QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
 QMAKE_LFLAGS += -fopenmp -pthread -lgomp
+QMAKE_CXXFLAGS += -MP
+
 LIBS += -fopenmp -pthread -lgomp
 }
 

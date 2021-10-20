@@ -875,7 +875,7 @@ void DataSet::transform_time_series_data()
     const Index old_samples_number = data.dimension(0);
     const Index old_variables_number = data.dimension(1);
 
-    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
+    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead-1);
     const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
 
     time_series_data = data;
@@ -3566,13 +3566,13 @@ void DataSet::set_binary_simple_columns()
 
                 if(values(0) == type(0) && values(1) == type(1))
                 {
-                    columns(column_index).categories(0) = "Negative (0)";
-                    columns(column_index).categories(1) = "Positive (1)";
+                    columns(column_index).categories(0) = "Positive (1)";
+                    columns(column_index).categories(1) = "Negative (0)";
                 }
                 else if(values(0) == type(1) && values(1) == type(0))
                 {
-                    columns(column_index).categories(0) = "Positive (1)";
-                    columns(column_index).categories(1) = "Negative (0)";
+                    columns(column_index).categories(0) = "Negative (0)";
+                    columns(column_index).categories(1) = "Positive (1)";
                 }
                 else
                 {
@@ -5043,8 +5043,6 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
     }
 
 #endif
-
-    Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
     Tensor<string, 1> constant_columns(0);
 
@@ -9819,7 +9817,6 @@ void DataSet::read_csv()
 
         read_csv_3_complete();
     }
-
 }
 
 void DataSet::read_text()
@@ -10240,7 +10237,7 @@ void DataSet::read_csv_3_simple()
 
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
-            if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
+            if(is_constant(numeric_column))
             {
                 columns(column).type = ColumnType::Constant;
                 columns(column).column_use = VariableUse::UnusedVariable;
@@ -10610,7 +10607,7 @@ void DataSet::read_csv_3_complete()
         {
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
-            if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
+            if(is_constant(numeric_column))
             {
                 columns(column).type = ColumnType::Constant;
                 columns(column).column_use = VariableUse::UnusedVariable;

@@ -319,11 +319,16 @@ void ProbabilisticLayer::set_synaptic_weights(const Tensor<type, 2>& new_synapti
 
 void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    const Index biases_number = biases.size();
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index biases_number = get_biases_number();
+    const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    memcpy(biases.data(), new_parameters.data() + index, static_cast<size_t>(biases_number)*sizeof(type));
-    memcpy(synaptic_weights.data(), new_parameters.data() + biases_number + index, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+    memcpy(biases.data(),
+           new_parameters.data() + index,
+           static_cast<size_t>(biases_number)*sizeof(type));
+
+    memcpy(synaptic_weights.data(),
+           new_parameters.data() + biases_number + index,
+           static_cast<size_t>(synaptic_weights_number)*sizeof(type));
 }
 
 
@@ -674,7 +679,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
 }
 
 
-/// This method processes the input to the probabilistic layer in order to obtain a set of outputs which
+/// This method processes the input to the probabilistic layer to obtain a set of outputs which
 /// can be interpreted as probabilities.
 /// This posprocessing is performed according to the probabilistic method to be used.
 /// @param inputs Set of inputs to the probabilistic layer.
