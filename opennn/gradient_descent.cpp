@@ -273,14 +273,22 @@ void GradientDescent::update_parameters(
 {
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
 
-    if(is_zero(optimization_data.training_direction)) return;
+    if(is_zero(optimization_data.training_direction))
+    {
+        cout << "Training direction is zero" << endl;
+        return;
         //throw logic_error("Training direction is zero");
+    }
 
     // Get initial learning_rate
 
     optimization_data.epoch == 0
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
+
+
+//    optimization_data.initial_learning_rate = 0.01;
+    cout << optimization_data.initial_learning_rate << endl;
 
     const pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
                             batch,
@@ -328,6 +336,7 @@ void GradientDescent::update_parameters(
     // Update parameters
 
     optimization_data.old_learning_rate = optimization_data.learning_rate;
+    optimization_data.epoch++;
 
     forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
 

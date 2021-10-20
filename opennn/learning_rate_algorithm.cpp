@@ -319,6 +319,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
                                                    back_propagation,
                                                    optimization_data);
 
+
     try
     {
         triplet.check();
@@ -610,6 +611,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
             }
         }
     }
+
 
     return triplet;
 }
