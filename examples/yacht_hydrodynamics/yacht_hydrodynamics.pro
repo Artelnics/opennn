@@ -26,6 +26,7 @@ SOURCES = main.cpp
 win32{
 QMAKE_CXXFLAGS += -openmp
 QMAKE_LFLAGS += -openmp
+QMAKE_CXXFLAGS += -MP
 }
 
 unix:macx{

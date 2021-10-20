@@ -19,8 +19,9 @@ SOURCES += main.cpp
 # OpenMP library
 
 win32{
-QMAKE_CXXFLAGS += -openmp
-QMAKE_LFLAGS += -openmp
+QMAKE_CXXFLAGS += -fopenmp
+QMAKE_LFLAGS += -fopenmp
+QMAKE_CXXFLAGS += -MP
 }
 
 unix:macx{

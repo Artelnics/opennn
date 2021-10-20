@@ -169,7 +169,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
    data_set.set(1, 1, 1);
 //   Tensor<Index, 1> indices(1,1,data_set.get_samples_number()-1);
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {1, 1});
 
 //   LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 

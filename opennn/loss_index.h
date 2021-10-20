@@ -88,6 +88,7 @@ public:
       return neural_network_pointer;
    }
 
+
    /// Returns a pointer to the data set object associated to the error term.
 
    inline DataSet* get_data_set_pointer() const 

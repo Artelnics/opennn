@@ -307,14 +307,23 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    copy(/*execution::par_unseq,*/
+    memcpy(biases.data(),
+           new_parameters.data() + index,
+           static_cast<size_t>(biases_number)*sizeof(type));
+
+    memcpy(synaptic_weights.data(),
+           new_parameters.data() + biases_number + index,
+           static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+    /*
+    copy(//execution::par_unseq,
         new_parameters.data() + index, new_parameters.data() + index + biases_number, 
         biases.data());
 
-    copy(/*execution::par_unseq,*/
+    copy(//execution::par_unseq,
         new_parameters.data() + index + biases_number, 
         new_parameters.data() + index + biases_number + synaptic_weights_number, 
         synaptic_weights.data());
+    */
 }
 
 
@@ -966,15 +975,25 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    copy(/*execution::par_unseq,*/
+    memcpy(gradient.data() + index,
+           perceptron_layer_back_propagation->biases_derivatives.data(),
+           static_cast<size_t>(biases_number)*sizeof(type));
+
+    memcpy(gradient.data() + index + biases_number,
+           perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
+           static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+
+/*
+    copy(//execution::par_unseq,
         perceptron_layer_back_propagation->biases_derivatives.data(),
         perceptron_layer_back_propagation->biases_derivatives.data() + biases_number, 
         gradient.data());
 
-    copy(/*execution::par_unseq,*/
+    copy(//execution::par_unseq,
         perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
         perceptron_layer_back_propagation->synaptic_weights_derivatives.data() + synaptic_weights_number,
         gradient.data());
+*/
 }
 
 

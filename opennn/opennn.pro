@@ -22,6 +22,8 @@ QMAKE_CXXFLAGS += -bigobj
 
 QMAKE_CXXFLAGS += -openmp
 QMAKE_LFLAGS += -openmp
+QMAKE_CXXFLAGS += -MP
+
 }
 
 unix:macx{

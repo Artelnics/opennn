@@ -257,7 +257,7 @@ void WeightedSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
 
 void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                                  NeuralNetworkForwardPropagation& ,
+                                                  NeuralNetworkForwardPropagation& forward_propagation,
                                                   LossIndexBackPropagation& back_propagation) const
 {
 #ifdef OPENNN_DEBUG
@@ -268,7 +268,11 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
+    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
+        = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
             = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
@@ -279,7 +283,9 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
     const type coefficient = static_cast<type>(2.0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
-    /*
+
+    // Does not compile with C++20
+
     const Tensor<bool, 2> if_sentence = targets == targets.constant(type(1));
     const Tensor<bool, 2> else_sentence = targets == targets.constant(type(0));
 
@@ -293,7 +299,9 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     f_3 = targets.constant(type(0));
 
     probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = if_sentence.select(f_1, else_sentence.select(f_2, f_3));
-    */
+
+    probabilistic_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device)
+        = probabilistic_layer_back_propagation->delta * probabilistic_layer_forward_propagation->activations_derivatives;
 }
 
 

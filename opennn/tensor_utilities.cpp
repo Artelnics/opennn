@@ -358,7 +358,7 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
 
     Map<Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> submatrix_map(submatrix.data(), submatrix.dimension(0), submatrix.dimension(1));
 
-    submatrix_map = matrix_map(rows_indices, columns_indices);
+    submatrix_map = matrix_map(rows_indices, columns_indices);        
 }
 
 

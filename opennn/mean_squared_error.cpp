@@ -87,8 +87,8 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number - 1);
-     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number - 1);
+     LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
+     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
      const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
@@ -113,10 +113,16 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      case Layer::Type::Probabilistic:
      {
+         ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
+             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
+
          ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
          = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
          probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
+
+         probabilistic_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device)
+             = probabilistic_layer_back_propagation->delta * probabilistic_layer_forward_propagation->activations_derivatives;
      }
          break;
 
