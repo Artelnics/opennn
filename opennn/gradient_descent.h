@@ -86,8 +86,6 @@ public:
 
    void set_maximum_epochs_number(const Index&);
 
-   
-
    void set_minimum_loss_decrease(const type&);
    void set_loss_goal(const type&);
 
@@ -96,8 +94,6 @@ public:
    void set_maximum_time(const type&);
 
    // Training methods
-
-   void calculate_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void update_parameters(
            const DataSetBatch& batch,

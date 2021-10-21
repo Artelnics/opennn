@@ -11190,11 +11190,17 @@ void DataSetBatch::print() const
 {
     cout << "Batch structure" << endl;
 
-    cout << "Inputs:" << endl;
-    cout << inputs_2d << endl;
+    cout << "Inputs rows:" << inputs_2d.dimension(0) << endl;
+    cout << "Inputs columns:" << inputs_2d.dimension(1) << endl;
 
-    cout << "Targets:" << endl;
-    cout << targets_2d << endl;
+    cout << "Targets rows:" << targets_2d.dimension(0) << endl;
+    cout << "Targets columns:" << targets_2d.dimension(1) << endl;
+
+//    cout << "Inputs:" << endl;
+//    cout << inputs_2d << endl;
+
+//    cout << "Targets:" << endl;
+//    cout << targets_2d << endl;
 }
 
 

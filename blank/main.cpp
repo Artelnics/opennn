@@ -34,7 +34,7 @@ int main()
 
         // Data Set
 
-        const Index samples_number = 1000;
+        const Index samples_number = 10000;
         const Index inputs_number = 10;
         const Index outputs_number = 1;
         const Index hidden_neurons_number = inputs_number;
@@ -53,24 +53,18 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
 
-        training_strategy.get_gradient_descent_pointer()->set_display_period(1);
-        training_strategy.get_gradient_descent_pointer()->set_maximum_epochs_number(3);
+        training_strategy.get_gradient_descent_pointer()->set_display_period(100);
+        training_strategy.get_gradient_descent_pointer()->set_maximum_epochs_number(1000);
 
         TrainingResults training_results = training_strategy.perform_training();
-
-        training_results.print();
-
-        cout << "End Rosenbrock" << endl;
-
 
         cout << "Good bye!" << endl;
 
         return 0;
-
     }
     catch(exception& e)
     {

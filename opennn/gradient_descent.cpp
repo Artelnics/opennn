@@ -217,48 +217,6 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
 }
 
 
-/// Returns the gradient descent training direction,
-/// which is the negative of the normalized gradient.
-/// @param gradient Loss index gradient.
-/// @param training_direction Training direction.
-
-void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradient, Tensor<type, 1>& training_direction) const
-{
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(!loss_index_pointer)
-    {
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
-               << "Loss index pointer is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-    const Index gradient_size = gradient.size();
-
-    if(gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
-               << "Size of gradient(" << gradient_size
-               << ") is not equal to number of parameters(" << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    training_direction.device(*thread_pool_device) = -gradient;
-}
-
-
 /// \brief GradientDescent::update_parameters
 /// \param batch
 /// \param forward_propagation
@@ -271,7 +229,21 @@ void GradientDescent::update_parameters(
         LossIndexBackPropagation& back_propagation,
         GradientDescentData& optimization_data)
 {
-    calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
+
+    const type learning_rate = 0.01;
+
+    optimization_data.parameters_increment.device(*thread_pool_device) = back_propagation.gradient*(-learning_rate);
+
+    back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+
+    // Update parameters
+
+    NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
+
+    neural_network_pointer->set_parameters(back_propagation.parameters);
+
+/*
+    optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;
 
     if(is_zero(optimization_data.training_direction))
     {
@@ -286,9 +258,8 @@ void GradientDescent::update_parameters(
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
-
-//    optimization_data.initial_learning_rate = 0.01;
-    cout << optimization_data.initial_learning_rate << endl;
+    optimization_data.initial_learning_rate = 0.01;
+//    cout << optimization_data.initial_learning_rate << endl;
 
     const pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
                             batch,
@@ -298,7 +269,20 @@ void GradientDescent::update_parameters(
 
     optimization_data.learning_rate = directional_point.first;
     back_propagation.loss = directional_point.second;
+*/
+/*
+    optimization_data.learning_rate = 0.01;
 
+    optimization_data.parameters_increment.device(*thread_pool_device)
+            = optimization_data.training_direction*optimization_data.learning_rate;
+
+    back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+
+
+
+    back_propagation.parameters.device(*thread_pool_device) = back_propagation.parameters
+            - 0.01*back_propagation.gradient;
+/*
     if(abs(optimization_data.learning_rate) > type(0))
     {
         optimization_data.parameters_increment.device(*thread_pool_device)
@@ -332,14 +316,13 @@ void GradientDescent::update_parameters(
 
         optimization_data.learning_rate = optimization_data.old_learning_rate;
     }
-
+*/
     // Update parameters
 
     optimization_data.old_learning_rate = optimization_data.learning_rate;
     optimization_data.epoch++;
 
     forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
-
 }
 
 
@@ -453,6 +436,8 @@ TrainingResults GradientDescent::perform_training()
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+
+
 
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
