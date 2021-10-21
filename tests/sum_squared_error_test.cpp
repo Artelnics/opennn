@@ -59,7 +59,9 @@ void SumSquaredErrorTest::test_calculate_error_gradient_lm()
    Tensor<Index,1> target_variables_indices;
 
    // Test
-/*
+
+   samples_number = 1;
+
    inputs_number = 2;
    targets_number = 3;
 
@@ -93,7 +95,7 @@ void SumSquaredErrorTest::test_calculate_error_gradient_lm()
 
    assert_true(back_propagation_lm.gradient(0) == 0.0, LOG);
    assert_true(back_propagation_lm.gradient(1) == 0.0, LOG);
-*/
+
 }
 
 
@@ -143,9 +145,9 @@ void SumSquaredErrorTest::test_back_propagate_approximation_random()
     // Test
 
     samples_number = 1 + rand()%10;
-    inputs_number = 1 + rand()%10;
-    outputs_number = 1 + rand()%10;
-    neurons_number = 1 + rand()%10;
+    inputs_number = 1 + rand()%5;
+    outputs_number = 1 + rand()%5;
+    neurons_number = 1 + rand()%5;
 
     data_set.set(samples_number, inputs_number, outputs_number);
 
@@ -176,7 +178,12 @@ void SumSquaredErrorTest::test_back_propagate_approximation_random()
 
     assert_true(back_propagation.error >= type(0), LOG);
 
-    assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+    assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);    
+
+    cout << back_propagation.gradient << endl;
+    cout << "XXXXXXXX" << endl;
+    cout << gradient_numerical_differentiation << endl;
+    system("pause");
 }
 
 
@@ -249,7 +256,7 @@ void SumSquaredErrorTest::test_back_propagate_binary_classification_random()
 
     forward_propagation.set(samples_number, &neural_network);
     neural_network.forward_propagate(batch, forward_propagation);
-/*
+
     back_propagation.set(samples_number, &sum_squared_error);
     sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
@@ -261,7 +268,7 @@ void SumSquaredErrorTest::test_back_propagate_binary_classification_random()
     assert_true(back_propagation.error >= 0, LOG);
 
     assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-2), LOG);
-*/
+
 }
 
 
@@ -414,7 +421,7 @@ void SumSquaredErrorTest::run_test_case()
    cout << "Running sum squared error test case...\n";
 
    // Constructor and destructor methods
-/*
+
    test_constructor();
 
    test_back_propagate_approximation_zero();
@@ -425,23 +432,21 @@ void SumSquaredErrorTest::run_test_case()
 
    test_back_propagate_forecasting_zero();
    test_back_propagate_forecasting_random();
-*/
+
    test_back_propagate_lm_approximation_random();
 
-/*
    // Error methods
 
-   test_calculate_error();
+//   test_calculate_error();
 
-
-   test_calculate_error_gradient();
+//   test_calculate_error_gradient();
 
    test_calculate_error_gradient_lm();
 
    // Squared errors methods
 
-   test_calculate_squared_errors_jacobian();
-*/
+//   test_calculate_squared_errors_jacobian();
+
    cout << "End of sum squared error test case.\n\n";
 }
 

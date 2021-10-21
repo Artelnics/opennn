@@ -30,20 +30,22 @@ int main()
     try{
         cout << "Hello, OpenNN!" << endl;
 
-        cout << "OpenNN. Rosenbrock Example." << endl;
-
         // Data Set
 
-        const Index samples_number = 10000;
-        const Index inputs_number = 10;
+        const Index samples_number = 10;
+        const Index inputs_number = 2;
         const Index outputs_number = 1;
         const Index hidden_neurons_number = inputs_number;
 
         DataSet data_set;// ("C:/rosenbrock.csv", ',', true);
 
-        data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
+//        data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
+
+        data_set.generate_sum_data(samples_number, inputs_number + outputs_number);
 
         data_set.set_training();
+
+        data_set.print_data();
 
         // Neural network
 
@@ -55,10 +57,10 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
 
-        training_strategy.get_gradient_descent_pointer()->set_display_period(100);
-        training_strategy.get_gradient_descent_pointer()->set_maximum_epochs_number(1000);
+        training_strategy.get_gradient_descent_pointer()->set_display_period(1);
+        training_strategy.get_gradient_descent_pointer()->set_maximum_epochs_number(2);
 
         TrainingResults training_results = training_strategy.perform_training();
 

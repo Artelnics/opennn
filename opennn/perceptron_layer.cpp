@@ -665,6 +665,9 @@ void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer
         calculate_hidden_delta_probabilistic(next_probabilistic_layer_forward_propagation,
                                              next_probabilistic_layer_back_propagation,
                                              perceptron_layer_back_propagation);
+
+        perceptron_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device) =
+            perceptron_layer_back_propagation->delta * perceptron_layer_forward_propagation->activations_derivatives;
     }
         break;
 

@@ -38,7 +38,6 @@ public:
    void test_set_steps_ahead_number();
    void test_set_time_series_data();
    void test_save_time_series_data_binary();
-   void test_set_time_index();
 
    // Data methods
 
@@ -139,7 +138,11 @@ public:
    void test_calculate_training_negatives();
    void test_calculate_selection_negatives();
    void test_scrub_missing_values();
-   void test_impute_missing_values_mean();
+   void test_impute_missing_values_mean();   
+
+   // Data set batch methods
+
+   void test_fill();
 
    // Unit testing methods
 
@@ -161,6 +164,8 @@ public:
 
    Tensor<Index, 1> input_variables_indices;
    Tensor<Index, 1> target_variables_indices;
+
+   DataSetBatch data_set_batch;
 
 };
 
