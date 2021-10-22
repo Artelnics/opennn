@@ -82,7 +82,7 @@ void StatisticsTest::test_has_mean_zero_standard_deviation_one()
 
     // Test
 
-//    descriptives.set(-4.0, 5.0, 0.0, 1.0);
+    descriptives.set(-4.0, 5.0, 0.0, 1.0);
 
     assert_true(descriptives.has_mean_zero_standard_deviation_one(), LOG);
 
@@ -300,10 +300,10 @@ void StatisticsTest::test_calculate_minimal_centers()
     assert_true((static_cast<Index>(histogram.calculate_minimal_centers()[3] - solution[3])) < 1.0e-7, LOG);
 
     //  Test 0
-/*
+
     Histogram histogram_0;
     assert_true(isnan(histogram_0.calculate_minimal_centers()(0)), LOG);
-*/
+
     // Test
 
     Tensor<type, 1> centers(3);
@@ -541,7 +541,7 @@ void StatisticsTest::test_mean()
 
    vector.setValues({ type(1.0), type(NAN), type(2.0), type(3.0), type(4.0)});
 
-   assert_true(abs(mean(vector)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(mean(vector)) - type(NUMERIC_LIMITS_MIN) < type(0), LOG);
 
    // Test
 
@@ -572,7 +572,7 @@ void StatisticsTest::test_standard_deviation()
 
    // Test
 
-//   assert_true(OpenNN::standard_deviation(vector) - static_cast<type>(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(OpenNN::standard_deviation(vector) - static_cast<type>(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
@@ -748,7 +748,7 @@ void StatisticsTest::test_variance()
 void StatisticsTest::test_asymmetry()
 {
     cout << "test_calculate_asymmetry\n";
-/*
+
     Tensor<type, 1> vector;
 
     // Test
@@ -773,7 +773,7 @@ void StatisticsTest::test_asymmetry()
     vector.resize(4);
     vector.setValues({ type(1),type(5),type(3),type(9)});
 
-    assert_true(asymmetry(vector) - static_cast<Index>(0.75) < static_cast<type>(1.0e-3), LOG);
+   assert_true(asymmetry(vector) - static_cast<Index>(0.75) < static_cast<type>(1.0e-3), LOG);
 
     // Test missing values
 
@@ -790,10 +790,10 @@ void StatisticsTest::test_asymmetry()
     vector[3] = type(3.0);
     vector[4] = type(9.0);
 
-    type asymmetry = OpenNN::asymmetry(vector);
+//     type asymmetry = OpenNN::asymmetry(vector);
 
 //    assert_true(abs(asymmetry - asymmetry_missing_values) < static_cast<type>(1.0e-3), LOG);
-*/
+
 }
 
 
@@ -1008,33 +1008,33 @@ void StatisticsTest::test_histogram()
    vector.resize(11);
    vector.setValues({type(0),type(1),type(2),type(3),type(4),type(5),type(6),type(7),type(8),type(9),type(10)});
 
-//   Histogram histogram(vector, 10);
-//   assert_true(histogram.get_bins_number() == 10, LOG);
+   Histogram histogram(vector, 10);
+   assert_true(histogram.get_bins_number() == 10, LOG);
 
-//   centers = histogram.centers;
-//   frequencies = histogram.frequencies;
+   centers = histogram.centers;
+   frequencies = histogram.frequencies;
 
-//   assert_true(abs(centers[0] - static_cast<type>(0.5)) < static_cast<type>(1.0e-3), LOG);
-//   assert_true(abs(centers[1] - static_cast<type>(1.5)) < static_cast<type>(1.0e-3), LOG);
-//   assert_true(abs(centers[2] - static_cast<type>(2.5)) < static_cast<type>(1.0e-3), LOG);
-//   assert_true(abs(centers[3] - static_cast<type>(3.5)) < static_cast<type>(1.0e-3), LOG);
-//   assert_true(abs(centers[4] - static_cast<type>(4.5)) < static_cast<type>(1.0e-3), LOG);
-//   assert_true(abs(centers[5] - static_cast<type>(5.5)) < static_cast<type>(1.0e-3), LOG);
-//   assert_true(abs(centers[6] - static_cast<type>(6.5)) < static_cast<type>(1.0e-3), LOG);
-//   assert_true(abs(centers[7] - static_cast<type>(7.5)) < static_cast<type>(1.0e-3), LOG);
-//   assert_true(abs(centers[8] - static_cast<type>(8.5)) < static_cast<type>(1.0e-3), LOG);
-//   assert_true(abs(centers[9] - static_cast<type>(9.5)) < static_cast<type>(1.0e-3), LOG);
+   assert_true(abs(centers[0] - static_cast<type>(0.5)) < static_cast<type>(1.0e-3), LOG);
+   assert_true(abs(centers[1] - static_cast<type>(1.5)) < static_cast<type>(1.0e-3), LOG);
+   assert_true(abs(centers[2] - static_cast<type>(2.5)) < static_cast<type>(1.0e-3), LOG);
+   assert_true(abs(centers[3] - static_cast<type>(3.5)) < static_cast<type>(1.0e-3), LOG);
+   assert_true(abs(centers[4] - static_cast<type>(4.5)) < static_cast<type>(1.0e-3), LOG);
+   assert_true(abs(centers[5] - static_cast<type>(5.5)) < static_cast<type>(1.0e-3), LOG);
+   assert_true(abs(centers[6] - static_cast<type>(6.5)) < static_cast<type>(1.0e-3), LOG);
+   assert_true(abs(centers[7] - static_cast<type>(7.5)) < static_cast<type>(1.0e-3), LOG);
+   assert_true(abs(centers[8] - static_cast<type>(8.5)) < static_cast<type>(1.0e-3), LOG);
+   assert_true(abs(centers[9] - static_cast<type>(9.5)) < static_cast<type>(1.0e-3), LOG);
 
-//   assert_true(frequencies[0] == 1, LOG);
-//   assert_true(frequencies[1] == 1, LOG);
-//   assert_true(frequencies[2] == 1, LOG);
-//   assert_true(frequencies[3] == 1, LOG);
-//   assert_true(frequencies[4] == 1, LOG);
-//   assert_true(frequencies[5] == 1, LOG);
-//   assert_true(frequencies[6] == 1, LOG);
-//   assert_true(frequencies[7] == 1, LOG);
-//   assert_true(frequencies[8] == 1, LOG);
-//   assert_true(frequencies[9] == 1, LOG);
+   assert_true(frequencies[0] == 1, LOG);
+   assert_true(frequencies[1] == 1, LOG);
+   assert_true(frequencies[2] == 1, LOG);
+   assert_true(frequencies[3] == 1, LOG);
+   assert_true(frequencies[4] == 1, LOG);
+   assert_true(frequencies[5] == 1, LOG);
+   assert_true(frequencies[6] == 1, LOG);
+   assert_true(frequencies[7] == 1, LOG);
+   assert_true(frequencies[8] == 1, LOG);
+   assert_true(frequencies[9] == 1, LOG);
 
    Tensor<Index, 0> sum_frec_1 = frequencies.sum();
    //assert_true(sum_frec_1(0) == 11, LOG); // <--- failed
@@ -1044,13 +1044,13 @@ void StatisticsTest::test_histogram()
    vector.resize(20);
    vector.setRandom();
 
-//   Histogram histogram_2(vector, 10);
+   Histogram histogram_2(vector, 10);
 
-//   centers = histogram_2.centers;
-//   frequencies = histogram_2.frequencies;
+   centers = histogram_2.centers;
+   frequencies = histogram_2.frequencies;
 
-//   Tensor<Index, 0> sum_frec_2;
-//   sum_frec_2 = frequencies.sum();
+   Tensor<Index, 0> sum_frec_2;
+   sum_frec_2 = frequencies.sum();
    //assert_true(sum_frec_2(0) == 20, LOG); // <--- failed
 
 }
@@ -1272,7 +1272,7 @@ void StatisticsTest::test_box_plot()
     BoxPlot solution;
 
     // Test
-
+/*
     box_plot = OpenNN::box_plot(vector);
 
     assert_true(box_plot.minimum - static_cast<type>(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -1280,7 +1280,7 @@ void StatisticsTest::test_box_plot()
     assert_true(box_plot.median - static_cast<type>(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(box_plot.third_quartile - static_cast<type>(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(box_plot.maximum - static_cast<type>(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
-
+*/
     // Test
 
     vector.resize(8);
@@ -1571,6 +1571,7 @@ void StatisticsTest::run_test_case()
 
    cout << "End of descriptives test case.\n\n";
 }
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
