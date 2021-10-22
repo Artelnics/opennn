@@ -49,7 +49,7 @@ void UnscalingLayerTest::test_constructor()
 void UnscalingLayerTest::test_set()
 {
    cout << "test_set\n";
-/*
+
    // Test
 
    unscaling_layer.set();
@@ -73,7 +73,7 @@ void UnscalingLayerTest::test_set()
 
    Index new_inputs_number_ = 4;
    unscaling_layer.set(new_inputs_number_);
-
+/*
    assert_true(unscaling_layer.get_descriptives().size()== 4, LOG);
    assert_true(unscaling_layer.get_inputs_number()== unscaling_layer.get_descriptives().size(), LOG);
 

@@ -52,14 +52,16 @@ void BoundingLayerTest::test_calculate_outputs()
    outputs = bounding_layer.calculate_outputs(inputs);
 
    assert_true(outputs.rank() == 2, LOG);
-   assert_true(outputs(0) == type(-1.0), LOG);
+   assert_true(outputs(0) - type(-1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
    inputs(0) = type(2.0);
    outputs = bounding_layer.calculate_outputs(inputs);
    assert_true(outputs.rank() == 2, LOG);
-   assert_true(outputs(0) == type(1), LOG);
+   assert_true(outputs(0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+
+
 }
 
 
