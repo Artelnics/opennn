@@ -79,21 +79,21 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
-   assert_true(activations_derivatives(0) == type(0.25), LOG);
+   assert_true(activations_derivatives(0) - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
 //   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
-   assert_true(activations_derivatives(0) == type(1.0), LOG);
+   assert_true(activations_derivatives(0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Linear);
 //   recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
    assert_true(activations_derivatives.rank() == 2, LOG);
    assert_true(activations_derivatives.dimension(0) == 1, LOG);
    assert_true(activations_derivatives.dimension(1) == 1, LOG);
-   assert_true(activations_derivatives(0) == type(1.0), LOG);
+   assert_true(activations_derivatives(0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 

@@ -79,7 +79,7 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    mean_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
-   assert_true(back_propagation.error == type(0.0), LOG);
+   assert_true(back_propagation.error - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
