@@ -107,7 +107,7 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    mean_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
-   assert_true(abs(back_propagation.error - type(1)) < type(1.0e-3), LOG);
+   assert_true(abs(back_propagation.error - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    assert_true(back_propagation.error == type(1.0), LOG);
 }

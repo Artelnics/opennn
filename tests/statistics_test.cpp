@@ -543,6 +543,7 @@ void StatisticsTest::test_mean()
 
    assert_true(abs(mean(vector)) - type(NUMERIC_LIMITS_MIN) < type(0), LOG);
 
+   cout << "mean vector: " << mean(vector) << endl;
    // Test
 
    vector.resize(4);

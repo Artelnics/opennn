@@ -95,7 +95,7 @@ void LongShortTermMemoryLayerTest::test_set_weights()
     Tensor<type, 3> weights;
 
     // Test
-/*
+
     neurons_number = 2;
     inputs_number = 1;
 
@@ -109,11 +109,11 @@ void LongShortTermMemoryLayerTest::test_set_weights()
     long_short_term_memory_layer.set_state_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
     long_short_term_memory_layer.set_output_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
 
-    assert_true(long_short_term_memory_layer.get_input_weights()(0) == weights(0), LOG);
-    assert_true(long_short_term_memory_layer.get_input_weights()(1) == weights(1), LOG);
-    assert_true(long_short_term_memory_layer.get_input_weights()(2) == weights(2), LOG);
-    assert_true(long_short_term_memory_layer.get_input_weights()(3) == weights(3), LOG);
-
+    assert_true(long_short_term_memory_layer.get_input_weights()(0) - weights(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_input_weights()(1) - weights(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_input_weights()(2) - weights(2) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_input_weights()(3) - weights(3) < type(NUMERIC_LIMITS_MIN), LOG);
+/*
     assert_true(long_short_term_memory_layer.get_input_weights()(0) == 4.0, LOG);
     assert_true(long_short_term_memory_layer.get_input_weights()(2) == 4.0, LOG);
 */
@@ -144,10 +144,10 @@ void LongShortTermMemoryLayerTest::test_set_recurrent_weights()
     long_short_term_memory_layer.set_state_recurrent_weights(recurrent_weights.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
     long_short_term_memory_layer.set_output_recurrent_weights(recurrent_weights.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
 
-    assert_true(long_short_term_memory_layer.get_forget_recurrent_weights()(0) == recurrent_weights(0), LOG);
-//    assert_true(long_short_term_memory_layer.get_recurrent_weights()(1) == recurrent_weights(1), LOG);
-//    assert_true(long_short_term_memory_layer.get_recurrent_weights()(2) == recurrent_weights(2), LOG);
-//    assert_true(long_short_term_memory_layer.get_recurrent_weights()(3) == recurrent_weights(3), LOG);
+    assert_true(long_short_term_memory_layer.get_forget_recurrent_weights()(0) - recurrent_weights(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_input_recurrent_weights()(1) - recurrent_weights(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_state_recurrent_weights()(2) - recurrent_weights(2) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_output_recurrent_weights()(3) - recurrent_weights(3) < type(NUMERIC_LIMITS_MIN), LOG);
 
 //    assert_true(long_short_term_memory_layer.get_recurrent_weights()(0) == 0.0, LOG);
 //    assert_true(long_short_term_memory_layer.get_recurrent_weights()(1) == 0.0, LOG);
@@ -227,9 +227,9 @@ void LongShortTermMemoryLayerTest::test_set_parameters()
 
     long_short_term_memory_layer.set_parameters(parameters,0);
 
-    assert_true(long_short_term_memory_layer.get_parameters()(0) == parameters(0), LOG);
-    assert_true(long_short_term_memory_layer.get_parameters()(1) == parameters(1), LOG);
-    assert_true(long_short_term_memory_layer.get_parameters()(4) == parameters(4), LOG);
+    assert_true(long_short_term_memory_layer.get_parameters()(0) - parameters(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_parameters()(1) - parameters(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_parameters()(4) - parameters(4) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -246,7 +246,7 @@ void LongShortTermMemoryLayerTest::test_set_parameters_constant()
 
    parameters = long_short_term_memory_layer.get_parameters();
 
-   assert_true(parameters(0) == type(0.0), LOG);
+   assert_true(parameters(0) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(parameters.size() == 48, LOG);
 }
 
@@ -276,10 +276,10 @@ void LongShortTermMemoryLayerTest::test_set_biases_constant()
    long_short_term_memory_layer.set_output_biases_constant(type(3.0));
    output_biases = long_short_term_memory_layer.get_output_biases();
 
-   assert_true(forget_biases(0) == type(0.0), LOG);
+   assert_true(forget_biases(0) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(forget_biases.size() == 2, LOG);
 
-   assert_true(input_biases(0) == type(1.0), LOG);
+   assert_true(input_biases(0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(input_biases.size() == 2, LOG);
 
 //   assert_true(state_biases == long_short_term_memory_layer.get_biases().chip(2, 1), LOG);
@@ -312,10 +312,10 @@ void LongShortTermMemoryLayerTest::test_set_weights_constant()
    long_short_term_memory_layer.set_output_weights_constant(type(3.0));
    output_weights = long_short_term_memory_layer.get_output_weights();
 
-   assert_true(forget_weights(0) == type(0.0), LOG);
+   assert_true(forget_weights(0) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(forget_weights.size() == 6, LOG);
 
-   assert_true(input_weights(0) == type(1.0), LOG);
+   assert_true(input_weights(0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(input_weights.size() == 6, LOG);
 
 //   assert_true(state_weights == long_short_term_memory_layer.get_weights().get_matrix(2), LOG);
@@ -348,10 +348,10 @@ void LongShortTermMemoryLayerTest::test_initialize_recurrent_weights()
    long_short_term_memory_layer.set_output_recurrent_weights_constant(type(3.0));
    output_recurrent_weights = long_short_term_memory_layer.get_output_recurrent_weights();
 
-   assert_true(forget_recurrent_weights(0) == type(0.0), LOG);
+   assert_true(forget_recurrent_weights(0) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(forget_recurrent_weights.size() == 4, LOG);
 
-   assert_true(input_recurrent_weights(0) == type(1.0), LOG);
+   assert_true(input_recurrent_weights(0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(input_recurrent_weights.size() == 4, LOG);
 
 //   assert_true(state_recurrent_weights == long_short_term_memory_layer.get_recurrent_weights().get_matrix(2), LOG);
