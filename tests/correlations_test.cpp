@@ -121,13 +121,13 @@ void CorrelationsTest::test_logistic_correlation()
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(abs(correlation.r + type(0.99)) <= type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(correlation.r + type(0.99) <= type(NUMERIC_LIMITS_MIN), LOG);
 
     y.setConstant(type(0));
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(abs(correlation.r) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(correlation.r + type(0.99) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -143,8 +143,6 @@ void CorrelationsTest::test_logistic_correlation()
     for(Index i = size - (size/2); i < size; i++) y[i] = 1;
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
-
-    cout << "logisitic correlation: " << correlation.r << endl;
 
     assert_true(correlation.r <= static_cast<type>(0.95), LOG);
 
@@ -165,7 +163,8 @@ void CorrelationsTest::test_logistic_correlation()
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(correlation.r >= static_cast<type>(-0.95), LOG);
+    assert_true(abs(correlation.r) >= static_cast<type>(-0.95), LOG);
+
 
 //    // Test
 
@@ -183,6 +182,8 @@ void CorrelationsTest::test_logistic_correlation()
 
     assert_true(abs(correlation.r) < type(NUMERIC_LIMITS_MIN), LOG);
 
+
+    cout << "logisitic correlation: " << correlation.r << endl;
 }
 
 
