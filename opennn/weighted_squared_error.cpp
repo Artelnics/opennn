@@ -299,9 +299,6 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     f_3 = targets.constant(type(0));
 
     probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = if_sentence.select(f_1, else_sentence.select(f_2, f_3));
-
-    probabilistic_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device)
-        = probabilistic_layer_back_propagation->delta * probabilistic_layer_forward_propagation->activations_derivatives;
 }
 
 

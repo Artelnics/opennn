@@ -362,8 +362,6 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
         delta.resize(batch_samples_number, neurons_number);
         delta_row.resize(neurons_number);
 
-        delta_times_activations_derivatives.resize(batch_samples_number, neurons_number);
-
         error_combinations_derivatives.resize(batch_samples_number, neurons_number);
     }
 
@@ -381,8 +379,6 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 2> delta;
     Tensor<type, 1> delta_row;
-
-    Tensor<type, 2> delta_times_activations_derivatives;
 
     Tensor<type, 2> error_combinations_derivatives;
 

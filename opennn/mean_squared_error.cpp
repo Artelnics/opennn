@@ -105,9 +105,6 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
          = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
          perceptron_layer_back_propagation->delta.device(*thread_pool_device) = back_propagation.errors*coefficient;
-
-         perceptron_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device)
-             = perceptron_layer_back_propagation->delta * perceptron_layer_forward_propagation->activations_derivatives;
      }
          break;
 
@@ -120,9 +117,6 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
          = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
          probabilistic_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
-
-         probabilistic_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device)
-             = probabilistic_layer_back_propagation->delta * probabilistic_layer_forward_propagation->activations_derivatives;
      }
          break;
 
