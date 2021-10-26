@@ -11111,7 +11111,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
     if(input_variables_dimensions.size() == 1)
     {
-        fill_submatrix(data, samples, inputs, inputs_2d);
+        fill_submatrix(data, samples, inputs, inputs_2d.data());
     }
     else if(input_variables_dimensions.size() == 4)
     {
@@ -11142,7 +11142,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         }
     }
 
-     fill_submatrix(data, samples, targets, targets_2d);
+     fill_submatrix(data, samples, targets, targets_2d.data());
 }
 
 

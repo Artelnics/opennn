@@ -365,7 +365,7 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
 void fill_submatrix(const Tensor<type, 2>& matrix,
     const Tensor<Index, 1>& rows_indices,
     const Tensor<Index, 1>& columns_indices,
-    Tensor<type, 2>& submatrix)
+    float* submatrix_pointer)
 {
 /*
     Map<const Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> matrix_map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
@@ -375,7 +375,7 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
     submatrix_map = matrix_map(rows_indices, columns_indices);        
 */
 
-    type* submatrix_pointer = submatrix.data();
+//    type* submatrix_pointer = submatrix.data();
 
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
