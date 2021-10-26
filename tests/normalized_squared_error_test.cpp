@@ -57,7 +57,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
     type normalization_coefficient;
 
     // Test
-    /*
+
    samples_number = 4;
    inputs_number = 4;
    outputs_number = 4;
@@ -80,7 +80,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
    normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
 
    assert_true(normalization_coefficient > 0, LOG);
-*/
+
 }
 
 
@@ -103,7 +103,7 @@ void NormalizedSquaredErrorTest::test_calculate_error()
     Tensor<type, 1> parameters;
 
     // Test
-    /*
+
    data_set.set(1, 1, 1);
 
    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1, 2});
@@ -135,7 +135,7 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    back_propagation.set(samples_number, &normalized_squared_error);
    normalized_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
-   assert_true(back_propagation.error == 0.0, LOG);
+/*   assert_true(back_propagation.error == 0.0, LOG);
 
    // Test
 
@@ -191,7 +191,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
     neural_network.set();
 
-    /*
+
     // Trivial test
 
     {
@@ -232,7 +232,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
         assert_true(all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
                            [](type i) { return (i-static_cast<type>(0))<NUMERIC_LIMITS_MIN; }), LOG);
     }
-
+/*
     // Test perceptron
 
     neural_network.set();
@@ -280,7 +280,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
     neural_network.set();
 
     // Test perceptron and binary probabilistic
-/*
+
     {
         samples_number = 3;
         inputs_number = 3;
@@ -318,7 +318,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
         assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
     }
-
+*/
     // Test multiple probabilistic
 
     {
@@ -361,8 +361,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
         numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-        cout << "probabilistic Error gradient: " << error_gradient << endl;
-        cout << "numerical error gradient: " << numerical_error_gradient << endl;
+//        cout << "probabilistic Error gradient: " << error_gradient << endl;
+//        cout << "numerical error gradient: " << numerical_error_gradient << endl;
 
         assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
     }
@@ -498,7 +498,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
 }
-
+/*
    // Test recurrent and perceptron
 
    neural_network.set();

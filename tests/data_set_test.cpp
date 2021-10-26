@@ -429,6 +429,7 @@ void DataSetTest::test_unuse_constant_columns()
 
    assert_true(data_set.get_input_columns_number() == 0, LOG);
    assert_true(data_set.get_target_columns_number() == 1, LOG);
+
 }
 
 
