@@ -73,7 +73,7 @@ void fill_subcolumn(const Tensor<type, 2>& matrix,
 void fill_submatrix(const Tensor<type, 2>& matrix,
     const Tensor<Index, 1>& rows_indices,
     const Tensor<Index, 1>& columns_indices, 
-    Tensor<type, 2>& submatrix);
+    float* submatrix);
 
 Index count_NAN(const Tensor<type, 1>&);
 
