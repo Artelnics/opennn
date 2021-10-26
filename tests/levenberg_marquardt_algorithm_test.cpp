@@ -61,7 +61,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    type minimum_loss_decrease;
 
    // Test
-/*
+
    samples_number = 1;
    inputs_number = 1;
    targets_number = 1;
@@ -83,13 +83,11 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    // Minimum parameters increment norm
 
    neural_network.set_parameters_random();
-
+/*
    minimum_parameters_increment_norm = 100.0;
 
-   levenberg_marquardt_algorithm.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
    levenberg_marquardt_algorithm.set_loss_goal(type(0));
    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
-   levenberg_marquardt_algorithm.set_gradient_norm_goal(0.0);
    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
@@ -101,10 +99,8 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    training_loss_goal = 100.0;
 
-   levenberg_marquardt_algorithm.set_minimum_parameters_increment_norm(0.0);
    levenberg_marquardt_algorithm.set_loss_goal(training_loss_goal);
    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
-   levenberg_marquardt_algorithm.set_gradient_norm_goal(0.0);
    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
@@ -120,10 +116,8 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    minimum_loss_decrease = 100.0;
 
-   levenberg_marquardt_algorithm.set_minimum_parameters_increment_norm(0.0);
    levenberg_marquardt_algorithm.set_loss_goal(type(0));
    levenberg_marquardt_algorithm.set_minimum_loss_decrease(minimum_loss_decrease);
-   levenberg_marquardt_algorithm.set_gradient_norm_goal(0.0);
    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
@@ -135,10 +129,8 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    gradient_norm_goal = 1.0e6;
 
-   levenberg_marquardt_algorithm.set_minimum_parameters_increment_norm(0.0);
    levenberg_marquardt_algorithm.set_loss_goal(type(0));
    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
-   levenberg_marquardt_algorithm.set_gradient_norm_goal(gradient_norm_goal);
    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 

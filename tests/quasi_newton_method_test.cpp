@@ -194,10 +194,8 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    type minimum_parameters_increment_norm = 0.1;
 
-   quasi_newton_method.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
    quasi_newton_method.set_loss_goal(type(0));
    quasi_newton_method.set_minimum_loss_decrease(0.0);
-   quasi_newton_method.set_gradient_norm_goal(0.0);
    quasi_newton_method.set_maximum_epochs_number(10);
    quasi_newton_method.set_maximum_time(1000.0);
 
@@ -209,10 +207,8 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    type training_loss_goal = 100.0;
 
-   quasi_newton_method.set_minimum_parameters_increment_norm(0.0);
    quasi_newton_method.set_loss_goal(training_loss_goal);
    quasi_newton_method.set_minimum_loss_decrease(0.0);
-   quasi_newton_method.set_gradient_norm_goal(0.0);
    quasi_newton_method.set_maximum_epochs_number(10);
    quasi_newton_method.set_maximum_time(1000.0);
 
@@ -228,10 +224,8 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    type minimum_loss_decrease = 100.0;
 
-   quasi_newton_method.set_minimum_parameters_increment_norm(0.0);
    quasi_newton_method.set_loss_goal(type(0));
    quasi_newton_method.set_minimum_loss_decrease(minimum_loss_decrease);
-   quasi_newton_method.set_gradient_norm_goal(0.0);
    quasi_newton_method.set_maximum_epochs_number(10);
    quasi_newton_method.set_maximum_time(1000.0);
 
@@ -241,10 +235,8 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    neural_network.set_parameters_constant(3.1415927);
 
-   quasi_newton_method.set_minimum_parameters_increment_norm(0.0);
    quasi_newton_method.set_loss_goal(type(0));
    quasi_newton_method.set_minimum_loss_decrease(0.0);
-   quasi_newton_method.set_gradient_norm_goal(gradient_norm_goal);
    quasi_newton_method.set_maximum_epochs_number(10);
    quasi_newton_method.set_maximum_time(1000.0);
 

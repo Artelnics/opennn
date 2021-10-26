@@ -217,10 +217,8 @@ void ConjugateGradientTest::test_perform_training()
 
    minimum_parameters_increment_norm = 0.1;
 
-   conjugate_gradient.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
    conjugate_gradient.set_loss_goal(type(0));
    conjugate_gradient.set_minimum_loss_decrease(0.0);
-   conjugate_gradient.set_gradient_norm_goal(0.0);
    conjugate_gradient.set_maximum_epochs_number(1000);
    conjugate_gradient.set_maximum_time(1000.0);
 
@@ -234,10 +232,8 @@ void ConjugateGradientTest::test_perform_training()
 
    training_loss_goal = 0.1;
 
-   conjugate_gradient.set_minimum_parameters_increment_norm(0.0);
    conjugate_gradient.set_loss_goal(training_loss_goal);
    conjugate_gradient.set_minimum_loss_decrease(0.0);
-   conjugate_gradient.set_gradient_norm_goal(0.0);
    conjugate_gradient.set_maximum_epochs_number(1000);
    conjugate_gradient.set_maximum_time(1000.0);
 
@@ -251,10 +247,8 @@ void ConjugateGradientTest::test_perform_training()
 
    minimum_loss_decrease = 0.1;
 
-   conjugate_gradient.set_minimum_parameters_increment_norm(0.0);
    conjugate_gradient.set_loss_goal(type(0));
    conjugate_gradient.set_minimum_loss_decrease(minimum_loss_decrease);
-   conjugate_gradient.set_gradient_norm_goal(0.0);
    conjugate_gradient.set_maximum_epochs_number(1000);
    conjugate_gradient.set_maximum_time(1000.0);
 
@@ -268,10 +262,8 @@ void ConjugateGradientTest::test_perform_training()
 
    gradient_norm_goal = 0.1;
 
-   conjugate_gradient.set_minimum_parameters_increment_norm(0.0);
    conjugate_gradient.set_loss_goal(type(0));
    conjugate_gradient.set_minimum_loss_decrease(0.0);
-   conjugate_gradient.set_gradient_norm_goal(gradient_norm_goal);
    conjugate_gradient.set_maximum_epochs_number(1000);
    conjugate_gradient.set_maximum_time(1000.0);
 
