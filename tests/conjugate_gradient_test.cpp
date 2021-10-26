@@ -188,11 +188,11 @@ void ConjugateGradientTest::test_perform_training()
 
    
    type minimum_loss_decrease;
-/*
+
    TrainingResults training_results;
 
    // Test
-/*
+
    data_set.set(1, 1, 1);
    data_set.set_data_constant(type(0));
 
@@ -209,10 +209,10 @@ void ConjugateGradientTest::test_perform_training()
 
    training_results = conjugate_gradient.perform_training();
 
-   assert_true(training_results.stopping_condition == OptimizationAlgorithm::MaximumEpochsNumber, LOG);
+   assert_true(training_results.stopping_condition == OptimizationAlgorithm::StoppingCondition::MaximumEpochsNumber, LOG);
 
    // Minimum parameters increment norm
-
+/*
    neural_network.set_parameters_constant(type(-1));
 
    minimum_parameters_increment_norm = 0.1;
@@ -225,12 +225,12 @@ void ConjugateGradientTest::test_perform_training()
    training_results = conjugate_gradient.perform_training();
 
    assert_true(training_results.stopping_condition == OptimizationAlgorithm::MinimumParametersIncrementNorm, LOG);
-
+*/
    // Loss goal
 
    neural_network.set_parameters_constant(type(-1));
 
-   training_loss_goal = 0.1;
+   training_loss_goal = type(0.1);
 
    conjugate_gradient.set_loss_goal(training_loss_goal);
    conjugate_gradient.set_minimum_loss_decrease(0.0);
@@ -239,13 +239,13 @@ void ConjugateGradientTest::test_perform_training()
 
    training_results = conjugate_gradient.perform_training();
 
-   assert_true(training_results.stopping_condition == OptimizationAlgorithm::LossGoal, LOG);
+   assert_true(training_results.stopping_condition == OptimizationAlgorithm::StoppingCondition::LossGoal, LOG);
 
    // Minimum loss decrease
 
    neural_network.set_parameters_constant(type(-1));
 
-   minimum_loss_decrease = 0.1;
+   minimum_loss_decrease = type(0.1);
 
    conjugate_gradient.set_loss_goal(type(0));
    conjugate_gradient.set_minimum_loss_decrease(minimum_loss_decrease);
@@ -254,10 +254,10 @@ void ConjugateGradientTest::test_perform_training()
 
    training_results = conjugate_gradient.perform_training();
 
-   assert_true(training_results.stopping_condition == OptimizationAlgorithm::MinimumLossDecrease, LOG);
+   assert_true(training_results.stopping_condition == OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease, LOG);
 
    // Gradient norm goal 
-
+/*
    neural_network.set_parameters_constant(type(-1));
 
    gradient_norm_goal = 0.1;

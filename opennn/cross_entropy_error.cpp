@@ -147,9 +147,6 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
     probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
             = static_cast<type>(1)/static_cast<type>(batch_samples_number) *
             (static_cast<type>(-1)*(targets/outputs) + (static_cast<type>(1) - targets)/(static_cast<type>(1) - outputs));
-
-    probabilistic_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device)
-        = probabilistic_layer_back_propagation->delta * probabilistic_layer_forward_propagation->activations_derivatives;
 }
 
 
@@ -174,10 +171,6 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
 
     probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
             = static_cast<type>(1)/static_cast<type>(batch_samples_number) *(-targets/outputs);
-
-    probabilistic_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device)
-        = probabilistic_layer_back_propagation->delta * probabilistic_layer_forward_propagation->activations_derivatives;
-
 }
 
 

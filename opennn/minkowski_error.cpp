@@ -146,9 +146,6 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
             perceptron_layer_back_propagation->delta.device(*thread_pool_device) =
                     (type(1.0/batch_samples_number))*perceptron_layer_back_propagation->delta/p_norm_derivative();
         }
-
-        perceptron_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device)
-            = perceptron_layer_back_propagation->delta * perceptron_layer_forward_propagation->activations_derivatives;
     }
         break;
 
@@ -172,9 +169,6 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
             probabilistic_layer_back_propagation->delta.device(*thread_pool_device) =
                     (type(1.0/batch_samples_number))*probabilistic_layer_back_propagation->delta/p_norm_derivative();
         }
-
-        probabilistic_layer_back_propagation->delta_times_activations_derivatives.device(*thread_pool_device)
-            = probabilistic_layer_back_propagation->delta * probabilistic_layer_forward_propagation->activations_derivatives;
     }
 
         break;
