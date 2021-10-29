@@ -231,10 +231,10 @@ void DataSetTest::test_calculate_input_variables_descriptives() //@todo
 
    input_variables_descriptives = data_set.calculate_input_variables_descriptives();
 
-   assert_true(input_variables_descriptives[0].mean == type(2.0), LOG);
-   assert_true(input_variables_descriptives[0].standard_deviation == type(1.0), LOG);
-   assert_true(input_variables_descriptives[0].minimum == type(1.0), LOG);
-   assert_true(input_variables_descriptives[0].maximum == type(3.0), LOG);
+   assert_true(input_variables_descriptives[0].mean - type(2.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(input_variables_descriptives[0].standard_deviation - type(1.0)< type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(input_variables_descriptives[0].minimum - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(input_variables_descriptives[0].maximum - type(3.0) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -330,13 +330,13 @@ void DataSetTest::test_calculate_data_distributions()
 
    assert_true(histograms.size() == 3, LOG);
 
-   assert_true(histograms(0).frequencies(0) == 0, LOG);
-   assert_true(histograms(1).frequencies(0) == 0, LOG);
-   assert_true(histograms(2).frequencies(0) == 0, LOG);
+   assert_true(histograms(0).frequencies(0) - 0 < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(histograms(1).frequencies(0) - 0 < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(histograms(2).frequencies(0) - 0 < type(NUMERIC_LIMITS_MIN), LOG);
 
-   assert_true(histograms(0).centers(0) == type(0), LOG);
-   assert_true(histograms(1).centers(0) == type(0), LOG);
-   assert_true(histograms(2).centers(0) == type(0), LOG);
+   assert_true(histograms(0).centers(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(histograms(1).centers(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(histograms(2).centers(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
@@ -451,13 +451,13 @@ void DataSetTest::test_set_data_constant()
        {type(2),type(2),type(2)},
        {type(2),type(2),type(2)}});
 
-   assert_true(data_set.get_data()(0) == solution(0), LOG);
-   assert_true(data_set.get_data()(1) == solution(1), LOG);
-   assert_true(data_set.get_data()(2) == solution(2), LOG);
-   assert_true(data_set.get_data()(3) == solution(3), LOG);
-   assert_true(data_set.get_data()(4) == solution(4), LOG);
-   assert_true(data_set.get_data()(5) == solution(5), LOG);
-   assert_true(data_set.get_data()(6) == solution(6), LOG);
+   assert_true(data_set.get_data()(0) - solution(0)< type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(1) - solution(1) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(2) - solution(2) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(3) - solution(3) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(4) - solution(4) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(5) - solution(5) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(6) - solution(6) < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
@@ -668,7 +668,7 @@ void DataSetTest::test_read_csv()
    assert_true(data.dimension(0) == 2, LOG);
    assert_true(data.dimension(1) == 2, LOG);
 
-//   assert_true(abs(data(0,0) - 1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(data(0,0) - type(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
 //   assert_true(abs(data(0,1) - 2.0) < type(NUMERIC_LIMITS_MIN), LOG);
 //   assert_true(abs(data(1,0) - 3.0) < type(NUMERIC_LIMITS_MIN), LOG);
 //   assert_true(abs(data(1,1) - 4.0) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -848,15 +848,15 @@ void DataSetTest::test_read_csv()
 
    data = data_set.get_data();
 
-   assert_true(data(0,4) == type(1.0), LOG);
-   assert_true(data(0,5) == type(0.0), LOG);
-   assert_true(data(0,6) == type(0.0), LOG);
-   assert_true(data(1,4) == type(0.0), LOG);
-   assert_true(data(1,5) == type(1.0), LOG);
-   assert_true(data(1,6) == type(0.0), LOG);
-   assert_true(data(2,4) == type(0.0), LOG);
-   assert_true(data(2,5) == type(1.0), LOG);
-   assert_true(data(2,6) == type(0.0), LOG);
+   assert_true(data(0,4) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(0,5) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(0,6) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(1,4) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(1,5) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(1,6) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(2,4) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(2,5) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(2,6) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
@@ -918,9 +918,9 @@ void DataSetTest::test_read_csv()
 
    data = data_set.get_data();
 
-   assert_true(data(0,1) == type(1.0), LOG);
-   assert_true(data(1,1) == type(0.0), LOG);
-   assert_true(data(2,1) == type(1.0), LOG);
+   assert_true(data(0,1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(1,1) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(2,1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
@@ -1269,9 +1269,9 @@ void DataSetTest::test_set_time_series_data()
 
     data_set.set_time_series_data(data);
 
-    assert_true(data_set.get_time_series_data()(0) == type(15), LOG);
-    assert_true(data_set.get_time_series_data()(1) == type(12), LOG);
-    assert_true(data_set.get_time_series_data()(2) == type(9), LOG);
+    assert_true(data_set.get_time_series_data()(0) - type(15) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data_set.get_time_series_data()(1) - type(12) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data_set.get_time_series_data()(2) - type(9) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -1322,9 +1322,9 @@ void DataSetTest::test_save_time_series_data_binary()
 
     data_set.load_time_series_data_binary(data_file_name);
 
-    assert_true(data_set.get_time_series_data()(0) == type(0), LOG);
-    assert_true(data_set.get_time_series_data()(1) == type(1), LOG);
-    assert_true(data_set.get_time_series_data()(2) == type(2), LOG);
+    assert_true(data_set.get_time_series_data()(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data_set.get_time_series_data()(1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data_set.get_time_series_data()(2) - type(2) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
