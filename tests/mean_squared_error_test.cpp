@@ -660,11 +660,7 @@ void MeanSquaredErrorTest::run_test_case()
 
    test_constructor();
 
-<<<<<<< HEAD
    test_back_propagate();
-=======
-//   test_calculate_error();
->>>>>>> d154b189001b546f51e1abded008b06b8e0d504d
 
    test_back_propagate_lm();
 

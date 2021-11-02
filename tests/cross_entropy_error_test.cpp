@@ -527,26 +527,11 @@ void CrossEntropyErrorTest::run_test_case()
 {
     cout << "Running cross entropy error test case...\n";
 
-<<<<<<< HEAD
     // Back-propagation methods
 
     test_back_propagate();
 
     test_back_propagate_lm();
-=======
-    test_calculate_error_binary_classification();
-
-//    test_calculate_error();
-
-//    test_calculate_error_gradient_binary_classification();
-
-//    test_calculate_error_gradient_multiple_classification();
-
-//    test_calculate_error_gradient_long_short_term_memory();
-
-//    test_calculate_error_gradient();
->>>>>>> d154b189001b546f51e1abded008b06b8e0d504d
-
    cout << "End of cross entropy error test case.\n\n";
 }
 
