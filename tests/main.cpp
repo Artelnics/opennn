@@ -486,12 +486,12 @@ int main()
 
           // bounding layer
 
-          BoundingLayerTest bounding_layer_test;
+     /*     BoundingLayerTest bounding_layer_test;
           bounding_layer_test.run_test_case();
           tests_count += bounding_layer_test.get_tests_count();
           tests_passed_count += bounding_layer_test.get_tests_passed_count();
           tests_failed_count += bounding_layer_test.get_tests_failed_count();
-
+*/
           // probabilistic layer
 
           ProbabilisticLayerTest probabilistic_layer_test;
