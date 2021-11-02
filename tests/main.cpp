@@ -543,13 +543,13 @@ int main()
           tests_failed_count += Minkowski_error_test.get_tests_failed_count();
 
           // cross entropy error
-
+/*
           CrossEntropyErrorTest cross_entropy_error_test;
           cross_entropy_error_test.run_test_case();
           tests_count += cross_entropy_error_test.get_tests_count();
           tests_passed_count += cross_entropy_error_test.get_tests_passed_count();
           tests_failed_count += cross_entropy_error_test.get_tests_failed_count();
-
+*/
           // T R A I N I N G   S T R A T E G Y   T E S T S
 
           // learning rate algorithm
