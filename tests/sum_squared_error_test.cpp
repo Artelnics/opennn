@@ -41,6 +41,60 @@ void SumSquaredErrorTest::test_constructor()
 }
 
 
+void SumSquaredErrorTest::test_back_propagate()
+{
+    cout << "test_back_propagate\n";
+
+    // Empty test does not work
+    // sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+
+    // Test approximation
+    {
+        samples_number = 1;
+        inputs_number = 1;
+        outputs_number = 1;
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_constant(type(0));
+        data_set.set_training();
+
+        batch.set(samples_number, &data_set);
+
+        training_samples_indices = data_set.get_training_samples_indices();
+
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+        neural_network.set_parameters_constant(type(0));
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation);
+
+        back_propagation.set(samples_number, &sum_squared_error);
+        sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+        assert_true(back_propagation.errors.dimension(0) == 1, LOG);
+        assert_true(back_propagation.errors.dimension(1) == 1, LOG);
+
+        assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
+
+        assert_true(back_propagation.gradient.size() == 2, LOG);
+        assert_true(is_zero(back_propagation.gradient.size()) , LOG);
+    }
+}
+
+
+void SumSquaredErrorTest::test_back_propagate_lm()
+{
+    cout << "test_back_propagate_lm\n";
+
+}
+
+
+
 void SumSquaredErrorTest::test_calculate_error_gradient_lm()
 {
    cout << "test_calculate_error_gradient_lm\n";
@@ -113,7 +167,7 @@ void SumSquaredErrorTest::test_back_propagate_approximation_zero()
 
     data_set.set_data_constant(type(0));
 
-    samples_indices = data_set.get_training_samples_indices();
+    training_samples_indices = data_set.get_training_samples_indices();
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
@@ -122,7 +176,7 @@ void SumSquaredErrorTest::test_back_propagate_approximation_zero()
     neural_network.set_parameters_constant(type(0));
 
     batch.set(samples_number, &data_set);
-    batch.fill(samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     forward_propagation.set(samples_number, &neural_network);
     neural_network.forward_propagate(batch, forward_propagation);
@@ -155,7 +209,7 @@ void SumSquaredErrorTest::test_back_propagate_approximation_random()
 
     data_set.set_training();
 
-    samples_indices = data_set.get_training_samples_indices();
+    training_samples_indices = data_set.get_training_samples_indices();
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
@@ -163,7 +217,7 @@ void SumSquaredErrorTest::test_back_propagate_approximation_random()
     neural_network.set_parameters_random();
 
     batch.set(samples_number, &data_set);
-    batch.fill(samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     forward_propagation.set(samples_number, &neural_network);
     neural_network.forward_propagate(batch, forward_propagation);
@@ -201,7 +255,7 @@ void SumSquaredErrorTest::test_back_propagate_binary_classification_zero()
 
     data_set.set_data_constant(type(0));
 
-    samples_indices = data_set.get_training_samples_indices();
+    training_samples_indices = data_set.get_training_samples_indices();
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
@@ -210,7 +264,7 @@ void SumSquaredErrorTest::test_back_propagate_binary_classification_zero()
     neural_network.set_parameters_constant(type(0));
 
     batch.set(samples_number, &data_set);
-    batch.fill(samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     forward_propagation.set(samples_number, &neural_network);
     neural_network.forward_propagate(batch, forward_propagation);
@@ -244,7 +298,7 @@ void SumSquaredErrorTest::test_back_propagate_binary_classification_random()
 
     data_set.set_training();
 
-    samples_indices = data_set.get_training_samples_indices();
+    training_samples_indices = data_set.get_training_samples_indices();
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
@@ -252,7 +306,7 @@ void SumSquaredErrorTest::test_back_propagate_binary_classification_random()
     neural_network.set_parameters_random();
 
     batch.set(samples_number, &data_set);
-    batch.fill(samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     forward_propagation.set(samples_number, &neural_network);
     neural_network.forward_propagate(batch, forward_propagation);
@@ -286,7 +340,7 @@ void SumSquaredErrorTest::test_back_propagate_forecasting_zero()
 
     data_set.set_data_constant(type(0));
 
-    samples_indices = data_set.get_training_samples_indices();
+    training_samples_indices = data_set.get_training_samples_indices();
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
@@ -295,7 +349,7 @@ void SumSquaredErrorTest::test_back_propagate_forecasting_zero()
     neural_network.set_parameters_constant(type(0));
 
     batch.set(samples_number, &data_set);
-    batch.fill(samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     forward_propagation.set(samples_number, &neural_network);
     neural_network.forward_propagate(batch, forward_propagation);
@@ -328,7 +382,7 @@ void SumSquaredErrorTest::test_back_propagate_forecasting_random()
 
     data_set.set_training();
 
-    samples_indices = data_set.get_training_samples_indices();
+    training_samples_indices = data_set.get_training_samples_indices();
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
@@ -336,7 +390,7 @@ void SumSquaredErrorTest::test_back_propagate_forecasting_random()
     neural_network.set_parameters_random();
 
     batch.set(samples_number, &data_set);
-    batch.fill(samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     forward_propagation.set(samples_number, &neural_network);
     neural_network.forward_propagate(batch, forward_propagation);
@@ -380,7 +434,7 @@ void SumSquaredErrorTest::test_back_propagate_lm_approximation_random()
 
     data_set.set_training();
 
-    samples_indices = data_set.get_training_samples_indices();
+    training_samples_indices = data_set.get_training_samples_indices();
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
@@ -388,7 +442,7 @@ void SumSquaredErrorTest::test_back_propagate_lm_approximation_random()
     neural_network.set_parameters_random();
 
     batch.set(samples_number, &data_set);
-    batch.fill(samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     forward_propagation.set(samples_number, &neural_network);
     neural_network.forward_propagate(batch, forward_propagation);
@@ -424,28 +478,9 @@ void SumSquaredErrorTest::run_test_case()
 
    test_constructor();
 
-   test_back_propagate_approximation_zero();
-   test_back_propagate_approximation_random();
+   test_back_propagate();
 
-   test_back_propagate_binary_classification_zero();
-   test_back_propagate_binary_classification_random();
-
-   test_back_propagate_forecasting_zero();
-   test_back_propagate_forecasting_random();
-
-   test_back_propagate_lm_approximation_random();
-
-   // Error methods
-
-//   test_calculate_error();
-
-//   test_calculate_error_gradient();
-
-   test_calculate_error_gradient_lm();
-
-   // Squared errors methods
-
-//   test_calculate_squared_errors_jacobian();
+   test_back_propagate_lm();
 
    cout << "End of sum squared error test case.\n\n";
 }

@@ -26,17 +26,16 @@ public:
 
    void test_constructor();
 
-   // Error methods
+   // Back-propagation methods
+
+   void test_back_propagate();
+
+   void test_back_propagate_lm();
+
 
    void test_calculate_error();
 
-   void test_calculate_error_gradient();
-
-   // Squared errors methods 
-
-   
-
-   
+   void test_calculate_error_gradient();   
 
    // Unit testing methods
 

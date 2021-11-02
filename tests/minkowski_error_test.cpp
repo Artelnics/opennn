@@ -42,6 +42,20 @@ void MinkowskiErrorTest::test_constructor()
 }
 
 
+void MinkowskiErrorTest::test_back_propagate()
+{
+    cout << "test_back_propagate\n";
+
+}
+
+
+void MinkowskiErrorTest::test_back_propagate_lm()
+{
+    cout << "test_back_propagate_lm\n";
+
+}
+
+
 void MinkowskiErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
@@ -704,15 +718,11 @@ void MinkowskiErrorTest::run_test_case()
 
    test_constructor();
 
-   // Set methods
+   // Back-propagation methods
 
-//   test_set_Minkowski_parameter();
+   test_back_propagate();
 
-   // Error methods
-
-   test_calculate_error();
-//   test_calculate_selection_error();
-   test_calculate_error_gradient();
+   test_back_propagate_lm();
 
    cout << "End of Minkowski error test case.\n\n";
 }
