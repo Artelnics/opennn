@@ -83,12 +83,6 @@ void SumSquaredErrorTest::test_calculate_error()
     sum_squared_error.calculate_errors(batch, forward_propagation, back_propagation);
     sum_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
-    cout << "forward propagation information" << endl;
-    forward_propagation.print();
-
-    cout << "backward propagation information" << endl;
-    back_propagation.print();
-
     cout << abs(back_propagation.error - type(12.7329755)) << endl;
     assert_true(abs(back_propagation.error - type(12.7329755)) < type(NUMERIC_LIMITS_MIN), LOG);
 
@@ -180,7 +174,7 @@ void SumSquaredErrorTest::test_back_propagate()
     // sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
 
-    // Test approximation
+    // Test approximation (trivial test)
     {
         samples_number = 1;
         inputs_number = 1;
@@ -189,11 +183,11 @@ void SumSquaredErrorTest::test_back_propagate()
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_constant(type(0));
         data_set.set_training();
-
-        batch.set(samples_number, &data_set);
+        data_set.print_data();
 
         training_samples_indices = data_set.get_training_samples_indices();
 
+        batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
         // Neural network
@@ -213,8 +207,11 @@ void SumSquaredErrorTest::test_back_propagate()
         assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
 
         assert_true(back_propagation.gradient.size() == 2, LOG);
-        assert_true(is_zero(back_propagation.gradient.size()) , LOG);
+        assert_true(is_zero(back_propagation.gradient) , LOG);
+
+        neural_network.set();
     }
+
 }
 
 
