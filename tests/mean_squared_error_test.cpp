@@ -42,6 +42,21 @@ void MeanSquaredErrorTest::test_constructor()
 }
 
 
+void MeanSquaredErrorTest::test_back_propagate()
+{
+    cout << "test_back_propagate\n";
+
+}
+
+
+void MeanSquaredErrorTest::test_back_propagate_lm()
+{
+    cout << "test_back_propagate_lm\n";
+
+}
+
+
+
 void MeanSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
@@ -630,9 +645,9 @@ void MeanSquaredErrorTest::run_test_case()
 
    test_constructor();
 
-   test_calculate_error();
+   test_back_propagate();
 
-   test_calculate_error_gradient();
+   test_back_propagate_lm();
 
    cout << "End of mean squared error test case.\n\n";
 }

@@ -26,7 +26,12 @@ public:
 
    void test_constructor();
 
-   // Gradient methods
+   // Back-propagation methods
+
+   void test_back_propagate();
+
+   void test_back_propagate_lm();
+
 
    void test_back_propagate_approximation_zero();
    void test_back_propagate_approximation_random();
@@ -52,7 +57,7 @@ private:
    Index neurons_number;
    Index outputs_number;
 
-   Tensor<Index, 1> samples_indices;
+   Tensor<Index, 1> training_samples_indices;
    Tensor<Index, 1> input_variables_indices;
    Tensor<Index, 1> target_variables_indices;
 
@@ -62,7 +67,7 @@ private:
 
    SumSquaredError sum_squared_error;
 
-   DataSetBatch batch;  
+   DataSetBatch batch;
 
    NeuralNetworkForwardPropagation forward_propagation;
 

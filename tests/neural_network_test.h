@@ -25,11 +25,7 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
-
-   // Display messages
-
-   
+   void test_destructor();  
 
    // Appending layers
 
@@ -62,11 +58,6 @@ public:
    void test_set_parameters_constant();
    void test_set_parameters_random();
 
-   // Display messages
-
-   void test_set_display_inputs_warning();
-   
-
    // Parameters norm / descriptives / histogram
 
    void test_calculate_parameters_norm();
@@ -83,9 +74,11 @@ public:
    void test_calculate_directional_inputs();
    void test_calculate_outputs_histograms();
 
-   // Expression methods
+   // Forward propagation
 
-   // XML expression methods
+   void test_forward_propagate();
+
+   // Expression methods
 
    void test_save_expression();
 
@@ -93,15 +86,9 @@ public:
 
    void test_to_XML();
    void test_from_XML();
-
    
-
    void test_save();
    void test_load();
-
-   // Forward propagation
-
-   void test_forward_propagate();
 
    // Unit testing methods
 

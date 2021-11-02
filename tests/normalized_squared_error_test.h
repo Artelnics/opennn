@@ -30,22 +30,15 @@ public:
 
    void test_calculate_normalization_coefficient();
 
-   void test_calculate_training_normalization_coefficient();   
-   void test_calculate_selection_normalization_coefficient();   
+   // Back-propagation methods
 
-   // Error methods
+   void test_back_propagate();
+
+   void test_back_propagate_lm();
 
    void test_calculate_error();
 
    void test_calculate_error_gradient();
-
-
-
-
-
-
-
-
 
    // Unit testing methods
 

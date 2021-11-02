@@ -322,6 +322,9 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
                                  const NeuralNetworkForwardPropagation& forward_propagation,
                                  LossIndexBackPropagation& back_propagation) const
 {
+    forward_propagation.print();system("pause");
+
+
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     switch(forward_propagation.layers(trainable_layers_number-1)->layer_pointer->get_type())
@@ -1018,6 +1021,8 @@ LossIndexBackPropagation::~LossIndexBackPropagation()
 
 Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
 {
+    // Data set
+
     const Index samples_number = data_set_pointer->get_training_samples_number();
 
     const Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
@@ -1027,13 +1032,17 @@ Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
     DataSetBatch batch(samples_number, data_set_pointer);
     batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
-    NeuralNetworkForwardPropagation forward_propagation(samples_number, neural_network_pointer);
+    // Neural network
 
-    LossIndexBackPropagation back_propagation(samples_number, this);
+    NeuralNetworkForwardPropagation forward_propagation(samples_number, neural_network_pointer);
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
     const Index parameters_number = parameters.size();
+
+    // Loss index
+
+    LossIndexBackPropagation back_propagation(samples_number, this);
 
     type h;
     Tensor<type, 1> parameters_forward(parameters);

@@ -21,6 +21,20 @@ CrossEntropyErrorTest::~CrossEntropyErrorTest()
 }
 
 
+void CrossEntropyErrorTest::test_back_propagate()
+{
+    cout << "test_back_propagate\n";
+
+}
+
+
+void CrossEntropyErrorTest::test_back_propagate_lm()
+{
+    cout << "test_back_propagate_lm\n";
+
+}
+
+
 void CrossEntropyErrorTest::test_calculate_error_binary_classification()
 {
     Tensor<Index,1> training_samples_indices;
@@ -460,7 +474,6 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 //   test_calculate_error_gradient_recurrent();
 //   test_calculate_error_gradient_long_short_term_memory();
 //   test_calculate_error_gradient_convolutional();
-
 }
 
 
@@ -468,9 +481,11 @@ void CrossEntropyErrorTest::run_test_case()
 {
     cout << "Running cross entropy error test case...\n";
 
-   test_calculate_error();
+    // Back-propagation methods
 
-   test_calculate_error_gradient();
+    test_back_propagate();
+
+    test_back_propagate_lm();
 
    cout << "End of cross entropy error test case.\n\n";
 }

@@ -41,10 +41,24 @@ void NormalizedSquaredErrorTest::test_constructor()
 }
 
 
+void NormalizedSquaredErrorTest::test_back_propagate()
+{
+    cout << "test_back_propagate\n";
+
+}
+
+
+void NormalizedSquaredErrorTest::test_back_propagate_lm()
+{
+    cout << "test_back_propagate_lm\n";
+
+}
+
+
 void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 {
     cout << "test_calculate_normalization_coefficient\n";
-/*
+
     Index samples_number;
     Index inputs_number;
     Index outputs_number;
@@ -74,13 +88,10 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
    neural_network.set_parameters_random();
 
-   data_set.set(samples_number, inputs_number, outputs_number);
-   data_set.set_data_random();
+//   normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
 
-   normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
+//   assert_true(normalization_coefficient > 0, LOG);
 
-   assert_true(normalization_coefficient > 0, LOG);
-*/
 }
 
 
@@ -135,7 +146,7 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    back_propagation.set(samples_number, &normalized_squared_error);
    normalized_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
-/*   assert_true(back_propagation.error == 0.0, LOG);
+   assert_true(back_propagation.error == 0.0, LOG);
 
    // Test
 
@@ -155,7 +166,7 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    normalized_squared_error.set_normalization_coefficient();
 
 //   assert_true(abs(normalized_squared_error.calculate_error() - normalized_squared_error.calculate_training_error(parameters)) < 1.0e-3, LOG);
-*/
+
 }
 
 
@@ -190,7 +201,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
     normalized_squared_error.set_regularization_method(NormalizedSquaredError::RegularizationMethod::NoRegularization);
 
     neural_network.set();
-
 
     // Trivial test
 
@@ -227,12 +237,12 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
         numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-        assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
+        assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()), LOG);
 
         assert_true(all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
-                           [](type i) { return (i-static_cast<type>(0))<NUMERIC_LIMITS_MIN; }), LOG);
+                           [](type i) { return (i-static_cast<type>(0)) < NUMERIC_LIMITS_MIN;}), LOG);
     }
-/*
+
     // Test perceptron
 
     neural_network.set();
@@ -252,7 +262,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        perceptron_layer_1->set(inputs_number, neurons_number);
+//        perceptron_layer_1->set(inputs_number, neurons_number);
 //        perceptron_layer_2->set(neurons_number, outputs_number);
 
 //        neural_network.add_layer(perceptron_layer_1);
@@ -318,7 +328,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
         assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
     }
-*/
+
     // Test multiple probabilistic
 
     {
@@ -498,12 +508,13 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
 }
-/*
+
    // Test recurrent and perceptron
 
    neural_network.set();
 
    {
+
        samples_number = 4;
        inputs_number = 2;
        outputs_number = 1;
@@ -518,8 +529,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        samples_indices = data_set.get_training_samples_indices();
        input_variables_indices = data_set.get_input_variables_indices();
        target_variables_indices = data_set.get_target_variables_indices();
-
-
+/*
        recurrent_layer->set(inputs_number, neurons_number);
        perceptron_layer_1->set(neurons_number, outputs_number);
 
@@ -548,6 +558,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        cout << "Difference: " << error_gradient-numerical_error_gradient << endl;
 
        assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
+*/
    }
 
    neural_network.set();
@@ -572,7 +583,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
         samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
-
+/*
         long_short_term_memory_layer->set(inputs_number, neurons_number);
         perceptron_layer_1->set(neurons_number, outputs_number);
 
@@ -601,8 +612,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
         numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
         assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
+*/
     }
-
+/*
    // Test recurrent and binary probabilistic
 
        samples_number = 4;
@@ -890,11 +902,11 @@ void NormalizedSquaredErrorTest::run_test_case()
 
     test_calculate_normalization_coefficient();
 
-    // Error methods
+    // Back-propagation methods
 
-    test_calculate_error();
+    test_back_propagate();
 
-    test_calculate_error_gradient();
+    test_back_propagate_lm();
 
     cout << "End of normalized squared error test case.\n\n";
 }

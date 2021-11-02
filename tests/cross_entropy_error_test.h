@@ -18,29 +18,33 @@ class CrossEntropyErrorTest : public UnitTesting
 
 public:
 
-   explicit CrossEntropyErrorTest();   
+    explicit CrossEntropyErrorTest();
 
-   virtual ~CrossEntropyErrorTest();
+    virtual ~CrossEntropyErrorTest();
 
-   // Error methods
+    // Back-propagation methods
+
+    void test_back_propagate();
+
+    void test_back_propagate_lm();
 
     void test_calculate_error_binary_classification();
     void test_calculate_error_multiple_classification();
 
-   void test_calculate_error();
+    void test_calculate_error();
 
-   void test_calculate_error_gradient_binary_classification();
-   void test_calculate_error_gradient_multiple_classification();
+    void test_calculate_error_gradient_binary_classification();
+    void test_calculate_error_gradient_multiple_classification();
 
-   void test_calculate_error_gradient_recurrent();
-   void test_calculate_error_gradient_long_short_term_memory();
-   void test_calculate_error_gradient_convolutional();
+    void test_calculate_error_gradient_recurrent();
+    void test_calculate_error_gradient_long_short_term_memory();
+    void test_calculate_error_gradient_convolutional();
 
-   void test_calculate_error_gradient();
+    void test_calculate_error_gradient();
 
-   // Unit testing methods
+    // Unit testing methods
 
-   void run_test_case();
+    void run_test_case();
 
 private:
 

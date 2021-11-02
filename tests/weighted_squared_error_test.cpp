@@ -42,6 +42,20 @@ void WeightedSquaredErrorTest::test_constructor()
 }
 
 
+void WeightedSquaredErrorTest::test_back_propagate()
+{
+    cout << "test_back_propagate\n";
+
+}
+
+
+void WeightedSquaredErrorTest::test_back_propagate_lm()
+{
+    cout << "test_back_propagate_lm\n";
+
+}
+
+
 void WeightedSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
@@ -407,13 +421,11 @@ void WeightedSquaredErrorTest::run_test_case()
 
    test_constructor();
 
-   // Error methods
+   // Back-propagation methods
 
-   test_calculate_error();
+   test_back_propagate();
 
-   test_calculate_error_gradient();
-
-   // Loss hessian methods
+   test_back_propagate_lm();
 
    cout << "End of weighted squared error test case.\n\n";
 }
