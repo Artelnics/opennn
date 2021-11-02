@@ -231,10 +231,10 @@ void DataSetTest::test_calculate_input_variables_descriptives() //@todo
 
    input_variables_descriptives = data_set.calculate_input_variables_descriptives();
 
-   assert_true(input_variables_descriptives[0].mean == type(2.0), LOG);
-   assert_true(input_variables_descriptives[0].standard_deviation == type(1.0), LOG);
-   assert_true(input_variables_descriptives[0].minimum == type(1.0), LOG);
-   assert_true(input_variables_descriptives[0].maximum == type(3.0), LOG);
+   assert_true(input_variables_descriptives[0].mean - type(2.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(input_variables_descriptives[0].standard_deviation - type(1.0)< type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(input_variables_descriptives[0].minimum - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(input_variables_descriptives[0].maximum - type(3.0) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -330,13 +330,13 @@ void DataSetTest::test_calculate_data_distributions()
 
    assert_true(histograms.size() == 3, LOG);
 
-   assert_true(histograms(0).frequencies(0) == 0, LOG);
-   assert_true(histograms(1).frequencies(0) == 0, LOG);
-   assert_true(histograms(2).frequencies(0) == 0, LOG);
+   assert_true(histograms(0).frequencies(0) - 0 < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(histograms(1).frequencies(0) - 0 < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(histograms(2).frequencies(0) - 0 < type(NUMERIC_LIMITS_MIN), LOG);
 
-   assert_true(histograms(0).centers(0) == type(0), LOG);
-   assert_true(histograms(1).centers(0) == type(0), LOG);
-   assert_true(histograms(2).centers(0) == type(0), LOG);
+   assert_true(histograms(0).centers(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(histograms(1).centers(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(histograms(2).centers(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
@@ -451,13 +451,13 @@ void DataSetTest::test_set_data_constant()
        {type(2),type(2),type(2)},
        {type(2),type(2),type(2)}});
 
-   assert_true(data_set.get_data()(0) == solution(0), LOG);
-   assert_true(data_set.get_data()(1) == solution(1), LOG);
-   assert_true(data_set.get_data()(2) == solution(2), LOG);
-   assert_true(data_set.get_data()(3) == solution(3), LOG);
-   assert_true(data_set.get_data()(4) == solution(4), LOG);
-   assert_true(data_set.get_data()(5) == solution(5), LOG);
-   assert_true(data_set.get_data()(6) == solution(6), LOG);
+   assert_true(data_set.get_data()(0) - solution(0)< type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(1) - solution(1) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(2) - solution(2) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(3) - solution(3) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(4) - solution(4) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(5) - solution(5) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data_set.get_data()(6) - solution(6) < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
@@ -558,7 +558,6 @@ void DataSetTest::test_calculate_euclidean_distance()
    assert_true(0 == 1, LOG);
 
    assert_true(false, LOG);
-
 }
 
 
@@ -668,7 +667,7 @@ void DataSetTest::test_read_csv()
    assert_true(data.dimension(0) == 2, LOG);
    assert_true(data.dimension(1) == 2, LOG);
 
-//   assert_true(abs(data(0,0) - 1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(data(0,0) - type(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
 //   assert_true(abs(data(0,1) - 2.0) < type(NUMERIC_LIMITS_MIN), LOG);
 //   assert_true(abs(data(1,0) - 3.0) < type(NUMERIC_LIMITS_MIN), LOG);
 //   assert_true(abs(data(1,1) - 4.0) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -848,15 +847,15 @@ void DataSetTest::test_read_csv()
 
    data = data_set.get_data();
 
-   assert_true(data(0,4) == type(1.0), LOG);
-   assert_true(data(0,5) == type(0.0), LOG);
-   assert_true(data(0,6) == type(0.0), LOG);
-   assert_true(data(1,4) == type(0.0), LOG);
-   assert_true(data(1,5) == type(1.0), LOG);
-   assert_true(data(1,6) == type(0.0), LOG);
-   assert_true(data(2,4) == type(0.0), LOG);
-   assert_true(data(2,5) == type(1.0), LOG);
-   assert_true(data(2,6) == type(0.0), LOG);
+   assert_true(data(0,4) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(0,5) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(0,6) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(1,4) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(1,5) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(1,6) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(2,4) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(2,5) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(2,6) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
@@ -918,9 +917,9 @@ void DataSetTest::test_read_csv()
 
    data = data_set.get_data();
 
-   assert_true(data(0,1) == type(1.0), LOG);
-   assert_true(data(1,1) == type(0.0), LOG);
-   assert_true(data(2,1) == type(1.0), LOG);
+   assert_true(data(0,1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(1,1) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(data(2,1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
@@ -972,7 +971,6 @@ void DataSetTest::test_read_adult_csv()
     assert_true(data_set.get_column_type(1) == DataSet::ColumnType::Categorical, LOG);
     assert_true(data_set.get_column_type(2) == DataSet::ColumnType::Numeric, LOG);
     assert_true(data_set.get_column_type(3) == DataSet::ColumnType::Categorical, LOG);
-
 }
 
 
@@ -1130,7 +1128,6 @@ void DataSetTest::test_read_pollution_csv()
     assert_true(data_set.get_column_type(10) == DataSet::ColumnType::Numeric, LOG);
     assert_true(data_set.get_column_type(11) == DataSet::ColumnType::Numeric, LOG);
     assert_true(data_set.get_column_type(12) == DataSet::ColumnType::Numeric, LOG);
-
 }
 
 
@@ -1236,7 +1233,6 @@ void DataSetTest::test_transform_time_series()
     assert_true(data_set.get_variable_name(1) == "y_lag_1", LOG);
     assert_true(data_set.get_variable_name(2) == "x_lag_0", LOG);
     assert_true(data_set.get_variable_name(3) == "y_lag_0", LOG);
-
 }
 
 
@@ -1269,9 +1265,9 @@ void DataSetTest::test_set_time_series_data()
 
     data_set.set_time_series_data(data);
 
-    assert_true(data_set.get_time_series_data()(0) == type(15), LOG);
-    assert_true(data_set.get_time_series_data()(1) == type(12), LOG);
-    assert_true(data_set.get_time_series_data()(2) == type(9), LOG);
+    assert_true(data_set.get_time_series_data()(0) - type(15) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data_set.get_time_series_data()(1) - type(12) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data_set.get_time_series_data()(2) - type(9) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -1322,9 +1318,9 @@ void DataSetTest::test_save_time_series_data_binary()
 
     data_set.load_time_series_data_binary(data_file_name);
 
-    assert_true(data_set.get_time_series_data()(0) == type(0), LOG);
-    assert_true(data_set.get_time_series_data()(1) == type(1), LOG);
-    assert_true(data_set.get_time_series_data()(2) == type(2), LOG);
+    assert_true(data_set.get_time_series_data()(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data_set.get_time_series_data()(1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data_set.get_time_series_data()(2) - type(2) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -1432,9 +1428,8 @@ void DataSetTest::test_scrub_missing_values()
     data = data_set.get_data();
 
     assert_true(abs(data(0,0) - type(1)) < type(1.0e-3), LOG);
-    assert_true(abs(data(1,1) - 2.0) < 1.0e-3, LOG);
-    assert_true(abs(data(2,2) - 3.0) < 1.0e-3, LOG);
-
+    assert_true(abs(data(1,1) - type(2.0)) < type(1.0e-3), LOG);
+    assert_true(abs(data(2,2) - type(3.0)) < type(1.0e-3), LOG);
 }
 
 
@@ -1472,7 +1467,6 @@ void DataSetTest::test_calculate_variables_means()
 //    Tensor<type, 1> solution(2, 2.0);
 
 //    assert_true(means == solution, LOG);
-
 }
 
 
@@ -1556,7 +1550,7 @@ void DataSetTest::test_calculate_selection_targets_mean()
 
 
 void DataSetTest::test_calculate_input_target_correlations()
-{
+{/*
     cout << "test_calculate_input_target_correlations\n";
 
     data.resize(3, 4);
@@ -1584,11 +1578,11 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     // Test logistic correlation
 
-}
+*/}
 
 
 void DataSetTest::test_calculate_total_input_correlations()
-{
+{/*
     cout << "test_calculate_total_input_correlations\n";    
 
     data.resize(3, 4);
@@ -1614,11 +1608,11 @@ void DataSetTest::test_calculate_total_input_correlations()
 //    Tensor<type, 1> correlations_inputs = data_set.calculate_total_input_correlations();
 
 //    assert_true(correlations_inputs == solution, LOG);
-}
+*/}
 
 
 void DataSetTest::test_unuse_repeated_samples()
-{
+{/*
     cout << "test_unuse_repeated_samples\n";
 
     Tensor<Index, 1> indices;
@@ -1666,11 +1660,11 @@ void DataSetTest::test_unuse_repeated_samples()
     indices.setValues({2,4});
 
 //    assert_true(ds_2.unuse_repeated_samples() == indices_2, LOG);
-}
+*/}
 
 
 void DataSetTest::test_unuse_uncorrelated_columns()
-{
+{/*
     cout << "test_unuse_uncorrelated_columns\n";
 
     data.resize(3, 3);
@@ -1679,11 +1673,11 @@ void DataSetTest::test_unuse_uncorrelated_columns()
         {type(1),type(0),type(0)},
         {type(1),type(0),type(1)}});
 
-}
+*/}
 
 
 void DataSetTest::test_calculate_training_negatives()
-{
+{/*
     cout << "test_calculate_training_negatives\n";
 
     Index training_negatives;
@@ -1721,13 +1715,13 @@ void DataSetTest::test_calculate_training_negatives()
     data = data_set.get_data();
 
 //    assert_true(training_negatives == 1, LOG);
-}
+*/}
 
 
 /// @todo
 
 void DataSetTest::test_calculate_selection_negatives()
-{
+{/*
     cout << "test_calculate_selection_negatives\n";
 
     Tensor<Index, 1> selection_indices;
@@ -1760,12 +1754,11 @@ void DataSetTest::test_calculate_selection_negatives()
     data = data_set.get_data();
 
 //    assert_true(selection_negatives == 0, LOG);
-
-}
+*/}
 
 
 void DataSetTest::test_fill()
-{
+{/*
     cout << "test_fill\n";
 
     data.resize(3, 3);
@@ -1798,7 +1791,7 @@ void DataSetTest::test_fill()
 //    cout << data << endl;
 //    system("pause");
 
-}
+*/}
 
 
 void DataSetTest::run_test_case()
