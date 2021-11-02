@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+ <rdmgr>
+  <timestamp type="u64_t">1633511768</timestamp>
+  <hostname>DESKTOP-2B6RDM9</hostname>
+  <os>windows</os>
+  <product>Intel® Advisor 2021.4</product>
+  <buildNumber type="s32_t">610727</buildNumber>
+  <logicalCPUCount type="s32_t">6</logicalCPUCount>
+  <physicalCoreCount type="s32_t">6</physicalCoreCount>
+  <processorPackageCount type="s32_t">1</processorPackageCount>
+  <CPUFrequency type="s64_t">2808000000</CPUFrequency>
+  <CPUFamily type="s32_t">6</CPUFamily>
+  <CPUModel type="s32_t">158</CPUModel>
+  <CPUStepping type="s32_t">10</CPUStepping>
+  <CPUBrandName>Intel(R) Core(TM) i5-8400 CPU @ 2.80GHz</CPUBrandName>
+  <isa>avx2</isa>
+ </rdmgr>
+</root>

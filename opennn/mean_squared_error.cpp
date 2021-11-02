@@ -53,11 +53,10 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
-    const type coefficient = static_cast<type>(batch_samples_number);
-
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
-    back_propagation.error = sum_squared_error(0)/coefficient;
+    back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_samples_number);
+
 }
 
 

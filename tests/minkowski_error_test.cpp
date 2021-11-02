@@ -711,7 +711,9 @@ void MinkowskiErrorTest::run_test_case()
    // Error methods
 
    test_calculate_error();
+
 //   test_calculate_selection_error();
+
    test_calculate_error_gradient();
 
    cout << "End of Minkowski error test case.\n\n";
