@@ -39,7 +39,7 @@ int main()
    "golden_section_order\n"
    "gradient_descent | gd\n"
    "growing_inputs | gi\n"
-   "incremental_neurons | in\n"
+   "growing_neurons | gn\n"
    "inputs_selection | is\n"
    "learning_rate_algorithm | lra\n"
    "levenberg_marquardt_algorithm | lma\n"
@@ -102,11 +102,13 @@ int main()
 
       else if(test == "data_set" || test == "ds")
       {
-         DataSetTest data_set_test;
-         data_set_test.run_test_case();
-         tests_count += data_set_test.get_tests_count();
-         tests_passed_count += data_set_test.get_tests_passed_count();
-         tests_failed_count += data_set_test.get_tests_failed_count();
+
+              DataSetTest data_set_test;
+              data_set_test.run_test_case();
+              tests_count += data_set_test.get_tests_count();
+              tests_passed_count += data_set_test.get_tests_passed_count();
+              tests_failed_count += data_set_test.get_tests_failed_count();
+
       }
 
       else if(test == "numerical_differentiation" || test == "nd")
@@ -331,10 +333,10 @@ int main()
       {
 
         TrainingStrategyTest training_strategy_test;
-        training_strategy_test.run_test_case();
-        tests_count += training_strategy_test.get_tests_count();
-        tests_passed_count += training_strategy_test.get_tests_passed_count();
-        tests_failed_count += training_strategy_test.get_tests_failed_count();
+//        training_strategy_test.run_test_case();
+//        tests_count += training_strategy_test.get_tests_count();
+//        tests_passed_count += training_strategy_test.get_tests_passed_count();
+//        tests_failed_count += training_strategy_test.get_tests_failed_count();
 
       }
       else if(test == "model_selection" || test == "ms")
@@ -355,14 +357,24 @@ int main()
         tests_failed_count += neurons_selection_algorithm_test.get_tests_failed_count();
       }
 
-      else if(test == "incremental_neurons" || test == "in")
+     /* else if(test == "incremental_neurons" || test == "in")
       {
         GrowingNeuronsTest incremental_order_test;
         incremental_order_test.run_test_case();
         tests_count += incremental_order_test.get_tests_count();
         tests_passed_count += incremental_order_test.get_tests_passed_count();
         tests_failed_count += incremental_order_test.get_tests_failed_count();
+      }*/
+
+      else if(test == "growing_neurons" || test == "gn")
+      {
+        GrowingNeuronsTest growing_neurons_test;
+        growing_neurons_test.run_test_case();
+        tests_count += growing_neurons_test.get_tests_count();
+        tests_passed_count += growing_neurons_test.get_tests_passed_count();
+        tests_failed_count += growing_neurons_test.get_tests_failed_count();
       }
+
 
       else if(test == "inputs_selection" || test == "is")
       {
@@ -439,13 +451,14 @@ int main()
           tests_failed_count += correlations_test.get_tests_failed_count();
 
           // data set
-
+          for(int i = 0; i < 10; i++)
+          {
           DataSetTest data_set_test;
           data_set_test.run_test_case();
           tests_count += data_set_test.get_tests_count();
           tests_passed_count += data_set_test.get_tests_passed_count();
           tests_failed_count += data_set_test.get_tests_failed_count();
-
+          }
           // N E U R A L   N E T W O R K   T E S T S
 
           // perceptron layer
@@ -614,13 +627,22 @@ int main()
           tests_passed_count += neurons_selection_algorithm_test.get_tests_passed_count();
           tests_failed_count += neurons_selection_algorithm_test.get_tests_failed_count();
 
-          // incremental order
+/*          // incremental order
 
           GrowingNeuronsTest incremental_order_test;
           incremental_order_test.run_test_case();
           tests_count += incremental_order_test.get_tests_count();
           tests_passed_count += incremental_order_test.get_tests_passed_count();
           tests_failed_count += incremental_order_test.get_tests_failed_count();
+*/
+          // growing neurons
+
+          GrowingNeuronsTest growing_neurons_test;
+          growing_neurons_test.run_test_case();
+          tests_count += growing_neurons_test.get_tests_count();
+          tests_passed_count += growing_neurons_test.get_tests_passed_count();
+          tests_failed_count += growing_neurons_test.get_tests_failed_count();
+
 
           // input selection algorithm
 
@@ -661,6 +683,7 @@ int main()
           tests_count += testing_analysis_test.get_tests_count();
           tests_passed_count += testing_analysis_test.get_tests_passed_count();
           tests_failed_count += testing_analysis_test.get_tests_failed_count();
+
       }
 
       else

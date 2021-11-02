@@ -82,6 +82,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
 void PruningInputsTest::run_test_case()
 {
+    /*
     cout << "Running pruning input test case...\n";
 
     // Constructor and destructor methods
@@ -94,4 +95,5 @@ void PruningInputsTest::run_test_case()
     test_perform_inputs_selection();
 
     cout << "End of pruning input test case.\n\n";
+    */
 }

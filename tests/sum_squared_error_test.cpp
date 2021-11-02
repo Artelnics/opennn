@@ -314,7 +314,7 @@ void SumSquaredErrorTest::test_back_propagate_approximation_random()
     cout << back_propagation.gradient << endl;
     cout << "XXXXXXXX" << endl;
     cout << gradient_numerical_differentiation << endl;
-    system("pause");
+
 }
 
 

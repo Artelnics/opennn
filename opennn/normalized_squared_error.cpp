@@ -259,7 +259,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
     const Index size = targets.dimension(0);
 
-    type normalization_coefficient = type(0);
+    type normalization_coefficient = type(0.0);
 
     for(Index i = 0; i < size; i++)
     {
@@ -268,7 +268,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
         normalization_coefficient += norm(0);
     }
 
-    if(static_cast<type>(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) normalization_coefficient = type(1);
+    if(static_cast<type>(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) normalization_coefficient = type(1.0);
 
     return normalization_coefficient;
 }
@@ -367,9 +367,6 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
     {
     case Layer::Type::Perceptron:
     {
-        PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-            = static_cast<PerceptronLayerForwardPropagation*>(output_layer_forward_propagation);
-
         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
                 = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
@@ -379,8 +376,6 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
     case Layer::Type::Probabilistic:
     {
-        ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
                 = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);

@@ -44,7 +44,7 @@ void NormalizedSquaredErrorTest::test_constructor()
 void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 {
     cout << "test_calculate_normalization_coefficient\n";
-
+/*
     Index samples_number;
     Index inputs_number;
     Index outputs_number;
@@ -80,7 +80,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
    normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
 
    assert_true(normalization_coefficient > 0, LOG);
-
+*/
 }
 
 
@@ -885,15 +885,15 @@ void NormalizedSquaredErrorTest::run_test_case()
     cout << "Running normalized squared error test case...\n";
 
     // Constructor and destructor methods
-    /*
-   test_constructor();
 
-   test_calculate_normalization_coefficient();
+    test_constructor();
 
-   // Error methods
+    test_calculate_normalization_coefficient();
 
-   test_calculate_error();
-*/
+    // Error methods
+
+    test_calculate_error();
+
     test_calculate_error_gradient();
 
     cout << "End of normalized squared error test case.\n\n";
