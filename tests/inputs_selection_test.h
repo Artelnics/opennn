@@ -27,11 +27,8 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
+
    void test_destructor();
-
-   // Set methods
-
-   void test_set();
 
    // Unit testing methods
 

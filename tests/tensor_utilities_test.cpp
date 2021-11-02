@@ -17,12 +17,38 @@ TensorUtilitiesTest::~TensorUtilitiesTest()
 {
 }
 
+void TensorUtilitiesTest::test_fill_submatrix()
+{
+    cout << "test_fill_submatrix\n";
+
+    Tensor<type, 2> submatrix;
+
+    Tensor<Index, 1> rows_indices;
+    Tensor<Index, 1> columns_indices;
+
+    // Test
+
+    matrix.resize(1, 1);
+    matrix.setConstant(3.1416);
+
+    rows_indices.resize(1);
+    rows_indices.setZero();
+
+    columns_indices.resize(1);
+    columns_indices.setZero();
+
+    submatrix.resize(1, 1);
+
+    fill_submatrix(matrix, rows_indices, columns_indices, submatrix.data());
+
+    assert_true(is_equal(submatrix, 3.1416), LOG);
+
+}
 
 void TensorUtilitiesTest::test_calculate_rank()
 {
     cout << "test_calculate_rank\n";
 
-    Tensor<type, 1> vector;
     Tensor<Index, 1> rank;
 
     // Test
@@ -31,15 +57,14 @@ void TensorUtilitiesTest::test_calculate_rank()
     vector.setValues({ type(4),type(2),type(3)});
 
     rank = calculate_rank_greater(vector);
-
-    cout << vector << endl << endl;
-    cout << rank << endl;
 }
 
 
 void TensorUtilitiesTest::run_test_case()
 {
    cout << "Running tensor utilities test case...\n";
+
+   test_fill_submatrix();
 
    test_calculate_rank();
 

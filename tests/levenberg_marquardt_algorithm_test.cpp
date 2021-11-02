@@ -144,69 +144,6 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_resize_training_error_history()
-{
-   cout << "test_resize_training_error_history\n";
-
-   TrainingResults training_results;
-
-   training_results.resize_training_error_history(1);
-
-   assert_true(training_results.training_error_history.size() == 1, LOG);
-   assert_true(training_results.selection_error_history.size() == 1, LOG);
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition()
-{
-   cout << "test_perform_Householder_QR_decomposition\n";
-
-   Tensor<type, 2> a;
-   Tensor<type, 1> b;
-
-   Tensor<type, 2> inverse;
-
-   // Test
-
-//   a.set(1, 1, 1.0);
-
-//   b.set(1, 0.0);
-
-//   levenberg_marquardt_algorithm.perform_Householder_QR_decomposition(a, b);
-
-   assert_true(is_equal(a, type(1.0)), LOG);
-   assert_true(is_zero(b), LOG);
-
-   // Test
-
-   a.resize(2, 2);
-//   a.initialize_identity();
-
-//   b.set(2, 0.0);
-
-//   levenberg_marquardt_algorithm.perform_Householder_QR_decomposition(a, b);
-
-   inverse.resize(2, 2);
-//   inverse.initialize_identity();
-
-//   assert_true(a == inverse, LOG);
-//   assert_true(b == 0.0, LOG);
-
-   // Test
-
-   a.resize(100, 100);
-   a.setRandom();
-   b.resize(100);
-   b.setRandom();
-
-//   levenberg_marquardt_algorithm.perform_Householder_QR_decomposition(a, b);
-
-   assert_true(a.dimension(0) == 100, LOG);
-   assert_true(a.dimension(1) == 100, LOG);
-   assert_true(b.size() == 100, LOG);
-}
-
-
 void LevenbergMarquardtAlgorithmTest::run_test_case()
 {
    cout << "Running Levenberg-Marquardt algorithm test case...\n";
@@ -218,14 +155,6 @@ void LevenbergMarquardtAlgorithmTest::run_test_case()
    // Training methods
 
    test_perform_training();
-
-   // Training history methods
-
-   test_resize_training_error_history();
-
-   // Linear algebraic equations methods
-
-   test_perform_Householder_QR_decomposition();
 
    cout << "End of Levenberg-Marquardt algorithm test case.\n\n";
 }

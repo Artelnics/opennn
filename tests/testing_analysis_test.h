@@ -34,26 +34,22 @@ public:
    void test_calculate_absolute_errors_descriptives();
    void test_calculate_percentage_errors_descriptives();
    void test_calculate_error_data_descriptives();
-   void test_print_error_data_descriptives();
    void test_calculate_error_data_histograms();
    void test_calculate_maximal_errors();
 
    // Linear regression parameters methods
 
    void test_linear_regression();
-   void test_print_linear_regression_correlation();
    void test_save();
    void test_perform_linear_regression();
 
    // Binary classification test methods
 
    void test_calculate_binary_classification_test();
-   void test_print_binary_classification_test();
 
    // Confusion matrix methods
 
    void test_calculate_confusion();
-   void test_print_confusion();
 
    // ROC curve methods
 
@@ -87,6 +83,14 @@ public:
    void run_test_case();
 
 private:
+
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
+   Index neurons_number;
+
+   Tensor<type, 2> targets;
+   Tensor<type, 2> outputs;
 
    DataSet data_set;
 

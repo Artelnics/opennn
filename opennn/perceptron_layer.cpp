@@ -984,6 +984,9 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
            perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
 
+/*
+    // @todo Change memcy by copy (faster)
+
     copy(//execution::par_unseq,
         perceptron_layer_back_propagation->biases_derivatives.data(),
         perceptron_layer_back_propagation->biases_derivatives.data() + biases_number, 
@@ -993,7 +996,7 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
         perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
         perceptron_layer_back_propagation->synaptic_weights_derivatives.data() + synaptic_weights_number,
         gradient.data());
-
+*/
 }
 
 

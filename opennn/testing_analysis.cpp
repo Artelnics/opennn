@@ -389,13 +389,14 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
 #endif
 
-    const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
-
-    const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
-
     // Error data
 
     Tensor<type, 3> error_data(testing_samples_number, 3, outputs_number);
+
+/*
+    const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
+
+    const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
     // Absolute error
 
@@ -413,7 +414,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
            error_data(j,2,i) = (difference_absolute_value(j,i)*static_cast<type>(100.0))/abs(outputs_maximum(i)-outputs_minimum(i));
        }
    }
-
+*/
     return error_data;
 }
 
@@ -471,25 +472,25 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
 #endif
 
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
+
+    Tensor<type, 2> error_data(testing_samples_number, outputs_number);
+/*
     const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
     const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
     // Error data
 
-    Tensor<type, 2> error_data(testing_samples_number, outputs_number);
-
-    Tensor<type, 2> difference_value = (targets - outputs);
+    Tensor<type, 2> difference = targets - outputs;
 
     for(Index i = 0; i < testing_samples_number; i++)
     {
        for(Index j = 0; j < outputs_number; j++)
        {
-           error_data(i,j) = (difference_value(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
+           error_data(i,j) = (difference(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
        }
     }
-
+*/
     return error_data;
 }
 

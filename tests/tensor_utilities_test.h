@@ -22,11 +22,20 @@ public:
 
    virtual ~TensorUtilitiesTest();
 
-   void test_calculate_rank();
+    void test_fill_submatrix();
+
+    void test_calculate_rank();
 
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   Tensor<type, 0> scalar;
+   Tensor<type, 1> vector;
+   Tensor<type, 2> matrix;
+
 
 };
 

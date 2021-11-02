@@ -26,7 +26,7 @@ public:
 
    void test_constructor();
 
-   // Inputs and perceptrons
+   // Inputs and neurons
 
    void test_is_empty();
 
@@ -53,14 +53,9 @@ public:
 
    void test_set_activation_function();
 
-   // Display messages
-
-   
-
    // Parameters initialization methods
 
    void test_set_parameters_constant();
-   void test_set_synaptic_weights_constant();
    void test_set_parameters_random();
 
    // Combination

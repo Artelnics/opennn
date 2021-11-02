@@ -49,13 +49,6 @@ void MinkowskiErrorTest::test_back_propagate()
 }
 
 
-void MinkowskiErrorTest::test_back_propagate_lm()
-{
-    cout << "test_back_propagate_lm\n";
-
-}
-
-
 void MinkowskiErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
@@ -721,8 +714,6 @@ void MinkowskiErrorTest::run_test_case()
    // Back-propagation methods
 
    test_back_propagate();
-
-   test_back_propagate_lm();
 
    cout << "End of Minkowski error test case.\n\n";
 }

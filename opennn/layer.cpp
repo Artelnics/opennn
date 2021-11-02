@@ -1492,7 +1492,6 @@ void Layer::soft_sign_derivatives(const Tensor<type, 4>& combinations,
                                   Tensor<type, 4>& activations,
                                   Tensor<type, 4>& activations_derivatives) const
 {
-
     const Tensor<bool, 4> if_sentence = combinations < combinations.constant(type(0));
 
     Tensor<type, 4> f_1(combinations.dimension(0), combinations.dimension(1), combinations.dimension(2), combinations.dimension(3));

@@ -26,13 +26,16 @@ public:
 
    void test_constructor();
 
-   // Inputs and perceptrons
+   // Inputs and neurons
 
    void test_is_empty();
 
    // Parameters
 
    void test_calculate_activations_derivatives();
+
+   // Forward propagation
+
    void test_calculate_outputs();
 
    // Unit testing methods

@@ -461,22 +461,6 @@ void PerceptronLayerTest::test_set_parameters_constant()
 }
 
 
-void PerceptronLayerTest::test_set_synaptic_weights_constant()
-{
-   cout << "test_set_synaptic_weights_constant\n";
-
-   Tensor<type, 2> synaptic_weights;
-
-   perceptron_layer.set(1, 1);
-   perceptron_layer.set_synaptic_weights_constant(type(5));
-
-   synaptic_weights = perceptron_layer.get_synaptic_weights();
-
-   assert_true(static_cast<Index>(synaptic_weights(0,0)) == 5, LOG);
-
-}
-
-
 void PerceptronLayerTest::test_set_parameters_random()
 {
    cout << "test_set_parameters_random\n";
@@ -1301,7 +1285,6 @@ void PerceptronLayerTest::run_test_case()
    // Parameters initialization methods
 
    test_set_parameters_constant();
-   test_set_synaptic_weights_constant();
    test_set_parameters_random();
 
    // Combinations

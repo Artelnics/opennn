@@ -28,17 +28,9 @@ public:
 
    void test_constructor();
 
-   // Set methods
-
-   void test_set();
-
    // Training methods
 
    void test_perform_training();
-
-   // Training history methods
-
-   void test_resize_training_error_history();
 
    // Unit testing methods
 

@@ -30,14 +30,6 @@ public:
 
    void test_perform_training();
 
-   // Training history methods
-
-   void test_resize_training_error_history();
-
-   // Linear algebraic equations methods
-
-   void test_perform_Householder_QR_decomposition();
-
    // Unit testing methods
 
    void run_test_case();

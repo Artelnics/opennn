@@ -25,10 +25,6 @@ public:
 
    void test_constructor();
 
-   // Set methods
-
-   void test_set_training_direction_method();
-
    // Training methods
 
    void test_calculate_PR_parameter();

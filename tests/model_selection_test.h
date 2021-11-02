@@ -25,10 +25,6 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Set methods
-
-   void test_set();
-
    // Model selection methods
 
    void test_perform_neurons_selection();

@@ -36,10 +36,6 @@ void TestingAnalysisTest::test_calculate_error_data()
 {
     cout << "test_calculate_error_data\n";
 
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-
     Tensor<type, 3> error_data;
 
     // Test
@@ -67,10 +63,6 @@ void TestingAnalysisTest::test_calculate_error_data()
 void TestingAnalysisTest::test_calculate_percentage_error_data()
 {
     cout << "test_calculate_percentage_error_data\n";
-
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
 
     Tensor<type, 2> error_data;
 
@@ -105,10 +97,6 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
 {
     cout << "test_calculate_absolute_errors_descriptives\n";
 
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-
     Tensor<Descriptives, 1> error_data;
 
     // Test
@@ -138,10 +126,6 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 {
     cout << "test_calculate_percentage_error_descriptives\n";
 
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-
     Tensor<Descriptives, 1> error_data;
 
     // Test
@@ -167,10 +151,6 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 void TestingAnalysisTest::test_calculate_error_data_descriptives()
 {
     cout << "test_calculate_error_data_descriptives\n";
-
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
 
     Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics;
 
@@ -202,38 +182,9 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
 }
 
 
-void TestingAnalysisTest::test_print_error_data_descriptives()
-{
-    cout << "test_print_error_data_descriptives\n";
-
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-
-    // Test
-
-    samples_number = 1;
-    inputs_number = 1;
-    targets_number = 1;
-
-    data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_constant(type(0));
-    data_set.set_testing();
-
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
-    neural_network.set_parameters_constant(type(0));
-
-    testing_analysis.print_error_data_descriptives();
-}
-
-
 void TestingAnalysisTest::test_calculate_error_data_histograms()
 {
     cout << "test_calculate_error_data_histograms\n";
-
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
 
     Tensor<Histogram, 1> error_data_histograms;
 
@@ -261,10 +212,6 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 {
     cout << "test_calculate_maximal_errors\n";
 
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-
     Tensor<Tensor<Index, 1>, 1> maximal_errors;
 
     // Test
@@ -290,10 +237,6 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 void TestingAnalysisTest::test_linear_regression()
 {
    cout << "test_linear_regression\n";
-
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
 
    Index neurons_number;
 
@@ -321,35 +264,6 @@ void TestingAnalysisTest::test_linear_regression()
 }
 
 
-void TestingAnalysisTest::test_print_linear_regression_correlation()
-{
-   cout << "test_print_linear_regression_correlation\n";
-
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
-
-   Index neurons_number;
-
-   // DataSet
-
-   data_set.set(samples_number, inputs_number, targets_number);
-
-   data_set.set_data_constant(type(0));
-
-   data_set.set_testing();
-
-   // Neural Network
-
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
-   neural_network.set_parameters_constant(type(0));
-
-   // Testing Analysis
-
-   testing_analysis.print_linear_regression_correlations();
-}
-
-
 void TestingAnalysisTest::test_save()
 {
    cout << "test_save\n";
@@ -362,15 +276,9 @@ void TestingAnalysisTest::test_save()
 
 void TestingAnalysisTest::test_perform_linear_regression()
 {/// @todo
-    /*
+
     cout << "test_perform_linear_regression\n";
-
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-
-    Index neurons_number;
-
+/*
     // DataSet
 
     data_set.set(samples_number, inputs_number, targets_number);
@@ -398,7 +306,8 @@ void TestingAnalysisTest::test_perform_linear_regression()
     assert_true(linear_regression_analysis.size() == 1 , LOG);
     //assert_true(linear_regression_analysis[0].targets(0) == test(0) , LOG);
     assert_true(linear_regression_analysis[0].correlation - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-*/}
+*/
+}
 
 
 void TestingAnalysisTest::test_calculate_confusion()
@@ -434,18 +343,14 @@ void TestingAnalysisTest::test_calculate_confusion()
    assert_true(confusion(1,1) == 2, LOG);
    assert_true(confusion(2,2) == 1, LOG);
    assert_true(confusion(0,2) == 0, LOG);
+
 }
 
 
 void TestingAnalysisTest::test_calculate_binary_classification_test()
-{ /// @todo
-    /*
+{
    cout << "test_calculate_binary_classification_test\n";
-
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
-
+/*
    // DataSet
 
    data_set.set(samples_number, inputs_number, targets_number);
@@ -464,7 +369,8 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
    Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
 
    assert_true(binary.size() == 15 , LOG);
-*/}
+*/
+}
 
 
 void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
@@ -577,9 +483,6 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 {
     cout << "test_calculate_area_under_curve\n";
 
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
-
     type area_under_curve;
 
     // Test
@@ -668,9 +571,6 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 {
     cout << "test_calculate_optimal_threshold\n";
 
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
-
     type optimal_threshold;
 
     // Test
@@ -741,9 +641,6 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
 {
     cout << "test_calculate_cumulative_chart\n";
 
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
-
     // Test
 
     targets.resize(4,1);
@@ -774,9 +671,6 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
 void TestingAnalysisTest::test_calculate_lift_chart()
 {
     cout << "test_calculate_lift_chart\n";
-
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
 
     Tensor<type, 2> cumulative_gain;
 
@@ -810,9 +704,6 @@ void TestingAnalysisTest::test_calculate_lift_chart()
 void TestingAnalysisTest::test_calculate_calibration_plot()
 {
     cout << "test_calculate_calibration_plot\n";
-
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
 
     Tensor<type, 2> calibration_plot;
 
@@ -854,9 +745,6 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
 void TestingAnalysisTest::test_calculate_true_positive_samples()
 {
     cout << "test_calculate_true_positive_samples\n";
-
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
 
     Tensor<Index, 1> true_positives_indices;
 
@@ -937,9 +825,6 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 void TestingAnalysisTest::test_calculate_false_positive_samples()
 {
     cout << "test_calculate_false_positive_samples\n";
-
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
 
     Tensor<Index, 1> false_positives_indices;
 
@@ -1022,9 +907,6 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
 {
     cout << "test_calculate_false_negative_samples\n";
 
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
-
     Tensor<Index, 1> false_negatives_indices;
 
     // Test
@@ -1106,9 +988,6 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
 {
     cout << "test_calculate_true_negative_samples\n";
 
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
-
     Tensor<Index, 1> true_negatives_indices;
 
     // Test
@@ -1188,9 +1067,6 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 {
     cout << "test_calculate_multiple_classification_rates\n";
 
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
-
     Tensor<Index, 1> testing_indices;
 
     Tensor<Tensor<Index,1>, 2> multiple_classification_rates;
@@ -1225,6 +1101,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     testing_indices.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8});
 
     /// @todo fails when running "suite" test
+
 /*    multiple_classification_rates = testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
     assert_true(multiple_classification_rates(0,0)(0) == 0, LOG);
@@ -1254,14 +1131,12 @@ void TestingAnalysisTest::run_test_case()
    test_calculate_error_data_descriptives();
    test_calculate_absolute_errors_descriptives();
    test_calculate_percentage_errors_descriptives();
-   test_print_error_data_descriptives();
    test_calculate_error_data_histograms();
    test_calculate_maximal_errors();
 
    // Linear regression analysis methodsta
 
    test_linear_regression();
-   test_print_linear_regression_correlation();
    test_save();
    test_perform_linear_regression();
 

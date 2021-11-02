@@ -73,42 +73,6 @@ Tensor<Descriptives, 1> UnscalingLayer::get_descriptives() const
 }
 
 
-/// Returns a vector with the minimum values of all unscaling neurons.
-/// The size is the number of neurons in the layer.
-
-Tensor<type, 1> UnscalingLayer::get_minimums() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> minimums(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        minimums[i] = descriptives[i].minimum;
-    }
-
-    return minimums;
-}
-
-
-/// Returns a vector with the maximum values of all unscaling neurons.
-/// The size is the number of neurons in the layer.
-
-Tensor<type, 1> UnscalingLayer::get_maximums() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> maximums(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        maximums[i] = descriptives[i].maximum;
-    }
-
-    return maximums;
-}
-
-
 /// Returns the method used for unscaling
 ///(no unscaling, minimum and maximum or mean and standard deviation).
 
@@ -427,46 +391,6 @@ void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descrip
 void UnscalingLayer::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
 {
     descriptives[i] = item_descriptives;
-}
-
-
-/// Sets the minimum value of a given unscaling neuron.
-/// @param i Index of unscaling neuron.
-/// @param new_minimum Minimum value.
-
-void UnscalingLayer::set_minimum(const Index& i, const type& new_minimum)
-{
-    descriptives[i].set_minimum(new_minimum);
-}
-
-
-/// Sets the maximum value of a given unscaling neuron.
-/// @param i Index of unscaling neuron.
-/// @param new_maximum Maximum value.
-
-void UnscalingLayer::set_maximum(const Index& i, const type& new_maximum)
-{
-    descriptives[i].set_maximum(new_maximum);
-}
-
-
-/// Sets the mean value of a given unscaling neuron.
-/// @param i Index of unscaling neuron.
-/// @param new_mean Mean value.
-
-void UnscalingLayer::set_mean(const Index& i, const type& new_mean)
-{
-    descriptives[i].set_mean(new_mean);
-}
-
-
-/// Sets the standard deviation value of a given unscaling neuron.
-/// @param i Index of unscaling neuron.
-/// @param new_standard_deviation Standard deviation value.
-
-void UnscalingLayer::set_standard_deviation(const Index& i, const type& new_standard_deviation)
-{
-    descriptives[i].set_standard_deviation(new_standard_deviation);
 }
 
 

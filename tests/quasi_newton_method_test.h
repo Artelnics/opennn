@@ -39,15 +39,16 @@ public:
 
    void test_perform_training();
 
-   // Training history methods
-
-   void test_resize_training_error_history();
-
    // Unit testing methods
 
    void run_test_case();
 
 private:
+
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
+   Index neurons_number;
 
    DataSet data_set;
 

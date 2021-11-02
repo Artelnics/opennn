@@ -40,41 +40,9 @@ public:
    void test_set_descriptives();
    void test_set_item_descriptives();
 
-   // Multilayer perceptron architecture
-
-   void test_set_layers_neurons_number();
-   void test_set_layer_size();
-
-   // Multilayer perceptron parameters
-
-   void test_set_network_parameters();
-   void test_set_layers_biases();
-   void test_set_layer_biases();
-   void test_set_layers_synaptic_weights();
-   void test_set_layer_synaptic_weights();
-   void test_set_layers_parameters();
-   void test_set_layer_parameters();
-
-   // Activation functions
-
-   void test_set_layers_activation_function();
-   void test_set_layer_activation_function();
-   void test_set_output_layer_activation_function();
-
-   // Input variables descriptives
-
-   void test_set_mean();
-   void test_set_standard_deviation();
-   void test_set_minimum();
-   void test_set_maximum();
-
    // Scaling method
 
    void test_set_scaling_method();
-
-   // Display messages
-
-   
 
    // Input range
 

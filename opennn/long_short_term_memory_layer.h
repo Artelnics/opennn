@@ -189,6 +189,7 @@ public:
 
    void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
    void calculate_activations(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+
    Tensor<type, 1> calculate_activations(const Tensor<type, 1>&) const;
    void calculate_recurrent_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
    void calculate_recurrent_activations(const Tensor<type, 1>&, Tensor<type, 1>&) const;
