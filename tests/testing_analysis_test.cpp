@@ -361,7 +361,8 @@ void TestingAnalysisTest::test_save()
 
 
 void TestingAnalysisTest::test_perform_linear_regression()
-{/*
+{/// @todo
+    /*
     cout << "test_perform_linear_regression\n";
 
     Index samples_number;
@@ -437,7 +438,8 @@ void TestingAnalysisTest::test_calculate_confusion()
 
 
 void TestingAnalysisTest::test_calculate_binary_classification_test()
-{/*
+{ /// @todo
+    /*
    cout << "test_calculate_binary_classification_test\n";
 
    Index samples_number;
