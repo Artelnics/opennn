@@ -322,8 +322,6 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
                                  const NeuralNetworkForwardPropagation& forward_propagation,
                                  LossIndexBackPropagation& back_propagation) const
 {
-    forward_propagation.print();
-
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
