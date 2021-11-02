@@ -1,0 +1,105 @@
+64 [17832] INFO perfrun.launcher <> - Launcher main begin
+70 [17832] INFO perfrun.launcher <> - MessageCatalogInit finished
+70 [17832] INFO perfrun.launcher <> - Launcher instance created
+70 [17832] INFO perfrun.launcher <> - argc = 7; cmdline = C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin64\advixe-runss.exe --ui-output-format xml --ui-output-fd 3604 --option-file D:\opennn\blank\My Advisor Results - blank\e000\hs001\config\runss.options 
+94 [17832] INFO perfrun.launcher <> - New signal handler callback was added
+146 [17832] INFO perfrun.launcher <> - create msngr2::ICliToolContext
+147 [17832] INFO perfrun.launcher <> - create file finder object
+147 [17832] INFO perfrun.launcher <> - create a result directory: pattern = D:\opennn\blank\My Advisor Results - blank\e000\hs001 pid = 4294967295
+150 [17832] INFO perfrun.launcher <> - create data directory = D:\opennn\blank\My Advisor Results - blank\e000\hs001\data.0
+150 [17832] INFO perfrun.launcher <> - Creating the master collection flag
+156 [17832] INFO perfrun.launcher <> - Done creating the master collection flag
+156 [16028] INFO perfrun.launcher <> - plugin [remoteplug] was disabled because it doesn't support the given collection type.
+157 [16028] INFO perfrun.sdk <> - Allocating TMU :D:\opennn\blank\My Advisor Results - blank\e000\hs001\data.0\systemcollector-17828-DESKTOP-2B6RDM9.sc
+157 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+159 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+159 [16028] INFO perfrun.launcher <> - plugin [gpu] was disabled because it doesn't support the given collection type.
+159 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+159 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+159 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+159 [16028] INFO perfrun.mrte <> - system-wide mode is 0
+160 [16028] INFO perfrun.mrte <> - Getting  mrte profiling environment ...
+188 [16028] INFO perfrun.mrte <> - INTEL_MRTE_DATA_DIR=D:\opennn\blank\My Advisor Results - blank\e000\hs001\data.0
+188 [16028] INFO perfrun.mrte <> - INTEL_MRTE_HOST_NAME=DESKTOP-2B6RDM9
+188 [16028] INFO perfrun.mrte <> - JAVA_TOOL_OPTIONS=-agentlib:advixe_tpssmrte_javaprof_1.0
+188 [16028] INFO perfrun.mrte <> - COR_ENABLE_PROFILING=1
+188 [16028] INFO perfrun.mrte <> - COR_PROFILER={10337B79-F6CD-4df9-8D18-26A67272096B}
+188 [16028] INFO perfrun.mrte <> - COMPLUS_ProfAPI_ProfilerCompatibilitySetting=EnableV2Profiler
+188 [16028] INFO perfrun.mrte <> - CORECLR_ENABLE_PROFILING=1
+188 [16028] INFO perfrun.mrte <> - CORECLR_PROFILER={10337B79-F6CD-4df9-8D18-26A67272096B}
+188 [16028] INFO perfrun.mrte <> - CORECLR_PROFILER_PATH=C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin64/advixe_tpssmrte_clrprof_1.0.dll
+188 [16028] INFO perfrun.mrte <> - INTEL_MRTE_PROFILER_MODE=mixed
+188 [16028] INFO perfrun.mrte <> - Data directory: D:\opennn\blank\My Advisor Results - blank\e000\hs001\data.0
+188 [16028] INFO perfrun.mrte <> - Mrte plugin is initialized
+188 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+188 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+188 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+188 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+188 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+188 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+188 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+188 [16028] INFO perfrun.tpss <> - initialize tpss controller
+188 [16028] INFO perfrun.tpss <> - configure collection mode: value = cpu:stack
+188 [16028] INFO perfrun.tpss <> - default obj-size-min=1024
+188 [16028] INFO perfrun.tpss <> - default hash-table-size=0
+189 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+189 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+189 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+189 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+189 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+189 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+189 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+189 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+189 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+189 [16028] INFO perfrun.launcher <> - plugin [] was disabled because it doesn't support the given collection type.
+189 [17832] INFO perfrun.launcher <> - set environment variable: PATH = C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin32\runtime;C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin64\runtime;C:\Program Files (x86)\Intel\oneAPI\compiler\2021.4.0\windows\redist\intel64_win\compiler;;C:\Program Files (x86)\Intel\oneAPI\compiler\2021.4.0\windows\redist\intel64_win\compiler;C:\Program Files (x86)\Intel\oneAPI\tbb\latest\redist\intel64\vc_mt\;C:\Program Files (x86)\Intel\oneAPI\tbb\latest\redist\ia32\vc_mt\;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin\;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\bin\release\;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin\;C:\Program Files (x86)\Intel\oneAPI\mpi\latest\libfabric\bin\utils\;C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\redist\intel64_win\compiler;C:\Program Files (x86)\Intel\oneAPI\compiler\latest\windows\redist\ia32_win\compiler;C:\Perl64\bin;C:\Users\Artelnics2019\AppData\Roaming\ActiveState\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.0\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.0\libnvvp;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.1\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.1\libnvvp;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\libnvvp;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\TortoiseSVN\bin;C:\Program Files\CMake\bin;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files\NVIDIA Corporation\Nsight Compute 2020.1.0\;D:\MATLAB\R2019a\bin;C:\Program Files\PuTTY\;C:\Users\Artelnics2019\Desktop\cuda\cuda\bin;C:\Users\Artelnics2019\Desktop\cuda\cuda\include;C:\Users\Artelnics2019\Desktop\cuda\cuda\lib\x64;C:\Users\Artelnics2019\Desktop\cuda\bin;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\GnuWin32\bin;C:\Users\Artelnics2019\Desktop\cuda\bin;C:\Program Files\PostgreSQL\12\bin;C:\Users\Artelnics2019\anaconda3\condabin;C:\Users\Artelnics2019\anaconda3\Scripts;C:\Users\Artelnics2019\anaconda3\Library\bin;C:\Users\Artelnics2019\AppData\Local\Microsoft\WindowsApps;C:\Users\Artelnics2019\AppData\Local\Programs\MiKTeX 2.9\miktex\bin\x64\;C:\Users\Artelnics2019\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Artelnics2019\AppData\Local\GitHubDesktop\bin
+189 [17832] INFO perfrun.launcher <> - set environment variable: INTEL_LIBITTNOTIFY32 = C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin32\runtime\ittnotify_collector.dll
+189 [17832] INFO perfrun.launcher <> - set environment variable: INTEL_LIBITTNOTIFY64 = C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin64\runtime\ittnotify_collector.dll
+189 [17832] INFO perfrun.launcher <> - set environment variable: INTEL_ITTNOTIFY_GROUPS = 
+189 [17832] INFO perfrun.launcher <> - set environment variable: INTEL_JIT_PROFILER32 = C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin32\runtime\ittnotify_collector.dll
+190 [17832] INFO perfrun.launcher <> - set environment variable: INTEL_JIT_PROFILER64 = C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin64\runtime\ittnotify_collector.dll
+190 [17832] INFO perfrun.launcher <> - set environment variable: VS_PROFILER = ittnotify_collector.dll
+190 [17832] INFO perfrun.launcher <> - set environment variable: OMP_TOOL_LIBRARIES = C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin32\runtime\ittnotify_collector.dll;C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin64\runtime\ittnotify_collector.dll
+190 [17832] INFO perfrun.launcher <> - set environment variable: ENABLE_JITPROFILING = 1
+190 [17832] INFO perfrun.launcher <> - set environment variable: CL_CONFIG_USE_VTUNE = True
+190 [17832] INFO perfrun.launcher <> - set environment variable: KMP_FORKJOIN_FRAMES = 0
+190 [17832] INFO perfrun.launcher <> - set environment variable: KMP_FORKJOIN_FRAMES_MODE = 0
+190 [17832] INFO perfrun.launcher <> - set environment variable: OMP_TOOL = disabled
+190 [17832] INFO perfrun.launcher <> - set environment variable: INTEL_MRTE_DATA_DIR = D:\opennn\blank\My Advisor Results - blank\e000\hs001\data.0
+190 [17832] INFO perfrun.launcher <> - set environment variable: INTEL_MRTE_HOST_NAME = DESKTOP-2B6RDM9
+191 [17832] INFO perfrun.launcher <> - set environment variable: JAVA_TOOL_OPTIONS = -agentlib:advixe_tpssmrte_javaprof_1.0
+191 [17832] INFO perfrun.launcher <> - set environment variable: COR_ENABLE_PROFILING = 1
+191 [17832] INFO perfrun.launcher <> - set environment variable: COR_PROFILER = {10337B79-F6CD-4df9-8D18-26A67272096B}
+191 [17832] INFO perfrun.launcher <> - set environment variable: COMPLUS_ProfAPI_ProfilerCompatibilitySetting = EnableV2Profiler
+191 [17832] INFO perfrun.launcher <> - set environment variable: CORECLR_ENABLE_PROFILING = 1
+191 [17832] INFO perfrun.launcher <> - set environment variable: CORECLR_PROFILER = {10337B79-F6CD-4df9-8D18-26A67272096B}
+191 [17832] INFO perfrun.launcher <> - set environment variable: CORECLR_PROFILER_PATH = C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin64/advixe_tpssmrte_clrprof_1.0.dll
+191 [17832] INFO perfrun.launcher <> - set environment variable: INTEL_MRTE_PROFILER_MODE = mixed
+191 [17832] INFO perfrun.launcher <> - RpcServer: run RPC server to handle requests
+194 [17832] INFO perfrun.sdk <> - IProcessUtil: the given executable 'D:\opennn-build\x64\Release\blank.exe' is valid.
+194 [17832] INFO perfrun.launcher <> - Launcher: command line to start before modification = D:\opennn-build\x64\Release\blank.exe
+197 [17832] INFO perfrun.launcher <> - Launcher: command line to start after modification = C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin64\pin.exe -error_file D:\opennn\blank\My Advisor Results - blank\e000\hs001\data.0\pinerr.tpsslog -detach_reattach -probe -follow_execv -p32 C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin32\pin.exe -p64 C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin64\pin.exe -t64 C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin64\tpsstool.dll -t C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0\bin32\tpsstool.dll -server_name tpss_ipc.17828 -prd_dir C:\Program Files (x86)\Intel\oneAPI\advisor\2021.4.0 -- D:\opennn-build\x64\Release\blank.exe
+197 [17832] INFO perfrun.launcher <> - ProcessCreator object was created
+198 [17832] INFO perfrun.launcher <> - Launcher: the process was started in suspend mode
+199 [16028] INFO perfrun.itt <> - start itt controller for pid #18288
+200 [16028] INFO perfrun.tpss <> - start tpss controller for pid #18288
+257 [17832] INFO perfrun.launcher <> - Launcher: all plugins were started
+257 [17832] INFO perfrun.launcher <> - DirectoryMonitor object was created
+257 [17832] INFO perfrun.launcher <> - DirectoryMonitor: a callback was added
+257 [17832] INFO perfrun.launcher <> - DirectoryMonitor was started with pingTime = 1000
+257 [17832] INFO perfrun.launcher <> - DeadlineTimer is going to be constructed
+257 [17832] INFO perfrun.launcher <> - DeadlineTimer: a callback was added
+264 [17832] INFO perfrun.launcher <> - Launcher: resume the profiled application and  wait its termination or stop command
+494 [17832] INFO perfrun.launcher <> - Launcher: the profiled application was terminated  with exit code = 0
+500 [16028] INFO perfrun.itt <> - stop itt controller
+500 [16028] INFO perfrun.itt <> - detach itt controller
+500 [16028] INFO perfrun.tpss <> - stop tpss controller
+501 [16028] INFO perfrun.sdk <> - De-allocating TMU: D:\opennn\blank\My Advisor Results - blank\e000\hs001\data.0\systemcollector-17828-DESKTOP-2B6RDM9.sc
+526 [16028] INFO perfrun.system <> - closed the system trace file: D:\opennn\blank\My Advisor Results - blank\e000\hs001\data.0\systemcollector-17828-DESKTOP-2B6RDM9.sc
+526 [17832] INFO perfrun.launcher <> - Launcher: all plugins were stopped.
+526 [17832] INFO perfrun.launcher <> - DeadlineTimer is going to be destroyed
+526 [17832] INFO perfrun.launcher <> - DeadlineTimer was destroyed
+527 [17832] INFO perfrun.launcher <> - DirectoryMonitor object was destroyed
+527 [17832] WARN perfrun.launcher <> - Stop command is ignored because it is received when collection is already stopped, at file: vcs\perfrun1\launcher\src\command_handler.cpp:212
+527 [17832] INFO perfrun.launcher <> - Application exit code: 0
+527 [17832] INFO perfrun.launcher <> - Exit code: 0

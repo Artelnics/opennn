@@ -159,6 +159,10 @@ public:
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const;
 
+   void calculate_error_gradient_v2(const Tensor<type, 2>& inputs,
+                                                     LayerForwardPropagation* forward_propagation,
+                                                     LayerBackPropagation* back_propagation) const;
+
    void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const;
 
    // Squared errors methods
