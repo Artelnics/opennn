@@ -607,28 +607,11 @@ void SumSquaredErrorTest::run_test_case()
 
    // Constructor and destructor methods
 
-<<<<<<< HEAD
    test_constructor();
 
    test_back_propagate();
 
    test_back_propagate_lm();
-=======
-//   test_back_propagate_approximation_random();
-
-//   test_back_propagate_binary_classification_random();
-
-//   test_back_propagate_forecasting_zero();
-//   test_back_propagate_forecasting_random();
-
-//   test_back_propagate_lm_approximation_random();
-
-   // Error methods
-
-   test_calculate_error();
-
-   test_calculate_error_gradient(); // Passed
->>>>>>> d154b189001b546f51e1abded008b06b8e0d504d
 
    cout << "End of sum squared error test case.\n\n";
 }

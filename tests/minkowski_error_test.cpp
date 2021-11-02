@@ -722,15 +722,7 @@ void MinkowskiErrorTest::run_test_case()
 
    test_back_propagate();
 
-<<<<<<< HEAD
    test_back_propagate_lm();
-=======
-   test_calculate_error();
-
-//   test_calculate_selection_error();
-
-   test_calculate_error_gradient();
->>>>>>> d154b189001b546f51e1abded008b06b8e0d504d
 
    cout << "End of Minkowski error test case.\n\n";
 }
