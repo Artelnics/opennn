@@ -49,7 +49,7 @@ void CrossEntropyErrorTest::test_calculate_error_binary_classification()
 
     // Test binary
 
-//    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
+    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
 
     // Test
 
@@ -176,11 +176,12 @@ void CrossEntropyErrorTest::test_calculate_error_multiple_classification()
 void CrossEntropyErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
-/*
+
    test_calculate_error_binary_classification();
 
    test_calculate_error_multiple_classification();
-*/
+
+
 }
 
 
@@ -192,7 +193,6 @@ void CrossEntropyErrorTest::test_calculate_error_gradient_binary_classification(
     Tensor<Index,1> input_variables_indices;
     Tensor<Index,1> target_variables_indices;
 
-    Tensor<type, 1> error_gradient;
     Tensor<type, 1> numerical_error_gradient;
 
     Index samples_number;
@@ -241,7 +241,10 @@ void CrossEntropyErrorTest::test_calculate_error_gradient_binary_classification(
 
     numerical_error_gradient = cross_entropy_error.calculate_gradient_numerical_differentiation();
 
-    assert_true(are_equal(back_propagation.gradient, numerical_error_gradient, type(1.0e-3)), LOG);
+    assert_true(are_equal(back_propagation.gradient, numerical_error_gradient), LOG);
+
+//    cout << "bp gradient: " << back_propagation.gradient << endl;
+//    cout << "numerical error gradient: " << numerical_error_gradient << endl;
 }
 
 
@@ -260,6 +263,49 @@ void CrossEntropyErrorTest::test_calculate_error_gradient_multiple_classificatio
     Index inputs_number;
     Index outputs_number;
     Index neurons_number;
+
+    // Test
+
+    samples_number = 5;
+    inputs_number = 10;
+    outputs_number = 3;
+    neurons_number = 3;
+
+    data_set.set(samples_number, inputs_number, outputs_number);
+
+    data.resize(samples_number, inputs_number+outputs_number);
+    data.setRandom();
+
+    data(0, 1) = type(1);
+    data(1, 1) = type(0);
+
+    data_set.set_data(data);
+
+    data_set.set_data_binary_random();
+
+    data_set.set_training();
+
+    training_samples_indices = data_set.get_training_samples_indices();
+
+    input_variables_indices = data_set.get_input_variables_indices();
+    target_variables_indices = data_set.get_target_variables_indices();
+
+    neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+
+    neural_network.set_parameters_random();
+
+    batch.set(samples_number, &data_set);
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+    forward_propagation.set(samples_number, &neural_network);
+    neural_network.forward_propagate(batch, forward_propagation);
+
+    back_propagation.set(samples_number, &cross_entropy_error);
+    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
+
+    numerical_error_gradient = cross_entropy_error.calculate_gradient_numerical_differentiation();
+
+    assert_true(are_equal(back_propagation.gradient, numerical_error_gradient), LOG);
 
 }
 
@@ -481,11 +527,25 @@ void CrossEntropyErrorTest::run_test_case()
 {
     cout << "Running cross entropy error test case...\n";
 
+<<<<<<< HEAD
     // Back-propagation methods
 
     test_back_propagate();
 
     test_back_propagate_lm();
+=======
+    test_calculate_error_binary_classification();
+
+//    test_calculate_error();
+
+//    test_calculate_error_gradient_binary_classification();
+
+//    test_calculate_error_gradient_multiple_classification();
+
+//    test_calculate_error_gradient_long_short_term_memory();
+
+//    test_calculate_error_gradient();
+>>>>>>> d154b189001b546f51e1abded008b06b8e0d504d
 
    cout << "End of cross entropy error test case.\n\n";
 }

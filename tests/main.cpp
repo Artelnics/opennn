@@ -102,11 +102,13 @@ int main()
 
       else if(test == "data_set" || test == "ds")
       {
-         DataSetTest data_set_test;
-         data_set_test.run_test_case();
-         tests_count += data_set_test.get_tests_count();
-         tests_passed_count += data_set_test.get_tests_passed_count();
-         tests_failed_count += data_set_test.get_tests_failed_count();
+
+              DataSetTest data_set_test;
+              data_set_test.run_test_case();
+              tests_count += data_set_test.get_tests_count();
+              tests_passed_count += data_set_test.get_tests_passed_count();
+              tests_failed_count += data_set_test.get_tests_failed_count();
+
       }
 
       else if(test == "numerical_differentiation" || test == "nd")
@@ -680,6 +682,7 @@ int main()
           tests_count += testing_analysis_test.get_tests_count();
           tests_passed_count += testing_analysis_test.get_tests_passed_count();
           tests_failed_count += testing_analysis_test.get_tests_failed_count();
+
       }
 
       else
