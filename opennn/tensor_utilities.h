@@ -65,11 +65,6 @@ void sum_diagonal(Tensor<type, 2>&, const type&);
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-void fill_subcolumn(const Tensor<type, 2>& matrix,
-    const Tensor<Index, 1>& rows_indices,
-    const Index& column_index, const Index& submatrix_column_index, type* submatrix);
-
-
 void fill_submatrix(const Tensor<type, 2>& matrix,
     const Tensor<Index, 1>& rows_indices,
     const Tensor<Index, 1>& columns_indices, 
@@ -85,7 +80,6 @@ void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
 
 bool is_less_than(const Tensor<type, 1>&, const type&);
 
-
 Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
 Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);
@@ -93,10 +87,9 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type
 
 Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&);
 Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&);
+
 void kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&,Tensor<type,2>&);
 void kronecker_product(const Tensor<type, 2>&, Tensor<type, 3>&);
-
-void softmax(const Tensor<type, 2>&, Tensor<type, 2>&);
 
 }
 

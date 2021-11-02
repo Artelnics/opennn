@@ -136,22 +136,9 @@ void GradientDescentTest::test_perform_training()
 }
 
 
-void GradientDescentTest::test_resize_training_error_history()
-{
-//   cout << "test_resize_training_error_history\n";
-
-   TrainingResults training_results;
-
-   training_results.resize_training_error_history(1);
-
-   assert_true(training_results.training_error_history.size() == 1, LOG);
-   assert_true(training_results.selection_error_history.size() == 0, LOG);
-}
-
-
 void GradientDescentTest::run_test_case()
 {
-//   cout << "Running gradient descent test case...\n";
+   cout << "Running gradient descent test case...\n";
 
    // Constructor and destructor methods
 
@@ -161,11 +148,7 @@ void GradientDescentTest::run_test_case()
 
    test_perform_training();
 
-   // Training history methods
-
-   test_resize_training_error_history();
-
- //  cout << "End of gradient descent test case.\n\n";
+   cout << "End of gradient descent test case.\n\n";
 }
 
 

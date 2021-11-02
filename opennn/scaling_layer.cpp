@@ -91,74 +91,6 @@ Descriptives ScalingLayer::get_descriptives(const Index& index) const
 }
 
 
-/// Returns a single matrix with the minimums of all scaling neurons.
-
-Tensor<type, 1> ScalingLayer::get_minimums() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> minimums(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        minimums[i] = descriptives[i].minimum;
-    }
-
-    return minimums;
-}
-
-
-/// Returns a single matrix with the maximums of all scaling neurons.
-
-Tensor<type, 1> ScalingLayer::get_maximums() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> maximums(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        maximums[i] = descriptives[i].maximum;
-    }
-
-    return maximums;
-}
-
-
-/// Returns a single matrix with the means of all scaling neurons.
-
-Tensor<type, 1> ScalingLayer::get_means() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> means(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        means[i] = descriptives[i].mean;
-    }
-
-    return means;
-}
-
-
-/// Returns a single matrix with the standard deviations of all scaling neurons.
-
-Tensor<type, 1> ScalingLayer::get_standard_deviations() const
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<type, 1> standard_deviations(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        standard_deviations[i] = descriptives[i].standard_deviation;
-    }
-
-    return standard_deviations;
-}
-
-
 /// Returns the methods used for scaling.
 
 const Tensor<Scaler, 1> ScalingLayer::get_scaling_methods() const
@@ -456,46 +388,6 @@ void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descripti
 void ScalingLayer::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
 {
     descriptives(i) = item_descriptives;
-}
-
-
-/// Sets the minimum value of a given scaling neuron.
-/// @param i Index of scaling neuron.
-/// @param new_minimum Minimum value.
-
-void ScalingLayer::set_minimum(const Index& i, const type& new_minimum)
-{
-    descriptives(i).set_minimum(new_minimum);
-}
-
-
-/// Sets the maximum value of a given scaling neuron.
-/// @param i Index of scaling neuron.
-/// @param new_maximum Maximum value.
-
-void ScalingLayer::set_maximum(const Index& i, const type& new_maximum)
-{
-    descriptives(i).set_maximum(new_maximum);
-}
-
-
-/// Sets the mean value of a given scaling neuron.
-/// @param i Index of scaling neuron.
-/// @param new_mean Mean value.
-
-void ScalingLayer::set_mean(const Index& i, const type& new_mean)
-{
-    descriptives(i).set_mean(new_mean);
-}
-
-
-/// Sets the standard deviation value of a given scaling neuron.
-/// @param i Index of scaling neuron.
-/// @param new_standard_deviation Standard deviation value.
-
-void ScalingLayer::set_standard_deviation(const Index& i, const type& new_standard_deviation)
-{
-    descriptives(i).set_standard_deviation(new_standard_deviation);
 }
 
 

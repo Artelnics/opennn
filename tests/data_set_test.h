@@ -30,6 +30,7 @@ public:
    void test_has_time_columns();
 
    // Set methods
+
    void test_set();
    void test_set_samples_number();
    void test_set_columns_number();
@@ -111,8 +112,6 @@ public:
    void test_generate_constant_data();
 
    // Serialization methods
-
-   void test_print_data_preview();
 
    void test_read_csv();
 

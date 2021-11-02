@@ -28,13 +28,6 @@ void CrossEntropyErrorTest::test_back_propagate()
 }
 
 
-void CrossEntropyErrorTest::test_back_propagate_lm()
-{
-    cout << "test_back_propagate_lm\n";
-
-}
-
-
 void CrossEntropyErrorTest::test_calculate_error_binary_classification()
 {
     Tensor<Index,1> training_samples_indices;
@@ -531,8 +524,7 @@ void CrossEntropyErrorTest::run_test_case()
 
     test_back_propagate();
 
-    test_back_propagate_lm();
-   cout << "End of cross entropy error test case.\n\n";
+    cout << "End of cross entropy error test case.\n\n";
 }
 
 

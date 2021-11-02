@@ -135,7 +135,6 @@ bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tole
 }
 
 
-
 bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2, const type& tolerance)
 {
     const Index size = vector_1.size();
@@ -382,7 +381,7 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
 
     const type* matrix_pointer = matrix.data();
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
 
     for(Index j = 0; j < columns_number; j++)
     {
@@ -391,6 +390,7 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
 
         const type* value_pointer = nullptr;
         const Index* rows_indices_pointer = rows_indices.data();
+
         for(Index i = 0; i < rows_number; i++)
         {
             value_pointer = matrix_column_pointer + *rows_indices_pointer;
@@ -604,7 +604,6 @@ void kronecker_product(Tensor<type, 1>& left_matrix, Tensor<type, 1>& right_matr
     TensorMap< Tensor<type, 2> > direct_matrix(product.data(), left_matrix.size(), left_matrix.size());
 
     product_matrix = direct_matrix;
-
 }
 
 
@@ -659,35 +658,6 @@ void kronecker_product(const Tensor<type, 2>& x, Tensor<type, 3>& y)
     }
 }
 
-void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y)
-{
-    const Index columns_number = x.dimension(1);
-
-    const Index rows_number = y.dimension(0);
-
-    // Activations
-
-    y = x.exp();
-
-    Tensor<type, 1> sums(rows_number);
-    sums.setZero();
-
-    for(Index i = 0; i< rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            sums[i] +=  y(i,j);
-        }
-    }
-
-    for(Index i = 0; i< rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            y(i, j) = y(i, j) / sums(i);
-        }
-    }
-}
 }
 
 

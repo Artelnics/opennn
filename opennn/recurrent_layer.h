@@ -87,10 +87,6 @@ public:
    Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
-   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
-   Tensor<type, 2> get_input_weights(const Tensor<type, 1>&) const;
-   Tensor<type, 2> get_recurrent_weights(const Tensor<type, 1>&) const;
-
    // Activation functions
 
    const RecurrentLayer::ActivationFunction& get_activation_function() const;

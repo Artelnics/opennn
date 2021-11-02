@@ -287,42 +287,6 @@ void LongShortTermMemoryLayerTest::test_set_biases_constant()
 }
 
 
-void LongShortTermMemoryLayerTest::test_set_weights_constant()
-{
-   cout << "test_set_synaptic_weights_constant\n";
-
-   Tensor<type, 2> forget_weights;
-   Tensor<type, 2> input_weights;
-   Tensor<type, 2> state_weights;
-   Tensor<type, 2> output_weights;
-
-   // Test
-
-   long_short_term_memory_layer.set(3, 2);
-
-   long_short_term_memory_layer.set_forget_weights_constant(type(0.0));
-   forget_weights = long_short_term_memory_layer.get_forget_weights();
-
-   long_short_term_memory_layer.set_input_weights_constant(type(1.0));
-   input_weights = long_short_term_memory_layer.get_input_weights();
-
-   long_short_term_memory_layer.set_state_weights_constant(type(2.0));
-   state_weights = long_short_term_memory_layer.get_state_weights();
-
-   long_short_term_memory_layer.set_output_weights_constant(type(3.0));
-   output_weights = long_short_term_memory_layer.get_output_weights();
-
-   assert_true(forget_weights(0) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(forget_weights.size() == 6, LOG);
-
-   assert_true(input_weights(0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(input_weights.size() == 6, LOG);
-
-//   assert_true(state_weights == long_short_term_memory_layer.get_weights().get_matrix(2), LOG);
-//   assert_true(output_weights == long_short_term_memory_layer.get_weights().get_matrix(3), LOG);
-}
-
-
 void LongShortTermMemoryLayerTest::test_initialize_recurrent_weights()
 {
    cout << "test_initialize_recurrent_weights\n";
@@ -502,7 +466,6 @@ void LongShortTermMemoryLayerTest::run_test_case()
 
    test_set_biases_constant();
 
-   test_set_weights_constant();
    test_initialize_recurrent_weights();
 
    test_set_parameters_random();

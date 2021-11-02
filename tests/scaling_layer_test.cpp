@@ -224,84 +224,6 @@ void ScalingLayerTest::test_set_item_descriptives()
 
 }
 
-void ScalingLayerTest::test_set_minimum()
-{
-   cout << "test_set_minimum\n";
-
-   // Test
-
-   scaling_layer.set(2);
-   descriptives.resize(2);
-
-   scaling_layer.set_descriptives(descriptives);
-
-   scaling_layer.set_minimum(0, type(-5));
-   scaling_layer.set_minimum(1, type(-6));
-
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,0) + 5) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(1,0) + type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void ScalingLayerTest::test_set_maximum()
-{
-   cout << "test_set_maximum\n";
-
-   scaling_layer.set(2);
-
-   // Test
-
-   Tensor<Descriptives, 1> descriptives(2);
-
-   scaling_layer.set_descriptives(descriptives);
-
-   scaling_layer.set_maximum(0, type(5));
-   scaling_layer.set_maximum(1, type(6));
-
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,1) - 5) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(1,1) - type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void ScalingLayerTest::test_set_mean()
-{
-   cout << "test_set_mean\n";
-
-   scaling_layer.set(2);
-
-   // Test
-
-   Tensor<Descriptives, 1> descriptives(2);
-
-   scaling_layer.set_descriptives(descriptives);
-
-   scaling_layer.set_mean(0, type(5));
-   scaling_layer.set_mean(1, type(6));
-
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,2) - 5) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(1,2) - type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void ScalingLayerTest::test_set_standard_deviation()
-{
-   cout << "test_set_standard_deviation\n";
-
-   scaling_layer.set(2);
-
-   // Test
-
-   Tensor<Descriptives, 1> descriptives(2);
-
-   scaling_layer.set_descriptives(descriptives);
-
-   scaling_layer.set_standard_deviation(0, type(5));
-   scaling_layer.set_standard_deviation(1, type(6));
-
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,3) - 5) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(1,3) - type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
 
 void ScalingLayerTest::test_set_scaling_method()
 {
@@ -591,10 +513,6 @@ void ScalingLayerTest::run_test_case()
 
    test_set_descriptives();
    test_set_item_descriptives();
-   test_set_minimum();
-   test_set_maximum();
-   test_set_mean();
-   test_set_standard_deviation();
 
    // Variables scaling and unscaling
 

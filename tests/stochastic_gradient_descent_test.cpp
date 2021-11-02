@@ -116,19 +116,6 @@ void StochasticGradientDescentTest::test_perform_training()
 }
 
 
-void StochasticGradientDescentTest::test_resize_training_error_history()
-{
-   cout << "test_resize_training_error_history\n";
-
-   TrainingResults training_results;
-
-   training_results.resize_training_error_history(1);
-
-   assert_true(training_results.training_error_history.size() == 1, LOG);
-   assert_true(training_results.selection_error_history.size() == 1, LOG);
-}
-
-
 void StochasticGradientDescentTest::test_to_XML()
 {
    cout << "test_to_XML\n";
@@ -155,10 +142,6 @@ void StochasticGradientDescentTest::run_test_case()
    // Training methods
 
    test_perform_training();
-
-   // Training history methods
-
-   test_resize_training_error_history();
 
    // Serialization methods
 

@@ -429,7 +429,6 @@ void DataSetTest::test_unuse_constant_columns()
 
    assert_true(data_set.get_input_columns_number() == 0, LOG);
    assert_true(data_set.get_target_columns_number() == 1, LOG);
-
 }
 
 
@@ -1191,15 +1190,6 @@ void DataSetTest::test_read_binary_csv()
 
 }
 
-void DataSetTest::test_print_data_preview()
-{
-    cout << "test_print_data_preview\n";
-
-    //data_set.set("../../datasets/iris.data",',',false);
-
-//    data_set.print_data_preview();
-
-}
 
 void DataSetTest::test_transform_time_series()
 {
@@ -1892,10 +1882,6 @@ void DataSetTest::run_test_case()
    test_set_time_series_data();
    test_save_time_series_data_binary();
    test_has_time_columns();
-
-   // Test print data preview
-
-   test_print_data_preview();
 
    test_calculate_cross_correlations();
    test_calculate_autocorrelations();

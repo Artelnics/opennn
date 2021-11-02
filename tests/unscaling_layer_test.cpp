@@ -90,7 +90,6 @@ void UnscalingLayerTest::test_set()
    unscaling_layer.set(descriptives);
 
    assert_true(unscaling_layer.get_descriptives().size()== 4, LOG);
-/**/
 }
 
 
@@ -202,85 +201,6 @@ void UnscalingLayerTest::test_set_item_descriptives()
 //   assert_true(abs(unscaling_layer.get_descriptives_matrix()(0,2) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 //   assert_true(abs(unscaling_layer.get_descriptives_matrix()(1,1) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
 //   assert_true(abs(unscaling_layer.get_descriptives_matrix()(1,3)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void UnscalingLayerTest::test_set_minimum()
-{
-   cout << "test_set_minimum\n";
-
-   unscaling_layer.set(2);
-
-   // Test
-
-   Tensor<Descriptives, 1> descriptives(2);
-
-   unscaling_layer.set_descriptives(descriptives);
-
-   unscaling_layer.set_minimum(0, type(-5));
-   unscaling_layer.set_minimum(1, type(-6));
-
-//   assert_true(abs(unscaling_layer.get_descriptives_matrix()(0,0) + 5) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(unscaling_layer.get_descriptives_matrix()(1,0) + type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-void UnscalingLayerTest::test_set_maximum()
-{
-   cout << "test_set_maximum\n";
-
-   unscaling_layer.set(2);
-
-   // Test
-
-   Tensor<Descriptives, 1> descriptives(2);
-
-   unscaling_layer.set_descriptives(descriptives);
-
-   unscaling_layer.set_maximum(0, type(5));
-   unscaling_layer.set_maximum(1, type(6));
-
-//   assert_true(abs(unscaling_layer.get_descriptives_matrix()(0,1) - 5) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(unscaling_layer.get_descriptives_matrix()(1,1) - type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void UnscalingLayerTest::test_set_mean()
-{
-   cout << "test_set_mean\n";
-
-   unscaling_layer.set(2);
-
-   // Test
-
-   Tensor<Descriptives, 1> descriptives(2);
-
-   unscaling_layer.set_descriptives(descriptives);
-
-   unscaling_layer.set_mean(0, type(5));
-   unscaling_layer.set_mean(1, type(6));
-
-//   assert_true(abs(unscaling_layer.get_descriptives_matrix()(0,2) - 5) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(unscaling_layer.get_descriptives_matrix()(1,2) - type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
-
-
-void UnscalingLayerTest::test_set_standard_deviation()
-{
-   cout << "test_set_standard_deviation\n";
-
-   // Test
-
-   unscaling_layer.set(2);
-
-   descriptives.resize(2);
-
-   unscaling_layer.set_descriptives(descriptives);
-
-   unscaling_layer.set_standard_deviation(0, type(5));
-   unscaling_layer.set_standard_deviation(1, type(6));
-
-//   assert_true(abs(unscaling_layer.get_descriptives_matrix()(0,3) - 5) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(unscaling_layer.get_descriptives_matrix()(1,3) - type(6)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -476,10 +396,6 @@ void UnscalingLayerTest::run_test_case()
 
    test_set_descriptives();
    test_set_item_descriptives();
-   test_set_minimum();
-   test_set_maximum();
-   test_set_mean();
-   test_set_standard_deviation();
 
    // Check methods
 

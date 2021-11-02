@@ -46,14 +46,14 @@ public:
    void test_calculate_activations_derivatives();
    void test_calculate_outputs();
 
+   // Forward propagate
+
+   void test_forward_propagate();
+
    // Serialization methods
 
    void test_to_XML();
    void test_from_XML();
-
-   // Forward propagate
-
-   void test_forward_propagate();
 
    // Unit testing methods
 

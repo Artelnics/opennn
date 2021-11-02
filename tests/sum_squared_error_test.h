@@ -32,26 +32,6 @@ public:
 
    void test_back_propagate_lm();
 
-
-   void test_back_propagate_approximation_zero();
-   void test_back_propagate_approximation_random();
-
-   void test_back_propagate_binary_classification_zero();
-   void test_back_propagate_binary_classification_random();
-
-   void test_back_propagate_forecasting_zero();
-   void test_back_propagate_forecasting_random();
-
-   void test_calculate_error();
-
-   void test_calculate_error_gradient();
-
-
-
-   void test_calculate_error_gradient_lm();
-
-   void test_back_propagate_lm_approximation_random();
-
    // Unit testing methods
 
    void run_test_case();

@@ -16,7 +16,6 @@
 class GrowingNeuronsTest : public UnitTesting
 {
 
-
 public:
 
    explicit GrowingNeuronsTest();
@@ -26,6 +25,7 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
+
    void test_destructor();
 
    // Order selection methods

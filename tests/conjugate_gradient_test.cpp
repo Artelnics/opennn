@@ -39,18 +39,6 @@ void ConjugateGradientTest::test_constructor()
 }
 
 
-void ConjugateGradientTest::test_set_training_direction_method()
-{
-   cout << "test_set_training_direction_method\n";
-
-   conjugate_gradient.set_training_direction_method(ConjugateGradient::TrainingDirectionMethod::FR);
-   assert_true(conjugate_gradient.get_training_direction_method() == ConjugateGradient::TrainingDirectionMethod::FR, LOG);
-
-   conjugate_gradient.set_training_direction_method(ConjugateGradient::TrainingDirectionMethod::PR);
-   assert_true(conjugate_gradient.get_training_direction_method() == ConjugateGradient::TrainingDirectionMethod::PR, LOG);
-}
-
-
 void ConjugateGradientTest::test_calculate_PR_parameter()
 {
    cout << "test_calculate_PR_parameter\n";
@@ -281,10 +269,6 @@ void ConjugateGradientTest::run_test_case()
    // Constructor methods
 
    test_constructor();
-
-   // Set methods
-
-   test_set_training_direction_method();
 
    // Training methods
 

@@ -31,6 +31,7 @@ public:
    void test_calculate_bracketing_triplet();
 
    void test_calculate_golden_section_directional_point();
+
    void test_calculate_Brent_method_directional_point();
    
    // Unit testing methods
@@ -46,9 +47,7 @@ private:
    SumSquaredError sum_squared_error;
 
    LearningRateAlgorithm learning_rate_algorithm;
-
 };
-
 
 #endif
 

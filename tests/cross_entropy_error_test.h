@@ -26,8 +26,6 @@ public:
 
     void test_back_propagate();
 
-    void test_back_propagate_lm();
-
     void test_calculate_error_binary_classification();
     void test_calculate_error_multiple_classification();
 

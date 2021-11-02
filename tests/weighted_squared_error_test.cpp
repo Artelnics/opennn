@@ -103,7 +103,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
 
    forward_propagation.set(samples_number, &neural_network);
    neural_network.forward_propagate(batch, forward_propagation);
-/*
+
    back_propagation.set(samples_number, &weighted_squared_error);
    weighted_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
@@ -132,7 +132,7 @@ void WeightedSquaredErrorTest::test_calculate_error()
   weighted_squared_error.set_weights();
 
   assert_true(weighted_squared_error.get_positives_weight() != weighted_squared_error.get_negatives_weight(), LOG);
-*/
+
 }
 
 
@@ -173,7 +173,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
    Tensor<type, 2> outputs;
 
    // Test trivial
-/*
+
    samples_number = 2;
    inputs_number = 1;
    outputs_number = 1;
@@ -409,7 +409,7 @@ void WeightedSquaredErrorTest::test_calculate_error_gradient()
        maximum_difference = (error_gradient - numerical_error_gradient).abs().sum();
 
        assert_true(maximum_difference(0) < 1.0e-3, LOG);
-*/
+
 }
 
 

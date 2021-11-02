@@ -44,7 +44,6 @@ public:
 
    void test_set_parameters_constant();
    void test_set_biases_constant();
-   void test_set_weights_constant();
    void test_initialize_recurrent_weights();
 
    void test_set_parameters_random();

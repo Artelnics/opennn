@@ -46,16 +46,6 @@ void InputsSelectionTest::test_destructor()
 }
 
 
-void InputsSelectionTest::test_set()
-{
-    cout << "test_set\n";
-
-    growing_inputs.set(&training_strategy);
-
-    assert_true(growing_inputs.get_training_strategy_pointer() != nullptr, LOG);
-}
-
-
 void InputsSelectionTest::run_test_case()
 {
     cout << "Running inputs selection algorithm test case...\n";
@@ -63,11 +53,8 @@ void InputsSelectionTest::run_test_case()
     // Constructor and destructor methods
 
     test_constructor();
+
     test_destructor();
-
-    // Set methods
-
-    test_set();
 
     cout << "End of inputs selection algorithm test case.\n\n";
 }

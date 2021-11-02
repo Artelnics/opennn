@@ -45,16 +45,6 @@ void ModelSelectionTest::test_destructor()
 }
 
 
-void ModelSelectionTest::test_set()
-{
-    cout << "test_set_training_strategy_pointer\n";
-
-    model_selection.set(&training_strategy);
-
-    assert_true(model_selection.get_training_strategy_pointer() != nullptr, LOG);
-}
-
-
 void ModelSelectionTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
@@ -128,10 +118,6 @@ void ModelSelectionTest::run_test_case()
 
     test_constructor();
     test_destructor();
-
-    // Set methods
-
-    test_set();
 
     // Model selection methods
 

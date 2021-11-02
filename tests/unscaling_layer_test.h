@@ -38,11 +38,6 @@ public:
    void test_set_descriptives();
    void test_set_item_descriptives();
 
-   void test_set_minimum();
-   void test_set_maximum();
-   void test_set_mean();
-   void test_set_standard_deviation();
-
    // Variables scaling and unscaling
 
    void test_set_unscaling_method();

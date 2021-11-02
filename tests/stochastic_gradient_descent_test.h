@@ -33,10 +33,6 @@ public:
 
    void test_perform_training();
 
-   // Training history methods
-
-   void test_resize_training_error_history();
-
    // Serialization methods
 
    void test_to_XML();
