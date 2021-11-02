@@ -558,7 +558,6 @@ void DataSetTest::test_calculate_euclidean_distance()
    assert_true(0 == 1, LOG);
 
    assert_true(false, LOG);
-
 }
 
 
@@ -972,7 +971,6 @@ void DataSetTest::test_read_adult_csv()
     assert_true(data_set.get_column_type(1) == DataSet::ColumnType::Categorical, LOG);
     assert_true(data_set.get_column_type(2) == DataSet::ColumnType::Numeric, LOG);
     assert_true(data_set.get_column_type(3) == DataSet::ColumnType::Categorical, LOG);
-
 }
 
 
@@ -1130,7 +1128,6 @@ void DataSetTest::test_read_pollution_csv()
     assert_true(data_set.get_column_type(10) == DataSet::ColumnType::Numeric, LOG);
     assert_true(data_set.get_column_type(11) == DataSet::ColumnType::Numeric, LOG);
     assert_true(data_set.get_column_type(12) == DataSet::ColumnType::Numeric, LOG);
-
 }
 
 
@@ -1236,7 +1233,6 @@ void DataSetTest::test_transform_time_series()
     assert_true(data_set.get_variable_name(1) == "y_lag_1", LOG);
     assert_true(data_set.get_variable_name(2) == "x_lag_0", LOG);
     assert_true(data_set.get_variable_name(3) == "y_lag_0", LOG);
-
 }
 
 
@@ -1432,9 +1428,8 @@ void DataSetTest::test_scrub_missing_values()
     data = data_set.get_data();
 
     assert_true(abs(data(0,0) - type(1)) < type(1.0e-3), LOG);
-    assert_true(abs(data(1,1) - 2.0) < 1.0e-3, LOG);
-    assert_true(abs(data(2,2) - 3.0) < 1.0e-3, LOG);
-
+    assert_true(abs(data(1,1) - type(2.0)) < type(1.0e-3), LOG);
+    assert_true(abs(data(2,2) - type(3.0)) < type(1.0e-3), LOG);
 }
 
 
@@ -1472,7 +1467,6 @@ void DataSetTest::test_calculate_variables_means()
 //    Tensor<type, 1> solution(2, 2.0);
 
 //    assert_true(means == solution, LOG);
-
 }
 
 
@@ -1556,7 +1550,7 @@ void DataSetTest::test_calculate_selection_targets_mean()
 
 
 void DataSetTest::test_calculate_input_target_correlations()
-{
+{/*
     cout << "test_calculate_input_target_correlations\n";
 
     data.resize(3, 4);
@@ -1584,11 +1578,11 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     // Test logistic correlation
 
-}
+*/}
 
 
 void DataSetTest::test_calculate_total_input_correlations()
-{
+{/*
     cout << "test_calculate_total_input_correlations\n";    
 
     data.resize(3, 4);
@@ -1614,11 +1608,11 @@ void DataSetTest::test_calculate_total_input_correlations()
 //    Tensor<type, 1> correlations_inputs = data_set.calculate_total_input_correlations();
 
 //    assert_true(correlations_inputs == solution, LOG);
-}
+*/}
 
 
 void DataSetTest::test_unuse_repeated_samples()
-{
+{/*
     cout << "test_unuse_repeated_samples\n";
 
     Tensor<Index, 1> indices;
@@ -1666,11 +1660,11 @@ void DataSetTest::test_unuse_repeated_samples()
     indices.setValues({2,4});
 
 //    assert_true(ds_2.unuse_repeated_samples() == indices_2, LOG);
-}
+*/}
 
 
 void DataSetTest::test_unuse_uncorrelated_columns()
-{
+{/*
     cout << "test_unuse_uncorrelated_columns\n";
 
     data.resize(3, 3);
@@ -1679,11 +1673,11 @@ void DataSetTest::test_unuse_uncorrelated_columns()
         {type(1),type(0),type(0)},
         {type(1),type(0),type(1)}});
 
-}
+*/}
 
 
 void DataSetTest::test_calculate_training_negatives()
-{
+{/*
     cout << "test_calculate_training_negatives\n";
 
     Index training_negatives;
@@ -1721,13 +1715,13 @@ void DataSetTest::test_calculate_training_negatives()
     data = data_set.get_data();
 
 //    assert_true(training_negatives == 1, LOG);
-}
+*/}
 
 
 /// @todo
 
 void DataSetTest::test_calculate_selection_negatives()
-{
+{/*
     cout << "test_calculate_selection_negatives\n";
 
     Tensor<Index, 1> selection_indices;
@@ -1760,12 +1754,11 @@ void DataSetTest::test_calculate_selection_negatives()
     data = data_set.get_data();
 
 //    assert_true(selection_negatives == 0, LOG);
-
-}
+*/}
 
 
 void DataSetTest::test_fill()
-{
+{/*
     cout << "test_fill\n";
 
     data.resize(3, 3);
@@ -1798,7 +1791,7 @@ void DataSetTest::test_fill()
 //    cout << data << endl;
 //    system("pause");
 
-}
+*/}
 
 
 void DataSetTest::run_test_case()
