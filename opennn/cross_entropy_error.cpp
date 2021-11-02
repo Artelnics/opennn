@@ -166,11 +166,10 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
 
     const Tensor<type, 2>& targets = batch.targets_2d;
 
-    const Tensor<type, 2>& outputs =
-            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations;
+    const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
 
     probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
-            = static_cast<type>(1)/static_cast<type>(batch_samples_number) *(-targets/outputs);
+            = (-static_cast<type>(1)/static_cast<type>(batch_samples_number))*(targets/outputs);
 }
 
 
