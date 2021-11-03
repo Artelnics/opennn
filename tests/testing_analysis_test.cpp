@@ -251,8 +251,8 @@ void TestingAnalysisTest::test_linear_regression()
    data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_constant(type(0));
    data_set.set_testing();
-
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+   /// @todo
+//   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
    neural_network.set_parameters_constant(type(0));
 
    linear_correlation = testing_analysis.linear_correlation();
@@ -350,7 +350,7 @@ void TestingAnalysisTest::test_calculate_confusion()
 void TestingAnalysisTest::test_calculate_binary_classification_test()
 {
    cout << "test_calculate_binary_classification_test\n";
-/*
+
    // DataSet
 
    data_set.set(samples_number, inputs_number, targets_number);
@@ -365,7 +365,8 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
    neural_network.set_parameters_constant(type(0));
 
    // Testing Analysis
-
+   /// @todo
+/*
    Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
 
    assert_true(binary.size() == 15 , LOG);
@@ -665,7 +666,7 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
     assert_true(cumulative_gain(0, 1) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(cumulative_gain(20, 0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(cumulative_gain(20, 1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
- }
+}
 
 
 void TestingAnalysisTest::test_calculate_lift_chart()
@@ -1101,8 +1102,8 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     testing_indices.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8});
 
     /// @todo fails when running "suite" test
-
-/*    multiple_classification_rates = testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
+/*
+    multiple_classification_rates = testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
     assert_true(multiple_classification_rates(0,0)(0) == 0, LOG);
     assert_true(multiple_classification_rates(0,1)(0) == 3, LOG);
