@@ -39,6 +39,7 @@ public:
     // Time series correlation methods
 
     void test_autocorrelations();
+
     void test_cross_correlations();
 
     // Unit testing methods

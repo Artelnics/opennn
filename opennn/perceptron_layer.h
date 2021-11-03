@@ -153,7 +153,6 @@ public:
    void forward_propagate(const Tensor<type, 2>&,
                           LayerForwardPropagation*);
 
-
    void forward_propagate(const Tensor<type, 2>&,
                           Tensor<type, 1>,
                           LayerForwardPropagation*);

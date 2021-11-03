@@ -47,7 +47,6 @@ void GrowingInputsTest::test_perform_inputs_selection()
 {
     cout << "test_perform_inputs_selection\n";
 
-    Tensor<type, 2> data;
 
     GrowingInputs growing_inputs(&training_strategy);
 
@@ -55,7 +54,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     // Test
 
-//    ds.generate_inputs_selection_data(30,3);
+//    ds.generate_inputs_selection_data(30, 3);
 
 //    data_set.set_columns_uses({"Input","Input","Target"});
 

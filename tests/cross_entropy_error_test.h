@@ -26,20 +26,6 @@ public:
 
     void test_back_propagate();
 
-    void test_calculate_error_binary_classification();
-    void test_calculate_error_multiple_classification();
-
-    void test_calculate_error();
-
-    void test_calculate_error_gradient_binary_classification();
-    void test_calculate_error_gradient_multiple_classification();
-
-    void test_calculate_error_gradient_recurrent();
-    void test_calculate_error_gradient_long_short_term_memory();
-    void test_calculate_error_gradient_convolutional();
-
-    void test_calculate_error_gradient();
-
     // Unit testing methods
 
     void run_test_case();
@@ -50,6 +36,8 @@ private:
    Index inputs_number;
    Index outputs_number;
    Index neurons_number;
+
+   Tensor<type, 2> data;
 
    Tensor<Index, 1> training_samples_indices;
    Tensor<Index, 1> input_variables_indices;

@@ -737,7 +737,7 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
     Tensor<type, 4> outputs;
 
-        const Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
 #ifdef OPENNN_DEBUG
 
