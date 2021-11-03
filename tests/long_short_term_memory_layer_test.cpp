@@ -437,7 +437,6 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   cout<< "outputs:  "<< long_short_term_memory_layer.calculate_outputs(inputs)<<endl;
 }
 
-
 void LongShortTermMemoryLayerTest::run_test_case()
 {
    cout << "Running long short term memory layer test case...\n";
