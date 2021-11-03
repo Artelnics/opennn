@@ -229,6 +229,37 @@ void RecurrentLayerTest::test_calculate_outputs()
    outputs = recurrent_layer.calculate_outputs(inputs);
 }
 
+void RecurrentLayerTest::test_forward_propagate()
+{/// @todo
+    /*
+    cout << "test_forward_propagate\n";
+
+    RecurrentLayer recurrent_layer;
+
+
+    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
+
+    Tensor<type, 1> parameters;
+    Tensor<type, 2> inputs;
+
+    recurrent_layer.set_parameters_constant(type(1));
+    inputs.setConstant(type(1));
+
+    RecurrentLayerForwardPropagation recurrent_layer_forward_propagation(1, &recurrent_layer);
+
+    recurrent_layer.forward_propagate(inputs, &recurrent_layer_forward_propagation);
+
+    assert_true(recurrent_layer_forward_propagation.combinations.rank() == 2, LOG);
+    assert_true(recurrent_layer_forward_propagation.combinations.dimension(0) == 1, LOG);
+    assert_true(recurrent_layer_forward_propagation.combinations.dimension(1) == 2, LOG);
+    assert_true(abs(recurrent_layer_forward_propagation.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(recurrent_layer_forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(recurrent_layer_forward_propagation.activations(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(recurrent_layer_forward_propagation.activations(0,1) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(recurrent_layer_forward_propagation.activations_derivatives(0,0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(recurrent_layer_forward_propagation.activations_derivatives(0,1,0) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+*/}
+
 
 void RecurrentLayerTest::run_test_case()
 {
