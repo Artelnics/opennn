@@ -27,73 +27,6 @@ void CrossEntropyErrorTest::test_back_propagate()
 
 }
 
-
-void CrossEntropyErrorTest::test_calculate_error_binary_classification()
-{
-    Tensor<Index,1> training_samples_indices;
-    Tensor<Index,1> input_variables_indices;
-    Tensor<Index,1> target_variables_indices;
-
-    Tensor<type, 1> parameters;
-
-    Index inputs_number;
-    Index targets_number;
-    Index samples_number;
-
-    // Test binary
-
-    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
-
-    // Test
-
-    inputs_number = 1;
-    targets_number = 1;
-    samples_number = 1;
-
-    data_set.set(1, 1, 1);
-    data_set.set_data_constant(type(0));
-    data_set.set_training();
-
-    training_samples_indices = data_set.get_training_samples_indices();
-    input_variables_indices = data_set.get_input_variables_indices();
-    target_variables_indices = data_set.get_target_variables_indices();
-
-    batch.set(samples_number, &data_set);
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-    neural_network.set(NeuralNetwork::ProjectType::Classification, {1, 1});
-    neural_network.set_parameters_constant(type(1));
-
-    forward_propagation.set(1, &neural_network);
-    neural_network.forward_propagate(batch, forward_propagation);
-
-    back_propagation.set(1, &cross_entropy_error);
-    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
-
-    cross_entropy_error.calculate_error(batch, forward_propagation, back_propagation);
-
-    assert_true(back_propagation.error < type(1e-3), LOG);
-
-    // Test
-
-    data_set.set_data_constant(type(1));
-
-    neural_network.set_parameters_constant(type(1));
-
-    batch.set(samples_number, &data_set);
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-    neural_network.forward_propagate(batch, forward_propagation);
-
-    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
-
-    cross_entropy_error.calculate_error(batch, forward_propagation, back_propagation);
-
-    assert_true(back_propagation.error < type(1e-3), LOG);
-
-}
-
-
 void CrossEntropyErrorTest::test_calculate_error_multiple_classification()
 {
     Tensor<type, 2> data;
@@ -170,9 +103,9 @@ void CrossEntropyErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
-   test_calculate_error_binary_classification();
+   //test_calculate_error_binary_classification();
 
-   test_calculate_error_multiple_classification();
+   //test_calculate_error_multiple_classification();
 
 
 }
@@ -413,19 +346,10 @@ void CrossEntropyErrorTest::test_calculate_error_gradient_convolutional()
 {
     Tensor<type, 2> data;
 
-    Tensor<Index,1> training_samples_indices;
-    Tensor<Index,1> input_variables_indices;
-    Tensor<Index,1> target_variables_indices;
-
     Tensor<type, 1> error_gradient;
     Tensor<type, 1> numerical_error_gradient;
 
     Tensor<type, 0> maximum_diference;
-
-    Index samples_number;
-    Index inputs_number;
-    Index outputs_number;
-    Index neurons_number;
 
     // Test
 

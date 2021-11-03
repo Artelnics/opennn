@@ -43,6 +43,15 @@ public:
 
 private:
 
+   Index samples_number;
+   Index inputs_number;
+   Index neurons_number;
+   Index outputs_number;
+
+   Tensor<Index, 1> training_samples_indices;
+   Tensor<Index, 1> input_variables_indices;
+   Tensor<Index, 1> target_variables_indices;
+
    DataSet data_set;
 
    NeuralNetwork neural_network;
@@ -56,6 +65,10 @@ private:
    LossIndexBackPropagation back_propagation;
 
    LossIndexBackPropagationLM back_propagation_lm;
+
+   Tensor<type, 1> gradient_numerical_differentiation;
+   Tensor<type, 2> jacobian_numerical_differentiation;
+
 };
 
 

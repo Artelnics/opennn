@@ -118,16 +118,6 @@ void MinkowskiErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
 
-   Index samples_number;
-
-   Tensor<Index, 1> samples_indices;
-   Tensor<Index, 1> input_variables_indices;
-   Tensor<Index, 1> target_variables_indices;
-
-   Index inputs_number;
-   Index outputs_number;
-   Index neurons_number;
-
    RecurrentLayer* recurrent_layer = new RecurrentLayer;
 
    LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer;
