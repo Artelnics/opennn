@@ -42,16 +42,16 @@ void GradientDescentTest::test_perform_training()
 {
 //   cout << "test_perform_training\n";
 
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
-
    // Test
+
+   samples_number = 1;
+   inputs_number = 1;
+   outputs_number = 1;
 
    data_set.set(1,1,1);
    data_set.set_data_constant(type(0));
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
    neural_network.set_parameters_constant(type(0));
 
    gradient_descent.set_maximum_epochs_number(1);
@@ -62,7 +62,7 @@ void GradientDescentTest::test_perform_training()
    data_set.set(1,1,1);
    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
    neural_network.set_parameters_random();
 
    gradient_descent.perform_training();

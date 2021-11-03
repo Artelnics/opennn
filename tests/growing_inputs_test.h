@@ -39,6 +39,8 @@ public:
 
 private:
 
+   Tensor<type, 2> data;
+
    DataSet data_set;
 
    NeuralNetwork neural_network;

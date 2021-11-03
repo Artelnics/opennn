@@ -12,6 +12,7 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+
 namespace OpenNN
 {
 
@@ -37,6 +38,11 @@ public:
    void run_test_case();
 
 private:
+
+   Index samples_number;
+   Index inputs_number;
+   Index neurons_number;
+   Index outputs_number;
 
    DataSet data_set;
 

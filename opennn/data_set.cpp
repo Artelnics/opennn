@@ -618,36 +618,23 @@ void DataSet::Column::print() const
     switch (column_use)
     {
     case VariableUse::Input:
-    {
         cout << "Input" << endl;
-    }
         break;
 
     case VariableUse::Target:
-    {
         cout << "Target" << endl;
-
-    }
         break;
 
     case VariableUse::UnusedVariable:
-    {
         cout << "Unused" << endl;
-
-    }
         break;
 
     case VariableUse::Time:
-    {
         cout << "Time" << endl;
-
-    }
         break;
 
     case VariableUse::Id:
-    {
         cout << "Id" << endl;
-    }
         break;
     }
 

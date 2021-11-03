@@ -1031,19 +1031,6 @@ void NeuralNetworkTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
-    Index inputs_number;
-    Index outputs_number;
-
-    Tensor<type, 2> data;
-
-    DataSet data_set;
-
-    DataSetBatch batch;
-
-    Tensor<Index,1> training_samples_indices;
-    Tensor<Index,1> input_variables_indices;
-    Tensor<Index,1> target_variables_indices;
-
     // Test
 
     inputs_number = 2;

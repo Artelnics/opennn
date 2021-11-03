@@ -75,10 +75,6 @@ public:
    void test_calculate_input_target_correlations();
    void test_calculate_total_input_correlations();
 
-   // Trending methods
-
-   void test_calculate_trends();
-
    // Histrogram methods
 
    void test_calculate_data_distributions();

@@ -72,7 +72,7 @@ void CorrelationsTest::test_linear_correlation()
 
     correlation = linear_correlation(thread_pool_device, x, y).r;
     assert_true(abs(correlation + static_cast<type>(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation) - static_cast<type>(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
