@@ -472,9 +472,9 @@ void StatisticsTest::test_maximum()
    Tensor<type, 1> vector;
 
    // Test
-/*
-   assert_true(isnan(type(maximum(vector)), LOG);
-*/
+
+   assert_true(isnan(maximum(vector)), LOG);
+
    // Test
 
    vector.resize(3);
@@ -791,7 +791,7 @@ void StatisticsTest::test_asymmetry()
     vector[3] = type(3.0);
     vector[4] = type(9.0);
 
-//     type asymmetry = OpenNN::asymmetry(vector);
+     type asymmetry = OpenNN::asymmetry(vector);
 
 //    assert_true(abs(asymmetry - asymmetry_missing_values) < static_cast<type>(1.0e-3), LOG);
 

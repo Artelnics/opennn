@@ -100,15 +100,22 @@ int main()
          tests_failed_count += correlations_test.get_tests_failed_count();
       }
 
+      else if(test == "statistics" || test == "st")
+      {
+         StatisticsTest statistics_test;
+         statistics_test.run_test_case();
+         tests_count += statistics_test.get_tests_count();
+         tests_passed_count += statistics_test.get_tests_passed_count();
+         tests_failed_count += statistics_test.get_tests_failed_count();
+      }
+
       else if(test == "data_set" || test == "ds")
       {
-
-              DataSetTest data_set_test;
-              data_set_test.run_test_case();
-              tests_count += data_set_test.get_tests_count();
-              tests_passed_count += data_set_test.get_tests_passed_count();
-              tests_failed_count += data_set_test.get_tests_failed_count();
-
+          DataSetTest data_set_test;
+          data_set_test.run_test_case();
+          tests_count += data_set_test.get_tests_count();
+          tests_passed_count += data_set_test.get_tests_passed_count();
+          tests_failed_count += data_set_test.get_tests_failed_count();
       }
 
       else if(test == "numerical_differentiation" || test == "nd")
@@ -136,15 +143,6 @@ int main()
          tests_count += scaling_test.get_tests_count();
          tests_passed_count += scaling_test.get_tests_passed_count();
          tests_failed_count += scaling_test.get_tests_failed_count();
-      }
-
-      else if(test == "statistics" || test == "st")
-      {
-         StatisticsTest statistics_test;
-         statistics_test.run_test_case();
-         tests_count += statistics_test.get_tests_count();
-         tests_passed_count += statistics_test.get_tests_passed_count();
-         tests_failed_count += statistics_test.get_tests_failed_count();
       }
 
       else if(test == "long_short_term_memory_layer" || test == "lstm")
@@ -333,10 +331,10 @@ int main()
       {
 
         TrainingStrategyTest training_strategy_test;
-//        training_strategy_test.run_test_case();
-//        tests_count += training_strategy_test.get_tests_count();
-//        tests_passed_count += training_strategy_test.get_tests_passed_count();
-//        tests_failed_count += training_strategy_test.get_tests_failed_count();
+        training_strategy_test.run_test_case();
+        tests_count += training_strategy_test.get_tests_count();
+        tests_passed_count += training_strategy_test.get_tests_passed_count();
+        tests_failed_count += training_strategy_test.get_tests_failed_count();
 
       }
       else if(test == "model_selection" || test == "ms")
@@ -357,15 +355,6 @@ int main()
         tests_failed_count += neurons_selection_algorithm_test.get_tests_failed_count();
       }
 
-     /* else if(test == "incremental_neurons" || test == "in")
-      {
-        GrowingNeuronsTest incremental_order_test;
-        incremental_order_test.run_test_case();
-        tests_count += incremental_order_test.get_tests_count();
-        tests_passed_count += incremental_order_test.get_tests_passed_count();
-        tests_failed_count += incremental_order_test.get_tests_failed_count();
-      }*/
-
       else if(test == "growing_neurons" || test == "gn")
       {
         GrowingNeuronsTest growing_neurons_test;
@@ -374,7 +363,6 @@ int main()
         tests_passed_count += growing_neurons_test.get_tests_passed_count();
         tests_failed_count += growing_neurons_test.get_tests_failed_count();
       }
-
 
       else if(test == "inputs_selection" || test == "is")
       {
@@ -449,6 +437,14 @@ int main()
           tests_count += correlations_test.get_tests_count();
           tests_passed_count += correlations_test.get_tests_passed_count();
           tests_failed_count += correlations_test.get_tests_failed_count();
+
+          // statistics
+
+          StatisticsTest statistics_test;
+          statistics_test.run_test_case();
+          tests_count += statistics_test.get_tests_count();
+          tests_passed_count += statistics_test.get_tests_passed_count();
+          tests_failed_count += statistics_test.get_tests_failed_count();
 
           // data set
 

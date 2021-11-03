@@ -161,7 +161,6 @@ public:
                                           Tensor<type, 1>&,
                                           Tensor<type, 1>&) const;
 
-
    // neuron layer outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);

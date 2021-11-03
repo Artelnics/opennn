@@ -113,10 +113,10 @@ void LongShortTermMemoryLayerTest::test_set_weights()
     assert_true(long_short_term_memory_layer.get_input_weights()(1) - weights(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(long_short_term_memory_layer.get_input_weights()(2) - weights(2) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(long_short_term_memory_layer.get_input_weights()(3) - weights(3) < type(NUMERIC_LIMITS_MIN), LOG);
-/*
-    assert_true(long_short_term_memory_layer.get_input_weights()(0) == 4.0, LOG);
-    assert_true(long_short_term_memory_layer.get_input_weights()(2) == 4.0, LOG);
-*/
+
+    assert_true(long_short_term_memory_layer.get_input_weights()(0) - type(4.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_input_weights()(2) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+
 }
 
 
@@ -149,9 +149,11 @@ void LongShortTermMemoryLayerTest::test_set_recurrent_weights()
     assert_true(long_short_term_memory_layer.get_state_recurrent_weights()(2) - recurrent_weights(2) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(long_short_term_memory_layer.get_output_recurrent_weights()(3) - recurrent_weights(3) < type(NUMERIC_LIMITS_MIN), LOG);
 
-//    assert_true(long_short_term_memory_layer.get_recurrent_weights()(0) == 0.0, LOG);
-//    assert_true(long_short_term_memory_layer.get_recurrent_weights()(1) == 0.0, LOG);
-//    assert_true(long_short_term_memory_layer.get_recurrent_weights()(3) == 0.0, LOG);
+    assert_true(long_short_term_memory_layer.get_forget_recurrent_weights()(0) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_input_recurrent_weights()(1) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_state_recurrent_weights()(2) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(long_short_term_memory_layer.get_output_recurrent_weights()(3) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+
 }
 
 void LongShortTermMemoryLayerTest::test_set_inputs_number()

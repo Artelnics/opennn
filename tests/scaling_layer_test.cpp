@@ -148,7 +148,6 @@ void ScalingLayerTest::test_set_default()
    assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::MinimumMaximum, LOG);
    assert_true(scaling_layer.get_display(), LOG);
    assert_true(scaling_layer.get_type() == Layer::Type::Scaling, LOG);
-//   assert_true(scaling_layer.get_type() == 0, LOG);
    assert_true(abs(sl_descriptives(0).minimum + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(abs(sl_descriptives(0).maximum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
    assert_true(abs(sl_descriptives(0).mean) < type(NUMERIC_LIMITS_MIN), LOG);

@@ -143,9 +143,9 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_derivative
    assert_true(abs(derivatives - type(1)) < static_cast<type>(1e-2), LOG);
    assert_true(abs(derivatives_1 - type(2)) < static_cast<type>(1e-2), LOG);
    assert_true(abs(derivatives_2 - type(3)) < static_cast<type>(1e-2), LOG);
-/*
-   // Test
 
+   // Test
+/*
    Tensor<type, 1> x_1d(2);
    x_1d.setValues({type(1),type(2)});
 

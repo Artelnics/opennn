@@ -1235,7 +1235,7 @@ void PerceptronLayerTest::test_forward_propagate()
 
     forward_propagation.set(samples_number, &perceptron_layer);
 
-/*  @todo
+
     perceptron_layer.forward_propagate(inputs, potential_parameters, &forward_propagation);
 
     assert_true(forward_propagation.combinations.rank() == 2, LOG);
@@ -1247,7 +1247,7 @@ void PerceptronLayerTest::test_forward_propagate()
     assert_true(abs(forward_propagation.activations(0,1) - static_cast<type>(0.99505)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(forward_propagation.activations_derivatives(0,0) - static_cast<type>(0.00986)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(forward_propagation.activations_derivatives(0,1) - static_cast<type>(0.00986)) < static_cast<type>(1e-3), LOG);
-*/
+
 }
 
 
