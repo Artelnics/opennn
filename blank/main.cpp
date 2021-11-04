@@ -47,8 +47,6 @@ int main()
 
         data_string = "x,y\n"
                       "1,2\n"
-                      "1,2\n"
-                      "1,2\n"
                       "3,4\n";
 
 
@@ -71,7 +69,6 @@ int main()
         data_set.read_csv();
 
         rows = data_set.get_samples_number();
-
 
         cout<<"The number of rows of the data set is:"<< data_set.get_samples_number() <<endl;
         cout << "Good bye!" << endl;
