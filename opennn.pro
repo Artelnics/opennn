@@ -12,7 +12,7 @@ TEMPLATE = subdirs
 
 SUBDIRS += opennn
 SUBDIRS += examples
-#SUBDIRS += blank
+SUBDIRS += blank
 SUBDIRS += tests
 
 

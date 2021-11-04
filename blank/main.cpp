@@ -30,40 +30,50 @@ int main()
     try{
         cout << "Hello, OpenNN!" << endl;
 
-        // Data Set
+        ofstream file;
 
-        const Index samples_number = 10;
-        const Index inputs_number = 2;
-        const Index outputs_number = 1;
-        const Index hidden_neurons_number = inputs_number;
+        string data_string;
 
-        DataSet data_set;// ("C:/rosenbrock.csv", ',', true);
+        string data_file_name = "../data/data.dat";
 
-//        data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
+        DataSet data_set;
 
-        data_set.generate_sum_data(samples_number, inputs_number + outputs_number);
+        Index rows;
 
-        data_set.set_training();
+        data_set.set_has_columns_names(true);
+        data_set.set_separator(',');
+        data_set.set_data_file_name(data_file_name);
 
-        data_set.print_data();
 
-        // Neural network
+        data_string = "x,y\n"
+                      "1,2\n"
+                      "1,2\n"
+                      "1,2\n"
+                      "3,4\n";
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
-        // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
+/*
+        data_string = "\n"
+                      "x,y\n"
+                      "\n"
+                      "1,2\n"
+                      "1,2\n"
+                      "3,4\n";
+*/
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
-        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
+        file.open(data_file_name.c_str());
+        file << data_string;
+        file.close();
 
-        training_strategy.get_gradient_descent_pointer()->set_display_period(1);
-        training_strategy.get_gradient_descent_pointer()->set_maximum_epochs_number(2);
+        cout << data_string << endl;
 
-        TrainingResults training_results = training_strategy.perform_training();
+        data_set.read_csv();
 
+        rows = data_set.get_samples_number();
+
+
+        cout<<"The number of rows of the data set is:"<< data_set.get_samples_number() <<endl;
         cout << "Good bye!" << endl;
 
         return 0;

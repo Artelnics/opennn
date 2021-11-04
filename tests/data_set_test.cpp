@@ -265,6 +265,7 @@ void DataSetTest::test_calculate_autocorrelations()
     data_set.set_steps_ahead_number(steps_ahead_number);
     data_set.transform_time_series();
 
+    // @todo bad_allocation
 //    autocorrelations = data_set.calculate_autocorrelations(lags_number);
 
     assert_true(autocorrelations.dimension(1) == 10, LOG);
@@ -398,7 +399,7 @@ void DataSetTest::test_scale_data()
 
    scaled_data = data_set.get_data();
 
-//   assert_true(scaled_data == data, LOG);
+   assert_true(are_equal(scaled_data, data), LOG);
 
     // Test
 
@@ -411,7 +412,7 @@ void DataSetTest::test_scale_data()
 
    scaled_data = data_set.get_data();
 
-//   assert_true(scaled_data == data, LOG);
+   assert_true(are_equal(scaled_data, data), LOG);
 }
 
 
@@ -569,8 +570,6 @@ void DataSetTest::test_calculate_distance_matrix()
 void DataSetTest::test_calculate_k_nearest_neighbors()
 {
    cout << "test_k_nearest_neighbors\n";
-
-//   Tensor kneware = data_set.calculate_k_nearest_neighbors();
 }
 
 
@@ -595,12 +594,6 @@ void DataSetTest::test_unuse_local_outlier_factor_outliers()
 void DataSetTest::test_read_csv() 
 {
    cout << "test_read_csv\n";
-
-   ofstream file;
-
-   string data_string;
-
-   string data_file_name;
 
    // Test
 
@@ -667,11 +660,13 @@ void DataSetTest::test_read_csv()
    assert_true(data.dimension(1) == 2, LOG);
 
    assert_true(abs(data(0,0) - type(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(data(0,1) - 2.0) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(data(1,0) - 3.0) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(data(1,1) - 4.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(data(0,1) - 2.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(data(1,0) - 3.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(data(1,1) - 4.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
+
+   data_set.set();
 
    data_set.set_has_columns_names(true);
    data_set.set_separator(' ');

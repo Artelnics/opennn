@@ -48,13 +48,13 @@ public:
 
    void test_set_parameters_random();
 
-   // Forward propagate
-
-   void test_forward_propagate();
-
    // Calculate outputs
 
    void test_calculate_outputs();
+
+   // Forward propagate
+
+   void test_forward_propagate();
 
    // Unit testing methods
 

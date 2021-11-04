@@ -231,7 +231,6 @@ void RecurrentLayerTest::test_calculate_outputs()
 
 void RecurrentLayerTest::test_forward_propagate()
 {/// @todo
-    /*
     cout << "test_forward_propagate\n";
 
     RecurrentLayer recurrent_layer;
@@ -252,13 +251,7 @@ void RecurrentLayerTest::test_forward_propagate()
     assert_true(recurrent_layer_forward_propagation.combinations.rank() == 2, LOG);
     assert_true(recurrent_layer_forward_propagation.combinations.dimension(0) == 1, LOG);
     assert_true(recurrent_layer_forward_propagation.combinations.dimension(1) == 2, LOG);
-    assert_true(abs(recurrent_layer_forward_propagation.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(recurrent_layer_forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(recurrent_layer_forward_propagation.activations(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(recurrent_layer_forward_propagation.activations(0,1) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(recurrent_layer_forward_propagation.activations_derivatives(0,0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(recurrent_layer_forward_propagation.activations_derivatives(0,1,0) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-*/}
+}
 
 
 void RecurrentLayerTest::run_test_case()
@@ -269,9 +262,17 @@ void RecurrentLayerTest::run_test_case()
 
    test_constructor();
 
+   // Activation Derivatives
+
    test_calculate_activations_derivatives();
 
+   // Outputs
+
    test_calculate_outputs();
+
+   // Forward propagate
+
+   test_forward_propagate();
 
    cout << "End of recurrent layer test case.\n\n";
 }

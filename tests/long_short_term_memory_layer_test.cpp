@@ -437,6 +437,31 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   cout<< "outputs:  "<< long_short_term_memory_layer.calculate_outputs(inputs)<<endl;
 }
 
+void LongShortTermMemoryLayerTest::test_forward_propagate()
+{/// @todo
+    cout << "test_forward_propagate\n";
+
+    LongShortTermMemoryLayer long_short_term_layer;
+
+
+    long_short_term_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
+
+    Tensor<type, 1> parameters;
+    Tensor<type, 2> inputs;
+
+    long_short_term_layer.set_parameters_constant(type(1));
+    inputs.setConstant(type(1));
+
+    LongShortTermMemoryLayerForwardPropagation long_short_term_layer_forward_propagation(1, &long_short_term_layer);
+
+    long_short_term_layer.forward_propagate(inputs, &long_short_term_layer_forward_propagation);
+
+    assert_true(long_short_term_layer_forward_propagation.combinations.rank() == 2, LOG);
+    assert_true(long_short_term_layer_forward_propagation.combinations.dimension(0) == 1, LOG);
+    assert_true(long_short_term_layer_forward_propagation.combinations.dimension(1) == 2, LOG);
+}
+
+
 void LongShortTermMemoryLayerTest::run_test_case()
 {
    cout << "Running long short term memory layer test case...\n";
@@ -474,6 +499,12 @@ void LongShortTermMemoryLayerTest::run_test_case()
    // Calculate outputs
 
    test_calculate_outputs();
+
+   // Forward propagate
+
+   test_forward_propagate();
+
+
 
    cout << "End of long short term memory layer test case.\n\n";
 }

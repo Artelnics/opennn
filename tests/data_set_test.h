@@ -145,6 +145,13 @@ public:
 
   private:
 
+   ofstream file;
+
+   string data_string;
+
+   string data_file_name;
+
+
    Index inputs_number;
    Index targets_number;
    Index samples_number;
