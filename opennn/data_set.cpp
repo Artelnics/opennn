@@ -9882,20 +9882,6 @@ void DataSet::read_csv_1()
         throw logic_error(buffer.str());
     }
 
-//  Error case when we have a lower number of rows in the dataset
-/*
-    if(size(data) <= 2)
-    {
-
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv_1() method.\n"
-               << "File " << data_file_name << " contains a poor dataset, consider adding more rows (The number of rows is lower than 2).\n";
-
-        throw logic_error(buffer.str());
-    }
-*/
     const char separator_char = get_separator_char();
 
     if(display) cout << "Setting data file preview..." << endl;
@@ -9903,7 +9889,22 @@ void DataSet::read_csv_1()
     const Index lines_number = has_columns_names ? 4 : 3;
 
     data_file_preview.resize(lines_number);
+/*
+    //  Error case when we have a low number of rows in the dataset
 
+
+       if(lines_number <= 2)
+        {
+
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_csv_1() method.\n"
+                   << "File " << data_file_name << " contains a poor dataset, consider adding more rows (The number of rows is lower than 2).\n";
+
+            throw logic_error(buffer.str());
+        }
+*/
     string line;
 
     Index lines_count = 0;
