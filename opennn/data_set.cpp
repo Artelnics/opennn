@@ -9806,6 +9806,7 @@ void DataSet::read_csv()
     }
 }
 
+
 void DataSet::read_text()
 {
     string text;
@@ -9836,6 +9837,7 @@ void DataSet::read_text()
 
     set(one_hot);
 }
+
 
 Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number)
 {
@@ -9880,6 +9882,20 @@ void DataSet::read_csv_1()
         throw logic_error(buffer.str());
     }
 
+//  Error case when we have a lower number of rows in the dataset
+/*
+    if(size(data) <= 2)
+    {
+
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv_1() method.\n"
+               << "File " << data_file_name << " contains a poor dataset, consider adding more rows (The number of rows is lower than 2).\n";
+
+        throw logic_error(buffer.str());
+    }
+*/
     const char separator_char = get_separator_char();
 
     if(display) cout << "Setting data file preview..." << endl;
@@ -10651,8 +10667,8 @@ void DataSet::check_separators(const string& line) const
     if(line.find(separator_char) == string::npos)
     {
         const string message =
-            "Error: " + get_separator_string() + " separator not found in line data file " + data_file_name + ".\n"
-            "Line: '" + line + "'";
+            "Error: " + get_separator_string() + " separator not found in line (" + line + "), in the data file:" + data_file_name + ".\n";
+            //"Line: '" + line + "'";
 
         throw logic_error(message);
     }
