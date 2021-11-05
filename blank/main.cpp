@@ -47,6 +47,7 @@ int main()
 
         data_string = "x,y\n"
                       "1,2\n"
+                      "1,2\n"
                       "3,4\n";
 
 
