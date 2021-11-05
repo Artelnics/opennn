@@ -1,0 +1,76 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>6</InputsNumber>
+      <Input Index="1">temperature</Input>
+      <Input Index="2">nausea</Input>
+      <Input Index="3">lumbar_pain</Input>
+      <Input Index="4">urine_pushing</Input>
+      <Input Index="5">micturition_pain</Input>
+      <Input Index="6">urethra_pain</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>6</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>35.5</Minimum>
+            <Maximum>41.5</Maximum>
+            <Mean>38.7242</Mean>
+            <StandardDeviation>1.81905</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.241667</Mean>
+            <StandardDeviation>0.429888</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="3">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.583333</Mean>
+            <StandardDeviation>0.495074</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="4">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.666667</Mean>
+            <StandardDeviation>0.473381</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="5">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.491667</Mean>
+            <StandardDeviation>0.502027</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="6">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.416667</Mean>
+            <StandardDeviation>0.495074</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <InputsNumber>6</InputsNumber>
+         <NeuronsNumber>6</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>-0.0114886 0.00869156 -0.00253701 0.0092089 0.0335664 0.0173672 0.443166 0.514622 0.574662 0.282311 -0.0501636 0.291375 -0.472823 -0.565527 -0.620501 -0.305884 0.0543085 -0.318421 0.441916 0.503552 0.57328 0.281589 -0.0502604 0.290611 -0.450331 -0.525824 -0.585828 -0.290289 0.0412706 -0.299704 -0.463999 -0.540774 -0.62137 -0.294649 0.0575094 -0.315452 -0.453701 -0.496978 -0.548091 -0.271856 0.0475792 -0.290179</Parameters>
+      </PerceptronLayer>
+      <ProbabilisticLayer>
+         <InputsNumber>6</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Logistic</ActivationFunction>
+         <Parameters>-0.0360461 1.16717 -1.29074 1.15599 -1.19665 -1.26018 -1.10135</Parameters>
+         <DecisionThreshold>0.5</DecisionThreshold>
+      </ProbabilisticLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1">nephritis_renal_pelvis_origin</Output>
+   </Outputs>
+</NeuralNetwork>
