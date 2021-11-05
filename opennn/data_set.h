@@ -44,8 +44,9 @@ using namespace Eigen;
 namespace OpenNN
 {
 
-/// This class represents the concept of a data set for data modelling problems, such as approximation, classification or forecasting.
+/// This class represents the concept of data set for data modelling problems, such as approximation, classification or forecasting.
 
+///
 /// It basically consists of a data Matrix separated by columns.
 /// These columns can take different categories depending on the data hosted in them.
 ///
@@ -285,7 +286,7 @@ public:
 
    // Batches get methods
 
-   Tensor<Tensor<Index, 1>, 1> get_batches(const Tensor<Index,1>&, const Index&, const bool&, const Index& buffer_size= 100) const;
+   Tensor<Index, 2> get_batches(const Tensor<Index,1>&, const Index&, const bool&, const Index& buffer_size= 100) const;
 
    // Data get methods
 
@@ -668,8 +669,6 @@ public:
 
    void read_csv();
 
-   void read_text();
-
    void load_data_binary();
    void load_time_series_data_binary(const string&);
 
@@ -719,7 +718,7 @@ public:
    void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
    void intialize_sequential(Tensor<type, 1>&, const type&, const type&, const type&) const;
 
-   Tensor<Tensor<Index, 1>, 1> split_samples(const Tensor<Index, 1>&, const Index&) const;
+   Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
 
    bool get_has_rows_labels() const;
 
@@ -741,7 +740,7 @@ public:
 
 private:
 
-   ThreadPool* thread_pool = nullptr;
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
 
    // DATA
@@ -879,10 +878,8 @@ private:
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/data_set_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"
 #endif
-
-/// This structure contains the batches of the data set.
 
 struct DataSetBatch
 {

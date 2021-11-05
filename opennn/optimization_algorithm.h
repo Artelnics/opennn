@@ -36,7 +36,6 @@ namespace OpenNN
 struct TrainingResults;
 
 /// This abstract class represents the concept of optimization algorithm for a neural network in OpenNN library.
-
 /// Any derived class must implement the perform_training() method.
 
 class OptimizationAlgorithm
@@ -121,7 +120,7 @@ public:
 
 protected:
 
-   ThreadPool* thread_pool = nullptr;
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device;
 
    /// Pointer to a loss index for a neural network object.
@@ -159,13 +158,11 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/optimization_algorithm_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/optimization_algorithm_cuda.h"
 #endif
 
 };
 
-
-/// This structure contains the data for the optimization algorithm.
 
 struct OptimizationAlgorithmData
 {

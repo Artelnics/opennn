@@ -17,7 +17,6 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-//#include <execution>
 
 // OpenNN includes
 
@@ -35,7 +34,7 @@ struct PerceptronLayerBackPropagation;
 struct PerceptronLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/struct_perceptron_layer_cuda.h"
 #endif
 
 
@@ -69,6 +68,8 @@ public:
 
    // Get methods
 
+   bool is_empty() const;
+
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
@@ -76,6 +77,9 @@ public:
 
    const Tensor<type, 2>& get_biases() const;
    const Tensor<type, 2>& get_synaptic_weights() const;
+
+   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
+   Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
 
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
@@ -153,6 +157,7 @@ public:
    void forward_propagate(const Tensor<type, 2>&,
                           LayerForwardPropagation*);
 
+
    void forward_propagate(const Tensor<type, 2>&,
                           Tensor<type, 1>,
                           LayerForwardPropagation*);
@@ -160,9 +165,8 @@ public:
    // Delta methods
 
    void calculate_hidden_delta(LayerForwardPropagation*,
-       LayerBackPropagation*,
-       LayerForwardPropagation*,
-       LayerBackPropagation*) const;
+                               LayerBackPropagation*,
+                               LayerBackPropagation*) const;
 
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,
@@ -247,12 +251,10 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/perceptron_layer_cuda.h"
 #else
 };
 #endif
-
-/// This structure contains information for the forward propagation of the perceptron layer.
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
@@ -301,8 +303,6 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 };
 
 
-/// This structure contains second order information for the back propagation of the perceptron layer.
-
 struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 {
     // Default constructor
@@ -349,7 +349,7 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
     Tensor<type, 2> squared_errors_Jacobian;
 };
 
-/// This structure contains information for the back propagation of the perceptron layer.
+
 
 struct PerceptronLayerBackPropagation : LayerBackPropagation
 {

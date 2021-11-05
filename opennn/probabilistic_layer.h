@@ -21,8 +21,11 @@
 // OpenNN includes
 
 #include "config.h"
+
 #include "layer.h"
+
 #include "opennn_strings.h"
+
 
 namespace OpenNN
 {
@@ -32,7 +35,7 @@ struct ProbabilisticLayerBackPropagation;
 struct ProbabilisticLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_probabilistic_layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/struct_probabilistic_layer_cuda.h"
 #endif
 
 
@@ -159,10 +162,6 @@ public:
                                  LayerForwardPropagation*,
                                  LayerBackPropagation*) const;
 
-   void calculate_error_gradient_v2(const Tensor<type, 2>& inputs,
-                                                     LayerForwardPropagation* forward_propagation,
-                                                     LayerBackPropagation* back_propagation) const;
-
    void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const;
 
    // Squared errors methods
@@ -224,12 +223,10 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/probabilistic_layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/probabilistic_layer_cuda.h"
 #else
 };
 #endif
-
-/// This structure contains information for the forward propagation of the probabilistic layer.
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {
@@ -281,8 +278,6 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 };
 
 
-/// This structure contains second order information for the back propagation of the probabilistic layer.
-
 struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 {
     explicit ProbabilisticLayerBackPropagationLM() : LayerBackPropagationLM()
@@ -333,7 +328,6 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 };
 
 
-/// This structure contains information for the back propagation of the probabilistic layer.
 
 struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 {

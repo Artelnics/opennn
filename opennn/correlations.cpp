@@ -15,7 +15,6 @@ namespace OpenNN
 {
 
 /// Calculate the coefficients of a linear regression (a, b) and the correlation among the variables.
-/// @param thread_pool_device Pointer to ThreadPoolDevice for multi-core processing.
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
@@ -111,7 +110,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
 
 /// Calculate the coefficients of a logarithmic regression (a, b) and the correlation among the variables
-/// @param thread_pool_device Pointer to ThreadPoolDevice for multi-core processing.
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 /// @todo check
@@ -162,7 +160,6 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device, 
 
 
 /// Calculate the coefficients of a exponential regression (a, b) and the correlation among the variables
-/// @param thread_pool_device Pointer to ThreadPoolDevice for multi-core processing.
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
@@ -210,7 +207,6 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device, 
 
 
 /// Calculate the coefficients of a power regression (a, b) and the correlation among the variables
-/// @param thread_pool_device Pointer to ThreadPoolDevice for multi-core processing.
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
@@ -265,7 +261,6 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device, const 
 
 
 /// Calculate the coefficients of a logistic regression (a, b) and the correlation among the variables
-/// @param thread_pool_device Pointer to ThreadPoolDevice for multi-core processing.
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
@@ -602,7 +597,6 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
 
 
 /// Calculates autocorrelation for a given number of maximum lags.
-/// @param thread_pool_device Pointer to ThreadPoolDevice for multi-core processing.
 /// @param x Vector containing the data.
 /// @param lags_number Maximum lags number.
 
@@ -631,7 +625,6 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, con
 
 
 /// Calculates the cross-correlation between two vectors.
-/// @param thread_pool_device Pointer to ThreadPoolDevice for multi-core processing.
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with this vector.
 /// @param maximum_lags_number Maximum lags for which cross-correlation is calculated.

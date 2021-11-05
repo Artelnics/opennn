@@ -28,7 +28,6 @@ namespace OpenNN
 {
 
 /// This class contains methods for numerical differentiation of functions. 
-
 /// In particular it implements the forward and central differences methods for derivatives, Jacobians, hessians or hessian forms.
 
 class NumericalDifferentiation 
@@ -150,15 +149,13 @@ public:
       const Tensor<type, 1> h = calculate_h(x);
 
 	  const Tensor<type, 1> y = (t.*f)(x);
-/*
+
       const Tensor<type, 1> x_forward = x + h;     
 	  const Tensor<type, 1> y_forward = (t.*f)(x_forward);
 
 	  const Tensor<type, 1> d = (y_forward - y)/h;
 
       return d;
-*/
-      return Tensor<type, 1>();
    }
 
 
@@ -168,15 +165,13 @@ public:
       const Tensor<type, 2> h = calculate_h(x);
 
       const Tensor<type, 2> y = (t.*f)(x);
-      /*
+
       const Tensor<type, 2> x_forward = x + h;
       const Tensor<type, 2> y_forward = (t.*f)(x_forward);
 
       const Tensor<type, 2> d = (y_forward - y)/h;
 
       return d;
-      */
-      return Tensor<type, 2>();
    }
 
 
@@ -188,7 +183,7 @@ public:
    template<class T> 
    Tensor<type, 1> calculate_central_differences_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
-    /*
+
       const Tensor<type, 1> h = calculate_h(x);
      
       const Tensor<type, 1> x_forward = x + h;
@@ -202,8 +197,6 @@ public:
       const Tensor<type, 1> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
-      */
-      return Tensor<type, 1>();
    }
 
 
@@ -211,7 +204,7 @@ public:
    Tensor<type, 2> calculate_central_differences_derivatives(const T& t, Tensor<type, 2>(T::*f)(const Tensor<type, 2>&) const, const Tensor<type, 2>& x) const
    {
       const Tensor<type, 2> h = calculate_h(x);
-      /*
+
       const Tensor<type, 2> x_forward = x + h;
       const Tensor<type, 2> x_backward = x - h;
 
@@ -223,8 +216,6 @@ public:
       const Tensor<type, 2> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
-      */
-      return Tensor<type, 2>();
    }
 
 
@@ -305,7 +296,7 @@ public:
    Tensor<type, 1> calculate_forward_differences_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
    {
       const Tensor<type, 1> y = (t.*f)(dummy, x);
-      /*
+
       const Tensor<type, 1> h = calculate_h(x);     
       const Tensor<type, 1> x_forward = x + h;     
 
@@ -314,8 +305,6 @@ public:
       const Tensor<type, 1> d = (y_forward - y)/h;
 
       return d;
-      */
-      return Tensor<type, 1>();
    }
 
 
@@ -330,7 +319,7 @@ public:
    Tensor<type, 1> calculate_central_differences_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Index&, const Tensor<type, 1>&) const, const Index& dummy, const Tensor<type, 1>& x) const
    {
       const Tensor<type, 1> h = calculate_h(x);     
-      /*
+
       const Tensor<type, 1> x_forward = x + h;
       const Tensor<type, 1> x_backward = x - h;
 
@@ -340,8 +329,6 @@ public:
       const Tensor<type, 1> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
 
       return d;
-      */
-      return Tensor<type, 1>();
    }
 
 
@@ -622,7 +609,7 @@ public:
 */
 
    /// Returns the second derivative of a vector function acording to the numerical differentiation method to be used. 
-   /// @param t : Object constructor containing the member method to differentiate.
+   /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
@@ -767,7 +754,7 @@ public:
 
    /// Returns the second derivatives of a vector function acording to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&) const. 
-   /// @param t : Object constructor containing the member method to differentiate.
+   /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param dummy: Dummy integer for the method prototype. 
    /// @param x: Input vector. 

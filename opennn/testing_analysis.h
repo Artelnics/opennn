@@ -53,7 +53,7 @@ public:
 
    virtual ~TestingAnalysis();
 
-    /// This structure contains the results of a linear regression analysis.
+    /// Structure with the results from a linear regression analysis.
 
     struct LinearRegressionAnalysis
     {
@@ -85,7 +85,7 @@ public:
     };
 
 
-    /// This structure contains the results of a roc curve analysis.
+    /// Structure with the results from a roc curve analysis.
 
     struct RocAnalysisResults
     {
@@ -107,7 +107,7 @@ public:
     };
 
 
-    /// This structure contains the results of a Kolmogorov-Smirnov analysis.
+    /// Structure with the results from Kolmogorov-Smirnov analysis.
 
     struct KolmogorovSmirnovResults
     {
@@ -125,7 +125,7 @@ public:
     };
 
 
-    /// This structure contains the binary classification rates
+    /// Structure with the binary classification rates
 
     struct BinaryClassifcationRates
     {
@@ -335,7 +335,7 @@ public:
 
 private: 
 
-   ThreadPool* thread_pool = nullptr;
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Pointer to the neural network object to be tested. 

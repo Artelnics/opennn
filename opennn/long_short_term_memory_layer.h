@@ -34,8 +34,7 @@ struct LongShortTermMemoryLayerForwardPropagation;
 struct LongShortTermMemoryLayerBackPropagation;
 
 
-/// This class represents a layer of LSTM neurons.
-
+/// This class represents a layer of neurons.
 /// Layers of neurons will be used to construct multilayer neurons.
 
 class LongShortTermMemoryLayer : public Layer
@@ -189,7 +188,6 @@ public:
 
    void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
    void calculate_activations(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-
    Tensor<type, 1> calculate_activations(const Tensor<type, 1>&) const;
    void calculate_recurrent_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
    void calculate_recurrent_activations(const Tensor<type, 1>&, Tensor<type, 1>&) const;
@@ -205,9 +203,8 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
    void calculate_hidden_delta(LayerForwardPropagation*,
-       LayerBackPropagation*,
-       LayerForwardPropagation*,
-       LayerBackPropagation*) const;
+                               LayerBackPropagation*,
+                               LayerBackPropagation*) const;
 
 
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
@@ -332,13 +329,11 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/long_short_term_memory_layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/long_short_term_memory_layer_cuda.h"
 #endif
 
 };
 
-
-/// This structure contains information for the forward propagation of the LSTM layer.
 
 struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 {
@@ -450,8 +445,6 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 2, RowMajor> hidden_states_activations_derivatives;
 };
 
-
-/// This structure contains information for the back propagation of the LSTM layer.
 
 struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 {

@@ -94,7 +94,7 @@ template<typename Scalar> void mmtr(int size)
   }
 }
 
-EIGEN_DECLARE_TEST(product_mmtr)
+void test_product_mmtr()
 {
   for(int i = 0; i < g_repeat ; i++)
   {

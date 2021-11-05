@@ -20,23 +20,25 @@ using namespace std;
 
 vector<float> scaling_layer(const vector<float>& inputs)
 {
-	vector<float> outputs(4);
+	vector<float> outputs(6);
 
-	outputs[0] = (inputs[0]-5.843333244)/0.828066051;
-	outputs[1] = (inputs[1]-3.057333231)/0.4358663261;
-	outputs[2] = (inputs[2]-3.757999897)/1.765298247;
-	outputs[3] = (inputs[3]-1.19933331)/0.762237668;
+	outputs[0] = inputs[0]*2.415266275-14.11320591;
+	outputs[1] = inputs[1]*4.588562965-14.02876568;
+	outputs[2] = inputs[2]*1.132953048-4.257637501;
+	outputs[3] = inputs[3]*4.228474617-1.409491658;
+	outputs[4] = inputs[4]*4.228474617-1.409491658;
+	outputs[5] = inputs[5]*4.228474617-1.409491658;
 
 	return outputs;
 }
 
-vector<float> perceptron_layer_1(const vector<float>& inputs)
+vector<float> Perceptron_layer_1(const vector<float>& inputs)
 {
 	vector<float> combinations(3);
 
-	combinations[0] = 0.621155 +0.320924*inputs[0] -0.560284*inputs[1] +0.772815*inputs[2] +0.747064*inputs[3];
-	combinations[1] = 2.35314 -0.29279*inputs[0] +0.403936*inputs[1] -1.9979*inputs[2] -1.35135*inputs[3];
-	combinations[2] = -0.623635 -0.323598*inputs[0] +0.559627*inputs[1] -0.766432*inputs[2] -0.74875*inputs[3];
+	combinations[0] = 0.808051 -0.137501*inputs[0] +0.233128*inputs[1] +0.875576*inputs[2] -0.432395*inputs[3] +0.296181*inputs[4] +0.164928*inputs[5];
+	combinations[1] = -0.901862 +0.00684303*inputs[0] +0.0279776*inputs[1] -0.0950193*inputs[2] +0.47241*inputs[3] -0.196155*inputs[4] -0.268482*inputs[5];
+	combinations[2] = -0.738978 +0.0462208*inputs[0] -0.0988235*inputs[1] -0.477717*inputs[2] +0.532404*inputs[3] -0.293018*inputs[4] -0.250419*inputs[5];
 
 	vector<float> activations(3);
 
@@ -49,21 +51,13 @@ vector<float> perceptron_layer_1(const vector<float>& inputs)
 
 vector<float> probabilistic_layer(const vector<float>& inputs)
 {
-	vector<float> combinations(3);
+	vector<float> combinations(1);
 
-	combinations[0] = 0.392765 -1.88896*inputs[0] +0.729255*inputs[1] +1.88443*inputs[2];
-	combinations[1] = -0.678374 +1.3423*inputs[0] +2.64725*inputs[1] -1.33715*inputs[2];
-	combinations[2] = 0.290721 +0.547446*inputs[0] -3.37877*inputs[1] -0.548088*inputs[2];
+	combinations[0] = 2.23115 +2.17447*inputs[0] -1.96864*inputs[1] -2.04471*inputs[2];
 
-	vector<float> activations(3);
+	vector<float> activations(1);
 
-	float sum = 0;
-
-	sum = exp(combinations[0]) + exp(combinations[1]) + exp(combinations[2]);
-
-	activations[0] = exp(combinations[0])/sum;
-	activations[1] = exp(combinations[1])/sum;
-	activations[2] = exp(combinations[2])/sum;
+	activations[0] = 1.0/(1.0 + exp(-combinations[0]));
 
 	return activations;
 }
@@ -73,7 +67,7 @@ vector<float> neural_network(const vector<float>& inputs)
 	vector<float> outputs;
 
 	outputs = scaling_layer(inputs);
-	outputs = perceptron_layer_1(outputs);
+	outputs = Perceptron_layer_1(outputs);
 	outputs = probabilistic_layer(outputs);
 
 	return outputs;

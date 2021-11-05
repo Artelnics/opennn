@@ -23,7 +23,6 @@ ProbabilisticLayer::ProbabilisticLayer()
 
 /// Probabilistic neurons number constructor.
 /// It creates a probabilistic layer with a given size.
-/// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of neurons in the layer.
 
 ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Index& new_neurons_number)
@@ -255,7 +254,6 @@ void ProbabilisticLayer::set()
 
 /// Resizes the size of the probabilistic layer.
 /// It also sets the rest of class members to their default values.
-/// @param new_inputs_number New size for the inputs.
 /// @param new_neurons_number New size for the probabilistic layer.
 
 void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)
@@ -319,16 +317,11 @@ void ProbabilisticLayer::set_synaptic_weights(const Tensor<type, 2>& new_synapti
 
 void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    const Index biases_number = get_biases_number();
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+    const Index biases_number = biases.size();
+    const Index synaptic_weights_number = synaptic_weights.size();
 
-    memcpy(biases.data(),
-           new_parameters.data() + index,
-           static_cast<size_t>(biases_number)*sizeof(type));
-
-    memcpy(synaptic_weights.data(),
-           new_parameters.data() + biases_number + index,
-           static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+    memcpy(biases.data(), new_parameters.data() + index, static_cast<size_t>(biases_number)*sizeof(type));
+    memcpy(synaptic_weights.data(), new_parameters.data() + biases_number + index, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
 }
 
 
@@ -405,7 +398,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
 
     const Index neurons_number = get_neurons_number();
 
-    if(neurons_number == 1 && new_activation_function == ProbabilisticLayer::ActivationFunction::Competitive)
+    if(neurons_number == 1 && new_activation_function == Competitive)
     {
         ostringstream buffer;
 
@@ -416,7 +409,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
         throw logic_error(buffer.str());
     }
 
-    if(neurons_number == 1 && new_activation_function == ProbabilisticLayer::ActivationFunction::Softmax)
+    if(neurons_number == 1 && new_activation_function == Softmax)
     {
         ostringstream buffer;
 
@@ -427,7 +420,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
         throw logic_error(buffer.str());
     }
 
-    if(neurons_number != 1 && new_activation_function == ProbabilisticLayer::ActivationFunction::Binary)
+    if(neurons_number != 1 && new_activation_function == Binary)
     {
         ostringstream buffer;
 
@@ -438,7 +431,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
         throw logic_error(buffer.str());
     }
 
-    if(neurons_number != 1 && new_activation_function == ProbabilisticLayer::ActivationFunction::Logistic)
+    if(neurons_number != 1 && new_activation_function == Logistic)
     {
         ostringstream buffer;
 
@@ -679,7 +672,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
 }
 
 
-/// This method processes the input to the probabilistic layer to obtain a set of outputs which
+/// This method processes the input to the probabilistic layer in order to obtain a set of outputs which
 /// can be interpreted as probabilities.
 /// This posprocessing is performed according to the probabilistic method to be used.
 /// @param inputs Set of inputs to the probabilistic layer.
@@ -766,7 +759,7 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
     const Index samples_number = inputs.dimension(0);
     const Index neurons_number = get_neurons_number();
 
-    if(neurons_number == 1) // Binary classification
+    if(neurons_number == 1) // Binary gradient
     {
         TensorMap< Tensor<type, 2> > activations_derivatives(probabilistic_layer_forward_propagation->activations_derivatives.data(), samples_number, neurons_number);
 
@@ -776,7 +769,7 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
         probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
                 inputs.contract((probabilistic_layer_back_propagation->delta*activations_derivatives), AT_B);
     }
-    else // Multiple classification
+    else // Multiple gradient
     {
         if(activation_function == ActivationFunction::Softmax)
         {
@@ -799,72 +792,9 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
             probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
                     inputs.contract(probabilistic_layer_back_propagation->error_combinations_derivatives, AT_B);
         }
-        else // Does it make sense that it is not softmax?
-        {
-            TensorMap< Tensor<type, 2> > activations_derivatives(probabilistic_layer_forward_propagation->activations_derivatives.data(),
-                                                                 samples_number,
-                                                                 neurons_number);
-
-            probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
-                    (probabilistic_layer_back_propagation->delta*activations_derivatives).sum(Eigen::array<Index, 1>({0}));
-
-            probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
-                    inputs.contract((probabilistic_layer_back_propagation->delta*activations_derivatives), AT_B);
-        }
-    }
-}
-
-void ProbabilisticLayer::calculate_error_gradient_v2(const Tensor<type, 2>& inputs,
-                                                  LayerForwardPropagation* forward_propagation,
-                                                  LayerBackPropagation* back_propagation) const
-{
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
-            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
-
-    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
-            static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
-
-    const Index samples_number = inputs.dimension(0);
-    const Index neurons_number = get_neurons_number();
-
-    if(neurons_number == 1) // Binary classification
-    {
-        TensorMap< Tensor<type, 2> > activations_derivatives(probabilistic_layer_forward_propagation->activations_derivatives.data(), samples_number, neurons_number);
-
-        probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
-                (probabilistic_layer_back_propagation->delta*activations_derivatives).sum(Eigen::array<Index, 1>({0}));
-
-        probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
-                inputs.contract((probabilistic_layer_back_propagation->delta*activations_derivatives), AT_B);
-    }
-    else // Multiple classification
-    {
-        if(activation_function == ActivationFunction::Softmax) // Under development
-        {
-            const Index step = neurons_number*neurons_number;
-
-            for(Index i = 0; i < samples_number; i++)
-            {
-                probabilistic_layer_back_propagation->delta_row = probabilistic_layer_back_propagation->delta.chip(i,0);
-
-                TensorMap< Tensor<type, 2> > activations_derivatives_matrix(probabilistic_layer_forward_propagation->activations_derivatives.data() + i*step,
-                                                                            neurons_number, neurons_number);
-
-                probabilistic_layer_back_propagation->error_combinations_derivatives.chip(i,0) =
-                        probabilistic_layer_back_propagation->delta_row.contract(activations_derivatives_matrix, AT_B);
-            }
-
-            probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
-                    (probabilistic_layer_back_propagation->error_combinations_derivatives).sum(Eigen::array<Index, 1>({0}));
-
-            probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
-                    inputs.contract(probabilistic_layer_back_propagation->error_combinations_derivatives, AT_B);
-        }
         else
         {
-            TensorMap< Tensor<type, 2> > activations_derivatives(probabilistic_layer_forward_propagation->activations_derivatives.data(),
-                                                                 samples_number,
-                                                                 neurons_number);
+            TensorMap< Tensor<type, 2> > activations_derivatives(probabilistic_layer_forward_propagation->activations_derivatives.data(), samples_number, neurons_number);
 
             probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
                     (probabilistic_layer_back_propagation->delta*activations_derivatives).sum(Eigen::array<Index, 1>({0}));

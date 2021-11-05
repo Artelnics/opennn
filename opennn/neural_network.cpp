@@ -114,7 +114,7 @@ void NeuralNetwork::delete_layers()
 
 
 /// Add a new layer to the Neural Network model.
-/// @param layer_pointer The layer that will be added.
+/// @param layer The layer that will be added.
 
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
@@ -637,7 +637,6 @@ void NeuralNetwork::set()
 
 /// Sets a new neural network with a given neural network architecture.
 /// It also sets the rest of members to their default values.
-/// @param model_type Type of model.
 /// @param architecture Architecture of the neural network.
 
 void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)
@@ -755,17 +754,17 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
     for(Index i = 0; i < blocks_number; i++)
     {
-        //ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
-        //add_layer(convolutional_layer);
+        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
+        add_layer(convolutional_layer);
 
-        //outputs_dimensions = convolutional_layer->get_outputs_dimensions();
+        outputs_dimensions = convolutional_layer->get_outputs_dimensions();
 
         // Pooling layer 1
 
-        //PoolingLayer* pooling_layer_1 = new PoolingLayer(outputs_dimensions);
-        //add_layer(pooling_layer_1);
+        PoolingLayer* pooling_layer_1 = new PoolingLayer(outputs_dimensions);
+        add_layer(pooling_layer_1);
 
-        //outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
+        outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
     }
 
     const Tensor<Index, 0> outputs_dimensions_sum = outputs_dimensions.sum();
@@ -1361,7 +1360,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
     Tensor<type, 1> parameters = get_parameters();
 
-    for (Index i = 0; i < parameters.size(); i++) parameters(i) += perturbation;
+    parameters = parameters + perturbation;
 
     set_parameters(parameters);
 }
@@ -1369,7 +1368,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
 /// Calculates the forward propagation in the neural network.
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
-/// @param foward_propagation NeuralNetwork class structure that saves the necessary parameters of forward propagation.
+/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
@@ -1436,8 +1435,8 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
 /// Calculates the forward propagation in the neural network.
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
-/// @param parameters Parameters of neural network.
-/// @param forward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
+/// @param paramters Parameters of neural network.
+/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       Tensor<type, 1>& parameters,
@@ -1601,7 +1600,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
     if(layers_pointers(1)->get_type() == Layer::Type::Convolutional)
     {
-        outputs_4d = layers_pointers(0)->calculate_outputs_4d(inputs);
+        outputs_4d = layers_pointers(0)->calculate_outputs_4D(inputs);
     }
     else
     {
@@ -1612,11 +1611,10 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
     {
         if(layers_pointers(i + 1)->get_type() == Layer::Type::Convolutional)
         {
-            outputs_4d = layers_pointers(i)->calculate_outputs_4d(outputs_4d);
+            outputs_4d = layers_pointers(i)->calculate_outputs_4D(outputs_4d);
         }
         else
         {
-/*
             if(layers_pointers(i)->get_type() != Layer::Type::Convolutional && layers_pointers(i)->get_type() != Layer::Type::Pooling)
             {
                 outputs = layers_pointers(i)->calculate_outputs(outputs);
@@ -1625,7 +1623,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
             {
                 outputs = layers_pointers(i)->calculate_outputs_from4D(outputs_4d);
             }
-*/
         }
     }
 
@@ -2110,7 +2107,6 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         }
         else if(layers_types(i) == "Convolutional")
         {
-/*
             ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer();
 
             const tinyxml2::XMLElement* convolutional_element = start_element->NextSiblingElement("ConvolutionalLayer");
@@ -2129,7 +2125,6 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(convolutional_layer);
-*/
         }
         else if(layers_types(i) == "Perceptron")
         {
@@ -2154,7 +2149,6 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
         }
         else if(layers_types(i) == "Pooling")
         {
-/*
             PoolingLayer* pooling_layer = new PoolingLayer();
 
             const tinyxml2::XMLElement* pooling_element = start_element->NextSiblingElement("PoolingLayer");
@@ -2173,7 +2167,6 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
             }
 
             add_layer(pooling_layer);
-*/
         }
         else if(layers_types(i) == "Probabilistic")
         {
@@ -2377,8 +2370,6 @@ void NeuralNetwork::print() const
 
 void NeuralNetwork::save(const string& file_name) const
 {
-    cout << "Saving neural network" << endl;
-
     FILE * file = fopen(file_name.c_str(), "w");
 
     tinyxml2::XMLPrinter printer(file);
@@ -2508,7 +2499,7 @@ string NeuralNetwork::write_expression_c() const
     buffer <<"// \tvector<float> outputs = neural_network(sample);"<<endl;
     buffer <<"// "<<endl;
     buffer <<"// Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,\t"<<endl;
-    buffer <<"// however you can loop through neural network function to get multiple outputs.\t"<<endl;
+    buffer <<"// however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
     buffer <<""<<endl;
 
     buffer << "#include <vector>\n" << endl;

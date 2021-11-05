@@ -35,13 +35,13 @@ namespace OpenNN
 
 struct GradientDescentData;
 
-/// This concrete class represents the gradient descent optimization algorithm, used to minimize the loss function.
-
 /// The process of making changes to weights and biases,
 /// where the changes are propotyional to derivatives of network error with respect to those weights and biases.
 /// This is done to minimize network error.
+
+/// This concrete class represents the gradient descent optimization algorithm[1], used to minimize loss function.
 ///
-/// \cite Neural Designer "5 Algorithms to Train a Neural Network."
+/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
 /// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 
 class GradientDescent : public OptimizationAlgorithm
@@ -86,6 +86,8 @@ public:
 
    void set_maximum_epochs_number(const Index&);
 
+   
+
    void set_minimum_loss_decrease(const type&);
    void set_loss_goal(const type&);
 
@@ -94,6 +96,8 @@ public:
    void set_maximum_time(const type&);
 
    // Training methods
+
+   void calculate_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void update_parameters(
            const DataSetBatch& batch,
@@ -148,8 +152,6 @@ private:
 
 };
 
-
-/// This structure contains the data for the gradient descent optimization algorithm.
 
 struct GradientDescentData : public OptimizationAlgorithmData
 {

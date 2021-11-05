@@ -50,8 +50,6 @@ void bdcsvd_method()
   VERIFY_RAISES_ASSERT(m.bdcSvd().matrixU());
   VERIFY_RAISES_ASSERT(m.bdcSvd().matrixV());
   VERIFY_IS_APPROX(m.bdcSvd(ComputeFullU|ComputeFullV).solve(m), m);
-  VERIFY_IS_APPROX(m.bdcSvd(ComputeFullU|ComputeFullV).transpose().solve(m), m);
-  VERIFY_IS_APPROX(m.bdcSvd(ComputeFullU|ComputeFullV).adjoint().solve(m), m);
 }
 
 // compare the Singular values returned with Jacobi and Bdc
@@ -68,7 +66,7 @@ void compare_bdc_jacobi(const MatrixType& a = MatrixType(), unsigned int computa
   if(computationOptions & ComputeThinV) VERIFY_IS_APPROX(bdc_svd.matrixV(), jacobi_svd.matrixV());
 }
 
-EIGEN_DECLARE_TEST(bdcsvd)
+void test_bdcsvd()
 {
   CALL_SUBTEST_3(( svd_verify_assert<BDCSVD<Matrix3f>  >(Matrix3f()) ));
   CALL_SUBTEST_4(( svd_verify_assert<BDCSVD<Matrix4d>  >(Matrix4d()) ));
@@ -110,7 +108,7 @@ EIGEN_DECLARE_TEST(bdcsvd)
   CALL_SUBTEST_7( BDCSVD<MatrixXf>(10,10) );
 
   // Check that preallocation avoids subsequent mallocs
-  // Disabled because not supported by BDCSVD
+  // Disbaled because not supported by BDCSVD
   // CALL_SUBTEST_9( svd_preallocate<void>() );
 
   CALL_SUBTEST_2( svd_underoverflow<void>() );

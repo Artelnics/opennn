@@ -25,7 +25,7 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
     const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -42,7 +42,7 @@ void divide_columns(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
     const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
 
     for(Index j = 0; j < columns_number; j++)
     {
@@ -109,19 +109,6 @@ bool is_constant(const Tensor<type, 1>& vector)
 }
 
 
-bool is_equal(const Tensor<type, 1>& vector, const type& value, const type& tolerance)
-{
-    const Index size = vector.size();
-
-    for(Index i = 0; i < size; i++)
-    {
-        if(abs(vector(i) - value) > tolerance) return false;
-    }
-
-    return true;
-}
-
-
 bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tolerance)
 {
     const Index size = matrix.size();
@@ -133,6 +120,7 @@ bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tole
 
     return true;
 }
+
 
 
 bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2, const type& tolerance)
@@ -362,26 +350,16 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
 
 
 void fill_submatrix(const Tensor<type, 2>& matrix,
-    const Tensor<Index, 1>& rows_indices,
-    const Tensor<Index, 1>& columns_indices,
-    float* submatrix_pointer)
+                    const Tensor<Index, 1>& rows_indices,
+                    const Tensor<Index, 1>& columns_indices,
+                    type* submatrix_pointer)
 {
-/*
-    Map<const Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> matrix_map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
-
-    Map<Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> submatrix_map(submatrix.data(), submatrix.dimension(0), submatrix.dimension(1));
-
-    submatrix_map = matrix_map(rows_indices, columns_indices);        
-*/
-
-//    type* submatrix_pointer = submatrix.data();
-
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
     const type* matrix_pointer = matrix.data();
 
-//    #pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index j = 0; j < columns_number; j++)
     {
@@ -390,7 +368,6 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
 
         const type* value_pointer = nullptr;
         const Index* rows_indices_pointer = rows_indices.data();
-
         for(Index i = 0; i < rows_number; i++)
         {
             value_pointer = matrix_column_pointer + *rows_indices_pointer;
@@ -400,7 +377,6 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
         }
     }
 }
-
 
 Index count_NAN(const Tensor<type, 1>& x)
 {
@@ -566,97 +542,6 @@ bool is_less_than(const Tensor<type, 1>& column, const type& value)
     return is_less(0);
 }
 
-Tensor<type, 2> kronecker_product(Tensor<type, 1>& left_matrix, Tensor<type, 1>& right_matrix)
-{
-    // Transform Tensors into Dense matrix
-
-    Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
-            ml(left_matrix.data(),left_matrix.dimension(0), 1);
-
-    Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
-            mr(right_matrix.data(),right_matrix.dimension(0), 1);
-
-    // Kronecker Product
-
-    auto product = kroneckerProduct(ml,mr).eval();
-
-    // Matrix into a Tensor
-
-    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), left_matrix.size(), left_matrix.size());
-
-    return direct_matrix;
-}
-
-void kronecker_product(Tensor<type, 1>& left_matrix, Tensor<type, 1>& right_matrix, Tensor<type,2>& product_matrix)
-{
-    // Transform Tensors into Dense matrix
-
-    Map<Matrix<type,Dynamic,Dynamic,RowMajor >>
-            ml(left_matrix.data(),left_matrix.dimension(0), 1);
-
-    Map<Matrix<type,Dynamic,Dynamic,RowMajor>>
-            mr(right_matrix.data(),right_matrix.dimension(0), 1);
-
-    auto product = kroneckerProduct(ml,mr).eval();
-
-    // Matrix into a Tensor
-
-    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), left_matrix.size(), left_matrix.size());
-
-    product_matrix = direct_matrix;
-}
-
-
-/// This method calculates the kronecker product between two matrices.
-/// Its return a direct matrix.
-/// @param left_matrix Matrix.
-/// @param right_matrix Matrix.
-
-Tensor<type, 2> kronecker_product(Tensor<type, 2>& left_matrix, Tensor<type, 2>& right_matrix)
-{
-    // Transform Tensors into Dense matrix
-
-    auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
-            (left_matrix.data(),left_matrix.dimension(0),left_matrix.dimension(1));
-
-    auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
-            (right_matrix.data(),right_matrix.dimension(0),right_matrix.dimension(1));
-
-    // Kronecker Product
-
-    auto product = kroneckerProduct(ml,mr).eval();
-
-    // Matrix into a Tensor
-
-    auto direct_matrix = TensorMap< Tensor<type, 2> > (product.data(), product.rows(), product.cols());
-
-    return direct_matrix;
-}
-
-
-void kronecker_product(const Tensor<type, 2>& x, Tensor<type, 3>& y)
-{
-    const Index rows_number = x.dimension(0);
-
-    const Index columns_number = x.dimension(1);
-
-    Tensor<type, 1> row;
-
-    Matrix<type, Dynamic, Dynamic> product(columns_number,columns_number);
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        row = x.chip(i,0);
-
-        Map<Matrix<type,Dynamic,Dynamic>> row_map(row.data(),row.dimension(0), 1);
-
-        product = kroneckerProduct(row_map, row_map);
-
-        copy(/*execution::par_unseq,*/
-             product.data(),product.data()+columns_number*columns_number,
-             y.data()+i*columns_number*columns_number);
-    }
-}
 
 }
 

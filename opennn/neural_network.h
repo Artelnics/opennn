@@ -39,8 +39,8 @@ namespace OpenNN
     struct NeuralNetworkForwardPropagation;
     struct NeuralNetworkBackPropagation;
 
-/// This class represents the concept of neural network in the OpenNN library.
-
+/// This class represents the concept of neural network in the OpenNN library
+///
 /// This neural network is used to span a function space for the problem at hand.
 
 class NeuralNetwork
@@ -253,12 +253,10 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/neural_network_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/neural_network_cuda.h"
 #endif
 
 };
-
-/// This structure contains information for the forward propagation of the neural network.
 
 struct NeuralNetworkForwardPropagation
 {
@@ -319,7 +317,7 @@ struct NeuralNetworkForwardPropagation
 
             case Layer::Type::Convolutional:
             {
-                //layers(i) = new ConvolutionalLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new ConvolutionalLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
@@ -349,8 +347,6 @@ struct NeuralNetworkForwardPropagation
     Tensor<LayerForwardPropagation*, 1> layers;
 };
 
-
-/// This structure contains information for the back propagation of the neural network.
 
 struct NeuralNetworkBackPropagation
 {
@@ -405,7 +401,7 @@ struct NeuralNetworkBackPropagation
 
             case Layer::Type::Convolutional:
             {
-                //layers(i) = new ConvolutionalLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+                layers(i) = new ConvolutionalLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
 
@@ -437,8 +433,6 @@ struct NeuralNetworkBackPropagation
     Tensor<LayerBackPropagation*, 1> layers;
 };
 
-
-/// This structure contains second order information for the back propagation of the neural network.
 
 struct NeuralNetworkBackPropagationLM
 {

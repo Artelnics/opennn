@@ -244,7 +244,7 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 
 
 /// Sets a new population size. It must be greater than 4.
-/// @param new_individuals_number Size of the population.
+/// @param new_population_size Size of the population.
 
 void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
 {

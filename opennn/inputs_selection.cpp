@@ -219,7 +219,7 @@ void InputsSelection::set_selection_error_goal(const type& new_selection_error_g
 
 
 /// Sets the maximum iterations number for the inputs selection algorithm.
-/// @param new_maximum_epochs_number Maximum number of epochs.
+/// @param new_maximum_iterations_number Maximum number of epochs.
 
 void InputsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {

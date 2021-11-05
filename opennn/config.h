@@ -9,10 +9,9 @@
 #endif
 
 //Eigen includes
+#include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
-//#include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
-
-//#define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
+#define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
 
 // For numeric limits
 
@@ -30,7 +29,7 @@
 
 #ifdef OPENNN_CUDA
 
-#include "../../opennn-cuda/opennn-cuda/kernel.cuh"
+#include "../../opennn-cuda/opennn_cuda/kernels.h"
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include "cublas_v2.h"
@@ -48,7 +47,5 @@
 namespace OpenNN
 {
     typedef float type;
-
-    using namespace std;
 }
 

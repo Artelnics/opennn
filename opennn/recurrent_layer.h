@@ -35,11 +35,10 @@ struct RecurrentLayerBackPropagation;
 
 
 #ifdef OPENNN_CUDA
-        #include "../../opennn-cuda/opennn-cuda/struct_recurrent_layer_cuda.h"
+        #include "../../opennn-cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
 #endif
 
-/// This class represents a recurrent layer of neurons.
-
+/// This class represents a layer of neurons.
 /// Layers of neurons will be used to construct multilayer neurons.
 
 class RecurrentLayer : public Layer
@@ -86,6 +85,10 @@ public:
 
    Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
+
+   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
+   Tensor<type, 2> get_input_weights(const Tensor<type, 1>&) const;
+   Tensor<type, 2> get_recurrent_weights(const Tensor<type, 1>&) const;
 
    // Activation functions
 
@@ -161,6 +164,7 @@ public:
                                           Tensor<type, 1>&,
                                           Tensor<type, 1>&) const;
 
+
    // neuron layer outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
@@ -170,9 +174,8 @@ public:
    void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, LayerForwardPropagation*);
 
    void calculate_hidden_delta(LayerForwardPropagation*,
-       LayerBackPropagation*,
-       LayerForwardPropagation*,
-       LayerBackPropagation*) const;
+                               LayerBackPropagation*,
+                               LayerBackPropagation*) const;
 
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,
@@ -244,12 +247,10 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/recurrent_layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/recurrent_layer_cuda.h"
 #else
 };
 #endif
-
-/// This structure contains information for the forward propagation of the recurrent layer.
 
 struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {
@@ -299,8 +300,6 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 2> activations_derivatives;
 };
 
-
-/// This structure contains information for the back propagation of the recurrent layer.
 
 struct RecurrentLayerBackPropagation : LayerBackPropagation
 {

@@ -124,7 +124,6 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_forget_weights() const
     return forget_weights;
 }
 
-
 /// Returns the input weights from the lstm.
 /// The format is a matrix of real values.
 /// The number of rows is the number of inputs in the layer.
@@ -484,7 +483,7 @@ void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_numbe
 
 
 /// Sets the forget biases of all lstm in the layer from a single vector.
-/// @param new_biases New set of forget biases in the layer.
+/// @param new_forget_biases New set of forget biases in the layer.
 
 void LongShortTermMemoryLayer::set_forget_biases(const Tensor<type, 1>& new_biases)
 {
@@ -493,7 +492,7 @@ void LongShortTermMemoryLayer::set_forget_biases(const Tensor<type, 1>& new_bias
 
 
 /// Sets the input biases of all lstm in the layer from a single vector.
-/// @param new_biases New set of input biases in the layer.
+/// @param new_input_biases New set of input biases in the layer.
 
 void LongShortTermMemoryLayer::set_input_biases(const Tensor<type, 1>& new_biases)
 {
@@ -502,7 +501,7 @@ void LongShortTermMemoryLayer::set_input_biases(const Tensor<type, 1>& new_biase
 
 
 /// Sets the state biases of all lstm in the layer from a single vector.
-/// @param new_biases New set of state biases in the layer.
+/// @param new_state_biases New set of state biases in the layer.
 
 void LongShortTermMemoryLayer::set_state_biases(const Tensor<type, 1>& new_biases)
 {
@@ -511,7 +510,7 @@ void LongShortTermMemoryLayer::set_state_biases(const Tensor<type, 1>& new_biase
 
 
 /// Sets the output biases of all lstm in the layer from a single vector.
-/// @param new_biases New set of output biases in the layer.
+/// @param new_output_biases New set of output biases in the layer.
 
 void LongShortTermMemoryLayer::set_output_biases(const Tensor<type, 1>& new_biases)
 {
@@ -535,7 +534,7 @@ void LongShortTermMemoryLayer::set_forget_weights(const Tensor<type, 2>& new_for
 /// The format is a matrix of real numbers.
 /// The number of rows is the number of inputs in the corresponding layer.
 /// The number of columns is the number of neurons to the corresponding layer.
-/// @param new_input_weight New set of input weights in that layer.
+/// @param new_input_weights New set of input weights in that layer.
 
 void LongShortTermMemoryLayer::set_input_weights(const Tensor<type, 2>& new_input_weight)
 {
@@ -559,7 +558,7 @@ void LongShortTermMemoryLayer::set_state_weights(const Tensor<type, 2>& new_stat
 /// The format is a matrix of real numbers.
 /// The number of rows is the number of inputs in the corresponding layer.
 /// The number of columns is the number of neurons to the corresponding layer.
-/// @param new_output_weight New set of output weights in that layer.
+/// @param new_output_weights New set of output weights in that layer.
 
 void LongShortTermMemoryLayer::set_output_weights(const Tensor<type, 2>& new_output_weight)
 {
@@ -572,7 +571,7 @@ void LongShortTermMemoryLayer::set_output_weights(const Tensor<type, 2>& new_out
 /// The format is a matrix of real numbers.
 /// The number of rows is the number of neurons in the corresponding layer.
 /// The number of columns is the number of neurons to the corresponding layer.
-/// @param new_forget_recurrent_weight New set of forget recurrent weights in that layer.
+/// @param new_forget_recurrent_weights New set of forget recurrent weights in that layer.
 
 void LongShortTermMemoryLayer::set_forget_recurrent_weights(const Tensor<type, 2>& new_forget_recurrent_weight)
 {
@@ -584,7 +583,7 @@ void LongShortTermMemoryLayer::set_forget_recurrent_weights(const Tensor<type, 2
 /// The format is a matrix of real numbers.
 /// The number of rows is the number of neurons in the corresponding layer.
 /// The number of columns is the number of neurons to the corresponding layer.
-/// @param new_input_recurrent_weight New set of input recurrent weights in that layer.
+/// @param new_input_recurrent_weights New set of input recurrent weights in that layer.
 
 
 void LongShortTermMemoryLayer::set_input_recurrent_weights(const Tensor<type, 2>& new_input_recurrent_weight)
@@ -597,7 +596,7 @@ void LongShortTermMemoryLayer::set_input_recurrent_weights(const Tensor<type, 2>
 /// The format is a matrix of real numbers.
 /// The number of rows is the number of neurons in the corresponding layer.
 /// The number of columns is the number of neurons to the corresponding layer.
-/// @param new_state_recurrent_weight New set of state recurrent weights in that layer.
+/// @param new_state_recurrent_weights New set of state recurrent weights in that layer.
 
 void LongShortTermMemoryLayer::set_state_recurrent_weights(const Tensor<type, 2>& new_state_recurrent_weight)
 {
@@ -609,7 +608,7 @@ void LongShortTermMemoryLayer::set_state_recurrent_weights(const Tensor<type, 2>
 /// The format is a matrix of real numbers.
 /// The number of rows is the number of neurons in the corresponding layer.
 /// The number of columns is the number of neurons to the corresponding layer.
-/// @param new_output_recurrent_weight New set of output recurrent weights in that layer.
+/// @param new_output_recurrent_weights New set of output recurrent weights in that layer.
 
 void LongShortTermMemoryLayer::set_output_recurrent_weights(const Tensor<type, 2>& new_output_recurrent_weight)
 {
@@ -619,7 +618,6 @@ void LongShortTermMemoryLayer::set_output_recurrent_weights(const Tensor<type, 2
 
 /// Sets the parameters of this layer.
 /// @param new_parameters Parameters vector for that layer.
-/// @index index Index for that layer.
 
 void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
@@ -727,9 +725,9 @@ void LongShortTermMemoryLayer::set_activation_function(const LongShortTermMemory
 }
 
 
-/// Sets a new activation (or transfer) function in a single layer.
+/// Sets a new activation(or transfer) function in a single layer.
 /// The argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
-/// @param new_activation_function_name Activation function for that layer.
+/// @param new_activation_function Activation function for that layer.
 
 void LongShortTermMemoryLayer::set_activation_function(const string& new_activation_function_name)
 {
@@ -801,7 +799,7 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const LongShort
 
 /// Sets a new recurrent activation(or transfer) function in a single layer.
 /// The argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
-/// @param new_recurrent_activation_function_name Recurrent activation function for that layer.
+/// @param new_recurrent_activation_function Recurrent activation function for that layer.
 
 void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& new_recurrent_activation_function_name)
 {
@@ -1648,9 +1646,8 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
 
 void LongShortTermMemoryLayer::calculate_hidden_delta(LayerForwardPropagation* next_forward_propagation,
-    LayerBackPropagation* next_back_propagation,
-    LayerForwardPropagation* forward_propagation,
-    LayerBackPropagation* back_propagation) const
+                                                      LayerBackPropagation* next_back_propagation,
+                                                      LayerBackPropagation* back_propagation) const
 {
     LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
             static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation);

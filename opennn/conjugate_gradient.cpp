@@ -23,7 +23,7 @@ ConjugateGradient::ConjugateGradient()
 }
 
 
-/// Constructor.
+/// Destructor.
 /// It creates a conjugate gradient optimization algorithm associated to a loss index object.
 /// It also initializes the rest of class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -211,6 +211,7 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
 /// <li> Reserve training error history: false.
 /// <li> Reserve training direction norm history: false.
 /// </ul>
+///
 
 void ConjugateGradient::set_default()
 {
@@ -260,7 +261,7 @@ void ConjugateGradient::set_maximum_selection_failures(const Index& new_maximum_
 
 
 /// Sets a maximum number of epochs for training.
-/// @param new_maximum_epochs_number Maximum number of epochs for training.
+/// @param new_maximum_iterations_number Maximum number of epochs for training.
 
 void ConjugateGradient::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
@@ -487,7 +488,6 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 /// @param old_gradient Previous error function gradient.
 /// @param gradient Current error function gradient.
 /// @param old_training_direction Previous training direction vector.
-/// @param training_direction Current training direction vector.
 
 void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& old_gradient,
                                                         const Tensor<type, 1>& gradient,
@@ -557,7 +557,6 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
 /// @param old_gradient Previous error function gradient.
 /// @param gradient Current error function gradient.
 /// @param old_training_direction Previous training direction vector.
-/// @param training_direction Current training direction vector.
 
 void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& old_gradient,
                                                         const Tensor<type, 1>& gradient,
@@ -638,7 +637,6 @@ void ConjugateGradient::calculate_gradient_descent_training_direction(const Tens
 /// @param old_gradient Gradient vector in the previous iteration.
 /// @param gradient Current gradient vector.
 /// @param old_training_direction Training direction in the previous iteration.
-/// @param training_direction Current training direction.
 
 void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Tensor<type, 1>& old_gradient,
                                                                         const Tensor<type, 1>& gradient,

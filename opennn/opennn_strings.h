@@ -57,12 +57,6 @@ namespace OpenNN
 
     void replace(string&, const string&, const string&);
     void replace_substring(Tensor<string, 1>&, const string& , const string&);
-
-    string create_character_list(const string&);
-
-    Tensor<type,2> text_to_one_hot(const string&, const string&);
-
-    string one_hot_to_text(Tensor<type,2>&, const string&);
 }
 
 #endif // OPENNNSTRINGS_H

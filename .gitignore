@@ -34,10 +34,6 @@ Icon
 .Trashes
 .VolumeIcon.icns
 
-# Directories created by Visual Studio
-
-.vs
-
 # Directories potentially created on remote AFP share
 .AppleDB
 .AppleDesktop
@@ -89,10 +85,6 @@ Makefile.in
 *.i*86
 *.x86_64
 *.hex
-
-# User files
-
-*.user
 
 # Debug files
 *.dSYM/

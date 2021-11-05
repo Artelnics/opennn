@@ -35,7 +35,7 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
         training_strategy.perform_training();
 

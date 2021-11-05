@@ -205,7 +205,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
 
 /// Sets the normalization coefficient from selection samples.
-/// @param new_selection_normalization_coefficient New normalization coefficient to be set.
+/// @param new_normalization_coefficient New normalization coefficient to be set.
 
 void NormalizedSquaredError::set_selection_normalization_coefficient(const type& new_selection_normalization_coefficient)
 {
@@ -259,7 +259,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
     const Index size = targets.dimension(0);
 
-    type normalization_coefficient = type(0.0);
+    type normalization_coefficient = type(0);
 
     for(Index i = 0; i < size; i++)
     {
@@ -268,7 +268,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
         normalization_coefficient += norm(0);
     }
 
-    if(static_cast<type>(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) normalization_coefficient = type(1.0);
+    if(static_cast<type>(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) normalization_coefficient = type(1);
 
     return normalization_coefficient;
 }
@@ -276,6 +276,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
 /// \brief NormalizedSquaredError::calculate_error
 /// \param batch
+/// \param forward_propagation
 /// \param back_propagation
 
 void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
@@ -298,14 +299,15 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
 
     Tensor<type, 0> sum_squared_error;
 
-    sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
+    sum_squared_error.device(*thread_pool_device) =  back_propagation.errors.contract(back_propagation.errors, SSE);
 
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
     const type coefficient = ((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-    back_propagation.error = sum_squared_error(0)/coefficient;
+    back_propagation.error
+            = sum_squared_error(0)/coefficient;
 }
 
 
@@ -341,7 +343,7 @@ void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
 
 void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                                    NeuralNetworkForwardPropagation& forward_propagation,
+                                                    NeuralNetworkForwardPropagation&,
                                                     LossIndexBackPropagation& back_propagation) const
 {
 #ifdef OPENNN_DEBUG
@@ -352,7 +354,6 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
     Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
@@ -376,7 +377,6 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
     case Layer::Type::Probabilistic:
     {
-
         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
                 = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 

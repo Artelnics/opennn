@@ -100,7 +100,7 @@ void check_stdlist_quaternion(const QuaternionType&)
   VERIFY_IS_APPROX(v.back(), x);
 }
 
-EIGEN_DECLARE_TEST(stdlist)
+void test_stdlist()
 {
   // some non vectorizable fixed sizes
   CALL_SUBTEST_1(check_stdlist_matrix(Vector2f()));

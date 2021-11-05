@@ -9,77 +9,77 @@
       <ScalingLayer>
          <ScalingNeuronsNumber>2</ScalingNeuronsNumber>
          <ScalingNeuron Index="1">
-            <Minimum>0</Minimum>
+            <Minimum>-1</Minimum>
             <Maximum>1</Maximum>
-            <Mean>0.5</Mean>
-            <StandardDeviation>0.57735</StandardDeviation>
-            <Scaler>MinimumMaximum</Scaler>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
          <ScalingNeuron Index="2">
-            <Minimum>0</Minimum>
+            <Minimum>-1</Minimum>
             <Maximum>1</Maximum>
-            <Mean>0.5</Mean>
-            <StandardDeviation>0.57735</StandardDeviation>
-            <Scaler>MinimumMaximum</Scaler>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
          </ScalingNeuron>
       </ScalingLayer>
       <PerceptronLayer>
-         <LayerName>perceptron_layer_1</LayerName>
+         <LayerName>perceptron_layer_0</LayerName>
          <InputsNumber>2</InputsNumber>
          <NeuronsNumber>6</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>-0.113537 0.112061 -0.0782958 0.0644652 0.0278807 -0.157959 0.0478636 0.000952274 0.083777 0.0478636 0.00124499 0.153979 0.00777575 -0.141308 0.0242675 -0.0932738 -0.0807372 -0.0905153</Parameters>
+         <Parameters>-0.559435 0.562031 0.0150081 0.240913 1.16944 0.0119609 0.984108 -1.35464 1.35457 -0.985578 0.0514883 0.0492923 -1.25371 -1.25354 -0.750202 -0.75207 -0.0105921 -0.0136781</Parameters>
       </PerceptronLayer>
       <PerceptronLayer>
-         <LayerName>perceptron_layer_2</LayerName>
+         <LayerName>perceptron_layer_1</LayerName>
          <InputsNumber>6</InputsNumber>
          <NeuronsNumber>6</NeuronsNumber>
          <ActivationFunction>Linear</ActivationFunction>
-         <Parameters>-0.16748 -0.149133 -0.172119 -0.182373 -0.165002 -0.0240233 -0.0849977 -0.0115722 0.167554 0.0192994 -0.0652465 0.062036 -0.197937 -0.0119874 0.097058 0.114319 0.193994 -0.133325 -0.004724 0.124023 0.130688 0.122412 -0.0592406 -0.181006 -0.157092 0.0201537 0.0670409 0.0136718 -0.1578 0.160583 -0.0339843 -0.0494384 0.146545 -0.146765 -0.181384 0.158118 0.156763 0.137268 0.182605 0.137451 0.0462157 -0.137683</Parameters>
+         <Parameters>-0.0106421 0.372348 0.586378 0.208179 0.381784 0.194148 -0.556309 0.557384 0.0401819 0.0351961 -0.686628 -0.0137688 0.18101 -0.181256 0.042532 -0.921285 0.0397124 -0.00221544 0.351479 -0.352862 -0.017284 -0.267701 1.0138 0.0125941 -0.383525 0.383468 -0.0201392 0.691361 0.2837 0.00478353 0.736828 -0.73814 0.00469091 -0.956929 0.727402 0.0033458 -0.941524 0.942518 0.0196121 0.724602 -0.400393 -0.00247133</Parameters>
       </PerceptronLayer>
       <UnscalingLayer>
          <UnscalingNeuronsNumber>6</UnscalingNeuronsNumber>
          <Descriptives Index="1">
-            <Minimum>0</Minimum>
+            <Minimum>-1</Minimum>
             <Maximum>1</Maximum>
-            <Mean>0.25</Mean>
-            <StandardDeviation>0.5</StandardDeviation>
-            <Scaler>MinimumMaximum</Scaler>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <UnscalingMethod>MinimumMaximum</UnscalingMethod>
          </Descriptives>
          <Descriptives Index="2">
-            <Minimum>0</Minimum>
+            <Minimum>-1</Minimum>
             <Maximum>1</Maximum>
-            <Mean>0.75</Mean>
-            <StandardDeviation>0.5</StandardDeviation>
-            <Scaler>MinimumMaximum</Scaler>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <UnscalingMethod>MinimumMaximum</UnscalingMethod>
          </Descriptives>
          <Descriptives Index="3">
-            <Minimum>0</Minimum>
+            <Minimum>-1</Minimum>
             <Maximum>1</Maximum>
-            <Mean>0.75</Mean>
-            <StandardDeviation>0.5</StandardDeviation>
-            <Scaler>MinimumMaximum</Scaler>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <UnscalingMethod>MinimumMaximum</UnscalingMethod>
          </Descriptives>
          <Descriptives Index="4">
-            <Minimum>0</Minimum>
+            <Minimum>-1</Minimum>
             <Maximum>1</Maximum>
-            <Mean>0.25</Mean>
-            <StandardDeviation>0.5</StandardDeviation>
-            <Scaler>MinimumMaximum</Scaler>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <UnscalingMethod>MinimumMaximum</UnscalingMethod>
          </Descriptives>
          <Descriptives Index="5">
-            <Minimum>0</Minimum>
+            <Minimum>-1</Minimum>
             <Maximum>1</Maximum>
-            <Mean>0.5</Mean>
-            <StandardDeviation>0.57735</StandardDeviation>
-            <Scaler>MinimumMaximum</Scaler>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <UnscalingMethod>MinimumMaximum</UnscalingMethod>
          </Descriptives>
          <Descriptives Index="6">
-            <Minimum>0</Minimum>
+            <Minimum>-1</Minimum>
             <Maximum>1</Maximum>
-            <Mean>0.5</Mean>
-            <StandardDeviation>0.57735</StandardDeviation>
-            <Scaler>MinimumMaximum</Scaler>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <UnscalingMethod>MinimumMaximum</UnscalingMethod>
          </Descriptives>
       </UnscalingLayer>
       <BoundingLayer>

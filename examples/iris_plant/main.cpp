@@ -33,6 +33,8 @@ int main()
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Data set
+
         DataSet data_set("../data/iris_plant_original.csv", ';', true);
 
         const Index input_variables_number = data_set.get_input_variables_number();
@@ -50,25 +52,40 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
         training_strategy.perform_training();
+
+        // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
+        Tensor<type, 2> inputs(3, 4);
+
+        inputs.setValues({{type(5.1),type(3.5),type(1.4),type(0.2)},
+                          {type(6.4),type(3.2),type(4.5),type(1.5)},
+                          {type(6.3),type(2.7),type(4.9),type(1.8)}});
+
+        cout << "Inputs: " << endl;
+        cout << inputs << endl;
+
+        cout << "Outputs: " << endl;
+        cout << neural_network.calculate_outputs(inputs) << endl;
+
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
-        neural_network.save_expression_python("D:/opennn/examples/iris_plant/data/neural_network.py");
+        cout << "Confusion: " << endl;
+        cout << confusion << endl;
 
-        system("pause");
+        // Save results
+
+        neural_network.save("../data/neural_network.xml");
+        neural_network.save_expression_c("../data/neural_network.c");
+        neural_network.save_expression_python("../data/neural_network.py");
 
         return 0;
     }
     catch(exception& e)
     {
         cout << e.what() << endl;
-
-        system("pause");
 
         return 1;
     }

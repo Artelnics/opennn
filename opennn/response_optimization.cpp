@@ -32,11 +32,11 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
     outputs_conditions.resize(outputs_number);
     outputs_conditions.setConstant(Condition::Minimum);
 
-//    inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
-//    inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
+    inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
+    inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
 
-//    outputs_minimums = neural_network_pointer->get_bounding_layer_pointer()->get_lower_bounds();
-//    outputs_maximums = neural_network_pointer->get_bounding_layer_pointer()->get_upper_bounds();
+    outputs_minimums = neural_network_pointer->get_bounding_layer_pointer()->get_lower_bounds();
+    outputs_maximums = neural_network_pointer->get_bounding_layer_pointer()->get_upper_bounds();
 }
 
 

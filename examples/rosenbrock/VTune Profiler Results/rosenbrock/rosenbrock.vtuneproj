@@ -2,19 +2,19 @@
 <root>
  <connectionOption>localhost</connectionOption>
  <rdmgr>
-  <timestamp type="u64_t">1632564045</timestamp>
-  <hostname>DESKTOP-5PN25MA</hostname>
+  <timestamp type="u64_t">1626968761</timestamp>
+  <hostname>DESKTOP-2UK71RH</hostname>
   <os>windows</os>
   <product>Intel® oneAPI VTune™ Profiler 2021.5.0</product>
   <buildNumber type="s32_t">618064</buildNumber>
-  <logicalCPUCount type="s32_t">12</logicalCPUCount>
-  <physicalCoreCount type="s32_t">6</physicalCoreCount>
+  <logicalCPUCount type="s32_t">16</logicalCPUCount>
+  <physicalCoreCount type="s32_t">8</physicalCoreCount>
   <processorPackageCount type="s32_t">1</processorPackageCount>
-  <CPUFrequency type="s64_t">3200000000</CPUFrequency>
-  <CPUFamily type="s32_t">6</CPUFamily>
-  <CPUModel type="s32_t">158</CPUModel>
-  <CPUStepping type="s32_t">10</CPUStepping>
-  <CPUBrandName>Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz</CPUBrandName>
+  <CPUFrequency type="s64_t">3800000000</CPUFrequency>
+  <CPUFamily type="s32_t">23</CPUFamily>
+  <CPUModel type="s32_t">1</CPUModel>
+  <CPUStepping type="s32_t">1</CPUStepping>
+  <CPUBrandName>AMD Ryzen Threadripper 1900X 8-Core Processor  </CPUBrandName>
   <isa>avx2</isa>
  </rdmgr>
  <vs_search_dirs>
@@ -22,22 +22,17 @@
    <searchCategory>
     <category type="u8_t">1</category>
     <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\oneAPI\compiler\2021.3.0\windows\bin</name>
+     <name>..\..\..\opennn-build\x64\Release</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\oneAPI\compiler\2021.3.0\windows\bin\Intel64</name>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\bin\HostX86\x64</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64</name>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\bin\HostX86\x86</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
@@ -62,22 +57,7 @@
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\WINDOWS\Microsoft.NET\Framework64\v4.0.30319\</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\WINDOWS\Microsoft.NET\Framework\v4.0.30319\</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.4\bin</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.4\libnvvp</name>
+     <name>C:\Windows\Microsoft.NET\Framework\v4.0.30319\</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
@@ -92,12 +72,7 @@
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\iCLS\</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files\Intel\Intel(R) Management Engine Components\iCLS\</name>
+     <name>C:\Program Files (x86)\Common Files\Oracle\Java\javapath</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
@@ -122,41 +97,6 @@
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\DAL</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files\Intel\Intel(R) Management Engine Components\DAL</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\IPT</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files\Intel\Intel(R) Management Engine Components\IPT</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files\Intel\WiFi\bin\</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files\Common Files\Intel\WirelessCommon\</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
      <name>C:\Program Files\TortoiseSVN\bin</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
@@ -167,42 +107,37 @@
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
+     <name>C:\Program Files\NVIDIA Corporation\Nsight Compute 2020.3.0\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
      <name>C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Program Files\MATLAB\R2021a\bin</name>
+     <name>C:\Program Files\AutoFirma\AutoFirma</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Program Files\NVIDIA Corporation\Nsight Compute 2021.2.2\</name>
+     <name>C:\Users\ROBERTO\AppData\Local\Microsoft\WindowsApps</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Users\Artelnics\AppData\Local\Microsoft\WindowsApps</name>
+     <name>C:\Users\ROBERTO\AppData\Local\GitHubDesktop\bin</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Users\Artelnics\AppData\Local\Programs\Microsoft VS Code\bin</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Users\Artelnics\AppData\Local\GitHubDesktop\bin</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Users\Artelnics\AppData\Local\Programs\MiKTeX\miktex\bin\x64\</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>D:\opennn</name>
+     <name>C:\opennn</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
@@ -210,7 +145,12 @@
    <searchCategory>
     <category type="u8_t">2</category>
     <searchDirectory>
-     <name>D:\opennn</name>
+     <name>..\..\..\opennn-build\x64\Release</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\opennn</name>
      <recursive type="bool">true</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
@@ -218,17 +158,17 @@
    <searchCategory>
     <category type="u8_t">3</category>
     <searchDirectory>
-     <name>D:\opennn\examples\rosenbrock</name>
+     <name>C:\opennn\examples\rosenbrock</name>
      <recursive type="bool">true</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\atlmfc\src\atl</name>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\atlmfc\src\atl</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\crt\src</name>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\crt\src</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
@@ -238,47 +178,12 @@
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\oneAPI\tbb\2021.3.0\include</name>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
     <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\oneAPI\mkl\2021.3.0\include</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\oneAPI\mkl\2021.3.0\include\fftw</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\oneAPI\mkl\2021.3.0\include\intel64</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\oneAPI\ipp\2021.3.0\include</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\oneAPI\compiler\2021.3.0\windows\include</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files (x86)\Intel\oneAPI\compiler\2021.3.0\windows\compiler\include</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include</name>
-     <recursive type="bool">false</recursive>
-     <priority type="bool">false</priority>
-    </searchDirectory>
-    <searchDirectory>
-     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\atlmfc\include</name>
+     <name>C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\atlmfc\include</name>
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
@@ -323,6 +228,7 @@
    </searchCategory>
   </searchDirs>
  </vs_search_dirs>
+ <contextValues type="bag"/>
  <All_Configurations-All_Platforms>
   <target_settings>
    <selected_workload>
@@ -334,11 +240,11 @@
       <workload>
        <targetName>launch</targetName>
        <use_app_dir_as_work_dir type="bool">true</use_app_dir_as_work_dir>
-       <launch_app.app_to_launch>D:\opennn-build\x64\Release\rosenbrock.exe</launch_app.app_to_launch>
+       <launch_app.app_to_launch>C:\opennn-build\x64\Release\rosenbrock.exe</launch_app.app_to_launch>
        <launch_app.app_parameters></launch_app.app_parameters>
-       <launch_app.environment>PATH=C:\Program Files (x86)\Intel\oneAPI\compiler\2021.3.0\windows\redist\intel64_win\compiler;C:\Program Files (x86)\Intel\oneAPI\mkl\2021.3.0\redist\intel64;%PATH%</launch_app.environment>
-       <result_directory.path>D:\opennn\examples\rosenbrock\VTune Profiler Results\rosenbrock\r@@@{at}</result_directory.path>
-       <launch_app.working_folder>D:\opennn-build\x64\Release</launch_app.working_folder>
+       <launch_app.environment></launch_app.environment>
+       <result_directory.path>C:\opennn\examples\rosenbrock\VTune Profiler Results\rosenbrock\r@@@{at}</result_directory.path>
+       <launch_app.working_folder>C:\opennn-build\x64\Release</launch_app.working_folder>
        <context>
         <contextValue>
          <id>allowMultipleRuns</id>
@@ -439,7 +345,7 @@
    </workloads>
   </target_settings>
   <analysis_type_settings>
-   <selected_analysis_type_path>C:\Program Files (x86)\Intel\oneAPI\vtune\2021.5.0\config\analysis_type\hotspots.cfg</selected_analysis_type_path>
+   <selected_analysis_type_path>C:\Program Files (x86)\Intel\oneAPI\vtune\2021.5.0\config\analysis_type\survey.cfg</selected_analysis_type_path>
    <localhost>
     <launch>
      <at_start_point>
@@ -447,7 +353,7 @@
       <knob_values>
        <contextValue>
         <id>collectMemoryBW</id>
-        <value type="bool">true</value>
+        <value type="bool">false</value>
        </contextValue>
        <contextValue>
         <id>collectPCIeBW</id>
@@ -471,50 +377,8 @@
        </contextValue>
       </knob_values>
      </at_start_point>
-     <at_start_point>
-      <at_path>C:\Program Files (x86)\Intel\oneAPI\vtune\2021.5.0\config\analysis_type\hotspots.cfg</at_path>
-      <knob_values>
-       <contextValue>
-        <id>enableCharacterizationInsights</id>
-        <value type="bool">true</value>
-       </contextValue>
-       <contextValue>
-        <id>enableStackCollect</id>
-        <value type="bool">false</value>
-       </contextValue>
-       <contextValue>
-        <id>goodFastFrameThreshold</id>
-        <value type="double">100</value>
-       </contextValue>
-       <contextValue>
-        <id>groupForCustomControl</id>
-        <value type="null"></value>
-       </contextValue>
-       <contextValue>
-        <id>initialViewpoint</id>
-        <value>%HotspotsByCPUUsageViewpointName</value>
-       </contextValue>
-       <contextValue>
-        <id>samplingInterval</id>
-        <value type="double">1</value>
-       </contextValue>
-       <contextValue>
-        <id>samplingMode</id>
-        <value>sw</value>
-       </contextValue>
-       <contextValue>
-        <id>slowGoodFrameThreshold</id>
-        <value type="double">40</value>
-       </contextValue>
-       <contextValue>
-        <id>stackSizeCollect</id>
-        <value>0</value>
-       </contextValue>
-      </knob_values>
-     </at_start_point>
     </launch>
    </localhost>
   </analysis_type_settings>
  </All_Configurations-All_Platforms>
- <contextValues type="bag"/>
 </root>

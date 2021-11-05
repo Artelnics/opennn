@@ -64,7 +64,7 @@ void MinkowskiError::set_default()
 }
 
 
-/// Sets a new Minkowski exponent value to be used to calculate the error.
+/// Sets a new Minkowski exponent value to be used in order to calculate the error.
 /// The Minkowski R-value must be comprised between 1 and 2.
 /// @param new_Minkowski_parameter Minkowski exponent value.
 
@@ -111,12 +111,11 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
 
 
 void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
-                                            NeuralNetworkForwardPropagation& forward_propagation,
+                                            NeuralNetworkForwardPropagation&,
                                             LossIndexBackPropagation& back_propagation) const
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
     const Tensor<type, 0> p_norm_derivative =
@@ -128,9 +127,6 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     {
     case Layer::Type::Perceptron:
     {
-        PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-            = static_cast<PerceptronLayerForwardPropagation*>(output_layer_forward_propagation);
-
         PerceptronLayerBackPropagation* perceptron_layer_back_propagation
                 = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
@@ -151,15 +147,13 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
 
     case Layer::Type::Probabilistic:
     {
-        ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
-
         ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
                 = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 
         if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
         {
             probabilistic_layer_back_propagation->delta.setZero();
+
         }
         else
         {
@@ -170,7 +164,6 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                     (type(1.0/batch_samples_number))*probabilistic_layer_back_propagation->delta/p_norm_derivative();
         }
     }
-
         break;
 
     case Layer::Type::Recurrent:

@@ -42,7 +42,7 @@ LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer, DataSet* new_dat
 
 LossIndex::~LossIndex()
 {
-    delete thread_pool;
+    delete non_blocking_thread_pool;
     delete thread_pool_device;
 }
 
@@ -174,11 +174,11 @@ void LossIndex::set(const LossIndex& other_error_term)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete this->thread_pool;
+    if(non_blocking_thread_pool != nullptr) delete this->non_blocking_thread_pool;
     if(thread_pool_device != nullptr) delete this->thread_pool_device;
 
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+    non_blocking_thread_pool = new NonBlockingThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, new_threads_number);
 }
 
 
@@ -203,13 +203,13 @@ void LossIndex::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 void LossIndex::set_default()
 {
-    delete thread_pool;
+    delete non_blocking_thread_pool;
     delete thread_pool_device;
 
     const int n = omp_get_max_threads();
 
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     regularization_method = RegularizationMethod::L2;
 }
@@ -255,7 +255,7 @@ void LossIndex::set_regularization_method(const LossIndex::RegularizationMethod&
 
 
 /// Sets the object with the regularization weights.
-/// @param new_regularization_weight New regularization weight.
+/// @param new_regularization_method New regularization weight.
 
 void LossIndex::set_regularization_weight(const type& new_regularization_weight)
 {
@@ -322,7 +322,6 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
                                  const NeuralNetworkForwardPropagation& forward_propagation,
                                  LossIndexBackPropagation& back_propagation) const
 {
-
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     switch(forward_propagation.layers(trainable_layers_number-1)->layer_pointer->get_type())
@@ -502,9 +501,9 @@ void LossIndex::back_propagate_lm(const DataSetBatch& batch,
 /// The Jacobian elements are the partial derivatives of a single term with respect to a single parameter.
 /// The number of rows in the Jacobian matrix are the number of parameters, and the number of columns
 /// the number of terms composing the objective.
-/// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
-/// @param forward_propagation NeuralNetwork class structure that saves the necessary parameters for forward propagation.
-/// @param loss_index_back_propagation_lm Loss index class structure that saves the necessary parameters for back propagation.
+/// @param inputs Tensor with inputs.
+/// @param layers_activations vector of tensors with layers activations.
+/// @param layers_delta vector of tensors with layers delta.
 
 void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
                                                   NeuralNetworkForwardPropagation& forward_propagation,
@@ -661,12 +660,11 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
 }
 
 
-/// It calculates the regularization term using the gradient method.
+/// It calculate the regularization term using the gradient method.
 /// Returns the gradient of the regularization, according to the regularization type.
 /// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
-/// The size is thus the number of parameters.
+/// The size is thus the number of parameters
 /// @param parameters vector with the parameters to get the regularization term.
-/// @param regularization_gradient Gradient of the regularization.
 
 void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& parameters, Tensor<type, 1>& regularization_gradient) const
 {
@@ -686,7 +684,6 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
 /// That Hessian is the matrix of second partial derivatives of the regularization with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
 /// @param parameters vector with the parameters to get the regularization term.
-/// @param regularization_hessian Hessian of the regularization.
 
 void LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& parameters, Tensor<type, 2>& regularization_hessian) const
 {
@@ -724,7 +721,6 @@ void LossIndex::calculate_layers_delta(const DataSetBatch& batch,
         trainable_layers_pointers(i)
                 ->calculate_hidden_delta(forward_propagation.layers(i+1),
                                          back_propagation.neural_network.layers(i+1),
-                                         forward_propagation.layers(i),
                                          back_propagation.neural_network.layers(i));
     }
 }
@@ -1019,8 +1015,6 @@ LossIndexBackPropagation::~LossIndexBackPropagation()
 
 Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
 {
-    // Data set
-
     const Index samples_number = data_set_pointer->get_training_samples_number();
 
     const Tensor<Index, 1> samples_indices = data_set_pointer->get_training_samples_indices();
@@ -1030,17 +1024,13 @@ Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
     DataSetBatch batch(samples_number, data_set_pointer);
     batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
-    // Neural network
-
     NeuralNetworkForwardPropagation forward_propagation(samples_number, neural_network_pointer);
+
+    LossIndexBackPropagation back_propagation(samples_number, this);
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
     const Index parameters_number = parameters.size();
-
-    // Loss index
-
-    LossIndexBackPropagation back_propagation(samples_number, this);
 
     type h;
     Tensor<type, 1> parameters_forward(parameters);

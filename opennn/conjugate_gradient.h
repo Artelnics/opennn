@@ -33,10 +33,10 @@ namespace OpenNN
 
 struct ConjugateGradientData;
 
-/// This concrete class represents a conjugate gradient optimization algorithm, based on solving sparse systems.
-
 /// In the conjugate gradient algorithms a search is performed along conjugate directions,
 /// which produces generally faster convergence than a search along the steepest descent directions.
+
+/// This concrete class represents a conjugate gradient training algorithm, based on solving sparse systems.
 ///
 /// \cite 1 \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 ///
@@ -181,8 +181,6 @@ private:
    type maximum_time;
 };
 
-
-/// This structure contains the data for the conjugate gradient optimization algorithm.
 
 struct ConjugateGradientData : public OptimizationAlgorithmData
 {

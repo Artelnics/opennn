@@ -18,8 +18,6 @@
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
-//#include "../../eigen/unsupported/Eigen/CXX11/Tensor"
-
 
 using namespace OpenNN;
 using namespace std;
@@ -29,12 +27,14 @@ int main()
 {          
     try
     {
-        cout << "OpenNN. Rosenbrock Example." << endl;     
-
+        cout << "OpenNN. Rosenbrock Example." << endl;
+        
+        srand(static_cast<unsigned>(time(nullptr)));
+     
         // Data Set
 
-        const Index samples_number = 2000;
-        const Index inputs_number = 1000;
+        const Index samples_number = 10000;
+        const Index inputs_number = 10;
         const Index outputs_number = 1;
         const Index hidden_neurons_number = inputs_number;
 
@@ -54,18 +54,15 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(10);
-//        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(3);
+        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(100);
 
-        TrainingResults training_results = training_strategy.perform_training();
-
-        training_results.print();
-
+        training_strategy.perform_training();
+        
         cout << "End Rosenbrock" << endl;
 
-        //system("pause");
+        system("pause");
 
         return 0;
     }
@@ -75,7 +72,6 @@ int main()
 
         return 1;
     }
-
 }
 
 

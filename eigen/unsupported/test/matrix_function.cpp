@@ -23,7 +23,7 @@ inline bool test_isApprox_abs(const Type1& a, const Type2& b)
 
 // Returns a matrix with eigenvalues clustered around 0, 1 and 2.
 template<typename MatrixType>
-MatrixType randomMatrixWithRealEivals(const Index size)
+MatrixType randomMatrixWithRealEivals(const typename MatrixType::Index size)
 {
   typedef typename MatrixType::Scalar Scalar;
   typedef typename MatrixType::RealScalar RealScalar;
@@ -41,14 +41,14 @@ template <typename MatrixType, int IsComplex = NumTraits<typename internal::trai
 struct randomMatrixWithImagEivals
 {
   // Returns a matrix with eigenvalues clustered around 0 and +/- i.
-  static MatrixType run(const Index size);
+  static MatrixType run(const typename MatrixType::Index size);
 };
 
 // Partial specialization for real matrices
 template<typename MatrixType>
 struct randomMatrixWithImagEivals<MatrixType, 0>
 {
-  static MatrixType run(const Index size)
+  static MatrixType run(const typename MatrixType::Index size)
   {
     typedef typename MatrixType::Scalar Scalar;
     MatrixType diag = MatrixType::Zero(size, size);
@@ -75,7 +75,7 @@ struct randomMatrixWithImagEivals<MatrixType, 0>
 template<typename MatrixType>
 struct randomMatrixWithImagEivals<MatrixType, 1>
 {
-  static MatrixType run(const Index size)
+  static MatrixType run(const typename MatrixType::Index size)
   {
     typedef typename MatrixType::Scalar Scalar;
     typedef typename MatrixType::RealScalar RealScalar;
@@ -210,7 +210,7 @@ void testMapRef(const MatrixType& A)
 }
 
 
-EIGEN_DECLARE_TEST(matrix_function)
+void test_matrix_function()
 {
   CALL_SUBTEST_1(testMatrixType(Matrix<float,1,1>()));
   CALL_SUBTEST_2(testMatrixType(Matrix3cf()));

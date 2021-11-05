@@ -11,14 +11,12 @@
 #include <math.h>
 #include <vector>
 #include <numeric>
-//#include <execution>
 
 // OpenNN includes
 
 #include "config.h"
 
 #include "../eigen/Eigen/Dense"
-#include "../eigen/unsupported/Eigen/KroneckerProduct"
 
 using namespace std;
 using namespace Eigen;
@@ -34,7 +32,6 @@ void divide_columns(Tensor<type, 2>&, const Tensor<type, 1>&);
 bool is_zero(const Tensor<type, 1>&);
 bool is_constant(const Tensor<type, 1>&);
 
-bool is_equal(const Tensor<type, 1>&, const type&, const type& = type(0));
 bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));
 
 bool are_equal(const Tensor<type, 1>&, const Tensor<type, 1>&, const type& = type(0));
@@ -66,9 +63,8 @@ void sum_diagonal(Tensor<type, 2>&, const type&);
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
 void fill_submatrix(const Tensor<type, 2>& matrix,
-    const Tensor<Index, 1>& rows_indices,
-    const Tensor<Index, 1>& columns_indices, 
-    float* submatrix);
+          const Tensor<Index, 1>& rows_indices,
+          const Tensor<Index, 1>& columns_indices, type* submatrix);
 
 Index count_NAN(const Tensor<type, 1>&);
 
@@ -80,16 +76,11 @@ void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
 
 bool is_less_than(const Tensor<type, 1>&, const type&);
 
+
 Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
 Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
-
-Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&);
-Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&);
-
-void kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&,Tensor<type,2>&);
-void kronecker_product(const Tensor<type, 2>&, Tensor<type, 3>&);
 
 }
 

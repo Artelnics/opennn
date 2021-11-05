@@ -10,7 +10,6 @@
 #                               pass the "-lm" linker flag.
 #
 # Copyright (c) 2010 Benoit Jacob <jacob.benoit.1@gmail.com>
-#               2020 Susi Lehtola <susi.lehtola@gmail.com>
 # Redistribution and use is allowed according to the terms of the 2-clause BSD license.
 
 
@@ -18,9 +17,7 @@ include(CheckCXXSourceCompiles)
 
 # a little test program for c++ math functions.
 # notice the std:: is required on some platforms such as QNX
-# notice the (void) is required if -Wall (-Wunused-value) is added to CMAKE_CXX_FLAG
 
-# We read in the arguments from standard input to avoid the compiler optimizing away the calls
 set(find_standard_math_library_test_program
 "
 #include<cmath>

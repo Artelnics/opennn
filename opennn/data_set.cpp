@@ -71,8 +71,7 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 /// It also sets a separator.
 /// Please mind about the file format. This is specified in the User's Guide.
 /// @param data_file_name Data file file name.
-/// @param separator Character set as separator.
-/// @param has_columns_names Whether the data set has column names.
+/// @param separator Data file file name.
 
 DataSet::DataSet(const string& data_file_name, const char& separator, const bool& has_columns_names)
 {
@@ -84,7 +83,7 @@ DataSet::DataSet(const string& data_file_name, const char& separator, const bool
 
 DataSet::~DataSet()
 {
-    delete thread_pool;
+    delete non_blocking_thread_pool;
     delete thread_pool_device;
 }
 
@@ -618,23 +617,36 @@ void DataSet::Column::print() const
     switch (column_use)
     {
     case VariableUse::Input:
+    {
         cout << "Input" << endl;
+    }
         break;
 
     case VariableUse::Target:
+    {
         cout << "Target" << endl;
+
+    }
         break;
 
     case VariableUse::UnusedVariable:
+    {
         cout << "Unused" << endl;
+
+    }
         break;
 
     case VariableUse::Time:
+    {
         cout << "Time" << endl;
+
+    }
         break;
 
     case VariableUse::Id:
+    {
         cout << "Id" << endl;
+    }
         break;
     }
 
@@ -862,7 +874,7 @@ void DataSet::transform_time_series_data()
     const Index old_samples_number = data.dimension(0);
     const Index old_variables_number = data.dimension(1);
 
-    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead-1);
+    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
     const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
 
     time_series_data = data;
@@ -1199,20 +1211,15 @@ const Tensor<DataSet::SampleUse,1 >& DataSet::get_samples_uses() const
 
 
 /// Returns a vector, where each element is a vector that contains the indices of the different batches of the training samples.
-/// @param samples_indices Vector with indeces for samples.
-/// @param batch_samples_number Number of batch samples.
 /// @param shuffle Is a boleean.
-/// @param new_buffer_size Size for new buffer.
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 
-Tensor<Tensor<Index, 1>, 1> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
+Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                                       const Index& batch_samples_number,
                                       const bool& shuffle,
                                       const Index& new_buffer_size) const
 {
     if(!shuffle) return split_samples(samples_indices, batch_samples_number);
-
-    Tensor<Tensor<Index, 1>, 1> batches;
 
     std::random_device rng;
     std::mt19937 urng(rng());
@@ -1225,7 +1232,10 @@ Tensor<Tensor<Index, 1>, 1> DataSet::get_batches(const Tensor<Index,1>& samples_
 
     // When samples_number is less than 100 (small sample)
 
-    if(buffer_size > samples_number) buffer_size = samples_number;
+    if(buffer_size > samples_number)
+    {
+        buffer_size = samples_number;
+    }
 
     // Check batch size and samples number
 
@@ -1237,28 +1247,26 @@ Tensor<Tensor<Index, 1>, 1> DataSet::get_batches(const Tensor<Index,1>& samples_
 
         Tensor<Index,1> samples_copy(samples_indices);
 
-        Tensor<Tensor<Index, 1>, 1> batches(batches_number);
-        for (Index i = 0; i < batches_number; i++) batches(i).resize(batch_size);
+        Tensor<Index, 2> batches(batches_number, batch_size);
 
         // Shuffle
 
         std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
-        for(Index i = 0; i < batch_size; i++)
+        for(Index i = 0; i > batch_size; i++)
         {
-            batches(0)(i) = samples_copy(i);
-        }
+            batches(0,i) = samples_copy(i);
 
+        }
         return batches;
+
     }
     else
     {
         batches_number = samples_number / batch_size;
     }
 
-    //Tensor<Index, 2> batches(batches_number, batch_size);
-    batches.resize(batches_number);
-    for (Index i = 0; i < batches_number; i++) batches(i).resize(batch_size);
+    Tensor<Index, 2> batches(batches_number, batch_size);
 
     Tensor<Index, 1> buffer(buffer_size);
 
@@ -1287,7 +1295,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::get_batches(const Tensor<Index,1>& samples_
                 {
                     for(Index j = 0; j < batch_size; j++)
                     {
-                        batches(k)(j) = buffer(buffer_index);
+                        batches(k,j) = buffer(buffer_index);
 
                         buffer_index++;
                     }
@@ -1302,7 +1310,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::get_batches(const Tensor<Index,1>& samples_
             {
                 random_index = static_cast<Index>(rand()%buffer_size);
 
-                batches(i)(j) = buffer(random_index);
+                batches(i, j) = buffer(random_index);
 
                 buffer(random_index) = samples_indices(next_index);
 
@@ -1328,19 +1336,19 @@ Tensor<Tensor<Index, 1>, 1> DataSet::get_batches(const Tensor<Index,1>& samples_
                 {
                     for(Index j = 0; j < batch_size;j++)
                     {
-                        batches(i)(j) = buffer(j);
+                        batches(i,j) = buffer(j);
                     }
                 }
                 else //buffer_size < batch_size
                 {
                     for(Index j = 0; j < buffer_size; j++)
                     {
-                        batches(i)(j) = buffer(j);
+                        batches(i,j) = buffer(j);
                     }
 
                     for(Index j = buffer_size; j < batch_size; j++)
                     {
-                        batches(i)(j) = samples_indices(next_index);
+                        batches(i,j) = samples_indices(next_index);
 
                         next_index++;
                     }
@@ -1355,18 +1363,17 @@ Tensor<Tensor<Index, 1>, 1> DataSet::get_batches(const Tensor<Index,1>& samples_
             {
                 random_index = static_cast<Index>(rand()%buffer_size);
 
-                batches(i)(j) = buffer(random_index);
+                batches(i, j) = buffer(random_index);
 
                 buffer(random_index) = samples_indices(next_index);
 
                 next_index++;
+
             }
         }
 
         return batches;
     }
-
-    return batches;
 }
 
 
@@ -1970,8 +1977,8 @@ void DataSet::set_default_columns_names()
 
 
 /// Sets the name of a single column.
-/// @param column_index Index of column.
-/// @param new_name Use for that column.
+/// @param index Index of column.
+/// @param new_use Use for that column.
 
 void DataSet::set_column_name(const Index& column_index, const string& new_name)
 {
@@ -2047,7 +2054,7 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
 
 
 /// Returns the name of a single variable in the data set.
-/// @param variable_index Index of variable.
+/// @param index Index of variable.
 
 string DataSet::get_variable_name(const Index& variable_index) const
 {
@@ -3282,8 +3289,8 @@ void DataSet::set_column_type(const string& name, const ColumnType& new_type)
 
 
 /// This method set the name of a single variable.
-/// @param variable_index Index of variable.
-/// @param new_variable_name Name of variable.
+/// @param index Index of variable.
+/// @param new_name Name of variable.
 
 void DataSet::set_variable_name(const Index& variable_index, const string& new_variable_name)
 {
@@ -3343,7 +3350,7 @@ void DataSet::set_variable_name(const Index& variable_index, const string& new_v
 
 /// Sets new names for the variables in the data set from a vector of strings.
 /// The size of that vector must be equal to the total number of variables.
-/// @param new_variables_names Name of variables.
+/// @param new_names Name of variables.
 
 void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
 {
@@ -3553,13 +3560,13 @@ void DataSet::set_binary_simple_columns()
 
                 if(values(0) == type(0) && values(1) == type(1))
                 {
-                    columns(column_index).categories(0) = "Positive (1)";
-                    columns(column_index).categories(1) = "Negative (0)";
+                    columns(column_index).categories(0) = "Negative (0)";
+                    columns(column_index).categories(1) = "Positive (1)";
                 }
                 else if(values(0) == type(1) && values(1) == type(0))
                 {
-                    columns(column_index).categories(0) = "Negative (0)";
-                    columns(column_index).categories(1) = "Positive (1)";
+                    columns(column_index).categories(0) = "Positive (1)";
+                    columns(column_index).categories(1) = "Negative (0)";
                 }
                 else
                 {
@@ -4527,7 +4534,7 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
 void DataSet::set()
 {
-//    ThreadPool* thread_pool = nullptr;
+//    NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
 //    ThreadPoolDevice* thread_pool_device = nullptr;
 
     data.resize(0,0);
@@ -4737,12 +4744,12 @@ void DataSet::set_display(const bool& new_display)
 
 void DataSet::set_default()
 {
-    delete thread_pool;
+    delete non_blocking_thread_pool;
     delete thread_pool_device;
 
     const int n = omp_get_max_threads();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     has_columns_names = false;
 
@@ -4863,7 +4870,7 @@ void DataSet::set_separator(const char& new_separator)
 
 
 /// Sets a new separator from a string.
-/// @param new_separator_string Char with the separator value.
+/// @param new_separator Char with the separator value.
 
 void DataSet::set_separator(const string& new_separator_string)
 {
@@ -4978,7 +4985,7 @@ void DataSet::set_steps_ahead_number(const Index& new_steps_ahead_number)
 
 
 /// Sets the new position where the time data is located in the data set.
-/// @param new_time_column Position where the time data is located.
+/// @param new_time_index Position where the time data is located.
 
 void DataSet::set_time_column(const string& new_time_column)
 {
@@ -4988,11 +4995,11 @@ void DataSet::set_time_column(const string& new_time_column)
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete thread_pool;
+    if(non_blocking_thread_pool != nullptr) delete non_blocking_thread_pool;
     if(thread_pool_device != nullptr) delete thread_pool_device;
 
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+    non_blocking_thread_pool = new NonBlockingThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, new_threads_number);
 }
 
 
@@ -5030,6 +5037,8 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
     }
 
 #endif
+
+    Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
     Tensor<string, 1> constant_columns(0);
 
@@ -5073,6 +5082,8 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
     Tensor<type, 1> sample_i;
     Tensor<type, 1> sample_j;
 
+    #pragma omp parallel for private(sample_i, sample_j) schedule(dynamic)
+
     for(Index i = 0; i < static_cast<Index>(samples_number); i++)
     {
         sample_i = get_sample_data(i);
@@ -5082,7 +5093,7 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
             sample_j = get_sample_data(j);
 
             if(get_sample_use(j) != SampleUse::UnusedSample
-            && equal(sample_i.data(), sample_i.data()+sample_i.size(), sample_j.data()))
+                    && equal(sample_i.data(), sample_i.data()+sample_i.size(), sample_j.data()))
             {
                 set_sample_use(j, SampleUse::UnusedSample);
 
@@ -5757,7 +5768,7 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
     {
         const Index variable_index = variables_indices(i);
 
-        const Tensor<type, 0> mean = data.chip(variable_index, 1).mean();
+        Tensor<type, 0> mean = data.chip(variable_index, 1).mean();
 
         means(i) = mean(0);
     }
@@ -8578,7 +8589,7 @@ Tensor<Index, 1> DataSet::select_outliers_via_contamination(const Tensor<type, 1
 
     Tensor<Index, 1> outlier_indexes(samples_number);
     outlier_indexes.setZero();
-/*
+
     for(Index i = 0; i < samples_number; i++)
     {
         ordered_ranks(i) = Tensor<type, 1>(2);
@@ -8602,7 +8613,7 @@ Tensor<Index, 1> DataSet::select_outliers_via_contamination(const Tensor<type, 1
         for(Index i = 0; i < Index(contamination*type(samples_number)); i++)
             outlier_indexes(static_cast<Index>(ordered_ranks(i)(0))) = 1;
     }
-*/
+
     return outlier_indexes;
 }
 
@@ -9247,7 +9258,7 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
 /// Returns a matrix with the values of autocorrelation for every variable in the data set.
 /// The number of rows is equal to the number of
 /// The number of columns is the maximum lags number.
-/// @param lags_number Maximum lags number for which autocorrelation is calculated.
+/// @param maximum_lags_number Maximum lags number for which autocorrelation is calculated.
 
 Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) const
 {
@@ -9491,7 +9502,6 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 /// by constant data.
 /// @param samples_number Number of samples in the data_set.
 /// @param variables_number Number of variables in the data_set.
-/// @param value Constant data to generate the data_set.
 
 void DataSet::generate_constant_data(const Index& samples_number, const Index& variables_number, const type& value)
 {
@@ -9804,38 +9814,7 @@ void DataSet::read_csv()
 
         read_csv_3_complete();
     }
-}
 
-
-void DataSet::read_text()
-{
-    string text;
-
-    ifstream file(data_file_name.c_str());
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_input_csv() method.\n"
-               << "Cannot open input data file: " << data_file_name << " for filling input data file. \n";
-
-        throw logic_error(buffer.str());
-    }
-
-    string line;
-
-    while(getline(file, line))
-    {
-        text.append(line);
-    }
-
-    const string character_list = create_character_list(text);
-
-    Tensor<type,2> one_hot = text_to_one_hot(text, character_list);
-
-    set(one_hot);
 }
 
 
@@ -9945,23 +9924,6 @@ void DataSet::read_csv_1()
     const Index columns_number = has_rows_labels ? data_file_preview(0).size()-1 : data_file_preview(0).size();
 
     columns.resize(columns_number);
-
-    /*
-        //  Error case when we have a low number of rows in the dataset
-
-
-           if(lines_number <= 2)
-            {
-
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void read_csv_1() method.\n"
-                       << "File " << data_file_name << " contains a poor dataset, consider adding more rows (The number of rows is lower than 2).\n";
-
-                throw logic_error(buffer.str());
-            }
-    */
 
     // Check if header has numeric value
 
@@ -10119,23 +10081,6 @@ void DataSet::read_csv_2_simple()
 
     data.resize(samples_count, columns_number);
 
-    cout<<"Numero de muestras o filas del dataset: "<<samples_count<<endl;
-    //  Error case when we have a low number of rows in the dataset
-
-/*    if(samples_count <= 2)
-    {
-
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv_1() method.\n"
-               << "File " << data_file_name << " contains a poor dataset, consider adding more rows (The number of rows is lower than 2).\n";
-
-        throw logic_error(buffer.str());
-    }
-
-*/
-
     set_default_columns_uses();
 
     samples_uses.resize(samples_count);
@@ -10260,7 +10205,7 @@ void DataSet::read_csv_3_simple()
 
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
-            if(is_constant(numeric_column))
+            if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
             {
                 columns(column).type = ColumnType::Constant;
                 columns(column).column_use = VariableUse::UnusedVariable;
@@ -10630,7 +10575,7 @@ void DataSet::read_csv_3_complete()
         {
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
-            if(is_constant(numeric_column))
+            if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
             {
                 columns(column).type = ColumnType::Constant;
                 columns(column).column_use = VariableUse::UnusedVariable;
@@ -10687,8 +10632,8 @@ void DataSet::check_separators(const string& line) const
     if(line.find(separator_char) == string::npos)
     {
         const string message =
-            "Error: " + get_separator_string() + " separator not found in line (" + line + "), in the data file:" + data_file_name + ".\n";
-            //"Line: '" + line + "'";
+            "Error: " + get_separator_string() + " separator not found in line data file " + data_file_name + ".\n"
+            "Line: '" + line + "'";
 
         throw logic_error(message);
     }
@@ -11085,7 +11030,7 @@ void DataSet::intialize_sequential(Tensor<type, 1>& new_tensor,
 }
 
 
-Tensor<Tensor<Index, 1>, 1> DataSet::split_samples(const Tensor<Index, 1>& samples_indices, const Index& new_batch_size) const
+Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices, const Index& new_batch_size) const
 {
     const Index samples_number = samples_indices.dimension(0);
 
@@ -11102,21 +11047,17 @@ Tensor<Tensor<Index, 1>, 1> DataSet::split_samples(const Tensor<Index, 1>& sampl
         batches_number = samples_number / batch_size;
     }
 
-    Tensor<Tensor<Index, 1>, 1> batches(batches_number);
-    for(Index i = 0; i < batches_number; i++) batches(i).resize(batch_size);
+    Tensor<Index, 2> batches(batches_number, batch_size);
 
-    auto patches = samples_indices.extract_patches(Eigen::array<Index, 1>({batch_size}));
-
-
-    Index count = 0;    
+    Index count = 0;
 
     for(Index i = 0; i < batches_number; ++i)
     {
         for(Index j = 0; j < batch_size; ++j)
         {
-            batches(i)(j) = samples_indices(i*batch_size + j);
+            batches(i,j) = samples_indices(count);
 
-            //count++;
+            count++;
         }
     }
 
@@ -11125,8 +11066,8 @@ Tensor<Tensor<Index, 1>, 1> DataSet::split_samples(const Tensor<Index, 1>& sampl
 
 
 void DataSetBatch::fill(const Tensor<Index, 1>& samples,
-                        const Tensor<Index, 1>& inputs,
-                        const Tensor<Index, 1>& targets)
+                          const Tensor<Index, 1>& inputs,
+                          const Tensor<Index, 1>& targets)
 {
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
@@ -11165,7 +11106,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         }
     }
 
-     fill_submatrix(data, samples, targets, targets_2d.data());
+    fill_submatrix(data, samples, targets, targets_2d.data());
 }
 
 
@@ -11213,16 +11154,10 @@ void DataSetBatch::print() const
 {
     cout << "Batch structure" << endl;
 
-    cout << "Inputs rows: " << inputs_2d.dimension(0) << endl;
-    cout << "Inputs columns: " << inputs_2d.dimension(1) << endl;
-
-    cout << "Targets rows: " << targets_2d.dimension(0) << endl;
-    cout << "Targets columns: " << targets_2d.dimension(1) << endl;
-
-    cout << "Inputs: " << endl;
+    cout << "Inputs:" << endl;
     cout << inputs_2d << endl;
 
-    cout << "Targets: " << endl;
+    cout << "Targets:" << endl;
     cout << targets_2d << endl;
 }
 

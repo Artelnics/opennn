@@ -101,7 +101,7 @@ void AdaptiveMomentEstimation::set_loss_index_pointer(LossIndex* new_loss_index_
 
 
 /// Sets a new learning rate.
-/// @param new_learning_rate Type to set.
+/// @param new_learning_rate.
 
 void AdaptiveMomentEstimation::set_initial_learning_rate(const type& new_learning_rate)
 {
@@ -110,7 +110,7 @@ void AdaptiveMomentEstimation::set_initial_learning_rate(const type& new_learnin
 
 
 /// Sets beta 1 generally close to 1.
-/// @param new_beta_1 Type to set.
+/// @param new_beta_1.
 
 void AdaptiveMomentEstimation::set_beta_1(const type& new_beta_1)
 {
@@ -119,7 +119,7 @@ void AdaptiveMomentEstimation::set_beta_1(const type& new_beta_1)
 
 
 /// Sets beta 2 generally close to 1.
-/// @param new_beta_2 Type to set.
+/// @param new_beta_2.
 
 void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
 {
@@ -128,7 +128,7 @@ void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
 
 
 /// Sets epsilon.
-/// @param new_epsilon Type to set.
+/// @param epsilon.
 
 void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 {
@@ -137,7 +137,7 @@ void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 
 
 /// Set the a new maximum for the epochs number.
-/// @param new_maximum_epochs_number New maximum epochs number.
+/// @param new_maximum_epochs number New maximum epochs number.
 
 void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
@@ -254,11 +254,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Index training_batches_number = training_samples_number/batch_size_training;
     const Index selection_batches_number = selection_samples_number/batch_size_selection;
 
-    Tensor<Tensor<Index, 1>, 1> training_batches(training_batches_number);
-    for (Index i = 0; i < training_batches_number; i++) training_batches(i).resize(batch_size_training);
-
-    Tensor<Tensor<Index, 1>, 1> selection_batches(selection_batches_number);
-    for (Index i = 0; i < selection_batches_number; i++) selection_batches(i).resize(batch_size_selection);
+    Tensor<Index, 2> training_batches(training_batches_number, batch_size_training);
+    Tensor<Index, 2> selection_batches(selection_batches_number, batch_size_selection);
 
     // Neural network
 
@@ -310,17 +307,17 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     bool shuffle = false;
 
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) shuffle = false;
-
-    if(!shuffle) training_batches = data_set_pointer->split_samples(training_samples_indices, batch_samples_number);
+    if(neural_network_pointer->has_long_short_term_memory_layer()
+    || neural_network_pointer->has_recurrent_layer())
+        shuffle = false;
 
     // Main loop
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        if(shuffle) training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
+        training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -333,7 +330,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         {
             // Data set
 
-            batch_training.fill(training_batches(iteration), input_variables_indices, target_variables_indices);
+            batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
@@ -343,18 +340,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
 
-            // Optimization algorithms
+            training_error += training_back_propagation.error;
+            training_loss += training_back_propagation.loss;
 
             update_parameters(training_back_propagation, optimization_data);
         }
 
         // Loss
 
-        training_error += training_back_propagation.error;
-        training_loss += training_back_propagation.loss;
-
-        training_error /= static_cast<type>(batches_number);
         training_loss /= static_cast<type>(batches_number);
+        training_error /= static_cast<type>(batches_number);
 
         results.training_error_history(epoch) = training_error;
 
@@ -368,7 +363,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             {
                 // Data set
 
-                batch_selection.fill(selection_batches(iteration), input_variables_indices, target_variables_indices);
+                batch_selection.fill(selection_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
 
                 // Neural network
 
@@ -421,7 +416,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
-/*
+
         if(training_loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_loss << endl;
@@ -430,7 +425,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             results.stopping_condition  = StoppingCondition::LossGoal;
         }
-*/
+
         if(selection_failures >= maximum_selection_failures)
         {
             if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
@@ -738,25 +733,22 @@ void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_
             sqrt(type(1) - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
             (type(1) - pow(beta_1, static_cast<type>(optimization_data.iteration))));
 
-    const type factor_1 = type(1) - beta_1;
-    const type factor_2 = type(1) - beta_2;
-
     optimization_data.gradient_exponential_decay.device(*thread_pool_device)
-        = optimization_data.gradient_exponential_decay*beta_1
-        + back_propagation.gradient*factor_1;
+            = optimization_data.gradient_exponential_decay*beta_1
+            + back_propagation.gradient*(type(1) - beta_1);
 
     optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
             = optimization_data.square_gradient_exponential_decay*beta_2
-            + back_propagation.gradient.square()*factor_2;
+            + back_propagation.gradient*back_propagation.gradient*(type(1) - beta_2);
 
     back_propagation.parameters.device(*thread_pool_device) -=
-            optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
+            optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);          
 
     optimization_data.iteration++;
 
     // Update parameters
 
-    loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
+    back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
 }
 
 

@@ -49,6 +49,23 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
                      const NeuralNetworkForwardPropagation& forward_propagation,
                      LossIndexBackPropagation& back_propagation) const
 {      
+#ifdef OPENNN_DEBUG
+
+    Layer* last_trainable_layer_pointer = forward_propagation.neural_network_pointer->get_last_trainable_layer_pointer();
+
+    if(last_trainable_layer_pointer->get_type() != Layer::Probabilistic)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: CrossEntropyError class.\n"
+               << "calculate_error() method.\n"
+               << "Last trainable layer is not probabilistic: " << last_trainable_layer_pointer->get_type_string() << endl;
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
     if(outputs_number == 1)
@@ -156,9 +173,6 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1));
-
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
             = static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers(trainable_layers_number-1));
 
@@ -166,10 +180,11 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
 
     const Tensor<type, 2>& targets = batch.targets_2d;
 
-    const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
+    const Tensor<type, 2>& outputs =
+            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations;
 
     probabilistic_layer_back_propagation->delta.device(*thread_pool_device)
-            = (-static_cast<type>(1)/static_cast<type>(batch_samples_number))*(targets/outputs);
+            = static_cast<type>(1)/static_cast<type>(batch_samples_number) *(-targets/outputs);
 }
 
 

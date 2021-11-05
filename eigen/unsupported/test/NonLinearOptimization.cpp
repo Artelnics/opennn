@@ -1789,7 +1789,7 @@ void testNistEckerle4(void)
   VERIFY_IS_APPROX(x[2], 4.5154121844E+02);
 }
 
-EIGEN_DECLARE_TEST(NonLinearOptimization)
+void test_NonLinearOptimization()
 {
     // Tests using the examples provided by (c)minpack
     CALL_SUBTEST/*_1*/(testChkder());
