@@ -1,0 +1,45 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>2</InputsNumber>
+      <Input Index="1">x1</Input>
+      <Input Index="2">x2</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>2</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>0.186207</Minimum>
+            <Maximum>0.868056</Maximum>
+            <Mean>0.497146</Mean>
+            <StandardDeviation>0.190358</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Minimum>0.149351</Minimum>
+            <Maximum>0.875</Maximum>
+            <Mean>0.488018</Mean>
+            <StandardDeviation>0.198204</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer0</LayerName>
+         <InputsNumber>2</InputsNumber>
+         <NeuronsNumber>10</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>80.0221 100.942 -27.5201 54.114 -94.6595 35.7201 -58.77 70.8452 55.0612 -6.14748 26.3867 -73.1528 27.955 -58.4409 -186.692 152.727 -242.031 55.7108 -82.3016 102.887 56.8908 13.3236 -184.138 120.111 78.6646 -65.7619 -131.155 162.058 90.8408 -14.5926</Parameters>
+      </PerceptronLayer>
+      <ProbabilisticLayer>
+         <InputsNumber>10</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Logistic</ActivationFunction>
+         <Parameters>-90.0598 70.512 144.18 284.931 119.573 -72.2747 19.1694 221.424 5.91975 297.373 42.3658</Parameters>
+         <DecisionThreshold>0.5</DecisionThreshold>
+      </ProbabilisticLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1">y</Output>
+   </Outputs>
+</NeuralNetwork>
