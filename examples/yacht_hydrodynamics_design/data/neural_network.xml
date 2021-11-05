@@ -1,0 +1,95 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>6</InputsNumber>
+      <Input Index="1">longitudinal_center_buoyancy</Input>
+      <Input Index="2">prismatic_coefficient</Input>
+      <Input Index="3">length_displacement_ratio</Input>
+      <Input Index="4">beam_draught_ratio</Input>
+      <Input Index="5">lenght_beam_ratio</Input>
+      <Input Index="6">froude_number</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Perceptron Unscaling Bounding</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>6</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>-5</Minimum>
+            <Maximum>1e-06</Maximum>
+            <Mean>-2.38182</Mean>
+            <StandardDeviation>1.51322</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Minimum>0.53</Minimum>
+            <Maximum>0.6</Maximum>
+            <Mean>0.564136</Mean>
+            <StandardDeviation>0.0232899</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="3">
+            <Minimum>4.34</Minimum>
+            <Maximum>5.14</Maximum>
+            <Mean>4.78864</Mean>
+            <StandardDeviation>0.253057</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="4">
+            <Minimum>2.81</Minimum>
+            <Maximum>5.35</Maximum>
+            <Mean>3.93682</Mean>
+            <StandardDeviation>0.548193</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="5">
+            <Minimum>2.73</Minimum>
+            <Maximum>3.64</Maximum>
+            <Mean>3.20682</Mean>
+            <StandardDeviation>0.247998</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="6">
+            <Minimum>0.125</Minimum>
+            <Maximum>0.45</Maximum>
+            <Mean>0.2875</Mean>
+            <StandardDeviation>0.100942</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer_1</LayerName>
+         <InputsNumber>6</InputsNumber>
+         <NeuronsNumber>10</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>0.282327 -0.00488831 0.354044 0.249857 -2.28886 0.102771 0.338703 -0.259311 -0.244974 0.282704 0.00461798 0.0090779 0.00747662 -0.00508681 -0.0244643 0.0422349 -0.000687973 -0.00250619 -0.00366636 -0.00711056 0.00151462 0.0027248 -0.0325226 -0.0190548 0.130454 0.00478435 0.103103 0.0868942 0.00884553 0.0119029 0.00384838 -0.00798681 -0.0214284 0.0409371 0.0102352 -0.0527625 0.0325249 -0.0391397 -0.0334349 1.63994 0.0048435 0.0156877 0.0115292 0.0102226 -0.00639893 0.0246586 0.0198574 0.0301811 -0.0794455 -0.0322902 -0.105342 0.0468999 -0.00467429 -0.0126089 -0.00595552 0.00585261 0.0215446 -0.0407826 -0.00528431 -0.0113387 -0.00894278 0.00323476 0.0190942 -0.0420197 0.00543173 0.0118489 0.00335247 -0.00670942 -0.0274389 0.0395314</Parameters>
+      </PerceptronLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer_2</LayerName>
+         <InputsNumber>10</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Linear</ActivationFunction>
+         <Parameters>1.03641 0.30326 -0.00400434 0.401393 0.271397 2.20287 0.108846 0.379996 -0.275136 -0.261471 0.301552</Parameters>
+      </PerceptronLayer>
+      <UnscalingLayer>
+         <UnscalingNeuronsNumber>1</UnscalingNeuronsNumber>
+         <Descriptives Index="1">
+            <Minimum>0.01</Minimum>
+            <Maximum>62.42</Maximum>
+            <Mean>10.4954</Mean>
+            <StandardDeviation>15.1605</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </Descriptives>
+      </UnscalingLayer>
+      <BoundingLayer>
+         <BoundingNeuronsNumber>1</BoundingNeuronsNumber>
+         <Item Index="1">
+            <LowerBound>-3.40282e+38</LowerBound>
+            <UpperBound>3.40282e+38</UpperBound>
+         </Item>
+         <UseBoundingLayer>1</UseBoundingLayer>
+      </BoundingLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1">residuary_resistance</Output>
+   </Outputs>
+</NeuralNetwork>

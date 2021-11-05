@@ -1,0 +1,83 @@
+<DataSet>
+   <DataFile>
+      <FileType>csv</FileType>
+      <DataFileName>../data/pima_indians_diabetes.csv</DataFileName>
+      <Separator>Semicolon</Separator>
+      <ColumnsNames>1</ColumnsNames>
+      <RowsLabels>0</RowsLabels>
+      <MissingValuesLabel>NA</MissingValuesLabel>
+      <LagsNumber>0</LagsNumber>
+      <StepsAhead>0</StepsAhead>
+      <TimeIndex>0</TimeIndex>
+   </DataFile>
+   <Columns>
+      <ColumnsNumber>9</ColumnsNumber>
+      <Column Item="1">
+         <Name>pregnant</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="2">
+         <Name>glucose</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="3">
+         <Name>pressure</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="4">
+         <Name>thickness</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="5">
+         <Name>insulin</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="6">
+         <Name>mass_index</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="7">
+         <Name>pedigree</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="8">
+         <Name>age</Name>
+         <ColumnUse>Input</ColumnUse>
+         <Type>Numeric</Type>
+      </Column>
+      <Column Item="9">
+         <Name>diabetes</Name>
+         <ColumnUse>Target</ColumnUse>
+         <Type>Binary</Type>
+         <Categories>Positive (1);Negative (0)</Categories>
+         <CategoriesUses>Target;Target</CategoriesUses>
+      </Column>
+   </Columns>
+   <TimeSeriesColumns>
+      <TimeSeriesColumnsNumber>0</TimeSeriesColumnsNumber>
+   </TimeSeriesColumns>
+   <Samples>
+      <SamplesNumber>768</SamplesNumber>
+      <SamplesUses>1 0 0 0 0 0 0 2 0 1 0 0 0 0 1 2 0 0 0 0 2 1 1 0 0 0 2 0 0 1 0 0 0 0 1 1 0 1 0 0 0 2 0 2 1 2 0 0 0 0 0 0 0 0 0 2 2 1 0 2 1 0 2 0 0 2 2 2 2 0 0 0 2 2 2 1 2 0 0 0 0 2 1 1 0 0 0 1 0 2 2 0 0 1 2 0 1 0 0 0 0 0 0 1 0 1 0 0 0 0 0 0 0 0 0 1 1 0 1 0 0 2 2 1 0 0 0 0 0 0 0 1 0 2 2 0 0 0 0 0 0 0 2 0 2 1 2 0 0 0 0 1 0 0 0 1 0 0 0 0 0 2 0 0 0 0 1 0 0 2 0 0 1 1 2 1 0 0 0 0 0 0 0 0 2 2 1 1 2 1 1 1 0 0 1 0 2 1 2 2 0 0 1 1 0 0 2 0 0 1 2 1 0 1 0 1 0 2 2 0 0 0 0 1 0 1 2 1 2 2 0 0 0 0 0 0 0 2 1 0 0 0 2 0 1 0 1 0 2 2 0 0 0 1 0 0 0 0 0 0 1 0 1 0 2 0 1 0 0 0 1 2 2 2 0 1 0 0 0 2 0 0 0 1 2 0 1 0 2 2 2 0 2 1 1 0 1 0 1 1 0 0 2 0 0 0 0 1 0 0 0 0 0 0 0 2 1 2 2 0 0 2 0 1 0 1 0 2 1 1 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 2 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 2 2 0 0 0 1 2 0 2 2 0 0 0 1 1 0 0 0 0 0 0 0 0 0 1 2 0 0 1 1 0 0 1 0 0 2 2 1 0 1 1 2 2 0 0 0 2 0 0 1 0 0 0 1 2 0 1 2 2 1 0 0 1 0 0 0 0 0 0 0 0 2 1 0 0 2 2 0 0 0 0 0 0 0 0 1 0 0 0 0 1 0 0 2 1 0 0 0 0 0 2 0 2 0 0 0 0 1 1 2 2 0 0 0 0 1 2 0 0 0 2 0 0 0 1 0 0 2 0 0 2 0 2 1 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 2 1 2 0 1 1 2 0 0 0 0 0 0 0 2 0 0 0 0 1 0 0 1 1 2 1 1 0 0 1 2 0 0 0 0 0 0 0 2 2 0 0 1 2 0 1 0 2 2 0 1 0 1 0 1 0 2 2 0 0 1 2 2 1 2 2 0 0 0 0 1 2 2 0 0 0 1 0 2 0 0 0 0 1 1 2 0 0 0 0 0 0 0 1 0 0 0 0 0 1 1 2 0 1 0 1 0 2 0 1 2 0 1 2 2 2 0 0 2 0 0 2 0 0 2 0 1 0 0 0 0 0 1 2 1 0 2 2 0 1 0 1 1 0 0 1 1 0 0 0 0 0 1 2 0 2 0 1 2 1 2 0 2 0 0 0 0 2 0 0 0 0 2 0 0 0 1 0 2 2 2 0 2 0 0 1 0 1 0 0 2 1 1 2 0 0 0 2 0 1 2 1 0 0 1 0 0 2 0 0 1 0 0 2 0 1 0 2 0 2 0 0 2 0 0 2 0 0 0 0 0 0 0 2 1 1 0 2 0 2 0</SamplesUses>
+   </Samples>
+   <MissingValues>
+      <MissingValuesMethod>Unuse</MissingValuesMethod>
+      <MissingValuesNumber>87150561329387</MissingValuesNumber>
+      <ColumnsMissingValuesNumber></ColumnsMissingValuesNumber>
+      <RowsMissingValuesNumber>0</RowsMissingValuesNumber>
+   </MissingValues>
+   <PreviewData>
+      <PreviewSize>4</PreviewSize>
+      <Row Item="1">pregnant,glucose,pressure,thickness,insulin,mass_index,pedigree,age,diabetes</Row>
+      <Row Item="2">6,148,72,35,0,33.6,0.627,50,1</Row>
+      <Row Item="3">1,85,66,29,0,26.6,0.351,31,0</Row>
+      <Row Item="4">1,93,70,31,0,30.4,0.315,23,0</Row>
+   </PreviewData>
+</DataSet>
