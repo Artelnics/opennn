@@ -125,7 +125,7 @@ void trmm(int rows=get_random_size<Scalar>(), int cols=get_random_size<Scalar>()
   CALL_ALL_ORDERS(EIGEN_CAT(3,NB),SCALAR,StrictlyLower)
   
 
-EIGEN_DECLARE_TEST(product_trmm)
+void test_product_trmm()
 {
   for(int i = 0; i < g_repeat ; i++)
   {

@@ -9,9 +9,9 @@
    <ColumnStructure DefaultColumnLayout="Top Down"/>
   </TopDownGrid>
  </SurveyView>
- <workflow int:selected="0" boolean:accuracyEnable="false">
+ <workflow int:selected="0" boolean:accuracyEnable="true">
   <pmVectorization>
-   <checked boolean:a1="false" boolean:a3="false" boolean:a6="false" boolean:a7="false"/>
+   <checked boolean:a1="true" boolean:a3="false" boolean:a6="false" boolean:a7="false"/>
   </pmVectorization>
  </workflow>
 </bag>

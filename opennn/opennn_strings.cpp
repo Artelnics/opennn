@@ -14,7 +14,6 @@ namespace OpenNN
 /// Returns the number of strings delimited by separator.
 /// If separator does not match anywhere in the string, this method returns 0.
 /// @param str String to be tokenized.
-/// @param separator Character that separates the string.
 
 Index count_tokens(string& str, const char& separator)
 {
@@ -58,7 +57,6 @@ Index count_tokens(const string& s, const char& c)
 /// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
-/// @param separator Character that separates the string.
 
 Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
@@ -75,7 +73,7 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
     // Find first "non-delimiter"
 
     Index index = 0;
-    Index old_pos = 0;
+    Index old_pos;
 
     string::size_type pos = str.find_first_of(separator, lastPos);
 
@@ -115,8 +113,6 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
 /// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
-/// @param separator Character that separates the string.
-/// @param tokens Vector of strings to store the result.
 
 void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& tokens)
 {
@@ -841,7 +837,6 @@ bool is_mixed(const Tensor<string, 1>& v)
 
 
 /// Replaces a substring by another one in each element of this vector.
-/// @param vector Vector for which we want to replace a substring.
 /// @param find_what String to be replaced.
 /// @param replace_with String to be put instead.
 
@@ -873,54 +868,6 @@ void replace(string& source, const string& find_what, const string& replace_with
 
         position += replace_with.length();
     }
-}
-
-
-string create_character_list(const string& text)
-{
-    string character_list;
-
-    for(auto i : text)
-    {
-        if(character_list.find(i) == string::npos)
-        {
-            character_list.push_back(i);
-        }
-    }
-    return character_list;
-}
-
-
-Tensor<type,2> text_to_one_hot(const string& text, const string& character_list)
-{
-    Tensor<type,2> one_hot( text.length(), character_list.length());
-
-    one_hot.setZero();
-
-    for(Index i = 0; i < int( text.length() ); i++) one_hot(i, character_list.find(text[i])) = 1;
-
-    return one_hot;
-}
-
-
-string one_hot_to_text(Tensor<type,2>& one_hot, const string& character_list)
-{
-    string text;
-
-    const Tensor<type, 2>::Dimensions& dim = one_hot.dimensions();
-
-    for(Index i = 0; i < dim[0] ; i++)
-    {
-        for(Index j=0; j < dim[1]; j++)
-        {
-            if(one_hot(i,j)==1)
-            {
-                text.push_back(character_list[j]);
-            }
-        }
-    }
-
-    return text;
 }
 }
 

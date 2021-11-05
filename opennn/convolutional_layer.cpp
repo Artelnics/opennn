@@ -15,7 +15,7 @@
 
 namespace OpenNN
 {
-/*
+
 /// Default constructor.
 /// It creates an empty ConvolutionalLayer object.
 
@@ -30,7 +30,7 @@ ConvolutionalLayer::ConvolutionalLayer() : Layer()
 /// with a number of kernels of a given size.
 /// The initialization values are random values from a normal distribution.
 /// @param new_inputs_dimensions A vector containing the new inputs' dimensions.
-/// @param new_kernels_dimensions A vector containing the number of kernels, their rows and columns.
+/// @param kernels_dimensions A vector containing the number of kernels, their rows and columns.
 
 ConvolutionalLayer::ConvolutionalLayer(const Tensor<Index, 1>& new_inputs_dimensions,
                                        const Tensor<Index, 1>& new_kernels_dimensions) : Layer()
@@ -1276,7 +1276,7 @@ void ConvolutionalLayer::set_row_stride(const Index& new_stride_row)
 
 
 /// Sets the kernels' column stride.
-/// @param new_stride_column The desired column stride.
+/// @param new_stride_row The desired column stride.
 
 void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 {
@@ -1381,7 +1381,7 @@ void ConvolutionalLayer::to_2d(const Tensor<type, 4>& input_4d, Tensor<type, 2>&
 
     output_2d = input_4d.reshape(dimensions);
 }
-*/
+
 }
 
 // OpenNN: Open Neural Networks Library.

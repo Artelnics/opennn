@@ -6,35 +6,43 @@
 #   Artificial Intelligence Techniques SL (Artelnics)
 #   artelnics@artelnics.com
 
+QT = # Do not use qt
+
 TARGET = opennn
+#DESTDIR = "$$PWD/bin"
 
 TEMPLATE = lib
 
 CONFIG += staticlib
-#CONFIG += c++17
+#CONFIG += c++11
 
-CONFIG(debug, debug|release){DEFINES += OPENNN_DEBUG}
+CONFIG(debug, debug|release) {
+    DEFINES += OPENNN_DEBUG
+}
+
+DEFINES += __Cpp11__
 
 # OpenMP library
 
-win32{
-QMAKE_CXXFLAGS += -bigobj
-
-QMAKE_CXXFLAGS += -openmp
-QMAKE_LFLAGS += -openmp
-QMAKE_CXXFLAGS += -MP
-
-}
-
-unix:macx{
+win32:!win32-g++{
+#QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
+#QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
+#LIBS += -fopenmp -pthread #-lgomp
+}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
+QMAKE_LFLAGS += -fopenmp -lgomp
+LIBS += -fopenmp -pthread -lgomp
+}else: macx{
 INCLUDEPATH += /usr/local/opt/libomp/include
-LIBS += /usr/local/opt/libomp/lib/libomp.dylib
+LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
+
+win32:!win32-g++{
+#QMAKE_CXXFLAGS+= -arch:AVX
+#QMAKE_CFLAGS+= -arch:AVX
 }
 
-unix:!macx{
-QMAKE_CXXFLAGS+= -fopenmp
-QMAKE_LFLAGS += -fopenmp
-}
+#macx{
+#INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
+#}
 
 # Eigen library
 
@@ -69,6 +77,7 @@ HEADERS += \
     sum_squared_error.h\
     normalized_squared_error.h\
     minkowski_error.h \
+    mean_squared_error.h \
     weighted_squared_error.h\
     cross_entropy_error.h \
     training_strategy.h \
@@ -76,6 +85,7 @@ HEADERS += \
     quasi_newton_method.h \
     levenberg_marquardt_algorithm.h\
     gradient_descent.h \
+    stochastic_gradient_descent.h\
     adaptive_moment_estimation.h\
     conjugate_gradient.h\
     model_selection.h \
@@ -116,15 +126,18 @@ SOURCES += \
     stochastic_gradient_descent.cpp \
     training_strategy.cpp \
     optimization_algorithm.cpp \
+    data_set.cpp \
     sum_squared_error.cpp \
     normalized_squared_error.cpp \
     minkowski_error.cpp \
+    mean_squared_error.cpp \
     weighted_squared_error.cpp \
     cross_entropy_error.cpp \
     learning_rate_algorithm.cpp \
     quasi_newton_method.cpp \
     levenberg_marquardt_algorithm.cpp \
     gradient_descent.cpp \
+    stochastic_gradient_descent.cpp\
     adaptive_moment_estimation.cpp\
     conjugate_gradient.cpp \
     model_selection.cpp \

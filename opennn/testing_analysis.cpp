@@ -44,7 +44,7 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network_pointer, Data
 
 TestingAnalysis::~TestingAnalysis()
 {
-    delete thread_pool;
+    delete non_blocking_thread_pool;
     delete thread_pool_device;
 }
 
@@ -111,22 +111,22 @@ const bool& TestingAnalysis::get_display() const
 
 void TestingAnalysis::set_default()
 {
-    delete thread_pool;
+    delete non_blocking_thread_pool;
     delete thread_pool_device;
 
     const int n = omp_get_max_threads();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 }
 
 
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete this->thread_pool;
+    if(non_blocking_thread_pool != nullptr) delete this->non_blocking_thread_pool;
     if(thread_pool_device != nullptr) delete this->thread_pool_device;
 
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+    non_blocking_thread_pool = new NonBlockingThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, new_threads_number);
 }
 
 
@@ -389,14 +389,13 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
 #endif
 
-    // Error data
-
-    Tensor<type, 3> error_data(testing_samples_number, 3, outputs_number);
-
-/*
     const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
 
     const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
+
+    // Error data
+
+    Tensor<type, 3> error_data(testing_samples_number, 3, outputs_number);
 
     // Absolute error
 
@@ -414,7 +413,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
            error_data(j,2,i) = (difference_absolute_value(j,i)*static_cast<type>(100.0))/abs(outputs_maximum(i)-outputs_minimum(i));
        }
    }
-*/
+
     return error_data;
 }
 
@@ -472,25 +471,25 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
 #endif
 
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-    Tensor<type, 2> error_data(testing_samples_number, outputs_number);
-/*
     const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
     const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
+
     // Error data
 
-    Tensor<type, 2> difference = targets - outputs;
+    Tensor<type, 2> error_data(testing_samples_number, outputs_number);
+
+    Tensor<type, 2> difference_value = (targets - outputs);
 
     for(Index i = 0; i < testing_samples_number; i++)
     {
        for(Index j = 0; j < outputs_number; j++)
        {
-           error_data(i,j) = (difference(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
+           error_data(i,j) = (difference_value(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
        }
     }
-*/
+
     return error_data;
 }
 
@@ -1353,7 +1352,7 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
     }
 
 #endif
-    /*
+
     type negatives_weight;
     type positives_weight;
 
@@ -1373,8 +1372,8 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
         negatives_weight = weights[1];
     }
 
-    const Tensor<bool, 2> if_sentence = (targets == targets.constant(type(1)));
-    const Tensor<bool, 2> else_sentence = (targets == targets.constant(type(0)));
+    const Tensor<bool, 2> if_sentence = targets == targets.constant(type(1));
+    const Tensor<bool, 2> else_sentence = targets == targets.constant(type(0));
 
     Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
 
@@ -1402,8 +1401,6 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
     const type normalization_coefficient = type(negatives)*negatives_weight*static_cast<type>(0.5);
 
     return sum_squared_error(0)/normalization_coefficient;
-    */
-    return 0;
 }
 
 
@@ -3485,7 +3482,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 /// Returns a vector of subvectors.
 /// The size of the vector is the number of targets.
 /// The size of the subvectors is the number of lags for which cross-correlation is calculated.
-/// @param lags_number Number of lags for which cross-correlation is calculated.
+/// @param maximum_lags_number Number of lags for which cross-correlation is calculated.
 
 Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correlation(const Index& lags_number) const
 {

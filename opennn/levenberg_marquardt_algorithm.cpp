@@ -606,7 +606,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 /// \brief LevenbergMarquardtAlgorithm::update_parameters
 /// \param batch
 /// \param forward_propagation
-/// \param back_propagation_lm
+/// \param back_propagation
+/// \param loss_index_back_propagation_lm
 /// \param optimization_data
 
 void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,

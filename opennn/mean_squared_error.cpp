@@ -43,6 +43,7 @@ MeanSquaredError::~MeanSquaredError()
 
 /// \brief MeanSquaredError::calculate_error
 /// \param batch
+/// \param forward_propagation
 /// \param back_propagation
 
 void MeanSquaredError::calculate_error(const DataSetBatch& batch,
@@ -53,10 +54,11 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
+    const type coefficient = static_cast<type>(batch_samples_number);
+
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
-    back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_samples_number);
-
+    back_propagation.error = sum_squared_error(0)/coefficient;
 }
 
 
@@ -77,7 +79,7 @@ void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
 
 
 void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                              NeuralNetworkForwardPropagation& forward_propagation,
+                                              NeuralNetworkForwardPropagation&,
                                               LossIndexBackPropagation& back_propagation) const
 {
      #ifdef OPENNN_DEBUG
@@ -86,7 +88,6 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
      const Index batch_samples_number = batch.inputs_2d.dimension(0);
@@ -97,21 +98,15 @@ void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
      {
      case Layer::Type::Perceptron:
      {
-         PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-             = static_cast<PerceptronLayerForwardPropagation*>(output_layer_forward_propagation);
-
          PerceptronLayerBackPropagation* perceptron_layer_back_propagation
          = static_cast<PerceptronLayerBackPropagation*>(output_layer_back_propagation);
 
-         perceptron_layer_back_propagation->delta.device(*thread_pool_device) = back_propagation.errors*coefficient;
+         perceptron_layer_back_propagation->delta.device(*thread_pool_device) = coefficient*back_propagation.errors;
      }
          break;
 
      case Layer::Type::Probabilistic:
      {
-         ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
-
          ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation
          = static_cast<ProbabilisticLayerBackPropagation*>(output_layer_back_propagation);
 

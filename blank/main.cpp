@@ -13,13 +13,11 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <cstring>
 #include <time.h>
-#include <stdio.h>
 
 // OpenNN includes
 
-#include "../../opennn/opennn/opennn.h"
+#include "../opennn/opennn.h"
 
 using namespace OpenNN;
 using namespace std;
@@ -27,51 +25,62 @@ using namespace Eigen;
 
 int main()
 {
-    try{
-        cout << "Hello, OpenNN!" << endl;
+    try
+    {
+        cout << "OpenNN. Blank application." << endl;
 
-        ofstream file;
+        srand(static_cast<unsigned>(time(nullptr)));
 
-        string data_string;
+        DataSet ds("C:/Users/Usuario/Documents/Waste_monthly.csv", ',', true);
 
-        string data_file_name = "../data/data.dat";
+        ds.set_lags_number(2);
+        ds.set_steps_ahead_number(1);
 
-        DataSet data_set;
+        ds.transform_time_series();
 
-        Index rows;
+        ds.split_samples_sequential();
 
-        data_set.set_has_columns_names(true);
-        data_set.set_separator(',');
-        data_set.set_data_file_name(data_file_name);
+        const Index columns_number = ds.get_columns_number();
+
+        ds.set_column_use(columns_number-1, DataSet::VariableUse::UnusedVariable);
+        ds.set_column_use(columns_number-2, DataSet::VariableUse::UnusedVariable);
+        ds.set_column_use(columns_number-3, DataSet::VariableUse::UnusedVariable);
+
+        const Index inputs_number = ds.get_input_variables_number();
+        const Index targets_number = ds.get_target_variables_number();
+
+        const Index neurons_number = 3;
+
+        ScalingLayer sl(inputs_number);
+
+        LongShortTermMemoryLayer lstm(inputs_number, neurons_number);
+        lstm.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::Linear);
+        lstm.set_recurrent_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
+        lstm.set_timesteps(2);
+
+        PerceptronLayer pl(neurons_number, targets_number);
+        pl.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+
+        UnscalingLayer ul(inputs_number);
+
+        NeuralNetwork nn;
+
+        nn.add_layer(&sl);
+        nn.add_layer(&lstm);
+        nn.add_layer(&pl);
+        nn.add_layer(&ul);
+
+        TrainingStrategy ts(&nn, &ds);
+
+        ts.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        ts.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+
+        ts.perform_training();
+
+        cout << "outputs: " << endl << nn.calculate_outputs(ds.get_input_data()) << endl;
 
 
-        data_string = "x,y\n"
-                      "1,2\n"
-                      "1,2\n"
-                      "3,4\n";
 
-
-
-/*
-        data_string = "\n"
-                      "x,y\n"
-                      "\n"
-                      "1,2\n"
-                      "1,2\n"
-                      "3,4\n";
-*/
-
-        file.open(data_file_name.c_str());
-        file << data_string;
-        file.close();
-
-        cout << data_string << endl;
-
-        data_set.read_csv();
-
-        rows = data_set.get_samples_number();
-
-        cout<<"The number of rows of the data set is:"<< data_set.get_samples_number() <<endl;
         cout << "Good bye!" << endl;
 
         return 0;

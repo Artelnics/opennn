@@ -38,7 +38,7 @@ LearningRateAlgorithm::LearningRateAlgorithm(LossIndex* new_loss_index_pointer)
 
 LearningRateAlgorithm::~LearningRateAlgorithm()
 {
-    delete thread_pool;
+    delete non_blocking_thread_pool;
     delete thread_pool_device;
 }
 
@@ -151,12 +151,12 @@ void LearningRateAlgorithm::set(LossIndex* new_loss_index_pointer)
 
 void LearningRateAlgorithm::set_default()
 {
-    delete thread_pool;
+    delete non_blocking_thread_pool;
     delete thread_pool_device;
 
     const int n = omp_get_max_threads();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     // TRAINING OPERATORS
 
@@ -180,11 +180,11 @@ void LearningRateAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_poi
 
 void LearningRateAlgorithm::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete this->thread_pool;
+    if(non_blocking_thread_pool != nullptr) delete this->non_blocking_thread_pool;
     if(thread_pool_device != nullptr) delete this->thread_pool_device;
 
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+    non_blocking_thread_pool = new NonBlockingThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, new_threads_number);
 }
 
 
@@ -318,7 +318,6 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
                                                    forward_propagation,
                                                    back_propagation,
                                                    optimization_data);
-
 
     try
     {
@@ -611,7 +610,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
             }
         }
     }
-
 
     return triplet;
 }

@@ -13,7 +13,7 @@ namespace OpenNN
 
 Layer::~Layer()
 {
-    delete thread_pool;
+    delete non_blocking_thread_pool;
     delete thread_pool_device;
 }
 
@@ -68,11 +68,11 @@ string Layer::get_type_string() const
 
 void Layer::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr) delete this->thread_pool;
+    if(non_blocking_thread_pool != nullptr) delete this->non_blocking_thread_pool;
     if(thread_pool_device != nullptr) delete this->thread_pool_device;
 
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+    non_blocking_thread_pool = new NonBlockingThreadPool(new_threads_number);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, new_threads_number);
 }
 
 
@@ -871,7 +871,6 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& combinations,
     activations_derivatives.device(*thread_pool_device) = if_sentence_2.select(f4, f5);
 }
 
-
 void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& combinations,
                                            Tensor<type, 2>& activations,
                                            Tensor<type, 2>& activations_derivatives) const
@@ -1104,35 +1103,6 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                                  Tensor<type, 2>& activations,
                                  Tensor<type, 3>& activations_derivatives) const
 {
-
-    // 20 seconds!!!
-
-        const Index columns_number = combinations.dimension(1);
-
-        const Index rows_number = activations.dimension(0);
-
-        // Activations : 14 seconds
-
-        activations.device(*thread_pool_device) = combinations.exp().sum(Eigen::array<Index, 1>({1})).reshape(Eigen::array<Index,2>{rows_number,1}).broadcast(Eigen::array<Index, 2>({1, columns_number}));
-
-        activations.device(*thread_pool_device) = combinations.exp()/activations;
-
-
-        // Activations derivatives : 6 seconds
-
-        kronecker_product(activations, activations_derivatives);
-
-        #pragma omp parallel for
-
-        for(Index i = 0; i < activations_derivatives.dimension(2); i++)
-        {
-            for(Index j = 0; j < activations_derivatives.dimension(1); j++)
-            {
-                activations_derivatives(j,j,i) += activations(i,j);
-            }
-        }
-
-    /*
      const Index dim = combinations.dimension(1);
 
      const Index rows_number = activations.dimension(0);
@@ -1188,7 +1158,6 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
              }
          }
      }
-     */
 }
 
 
@@ -1492,6 +1461,7 @@ void Layer::soft_sign_derivatives(const Tensor<type, 4>& combinations,
                                   Tensor<type, 4>& activations,
                                   Tensor<type, 4>& activations_derivatives) const
 {
+
     const Tensor<bool, 4> if_sentence = combinations < combinations.constant(type(0));
 
     Tensor<type, 4> f_1(combinations.dimension(0), combinations.dimension(1), combinations.dimension(2), combinations.dimension(3));

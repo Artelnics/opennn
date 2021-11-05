@@ -8,7 +8,7 @@
 
 #ifndef POOLINGLAYER_H
 #define POOLINGLAYER_H
-/*
+
 // System includes
 
 #include <cmath>
@@ -172,6 +172,6 @@ protected:
 
 };
 }
-*/
+
 #endif // POOLING_LAYER_H
 

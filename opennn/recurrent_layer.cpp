@@ -177,6 +177,68 @@ const RecurrentLayer::ActivationFunction& RecurrentLayer::get_activation_functio
 }
 
 
+/// Returns the biases from all the recurrent in the layer.
+/// The format is a vector of real values.
+/// The size of this vector is the number of neurons in the layer.
+
+Tensor<type, 2> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) const
+{
+    const Index biases_number = get_biases_number();
+    const Index input_weights_number = get_input_weights_number();
+
+    Tensor<type, 1> new_biases(biases_number);
+
+    new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({input_weights_number}), Eigen::array<Eigen::Index, 1>({biases_number}));
+
+    Eigen::array<Index, 2> two_dim{{1, biases.dimension(1)}};
+
+    return new_biases.reshape(two_dim);
+}
+
+
+/// Returns the weights from the recurrent layer.
+/// The format is a matrix of real values.
+/// The number of rows is the number of inputs in the layer.
+/// The number of columns is the number of neurons to the layer.
+
+Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& parameters) const
+{
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index input_weights_number = get_input_weights_number();
+
+    const Tensor<type, 1> new_inputs_weights
+            = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({input_weights_number}));
+
+    const Eigen::array<Index, 2> two_dim{{inputs_number, neurons_number}};
+
+    return new_inputs_weights.reshape(two_dim);
+}
+
+
+/// Returns the recurrent weights from the recurrent layer.
+/// The format is a matrix of real values.
+/// The number of rows is the number of neurons in the layer.
+/// The number of columns is the number of neurons to the layer.
+
+Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& parameters) const
+{
+    const Index neurons_number = get_neurons_number();
+    const Index recurrent_weights_number = recurrent_weights.size();
+
+    const Index parameters_size = parameters.size();
+
+    const Index start_recurrent_weights_number = (parameters_size - recurrent_weights_number);
+
+    const Tensor<type, 1> new_synaptic_weights
+            = parameters.slice(Eigen::array<Eigen::Index, 1>({start_recurrent_weights_number}), Eigen::array<Eigen::Index, 1>({recurrent_weights_number}));
+
+    const Eigen::array<Index, 2> two_dim{{neurons_number, neurons_number}};
+
+    return new_synaptic_weights.reshape(two_dim);
+}
+
+
 /// Returns a string with the name of the layer activation function.
 /// This can be: Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
 
@@ -344,7 +406,6 @@ void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_
 
 /// Sets the parameters of this layer.
 /// @param new_parameters Parameters vector for that layer.
-/// @param index Index for this layer.
 
 void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
@@ -381,7 +442,7 @@ void RecurrentLayer::set_activation_function(const RecurrentLayer::ActivationFun
 
 /// Sets a new activation(or transfer) function in a single layer.
 /// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
-/// @param new_activation_function_name Activation function for that layer.
+/// @param new_activation_function Activation function for that layer.
 
 void RecurrentLayer::set_activation_function(const string& new_activation_function_name)
 {
@@ -781,12 +842,11 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
 
 void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
-    LayerBackPropagation* next_layer_back_propagation,
-    LayerForwardPropagation* layer_forward_propagation,
-    LayerBackPropagation* layer_back_propagation) const
+                                            LayerBackPropagation* next_layer_back_propagation,
+                                            LayerBackPropagation* current_layer_back_propagation) const
 {
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
-            static_cast<RecurrentLayerBackPropagation*>(layer_back_propagation);
+            static_cast<RecurrentLayerBackPropagation*>(current_layer_back_propagation);
 
     switch(next_layer_back_propagation->layer_pointer->get_type())
     {

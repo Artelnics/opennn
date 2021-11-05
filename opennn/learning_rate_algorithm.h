@@ -30,9 +30,11 @@
 namespace OpenNN
 {
 
-/// This class is used by many different optimization algorithms to calculate the learning rate given a training direction.
+/// A learning rate that is adjusted according to an algorithm during training to minimize training time.
 
-/// The learning rate is adjusted according to an algorithm during training to minimize training time.
+///
+/// This class is used by many different optimization algorithms to calculate the learning rate given a training direction.
+///
 /// It implements the golden section method and the Brent's method.
 
 class LearningRateAlgorithm
@@ -56,7 +58,7 @@ public:
 
    virtual ~LearningRateAlgorithm();
 
-   /// This structure defines a set of three points (A, U, B) for bracketing a directional minimum.
+   /// Defines a set of three points (A, U, B) for bracketing a directional minimum.
 
    struct Triplet
    {
@@ -287,7 +289,7 @@ protected:
 
    const type golden_ratio = static_cast<type>(1.618);
 
-   ThreadPool* thread_pool = nullptr;
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
 };
 

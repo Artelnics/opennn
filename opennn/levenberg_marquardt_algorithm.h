@@ -36,11 +36,11 @@ namespace OpenNN
 
 struct LevenbergMarquardtAlgorithmData;
 
-/// This concrete class represents the Levenberg-Marquardt optimization algorithm, used to minimize loss function.
+/// Levenberg-Marquardt Algorithm will always compute the approximate Hessian matrix, which has dimensions n-by-n.
 
-/// The Levenberg-Marquardt Algorithm will always compute the approximate Hessian matrix, which has dimensions n-by-n.
+/// This concrete class represents a Levenberg-Marquardt Algorithm training algorithm[1], use to minimize loss function.
 ///
-/// \cite Neural Designer "5 Algorithms to Train a Neural Network."
+/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
 /// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 
 
@@ -167,8 +167,6 @@ private:
    type maximum_time;
 };
 
-
-/// This structure contains the data for the Levenberg-Marquardt optimization algorithm.
 
 struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 {

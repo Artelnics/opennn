@@ -129,7 +129,7 @@ Index StochasticGradientDescent::get_batch_samples_number() const
 
 /// Set the initial value for the learning rate. If dacay is not active learning rate will be constant
 /// otherwise learning rate will decay over each update.
-/// @param new_learning_rate initial learning rate value.
+/// @param new_initial_learning_rate initial learning rate value.
 
 void StochasticGradientDescent::set_initial_learning_rate(const type& new_learning_rate)
 {
@@ -155,7 +155,7 @@ void StochasticGradientDescent::set_initial_learning_rate(const type& new_learni
 
 
 /// Set the initial value for the decay.
-/// @param new_dacay initial value for the decay.
+/// @param new_initial_learning_rate initial value for the decay.
 
 void StochasticGradientDescent::set_initial_decay(const type& new_dacay)
 {
@@ -208,7 +208,7 @@ void StochasticGradientDescent::set_momentum(const type& new_momentum)
 
 
 /// Set nesterov, boolean. Whether to apply Nesterov momentum.
-/// @param new_nesterov_momentum initial value for the mometum.
+/// @param new_momentum initial value for the mometum.
 
 void StochasticGradientDescent::set_nesterov(const bool& new_nesterov_momentum)
 {
@@ -217,7 +217,7 @@ void StochasticGradientDescent::set_nesterov(const bool& new_nesterov_momentum)
 
 
 /// Set the a new maximum for the epochs number.
-/// @param new_maximum_epochs_number New maximum epochs number.
+/// @param new_maximum_epochs number New maximum epochs number.
 
 void StochasticGradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
@@ -376,11 +376,8 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Index training_batches_number = training_samples_number/batch_size_training;
     const Index selection_batches_number = selection_samples_number/batch_size_selection;
 
-    Tensor<Tensor<Index, 1>, 1> training_batches(training_batches_number);
-    for (Index i = 0; i < training_batches_number; i++) training_batches(i).resize(batch_size_training);
-
-    Tensor<Tensor<Index, 1>, 1> selection_batches(selection_batches_number);
-    for (Index i = 0; i < selection_batches_number; i++) selection_batches(i).resize(batch_size_selection);
+    Tensor<Index, 2> training_batches(training_batches_number, batch_size_training);
+    Tensor<Index, 2> selection_batches(selection_batches_number, batch_size_selection);
 
     // Neural network
 
@@ -457,7 +454,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             // Data set
 
-            batch_training.fill(training_batches(iteration), input_variables_indices, target_variables_indices);
+            batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
@@ -492,7 +489,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             {
                 // Data set
 
-                batch_selection.fill(selection_batches(iteration), input_variables_indices, target_variables_indices);
+                batch_selection.fill(selection_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
 
                 // Neural network
 

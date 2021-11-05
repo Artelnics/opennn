@@ -64,6 +64,11 @@ public:
    Tensor<Descriptives, 1> get_descriptives() const;
    Descriptives get_descriptives(const Index&) const;
 
+   Tensor<type, 1> get_minimums() const;
+   Tensor<type, 1> get_maximums() const;
+   Tensor<type, 1> get_means() const;
+   Tensor<type, 1> get_standard_deviations() const;
+
    // Variables scaling and unscaling
 
    const Tensor<Scaler, 1> get_scaling_methods() const;
@@ -93,6 +98,11 @@ public:
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
    void set_item_descriptives(const Index&, const Descriptives&);
+
+   void set_minimum(const Index&, const type&);
+   void set_maximum(const Index&, const type&);
+   void set_mean(const Index&, const type&);
+   void set_standard_deviation(const Index&, const type&);
 
    void set_min_max_range(const type& min, const type& max);
 

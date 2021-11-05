@@ -40,14 +40,14 @@ struct LayerBackPropagation;
 struct LayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/struct_layer_cuda.h"
 #endif
 
 
-/// This abstract class represents the concept of a layer of neurons in OpenNN.
+/// This abstract class represents the concept of layer of neurons in OpenNN.
 
-/// A layer is a group of neurons that have connections to the same inputs and send outputs to the same destinations.
-/// It is also used to store information about the layers of the different architectures of NeuralNetworks.
+/// Layer is a group of neurons having connections to the same inputs and sending outputs to the same destinations.
+/// Also is used to store information about the layers of the different architectures of NeuralNetworks.
 
 class Layer
 {
@@ -67,8 +67,8 @@ public:
     {
         const int n = omp_get_max_threads();
 
-        thread_pool = new ThreadPool(n);
-        thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+        non_blocking_thread_pool = new NonBlockingThreadPool(n);
+        thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
     }
 
     // Destructor
@@ -103,7 +103,7 @@ public:
 
     virtual Tensor<type, 2> calculate_outputs_from4D(const Tensor<type, 4>&) {return Tensor<type, 2>();}
 
-    virtual Tensor<type, 4> calculate_outputs_4d(const Tensor<type, 4>&) {return Tensor<type, 4>();}
+    virtual Tensor<type, 4> calculate_outputs_4D(const Tensor<type, 4>&) {return Tensor<type, 4>();}
 
     virtual void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*) {} // Cannot be const because of Recurrent and LSTM layers
     virtual void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*) {}
@@ -115,7 +115,6 @@ public:
 
     virtual void calculate_hidden_delta(LayerForwardPropagation*,
                                         LayerBackPropagation*,
-                                        LayerForwardPropagation*,
                                         LayerBackPropagation*) const {}
 
     virtual void calculate_hidden_delta_lm(LayerForwardPropagation*,
@@ -146,9 +145,7 @@ public:
 
     virtual Index get_inputs_number() const;
     virtual Index get_neurons_number() const;
-
     virtual Index get_synaptic_weights_number() const;
-
     virtual void set_inputs_number(const Index&);
     virtual void set_neurons_number(const Index&);
 
@@ -174,8 +171,7 @@ public:
 
 protected:
 
-    ThreadPool* thread_pool = nullptr;
-
+    NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
     ThreadPoolDevice* thread_pool_device = nullptr;
 
     /// Layer name.
@@ -278,13 +274,10 @@ protected:
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/layer_cuda.h"
 #else
 };
 #endif
-
-/// This structure contains information for the forward propagation of the layer.
-
 struct LayerForwardPropagation
 {
     /// Default constructor.
@@ -305,8 +298,6 @@ struct LayerForwardPropagation
 };
 
 
-/// This structure contains information for the back propagation of the layer.
-
 struct LayerBackPropagation
 {
     /// Default constructor.
@@ -324,8 +315,6 @@ struct LayerBackPropagation
     Layer* layer_pointer = nullptr;
 };
 
-
-/// This structure contains second order information for the back propagation of the layer.
 
 struct LayerBackPropagationLM
 {

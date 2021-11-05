@@ -28,11 +28,12 @@ namespace OpenNN
 
 struct NeuronsSelectionResults;
 
-/// This abstract class represents the concept of neurons selection algorithm for a ModelSelection.
+/// This abstract class represents the concept of neurons selection algorithm for a ModelSelection[1].
 
+///
 /// Any derived class must implement the perform_neurons_selection() method.
 ///
-/// Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
+/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
 
 class NeuronsSelection
 {

@@ -207,7 +207,7 @@ void polynomialsolver(int deg)
       realRoots );
 }
 
-EIGEN_DECLARE_TEST(polynomialsolver)
+void test_polynomialsolver()
 {
   for(int i = 0; i < g_repeat; i++)
   {
