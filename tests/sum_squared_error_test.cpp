@@ -86,7 +86,7 @@ void SumSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == 1, LOG);
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
 
-        assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
+        assert_true(abs(back_propagation.error) < type(NUMERIC_LIMITS_MIN), LOG);
 
         assert_true(back_propagation.gradient.size() == 4, LOG);
         assert_true(is_zero(back_propagation.gradient) , LOG);
@@ -164,10 +164,10 @@ void SumSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
         assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-3), LOG);
+        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-3)), LOG);
 
     }
-/*
+
     // Test binary classification random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;
@@ -204,9 +204,9 @@ void SumSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-2), LOG);
+        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
     }
-*/
+
 
     // Test forecasting trivial
     {

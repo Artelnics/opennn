@@ -253,7 +253,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
    assert_true(activations(0,0) - static_cast<type>(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
-/*
+
    probabilistic_layer.set(2, 2);
    probabilistic_layer.set_parameters_constant(2);
 
@@ -268,7 +268,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
    probabilistic_layer.calculate_combinations(inputs, probabilistic_layer.get_biases(), probabilistic_layer.get_synaptic_weights(), combinations);
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
 
    probabilistic_layer.calculate_activations(combinations, activations);
 
@@ -277,7 +277,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
    assert_true(activations.dimension(1) == 2, LOG);
    assert_true(static_cast<Index>(activations(0,0)) == 1, LOG);
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
    probabilistic_layer.calculate_activations(combinations, activations);
    assert_true(abs(activations(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
 
@@ -288,7 +288,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
    combinations.resize(1,3);
    combinations.setValues({{1,0,-1}});
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
 
    activations.resize(1,3);
    probabilistic_layer.calculate_activations(combinations, activations);
@@ -300,12 +300,12 @@ void ProbabilisticLayerTest::test_calculate_activations()
    assert_true(static_cast<Index>(activations(0,1)) == 0, LOG);
    assert_true(static_cast<Index>(activations(0,2)) == 0, LOG);
 
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
    probabilistic_layer.calculate_activations(combinations, activations);
    assert_true(abs(activations(0,0) - static_cast<type>(0.6652)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations(0,1) - static_cast<type>(0.2447)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations(0,2) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
-*/
+
 }
 
 
