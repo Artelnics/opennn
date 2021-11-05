@@ -81,6 +81,7 @@ Makefile.in
 # Executables
 *.exe
 *.out
+*.pdb
 *.app
 *.i*86
 *.x86_64
