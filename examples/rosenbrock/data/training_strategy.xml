@@ -1,0 +1,24 @@
+<TrainingStrategy>
+   <Main Type="STOCHASTIC_GRADIENT_DESCENT">
+      <ReturnMinimumSelectionErrorNN>0</ReturnMinimumSelectionErrorNN>
+      <ApplyEarlyStopping>1</ApplyEarlyStopping>
+      <WarningParametersNorm>1e+06</WarningParametersNorm>
+      <WarningGradientNorm>1e+06</WarningGradientNorm>
+      <ErrorParametersNorm>1e+09</ErrorParametersNorm>
+      <ErrorGradientNorm>1e+09</ErrorGradientNorm>
+      <MinimumParametersIncrementNorm>0</MinimumParametersIncrementNorm>
+      <MinimumLossDecrease>0</MinimumLossDecrease>
+      <LossGoal>-1.79769e+308</LossGoal>
+      <GradientNormGoal>0</GradientNormGoal>
+      <MaximumSelectionErrorIncreases>1000000</MaximumSelectionErrorIncreases>
+      <MaximumEpochsNumber>0</MaximumEpochsNumber>
+      <MaximumTime>1000</MaximumTime>
+      <ReserveTrainingErrorHistory>1</ReserveTrainingErrorHistory>
+      <ReserveSelectionErrorHistory>0</ReserveSelectionErrorHistory>
+      <ReserveSelectionErrorHistory>0</ReserveSelectionErrorHistory>
+      <DisplayPeriod>1</DisplayPeriod>
+      <SavePeriod>4294967295</SavePeriod>
+      <NeuralNetworkFileName>neural_network.xml</NeuralNetworkFileName>
+      <Display>1</Display>
+   </Main>
+</TrainingStrategy>
