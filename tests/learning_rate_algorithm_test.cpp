@@ -60,19 +60,19 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     // Test
 /*
-//    triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
+    triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
 
-//    Tensor<Index, 1> samples_indices(0, 1, data_set.get_samples_number()-1);
+    Tensor<Index, 1> samples_indices(0, 1, data_set.get_samples_number()-1);
 
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
-//    LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
+    LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 
-//    type loss = 0.0;
-//    Tensor<type, 1> training_direction;
-//    type initial_learning_rate = 0.0;
+    type loss = 0.0;
+    Tensor<type, 1> training_direction;
+    type initial_learning_rate = 0.0;
 
-//    LearningRateAlgorithm::Triplet triplet;
+    LearningRateAlgorithm::Triplet triplet;
 
     // Test
 

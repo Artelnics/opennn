@@ -660,9 +660,9 @@ void DataSetTest::test_read_csv()
    assert_true(data.dimension(1) == 2, LOG);
 
    assert_true(abs(data(0,0) - type(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(data(0,1) - 2.0) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(data(1,0) - 3.0) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(data(1,1) - 4.0) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(data(0,1) - type(2.0)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(data(1,0) - type(3.0)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(data(1,1) - type(4.0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
@@ -680,7 +680,8 @@ void DataSetTest::test_read_csv()
    file.open(data_file_name.c_str());
    file << data_string;
    file.close();
-/*
+/// @todo
+   /*
    data_set.read_csv();
 
    data = data_set.get_data();
@@ -1536,7 +1537,7 @@ void DataSetTest::test_calculate_selection_targets_mean()
 
 
 void DataSetTest::test_calculate_input_target_correlations()
-{/*
+{
     cout << "test_calculate_input_target_correlations\n";
 
     data.resize(3, 4);
@@ -1564,7 +1565,7 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     // Test logistic correlation
 
-*/}
+}
 
 
 void DataSetTest::test_calculate_total_input_correlations()
