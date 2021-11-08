@@ -203,7 +203,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
 
     const Index batch_samples_number = batch.get_samples_number();
 
-    const type coefficient = static_cast<type>(2)/static_cast<type>(batch_samples_number);
+    const type coefficient = type(2)/static_cast<type>(batch_samples_number);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);

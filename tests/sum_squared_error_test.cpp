@@ -1,4 +1,4 @@
- //   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   S U M   S Q U A R E D   E R R O R   T E S T   C L A S S               
@@ -177,7 +177,6 @@ void SumSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
         assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-3), LOG);
-
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -223,7 +222,6 @@ void SumSquaredErrorTest::test_back_propagate()
 
         assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-2), LOG);
     }
-
 
     // Test forecasting trivial
     {
@@ -364,7 +362,56 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
     }
 
-    // Test classification random samples, inputs, outputs, neurons
+    // Test binary classification random samples, inputs, outputs, neurons
+    {
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_binary_random();
+        data_set.set_training();
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &sum_squared_error);
+        sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+        back_propagation_lm.set(samples_number, &sum_squared_error);
+        sum_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+
+        gradient_numerical_differentiation = sum_squared_error.calculate_gradient_numerical_differentiation();
+        jacobian_numerical_differentiation = sum_squared_error.calculate_jacobian_numerical_differentiation();
+
+        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+
+        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
+
+        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
+    }
+
+    // Test multiple classification random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;
         inputs_number = 1 + rand()%10;

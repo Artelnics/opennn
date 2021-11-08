@@ -48,12 +48,10 @@ void MinkowskiErrorTest::test_back_propagate()
 
     minkowski_error.set_Minkowski_parameter(type(1.5));
 
-    cout << "test_back_propagate\n";
-
     // Empty test does not work
     // minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
-    // Test approximation all zero
+    // Test approximation trivial
     {
         samples_number = 1;
         inputs_number = 1;
@@ -189,7 +187,7 @@ void MinkowskiErrorTest::test_back_propagate()
     {
         samples_number = 1 + rand()%10;
         inputs_number = 1 + rand()%10;
-        outputs_number = 1;
+        outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
 
         // Data set
@@ -266,8 +264,6 @@ void MinkowskiErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error < type(NUMERIC_LIMITS_MIN), LOG);
         assert_true(is_zero(back_propagation.gradient), LOG);
-
-        back_propagation.print();
     }
 
     // Test forecasting random samples, inputs, outputs, neurons
