@@ -541,9 +541,8 @@ void StatisticsTest::test_mean()
 
    vector.setValues({ type(1.0), type(NAN), type(2.0), type(3.0), type(4.0)});
 
-   assert_true(abs(mean(vector)) - type(NUMERIC_LIMITS_MIN) < type(0), LOG);
+   assert_true(abs(mean(vector)) - type(2.5) < type(NUMERIC_LIMITS_MIN), LOG);
 
-   cout << "mean vector: " << mean(vector) << endl;
    // Test
 
    vector.resize(4);
@@ -679,8 +678,10 @@ void StatisticsTest::test_median()
     matrix(2, 0) = type(3.0);
     matrix(2, 1) = type(3.0);
 
-    assert_true(abs(median(matrix)(0) - static_cast<type>(2)) < static_cast<type>(1.0e-3), LOG);
-    assert_true(abs(median(matrix)(1) - static_cast<type>(2)) < static_cast<type>(1.0e-3), LOG);
+    assert_true(isnan(median(matrix)(0)), LOG);
+    assert_true(isnan(median(matrix)(1)), LOG);
+
+    cout<<"median(matrix)(0): "<<median(matrix)(0)<<endl;
 
     // Test median missing values vector
     vector.resize(4);
