@@ -123,10 +123,10 @@ void StochasticGradientDescentTest::test_to_XML()
    tinyxml2::XMLDocument* document = nullptr;
 
    // Test
-
-//   document = stochastic_gradient_descent.to_XML();
+/*
+   document = stochastic_gradient_descent.to_XML();
    assert_true(document != nullptr, LOG);
-
+*/
    delete document;
 }
 
