@@ -79,6 +79,7 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
 }
 
 
+
 void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
                                                const NeuralNetworkForwardPropagation& forward_propagation,
                                                LossIndexBackPropagation& back_propagation) const
@@ -98,7 +99,6 @@ void CrossEntropyError::calculate_binary_error(const DataSetBatch& batch,
 
     back_propagation.error = cross_entropy_error()/static_cast<type>(batch_samples_number);
 }
-
 
 void CrossEntropyError::calculate_multiple_error(const DataSetBatch& batch,
                                                  const NeuralNetworkForwardPropagation& forward_propagation,
@@ -187,7 +187,6 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
             = static_cast<type>(1)/static_cast<type>(batch_samples_number) *(-targets/outputs);
 }
 
-
 /// Returns a string with the name of the cross entropy error loss type, "CROSS_ENTROPY_ERROR".
 
 string CrossEntropyError::get_error_type() const
@@ -246,11 +245,10 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 
     regularization_document.InsertFirstChild(element_clone);
 
-    regularization_from_XML(regularization_document);    
+    regularization_from_XML(regularization_document);
 }
 
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.

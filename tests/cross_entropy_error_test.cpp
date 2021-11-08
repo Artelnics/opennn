@@ -20,7 +20,6 @@ CrossEntropyErrorTest::~CrossEntropyErrorTest()
 {
 }
 
-
 void CrossEntropyErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
@@ -118,6 +117,8 @@ void CrossEntropyErrorTest::test_back_propagate()
 void CrossEntropyErrorTest::run_test_case()
 {
     cout << "Running cross entropy error test case...\n";
+
+
 
     // Back-propagation methods
 

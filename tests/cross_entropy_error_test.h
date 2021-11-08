@@ -22,6 +22,8 @@ public:
 
     virtual ~CrossEntropyErrorTest();
 
+    void test_constructor();
+
     // Back-propagation methods
 
     void test_back_propagate();

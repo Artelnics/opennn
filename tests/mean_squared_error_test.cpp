@@ -185,7 +185,7 @@ void MeanSquaredErrorTest::test_back_propagate()
     {
         samples_number = 1 + rand()%10;
         inputs_number = 1 + rand()%10;
-        outputs_number = 1;
+        outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
 
         // Data set
@@ -365,7 +365,56 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
     }
 
-    // Test classification random samples, inputs, outputs, neurons
+    // Test binary classification random samples, inputs, outputs, neurons
+    {
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_binary_random();
+        data_set.set_training();
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+        back_propagation_lm.set(samples_number, &mean_squared_error);
+        mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+
+        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+        jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
+
+        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+
+        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
+
+        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
+    }
+
+    // Test multiple classification random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;
         inputs_number = 1 + rand()%10;
@@ -415,7 +464,6 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
     }
 
     // Forecasting incompatible with LM
-
 }
 
 
@@ -423,12 +471,6 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 void MeanSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
-
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
-
-   Index neurons_number;
 
    Tensor<type, 2> data;
 
@@ -438,14 +480,14 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    samples_number = 1;
    inputs_number = 1;
-   targets_number = 1;
+   outputs_number = 1;
 
-   data_set.set(samples_number, inputs_number, targets_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
    data_set.set_data_constant(type(1));
    data_set.set_training();
    batch.set(samples_number, &data_set);
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
    neural_network.set_parameters_constant(type(0));
 
    forward_propagation.set(samples_number, &neural_network);
@@ -462,9 +504,9 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    samples_number = 2;
    inputs_number = 2;
-   targets_number = 2;
+   outputs_number = 2;
 
-   data_set.set(samples_number, inputs_number, targets_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data.resize(2, 4);
    
@@ -474,7 +516,7 @@ void MeanSquaredErrorTest::test_calculate_error()
 
    batch.set(samples_number, &data_set);
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
    neural_network.set_parameters_random();
 
    parameters = neural_network.get_parameters();
@@ -1022,6 +1064,8 @@ void MeanSquaredErrorTest::run_test_case()
    cout << "Running mean squared error test case...\n";
 
    test_constructor();
+
+   // Back propagate methods
 
    test_back_propagate();
 
