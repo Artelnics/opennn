@@ -132,7 +132,6 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         gradient_numerical_differentiation = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
@@ -173,7 +172,6 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
         gradient_numerical_differentiation = normalized_squared_error.calculate_gradient_numerical_differentiation();
-
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
@@ -223,7 +221,6 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         gradient_numerical_differentiation = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
@@ -265,7 +262,6 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
@@ -310,7 +306,6 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
         gradient_numerical_differentiation = normalized_squared_error.calculate_gradient_numerical_differentiation();
-
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);

@@ -327,6 +327,110 @@ void WeightedSquaredErrorTest::test_back_propagate_lm()
 {
     cout << "test_back_propagate_lm\n";
 
+    weighted_squared_error.set_weights();
+
+    // Test approximation random samples, inputs, outputs, neurons
+    {
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_random();
+        data_set.set_training();
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &weighted_squared_error);
+        weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+        back_propagation_lm.set(samples_number, &weighted_squared_error);
+        weighted_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+
+        gradient_numerical_differentiation = weighted_squared_error.calculate_gradient_numerical_differentiation();
+        jacobian_numerical_differentiation = weighted_squared_error.calculate_jacobian_numerical_differentiation();
+
+        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+
+        back_propagation_lm.print();
+
+        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
+
+        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
+    }
+
+    // Test classification random samples, inputs, outputs, neurons
+    {
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1 + rand()%10;
+        neurons_number = 1 + rand()%10;
+
+        // Data set
+
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_random();
+        data_set.set_training();
+
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation);
+
+        // Loss index
+
+        back_propagation.set(samples_number, &weighted_squared_error);
+        weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+        back_propagation_lm.set(samples_number, &weighted_squared_error);
+        weighted_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+
+        gradient_numerical_differentiation = weighted_squared_error.calculate_gradient_numerical_differentiation();
+        jacobian_numerical_differentiation = weighted_squared_error.calculate_jacobian_numerical_differentiation();
+
+        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+
+        assert_true(back_propagation_lm.error >= type(0), LOG);
+        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
+
+        assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
+    }
+
+    // Forecasting incompatible with LM
+
 }
 
 
