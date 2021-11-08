@@ -227,7 +227,7 @@ protected:
    ActivationFunction activation_function = ActivationFunction::RectifiedLinear;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/convolutional_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/convolutional_layer_cuda.h"
 #endif
 
 };

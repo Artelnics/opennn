@@ -878,7 +878,7 @@ private:
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/data_set_cuda.h"
 #endif
 
 struct DataSetBatch

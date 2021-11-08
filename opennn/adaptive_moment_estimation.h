@@ -168,7 +168,7 @@ private:
    Index batch_samples_number = 1000;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/adaptive_moment_estimation_cuda.h"
 #endif
 
 };
