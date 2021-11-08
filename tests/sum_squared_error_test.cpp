@@ -83,21 +83,23 @@ void SumSquaredErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &sum_squared_error);
         sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        assert_true(back_propagation.errors.dimension(0) == 1, LOG);
-        assert_true(back_propagation.errors.dimension(1) == 1, LOG);
+        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(abs(back_propagation.error) < type(NUMERIC_LIMITS_MIN), LOG);
+        assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
+        assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
 
-        assert_true(back_propagation.gradient.size() == 4, LOG);
         assert_true(is_zero(back_propagation.gradient) , LOG);
     }
 
-    // Test approximation random samples, inputs, outputs, neurons
+    // Test approximation all random
     {
         samples_number = 1 + rand()%5;
         inputs_number = 1 + rand()%5;
         outputs_number = 1 + rand()%5;
         neurons_number = 1 + rand()%5;
+
+        // Data set
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
@@ -108,19 +110,24 @@ void SumSquaredErrorTest::test_back_propagate()
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
-        neural_network.set_parameters_random();
-
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
         forward_propagation.set(samples_number, &neural_network);
         neural_network.forward_propagate(batch, forward_propagation);
+
+        // Loss index
 
         back_propagation.set(samples_number, &sum_squared_error);
         sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
         gradient_numerical_differentiation = sum_squared_error.calculate_gradient_numerical_differentiation();
+
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
@@ -134,37 +141,42 @@ void SumSquaredErrorTest::test_back_propagate()
         outputs_number = 1;
         samples_number = 1;
 
-        data_set.set(samples_number, inputs_number, outputs_number);
+        // Data set
 
+        data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_constant(type(0));
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
-
-        neural_network.set_parameters_constant(type(0));
-
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
+        neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
         neural_network.forward_propagate(batch, forward_propagation);
 
+        // Loss index
+
         back_propagation.set(samples_number, &sum_squared_error);
         sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
+        gradient_numerical_differentiation = sum_squared_error.calculate_gradient_numerical_differentiation();
+
+
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
-
-        gradient_numerical_differentiation = sum_squared_error.calculate_gradient_numerical_differentiation();
 
         assert_true(back_propagation.errors.dimension(0) == 1, LOG);
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
         assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-3)), LOG);
+        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-3), LOG);
 
     }
 
@@ -175,36 +187,41 @@ void SumSquaredErrorTest::test_back_propagate()
         outputs_number = 1;
         neurons_number = 1 + rand()%10;
 
+        // Data set
+
         data_set.set(samples_number, inputs_number, outputs_number);
-
         data_set.set_data_binary_random();
-
         data_set.set_training();
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
-        neural_network.set_parameters_random();
-
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
         forward_propagation.set(samples_number, &neural_network);
         neural_network.forward_propagate(batch, forward_propagation);
+
+        // Loss index
 
         back_propagation.set(samples_number, &sum_squared_error);
         sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
         gradient_numerical_differentiation = sum_squared_error.calculate_gradient_numerical_differentiation();
 
+
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
+        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-2), LOG);
     }
 
 
@@ -214,26 +231,31 @@ void SumSquaredErrorTest::test_back_propagate()
         outputs_number = 1;
         samples_number = 1;
 
-        data_set.set(samples_number, inputs_number, outputs_number);
+        // Data set
 
+        data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_constant(type(0));
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, outputs_number});
-
-        neural_network.set_parameters_constant(type(0));
-
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, outputs_number});
+        neural_network.set_parameters_constant(type(0));
 
         forward_propagation.set(samples_number, &neural_network);
         neural_network.forward_propagate(batch, forward_propagation);
 
+        // Loss index
+
         back_propagation.set(samples_number, &sum_squared_error);
         sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
@@ -241,7 +263,7 @@ void SumSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.error < type(NUMERIC_LIMITS_MIN), LOG);
         assert_true(is_zero(back_propagation.gradient), LOG);
     }
-/*
+
     // Test forecasting random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;
@@ -249,29 +271,34 @@ void SumSquaredErrorTest::test_back_propagate()
         outputs_number = 1 + rand()%10;
         neurons_number = 1 + rand()%10;
 
+        // Data set
+
         data_set.set(samples_number, inputs_number, outputs_number);
-
         data_set.set_data_random();
-
         data_set.set_training();
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, neurons_number, outputs_number});
-        neural_network.set_parameters_random();
-
         batch.set(samples_number, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
+        // Neural network
+
+        neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
+
         forward_propagation.set(samples_number, &neural_network);
         neural_network.forward_propagate(batch, forward_propagation);
+
+        // Loss index
 
         back_propagation.set(samples_number, &sum_squared_error);
         sum_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
         gradient_numerical_differentiation = sum_squared_error.calculate_gradient_numerical_differentiation();
+
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
@@ -281,7 +308,7 @@ void SumSquaredErrorTest::test_back_propagate()
         assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
 
     }
-*/
+
 }
 
 
