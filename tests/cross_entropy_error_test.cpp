@@ -25,294 +25,93 @@ void CrossEntropyErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
 
-    // Data set
+    // Empty test does not work
+    // cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
 
-    inputs_number = 2;
-    outputs_number = 1;
+    // Test binary classification trivial
+    {
+        inputs_number = 1;
+        outputs_number = 1;
+        samples_number = 1;
 
-    data_set.set(1, 2, 1);
-    data_set.set_data_constant(type(0));
-    data_set.set_training();
+        // Data set
 
-    training_samples_indices = data_set.get_training_samples_indices();
-    input_variables_indices = data_set.get_input_variables_indices();
-    target_variables_indices = data_set.get_target_variables_indices();
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_constant(type(0));
 
-    neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
-    neural_network.set_parameters_constant(type(0));
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
-    batch.set(samples_number, &data_set);
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    forward_propagation.set(samples_number, &neural_network);
-    neural_network.forward_propagate(batch, forward_propagation);
+        // Neural network
 
-    back_propagation.set(samples_number, &cross_entropy_error);
-    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
+        neural_network.set_parameters_constant(type(0));
 
-    cross_entropy_error.calculate_error(batch, forward_propagation, back_propagation);
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation);
 
-    assert_true(abs(back_propagation.error - type(0.693)) < type(1e-3), LOG);
+        // Loss index
 
-    // Test multiple
+        back_propagation.set(samples_number, &cross_entropy_error);
+        cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
 
-    inputs_number = 2;
-    outputs_number = 2;
+        gradient_numerical_differentiation = cross_entropy_error.calculate_gradient_numerical_differentiation();
 
-    data_set.set(samples_number, inputs_number, outputs_number);
-    data_set.set_data_constant(type(0));
-    data_set.set_training();
+        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-    training_samples_indices = data_set.get_training_samples_indices();
-    input_variables_indices = data_set.get_input_variables_indices();
-    target_variables_indices = data_set.get_target_variables_indices();
+        assert_true(back_propagation.error >= 0, LOG);
 
-    neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, outputs_number});
-    neural_network.set_parameters_constant(type(0));
+        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-3), LOG);
 
-    batch.set(samples_number, &data_set);
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    }
 
-    forward_propagation.set(samples_number, &neural_network);
-    neural_network.forward_propagate(batch, forward_propagation);
+    // Test binary classification random samples, inputs, outputs, neurons
+    {
+        samples_number = 1 + rand()%10;
+        inputs_number = 1 + rand()%10;
+        outputs_number = 1;
+        neurons_number = 1 + rand()%10;
 
-    back_propagation.set(samples_number, &cross_entropy_error);
-    cross_entropy_error.calculate_error(batch, forward_propagation, back_propagation);
+        // Data set
 
-    assert_true(back_propagation.error < type(1e-3), LOG);
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_binary_random();
+        data_set.set_training();
 
-    // Test
+        training_samples_indices = data_set.get_training_samples_indices();
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
 
-    samples_number = 2;
-    inputs_number = 10;
-    outputs_number = 1;
-    neurons_number = 3;
+        batch.set(samples_number, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-    data_set.set(samples_number, inputs_number, outputs_number);
+        // Neural network
 
-    data.resize(samples_number, inputs_number+outputs_number);
-    data.setRandom();
+        neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
+        neural_network.set_parameters_random();
 
-    data(0, 1) = type(1);
-    data(1, 1) = type(0);
+        forward_propagation.set(samples_number, &neural_network);
+        neural_network.forward_propagate(batch, forward_propagation);
 
-    data_set.set_data(data);
+        // Loss index
 
-    data_set.set_data_binary_random();
+        back_propagation.set(samples_number, &cross_entropy_error);
+        cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
 
-    data_set.set_training();
+        gradient_numerical_differentiation = cross_entropy_error.calculate_gradient_numerical_differentiation();
 
-    training_samples_indices = data_set.get_training_samples_indices();
+        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
+        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-    input_variables_indices = data_set.get_input_variables_indices();
-    target_variables_indices = data_set.get_target_variables_indices();
+        assert_true(back_propagation.error >= 0, LOG);
 
-    neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
-
-    neural_network.set_parameters_random();
-
-    batch.set(samples_number, &data_set);
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-    forward_propagation.set(samples_number, &neural_network);
-    neural_network.forward_propagate(batch, forward_propagation);
-
-    back_propagation.set(samples_number, &cross_entropy_error);
-    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
-
-    gradient_numerical_differentiation = cross_entropy_error.calculate_gradient_numerical_differentiation();
-
-    assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation), LOG);
-
-    // Test
-
-    samples_number = 5;
-    inputs_number = 10;
-    outputs_number = 3;
-    neurons_number = 3;
-
-    data_set.set(samples_number, inputs_number, outputs_number);
-
-    data.resize(samples_number, inputs_number+outputs_number);
-    data.setRandom();
-
-    data(0, 1) = type(1);
-    data(1, 1) = type(0);
-
-    data_set.set_data(data);
-
-    data_set.set_data_binary_random();
-
-    data_set.set_training();
-
-    training_samples_indices = data_set.get_training_samples_indices();
-
-    input_variables_indices = data_set.get_input_variables_indices();
-    target_variables_indices = data_set.get_target_variables_indices();
-
-    neural_network.set(NeuralNetwork::ProjectType::Classification, {inputs_number, neurons_number, outputs_number});
-
-    neural_network.set_parameters_random();
-
-    batch.set(samples_number, &data_set);
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-    forward_propagation.set(samples_number, &neural_network);
-    neural_network.forward_propagate(batch, forward_propagation);
-
-    back_propagation.set(samples_number, &cross_entropy_error);
-    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
-
-    gradient_numerical_differentiation = cross_entropy_error.calculate_gradient_numerical_differentiation();
-
-    assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation), LOG);
-
-    Tensor<type, 0> maximum_difference;
-
-    RecurrentLayer* recurrent_layer_pointer = new RecurrentLayer;
-    PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer;
-
-    // Test
-
-    samples_number = 10;
-    inputs_number = 3;
-    outputs_number = 2;
-    neurons_number = 2;
-
-   data_set.set(samples_number, inputs_number, outputs_number);
-   data_set.set_training();
-
-   data_set.set_data_random();
-
-   recurrent_layer_pointer->set(inputs_number, neurons_number);
-   neural_network.add_layer(recurrent_layer_pointer);
-
-   perceptron_layer_pointer->set(neurons_number, outputs_number);
-
-   neural_network.add_layer(perceptron_layer_pointer);
-
-   neural_network.set_parameters_random();
-
-//   error_gradient = cross_entropy_error.calculate_error_gradient();
-
-   gradient_numerical_differentiation = cross_entropy_error.calculate_gradient_numerical_differentiation();
-
-//   maximum_difference = (error_gradient - numerical_error_gradient).abs().maximum();
-
-   assert_true(maximum_difference(0) < type(1.0e-3), LOG);
-
-   Index samples_number;
-   Index inputs_number;
-   Index outputs_number;
-   Index neurons_number;
-
-   LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer;
-//   PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer;
-
-   // Test
-
-   samples_number = 10;
-   inputs_number = 3;
-   outputs_number = 2;
-   neurons_number = 2;
-
-   data_set.set(samples_number, inputs_number, outputs_number);
-
-   data_set.set_training();
-
-   data_set.set_data_random();
-
-   neural_network.set(NeuralNetwork::ProjectType::Forecasting, {inputs_number, neurons_number, outputs_number});
-
-   long_short_term_memory_layer_pointer->set(inputs_number, neurons_number);
-   neural_network.add_layer(long_short_term_memory_layer_pointer);
-
-   perceptron_layer_pointer->set(neurons_number, outputs_number);
-   neural_network.add_layer(perceptron_layer_pointer);
-
-   neural_network.set_parameters_random();
-
-//   error_gradient = cross_entropy_error.calculate_error_gradient();
-
-   gradient_numerical_differentiation = cross_entropy_error.calculate_gradient_numerical_differentiation();
-
-//   maximum_difference = (error_gradient - numerical_error_gradient).abs().maximum();
-
-   assert_true(maximum_difference(0) < type(1.0e-3), LOG);
-
-   // Test
-
-   samples_number = 5;
-   inputs_number = 147;
-   outputs_number = 1;
-
-//   data_set.set(samples_number, inputs_number, outputs_number);
-//   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
-//   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
-   data_set.set_data_random();
-   data_set.set_training();
-
-//   const type parameters_minimum = -100.0;
-//   const type parameters_maximum = 100.0;
-
-//   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
-//   Tensor<type, 2> filters_1({2,3,2,2}, 0);
-//   filters_1.setRandom(parameters_minimum,parameters_maximum);
-//   convolutional_layer_1->set_synaptic_weights(filters_1);
-//   Tensor<type, 1> biases_1(2, 0);
-//   biases_1.setRandom(parameters_minimum, parameters_maximum);
-//   convolutional_layer_1->set_biases(biases_1);
-
-//   ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
-//   convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-//   Tensor<type, 2> filters_2({2,2,2,2}, 0);
-//   filters_2.setRandom(parameters_minimum, parameters_maximum);
-//   convolutional_layer_2->set_synaptic_weights(filters_2);
-//   Tensor<type, 1> biases(2, 0);
-//   biases.setRandom(parameters_minimum, parameters_maximum);
-//   convolutional_layer_2->set_biases(biases);
-
-//   PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
-
-//   ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
-//   convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-//   Tensor<type, 2> filters_3({1,2,2,2}, 0);
-//   filters_3.setRandom(parameters_minimum, parameters_maximum);
-//   convolutional_layer_3->set_synaptic_weights(filters_3);
-//   Tensor<type, 1> biases_3(1);
-//   biases_3.setRandom(parameters_minimum, parameters_maximum);
-//   convolutional_layer_3->set_biases(biases_3);
-
-//   PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_3->get_outputs_dimensions(), {2,2});
-//   pooling_layer_2->set_pooling_method(PoolingLayer::MaxPooling);
-
-//   PoolingLayer* pooling_layer_3 = new PoolingLayer(pooling_layer_2->get_outputs_dimensions(), {2,2});
-//   pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
-
-//   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
-//   perceptron_layer->set_parameters_random();
-
-//   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
-//   probabilistic_layer->set_parameters_random();
-
-//   neural_network.set();
-//   neural_network.add_layer(convolutional_layer_1);
-//   neural_network.add_layer(convolutional_layer_2);
-//   neural_network.add_layer(pooling_layer_1);
-//   neural_network.add_layer(convolutional_layer_3);
-//   neural_network.add_layer(pooling_layer_2);
-//   neural_network.add_layer(pooling_layer_3);
-//   neural_network.add_layer(perceptron_layer);
-//   neural_network.add_layer(probabilistic_layer);
-
-//   numerical_error_gradient = cross_entropy_error.calculate_gradient_numerical_differentiation();
-
-//   error_gradient = cross_entropy_error.calculate_error_gradient();
-
-//   maximum_diference = (numerical_error_gradient - error_gradient).abs().maximum();
-
-//   assert_true(maximum_diference(0) < type(1e-3), LOG);
-
+        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-2), LOG);
+    }
 }
 
 
