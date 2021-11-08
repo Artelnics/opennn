@@ -34,7 +34,7 @@ struct PerceptronLayerBackPropagation;
 struct PerceptronLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/struct_perceptron_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
 #endif
 
 
@@ -251,7 +251,7 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/perceptron_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
 #else
 };
 #endif

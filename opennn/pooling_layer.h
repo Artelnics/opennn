@@ -167,7 +167,7 @@ protected:
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/pooling_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
 #endif
 
 };
