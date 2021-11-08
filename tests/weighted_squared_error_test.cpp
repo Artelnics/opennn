@@ -45,7 +45,7 @@ void WeightedSquaredErrorTest::test_constructor()
 void WeightedSquaredErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
-
+/*
     // Empty test does not work
     // weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
@@ -228,8 +228,6 @@ void WeightedSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
-        assert_true(back_propagation.error >= 0, LOG);
-
         assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-2), LOG);
     }
 
@@ -274,18 +272,31 @@ void WeightedSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.error < type(NUMERIC_LIMITS_MIN), LOG);
         assert_true(is_zero(back_propagation.gradient), LOG);
     }
-
+*/
     // Test forecasting random samples, inputs, outputs, neurons
     {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1 + rand()%10;
-        neurons_number = 1 + rand()%10;
+        samples_number = 2;// + rand()%10;
+        inputs_number = 2;// + rand()%10;
+        outputs_number = 2;// + rand()%10;
+        neurons_number = 2;// + rand()%10;
+
+        Tensor<type,2> data(samples_number, inputs_number+outputs_number);
+        type max = 10;
+        type min = -10;
+
+        data.setValues({{2,-4,6,2},{6,-1,-2.5,9.6}});
+
+        /*for(Index i=0; i<=data.size();i++)
+        {
+            data(i) = static_cast<type>((max-min)/static_cast<type>(RAND_MAX)*(type(rand()))) + min;
+        }*/
+
+        cout << data << endl;
 
         // Data set
 
         data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_random();
+        data_set.set(data);
         data_set.set_training();
 
         training_samples_indices = data_set.get_training_samples_indices();
@@ -307,11 +318,15 @@ void WeightedSquaredErrorTest::test_back_propagate()
 
         weighted_squared_error.set_weights();
 
+        cout << "Positives weight: " << weighted_squared_error.get_positives_weight() << endl;
+        cout << "Negatives weight: " << weighted_squared_error.get_negatives_weight() << endl;
+
         back_propagation.set(samples_number, &weighted_squared_error);
         weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        gradient_numerical_differentiation = weighted_squared_error.calculate_gradient_numerical_differentiation();
+        back_propagation.print();
 
+        gradient_numerical_differentiation = weighted_squared_error.calculate_gradient_numerical_differentiation();
 
         assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
@@ -326,7 +341,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
 void WeightedSquaredErrorTest::test_back_propagate_lm()
 {
     cout << "test_back_propagate_lm\n";
-
+/*
     // Test trivial approximation
     {
         samples_number = 1;// + rand()%10;
@@ -381,16 +396,19 @@ void WeightedSquaredErrorTest::test_back_propagate_lm()
 
     // Test approximation all random
     {
-        samples_number = 1;// + rand()%10;
-        inputs_number = 1;// + rand()%10;
-        outputs_number = 1;// + rand()%10;
-        neurons_number = 1;// + rand()%10;
+        samples_number = 2;// + rand()%10;
+        inputs_number = 2;// + rand()%10;
+        outputs_number = 2;// + rand()%10;
+        neurons_number = 2;// + rand()%10;
 
         // Data set
 
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
         data_set.set_training();
+
+        data_set.print();
+        data_set.print_data();
 
         training_samples_indices = data_set.get_training_samples_indices();
         input_variables_indices = data_set.get_input_variables_indices();
@@ -423,6 +441,9 @@ void WeightedSquaredErrorTest::test_back_propagate_lm()
         assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
 
+        back_propagation.print();
+        back_propagation_lm.print();
+
         assert_true(back_propagation_lm.error >= type(0), LOG);
         assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
 
@@ -430,7 +451,7 @@ void WeightedSquaredErrorTest::test_back_propagate_lm()
         assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
 
         }
-
+/*
     // Test classification random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;
@@ -479,7 +500,7 @@ void WeightedSquaredErrorTest::test_back_propagate_lm()
         assert_true(are_equal(back_propagation_lm.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
         assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
     }
-
+*/
     // Forecasting incompatible with LM
 
 }
