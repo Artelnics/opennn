@@ -371,6 +371,10 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     {
         throw logic_error("Levenberg-Marquard algorithm cannot work with cross entropy error.");
     }
+    else if(loss_index_pointer->get_error_type() == "WEIGHTED_SQUARED_ERROR")
+    {
+        throw logic_error("Levenberg-Marquard algorithm is not implemented yet with weighted squared error.");
+    }
 
     ostringstream buffer;
 

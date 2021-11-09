@@ -319,20 +319,25 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 
     // Test
 
-    probabilistic_layer.set(1,3);
+    samples_number = 1;
+    inputs_number = 1;
+    outputs_number = 1;
+    neurons_number = 3;
 
-    combinations.resize(1,3);
-    combinations.setValues({{type(1), type(2), type(3)}});
-    activations.resize(1,3);
+    probabilistic_layer.set(inputs_number, neurons_number);
+
+    combinations.resize(inputs_number, neurons_number);
+    combinations.setValues({{type(1), type(2), type(3),type(4)}});
+    activations.resize(inputs_number, neurons_number);
     activations_derivatives.resize(3,3,1);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
     assert_true(activations_derivatives.rank() == 3, LOG);
-    assert_true(activations_derivatives.dimension(0) == 3, LOG);
-    assert_true(activations_derivatives.dimension(1) == 3, LOG);
-    assert_true(activations_derivatives.dimension(2) == 1, LOG);
+    assert_true(activations_derivatives.dimension(0) == neurons_number, LOG);
+    assert_true(activations_derivatives.dimension(1) == neurons_number, LOG);
+    assert_true(activations_derivatives.dimension(2) == inputs_number, LOG);
 
     assert_true(abs(activations(0,0) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
 

@@ -62,6 +62,7 @@ public:
 private:
 
    Index inputs_number;
+   Index outputs_number;
    Index neurons_number;
    Index samples_number;
 
