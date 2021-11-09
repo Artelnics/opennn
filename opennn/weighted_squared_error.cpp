@@ -295,6 +295,8 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 }
 
 
+/// @todo Add gradient and hessian weighted squared error code (insted of normalized squared error)
+
 void WeightedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
                                               LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
@@ -312,7 +314,7 @@ void WeightedSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
 
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device) = coefficient*loss_index_back_propagation_lm.gradient;
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device) = coefficient * loss_index_back_propagation_lm.gradient;
 }
 
 
