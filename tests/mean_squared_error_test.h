@@ -32,11 +32,6 @@ public:
 
    void test_back_propagate_lm();
 
-
-   void test_calculate_error();
-
-   void test_calculate_error_gradient();   
-
    // Unit testing methods
 
    void run_test_case();

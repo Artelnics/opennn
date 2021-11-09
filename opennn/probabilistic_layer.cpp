@@ -764,16 +764,16 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
         TensorMap< Tensor<type, 2> > activations_derivatives(probabilistic_layer_forward_propagation->activations_derivatives.data(), samples_number, neurons_number);
 
         probabilistic_layer_back_propagation->biases_derivatives.device(*thread_pool_device) =
-                (probabilistic_layer_back_propagation->delta*activations_derivatives).sum(Eigen::array<Index, 1>({0}));
+                (probabilistic_layer_back_propagation->delta * activations_derivatives).sum(Eigen::array<Index, 1>({0}));
 
         probabilistic_layer_back_propagation->synaptic_weights_derivatives.device(*thread_pool_device) =
-                inputs.contract((probabilistic_layer_back_propagation->delta*activations_derivatives), AT_B);
+                inputs.contract((probabilistic_layer_back_propagation->delta * activations_derivatives), AT_B);
     }
     else // Multiple gradient
     {
         if(activation_function == ActivationFunction::Softmax)
         {
-            const Index step = neurons_number*neurons_number;
+            const Index step = neurons_number * neurons_number;
 
             for(Index i = 0; i < samples_number; i++)
             {

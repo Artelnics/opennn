@@ -29,6 +29,7 @@ int main()
     {
         cout << "OpenNN. Blank application." << endl;
 
+        /*
         srand(static_cast<unsigned>(time(nullptr)));
 
         DataSet ds("C:/Users/Usuario/Documents/Waste_monthly.csv", ',', true);
@@ -79,7 +80,7 @@ int main()
 
         cout << "outputs: " << endl << nn.calculate_outputs(ds.get_input_data()) << endl;
 
-
+        */
 
         cout << "Good bye!" << endl;
 

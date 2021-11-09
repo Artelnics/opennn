@@ -39,6 +39,8 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+
         const TrainingResults training_results = training_strategy.perform_training();
 
         // Testing analysis

@@ -32,11 +32,6 @@ public:
 
    void test_back_propagate_lm();
 
-   // Error methods
-
-   void test_calculate_error();
-   void test_calculate_error_gradient();
-
    // Unit testing methods
 
    void run_test_case();
@@ -63,10 +58,8 @@ private:
    NeuralNetworkForwardPropagation forward_propagation;
 
    LossIndexBackPropagation back_propagation;
-   LossIndexBackPropagationLM back_propagation_lm;
 
    Tensor<type, 1> gradient_numerical_differentiation;
-   Tensor<type, 2> jacobian_numerical_differentiation;
 
 };
 
