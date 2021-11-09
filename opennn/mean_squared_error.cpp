@@ -209,7 +209,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = coefficient*loss_index_back_propagation_lm.gradient;
+            = coefficient * loss_index_back_propagation_lm.gradient;
 }
 
 
