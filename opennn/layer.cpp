@@ -1103,61 +1103,112 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                                  Tensor<type, 2>& activations,
                                  Tensor<type, 3>& activations_derivatives) const
 {
-     const Index dim = combinations.dimension(1);
+    const Index dim = combinations.dimension(1);
 
-     const Index rows_number = activations.dimension(0);
+    const Index rows_number = activations.dimension(0);
 
-     //Activations
+    //Activations
 
-     activations.device(*thread_pool_device) = combinations.exp();
+    activations.device(*thread_pool_device) = combinations.exp();
 
-     Tensor<type, 1> sums(rows_number);
+    Tensor<type, 1> sums(rows_number);
 
-     sums.setZero();
+    sums = activations.sum(Eigen::array<Index, 1>({1}));
+    //cout << "sums 1:\n" << sums << endl;
+    //cout << "sums 2:\n" << sums.broadcast() << endl;
 
-     #pragma omp parallel for
+    #pragma omp parallel for
 
-     for(Index i = 0; i< rows_number; i++)
-     {
-         for(Index j = 0; j < dim; j++)
-         {
-             sums[i] +=  activations(i,j);
-         }
-     }
+    for(Index i = 0; i< rows_number; i++)
+    {
+        for(Index j = 0; j < dim; j++)
+        {
+            activations(i, j) /= sums(i);
+        }
+    }
 
-     #pragma omp parallel for
+    /// @todo Add #pragma parallel for in loops.
 
-     for(Index i = 0; i< rows_number; i++)
-     {
-         for(Index j = 0; j < dim; j++)
-         {
-             activations(i, j) /= sums(i);
-         }
-     }
+    // Activations derivatives
 
-     /// @todo Add #pragma parallel for in loops.
+    type delta = type(0);
+    Index index= 0;
 
-     // Activations derivatives
+    for(Index row = 0; row < rows_number; row++)
+    {
+        for(Index i = 0; i < dim; i++)
+        {
+            for(Index j = 0; j < dim; j++)
+            {
+                (i == j) ? delta = type(1) : delta = type(0);
 
-     type delta = type(0);
-     Index index= 0;
+                // row, i, j
 
-     for(Index row = 0; row < rows_number; row++)
-     {
-         for(Index i = 0; i < dim; i++)
-         {
-             for(Index j = 0; j < dim; j++)
-             {
-                 (i == j) ? delta = type(1) : delta = type(0);
+                activations_derivatives(index) = activations(row,i) * (delta - activations(row,j));
 
-                 // row, i, j
+                index++;
+            }
+        }
+    }
+    /*
+      const Index dim = combinations.dimension(1);
 
-                 activations_derivatives(index) = activations(row,i) * (delta - activations(row,j));
+    const Index rows_number = activations.dimension(0);
 
-                 index++;
-             }
-         }
-     }
+    //Activations
+
+    activations.device(*thread_pool_device) = combinations.exp();
+
+    Tensor<type, 1> sums(rows_number);
+
+    sums.setZero();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i< rows_number; i++)
+    {
+        for(Index j = 0; j < dim; j++)
+        {
+            sums[i] +=  activations(i,j);
+        }
+    }
+
+    cout << "sums: \n" << sums << endl;
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i< rows_number; i++)
+    {
+        for(Index j = 0; j < dim; j++)
+        {
+            activations(i, j) /= sums(i);
+        }
+    }
+
+    /// @todo Add #pragma parallel for in loops.
+
+    // Activations derivatives
+
+    type delta = type(0);
+    Index index= 0;
+
+    for(Index row = 0; row < rows_number; row++)
+    {
+        for(Index i = 0; i < dim; i++)
+        {
+            for(Index j = 0; j < dim; j++)
+            {
+                (i == j) ? delta = type(1) : delta = type(0);
+
+                // row, i, j
+
+                activations_derivatives(index) = activations(row,i) * (delta - activations(row,j));
+
+                index++;
+            }
+        }
+    }
+     */
 }
 
 
@@ -1165,19 +1216,19 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 
 void Layer::linear(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
-    y = x;
+   y = x;
 }
 
 
 void Layer::logistic(const Tensor<type, 4>& x, Tensor<type, 4>& y)const
 {
-    y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
+   y.device(*thread_pool_device) = (type(1) + x.exp().inverse()).inverse();
 }
 
 
 void Layer::hyperbolic_tangent(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
-    y.device(*thread_pool_device) = x.tanh();
+   y.device(*thread_pool_device) = x.tanh();
 }
 
 
