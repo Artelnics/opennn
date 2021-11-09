@@ -29,6 +29,26 @@ int main()
     {
         cout << "OpenNN. Blank application." << endl;
 
+        DataSet data_set("C:/Program Files/Neural Designer/examples/activityrecognition/activityrecognition.csv",';',true);
+
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
+
+        // Neural network
+
+        const Index hidden_neurons_number = 10;
+
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
+
+        // Training strategy
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_maximum_epochs_number(200);
+
+        training_strategy.perform_training();
+
         /*
         srand(static_cast<unsigned>(time(nullptr)));
 
