@@ -806,20 +806,16 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     const Index rows_number = y.dimension(0);
 
-    // Activations
+    Tensor<type, 1> sums(rows_number);
 
     y.device(*thread_pool_device) = x.exp();
 
-    Tensor<type, 1> sums(rows_number);
-    sums.setZero();
+    sums.device(*thread_pool_device) = y.sum(Eigen::array<Index, 1>({1}));
 
-    for(Index i = 0; i< rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            sums[i] +=  y(i,j);
-        }
-    }
+    y.device(*thread_pool_device) = y / sums.broadcast(Eigen::array<Index,2>({1,columns_number}));
+/*
+
+    // Activations
 
     for(Index i = 0; i< rows_number; i++)
     {
@@ -828,6 +824,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
             y(i, j) = y(i, j) / sums(i);
         }
     }
+    */
 }
 
 
@@ -1105,36 +1102,41 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 {
     const Index dim = combinations.dimension(1);
 
-    const Index rows_number = activations.dimension(0);
+    const Index matrix_number = activations.dimension(0);
 
     //Activations
 
-    activations.device(*thread_pool_device) = combinations.exp();
+    softmax(combinations, activations);
 
-    Tensor<type, 1> sums(rows_number);
+    // Activations derivatives
+/*
+    Tensor<type,2> diagonal_matrix(dim,dim);
+    Tensor<type,1> row(dim);
+    Tensor<type,2> temp_matrix(dim,dim);
 
-    sums = activations.sum(Eigen::array<Index, 1>({1}));
-    //cout << "sums 1:\n" << sums << endl;
-    //cout << "sums 2:\n" << sums.broadcast() << endl;
+    diagonal_matrix.setZero();
+    sum_diagonal(diagonal_matrix,type(1));
 
     #pragma omp parallel for
 
-    for(Index i = 0; i< rows_number; i++)
+    for(Index row_index = 0; row_index < matrix_number; row_index++)
     {
-        for(Index j = 0; j < dim; j++)
-        {
-            activations(i, j) /= sums(i);
-        }
+        row = activations.chip(row_index,0);
+
+        temp_matrix =
+                row.reshape(Eigen::array<Index,2>({dim,1})).broadcast(Eigen::array<Index,2>({1,dim}))
+                * (diagonal_matrix- row.reshape(Eigen::array<Index,2>({1,dim})).broadcast(Eigen::array<Index,2>({dim,1})));
+
+        memcpy(activations_derivatives.data()+(dim*dim)*row_index,
+               temp_matrix.data(),
+               static_cast<size_t>(dim*dim)*sizeof(type));
     }
-
-    /// @todo Add #pragma parallel for in loops.
-
-    // Activations derivatives
+*/
 
     type delta = type(0);
     Index index= 0;
 
-    for(Index row = 0; row < rows_number; row++)
+    for(Index row = 0; row < matrix_number; row++)
     {
         for(Index i = 0; i < dim; i++)
         {
@@ -1150,65 +1152,6 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
             }
         }
     }
-    /*
-      const Index dim = combinations.dimension(1);
-
-    const Index rows_number = activations.dimension(0);
-
-    //Activations
-
-    activations.device(*thread_pool_device) = combinations.exp();
-
-    Tensor<type, 1> sums(rows_number);
-
-    sums.setZero();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i< rows_number; i++)
-    {
-        for(Index j = 0; j < dim; j++)
-        {
-            sums[i] +=  activations(i,j);
-        }
-    }
-
-    cout << "sums: \n" << sums << endl;
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i< rows_number; i++)
-    {
-        for(Index j = 0; j < dim; j++)
-        {
-            activations(i, j) /= sums(i);
-        }
-    }
-
-    /// @todo Add #pragma parallel for in loops.
-
-    // Activations derivatives
-
-    type delta = type(0);
-    Index index= 0;
-
-    for(Index row = 0; row < rows_number; row++)
-    {
-        for(Index i = 0; i < dim; i++)
-        {
-            for(Index j = 0; j < dim; j++)
-            {
-                (i == j) ? delta = type(1) : delta = type(0);
-
-                // row, i, j
-
-                activations_derivatives(index) = activations(row,i) * (delta - activations(row,j));
-
-                index++;
-            }
-        }
-    }
-     */
 }
 
 

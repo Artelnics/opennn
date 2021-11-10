@@ -18,6 +18,7 @@
 // OpenNN includes
 
 #include "../opennn/opennn.h"
+#include "../opennn/layer.h"
 
 using namespace OpenNN;
 using namespace std;
@@ -28,6 +29,43 @@ int main()
     try
     {
         cout << "OpenNN. Blank application." << endl;
+
+        Index rows_number = 3;
+        Index columns_number = 4;
+
+        Tensor<type,2> diagonal_matrix(columns_number,columns_number);
+        Tensor<type,1> row;
+
+        Tensor<type,2> activations(rows_number,columns_number);
+        activations.setValues({{1,1,1,1},{2,2,2,2},{3,3,3,3}});
+
+        Tensor<type,3> activations_derivatives(columns_number,rows_number,columns_number);
+
+        diagonal_matrix.setZero();
+        sum_diagonal(diagonal_matrix,type(1));
+
+        Tensor<type,2> temp_matrix(rows_number,columns_number);
+
+        cout << "activations:\n" << activations << endl;
+        for(Index row_index = 0; row_index < rows_number; row_index++)
+        {
+            row = activations.chip(row_index,0);
+            cout << "row:\n" << row << endl;
+
+            temp_matrix =
+                     row.reshape(Eigen::array<Index,2>({columns_number,1})).broadcast(Eigen::array<Index,2>({1,columns_number}))
+                     *(diagonal_matrix - row.reshape(Eigen::array<Index,2>({1,columns_number})).broadcast(Eigen::array<Index,2>({columns_number,1})));
+
+            cout << "temp_matrix:\n" << temp_matrix << endl;
+
+            memcpy(activations_derivatives.data()+temp_matrix.size()*row_index, temp_matrix.data(), static_cast<size_t>(temp_matrix.size())*sizeof(type));
+        }
+
+        cout << "activations_derivatives:\n" << activations_derivatives << endl;
+
+        system("pause");
+
+        // -----------------------
 
         DataSet data_set("C:/Program Files/Neural Designer/examples/activityrecognition/activityrecognition.csv",';',true);
 
