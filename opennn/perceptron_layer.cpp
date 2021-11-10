@@ -784,7 +784,7 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
             }
 
             back_propagation->delta.device(*thread_pool_device) =
-                    (next_back_propagation->error_combinations_derivatives).contract(next_synaptic_weights, A_BT);
+                    next_back_propagation->error_combinations_derivatives.contract(next_synaptic_weights, A_BT);
         }
     }
 }

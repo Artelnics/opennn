@@ -330,7 +330,6 @@ void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
         matrix(i,i) += value;
 }
 
-
 /// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b)
