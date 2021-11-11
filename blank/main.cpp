@@ -30,38 +30,25 @@ int main()
     {
         cout << "OpenNN. Blank application." << endl;
 
-        Index rows_number = 3;
-        Index columns_number = 4;
+        const Index rows_number = 3;
+        const Index columns_number = 3;
+        const Index matrix_number = 2;
 
-        Tensor<type,2> diagonal_matrix(columns_number,columns_number);
-        Tensor<type,1> row;
+        Tensor<type,3> activations_derivatives(rows_number,columns_number,matrix_number);
 
-        Tensor<type,2> activations(rows_number,columns_number);
-        activations.setValues({{1,1,1,1},{2,2,2,2},{3,3,3,3}});
-
-        Tensor<type,3> activations_derivatives(columns_number,rows_number,columns_number);
-
-        diagonal_matrix.setZero();
-        sum_diagonal(diagonal_matrix,type(1));
-
-        Tensor<type,2> temp_matrix(rows_number,columns_number);
-
-        cout << "activations:\n" << activations << endl;
-        for(Index row_index = 0; row_index < rows_number; row_index++)
+        for(Index i = 0; i < activations_derivatives.dimension(0); i++)
         {
-            row = activations.chip(row_index,0);
-            cout << "row:\n" << row << endl;
-
-            temp_matrix =
-                     row.reshape(Eigen::array<Index,2>({columns_number,1})).broadcast(Eigen::array<Index,2>({1,columns_number}))
-                     *(diagonal_matrix - row.reshape(Eigen::array<Index,2>({1,columns_number})).broadcast(Eigen::array<Index,2>({columns_number,1})));
-
-            cout << "temp_matrix:\n" << temp_matrix << endl;
-
-            memcpy(activations_derivatives.data()+temp_matrix.size()*row_index, temp_matrix.data(), static_cast<size_t>(temp_matrix.size())*sizeof(type));
+            for(Index j = 0; j < activations_derivatives.dimension(1); j++)
+        {
+                for(Index k = 0; k < activations_derivatives.dimension(2); k++)
+                {
+                    activations_derivatives(i,j,k) = i+j+k;
+                    //(i == j) ? delta = type(1) : delta = type(0);
+                    //activations_derivatives(i,j,k) = activations() * (delta - activations());
+                }
+            }
         }
-
-        cout << "activations_derivatives:\n" << activations_derivatives << endl;
+        cout << activations_derivatives << endl;
 
         system("pause");
 

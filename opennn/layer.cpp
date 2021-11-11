@@ -813,18 +813,6 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     sums.device(*thread_pool_device) = y.sum(Eigen::array<Index, 1>({1}));
 
     y.device(*thread_pool_device) = y / sums.broadcast(Eigen::array<Index,2>({1,columns_number}));
-/*
-
-    // Activations
-
-    for(Index i = 0; i< rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            y(i, j) = y(i, j) / sums(i);
-        }
-    }
-    */
 }
 
 
@@ -1108,16 +1096,32 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 
     softmax(combinations, activations);
 
+    /*type delta = type(0);
+    Index index= 0;
+
+    for(Index i = 0; i < activations_derivatives.dimension(0); i++)
+    {
+        for(Index j = 0; j < activations_derivatives.dimension(1); j++)
+        {
+            for(Index k = 0; k < activations_derivatives.dimension(2); k++)
+            {
+                (i == j) ? delta = type(1) : delta = type(0);
+
+                activations_derivatives(i,j,k) = activations(i,k) *  (delta - activations(k,j));
+            }
+        }
+    }*/
+
     // Activations derivatives
-/*
-    Tensor<type,2> diagonal_matrix(dim,dim);
-    Tensor<type,1> row(dim);
-    Tensor<type,2> temp_matrix(dim,dim);
 
-    diagonal_matrix.setZero();
-    sum_diagonal(diagonal_matrix,type(1));
+//    Tensor<type,2> diagonal_matrix(dim,dim);
+//    Tensor<type,1> row(dim);
+//    Tensor<type,2> temp_matrix(dim,dim);
 
-    #pragma omp parallel for
+//    diagonal_matrix.setZero();
+//    sum_diagonal(diagonal_matrix,type(1));
+
+    /*
 
     for(Index row_index = 0; row_index < matrix_number; row_index++)
     {
@@ -1127,11 +1131,16 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                 row.reshape(Eigen::array<Index,2>({dim,1})).broadcast(Eigen::array<Index,2>({1,dim}))
                 * (diagonal_matrix- row.reshape(Eigen::array<Index,2>({1,dim})).broadcast(Eigen::array<Index,2>({dim,1})));
 
-        memcpy(activations_derivatives.data()+(dim*dim)*row_index,
+//        for(Index i = 0; i < dim_2 ; i++)
+//        {
+//            activations_derivatives(i + dim_2 * row_index) = temp_matrix(i);
+//        }
+
+        memcpy(activations_derivatives.data()+(dim_2)*row_index,
                temp_matrix.data(),
-               static_cast<size_t>(dim*dim)*sizeof(type));
+               static_cast<size_t>(dim_2)*sizeof(type));
     }
-*/
+    */
 
     type delta = type(0);
     Index index= 0;
@@ -1146,12 +1155,18 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
 
                 // row, i, j
 
-                activations_derivatives(index) = activations(row,i) * (delta - activations(row,j));
-
+                activations_derivatives(index) = activations(row,j) * (delta - activations(row,i));
+//                cout << "row: " << row << "i: " << i << " -j: " << j << endl;
+//                cout << activations_derivatives(row,i,j) << endl;
                 index++;
             }
         }
     }
+
+//    cout << "activations: " << activations << endl;
+//    cout << activations_derivatives << endl;
+//    cout << "( " << activations_derivatives.dimension(0) << "," << activations_derivatives.dimension(1) << "," << activations_derivatives.dimension(2) << ") " <<endl;
+
 }
 
 

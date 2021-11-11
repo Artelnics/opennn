@@ -343,7 +343,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 
     // Test
 
-    inputs_number = 1;
+    inputs_number = 2;
     neurons_number = 3;
 
     probabilistic_layer.set(inputs_number, neurons_number);
@@ -511,17 +511,23 @@ void ProbabilisticLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
-    ProbabilisticLayer probabilistic_layer(2,2);
+    inputs_number = 4;
+    neurons_number = 2;
+    samples_number = 1;
+
+    ProbabilisticLayer probabilistic_layer(inputs_number,neurons_number);
+
+    probabilistic_layer.set_parameters_constant(type(1));
+
+    Tensor<type, 2> inputs(samples_number,inputs_number);
+    inputs.setConstant(type(1));
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
-    Tensor<type, 1> parameters(6);
-    Tensor<type, 2> inputs(1,2);
 
-    probabilistic_layer.set_parameters_constant(type(1));
-    inputs.setConstant(type(1));
+    //Forward propagate
 
-    ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(1, &probabilistic_layer);
+    ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(samples_number, &probabilistic_layer);
 
     probabilistic_layer.forward_propagate(inputs, &probabilistic_layer_forward_propagation);
 
