@@ -100,12 +100,12 @@ void UnscalingLayerTest::test_set_inputs_number()
    Index new_inputs_number;
    unscaling_layer.set_inputs_number(new_inputs_number);
 
-   assert_true(unscaling_layer.get_descriptives().size() == 0, LOG);
+   assert_true(unscaling_layer.get_descriptives().size() == new_inputs_number, LOG);
 
    Index new_inputs_number_ = 4;
    unscaling_layer.set_inputs_number(new_inputs_number_);
 
-   assert_true(unscaling_layer.get_descriptives().size()== 4, LOG);
+   assert_true(unscaling_layer.get_descriptives().size()== new_inputs_number_, LOG);
 }
 
 
@@ -231,6 +231,8 @@ void UnscalingLayerTest::test_is_empty()
 {
     cout << "test_is_empty\n";
 
+    unscaling_layer.set();
+
     // Test
 
     assert_true(unscaling_layer.is_empty(), LOG);
@@ -263,7 +265,10 @@ void UnscalingLayerTest::test_calculate_outputs()
    unscaling_layer.set_scalers(Scaler::NoScaling);
 
    inputs.resize(1,1);
+   inputs.setRandom();
+
    outputs = unscaling_layer.calculate_outputs(inputs);
+
    assert_true(outputs.dimension(0) == 1, LOG);
    assert_true(outputs.dimension(1) == 1, LOG);
    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -289,6 +294,7 @@ void UnscalingLayerTest::test_calculate_outputs()
    unscaling_layer.set_scalers(Scaler::MinimumMaximum);
 
    inputs.resize(1,1);
+   inputs.setRandom();
    outputs = unscaling_layer.calculate_outputs(inputs);
 
    assert_true(outputs.dimension(0) - 1 < NUMERIC_LIMITS_MIN, LOG);
@@ -320,9 +326,13 @@ void UnscalingLayerTest::test_calculate_outputs()
    unscaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
    inputs.resize(1,1);
+   inputs.setRandom();
+
    outputs = unscaling_layer.calculate_outputs(inputs);
+
    assert_true(outputs.dimension(0) == 1, LOG);
    assert_true(outputs.dimension(1) == 1, LOG);
+
    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test 2_1
@@ -350,29 +360,28 @@ void UnscalingLayerTest::test_calculate_outputs()
    unscaling_layer.set_scalers(Scaler::Logarithm);
 
    inputs.resize(1,1);
+   inputs.setValues({{type(1)}});
+
    outputs = unscaling_layer.calculate_outputs(inputs);
    assert_true(outputs.dimension(0) == 1, LOG);
    assert_true(outputs.dimension(1) == 1, LOG);
 
-   assert_true(abs(outputs(0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
+   assert_true(abs(outputs(0) - type(2.71828)) < type(10e-5), LOG);
 
    // Test 3_1
 
    unscaling_layer.set(2);
    unscaling_layer.set_scalers(Scaler::Logarithm);
 
-   standard_deviation.resize(2,4);
-   standard_deviation.setValues({{type(-1),type(1),type(-1),type(2)},{type(-1),type(1),type(1),type(4)}});
-
    inputs.resize(1,2);
    inputs.setConstant(type(1));
+
    outputs = unscaling_layer.calculate_outputs(inputs);
 
    assert_true(outputs.dimension(0) == 1, LOG);
    assert_true(outputs.dimension(1) == 2, LOG);
-   assert_true(abs(outputs(0)) - static_cast<type>(2.71828) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(outputs(1)) - static_cast<type>(2.71828) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(outputs(0) - type(2.71828)) < type(10e-5), LOG);
+   assert_true(abs(outputs(1) - type(2.71828)) < type(10e-5), LOG);
 
 }
 

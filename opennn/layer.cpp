@@ -1112,36 +1112,6 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
         }
     }*/
 
-    // Activations derivatives
-
-//    Tensor<type,2> diagonal_matrix(dim,dim);
-//    Tensor<type,1> row(dim);
-//    Tensor<type,2> temp_matrix(dim,dim);
-
-//    diagonal_matrix.setZero();
-//    sum_diagonal(diagonal_matrix,type(1));
-
-    /*
-
-    for(Index row_index = 0; row_index < matrix_number; row_index++)
-    {
-        row = activations.chip(row_index,0);
-
-        temp_matrix =
-                row.reshape(Eigen::array<Index,2>({dim,1})).broadcast(Eigen::array<Index,2>({1,dim}))
-                * (diagonal_matrix- row.reshape(Eigen::array<Index,2>({1,dim})).broadcast(Eigen::array<Index,2>({dim,1})));
-
-//        for(Index i = 0; i < dim_2 ; i++)
-//        {
-//            activations_derivatives(i + dim_2 * row_index) = temp_matrix(i);
-//        }
-
-        memcpy(activations_derivatives.data()+(dim_2)*row_index,
-               temp_matrix.data(),
-               static_cast<size_t>(dim_2)*sizeof(type));
-    }
-    */
-
     type delta = type(0);
     Index index= 0;
 
@@ -1156,17 +1126,38 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
                 // row, i, j
 
                 activations_derivatives(index) = activations(row,j) * (delta - activations(row,i));
-//                cout << "row: " << row << "i: " << i << " -j: " << j << endl;
-//                cout << activations_derivatives(row,i,j) << endl;
                 index++;
             }
         }
     }
+/*
+    // Activations derivatives
 
-//    cout << "activations: " << activations << endl;
-//    cout << activations_derivatives << endl;
-//    cout << "( " << activations_derivatives.dimension(0) << "," << activations_derivatives.dimension(1) << "," << activations_derivatives.dimension(2) << ") " <<endl;
+    Tensor<type,2> diagonal_matrix(dim,dim);
+    Tensor<type,1> row(dim);
+    Tensor<type,2> temp_matrix(dim,dim);
 
+    diagonal_matrix.setZero();
+    sum_diagonal(diagonal_matrix,type(1));
+
+    for(Index row_index = 0; row_index < matrix_number; row_index++)
+    {
+        row = activations.chip(row_index,0);
+
+        temp_matrix =
+                row.reshape(Eigen::array<Index,2>({dim,1})).broadcast(Eigen::array<Index,2>({1,dim}))
+                * (diagonal_matrix- row.reshape(Eigen::array<Index,2>({1,dim})).broadcast(Eigen::array<Index,2>({dim,1})));
+
+        for(Index i = 0; i < dim_2 ; i++)
+        {
+            activations_derivatives(i + dim_2 * row_index) = temp_matrix(i);
+        }
+
+        memcpy(activations_derivatives.data()+(dim_2)*row_index,
+               temp_matrix.data(),
+               static_cast<size_t>(dim_2)*sizeof(type));
+    }
+    */
 }
 
 

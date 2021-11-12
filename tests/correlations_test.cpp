@@ -159,7 +159,7 @@ void CorrelationsTest::test_logistic_correlation()
     ThreadPool* thread_pool = new ThreadPool(n);
     ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 
-//    // Test
+    // Test
 
     for(Index i = 0; i < size/2; i++) y[i] = 1.0;
 
@@ -169,8 +169,7 @@ void CorrelationsTest::test_logistic_correlation()
 
     assert_true(abs(correlation.r) >= static_cast<type>(-0.95), LOG);
 
-
-//    // Test
+    // Test
 
     y.setConstant(type(0));
 
@@ -178,16 +177,14 @@ void CorrelationsTest::test_logistic_correlation()
 
     assert_true(abs(correlation.r) - static_cast<type>(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
-//    // Test
+    // Test
 
     for(Index i = 0; i < size; i++) i%2 == 0 ? y[i] = 0.0 : y[i] = 1.0;
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(abs(correlation.r) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(correlation.r - type(0.0173214)) < type(10e-6), LOG);
 
-
-    cout << "logisitic correlation: " << correlation.r << endl;
 }
 
 

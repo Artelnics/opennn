@@ -235,7 +235,6 @@ void RecurrentLayerTest::test_forward_propagate()
 
     RecurrentLayer recurrent_layer;
 
-
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
 
     Tensor<type, 1> parameters;
