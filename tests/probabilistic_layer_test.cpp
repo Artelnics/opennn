@@ -91,21 +91,22 @@ void ProbabilisticLayerTest::test_set_default()
 
 void ProbabilisticLayerTest::test_set_biases()
 {
-   cout << "test_set_biases\n";
+    cout << "test_set_biases\n";
 
-   Tensor<type, 2> biases;
+    Tensor<type, 2> biases;
+    Index biases_number = 1 + rand()%10;
 
-   // Test
+    // Test
 
-   biases.resize(1, 4);
+    biases.resize(1, biases_number);
 
-    probabilistic_layer.set(1, 4);
+    probabilistic_layer.set(1, biases_number);
 
     biases.setZero();
 
     probabilistic_layer.set_biases(biases);
 
-    assert_true(probabilistic_layer.get_biases_number() == 4, LOG);
+    assert_true(probabilistic_layer.get_biases_number() == biases_number, LOG);
 
     assert_true(abs(probabilistic_layer.get_biases()(0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(probabilistic_layer.get_biases()(3)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -114,21 +115,23 @@ void ProbabilisticLayerTest::test_set_biases()
 
 void ProbabilisticLayerTest::test_set_synaptic_weights()
 {
-   cout << "test_set_synaptic_weights\n";
+    cout << "test_set_synaptic_weights\n";
 
-   Tensor<type, 2> synaptic_weights;
+    Tensor<type, 2> synaptic_weights;
 
-   // Test
+    Index weights_number = 10;
 
-    probabilistic_layer.set(1, 2);
+    // Test
 
-    synaptic_weights.resize(2, 1);
+    probabilistic_layer.set(1, weights_number);
+
+    synaptic_weights.resize(1, weights_number);
 
     synaptic_weights.setZero();
 
     probabilistic_layer.set_synaptic_weights(synaptic_weights);
 
-    assert_true(probabilistic_layer.get_synaptic_weights().size() == 2, LOG);
+    assert_true(probabilistic_layer.get_synaptic_weights().size() == weights_number, LOG);
 
     assert_true(abs(probabilistic_layer.get_synaptic_weights()(0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(probabilistic_layer.get_synaptic_weights()(1)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -148,7 +151,10 @@ void ProbabilisticLayerTest::test_set_parameters()
     probabilistic_layer.set_parameters(parameters);
 
     assert_true(probabilistic_layer.get_biases()(0) - parameters(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(probabilistic_layer.get_biases()(1) - parameters(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(probabilistic_layer.get_synaptic_weights()(0) - parameters(2)  < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(probabilistic_layer.get_synaptic_weights()(1) - parameters(3)  < type(NUMERIC_LIMITS_MIN), LOG);
+
 }
 
 
@@ -167,6 +173,12 @@ void ProbabilisticLayerTest::test_set_decision_threshold()
 void ProbabilisticLayerTest::test_set_activation_function()
 {
    cout << "test_set_activation_function\n";
+
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+   assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Logistic, LOG);
+
+   probabilistic_layer.set_activation_function("Logistic");
+   assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Logistic, LOG);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
    assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::ActivationFunction::Softmax, LOG);
@@ -218,7 +230,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
    // Test
 
    inputs_number = 1;
-   neurons_number = 1;
+   neurons_number = 2;
    samples_number = 1;
 
    probabilistic_layer.set(inputs_number, neurons_number);
@@ -237,8 +249,8 @@ void ProbabilisticLayerTest::test_calculate_activations()
    probabilistic_layer.calculate_activations(combinations, activations);
 
    assert_true(activations.rank() == 2, LOG);
-   assert_true(activations.dimension(0) == 1, LOG);
-   assert_true(activations.dimension(1) == 1, LOG);
+   assert_true(activations.dimension(0) == samples_number, LOG);
+   assert_true(activations.dimension(1) == inputs_number * neurons_number, LOG);
    assert_true(static_cast<Index>(activations(0,0)) == 1 , LOG);
 
    // Test
@@ -248,8 +260,8 @@ void ProbabilisticLayerTest::test_calculate_activations()
    probabilistic_layer.calculate_activations(combinations, activations);
 
    assert_true(activations.rank() == 2, LOG);
-   assert_true(activations.dimension(0) == 1, LOG);
-   assert_true(activations.dimension(1) == 1, LOG);
+   assert_true(activations.dimension(0) == samples_number, LOG);
+   assert_true(activations.dimension(1) == inputs_number * neurons_number, LOG);
    assert_true(activations(0,0) - static_cast<type>(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
@@ -319,15 +331,16 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
 
     // Test
 
+    samples_number = 1;
     inputs_number = 1;
     neurons_number = 1;
 
     probabilistic_layer.set(inputs_number, neurons_number);
 
-    combinations.resize(inputs_number, neurons_number);
+    combinations.resize(samples_number * inputs_number, neurons_number);
     combinations.setValues({{type(-1.55f)}});
-    activations.resize(inputs_number, neurons_number);
-    activations_derivatives.resize(neurons_number, neurons_number, inputs_number);
+    activations.resize(samples_number * inputs_number, neurons_number);
+    activations_derivatives.resize(samples_number * inputs_number, neurons_number, neurons_number);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
     probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
@@ -335,61 +348,63 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     assert_true(abs(activations(0,0) - static_cast<type>(0.175)) < static_cast<type>(1e-2), LOG);
 
     assert_true(activations_derivatives.rank() == 3, LOG);
-    assert_true(activations_derivatives.dimension(0) == neurons_number, LOG);
+    assert_true(activations_derivatives.dimension(0) == inputs_number, LOG);
     assert_true(activations_derivatives.dimension(1) == neurons_number, LOG);
-    assert_true(activations_derivatives.dimension(2) == inputs_number, LOG);
+    assert_true(activations_derivatives.dimension(2) == neurons_number, LOG);
 
     assert_true(abs(activations_derivatives(0,0,0) - static_cast<type>(0.1444)) < static_cast<type>(1e-3), LOG);
 
     // Test
 
-    inputs_number = 2;
+    samples_number = 1;
+    inputs_number = 1;
     neurons_number = 3;
 
     probabilistic_layer.set(inputs_number, neurons_number);
 
-    combinations.resize(inputs_number, neurons_number);
+    combinations.resize(samples_number * inputs_number, neurons_number);
     combinations.setValues({{type(1), type(2), type(3)}});
-    activations.resize(inputs_number, neurons_number);
-    activations_derivatives.resize(neurons_number, neurons_number, inputs_number);
+    activations.resize(samples_number * inputs_number, neurons_number);
+    activations_derivatives.resize(samples_number * inputs_number, neurons_number, neurons_number);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
     assert_true(activations_derivatives.rank() == 3, LOG);
-    assert_true(activations_derivatives.dimension(0) == neurons_number, LOG);
+    assert_true(activations_derivatives.dimension(0) == samples_number * inputs_number, LOG);
     assert_true(activations_derivatives.dimension(1) == neurons_number, LOG);
-    assert_true(activations_derivatives.dimension(2) == inputs_number, LOG);
+    assert_true(activations_derivatives.dimension(2) == neurons_number, LOG);
 
     assert_true(abs(activations(0,0) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
 
     assert_true(abs(activations_derivatives(0,0,0) - static_cast<type>(0.0819)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(activations_derivatives(1,1,0) - static_cast<type>(0.1848)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(activations_derivatives(2,2,0) - static_cast<type>(0.2227)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(0,1,1) - static_cast<type>(0.1848)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(0,2,2) - static_cast<type>(0.2227)) < static_cast<type>(1e-3), LOG);
 
     // Test
 
+    samples_number = 1;
     inputs_number = 1;
     neurons_number = 4;
 
-    probabilistic_layer.set(inputs_number, neurons_number);
+    probabilistic_layer.set( inputs_number, neurons_number);
 
-    combinations.resize(inputs_number, neurons_number);
+    combinations.resize(samples_number * inputs_number, neurons_number);
     combinations.setValues({{type(-1), type(2), type(-3), type(-4)}});
-    activations.resize(inputs_number, neurons_number);
-    activations_derivatives.resize(neurons_number, neurons_number, inputs_number);
+    activations.resize(samples_number * inputs_number, neurons_number);
+    activations_derivatives.resize(samples_number * inputs_number,neurons_number, neurons_number);
 
     probabilistic_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
     assert_true(activations_derivatives.rank() == 3, LOG);
-    assert_true(activations_derivatives.dimension(0) == neurons_number, LOG);
+    assert_true(activations_derivatives.dimension(0) == samples_number * inputs_number, LOG);
     assert_true(activations_derivatives.dimension(1) == neurons_number, LOG);
-    assert_true(activations_derivatives.dimension(2) == inputs_number, LOG);
+    assert_true(activations_derivatives.dimension(2) == neurons_number, LOG);
 
-    assert_true(abs(activations_derivatives(3,0,0) + static_cast<type>(0.00011)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(activations_derivatives(3,1,0) + static_cast<type>(0.00221)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(activations_derivatives(3,2,0) + static_cast<type>(0.00001)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(activations_derivatives(3,3,0) - static_cast<type>(0.00233)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(0,3,0) + static_cast<type>(0.00011)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(0,3,1) + static_cast<type>(0.00221)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(0,3,2) + static_cast<type>(0.00001)) < static_cast<type>(1e-3), LOG);
+    assert_true(abs(activations_derivatives(0,3,3) - static_cast<type>(0.00233)) < static_cast<type>(1e-3), LOG);
 
 }
 
@@ -511,11 +526,11 @@ void ProbabilisticLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
-    inputs_number = 4;
+    inputs_number = 2;
     neurons_number = 2;
-    samples_number = 1;
+    samples_number = 5;
 
-    ProbabilisticLayer probabilistic_layer(inputs_number,neurons_number);
+    ProbabilisticLayer probabilistic_layer(inputs_number, neurons_number);
 
     probabilistic_layer.set_parameters_constant(type(1));
 
@@ -524,16 +539,18 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
-
     //Forward propagate
 
     ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(samples_number, &probabilistic_layer);
 
     probabilistic_layer.forward_propagate(inputs, &probabilistic_layer_forward_propagation);
 
+    Tensor<type,3> activations_derivatives;
+    activations_derivatives = probabilistic_layer_forward_propagation.activations_derivatives;
+
     assert_true(probabilistic_layer_forward_propagation.combinations.rank() == 2, LOG);
-    assert_true(probabilistic_layer_forward_propagation.combinations.dimension(0) == 1, LOG);
-    assert_true(probabilistic_layer_forward_propagation.combinations.dimension(1) == 2, LOG);
+    assert_true(probabilistic_layer_forward_propagation.combinations.dimension(0) == samples_number, LOG);
+    assert_true(probabilistic_layer_forward_propagation.combinations.dimension(1) == neurons_number , LOG);
     assert_true(abs(probabilistic_layer_forward_propagation.combinations(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(probabilistic_layer_forward_propagation.combinations(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(probabilistic_layer_forward_propagation.activations(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);

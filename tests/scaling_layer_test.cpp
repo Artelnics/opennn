@@ -139,13 +139,11 @@ void ScalingLayerTest::test_set_default()
 {
    cout << "test_set_default\n";
 
-   scaling_layer.set(1);
-
    scaling_layer.set_default();
 
    Tensor<Descriptives, 1> sl_descriptives = scaling_layer.get_descriptives();
 
-   assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::MinimumMaximum, LOG);
+   assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::MeanStandardDeviation, LOG);
    assert_true(scaling_layer.get_display(), LOG);
    assert_true(scaling_layer.get_type() == Layer::Type::Scaling, LOG);
    assert_true(abs(sl_descriptives(0).minimum + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -337,159 +335,163 @@ void ScalingLayerTest::test_set_scaling_method()
 
 void ScalingLayerTest::test_is_empty()
 {
-   cout << "test_is_empty\n";
+    cout << "test_is_empty\n";
 
-   scaling_layer.set(1);
+    scaling_layer.set();
 
-   assert_true(scaling_layer.is_empty(), LOG);
-   assert_true(!scaling_layer.is_empty(), LOG);
+    assert_true(scaling_layer.is_empty(), LOG);
 }
 
 
 void ScalingLayerTest::test_check_range()
 {
-   cout << "test_check_range\n";
+    cout << "test_check_range\n";
 
-   Tensor<type, 1> inputs;
+    Tensor<type, 1> inputs;
 
-   // Test
+    // Test
 
-   scaling_layer.set(1);
+    scaling_layer.set(1);
 
-   inputs.resize(1);
-   inputs.setConstant(type(0));
-   scaling_layer.check_range(inputs);
+    inputs.resize(1);
+    inputs.setConstant(type(0));
+    scaling_layer.check_range(inputs);
 
-   // Test
+    // Test
 
-   Tensor<Descriptives, 1> descriptives(1);
-   Descriptives des(type(-1), type(1), type(1), type(0));
-   descriptives.setValues({des});
+    Tensor<Descriptives, 1> descriptives(1);
+    Descriptives des(type(-1), type(1), type(1), type(0));
+    descriptives.setValues({des});
 
-   scaling_layer.set_descriptives(descriptives);
+    scaling_layer.set_descriptives(descriptives);
 
-   scaling_layer.check_range(inputs);
+    scaling_layer.check_range(inputs);
 }
 
 
 void ScalingLayerTest::test_calculate_outputs()
 {
-   cout << "test_calculate_outputs\n";
+    cout << "test_calculate_outputs\n";
 
-   Tensor<type, 2> inputs;
-   Tensor<type, 2> outputs;
+    Tensor<type, 2> inputs;
+    Tensor<type, 2> outputs;
 
-   // Test
+    // Test
 
-   scaling_layer.set(1);
-   scaling_layer.set_scalers(Scaler::NoScaling);
+    Index inputs_number = 1;
+    Index samples_number = 1;
 
-   inputs.resize(1,1);
-   outputs = scaling_layer.calculate_outputs(inputs);
-   assert_true(outputs.dimension(0) == 1, LOG);
-   assert_true(outputs.dimension(1) == 1, LOG);
-   assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    scaling_layer.set(inputs_number);
+    scaling_layer.set_scalers(Scaler::NoScaling);
 
-   // Test
+    inputs.resize(samples_number, inputs_number);
+    inputs.setZero();
 
-   scaling_layer.set(3);
-   scaling_layer.set_scalers(Scaler::NoScaling);
+    outputs = scaling_layer.calculate_outputs(inputs);
 
-   inputs.resize(1,3);
-   inputs.setConstant(type(0));
-   outputs = scaling_layer.calculate_outputs(inputs);
+    assert_true(outputs.dimension(0) == samples_number, LOG);
+    assert_true(outputs.dimension(1) == inputs_number, LOG);
 
-   assert_true(outputs.dimension(0) == 1, LOG);
-   assert_true(outputs.dimension(1) == 3, LOG);
-   assert_true(abs(outputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(outputs(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(outputs(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-   // Test
+    // Test
 
-   scaling_layer.set(1);
-   scaling_layer.set_scalers(Scaler::MinimumMaximum);
+    inputs_number = 3;
+    samples_number = 1;
 
-   inputs.resize(1,1);
-   outputs = scaling_layer.calculate_outputs(inputs);
-   assert_true(outputs.dimension(0) == 1, LOG);
-   assert_true(outputs.dimension(1) == 1, LOG);
+    scaling_layer.set(inputs_number);
+    scaling_layer.set_scalers(Scaler::NoScaling);
 
-   assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    inputs.resize(samples_number, inputs_number);
+    inputs.setZero();
 
-   // Test
+    outputs = scaling_layer.calculate_outputs(inputs);
 
-   scaling_layer.set(3);
-   scaling_layer.set_scalers(Scaler::MinimumMaximum);
+    assert_true(outputs.dimension(0) == samples_number, LOG);
+    assert_true(outputs.dimension(1) == inputs_number, LOG);
+    assert_true(abs(outputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(2)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-   Tensor<type, 2> minimums_maximums(3, 4);
-   minimums_maximums.setValues({{type(-1),type(2),type(0),type(0)},{type(-2),type(4),type(0),type(0)},{type(-3),type(6),type(0),type(0)}});
+    // Test
 
-   inputs.resize(1,3);
-   inputs.setConstant(type(0));
-   outputs = scaling_layer.calculate_outputs(inputs);
+    inputs_number = 1;
+    samples_number = 1;
 
-   assert_true(outputs.dimension(0) == 1, LOG);
-   assert_true(outputs.dimension(1) == 3, LOG);
-   assert_true(abs(outputs(0) + static_cast<type>(0.333)) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(outputs(1) + static_cast<type>(0.333)) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(outputs(2) + static_cast<type>(0.333)) < type(NUMERIC_LIMITS_MIN), LOG);
+    scaling_layer.set(inputs_number);
+    scaling_layer.set_scalers(Scaler::MinimumMaximum);
 
-   // Test
+    inputs.resize(samples_number,inputs_number);
+    inputs.setRandom();
 
-   scaling_layer.set(1);
-   scaling_layer.set_scalers(Scaler::MeanStandardDeviation);
+    outputs = scaling_layer.calculate_outputs(inputs);
+    assert_true(outputs.dimension(0) == samples_number, LOG);
+    assert_true(outputs.dimension(1) == inputs_number, LOG);
 
-   inputs.resize(1,1);
-   outputs = scaling_layer.calculate_outputs(inputs);
-   assert_true(outputs.dimension(0) == 1, LOG);
-   assert_true(outputs.dimension(1) == 1, LOG);
-   assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-   // Test
+    // Test
 
-   scaling_layer.set(2);
-   scaling_layer.set_scalers(Scaler::MeanStandardDeviation);
+    inputs_number = 3;
+    samples_number = 1;
 
-   Tensor<type, 2> mean_standard_deviation(2,4);
-   mean_standard_deviation.setValues({{type(-1),type(1),type(-1),type(2)},{type(-1),type(1),type(1),type(4)}});
+    scaling_layer.set(inputs_number);
+    scaling_layer.set_scalers(Scaler::MinimumMaximum);
 
-   inputs.resize(1,2);
-   inputs.setConstant(type(0));
-   outputs = scaling_layer.calculate_outputs(inputs);
+    Tensor<type, 2> minimums_maximums(3, 4);
+    minimums_maximums.setValues({{type(-1),type(2),type(0),type(0)},{type(-2),type(4),type(0),type(0)},{type(-3),type(6),type(0),type(0)}});
 
-   assert_true(outputs.dimension(0) == 1, LOG);
-   assert_true(outputs.dimension(1) == 2, LOG);
+    inputs.resize(samples_number,inputs_number);
+    inputs.setConstant(type(0));
 
-   assert_true(abs(outputs(0) - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(outputs(1) + static_cast<type>(0.25)) < type(NUMERIC_LIMITS_MIN), LOG);
+    outputs = scaling_layer.calculate_outputs(inputs);
 
-   // Test
+    cout << "outputs:\n" << outputs << endl;
 
-   scaling_layer.set(1);
-   scaling_layer.set_scalers(Scaler::StandardDeviation);
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 3, LOG);
+    assert_true(abs(outputs(0) + static_cast<type>(0.333)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(1) + static_cast<type>(0.333)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(2) + static_cast<type>(0.333)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-   inputs.resize(1,1);
-   outputs = scaling_layer.calculate_outputs(inputs);
-   assert_true(outputs.dimension(0) == 1, LOG);
-   assert_true(outputs.dimension(1) == 1, LOG);
-   assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    // Test
 
-   // Test
-   scaling_layer.set(2);
-   scaling_layer.set_scalers(Scaler::StandardDeviation);
+    scaling_layer.set(1);
+    scaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
-   Tensor<type, 2> standard_deviation(2,4);
-   standard_deviation.setValues({{type(-1),type(1),type(-1),type(2)},{type(-1),type(1),type(1),type(4)}});
+    inputs.resize(1,1);
+    outputs = scaling_layer.calculate_outputs(inputs);
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 1, LOG);
+    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-   inputs.resize(1,2);
-   inputs.setConstant(type(1));
-   outputs = scaling_layer.calculate_outputs(inputs);
+    // Test
 
-   assert_true(outputs.dimension(0) == 1, LOG);
-   assert_true(outputs.dimension(1) == 2, LOG);
-   assert_true(abs(outputs(0) - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
-   assert_true(abs(outputs(1) - static_cast<type>(0.25)) < type(NUMERIC_LIMITS_MIN), LOG);
+    scaling_layer.set(1);
+    scaling_layer.set_scalers(Scaler::StandardDeviation);
+
+    inputs.resize(1,1);
+    outputs = scaling_layer.calculate_outputs(inputs);
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 1, LOG);
+    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+
+    // Test
+    scaling_layer.set(2);
+    scaling_layer.set_scalers(Scaler::StandardDeviation);
+
+    Tensor<type, 2> standard_deviation(2,4);
+    standard_deviation.setValues({{type(-1),type(1),type(-1),type(2)},{type(-1),type(1),type(1),type(4)}});
+
+    inputs.resize(1,2);
+    inputs.setConstant(type(1));
+
+    outputs = scaling_layer.calculate_outputs(inputs);
+
+    assert_true(outputs.dimension(0) == 1, LOG);
+    assert_true(outputs.dimension(1) == 2, LOG);
+    assert_true(abs(outputs(0) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(1) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 

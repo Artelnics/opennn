@@ -443,7 +443,6 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
     LongShortTermMemoryLayer long_short_term_layer;
 
-
     long_short_term_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
 
     Tensor<type, 1> parameters;
@@ -460,7 +459,6 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
     assert_true(long_short_term_layer_forward_propagation.combinations.dimension(0) == 1, LOG);
     assert_true(long_short_term_layer_forward_propagation.combinations.dimension(1) == 2, LOG);
 }
-
 
 void LongShortTermMemoryLayerTest::run_test_case()
 {

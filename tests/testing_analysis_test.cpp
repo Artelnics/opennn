@@ -229,7 +229,7 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 
     maximal_errors = testing_analysis.calculate_maximal_errors(2);
 
-    assert_true(maximal_errors.size() == 1, LOG);
+    assert_true(maximal_errors.rank() == 1, LOG);
     assert_true(maximal_errors[0](0) == 0 , LOG);
 }
 
