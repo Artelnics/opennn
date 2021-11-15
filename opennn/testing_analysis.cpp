@@ -2055,12 +2055,12 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
 
     Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
 
-    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    for(Index i = 0; i < targets_outputs.dimension(1); i++)
     {
         for(Index j = 0; j < targets.dimension(0); j++)
         {
             if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
-            else targets_outputs(j,i) = outputs(j,i);
+            else targets_outputs(j,i) = outputs(j,i - targets.dimension(1));
         }
     }
 
