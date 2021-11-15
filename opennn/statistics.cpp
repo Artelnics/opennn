@@ -146,7 +146,6 @@ void Descriptives::print(const string& title) const
          << "Standard deviation: " << standard_deviation << endl;
 }
 
-
 BoxPlot::BoxPlot(const type& new_minimum,
                  const type& new_first_cuartile,
                  const type& new_median,

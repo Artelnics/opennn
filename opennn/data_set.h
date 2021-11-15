@@ -439,6 +439,8 @@ public:
 
    // Columns other methods
 
+   void check_constant_columns();
+
    Tensor<type, 2> transform_binary_column(const Tensor<type, 1>&) const;
 
    // Variables set methods

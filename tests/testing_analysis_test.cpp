@@ -612,7 +612,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(targets, outputs);
 
-    assert_true(optimal_threshold - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(optimal_threshold - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -635,6 +635,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     optimal_threshold = testing_analysis.calculate_optimal_threshold(targets, outputs);
 
     assert_true(optimal_threshold - type(0.62) < type(NUMERIC_LIMITS_MIN), LOG);
+
 }
 
 
