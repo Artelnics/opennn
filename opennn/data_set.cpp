@@ -5097,7 +5097,6 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
     {
         if(columns(i).type == ColumnType::Constant)
         {
-            cout << "i: " << i << endl;
             columns(i).set_use(VariableUse::UnusedVariable);
             constant_columns = push_back(constant_columns, columns(i).name);
         }
@@ -5194,7 +5193,7 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
 
 
 /// Returns the distribution of each of the columns. In the case of numeric columns, it returns a
-/// histogram, for the case of categorical columns, it returns the frequencies of each category nad for the
+/// histogram, for the case of categorical columns, it returns the frequencies of each category and for the
 /// binary columns it returns the frequencies of the positives and negatives.
 /// The default number of bins is 10.
 /// @param bins_number Number of bins.
@@ -6303,7 +6302,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
     const Tensor<Scaler, 1> target_variables_scalers = get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> target_variables_descriptives = calculate_target_variables_descriptives();
+    const Tensor<Descriptives, 1> target_variables_descriptives = calculate_variables_descriptives();
 
     for(Index i = 0; i < target_variables_number; i++)
     {
