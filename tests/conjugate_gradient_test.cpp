@@ -41,19 +41,24 @@ void ConjugateGradientTest::test_constructor()
 
 void ConjugateGradientTest::test_calculate_PR_parameter()
 {
-   cout << "test_calculate_PR_parameter\n";
+    cout << "test_calculate_PR_parameter\n";
 
-   Tensor<type, 1> old_gradient;
-   Tensor<type, 1> gradient;
+    Index size = 1 + rand()%10;
 
-   type PR_parameter;
+    Tensor<type, 1> old_gradient(size);
+    Tensor<type, 1> gradient(size);
 
-   // Test
+    type PR_parameter;
 
-   PR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
+    // Test
 
-   assert_true(PR_parameter >= type(0), LOG);
-   assert_true(PR_parameter <= type(1), LOG);
+    old_gradient.setRandom();
+    gradient.setRandom();
+
+    PR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
+
+    assert_true(PR_parameter >= type(0), LOG);
+    assert_true(PR_parameter <= type(1), LOG);
 }
 
 
@@ -61,12 +66,17 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 {
    cout << "test_calculate_FR_parameter\n";
 
-   Tensor<type, 1> old_gradient;
-   Tensor<type, 1> gradient;
+   Index size = 1 + rand()%10;
+
+   Tensor<type, 1> old_gradient(size);
+   Tensor<type, 1> gradient(size);
 
    type FR_parameter;
 
    // Test
+
+   old_gradient.setRandom();
+   gradient.setRandom();
 
    FR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
 

@@ -64,9 +64,13 @@ void PruningInputsTest::test_perform_inputs_selection()
 
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,6,1});
 
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+
+    pruning_inputs.set(&training_strategy);
+
     inputs_selection_results = pruning_inputs.perform_inputs_selection();
 
-//    assert_true(inputs_selection_results.optimal_input_variables_indices[0] == 0, LOG);
+    assert_true(inputs_selection_results.optimal_input_columns_indices[0] == 0, LOG);
 
     // Test
 
@@ -74,15 +78,18 @@ void PruningInputsTest::test_perform_inputs_selection()
 
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,6,1});
 
+    training_strategy.set(&neural_network, &data_set);
+
+    pruning_inputs.set(&training_strategy);
+
     inputs_selection_results = pruning_inputs.perform_inputs_selection();
 
-//    assert_true(pir->optimal_input_variables_indices[0] == 0, LOG);
+    assert_true(inputs_selection_results.optimal_input_columns_indices[0] == 0, LOG);
 }
 
 
 void PruningInputsTest::run_test_case()
 {
-    /*
     cout << "Running pruning input test case...\n";
 
     // Constructor and destructor methods
@@ -95,5 +102,5 @@ void PruningInputsTest::run_test_case()
     test_perform_inputs_selection();
 
     cout << "End of pruning input test case.\n\n";
-    */
+
 }
