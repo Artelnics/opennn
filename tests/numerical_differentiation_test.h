@@ -159,12 +159,9 @@ private:
 
    type f4_4(const Tensor<Index,1>& dummy, const Tensor<type, 1>& vector_x) const
    {
-       /*
        Tensor<type, 0> sum_ = (vector_x * dummy).sum();
 
        return sum_(0);
-       */
-       return type(NAN);
    }
 
    type f4_5(const Tensor<type, 1>& vector_x) const
