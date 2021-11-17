@@ -52,38 +52,39 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     InputsSelectionResults inputs_selection_results;
 
+/// @todo data_set.generate_inputs_selection_data() not available
     // Test
 
-//    ds.generate_inputs_selection_data(30, 3);
+//    data_set.generate_inputs_selection_data(30, 3);
 
 //    data_set.set_columns_uses({"Input","Input","Target"});
 
-    data_set.split_samples_random();
+//    data_set.split_samples_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,1,1});
+//    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,1,1});
 
-    inputs_selection_results = growing_inputs.perform_inputs_selection();
+//    inputs_selection_results = growing_inputs.perform_inputs_selection();
 
 //    assert_true(gir->optimal_input_variables_indices[0] == 0, LOG);
 
     // Test
 
-    data_set.generate_sum_data(20,3);
+//    data_set.generate_sum_data(20,3);
 
-    neural_network.set();
+//    neural_network.set();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,6,1});
+//    neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,6,1});
 
-    TrainingStrategy training_strategy1(&neural_network, &data_set);
+//    TrainingStrategy training_strategy1(&neural_network, &data_set);
 
-    inputs_selection_results = growing_inputs.perform_inputs_selection();
+//    inputs_selection_results = growing_inputs.perform_inputs_selection();
 
 //    assert_true(gir->optimal_input_variables_indices[0] == 0, LOG);
 }
 
 
 void GrowingInputsTest::run_test_case()
-{/*
+{
     cout << "Running growing inputs test case...\n";
 
     // Constructor and destructor methods
@@ -96,5 +97,5 @@ void GrowingInputsTest::run_test_case()
     test_perform_inputs_selection();
 
     cout << "End of growing input test case.\n\n";
-*/
+
 }

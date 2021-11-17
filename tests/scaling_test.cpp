@@ -69,41 +69,40 @@ void ScalingTest::test_scale_minimum_maximum()
 
    min = matrix.minimum();
 
-//   assert_true(min_abs(0) < static_cast<type>(1e-3) , LOG);
+   assert_true(abs(min(0)+type(1)) < static_cast<type>(1e-3) , LOG);
 }
 
 
 void ScalingTest::test_unscale_data_mean_standard_deviation()
 {
-   cout << "test_unscale_data_mean_standard_deviation\n";
+    cout << "test_unscale_data_mean_standard_deviation\n";
 
-   Tensor<type, 2> matrix(3,1);
-   matrix(0,0) = type(2.0);
-   matrix(1,0) = type(5.0);
-   matrix(2,0) = type(77.0);
+    Tensor<type, 2> matrix(3,1);
+    matrix(0,0) = type(5);
+    matrix(1,0) = type(9);
+    matrix(2,0) = type(10);
 
-   DataSet data(matrix);
+    DataSet data(matrix);
 
-   Tensor<Descriptives, 1> descrriptives(1);
-   Descriptives descriptives;
-   descriptives.set_minimum(type(5.0));
-   descriptives.set_maximum(type(9.0));
-   descriptives.set_mean(type(8.0));
-   descriptives.set_standard_deviation(type(2.0));
-   descrriptives[0] = descriptives ;
+    Tensor<Descriptives, 1> descrriptives(1);
+    Descriptives descriptives;
 
-   Tensor<type, 2> unescale_matrix(3,1);
-   DataSet data_unscaled;
-   data.set(unescale_matrix);
+    descriptives.set_minimum(type(5.0));
+    descriptives.set_maximum(type(10.0));
+    descriptives.set_mean(type(8.0));
+    descriptives.set_standard_deviation(type(2.0));
+    descrriptives[0] = descriptives ;
 
-   //data.unscale_data_mean_standard_deviation(descrriptives);
+    data.set_columns_scalers(Scaler::MeanStandardDeviation);
 
-   Tensor<type, 2> matrix_solution (3,1);
-   matrix_solution(0,0) = descriptives.mean;
-   matrix_solution(1,0) = descriptives.mean;
-   matrix_solution(2,0) = descriptives.mean;
+    data.unscale_data(descrriptives);
 
-   //assert_true(data.get_data() == matrix_solution, LOG);
+    Tensor<type, 2> matrix_solution (3,1);
+    matrix_solution(0,0) = descriptives.mean;
+    matrix_solution(1,0) = descriptives.mean;
+    matrix_solution(2,0) = descriptives.mean;
+
+    assert_true(are_equal(data.get_data(),matrix_solution,type(1e-4)), LOG);
 }
 
 
@@ -116,11 +115,11 @@ void ScalingTest::test_unscale_data_minimum_maximum()
    matrix(1,0) = type(5.0);
    matrix(2,0) = type(77.0);
 
-   DataSet data;
-   data.set(matrix);
+   DataSet data(matrix);
 
    Tensor<Descriptives, 1> descrriptives(1);
    Descriptives descriptives;
+
    descriptives.set_minimum(type(5.0));
    descriptives.set_maximum(type(9.0));
    descriptives.set_mean(type(8.0));
@@ -131,14 +130,16 @@ void ScalingTest::test_unscale_data_minimum_maximum()
    DataSet data_unscaled;
    data.set_data(unescale_matrix);
 
-   //data.unscale_data_minimum_maximum(descriptives);
+   data.set_columns_scalers(Scaler::MinimumMaximum);
+
+   data.unscale_data(descrriptives);
 
    Tensor<type, 2> matrix_solution (3,1);
    matrix_solution(0,0) = type(7.0);
    matrix_solution(1,0) = type(7.0);
    matrix_solution(2,0) = type(7.0);
 
-   //assert_true(data.get_data() == matrix_solution, LOG);
+   assert_true(are_equal(data.get_data(),matrix_solution,type(1e-4)), LOG);
 }
 
 

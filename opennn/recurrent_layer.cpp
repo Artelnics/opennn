@@ -709,6 +709,56 @@ void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 1>& co
      }
 }
 
+void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
+                                                       Tensor<type, 2>& activations_2d,
+                                                       Tensor<type, 2>& activations_derivatives_2d) const
+{
+     #ifdef OPENNN_DEBUG
+
+     const Index neurons_number = get_neurons_number();
+
+     const Index combinations_columns_number = combinations_2d.dimension(1);
+
+     if(combinations_columns_number != neurons_number)
+     {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: RecurrentLayer class.\n"
+               << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "Number of combinations_2d columns (" << combinations_columns_number
+               << ") must be equal to number of neurons (" << neurons_number << ").\n";
+
+        throw logic_error(buffer.str());
+     }
+
+     #endif
+
+     switch(activation_function)
+     {
+         case ActivationFunction::Linear: linear_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+
+         case ActivationFunction::Logistic: logistic_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+
+         case ActivationFunction::HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+
+         case ActivationFunction::Threshold: threshold_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+
+         case ActivationFunction::SymmetricThreshold: symmetric_threshold_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+
+         case ActivationFunction::RectifiedLinear: rectified_linear_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+
+         case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+
+         case ActivationFunction::SoftPlus: soft_plus_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+
+         case ActivationFunction::SoftSign: soft_sign_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+
+         case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+
+         case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+     }
+}
+
 
 void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, LayerForwardPropagation* forward_propagation)
 {

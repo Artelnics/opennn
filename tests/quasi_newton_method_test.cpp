@@ -44,35 +44,40 @@ void QuasiNewtonMethodTest::test_set_inverse_hessian_approximation_method()
 {
    cout << "test_set_training_direction_method\n";
 
-   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::BFGS);
-   assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::InverseHessianApproximationMethod::BFGS, LOG);
-}
+   quasi_newton_method.set_inverse_hessian_approximation_method(
+               QuasiNewtonMethod::InverseHessianApproximationMethod::BFGS);
 
+   assert_true(
+               quasi_newton_method.get_inverse_hessian_approximation_method()
+               == QuasiNewtonMethod::InverseHessianApproximationMethod::BFGS, LOG);
+}
 
 
 void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
 {
-   cout << "test_calculate_DFP_inverse_hessian_approximation\n";
+    cout << "test_calculate_DFP_inverse_hessian_approximation\n";
 
-   samples_number = 1;
-   inputs_number = 1;
-   targets_number = 1;
-   neurons_number = 1;
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
+    neurons_number = 1;
 
-   // Test
+    // Test
 
-   data_set.set(samples_number, inputs_number, targets_number);
-   data_set.set_data_random();
+    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
-   // Test
+    // Test
 
-   neural_network.set_parameters_constant(type(1));
+    neural_network.set_parameters_constant(type(1));
 
-   quasi_newton_method.calculate_DFP_inverse_hessian(quasi_newton_method_data);
+    quasi_newton_method_data.set(&quasi_newton_method);
 
-//   assert_true(DFP_inverse_hessian == inverse_hessian, LOG);
+    quasi_newton_method.calculate_DFP_inverse_hessian(quasi_newton_method_data);
+
+//    assert_true(are_equal(quasi_newton_method_data.inverse_hessian, inverse_hessian, type(1e-4)), LOG);
 }
 
 // @todo
