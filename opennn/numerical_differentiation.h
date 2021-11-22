@@ -46,7 +46,7 @@ public:
    /// Enumeration of available methods for numerical differentiation.
 
    enum NumericalDifferentiationMethod{ForwardDifferences, CentralDifferences};  
-
+/*
    const NumericalDifferentiationMethod& get_numerical_differentiation_method() const;
    string write_numerical_differentiation_method() const;
    
@@ -3675,7 +3675,7 @@ public:
 
        return H;
    }
-
+*/
 
 private:
 
