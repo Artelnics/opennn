@@ -214,10 +214,10 @@ void PerceptronLayerTest::test_set_synaptic_weights()
 
 void PerceptronLayerTest::test_set_inputs_number()
 {
-   cout << "test_set_inputs_number\n";
+    cout << "test_set_inputs_number\n";
 
-   Tensor<type, 2> biases;
-   Tensor<type, 2> synaptic_weights;
+    Tensor<type, 2> biases;
+    Tensor<type, 2> synaptic_weights;
 
     Tensor<type, 2> new_biases;
     Tensor<type, 2> new_synaptic_weights;
@@ -254,27 +254,27 @@ void PerceptronLayerTest::test_set_inputs_number()
 
     perceptron_layer.set_inputs_number(new_inputs_number_1);
 
-    biases = perceptron_layer.get_biases();
+    new_biases = perceptron_layer.get_biases();
     new_synaptic_weights = perceptron_layer.get_synaptic_weights();
 
-//    assert_true(biases.size() == new_biases_1.size(), LOG);
-//    assert_true(synaptic_weights_1.size() != new_synaptic_weights_1.size(), LOG);
+    assert_true(biases.size() == new_biases.size(), LOG);
+    assert_true(synaptic_weights.size() != new_synaptic_weights.size(), LOG);
 
     // Test
     perceptron_layer.set(2, 2);
 
     biases.resize(1, 4);
     biases.setValues({
-        {type(9)},
-        {type(-8)},
-        {type(7)},
-        {type(-6)}});
+                         {type(9)},
+                         {type(-8)},
+                         {type(7)},
+                         {type(-6)}});
 
     synaptic_weights.resize(2, 4);
 
     synaptic_weights.setValues({
-        {type(-11), type(12), type(-13), type(14)},
-        {type(21), type(-22), type(23), type(-24)}});
+                                   {type(-11), type(12), type(-13), type(14)},
+                                   {type(21), type(-22), type(23), type(-24)}});
 
     perceptron_layer.set_biases(biases);
     perceptron_layer.set_synaptic_weights(synaptic_weights);
@@ -283,11 +283,11 @@ void PerceptronLayerTest::test_set_inputs_number()
 
     perceptron_layer.set_inputs_number(new_inputs_number_2);
 
-    biases = perceptron_layer.get_biases();
+    new_biases = perceptron_layer.get_biases();
     new_synaptic_weights = perceptron_layer.get_synaptic_weights();
 
-//    assert_true(biases.size() == new_biases_2.size(), LOG);
-//    assert_true(synaptic_weights.size() != new_synaptic_weights_2.size(), LOG);
+    assert_true(biases.size() == new_biases.size(), LOG);
+    assert_true(synaptic_weights.size() != new_synaptic_weights.size(), LOG);
 }
 
 

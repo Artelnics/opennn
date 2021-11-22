@@ -105,7 +105,7 @@ void GradientDescentTest::test_perform_training()
 
    gradient_descent.perform_training();
 
-   //loss = sum_squared_error.calculate_error({0});
+//   loss = sum_squared_error.calculate_errors({0});
 
    // Minimum loss increase
 

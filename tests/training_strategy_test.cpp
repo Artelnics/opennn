@@ -24,33 +24,33 @@ TrainingStrategyTest::~TrainingStrategyTest()
 
 void TrainingStrategyTest::test_constructor()
 {
-   cout << "test_constructor\n";
+    cout << "test_constructor\n";
 
-   // Test
+    // Test
 
-   TrainingStrategy training_strategy_1(&neural_network, &data_set);
+    TrainingStrategy training_strategy_1(&neural_network, &data_set);
 }
 
 
 void TrainingStrategyTest::test_destructor()
 {
-   cout << "test_destructor\n";
+    cout << "test_destructor\n";
 
-   TrainingStrategy* training_strategy_pointer = new TrainingStrategy(&neural_network, &data_set);
+    TrainingStrategy* training_strategy_pointer = new TrainingStrategy(&neural_network, &data_set);
 
-   delete training_strategy_pointer;
+    delete training_strategy_pointer;
 }
 
 
 void TrainingStrategyTest::test_perform_training()
 {
-   cout << "test_perform_training\n";
+    cout << "test_perform_training\n";
 
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-   Index neurons_number;
+    Index neurons_number;
 
     Tensor<type, 2> data;
 
@@ -62,8 +62,8 @@ void TrainingStrategyTest::test_perform_training()
 
     data.resize(samples_number, inputs_number+targets_number);
     data.setValues({
-        {type(0),type(1)},
-        {type(0),type(1)}});
+                       {type(0),type(1)},
+                       {type(0),type(1)}});
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data(data);
@@ -81,97 +81,95 @@ void TrainingStrategyTest::test_perform_training()
 
 void TrainingStrategyTest::test_to_XML()
 {
-   cout << "test_to_XML\n";
+    cout << "test_to_XML\n";
 
-   FILE *pFile;
+    FILE *pFile;
 
-   string file_name = "../data/training_strategy.xml";
+    string file_name = "../data/training_strategy.xml";
 
-   pFile = fopen(file_name.c_str(), "w");
+    pFile = fopen(file_name.c_str(), "w");
 
-   tinyxml2::XMLPrinter document(pFile);
+    tinyxml2::XMLPrinter document(pFile);
 
-   training_strategy.write_XML(document);
+    training_strategy.write_XML(document);
 
-   fclose(pFile);
+    fclose(pFile);
 }
 
 
 void TrainingStrategyTest::test_from_XML()
 {
-   cout << "test_from_XML\n";
+    cout << "test_from_XML\n";
 
-   training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
 
-   training_strategy.set_default();
+    training_strategy.set_default();
 
-   tinyxml2::XMLDocument document;
+    tinyxml2::XMLDocument document;
 
-   string file_name = "../data/training_strategy.xml";
+    string file_name = "../data/training_strategy.xml";
 
-   if(document.LoadFile(file_name.c_str()))
-   {
-       ostringstream buffer;
+    if(document.LoadFile(file_name.c_str()))
+    {
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: TrainingStrategy class.\n"
-              << "void load(const string&) method.\n"
-              << "Cannot load XML file " << file_name << ".\n";
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "void load(const string&) method.\n"
+               << "Cannot load XML file " << file_name << ".\n";
 
-       throw logic_error(buffer.str());
-   }
+        throw logic_error(buffer.str());
+    }
 
-   training_strategy.from_XML(document);
+    training_strategy.from_XML(document);
 }
 
 
 void TrainingStrategyTest::test_save()
 {
-   cout << "test_save\n";
+    cout << "test_save\n";
 
-   string file_name = "../data/training_strategy.xml";
+    string file_name = "../data/training_strategy.xml";
 
-   training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
 
-   training_strategy.save(file_name);
+    training_strategy.save(file_name);
 }
 
 
 void TrainingStrategyTest::test_load()
 {
-   cout << "test_load\n";
+    cout << "test_load\n";
 
-   string file_name = "../data/training_strategy.xml";
+    string file_name = "../data/training_strategy.xml";
 
-   // Test
+    // Test
 
-   training_strategy.save(file_name);
-   training_strategy.load(file_name);
+    training_strategy.save(file_name);
+    training_strategy.load(file_name);
 }
 
 
 void TrainingStrategyTest::run_test_case()
 {
-   cout << "Running training strategy test case...\n";
+    cout << "Running training strategy test case...\n";
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   test_constructor();
-   test_destructor();
+    test_constructor();
+    test_destructor();
 
-   // Get methods
+    // Training methods
 
-   // Training methods
+    test_perform_training();
 
-   test_perform_training();
+    // Serialization methods
 
-   // Serialization methods
+    test_to_XML();
+    test_from_XML();
+    test_save();
+    test_load();
 
-   test_to_XML();
-   test_from_XML();
-   test_save();
-   test_load();
-
-   cout << "End of training strategy test case.\n\n";
+    cout << "End of training strategy test case.\n\n";
 }
 
 

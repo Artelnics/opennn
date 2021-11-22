@@ -28,7 +28,7 @@ void ScalingLayerTest::test_constructor()
    ScalingLayer scaling_layer_1;
 
    assert_true(scaling_layer_1.get_type() == Layer::Type::Scaling, LOG);
-//   assert_true(scaling_layer_1.().size() == 0, LOG);
+   assert_true(scaling_layer_1.get_neurons_number() == 0, LOG);
 
    ScalingLayer scaling_layer_2(3);
 
@@ -167,10 +167,10 @@ void ScalingLayerTest::test_set_descriptives()
 
    scaling_layer.set_descriptives(descriptives);
 
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,0) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,1) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,2)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,3) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(0).minimum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(0).maximum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(0).mean - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(0).standard_deviation) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
@@ -179,10 +179,10 @@ void ScalingLayerTest::test_set_descriptives()
 
    scaling_layer.set_descriptives(descriptives);
 
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,2) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(1,1) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(1,3)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(1).minimum - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(1).maximum - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(1).mean - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(1).standard_deviation) < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
@@ -191,8 +191,8 @@ void ScalingLayerTest::test_set_item_descriptives()
 {
    cout << "test_set_item_descriptives\n";
 
-   Descriptives item_descriptives_1;
-   Descriptives item_descriptives_2;
+   Descriptives item_descriptives_1(type(1), type(1), type(1), type(0));
+   Descriptives item_descriptives_2(type(2), type(2), type(2), type(0));
 
    // Test
 
@@ -200,25 +200,22 @@ void ScalingLayerTest::test_set_item_descriptives()
 
    scaling_layer.set_item_descriptives(0, item_descriptives_1);
 
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,0) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,1) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,2)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,3) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(0).minimum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(0).maximum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(0).mean - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(0).standard_deviation) < type(NUMERIC_LIMITS_MIN), LOG);
 
    // Test
 
    scaling_layer.set(2);
 
-//   item_descriptives_1.set(1,1,1,0);
-//   item_descriptives_2.set(2,2,2,0);
-
    scaling_layer.set_item_descriptives(0, item_descriptives_1);
    scaling_layer.set_item_descriptives(1, item_descriptives_1);
 
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(0,2) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(1,1) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
-//   assert_true(abs(scaling_layer.get_descriptives_matrix()(1,3)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(1).minimum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(1).maximum - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(1).mean - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+   assert_true(abs(scaling_layer.get_descriptives(1).standard_deviation) < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
