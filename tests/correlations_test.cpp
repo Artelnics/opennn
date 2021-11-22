@@ -66,7 +66,6 @@ void CorrelationsTest::test_linear_correlation()
 
     assert_true(abs(correlation) - static_cast<type>(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
-
     // Test
 
     y = type(-1.0)*x;
@@ -184,7 +183,6 @@ void CorrelationsTest::test_logistic_correlation()
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
     assert_true(abs(correlation.r - type(0.0173214)) < type(10e-6), LOG);
-
 }
 
 
@@ -250,7 +248,6 @@ void CorrelationsTest::test_exponential_correlation()
     assert_true(abs(correlation.a - static_cast<type>(1))< type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation.b - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-
     // Test missing values
 
     size = 5;
@@ -294,7 +291,6 @@ void CorrelationsTest::test_power_correlation()
     assert_true(correlation.r > static_cast<type>(0.999999), LOG);
     assert_true(correlation.a - static_cast<type>(1)< type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(correlation.b - static_cast<type>(2)< type(NUMERIC_LIMITS_MIN), LOG);
-
 }
 
 void CorrelationsTest::test_autocorrelations()
@@ -306,8 +302,8 @@ void CorrelationsTest::test_autocorrelations()
     initialize_sequential(x);
     Tensor<type, 1> correlations;
 
-//    correlations = autocorrelations(x, size/100);
-    //@todo(assert_true(minimum(correlations) > static_cast<type>(0.9), LOG);)
+    correlations = autocorrelations(thread_pool_device,x, size/100);
+    assert_true(minimum(correlations) > static_cast<type>(0.9), LOG);
 }
 
 
@@ -324,9 +320,9 @@ void CorrelationsTest::test_cross_correlations()
 
     Tensor<type, 1> cros_correlations;
 
-//    cros_correlations = cross_correlations(x, y, 10);
-    //@todo(assert_true(cros_correlations(0) < 5.0, LOG);)
-    //@todo(assert_true(cros_correlations(1) > 0.9, LOG);)
+    cros_correlations = cross_correlations(thread_pool_device,x, y, 10);
+    assert_true(cros_correlations(0) < 5.0, LOG);
+    assert_true(cros_correlations(1) > 0.9, LOG);
 }
 
 

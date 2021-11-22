@@ -19,145 +19,271 @@ ScalingTest::~ScalingTest()
 }
 
 
-// @todo std abs
-
-void ScalingTest::test_scale_mean_standard_deviation()
+void ScalingTest::test_scale_data_mean_standard_deviation()
 {
-   cout << "test_scale_inputs_mean_standard_deviation\n";
+    cout << "test_scale_data_inputs_mean_standard_deviation\n";
 
-   Tensor<type, 2> matrix;
+    Tensor<type, 2> matrix(10 + rand()%10, 1);
+    Tensor<type, 2> scaled_matrix;
 
-   Tensor<Descriptives, 1> matrix_descriptives;
+    Tensor<Descriptives, 1> matrix_descriptives;
 
-   Tensor<type, 0> mean_abs;
-   Tensor<type, 0> std_abs;
+    // Test
 
-   // Test
+    matrix.setRandom();
 
-   matrix.resize(10, 1);
-   matrix.setRandom();
+    data_set.set(matrix);
+    data_set.set_columns_scalers(Scaler::MeanStandardDeviation);
 
-   matrix_descriptives = descriptives(matrix);
+    data_set.scale_data();
+    scaled_matrix = data_set.get_data();
 
-   scale_mean_standard_deviation(matrix, 0, matrix_descriptives(0));
+    matrix_descriptives = data_set.calculate_variables_descriptives();
 
-   mean_abs = matrix.mean().abs();
-
-   assert_true(mean_abs(0) < static_cast<type>(1e-3) , LOG);
+    assert_true(abs(matrix_descriptives(0).mean) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(matrix_descriptives(0).standard_deviation - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
-void ScalingTest::test_scale_minimum_maximum()
+void ScalingTest::test_scale_data_minimum_maximum()
 {
-   cout << "test_scale_minimum_maximum\n";
+    cout << "test_scale_data_minimum_maximum\n";
 
-   Tensor<type, 2> matrix;
+    Tensor<type, 2> matrix(10 + rand()%10, 1);
+    Tensor<type, 2> scaled_matrix;
 
-   Tensor<Descriptives, 1> matrix_descriptives;
+    Tensor<Descriptives, 1> matrix_descriptives;
 
-   Tensor<type, 0> min;
-   Tensor<type, 0> max;
+    // Test
 
-   // Test
+    matrix.setRandom();
 
-   matrix.resize(10, 1);
-   matrix.setRandom();
+    data_set.set(matrix);
+    data_set.set_columns_scalers(Scaler::MinimumMaximum);
+    data_set.scale_data();
 
-   matrix_descriptives = descriptives(matrix);
+    scaled_matrix = data_set.get_data();
+    matrix_descriptives = data_set.calculate_variables_descriptives();
 
-   scale_minimum_maximum(matrix, 0, matrix_descriptives(0));
+    assert_true(abs(matrix_descriptives(0).minimum + type(1)) < type(NUMERIC_LIMITS_MIN) , LOG);
+    assert_true(abs(matrix_descriptives(0).maximum - type(1)) < type(NUMERIC_LIMITS_MIN) , LOG);
 
-   min = matrix.minimum();
-
-   assert_true(abs(min(0)+type(1)) < static_cast<type>(1e-3) , LOG);
 }
 
+void ScalingTest::test_scale_data_no_scaling()
+{
+    cout << "test_scale_data_no_scaling\n";
+
+    Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
+    Tensor<type, 2> scaled_matrix;
+
+    // Test
+
+    matrix.setRandom();
+
+    data_set.set(matrix);
+    data_set.set_columns_scalers(Scaler::NoScaling);
+    data_set.scale_data();
+
+    scaled_matrix = data_set.get_data();
+
+    assert_true(are_equal(matrix, scaled_matrix,type(NUMERIC_LIMITS_MIN)) , LOG);
+}
+
+
+void ScalingTest::test_scale_data_standard_deviation()
+{
+    cout << "test_scale_data_standard_deviation\n";
+
+    Tensor<type, 2> matrix(10 + rand()%10, 1);
+    Tensor<type, 2> scaled_matrix;
+
+    Tensor<Descriptives, 1> matrix_descriptives;
+
+    // Test
+
+    matrix.setRandom();
+
+    data_set.set(matrix);
+    data_set.set_columns_scalers(Scaler::StandardDeviation);
+    data_set.scale_data();
+
+    scaled_matrix = data_set.get_data();
+    matrix_descriptives = data_set.calculate_variables_descriptives();
+
+    assert_true(abs(matrix_descriptives(0).standard_deviation - type(1)) < type(NUMERIC_LIMITS_MIN) , LOG);
+}
+
+
+void ScalingTest::test_scale_data_logarithmic()
+{
+    cout << "test_scale_data_logarithmic\n";
+
+    Tensor<type, 2> matrix(10 + rand()%10, 1);
+    Tensor<type, 2> scaled_matrix;
+    Tensor<type, 2> solution_matrix;
+
+    // Test
+
+    matrix.setRandom();
+
+    data_set.set(matrix);
+    data_set.set_columns_scalers(Scaler::Logarithm);
+    data_set.scale_data();
+
+    scaled_matrix = data_set.get_data();
+
+    solution_matrix.resize(matrix.dimension(0),1);
+    for(Index i = 0; i < matrix.size() ; i++)
+    {
+        solution_matrix(i) = log(matrix(i));
+    }
+
+    assert_true(are_equal(scaled_matrix, solution_matrix, type(NUMERIC_LIMITS_MIN)) , LOG);
+}
+
+
+// Unscaling methods
 
 void ScalingTest::test_unscale_data_mean_standard_deviation()
 {
-    cout << "test_unscale_data_mean_standard_deviation\n";
+    cout << "test_unscale_data_minimum_maximum\n";
 
-    Tensor<type, 2> matrix(3,1);
-    matrix(0,0) = type(5);
-    matrix(1,0) = type(9);
-    matrix(2,0) = type(10);
+    Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
+    Tensor<type, 2> unscaled_matrix;
 
-    DataSet data(matrix);
+    // Test
 
-    Tensor<Descriptives, 1> descrriptives(1);
-    Descriptives descriptives;
+    matrix.setRandom();
 
-    descriptives.set_minimum(type(5.0));
-    descriptives.set_maximum(type(10.0));
-    descriptives.set_mean(type(8.0));
-    descriptives.set_standard_deviation(type(2.0));
-    descrriptives[0] = descriptives ;
+    data_set.set(matrix);
+    data_set.set_columns_scalers(Scaler::MeanStandardDeviation);
 
-    data.set_columns_scalers(Scaler::MeanStandardDeviation);
+    variables_descriptives = data_set.calculate_variables_descriptives();
+    data_set.scale_data();
+    data_set.unscale_data(variables_descriptives);
 
-    data.unscale_data(descrriptives);
+    unscaled_matrix = data_set.get_data();
 
-    Tensor<type, 2> matrix_solution (3,1);
-    matrix_solution(0,0) = descriptives.mean;
-    matrix_solution(1,0) = descriptives.mean;
-    matrix_solution(2,0) = descriptives.mean;
-
-    assert_true(are_equal(data.get_data(),matrix_solution,type(1e-4)), LOG);
+    assert_true(are_equal(matrix, unscaled_matrix,type(NUMERIC_LIMITS_MIN)), LOG);
 }
 
 
 void ScalingTest::test_unscale_data_minimum_maximum()
 {
-   cout << "test_unscale_data_minimum_maximum\n";
+    cout << "test_unscale_data_minimum_maximum\n";
 
-   Tensor<type, 2> matrix (3,1);
-   matrix(0,0) = type(2.0);
-   matrix(1,0) = type(5.0);
-   matrix(2,0) = type(77.0);
+    Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
+    Tensor<type, 2> unscaled_matrix;
 
-   DataSet data(matrix);
+    // Test
 
-   Tensor<Descriptives, 1> descrriptives(1);
-   Descriptives descriptives;
+    matrix.setRandom();
 
-   descriptives.set_minimum(type(5.0));
-   descriptives.set_maximum(type(9.0));
-   descriptives.set_mean(type(8.0));
-   descriptives.set_standard_deviation(type(2.0));
-   descrriptives[0] = descriptives ;
+    data_set.set(matrix);
+    data_set.set_columns_scalers(Scaler::MinimumMaximum);
 
-   Tensor<type, 2> unescale_matrix(3,1);
-   DataSet data_unscaled;
-   data.set_data(unescale_matrix);
+    variables_descriptives = data_set.calculate_variables_descriptives();
+    data_set.scale_data();
+    data_set.unscale_data(variables_descriptives);
 
-   data.set_columns_scalers(Scaler::MinimumMaximum);
+    unscaled_matrix = data_set.get_data();
 
-   data.unscale_data(descrriptives);
+    assert_true(are_equal(matrix, unscaled_matrix,type(NUMERIC_LIMITS_MIN)), LOG);
+}
 
-   Tensor<type, 2> matrix_solution (3,1);
-   matrix_solution(0,0) = type(7.0);
-   matrix_solution(1,0) = type(7.0);
-   matrix_solution(2,0) = type(7.0);
+void ScalingTest::test_unscale_data_no_scaling()
+{
+    cout << "test_unscale_data_no_scaling\n";
 
-   assert_true(are_equal(data.get_data(),matrix_solution,type(1e-4)), LOG);
+    Tensor<type, 2> matrix(1 + rand()%10,1 + rand()%10);
+    Tensor<type, 2> scaled_matrix;
+
+    // Test
+
+    matrix.setRandom();
+
+    data_set.set(matrix);
+    data_set.set_columns_scalers(Scaler::NoScaling);
+
+    variables_descriptives = data_set.calculate_variables_descriptives();
+    data_set.unscale_data(variables_descriptives);
+
+    scaled_matrix = data_set.get_data();
+
+    assert_true(are_equal(matrix, scaled_matrix,type(NUMERIC_LIMITS_MIN)) , LOG);
+}
+
+
+void ScalingTest::test_unscale_data_standard_deviation()
+{
+    cout << "test_unscale_data_standard_deviation\n";
+
+    Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
+    Tensor<type, 2> unscaled_matrix;
+
+    // Test
+
+    matrix.setRandom();
+
+    data_set.set(matrix);
+    data_set.set_columns_scalers(Scaler::StandardDeviation);
+
+    variables_descriptives = data_set.calculate_variables_descriptives();
+    data_set.scale_data();
+    data_set.unscale_data(variables_descriptives);
+
+    unscaled_matrix = data_set.get_data();
+
+    assert_true(are_equal(matrix, unscaled_matrix,type(NUMERIC_LIMITS_MIN)), LOG);
+}
+
+
+void ScalingTest::test_unscale_data_logarithmic()
+{
+    cout << "test_unscale_data_minimum_maximum\n";
+
+    Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
+    Tensor<type, 2> unscaled_matrix;
+
+    // Test
+
+    matrix.setRandom();
+
+    data_set.set(matrix);
+    data_set.set_columns_scalers(Scaler::Logarithm);
+
+    variables_descriptives = data_set.calculate_variables_descriptives();
+    data_set.scale_data();
+    data_set.unscale_data(variables_descriptives);
+
+    unscaled_matrix = data_set.get_data();
+
+    assert_true(are_equal(matrix, unscaled_matrix,type(NUMERIC_LIMITS_MIN)), LOG);
 }
 
 
 void ScalingTest::run_test_case()
 {
-   cout << "Running scaling test case...\n";
+    cout << "Running scaling test case...\n";
 
-   // Scaling
+    // Scaling
 
-   test_scale_mean_standard_deviation();
-   test_scale_minimum_maximum();
+    test_scale_data_mean_standard_deviation();
+    test_scale_data_minimum_maximum();
+    test_scale_data_no_scaling();
+    test_scale_data_standard_deviation();
+    test_scale_data_logarithmic();
 
-   // Unscaling
+    // Unscaling
 
-   test_unscale_data_mean_standard_deviation();
-   test_unscale_data_minimum_maximum();
+    test_unscale_data_mean_standard_deviation();
+    test_unscale_data_minimum_maximum();
+    test_unscale_data_no_scaling();
+    test_unscale_data_standard_deviation();
+    test_unscale_data_logarithmic();
 
-   cout << "End of scaling test case.\n\n";
+    cout << "End of scaling test case.\n\n";
 }
 
 

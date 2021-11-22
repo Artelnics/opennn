@@ -49,14 +49,21 @@ void TensorUtilitiesTest::test_calculate_rank()
 {
     cout << "test_calculate_rank\n";
 
-    Tensor<Index, 1> rank;
+    Tensor<Index, 1> rank_greater;
+    Tensor<Index, 1> rank_less;
 
     // Test
 
     vector.resize(3);
     vector.setValues({ type(4),type(2),type(3)});
 
-    rank = calculate_rank_greater(vector);
+    rank_greater = calculate_rank_greater(vector);
+    rank_less = calculate_rank_less(vector);
+
+    cout << "greater:\n " << rank_greater << endl;
+    cout << "less:\n " << rank_less << endl;
+
+    // assert_true(¿?)
 }
 
 

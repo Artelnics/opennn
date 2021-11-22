@@ -112,7 +112,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 
     recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-///@todo numerical_differentiation.calculate_derivatives has different arguments
+///@todo numerical_differentiation.calculate_derivatives() has different arguments
 
 //    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
 
@@ -163,6 +163,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
     inputs(0,2) = static_cast<type>(0.29);
     inputs(0,3) = static_cast<type>(-0.77);
 
+///@todo
 //    recurrent_layer.set_activation_function(RecurrentLayer::Threshold);
 //    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
 //    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);

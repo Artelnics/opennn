@@ -18,23 +18,32 @@ class ScalingTest : public UnitTesting
 
 public:  
 
-   explicit ScalingTest();
+    explicit ScalingTest();
 
     // Scaling
 
-    void test_scale_mean_standard_deviation();
-    void test_scale_minimum_maximum();
+    void test_scale_data_mean_standard_deviation();
+    void test_scale_data_minimum_maximum();
+    void test_scale_data_no_scaling();
+    void test_scale_data_standard_deviation();
+    void test_scale_data_logarithmic();
 
     // Unscaling
 
     void test_unscale_data_mean_standard_deviation();
     void test_unscale_data_minimum_maximum();
+    void test_unscale_data_no_scaling();
+    void test_unscale_data_standard_deviation();
+    void test_unscale_data_logarithmic();
 
 
+    virtual ~ScalingTest();
 
-   virtual ~ScalingTest();
+    void run_test_case();
 
-   void run_test_case();
+    DataSet data_set;
+
+    Tensor<Descriptives, 1> variables_descriptives;
 };
 
 
