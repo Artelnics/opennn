@@ -10,6 +10,7 @@
 
 namespace OpenNN
 {
+/*
 
 /// Default constructor.
 /// It creates a numerical differentiation object with the default members.
@@ -290,7 +291,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
 
     return derivatives;
 }
-
+*/
 }
 
 // OpenNN: Open Neural Networks Library.

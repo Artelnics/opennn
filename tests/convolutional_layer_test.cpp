@@ -882,7 +882,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_activations_derivatives\n";
 
-    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+//    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 
     Tensor<type, 4> numerical_activation_derivatives;
 
