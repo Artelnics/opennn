@@ -75,7 +75,7 @@ public:
 
 private:
 
-//   NumericalDifferentiation numerical_differentiation;
+   NumericalDifferentiation numerical_differentiation;
 
    // Constant methods
 

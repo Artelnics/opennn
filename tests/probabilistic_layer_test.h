@@ -102,7 +102,7 @@ private:
 
    ProbabilisticLayer probabilistic_layer;
 
-//   NumericalDifferentiation numerical_differentiation;
+   NumericalDifferentiation numerical_differentiation;
 };
 
 

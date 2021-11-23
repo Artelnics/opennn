@@ -18,7 +18,7 @@ NumericalDifferentiationTest::~NumericalDifferentiationTest()
 {
 }
 
-/*
+
 
 void NumericalDifferentiationTest::test_constructor()
 {
@@ -1505,11 +1505,11 @@ void NumericalDifferentiationTest::test_calculate_central_differences_hessian_ma
 //    assert_true(abs(H(1) - 1) < static_cast<type>(1e-2), LOG);
 
 }
-*/
+
 void NumericalDifferentiationTest::run_test_case()
 {
    cout << "Running numerical differentiation test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
@@ -1558,7 +1558,7 @@ void NumericalDifferentiationTest::run_test_case()
    test_calculate_central_differences_hessian_matrices();
 
    cout << "End of numerical differentiation test case.\n\n";
-*/
+
 
 }
 

@@ -1236,7 +1236,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    Tensor<type, 2> combinations(1,1);
    Tensor<type, 2> activations(1,1);
    Tensor<type, 2> activations_derivatives(1,1);
-/*
+
    // Test
 
    perceptron_layer.set(1,1);
@@ -1422,7 +1422,7 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
            = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);
 
    assert_true(activations_derivatives(0,0) - numerical_activation_derivative(0,0) < static_cast<type>(1e-3), LOG);
-*/
+
 }
 
 

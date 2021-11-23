@@ -118,7 +118,7 @@ private:
     PerceptronLayerForwardPropagation forward_propagation;
     PerceptronLayerBackPropagation back_propagation;
 
-//    NumericalDifferentiation numerical_differentiation;
+    NumericalDifferentiation numerical_differentiation;
 };
 
 

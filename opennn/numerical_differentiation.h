@@ -46,7 +46,7 @@ public:
    /// Enumeration of available methods for numerical differentiation.
 
    enum NumericalDifferentiationMethod{ForwardDifferences, CentralDifferences};  
-/*
+
    const NumericalDifferentiationMethod& get_numerical_differentiation_method() const;
    string write_numerical_differentiation_method() const;
    
@@ -604,7 +604,7 @@ public:
       const Tensor<type, 1> y_backward = (t.*f)(x_backward);
       const Tensor<type, 1> y_backward_2 = (t.*f)(x_backward_2);
 
-      return (y_forward_2*-1.0 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0);
+      return (y_forward_2*type(-1) + y_forward*type(16) + y*type(-30) + y_backward*type(16) + y_backward_2*type(-1))/(h*h*type(12));
    }
 
 
@@ -715,8 +715,7 @@ public:
       const Tensor<type, 1> y_forward = (t.*f)(dummy, x_forward);
       const Tensor<type, 1> y_forward_2 = (t.*f)(dummy, x_forward_2);
 
-//      return (y_forward_2 - y_forward*2.0 + y)/(h*h);
-      return Tensor<type, 1>();
+      return (y_forward_2 - y_forward*type(2) + y)/(h*h);
    }
 
 
@@ -748,7 +747,7 @@ public:
       const Tensor<type, 1> y_backward = (t.*f)(dummy, x_backward);
       const Tensor<type, 1> y_backward_2 = (t.*f)(dummy, x_backward_2);
 
-      return (y_forward_2*-1 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0);
+      return (y_forward_2*type(-1) + y_forward*type(16) + y*type(-30) + y_backward*type(16) + y_backward_2*type(-1))/(h*h*type(12));
    }
 
 
@@ -1978,7 +1977,7 @@ public:
             x_forward_i_backward_j(i) -= h_i;
             x_forward_i_backward_j(j) += h_j;
  
-            H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
+            H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(type(4)*h_i*h_j);
          }
       }
 
@@ -3675,7 +3674,7 @@ public:
 
        return H;
    }
-*/
+
 
 private:
 
