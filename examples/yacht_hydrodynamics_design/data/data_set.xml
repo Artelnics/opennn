@@ -8,7 +8,7 @@
       <MissingValuesLabel>NA</MissingValuesLabel>
       <LagsNumber>0</LagsNumber>
       <StepsAhead>0</StepsAhead>
-      <TimeIndex>0</TimeIndex>
+      <TimeIndex>140119013064705</TimeIndex>
    </DataFile>
    <Columns>
       <ColumnsNumber>7</ColumnsNumber>
@@ -57,13 +57,13 @@
    </Columns>
    <Samples>
       <SamplesNumber>308</SamplesNumber>
-      <SamplesUses>1 1 2 0 0 1 2 0 1 2 0 0 0 0 2 0 2 0 0 0 2 0 2 0 2 1 0 0 0 1 2 0 1 0 1 2 1 0 2 1 0 2 1 2 0 0 1 0 0 2 0 0 0 1 0 2 0 0 2 0 0 0 0 0 0 1 2 0 2 2 2 2 0 2 0 1 0 0 0 0 0 2 2 0 0 0 0 0 2 1 1 2 0 0 1 0 1 0 1 2 2 0 0 0 0 0 0 0 2 0 2 0 0 2 0 0 0 0 0 0 2 2 0 0 0 0 0 1 2 0 1 0 0 2 2 2 0 0 0 0 0 1 0 0 1 1 0 0 1 0 1 2 1 0 0 0 0 0 0 2 0 0 0 0 0 1 0 2 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 1 1 2 1 2 1 0 2 0 0 1 2 0 0 0 0 2 0 0 0 0 0 0 2 0 0 1 0 0 0 0 2 1 2 0 0 0 0 1 0 0 2 0 0 1 0 1 2 0 1 0 0 1 2 0 0 0 0 0 0 1 1 1 0 0 0 0 1 0 1 2 0 2 1 1 0 0 0 2 2 0 0 0 1 2 0 0 1 0 0 0 2 2 0 1 0 0 1 0 1 1 2 1 0 1 0 0 0 0 1 0 0 0 1 0 0 0 2 2</SamplesUses>
+      <SamplesUses>1 2 2 0 1 0 1 0 0 1 0 1 2 0 0 0 0 0 2 0 1 2 1 0 0 0 0 0 0 0 0 0 2 2 0 1 2 1 0 0 0 0 0 2 2 0 1 0 0 0 0 1 0 0 0 2 0 1 1 1 0 0 0 1 2 2 2 1 0 2 0 0 1 0 0 0 0 0 1 0 0 0 2 1 1 2 0 0 0 0 0 1 2 1 2 2 0 0 2 0 2 0 0 2 1 0 2 0 2 2 1 0 0 2 0 2 1 0 1 1 0 1 0 0 1 0 0 0 0 0 0 1 2 2 2 0 1 2 1 0 0 0 0 0 0 0 1 0 0 2 1 0 0 1 0 1 0 2 0 0 0 1 0 0 0 1 0 1 0 0 0 0 0 0 0 2 0 0 2 0 1 2 0 0 1 0 0 2 0 0 0 2 1 0 1 1 1 0 0 1 0 0 1 0 0 2 0 0 2 0 0 0 0 0 0 1 1 0 0 0 1 0 2 0 0 2 2 0 0 0 0 0 2 2 2 0 0 0 1 2 0 0 0 0 2 1 0 0 0 0 1 0 0 0 2 1 0 0 2 0 2 0 0 2 0 0 0 0 0 2 1 0 2 0 0 0 1 0 0 2 0 2 2 0 1 0 0 1 0 0 0 2 0 0 1 1 0 0 0 0 0 0 1 0 0 0 2 2</SamplesUses>
    </Samples>
    <MissingValues>
       <MissingValuesMethod>Unuse</MissingValuesMethod>
-      <MissingValuesNumber>2174721104304</MissingValuesNumber>
+      <MissingValuesNumber>140736210541776</MissingValuesNumber>
       <ColumnsMissingValuesNumber></ColumnsMissingValuesNumber>
-      <RowsMissingValuesNumber>298259050896</RowsMissingValuesNumber>
+      <RowsMissingValuesNumber>140121825060128</RowsMissingValuesNumber>
    </MissingValues>
    <PreviewData>
       <PreviewSize>4</PreviewSize>
