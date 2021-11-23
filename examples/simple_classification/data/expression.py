@@ -3,83 +3,115 @@ Artificial Intelligence Techniques SL
 artelnics@artelnics.com	
 
 Your model has been exported to this python file.
-You can manage it with the 'neural network' method.	
+You can manage it with the 'NeuralNetwork' class.	
 Example:
 
+	model = NeuralNetwork()	
 	sample = [input_1, input_2, input_3, input_4, ...] 	 	
-	outputs = neural_network(sample)
+	outputs = model.calculate_output(sample)
 
 	Inputs Names: 	
-	x1
-x2
+	1 )x1
+	2 )x2
 
-Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,	
-however you can loop through neural network function in order to get multiple outputs.	
+You can predict with a batch of samples using calculate_batch_output method	
+IMPORTANT: input batch must be <class 'numpy.ndarray'> type	
+Example_1:	
+	model = NeuralNetwork()	
+	input_batch = np.array([[1, 2], [4, 5]], np.int32)	
+	outputs = model.calculate_batch_output(input_batch)
+Example_2:	
+	input_batch = pd.DataFrame( {'col1': [1, 2], 'col2': [3, 4]})	
+	outputs = model.calculate_batch_output(input_batch.values)
 '''
 
 import numpy as np
 
-def scaling_layer(inputs):
+class NeuralNetwork:
+ 
+	def __init__(self):
+ 
+		self.parameters_number = 41
+ 
+	def scaling_layer(self,inputs):
 
-	outputs = [None] * 2
+		outputs = [None] * 2
 
-	outputs[0] = inputs[0]*2.933202028-1.546182394
-	outputs[1] = inputs[1]*2.756152153-1.411633015
+		outputs[0] = inputs[0]*10.50651836-5.223269463
+		outputs[1] = inputs[1]*10.09063339-4.924414158
 
-	return outputs;
-
-
-def perceptron_layer0(inputs):
-
-	combinations = [None] * 10
-
-	combinations[0] = 80.0221 +26.3867*inputs[0] -73.1528*inputs[1] 
-	combinations[1] = 100.942 +27.955*inputs[0] -58.4409*inputs[1] 
-	combinations[2] = -27.5201 -186.692*inputs[0] +152.727*inputs[1] 
-	combinations[3] = 54.114 -242.031*inputs[0] +55.7108*inputs[1] 
-	combinations[4] = -94.6595 -82.3016*inputs[0] +102.887*inputs[1] 
-	combinations[5] = 35.7201 +56.8908*inputs[0] +13.3236*inputs[1] 
-	combinations[6] = -58.77 -184.138*inputs[0] +120.111*inputs[1] 
-	combinations[7] = 70.8452 +78.6646*inputs[0] -65.7619*inputs[1] 
-	combinations[8] = 55.0612 -131.155*inputs[0] +162.058*inputs[1] 
-	combinations[9] = -6.14748 +90.8408*inputs[0] -14.5926*inputs[1] 
-	
-	activations = [None] * 10
-
-	activations[0] = np.tanh(combinations[0])
-	activations[1] = np.tanh(combinations[1])
-	activations[2] = np.tanh(combinations[2])
-	activations[3] = np.tanh(combinations[3])
-	activations[4] = np.tanh(combinations[4])
-	activations[5] = np.tanh(combinations[5])
-	activations[6] = np.tanh(combinations[6])
-	activations[7] = np.tanh(combinations[7])
-	activations[8] = np.tanh(combinations[8])
-	activations[9] = np.tanh(combinations[9])
-
-	return activations;
+		return outputs;
 
 
-def probabilistic_layer(inputs):
+	def perceptron_layer_1(self,inputs):
 
-	combinations = [None] * 1
+		combinations = [None] * 10
 
-	combinations[0] = -90.0598 +70.512*inputs[0] +144.18*inputs[1] +284.931*inputs[2] +119.573*inputs[3] -72.2747*inputs[4] +19.1694*inputs[5] +221.424*inputs[6] +5.91975*inputs[7] +297.373*inputs[8] +42.3658*inputs[9] 
-	
-	activations = [None] * 1
+		combinations[0] = 0.0146402 -0.0574556*inputs[0] +0.482391*inputs[1] 
+		combinations[1] = -0.00501259 +0.0573209*inputs[0] -0.481549*inputs[1] 
+		combinations[2] = -0.0124921 +0.0565344*inputs[0] -0.482869*inputs[1] 
+		combinations[3] = -0.00290161 +0.0535286*inputs[0] -0.480699*inputs[1] 
+		combinations[4] = -0.009853 +0.0562651*inputs[0] -0.482262*inputs[1] 
+		combinations[5] = -0.50577 +2.6992*inputs[0] +3.40169*inputs[1] 
+		combinations[6] = 2.32576 +0.00369966*inputs[0] -2.51684*inputs[1] 
+		combinations[7] = 1.37366 -0.325119*inputs[0] +2.31626*inputs[1] 
+		combinations[8] = 0.012314 -0.0458432*inputs[0] +0.476505*inputs[1] 
+		combinations[9] = 0.0108689 -0.0591511*inputs[0] +0.484173*inputs[1] 
+		
+		activations = [None] * 10
 
-	activations[0] = 1.0/(1.0 + np.exp(-combinations[0]));
+		activations[0] = np.tanh(combinations[0])
+		activations[1] = np.tanh(combinations[1])
+		activations[2] = np.tanh(combinations[2])
+		activations[3] = np.tanh(combinations[3])
+		activations[4] = np.tanh(combinations[4])
+		activations[5] = np.tanh(combinations[5])
+		activations[6] = np.tanh(combinations[6])
+		activations[7] = np.tanh(combinations[7])
+		activations[8] = np.tanh(combinations[8])
+		activations[9] = np.tanh(combinations[9])
 
-	return activations;
+		return activations;
 
 
-def neural_network(inputs):
+	def probabilistic_layer(self, inputs):
 
-	outputs = [None] * len(inputs)
+		combinations = [None] * 1
 
-	outputs = scaling_layer(inputs)
-	outputs = perceptron_layer0(outputs)
-	outputs = probabilistic_layer(outputs)
+		combinations[0] = -0.0587929 +0.683608*inputs[0] -0.681948*inputs[1] -0.690227*inputs[2] -0.689325*inputs[3] -0.689073*inputs[4] -4.63996*inputs[5] -3.21611*inputs[6] +2.80742*inputs[7] +0.680546*inputs[8] +0.692442*inputs[9] 
+		
+		activations = [None] * 1
 
-	return outputs;
+		activations[0] = 1.0/(1.0 + np.exp(-combinations[0]));
 
+		return activations;
+
+
+	def calculate_output(self, inputs):
+
+		output_scaling_layer = self.scaling_layer(inputs)
+
+		output_perceptron_layer_1 = self.perceptron_layer_1(output_scaling_layer)
+
+		output_probabilistic_layer = self.probabilistic_layer(output_perceptron_layer_1)
+
+		return output_probabilistic_layer
+
+
+	def calculate_batch_output(self, input_batch):
+
+		output = []
+
+		for i in range(input_batch.shape[0]):
+
+			inputs = list(input_batch[i])
+
+			output_scaling_layer = self.scaling_layer(inputs)
+
+			output_perceptron_layer_1 = self.perceptron_layer_1(output_scaling_layer)
+
+			output_probabilistic_layer = self.probabilistic_layer(output_perceptron_layer_1)
+
+			output = np.append(output,output_probabilistic_layer, axis=0)
+
+		return output
