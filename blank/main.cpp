@@ -28,8 +28,6 @@ int main()
     try
     {
         cout << "OpenNN. Blank application." << endl;
-
-        srand(static_cast<unsigned>(time(nullptr)));
         
         // Write your code here
 

@@ -501,7 +501,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
    assert_true(activations(0,0) - static_cast<type>(0.5) < static_cast<type>(1e-5), LOG);
 
    // Test
-/*
+
    probabilistic_layer.set(2, 2);
    probabilistic_layer.set_parameters_constant(2);
 
@@ -553,7 +553,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
    assert_true(abs(activations(0,0) - static_cast<type>(0.6652)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations(0,1) - static_cast<type>(0.2447)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations(0,2) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
-*/
+
 }
 
 

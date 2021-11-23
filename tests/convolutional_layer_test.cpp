@@ -882,7 +882,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_activations_derivatives\n";
 
-//    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 
     Tensor<type, 4> numerical_activation_derivatives;
 
@@ -1023,10 +1023,10 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
     result(1,1,1,0) = 0.046000f;
     result(1,1,1,1) = 0.045910f;
 
-//    numerical_activation_derivatives = numerical_differentiation.calculate_derivatives(convolutional_layer, &ConvolutionalLayer::calculate_activations, 0, inputs);
-//    cout << endl << "Numerical differentiation derivatives:" << endl << numerical_activation_derivatives << endl << endl;
+    numerical_activation_derivatives = numerical_differentiation.calculate_derivatives(convolutional_layer, &ConvolutionalLayer::calculate_activations, 0, inputs);
+    cout << endl << "Numerical differentiation derivatives:" << endl << numerical_activation_derivatives << endl << endl;
 
-//    cout << endl << "Result:" << endl << result << endl << endl;
+    cout << endl << "Result:" << endl << result << endl << endl;
 
     assert_true(abs(activations_derivatives(0,0,0,0) - result(0,0,0,0)) < 1e-6f &&
                 abs(activations_derivatives(0,0,0,1) - result(0,0,0,1)) < 1e-6f &&
