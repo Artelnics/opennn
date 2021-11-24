@@ -1030,7 +1030,6 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
 
         for(Index i = 0; i < inputs_names.size() - 1; i++)
         {
-
             buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ") +";
         }
 
