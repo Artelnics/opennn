@@ -1455,11 +1455,11 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& outputs_na
 
             if(i == 0)
             {
-                buffer << "\tsum_ = ";
+                buffer << "sum = ";
 
                 for(Index i = 0; i < neurons_number; i++)
                 {
-                    buffer << "exp(probabilistic_layer_combinations_"  << to_string(i);
+                    buffer << "exp(probabilistic_layer_combinations_" << to_string(i) << ")";
 
                     if(i != neurons_number-1) buffer << " + ";
                 }
@@ -1468,7 +1468,7 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& outputs_na
 
                 for(Index i = 0; i < neurons_number; i++)
                 {
-                    buffer << "\t" << outputs_names(i) << " = exp(probabilistic_layer_combinations_" << to_string(i) <<")/sum_;\n";
+                    buffer << outputs_names(i) << " = exp(probabilistic_layer_combinations_" << to_string(i) <<")/sum;\n";
                 }
 
             }
