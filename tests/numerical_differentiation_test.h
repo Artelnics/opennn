@@ -127,7 +127,6 @@ private:
        return matrix;
    }
 
-
    type f4(const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> sum_ = vector_x.sum();
@@ -142,28 +141,28 @@ private:
 
        return sum_(0);
    }
-
+   
    type f4_2(const Index& dummy, const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> sum_ = type(dummy)*vector_x.square().sum();
 
        return sum_(0);
    }
-
+   
    type f4_3(const Tensor<type, 1>& dummy, const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> sum_ = (vector_x * dummy).sum();
 
        return sum_(0);
    }
-
+   /*
    type f4_4(const Tensor<Index,1>& dummy, const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> sum_ = (vector_x * dummy).sum();
 
        return sum_(0);
    }
-
+  */ 
    type f4_5(const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> prod_ = vector_x.prod();
@@ -180,14 +179,14 @@ private:
 
    type f4_7(const Index& dummy, const Tensor<type, 1>& vector_x) const
    {
-       Tensor<type, 0> prod_ = type(dummy)*vector_x.square().prod();
+       Tensor<type, 0> prod_ = type(dummy) * vector_x.square().prod();
 
        return prod_(0);
    }
 
    Tensor<type, 1> f5(const Index& dummy_int, const Tensor<type, 1>& dummy_vec, const Tensor<type, 1>& vector_x) const
    {
-       Tensor<type, 1> prod_ = type(dummy_int)*vector_x.square() + dummy_vec*vector_x.square();
+       Tensor<type, 1> prod_ = type(dummy_int) * vector_x.square() + dummy_vec * vector_x.square();
 
        return prod_;
    }

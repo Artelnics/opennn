@@ -10,20 +10,15 @@ TEMPLATE = subdirs
 
 CONFIG += ordered
 
+SUBDIRS += breast_cancer
+SUBDIRS += iris_plant
+SUBDIRS += leukemia
+SUBDIRS += logical_operations
+SUBDIRS += mnist
+SUBDIRS += outlier_detection
 SUBDIRS += rosenbrock
 SUBDIRS += simple_approximation
 SUBDIRS += simple_classification
-SUBDIRS += airfoil_self_noise
-SUBDIRS += breast_cancer
-SUBDIRS += iris_plant
-SUBDIRS += logical_operations
-SUBDIRS += pima_indians_diabetes
-SUBDIRS += urinary_inflammations_diagnosis
-SUBDIRS += yacht_hydrodynamics_design
-SUBDIRS += yacht_hydrodynamics_production
-SUBDIRS += leukemia
-SUBDIRS += mnist
-SUBDIRS += outlier_detection
 
 win32:!win32-g++{
 #QMAKE_CXXFLAGS+= -arch:AVX
