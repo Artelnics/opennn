@@ -11,7 +11,11 @@ Example:
 	outputs = model.calculate_output(sample)
 
 	Inputs Names: 	
-	1 )input_1
+	1 )frequency
+	2 )angle_of_attack
+	3 )chord_lenght
+	4 )free-stream_velocity
+	5 )suction_side_displacement_thickness
 
 You can predict with a batch of samples using calculate_batch_output method	
 IMPORTANT: input batch must be <class 'numpy.ndarray'> type	
@@ -30,33 +34,37 @@ class NeuralNetwork:
  
 	def __init__(self):
  
-		self.parameters_number = 37
+		self.parameters_number = 85
  
 	def scaling_layer(self,inputs):
 
-		outputs = [None] * 1
+		outputs = [None] * 5
 
-		outputs[0] = inputs[0]*2-0
+		outputs[0] = inputs[0]*0.0006344023859-1.831126809
+		outputs[1] = inputs[1]*0.3379446864-2.292042971
+		outputs[2] = inputs[2]*21.38105965-2.919546127
+		outputs[3] = inputs[3]*0.1284291446-6.532002926
+		outputs[4] = inputs[4]*152.0885315-1.694248438
 
 		return outputs;
 
 
-	def Perceptron_layer_1(self,inputs):
+	def perceptron_layer_1(self,inputs):
 
 		combinations = [None] * 12
 
-		combinations[0] = 0.00579174 +0.0703753*inputs[0] 
-		combinations[1] = -0.00923719 -0.150621*inputs[0] 
-		combinations[2] = 0.0036113 +0.0173306*inputs[0] 
-		combinations[3] = -0.00432969 -0.0580116*inputs[0] 
-		combinations[4] = 0.00480544 -0.0272374*inputs[0] 
-		combinations[5] = -0.00427574 -0.0654304*inputs[0] 
-		combinations[6] = 0.000137226 +0.0634266*inputs[0] 
-		combinations[7] = -0.0148643 -0.204804*inputs[0] 
-		combinations[8] = -0.000624239 +0.0348438*inputs[0] 
-		combinations[9] = 0.00494637 -0.087008*inputs[0] 
-		combinations[10] = 0.00402091 +0.0771491*inputs[0] 
-		combinations[11] = 0.00865105 +0.11452*inputs[0] 
+		combinations[0] = -2.45171 -2.83248*inputs[0] -0.0154837*inputs[1] -0.285817*inputs[2] +0.0798651*inputs[3] -0.555983*inputs[4] 
+		combinations[1] = 0.350715 -0.342367*inputs[0] -0.534176*inputs[1] +0.996336*inputs[2] +0.0685724*inputs[3] +0.1939*inputs[4] 
+		combinations[2] = -1.60804 -2.99799*inputs[0] +0.215704*inputs[1] -0.117082*inputs[2] -0.00522491*inputs[3] -0.635365*inputs[4] 
+		combinations[3] = -2.01765 -0.0712848*inputs[0] +1.63812*inputs[1] +0.193503*inputs[2] -0.277157*inputs[3] +0.0365911*inputs[4] 
+		combinations[4] = 0.625705 -0.389163*inputs[0] +0.847483*inputs[1] -0.325186*inputs[2] -0.037907*inputs[3] -0.46383*inputs[4] 
+		combinations[5] = 1.43889 +1.58736*inputs[0] +0.274995*inputs[1] +2.04122*inputs[2] -0.0924125*inputs[3] +0.121852*inputs[4] 
+		combinations[6] = 0.366792 +0.643992*inputs[0] +1.03961*inputs[1] +0.177762*inputs[2] -0.27856*inputs[3] +0.875626*inputs[4] 
+		combinations[7] = 0.92906 +0.101344*inputs[0] +0.550531*inputs[1] +0.840729*inputs[2] -0.0821249*inputs[3] -0.256404*inputs[4] 
+		combinations[8] = -1.73428 -1.40604*inputs[0] -0.691719*inputs[1] -1.43395*inputs[2] +0.127188*inputs[3] +0.143665*inputs[4] 
+		combinations[9] = -1.26807 +0.509053*inputs[0] +0.328064*inputs[1] -0.56155*inputs[2] -0.14906*inputs[3] +0.00631917*inputs[4] 
+		combinations[10] = -1.29608 -1.19275*inputs[0] +1.72962*inputs[1] +0.184001*inputs[2] +0.0140756*inputs[3] -0.34267*inputs[4] 
+		combinations[11] = -0.343156 -1.22936*inputs[0] +0.707738*inputs[1] -0.0582559*inputs[2] -0.0870025*inputs[3] -0.612563*inputs[4] 
 		
 		activations = [None] * 12
 
@@ -76,11 +84,11 @@ class NeuralNetwork:
 		return activations;
 
 
-	def Perceptron_layer_2(self,inputs):
+	def perceptron_layer_2(self,inputs):
 
 		combinations = [None] * 1
 
-		combinations[0] = 0.0134395 +0.0700213*inputs[0] -0.151784*inputs[1] +0.0173042*inputs[2] -0.0575696*inputs[3] -0.0287691*inputs[4] -0.0658386*inputs[5] +0.0632458*inputs[6] -0.2004*inputs[7] +0.0344881*inputs[8] -0.0871112*inputs[9] +0.0796907*inputs[10] +0.113821*inputs[11] 
+		combinations[0] = -1.13819 -2.77017*inputs[0] +1.20276*inputs[1] +1.73102*inputs[2] -1.67012*inputs[3] +0.998875*inputs[4] -1.51777*inputs[5] -1.15415*inputs[6] -1.45583*inputs[7] -1.9713*inputs[8] +1.74127*inputs[9] +1.70445*inputs[10] -1.04145*inputs[11] 
 		
 		activations = [None] * 1
 
@@ -93,7 +101,7 @@ class NeuralNetwork:
 
 		outputs = [None] * 1
 
-		outputs[0] = inputs[0]*3.449328661+124.8359451
+		outputs[0] = inputs[0]*3.449333668+124.8359604
 
 		return outputs
 
@@ -111,11 +119,11 @@ class NeuralNetwork:
 
 		output_scaling_layer = self.scaling_layer(inputs)
 
-		output_Perceptron_layer_1 = self.Perceptron_layer_1(output_scaling_layer)
+		output_perceptron_layer_1 = self.perceptron_layer_1(output_scaling_layer)
 
-		output_Perceptron_layer_2 = self.Perceptron_layer_2(output_Perceptron_layer_1)
+		output_perceptron_layer_2 = self.perceptron_layer_2(output_perceptron_layer_1)
 
-		output_unscaling_layer = self.unscaling_layer(output_Perceptron_layer_2)
+		output_unscaling_layer = self.unscaling_layer(output_perceptron_layer_2)
 
 		output_bounding_layer = self.bounding_layer(output_unscaling_layer)
 
@@ -132,11 +140,11 @@ class NeuralNetwork:
 
 			output_scaling_layer = self.scaling_layer(inputs)
 
-			output_Perceptron_layer_1 = self.Perceptron_layer_1(output_scaling_layer)
+			output_perceptron_layer_1 = self.perceptron_layer_1(output_scaling_layer)
 
-			output_Perceptron_layer_2 = self.Perceptron_layer_2(output_Perceptron_layer_1)
+			output_perceptron_layer_2 = self.perceptron_layer_2(output_perceptron_layer_1)
 
-			output_unscaling_layer = self.unscaling_layer(output_Perceptron_layer_2)
+			output_unscaling_layer = self.unscaling_layer(output_perceptron_layer_2)
 
 			output_bounding_layer = self.bounding_layer(output_unscaling_layer)
 
