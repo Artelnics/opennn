@@ -1,0 +1,101 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>9</InputsNumber>
+      <Input Index="1">clump_thickness</Input>
+      <Input Index="2">cell_size_uniformity</Input>
+      <Input Index="3">cell_shape_uniformity</Input>
+      <Input Index="4">marginal_adhesion</Input>
+      <Input Index="5">single_epithelial_cell_size</Input>
+      <Input Index="6">bare_nuclei</Input>
+      <Input Index="7">bland_chromatin</Input>
+      <Input Index="8">normal_nucleoli</Input>
+      <Input Index="9">mitoses</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>9</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>4.44217</Mean>
+            <StandardDeviation>2.82076</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>3.15081</Mean>
+            <StandardDeviation>3.06514</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="3">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>3.21523</Mean>
+            <StandardDeviation>2.98858</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="4">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>2.83016</Mean>
+            <StandardDeviation>2.86456</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="5">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>3.23426</Mean>
+            <StandardDeviation>2.22309</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="6">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>3.54466</Mean>
+            <StandardDeviation>3.64386</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="7">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>3.4451</Mean>
+            <StandardDeviation>2.4497</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="8">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>2.86969</Mean>
+            <StandardDeviation>3.05267</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="9">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>1.60322</Mean>
+            <StandardDeviation>1.73267</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer_1</LayerName>
+         <InputsNumber>9</InputsNumber>
+         <NeuronsNumber>6</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>0.244577 -0.0409031 -2.12664 -0.210046 1.00134 -0.709447 0.906687 0.759496 1.76256 0.382582 0.342114 1.07983 -0.00602729 1.44184 -0.0366609 1.47499 -0.862586 0.666515 -0.614149 -0.918053 1.07669 0.0945446 2.04449 0.264392 0.256234 0.674226 -0.476106 0.719289 1.15516 -0.898875 0.387625 1.16791 0.900421 0.0500261 -0.164905 -0.891915 -0.978673 0.0203212 -1.99462 -0.47445 1.51856 -0.166461 2.50405 -0.495027 -0.109783 -1.39251 2.63462 -1.16455 -0.978416 -0.439059 -0.0021004 -3.44641 0.282477 1.53466 1.87098 -0.442781 0.503129 0.0286959 1.1542 -0.856069</Parameters>
+      </PerceptronLayer>
+      <ProbabilisticLayer>
+         <InputsNumber>6</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Logistic</ActivationFunction>
+         <Parameters>1.17273 3.87907 3.44563 3.39344 -3.43661 -4.45167 -5.04438</Parameters>
+         <DecisionThreshold>0.5</DecisionThreshold>
+      </ProbabilisticLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1">diagnose</Output>
+   </Outputs>
+</NeuralNetwork>

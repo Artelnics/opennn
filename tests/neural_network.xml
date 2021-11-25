@@ -1,0 +1,30 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>1</InputsNumber>
+      <Input Index="1">column_1</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Probabilistic</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>1</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>0</Minimum>
+            <Maximum>99</Maximum>
+            <Mean>49.5</Mean>
+            <StandardDeviation>29.0115</StandardDeviation>
+            <Scaler>MinimumMaximum</Scaler>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <ProbabilisticLayer>
+         <InputsNumber>1</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Logistic</ActivationFunction>
+         <Parameters>6.17839e-06 0.0596346</Parameters>
+         <DecisionThreshold>0.5</DecisionThreshold>
+      </ProbabilisticLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1">column_2</Output>
+   </Outputs>
+</NeuralNetwork>
