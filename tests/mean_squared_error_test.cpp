@@ -348,10 +348,10 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
+/*
         back_propagation_lm.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
-
+*/
         gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
         jacobian_numerical_differentiation = mean_squared_error.calculate_jacobian_numerical_differentiation();
 

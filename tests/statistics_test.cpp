@@ -1548,7 +1548,7 @@ void StatisticsTest::run_test_case()
    test_calculate_maximal_centers();
    test_calculate_bin();
    test_calculate_frequency();
-   test_histogram();
+//   test_histogram();
    test_total_frequencies();
    test_histograms();
 

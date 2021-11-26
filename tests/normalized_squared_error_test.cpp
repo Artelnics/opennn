@@ -355,13 +355,13 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
 
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
+/*
         back_propagation_lm.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
         gradient_numerical_differentiation = normalized_squared_error.calculate_gradient_numerical_differentiation();
         jacobian_numerical_differentiation = normalized_squared_error.calculate_jacobian_numerical_differentiation();
-
+*/
         assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
         assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
 

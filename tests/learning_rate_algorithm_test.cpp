@@ -196,18 +196,19 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 {
     cout << "test_calculate_Brent_method_directional_point\n";
 
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
+    Index samples_number = 1;
+    Index inputs_number = 1;
+    Index targets_number = 1;
 
-    Index neurons_number;
+    Index neurons_number = 5;
 
-    data_set.set(1, 1, 1);
+    data_set.set(samples_number, inputs_number, targets_number);
+    
     Tensor<Index, 1> indices(3);
-    indices.setValues({1,1,data_set.get_samples_number()-1});
+    
+    indices.setValues({inputs_number,targets_number,samples_number-1});
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
-
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number,neurons_number});
     neural_network.set_parameters_constant(type(1));
 
 /// @todo loss_index.calculate_training_loss not available
@@ -232,7 +233,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
 void LearningRateAlgorithmTest::run_test_case()
 {
-   cout << "Running training rate algorithm test case...\n";
+   cout << "Running learning rate algorithm test case...\n";
 
    // Constructor and destructor methods
 
@@ -244,7 +245,7 @@ void LearningRateAlgorithmTest::run_test_case()
    test_calculate_golden_section_directional_point();
    test_calculate_Brent_method_directional_point();
 
-   cout << "End of training rate algorithm test case.\n\n";
+   cout << "End of learning rate algorithm test case.\n\n";
 }
 
 // OpenNN: Open Neural Networks Library.

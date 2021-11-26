@@ -79,11 +79,11 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>..\..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)\bin\</OutDir>
     <IntDir>..\..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\..\..\opennn-build\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)\bin\</OutDir>
     <IntDir>..\..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <ProfileDirectory>$(IntDir)</ProfileDirectory>

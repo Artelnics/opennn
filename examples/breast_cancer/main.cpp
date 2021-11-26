@@ -27,7 +27,7 @@ int main()
 
         srand(static_cast<unsigned>(time(nullptr)));
        
-        DataSet data_set("data/breast_cancer.csv", ';', true);
+        DataSet data_set("../data/breast_cancer.csv", ';', true);
 
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {9, 6, 1});
 
