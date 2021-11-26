@@ -1577,7 +1577,7 @@ void NumericalDifferentiationTest::run_test_case()
    cout << "Running numerical differentiation test case...\n";
 
    // Constructor and destructor methods
-/*
+
    test_constructor();
 
    test_set_get_methods();
@@ -1622,11 +1622,9 @@ void NumericalDifferentiationTest::run_test_case()
    test_calculate_hessian_form();
 
    test_calculate_central_differences_hessian_matrices();
-   */
 
    cout << "End of numerical differentiation test case.\n\n";
 }
-
 
 
 // OpenNN: Open Neural Networks Library.

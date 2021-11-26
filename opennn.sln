@@ -38,6 +38,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simple_classification", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opennn", "opennn\opennn.vcxproj", "{A3901B9A-AA4C-439F-932F-962D71B4A6D9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "airfoil_self_noise", "examples\airfoil_self_noise\airfoil_self_noise.vcxproj", "{6E9A8F74-7B08-469D-B1A9-078E5469D109}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -142,6 +144,14 @@ Global
 		{A3901B9A-AA4C-439F-932F-962D71B4A6D9}.Release|x64.Build.0 = Release|x64
 		{A3901B9A-AA4C-439F-932F-962D71B4A6D9}.Release|x86.ActiveCfg = Release|Win32
 		{A3901B9A-AA4C-439F-932F-962D71B4A6D9}.Release|x86.Build.0 = Release|Win32
+		{6E9A8F74-7B08-469D-B1A9-078E5469D109}.Debug|x64.ActiveCfg = Debug|x64
+		{6E9A8F74-7B08-469D-B1A9-078E5469D109}.Debug|x64.Build.0 = Debug|x64
+		{6E9A8F74-7B08-469D-B1A9-078E5469D109}.Debug|x86.ActiveCfg = Debug|Win32
+		{6E9A8F74-7B08-469D-B1A9-078E5469D109}.Debug|x86.Build.0 = Debug|Win32
+		{6E9A8F74-7B08-469D-B1A9-078E5469D109}.Release|x64.ActiveCfg = Release|x64
+		{6E9A8F74-7B08-469D-B1A9-078E5469D109}.Release|x64.Build.0 = Release|x64
+		{6E9A8F74-7B08-469D-B1A9-078E5469D109}.Release|x86.ActiveCfg = Release|Win32
+		{6E9A8F74-7B08-469D-B1A9-078E5469D109}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -156,6 +166,7 @@ Global
 		{E5316C8E-958B-4516-8FED-35CE23A07B0E} = {6B728F22-C82B-447F-A683-085A43749ED2}
 		{AEC8D159-E309-4003-9989-69E224952A8A} = {6B728F22-C82B-447F-A683-085A43749ED2}
 		{78168A28-6C41-4E07-B0E3-AC152FDD4934} = {6B728F22-C82B-447F-A683-085A43749ED2}
+		{6E9A8F74-7B08-469D-B1A9-078E5469D109} = {6B728F22-C82B-447F-A683-085A43749ED2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16AD787C-DE1C-47CD-BE14-1B227938F07E}

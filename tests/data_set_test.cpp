@@ -1265,12 +1265,12 @@ void DataSetTest::test_has_time_columns()
     assert_true(data_set.has_time_columns(), LOG);
 }
 
-
 void DataSetTest::test_save_time_series_data_binary()
 {
     cout << "test_save_time_series_data_binary\n";
 
     const string data_file_name = "../data/test";
+    
 
     // Test
 
@@ -1650,27 +1650,22 @@ void DataSetTest::test_calculate_training_negatives()
     training_indices.resize(2);
     training_indices.setValues({0,1});
 
-    input_variables_indices(2);
+    input_variables_indices.resize(2);
     input_variables_indices.setValues({0, 1});
 
     target_variables_indices.resize(1);
     target_variables_indices.setValues({2});
 
     target_index = 2;
+ 
 
-    data_set.set_testing();
-    data_set.set_training(training_indices);
-
-//    data_set.set_input_variables_indices(input_variables_indices);
-//    data_set.set_target_variables_indices(target_variables_indices);
+//    data_set.set_testing();
+//    data_set.set_training(training_indices);
 
 //    training_negatives = data_set.calculate_training_negatives(target_index);
 
-    data = data_set.get_data();
-
 //    assert_true(training_negatives == 1, LOG);
 }
-
 
 /// @todo
 
@@ -1821,6 +1816,7 @@ void DataSetTest::run_test_case()
    // Serialization methods
 
    test_read_csv();
+
    test_read_adult_csv();
    test_read_car_csv();
    test_read_empty_csv();

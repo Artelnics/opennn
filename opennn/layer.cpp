@@ -806,13 +806,28 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
     const Index rows_number = y.dimension(0);
 
-    Tensor<type, 1> sums(rows_number);
+    // Activations
 
     y.device(*thread_pool_device) = x.exp();
 
-    sums.device(*thread_pool_device) = y.sum(Eigen::array<Index, 1>({1}));
+    Tensor<type, 1> sums(rows_number);
+    sums.setZero();
 
-    y.device(*thread_pool_device) = y / sums.broadcast(Eigen::array<Index,2>({1,columns_number}));
+    for (Index i = 0; i < rows_number; i++)
+    {
+        for (Index j = 0; j < columns_number; j++)
+        {
+            sums[i] += y(i, j);
+        }
+    }
+
+    for (Index i = 0; i < rows_number; i++)
+    {
+        for (Index j = 0; j < columns_number; j++)
+        {
+            y(i, j) = y(i, j) / sums(i);
+        }
+    }
 }
 
 
