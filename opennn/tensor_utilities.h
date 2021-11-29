@@ -30,6 +30,7 @@ void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 void divide_columns(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 bool is_zero(const Tensor<type, 1>&);
+bool is_zero(const Tensor<type,1>&, const type&);
 bool is_constant(const Tensor<type, 1>&);
 
 bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));

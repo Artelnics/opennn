@@ -84,7 +84,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
     inputs_selection_results = pruning_inputs.perform_inputs_selection();
 
-    assert_true(inputs_selection_results.optimal_input_columns_indices[0] == 0, LOG);
+    assert_true(inputs_selection_results.optimal_input_columns_indices(0) == 0, LOG);
 }
 
 
