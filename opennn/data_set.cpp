@@ -6302,7 +6302,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables()
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
     const Tensor<Scaler, 1> target_variables_scalers = get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> target_variables_descriptives = calculate_variables_descriptives();
+    const Tensor<Descriptives, 1> target_variables_descriptives = calculate_target_variables_descriptives();
 
     for(Index i = 0; i < target_variables_number; i++)
     {

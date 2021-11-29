@@ -172,7 +172,7 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
 {
     const Index neurons_number = get_neurons_number();
 
-    Tensor<string, 1> scaling_methods_strings(neurons_number);
+    Tensor<string, 1> scaling_methods_strings(neurons_number);                    
 
     for(Index i = 0; i < neurons_number; i++)
     {
