@@ -27,36 +27,6 @@ NumericalDifferentiation::~NumericalDifferentiation()
 
 }
 
-
-/// Returns the method used for numerical differentiation(forward differences or central differences).
-
-const NumericalDifferentiation::NumericalDifferentiationMethod& NumericalDifferentiation::get_numerical_differentiation_method() const
-{
-    return numerical_differentiation_method ;
-}
-
-
-/// Returns a string with the name of the method to be used for numerical differentiation.
-
-string NumericalDifferentiation::write_numerical_differentiation_method() const
-{
-    switch(numerical_differentiation_method)
-    {
-    case NumericalDifferentiationMethod::ForwardDifferences:
-    {
-        return "ForwardDifferences";
-    }
-
-    case NumericalDifferentiationMethod::CentralDifferences:
-    {
-        return "CentralDifferences";
-    }
-    }
-
-    return string();
-}
-
-
 /// Returns the number of precision digits required for the derivatives.
 
 const Index& NumericalDifferentiation::get_precision_digits() const
@@ -71,58 +41,6 @@ const bool& NumericalDifferentiation::get_display() const
 {
     return display;
 }
-
-
-/// Sets the members of this object to be equal to those of another object.
-/// @param other_numerical_differentiation Numerical differentiation object to be copied.
-
-void NumericalDifferentiation::set(const NumericalDifferentiation& other_numerical_differentiation)
-{
-    numerical_differentiation_method = other_numerical_differentiation.numerical_differentiation_method;
-
-    precision_digits = other_numerical_differentiation.precision_digits;
-
-    display = other_numerical_differentiation.display;
-
-}
-
-
-/// Sets the method to be used for numerical differentiation(forward differences or central differences).
-/// @param new_numerical_differentiation_method New numerical differentiation method.
-
-void NumericalDifferentiation::set_numerical_differentiation_method
-(const NumericalDifferentiation::NumericalDifferentiationMethod& new_numerical_differentiation_method)
-{
-    numerical_differentiation_method = new_numerical_differentiation_method;
-}
-
-
-/// Sets the method to be used for the numerical differentiation.
-/// The argument is a string with the name of the numerical differentiation method.
-/// @param new_numerical_differentiation_method Numerical differentiation method name string.
-
-void NumericalDifferentiation::set_numerical_differentiation_method(const string& new_numerical_differentiation_method)
-{
-    if(new_numerical_differentiation_method == "ForwardDifferences")
-    {
-        numerical_differentiation_method = NumericalDifferentiationMethod::ForwardDifferences;
-    }
-    else if(new_numerical_differentiation_method == "CentralDifferences")
-    {
-        numerical_differentiation_method = NumericalDifferentiationMethod::CentralDifferences;
-    }
-    else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-               << "void set_numerical_differentiation_method(const string&) method.\n"
-               << "Unknown numerical differentiation method: " << new_numerical_differentiation_method << ".\n";
-
-        throw logic_error(buffer.str());
-    }
-}
-
 
 /// Sets a new flag for displaying warnings from this class or not.
 /// @param new_display Display flag.
@@ -151,8 +69,6 @@ void NumericalDifferentiation::set_precision_digits(const Index& new_precision_d
 
 void NumericalDifferentiation::set_default()
 {
-    numerical_differentiation_method = NumericalDifferentiationMethod::CentralDifferences;
-
     precision_digits = 6;
 
     display = true;
@@ -238,57 +154,6 @@ Tensor<type, 4> NumericalDifferentiation::calculate_h(const Tensor<type, 4>& x) 
     }
 
     return h;
-}
-
-
-Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivatives(const Tensor<type, 1>& x,
-        const Tensor<type, 1>& y) const
-{
-#ifdef OPENNN_DEBUG
-
-    const Index x_size = x.size();
-    const Index y_size = y.size();
-
-    if(x_size != y_size)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-               << "Tensor<type, 1> calculate_backward_differences_derivatives(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-               << "Size of independent variable must be equal to size of dependent variable.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Index size = x.size();
-
-    Tensor<type, 1> derivatives(size);
-    derivatives[0] = type(0);
-
-    for(Index i = 1; i < size; i++)
-    {
-        const type numerator = y(i) - y[i-1];
-        const type denominator = x(i) - x[i-1];
-
-        if(abs(denominator) > type(NUMERIC_LIMITS_MIN))
-        {
-            derivatives(i) = numerator/denominator;
-        }
-        else
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Tensor<type, 1> calculate_backward_differences_derivatives(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-                   << "Denominator is equal to 0.\n";
-
-            throw logic_error(buffer.str());
-        }
-    }
-
-    return derivatives;
 }
 
 }

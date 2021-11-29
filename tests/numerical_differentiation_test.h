@@ -27,47 +27,34 @@ public:
    void test_constructor();
 
    void test_set_get_methods();
+
    void test_calculate_methods();
 
    // Derivative methods
 
-   void test_calculate_forward_differences_derivatives();
-   void test_calculate_central_differences_derivatives();
    void test_calculate_derivatives();
 
    // Second derivative methods
 
-   void test_calculate_forward_differences_second_derivatives();
-   void test_calculate_central_differences_second_derivatives();
    void test_calculate_second_derivatives();
 
    // Gradient methods
 
-   void test_calculate_forward_differences_gradient();
-   void test_calculate_central_differences_gradient();
-   void test_calculate_training_loss_gradient();
+   void test_calculate_gradient();
 
-   void test_calculate_central_differences_gradient_matrix();
+   void test_calculate_gradient_matrix();
 
    // hessian methods
 
-   void test_calculate_forward_differences_hessian();
-   void test_calculate_central_differences_hessian();
    void test_calculate_hessian();
+
+   void test_calculate_hessian_form();
+
+   void test_calculate_hessian_matrices();
 
    // Jacobian methods
 
-   void test_calculate_forward_differences_Jacobian();
-   void test_calculate_central_differences_Jacobian();
    void test_calculate_Jacobian();
-
-   // hessian methods
-
-   void test_calculate_forward_differences_hessian_form();
-   void test_calculate_central_differences_hessian_form();
-   void test_calculate_hessian_form();
-
-   void test_calculate_central_differences_hessian_matrices();
 
    // Unit testing methods
 

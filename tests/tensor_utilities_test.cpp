@@ -60,9 +60,6 @@ void TensorUtilitiesTest::test_calculate_rank()
     rank_greater = calculate_rank_greater(vector);
     rank_less = calculate_rank_less(vector);
 
-    cout << "greater:\n " << rank_greater << endl;
-    cout << "less:\n " << rank_less << endl;
-
     // assert_true(¿?)
 }
 

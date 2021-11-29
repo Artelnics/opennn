@@ -2815,9 +2815,9 @@ Index DataSet::get_variables_number() const
 {
     Index variables_number = 0;
 
-    for(Index i = 0; i < columns.size(); i++)
+    for (Index i = 0; i < columns.size(); i++)
     {
-        if(columns(i).type == ColumnType::Categorical)
+        if (columns(i).type == ColumnType::Categorical)
         {
             variables_number += columns(i).categories.size();
         }
@@ -2826,7 +2826,7 @@ Index DataSet::get_variables_number() const
             variables_number++;
         }
     }
-
+   
     return variables_number;
 }
 

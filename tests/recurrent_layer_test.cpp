@@ -110,9 +110,9 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Logistic);
 
-    recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
-
 ///@todo numerical_differentiation.calculate_derivatives() has different arguments
+
+//    recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
 //    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
 
@@ -239,11 +239,11 @@ void RecurrentLayerTest::test_forward_propagate()
 {/// @todo
     cout << "test_forward_propagate\n";
 
-    Index neurons_number = 2;
+    Index neurons_number = 4;
     Index samples_number = 2;
     inputs_number = 3;
 
-    RecurrentLayer recurrent_layer(neurons_number,inputs_number);
+    RecurrentLayer recurrent_layer(inputs_number, neurons_number);
 
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
 
@@ -258,7 +258,7 @@ void RecurrentLayerTest::test_forward_propagate()
 
     assert_true(recurrent_layer_forward_propagation.combinations.rank() == 2, LOG);
     assert_true(recurrent_layer_forward_propagation.combinations.dimension(0) == samples_number, LOG);
-    assert_true(recurrent_layer_forward_propagation.combinations.dimension(1) == inputs_number, LOG);
+    assert_true(recurrent_layer_forward_propagation.combinations.dimension(1) == neurons_number, LOG);
 }
 
 
