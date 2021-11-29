@@ -101,13 +101,14 @@ void LongShortTermMemoryLayerTest::test_set_weights()
 
     long_short_term_memory_layer.set(inputs_number, neurons_number);
 
-    weights.resize(1, 2, 4);
-    weights.setConstant(4.0);
+    weights.resize(neurons_number, neurons_number, 4);
+    weights.setConstant(type(4));
 
-    long_short_term_memory_layer.set_forget_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-    long_short_term_memory_layer.set_input_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-    long_short_term_memory_layer.set_state_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
-    long_short_term_memory_layer.set_output_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Eigen::Index, 3>({inputs_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({inputs_number, neurons_number})));
+    long_short_term_memory_layer.set_forget_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,0}), Eigen::array<Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
+    long_short_term_memory_layer.set_input_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,1}), Eigen::array<Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
+    long_short_term_memory_layer.set_state_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,2}), Eigen::array<Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
+    long_short_term_memory_layer.set_output_weights(weights.slice(Eigen::array<Eigen::Index, 3>({0,0,3}), Eigen::array<Index, 3>({neurons_number,neurons_number,1})).reshape(Eigen::array<Index, 2>({neurons_number, neurons_number})));
+    
 
     assert_true(long_short_term_memory_layer.get_input_weights()(0) - weights(0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(long_short_term_memory_layer.get_input_weights()(1) - weights(1) < type(NUMERIC_LIMITS_MIN), LOG);
@@ -115,8 +116,8 @@ void LongShortTermMemoryLayerTest::test_set_weights()
     assert_true(long_short_term_memory_layer.get_input_weights()(3) - weights(3) < type(NUMERIC_LIMITS_MIN), LOG);
 
     assert_true(long_short_term_memory_layer.get_input_weights()(0) - type(4.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(long_short_term_memory_layer.get_input_weights()(2) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
-
+    assert_true(long_short_term_memory_layer.get_input_weights()(2) - type(4.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    
 }
 
 
@@ -134,7 +135,7 @@ void LongShortTermMemoryLayerTest::test_set_recurrent_weights()
    neurons_number = 2;
    inputs_number = 1;
 
-    long_short_term_memory_layer.set(1, 2);
+    long_short_term_memory_layer.set(inputs_number, neurons_number);
 
     recurrent_weights.resize(2, 2, 4);
     recurrent_weights.setZero();
@@ -457,7 +458,8 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
     assert_true(long_short_term_layer_forward_propagation.combinations.rank() == 2, LOG);
     assert_true(long_short_term_layer_forward_propagation.combinations.dimension(0) == 1, LOG);
-    assert_true(long_short_term_layer_forward_propagation.combinations.dimension(1) == 2, LOG);
+    assert_true(long_short_term_layer_forward_propagation.combinations.dimension(1) == inputs.dimension(1), LOG);
+
 }
 
 void LongShortTermMemoryLayerTest::run_test_case()

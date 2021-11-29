@@ -952,7 +952,6 @@ void PerceptronLayerTest::test_calculate_activations_derivatives()
    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Threshold);
    perceptron_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
 
-   numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::NumericalDifferentiationMethod::CentralDifferences);
    Tensor<type, 2> numerical_activation_derivative(1,4);
    numerical_activation_derivative
            = numerical_differentiation.calculate_derivatives(perceptron_layer, &PerceptronLayer::calculate_activations, 0, combinations);

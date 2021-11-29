@@ -451,10 +451,12 @@ void ScalingLayerTest::test_calculate_outputs()
 
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
+
+    cout << outputs << endl;
+
     assert_true(abs(outputs(0,0) - static_cast<type>(-1)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs(1,0) - static_cast<type>(0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs(2,0) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
 
     // Test
 
