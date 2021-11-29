@@ -6537,6 +6537,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("RowsLabels");
 
         buffer.str("");
+
         buffer << has_rows_labels;
 
         file_stream.PushText(buffer.str().c_str());
@@ -9966,11 +9967,6 @@ void DataSet::read_csv_1()
 
     string first_name = data_file_preview(0)(0);
     transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
-
-    if(contains_substring(first_name, "id"))
-    {
-        has_rows_labels = true;
-    }
 
     const Index columns_number = has_rows_labels ? data_file_preview(0).size()-1 : data_file_preview(0).size();
 
