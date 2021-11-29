@@ -66,6 +66,18 @@ bool is_zero(const Tensor<type, 1>& tensor)
     return true;
 }
 
+bool is_zero(const Tensor<type,1>& tensor,const type& limit)
+{
+    const Index size = tensor.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(abs(tensor[i]) > type(limit)) return false;
+    }
+
+    return true;
+}
+
 
 bool is_false(const Tensor<bool, 1>& tensor)
 {

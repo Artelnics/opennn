@@ -681,8 +681,6 @@ void StatisticsTest::test_median()
     assert_true(isnan(median(matrix)(0)), LOG);
     assert_true(isnan(median(matrix)(1)), LOG);
 
-    cout<<"median(matrix)(0): "<<median(matrix)(0)<<endl;
-
     // Test median missing values vector
     vector.resize(4);
     vector[0] = type(3.0);
