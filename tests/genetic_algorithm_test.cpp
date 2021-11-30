@@ -240,15 +240,8 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     genetic_algorithm.set_individuals_number(2);
 
-    genetic_algorithm.set_population(population);
-
-    genetic_algorithm.set_mutation_rate(type(1));
-
-    genetic_algorithm.perform_mutation();
-
-    mutated_population = genetic_algorithm.get_population();
-
     population.resize(2,1);
+    population.setRandom();
 
     genetic_algorithm.set_population(population);
 

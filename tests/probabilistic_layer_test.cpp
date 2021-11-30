@@ -94,7 +94,7 @@ void ProbabilisticLayerTest::test_set_biases()
     cout << "test_set_biases\n";
 
     Tensor<type, 2> biases;
-    Index biases_number = 1 + rand()%10;
+    Index biases_number = 3 + rand()%10;
 
     // Test
 
