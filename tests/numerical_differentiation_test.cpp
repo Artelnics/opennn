@@ -29,6 +29,17 @@ void NumericalDifferentiationTest::test_constructor()
     assert_true(nd_1.get_precision_digits()== 6, LOG);
 }
 
+
+void NumericalDifferentiationTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    NumericalDifferentiation* nd_1 = new NumericalDifferentiation(numerical_differentiation);
+
+    delete nd_1;
+}
+
+
 void NumericalDifferentiationTest::test_set_get_methods()
 {
     cout << "test_set_methods\n";
@@ -135,10 +146,10 @@ void NumericalDifferentiationTest::test_calculate_derivatives()
 
     // Test 5
 
-    //   Tensor<type, 1> d5 = nunmerical_differentiation.calculate_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
+//    Tensor<type, 1> d5 = nunmerical_differentiation.calculate_derivatives(*this, &NumericalDifferentiationTest::f3_1, dummy_index, x_1d);
 
-    //   assert_true(abs(d5(0) - type(6)) < static_cast<type>(1e-2), LOG);
-    //   assert_true(abs(d5(1) - type(12)) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(d5(0) - type(6)) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(d5(1) - type(12)) < static_cast<type>(1e-2), LOG);
 }
 
 
@@ -211,10 +222,10 @@ void NumericalDifferentiationTest::test_calculate_gradient()
     Tensor<type, 1>dummy(2);
     dummy.setValues({type(2),type(3)});
 
-    //   Tensor<type, 1> d3 = numerical_differentiation.calculate_gradient(*this, &NumericalDifferentiationTest::f4_3, dummy, x3_1d);
+//    Tensor<type, 1> d3 = numerical_differentiation.calculate_gradient(*this, &NumericalDifferentiationTest::f4_3, dummy, x3_1d);
 
-    //   assert_true(abs(d3(0) - type(2)) < static_cast<type>(1e-2), LOG);
-    //   assert_true(abs(d3(1) - type(3)) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(d3(0) - type(2)) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(d3(1) - type(3)) < static_cast<type>(1e-2), LOG);
 
     // Test
 
@@ -224,30 +235,30 @@ void NumericalDifferentiationTest::test_calculate_gradient()
     assert_true(abs(d4(1) - type(8)) < static_cast<type>(1e-2), LOG);
 
     // Test 5
-    /*
-   Tensor<type,1>dummy_5(2);
-   dummy_5.setValues({type(2),type(3)});
 
-   Tensor<type, 1> d5 = numerical_differentiation.calculate_gradient(*this, &NumericalDifferentiationTest::f4_4, dummy_5, x3_1d);
+//   Tensor<type,1>dummy_5(2);
+//   dummy_5.setValues({type(2),type(3)});
 
-   assert_true(abs(d5(0) - type(2)) < static_cast<type>(1e-2), LOG);
-   assert_true(abs(d5(1) - type(3)) < static_cast<type>(1e-2), LOG);
-   */
+//   Tensor<type, 1> d5 = numerical_differentiation.calculate_gradient(*this, &NumericalDifferentiationTest::f4_4, dummy_5, x3_1d);
+
+//   assert_true(abs(d5(0) - type(2)) < static_cast<type>(1e-2), LOG);
+//   assert_true(abs(d5(1) - type(3)) < static_cast<type>(1e-2), LOG);
 }
+
 
 void NumericalDifferentiationTest::test_calculate_gradient_matrix()
-{/*
-    cout << "test_calculate_gradient_matrix\n";
+{
+//    cout << "test_calculate_gradient_matrix\n";
 
-    Tensor<type,2>x_2d(2,2);
-    x_2d.setValues({{1,2},{-1,-2}});
+//    Tensor<type,2>x_2d(2,2);
+//    x_2d.setValues({{1,2},{-1,-2}});
 
-    Tensor<type, 2> derivatives = numerical_differentiation.calculate_gradient_matrix(*this, &NumericalDifferentiationTest::f2_2,-1, x_2d);
+//    Tensor<type, 2> derivatives = numerical_differentiation.calculate_gradient_matrix(*this, &NumericalDifferentiationTest::f2_2,-1, x_2d);
 
-    assert_true(abs(derivatives(0,0) - type(1)) < static_cast<type>(1e-2), LOG);
-    assert_true(abs(derivatives(0,1) - type(1)) < static_cast<type>(1e-2), LOG);
-*/
+//    assert_true(abs(derivatives(0,0) - type(1)) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(derivatives(0,1) - type(1)) < static_cast<type>(1e-2), LOG);
 }
+
 
 void NumericalDifferentiationTest::test_calculate_hessian()
 {
@@ -292,6 +303,7 @@ void NumericalDifferentiationTest::test_calculate_hessian()
     assert_true(abs(H3(1,0) - type(8)) < static_cast<type>(1e-1), LOG);
     assert_true(abs(H3(1,1) - type(4)) < static_cast<type>(1e-1), LOG);
 }
+
 
 void NumericalDifferentiationTest::test_calculate_hessian_form()
 {
@@ -398,11 +410,10 @@ void NumericalDifferentiationTest::test_calculate_hessian_matrices()
     Tensor<type, 1> x_1d(2);
     x_1d.setValues({type(3),type(4)});
 
-    //    Tensor<type, 1> H = nd.calculate_hessian_matrices(*this, &NumericalDifferentiationTest::f5, 2, dummy, x_1d);
+//    Tensor<type, 1> H = numerical_differentiation.calculate_hessian_matrices(*this, &NumericalDifferentiationTest::f5, 2, dummy, x_1d);
 
-    //    assert_true(abs(H(0) - type(1)) < static_cast<type>(1e-2), LOG);
-    //    assert_true(abs(H(1) - type(1)) < static_cast<type>(1e-2), LOG);
-
+//    assert_true(abs(H(0) - type(1)) < static_cast<type>(1e-2), LOG);
+//    assert_true(abs(H(1) - type(1)) < static_cast<type>(1e-2), LOG);
 }
 
 void NumericalDifferentiationTest::test_calculate_Jacobian()
@@ -482,6 +493,7 @@ void NumericalDifferentiationTest::run_test_case()
     // Constructor and destructor methods
 
     test_constructor();
+    test_destructor();
 
     test_set_get_methods();
 

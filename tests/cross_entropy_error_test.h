@@ -24,6 +24,8 @@ public:
 
     void test_constructor();
 
+    void test_destructor();
+
     // Back-propagation methods
 
     void test_back_propagate();

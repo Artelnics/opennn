@@ -26,6 +26,8 @@ public:
 
    void test_constructor();
 
+   void test_destructor();
+
    // Output methods
 
    void test_calculate_outputs();

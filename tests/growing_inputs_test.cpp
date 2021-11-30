@@ -23,9 +23,13 @@ void GrowingInputsTest::test_constructor()
 {
     cout << "test_constructor\n";
 
+    // Test
+
     GrowingInputs growing_inputs_1(&training_strategy);
 
     assert_true(growing_inputs_1.has_training_strategy(), LOG);
+
+    // Test
 
     GrowingInputs growing_inputs_2;
 
@@ -47,15 +51,14 @@ void GrowingInputsTest::test_perform_inputs_selection()
 {
     cout << "test_perform_inputs_selection\n";
 
-
     GrowingInputs growing_inputs(&training_strategy);
 
     InputsSelectionResults inputs_selection_results;
 
-/// @todo data_set.generate_inputs_selection_data() not available
-    // Test
+    /// @todo data_set.generate_inputs_selection_data() not available
+//    Test
 
-//    data_set.generate_inputs_selection_data(30, 3);
+//            data_set.generate_inputs_selection_data(30, 3);
 
 //    data_set.set_columns_uses({"Input","Input","Target"});
 
@@ -67,7 +70,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
 //    assert_true(gir->optimal_input_variables_indices[0] == 0, LOG);
 
-    // Test
+//    Test
 
 //    data_set.generate_sum_data(20,3);
 
@@ -79,7 +82,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
 //    inputs_selection_results = growing_inputs.perform_inputs_selection();
 
-//    assert_true(gir->optimal_input_variables_indices[0] == 0, LOG);
+//    assert_true(inputs_selection_results.optimal_input_columns_indices == 0, LOG);
 }
 
 

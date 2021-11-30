@@ -25,6 +25,8 @@ public:
 
    void test_constructor();
 
+   void test_destructor();
+
    // Training methods
 
    void test_calculate_PR_parameter();

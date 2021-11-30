@@ -12,7 +12,6 @@
 GeneticAlgorithmTest::GeneticAlgorithmTest() : UnitTesting()
 {
     training_strategy.set(&neural_network, &data_set);
-
     genetic_algorithm.set(&training_strategy);
 }
 
@@ -29,13 +28,11 @@ void GeneticAlgorithmTest::test_constructor()
     // Test
 
     GeneticAlgorithm genetic_algorithm_1(&training_strategy);
-
     assert_true(genetic_algorithm_1.has_training_strategy(), LOG);
 
     // Test
 
     GeneticAlgorithm genetic_algorithm_2;
-
     assert_true(!genetic_algorithm_2.has_training_strategy(), LOG);
 }
 
@@ -45,7 +42,6 @@ void GeneticAlgorithmTest::test_destructor()
     cout << "test_destructor\n";
 
     GeneticAlgorithm* genetic_algorithm_pointer = new GeneticAlgorithm;
-
     delete genetic_algorithm_pointer;
 }
 
@@ -79,7 +75,6 @@ void GeneticAlgorithmTest::test_initialize_population()
 
 
 /// @todo
-
 void GeneticAlgorithmTest::test_perform_fitness_assignment()
 {
     cout << "test_calculate_fitness\n";
@@ -141,7 +136,7 @@ void GeneticAlgorithmTest::test_perform_selection()
     selection_errors(3) = static_cast<type>(0.1);
 
     /// @todo
-//    genetic_algorithm.initialize_population();
+    //    genetic_algorithm.initialize_population();
 
     genetic_algorithm.set_selection_errors(selection_errors);
 
@@ -153,9 +148,8 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     selection = genetic_algorithm.get_selection();
 
-//    assert_true(selection[0] == population[3], LOG);
-//    assert_true(selection[1] == population[2], LOG);
-
+    //    assert_true(selection[0] == population[3], LOG);
+    //    assert_true(selection[1] == population[2], LOG);
 }
 
 
@@ -164,6 +158,7 @@ void GeneticAlgorithmTest::test_perform_crossover()
     cout << "test_perform_crossover\n";
 
     Tensor<bool, 2> population;
+    Tensor<bool, 2> crossover_population;
     Tensor<bool, 1> individual;
 
     Tensor<type, 1> fitness;
@@ -178,8 +173,8 @@ void GeneticAlgorithmTest::test_perform_crossover()
     individual.resize(2);
     individual[0] = true;
     individual[1] = true;
-//    population[0] = individual[0];
-//    population[1] = individual[1];
+    population(0) = individual[0];
+    population(1) = individual[1];
 
     genetic_algorithm.set_population(population);
 
@@ -191,12 +186,12 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
     genetic_algorithm.set_fitness(fitness);
 
-//    loss(0,0) = 0.0; loss(0,1) = static_cast<type>(0.4);
-//    loss(1,0) = 0.0; loss(1,1) = static_cast<type>(0.3);
-//    loss(2,0) = 0.0; loss(2,1) = static_cast<type>(0.2);
-//    loss(3,0) = 0.0; loss(3,1) = static_cast<type>(0.1);
+    //    loss(0,0) = 0.0; loss(0,1) = static_cast<type>(0.4);
+    //    loss(1,0) = 0.0; loss(1,1) = static_cast<type>(0.3);
+    //    loss(2,0) = 0.0; loss(2,1) = static_cast<type>(0.2);
+    //    loss(3,0) = 0.0; loss(3,1) = static_cast<type>(0.1);
 
-//    genetic_algorithm.set_loss(loss);
+    //    genetic_algorithm.set_loss(loss);
 
     genetic_algorithm.set_elitism_size(2);
 
@@ -204,15 +199,13 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
     genetic_algorithm.perform_crossover();
 
-//    crossover_population = genetic_algorithm.get_population();
-
-//    assert_true(crossover_population(2,1), LOG);
+    crossover_population = genetic_algorithm.get_population();
 
     genetic_algorithm.set_population(population);
 
     genetic_algorithm.set_fitness(fitness);
 
-//    genetic_algorithm.set_loss(loss);
+    //    genetic_algorithm.set_loss(loss);
 
     genetic_algorithm.set_elitism_size(2);
 
@@ -220,9 +213,9 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
     genetic_algorithm.perform_crossover();
 
-//    crossover_population = genetic_algorithm.get_population();
+    crossover_population = genetic_algorithm.get_population();
 
-//    assert_true(crossover_population(2,1), LOG);
+    //    assert_true(crossover_population(2,1), LOG);
 }
 
 
@@ -253,7 +246,6 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     assert_true(mutated_population(0,0) == 1, LOG);
     assert_true(mutated_population(1,0) == 1, LOG);
-
 }
 
 
@@ -288,7 +280,6 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
-//    assert_true(ga_results->selection_error < 1, LOG);
     assert_true(inputs_selection_results.stopping_condition == InputsSelection::StoppingCondition::SelectionErrorGoal, LOG);
 
     // Test
@@ -310,25 +301,16 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     }
 
     data_set.set(data);
-
-//    data_set.generate_inputs_selection_data(20,3);
-
     data_set.set_default_columns_uses();
 
-//    neural_network.set(NeuralNetwork::ProjectType::Approximation, architecture);
-
     genetic_algorithm.set_individuals_number(10);
-
     genetic_algorithm.set_selection_error_goal(type(0.0));
-//    genetic_algorithm.set_maximum_iterations_number(1);
+    genetic_algorithm.set_maximum_epochs_number(1);
 
-    /// @todo
-//    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
+    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
-//    assert_true(genetic_algorithm.iterations_number == 1, LOG);
-//    assert_true(genetic_algorithm.selection_error < 1, LOG);
-//    assert_true(genetic_algorithm.stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
-
+    assert_true(genetic_algorithm.get_maximum_iterations_number() == 1, LOG);
+    assert_true(genetic_algorithm.get_selection_error_goal() < 1, LOG);
 }
 
 

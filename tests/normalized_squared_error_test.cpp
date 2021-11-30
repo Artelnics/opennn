@@ -41,6 +41,16 @@ void NormalizedSquaredErrorTest::test_constructor()
 }
 
 
+void NormalizedSquaredErrorTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    NormalizedSquaredError* nse = new NormalizedSquaredError;
+
+    delete nse;
+}
+
+
 void NormalizedSquaredErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
@@ -501,26 +511,24 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 
     // Test
 
-   samples_number = 4;
-   inputs_number = 4;
-   outputs_number = 4;
+    samples_number = 4;
+    inputs_number = 4;
+    outputs_number = 4;
 
-   data_set.generate_random_data(samples_number, inputs_number+outputs_number);
+    data_set.generate_random_data(samples_number, inputs_number + outputs_number);
 
-   uses.resize(8);
-   uses.setValues({"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"});
+    uses.resize(8);
+    uses.setValues({"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"});
 
-   data_set.set_columns_uses(uses);
+    data_set.set_columns_uses(uses);
 
-   target_data = data_set.get_target_data();
+    target_data = data_set.get_target_data();
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
-   neural_network.set_parameters_random();
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {samples_number, inputs_number, outputs_number});
+    neural_network.set_parameters_random();
 
-//   normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
-
-//   assert_true(normalization_coefficient > 0, LOG);
-
+//    normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
+//    assert_true(normalization_coefficient > 0, LOG);
 }
 
 
@@ -531,6 +539,8 @@ void NormalizedSquaredErrorTest::run_test_case()
     // Constructor and destructor methods
 
     test_constructor();
+
+    test_destructor();
 
     test_calculate_normalization_coefficient();
 

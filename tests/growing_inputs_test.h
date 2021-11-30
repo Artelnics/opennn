@@ -18,36 +18,37 @@ class GrowingInputsTest : public UnitTesting
 
 public:
 
-   // CONSTRUCTOR
+    // CONSTRUCTOR
 
-   explicit GrowingInputsTest();
+    explicit GrowingInputsTest();
 
-   virtual ~GrowingInputsTest();
+    virtual ~GrowingInputsTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
-   void test_destructor();
+    void test_constructor();
 
-   // Input selection methods
+    void test_destructor();
 
-   void test_perform_inputs_selection();
+    // Input selection methods
 
-   // Unit testing methods
+    void test_perform_inputs_selection();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   Tensor<type, 2> data;
+    Tensor<type, 2> data;
 
-   DataSet data_set;
+    DataSet data_set;
 
-   NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-   TrainingStrategy training_strategy;
+    TrainingStrategy training_strategy;
 
-   GrowingInputs growing_inputs;
+    GrowingInputs growing_inputs;
 };
 
 

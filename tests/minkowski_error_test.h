@@ -18,47 +18,49 @@ class MinkowskiErrorTest : public UnitTesting
 
 public:
 
-   explicit MinkowskiErrorTest();
+    explicit MinkowskiErrorTest();
 
-   virtual ~MinkowskiErrorTest();
+    virtual ~MinkowskiErrorTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   // Back-propagation methods
+    void test_destructor();
 
-   void test_back_propagate();
+    // Back-propagation methods
 
-   // Unit testing methods
+    void test_back_propagate();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   Index samples_number;
-   Index inputs_number;
-   Index outputs_number;
-   Index neurons_number;
+    Index samples_number;
+    Index inputs_number;
+    Index outputs_number;
+    Index neurons_number;
 
-   Tensor<Index, 1> training_samples_indices;
-   Tensor<Index, 1> input_variables_indices;
-   Tensor<Index, 1> target_variables_indices;
+    Tensor<Index, 1> training_samples_indices;
+    Tensor<Index, 1> input_variables_indices;
+    Tensor<Index, 1> target_variables_indices;
 
-   DataSet data_set;
+    DataSet data_set;
 
-   NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-   MinkowskiError minkowski_error;
+    MinkowskiError minkowski_error;
 
-   DataSetBatch batch;
+    DataSetBatch batch;
 
-   NeuralNetworkForwardPropagation forward_propagation;
+    NeuralNetworkForwardPropagation forward_propagation;
 
-   LossIndexBackPropagation back_propagation;
+    LossIndexBackPropagation back_propagation;
 
-   Tensor<type, 1> gradient_numerical_differentiation;
-   Tensor<type, 2> jacobian_numerical_differentiation;
+    Tensor<type, 1> gradient_numerical_differentiation;
+    Tensor<type, 2> jacobian_numerical_differentiation;
 
 };
 

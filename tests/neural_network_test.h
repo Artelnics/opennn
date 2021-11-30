@@ -18,98 +18,99 @@ class NeuralNetworkTest : public UnitTesting
 
 public:
 
-   explicit NeuralNetworkTest();   
+    explicit NeuralNetworkTest();
 
-   virtual ~NeuralNetworkTest();
+    virtual ~NeuralNetworkTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
-   void test_destructor();  
+    void test_constructor();
 
-   // Appending layers
+    void test_destructor();
 
-   void test_add_layer();
-   void check_layer_type();
+    // Appending layers
 
-   // Get methods
+    void test_add_layer();
+    void check_layer_type();
 
-   void test_has_methods();
+    // Get methods
 
-   // Set methods
+    void test_has_methods();
 
-   void test_set();
+    // Set methods
 
-   void test_set_names();
-   void test_set_inputs_number();
+    void test_set();
 
-   void test_set_pointers();
+    void test_set_names();
+    void test_set_inputs_number();
 
-   void test_set_default();
+    void test_set_pointers();
 
-   // Architecture
+    void test_set_default();
 
-   void test_set_network();
+    // Architecture
 
-   void test_set_parameters();
+    void test_set_network();
 
-   // Parameters initialization methods
+    void test_set_parameters();
 
-   void test_set_parameters_constant();
-   void test_set_parameters_random();
+    // Parameters initialization methods
 
-   // Parameters norm / descriptives / histogram
+    void test_set_parameters_constant();
+    void test_set_parameters_random();
 
-   void test_calculate_parameters_norm();
-   void test_calculate_parameters_descriptives();
-   void test_calculate_parameters_histogram();
+    // Parameters norm / descriptives / histogram
 
-   void test_perturbate_parameters();
+    void test_calculate_parameters_norm();
+    void test_calculate_parameters_descriptives();
+    void test_calculate_parameters_histogram();
 
-   // Output 
+    void test_perturbate_parameters();
 
-   void test_calculate_trainable_outputs();
-   void test_calculate_outputs();
+    // Output
 
-   void test_calculate_directional_inputs();
-   void test_calculate_outputs_histograms();
+    void test_calculate_trainable_outputs();
+    void test_calculate_outputs();
 
-   // Forward propagation
+    void test_calculate_directional_inputs();
+    void test_calculate_outputs_histograms();
 
-   void test_forward_propagate();
+    // Forward propagation
 
-   // Expression methods
+    void test_forward_propagate();
 
-   void test_save_expression();
+    // Expression methods
 
-   // Serialization methods
+    void test_save_expression();
 
-   void test_to_XML();
-   void test_from_XML();
-   
-   void test_save();
-   void test_load();
+    // Serialization methods
 
-   // Unit testing methods
+    void test_to_XML();
+    void test_from_XML();
 
-   void run_test_case();
+    void test_save();
+    void test_load();
+
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   Index inputs_number;
-   Index outputs_number;
+    Index inputs_number;
+    Index outputs_number;
 
-   Tensor<type, 2> data;
+    Tensor<type, 2> data;
 
-   DataSet data_set;
+    DataSet data_set;
 
-   DataSetBatch batch;
+    DataSetBatch batch;
 
-   Tensor<Index,1> training_samples_indices;
-   Tensor<Index,1> input_variables_indices;
-   Tensor<Index,1> target_variables_indices;
+    Tensor<Index,1> training_samples_indices;
+    Tensor<Index,1> input_variables_indices;
+    Tensor<Index,1> target_variables_indices;
 
-   NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 };
 
 #endif

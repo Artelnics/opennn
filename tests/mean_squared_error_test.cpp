@@ -24,21 +24,39 @@ MeanSquaredErrorTest::~MeanSquaredErrorTest()
 
 void MeanSquaredErrorTest::test_constructor()
 {
-   cout << "test_constructor\n";
+    cout << "test_constructor\n";
 
-   // Default
+    // Default
 
-   MeanSquaredError mean_squared_error_1;
+    MeanSquaredError mean_squared_error_1;
 
-   assert_true(!mean_squared_error_1.has_neural_network(), LOG);
-   assert_true(!mean_squared_error_1.has_data_set(), LOG);
+    assert_true(!mean_squared_error_1.has_neural_network(), LOG);
+    assert_true(!mean_squared_error_1.has_data_set(), LOG);
 
-   // Neural network and data set
+    // Neural network and data set
 
-   MeanSquaredError mean_squared_error_2(&neural_network, &data_set);
+    MeanSquaredError mean_squared_error_2(&neural_network, &data_set);
 
-   assert_true(mean_squared_error_2.has_neural_network(), LOG);
-   assert_true(mean_squared_error_2.has_data_set(), LOG);
+    assert_true(mean_squared_error_2.has_neural_network(), LOG);
+    assert_true(mean_squared_error_2.has_data_set(), LOG);
+}
+
+
+void MeanSquaredErrorTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    // Default
+
+    MeanSquaredError* mean_squared_error_1 = new MeanSquaredError;
+
+    delete mean_squared_error_1;
+
+    // Neural network and data set
+
+    MeanSquaredError* mean_squared_error_2 = new MeanSquaredError(&neural_network, &data_set);
+
+    delete mean_squared_error_2;
 }
 
 
@@ -307,7 +325,6 @@ void MeanSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.error >= type(0), LOG);
 
         assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-1)), LOG);
-
     }
 }
 
@@ -350,7 +367,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
 
-        // visual studio not running
+        // not running in  visual studio
         /*
         back_propagation_lm.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
@@ -402,7 +419,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        // visual studio not running
+        // not running in visual studio
         /*
         back_propagation_lm.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
@@ -454,7 +471,7 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         back_propagation.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        // visual studio not running
+        // not running in visual studio
         /*
         back_propagation_lm.set(samples_number, &mean_squared_error);
         mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
@@ -472,24 +489,23 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
         */
     }
-
-    // Forecasting incompatible with LM
 }
 
 
 void MeanSquaredErrorTest::run_test_case()
 {
-   cout << "Running mean squared error test case...\n";
+    cout << "Running mean squared error test case...\n";
 
-   test_constructor();
+    test_constructor();
+    test_destructor();
 
-   // Back propagate methods
+    // Back propagate methods
 
-   test_back_propagate();
+    test_back_propagate();
 
-   test_back_propagate_lm();
+    test_back_propagate_lm();
 
-   cout << "End of mean squared error test case.\n\n";
+    cout << "End of mean squared error test case.\n\n";
 }
 
 

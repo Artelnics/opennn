@@ -78,7 +78,6 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_5.get_layer_pointer(0)->get_type() == Layer::Type::Scaling, LOG);
 */
 
-
     //    Layers constructor
 
     // Default constructor
@@ -118,7 +117,7 @@ void NeuralNetworkTest::test_constructor()
     assert_true(neural_network_8.get_layer_pointer(5)->get_type() == Layer::Type::Perceptron, LOG);
     assert_true(neural_network_8.get_layer_pointer(6)->get_type() == Layer::Type::Bounding, LOG);
 
-    ///@todo Convulotional layer
+    ///@todo Convolutional layer
     /*
     // Convolutional layer constructor
 
@@ -404,34 +403,34 @@ void NeuralNetworkTest::test_set()
 
     ///@todo Image treatment Projects
 
-//    neural_network.set(NeuralNetwork::ImageApproximation, {1,0,1});
-//    assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
-//    assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
-//    assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
+    //    neural_network.set(NeuralNetwork::ImageApproximation, {1,0,1});
+    //    assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+    //    assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+    //    assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
 
-//    neural_network.set(NeuralNetwork::ImageClassification, {1,0,1});
-//    assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
-//    assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
-//    assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
+    //    neural_network.set(NeuralNetwork::ImageClassification, {1,0,1});
+    //    assert_true(neural_network.get_inputs_names().size() == 1, LOG);  //CC -> architecture(0)
+    //    assert_true(neural_network.get_outputs_names().size() == 1, LOG);  //CC -> architecture(architecture.size()-1)
+    //    assert_true(neural_network.get_layers_pointers().size() == 1, LOG);
 
-//    Test / Convolutional layer set
+    //    Test / Convolutional layer set
 
-//            Tensor<Index, 1> new_inputs_dimensions(1);
-//    new_inputs_dimensions.setConstant(type(1));
+    //            Tensor<Index, 1> new_inputs_dimensions(1);
+    //    new_inputs_dimensions.setConstant(type(1));
 
-//    Index new_blocks_number = 1;
+    //    Index new_blocks_number = 1;
 
-//    Tensor<Index, 1> new_filters_dimensions(1);
-//    new_filters_dimensions.setConstant(type(1));
+    //    Tensor<Index, 1> new_filters_dimensions(1);
+    //    new_filters_dimensions.setConstant(type(1));
 
-//    Index new_outputs_number = 1;
+    //    Index new_outputs_number = 1;
 
-//    ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
+    //    ConvolutionalLayer convolutional_layer(1,1); //CC -> cl(inputs_dim, filters_dim)
 
-//    neural_network.set(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
+    //    neural_network.set(new_inputs_dimensions, new_blocks_number, new_filters_dimensions, new_outputs_number);
 
-//    assert_true(neural_network.is_empty(), LOG);
-//    assert_true(neural_network.get_layers_number() == 0, LOG);
+    //    assert_true(neural_network.is_empty(), LOG);
+    //    assert_true(neural_network.get_layers_number() == 0, LOG);
 
 }
 

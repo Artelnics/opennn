@@ -25,19 +25,28 @@ ConjugateGradientTest::~ConjugateGradientTest()
 
 void ConjugateGradientTest::test_constructor()
 {
-   cout << "test_constructor\n"; 
+    cout << "test_constructor\n";
 
-   // Default constructor
+    // Default constructor
 
-   ConjugateGradient conjugate_gradient_1;
-   assert_true(!conjugate_gradient_1.has_loss_index(), LOG);
+    ConjugateGradient conjugate_gradient_1;
+    assert_true(!conjugate_gradient_1.has_loss_index(), LOG);
 
-   // Loss index constructor
+    // Loss index constructor
 
-   ConjugateGradient conjugate_gradient_2(&sum_squared_error);
-   assert_true(conjugate_gradient_2.has_loss_index(), LOG);
+    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
+    assert_true(conjugate_gradient_2.has_loss_index(), LOG);
 }
 
+
+void ConjugateGradientTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    ConjugateGradient* conjugate_gradient = new ConjugateGradient;
+
+    delete conjugate_gradient;
+}
 
 void ConjugateGradientTest::test_calculate_PR_parameter()
 {
@@ -64,89 +73,88 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
 
 void ConjugateGradientTest::test_calculate_FR_parameter()
 {
-   cout << "test_calculate_FR_parameter\n";
+    cout << "test_calculate_FR_parameter\n";
 
-   Index size = 1 + rand()%10;
+    Index size = 1 + rand()%10;
 
-   Tensor<type, 1> old_gradient(size);
-   Tensor<type, 1> gradient(size);
+    Tensor<type, 1> old_gradient(size);
+    Tensor<type, 1> gradient(size);
 
-   type FR_parameter;
+    type FR_parameter;
 
-   // Test
+    // Test
 
-   old_gradient.setRandom();
-   gradient.setRandom();
+    old_gradient.setRandom();
+    gradient.setRandom();
 
-   FR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
+    FR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
 
-   assert_true(FR_parameter >= type(0), LOG);
-   assert_true(FR_parameter <= type(1), LOG);
-
+    assert_true(FR_parameter >= type(0), LOG);
+    assert_true(FR_parameter <= type(1), LOG);
 }
 
 
 void ConjugateGradientTest::test_calculate_PR_training_direction()
 {
-   cout << "test_calculate_PR_training_direction\n";
+    cout << "test_calculate_PR_training_direction\n";
 
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-   Tensor<type, 1> old_gradient;
-   Tensor<type, 1> gradient;
-   Tensor<type, 1> old_training_direction;
-   Tensor<type, 1> training_direction;
+    Tensor<type, 1> old_gradient;
+    Tensor<type, 1> gradient;
+    Tensor<type, 1> old_training_direction;
+    Tensor<type, 1> training_direction;
 
-   Index parameters_number;
+    Index parameters_number;
 
-   // Test
+    // Test
 
-   samples_number = 1;
-   inputs_number = 1;
-   targets_number = 1;
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
 
-   data_set.set(samples_number, inputs_number, targets_number);
-   data_set.set_data_random();
+    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
 
-   parameters_number = neural_network.get_parameters_number();
+    parameters_number = neural_network.get_parameters_number();
 
-   old_gradient.resize(parameters_number);
-   gradient.resize(parameters_number);
-   old_training_direction.resize(parameters_number);
-   training_direction.resize(parameters_number);
+    old_gradient.resize(parameters_number);
+    gradient.resize(parameters_number);
+    old_training_direction.resize(parameters_number);
+    training_direction.resize(parameters_number);
 
-   old_gradient.setRandom();
-   gradient.setRandom();
-   old_training_direction.setRandom();
-   training_direction.setRandom();
+    old_gradient.setRandom();
+    gradient.setRandom();
+    old_training_direction.setRandom();
+    training_direction.setRandom();
 
-   conjugate_gradient.calculate_PR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
+    conjugate_gradient.calculate_PR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
 
-   assert_true(training_direction.size() == parameters_number, LOG);
+    assert_true(training_direction.size() == parameters_number, LOG);
 }
 
 
 void ConjugateGradientTest::test_calculate_FR_training_direction()
 {
-   cout << "test_calculate_FR_training_direction\n";
+    cout << "test_calculate_FR_training_direction\n";
 
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-   Tensor<type, 1> old_gradient;
-   Tensor<type, 1> gradient;
-   Tensor<type, 1> old_training_direction;
-   Tensor<type, 1> training_direction;
+    Tensor<type, 1> old_gradient;
+    Tensor<type, 1> gradient;
+    Tensor<type, 1> old_training_direction;
+    Tensor<type, 1> training_direction;
 
-   Index parameters_number;
+    Index parameters_number;
 
-   // Test
-/*
+    // Test
+    /*
    data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_random();
 
@@ -173,8 +181,8 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
 
 void ConjugateGradientTest::test_perform_training()
 {
-   cout << "test_perform_training\n";
-/*
+    cout << "test_perform_training\n";
+    /*
    Index samples_number;
    Index inputs_number;
    Index targets_number;
@@ -254,7 +262,7 @@ void ConjugateGradientTest::test_perform_training()
 
    assert_true(training_results.stopping_condition == OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease, LOG);
 
-   // Gradient norm goal 
+   // Gradient norm goal
 
    neural_network.set_parameters_constant(type(-1));
 
@@ -274,23 +282,24 @@ void ConjugateGradientTest::test_perform_training()
 
 void ConjugateGradientTest::run_test_case()
 {
-   cout << "Running conjugate gradient test case...\n";
+    cout << "Running conjugate gradient test case...\n";
 
-   // Constructor methods
+    // Constructor methods
 
-   test_constructor();
+    test_constructor();
+    test_destructor();
 
-   // Training methods
+    // Training methods
 
-   test_calculate_PR_parameter();
-   test_calculate_FR_parameter();
+    test_calculate_PR_parameter();
+    test_calculate_FR_parameter();
 
-   test_calculate_FR_training_direction();
-   test_calculate_PR_training_direction();
+    test_calculate_FR_training_direction();
+    test_calculate_PR_training_direction();
 
-   test_perform_training();
+    test_perform_training();
 
-   cout << "End of conjugate gradient test case.\n\n";
+    cout << "End of conjugate gradient test case.\n\n";
 }
 
 

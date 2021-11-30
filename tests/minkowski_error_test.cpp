@@ -42,6 +42,15 @@ void MinkowskiErrorTest::test_constructor()
 }
 
 
+void MinkowskiErrorTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    MinkowskiError* minkowski_error = new MinkowskiError;
+
+    delete minkowski_error;
+}
+
 void MinkowskiErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
@@ -319,6 +328,7 @@ void MinkowskiErrorTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
+   test_destructor();
 
    // Back-propagation methods
 

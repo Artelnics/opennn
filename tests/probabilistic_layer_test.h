@@ -18,57 +18,59 @@ class ProbabilisticLayerTest : public UnitTesting
 
 public:
 
-   explicit ProbabilisticLayerTest();
+    explicit ProbabilisticLayerTest();
 
-   virtual ~ProbabilisticLayerTest();
+    virtual ~ProbabilisticLayerTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   // Set methods
+    void test_destructor();
 
-   void test_set();
-   void test_set_default();
-   void test_set_biases();
-   void test_set_synaptic_weights();
-   void test_set_parameters();
-   void test_set_decision_threshold();
+    // Set methods
 
-   // Activation function
+    void test_set();
+    void test_set_default();
+    void test_set_biases();
+    void test_set_synaptic_weights();
+    void test_set_parameters();
+    void test_set_decision_threshold();
 
-   void test_set_activation_function();
+    // Activation function
 
-   // Probabilistic post-processing
+    void test_set_activation_function();
 
-   void test_calculate_combinations();
-   void test_calculate_activations();
-   void test_calculate_activations_derivatives();
-   void test_calculate_outputs();
+    // Probabilistic post-processing
 
-   // Forward propagate
+    void test_calculate_combinations();
+    void test_calculate_activations();
+    void test_calculate_activations_derivatives();
+    void test_calculate_outputs();
 
-   void test_forward_propagate();
+    // Forward propagate
 
-   // Serialization methods
+    void test_forward_propagate();
 
-   void test_to_XML();
-   void test_from_XML();
+    // Serialization methods
 
-   // Unit testing methods
+    void test_to_XML();
+    void test_from_XML();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   Index inputs_number;
-   Index outputs_number;
-   Index neurons_number;
-   Index samples_number;
+    Index inputs_number;
+    Index outputs_number;
+    Index neurons_number;
+    Index samples_number;
 
-   ProbabilisticLayer probabilistic_layer;
+    ProbabilisticLayer probabilistic_layer;
 
-   NumericalDifferentiation numerical_differentiation;
+    NumericalDifferentiation numerical_differentiation;
 };
 
 

@@ -11,14 +11,30 @@
 CrossEntropyErrorTest::CrossEntropyErrorTest() : UnitTesting() 
 {
     cross_entropy_error.set(&neural_network, &data_set);
-
     cross_entropy_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 }
-
 
 CrossEntropyErrorTest::~CrossEntropyErrorTest()
 {
 }
+
+void CrossEntropyErrorTest::test_constructor()
+{
+    cout << "test_constructor\n";
+
+    CrossEntropyError cross_entropy_error;
+}
+
+
+void CrossEntropyErrorTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    CrossEntropyError* cross_entropy_error = new CrossEntropyError;
+
+    delete cross_entropy_error;
+}
+
 
 void CrossEntropyErrorTest::test_back_propagate()
 {
@@ -66,7 +82,6 @@ void CrossEntropyErrorTest::test_back_propagate()
         assert_true(back_propagation.error >= 0, LOG);
 
         assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-3), LOG);
-
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -118,7 +133,10 @@ void CrossEntropyErrorTest::run_test_case()
 {
     cout << "Running cross entropy error test case...\n";
 
+    // Test constructor
 
+    test_constructor();
+    test_destructor();
 
     // Back-propagation methods
 
