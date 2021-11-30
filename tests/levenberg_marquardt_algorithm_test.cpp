@@ -26,137 +26,155 @@ LevenbergMarquardtAlgorithmTest::~LevenbergMarquardtAlgorithmTest()
 
 void LevenbergMarquardtAlgorithmTest::test_constructor()
 {
-   cout << "test_constructor\n"; 
+    cout << "test_constructor\n";
 
-   // Default constructor
+    // Default constructor
 
-   LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm_1;
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm_1;
 
-   assert_true(!levenberg_marquardt_algorithm_1.has_loss_index(), LOG);
+    assert_true(!levenberg_marquardt_algorithm_1.has_loss_index(), LOG);
 
-   // Loss index constructor
+    // Loss index constructor
 
-   LevenbergMarquardtAlgorithm lma2(&sum_squared_error);
+    LevenbergMarquardtAlgorithm lma2(&sum_squared_error);
 
-   assert_true(lma2.has_loss_index(), LOG);
+    assert_true(lma2.has_loss_index(), LOG);
+}
+
+
+void LevenbergMarquardtAlgorithmTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    // Test
+
+    LevenbergMarquardtAlgorithm* lma = new LevenbergMarquardtAlgorithm;
+
+    delete lma;
+
+    // Test
+
+    LevenbergMarquardtAlgorithm* lma2 = new LevenbergMarquardtAlgorithm(&sum_squared_error);
+
+    delete lma2;
 }
 
 
 void LevenbergMarquardtAlgorithmTest::test_perform_training()
 {
-   cout << "test_perform_training\n";
+    cout << "test_perform_training\n";
 
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-   Index neurons_number;
+    Index neurons_number;
 
-   Tensor<type, 1> gradient;
+    Tensor<type, 1> gradient;
 
-   type old_loss;
-   type loss;
-   
-   type training_loss_goal;
-   type minimum_loss_decrease;
-/*
-   // Test
+    type old_loss;
+    type loss;
 
-   samples_number = 1;
-   inputs_number = 1;
-   targets_number = 1;
+    type training_loss_goal;
+    type minimum_loss_decrease;
 
-   data_set.set(1, 1, 1);
-   data_set.set_data_random();
+    // Test
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
-   neural_network.set_parameters_random();
+//    samples_number = 1;
+//    inputs_number = 1;
+//    targets_number = 1;
 
-//   old_loss = sum_squared_error.calculate_training_loss();
+//    data_set.set(1, 1, 1);
+//    data_set.set_data_random();
 
-   levenberg_marquardt_algorithm.perform_training();
+//    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+//    neural_network.set_parameters_random();
 
-//   loss = sum_squared_error.calculate_training_loss();
+//    //   old_loss = sum_squared_error.calculate_training_loss();
 
-//   assert_true(loss < old_loss, LOG);
+//    levenberg_marquardt_algorithm.perform_training();
 
-   // Minimum parameters increment norm
+//    //   loss = sum_squared_error.calculate_training_loss();
 
-   neural_network.set_parameters_random();
+//    //   assert_true(loss < old_loss, LOG);
 
-   minimum_parameters_increment_norm = 100.0;
+//    // Minimum parameters increment norm
 
-   levenberg_marquardt_algorithm.set_loss_goal(type(0));
-   levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
-   levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
-   levenberg_marquardt_algorithm.set_maximum_time(10.0);
+//    neural_network.set_parameters_random();
 
-   levenberg_marquardt_algorithm.perform_training();
+//    minimum_parameters_increment_norm = 100.0;
 
-   // Loss goal
+//    levenberg_marquardt_algorithm.set_loss_goal(type(0));
+//    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
+//    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
+//    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-   neural_network.set_parameters_random();
+//    levenberg_marquardt_algorithm.perform_training();
 
-   training_loss_goal = 100.0;
+//    // Loss goal
 
-   levenberg_marquardt_algorithm.set_loss_goal(training_loss_goal);
-   levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
-   levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
-   levenberg_marquardt_algorithm.set_maximum_time(10.0);
+//    neural_network.set_parameters_random();
 
-   levenberg_marquardt_algorithm.perform_training();
+//    training_loss_goal = 100.0;
 
-//   loss = sum_squared_error.calculate_training_loss();
+//    levenberg_marquardt_algorithm.set_loss_goal(training_loss_goal);
+//    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
+//    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
+//    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-   assert_true(loss < training_loss_goal, LOG);
+//    levenberg_marquardt_algorithm.perform_training();
 
-   // Minimum loss increas
+//    //   loss = sum_squared_error.calculate_training_loss();
 
-   neural_network.set_parameters_random();
+//    assert_true(loss < training_loss_goal, LOG);
 
-   minimum_loss_decrease = 100.0;
+//    // Minimum loss increas
 
-   levenberg_marquardt_algorithm.set_loss_goal(type(0));
-   levenberg_marquardt_algorithm.set_minimum_loss_decrease(minimum_loss_decrease);
-   levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
-   levenberg_marquardt_algorithm.set_maximum_time(10.0);
+//    neural_network.set_parameters_random();
 
-   levenberg_marquardt_algorithm.perform_training();
+//    minimum_loss_decrease = 100.0;
 
-   // Gradient norm goal 
+//    levenberg_marquardt_algorithm.set_loss_goal(type(0));
+//    levenberg_marquardt_algorithm.set_minimum_loss_decrease(minimum_loss_decrease);
+//    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
+//    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-   neural_network.set_parameters_random();
+//    levenberg_marquardt_algorithm.perform_training();
 
-   gradient_norm_goal = 1.0e6;
+//    // Gradient norm goal
 
-   levenberg_marquardt_algorithm.set_loss_goal(type(0));
-   levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
-   levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
-   levenberg_marquardt_algorithm.set_maximum_time(10.0);
+//    neural_network.set_parameters_random();
 
-   levenberg_marquardt_algorithm.perform_training();
+//    gradient_norm_goal = 1.0e6;
 
-//   gradient = sum_squared_error.calculate_training_loss_gradient();
-//   gradient_norm = l2_norm(gradient);
+//    levenberg_marquardt_algorithm.set_loss_goal(type(0));
+//    levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
+//    levenberg_marquardt_algorithm.set_maximum_epochs_number(10);
+//    levenberg_marquardt_algorithm.set_maximum_time(10.0);
 
-   assert_true(gradient_norm < gradient_norm_goal, LOG);
-*/
+//    levenberg_marquardt_algorithm.perform_training();
+
+//    //   gradient = sum_squared_error.calculate_training_loss_gradient();
+//    //   gradient_norm = l2_norm(gradient);
+
+//    assert_true(gradient_norm < gradient_norm_goal, LOG);
 }
 
 
 void LevenbergMarquardtAlgorithmTest::run_test_case()
 {
-   cout << "Running Levenberg-Marquardt algorithm test case...\n";
+    cout << "Running Levenberg-Marquardt algorithm test case...\n";
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   test_constructor();
+    test_constructor();
+    test_destructor();
 
-   // Training methods
+    // Training methods
 
-   test_perform_training();
+    test_perform_training();
 
-   cout << "End of Levenberg-Marquardt algorithm test case.\n\n";
+    cout << "End of Levenberg-Marquardt algorithm test case.\n\n";
 }
 
 

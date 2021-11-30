@@ -18,35 +18,37 @@ class LearningRateAlgorithmTest : public UnitTesting
 
 public:
 
-   explicit LearningRateAlgorithmTest(); 
+    explicit LearningRateAlgorithmTest();
 
-   virtual ~LearningRateAlgorithmTest();
+    virtual ~LearningRateAlgorithmTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   // Training methods
+    void test_destructor();
 
-   void test_calculate_bracketing_triplet();
+    // Training methods
 
-   void test_calculate_golden_section_directional_point();
+    void test_calculate_bracketing_triplet();
 
-   void test_calculate_Brent_method_directional_point();
-   
-   // Unit testing methods
+    void test_calculate_golden_section_directional_point();
 
-   void run_test_case();
+    void test_calculate_Brent_method_directional_point();
+
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   DataSet data_set;
+    DataSet data_set;
 
-   NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-   SumSquaredError sum_squared_error;
+    SumSquaredError sum_squared_error;
 
-   LearningRateAlgorithm learning_rate_algorithm;
+    LearningRateAlgorithm learning_rate_algorithm;
 };
 
 #endif

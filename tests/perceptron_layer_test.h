@@ -18,72 +18,74 @@ class PerceptronLayerTest : public UnitTesting
 
 public:
 
-   explicit PerceptronLayerTest();
+    explicit PerceptronLayerTest();
 
-   virtual ~PerceptronLayerTest();
+    virtual ~PerceptronLayerTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   // Inputs and neurons
+    void test_destructor();
 
-   void test_is_empty();
+    // Inputs and neurons
 
-   // Set methods
+    void test_is_empty();
 
-   void test_set();
-   void test_set_default();
+    // Set methods
 
-   // Parameters
+    void test_set();
+    void test_set_default();
 
-   void test_set_biases();
-   void test_set_synaptic_weights();
-   void test_set_parameters();
+    // Parameters
 
-   // Inputs
+    void test_set_biases();
+    void test_set_synaptic_weights();
+    void test_set_parameters();
 
-   void test_set_inputs_number();
+    // Inputs
 
-   //Perceptrons
+    void test_set_inputs_number();
 
-   void test_set_perceptrons_number();
+    //Perceptrons
 
-   // Activation functions
+    void test_set_perceptrons_number();
 
-   void test_set_activation_function();
+    // Activation functions
 
-   // Parameters initialization methods
+    void test_set_activation_function();
 
-   void test_set_parameters_constant();
-   void test_set_parameters_random();
+    // Parameters initialization methods
 
-   // Combination
+    void test_set_parameters_constant();
+    void test_set_parameters_random();
 
-   void test_calculate_combinations();
+    // Combination
 
-   // Activation
+    void test_calculate_combinations();
 
-   void test_calculate_activations();
-   void test_calculate_activations_derivatives();
+    // Activation
 
-   // Outputs
+    void test_calculate_activations();
+    void test_calculate_activations_derivatives();
 
-   void test_calculate_outputs();
+    // Outputs
 
-   // Forward propagate
+    void test_calculate_outputs();
 
-   void test_forward_propagate();
+    // Forward propagate
 
-   // Unit testing methods
+    void test_forward_propagate();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   Index inputs_number;
-   Index neurons_number;
-   Index samples_number;
+    Index inputs_number;
+    Index neurons_number;
+    Index samples_number;
 
     PerceptronLayer perceptron_layer;
 

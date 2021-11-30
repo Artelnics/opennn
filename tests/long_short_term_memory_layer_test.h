@@ -18,51 +18,53 @@ class LongShortTermMemoryLayerTest : public UnitTesting
 
 public:
 
-   explicit LongShortTermMemoryLayerTest();
+    explicit LongShortTermMemoryLayerTest();
 
-   virtual ~LongShortTermMemoryLayerTest();
+    virtual ~LongShortTermMemoryLayerTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   // lstm layer parameters
+    void test_destructor();
 
-   void test_set_biases();
-   void test_set_weights();
-   void test_set_recurrent_weights();
+    // lstm layer parameters
 
-   // Inputs
+    void test_set_biases();
+    void test_set_weights();
+    void test_set_recurrent_weights();
 
-   void test_set_inputs_number();
+    // Inputs
 
-   // Parameters methods
+    void test_set_inputs_number();
 
-   void test_set_parameters();
+    // Parameters methods
 
-   // Parameters initialization methods
+    void test_set_parameters();
 
-   void test_set_parameters_constant();
-   void test_set_biases_constant();
-   void test_initialize_recurrent_weights();
+    // Parameters initialization methods
 
-   void test_set_parameters_random();
+    void test_set_parameters_constant();
+    void test_set_biases_constant();
+    void test_initialize_recurrent_weights();
 
-   // Calculate outputs
+    void test_set_parameters_random();
 
-   void test_calculate_outputs();
+    // Calculate outputs
 
-   // Forward propagate
+    void test_calculate_outputs();
 
-   void test_forward_propagate();
+    // Forward propagate
 
-   // Unit testing methods
+    void test_forward_propagate();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   LongShortTermMemoryLayer long_short_term_memory_layer;
+    LongShortTermMemoryLayer long_short_term_memory_layer;
 };
 
 

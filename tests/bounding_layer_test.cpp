@@ -21,63 +21,71 @@ BoundingLayerTest::~BoundingLayerTest()
 
 void BoundingLayerTest::test_constructor()
 {
-   cout << "test_constructor\n";
+    cout << "test_constructor\n";
 
-   // Default constructor
+    // Default constructor
 
-   BoundingLayer bounding_layer_1;
+    BoundingLayer bounding_layer_1;
 
-   assert_true(bounding_layer_1.get_neurons_number() == 0, LOG);
+    assert_true(bounding_layer_1.get_neurons_number() == 0, LOG);
+}
 
+
+void BoundingLayerTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    BoundingLayer* bounding_layer_1 = new BoundingLayer;
+
+    delete bounding_layer_1;
 }
 
 
 void BoundingLayerTest::test_calculate_outputs()
 {
-   cout << "test_calculate_outputs\n";
+    cout << "test_calculate_outputs\n";
 
-   BoundingLayer bounding_layer;
-   Tensor<type, 2> inputs;
-   Tensor<type, 2> outputs;
+    BoundingLayer bounding_layer;
+    Tensor<type, 2> inputs;
+    Tensor<type, 2> outputs;
 
-   // Test
+    // Test
 
-   bounding_layer.set(1);
-   bounding_layer.set_lower_bound(0, type(-1.0));
-   bounding_layer.set_upper_bound(0, type(1));
-   bounding_layer.set_bounding_method("Bounding");
+    bounding_layer.set(1);
+    bounding_layer.set_lower_bound(0, type(-1.0));
+    bounding_layer.set_upper_bound(0, type(1));
+    bounding_layer.set_bounding_method("Bounding");
 
-   inputs.resize(1, 1);
-   inputs(0) = type(-2.0);
-   outputs = bounding_layer.calculate_outputs(inputs);
+    inputs.resize(1, 1);
+    inputs(0) = type(-2.0);
+    outputs = bounding_layer.calculate_outputs(inputs);
 
-   assert_true(outputs.rank() == 2, LOG);
-   assert_true(outputs(0) - type(-1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(outputs.rank() == 2, LOG);
+    assert_true(outputs(0) - type(-1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
-   // Test
+    // Test
 
-   inputs(0) = type(2.0);
-   outputs = bounding_layer.calculate_outputs(inputs);
-   assert_true(outputs.rank() == 2, LOG);
-   assert_true(outputs(0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-
-
+    inputs(0) = type(2.0);
+    outputs = bounding_layer.calculate_outputs(inputs);
+    assert_true(outputs.rank() == 2, LOG);
+    assert_true(outputs(0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
 void BoundingLayerTest::run_test_case()
 {
-   cout << "Running bounding layer test case...\n";
+    cout << "Running bounding layer test case...\n";
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   test_constructor();
+    test_constructor();
+    test_destructor();
 
-   // Lower and upper bounds
+    // Lower and upper bounds
 
-   test_calculate_outputs();
+    test_calculate_outputs();
 
-   cout << "End of bounding layer test case.\n\n";
+    cout << "End of bounding layer test case.\n\n";
 }
 
 

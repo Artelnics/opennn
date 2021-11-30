@@ -24,131 +24,141 @@ GradientDescentTest::~GradientDescentTest()
 
 void GradientDescentTest::test_constructor()
 {
-//   cout << "test_constructor\n";
+    cout << "test_constructor\n";
 
-   // Default constructor
+    // Default constructor
 
-   GradientDescent gradient_descent_1;
-   assert_true(!gradient_descent_1.has_loss_index(), LOG);
+    GradientDescent gradient_descent_1;
+    assert_true(!gradient_descent_1.has_loss_index(), LOG);
 
-   // Loss index constructor
+    // Loss index constructor
 
-   GradientDescent gradient_descent_2(&sum_squared_error);
-   assert_true(gradient_descent_2.has_loss_index(), LOG);
+    GradientDescent gradient_descent_2(&sum_squared_error);
+    assert_true(gradient_descent_2.has_loss_index(), LOG);
+}
+
+void GradientDescentTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    GradientDescent* gradient_descent = new GradientDescent;
+
+    delete gradient_descent;
 }
 
 
 void GradientDescentTest::test_perform_training()
 {
-//   cout << "test_perform_training\n";
+    //   cout << "test_perform_training\n";
 
-   // Test
+    // Test
 
-   samples_number = 1;
-   inputs_number = 1;
-   outputs_number = 1;
+    samples_number = 1;
+    inputs_number = 1;
+    outputs_number = 1;
 
-   data_set.set(1,1,1);
-   data_set.set_data_constant(type(0));
+    data_set.set(1,1,1);
+    data_set.set_data_constant(type(0));
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
-   neural_network.set_parameters_constant(type(0));
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set_parameters_constant(type(0));
 
-   gradient_descent.set_maximum_epochs_number(1);
-   gradient_descent.perform_training();
+    gradient_descent.set_maximum_epochs_number(1);
+    gradient_descent.perform_training();
 
-   // Test
+    // Test
 
-   data_set.set(1,1,1);
-   data_set.set_data_random();
+    data_set.set(1,1,1);
+    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
-   neural_network.set_parameters_random();
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set_parameters_random();
 
-   gradient_descent.perform_training();
+    gradient_descent.perform_training();
 
-   // Test
+    // Test
 
-   //type old_loss = sum_squared_error.calculate_error({0});
+    //type old_loss = sum_squared_error.calculate_error({0});
 
-   gradient_descent.set_maximum_epochs_number(1);
+    gradient_descent.set_maximum_epochs_number(1);
 
-   gradient_descent.perform_training();
+    gradient_descent.perform_training();
 
-//   type loss = sum_squared_error.calculate_error({0});
+    //   type loss = sum_squared_error.calculate_error({0});
 
-   //assert_true(loss < old_loss, LOG);
+    //assert_true(loss < old_loss, LOG);
 
-   // Minimum parameters increment norm
+    // Minimum parameters increment norm
 
-   neural_network.set_parameters_constant(type(-1));
+    neural_network.set_parameters_constant(type(-1));
 
-   type minimum_parameters_increment_norm = type(0.1);
+    type minimum_parameters_increment_norm = type(0.1);
 
-   gradient_descent.set_loss_goal(type(0));
-   gradient_descent.set_minimum_loss_decrease(0.0);
-   gradient_descent.set_maximum_epochs_number(1000);
-   gradient_descent.set_maximum_time(1000.0);
+    gradient_descent.set_loss_goal(type(0));
+    gradient_descent.set_minimum_loss_decrease(0.0);
+    gradient_descent.set_maximum_epochs_number(1000);
+    gradient_descent.set_maximum_time(1000.0);
 
-   gradient_descent.perform_training();
+    gradient_descent.perform_training();
 
-   // Loss goal
+    // Loss goal
 
-   neural_network.set_parameters_constant(type(-1));
+    neural_network.set_parameters_constant(type(-1));
 
-   type training_loss_goal = type(0.1);
+    type training_loss_goal = type(0.1);
 
-   gradient_descent.set_loss_goal(training_loss_goal);
-   gradient_descent.set_minimum_loss_decrease(0.0);
-   gradient_descent.set_maximum_epochs_number(1000);
-   gradient_descent.set_maximum_time(1000.0);
+    gradient_descent.set_loss_goal(training_loss_goal);
+    gradient_descent.set_minimum_loss_decrease(0.0);
+    gradient_descent.set_maximum_epochs_number(1000);
+    gradient_descent.set_maximum_time(1000.0);
 
-   gradient_descent.perform_training();
+    gradient_descent.perform_training();
 
-//   loss = sum_squared_error.calculate_errors({0});
+    //   loss = sum_squared_error.calculate_errors({0});
 
-   // Minimum loss increase
+    // Minimum loss increase
 
-   neural_network.set_parameters_constant(type(-1));
+    neural_network.set_parameters_constant(type(-1));
 
-   type minimum_loss_decrease = 0.1;
+    type minimum_loss_decrease = 0.1;
 
-   gradient_descent.set_loss_goal(type(0));
-   gradient_descent.set_maximum_epochs_number(1000);
-   gradient_descent.set_maximum_time(1000.0);
+    gradient_descent.set_loss_goal(type(0));
+    gradient_descent.set_maximum_epochs_number(1000);
+    gradient_descent.set_maximum_time(1000.0);
 
-   gradient_descent.perform_training();
+    gradient_descent.perform_training();
 
-   // Gradient norm goal
+    // Gradient norm goal
 
-   neural_network.set_parameters_constant(type(-1));
+    neural_network.set_parameters_constant(type(-1));
 
-   gradient_descent.set_loss_goal(type(0));
-   gradient_descent.set_minimum_loss_decrease(0.0);
-   gradient_descent.set_maximum_epochs_number(1000);
-   gradient_descent.set_maximum_time(1000.0);
+    gradient_descent.set_loss_goal(type(0));
+    gradient_descent.set_minimum_loss_decrease(0.0);
+    gradient_descent.set_maximum_epochs_number(1000);
+    gradient_descent.set_maximum_time(1000.0);
 
-   gradient_descent.perform_training();
+    gradient_descent.perform_training();
 
-//   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
-//   assert_true(gradient_norm < gradient_norm_goal, LOG);
+    //   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
+    //   assert_true(gradient_norm < gradient_norm_goal, LOG);
 
 }
 
 
 void GradientDescentTest::run_test_case()
 {
-   cout << "Running gradient descent test case...\n";
+    cout << "Running gradient descent test case...\n";
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   test_constructor();
+    test_constructor();
+    test_destructor();
 
-   // Training methods
+    // Training methods
 
-   test_perform_training();
+    test_perform_training();
 
-   cout << "End of gradient descent test case.\n\n";
+    cout << "End of gradient descent test case.\n\n";
 }
 
 

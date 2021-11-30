@@ -73,7 +73,6 @@ void CorrelationsTest::test_linear_correlation()
     correlation = linear_correlation(thread_pool_device, x, y).r;
     assert_true(abs(correlation + static_cast<type>(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation) - static_cast<type>(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-
 }
 
 
@@ -217,7 +216,6 @@ void CorrelationsTest::test_logarithmic_correlation()
     assert_true(abs(correlation.r - solution) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation.b - static_cast<type>(4)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(correlation.a - static_cast<type>(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-
 }
 
 
@@ -328,27 +326,27 @@ void CorrelationsTest::test_cross_correlations()
 
 void CorrelationsTest::run_test_case()
 {
-   cout << "Running correlation analysis test case...\n";
+    cout << "Running correlation analysis test case...\n";
 
-   // Correlation methods
+    // Correlation methods
 
-   test_linear_correlation();
+    test_linear_correlation();
 
-   test_logistic_correlation();
+    test_logistic_correlation();
 
-   test_logarithmic_correlation();
+    test_logarithmic_correlation();
 
-   test_exponential_correlation();
+    test_exponential_correlation();
 
-   test_power_correlation();
+    test_power_correlation();
 
-   // Time series correlation methods
+    // Time series correlation methods
 
-   test_autocorrelations();
+    test_autocorrelations();
 
-   test_cross_correlations();
+    test_cross_correlations();
 
-   cout << "End of correlation analysis test case.\n\n";
+    cout << "End of correlation analysis test case.\n\n";
 }
 
 

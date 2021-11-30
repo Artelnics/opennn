@@ -29,6 +29,8 @@ public:
 
    void test_constructor();
 
+   void test_destructor();
+
    // Training methods
 
    void test_perform_training();
