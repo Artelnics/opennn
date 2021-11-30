@@ -206,7 +206,10 @@ void Descriptives::save(const string &file_name) const
 }
 
 
-Histogram::Histogram() {}
+Histogram::Histogram() {
+    centers.resize(0);
+    frequencies.resize(0);
+}
 
 
 /// Destructor.

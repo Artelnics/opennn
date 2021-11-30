@@ -174,7 +174,7 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
 void ConjugateGradientTest::test_perform_training()
 {
    cout << "test_perform_training\n";
-
+/*
    Index samples_number;
    Index inputs_number;
    Index targets_number;
@@ -210,7 +210,7 @@ void ConjugateGradientTest::test_perform_training()
    assert_true(training_results.stopping_condition == OptimizationAlgorithm::StoppingCondition::MaximumEpochsNumber, LOG);
 
    // Minimum parameters increment norm
-/*
+
    neural_network.set_parameters_constant(type(-1));
 
    minimum_parameters_increment_norm = 0.1;
@@ -223,7 +223,7 @@ void ConjugateGradientTest::test_perform_training()
    training_results = conjugate_gradient.perform_training();
 
    assert_true(training_results.stopping_condition == OptimizationAlgorithm::MinimumParametersIncrementNorm, LOG);
-*/
+
    // Loss goal
 
    neural_network.set_parameters_constant(type(-1));
@@ -255,7 +255,7 @@ void ConjugateGradientTest::test_perform_training()
    assert_true(training_results.stopping_condition == OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease, LOG);
 
    // Gradient norm goal 
-/*
+
    neural_network.set_parameters_constant(type(-1));
 
    gradient_norm_goal = 0.1;

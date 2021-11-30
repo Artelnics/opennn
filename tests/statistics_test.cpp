@@ -179,7 +179,7 @@ void StatisticsTest::test_calculate_minimum_frequency()
 
     // Test
     Histogram histogram;
-    assert_true(histogram.calculate_minimum_frequency() == 0, LOG);
+    assert_true(is_not_numeric(histogram.calculate_minimum_frequency()) , LOG);
 
     // Test
     Tensor<type, 1> centers(3);
@@ -216,7 +216,7 @@ void StatisticsTest::test_calculate_maximum_frequency()
 
     // Test
     Histogram histogram;
-    assert_true(histogram.calculate_maximum_frequency() == 0, LOG);
+    assert_true(is_not_numeric(histogram.calculate_maximum_frequency()), LOG);
 
     // Test
     Tensor<type, 1> centers(3);
