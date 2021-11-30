@@ -111,6 +111,7 @@ public:
 
    void test_read_csv();
 
+   void test_read_breast_cancer_csv();
    void test_read_adult_csv();
    void test_read_airline_passengers_csv();
    void test_read_car_csv();
