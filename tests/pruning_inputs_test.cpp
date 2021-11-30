@@ -74,7 +74,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 
     // Test
 
-    data_set.generate_sum_data(40,3);
+    data_set.generate_sum_data(40,2);
 
     neural_network.set(NeuralNetwork::ProjectType::Approximation, {2,6,1});
 

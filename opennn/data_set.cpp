@@ -1157,6 +1157,7 @@ Tensor<Index, 1> DataSet::get_used_samples_indices() const
 
     for(Index i = 0; i < samples_number; i++)
     {
+
         if(samples_uses(i) != SampleUse::UnusedSample)
         {
             used_indices(index) = i;
@@ -9648,7 +9649,7 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
         }
     }
 
-    set_default();
+    set(data);
 }
 
 

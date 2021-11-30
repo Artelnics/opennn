@@ -236,21 +236,13 @@ void ScalingLayerTest::test_set_scaling_method()
 
     scaling_layer.set_scalers(method_tensor_1);
 
-/*
     assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::NoScaling, LOG);
-    assert_true(scaling_layer.get_scaling_methods()(0) == 0, LOG);
-
     assert_true(scaling_layer.get_scaling_methods()(1) == Scaler::MinimumMaximum, LOG);
-    assert_true(scaling_layer.get_scaling_methods()(1) == 1, LOG);
-
     assert_true(scaling_layer.get_scaling_methods()(2) == Scaler::MeanStandardDeviation, LOG);
-    assert_true(scaling_layer.get_scaling_methods()(2) == 2, LOG);
-
     assert_true(scaling_layer.get_scaling_methods()(3) == Scaler::StandardDeviation, LOG);
-    assert_true(scaling_layer.get_scaling_methods()(3) == 3, LOG);
 
     // Test
-*/
+
     Tensor<string, 1> method_tensor_2(4);
     method_tensor_2.setValues({"NoScaling",
                                 "MinimumMaximum",
@@ -260,16 +252,9 @@ void ScalingLayerTest::test_set_scaling_method()
     scaling_layer.set_scalers(method_tensor_2);
 
     assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::NoScaling, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(0) == 0, LOG);
-
     assert_true(scaling_layer.get_scaling_methods()(1) == Scaler::MinimumMaximum, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(1) == 1, LOG);
-
     assert_true(scaling_layer.get_scaling_methods()(2) == Scaler::MeanStandardDeviation, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(2) == 2, LOG);
-
     assert_true(scaling_layer.get_scaling_methods()(3) == Scaler::StandardDeviation, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(3) == 3, LOG);
 
     // Test
 
@@ -281,53 +266,31 @@ void ScalingLayerTest::test_set_scaling_method()
     scaling_layer.set_scalers(no_scaling);
 
     assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::NoScaling, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(0) == 0, LOG);
-
     scaling_layer.set_scalers(minimum_maximum);
-
     assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::MinimumMaximum, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(0) == 1, LOG);
-
     scaling_layer.set_scalers(mean_standard_deviation);
-
     assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::MeanStandardDeviation, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(0) == 2, LOG);
-
     scaling_layer.set_scalers(standard_deviation);
-
     assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::StandardDeviation, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(0) == 3, LOG);
 
-    // Test 
+    // Test
 
     Scaler no_scaling_4 = Scaler::NoScaling;
-
     Scaler minimum_maximum_4 = Scaler::MinimumMaximum;
-
     Scaler mean_standard_deviation_4 = Scaler::MeanStandardDeviation;
-
     Scaler standard_deviation_4 = Scaler::StandardDeviation;
 
     scaling_layer.set_scalers(no_scaling_4);
-
     assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::NoScaling, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(0) == 0, LOG);
 
     scaling_layer.set_scalers(minimum_maximum_4);
-
     assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::MinimumMaximum, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(0) == 1, LOG);
 
     scaling_layer.set_scalers(mean_standard_deviation_4);
-
     assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::MeanStandardDeviation, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(0) == 2, LOG);
 
     scaling_layer.set_scalers(standard_deviation_4);
-
     assert_true(scaling_layer.get_scaling_methods()(0) == Scaler::StandardDeviation, LOG);
-//    assert_true(scaling_layer.get_scaling_methods()(0) == 3, LOG);
-
     }
 
 
@@ -441,6 +404,7 @@ void ScalingLayerTest::test_calculate_outputs()
     data.resize(samples_number,inputs_number + 1);
     data.setValues({{type(1),type(1),type(1),type(1)},{type(2),type(2),type(2),type(2)},{type(3),type(3),type(3),type(3)}});
     data_set.set_data(data);
+    data_set.set_training();
 
     scaling_layer.set(inputs_number);
     scaling_layer.set_scalers(Scaler::MinimumMaximum);
@@ -458,14 +422,14 @@ void ScalingLayerTest::test_calculate_outputs()
 
     // Test
 
-    inputs_number = 1;
-    samples_number = 1;
+    inputs_number = 2;
+    samples_number = 2;
 
     scaling_layer.set(inputs_number);
     scaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
     data.resize(samples_number,inputs_number + 1);
-    data.setRandom();
+    data.setValues({{type(0),type(0)},{type(2),type(2)}});
     data_set.set_data(data);
 
     input_descriptives = data_set.calculate_input_variables_descriptives();
@@ -475,7 +439,7 @@ void ScalingLayerTest::test_calculate_outputs()
     assert_true(outputs.dimension(0) == samples_number, LOG);
     assert_true(outputs.dimension(1) == inputs_number, LOG);
 
-    assert_true(abs(outputs(0) - data(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(outputs(0) + type(0.707107)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -486,11 +450,15 @@ void ScalingLayerTest::test_calculate_outputs()
     scaling_layer.set_scalers(Scaler::StandardDeviation);
 
     data.resize(samples_number, inputs_number + 1);
+    data.setConstant(type(1));
+    data_set.set(data);
+
     scaling_layer.set_descriptives(data_set.calculate_input_variables_descriptives());
     outputs = scaling_layer.calculate_outputs(data_set.get_input_data());
 
     assert_true(outputs.dimension(0) == inputs_number, LOG);
     assert_true(outputs.dimension(1) == samples_number, LOG);
+
     assert_true(abs(outputs(0) - data(0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
