@@ -21,11 +21,11 @@
 #define EIGEN_USE_THREADS
 #endif
 
-#pragma warning(push, 0)
+//#pragma warning(push, 0)
 #include "tinyxml2.h"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
-#pragma warning(pop)
+//#pragma warning(pop)
 
 #ifdef OPENNN_CUDA
 
