@@ -59,7 +59,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    
    type training_loss_goal;
    type minimum_loss_decrease;
-
+/*
    // Test
 
    samples_number = 1;
@@ -83,7 +83,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    // Minimum parameters increment norm
 
    neural_network.set_parameters_random();
-/*
+
    minimum_parameters_increment_norm = 100.0;
 
    levenberg_marquardt_algorithm.set_loss_goal(type(0));
