@@ -961,7 +961,7 @@ void DataSetTest::test_read_breast_cancer_csv()
     cout << "test_read_adult_csv\n";
 
     data_set.set_separator(';');
-    data_set.set_data_file_name("../../datasets/breast_cancer.csv");
+    data_set.set_data_file_name("../../datasets/breastcancer.csv");
     data_set.set_has_columns_names(true);
     data_set.read_csv();
 
