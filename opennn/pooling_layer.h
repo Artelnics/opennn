@@ -56,47 +56,47 @@ public:
 
     virtual ~PoolingLayer();
 
-     // Get methods
+    // Get methods
 
 
-     Tensor<Index, 1> get_outputs_dimensions() const;
+    Tensor<Index, 1> get_outputs_dimensions() const;
 
-     Index get_inputs_number() const;
+    Index get_inputs_number() const;
 
-     Index get_inputs_channels_number() const;
+    Index get_inputs_channels_number() const;
 
-     Index get_inputs_rows_number() const;
+    Index get_inputs_rows_number() const;
 
-     Index get_inputs_columns_number() const;
+    Index get_inputs_columns_number() const;
 
-     Index get_neurons_number() const;
+    Index get_neurons_number() const;
 
-     Index get_outputs_rows_number() const;
+    Index get_outputs_rows_number() const;
 
-     Index get_outputs_columns_number() const;
+    Index get_outputs_columns_number() const;
 
-     Index get_padding_width() const;
+    Index get_padding_width() const;
 
-     Index get_row_stride() const;
+    Index get_row_stride() const;
 
-     Index get_column_stride() const;
+    Index get_column_stride() const;
 
-     Index get_pool_rows_number() const;
+    Index get_pool_rows_number() const;
 
-     Index get_pool_columns_number() const;
+    Index get_pool_columns_number() const;
 
-     Index get_parameters_number() const;
+    Index get_parameters_number() const;
 
-     Tensor<type, 1> get_parameters() const;
+    Tensor<type, 1> get_parameters() const;
 
-     PoolingMethod get_pooling_method() const;
+    PoolingMethod get_pooling_method() const;
 
-     // Set methods
+    // Set methods
 
-     void set_inputs_number(const Index&) {}
-     void set_neurons_number(const Index&) {}
+    void set_inputs_number(const Index&) {}
+    void set_neurons_number(const Index&) {}
 
-     void set_input_variables_dimensions(const Tensor<Index, 1>&);
+    void set_input_variables_dimensions(const Tensor<Index, 1>&);
 
     void set_padding_width(const Index&);
 
@@ -139,7 +139,9 @@ public:
 
     // Delta methods
 
-    Tensor<type, 4> calculate_hidden_delta(Layer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
+    void calculate_hidden_delta(LayerForwardPropagation*,
+                                LayerBackPropagation*,
+                                LayerBackPropagation*) const;
 
     Tensor<type, 4> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
     Tensor<type, 4> calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&) const;
@@ -148,7 +150,9 @@ public:
 
     // Gradient methods
 
-    Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const LayerForwardPropagation&, const Tensor<type, 2>&);
+    void calculate_error_gradient(const Tensor<type, 2>&,
+                                  LayerForwardPropagation*,
+                                  LayerBackPropagation*) const;
 
 protected:
 
@@ -167,7 +171,7 @@ protected:
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
+#include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
 #endif
 
 };

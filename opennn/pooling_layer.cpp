@@ -203,11 +203,10 @@ Tensor<type, 4> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 4
 }
 
 
-Tensor<type, 4> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-        const Tensor<type, 4>& activations,
-        const Tensor<type, 4>& activations_derivatives,
-        const Tensor<type, 4>& next_layer_delta) const
-{
+void PoolingLayer::calculate_hidden_delta(LayerForwardPropagation*,
+                                                     LayerBackPropagation*,
+                                                     LayerBackPropagation*) const
+{/*
     if(pooling_method == PoolingMethod::NoPooling) return next_layer_delta;
 
     else
@@ -241,6 +240,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
     }
 
     return Tensor<type, 4>();
+    */
 }
 
 
@@ -574,11 +574,10 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilistic
 }
 
 
-Tensor<type, 1> PoolingLayer::calculate_error_gradient(const Tensor<type, 2>&,
-        const LayerForwardPropagation&,
-        const Tensor<type, 2>&)
+void PoolingLayer::calculate_error_gradient(const Tensor<type, 2>&,
+                              LayerForwardPropagation*,
+                              LayerBackPropagation*) const
 {
-    return Tensor<type, 1>();
 }
 
 

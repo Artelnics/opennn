@@ -1600,18 +1600,18 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
     if(layers_pointers(1)->get_type() == Layer::Type::Convolutional)
     {
-        outputs_4d = layers_pointers(0)->calculate_outputs_4D(inputs);
+        //outputs_4d = layers_pointers(0)->calculate_outputs(inputs);
     }
     else
     {
-        outputs = layers_pointers(0)->calculate_outputs_from4D(inputs);
+        //outputs = layers_pointers(0)->calculate_outputs_from4D(inputs);
     }
 
     for(Index i = 1; i < layers_number; i++)
     {
         if(layers_pointers(i + 1)->get_type() == Layer::Type::Convolutional)
         {
-            outputs_4d = layers_pointers(i)->calculate_outputs_4D(outputs_4d);
+            //outputs_4d = layers_pointers(i)->calculate_outputs_4D(outputs_4d);
         }
         else
         {
@@ -1621,7 +1621,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
             }
             else
             {
-                outputs = layers_pointers(i)->calculate_outputs_from4D(outputs_4d);
+                //outputs = layers_pointers(i)->calculate_outputs_from4D(outputs_4d);
             }
         }
     }
