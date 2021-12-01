@@ -28,7 +28,7 @@ namespace OpenNN
 
 struct ResponseOptimizationResults;
 
-/// This class is used to optimize model response identify the combinations of variable settings jointly optimize a set of responses.
+/// This class optimizes model response identify the combinations of variable settings jointly optimize a set of responses.
 
 ///
 /// This tool is adequate when you need to know the behaviour of a multiple variables on a response

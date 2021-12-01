@@ -146,7 +146,7 @@ public:
 private: 
 
    /// Learning rate algorithm object.
-   /// It is used to calculate the step for the quasi-Newton training direction.
+   /// It calculates the step for a given training direction.
 
    LearningRateAlgorithm learning_rate_algorithm;
 

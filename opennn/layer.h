@@ -46,8 +46,7 @@ struct LayerBackPropagationLM;
 
 /// This abstract class represents the concept of layer of neurons in OpenNN.
 
-/// Layer is a group of neurons having connections to the same inputs and sending outputs to the same destinations.
-/// Also is used to store information about the layers of the different architectures of NeuralNetworks.
+/// A layer is a group of neurons having connections to the same inputs and sending outputs to the same destinations.
 
 class Layer
 {

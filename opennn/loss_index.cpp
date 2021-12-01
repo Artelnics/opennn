@@ -289,7 +289,7 @@ bool LossIndex::has_selection() const
 }
 
 
-/// Checks that there is a neural network associated to the error term.
+/// Checks whether there is a neural network associated to the error term.
 /// If some of the above conditions is not hold, the method throws an exception.
 
 void LossIndex::check() const
