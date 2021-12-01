@@ -433,7 +433,7 @@ void ConvolutionalLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer
         const Index row_index = (tensor_index / output_columns_number) % output_rows_number;
         const Index column_index = tensor_index % output_columns_number;
 
-        type sum = type(0);
+        long double sum = 0.0;
 
         const Index lower_row_index = (row_index - next_layers_kernel_rows) / next_layers_row_stride + 1;
         const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -512,7 +512,7 @@ void ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer
                     const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
                     const Index column_index = tensor_index%output_columns_number;
 
-                    type sum = type(0);
+                    long double sum = 0.0;
 
                     const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
                     const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -569,7 +569,7 @@ void ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer
                     const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
                     const Index column_index = tensor_index%output_columns_number;
 
-                    type sum = type(0);
+                    long double sum = 0.0;
 
                     const Index lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
                     const Index upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
@@ -673,7 +673,7 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(const PerceptronLayer
 //            const Index row_index = (tensor_index/output_columns_number)%output_rows_number;
 //            const Index column_index = tensor_index%output_columns_number;
 
-            type sum = type(0);
+            long double sum = 0.0;
 
 //            for(Index sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
 //            {
@@ -729,7 +729,7 @@ void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer
         const Index row_index = (tensor_index / output_columns_number) % output_rows_number;
         const Index column_index = tensor_index % output_columns_number;
 
-        type sum = type(0);
+        long double sum = 0.0;
 
         for(Index sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
         {
