@@ -782,7 +782,7 @@ type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
 
     if(end == begin) return vector[begin];
 
-    type sum = type(0);
+    long double sum = 0.0;
 
     for(Index i = begin; i <= end; i++)
     {
@@ -818,7 +818,7 @@ type mean(const Tensor<type, 1>& vector)
 
 #endif
 
-    type sum = type(0);
+    long double sum = 0.0;
 
     Index count = 0;
 
@@ -860,8 +860,8 @@ type variance(const Tensor<type, 1>& vector)
 
 #endif
 
-    type sum = type(0);
-    type squared_sum = type(0);
+    long double sum = 0.0;
+    long double squared_sum = 0.0;
 
     Index count = 0;
 
@@ -908,8 +908,8 @@ type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
 #endif
 
-    type sum = type(0);
-    type squared_sum = type(0);
+    long double sum = 0.0;
+    long double squared_sum = 0.0;
 
     Index count = 0;
 
@@ -930,7 +930,7 @@ type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
     if(count <= 1) return type(0);
 
-    const type variance = squared_sum/static_cast<type>(count - 1) -(sum/static_cast<type>(count))*(sum/static_cast<type>(count))*static_cast<type>(count)/static_cast<type>(count-1);
+    const type variance = squared_sum/static_cast<type>(count - 1) - (sum/static_cast<type>(count))*(sum/static_cast<type>(count))*static_cast<type>(count)/static_cast<type>(count-1);
 
     return variance;
 }
@@ -1007,7 +1007,8 @@ Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& p
     Tensor<type, 1> std(size);
 
     type mean_value = type(0);
-    type sum = type(0);
+
+    long double sum = 0.0;
 
     for(Index i = 0; i < size; i++)
     {
@@ -1062,7 +1063,7 @@ type asymmetry(const Tensor<type, 1>& vector)
 
     const type mean_value = mean(vector);
 
-    type sum = type(0);
+    long double sum = 0.0;
 
     Index count = 0;
 
@@ -1113,7 +1114,7 @@ type kurtosis(const Tensor<type, 1>& vector)
 
     const type mean_value = mean(vector);
 
-    type sum = type(0);
+    long double sum = 0.0;
 
     Index count = 0;
 
@@ -2039,8 +2040,8 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
     type minimum = numeric_limits<type>::max();
     type maximum = -numeric_limits<type>::max();
 
-    type sum = type(0);
-    type squared_sum = type(0);
+    long double sum = 0.0;
+    long double squared_sum = 0;
     Index count = 0;
 
     for(Index i = 0; i < size; i++)

@@ -8981,7 +8981,7 @@ Tensor<type, 1> DataSet::calculate_local_outlier_factor(Tensor<list<Index>, 1>& 
 
     for(Index i = 0; i < samples_number; i++)
     {
-        type sum = type(0);
+        long double sum = 0.0;
 
         for(auto & neighbor_index : k_nearest_indexes(i))
             sum += average_reachabilities(i) / average_reachabilities(neighbor_index);
