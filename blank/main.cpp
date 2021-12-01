@@ -30,58 +30,6 @@ int main()
     {
         cout << "OpenNN. Blank application." << endl;
 
-        Index samples_number = 2;
-        Index input_variables_number = 1;
-        Index target_variables_number = 1;
-
-        // DataSet
-
-        Tensor<type,2> data(samples_number,input_variables_number + target_variables_number);
-        data.setRandom();
-
-        DataSet data_set;
-        data_set.set(data);
-        data_set.print_data();
-
-        // Neural Network
-
-        Index hidden_neurons_number = 1;
-
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
-
-        // Training Strategy
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-        training_strategy.set_maximum_epochs_number(100);
-
-        training_strategy.perform_training();
-
-        system("pause");
-
-        // -----------------------
-
-        data_set.set("C:/Program Files/Neural Designer/examples/activityrecognition/activityrecognition.csv",';',true);
-
-        input_variables_number = data_set.get_input_variables_number();
-        target_variables_number = data_set.get_target_variables_number();
-
-        // Neural network
-
-        hidden_neurons_number = 10;
-
-        neural_network.set(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
-
-        // Training strategy
-
-        training_strategy.set(&neural_network, &data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-        training_strategy.set_maximum_epochs_number(200);
-
-        training_strategy.perform_training();
-
         cout << "Good bye!" << endl;
 
         return 0;

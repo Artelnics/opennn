@@ -31,6 +31,7 @@ int main()
    "conjugate_gradient | cg\n"
    "correlations | cr\n"
    "cross_entropy_error | cee\n"
+   "convulational_layer | cl\n"
    "descriptives | dsc\n"
    "data_set | ds\n"
    "genetic_algorithm | ga\n"
@@ -49,6 +50,8 @@ int main()
    "normalized_squared_error | nse\n"
    "numerical_differentiation | nd\n"
    "perceptron_layer | pl\n"
+   "pooling_layer | pl"
+   "l\n"
    "probabilistic_layer | pbl\n"
    "pruning_inputs | pi\n"
    "quasi_newton_method | qnm\n"
@@ -189,7 +192,7 @@ int main()
          tests_passed_count += probabilistic_layer_test.get_tests_passed_count();
          tests_failed_count += probabilistic_layer_test.get_tests_failed_count();
       }
-/*
+
       else if(test == "convolutional_layer" || test == "cl")
       {
          ConvolutionalLayerTest layer_test;
@@ -206,7 +209,7 @@ int main()
          tests_passed_count += layer_test.get_tests_passed_count();
          tests_failed_count += layer_test.get_tests_failed_count();
       }
-*/
+
       else if(test == "neural_network" || test == "nn")
       {
         NeuralNetworkTest neural_network_test;
@@ -524,6 +527,22 @@ int main()
           tests_count += recurrent_layer_test.get_tests_count();
           tests_passed_count += recurrent_layer_test.get_tests_passed_count();
           tests_failed_count += recurrent_layer_test.get_tests_failed_count();
+
+          // convolutional layer
+
+          ConvolutionalLayerTest convolutional_layer_test;
+          convolutional_layer_test.run_test_case();
+          tests_count += convolutional_layer_test.get_tests_count();
+          tests_passed_count += convolutional_layer_test.get_tests_passed_count();
+          tests_failed_count += convolutional_layer_test.get_tests_failed_count();
+
+          // recurrent layer
+
+          PoolingLayerTest pooling_layer_test;
+          pooling_layer_test.run_test_case();
+          tests_count += pooling_layer_test.get_tests_count();
+          tests_passed_count += pooling_layer_test.get_tests_passed_count();
+          tests_failed_count += pooling_layer_test.get_tests_failed_count();
 
           // neural network
 

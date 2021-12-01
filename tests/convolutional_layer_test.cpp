@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "convolutional_layer_test.h"
-/*
+
 ConvolutionalLayerTest::ConvolutionalLayerTest() : UnitTesting()
 {
 }
@@ -18,10 +18,22 @@ ConvolutionalLayerTest::~ConvolutionalLayerTest()
 }
 
 
+void ConvolutionalLayerTest::test_constructor()
+{
+    cout << "test_constuctor\n";
+}
+
+
+void ConvolutionalLayerTest::test_set()
+{
+    cout << "test_set\n";
+}
+
+
 void ConvolutionalLayerTest::test_eigen_convolution()
 {
     cout << "test_eigen_convolution\n";
-
+/*
     // Convolution 2D, 1 channel
     Tensor<type, 2> input(3, 3);
     Tensor<type, 2> kernel(2, 2);
@@ -142,7 +154,7 @@ void ConvolutionalLayerTest::test_constructor()
 //                convolutional_layer.get_filters_number() == 1 &&
 //                convolutional_layer.get_filters_rows_number() == 2 &&
 //                convolutional_layer.get_filters_columns_number() == 3, LOG);
-}
+*/}
 
 
 void ConvolutionalLayerTest::test_destructor()
@@ -154,7 +166,7 @@ void ConvolutionalLayerTest::test_destructor()
 void ConvolutionalLayerTest::test_set_parameters()
 {
     cout << "test_set_parameters\n";
-
+/*
     Tensor<type, 4> new_synaptic_weights(2, 2, 2, 2);
     Tensor<type, 1> new_biases(2);
     Tensor<type, 1> parameters(18);
@@ -231,12 +243,12 @@ void ConvolutionalLayerTest::test_set_parameters()
 //                convolutional_layer.get_parameters_number() == 18 &&
 //                convolutional_layer.get_synaptic_weights() == new_synaptic_weights &&
 //                convolutional_layer.get_biases() == new_biases, LOG);
-}
+*/}
 
 
 void ConvolutionalLayerTest::test_calculate_combinations()
 {
-
+/*
     cout << "test_calculate_combinations\n";
 
     Tensor<type, 4> inputs;
@@ -391,13 +403,13 @@ void ConvolutionalLayerTest::test_calculate_combinations()
                 combinations(1, 1, 3, 1) == type(4) &&
                 combinations(1, 1, 3, 2) == type(4) &&
                 combinations(1, 1, 3, 3) == type(4), LOG);
-}
+*/}
 
 
 void ConvolutionalLayerTest::test_calculate_activations()
 {
     cout << "test_calculate_activations\n";
-
+/*
 
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations_4d;
@@ -682,14 +694,13 @@ void ConvolutionalLayerTest::test_calculate_activations()
                 abs(activations_4d(1,1,0,1) - result(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activations_4d(1,1,1,0) - result(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activations_4d(1,1,1,1) - result(1,1,1,1)) <= type(NUMERIC_LIMITS_MIN), LOG);
-
-}
+*/}
 
 
 void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_activations_derivatives\n";
-
+/*
     numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::NumericalDifferentiationMethod::CentralDifferences);
 
     Tensor<type, 4> numerical_activation_derivatives;
@@ -967,15 +978,13 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
                 abs(activations_derivatives(1,1,0,1) - result(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activations_derivatives(1,1,1,0) - result(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
+*/}
 
-
-/// @todo
 
 void ConvolutionalLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
-
+/*
 
 
     Tensor<type, 4> inputs;
@@ -1165,13 +1174,13 @@ void ConvolutionalLayerTest::test_calculate_outputs()
     inputs.resize(5, 5, 3, 2);
     kernels.resize(3, 3, 3, 2);
     biases.resize(2);
-}
+*/}
 
 
 void ConvolutionalLayerTest::test_insert_padding()
 {
     cout << "test_insert_padding\n";
-
+/*
 
 
     Tensor<type, 4> inputs;
@@ -1258,13 +1267,14 @@ void ConvolutionalLayerTest::test_insert_padding()
     assert_true(padded.dimension(0) == 5 &&
                 padded.dimension(1) == 5,LOG);
 
+*/
 }
 
 
 void ConvolutionalLayerTest::test_forward_propagate()
 {
-
     cout << "test_forward_propagate\n";
+/*
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations;
     Tensor<type, 4> activations_derivatives;
@@ -1356,7 +1366,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
     assert_true(abs(forward_propagation.combinations(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(forward_propagation.activations(0, 0, 0, 0) - type(0.761594f)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(forward_propagation.activations_derivatives(0, 0, 0, 0) - type(0.419974f)) < type(NUMERIC_LIMITS_MIN), LOG);
-}
+*/}
 
 
 void ConvolutionalLayerTest::run_test_case()
@@ -1400,7 +1410,7 @@ void ConvolutionalLayerTest::run_test_case()
 
    cout << "End of convolutional layer test case.\n\n";
 }
-*/
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
