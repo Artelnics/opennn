@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "pooling_layer_test.h"
-/*
+
 
 PoolingLayerTest::PoolingLayerTest() : UnitTesting()
 {
@@ -279,7 +279,7 @@ void PoolingLayerTest::run_test_case()
 
    cout << "End of pooling layer test case.\n\n";
 }
-*/
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.

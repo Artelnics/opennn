@@ -8,7 +8,7 @@
 
 #ifndef POOLINGLAYERTEST_H
 #define POOLINGLAYERTEST_H
-/*
+
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
@@ -38,7 +38,7 @@ private:
    PoolingLayer pooling_layer;
 
 };
-*/
+
 #endif
 
 
