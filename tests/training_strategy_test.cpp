@@ -8,9 +8,6 @@
 
 #include "training_strategy_test.h"
 
-
-/// @todo This set crashes the program
-
 TrainingStrategyTest::TrainingStrategyTest() : UnitTesting() 
 {
     training_strategy.set(&neural_network, &data_set);
@@ -29,6 +26,9 @@ void TrainingStrategyTest::test_constructor()
     // Test
 
     TrainingStrategy training_strategy_1(&neural_network, &data_set);
+
+    assert_true(training_strategy.get_neural_network_pointer() != nullptr, LOG);
+    assert_true(training_strategy.get_data_set_pointer() != nullptr, LOG);
 }
 
 

@@ -19,38 +19,39 @@ class TrainingStrategyTest : public UnitTesting
 
 public:
 
-   explicit TrainingStrategyTest(); 
+    explicit TrainingStrategyTest();
 
-   virtual ~TrainingStrategyTest();
+    virtual ~TrainingStrategyTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
-   void test_destructor();
+    void test_constructor();
 
-   // Training methods
+    void test_destructor();
 
-   void test_perform_training();
+    // Training methods
 
-   // Serialization methods
+    void test_perform_training();
 
-   void test_to_XML();
-   void test_from_XML();
+    // Serialization methods
 
-   void test_save();
-   void test_load();
+    void test_to_XML();
+    void test_from_XML();
 
-   // Unit testing methods
+    void test_save();
+    void test_load();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   DataSet data_set;
+    DataSet data_set;
 
-   NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-   TrainingStrategy training_strategy;
+    TrainingStrategy training_strategy;
 
 };
 

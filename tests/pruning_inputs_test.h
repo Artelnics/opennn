@@ -18,34 +18,35 @@ class PruningInputsTest : public UnitTesting
 
 public:
 
-   // CONSTRUCTOR
+    // CONSTRUCTOR
 
-   explicit PruningInputsTest();
+    explicit PruningInputsTest();
 
-   virtual ~PruningInputsTest();
+    virtual ~PruningInputsTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
-   void test_destructor();
+    void test_constructor();
 
-   // Input selection methods
+    void test_destructor();
 
-   void test_perform_inputs_selection();
+    // Input selection methods
 
-   // Unit testing methods
+    void test_perform_inputs_selection();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   DataSet data_set;
+    DataSet data_set;
 
-   NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-   TrainingStrategy training_strategy;
+    TrainingStrategy training_strategy;
 
-   PruningInputs pruning_inputs;
+    PruningInputs pruning_inputs;
 
 };
 

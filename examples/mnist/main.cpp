@@ -66,7 +66,7 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, 50, target_variables_number});
 
         PerceptronLayer* perceptron_layer_pointer = neural_network.get_first_perceptron_layer_pointer();
-//        perceptron_layer_pointer->set_activation_function("RectifiedLinear");
+        perceptron_layer_pointer->set_activation_function("RectifiedLinear");
 
         Tensor<Layer*, 1> layers_pointers = neural_network.get_trainable_layers_pointers();
 
@@ -84,11 +84,8 @@ int main()
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-        training_strategy.set_display_period(10);
-
+        training_strategy.set_display_period(100);
         training_strategy.set_maximum_epochs_number(1000);
 
         training_strategy.perform_training();

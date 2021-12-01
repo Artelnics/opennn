@@ -21,35 +21,37 @@ class StochasticGradientDescentTest : public UnitTesting
 
 public:
 
-   explicit StochasticGradientDescentTest();
+    explicit StochasticGradientDescentTest();
 
-   virtual ~StochasticGradientDescentTest();  
+    virtual ~StochasticGradientDescentTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   // Training methods
+    void test_destructor();
 
-   void test_perform_training();
+    // Training methods
 
-   // Serialization methods
+    void test_perform_training();
 
-   void test_to_XML();
+    // Serialization methods
 
-   // Unit testing methods
+    void test_to_XML();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   DataSet data_set;
+    DataSet data_set;
 
-   NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-   SumSquaredError sum_squared_error;
+    SumSquaredError sum_squared_error;
 
-   StochasticGradientDescent stochastic_gradient_descent;
+    StochasticGradientDescent stochastic_gradient_descent;
 
 };
 

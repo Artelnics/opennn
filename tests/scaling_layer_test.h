@@ -18,58 +18,60 @@ class ScalingLayerTest : public UnitTesting
 
 public:  
 
-   explicit ScalingLayerTest();
+    explicit ScalingLayerTest();
 
-   virtual ~ScalingLayerTest();
+    virtual ~ScalingLayerTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   // Set methods
+    void test_destructor();
 
-   void test_set();
+    // Set methods
 
-   void test_set_inputs_number();
-   void test_set_neurons_number();
+    void test_set();
 
-   void test_set_default();
+    void test_set_inputs_number();
+    void test_set_neurons_number();
 
-   // Descriptives
+    void test_set_default();
 
-   void test_set_descriptives();
-   void test_set_item_descriptives();
+    // Descriptives
 
-   // Scaling method
+    void test_set_descriptives();
+    void test_set_item_descriptives();
 
-   void test_set_scaling_method();
+    // Scaling method
 
-   // Input range
+    void test_set_scaling_method();
 
-   void test_is_empty();
+    // Input range
 
-   void test_check_range();
+    void test_is_empty();
 
-   // Scaling 
+    void test_check_range();
 
-   void test_calculate_outputs();
-   void test_calculate_minimum_maximum_output();
-   void test_calculate_mean_standard_deviation_output();
+    // Scaling
 
-   // Serialization methods
+    void test_calculate_outputs();
+    void test_calculate_minimum_maximum_output();
+    void test_calculate_mean_standard_deviation_output();
 
-   void test_to_XML();
-   void test_from_XML();
+    // Serialization methods
 
-   // Unit testing methods
+    void test_to_XML();
+    void test_from_XML();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   ScalingLayer scaling_layer;
+    ScalingLayer scaling_layer;
 
-   Tensor<Descriptives, 1> descriptives;
+    Tensor<Descriptives, 1> descriptives;
 };
 
 

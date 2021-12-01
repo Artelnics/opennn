@@ -17,6 +17,7 @@ TensorUtilitiesTest::~TensorUtilitiesTest()
 {
 }
 
+
 void TensorUtilitiesTest::test_fill_submatrix()
 {
     cout << "test_fill_submatrix\n";
@@ -42,8 +43,8 @@ void TensorUtilitiesTest::test_fill_submatrix()
     fill_submatrix(matrix, rows_indices, columns_indices, submatrix.data());
 
     assert_true(is_equal(submatrix, 3.1416), LOG);
-
 }
+
 
 void TensorUtilitiesTest::test_calculate_rank()
 {
@@ -59,20 +60,18 @@ void TensorUtilitiesTest::test_calculate_rank()
 
     rank_greater = calculate_rank_greater(vector);
     rank_less = calculate_rank_less(vector);
-
-    // assert_true(¿?)
 }
 
 
 void TensorUtilitiesTest::run_test_case()
 {
-   cout << "Running tensor utilities test case...\n";
+    cout << "Running tensor utilities test case...\n";
 
-   test_fill_submatrix();
+    test_fill_submatrix();
 
-   test_calculate_rank();
+    test_calculate_rank();
 
-   cout << "End of tensor utilities test case.\n\n";
+    cout << "End of tensor utilities test case.\n\n";
 }
 
 

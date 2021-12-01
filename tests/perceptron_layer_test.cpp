@@ -74,13 +74,6 @@ void PerceptronLayerTest::test_set()
 
     // Test
 
-    perceptron_layer.set();
-
-    assert_true(perceptron_layer.get_inputs_number() == 0, LOG);
-    assert_true(perceptron_layer.get_neurons_number() == 0, LOG);
-
-    // Test
-
     perceptron_layer.set(1,1);
 
     perceptron_layer.set();
