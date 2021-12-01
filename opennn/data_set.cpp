@@ -900,6 +900,7 @@ void DataSet::transform_time_series_data()
     }
 
     samples_uses.resize(new_samples_number);
+    split_samples_random();
 }
 
 
@@ -4642,7 +4643,6 @@ void DataSet::set(const Tensor<type, 2>& new_data)
 
 
 /// Sets new numbers of samples and variables in the inputs targets data set.
-/// All the samples are set for training.
 /// All the variables are set as inputs.
 /// @param new_samples_number Number of
 /// @param new_variables_number Number of variables.
@@ -4733,7 +4733,6 @@ void DataSet::set(const Index& new_samples_number,
     input_variables_dimensions.resize(1);
 
     samples_uses.resize(new_samples_number);
-
     split_samples_random();
 }
 
@@ -7466,6 +7465,8 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const Index new_samples_number = static_cast<Index>(atoi(samples_number_element->GetText()));
 
         samples_uses.resize(new_samples_number);
+
+        set_training();
     }
 
     // Samples uses

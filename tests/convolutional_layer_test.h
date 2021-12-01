@@ -8,7 +8,7 @@
 
 #ifndef CONVOLUTIONALLAYERTEST_H
 #define CONVOLUTIONALLAYERTEST_H
-/*
+
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
@@ -63,11 +63,11 @@ public:
 
 private:
 
-  ConvolutionalLayer convolutional_layer;
+//  ConvolutionalLayer convolutional_layer;
 
   NumericalDifferentiation numerical_differentiation;
 };
-*/
+
 #endif
 
 
