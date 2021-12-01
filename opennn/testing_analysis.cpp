@@ -1896,7 +1896,7 @@ type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& targets,
 
     Index testing_samples_number = targets.dimension(0);
 
-    type sum = type(0);
+    long double sum = 0.0;
 
     type area_under_curve;
 
@@ -2645,7 +2645,7 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
 
     type probability = type(0);
 
-    type sum = type(0);
+    long double sum = 0.0;
 
     for(Index i = 1; i < points_number+1; i++)
     {
