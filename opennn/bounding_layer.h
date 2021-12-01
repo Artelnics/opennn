@@ -29,7 +29,7 @@ namespace OpenNN
 
 /// This class represents a layer of bounding neurons. 
 
-/// A bounding layer is used to ensure that variables will never fall below or above given values. 
+/// A bounding layer ensures that the output variables never fall below or above given values.
 
 class BoundingLayer : public Layer
 {

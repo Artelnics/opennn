@@ -64,7 +64,7 @@ void MinkowskiError::set_default()
 }
 
 
-/// Sets a new Minkowski exponent value to be used in order to calculate the error.
+/// Sets a new Minkowski exponent value to be used to calculate the error.
 /// The Minkowski R-value must be comprised between 1 and 2.
 /// @param new_Minkowski_parameter Minkowski exponent value.
 

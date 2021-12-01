@@ -308,7 +308,7 @@ void UnscalingLayer::set(const Index& new_neurons_number)
 
 
 /// Sets the size of the unscaling layer and the descriptives values.
-/// @param new_descriptives Vector of vectors containing the minimums, maximums, means and standard deviations for the unscaling layer.
+/// @param new_descriptives Vector of vectors containing the minimums, maximums, means, and standard deviations for the unscaling layer.
 /// The size of this vector must be 4.
 /// The size of each subvector will be the size of the unscaling layer.
 

@@ -770,7 +770,7 @@ void GeneticAlgorithm::perform_mutation()
 }
 
 
-/// Select the inputs with best generalization properties using the genetic algorithm.
+/// Select the inputs with the best generalization properties using the genetic algorithm.
 
 InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 {

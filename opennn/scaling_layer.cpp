@@ -38,7 +38,7 @@ ScalingLayer::ScalingLayer(const Tensor<Index, 1>& new_inputs_dimensions) : Laye
 
 
 /// Descriptives constructor.
-/// This constructor creates a scaling layer with given minimums, maximums, means and standard deviations.
+/// This constructor creates a scaling layer with given minimums, maximums, means, and standard deviations.
 /// The rest of members of this object are initialized with the default values.
 /// @param new_descriptives Vector of vectors with the variables descriptives.
 
@@ -330,7 +330,7 @@ void ScalingLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 
 
 /// Sets the size of the scaling layer and the descriptives values.
-/// @param new_descriptives Vector of vectors containing the minimums, maximums, means and standard deviations for the scaling layer.
+/// @param new_descriptives Vector of vectors containing the minimums, maximums, means, and standard deviations for the scaling layer.
 /// The size of this vector must be 4.
 /// The size of each subvector will be the size of the scaling layer.
 

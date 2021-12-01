@@ -672,7 +672,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
 }
 
 
-/// This method processes the input to the probabilistic layer in order to obtain a set of outputs which
+/// This method processes the input to the probabilistic layer to obtain a set of outputs which
 /// can be interpreted as probabilities.
 /// This posprocessing is performed according to the probabilistic method to be used.
 /// @param inputs Set of inputs to the probabilistic layer.

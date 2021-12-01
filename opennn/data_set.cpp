@@ -7787,8 +7787,7 @@ void DataSet::print_data() const
 }
 
 
-/// Prints to the scross_entropy_errorn a preview of the data matrix,
-/// i.e., the first, second and last samples
+/// Prints to the screen a preview of the data matrix, i.e. the first, second and last samples.
 
 void DataSet::print_data_preview() const
 {
@@ -8535,7 +8534,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
 }
 
 
-/// Calculate the outliers from the data set using the Tukey's test.
+/// Calculate the outliers from the data set using Tukey's test.
 /// @param cleaning_parameter Parameter used to detect outliers.
 
 Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleaning_parameter) const
@@ -8618,7 +8617,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 }
 
 
-/// Calculate the outliers from the data set using the Tukey's test and sets in samples object.
+/// Calculate the outliers from the data set using Tukey's test and sets in samples object.
 /// @param cleaning_parameter Parameter used to detect outliers
 /// @todo
 
@@ -9522,7 +9521,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
             {
                 input_j = get_time_series_column_data(j);
 
-                if(display) cout << "   -VS- " << time_series_columns(j).name << endl;
+                if(display) cout << "   vs. " << time_series_columns(j).name << endl;
 
             }
             else
