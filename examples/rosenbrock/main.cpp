@@ -62,8 +62,6 @@ int main()
         
         cout << "End Rosenbrock" << endl;
 
-        system("pause");
-
         return 0;
     }
     catch(exception& e)

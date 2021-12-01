@@ -18,56 +18,58 @@ class UnscalingLayerTest : public UnitTesting
 
 public:
 
-   explicit UnscalingLayerTest();
+    explicit UnscalingLayerTest();
 
-   virtual ~UnscalingLayerTest();
+    virtual ~UnscalingLayerTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   // Set methods
+    void test_destructor();
 
-   void test_set();
-   void test_set_inputs_number();
-   void test_set_neurons_number();
-   void test_set_default();
+    // Set methods
 
-   // Output variables descriptives
+    void test_set();
+    void test_set_inputs_number();
+    void test_set_neurons_number();
+    void test_set_default();
 
-   void test_set_descriptives();
-   void test_set_item_descriptives();
+    // Output variables descriptives
 
-   // Variables scaling and unscaling
+    void test_set_descriptives();
+    void test_set_item_descriptives();
 
-   void test_set_unscaling_method();
+    // Variables scaling and unscaling
 
-   // Check methods
+    void test_set_unscaling_method();
 
-   void test_is_empty();
+    // Check methods
 
-   // Outputs unscaling
+    void test_is_empty();
 
-   void test_calculate_outputs();
+    // Outputs unscaling
 
-   void test_calculate_minimum_maximum_outputs();
-   void test_calculate_mean_standard_deviation_outputs();
-   void test_calculate_logarithmic_outputs();
+    void test_calculate_outputs();
 
-   // Serialization methods
+    void test_calculate_minimum_maximum_outputs();
+    void test_calculate_mean_standard_deviation_outputs();
+    void test_calculate_logarithmic_outputs();
 
-   void test_to_XML();
-   void test_from_XML();
+    // Serialization methods
 
-   // Unit testing methods
+    void test_to_XML();
+    void test_from_XML();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   UnscalingLayer unscaling_layer;
+    UnscalingLayer unscaling_layer;
 
-   Tensor<Descriptives, 1> descriptives;
+    Tensor<Descriptives, 1> descriptives;
 
 };
 

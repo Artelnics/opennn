@@ -25,129 +25,128 @@ StochasticGradientDescentTest::~StochasticGradientDescentTest()
 
 void StochasticGradientDescentTest::test_constructor()
 {
-   cout << "test_constructor\n"; 
+    cout << "test_constructor\n";
 
-   // Default constructor
+    // Default constructor
 
-   StochasticGradientDescent stochastic_gradient_descent_1;
-   assert_true(!stochastic_gradient_descent_1.has_loss_index(), LOG);
+    StochasticGradientDescent stochastic_gradient_descent_1;
+    assert_true(!stochastic_gradient_descent_1.has_loss_index(), LOG);
 
-   // Loss index constructor
+    // Loss index constructor
 
-   StochasticGradientDescent stochastic_gradient_descent_2(&sum_squared_error);
-   assert_true(stochastic_gradient_descent_2.has_loss_index(), LOG);
+    StochasticGradientDescent stochastic_gradient_descent_2(&sum_squared_error);
+    assert_true(stochastic_gradient_descent_2.has_loss_index(), LOG);
+}
+
+
+void StochasticGradientDescentTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    StochasticGradientDescent* stochastic_gradient_descent = new StochasticGradientDescent;
+    delete stochastic_gradient_descent;
 }
 
 
 void StochasticGradientDescentTest::test_perform_training()
 {
-   cout << "test_perform_training\n";
+    cout << "test_perform_training\n";
 
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-   TrainingResults training_results;
+    TrainingResults training_results;
 
-   // Test
+    // Test
 
-   samples_number = 1;
-   inputs_number = 1;
-   targets_number = 1;
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
 
-   data_set.set(samples_number, inputs_number, targets_number);
-   data_set.set_data_random();
+    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
-   neural_network.set_parameters_random();
+    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set_parameters_random();
 
-   stochastic_gradient_descent.set_maximum_epochs_number(1);
+    stochastic_gradient_descent.set_maximum_epochs_number(1);
 
-   training_results = stochastic_gradient_descent.perform_training();
+    training_results = stochastic_gradient_descent.perform_training();
 
-   // Minimum parameters increment norm
+    // Minimum parameters increment norm
 
-   neural_network.set_parameters_constant(type(-1.0));
+    neural_network.set_parameters_constant(type(-1.0));
 
-   stochastic_gradient_descent.set_loss_goal(type(0.0));
-   stochastic_gradient_descent.set_maximum_epochs_number(1000);
-   stochastic_gradient_descent.set_maximum_time(type(1000.0));
+    stochastic_gradient_descent.set_loss_goal(type(0.0));
+    stochastic_gradient_descent.set_maximum_epochs_number(1000);
+    stochastic_gradient_descent.set_maximum_time(type(1000.0));
 
-   training_results = stochastic_gradient_descent.perform_training();
+    training_results = stochastic_gradient_descent.perform_training();
 
-   //assert_true(training_results.stopping_criterion, LOG);
+    // Loss goal
 
-   // Loss goal
+    neural_network.set_parameters_constant(type(-1.0));
 
-   neural_network.set_parameters_constant(type(-1.0));
+    type training_loss_goal = type(0.1);
 
-   type training_loss_goal = type(0.1);
+    stochastic_gradient_descent.set_loss_goal(training_loss_goal);
+    stochastic_gradient_descent.set_maximum_epochs_number(1000);
+    stochastic_gradient_descent.set_maximum_time(type(1000.0));
 
-   stochastic_gradient_descent.set_loss_goal(training_loss_goal);
-   stochastic_gradient_descent.set_maximum_epochs_number(1000);
-   stochastic_gradient_descent.set_maximum_time(type(1000.0));
+    training_results = stochastic_gradient_descent.perform_training();
 
-   training_results = stochastic_gradient_descent.perform_training();
+    // Minimum loss increase
 
-   //loss = sum_squared_error.calculate_error({0});
+    neural_network.set_parameters_constant(type(-1));
 
-   // Minimum loss increase
+    stochastic_gradient_descent.set_loss_goal(type(0));
+    stochastic_gradient_descent.set_maximum_epochs_number(1000);
+    stochastic_gradient_descent.set_maximum_time(type(1000.0));
 
-   neural_network.set_parameters_constant(type(-1));
+    training_results = stochastic_gradient_descent.perform_training();
 
-   stochastic_gradient_descent.set_loss_goal(type(0));
-   stochastic_gradient_descent.set_maximum_epochs_number(1000);
-   stochastic_gradient_descent.set_maximum_time(type(1000.0));
+    // Gradient norm goal
 
-   training_results = stochastic_gradient_descent.perform_training();
+    neural_network.set_parameters_constant(type(-1));
 
-   // Gradient norm goal
+    stochastic_gradient_descent.set_loss_goal(type(0));
+    stochastic_gradient_descent.set_maximum_epochs_number(1000);
+    stochastic_gradient_descent.set_maximum_time(type(1000.0));
 
-   neural_network.set_parameters_constant(type(-1));
-
-   stochastic_gradient_descent.set_loss_goal(type(0));
-   stochastic_gradient_descent.set_maximum_epochs_number(1000);
-   stochastic_gradient_descent.set_maximum_time(type(1000.0));
-
-   training_results = stochastic_gradient_descent.perform_training();
-
-//   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
-//   assert_true(gradient_norm < gradient_norm_goal, LOG);
+    training_results = stochastic_gradient_descent.perform_training();
 }
 
 
 void StochasticGradientDescentTest::test_to_XML()
 {
-   cout << "test_to_XML\n";
+    cout << "test_to_XML\n";
 
-   tinyxml2::XMLDocument* document = nullptr;
+    tinyxml2::XMLPrinter file_stream;
 
-   // Test
-/*
-   document = stochastic_gradient_descent.to_XML();
-   assert_true(document != nullptr, LOG);
-*/
-   delete document;
+    stochastic_gradient_descent.write_XML(file_stream);
 }
 
 
 void StochasticGradientDescentTest::run_test_case()
 {
-   cout << "Running stochastic gradient descent test case...\n";
+    cout << "Running stochastic gradient descent test case...\n";
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   test_constructor();
+    test_constructor();
 
-   // Training methods
+    test_destructor();
 
-   test_perform_training();
+    // Training methods
 
-   // Serialization methods
+    test_perform_training();
 
-   test_to_XML();
+    // Serialization methods
 
-   cout << "End of stochastic gradient descent test case.\n\n";
+    test_to_XML();
+
+    cout << "End of stochastic gradient descent test case.\n\n";
 }
 
 

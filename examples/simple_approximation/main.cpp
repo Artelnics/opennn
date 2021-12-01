@@ -36,7 +36,7 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {1, 3, 1});
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.perform_training();
 
         neural_network.save_expression_python("simple_function_regresion.py");

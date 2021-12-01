@@ -18,23 +18,23 @@ class TensorUtilitiesTest : public UnitTesting
 
 public:  
 
-   explicit TensorUtilitiesTest();
+    explicit TensorUtilitiesTest();
 
-   virtual ~TensorUtilitiesTest();
+    virtual ~TensorUtilitiesTest();
 
     void test_fill_submatrix();
 
     void test_calculate_rank();
 
-   // Unit testing methods
+    // Unit testing methods
 
-   void run_test_case();
+    void run_test_case();
 
 private:
 
-   Tensor<type, 0> scalar;
-   Tensor<type, 1> vector;
-   Tensor<type, 2> matrix;
+    Tensor<type, 0> scalar;
+    Tensor<type, 1> vector;
+    Tensor<type, 2> matrix;
 
 
 };

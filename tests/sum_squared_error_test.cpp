@@ -23,23 +23,32 @@ SumSquaredErrorTest::~SumSquaredErrorTest()
 
 void SumSquaredErrorTest::test_constructor()
 {
-   cout << "test_constructor\n";
+    cout << "test_constructor\n";
 
-   // Default
+    // Default
 
-   SumSquaredError sum_squared_error_1;
+    SumSquaredError sum_squared_error_1;
 
-   assert_true(!sum_squared_error_1.has_neural_network(), LOG);
-   assert_true(!sum_squared_error_1.has_data_set(), LOG);
+    assert_true(!sum_squared_error_1.has_neural_network(), LOG);
+    assert_true(!sum_squared_error_1.has_data_set(), LOG);
 
-   // Neural network and data set
+    // Neural network and data set
 
-   SumSquaredError sum_squared_error_4(&neural_network, &data_set);
+    SumSquaredError sum_squared_error_4(&neural_network, &data_set);
 
-   assert_true(sum_squared_error_4.has_neural_network(), LOG);
-   assert_true(sum_squared_error_4.has_data_set(), LOG);
+    assert_true(sum_squared_error_4.has_neural_network(), LOG);
+    assert_true(sum_squared_error_4.has_data_set(), LOG);
 }
 
+
+void SumSquaredErrorTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    SumSquaredError* sum_squared_error = new SumSquaredError;
+
+    delete sum_squared_error;
+}
 
 void SumSquaredErrorTest::test_back_propagate()
 {
@@ -304,7 +313,6 @@ void SumSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.error >= type(0), LOG);
 
         assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-1)), LOG);
-
     }
 }
 
@@ -475,17 +483,21 @@ void SumSquaredErrorTest::test_back_propagate_lm()
 
 void SumSquaredErrorTest::run_test_case()
 {
-   cout << "Running sum squared error test case...\n";
+    cout << "Running sum squared error test case...\n";
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   test_constructor();
+    test_constructor();
 
-   test_back_propagate();
+    test_destructor();
 
-   test_back_propagate_lm();
+    // Back propagate
 
-   cout << "End of sum squared error test case.\n\n";
+    test_back_propagate();
+
+    test_back_propagate_lm();
+
+    cout << "End of sum squared error test case.\n\n";
 }
 
 

@@ -22,13 +22,24 @@ TestingAnalysisTest::~TestingAnalysisTest()
 
 void TestingAnalysisTest::test_constructor()
 {
-   cout << "test_constructor\n";
+    cout << "test_constructor\n";
 
-   // Neural network and data set constructor
+    // Neural network and data set constructor
 
-   assert_true(testing_analysis.get_neural_network_pointer() != nullptr, LOG);
+    TestingAnalysis testing_analysis(&neural_network,&data_set);
 
-   assert_true(testing_analysis.get_data_set_pointer() != nullptr, LOG);
+    assert_true(testing_analysis.get_neural_network_pointer() != nullptr, LOG);
+
+    assert_true(testing_analysis.get_data_set_pointer() != nullptr, LOG);
+}
+
+
+void TestingAnalysisTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    TestingAnalysis* testing_analysis = new TestingAnalysis;
+    delete testing_analysis;
 }
 
 
@@ -84,12 +95,6 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
     assert_true(error_data.size() == 1, LOG);
     assert_true(error_data.dimension(1) == 1, LOG);
     assert_true(static_cast<double>(error_data(0,0)) == 0.0, LOG);
-}
-
-
-void TestingAnalysisTest::test_calculate_forecasting_error_data()
-{
-
 }
 
 
@@ -236,41 +241,41 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 
 void TestingAnalysisTest::test_linear_regression()
 {
-   cout << "test_linear_regression\n";
+    cout << "test_linear_regression\n";
 
-   Index neurons_number;
+    Index neurons_number;
 
-   Tensor<Correlation, 1> linear_correlation;
+    Tensor<Correlation, 1> linear_correlation;
 
-   // Test
+    // Test
 
-   samples_number = 1;
-   inputs_number = 1;
-   targets_number = 1;
+    samples_number = 1;
+    inputs_number = 1;
+    targets_number = 1;
 
-   data_set.set(samples_number, inputs_number, targets_number);
-   data_set.set_data_constant(type(0));
-   data_set.set_testing();
-   /// @todo
-//   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
-   neural_network.set_parameters_constant(type(0));
+    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set_data_constant(type(0));
+    data_set.set_testing();
+    /// @todo
+    //   neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+    neural_network.set_parameters_constant(type(0));
 
-   linear_correlation = testing_analysis.linear_correlation();
+    linear_correlation = testing_analysis.linear_correlation();
 
-   assert_true(linear_correlation.size() == 1, LOG);
-   assert_true(static_cast<double>(linear_correlation(0).a) == 0.0, LOG);
-   assert_true(static_cast<double>(linear_correlation(0).b) == 0.0, LOG);
-   assert_true(static_cast<double>(linear_correlation(0).r) == 1.0, LOG);
+    assert_true(linear_correlation.size() == 1, LOG);
+    assert_true(static_cast<double>(linear_correlation(0).a) == 0.0, LOG);
+    assert_true(static_cast<double>(linear_correlation(0).b) == 0.0, LOG);
+    assert_true(static_cast<double>(linear_correlation(0).r) == 1.0, LOG);
 }
 
 
 void TestingAnalysisTest::test_save()
 {
-   cout << "test_save\n";
+    cout << "test_save\n";
 
-   string file_name = "../data/linear_correlation.dat";
+    string file_name = "../data/linear_correlation.dat";
 
-   testing_analysis.save(file_name);
+    testing_analysis.save(file_name);
 }
 
 
@@ -278,7 +283,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
 {/// @todo
 
     cout << "test_perform_linear_regression\n";
-/*
+    /*
     // DataSet
 
     data_set.set(samples_number, inputs_number, targets_number);
@@ -312,61 +317,61 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
 void TestingAnalysisTest::test_calculate_confusion()
 {
-   cout << "test_calculate_confusion\n";
+    cout << "test_calculate_confusion\n";
 
-  // Samples* i;
+    // Samples* i;
 
-   Tensor<type, 2> actual;
-   Tensor<type, 2> predicted;
+    Tensor<type, 2> actual;
+    Tensor<type, 2> predicted;
 
-   // Test
+    // Test
 
-   actual.resize(4, 3);
-   predicted.resize(4, 3);
+    actual.resize(4, 3);
+    predicted.resize(4, 3);
 
-   actual(0,0) = type(1); actual(0,1) = type(0); actual(0,2) = type(0);
-   actual(1,0) = type(0); actual(1,1) = type(1); actual(1,2) = type(0);
-   actual(2,0) = type(0); actual(2,1) = type(1); actual(2,2) = type(0);
-   actual(3,0) = type(0); actual(3,1) = type(0); actual(3,2) = type(1);
+    actual(0,0) = type(1); actual(0,1) = type(0); actual(0,2) = type(0);
+    actual(1,0) = type(0); actual(1,1) = type(1); actual(1,2) = type(0);
+    actual(2,0) = type(0); actual(2,1) = type(1); actual(2,2) = type(0);
+    actual(3,0) = type(0); actual(3,1) = type(0); actual(3,2) = type(1);
 
-   predicted(0,0) = type(1); predicted(0,1) = type(0); predicted(0,2) = type(0);
-   predicted(1,0) = type(0); predicted(1,1) = type(1); predicted(1,2) = type(0);
-   predicted(2,0) = type(0); predicted(2,1) = type(1); predicted(2,2) = type(0);
-   predicted(3,0) = type(0); predicted(3,1) = type(0); predicted(3,2) = type(1);
+    predicted(0,0) = type(1); predicted(0,1) = type(0); predicted(0,2) = type(0);
+    predicted(1,0) = type(0); predicted(1,1) = type(1); predicted(1,2) = type(0);
+    predicted(2,0) = type(0); predicted(2,1) = type(1); predicted(2,2) = type(0);
+    predicted(3,0) = type(0); predicted(3,1) = type(0); predicted(3,2) = type(1);
 
-   Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_multiple_classification(actual, predicted);
+    Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_multiple_classification(actual, predicted);
 
-   Tensor<Index, 0> sum = confusion.sum();
+    Tensor<Index, 0> sum = confusion.sum();
 
-   assert_true(sum(0) == 4, LOG);
-   assert_true(confusion(0,0) == 1, LOG);
-   assert_true(confusion(1,1) == 2, LOG);
-   assert_true(confusion(2,2) == 1, LOG);
-   assert_true(confusion(0,2) == 0, LOG);
+    assert_true(sum(0) == 4, LOG);
+    assert_true(confusion(0,0) == 1, LOG);
+    assert_true(confusion(1,1) == 2, LOG);
+    assert_true(confusion(2,2) == 1, LOG);
+    assert_true(confusion(0,2) == 0, LOG);
 
 }
 
 
 void TestingAnalysisTest::test_calculate_binary_classification_test()
 {
-   cout << "test_calculate_binary_classification_test\n";
+    cout << "test_calculate_binary_classification_test\n";
 
-   // DataSet
+    // DataSet
 
-   data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set(samples_number, inputs_number, targets_number);
 
-   data_set.set_data_constant(type(0));
+    data_set.set_data_constant(type(0));
 
-   data_set.set_testing();
+    data_set.set_testing();
 
-   // Neural Network
+    // Neural Network
 
-   neural_network.set(NeuralNetwork::ProjectType::Classification, {1, 1, 1});
-   neural_network.set_parameters_constant(type(0));
+    neural_network.set(NeuralNetwork::ProjectType::Classification, {1, 1, 1});
+    neural_network.set_parameters_constant(type(0));
 
-   // Testing Analysis
-   /// @todo
-/*
+    // Testing Analysis
+    /// @todo
+    /*
    Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
 
    assert_true(binary.size() == 15 , LOG);
@@ -1103,7 +1108,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     testing_indices.setValues({0, 1, 2, 3, 4, 5, 6, 7, 8});
 
     /// @todo fails when running "suite" test
-/*
+    /*
     multiple_classification_rates = testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
     assert_true(multiple_classification_rates(0,0)(0) == 0, LOG);
@@ -1120,65 +1125,66 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 
 void TestingAnalysisTest::run_test_case()
 {
-   cout << "Running testing analysis test case...\n";
+    cout << "Running testing analysis test case...\n";
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   test_constructor();
+    test_constructor();
+    test_destructor();
 
-   // Error data methods
+    // Error data methods
 
-   test_calculate_error_data();
-   test_calculate_percentage_error_data();
-   test_calculate_error_data_descriptives();
-   test_calculate_absolute_errors_descriptives();
-   test_calculate_percentage_errors_descriptives();
-   test_calculate_error_data_histograms();
-   test_calculate_maximal_errors();
+    test_calculate_error_data();
+    test_calculate_percentage_error_data();
+    test_calculate_error_data_descriptives();
+    test_calculate_absolute_errors_descriptives();
+    test_calculate_percentage_errors_descriptives();
+    test_calculate_error_data_histograms();
+    test_calculate_maximal_errors();
 
-   // Linear regression analysis methodsta
+    // Linear regression analysis methodsta
 
-   test_linear_regression();
-   test_save();
-   test_perform_linear_regression();
+    test_linear_regression();
+    test_save();
+    test_perform_linear_regression();
 
-   // Binary classification test methods
+    // Binary classification test methods
 
-   test_calculate_binary_classification_test();
+    test_calculate_binary_classification_test();
 
-   // Confusion matrix methods
+    // Confusion matrix methods
 
-   test_calculate_confusion();
+    test_calculate_confusion();
 
-   // ROC curve methods
+    // ROC curve methods
 
-   test_calculate_Wilcoxon_parameter();
-   test_calculate_roc_curve();
-   test_calculate_area_under_curve();
-   test_calculate_optimal_threshold();
+    test_calculate_Wilcoxon_parameter();
+    test_calculate_roc_curve();
+    test_calculate_area_under_curve();
+    test_calculate_optimal_threshold();
 
-   // Lift chart methods
+    // Lift chart methods
 
-   test_calculate_cumulative_gain();
-   test_calculate_lift_chart();
+    test_calculate_cumulative_gain();
+    test_calculate_lift_chart();
 
-   // Calibration plot
+    // Calibration plot
 
-   test_calculate_calibration_plot();
+    test_calculate_calibration_plot();
 
-   // Binary classification rates
+    // Binary classification rates
 
-   test_calculate_true_positive_samples();
-   test_calculate_false_positive_samples();
-   test_calculate_false_negative_samples();
-   test_calculate_true_negative_samples();
+    test_calculate_true_positive_samples();
+    test_calculate_false_positive_samples();
+    test_calculate_false_negative_samples();
+    test_calculate_true_negative_samples();
 
 
-   // Multiple classification rates
+    // Multiple classification rates
 
-   test_calculate_multiple_classification_rates();
+    test_calculate_multiple_classification_rates();
 
-   cout << "End of testing analysis test case.\n\n";
+    cout << "End of testing analysis test case.\n\n";
 }
 
 

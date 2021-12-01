@@ -18,38 +18,40 @@ class RecurrentLayerTest : public UnitTesting
 
 public:
 
-   explicit RecurrentLayerTest();
+    explicit RecurrentLayerTest();
 
-   virtual ~RecurrentLayerTest();
+    virtual ~RecurrentLayerTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   // Inputs and neurons
+    void test_destructor();
 
-   void test_is_empty();
+    // Inputs and neurons
 
-   // Parameters
+    void test_is_empty();
 
-   void test_calculate_activations_derivatives();
+    // Parameters
 
-   // Forward propagate
+    void test_calculate_activations_derivatives();
 
-   void test_forward_propagate();
+    // Forward propagate
 
-   // Forward propagation
+    void test_forward_propagate();
 
-   void test_calculate_outputs();
+    // Forward propagation
 
-   // Unit testing methods
+    void test_calculate_outputs();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   Index inputs_number;
-   Index neurons_number;
+    Index inputs_number;
+    Index neurons_number;
 
 
     RecurrentLayer recurrent_layer;

@@ -19,6 +19,7 @@ class ScalingTest : public UnitTesting
 public:  
 
     explicit ScalingTest();
+    virtual ~ScalingTest();
 
     // Scaling
 
@@ -36,10 +37,9 @@ public:
     void test_unscale_data_standard_deviation();
     void test_unscale_data_logarithmic();
 
-
-    virtual ~ScalingTest();
-
     void run_test_case();
+
+private:
 
     DataSet data_set;
 

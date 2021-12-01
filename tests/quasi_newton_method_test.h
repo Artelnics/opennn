@@ -18,49 +18,51 @@ class QuasiNewtonMethodTest : public UnitTesting
 
 public:
 
-   explicit QuasiNewtonMethodTest();
+    explicit QuasiNewtonMethodTest();
 
-   virtual ~QuasiNewtonMethodTest();
+    virtual ~QuasiNewtonMethodTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   // Set methods
+    void test_destructor();
 
-   void test_set_inverse_hessian_approximation_method();
+    // Set methods
 
-   // Training methods
+    void test_set_inverse_hessian_approximation_method();
 
-   void test_calculate_DFP_inverse_hessian_approximation();
-   void test_calculate_BFGS_inverse_hessian_approximation();
+    // Training methods
 
-   void test_calculate_inverse_hessian_approximation();
+    void test_calculate_DFP_inverse_hessian_approximation();
+    void test_calculate_BFGS_inverse_hessian_approximation();
 
-   void test_perform_training();
+    void test_calculate_inverse_hessian_approximation();
 
-   // Unit testing methods
+    void test_perform_training();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
-   Index neurons_number;
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
+    Index neurons_number;
 
-   DataSet data_set;
+    DataSet data_set;
 
-   NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-   SumSquaredError sum_squared_error;
+    SumSquaredError sum_squared_error;
 
-   QuasiNewtonMethod quasi_newton_method;
+    QuasiNewtonMethod quasi_newton_method;
 
-   QuasiNewtonMehtodData quasi_newton_method_data;
+    QuasiNewtonMehtodData quasi_newton_method_data;
 
-   TrainingResults training_results;
+    TrainingResults training_results;
 
 };
 

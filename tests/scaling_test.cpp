@@ -28,8 +28,6 @@ void ScalingTest::test_scale_data_mean_standard_deviation()
 
     Tensor<Descriptives, 1> matrix_descriptives;
 
-    // Test
-
     matrix.setRandom();
 
     data_set.set(matrix);
@@ -54,8 +52,6 @@ void ScalingTest::test_scale_data_minimum_maximum()
 
     Tensor<Descriptives, 1> matrix_descriptives;
 
-    // Test
-
     matrix.setRandom();
 
     data_set.set(matrix);
@@ -76,8 +72,6 @@ void ScalingTest::test_scale_data_no_scaling()
 
     Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
     Tensor<type, 2> scaled_matrix;
-
-    // Test
 
     matrix.setRandom();
 
@@ -100,8 +94,6 @@ void ScalingTest::test_scale_data_standard_deviation()
 
     Tensor<Descriptives, 1> matrix_descriptives;
 
-    // Test
-
     matrix.setRandom();
 
     data_set.set(matrix);
@@ -123,8 +115,6 @@ void ScalingTest::test_scale_data_logarithmic()
     Tensor<type, 2> scaled_matrix;
     Tensor<type, 2> solution_matrix;
 
-    // Test
-
     matrix.setRandom();
 
     data_set.set(matrix);
@@ -143,16 +133,12 @@ void ScalingTest::test_scale_data_logarithmic()
 }
 
 
-// Unscaling methods
-
 void ScalingTest::test_unscale_data_mean_standard_deviation()
 {
     cout << "test_unscale_data_minimum_maximum\n";
 
     Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
     Tensor<type, 2> unscaled_matrix;
-
-    // Test
 
     matrix.setRandom();
 
@@ -176,8 +162,6 @@ void ScalingTest::test_unscale_data_minimum_maximum()
     Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
     Tensor<type, 2> unscaled_matrix;
 
-    // Test
-
     matrix.setRandom();
 
     data_set.set(matrix);
@@ -192,14 +176,13 @@ void ScalingTest::test_unscale_data_minimum_maximum()
     assert_true(are_equal(matrix, unscaled_matrix,type(NUMERIC_LIMITS_MIN)), LOG);
 }
 
+
 void ScalingTest::test_unscale_data_no_scaling()
 {
     cout << "test_unscale_data_no_scaling\n";
 
     Tensor<type, 2> matrix(1 + rand()%10,1 + rand()%10);
     Tensor<type, 2> scaled_matrix;
-
-    // Test
 
     matrix.setRandom();
 
@@ -222,8 +205,6 @@ void ScalingTest::test_unscale_data_standard_deviation()
     Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
     Tensor<type, 2> unscaled_matrix;
 
-    // Test
-
     matrix.setRandom();
 
     data_set.set(matrix);
@@ -245,8 +226,6 @@ void ScalingTest::test_unscale_data_logarithmic()
 
     Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
     Tensor<type, 2> unscaled_matrix;
-
-    // Test
 
     matrix.setRandom();
 

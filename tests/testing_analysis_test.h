@@ -18,85 +18,87 @@ class TestingAnalysisTest : public UnitTesting
 
 public:  
 
-   explicit TestingAnalysisTest();   
+    explicit TestingAnalysisTest();
 
-   virtual ~TestingAnalysisTest();
+    virtual ~TestingAnalysisTest();
 
-   // Constructor and destructor methods
+    // Constructor and destructor methods
 
-   void test_constructor();
+    void test_constructor();
 
-   // Error data methods
+    void test_destructor();
 
-   void test_calculate_error_data();
-   void test_calculate_percentage_error_data();
-   void test_calculate_forecasting_error_data();
-   void test_calculate_absolute_errors_descriptives();
-   void test_calculate_percentage_errors_descriptives();
-   void test_calculate_error_data_descriptives();
-   void test_calculate_error_data_histograms();
-   void test_calculate_maximal_errors();
+    // Error data methods
 
-   // Linear regression parameters methods
+    void test_calculate_error_data();
+    void test_calculate_percentage_error_data();
+    void test_calculate_forecasting_error_data();
+    void test_calculate_absolute_errors_descriptives();
+    void test_calculate_percentage_errors_descriptives();
+    void test_calculate_error_data_descriptives();
+    void test_calculate_error_data_histograms();
+    void test_calculate_maximal_errors();
 
-   void test_linear_regression();
-   void test_save();
-   void test_perform_linear_regression();
+    // Linear regression parameters methods
 
-   // Binary classification test methods
+    void test_linear_regression();
+    void test_save();
+    void test_perform_linear_regression();
 
-   void test_calculate_binary_classification_test();
+    // Binary classification test methods
 
-   // Confusion matrix methods
+    void test_calculate_binary_classification_test();
 
-   void test_calculate_confusion();
+    // Confusion matrix methods
 
-   // ROC curve methods
+    void test_calculate_confusion();
 
-   void test_calculate_Wilcoxon_parameter();
-   void test_calculate_roc_curve();
-   void test_calculate_area_under_curve();
-   void test_calculate_optimal_threshold ();
+    // ROC curve methods
 
-   // Lift chart methods
+    void test_calculate_Wilcoxon_parameter();
+    void test_calculate_roc_curve();
+    void test_calculate_area_under_curve();
+    void test_calculate_optimal_threshold ();
 
-   void test_calculate_cumulative_gain();
-   void test_calculate_lift_chart();
+    // Lift chart methods
 
-   // Calibration plot
+    void test_calculate_cumulative_gain();
+    void test_calculate_lift_chart();
 
-   void test_calculate_calibration_plot();
+    // Calibration plot
 
-   // Binary classificaton rates
+    void test_calculate_calibration_plot();
 
-   void test_calculate_true_positive_samples();
-   void test_calculate_false_positive_samples();
-   void test_calculate_false_negative_samples();
-   void test_calculate_true_negative_samples();
+    // Binary classificaton rates
 
-   // Multiple classification rates
+    void test_calculate_true_positive_samples();
+    void test_calculate_false_positive_samples();
+    void test_calculate_false_negative_samples();
+    void test_calculate_true_negative_samples();
 
-   void test_calculate_multiple_classification_rates();
+    // Multiple classification rates
 
-   // Unit testing methods
+    void test_calculate_multiple_classification_rates();
 
-   void run_test_case();
+    // Unit testing methods
+
+    void run_test_case();
 
 private:
 
-   Index samples_number;
-   Index inputs_number;
-   Index targets_number;
-   Index neurons_number;
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
+    Index neurons_number;
 
-   Tensor<type, 2> targets;
-   Tensor<type, 2> outputs;
+    Tensor<type, 2> targets;
+    Tensor<type, 2> outputs;
 
-   DataSet data_set;
+    DataSet data_set;
 
-   NeuralNetwork neural_network;
+    NeuralNetwork neural_network;
 
-   TestingAnalysis testing_analysis;
+    TestingAnalysis testing_analysis;
 };
 
 

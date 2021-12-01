@@ -37,7 +37,6 @@ void RecurrentLayerTest::test_constructor()
     recurrent_layer.set(inputs_number, neurons_number);
 
     assert_true(recurrent_layer.get_parameters_number() == 3, LOG);
-
     assert_true(recurrent_layer.get_biases_number() == 1, LOG);
 
     // Test
@@ -48,8 +47,16 @@ void RecurrentLayerTest::test_constructor()
     recurrent_layer.set(inputs_number, neurons_number);
 
     assert_true(recurrent_layer.get_parameters_number() == 18, LOG);
-
     assert_true(recurrent_layer.get_biases_number() == 3, LOG);
+}
+
+
+void RecurrentLayerTest::test_destructor()
+{
+    cout << "test_destructor\n";
+
+    RecurrentLayer* recurrent_layer = new RecurrentLayer;
+    delete recurrent_layer;
 }
 
 
@@ -110,30 +117,21 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Logistic);
 
-///@todo numerical_differentiation.calculate_derivatives() has different arguments
+    ///@todo numerical_differentiation.calculate_derivatives() has different arguments
 
 //    recurrent_layer.calculate_activations_derivatives(combinations, activations, activations_derivatives);
-
 //    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
-
 //    assert_true((activations_derivatives - numerical_activation_derivative).abs() < 1.0e-3, LOG);
 
 //    recurrent_layer.set_activation_function(RecurrentLayer::HyperbolicTangent);
-
 //    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
-
 //    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
-
 //    assert_true(absolute_value(activations_derivatives - numerical_activation_derivative) < 1.0e-3, LOG);
 
 //    recurrent_layer.set_activation_function(RecurrentLayer::Linear);
-
 //    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
-
 //    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
-
 //    assert_true(absolute_value(activations_derivatives - numerical_activation_derivative) < 1.0e-3, LOG);
-
 
     // Test
 
@@ -163,7 +161,7 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
     inputs(0,2) = static_cast<type>(0.29);
     inputs(0,3) = static_cast<type>(-0.77);
 
-///@todo
+    ///@todo
 //    recurrent_layer.set_activation_function(RecurrentLayer::Threshold);
 //    activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
 //    numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
@@ -193,50 +191,51 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 
 void RecurrentLayerTest::test_calculate_outputs()
 {
-   cout << "test_calculate_outputs\n";
+    cout << "test_calculate_outputs\n";
 
-   Tensor<type, 2> inputs;
-   Tensor<type, 2> outputs;
+    Tensor<type, 2> inputs;
+    Tensor<type, 2> outputs;
 
-   Tensor<type, 1> parameters;
+    Tensor<type, 1> parameters;
 
-   Index samples;
+    Index samples;
 
-   Tensor<type, 2> new_weights;
-   Tensor<type, 2> new_recurrent_weights;
-   Tensor<type, 1> new_biases;
+    Tensor<type, 2> new_weights;
+    Tensor<type, 2> new_recurrent_weights;
+    Tensor<type, 1> new_biases;
 
-   // Test
+    // Test
 
-   samples = 3;
+    samples = 3;
 
-   recurrent_layer.set(2,2);
+    recurrent_layer.set(2,2);
 
-   inputs.resize(samples,2);
-   inputs.setConstant(type(1));
+    inputs.resize(samples,2);
+    inputs.setConstant(type(1));
 
-   recurrent_layer.set_activation_function("SoftPlus");
+    recurrent_layer.set_activation_function("SoftPlus");
 
-   recurrent_layer.set_timesteps(3);
+    recurrent_layer.set_timesteps(3);
 
-   new_weights.resize(2,2);
-   new_weights.setConstant(type(1));
-   new_recurrent_weights.resize(2,2);
-   new_recurrent_weights.setConstant(type(1));
-   new_biases.resize(2);
-   new_biases.setConstant(type(1));
+    new_weights.resize(2,2);
+    new_weights.setConstant(type(1));
+    new_recurrent_weights.resize(2,2);
+    new_recurrent_weights.setConstant(type(1));
+    new_biases.resize(2);
+    new_biases.setConstant(type(1));
 
-   recurrent_layer.set_biases(new_biases);
-   recurrent_layer.set_input_weights(new_weights);
-   recurrent_layer.set_recurrent_weights(new_recurrent_weights);
+    recurrent_layer.set_biases(new_biases);
+    recurrent_layer.set_input_weights(new_weights);
+    recurrent_layer.set_recurrent_weights(new_recurrent_weights);
 
-   parameters = recurrent_layer.get_parameters();
+    parameters = recurrent_layer.get_parameters();
 
-   outputs = recurrent_layer.calculate_outputs(inputs);
+    outputs = recurrent_layer.calculate_outputs(inputs);
 }
 
+
 void RecurrentLayerTest::test_forward_propagate()
-{/// @todo
+{
     cout << "test_forward_propagate\n";
 
     Index neurons_number = 4;
@@ -264,25 +263,27 @@ void RecurrentLayerTest::test_forward_propagate()
 
 void RecurrentLayerTest::run_test_case()
 {
-   cout << "Running recurrent layer test case...\n";
+    cout << "Running recurrent layer test case...\n";
 
-   // Constructor and destructor
+    // Constructor and destructor
 
-   test_constructor();
+    test_constructor();
 
-   // Activation Derivatives
+    test_destructor();
 
-   test_calculate_activations_derivatives();
+    // Activation Derivatives
 
-   // Outputs
+    test_calculate_activations_derivatives();
 
-   test_calculate_outputs();
+    // Outputs
 
-   // Forward propagate
+    test_calculate_outputs();
 
-   test_forward_propagate();
+    // Forward propagate
 
-   cout << "End of recurrent layer test case.\n\n";
+    test_forward_propagate();
+
+    cout << "End of recurrent layer test case.\n\n";
 }
 
 
