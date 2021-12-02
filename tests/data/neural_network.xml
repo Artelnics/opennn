@@ -1,0 +1,87 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>2</InputsNumber>
+      <Input Index="1"></Input>
+      <Input Index="2"></Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Perceptron Unscaling Bounding</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>2</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>-1</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Minimum>-1</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer_1</LayerName>
+         <InputsNumber>2</InputsNumber>
+         <NeuronsNumber>4</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>-0.0659546 0.1578 0.0724853 0.1875 0.0142334 0.171667 0.127722 -0.0491577 -0.12146 -0.108411 -0.097937 0.00756836</Parameters>
+      </PerceptronLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer_2</LayerName>
+         <InputsNumber>4</InputsNumber>
+         <NeuronsNumber>3</NeuronsNumber>
+         <ActivationFunction>Linear</ActivationFunction>
+         <Parameters>-0.176917 0.152087 -0.0765991 -0.120374 0.165039 -0.0474365 -0.059436 -0.120618 -0.109033 -0.0375122 0.0578613 -0.0442383 0.168335 -0.163379 0.0393188</Parameters>
+      </PerceptronLayer>
+      <UnscalingLayer>
+         <UnscalingNeuronsNumber>3</UnscalingNeuronsNumber>
+         <Descriptives Index="1">
+            <Minimum>-1</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <Scaler>MinimumMaximum</Scaler>
+         </Descriptives>
+         <Descriptives Index="2">
+            <Minimum>-1</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <Scaler>MinimumMaximum</Scaler>
+         </Descriptives>
+         <Descriptives Index="3">
+            <Minimum>-1</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0</Mean>
+            <StandardDeviation>1</StandardDeviation>
+            <Scaler>MinimumMaximum</Scaler>
+         </Descriptives>
+      </UnscalingLayer>
+      <BoundingLayer>
+         <BoundingNeuronsNumber>3</BoundingNeuronsNumber>
+         <Item Index="1">
+            <LowerBound>-3.40282e+38</LowerBound>
+            <UpperBound>3.40282e+38</UpperBound>
+         </Item>
+         <Item Index="2">
+            <LowerBound>-3.40282e+38</LowerBound>
+            <UpperBound>3.40282e+38</UpperBound>
+         </Item>
+         <Item Index="3">
+            <LowerBound>-3.40282e+38</LowerBound>
+            <UpperBound>3.40282e+38</UpperBound>
+         </Item>
+         <UseBoundingLayer>1</UseBoundingLayer>
+      </BoundingLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>3</OutputsNumber>
+      <Output Index="1"></Output>
+      <Output Index="2"></Output>
+      <Output Index="3"></Output>
+   </Outputs>
+</NeuralNetwork>

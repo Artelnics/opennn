@@ -1,0 +1,93 @@
+﻿  adaptive_moment_estimation.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\adaptive_moment_estimation.cpp': No such file or directory
+  bounding_layer.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\bounding_layer.cpp': No such file or directory
+  conjugate_gradient.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\conjugate_gradient.cpp': No such file or directory
+  convolutional_layer.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\convolutional_layer.cpp': No such file or directory
+  correlations.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\correlations.cpp': No such file or directory
+  cross_entropy_error.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\cross_entropy_error.cpp': No such file or directory
+  data_set.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\data_set.cpp': No such file or directory
+  genetic_algorithm.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\genetic_algorithm.cpp': No such file or directory
+  gradient_descent.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\gradient_descent.cpp': No such file or directory
+  growing_inputs.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\growing_inputs.cpp': No such file or directory
+  growing_neurons.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\growing_neurons.cpp': No such file or directory
+  inputs_selection.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\inputs_selection.cpp': No such file or directory
+  layer.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\layer.cpp': No such file or directory
+  learning_rate_algorithm.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\learning_rate_algorithm.cpp': No such file or directory
+  levenberg_marquardt_algorithm.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\levenberg_marquardt_algorithm.cpp': No such file or directory
+  long_short_term_memory_layer.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\long_short_term_memory_layer.cpp': No such file or directory
+  loss_index.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\loss_index.cpp': No such file or directory
+  mean_squared_error.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\mean_squared_error.cpp': No such file or directory
+  minkowski_error.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\minkowski_error.cpp': No such file or directory
+  model_selection.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\model_selection.cpp': No such file or directory
+  Generando código...
+  Compilando...
+  neural_network.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\neural_network.cpp': No such file or directory
+  neurons_selection.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\neurons_selection.cpp': No such file or directory
+  normalized_squared_error.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\normalized_squared_error.cpp': No such file or directory
+  numerical_differentiation.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\numerical_differentiation.cpp': No such file or directory
+  opennn_strings.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\opennn_strings.cpp': No such file or directory
+  optimization_algorithm.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\optimization_algorithm.cpp': No such file or directory
+  perceptron_layer.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\perceptron_layer.cpp': No such file or directory
+  pooling_layer.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\pooling_layer.cpp': No such file or directory
+  principal_components_layer.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\principal_components_layer.cpp': No such file or directory
+  probabilistic_layer.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\probabilistic_layer.cpp': No such file or directory
+  pruning_inputs.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\pruning_inputs.cpp': No such file or directory
+  quasi_newton_method.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\quasi_newton_method.cpp': No such file or directory
+  recurrent_layer.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\recurrent_layer.cpp': No such file or directory
+  response_optimization.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\response_optimization.cpp': No such file or directory
+  scaling_layer.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\scaling_layer.cpp': No such file or directory
+  statistics.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\statistics.cpp': No such file or directory
+  stochastic_gradient_descent.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\stochastic_gradient_descent.cpp': No such file or directory
+  sum_squared_error.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\sum_squared_error.cpp': No such file or directory
+  testing_analysis.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\testing_analysis.cpp': No such file or directory
+  tinyxml2.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\tinyxml2.cpp': No such file or directory
+  Generando código...
+  Compilando...
+  training_strategy.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\training_strategy.cpp': No such file or directory
+  unit_testing.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\unit_testing.cpp': No such file or directory
+  unscaling_layer.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\unscaling_layer.cpp': No such file or directory
+  weighted_squared_error.cpp
+c1xx : fatal error C1083: No se puede abrir el archivo origen: 'C:\opennn\examples\opennn\weighted_squared_error.cpp': No such file or directory
+  Generando código...
