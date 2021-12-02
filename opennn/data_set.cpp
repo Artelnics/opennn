@@ -3510,8 +3510,10 @@ void DataSet::set_binary_simple_columns()
                     different_values++;
                 }
 
-                if(row_index == (data.dimension(0)-1)){
-                    if(different_values == 1){
+                if(row_index == (data.dimension(0)-1))
+                {
+                    if(different_values == 1)
+                    {
                         is_binary = false;
                         break;
                     }
@@ -3532,13 +3534,13 @@ void DataSet::set_binary_simple_columns()
 
                 if(values(0) == type(0) && values(1) == type(1))
                 {
-                    columns(column_index).categories(0) = "Negative (0)";
-                    columns(column_index).categories(1) = "Positive (1)";
+                    columns(column_index).categories(0) = "Negative " + std::to_string(static_cast<int>(values(0)));
+                    columns(column_index).categories(1) = "Positive " + std::to_string(static_cast<int>(values(1)));
                 }
                 else if(values(0) == type(1) && values(1) == type(0))
                 {
-                    columns(column_index).categories(0) = "Positive (1)";
-                    columns(column_index).categories(1) = "Negative (0)";
+                    columns(column_index).categories(0) = "Positive " + std::to_string(static_cast<int>(values(0)));
+                    columns(column_index).categories(1) = "Negative " + std::to_string(static_cast<int>(values(1)));
                 }
                 else
                 {
@@ -5279,21 +5281,42 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                 Tensor<Index, 1> binary_frequencies(2);
                 binary_frequencies.setZero();
 
-                for(Index j = 0; j < used_samples_number; j++)
+                if(abs(data(used_samples_indices(0), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
                 {
-                    if(abs(data(used_samples_indices(j), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
+                    for(Index j = 0; j < used_samples_number; j++)
                     {
-                        binary_frequencies(0)++;
+                        if(abs(data(used_samples_indices(j), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
+                        {
+                            binary_frequencies(0)++;
+                        }
+                        else
+                        {
+                            binary_frequencies(1)++;
+                        }
                     }
-                    else
-                    {
-                        binary_frequencies(1)++;
-                    }
-                }
 
                 histograms(used_column_index).frequencies = binary_frequencies;
                 variable_index++;
                 used_column_index++;
+                }
+                else
+                {
+                    for(Index j = 0; j < used_samples_number; j++)
+                    {
+                        if(abs(data(used_samples_indices(j), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
+                        {
+                            binary_frequencies(1)++;
+                        }
+                        else
+                        {
+                            binary_frequencies(0)++;
+                        }
+                    }
+
+                histograms(used_column_index).frequencies = binary_frequencies;
+                variable_index++;
+                used_column_index++;
+                }
             }
         }
         else // Time @todo
