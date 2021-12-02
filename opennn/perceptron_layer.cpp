@@ -13,7 +13,7 @@ namespace OpenNN
 
 /// Default constructor.
 /// It creates a empty layer object, with no perceptrons.
-/// This constructor also initializes the rest of class members to their default values.
+/// This constructor also initializes the rest of the class members to their default values.
 
 PerceptronLayer::PerceptronLayer() : Layer()
 {
@@ -26,7 +26,7 @@ PerceptronLayer::PerceptronLayer() : Layer()
 /// Layer architecture constructor.
 /// It creates a layer object with given numbers of inputs and perceptrons.
 /// It initializes the parameters at random.
-/// This constructor also initializes the rest of class members to their default values.
+/// This constructor also initializes the rest of the class members to their default values.
 /// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of perceptrons in the layer.
 
