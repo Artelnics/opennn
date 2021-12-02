@@ -3657,7 +3657,7 @@ void DataSet::set_input_variables_dimensions(const Tensor<Index, 1>& new_inputs_
 }
 
 
-/// Returns true if the data matrix is empty, and false otherwise.
+/// Returns true if the data matrix is empty and false otherwise.
 
 bool DataSet::is_empty() const
 {
@@ -4780,8 +4780,8 @@ void DataSet::set(const string& file_name)
 }
 
 /// Sets a new display value.
-/// If it is set to true messages from this class are to be displayed on the screen;
-/// if it is set to false messages from this class are not to be displayed on the screen.
+/// If it is set to true messages from this class are displayed on the screen;
+/// if it is set to false messages from this class are not displayed on the screen.
 /// @param new_display Display value.
 
 void DataSet::set_display(const bool& new_display)

@@ -371,7 +371,7 @@ const bool& LongShortTermMemoryLayer::get_display() const
 
 
 /// Sets an empty layer, wihtout any neuron.
-/// It also sets the rest of members to their default values.
+/// It also sets the rest of the members to their default values.
 
 void LongShortTermMemoryLayer::set()
 {
@@ -380,7 +380,7 @@ void LongShortTermMemoryLayer::set()
 
 
 /// Sets new numbers of inputs and neurons in the layer.
-/// It also sets the rest of members to their default values.
+/// It also sets the rest of the members to their default values.
 /// @param new_inputs_number Number of inputs.
 /// @param new_neurons_number Number of neurons.
 
