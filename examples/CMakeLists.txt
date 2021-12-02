@@ -23,5 +23,4 @@ add_subdirectory(outlier_detection)
 add_subdirectory(rosenbrock)
 add_subdirectory(simple_approximation)
 add_subdirectory(simple_classification)
-add_subdirectory(yacht_hydrodynamics_design)
-add_subdirectory(yacht_hydrodynamics_production)
+
