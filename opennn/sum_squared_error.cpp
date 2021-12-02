@@ -13,7 +13,7 @@ namespace OpenNN
 
 /// Default constructor.
 /// It creates a sum squared error term not associated with any neural network and not measured on any data set.
-/// It also initializes all the rest of class members to their default values.
+/// It also initializes all the rest of the class members to their default values.
 
 SumSquaredError::SumSquaredError() : LossIndex()
 {
@@ -22,7 +22,7 @@ SumSquaredError::SumSquaredError() : LossIndex()
 
 /// Neural network and data set constructor.
 /// It creates a sum squared error associated with a neural network and measured on a data set.
-/// It also initializes all the rest of class members to their default values.
+/// It also initializes all the rest of the class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 

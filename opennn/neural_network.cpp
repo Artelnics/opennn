@@ -610,8 +610,8 @@ RecurrentLayer* NeuralNetwork::get_recurrent_layer_pointer() const
 }
 
 
-/// Returns true if messages from this class are to be displayed on the screen, or false if messages
-/// from this class are not to be displayed on the screen.
+/// Returns true if messages from this class are displayed on the screen, or false if messages
+/// from this class are not displayed on the screen.
 
 const bool& NeuralNetwork::get_display() const
 {
@@ -1145,8 +1145,8 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
 
 
 /// Sets a new display value.
-/// If it is set to true messages from this class are to be displayed on the screen;
-/// if it is set to false messages from this class are not to be displayed on the screen.
+/// If it is set to true messages from this class are displayed on the screen;
+/// if it is set to false messages from this class are not displayed on the screen.
 /// @param new_display Display value.
 
 void NeuralNetwork::set_display(const bool& new_display)
@@ -1642,7 +1642,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 
 
 /// For each layer: inputs, neurons, activation function.
-/// @todo Complete for rest of layers.
+/// @todo Complete for the rest of the layers.
 
 Tensor<string, 2> NeuralNetwork::get_information() const
 {
@@ -2357,7 +2357,7 @@ void NeuralNetwork::save(const string& file_name) const
 
 
 /// Saves to a data file the parameters of a neural network object.
-/// @param file_name Name of parameters data file.
+/// @param file_name Name of the parameters data file.
 
 void NeuralNetwork::save_parameters(const string& file_name) const
 {
@@ -2412,7 +2412,7 @@ void NeuralNetwork::load(const string& file_name)
 
 /// Loads the neural network parameters from a data file.
 /// The format of this file is just a sequence of numbers.
-/// @param file_name Name of parameters data file.
+/// @param file_name Name of the parameters data file.
 
 void NeuralNetwork::load_parameters_binary(const string& file_name)
 {
@@ -2734,7 +2734,7 @@ string NeuralNetwork::write_expression_python() const
 
 
 /// Saves the mathematical expression represented by the neural network to a text file.
-/// @param file_name Name of expression text file.
+/// @param file_name Name of the expression text file.
 
 void NeuralNetwork::save_expression_c(const string& file_name)
 {
@@ -2758,7 +2758,7 @@ void NeuralNetwork::save_expression_c(const string& file_name)
 
 
 /// Saves the python function of the expression represented by the neural network to a text file.
-/// @param file_name Name of expression text file.
+/// @param file_name Name of the expression text file.
 
 void NeuralNetwork::save_expression_python(const string& file_name)
 {
@@ -2783,7 +2783,7 @@ void NeuralNetwork::save_expression_python(const string& file_name)
 
 /// Saves a csv file containing the outputs for a set of given inputs.
 /// @param inputs Inputs to calculate the outputs.
-/// @param file_name Name of data file
+/// @param file_name Name of the data file
 
 void NeuralNetwork::save_outputs(const Tensor<type, 2>& inputs, const string & file_name)
 {

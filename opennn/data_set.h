@@ -76,11 +76,11 @@ public:
 
    // Enumerations
 
-   /// Enumeration of available separators for the data file.
+   /// Enumeration of the available separators for the data file.
 
    enum class Separator{Space, Tab, Comma, Semicolon};
 
-   /// Enumeration of available methods for missing values in the data.
+   /// Enumeration of the available methods for missing values in the data.
 
    enum class MissingValuesMethod{Unuse, Mean, Median};
 
@@ -93,7 +93,7 @@ public:
 
    enum class SampleUse{Training, Selection, Testing, UnusedSample};
 
-   /// This enumeration represents the possible uses of an variable
+   /// This enumeration represents the possible uses of a variable
    /// (input, target, time or unused).
 
    enum class VariableUse{Id, Input, Target, Time, UnusedVariable};
@@ -767,7 +767,7 @@ private:
 
    // DATA FILE
 
-   /// Data file name.
+   /// Data filename.
 
    string data_file_name;
 

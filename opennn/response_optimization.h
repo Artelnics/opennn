@@ -47,7 +47,7 @@ public:
 
    virtual ~ResponseOptimization();
 
-    ///Enumeration of available conditions for response optimization.
+    ///Enumeration of the available conditions for response optimization.
 
    enum class Condition{Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};
 

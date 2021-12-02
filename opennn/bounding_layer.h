@@ -48,7 +48,7 @@ public:
 
    // Enumerations
 
-   /// Enumeration of available methods for bounding the output variables.
+   /// Enumeration of the available methods for bounding the output variables.
 
    enum class BoundingMethod{NoBounding, Bounding};
 

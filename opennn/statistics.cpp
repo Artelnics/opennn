@@ -3022,7 +3022,7 @@ if(number > size)
 
 /// Returns the indices of the largest elements in the vector.
 /// @param number Number of maximal indices to be computed.
-/// @todo Clean variables names minim, vector_!!!
+/// @todo Clea variables names minim, vector_!!!
 
 Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
