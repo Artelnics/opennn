@@ -25,7 +25,7 @@ RecurrentLayer::RecurrentLayer() : Layer()
 
 /// Layer architecture constructor.
 /// It creates a layer object with given numbers of inputs and neurons.
-/// The parameters are initialized at random.
+/// It also initializes the parameters at random.
 /// This constructor also initializes the rest of class members to their default values.
 /// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of neurons in the layer.
@@ -240,7 +240,7 @@ Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& par
 
 
 /// Returns a string with the name of the layer activation function.
-/// This can be: Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
+/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string RecurrentLayer::write_activation_function() const
 {
@@ -345,7 +345,7 @@ void RecurrentLayer::set_default()
 
 
 /// Sets a new number of inputs in the layer.
-/// The new synaptic weights are initialized at random.
+/// It also initilializes the new synaptic weights at random.
 /// @param new_inputs_number Number of layer inputs.
 
 void RecurrentLayer::set_inputs_number(const Index& new_inputs_number)

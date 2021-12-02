@@ -65,7 +65,7 @@ public:
 
    enum class RegularizationMethod{L1, L2, NoRegularization};
 
-   /// Returns a pointer to the neural network object associated to the error term.
+   /// Returns a pointer to the neural network object associated with the error term.
 
    inline NeuralNetwork* get_neural_network_pointer() const 
    {
@@ -87,7 +87,7 @@ public:
       return neural_network_pointer;
    }
 
-   /// Returns a pointer to the data set object associated to the error term.
+   /// Returns a pointer to the data set object associated with the error term.
 
    inline DataSet* get_data_set_pointer() const 
    {
@@ -374,7 +374,7 @@ struct LossIndexBackPropagation
 
 /// A loss index composed of several terms, this structure represent the First Order for this function.
 
-/// This structure contains second order information about the loss function (loss, gradient and Hessian).
+/// This structure contains second-order information about the loss function (loss, gradient and Hessian).
 /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
 /// A method returning this structure might be implemented more efficiently than the loss,
 /// gradient and <i>Hessian</i> methods separately.

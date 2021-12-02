@@ -208,7 +208,7 @@ protected:
 
    Tensor<type, 2> biases;
 
-   /// This matrix containing conection strengths from a layer's inputs to its neurons.
+   /// This matrix contains conection strengths from a layer's inputs to its neurons.
 
    Tensor<type, 2> synaptic_weights;
 

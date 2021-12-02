@@ -53,7 +53,7 @@ public:
 
     // Enumerations
 
-    /// Enumeration of all possibles condition of stop for the algorithms.
+    /// Enumeration of all possible conditions of stop for the algorithms.
 
     enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumInputs, MinimumInputs, MaximumEpochs,
                            MaximumSelectionFailures, CorrelationGoal};
@@ -130,11 +130,11 @@ protected:
 
     // Stopping criteria
 
-    /// Goal value for the selection error. It is used as a stopping criterion.
+    /// Goal value for the selection error. It is a stopping criterion.
 
     type selection_error_goal;
 
-    /// Maximum number of epochs to perform_inputs_selection. It is used as a stopping criterion.
+    /// Maximum number of epochs to perform_inputs_selection. It is a stopping criterion.
 
     Index maximum_epochs_number;
 
@@ -146,7 +146,7 @@ protected:
 
     type minimum_correlation;
 
-    /// Maximum selection algorithm time. It is used as a stopping criterion.
+    /// Maximum selection algorithm time. It is a stopping criterion.
 
     type maximum_time;
 

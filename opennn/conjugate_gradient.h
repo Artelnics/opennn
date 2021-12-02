@@ -36,7 +36,7 @@ struct ConjugateGradientData;
 /// In the conjugate gradient algorithms a search is performed along conjugate directions,
 /// which produces generally faster convergence than a search along the steepest descent directions.
 
-/// This concrete class represents a conjugate gradient training algorithm, based on solving sparse systems.
+/// This concrete class represents a conjugate gradient optimization algorithm.
 ///
 /// \cite 1 \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 ///
@@ -159,11 +159,11 @@ private:
 
    // Stopping criteria
 
-   /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
+   /// Minimum loss improvement between two successive iterations. It is a stopping criterion.
 
    type minimum_loss_decrease = type(0);
 
-   /// Goal value for the loss. It is used as a stopping criterion.
+   /// Goal value for the loss. It is a stopping criterion.
 
    type training_loss_goal = type(0);
 
@@ -172,11 +172,11 @@ private:
 
    Index maximum_selection_failures;
 
-   /// Maximum number of epochs to perform_training. It is used as a stopping criterion.
+   /// Maximum number of epochs to perform_training. It is a stopping criterion.
 
    Index maximum_epochs_number;
 
-   /// Maximum training time. It is used as a stopping criterion.
+   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time;
 };

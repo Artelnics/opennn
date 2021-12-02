@@ -27,7 +27,7 @@ LongShortTermMemoryLayer::LongShortTermMemoryLayer() : Layer()
 
 /// Layer architecture constructor.
 /// It creates a layer object with given numbers of inputs and neurons.
-/// The parameters are initialized at random.
+/// It also initializes the parameters at random.
 /// This constructor also initializes the rest of class members to their default values.
 /// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of neurons in the layer.
@@ -293,7 +293,7 @@ const LongShortTermMemoryLayer::ActivationFunction& LongShortTermMemoryLayer::ge
 
 
 /// Returns a string with the name of the layer activation function.
-/// This can be: Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear,
+/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear,
 /// ScaledExponentialLinear.
 
 string LongShortTermMemoryLayer::write_activation_function() const
@@ -328,7 +328,7 @@ string LongShortTermMemoryLayer::write_activation_function() const
 
 
 /// Returns a string with the name of the layer recurrent activation function.
-/// This can be: Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
+/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string LongShortTermMemoryLayer::write_recurrent_activation_function() const
 {
@@ -447,7 +447,7 @@ void LongShortTermMemoryLayer::set_name(const string& new_layer_name)
 
 
 /// Sets a new number of inputs in the layer.
-/// The new biases, weights and recurrent weights are initialized at random.
+/// It inializes the new biases, weights and recurrent weights at random.
 /// @param new_inputs_number Number of layer inputs.
 
 void LongShortTermMemoryLayer::set_inputs_number(const Index& new_inputs_number)
@@ -459,7 +459,7 @@ void LongShortTermMemoryLayer::set_inputs_number(const Index& new_inputs_number)
 
 
 /// Sets a new size of inputs in the layer.
-/// The new biases, weights and recurrent weights are initialized at random.
+/// It initializes the new biases, weights and recurrent weights at random.
 /// @param size dimensions of layer inputs.
 
 void LongShortTermMemoryLayer::set_input_shape(const Tensor<Index, 1>& size)
@@ -4997,7 +4997,7 @@ void LongShortTermMemoryLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 {
     ostringstream buffer;
 
-    // Long short term memory layer
+    // Long short-term memory layer
 
     file_stream.OpenElement("LongShortTermMemoryLayer");
 
@@ -5078,7 +5078,7 @@ void LongShortTermMemoryLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     file_stream.CloseElement();
 
-    // Long short term memory layer (end tag)
+    // Long short-term memory layer (end tag)
 
     file_stream.CloseElement();
 }

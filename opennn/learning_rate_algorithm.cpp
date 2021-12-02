@@ -12,7 +12,7 @@ namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates a learning rate algorithm object not associated to any loss index object.
+/// It creates a learning rate algorithm object not associated with any loss index object.
 /// It also initializes the class members to their default values.
 
 LearningRateAlgorithm::LearningRateAlgorithm()
@@ -23,7 +23,7 @@ LearningRateAlgorithm::LearningRateAlgorithm()
 
 
 /// Destructor.
-/// It creates a learning rate algorithm associated to a loss index.
+/// It creates a learning rate algorithm associated with a loss index.
 /// It also initializes the class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
@@ -125,7 +125,7 @@ const bool& LearningRateAlgorithm::get_display() const
 
 
 /// Sets the loss index pointer to nullptr.
-/// It also sets the rest of members to their default values.
+/// It also sets the rest of the members to their default values.
 
 void LearningRateAlgorithm::set()
 {
@@ -136,7 +136,7 @@ void LearningRateAlgorithm::set()
 
 
 /// Sets a new loss index pointer.
-/// It also sets the rest of members to their default values.
+/// It also sets the rest of the members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 void LearningRateAlgorithm::set(LossIndex* new_loss_index_pointer)
@@ -169,7 +169,7 @@ void LearningRateAlgorithm::set_default()
 }
 
 
-/// Sets a pointer to a loss index object to be associated to the optimization algorithm.
+/// Sets a pointer to a loss index object to be associated with the optimization algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 void LearningRateAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
@@ -686,8 +686,8 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 }
 
 
-/// Serializes the learning rate algorithm object into a XML document of the TinyXML library
-/// without keep the DOM tree in memory.
+/// Serializes the learning rate algorithm object into an XML document of the TinyXML library
+/// without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -723,7 +723,7 @@ void LearningRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Loads a learning rate algorithm object from a XML-type file.
+/// Loads a learning rate algorithm object from an XML-type file.
 /// Please mind about the file format, wich is specified in the manual.
 /// @param document TinyXML document with the learning rate algorithm members.
 

@@ -12,7 +12,7 @@ namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates a Levenberg-Marquardt optimization algorithm object not associated to any loss index object.
+/// It creates a Levenberg-Marquardt optimization algorithm object not associated with any loss index object.
 /// It also initializes the class members to their default values.
 
 LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm()
@@ -315,9 +315,9 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
 /// Checks that the Levenberg-Marquard object is ok for training.
 /// In particular, it checks that:
 /// <ul>
-/// <li> The loss index pointer associated to the optimization algorithm is not nullptr,
-/// <li> The neural network associated to that loss index is neither nullptr.
-/// <li> The data set associated to that loss index is neither nullptr.
+/// <li> The loss index pointer associated with the optimization algorithm is not nullptr,
+/// <li> The neural network associated with that loss index is neither nullptr.
+/// <li> The data set associated with that loss index is neither nullptr.
 /// </ul>
 /// If that checkings are not hold, an exception is thrown.
 
@@ -369,7 +369,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     }
     else if(loss_index_pointer->get_error_type() == "CROSS_ENTROPY_ERROR")
     {
-        throw logic_error("Levenberg-Marquard algorithm cannot work with cross entropy error.");
+        throw logic_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
     }
     else if(loss_index_pointer->get_error_type() == "WEIGHTED_SQUARED_ERROR")
     {
@@ -707,7 +707,7 @@ string LevenbergMarquardtAlgorithm::write_optimization_algorithm_type() const
 }
 
 
-/// Writes as matrix of strings the most representative atributes.
+/// This method writes a matrix of strings the most representative atributes.
 
 Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 {
@@ -747,8 +747,8 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 }
 
 
-/// Serializes the Levenberg Marquardt algorithm object into a XML document of the TinyXML library
-/// without keep the DOM tree in memory.
+/// Serializes the Levenberg Marquardt algorithm object into an XML document of the TinyXML library
+/// without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -838,7 +838,7 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 }
 
 
-/// Loads a Levenberg-Marquardt method object from a XML document.
+/// Loads a Levenberg-Marquardt method object from an XML document.
 /// Please mind about the format, wich is specified in the OpenNN manual.
 /// @param document TinyXML document containint the object data.
 

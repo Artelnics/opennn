@@ -41,10 +41,9 @@ namespace OpenNN
 
 struct QuasiNewtonMehtodData;
 
+/// This concrete class represents a quasi-Newton optimization algorithm[1], used to minimize loss function.
 /// Class of optimization algorithm based on Newton's method.
 /// An approximate Hessian matrix is computed at each iteration of the algorithm based on the gradients.
-
-/// This concrete class represents a quasi-Newton training algorithm[1], used to minimize loss function.
 ///
 /// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
 /// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
@@ -158,11 +157,11 @@ private:
 
    // Stopping criteria
 
-   /// Minimum loss improvement between two successive epochs. It is used as a stopping criterion.
+   /// Minimum loss improvement between two successive epochs. It is a stopping criterion.
 
    type minimum_loss_decrease;
 
-   /// Goal value for the loss. It is used as a stopping criterion.
+   /// Goal value for the loss. It is a stopping criterion.
 
    type training_loss_goal;
 
@@ -171,11 +170,11 @@ private:
 
    Index maximum_selection_failures;
 
-   /// Maximum number of epochs to perform_training. It is used as a stopping criterion.
+   /// Maximum number of epochs to perform_training. It is a stopping criterion.
 
    Index maximum_epochs_number;
 
-   /// Maximum training time. It is used as a stopping criterion.
+   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time;
 };

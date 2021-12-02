@@ -38,8 +38,8 @@ namespace OpenNN
 
 struct AdaptiveMomentEstimationData;
 
-/// This concrete class represents the adaptive moment estimation(Adam) training algorithm,
-/// based on adaptive estimates of lower-order moments.
+/// This concrete class represents the adaptive moment estimation(Adam) optimization algorithm.
+/// This algorithm is based on adaptive estimates of lower-order moments.
 
 ///
 /// For more information visit:
@@ -147,7 +147,7 @@ private:
 
     // Stopping criteria
 
-   /// Goal value for the loss. It is used as a stopping criterion.
+   /// Goal value for the loss. It a stopping criterion.
 
    type training_loss_goal = type(0);
 
@@ -159,7 +159,7 @@ private:
 
    Index maximum_selection_failures = numeric_limits<Index>::max();
 
-   /// Maximum training time. It is used as a stopping criterion.
+   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time = type(3600);
 

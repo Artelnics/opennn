@@ -12,7 +12,7 @@ namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates a quasi-Newton method optimization algorithm not associated to any loss index.
+/// It creates a quasi-Newton method optimization algorithm not associated with any loss index.
 /// It also initializes the class members to their default values.
 
 QuasiNewtonMethod::QuasiNewtonMethod()
@@ -23,7 +23,7 @@ QuasiNewtonMethod::QuasiNewtonMethod()
 
 
 /// Loss index constructor.
-/// It creates a quasi-Newton method optimization algorithm associated to a loss index.
+/// It creates a quasi-Newton method optimization algorithm associated with a loss index.
 /// It also initializes the class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
@@ -138,7 +138,7 @@ const type& QuasiNewtonMethod::get_maximum_time() const
 }
 
 
-/// Sets a pointer to a loss index object to be associated to the quasi-Newton method object.
+/// Sets a pointer to a loss index object to be associated with the quasi-Newton method object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
@@ -809,7 +809,7 @@ string QuasiNewtonMethod::write_optimization_algorithm_type() const
 }
 
 
-/// Serializes the quasi Newton method object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the quasi Newton method object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -900,7 +900,7 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Writes as matrix of strings the most representative atributes.
+/// This method writes a matrix of strings the most representative atributes.
 
 Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 {

@@ -51,7 +51,7 @@ public:
 
     // Enumerators
 
-    /// Enumeration of all possibles condition of stop for the algorithms.
+    /// Enumeration of all possible conditions of stop for the algorithms.
 
     enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons};
 
@@ -141,15 +141,15 @@ protected:
 
     bool display = true;
 
-    /// Goal value for the selection error. It is used as a stopping criterion.
+    /// Goal value for the selection error. It is a stopping criterion.
 
     type selection_error_goal;
 
-    /// Maximum number of epochs to perform neurons selection. It is used as a stopping criterion.
+    /// Maximum number of epochs to perform neurons selection. It is a stopping criterion.
 
     Index maximum_epochs_number;
 
-    /// Maximum selection algorithm time. It is used as a stopping criterion.
+    /// Maximum selection algorithm time. It is a stopping criterion.
 
     type maximum_time;
 };

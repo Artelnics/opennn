@@ -13,7 +13,7 @@ namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates a conjugate gradient optimization algorithm object not associated to any loss index object.
+/// It creates a conjugate gradient optimization algorithm object not associated with any loss index object.
 /// It also initializes the class members to their default values.
 
 ConjugateGradient::ConjugateGradient()
@@ -24,7 +24,7 @@ ConjugateGradient::ConjugateGradient()
 
 
 /// Destructor.
-/// It creates a conjugate gradient optimization algorithm associated to a loss index object.
+/// It creates a conjugate gradient optimization algorithm associated with a loss index object.
 /// It also initializes the rest of class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
@@ -126,7 +126,7 @@ const type& ConjugateGradient::get_maximum_time() const
 }
 
 
-/// Sets a pointer to a loss index object to be associated to the conjugate gradient object.
+/// Sets a pointer to a loss index object to be associated with the conjugate gradient object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
@@ -928,7 +928,7 @@ string ConjugateGradient::write_optimization_algorithm_type() const
 }
 
 
-/// Writes as matrix of strings the most representative atributes.
+/// This method writes a matrix of strings the most representative atributes.
 
 Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 {
@@ -978,7 +978,7 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 }
 
 
-/// Serializes the conjugate gradient object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the conjugate gradient object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this element.
 
 void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -1080,7 +1080,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Deserializes the conjugate gradient object from a XML document of the TinyXML library.
+/// Deserializes the conjugate gradient object from an XML document of the TinyXML library.
 /// @param document TinyXML document containing the member data.
 
 void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)

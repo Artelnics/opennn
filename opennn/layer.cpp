@@ -174,20 +174,6 @@ Index Layer::get_neurons_number() const
 }
 
 
-/// Returns the number of layer's synaptic weights
-
-Index Layer::get_synaptic_weights_number() const
-{
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "get_synaptic_weight_number() const method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
-}
-
-
 void Layer::set_inputs_number(const Index& )
 {
     ostringstream buffer;

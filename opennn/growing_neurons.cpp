@@ -315,7 +315,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 }
 
 
-/// Writes as matrix of strings the most representative atributes.
+/// This method writes a matrix of strings the most representative atributes.
 
 Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 {
@@ -408,7 +408,7 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 }
 
 
-/// Serializes the growing neurons object into a XML document of the TinyXML library without
+/// Serializes the growing neurons object into an XML document of the TinyXML library without
 /// keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -652,7 +652,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Saves to a XML-type file the members of the growing neurons object.
+/// Saves to an XML-type file the members of the growing neurons object.
 /// @param file_name Name of growing neurons XML-type file.
 
 void GrowingNeurons::save(const string& file_name) const
@@ -667,7 +667,7 @@ void GrowingNeurons::save(const string& file_name) const
 }
 
 
-/// Loads a growing neurons object from a XML-type file.
+/// Loads a growing neurons object from an XML-type file.
 /// @param file_name Name of growing neurons XML-type file.
 
 void GrowingNeurons::load(const string& file_name)

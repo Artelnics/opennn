@@ -44,7 +44,7 @@ using namespace Eigen;
 namespace OpenNN
 {
 
-/// This class represents the concept of data set for data modelling problems, such as approximation, classification or forecasting.
+/// This class represents the concept of data set for data modeling problems, such as approximation, classification or forecasting.
 
 ///
 /// It basically consists of a data Matrix separated by columns.

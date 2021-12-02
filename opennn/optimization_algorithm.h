@@ -35,7 +35,7 @@ namespace OpenNN
 
 struct TrainingResults;
 
-/// This abstract class represents the concept of optimization algorithm for a neural network in OpenNN library.
+/// This abstract class represents the concept of optimization algorithm for a neural network in the OpenNN library.
 /// Any derived class must implement the perform_training() method.
 
 class OptimizationAlgorithm
@@ -49,7 +49,7 @@ public:
 
    virtual ~OptimizationAlgorithm();
 
-    /// Enumeration of all possibles condition of stop for the algorithms.
+    /// Enumeration of all possible conditions of stop for the algorithms.
 
     enum class StoppingCondition{MinimumLossDecrease, LossGoal,
                            MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
