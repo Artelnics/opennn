@@ -1799,7 +1799,6 @@ void DataSetTest::run_test_case()
 
     test_read_csv();
 
-    test_read_breast_cancer_csv();
     test_read_adult_csv();
     test_read_car_csv();
     test_read_empty_csv();
