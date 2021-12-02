@@ -58,39 +58,35 @@ int main()
         Tensor<type, 2> inputs(1,2);
         Tensor<type, 2> outputs(1,6);
 
-        cout << "X Y AND OR NAND NOR XOR XNOR" << endl;
+        cout << "\nX Y\tAND\tOR\tNAND\tNOR\tXOR\tXNOR\n" << endl;
 
         inputs(0,0) = type(1);
         inputs(0,1) = type(1);
 
         outputs = neural_network.calculate_outputs(inputs);
 
-        cout <<"X = 1 Y = 1" << endl
-             << inputs << " " << outputs << endl;
+        cout << inputs << " " << outputs << endl;
 
         inputs(0,0) = type(1);
         inputs(0,1) = type(0.0);
 
         outputs = neural_network.calculate_outputs(inputs);
 
-        cout << "X = 1 Y = 0" << endl
-             << inputs << " " << outputs << endl;
+        cout << inputs << " " << outputs << endl;
 
         inputs(0,0) = type(0.0);
         inputs(0,1) = type(1);
 
         outputs = neural_network.calculate_outputs(inputs);
 
-        cout << "X = 0 Y = 1" << endl
-             << inputs << " " << outputs << endl;
+        cout << inputs << " " << outputs << endl;
 
         inputs(0,0) = type(0.0);
         inputs(0,1) = type(0.0);
 
         outputs = neural_network.calculate_outputs(inputs);
 
-        cout << "X = 0 Y = 0" << endl
-             << inputs << " " << outputs << endl;
+        cout << inputs << " " << outputs << endl;
 
         // Save results
 

@@ -58,12 +58,18 @@ int main()
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         Tensor<type, 2> inputs(3, 4);
+        Tensor<type, 2> outputs;
 
         inputs.setValues({{type(5.1),type(3.5),type(1.4),type(0.2)},
                           {type(6.4),type(3.2),type(4.5),type(1.5)},
                           {type(6.3),type(2.7),type(4.9),type(1.8)}});
 
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        outputs = neural_network.calculate_outputs(inputs);
+
+        cout << "\nInputs:\n" << inputs << endl;
+
+        cout << "\nOutputs:\n" << outputs << endl;
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
 

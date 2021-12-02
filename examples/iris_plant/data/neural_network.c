@@ -12,7 +12,7 @@
 // 	vector<float> outputs = neural_network(sample);
 // 
 // Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,	
-// however you can loop through neural network function in order to get multiple outputs.	
+// however you can loop through neural network function to get multiple outputs.	
 
 #include <vector>
 
@@ -34,9 +34,9 @@ vector<float> perceptron_layer_1(const vector<float>& inputs)
 {
 	vector<float> combinations(3);
 
-	combinations[0] = -1.76127 -0.0575797*inputs[0] -0.447013*inputs[1] +0.669025*inputs[2] +1.90211*inputs[3];
-	combinations[1] = 0.890484 +0.534577*inputs[0] -0.614074*inputs[1] +0.964969*inputs[2] +0.799826*inputs[3];
-	combinations[2] = 2.19651 +0.0607238*inputs[0] +0.538885*inputs[1] -0.773184*inputs[2] -2.32069*inputs[3];
+	combinations[0] = -0.627411 -0.254193*inputs[0] +0.495569*inputs[1] -0.83301*inputs[2] -0.728462*inputs[3];
+	combinations[1] = -0.624156 -0.250754*inputs[0] +0.495621*inputs[1] -0.832303*inputs[2] -0.732059*inputs[3];
+	combinations[2] = 2.51788 +0.706088*inputs[0] +0.179724*inputs[1] -2.99101*inputs[2] -1.60383*inputs[3];
 
 	vector<float> activations(3);
 
@@ -51,9 +51,9 @@ vector<float> probabilistic_layer(const vector<float>& inputs)
 {
 	vector<float> combinations(3);
 
-	combinations[0] = 0.298208 -0.962764*inputs[0] -3.0711*inputs[1] +0.849773*inputs[2];
-	combinations[1] = -0.688423 -1.3664*inputs[0] +2.63529*inputs[1] +1.89889*inputs[2];
-	combinations[2] = 0.389329 +2.32941*inputs[0] +0.436391*inputs[1] -2.74906*inputs[2];
+	combinations[0] = 0.475693 +1.91974*inputs[0] +1.91788*inputs[1] +0.81882*inputs[2];
+	combinations[1] = -0.79201 -1.33765*inputs[0] -1.33498*inputs[1] +2.91501*inputs[2];
+	combinations[2] = 0.316038 -0.579922*inputs[0] -0.58773*inputs[1] -3.73743*inputs[2];
 
 	vector<float> activations(3);
 
