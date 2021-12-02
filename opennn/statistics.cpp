@@ -567,7 +567,7 @@ Index minimum(const Tensor<Index, 1>& vector)
 {
     const Index size = vector.size();
 
-    if(size == 0) return NAN;
+    if(size == 0) return Index(NAN);
 
     Index minimum = numeric_limits<Index>::max();
 
@@ -668,7 +668,7 @@ Index maximum(const Tensor<Index, 1>& vector)
 {
     const Index size = vector.size();
 
-    if(size == 0) return NAN;
+    if(size == 0) return Index(NAN);
 
     Index maximum = -numeric_limits<Index>::max();
 
