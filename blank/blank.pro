@@ -22,7 +22,7 @@ mac{
 
 DESTDIR = "$$PWD/bin"
 
-SOURCES += main.cpp
+SOURCES = main.cpp
 
 win32-g++{
 QMAKE_LFLAGS += -static-libgcc
