@@ -910,24 +910,6 @@ void DataSetTest::test_read_csv()
 }
 
 
-void DataSetTest::test_read_breast_cancer_csv()
-{
-    cout << "test_read_adult_csv\n";
-
-    data_set.set_separator(';');
-    data_set.set_data_file_name("../../datasets/breastcancer.csv");
-    data_set.set_has_columns_names(true);
-    data_set.read_csv();
-    data_set.print_columns();
-
-    //    assert_true(data_set.get_samples_number() == 1000, LOG);
-    //    assert_true(data_set.get_column_type(0) == DataSet::ColumnType::Numeric, LOG);
-    //    assert_true(data_set.get_column_type(1) == DataSet::ColumnType::Categorical, LOG);
-    //    assert_true(data_set.get_column_type(2) == DataSet::ColumnType::Numeric, LOG);
-    //    assert_true(data_set.get_column_type(3) == DataSet::ColumnType::Categorical, LOG);
-}
-
-
 void DataSetTest::test_read_adult_csv()
 {
     cout << "test_read_adult_csv\n";
