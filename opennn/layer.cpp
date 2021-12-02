@@ -20,7 +20,7 @@ Layer::~Layer()
 
 /// Default constructor.
 /// It creates a layer object with zero parameters.
-/// It also initializes the rest of class members to their default values.
+/// It also initializes the rest of the class members to their default values.
 
 Layer::Type Layer::get_type () const
 {

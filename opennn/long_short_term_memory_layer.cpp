@@ -15,7 +15,7 @@ namespace OpenNN
 
 /// Default constructor.
 /// It creates a empty layer object, with no neurons.
-/// This constructor also initializes the rest of class members to their default values.
+/// This constructor also initializes the rest of the class members to their default values.
 
 LongShortTermMemoryLayer::LongShortTermMemoryLayer() : Layer()
 {
@@ -28,7 +28,7 @@ LongShortTermMemoryLayer::LongShortTermMemoryLayer() : Layer()
 /// Layer architecture constructor.
 /// It creates a layer object with given numbers of inputs and neurons.
 /// It also initializes the parameters at random.
-/// This constructor also initializes the rest of class members to their default values.
+/// This constructor also initializes the rest of the class members to their default values.
 /// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of neurons in the layer.
 

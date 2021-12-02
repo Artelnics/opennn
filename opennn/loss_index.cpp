@@ -13,7 +13,7 @@ namespace OpenNN
 
 /// Default constructor.
 /// It creates a default error term object, with all pointers initialized to nullptr.
-/// It also initializes all the rest of class members to their default values.
+/// It also initializes all the rest of the class members to their default values.
 
 LossIndex::LossIndex()
     : neural_network_pointer(nullptr),
@@ -26,7 +26,7 @@ LossIndex::LossIndex()
 /// Neural network and data set constructor.
 /// It creates a error term object associated with a neural network and to be measured on a data set.
 /// It initializes the rest of pointers to nullptr.
-/// It also initializes all the rest of class members to their default values.
+/// It also initializes all the rest of the class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
@@ -105,7 +105,7 @@ LossIndex::RegularizationMethod LossIndex::get_regularization_method() const
 
 
 /// Sets all the member pointers to nullptr(neural network, data set).
-/// It also initializes all the rest of class members to their default values.
+/// It also initializes all the rest of the class members to their default values.
 
 void LossIndex::set()
 {
@@ -117,7 +117,7 @@ void LossIndex::set()
 
 
 /// Sets all the member pointers to nullptr, but the neural network, which set to a given pointer.
-/// It also initializes all the rest of class members to their default values.
+/// It also initializes all the rest of the class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 void LossIndex::set(NeuralNetwork* new_neural_network_pointer)
@@ -130,7 +130,7 @@ void LossIndex::set(NeuralNetwork* new_neural_network_pointer)
 
 
 /// Sets all the member pointers to nullptr, but the data set, which set to a given pointer.
-/// It also initializes all the rest of class members to their default values.
+/// It also initializes all the rest of the class members to their default values.
 /// @param new_data_set_pointer Pointer to a data set object.
 
 void LossIndex::set(DataSet* new_data_set_pointer)
@@ -143,7 +143,7 @@ void LossIndex::set(DataSet* new_data_set_pointer)
 
 
 /// Sets new neural network and data set pointers.
-/// Finally, it initializes all the rest of class members to their default values.
+/// Finally, it initializes all the rest of the class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
