@@ -63,7 +63,9 @@ int main()
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, 50, target_variables_number});
+        Index hidden_neurons_number = 50;
+
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         PerceptronLayer* perceptron_layer_pointer = neural_network.get_first_perceptron_layer_pointer();
         perceptron_layer_pointer->set_activation_function("RectifiedLinear");
