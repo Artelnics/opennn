@@ -1,0 +1,42 @@
+﻿  bounding_layer_test.cpp
+  conjugate_gradient_test.cpp
+  convolutional_layer_test.cpp
+  correlations_test.cpp
+  cross_entropy_error_test.cpp
+  data_set_test.cpp
+  genetic_algorithm_test.cpp
+  gradient_descent_test.cpp
+  growing_inputs_test.cpp
+  growing_neurons_test.cpp
+  inputs_selection_test.cpp
+  learning_rate_algorithm_test.cpp
+  levenberg_marquardt_algorithm_test.cpp
+  long_short_term_memory_layer_test.cpp
+  main.cpp
+  mean_squared_error_test.cpp
+  minkowski_error_test.cpp
+  model_selection_test.cpp
+  neural_network_test.cpp
+  neurons_selection_test.cpp
+  normalized_squared_error_test.cpp
+  numerical_differentiation_test.cpp
+  perceptron_layer_test.cpp
+  pooling_layer_test.cpp
+  probabilistic_layer_test.cpp
+  pruning_inputs_test.cpp
+  quasi_newton_method_test.cpp
+  recurrent_layer_test.cpp
+  scaling_layer_test.cpp
+  scaling_test.cpp
+  statistics_test.cpp
+  stochastic_gradient_descent_test.cpp
+  sum_squared_error_test.cpp
+  tensor_utilities_test.cpp
+  testing_analysis_test.cpp
+  training_strategy_test.cpp
+  unscaling_layer_test.cpp
+  weighted_squared_error_test.cpp
+  Generando código
+  Previous IPDB not found, fall back to full compilation.
+  Compiler terminating.  Please wait... Abort complete.
+LINK : fatal error LNK1257: error de generación de código
