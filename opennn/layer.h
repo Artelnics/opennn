@@ -144,7 +144,7 @@ public:
 
     virtual Index get_inputs_number() const;
     virtual Index get_neurons_number() const;
-    virtual Index get_synaptic_weights_number() const;
+
     virtual void set_inputs_number(const Index&);
     virtual void set_neurons_number(const Index&);
 

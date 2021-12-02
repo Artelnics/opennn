@@ -22,7 +22,7 @@ ScalingLayer::ScalingLayer() : Layer()
 
 /// Scaling neurons number constructor.
 /// This constructor creates a scaling layer with a given size.
-/// The members of this object are initialized with the default values.
+/// It initializes the members of this object with the default values.
 /// @param new_neurons_number Number of scaling neurons in the layer.
 
 ScalingLayer::ScalingLayer(const Index& new_neurons_number) : Layer()
@@ -39,7 +39,7 @@ ScalingLayer::ScalingLayer(const Tensor<Index, 1>& new_inputs_dimensions) : Laye
 
 /// Descriptives constructor.
 /// This constructor creates a scaling layer with given minimums, maximums, means, and standard deviations.
-/// The rest of members of this object are initialized with the default values.
+/// It also initializes the rest of the members of this object with the default values.
 /// @param new_descriptives Vector of vectors with the variables descriptives.
 
 ScalingLayer::ScalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
@@ -354,7 +354,7 @@ void ScalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const Te
 }
 
 
-/// Sets the scaling layer members from a XML document.
+/// Sets the scaling layer members from an XML document.
 /// @param new_scaling_layer_document Pointer to a TinyXML document containing the member data.
 
 void ScalingLayer::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
@@ -1184,7 +1184,7 @@ string ScalingLayer::write_expression_python() const
 }
 
 
-/// Serializes the scaling layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the scaling layer object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const

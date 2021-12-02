@@ -232,7 +232,7 @@ void BoundingLayer::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-/// Sets the bounding layer members from a XML document.
+/// Sets the bounding layer members from an XML document.
 /// @param bounding_layer_document Pointer to a TinyXML document containing the member data.
 
 void BoundingLayer::set(const tinyxml2::XMLDocument& bounding_layer_document)
@@ -584,7 +584,7 @@ string BoundingLayer::write_expression_python() const
 }
 
 
-/// Serializes the bounding layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the bounding layer object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const

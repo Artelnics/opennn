@@ -12,7 +12,7 @@ namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates a optimization algorithm object not associated to any loss index object.
+/// It creates a optimization algorithm object not associated with any loss index object.
 
 OptimizationAlgorithm::OptimizationAlgorithm()
     : loss_index_pointer(nullptr)
@@ -25,7 +25,7 @@ OptimizationAlgorithm::OptimizationAlgorithm()
 }
 
 
-/// It creates a optimization algorithm object associated to a loss index object.
+/// It creates a optimization algorithm object associated with a loss index object.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
@@ -138,7 +138,7 @@ const string& OptimizationAlgorithm::get_neural_network_file_name() const
 
 
 /// Sets the loss index pointer to nullptr.
-/// It also sets the rest of members to their default values.
+/// It also sets the rest of the members to their default values.
 
 void OptimizationAlgorithm::set()
 {
@@ -158,7 +158,7 @@ void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 }
 
 
-/// Sets a pointer to a loss index object to be associated to the optimization algorithm.
+/// Sets a pointer to a loss index object to be associated with the optimization algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 void OptimizationAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
@@ -253,8 +253,8 @@ void OptimizationAlgorithm::set_default()
 
 
 /// Performs a default checking for optimization algorithms.
-/// In particular, it checks that the loss index pointer associated to the optimization algorithm is not nullptr,
-/// and that the neural network associated to that loss index is neither nullptr.
+/// In particular, it checks that the loss index pointer associated with the optimization algorithm is not nullptr,
+/// and that the neural network associated with that loss index is neither nullptr.
 /// If that checkings are not hold, an exception is thrown.
 
 void OptimizationAlgorithm::check() const
@@ -287,7 +287,7 @@ void OptimizationAlgorithm::check() const
 }
 
 
-/// Serializes the optimization algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the optimization algorithm object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void OptimizationAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -311,7 +311,7 @@ void OptimizationAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Loads a default optimization algorithm from a XML document.
+/// Loads a default optimization algorithm from an XML document.
 /// @param document TinyXML document containing the error term members.
 
 void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
@@ -366,7 +366,7 @@ void OptimizationAlgorithm::print() const
 }
 
 
-/// Saves to a XML-type file the members of the optimization algorithm object.
+/// Saves to an XML-type file the members of the optimization algorithm object.
 /// @param file_name Name of optimization algorithm XML-type file.
 
 void OptimizationAlgorithm::save(const string& file_name) const
@@ -381,7 +381,7 @@ void OptimizationAlgorithm::save(const string& file_name) const
 }
 
 
-/// Loads a gradient descent object from a XML-type file.
+/// Loads a gradient descent object from an XML-type file.
 /// Please mind about the file format, wich is specified in the User's Guide.
 /// @param file_name Name of optimization algorithm XML-type file.
 

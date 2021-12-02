@@ -207,7 +207,7 @@ private:
 
     MinkowskiError Minkowski_error;
 
-    /// Pointer to the cross entropy error object wich can be used as the error term.
+    /// Pointer to the cross-entropy error object wich can be used as the error term.
 
     CrossEntropyError cross_entropy_error;
 

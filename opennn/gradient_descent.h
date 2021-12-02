@@ -129,11 +129,11 @@ private:
 
    // Stopping criteria 
 
-   /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
+   /// Minimum loss improvement between two successive iterations. It is a stopping criterion.
 
    type minimum_loss_decrease;
 
-   /// Goal value for the loss. It is used as a stopping criterion.
+   /// Goal value for the loss. It is a stopping criterion.
 
    type training_loss_goal;
 
@@ -146,7 +146,7 @@ private:
 
    Index maximum_epochs_number;
 
-   /// Maximum training time. It is used as a stopping criterion.
+   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time;
 

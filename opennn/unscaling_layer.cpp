@@ -332,7 +332,7 @@ void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const 
 }
 
 
-/// Sets the unscaling layer members from a XML document.
+/// Sets the unscaling layer members from an XML document.
 /// @param new_unscaling_layer_document Pointer to a TinyXML document containing the member data.
 
 void UnscalingLayer::set(const tinyxml2::XMLDocument& new_unscaling_layer_document)
@@ -783,7 +783,7 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 }
 
 
-/// Serializes the unscaling layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the unscaling layer object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const

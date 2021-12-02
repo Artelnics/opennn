@@ -1325,7 +1325,7 @@ const Tensor<type, 4>& ConvolutionalLayer::get_synaptic_weights() const
 }
 
 
-/// Returns the number of layer's synaptic weights
+/// Returns the number of synaptic weights in the layer.
 
 Index ConvolutionalLayer::get_synaptic_weights_number() const
 {

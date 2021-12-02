@@ -376,7 +376,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 }
 
 
-/// Writes as matrix of strings the most representative atributes.
+/// This method writes a matrix of strings the most representative atributes.
 
 Tensor<string, 2> PruningInputs::to_string_matrix() const
 {
@@ -469,7 +469,7 @@ Tensor<string, 2> PruningInputs::to_string_matrix() const
 }
 
 
-/// Serializes the pruning inputs object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the pruning inputs object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void PruningInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -791,7 +791,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Saves to a XML-type file the members of the pruning inputs object.
+/// Saves to an XML-type file the members of the pruning inputs object.
 /// @param file_name Name of pruning inputs XML-type file.
 
 void PruningInputs::save(const string& file_name) const
@@ -806,7 +806,7 @@ void PruningInputs::save(const string& file_name) const
 }
 
 
-/// Loads a pruning inputs object from a XML-type file.
+/// Loads a pruning inputs object from an XML-type file.
 /// @param file_name Name of pruning inputs XML-type file.
 
 void PruningInputs::load(const string& file_name)

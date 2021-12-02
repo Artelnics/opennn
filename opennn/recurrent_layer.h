@@ -236,7 +236,7 @@ protected:
 
    Tensor<type, 2> input_weights;
 
-   /// This matrix containing conection strengths from a recurrent layer inputs to its neurons.
+   /// This matrix contains conection strengths from a recurrent layer inputs to its neurons.
 
    Tensor<type, 2> recurrent_weights;
 

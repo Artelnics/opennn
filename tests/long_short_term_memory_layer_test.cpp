@@ -470,7 +470,7 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
 void LongShortTermMemoryLayerTest::run_test_case()
 {
-    cout << "Running long short term memory layer test case...\n";
+    cout << "Running long short-term memory layer test case...\n";
 
     // Constructor and destructor
 
@@ -511,7 +511,7 @@ void LongShortTermMemoryLayerTest::run_test_case()
 
     test_forward_propagate();
 
-    cout << "End of long short term memory layer test case.\n\n";
+    cout << "End of long short-term memory layer test case.\n\n";
 }
 
 

@@ -131,7 +131,7 @@ void CrossEntropyErrorTest::test_back_propagate()
 
 void CrossEntropyErrorTest::run_test_case()
 {
-    cout << "Running cross entropy error test case...\n";
+    cout << "Running cross-entropy error test case...\n";
 
     // Test constructor
 
@@ -142,7 +142,7 @@ void CrossEntropyErrorTest::run_test_case()
 
     test_back_propagate();
 
-    cout << "End of cross entropy error test case.\n\n";
+    cout << "End of cross-entropy error test case.\n\n";
 }
 
 

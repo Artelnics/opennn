@@ -940,7 +940,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 }
 
 
-/// Writes as matrix of strings the most representative atributes.
+/// This method writes a matrix of strings the most representative atributes.
 /// @todo to many rows in string matrix.
 
 Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
@@ -991,7 +991,7 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 }
 
 
-/// Serializes the genetic algorithm object into a XML document of the TinyXML library without keep the DOM
+/// Serializes the genetic algorithm object into an XML document of the TinyXML library without keeping the DOM
 /// tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -1272,7 +1272,7 @@ void GeneticAlgorithm::print() const
 }
 
 
-/// Saves to a XML-type file the members of the genetic algorithm object.
+/// Saves to an XML-type file the members of the genetic algorithm object.
 /// @param file_name Name of genetic algorithm XML-type file.
 
 void GeneticAlgorithm::save(const string& file_name) const
@@ -1287,7 +1287,7 @@ void GeneticAlgorithm::save(const string& file_name) const
 }
 
 
-/// Loads a genetic algorithm object from a XML-type file.
+/// Loads a genetic algorithm object from an XML-type file.
 /// @param file_name Name of genetic algorithm XML-type file.
 
 void GeneticAlgorithm::load(const string& file_name)

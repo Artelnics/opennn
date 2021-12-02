@@ -12,8 +12,8 @@ namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates a default cross entropy error term object,
-/// which is not associated to any neural network and not measured on any data set.
+/// It creates a default cross-entropy error term object,
+/// which is not associated with any neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
 CrossEntropyError::CrossEntropyError() : LossIndex()
@@ -22,7 +22,7 @@ CrossEntropyError::CrossEntropyError() : LossIndex()
 
 
 /// Neural network and data set constructor.
-/// It creates a cross entropy error term object associated to a neural network and measured on a data set.
+/// It creates a cross-entropy error term object associated with a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values:
 /// @param new_neural_network_pointer: Pointer to a neural network object.
 /// @param new_data_set_pointer: Pointer to a data set object.
@@ -189,7 +189,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const DataSetBatch& batc
 }
 
 
-/// Returns a string with the name of the cross entropy error loss type, "CROSS_ENTROPY_ERROR".
+/// Returns a string with the name of the cross-entropy error loss type, "CROSS_ENTROPY_ERROR".
 
 string CrossEntropyError::get_error_type() const
 {
@@ -197,7 +197,7 @@ string CrossEntropyError::get_error_type() const
 }
 
 
-/// Returns a string with the name of the cross entropy error loss type in text format.
+/// Returns a string with the name of the cross-entropy error loss type in text format.
 
 string CrossEntropyError::get_error_type_text() const
 {
@@ -205,7 +205,7 @@ string CrossEntropyError::get_error_type_text() const
 }
 
 
-/// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the cross-entropy error object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document
 
 void CrossEntropyError::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -218,7 +218,7 @@ void CrossEntropyError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Deserializes a TinyXML document into this cross entropy object.
+/// Deserializes a TinyXML document into this cross-entropy object.
 /// @param document TinyXML document containing the member data.
 
 void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)

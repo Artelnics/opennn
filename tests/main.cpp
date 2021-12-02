@@ -594,7 +594,7 @@ int main()
           tests_passed_count += Minkowski_error_test.get_tests_passed_count();
           tests_failed_count += Minkowski_error_test.get_tests_failed_count();
 
-          // cross entropy error
+          // cross-entropy error
 
           CrossEntropyErrorTest cross_entropy_error_test;
           cross_entropy_error_test.run_test_case();

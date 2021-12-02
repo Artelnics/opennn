@@ -42,7 +42,7 @@ class LongShortTermMemoryLayer : public Layer
 
 public:
 
-    /// Enumeration of available activation functions for the long-short term memory layer.
+    /// Enumeration of available activation functions for the long-short-term memory layer.
 
     enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent,
                             Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear,
@@ -176,7 +176,7 @@ public:
 
    void set_parameters_random();
 
-   // Long short term memory layer combinations
+   // Long short-term memory layer combinations
 
    void calculate_combinations(const Tensor<type, 1>&,
                                const Tensor<type, 2>&,
@@ -184,7 +184,7 @@ public:
                                const Tensor<type, 1>&,
                                Tensor<type, 1>&) const;
 
-   // Long short term memory layer activations
+   // Long short-term memory layer activations
 
    void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
    void calculate_activations(const Tensor<type, 1>&, Tensor<type, 1>&) const;
@@ -192,13 +192,13 @@ public:
    void calculate_recurrent_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
    void calculate_recurrent_activations(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
-   // Long short term memory layer derivatives
+   // Long short-term memory layer derivatives
 
    void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
    void calculate_activations_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
    void calculate_recurrent_activations_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
 
-   // Long short term memory layer outputs
+   // Long short-term memory layer outputs
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 

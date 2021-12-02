@@ -12,7 +12,7 @@ namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates a adaptive moment estimation optimization algorithm not associated to any loss index object.
+/// It creates an adaptive moment estimation optimization algorithm not associated with any loss index object.
 /// It also initializes the class members to their default values.
 
 AdaptiveMomentEstimation::AdaptiveMomentEstimation()
@@ -23,7 +23,7 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation()
 
 
 /// Loss index constructor.
-/// It creates a adaptive moment estimation optimization algorithm associated to a loss index.
+/// It creates an adaptive moment estimation optimization algorithm associated with a loss index.
 /// It also initializes the class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
@@ -74,7 +74,7 @@ const type& AdaptiveMomentEstimation::get_epsilon() const
 
 
 /// Returns the goal value for the loss.
-/// This is used as a stopping criterion when training a neural network
+/// This is a stopping criterion when training a neural network.
 
 const type& AdaptiveMomentEstimation::get_loss_goal() const
 {
@@ -90,7 +90,7 @@ const type& AdaptiveMomentEstimation::get_maximum_time() const
 }
 
 
-/// Sets a pointer to a loss index object to be associated to the gradient descent object.
+/// Sets a pointer to a loss index object to be associated with the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
@@ -163,7 +163,7 @@ void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximu
 
 
 /// Sets a new goal value for the loss.
-/// This is used as a stopping criterion when training a neural network
+/// This is a stopping criterion when training a neural network.
 /// @param new_loss_goal Goal value for the loss.
 
 void AdaptiveMomentEstimation::set_loss_goal(const type& new_loss_goal)
@@ -467,7 +467,7 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 }
 
 
-/// Writes as matrix of strings the most representative atributes.
+/// This method writes a matrix of strings the most representative atributes.
 
 Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
@@ -522,7 +522,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 }
 
 
-/// Serializes the gradient descent object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the gradient descent object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) const

@@ -4760,7 +4760,7 @@ void DataSet::set(const DataSet& other_data_set)
 }
 
 
-/// Sets the data set members from a XML document.
+/// Sets the data set members from an XML document.
 /// @param data_set_document TinyXML document containing the member data.
 
 void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
@@ -4771,7 +4771,7 @@ void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-/// Sets the data set members by loading them from a XML file.
+/// Sets the data set members by loading them from an XML file.
 /// @param file_name Data set XML file_name.
 
 void DataSet::set(const string& file_name)
@@ -6504,7 +6504,7 @@ void DataSet::set_data_binary_random()
 }
 
 
-/// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the data set object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 
 void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -7700,7 +7700,7 @@ void DataSet::print() const
 }
 
 
-/// Saves the members of a data set object to a XML-type file in an XML-type format.
+/// Saves the members of a data set object to an XML-type file in an XML-type format.
 /// @param file_name Name of data set XML-type file.
 
 void DataSet::save(const string& file_name) const
@@ -7715,7 +7715,7 @@ void DataSet::save(const string& file_name) const
 }
 
 
-/// Loads the members of a data set object from a XML-type file:
+/// Loads the members of a data set object from an XML-type file:
 /// <ul>
 /// <li> Samples number.
 /// <li> Training samples number.

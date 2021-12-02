@@ -38,7 +38,7 @@ struct LevenbergMarquardtAlgorithmData;
 
 /// Levenberg-Marquardt Algorithm will always compute the approximate Hessian matrix, which has dimensions n-by-n.
 
-/// This concrete class represents a Levenberg-Marquardt Algorithm training algorithm[1], use to minimize loss function.
+/// This concrete class represents the Levenberg-Marquardt (LM) optimization algorithm[1], use to minimize loss function.
 ///
 /// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
 /// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
@@ -145,11 +145,11 @@ private:
 
    // Stopping criteria 
 
-   /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
+   /// Minimum loss improvement between two successive iterations. It is a stopping criterion.
 
    type minimum_loss_decrease;
 
-   /// Goal value for the loss. It is used as a stopping criterion.
+   /// Goal value for the loss. It is a stopping criterion.
 
    type training_loss_goal;
 
@@ -158,11 +158,11 @@ private:
 
    Index maximum_selection_failures;
 
-   /// Maximum number of epoch to perform_training. It is used as a stopping criterion.
+   /// Maximum number of epoch to perform_training. It is a stopping criterion.
 
    Index maximum_epochs_number;
 
-   /// Maximum training time. It is used as a stopping criterion.
+   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time;
 };

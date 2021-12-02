@@ -13,7 +13,7 @@ namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates a training strategy object not associated to any loss index object.
+/// It creates a training strategy object not associated with any loss index object.
 /// It also constructs the main optimization algorithm object.
 
 TrainingStrategy::TrainingStrategy()
@@ -36,7 +36,7 @@ TrainingStrategy::TrainingStrategy()
 
 
 /// Pointer constuctor.
-/// It creates a training strategy object not associated to any loss index object.
+/// It creates a training strategy object not associated with any loss index object.
 /// It also loads the members of this object from NeuralNetwork and DataSet class.
 
 TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
@@ -234,7 +234,7 @@ MinkowskiError* TrainingStrategy::get_Minkowski_error_pointer()
 }
 
 
-/// Returns a pointer to the cross entropy error which is used as error.
+/// Returns a pointer to the cross-entropy error which is used as error.
 /// If that object does not exists, an exception is thrown.
 
 CrossEntropyError* TrainingStrategy::get_cross_entropy_error_pointer()
@@ -421,7 +421,7 @@ const bool& TrainingStrategy::get_display() const
 
 /// Sets the loss index pointer to nullptr.
 /// It also destructs the loss index and the optimization algorithm.
-/// Finally, it sets the rest of members to their default values.
+/// Finally, it sets the rest of the members to their default values.
 
 void TrainingStrategy::set()
 {
@@ -591,7 +591,7 @@ void TrainingStrategy::set_optimization_algorithm_threads_number(const int& new_
 }
 
 
-/// Sets a pointer to a loss index object to be associated to the training strategy.
+/// Sets a pointer to a loss index object to be associated with the training strategy.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
@@ -850,7 +850,7 @@ void TrainingStrategy::print() const
 }
 
 
-/// Serializes the training strategy object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the training strategy object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -908,7 +908,7 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Loads the members of this training strategy object from a XML document.
+/// Loads the members of this training strategy object from an XML document.
 /// @param document XML document of the TinyXML library.
 
 void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
@@ -1183,7 +1183,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Saves to a XML-type file the members of the optimization algorithm object.
+/// Saves to an XML-type file the members of the optimization algorithm object.
 /// @param file_name Name of optimization algorithm XML-type file.
 
 void TrainingStrategy::save(const string& file_name) const
@@ -1198,7 +1198,7 @@ void TrainingStrategy::save(const string& file_name) const
 }
 
 
-/// Loads a gradient descent object from a XML-type file.
+/// Loads a gradient descent object from an XML-type file.
 /// Please mind about the file format, wich is specified in the User's Guide.
 /// @param file_name Name of optimization algorithm XML-type file.
 

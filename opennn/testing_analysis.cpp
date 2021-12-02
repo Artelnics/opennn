@@ -12,7 +12,7 @@ namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates a testing analysis object neither associated to a neural network nor to a mathematical model or a data set.
+/// It creates a testing analysis object neither associated with a neural network nor to a mathematical model or a data set.
 /// By default, it constructs the function regression testing object.
 
 TestingAnalysis::TestingAnalysis()
@@ -24,7 +24,7 @@ TestingAnalysis::TestingAnalysis()
 
 
 /// Neural network and data set constructor.
-/// It creates a testing analysis object associated to a neural network and to a data set.
+/// It creates a testing analysis object associated with a neural network and to a data set.
 /// By default, it constructs the function regression testing object.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
@@ -3944,7 +3944,7 @@ void TestingAnalysis::print() const
 }
 
 
-/// Serializes the testing analysis object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the testing analysis object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void TestingAnalysis::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -4006,7 +4006,7 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Saves to a XML file the members of this testing analysis object.
+/// Saves to an XML file the members of this testing analysis object.
 /// @param file_name Name of testing analysis XML file.
 
 void TestingAnalysis::save(const string& file_name) const
@@ -4023,7 +4023,7 @@ void TestingAnalysis::save(const string& file_name) const
 }
 
 
-/// Loads from a XML file the members for this testing analysis object.
+/// Loads from an XML file the members for this testing analysis object.
 /// @param file_name Name of testing analysis XML file.
 
 void TestingAnalysis::load(const string& file_name)

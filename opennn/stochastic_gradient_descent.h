@@ -139,7 +139,7 @@ private:
 
    // Stopping criteria
 
-   /// Goal value for the loss. It is used as a stopping criterion.
+   /// Goal value for the loss. It is a stopping criterion.
 
    type training_loss_goal = type(0);
 
@@ -151,7 +151,7 @@ private:
 
    Index maximum_epochs_number = 10000;
 
-   /// Maximum training time. It is used as a stopping criterion.
+   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time = type(3600);
 

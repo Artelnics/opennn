@@ -159,7 +159,6 @@ public:
 
    Tensor<Index, 1> get_trainable_layers_neurons_numbers() const;
    Tensor<Index, 1> get_trainable_layers_inputs_numbers() const;
-   Tensor<Index, 1> get_trainable_layers_synaptic_weight_numbers() const;
 
    Tensor<Index, 1> get_architecture() const;
 

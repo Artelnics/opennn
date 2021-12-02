@@ -208,7 +208,7 @@ Tensor<type, 2> ProbabilisticLayer::get_synaptic_weights(Tensor<type, 1>& parame
 }
 
 
-/// Returns the number of parameters(biases and synaptic weights) of the layer.
+/// Returns the number of parameters (biases and synaptic weights) of the layer.
 
 Index ProbabilisticLayer::get_parameters_number() const
 {
@@ -240,7 +240,7 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 
 
 /// Sets a probabilistic layer with zero probabilistic neurons.
-/// It also sets the rest of members to their default values.
+/// It also sets the rest of the members to their default values.
 
 void ProbabilisticLayer::set()
 {
@@ -910,7 +910,7 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationL
 }
 
 
-/// Serializes the probabilistic layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the probabilistic layer object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void ProbabilisticLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const

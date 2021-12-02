@@ -25,7 +25,7 @@ PerceptronLayer::PerceptronLayer() : Layer()
 
 /// Layer architecture constructor.
 /// It creates a layer object with given numbers of inputs and perceptrons.
-/// The parameters are initialized at random.
+/// It initializes the parameters at random.
 /// This constructor also initializes the rest of class members to their default values.
 /// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of perceptrons in the layer.
@@ -79,7 +79,7 @@ Index PerceptronLayer::get_synaptic_weights_number() const
 }
 
 
-/// Returns the number of parameters(biases and synaptic weights) of the layer.
+/// Returns the number of parameters (biases and synaptic weights) of the layer.
 
 Index PerceptronLayer::get_parameters_number() const
 {
@@ -175,7 +175,7 @@ const PerceptronLayer::ActivationFunction& PerceptronLayer::get_activation_funct
 
 
 /// Returns a string with the name of the layer activation function.
-/// This can be: Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
+/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
 
 string PerceptronLayer::write_activation_function() const
 {
@@ -285,7 +285,7 @@ void PerceptronLayer::set_name(const string& new_layer_name)
 
 
 /// Sets a new number of inputs in the layer.
-/// The new synaptic weights are initialized at random.
+/// It also initializes the new synaptic weights at random.
 /// @param new_inputs_number Number of layer inputs.
 
 void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
