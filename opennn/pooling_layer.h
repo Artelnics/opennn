@@ -40,7 +40,7 @@ class PoolingLayer : public Layer
 
 public:
 
-    /// Enumeration of available methods for pooling data.
+    /// Enumeration of the available methods for pooling data.
 
     enum class PoolingMethod{NoPooling, MaxPooling, AveragePooling};
 

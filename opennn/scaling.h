@@ -27,7 +27,7 @@ using namespace Eigen;
 
 namespace OpenNN
 {
-/// Enumeration of available methods for scaling and unscaling the data.
+/// Enumeration of the available methods for scaling and unscaling the data.
 
     enum class Scaler{NoScaling, MinimumMaximum, MeanStandardDeviation, StandardDeviation, Logarithm};
 

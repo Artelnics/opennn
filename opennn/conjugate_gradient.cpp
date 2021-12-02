@@ -25,7 +25,7 @@ ConjugateGradient::ConjugateGradient()
 
 /// Destructor.
 /// It creates a conjugate gradient optimization algorithm associated with a loss index object.
-/// It also initializes the rest of class members to their default values.
+/// It also initializes the rest of the class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index_pointer)
@@ -1267,7 +1267,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
              }
          }
 
-         // Neural network file name
+         // Neural network filename
          {
              const tinyxml2::XMLElement* element = root_element->FirstChildElement("NeuralNetworkFileName");
 

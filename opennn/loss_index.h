@@ -61,7 +61,7 @@ public:
 
    // Methods
 
-   /// Enumeration of available regularization methods.
+   /// Enumeration of the available regularization methods.
 
    enum class RegularizationMethod{L1, L2, NoRegularization};
 

@@ -88,7 +88,7 @@ protected:
 
    Index random_tests_number;
 
-   /// True if messages from this class are displayed, false otherwise.
+   /// True if messages from this class are displayed and false otherwise.
 
    bool display = true;
 

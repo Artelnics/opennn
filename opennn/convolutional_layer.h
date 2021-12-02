@@ -40,7 +40,7 @@ class ConvolutionalLayer : public Layer
 
 public:
 
-    /// Enumeration of available activation functions for the convolutional layer.
+    /// Enumeration of the available activation functions for the convolutional layer.
 
     enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 

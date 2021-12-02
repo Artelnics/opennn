@@ -69,7 +69,7 @@ public:
 
     // Enumerations
 
-    /// Enumeration of available error terms in OpenNN.
+    /// Enumeration of the available error terms in OpenNN.
 
     enum class LossMethod
     {

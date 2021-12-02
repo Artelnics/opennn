@@ -15,7 +15,7 @@ namespace OpenNN
 
 /// Default constructor.
 /// It creates a data set object with zero samples and zero inputs and target variables.
-/// It also initializes the rest of class members to their default values.
+/// It also initializes the rest of the class members to their default values.
 
 DataSet::DataSet()
 {
@@ -26,7 +26,7 @@ DataSet::DataSet()
 
 
 /// Default constructor. It creates a data set object from data Eigen Matrix.
-/// It also initializes the rest of class members to their default values.
+/// It also initializes the rest of the class members to their default values.
 /// @param data Data Tensor<type, 2>.
 
 DataSet::DataSet(const Tensor<type, 2>& data)
@@ -40,7 +40,7 @@ DataSet::DataSet(const Tensor<type, 2>& data)
 /// Samples and variables number constructor.
 /// It creates a data set object with given samples and variables numbers.
 /// All the variables are set as inputs.
-/// It also initializes the rest of class members to their default values.
+/// It also initializes the rest of the class members to their default values.
 /// @param new_samples_number Number of samples in the data set.
 /// @param new_variables_number Number of variables.
 
@@ -54,7 +54,7 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_variables_num
 
 /// Samples number, input variables number and target variables number constructor.
 /// It creates a data set object with given samples and inputs and target variables numbers.
-/// It also initializes the rest of class members to their default values.
+/// It also initializes the rest of the class members to their default values.
 /// @param new_samples_number Number of samples in the data set.
 /// @param new_inputs_number Number of input variables.
 /// @param new_targets_number Number of target variables.
@@ -70,8 +70,8 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 /// File and separator constructor. It creates a data set object by loading the object members from a data file.
 /// It also sets a separator.
 /// Please mind about the file format. This is specified in the User's Guide.
-/// @param data_file_name Data file file name.
-/// @param separator Data file file name.
+/// @param data_file_name Data file filename.
+/// @param separator Data file filename.
 
 DataSet::DataSet(const string& data_file_name, const char& separator, const bool& has_columns_names)
 {
@@ -5953,7 +5953,7 @@ bool DataSet::has_nan_row(const Index& row_index) const
 }
 
 
-/// Print on screen the information about the missing values in the data set.
+/// Prints on the screen the information about the missing values in the data set.
 /// <ul>
 /// <li> Total number of missing values.
 /// <li> Number of variables with missing values.
@@ -5978,7 +5978,7 @@ void DataSet::print_missing_values_information() const
 }
 
 
-/// Print on screen the correlation between targets and inputs.
+/// Prints on the screen the correlation between targets and inputs.
 
 void DataSet::print_input_target_columns_correlations() const
 {
@@ -6000,7 +6000,7 @@ void DataSet::print_input_target_columns_correlations() const
 }
 
 
-/// This method print on screen the corretaliont between inputs and targets.
+/// This method Prints on the screen the corretaliont between inputs and targets.
 /// @param number Number of variables to be printed.
 
 void DataSet::print_top_input_target_columns_correlations() const
@@ -6082,7 +6082,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
 }
 
 
-/// Print on screen the correlation between variables in the data set.
+/// Prints on the screen the correlation between variables in the data set.
 
 void DataSet::print_inputs_correlations() const
 {
@@ -6108,7 +6108,7 @@ void DataSet::print_data_file_preview() const
 }
 
 
-/// This method print on screen the corretaliont between variables.
+/// This method Prints on the screen the corretaliont between variables.
 /// @param number Number of variables to be printed.
 
 void DataSet::print_top_inputs_correlations() const
@@ -6525,7 +6525,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Data file name
+    // Data filename
     {
         file_stream.OpenElement("DataFileName");
 
@@ -6905,7 +6905,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw logic_error(buffer.str());
     }
 
-    // Data file name
+    // Data filename
 
     const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataFileName");
 
@@ -9919,7 +9919,7 @@ void DataSet::read_csv_1()
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void read_csv() method.\n"
-               << "Data file name is empty.\n";
+               << "Data filename is empty.\n";
 
         throw logic_error(buffer.str());
     }

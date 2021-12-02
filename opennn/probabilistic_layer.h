@@ -63,7 +63,7 @@ public:
 
    // Enumerations
 
-   /// Enumeration of available methods for interpreting variables as probabilities.
+   /// Enumeration of the available methods for interpreting variables as probabilities.
 
    enum class ActivationFunction{Binary, Logistic, Competitive, Softmax};
 

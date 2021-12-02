@@ -233,7 +233,7 @@ bool is_numeric_string(const string& str)
 }
 
 
-/// Returns true if given string vector is constant, false otherwise.
+/// Returns true if given string vector is constant and false otherwise.
 /// @param str vector to be checked.
 ///
 bool is_constant_string(const Tensor<string, 1>& str)
@@ -250,7 +250,7 @@ bool is_constant_string(const Tensor<string, 1>& str)
     return true;
 }
 
-/// Returns true if given numeric vector is constant, false otherwise.
+/// Returns true if given numeric vector is constant and false otherwise.
 /// @param str vector to be checked.
 
 bool is_constant_numeric(const Tensor<type, 1>& str)
@@ -266,7 +266,7 @@ bool is_constant_numeric(const Tensor<type, 1>& str)
 }
 
 
-/// Returns true if given string is a date, false otherwise.
+/// Returns true if given string is a date and false otherwise.
 /// @param str String to be checked.
 
 bool is_date_time_string(const string& str)
@@ -684,7 +684,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 }
 
 
-/// Returns true if the string contains the given substring, false otherwise.
+/// Returns true if the string contains the given substring and false otherwise.
 /// @param str String.
 /// @param sub_str Substring to search.
 

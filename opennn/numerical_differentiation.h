@@ -43,7 +43,7 @@ public:
 
     virtual ~NumericalDifferentiation();
 
-    /// Enumeration of available methods for numerical differentiation.
+    /// Enumeration of the available methods for numerical differentiation.
 
     const Index& get_precision_digits() const;
 

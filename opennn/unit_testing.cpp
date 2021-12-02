@@ -117,7 +117,7 @@ void UnitTesting::set_display(const bool& new_display)
 /// It appends to the information message an error message is the condition is not satisfied.
 /// @param condition Expression of the condition to be tested.
 /// @param error_message Error message to be appended to the information message,
-/// typically the file name and the line where the condition has been tested.
+/// typically the filename and the line where the condition has been tested.
 
 void UnitTesting::assert_true(const bool& condition, const string& error_message)
 {
@@ -143,7 +143,7 @@ void UnitTesting::assert_true(const bool& condition, const string& error_message
 /// It appends to the information message an error message is the condition is not satisfied.
 /// @param condition Expression of the condition to be tested.
 /// @param error_message Error message to be appended to the information message,
-/// typically the file name and the line where the condition has been tested.
+/// typically the filename and the line where the condition has been tested.
 
 void UnitTesting::assert_false(const bool& condition, const string& error_message)
 {

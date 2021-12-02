@@ -129,7 +129,7 @@ const Index& OptimizationAlgorithm::get_save_period() const
 }
 
 
-/// Returns the file name where the neural network will be saved.
+/// Returns the filename where the neural network will be saved.
 
 const string& OptimizationAlgorithm::get_neural_network_file_name() const
 {
@@ -228,9 +228,9 @@ void OptimizationAlgorithm::set_save_period(const Index& new_save_period)
 }
 
 
-/// Sets a new file name where the neural network will be saved.
+/// Sets a new filename where the neural network will be saved.
 /// @param new_neural_network_file_name
-/// File name for the neural network object.
+/// filename for the neural network object.
 
 void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neural_network_file_name)
 {
