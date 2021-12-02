@@ -983,12 +983,11 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_inputs_numbers() const
 /// Returns a vector with the architecture of the neural network.
 /// The elements of this vector are as follows:
 /// <UL>
-/// <LI> Number of scaling neurons(if there is a scaling layer).</LI>
+/// <LI> Number of scaling neurons (if there is a scaling layer).</LI>
 /// <LI> Multilayer perceptron architecture(if there is a neural network).</LI>
-/// <LI> Number of conditions neurons(if there is a conditions layer).</LI>
-/// <LI> Number of unscaling neurons(if there is an unscaling layer).</LI>
-/// <LI> Number of probabilistic neurons(if there is a probabilistic layer).</LI>
-/// <LI> Number of bounding neurons(if there is a bounding layer).</LI>
+/// <LI> Number of unscaling neurons (if there is an unscaling layer).</LI>
+/// <LI> Number of probabilistic neurons (if there is a probabilistic layer).</LI>
+/// <LI> Number of bounding neurons (if there is a bounding layer).</LI>
 /// </UL>
 
 Tensor<Index, 1> NeuralNetwork::get_architecture() const
@@ -1345,7 +1344,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
 /// Calculates the forward propagation in the neural network.
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
-/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
+/// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
@@ -1413,7 +1412,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 /// Calculates the forward propagation in the neural network.
 /// @param batch DataSetBatch of data set that contains the inputs and targets to be trained.
 /// @param paramters Parameters of neural network.
-/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
+/// @param foward_propagation Is a NeuralNetwork class structure where save the necessary parameters of forward propagation.
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       Tensor<type, 1>& parameters,
@@ -1506,7 +1505,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 /// <li> Calculate scaled inputs.
 /// <li> Calculate forward propagation.
 /// <li> Calculate unscaled outputs.
-/// <li> Apply boundary condtions.
+/// <li> Apply boundary conditions.
 /// <li> Calculate bounded outputs.
 /// </ul>
 /// @param inputs Set of inputs to the neural network.
@@ -1608,7 +1607,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
 
 /// Calculates the input data necessary to compute the output data from the neural network in some direction.
-/// @param direction Input index(must be between 0 and number of inputs - 1).
+/// @param direction Input index (must be between 0 and number of inputs - 1).
 /// @param point Input point through the directional input passes.
 /// @param minimum Minimum value of the input with the above index.
 /// @param maximum Maximum value of the input with the above index.

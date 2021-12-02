@@ -251,8 +251,8 @@ void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning
 
 
 /// Sets a new display value.
-/// If it is set to true messages from this class are to be displayed on the screen;
-/// if it is set to false messages from this class are not to be displayed on the screen.
+/// If it is set to true messages from this class are displayed on the screen;
+/// if it is set to false messages from this class are not displayed on the screen.
 /// @param new_display Display value.
 
 void LearningRateAlgorithm::set_display(const bool& new_display)

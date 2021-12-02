@@ -28,22 +28,14 @@
          <InputsNumber>2</InputsNumber>
          <NeuronsNumber>4</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-<<<<<<< HEAD
-         <Parameters>0.146387 0.00146484 -0.169324 0.0516846 -0.0133179 -0.184424 0.143457 0.167468 -0.0816528 0.0593262 -0.131311 -0.0955689</Parameters>
-=======
-         <Parameters>-0.0659546 0.1578 0.0724853 0.1875 0.0142334 0.171667 0.127722 -0.0491577 -0.12146 -0.108411 -0.097937 0.00756836</Parameters>
->>>>>>> d198b597bb68448122ba0758235f5cc9689941f4
+         <Parameters>-0.0887207 -0.155518 -0.168835 -0.166089 0.172205 0.0128174 0.0391724 -0.0283936 -0.0283203 0.0838013 -0.103064 -0.0505371</Parameters>
       </PerceptronLayer>
       <PerceptronLayer>
          <LayerName>perceptron_layer_2</LayerName>
          <InputsNumber>4</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <ActivationFunction>Linear</ActivationFunction>
-<<<<<<< HEAD
-         <Parameters>-0.0765503 0.134326 0.157922 -0.0614502 0.182092 -0.123743 0.176209 0.158459 -0.123059 0.191223 0.0429443 -0.107092 0.161047 0.00228271 0.0422607</Parameters>
-=======
-         <Parameters>-0.176917 0.152087 -0.0765991 -0.120374 0.165039 -0.0474365 -0.059436 -0.120618 -0.109033 -0.0375122 0.0578613 -0.0442383 0.168335 -0.163379 0.0393188</Parameters>
->>>>>>> d198b597bb68448122ba0758235f5cc9689941f4
+         <Parameters>0.0947388 -0.185803 -0.00162354 0.193018 0.0431397 0.163831 0.0689453 -0.0887817 0.0339966 -0.0505371 -0.146179 -0.118005 -0.106958 -0.18479 0.0568115</Parameters>
       </PerceptronLayer>
       <UnscalingLayer>
          <UnscalingNeuronsNumber>3</UnscalingNeuronsNumber>

@@ -155,8 +155,8 @@ string ProbabilisticLayer::write_activation_function_text() const
 }
 
 
-/// Returns true if messages from this class are to be displayed on the screen, or false if messages
-/// from this class are not to be displayed on the screen.
+/// Returns true if messages from this class are displayed on the screen, or false if messages
+/// from this class are not displayed on the screen.
 
 const bool& ProbabilisticLayer::get_display() const
 {
@@ -484,8 +484,8 @@ void ProbabilisticLayer::set_activation_function(const string& new_activation_fu
 
 
 /// Sets a new display value.
-/// If it is set to true messages from this class are to be displayed on the screen;
-/// if it is set to false messages from this class are not to be displayed on the screen.
+/// If it is set to true messages from this class are displayed on the screen;
+/// if it is set to false messages from this class are not displayed on the screen.
 /// @param new_display Display value.
 
 void ProbabilisticLayer::set_display(const bool& new_display)

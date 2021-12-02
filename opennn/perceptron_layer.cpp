@@ -229,7 +229,7 @@ const bool& PerceptronLayer::get_display() const
 
 
 /// Sets an empty layer, wihtout any perceptron.
-/// It also sets the rest of members to their default values.
+/// It also sets the rest of the members to their default values.
 
 void PerceptronLayer::set()
 {
@@ -242,7 +242,7 @@ void PerceptronLayer::set()
 
 
 /// Sets new numbers of inputs and perceptrons in the layer.
-/// It also sets the rest of members to their default values.
+/// It also sets the rest of the members to their default values.
 /// @param new_inputs_number Number of inputs.
 /// @param new_neurons_number Number of perceptron neurons.
 
