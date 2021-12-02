@@ -18,6 +18,10 @@ set(VS_STARTUP_PROJECT opennn)
 # Uncomment next line to compile without using C++11
 # add_definitions(-D__Cpp11__)
 
+find_package(OpenMP REQUIRED)
+set(CMAKE_C_FLAGS "${OpenMP_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${OpenMP_CXX_FLAGS}")
+
 add_subdirectory(opennn)
 
 include_directories(opennn)
