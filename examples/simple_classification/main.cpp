@@ -31,32 +31,38 @@ int main()
 
         DataSet data_set("../data/simple_pattern_recognition.csv", ';', true);
 
+        const Index input_variables_number = 2;
+        const Index target_variables_number = 1;
+        const Index hidden_neurons_number = 10;
+
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {2, 10, 1});
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
         const TrainingResults training_results = training_strategy.perform_training();
 
         // Testing analysis
 
-        const TestingAnalysis testing_analysis(&neural_network, &data_set);
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         const Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
-
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+
+        cout << "\nConfusion matrix:\n" << confusion << "\n" << endl;
 
         // Save results
 
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression_python("../data/expression.py");
 
-        cout << "Bye" << endl;
+        cout << "Bye Simple Function Classification" << endl;
 
         return 0;
     }
