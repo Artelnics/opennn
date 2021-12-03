@@ -42,50 +42,11 @@ BoundingLayer::~BoundingLayer()
 }
 
 
-/// Returns true if the size of the layer is zero, and false otherwise.
-
-bool BoundingLayer::is_empty() const
-{
-    if(get_neurons_number() == 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-
 /// Returns the method used for bounding layer.
 
 const BoundingLayer::BoundingMethod& BoundingLayer::get_bounding_method() const
 {
     return bounding_method;
-}
-
-/// Returns a string writing if use bounding layer or not.
-
-string BoundingLayer::write_bounding_method() const
-{
-    if(bounding_method == BoundingMethod::Bounding)
-    {
-        return "Bounding";
-    }
-    else if(bounding_method == BoundingMethod::NoBounding)
-    {
-        return "NoBounding";
-    }
-    else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: BoundingLayer class.\n"
-               << "string write_bounding_method() const method.\n"
-               << "Unknown bounding method.\n";
-
-        throw logic_error(buffer.str());
-    }
 }
 
 
@@ -94,22 +55,6 @@ string BoundingLayer::write_bounding_method() const
 Index BoundingLayer::get_inputs_number() const
 {
     return lower_bounds.dimension(0);
-}
-
-
-/// Return the neurons number in the bounding layer.
-
-Index BoundingLayer::get_neurons_number() const
-{
-    return lower_bounds.dimension(0);
-}
-
-
-/// Returns the lower bounds values of all the bounding neurons in the layer.
-
-const Tensor<type, 1>& BoundingLayer::get_lower_bounds() const
-{
-    return lower_bounds;
 }
 
 
@@ -139,11 +84,19 @@ type BoundingLayer::get_lower_bound(const Index& i) const
 }
 
 
-/// Returns the upper bounds values of all the bounding neurons in the layer.
+/// Returns the lower bounds values of all the bounding neurons in the layer.
 
-const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
+const Tensor<type, 1>& BoundingLayer::get_lower_bounds() const
 {
-    return upper_bounds;
+    return lower_bounds;
+}
+
+
+/// Return the neurons number in the bounding layer.
+
+Index BoundingLayer::get_neurons_number() const
+{
+    return lower_bounds.dimension(0);
 }
 
 
@@ -183,6 +136,29 @@ type BoundingLayer::get_upper_bound(const Index& i) const
 }
 
 
+/// Returns the upper bounds values of all the bounding neurons in the layer.
+
+const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
+{
+    return upper_bounds;
+}
+
+
+/// Returns true if the size of the layer is zero, and false otherwise.
+
+bool BoundingLayer::is_empty() const
+{
+    if(get_neurons_number() == 0)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
 /// Sets the number of bounding neurons to be zero.
 /// It also sets the rest of memebers to their default values.
 
@@ -198,7 +174,7 @@ void BoundingLayer::set()
 
 
 /// Resizes the bounding layer.
-/// It also sets the rest of memebers to their default values.
+/// It also sets the rest of members to their default values.
 /// @param new_neurons_number Size of the bounding layer.
 
 void BoundingLayer::set(const Index& new_neurons_number)
@@ -206,29 +182,6 @@ void BoundingLayer::set(const Index& new_neurons_number)
     set_neurons_number(new_neurons_number);
 
     set_default();
-}
-
-
-/// Resize the number of inputs.
-/// @param new_inputs_number Size of the inputs array.
-
-void BoundingLayer::set_inputs_number(const Index& new_inputs_number)
-{
-    lower_bounds.resize(new_inputs_number);
-    upper_bounds.resize(new_inputs_number);
-}
-
-
-/// Resize the number of bound neurons from the bounding layer.
-/// @param new_neurons_number Number of the neurons from the bounding layer.
-
-void BoundingLayer::set_neurons_number(const Index& new_neurons_number)
-{
-    lower_bounds.resize(new_neurons_number);
-    upper_bounds.resize(new_neurons_number);
-
-    lower_bounds.setConstant(-numeric_limits<type>::max());
-    upper_bounds.setConstant(numeric_limits<type>::max());
 }
 
 
@@ -291,31 +244,36 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
 }
 
 
-/// Sets new lower bounds for all the neurons in the layer.
-/// @param new_lower_bounds New set of lower bounds for the bounding neurons.
+/// Sets the members to their default values:
 
-void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
+void BoundingLayer::set_default()
 {
-#ifdef OPENNN_DEBUG
+    layer_name = "bounding_layer";
 
-    const Index neurons_number = get_neurons_number();
+    bounding_method = BoundingMethod::Bounding;
 
-    if(new_lower_bounds.size() != neurons_number)
-    {
-        ostringstream buffer;
+    layer_type = Layer::Type::Bounding;
+}
 
-        buffer << "OpenNN Exception: BoundingLayer class.\n"
-               << "void set_lower_bounds(const Tensor<type, 1>&) method.\n"
-               << "Size must be equal to number of bounding neurons number.\n";
 
-        throw logic_error(buffer.str());
-    }
+/// Sets a new display value.
+/// If it is set to true messages from this class are displayed on the screen;
+/// if it is set to false messages from this class are not displayed on the screen.
+/// @param new_display Display value.
 
-#endif
+void BoundingLayer::set_display(const bool& new_display)
+{
+    display = new_display;
+}
 
-    // Set lower bound of bounding neurons
 
-    lower_bounds = new_lower_bounds;
+/// Resize the number of inputs.
+/// @param new_inputs_number Size of the inputs array.
+
+void BoundingLayer::set_inputs_number(const Index& new_inputs_number)
+{
+    lower_bounds.resize(new_inputs_number);
+    upper_bounds.resize(new_inputs_number);
 }
 
 
@@ -352,6 +310,47 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
     // Set lower bound of single neuron
 
     lower_bounds[index] = new_lower_bound;
+}
+
+
+/// Sets new lower bounds for all the neurons in the layer.
+/// @param new_lower_bounds New set of lower bounds for the bounding neurons.
+
+void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
+{
+#ifdef OPENNN_DEBUG
+
+    const Index neurons_number = get_neurons_number();
+
+    if(new_lower_bounds.size() != neurons_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: BoundingLayer class.\n"
+               << "void set_lower_bounds(const Tensor<type, 1>&) method.\n"
+               << "Size must be equal to number of bounding neurons number.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    // Set lower bound of bounding neurons
+
+    lower_bounds = new_lower_bounds;
+}
+
+
+/// Resize the number of bound neurons from the bounding layer.
+/// @param new_neurons_number Number of the neurons from the bounding layer.
+
+void BoundingLayer::set_neurons_number(const Index& new_neurons_number)
+{
+    lower_bounds.resize(new_neurons_number);
+    upper_bounds.resize(new_neurons_number);
+
+    lower_bounds.setConstant(-numeric_limits<type>::max());
+    upper_bounds.setConstant(numeric_limits<type>::max());
 }
 
 
@@ -406,32 +405,6 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 }
 
 
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
-
-void BoundingLayer::set_display(const bool& new_display)
-{
-    display = new_display;
-}
-
-
-/// Sets the members to their default values:
-/// <ul>
-/// <li> Display: True.
-/// </ul>
-
-void BoundingLayer::set_default()
-{
-    layer_name = "bounding_layer";
-
-    bounding_method = BoundingMethod::Bounding;
-
-    layer_type = Layer::Type::Bounding;
-}
-
-
 /// Calculates the outputs from the bounding layer for a set of inputs to that layer.
 /// @param inputs Set of inputs to the bounding layer.
 
@@ -467,6 +440,31 @@ check_columns_number(inputs, get_inputs_number(), LOG);
     }
 
     return Tensor<type, 2>();
+}
+
+
+/// Returns a string writing if use bounding layer or not.
+
+string BoundingLayer::write_bounding_method() const
+{
+    if(bounding_method == BoundingMethod::Bounding)
+    {
+        return "Bounding";
+    }
+    else if(bounding_method == BoundingMethod::NoBounding)
+    {
+        return "NoBounding";
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: BoundingLayer class.\n"
+               << "string write_bounding_method() const method.\n"
+               << "Unknown bounding method.\n";
+
+        throw logic_error(buffer.str());
+    }
 }
 
 
