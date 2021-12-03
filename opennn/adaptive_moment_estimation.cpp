@@ -40,12 +40,12 @@ AdaptiveMomentEstimation::~AdaptiveMomentEstimation()
 {
 }
 
- 
-/// Returns the initial learning rate.
 
-const type& AdaptiveMomentEstimation::get_initial_learning_rate() const
+/// Returns batch samples number.
+
+Index AdaptiveMomentEstimation::get_batch_samples_number() const
 {
-    return initial_learning_rate;
+    return batch_samples_number;
 }
 
 
@@ -73,6 +73,14 @@ const type& AdaptiveMomentEstimation::get_epsilon() const
 }
 
 
+/// Returns the initial learning rate.
+
+const type& AdaptiveMomentEstimation::get_initial_learning_rate() const
+{
+    return initial_learning_rate;
+}
+
+
 /// Returns the goal value for the loss.
 /// This is a stopping criterion when training a neural network.
 
@@ -90,27 +98,17 @@ const type& AdaptiveMomentEstimation::get_maximum_time() const
 }
 
 
-/// Sets a pointer to a loss index object to be associated with the gradient descent object.
-/// It also sets that loss index to the learning rate algorithm.
-/// @param new_loss_index_pointer Pointer to a loss index object.
+/// Set number of samples in each batch. Default 1000.
+/// @param new_batch_sumples_number New value for batch samples number.
 
-void AdaptiveMomentEstimation::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_samples_number)
 {
-    loss_index_pointer = new_loss_index_pointer;
-}
-
-
-/// Sets a new learning rate.
-/// @param new_learning_rate.
-
-void AdaptiveMomentEstimation::set_initial_learning_rate(const type& new_learning_rate)
-{
-    initial_learning_rate= new_learning_rate;
+    batch_samples_number = new_batch_samples_number;
 }
 
 
 /// Sets beta 1 generally close to 1.
-/// @param new_beta_1.
+/// @param new_beta_1 New value for beta 1.
 
 void AdaptiveMomentEstimation::set_beta_1(const type& new_beta_1)
 {
@@ -119,7 +117,7 @@ void AdaptiveMomentEstimation::set_beta_1(const type& new_beta_1)
 
 
 /// Sets beta 2 generally close to 1.
-/// @param new_beta_2.
+/// @param new_beta_2 New value for beta 2.
 
 void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
 {
@@ -127,12 +125,49 @@ void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
 }
 
 
+/// Sets adaptive moment estimation optimization algorithm to default.
+
+void AdaptiveMomentEstimation::set_default()
+{
+    display_period = 100;
+}
+
+
 /// Sets epsilon.
-/// @param epsilon.
+/// @param epsilon New epsilon value.
 
 void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 {
     epsilon= new_epsilon;
+}
+
+
+/// Sets a new learning rate.
+/// @param new_learning_rate New learning rate.
+
+void AdaptiveMomentEstimation::set_initial_learning_rate(const type& new_learning_rate)
+{
+    initial_learning_rate= new_learning_rate;
+}
+
+
+/// Sets a new goal value for the loss.
+/// This is a stopping criterion when training a neural network.
+/// @param new_loss_goal Goal value for the loss.
+
+void AdaptiveMomentEstimation::set_loss_goal(const type& new_loss_goal)
+{
+    training_loss_goal = new_loss_goal;
+}
+
+
+/// Sets a pointer to a loss index object to be associated with the gradient descent object.
+/// It also sets that loss index to the learning rate algorithm.
+/// @param new_loss_index_pointer Pointer to a loss index object.
+
+void AdaptiveMomentEstimation::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+{
+    loss_index_pointer = new_loss_index_pointer;
 }
 
 
@@ -162,18 +197,8 @@ void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximu
 }
 
 
-/// Sets a new goal value for the loss.
-/// This is a stopping criterion when training a neural network.
-/// @param new_loss_goal Goal value for the loss.
-
-void AdaptiveMomentEstimation::set_loss_goal(const type& new_loss_goal)
-{
-    training_loss_goal = new_loss_goal;
-}
-
-
 /// Sets a new maximum training time.
-/// @param new_maximum_time Maximum training time.
+/// @param new_maximum_time New maximum training time.
 
 void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 {
@@ -461,13 +486,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 }
 
 
-string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
-{
-    return "ADAPTIVE_MOMENT_ESTIMATION";
-}
-
-
-/// This method writes a matrix of strings the most representative atributes.
+/// Writes in a matrix of strings the most representative atributes.
 
 Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
@@ -522,8 +541,48 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 }
 
 
-/// Serializes the gradient descent object into an XML document of the TinyXML library without keeping the DOM tree in memory.
+/// Update iteration parameters.
+/// @param back_propagation New loss index back propagation.
+/// @param optimization_data New moment estimation data.
+
+void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_propagation,
+                              AdaptiveMomentEstimationData& optimization_data)
+{
+    const type learning_rate =
+        type(initial_learning_rate*
+            sqrt(type(1) - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
+            (type(1) - pow(beta_1, static_cast<type>(optimization_data.iteration))));
+
+    optimization_data.gradient_exponential_decay.device(*thread_pool_device)
+            = optimization_data.gradient_exponential_decay*beta_1
+            + back_propagation.gradient*(type(1) - beta_1);
+
+    optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
+            = optimization_data.square_gradient_exponential_decay*beta_2
+            + back_propagation.gradient*back_propagation.gradient*(type(1) - beta_2);
+
+    back_propagation.parameters.device(*thread_pool_device) -=
+            optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
+
+    optimization_data.iteration++;
+
+    // Update parameters
+
+    back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
+}
+
+
+/// Write a string with best algorithm type for the model.
+
+string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
+{
+    return "ADAPTIVE_MOMENT_ESTIMATION";
+}
+
+
+/// Serializes the adaptive moment estimation object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
+/// @param file_stream.
 
 void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -591,6 +650,10 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.CloseElement();
 }
 
+
+/// Imports the adaptive moment estimation object from an XML document of the TinyXML library.
+/// See the OpenNN manual for more information about the format of this document.
+/// @param document.
 
 void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 {
@@ -703,70 +766,32 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Set number of samples in each batch. Default 1000.
-
-void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_samples_number)
-{
-    batch_samples_number = new_batch_samples_number;
-}
-
-
-void AdaptiveMomentEstimation::set_default()
-{
-    display_period = 100;
-}
-
-
-Index AdaptiveMomentEstimation::get_batch_samples_number() const
-{
-    return batch_samples_number;
-}
-
-
-/// Update iteration parameters
-
-void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_propagation,
-                              AdaptiveMomentEstimationData& optimization_data)
-{  
-    const type learning_rate =
-        type(initial_learning_rate*
-            sqrt(type(1) - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
-            (type(1) - pow(beta_1, static_cast<type>(optimization_data.iteration))));
-
-    optimization_data.gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.gradient_exponential_decay*beta_1
-            + back_propagation.gradient*(type(1) - beta_1);
-
-    optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.square_gradient_exponential_decay*beta_2
-            + back_propagation.gradient*back_propagation.gradient*(type(1) - beta_2);
-
-    back_propagation.parameters.device(*thread_pool_device) -=
-            optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);          
-
-    optimization_data.iteration++;
-
-    // Update parameters
-
-    back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
-}
-
+/// Default constructor
 
 AdaptiveMomentEstimationData::AdaptiveMomentEstimationData()
 {
 }
 
 
-AdaptiveMomentEstimationData::AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer)
+/// Adaptive Moment Estimation constructor.
+/// It creates an adaptive moment estimation data object associated with an adaptive moment estimation algorithm.
+/// @param new_adaptive_moment_estimation_pointer Pointer to a adaptive moment estimation object.
+
+AdaptiveMomentEstimationData::AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
 {
-    set(new_stochastic_gradient_descent_pointer);
+    set(new_adaptive_moment_estimation_pointer);
 }
 
+
+/// Destructor
 
 AdaptiveMomentEstimationData::~AdaptiveMomentEstimationData()
 {
 }
 
+
+/// Sets a new adaptive moment estimation pointer.
+/// @param new_adaptive_moment_estimation_pointer New adaptive moment estimation pointer.
 
 void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
 {
@@ -785,6 +810,12 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     square_gradient_exponential_decay.setZero();
 }
 
+
+/// Prints on the screen the information about de AdaptiveMomentEstimation data.
+/// <ul>
+/// <li> Gradient exponential decay.
+/// <li> Square gradient exponential decay.
+/// </ul>
 
 void AdaptiveMomentEstimationData::print() const
 {

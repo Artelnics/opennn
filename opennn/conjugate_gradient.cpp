@@ -23,7 +23,7 @@ ConjugateGradient::ConjugateGradient()
 }
 
 
-/// Destructor.
+/// Loss index constructor.
 /// It creates a conjugate gradient optimization algorithm associated with a loss index object.
 /// It also initializes the rest of the class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -44,279 +44,79 @@ ConjugateGradient::~ConjugateGradient()
 }
 
 
-/// Returns a constant reference to the learning rate algorithm object inside the conjugate gradient method object.
+/// Returns the conjugate gradient training direction.
+/// @param old_gradient Gradient vector in the previous iteration.
+/// @param gradient Current gradient vector.
+/// @param old_training_direction Training direction in the previous iteration.
 
-const LearningRateAlgorithm& ConjugateGradient::get_learning_rate_algorithm() const
+void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Tensor<type, 1>& old_gradient,
+                                                                        const Tensor<type, 1>& gradient,
+                                                                        const Tensor<type, 1>& old_training_direction,
+                                                                        Tensor<type, 1>& training_direction) const
 {
-    return learning_rate_algorithm;
-}
 
+#ifdef OPENNN_DEBUG
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-/// Returns a pointer to the learning rate algorithm object inside the conjugate gradient method object.
+    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
-{
-    return &learning_rate_algorithm;
-}
+    ostringstream buffer;
 
+    if(!loss_index_pointer)
+    {
+        buffer << "OpenNN Exception: ConjugateGradient class.\n"
+               << "void calculate_training_direction() const method.\n"
+               << "Loss index pointer is nullptr.\n";
 
-/// Returns the conjugate gradient training direction method used for training.
+        throw logic_error(buffer.str());
+    }
 
-const ConjugateGradient::TrainingDirectionMethod& ConjugateGradient::get_training_direction_method() const
-{
-    return training_direction_method;
-}
+    const Index old_gradient_size = old_gradient.size();
 
+    if(old_gradient_size != parameters_number)
+    {
+        buffer << "OpenNN Exception: ConjugateGradient class.\n"
+               << "void calculate_training_direction() const method.\n"
+               << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-/// Returns a string with the name of the training direction.
+        throw logic_error(buffer.str());
+    }
 
-string ConjugateGradient::write_training_direction_method() const
-{
+    const Index gradient_size = gradient.size();
+
+    if(gradient_size != parameters_number)
+    {
+        buffer << "OpenNN Exception: ConjugateGradient class.\n"
+               << "void calculate_training_direction() const method.\n"
+               << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    const Index old_training_direction_size = old_training_direction.size();
+
+    if(old_training_direction_size != parameters_number)
+    {
+        buffer << "OpenNN Exception: ConjugateGradient class.\n"
+               << "void calculate_training_direction() const method.\n"
+               << "Size of old training direction (" << old_training_direction_size
+               << ") is not equal to number of parameters (" << parameters_number << ").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
     switch(training_direction_method)
     {
-    case TrainingDirectionMethod::PR:
-        return "PR";
-
     case TrainingDirectionMethod::FR:
-        return "FR";
+        calculate_FR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
+
+        return;
+    case TrainingDirectionMethod::PR:
+        calculate_PR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
+        return;
     }
-
-    return string();
-}
-
-
-/// Returns the minimum loss improvement during training.
-
-const type& ConjugateGradient::get_minimum_loss_decrease() const
-{
-    return minimum_loss_decrease;
-}
-
-
-/// Returns the goal value for the loss.
-/// This is used as a stopping criterion when training a neural network
-
-const type& ConjugateGradient::get_loss_goal() const
-{
-    return training_loss_goal;
-}
-
-
-/// Returns the maximum number of selection error increases during the training process.
-
-const Index& ConjugateGradient::get_maximum_selection_failures() const
-{
-    return maximum_selection_failures;
-}
-
-
-/// Returns the maximum number of epochs for training.
-
-const Index& ConjugateGradient::get_maximum_epochs_number() const
-{
-    return maximum_epochs_number;
-}
-
-
-/// Returns the maximum training time.
-
-const type& ConjugateGradient::get_maximum_time() const
-{
-    return maximum_time;
-}
-
-
-/// Sets a pointer to a loss index object to be associated with the conjugate gradient object.
-/// It also sets that loss index to the learning rate algorithm.
-/// @param new_loss_index_pointer Pointer to a loss index object.
-
-void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
-{
-    loss_index_pointer = new_loss_index_pointer;
-
-    learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
-}
-
-
-/// Sets a new training direction method to be used for training.
-/// @param new_training_direction_method Conjugate gradient training direction method.
-
-void ConjugateGradient::set_training_direction_method
-(const ConjugateGradient::TrainingDirectionMethod& new_training_direction_method)
-{
-    training_direction_method = new_training_direction_method;
-}
-
-
-/// Sets a new conjugate gradient training direction from a string representation.
-/// Possible values are:
-/// <ul>
-/// <li> "PR"
-/// <li> "FR"
-/// </ul>
-/// @param new_training_direction_method_name String with the name of the training direction method.
-
-void ConjugateGradient::set_training_direction_method(const string& new_training_direction_method_name)
-{
-    if(new_training_direction_method_name == "PR")
-    {
-        training_direction_method = TrainingDirectionMethod::PR;
-
-    }
-    else if(new_training_direction_method_name == "FR")
-    {
-        training_direction_method = TrainingDirectionMethod::FR;
-    }
-    else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_training_direction_method(const string&) method.\n"
-               << "Unknown training direction method: " << new_training_direction_method_name << ".\n";
-
-        throw logic_error(buffer.str());
-    }
-}
-
-
-/// Sets the default values into a conjugate gradient object.
-/// Training operators:
-/// <ul>
-/// <li> Training direction method = Polak-Ribiere;
-/// <li> Learning rate method = Brent;
-/// </ul>
-/// Training parameters:
-/// <ul>
-/// <li> First learning rate: 1.0.
-/// <li> Bracketing factor: 2.0.
-/// <li> Learning rate tolerance: 1.0e-3.
-/// </ul>
-/// Stopping criteria:
-/// <ul>
-/// <li> Loss goal: -numeric_limits<type>::max().
-/// <li> Maximum training time: 1.0e6.
-/// <li> Maximum number of epochs: 100.
-/// </ul>
-/// User stuff:
-/// <ul>
-/// <li> Warning learning rate: 1.0e6.
-/// <li> Error learning rate: 1.0e12.
-/// <li> Display: true.
-/// <li> Display period: 10.
-/// <li> Save period: 0.
-/// </ul>
-/// Reserve:
-/// <ul>
-/// <li> Reserve training error history: false.
-/// <li> Reserve training direction norm history: false.
-/// </ul>
-///
-
-void ConjugateGradient::set_default()
-{
-    // Stopping criteria
-
-    minimum_loss_decrease = type(0);
-    training_loss_goal = type(0);
-    maximum_selection_failures = 1000000;
-
-    maximum_epochs_number = 1000;
-    maximum_time = type(3600.0);
-
-    // UTILITIES
-
-    display_period = 10;
-
-    training_direction_method = TrainingDirectionMethod::FR;
-}
-
-
-/// Sets a new minimum loss improvement during training.
-/// @param new_minimum_loss_decrease Minimum improvement in the loss between two iterations.
-
-void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
-{
-    minimum_loss_decrease = new_minimum_loss_decrease;
-}
-
-
-/// Sets a new goal value for the loss.
-/// This is used as a stopping criterion when training a neural network
-/// @param new_loss_goal Goal value for the loss.
-
-void ConjugateGradient::set_loss_goal(const type& new_loss_goal)
-{
-    training_loss_goal = new_loss_goal;
-}
-
-
-/// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_failures Maximum number of epochs in which the selection evalutation increases.
-
-void ConjugateGradient::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
-{
-    maximum_selection_failures = new_maximum_selection_failures;
-}
-
-
-/// Sets a maximum number of epochs for training.
-/// @param new_maximum_iterations_number Maximum number of epochs for training.
-
-void ConjugateGradient::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
-{
-    maximum_epochs_number = new_maximum_epochs_number;
-}
-
-
-/// Sets a new maximum training time.
-/// @param new_maximum_time Maximum training time.
-
-void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_maximum_time(const type&) method.\n"
-               << "Maximum time must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set maximum time
-
-    maximum_time = new_maximum_time;
-}
-
-
-/// Sets a new number of iterations between the training saving progress.
-/// @param new_save_period
-/// Number of iterations between the training saving progress.
-
-void ConjugateGradient::set_save_period(const Index& new_save_period)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_save_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_save_period(const type&) method.\n"
-               << "Save period must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    save_period = new_save_period;
 }
 
 
@@ -399,6 +199,85 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
     }
 
     return FR_parameter;
+}
+
+
+/// Returns the training direction using the Fletcher-Reeves update.
+/// @param old_gradient Previous error function gradient.
+/// @param gradient Current error function gradient.
+/// @param old_training_direction Previous training direction vector.
+
+void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& old_gradient,
+                                                        const Tensor<type, 1>& gradient,
+                                                        const Tensor<type, 1>& old_training_direction,
+                                                        Tensor<type, 1>& training_direction) const
+{
+#ifdef OPENNN_DEBUG
+
+    ostringstream buffer;
+
+    if(!loss_index_pointer)
+    {
+        buffer << "OpenNN Exception: ConjugateGradient class.\n"
+               << "void calculate_FR_training_direction() const method.\n"
+               << "Loss index pointer is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+    const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+    const Index old_gradient_size = old_gradient.size();
+
+    if(old_gradient_size != parameters_number)
+    {
+        buffer << "OpenNN Exception: ConjugateGradient class.\n"
+               << "void calculate_FR_training_direction() const method.\n"
+               << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    const Index gradient_size = gradient.size();
+
+    if(gradient_size != parameters_number)
+    {
+        buffer << "OpenNN Exception: ConjugateGradient class.\n"
+               << "void calculate_FR_training_direction() const method.\n"
+               << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    const Index old_training_direction_size = old_training_direction.size();
+
+    if(old_training_direction_size != parameters_number)
+    {
+        buffer << "OpenNN Exception: ConjugateGradient class.\n"
+               << "void calculate_FR_training_direction() const method.\n"
+               << "Size of old training direction (" << old_training_direction_size
+               << ") is not equal to number of parameters (" << parameters_number << ").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    const type FR_parameter = calculate_FR_parameter(old_gradient, gradient);
+
+    training_direction.device(*thread_pool_device) = -gradient + old_training_direction*FR_parameter;
+}
+
+
+/// Returns the dradient descent training direction.
+/// @param gradient Current error function gradient.
+
+void ConjugateGradient::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient,
+                                                                      Tensor<type, 1>& training_direction) const
+{
+    training_direction.device(*thread_pool_device) = -gradient;
 }
 
 
@@ -553,159 +432,262 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
 }
 
 
-/// Returns the training direction using the Fletcher-Reeves update.
-/// @param old_gradient Previous error function gradient.
-/// @param gradient Current error function gradient.
-/// @param old_training_direction Previous training direction vector.
+/// Returns a constant reference to the learning rate algorithm object inside the conjugate gradient method object.
 
-void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& old_gradient,
-                                                        const Tensor<type, 1>& gradient,
-                                                        const Tensor<type, 1>& old_training_direction,
-                                                        Tensor<type, 1>& training_direction) const
+const LearningRateAlgorithm& ConjugateGradient::get_learning_rate_algorithm() const
 {
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    if(!loss_index_pointer)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_FR_training_direction() const method.\n"
-               << "Loss index pointer is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-    const Index old_gradient_size = old_gradient.size();
-
-    if(old_gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_FR_training_direction() const method.\n"
-               << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index gradient_size = gradient.size();
-
-    if(gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_FR_training_direction() const method.\n"
-               << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index old_training_direction_size = old_training_direction.size();
-
-    if(old_training_direction_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_FR_training_direction() const method.\n"
-               << "Size of old training direction (" << old_training_direction_size
-               << ") is not equal to number of parameters (" << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const type FR_parameter = calculate_FR_parameter(old_gradient, gradient);
-
-    training_direction.device(*thread_pool_device) = -gradient + old_training_direction*FR_parameter;
+    return learning_rate_algorithm;
 }
 
 
+/// Returns a pointer to the learning rate algorithm object inside the conjugate gradient method object.
+
+LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
+{
+    return &learning_rate_algorithm;
+}
+
+
+/// Returns the goal value for the loss.
+/// This is used as a stopping criterion when training a neural network
+
+const type& ConjugateGradient::get_loss_goal() const
+{
+    return training_loss_goal;
+}
+
+
+/// Returns the maximum number of epochs for training.
+
+const Index& ConjugateGradient::get_maximum_epochs_number() const
+{
+    return maximum_epochs_number;
+}
+
+
+/// Returns the maximum number of selection error increases during the training process.
+
+const Index& ConjugateGradient::get_maximum_selection_failures() const
+{
+    return maximum_selection_failures;
+}
+
+
+/// Returns the maximum training time.
+
+const type& ConjugateGradient::get_maximum_time() const
+{
+    return maximum_time;
+}
+
+
+/// Returns the minimum loss improvement during training.
+
+const type& ConjugateGradient::get_minimum_loss_decrease() const
+{
+    return minimum_loss_decrease;
+}
+
+
+/// Returns the conjugate gradient training direction method used for training.
+
+const ConjugateGradient::TrainingDirectionMethod& ConjugateGradient::get_training_direction_method() const
+{
+    return training_direction_method;
+}
+
+
+/// Sets the default values into a conjugate gradient object.
+/// Training operators:
+/// <ul>
+/// <li> Training direction method = Polak-Ribiere;
+/// <li> Learning rate method = Brent;
+/// </ul>
+/// Training parameters:
+/// <ul>
+/// <li> First learning rate: 1.0.
+/// <li> Bracketing factor: 2.0.
+/// <li> Learning rate tolerance: 1.0e-3.
+/// </ul>
+/// Stopping criteria:
+/// <ul>
+/// <li> Loss goal: -numeric_limits<type>::max().
+/// <li> Maximum training time: 1.0e6.
+/// <li> Maximum number of epochs: 100.
+/// </ul>
+/// User stuff:
+/// <ul>
+/// <li> Warning learning rate: 1.0e6.
+/// <li> Error learning rate: 1.0e12.
+/// <li> Display: true.
+/// <li> Display period: 10.
+/// <li> Save period: 0.
+/// </ul>
+/// Reserve:
+/// <ul>
+/// <li> Reserve training error history: false.
+/// <li> Reserve training direction norm history: false.
+/// </ul>
 ///
-// \brief ConjugateGradient::calculate_gradient_descent_training_direction
-// \param gradient
-// \param training_direction
 
-void ConjugateGradient::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient,
-                                                                      Tensor<type, 1>& training_direction) const
+void ConjugateGradient::set_default()
 {
-    training_direction.device(*thread_pool_device) = -gradient;
+    // Stopping criteria
+
+    minimum_loss_decrease = type(0);
+    training_loss_goal = type(0);
+    maximum_selection_failures = 1000000;
+
+    maximum_epochs_number = 1000;
+    maximum_time = type(3600.0);
+
+    // UTILITIES
+
+    display_period = 10;
+
+    training_direction_method = TrainingDirectionMethod::FR;
 }
 
-/// Returns the conjugate gradient training direction.
-/// @param old_gradient Gradient vector in the previous iteration.
-/// @param gradient Current gradient vector.
-/// @param old_training_direction Training direction in the previous iteration.
 
-void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Tensor<type, 1>& old_gradient,
-                                                                        const Tensor<type, 1>& gradient,
-                                                                        const Tensor<type, 1>& old_training_direction,
-                                                                        Tensor<type, 1>& training_direction) const
+/// Sets a pointer to a loss index object to be associated with the conjugate gradient object.
+/// It also sets that loss index to the learning rate algorithm.
+/// @param new_loss_index_pointer Pointer to a loss index object.
+
+void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
+    loss_index_pointer = new_loss_index_pointer;
 
+    learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+}
+
+
+/// Sets a new training direction method to be used for training.
+/// @param new_training_direction_method Conjugate gradient training direction method.
+
+void ConjugateGradient::set_training_direction_method
+                        (const ConjugateGradient::TrainingDirectionMethod& new_training_direction_method)
+{
+    training_direction_method = new_training_direction_method;
+}
+
+
+/// Sets a new conjugate gradient training direction from a string representation.
+/// Possible values are:
+/// <ul>
+/// <li> "PR"
+/// <li> "FR"
+/// </ul>
+/// @param new_training_direction_method_name String with the name of the training direction method.
+
+void ConjugateGradient::set_training_direction_method(const string& new_training_direction_method_name)
+{
+    if(new_training_direction_method_name == "PR")
+    {
+        training_direction_method = TrainingDirectionMethod::PR;
+
+    }
+    else if(new_training_direction_method_name == "FR")
+    {
+        training_direction_method = TrainingDirectionMethod::FR;
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: ConjugateGradient class.\n"
+               << "void set_training_direction_method(const string&) method.\n"
+               << "Unknown training direction method: " << new_training_direction_method_name << ".\n";
+
+        throw logic_error(buffer.str());
+    }
+}
+
+
+/// Sets a new goal value for the loss.
+/// This is used as a stopping criterion when training a neural network
+/// @param new_loss_goal Goal value for the loss.
+
+void ConjugateGradient::set_loss_goal(const type& new_loss_goal)
+{
+    training_loss_goal = new_loss_goal;
+}
+
+
+/// Sets a new maximum number of selection error increases.
+/// @param new_maximum_selection_failures Maximum number of epochs in which the selection evalutation increases.
+
+void ConjugateGradient::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
+{
+    maximum_selection_failures = new_maximum_selection_failures;
+}
+
+
+/// Sets a maximum number of epochs for training.
+/// @param new_maximum_iterations_number Maximum number of epochs for training.
+
+void ConjugateGradient::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
+{
+    maximum_epochs_number = new_maximum_epochs_number;
+}
+
+
+/// Sets a new maximum training time.
+/// @param new_maximum_time Maximum training time.
+
+void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
+{
 #ifdef OPENNN_DEBUG
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-    ostringstream buffer;
-
-    if(!loss_index_pointer)
+    if(new_maximum_time < static_cast<type>(0.0))
     {
+        ostringstream buffer;
+
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_training_direction() const method.\n"
-               << "Loss index pointer is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index old_gradient_size = old_gradient.size();
-
-    if(old_gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_training_direction() const method.\n"
-               << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index gradient_size = gradient.size();
-
-    if(gradient_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_training_direction() const method.\n"
-               << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const Index old_training_direction_size = old_training_direction.size();
-
-    if(old_training_direction_size != parameters_number)
-    {
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void calculate_training_direction() const method.\n"
-               << "Size of old training direction (" << old_training_direction_size
-               << ") is not equal to number of parameters (" << parameters_number << ").\n";
+               << "void set_maximum_time(const type&) method.\n"
+               << "Maximum time must be equal or greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
 
 #endif
 
-    switch(training_direction_method)
-    {
-    case TrainingDirectionMethod::FR:
-        calculate_FR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
+    // Set maximum time
 
-        return;
-    case TrainingDirectionMethod::PR:
-        calculate_PR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
-        return;
+    maximum_time = new_maximum_time;
+}
+
+
+/// Sets a new minimum loss improvement during training.
+/// @param new_minimum_loss_decrease Minimum improvement in the loss between two iterations.
+
+void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
+{
+    minimum_loss_decrease = new_minimum_loss_decrease;
+}
+
+
+/// Sets a new number of iterations between the training saving progress.
+/// @param new_save_period
+/// Number of iterations between the training saving progress.
+
+void ConjugateGradient::set_save_period(const Index& new_save_period)
+{
+#ifdef OPENNN_DEBUG
+
+    if(new_save_period <= 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: ConjugateGradient class.\n"
+               << "void set_save_period(const type&) method.\n"
+               << "Save period must be greater than 0.\n";
+
+        throw logic_error(buffer.str());
     }
+
+#endif
+
+    save_period = new_save_period;
 }
 
 
@@ -920,15 +902,7 @@ TrainingResults ConjugateGradient::perform_training()
 }
 
 
-/// Write a string with best algorithm type for the model.
-
-string ConjugateGradient::write_optimization_algorithm_type() const
-{
-    return "CONJUGATE_GRADIENT";
-}
-
-
-/// This method writes a matrix of strings the most representative atributes.
+/// Writes a matrix of strings the most representative atributes.
 
 Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 {
@@ -975,6 +949,133 @@ Tensor<string, 2> ConjugateGradient::to_string_matrix() const
     labels_values(7,1) = write_time(maximum_time);
 
     return labels_values;
+}
+
+
+/// Updates conjugate gradient method parameters
+/// @param batch New batch
+/// @param forward_propagation New neural network forward propagation
+/// @param back_propagation New loss index back propagation
+/// @param optimization_data New conjugate gradient method data.
+
+void ConjugateGradient::update_parameters(
+        const DataSetBatch& batch,
+        NeuralNetworkForwardPropagation& forward_propagation,
+        LossIndexBackPropagation& back_propagation,
+        ConjugateGradientData& optimization_data)
+{
+    const Index parameters_number = back_propagation.parameters.dimension(0);
+
+    if(optimization_data.epoch == 0 || optimization_data.epoch % parameters_number == 0)
+    {
+        calculate_gradient_descent_training_direction(
+                    back_propagation.gradient,
+                    optimization_data.training_direction);
+    }
+    else
+    {
+        calculate_conjugate_gradient_training_direction(
+                    optimization_data.old_gradient,
+                    back_propagation.gradient,
+                    optimization_data.old_training_direction,
+                    optimization_data.training_direction);
+    }
+
+    optimization_data.training_slope.device(*thread_pool_device)
+            = (back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
+
+    if(optimization_data.training_slope(0) >= type(0))
+    {
+        calculate_gradient_descent_training_direction(
+                    back_propagation.gradient,
+                    optimization_data.training_direction);
+    }
+
+    // Get initial learning rate
+
+    optimization_data.epoch == 0
+            ? optimization_data.initial_learning_rate = first_learning_rate
+            : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
+
+    pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
+         batch,
+         forward_propagation,
+         back_propagation,
+         optimization_data);
+
+    optimization_data.learning_rate = directional_point.first;
+    back_propagation.loss = directional_point.second;
+
+    if(abs(optimization_data.learning_rate) > type(0))
+    {
+        optimization_data.parameters_increment.device(*thread_pool_device)
+                = optimization_data.training_direction*optimization_data.learning_rate;
+
+        back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+    }
+    else
+    {
+        const Index parameters_number = back_propagation.parameters.size();
+
+        for(Index i = 0; i < parameters_number; i++)
+        {
+            if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            {
+                optimization_data.parameters_increment(i) = type(0);
+            }
+            else if(back_propagation.gradient(i) > type(0))
+            {
+                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();;
+
+                optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
+            }
+            else if(back_propagation.gradient(i) < type(0))
+            {
+                back_propagation.parameters(i) += numeric_limits<type>::epsilon();;
+
+                optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
+            }
+        }
+
+        optimization_data.learning_rate = optimization_data.initial_learning_rate;
+    }
+
+    // Update stuff
+
+    optimization_data.old_gradient = back_propagation.gradient;
+
+    optimization_data.old_training_direction = optimization_data.training_direction;
+
+    optimization_data.old_learning_rate = optimization_data.learning_rate;
+
+    // Update parameters
+
+    forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
+}
+
+
+/// Writes a string with best algorithm type for the model.
+
+string ConjugateGradient::write_optimization_algorithm_type() const
+{
+    return "CONJUGATE_GRADIENT";
+}
+
+
+/// Returns a string with the name of the training direction method.
+
+string ConjugateGradient::write_training_direction_method() const
+{
+    switch(training_direction_method)
+    {
+    case TrainingDirectionMethod::PR:
+        return "PR";
+
+    case TrainingDirectionMethod::FR:
+        return "FR";
+    }
+
+    return string();
 }
 
 
@@ -1326,118 +1427,23 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// \brief ConjugateGradient::update_parameters
-/// \param batch
-/// \param forward_propagation
-/// \param back_propagation
-/// \param optimization_data
-
-void ConjugateGradient::update_parameters(
-        const DataSetBatch& batch,
-        NeuralNetworkForwardPropagation& forward_propagation,
-        LossIndexBackPropagation& back_propagation,
-        ConjugateGradientData& optimization_data)
-{      
-    const Index parameters_number = back_propagation.parameters.dimension(0);
-
-    if(optimization_data.epoch == 0 || optimization_data.epoch % parameters_number == 0)
-    {
-        calculate_gradient_descent_training_direction(
-                    back_propagation.gradient,
-                    optimization_data.training_direction);
-    }
-    else
-    {       
-        calculate_conjugate_gradient_training_direction(
-                    optimization_data.old_gradient,
-                    back_propagation.gradient,
-                    optimization_data.old_training_direction,
-                    optimization_data.training_direction);
-    }
-
-    optimization_data.training_slope.device(*thread_pool_device)
-            = (back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
-
-    if(optimization_data.training_slope(0) >= type(0))
-    {
-        calculate_gradient_descent_training_direction(
-                    back_propagation.gradient,
-                    optimization_data.training_direction);
-    }
-
-    // Get initial learning rate
-
-    optimization_data.epoch == 0
-            ? optimization_data.initial_learning_rate = first_learning_rate
-            : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
-
-    pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
-         batch,
-         forward_propagation,
-         back_propagation,
-         optimization_data);
-
-    optimization_data.learning_rate = directional_point.first;
-    back_propagation.loss = directional_point.second;
-
-    if(abs(optimization_data.learning_rate) > type(0))
-    {
-        optimization_data.parameters_increment.device(*thread_pool_device)
-                = optimization_data.training_direction*optimization_data.learning_rate;
-
-        back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
-    }
-    else
-    {
-        const Index parameters_number = back_propagation.parameters.size();
-
-        for(Index i = 0; i < parameters_number; i++)
-        {
-            if(abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
-            {
-                optimization_data.parameters_increment(i) = type(0);
-            }
-            else if(back_propagation.gradient(i) > type(0))
-            {
-                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();;
-
-                optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
-            }
-            else if(back_propagation.gradient(i) < type(0))
-            {
-                back_propagation.parameters(i) += numeric_limits<type>::epsilon();;
-
-                optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
-            }
-        }
-
-        optimization_data.learning_rate = optimization_data.initial_learning_rate;
-    }
-
-    // Update stuff
-
-    optimization_data.old_gradient = back_propagation.gradient;
-
-    optimization_data.old_training_direction = optimization_data.training_direction;
-
-    optimization_data.old_learning_rate = optimization_data.learning_rate;
-
-    // Update parameters
-
-    forward_propagation.neural_network_pointer->set_parameters(back_propagation.parameters);
-}
-
+/// Default constructor.
 
 ConjugateGradientData::ConjugateGradientData(): OptimizationAlgorithmData()
 {
 }
 
 
+/// Loss index constructor.
+/// @param new_conjugate_gradient_pointer New conjugate gradient method pointer.
+
 ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient_pointer) : OptimizationAlgorithmData()
 {
     set(new_conjugate_gradient_pointer);
 }
 
+
+/// Destructor
 
 ConjugateGradientData::~ConjugateGradientData()
 {
