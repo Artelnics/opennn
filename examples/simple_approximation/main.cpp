@@ -31,13 +31,27 @@ int main()
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Data Set
+
         DataSet data_set("../data/simple_function_regression.csv", ';', true);
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {1, 3, 1});
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
+        const Index hidden_neurons_number = 3;
+
+        // Neural Network
+
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation,
+                                     {input_variables_number, hidden_neurons_number, target_variables_number});
+
+        // Training Strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_display_period(1000);
         training_strategy.perform_training();
+
+        // Save results
 
         neural_network.save_expression_python("simple_function_regresion.py");
 
