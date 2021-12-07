@@ -1,0 +1,11 @@
+customer_id;credit_score;country;gender;age;tenure;balance;products_number;credit_card;active_member;estimated_salary;churn
+15634602;619;France;Female;42;2;0;1;0;0;101348.88;1
+15647311;608;Spain;Female;41;1;83807.86;1;0;1;112542.58;0
+15619304;502;France;Female;42;8;159660.8;3;1;0;113931.57;1
+15701354;699;France;Female;39;1;0;2;0;0;93826.63;0
+15737888;850;Spain;Female;43;2;125510.82;1;1;1;79084.1;0
+15574012;645;Spain;Male;44;8;113755.78;2;1;0;149756.71;1
+15592531;822;France;Male;50;7;0;2;1;1;10062.8;0
+15656148;376;Germany;Female;29;4;115046.74;4;1;0;119346.88;1
+15792365;501;France;Male;44;4;142051.07;2;0;1;74940.5;0
+15592389;684;France;Male;27;2;134603.88;1;1;1;71725.73;0

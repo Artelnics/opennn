@@ -1103,6 +1103,16 @@ void DataSetTest::test_read_pollution_csv()
 }
 
 
+void DataSetTest::test_read_bank_churn_csv()
+{
+    cout << "test_read_adult_csv\n";
+
+    data_set.set_separator(';');
+    data_set.set_data_file_name("../../datasets/bankchurn.csv");
+    data_set.set_has_columns_names(true);
+    data_set.read_csv();
+}
+
 void DataSetTest::test_read_urinary_inflammations_csv()
 {
     cout << "test_read_urinary_inflammations_csv\n";
@@ -1119,7 +1129,7 @@ void DataSetTest::test_read_urinary_inflammations_csv()
         assert_true(data_set.get_column_type(4) == DataSet::ColumnType::Binary, LOG);
         assert_true(data_set.get_column_type(5) == DataSet::ColumnType::Binary, LOG);
         assert_true(data_set.get_column_type(6) == DataSet::ColumnType::Binary, LOG);
-        assert_true(data_set.get_column_type(7) == DataSet::ColumnType::Binary, LOG);
+        assert_true(data_set.get_column_type(7) == DataSet::ColumnType::Binary, LOG);              
     }
     catch (const exception&)
     {
@@ -1799,6 +1809,7 @@ void DataSetTest::run_test_case()
 
     test_read_csv();
 
+    test_read_bank_churn_csv();
     test_read_adult_csv();
     test_read_car_csv();
     test_read_empty_csv();

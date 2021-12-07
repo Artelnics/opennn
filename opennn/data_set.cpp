@@ -3534,13 +3534,13 @@ void DataSet::set_binary_simple_columns()
 
                 if(values(0) == type(0) && values(1) == type(1))
                 {
-                    columns(column_index).categories(0) = "Negative " + std::to_string(static_cast<int>(values(0)));
-                    columns(column_index).categories(1) = "Positive " + std::to_string(static_cast<int>(values(1)));
+                    columns(column_index).categories(0) = "Negative (" + std::to_string(static_cast<int>(values(0))) + ")";
+                    columns(column_index).categories(1) = "Positive (" + std::to_string(static_cast<int>(values(1))) + ")";
                 }
                 else if(values(0) == type(1) && values(1) == type(0))
                 {
-                    columns(column_index).categories(0) = "Positive " + std::to_string(static_cast<int>(values(0)));
-                    columns(column_index).categories(1) = "Negative " + std::to_string(static_cast<int>(values(1)));
+                    columns(column_index).categories(0) = "Positive (" + std::to_string(static_cast<int>(values(0))) + ")";
+                    columns(column_index).categories(1) = "Negative (" + std::to_string(static_cast<int>(values(1))) + ")";
                 }
                 else
                 {
@@ -10535,6 +10535,7 @@ void DataSet::read_csv_3_complete()
             {
                 for(Index k = 0; k < columns(column_index).get_categories_number(); k++)
                 {
+
                     if(tokens(j) == missing_values_label)
                     {
                         data(sample_index, variable_index) = static_cast<type>(NAN);
@@ -10569,6 +10570,15 @@ void DataSet::read_csv_3_complete()
         }
 
         sample_index++;
+    }
+
+    for(Index j = 0; j < raw_columns_number; j++)
+    {
+        if(columns(j).type == ColumnType::Binary)
+        {
+            columns(j).categories(0) = columns(j).categories(0) + " (1)";
+            columns(j).categories(1) = columns(j).categories(1) + " (0)";
+        }
     }
 
     const Index data_file_preview_index = has_columns_names ? 3 : 2;
