@@ -33,14 +33,13 @@ void ConvolutionalLayerTest::test_set()
 void ConvolutionalLayerTest::test_eigen_convolution()
 {
     cout << "test_eigen_convolution\n";
-/*
+
     // Convolution 2D, 1 channel
     Tensor<type, 2> input(3, 3);
     Tensor<type, 2> kernel(2, 2);
     Tensor<type, 2> output;
     input.setRandom();
     kernel.setRandom();
-
 
     Eigen::array<ptrdiff_t, 2> dims = {0, 1};
 
@@ -135,6 +134,30 @@ void ConvolutionalLayerTest::test_eigen_convolution()
 
 }
 
+void ConvolutionalLayerTest::test_eigen_convolution_3d()
+{
+    cout << "test_eigen_3d_convolution\n";
+
+    // Convolution 3D, 2 channels
+
+    Tensor<type, 3> input(3, 3, 2);
+    Tensor<type, 3> kernel(2, 2, 2);
+    Tensor<type, 3> output(2, 2, 1);
+
+    for(int i=0;i<3*3*2;i++) *(input.data() + i) = i;
+    for(int i=0;i<2*2*2;i++) *(kernel.data() + i) = i+1;
+
+    Eigen::array<ptrdiff_t, 3> dims = {0,1,2};
+
+    output = input.convolve(kernel, dims);
+
+    assert_true(output(0,0,0) == 320, LOG);
+    assert_true(output(1,0,0) == 356, LOG);
+    assert_true(output(0,1,0) == 428, LOG);
+    assert_true(output(1,1,0) == 464, LOG);
+}
+
+/*
 
 void ConvolutionalLayerTest::test_constructor()
 {
@@ -154,8 +177,8 @@ void ConvolutionalLayerTest::test_constructor()
 //                convolutional_layer.get_filters_number() == 1 &&
 //                convolutional_layer.get_filters_rows_number() == 2 &&
 //                convolutional_layer.get_filters_columns_number() == 3, LOG);
-*/}
-
+}
+*/
 
 void ConvolutionalLayerTest::test_destructor()
 {
@@ -1386,6 +1409,7 @@ void ConvolutionalLayerTest::run_test_case()
    // Convolutions
 
    test_eigen_convolution();
+   test_eigen_convolution_3d();
 
    // Combinations
 

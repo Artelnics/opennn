@@ -23,6 +23,7 @@ public:
    virtual ~ConvolutionalLayerTest();
 
    void test_eigen_convolution();
+   void test_eigen_convolution_3d();
 
    // Constructor and destructor methods
 
