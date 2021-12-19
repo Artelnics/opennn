@@ -18,12 +18,6 @@ ConvolutionalLayerTest::~ConvolutionalLayerTest()
 }
 
 
-void ConvolutionalLayerTest::test_constructor()
-{
-    cout << "test_constuctor\n";
-}
-
-
 void ConvolutionalLayerTest::test_set()
 {
     cout << "test_set\n";
@@ -72,7 +66,7 @@ void ConvolutionalLayerTest::test_eigen_convolution()
     input_3.chip(1, 0).setConstant(type(2));
     input_3.chip(2, 0).setConstant(type(3));
 
-    kernel_3.setConstant(type(1.0/12.f));
+    kernel_3.setConstant(type(1.0/12.0));
 
     Eigen::array<ptrdiff_t, 3> dims_3 = {1, 2, 3};
 
@@ -151,34 +145,29 @@ void ConvolutionalLayerTest::test_eigen_convolution_3d()
 
     output = input.convolve(kernel, dims);
 
-    assert_true(output(0,0,0) == 320, LOG);
-    assert_true(output(1,0,0) == 356, LOG);
-    assert_true(output(0,1,0) == 428, LOG);
-    assert_true(output(1,1,0) == 464, LOG);
+    assert_true(fabs(output(0,0,0) - 320)<type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(fabs(output(1,0,0) - 356)<type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(fabs(output(0,1,0) - 428)<type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(fabs(output(1,1,0) - 464)<type(NUMERIC_LIMITS_MIN), LOG);
 }
-
-/*
 
 void ConvolutionalLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    // Test
+    Tensor<Index, 1> new_inputs_dimensions(4);
+    Tensor<Index, 1> new_kernels_dimensions(4);
 
-    assert_true(convolutional_layer.is_empty(), LOG);
+    new_inputs_dimensions.setValues({1, 3, 32, 64});
+    new_kernels_dimensions.setValues({1, 1, 2, 3});
 
-    // Test
+    ConvolutionalLayer convolutional_layer(new_inputs_dimensions, new_kernels_dimensions);
 
-//    convolutional_layer = OpenNN::ConvolutionalLayer({3,32,64}, {1,2,3});
-
-//    assert_true(convolutional_layer.get_filters_channels_number() == 3 &&
-//                convolutional_layer.get_inputs_rows_number() == 32 &&
-//                convolutional_layer.get_inputs_columns_number() == 64 &&
-//                convolutional_layer.get_filters_number() == 1 &&
-//                convolutional_layer.get_filters_rows_number() == 2 &&
-//                convolutional_layer.get_filters_columns_number() == 3, LOG);
+    assert_true(convolutional_layer.get_inputs_channels_number() == 3 &&
+                convolutional_layer.get_inputs_rows_number() == 32 &&
+                convolutional_layer.get_inputs_columns_number() == 64, LOG);
 }
-*/
+
 
 void ConvolutionalLayerTest::test_destructor()
 {
@@ -271,162 +260,76 @@ void ConvolutionalLayerTest::test_set_parameters()
 
 void ConvolutionalLayerTest::test_calculate_combinations()
 {
-/*
     cout << "test_calculate_combinations\n";
 
-    Tensor<type, 4> inputs;
-    Tensor<type, 4> kernels;
-    Tensor<type, 1> biases;
-    Tensor<type, 4> combinations;
+    const Index input_images = 1;
+    const Index input_kernels = 3;
 
+    const Index channels = 3;
 
+    const Index rows_input = 5;
+    const Index cols_input = 5;
+    const Index rows_kernel = 3;
+    const Index cols_kernel = 3;
 
-    inputs.resize(1, 3, 5, 5);
-    kernels.resize(3, 3, 2, 2);
-    biases.resize(3);
+    Tensor<type, 4> inputs(input_images, channels, rows_input, cols_input);
+    Tensor<type, 4> kernels(input_kernels, channels, rows_kernel, cols_kernel);
 
-    combinations.resize(1, 3, 4, 4);
+    Tensor<type, 4> combinations(input_images,
+                                 input_kernels,
+                                 (rows_input - rows_kernel) + 1,
+                                 (cols_input - cols_kernel) + 1);
 
-    inputs.setConstant(type(1));
-    kernels.setConstant(type(1/12));
+    Tensor<type, 1> biases(channels);
 
-    biases(0) = type(0);
-    biases(1) = type(1);
-    biases(2) = type(2);
+    inputs.setConstant(type(1.));
+    kernels.setConstant(type(1./12.));
+    combinations.setZero();
+
+    biases(0) = type(0.);
+    biases(1) = type(1.);
+    biases(2) = type(2.);
+
+    Tensor<Index, 1> new_inputs_dimension(4);
+    Tensor<Index, 1> new_kernels_dimensions(4);
+
+    new_inputs_dimension.setValues({input_images, channels, rows_input, cols_input});
+    new_kernels_dimensions.setValues({input_kernels, channels, rows_kernel, cols_kernel});
+
+    ConvolutionalLayer convolutional_layer(new_inputs_dimension, new_kernels_dimensions);
 
     convolutional_layer.set_biases(biases);
     convolutional_layer.set_synaptic_weights(kernels);
+
     convolutional_layer.calculate_convolutions(inputs, combinations);
 
-    assert_true(abs(combinations(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 0, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 0, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 1, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 1, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 2, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 2, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 2, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 2, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 3, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 3, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 3, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 0, 3, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 0, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 0, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 0, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 0, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 1, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 1, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 1, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 1, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 2, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 2, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 2, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 2, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 3, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 3, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 3, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 1, 3, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 0, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 0, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 0, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 0, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 1, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 1, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 1, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 1, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 2, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 2, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 2, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 2, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 3, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 3, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 3, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(combinations(0, 2, 3, 3) - type(3)) <= type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(combinations(0, 0, 0, 0) - type(2.25)) < type(NUMERIC_LIMITS_MIN)&&
+                abs(combinations(0, 1, 0, 0) - type(3.25)) < type(NUMERIC_LIMITS_MIN)&&
+                abs(combinations(0, 2, 0, 0) - type(4.25)) < type(NUMERIC_LIMITS_MIN), LOG);
 
     inputs.resize(2, 2, 5, 5);
     kernels.resize(2, 2, 2, 2);
     combinations.resize(2, 2, 4, 4);
     biases.resize(2);
 
-    inputs.chip(0, 0).setConstant(type(1));
-    inputs.chip(1, 0).setConstant(type(2));
-    kernels.setConstant(type(1/8));
-    biases(0) = type(1);
-    biases(1) = type(2.0);
+    inputs.chip(0, 0).setConstant(type(1.));
+    inputs.chip(1, 0).setConstant(type(2.));
+    kernels.chip(0, 0).setConstant(type(1./8.));
+    kernels.chip(1, 0).setConstant(type(1./4.));
+
+
+    biases(0) = type(0);
+    biases(1) = type(1);
 
     convolutional_layer.set_biases(biases);
     convolutional_layer.set_synaptic_weights(kernels);
     convolutional_layer.calculate_convolutions(inputs, combinations);
 
-    assert_true(combinations(0, 0, 0, 0) == type(2) &&
-                combinations(0, 0, 0, 1) == type(2) &&
-                combinations(0, 0, 0, 2) == type(2) &&
-                combinations(0, 0, 0, 3) == type(2) &&
-                combinations(0, 0, 1, 0) == type(2) &&
-                combinations(0, 0, 1, 1) == type(2) &&
-                combinations(0, 0, 1, 2) == type(2) &&
-                combinations(0, 0, 1, 3) == type(2) &&
-                combinations(0, 0, 2, 0) == type(2) &&
-                combinations(0, 0, 2, 1) == type(2) &&
-                combinations(0, 0, 2, 2) == type(2) &&
-                combinations(0, 0, 2, 3) == type(2) &&
-                combinations(0, 0, 3, 0) == type(2) &&
-                combinations(0, 0, 3, 1) == type(2) &&
-                combinations(0, 0, 3, 2) == type(2) &&
-                combinations(0, 0, 3, 3) == type(2) &&
-                combinations(0, 1, 0, 0) == type(3) &&
-                combinations(0, 1, 0, 1) == type(3) &&
-                combinations(0, 1, 0, 2) == type(3) &&
-                combinations(0, 1, 0, 3) == type(3) &&
-                combinations(0, 1, 1, 0) == type(3) &&
-                combinations(0, 1, 1, 1) == type(3) &&
-                combinations(0, 1, 1, 2) == type(3) &&
-                combinations(0, 1, 1, 3) == type(3) &&
-                combinations(0, 1, 2, 0) == type(3) &&
-                combinations(0, 1, 2, 1) == type(3) &&
-                combinations(0, 1, 2, 2) == type(3) &&
-                combinations(0, 1, 2, 3) == type(3) &&
-                combinations(0, 1, 3, 0) == type(3) &&
-                combinations(0, 1, 3, 1) == type(3) &&
-                combinations(0, 1, 3, 2) == type(3) &&
-                combinations(0, 1, 3, 3) == type(3) &&
-                combinations(1, 0, 0, 0) == type(3) &&
-                combinations(1, 0, 0, 1) == type(3) &&
-                combinations(1, 0, 0, 2) == type(3) &&
-                combinations(1, 0, 0, 3) == type(3) &&
-                combinations(1, 0, 1, 0) == type(3) &&
-                combinations(1, 0, 1, 1) == type(3) &&
-                combinations(1, 0, 1, 2) == type(3) &&
-                combinations(1, 0, 1, 3) == type(3) &&
-                combinations(1, 0, 2, 0) == type(3) &&
-                combinations(1, 0, 2, 1) == type(3) &&
-                combinations(1, 0, 2, 2) == type(3) &&
-                combinations(1, 0, 2, 3) == type(3) &&
-                combinations(1, 0, 3, 0) == type(3) &&
-                combinations(1, 0, 3, 1) == type(3) &&
-                combinations(1, 0, 3, 2) == type(3) &&
-                combinations(1, 0, 3, 3) == type(3) &&
-                combinations(1, 1, 0, 0) == type(4) &&
-                combinations(1, 1, 0, 1) == type(4) &&
-                combinations(1, 1, 0, 2) == type(4) &&
-                combinations(1, 1, 0, 3) == type(4) &&
-                combinations(1, 1, 1, 0) == type(4) &&
-                combinations(1, 1, 1, 1) == type(4) &&
-                combinations(1, 1, 1, 2) == type(4) &&
-                combinations(1, 1, 1, 3) == type(4) &&
-                combinations(1, 1, 2, 0) == type(4) &&
-                combinations(1, 1, 2, 1) == type(4) &&
-                combinations(1, 1, 2, 2) == type(4) &&
-                combinations(1, 1, 2, 3) == type(4) &&
-                combinations(1, 1, 3, 0) == type(4) &&
-                combinations(1, 1, 3, 1) == type(4) &&
-                combinations(1, 1, 3, 2) == type(4) &&
-                combinations(1, 1, 3, 3) == type(4), LOG);
-*/}
+    assert_true(abs(combinations(0, 0, 0, 0) - type(1.)) < type(NUMERIC_LIMITS_MIN)&&
+                abs(combinations(0, 1, 0, 0) - type(3.)) < type(NUMERIC_LIMITS_MIN)&&
+                abs(combinations(1, 0, 0, 0) - type(2.)) < type(NUMERIC_LIMITS_MIN)&&
+                abs(combinations(1, 1, 0, 0) - type(5.)) < type(NUMERIC_LIMITS_MIN), LOG);
+}
 
 
 void ConvolutionalLayerTest::test_calculate_activations()

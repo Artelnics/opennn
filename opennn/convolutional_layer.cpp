@@ -56,39 +56,68 @@ bool ConvolutionalLayer::is_empty() const
 
 /// @todo Add stride.
 
-void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output)
-{
-    switch(convolution_type)
-    {
-        case ConvolutionType::Valid: padded_output = inputs; return;
+//void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output)
+//{
+//    switch(convolution_type)
+//    {
+//        case ConvolutionType::Valid: padded_output = inputs; return;
 
-        case ConvolutionType::Same:
-        {
-                Eigen::array<pair<int, int>, 4> paddings;
-                const int pad = int(0.5 *(get_kernels_rows_number() - 1));
-                paddings[0] = make_pair(0, 0);
-                paddings[1] = make_pair(0, 0);
-                paddings[2] = make_pair(pad, pad);
-                paddings[3] = make_pair(pad, pad);
-                padded_output = inputs.pad(paddings);
-                return;
-        }
-    }
-}
+//        case ConvolutionType::Same:
+//        {
+//                Eigen::array<pair<int, int>, 4> paddings;
+//                const int pad = int(0.5 *(get_kernels_rows_number() - 1));
+//                paddings[0] = make_pair(0, 0);
+//                paddings[1] = make_pair(0, 0);
+//                paddings[2] = make_pair(pad, pad);
+//                paddings[3] = make_pair(pad, pad);
+//                padded_output = inputs.pad(paddings);
+//                return;
+//        }
+//    }
+//}
 
 
 /// Calculate convolutions
 
 void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4> & combinations) const
 {
+
     const Index images_number = inputs.dimension(0);
     const Index kernels_number = synaptic_weights.dimension(0);
+
+#ifdef OPENNN_DEBUG
+
+    const Index output_channel_number = combinations.dimension(1);
+    const Index output_images_number = combinations.dimension(0);
+
+    if(output_channel_number != kernels_number)
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "ConvolutionalLayer::calculate_convolutions.\n"
+               << "output_channel_number" <<output_channel_number <<"must me equal to" << kernels_number<<".\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(output_images_number != images_number)
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "ConvolutionalLayer::calculate_convolutions.\n"
+               << "output_images_number" <<output_images_number <<"must me equal to" << images_number<<".\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
     Tensor<type, 3> kernel;
 
 //    #pragma omp parallel for
+
     for(Index i = 0; i < images_number; i++)
     {
         for(Index j = 0; j < kernels_number; j++)
