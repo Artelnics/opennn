@@ -53,7 +53,7 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
 
     Layer* last_trainable_layer_pointer = forward_propagation.neural_network_pointer->get_last_trainable_layer_pointer();
 
-    if(last_trainable_layer_pointer->get_type() != Layer::Probabilistic)
+    if(last_trainable_layer_pointer->get_type() != Layer::Type::Probabilistic)
     {
         ostringstream buffer;
 
