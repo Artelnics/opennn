@@ -1,4 +1,5 @@
 //   OpenNN: Open Neural Networks Library
+// 
 //   www.opennn.net
 //
 //   D A T A   S E T   C L A S S
