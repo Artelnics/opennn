@@ -58,6 +58,10 @@ public:
 
   void test_forward_propagate();
 
+  // Utils
+
+  void test_memcpy_approach();
+
   // Unit testing methods
 
   void run_test_case();
