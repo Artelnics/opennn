@@ -9891,6 +9891,32 @@ void DataSet::read_csv()
 
         read_csv_3_complete();
     }
+}
+
+
+void DataSet::read_images()
+{
+    Index images_number = 9;
+    Index classes_number = 3;
+    Index image_size = 28*28;
+
+    // Vamos al directorio de data filename "c:/mnsit"
+
+    // Miramos cuantas carpetas contiene. Ese es el número de clases.
+
+    // Vamos a cada subdirectorio
+
+    // Contamos cuantos archivos tiene
+
+    // El número total es el número de filas.
+
+    // Cambiamos el tamaño de las matrices y vectores
+
+    data.resize(images_number, image_size + classes_number);
+
+    rows_labels.resize(9);
+
+    // Rellenamos las matrices leyendo las imagenes.
 
 }
 

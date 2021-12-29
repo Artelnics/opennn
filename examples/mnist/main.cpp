@@ -33,7 +33,11 @@ int main()
 
         // Data set
 
-        DataSet data_set("../data/mnist_train.csv", ',', true);
+        DataSet data_set;//("../data/mnist_train.csv", ',', true);
+
+        data_set.set_data_file_name("c:/mnsit");
+
+        data_set.read_images();
 
         data_set.set_input();
 
