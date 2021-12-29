@@ -670,6 +670,7 @@ public:
    // Data load methods
 
    void read_csv();
+   void read_images();
 
    void load_data_binary();
    void load_time_series_data_binary(const string&);
