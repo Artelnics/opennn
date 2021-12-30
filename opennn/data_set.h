@@ -8,7 +8,6 @@
 
 #ifndef DATASET_H
 #define DATASET_H
-
 // System includes
 
 #include <iostream>
@@ -28,6 +27,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <list>
+#include <vector>
 
 // OpenNN includes
 
@@ -670,7 +670,10 @@ public:
    // Data load methods
 
    void read_csv();
+   /*
+   Index number_of_files_in_directory(std::experimental::filesystem::path path);
    void read_images();
+  */
 
    void load_data_binary();
    void load_time_series_data_binary(const string&);

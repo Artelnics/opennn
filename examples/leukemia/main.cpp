@@ -35,6 +35,8 @@ int main()
 
         data_set.set_training();
 
+        //data_set.read_images();
+
         const Tensor<Correlation, 2> correlation_results = data_set.calculate_input_target_columns_correlations();
 
         cout << "Separable genes: " << endl;

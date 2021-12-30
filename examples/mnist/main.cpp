@@ -5,7 +5,127 @@
 //
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
+#include <iostream>
+#include <vector>
+#include <filesystem>
+#include <experimental/filesystem>
+using namespace std;
+
+vector<char> read_bmp(const string& filename)
+{
+    int i;
+    FILE* f = fopen(filename.data(), "rb");
+
+    unsigned char info[54];
+
+    // read the 54-byte header
+    fread(info, sizeof(unsigned char), 54, f);
+
+    // extract image height and width from header
+    const int width = *(int*)&info[18];
+    const int height = *(int*)&info[22];
+    const int image_size = *(int*)&info[34];
+    //const short int channels1 = *(int*)&info[26];
+    const short int channels3 = image_size/(width*height);
+    short int channels;
+    int size;
+
+    if (channels3 != 3){
+         size =  width * height;
+         channels = 1;
+    }else {
+         size = channels3 * width * height;
+         channels=channels3;
+    }
+
+    cout<<"Channels: "<<channels<<endl;
+    //unsigned char* data = new unsigned char[size];
+
+    vector<char> data(size);
+
+    // read the rest of the data at once
+    fread(data.data(), sizeof(unsigned char), size, f);
+    fclose(f);
+
+    for(i = 0; i < size; i += channels)
+    {
+        if(channels==3){
+            // flip the order of every 3 bytes
+            unsigned char tmp = data[i];
+            data[i] = data[i+2];
+            data[i+2] = tmp;
+
+            cout << "R: " << int(data[i] & 0xff) << " G: " << int(data[i+1] & 0xff) << " B: " << int(data[i+2] & 0xff) << endl;
+        }else if (channels==1) {
+            unsigned char tmp = data[i];
+            cout << "GrayScale1: " << int(data[i] & 0xff)<<endl;        }
+    }
+
+
+
+//    std::vector<char> v(data, data + sizeof data / sizeof data[0]);
+
+    return data;
+}
+
+const int number_of_files_in_directory(std::experimental::filesystem::path path)
+{
+    using std::experimental::filesystem::directory_iterator;
+    return std::distance(directory_iterator(path), directory_iterator{});
+}
+
+
+void read_images()
+{
+    int images_number;
+    int classes_number;
+    int image_size = 28*28;
+    string path;
+
+    path = "C:/Users/Artelnics/Desktop/mnist/data/";
+
+    // Miramos cuantas carpetas contiene. Ese es el número de clases.
+    //classes_number = number_of_files_in_directory(std::experimental::filesystem::current_path());
+    classes_number = number_of_files_in_directory(path);
+    cout << "El numero de clases es: " << classes_number << endl;
+
+    // Vamos a cada subdirectorio y Contamos cuantos archivos tiene
+    images_number = number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/zero/")+
+                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/one/")+
+                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/two/")+
+                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/three/");
+
+    cout << "El numero de imagenes es: " << images_number << endl;
+
+    // El número total es el número de filas.
+
+    // Cambiamos el tamaño de las matrices y vectores
+
+    //data.resize(images_number, image_size + classes_number);
+
+    //rows_labels.resize(9);
+
+    // Rellenamos las matrices leyendo las imagenes.
+
+    //v=readBMP("C:/Users/Artelnics/Desktop/mnist/data/two/2_345.bmp");
+
+}
+
+int main()
+{
+    vector<char> v = read_bmp("C:/Users/Artelnics/Desktop/mnist/data/101.bmp");
+
+    //for(int i = 0; i < v.size(); i++) cout << v[i] << " ";
+
+    cout << v.size() << endl;
+    read_images();
+    return 0;
+}
+
+
+/*
 // This is an approximation application.
 
 // System includes
@@ -118,7 +238,7 @@ int main()
         return 1;
     }
 }
-
+*/
 
 
 // OpenNN: Open Neural Networks Library.
