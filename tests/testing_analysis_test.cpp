@@ -489,6 +489,8 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 {
     cout << "test_calculate_area_under_curve\n";
 
+    Tensor<type, 2> roc_curve;
+
     type area_under_curve;
 
     // Test
@@ -507,7 +509,9 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     outputs(2,0) = type(1);
     outputs(3,0) = type(1);
 
-    area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+
+    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
     assert_true(area_under_curve - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
@@ -527,7 +531,9 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     outputs(2,0) = type(0);
     outputs(3,0) = type(1);
 
-    area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+
+    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
     assert_true(area_under_curve - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
 
@@ -547,7 +553,9 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     outputs(2,0) = static_cast<type>(0.12);
     outputs(3,0) = static_cast<type>(0.99);
 
-    area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+
+    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
     assert_true(area_under_curve - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
 
@@ -567,7 +575,9 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     outputs(2,0) = type(0.0);
     outputs(3,0) = type(0.0);
 
-    area_under_curve = testing_analysis.calculate_area_under_curve(targets, outputs);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+
+    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
     assert_true(area_under_curve < type(NUMERIC_LIMITS_MIN), LOG);
 }
@@ -578,6 +588,8 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     cout << "test_calculate_optimal_threshold\n";
 
     type optimal_threshold;
+
+    Tensor<type, 2> roc_curve;
 
     // Test
 
@@ -595,7 +607,9 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     outputs(2,0) = type(1);
     outputs(3,0) = type(1);
 
-    optimal_threshold = testing_analysis.calculate_optimal_threshold(targets, outputs);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+
+    optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
     assert_true(optimal_threshold - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
 
@@ -615,7 +629,9 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     outputs(2,0) = type(0.0);
     outputs(3,0) = type(0.0);
 
-    optimal_threshold = testing_analysis.calculate_optimal_threshold(targets, outputs);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+
+    optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
     assert_true(optimal_threshold - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
@@ -637,10 +653,11 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     outputs(3,0) = static_cast<type>(0.62);
     outputs(4,0) = static_cast<type>(0.85);
 
-    optimal_threshold = testing_analysis.calculate_optimal_threshold(targets, outputs);
+    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+
+    optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
     assert_true(optimal_threshold - type(0.62) < type(NUMERIC_LIMITS_MIN), LOG);
-
 }
 
 

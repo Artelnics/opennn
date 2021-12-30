@@ -5923,7 +5923,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
 
             correlations(i,j) = OpenNN::correlation(thread_pool_device, input_column_data, target_column_data);
 
-            cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
+            //cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
         }
     }
 
@@ -9893,20 +9893,35 @@ void DataSet::read_csv()
     }
 }
 
+/*
+Index DataSet::number_of_files_in_directory(std::experimental::filesystem::path path)
+{
+    using std::experimental::filesystem::directory_iterator;
+    return std::distance(directory_iterator(path), directory_iterator{});
+}
+
 
 void DataSet::read_images()
 {
-    Index images_number = 9;
-    Index classes_number = 3;
+    Index images_number;
+    Index classes_number;
     Index image_size = 28*28;
+    string path;
 
-    // Vamos al directorio de data filename "c:/mnsit"
+    path = "C:/Users/Artelnics/Desktop/mnist/data/";
 
     // Miramos cuantas carpetas contiene. Ese es el número de clases.
+    //classes_number = number_of_files_in_directory(std::experimental::filesystem::current_path());
+    classes_number = number_of_files_in_directory(path);
+    cout << "El numero de clases es: " << classes_number << endl;
 
-    // Vamos a cada subdirectorio
+    // Vamos a cada subdirectorio y Contamos cuantos archivos tiene
+    images_number = number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/zero/")+
+                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/one/")+
+                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/two/")+
+                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/three/");
 
-    // Contamos cuantos archivos tiene
+    cout << "El numero de imagenes es: " << images_number << endl;
 
     // El número total es el número de filas.
 
@@ -9918,8 +9933,10 @@ void DataSet::read_images()
 
     // Rellenamos las matrices leyendo las imagenes.
 
-}
+    //v=readBMP("C:/Users/Artelnics/Desktop/mnist/data/two/2_345.bmp");
 
+}
+*/
 
 Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number)
 {

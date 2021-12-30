@@ -1698,11 +1698,11 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() cons
 
     cout << "Calculating confidence limits..." << endl;
 
-    roc_analysis_results.confidence_limit = calculate_area_under_curve_confidence_limit(targets, outputs, roc_analysis_results.area_under_curve);
+    roc_analysis_results.confidence_limit = calculate_area_under_curve_confidence_limit(targets, outputs);
 
     cout << "Calculating optimal threshold..." << endl;
 
-    roc_analysis_results.optimal_threshold = calculate_optimal_threshold(targets, outputs, roc_analysis_results.roc_curve);
+    roc_analysis_results.optimal_threshold = calculate_optimal_threshold(roc_analysis_results.roc_curve);
 
     return roc_analysis_results;
 }
@@ -1860,7 +1860,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
     return roc_curve;
 }
 
-
+/*
 /// Returns the area under a ROC curve using Wilcoxon parameter test.
 /// @param targets Testing target data.
 /// @param outputs Testing output data.
@@ -1920,7 +1920,7 @@ type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& targets,
 
     return area_under_curve;
 }
-
+*/
 
 /// Returns the area under a ROC curve using trapezoidal integration.
 /// @param roc_curve ROC curve.
@@ -1971,7 +1971,9 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
         throw logic_error(buffer.str());
     }
 
-    const type area_under_curve = calculate_area_under_curve(targets, outputs);
+    const Tensor<type, 2> roc_curve = calculate_roc_curve(targets, outputs);
+
+    const type area_under_curve = calculate_area_under_curve(roc_curve);
 
     const type Q_1 = area_under_curve/(static_cast<type>(2.0) - area_under_curve);
     const type Q_2 = (static_cast<type>(2.0) *area_under_curve*area_under_curve)/(static_cast<type>(1.0) *area_under_curve);
@@ -1983,7 +1985,7 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
     return confidence_limit;
 }
 
-
+/*
 /// Returns the confidence limit for the area under a roc curve.
 /// @param targets Testing target data.
 /// @param outputs Testing output data.
@@ -2027,8 +2029,8 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
 
     return confidence_limit;
 }
-
-
+*/
+/*
 /// Returns the point of optimal classification accuracy, which is the nearest ROC curve point to the upper left corner(0,1).
 /// @param targets Testing target data.
 /// @param outputs Testing output data.
@@ -2099,20 +2101,21 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
 
     return optimal_threshold;
 }
-
+*/
 
 /// Returns the point of optimal classification accuracy, which is the nearest ROC curve point to the upper left corner(0,1).
 /// @param targets Testing target data.
 /// @param outputs Testing output data.
 /// @param roc_curve ROC curve.
 
-type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const Tensor<type, 2>& roc_curve) const
+type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& roc_curve) const
 {
     const Index points_number = roc_curve.dimension(0);
 
     type optimal_threshold = type(0.5);
 
     type minimun_distance = numeric_limits<type>::max();
+
     type distance;
 
     for(Index i = 0; i < points_number; i++)
@@ -2440,7 +2443,8 @@ Tensor<type, 2> TestingAnalysis::calculate_lift_chart(const Tensor<type, 2>& cum
 
 
 /// Performs a Kolmogorov-Smirnov analysis, which consists of the cumulative gain for the positive samples and the cumulative
-/// gain for the negative samples. It returns a Kolmogorov-Smirnov results structure, which consists of:
+/// gain for the negative samples.
+/// It returns a Kolmogorov-Smirnov results structure, which consists of:
 /// <ul>
 /// <li> Positive cumulative gain
 /// <li> Negative cumulative gain

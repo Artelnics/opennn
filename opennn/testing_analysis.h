@@ -242,12 +242,14 @@ public:
    type calculate_Wilcoxon_parameter(const type&, const type&) const;
 
    Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   type calculate_area_under_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+
+//   type calculate_area_under_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+
    type calculate_area_under_curve(const Tensor<type, 2>&) const;
    type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
-   type calculate_optimal_threshold(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   type calculate_optimal_threshold(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+//   type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
+//   type calculate_optimal_threshold(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   type calculate_optimal_threshold(const Tensor<type, 2>&) const;
 
    // Lift Chart
 
