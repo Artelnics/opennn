@@ -1227,7 +1227,7 @@ void ConvolutionalLayer::set_parameters_constant(const type& value)
 }
 
 
-// Sets the parameters to random numbers using Eigen's setRandom.
+/// Sets the parameters to random numbers using Eigen's setRandom.
 
 void ConvolutionalLayer::set_parameters_random()
 {

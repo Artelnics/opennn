@@ -8775,6 +8775,7 @@ Tensor<type, 2> DataSet::calculate_distance_matrix(const Tensor<Index,1>& indice
 
 Tensor<list<Index>, 1> DataSet::calculate_k_nearest_neighbors(const Tensor<type, 2>& distance_matrix, const Index& k_neighbors) const
 {
+    /*
     const Index samples_number = distance_matrix.dimensions()[0];
 
     Tensor<list<Index>, 1> neighbors_indices(samples_number);
@@ -8811,11 +8812,14 @@ Tensor<list<Index>, 1> DataSet::calculate_k_nearest_neighbors(const Tensor<type,
     }
 
     return neighbors_indices;
+    */
+    return Tensor<list<Index>, 1>();
 }
 
 
 Tensor<Tensor<type, 1>, 1> DataSet::get_kd_tree_data() const
 {
+    /*
     const Index used_samples_number = get_used_samples_number();
     const Index input_variables_number = get_input_variables_number();
 
@@ -8835,12 +8839,14 @@ Tensor<Tensor<type, 1>, 1> DataSet::get_kd_tree_data() const
     }
 
     return kd_tree_data;
+    */
+    return Tensor<Tensor<type, 1>, 1>();
 }
 
 
 Tensor<Tensor<Index, 1>, 1> DataSet::create_bounding_limits_kd_tree(const Index& depth) const
 {
-
+    /*
     Tensor<Tensor<Index, 1>, 1> bounding_limits(depth+1);
 
     bounding_limits(0) = Tensor<Index, 1>(2);
@@ -8862,11 +8868,14 @@ Tensor<Tensor<Index, 1>, 1> DataSet::create_bounding_limits_kd_tree(const Index&
         }
     }
     return bounding_limits;
+    */
+    return Tensor<Tensor<Index, 1>, 1>();
 }
 
 
 void DataSet::create_kd_tree(Tensor<Tensor<type, 1>, 1>& tree, const Tensor<Tensor<Index, 1>, 1>& bounding_limits) const
 {
+    /*
     const Index depth = bounding_limits.size()-1;
     const Index input_variables = tree(0).size();
 
@@ -8893,6 +8902,7 @@ void DataSet::create_kd_tree(Tensor<Tensor<type, 1>, 1>& tree, const Tensor<Tens
         for(Index j = 1; j < (Index)bounding_limits(i).size()-1; j++)
             specific_sort(bounding_limits(i)(j)+1, bounding_limits(i)(j+1), split_variable);
     }
+    */
 }
 
 
@@ -8901,7 +8911,7 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
                                                                    const Index& depth,
                                                                    const Index& k_neighbors) const
 {
-/*
+    /*
     const Index used_samples_number = get_used_samples_number();
     const Index leaves_number = pow(2, depth);
 
@@ -8932,14 +8942,13 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
     }
 
     return k_nearest_neighbors;
-*/
+    */
     return Tensor<list<Index>, 1>();
 }
 
 
 Tensor<list<Index>, 1> DataSet::calculate_kd_tree_neighbors(const Index& k_neighbors, const Index& min_samples_leaf) const
 {
-/*
     const Index used_samples_number = get_used_samples_number();
 
     Tensor<Tensor<type, 1>, 1> tree = get_kd_tree_data();
@@ -8952,8 +8961,6 @@ Tensor<list<Index>, 1> DataSet::calculate_kd_tree_neighbors(const Index& k_neigh
     create_kd_tree(tree, bounding_limits);
 
     return calculate_bounding_boxes_neighbors(tree, bounding_limits(depth), depth, k_neighbors);
-*/
-    return Tensor<list<Index>, 1>();
 }
 
 
@@ -9106,7 +9113,6 @@ void DataSet::calculate_min_max_indices_list(list<Index>& elements, const Index&
 
 Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& tree_simulation, list<Index>& tree_index) const
 {
-/*
     const Index current_tree_index = tree_index.front();
     const type current_variable = tree(current_tree_index, 1);
     const type division_value = tree(current_tree_index, 0);
@@ -9157,13 +9163,12 @@ Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& t
 
 
     return delta_next_depth_nodes;
-*/
-    return Index();
 }
 
 
 Tensor<type, 2> DataSet::create_isolation_tree(const Tensor<Index, 1>& indices, const Index& max_depth) const
 {
+    /*
     const Index used_samples_number = indices.size();
 
     const Index variables_number = get_input_variables_number();
@@ -9219,13 +9224,16 @@ Tensor<type, 2> DataSet::create_isolation_tree(const Tensor<Index, 1>& indices, 
             current_variable_index = input_variables_indices(rand() % variables_number);
         }
     }
-
+    
     return tree;
+    */
+    return Tensor<type, 2>();
 }
 
 
 Tensor<Tensor<type, 2>, 1> DataSet::create_isolation_forest(const Index& trees_number, const Index& sub_set_size, const Index& max_depth) const
 {
+    /*
     const Tensor<Index, 1> indices = get_used_samples_indices();
     const Index samples_number = get_used_samples_number();
     Tensor<Tensor<type, 2>, 1> forest(trees_number);
@@ -9246,6 +9254,8 @@ Tensor<Tensor<type, 2>, 1> DataSet::create_isolation_forest(const Index& trees_n
 
     }
     return forest;
+    */
+    return Tensor<Tensor<type, 2>, 1>();
 }
 
 
@@ -9258,7 +9268,7 @@ type DataSet::calculate_tree_path(const Tensor<type, 2>& tree, const Index& samp
 
     type samples;
     type value;
-
+/*
     while(current_depth < tree_depth)
     {
         if(tree(current_index, 2) == type(1))
@@ -9288,6 +9298,8 @@ type DataSet::calculate_tree_path(const Tensor<type, 2>& tree, const Index& samp
         return type(current_depth);
     else
         return type(log(samples- type(1))-(type(2.0) *(samples- type(1)))/samples + type(0.5772) + type(current_depth));
+*/
+    return 0;
 }
 
 
@@ -9296,6 +9308,7 @@ Tensor<type, 1> DataSet::calculate_average_forest_paths(const Tensor<Tensor<type
     const Index samples_number = get_used_samples_number();
     const Index n_trees = forest.dimensions()[0];
     Tensor<type, 1> average_paths(samples_number);
+    /*
     average_paths.setZero();
 
     # pragma omp parallel for
@@ -9306,6 +9319,8 @@ Tensor<type, 1> DataSet::calculate_average_forest_paths(const Tensor<Tensor<type
 
         average_paths(i) /= type(n_trees);
     }
+
+    */
     return average_paths;
 }
 
@@ -9314,6 +9329,7 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
                                                               const Index& subs_set_samples,
                                                               const type& contamination) const
 {
+    /*
     const Index samples_number = get_used_samples_number();
     const Index fixed_subs_set_samples = min(samples_number, subs_set_samples);
     const Index max_depth = ceil(log2(fixed_subs_set_samples))*2;
@@ -9328,6 +9344,9 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
                       : outlier_indexes = select_outliers_via_standard_deviation(average_paths, type(2.0), false);
 
     return outlier_indexes;
+    */
+
+    return Tensor<Index, 1>();
 }
 
 
@@ -9339,6 +9358,7 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
 
 Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) const
 {
+    /*
     const Index samples_number = time_series_data.dimension(0);
 
     if(lags_number > samples_number)
@@ -9441,6 +9461,8 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
     }
 
     return autocorrelations;
+    */
+    return Tensor<type, 2>();
 }
 
 

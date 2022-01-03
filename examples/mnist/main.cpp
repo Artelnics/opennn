@@ -51,16 +51,20 @@ vector<char> read_bmp(const string& filename)
 
     for(i = 0; i < size; i += channels)
     {
-        if(channels==3){
+        if(channels==3)
+        {
             // flip the order of every 3 bytes
             unsigned char tmp = data[i];
             data[i] = data[i+2];
             data[i+2] = tmp;
 
             cout << "R: " << int(data[i] & 0xff) << " G: " << int(data[i+1] & 0xff) << " B: " << int(data[i+2] & 0xff) << endl;
-        }else if (channels==1) {
+        }
+        else if (channels==1)
+        {
             unsigned char tmp = data[i];
-            cout << "GrayScale1: " << int(data[i] & 0xff)<<endl;        }
+            cout << "GrayScale1: " << int(data[i] & 0xff)<<endl;
+        }
     }
 
 
@@ -84,18 +88,20 @@ void read_images()
     int image_size = 28*28;
     string path;
 
-    path = "C:/Users/Artelnics/Desktop/mnist/data/";
+    path = "C:/Users/Artelnics2019/Desktop/mnist/data";
 
     // Miramos cuantas carpetas contiene. Ese es el número de clases.
+
+
     //classes_number = number_of_files_in_directory(std::experimental::filesystem::current_path());
     classes_number = number_of_files_in_directory(path);
     cout << "El numero de clases es: " << classes_number << endl;
 
     // Vamos a cada subdirectorio y Contamos cuantos archivos tiene
-    images_number = number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/zero/")+
-                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/one/")+
-                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/two/")+
-                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/three/");
+    images_number = number_of_files_in_directory("C:/Users/Artelnics2019/Desktop/mnist/data/zero/") +
+                    number_of_files_in_directory("C:/Users/Artelnics2019/Desktop/mnist/data/one/") +
+                    number_of_files_in_directory("C:/Users/Artelnics2019/Desktop/mnist/data/two/") +
+                    number_of_files_in_directory("C:/Users/Artelnics2019/Desktop/mnist/data/three/");
 
     cout << "El numero de imagenes es: " << images_number << endl;
 
@@ -115,9 +121,9 @@ void read_images()
 
 int main()
 {
-    vector<char> v = read_bmp("C:/Users/Artelnics/Desktop/mnist/data/101.bmp");
+    vector<char> v = read_bmp("C:/Users/Artelnics2019/Desktop/mnist/data/zero/0_1.bmp");
 
-    //for(int i = 0; i < v.size(); i++) cout << v[i] << " ";
+    for(int i = 0; i < v.size(); i++) cout << v[i] << " ";
 
     cout << v.size() << endl;
     read_images();

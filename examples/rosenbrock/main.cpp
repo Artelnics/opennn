@@ -32,14 +32,14 @@ int main()
         srand(static_cast<unsigned>(time(nullptr)));
      
         // Data Set
-
-        const Index samples_number = 10000;
-        const Index inputs_number = 10;
+        
+        const Index samples_number = 1000000;
+        const Index inputs_number = 1000;
         const Index outputs_number = 1;
         const Index hidden_neurons_number = inputs_number;
-
+        
         DataSet data_set;// ("C:/rosenbrock.csv", ',', true);
-
+        
         data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
 
         data_set.set_training();
@@ -59,7 +59,7 @@ int main()
         training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(100);
 
         training_strategy.perform_training();
-        
+
         cout << "End Rosenbrock" << endl;
 
         return 0;
