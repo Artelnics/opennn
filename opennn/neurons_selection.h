@@ -161,7 +161,9 @@ struct NeuronsSelectionResults
 {
     // Default constructor
 
-    explicit NeuronsSelectionResults() {}
+    explicit NeuronsSelectionResults()
+    {
+    }
 
     // Epochs constructor
 

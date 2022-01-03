@@ -30,6 +30,17 @@ int main()
     {
         cout << "OpenNN. Blank application." << endl;
 
+        srand(static_cast<unsigned>(time(nullptr)));
+
+        // Data Set
+
+        const Index samples_number = 1000000;
+        const Index inputs_number = 1000;
+        const Index outputs_number = 1;
+        const Index hidden_neurons_number = inputs_number;
+
+        DataSet dataset;
+
         cout << "Good bye!" << endl;
 
         return 0;

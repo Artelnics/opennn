@@ -846,7 +846,7 @@ void replace_substring(Tensor<string, 1>& vector, const string& find_what, const
 
     for(Index i = 0; i < size; i++)
     {
-        Index position = 0;
+        size_t position = 0;
 
         while((position = vector(i).find(find_what, position)) != string::npos)
         {
@@ -860,7 +860,7 @@ void replace_substring(Tensor<string, 1>& vector, const string& find_what, const
 
 void replace(string& source, const string& find_what, const string& replace_with)
 {
-    Index position = 0;
+    size_t position = 0;
 
     while((position = source.find(find_what, position)) != string::npos)
     {

@@ -24,7 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
-//#include "tensor_utilities.h"
+#include "tensor_utilities.h"
 #include "statistics.h"
 #include "data_set.h"
 
