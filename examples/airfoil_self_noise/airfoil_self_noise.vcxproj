@@ -21,9 +21,6 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\mnist\mnist.vcxproj" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6E9A8F74-7B08-469D-B1A9-078E5469D109}</ProjectGuid>
     <RootNamespace>AirfoilSelfNoise</RootNamespace>
@@ -76,11 +73,11 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>..\..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\bin\</OutDir>
+    <OutDir>$(ProjectDir)\bin\</OutDir>
     <IntDir>..\..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\bin\</OutDir>
+    <OutDir>$(ProjectDir)\bin\</OutDir>
     <IntDir>..\..\..\opennn-build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -117,6 +114,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>..\..\..\opennn-build\$(Platform)\$(Configuration)\opennn.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -152,6 +150,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <AdditionalDependencies>..\..\..\opennn-build\$(Platform)\$(Configuration)\opennn.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(Configuration)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

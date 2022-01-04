@@ -41,7 +41,7 @@ int main()
 
         testing_analysis.print_binary_classification_tests();
 
-        neural_network.save_expression_python("data/breast_cancer.py");
+        neural_network.save_expression_python("../data/breast_cancer.py");
 
         cout << "End breast cancer application" << endl;
 

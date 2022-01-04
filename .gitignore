@@ -235,4 +235,10 @@ examples/*/*.dir/*
 *.cmake
 *.vcxproj.user
 
+#SonarQube elements
+/build_wrapper_output_directory/*
+build-wrapper.log
+build-wrapper-dump.json
+.scannerwork/*
+
 # Created by .ignore support plugin (hsz.mobi)
