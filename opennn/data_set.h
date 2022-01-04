@@ -8,6 +8,8 @@
 
 #ifndef DATASET_H
 #define DATASET_H
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+
 // System includes
 
 #include <iostream>
@@ -27,7 +29,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include <list>
-#include <vector>
+#include <filesystem>
+#include <experimental/filesystem>
 
 // OpenNN includes
 
@@ -40,11 +43,12 @@
 
 using namespace std;
 using namespace Eigen;
+namespace fs = std::experimental::filesystem;
 
 namespace OpenNN
 {
 
-/// This class represents the concept of data set for data modeling problems, such as approximation, classification or forecasting.
+/// This class represents the concept of data set for data modelling problems, such as approximation, classification or forecasting.
 
 ///
 /// It basically consists of a data Matrix separated by columns.
@@ -76,11 +80,11 @@ public:
 
    // Enumerations
 
-   /// Enumeration of the available separators for the data file.
+   /// Enumeration of available separators for the data file.
 
    enum class Separator{Space, Tab, Comma, Semicolon};
 
-   /// Enumeration of the available methods for missing values in the data.
+   /// Enumeration of available methods for missing values in the data.
 
    enum class MissingValuesMethod{Unuse, Mean, Median};
 
@@ -93,7 +97,7 @@ public:
 
    enum class SampleUse{Training, Selection, Testing, UnusedSample};
 
-   /// This enumeration represents the possible uses of a variable
+   /// This enumeration represents the possible uses of an variable
    /// (input, target, time or unused).
 
    enum class VariableUse{Id, Input, Target, Time, UnusedVariable};
@@ -434,7 +438,6 @@ public:
 
    void set_columns_scalers(const Scaler&);
 
-
    void set_binary_simple_columns();
 
    // Columns other methods
@@ -670,10 +673,7 @@ public:
    // Data load methods
 
    void read_csv();
-   /*
-   Index number_of_files_in_directory(std::experimental::filesystem::path path);
-   void read_images();
-  */
+   void read_bmp();
 
    void load_data_binary();
    void load_time_series_data_binary(const string&);
@@ -771,7 +771,7 @@ private:
 
    // DATA FILE
 
-   /// Data filename.
+   /// Data file name.
 
    string data_file_name;
 
@@ -836,6 +836,10 @@ private:
    bool display = true;
 
    const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
+
+   static size_t number_of_elements_in_directory(fs::path path);
+
+   static vector<unsigned char> read_bmp_image(const string& filename);
 
    // Local Outlier Factor
 

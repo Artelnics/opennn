@@ -1,5 +1,4 @@
 //   OpenNN: Open Neural Networks Library
-// 
 //   www.opennn.net
 //
 //   D A T A   S E T   C L A S S
@@ -10,13 +9,14 @@
 #include "data_set.h"
 
 using namespace  OpenNN;
+namespace fs = std::experimental::filesystem;
 
 namespace OpenNN
 {
 
 /// Default constructor.
 /// It creates a data set object with zero samples and zero inputs and target variables.
-/// It also initializes the rest of the class members to their default values.
+/// It also initializes the rest of class members to their default values.
 
 DataSet::DataSet()
 {
@@ -27,7 +27,7 @@ DataSet::DataSet()
 
 
 /// Default constructor. It creates a data set object from data Eigen Matrix.
-/// It also initializes the rest of the class members to their default values.
+/// It also initializes the rest of class members to their default values.
 /// @param data Data Tensor<type, 2>.
 
 DataSet::DataSet(const Tensor<type, 2>& data)
@@ -41,7 +41,7 @@ DataSet::DataSet(const Tensor<type, 2>& data)
 /// Samples and variables number constructor.
 /// It creates a data set object with given samples and variables numbers.
 /// All the variables are set as inputs.
-/// It also initializes the rest of the class members to their default values.
+/// It also initializes the rest of class members to their default values.
 /// @param new_samples_number Number of samples in the data set.
 /// @param new_variables_number Number of variables.
 
@@ -55,7 +55,7 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_variables_num
 
 /// Samples number, input variables number and target variables number constructor.
 /// It creates a data set object with given samples and inputs and target variables numbers.
-/// It also initializes the rest of the class members to their default values.
+/// It also initializes the rest of class members to their default values.
 /// @param new_samples_number Number of samples in the data set.
 /// @param new_inputs_number Number of input variables.
 /// @param new_targets_number Number of target variables.
@@ -71,8 +71,8 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 /// File and separator constructor. It creates a data set object by loading the object members from a data file.
 /// It also sets a separator.
 /// Please mind about the file format. This is specified in the User's Guide.
-/// @param data_file_name Data file filename.
-/// @param separator Data file filename.
+/// @param data_file_name Data file file name.
+/// @param separator Data file file name.
 
 DataSet::DataSet(const string& data_file_name, const char& separator, const bool& has_columns_names)
 {
@@ -3535,18 +3535,18 @@ void DataSet::set_binary_simple_columns()
 
                 if(values(0) == type(0) && values(1) == type(1))
                 {
-                    columns(column_index).categories(0) ="(    " + std::to_string(static_cast<int>(values(0))) + "    )";
-                    columns(column_index).categories(1) ="(    " + std::to_string(static_cast<int>(values(1))) + "    )";
+                    columns(column_index).categories(0) = "Negative " + std::to_string(static_cast<int>(values(0)));
+                    columns(column_index).categories(1) = "Positive " + std::to_string(static_cast<int>(values(1)));
                 }
                 else if(values(0) == type(1) && values(1) == type(0))
                 {
-                    columns(column_index).categories(0) = "(    " + std::to_string(static_cast<int>(values(0))) + "    )";
-                    columns(column_index).categories(1) = "(    " + std::to_string(static_cast<int>(values(1))) + "    )";
+                    columns(column_index).categories(0) = "Positive " + std::to_string(static_cast<int>(values(0)));
+                    columns(column_index).categories(1) = "Negative " + std::to_string(static_cast<int>(values(1)));
                 }
                 else
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0))) + " (   0   )";
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1))) + " (   1   )";
+                    columns(column_index).categories(0) = "Class_1";
+                    columns(column_index).categories(1) = "Class_2";
                 }
 
                 const VariableUse column_use = columns(column_index).column_use;
@@ -3658,7 +3658,7 @@ void DataSet::set_input_variables_dimensions(const Tensor<Index, 1>& new_inputs_
 }
 
 
-/// Returns true if the data matrix is empty and false otherwise.
+/// Returns true if the data matrix is empty, and false otherwise.
 
 bool DataSet::is_empty() const
 {
@@ -4761,7 +4761,7 @@ void DataSet::set(const DataSet& other_data_set)
 }
 
 
-/// Sets the data set members from an XML document.
+/// Sets the data set members from a XML document.
 /// @param data_set_document TinyXML document containing the member data.
 
 void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
@@ -4772,7 +4772,7 @@ void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-/// Sets the data set members by loading them from an XML file.
+/// Sets the data set members by loading them from a XML file.
 /// @param file_name Data set XML file_name.
 
 void DataSet::set(const string& file_name)
@@ -4781,8 +4781,8 @@ void DataSet::set(const string& file_name)
 }
 
 /// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
+/// If it is set to true messages from this class are to be displayed on the screen;
+/// if it is set to false messages from this class are not to be displayed on the screen.
 /// @param new_display Display value.
 
 void DataSet::set_display(const bool& new_display)
@@ -5923,7 +5923,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
 
             correlations(i,j) = OpenNN::correlation(thread_pool_device, input_column_data, target_column_data);
 
-            //cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
+            cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
         }
     }
 
@@ -5954,7 +5954,7 @@ bool DataSet::has_nan_row(const Index& row_index) const
 }
 
 
-/// Prints on the screen the information about the missing values in the data set.
+/// Print on screen the information about the missing values in the data set.
 /// <ul>
 /// <li> Total number of missing values.
 /// <li> Number of variables with missing values.
@@ -5979,7 +5979,7 @@ void DataSet::print_missing_values_information() const
 }
 
 
-/// Prints on the screen the correlation between targets and inputs.
+/// Print on screen the correlation between targets and inputs.
 
 void DataSet::print_input_target_columns_correlations() const
 {
@@ -6001,7 +6001,7 @@ void DataSet::print_input_target_columns_correlations() const
 }
 
 
-/// This method Prints on the screen the corretaliont between inputs and targets.
+/// This method print on screen the corretaliont between inputs and targets.
 /// @param number Number of variables to be printed.
 
 void DataSet::print_top_input_target_columns_correlations() const
@@ -6083,7 +6083,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
 }
 
 
-/// Prints on the screen the correlation between variables in the data set.
+/// Print on screen the correlation between variables in the data set.
 
 void DataSet::print_inputs_correlations() const
 {
@@ -6109,7 +6109,7 @@ void DataSet::print_data_file_preview() const
 }
 
 
-/// This method Prints on the screen the corretaliont between variables.
+/// This method print on screen the corretaliont between variables.
 /// @param number Number of variables to be printed.
 
 void DataSet::print_top_inputs_correlations() const
@@ -6505,7 +6505,7 @@ void DataSet::set_data_binary_random()
 }
 
 
-/// Serializes the data set object into an XML document of the TinyXML library without keeping the DOM tree in memory.
+/// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
 
 void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -6526,7 +6526,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    // Data filename
+    // Data file name
     {
         file_stream.OpenElement("DataFileName");
 
@@ -6906,7 +6906,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw logic_error(buffer.str());
     }
 
-    // Data filename
+    // Data file name
 
     const tinyxml2::XMLElement* data_file_name_element = data_file_element->FirstChildElement("DataFileName");
 
@@ -7701,7 +7701,7 @@ void DataSet::print() const
 }
 
 
-/// Saves the members of a data set object to an XML-type file in an XML-type format.
+/// Saves the members of a data set object to a XML-type file in an XML-type format.
 /// @param file_name Name of data set XML-type file.
 
 void DataSet::save(const string& file_name) const
@@ -7716,7 +7716,7 @@ void DataSet::save(const string& file_name) const
 }
 
 
-/// Loads the members of a data set object from an XML-type file:
+/// Loads the members of a data set object from a XML-type file:
 /// <ul>
 /// <li> Samples number.
 /// <li> Training samples number.
@@ -8775,7 +8775,6 @@ Tensor<type, 2> DataSet::calculate_distance_matrix(const Tensor<Index,1>& indice
 
 Tensor<list<Index>, 1> DataSet::calculate_k_nearest_neighbors(const Tensor<type, 2>& distance_matrix, const Index& k_neighbors) const
 {
-    /*
     const Index samples_number = distance_matrix.dimensions()[0];
 
     Tensor<list<Index>, 1> neighbors_indices(samples_number);
@@ -8812,14 +8811,11 @@ Tensor<list<Index>, 1> DataSet::calculate_k_nearest_neighbors(const Tensor<type,
     }
 
     return neighbors_indices;
-    */
-    return Tensor<list<Index>, 1>();
 }
 
 
 Tensor<Tensor<type, 1>, 1> DataSet::get_kd_tree_data() const
 {
-    /*
     const Index used_samples_number = get_used_samples_number();
     const Index input_variables_number = get_input_variables_number();
 
@@ -8839,14 +8835,12 @@ Tensor<Tensor<type, 1>, 1> DataSet::get_kd_tree_data() const
     }
 
     return kd_tree_data;
-    */
-    return Tensor<Tensor<type, 1>, 1>();
 }
 
 
 Tensor<Tensor<Index, 1>, 1> DataSet::create_bounding_limits_kd_tree(const Index& depth) const
 {
-    /*
+
     Tensor<Tensor<Index, 1>, 1> bounding_limits(depth+1);
 
     bounding_limits(0) = Tensor<Index, 1>(2);
@@ -8868,14 +8862,11 @@ Tensor<Tensor<Index, 1>, 1> DataSet::create_bounding_limits_kd_tree(const Index&
         }
     }
     return bounding_limits;
-    */
-    return Tensor<Tensor<Index, 1>, 1>();
 }
 
 
 void DataSet::create_kd_tree(Tensor<Tensor<type, 1>, 1>& tree, const Tensor<Tensor<Index, 1>, 1>& bounding_limits) const
 {
-    /*
     const Index depth = bounding_limits.size()-1;
     const Index input_variables = tree(0).size();
 
@@ -8902,7 +8893,6 @@ void DataSet::create_kd_tree(Tensor<Tensor<type, 1>, 1>& tree, const Tensor<Tens
         for(Index j = 1; j < (Index)bounding_limits(i).size()-1; j++)
             specific_sort(bounding_limits(i)(j)+1, bounding_limits(i)(j+1), split_variable);
     }
-    */
 }
 
 
@@ -8911,7 +8901,7 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
                                                                    const Index& depth,
                                                                    const Index& k_neighbors) const
 {
-    /*
+/*
     const Index used_samples_number = get_used_samples_number();
     const Index leaves_number = pow(2, depth);
 
@@ -8942,13 +8932,14 @@ Tensor<list<Index>, 1> DataSet::calculate_bounding_boxes_neighbors(const Tensor<
     }
 
     return k_nearest_neighbors;
-    */
+*/
     return Tensor<list<Index>, 1>();
 }
 
 
 Tensor<list<Index>, 1> DataSet::calculate_kd_tree_neighbors(const Index& k_neighbors, const Index& min_samples_leaf) const
 {
+/*
     const Index used_samples_number = get_used_samples_number();
 
     Tensor<Tensor<type, 1>, 1> tree = get_kd_tree_data();
@@ -8961,6 +8952,8 @@ Tensor<list<Index>, 1> DataSet::calculate_kd_tree_neighbors(const Index& k_neigh
     create_kd_tree(tree, bounding_limits);
 
     return calculate_bounding_boxes_neighbors(tree, bounding_limits(depth), depth, k_neighbors);
+*/
+    return Tensor<list<Index>, 1>();
 }
 
 
@@ -9113,6 +9106,7 @@ void DataSet::calculate_min_max_indices_list(list<Index>& elements, const Index&
 
 Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& tree_simulation, list<Index>& tree_index) const
 {
+/*
     const Index current_tree_index = tree_index.front();
     const type current_variable = tree(current_tree_index, 1);
     const type division_value = tree(current_tree_index, 0);
@@ -9163,12 +9157,13 @@ Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& t
 
 
     return delta_next_depth_nodes;
+*/
+    return Index();
 }
 
 
 Tensor<type, 2> DataSet::create_isolation_tree(const Tensor<Index, 1>& indices, const Index& max_depth) const
 {
-    /*
     const Index used_samples_number = indices.size();
 
     const Index variables_number = get_input_variables_number();
@@ -9224,16 +9219,13 @@ Tensor<type, 2> DataSet::create_isolation_tree(const Tensor<Index, 1>& indices, 
             current_variable_index = input_variables_indices(rand() % variables_number);
         }
     }
-    
+
     return tree;
-    */
-    return Tensor<type, 2>();
 }
 
 
 Tensor<Tensor<type, 2>, 1> DataSet::create_isolation_forest(const Index& trees_number, const Index& sub_set_size, const Index& max_depth) const
 {
-    /*
     const Tensor<Index, 1> indices = get_used_samples_indices();
     const Index samples_number = get_used_samples_number();
     Tensor<Tensor<type, 2>, 1> forest(trees_number);
@@ -9254,8 +9246,6 @@ Tensor<Tensor<type, 2>, 1> DataSet::create_isolation_forest(const Index& trees_n
 
     }
     return forest;
-    */
-    return Tensor<Tensor<type, 2>, 1>();
 }
 
 
@@ -9268,7 +9258,7 @@ type DataSet::calculate_tree_path(const Tensor<type, 2>& tree, const Index& samp
 
     type samples;
     type value;
-/*
+
     while(current_depth < tree_depth)
     {
         if(tree(current_index, 2) == type(1))
@@ -9298,8 +9288,6 @@ type DataSet::calculate_tree_path(const Tensor<type, 2>& tree, const Index& samp
         return type(current_depth);
     else
         return type(log(samples- type(1))-(type(2.0) *(samples- type(1)))/samples + type(0.5772) + type(current_depth));
-*/
-    return 0;
 }
 
 
@@ -9308,7 +9296,6 @@ Tensor<type, 1> DataSet::calculate_average_forest_paths(const Tensor<Tensor<type
     const Index samples_number = get_used_samples_number();
     const Index n_trees = forest.dimensions()[0];
     Tensor<type, 1> average_paths(samples_number);
-    /*
     average_paths.setZero();
 
     # pragma omp parallel for
@@ -9319,8 +9306,6 @@ Tensor<type, 1> DataSet::calculate_average_forest_paths(const Tensor<Tensor<type
 
         average_paths(i) /= type(n_trees);
     }
-
-    */
     return average_paths;
 }
 
@@ -9329,7 +9314,6 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
                                                               const Index& subs_set_samples,
                                                               const type& contamination) const
 {
-    /*
     const Index samples_number = get_used_samples_number();
     const Index fixed_subs_set_samples = min(samples_number, subs_set_samples);
     const Index max_depth = ceil(log2(fixed_subs_set_samples))*2;
@@ -9344,9 +9328,6 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
                       : outlier_indexes = select_outliers_via_standard_deviation(average_paths, type(2.0), false);
 
     return outlier_indexes;
-    */
-
-    return Tensor<Index, 1>();
 }
 
 
@@ -9358,7 +9339,6 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
 
 Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) const
 {
-    /*
     const Index samples_number = time_series_data.dimension(0);
 
     if(lags_number > samples_number)
@@ -9461,8 +9441,6 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
     }
 
     return autocorrelations;
-    */
-    return Tensor<type, 2>();
 }
 
 
@@ -9915,50 +9893,168 @@ void DataSet::read_csv()
     }
 }
 
-/*
-Index DataSet::number_of_files_in_directory(std::experimental::filesystem::path path)
+
+vector<unsigned char> DataSet::read_bmp_image(const string& filename)
 {
-    using std::experimental::filesystem::directory_iterator;
-    return std::distance(directory_iterator(path), directory_iterator{});
+    FILE* f = fopen(filename.data(), "rb");
+
+    unsigned char info[54];
+
+    fread(info, sizeof(unsigned char), 54, f);
+    const int width = *(int*)&info[18];
+    const int height = *(int*)&info[22];
+    const int bits_per_pixel = *(int*)&info[28];
+    int channels;
+
+    bits_per_pixel == 24 ? channels = 3 : channels = 1;
+
+    const size_t size = channels*width*height;
+
+    vector<unsigned char> image(size);
+
+    int data_offset = *(int*)(&info[0x0A]);
+    fseek(f, (long int)(data_offset - 54), SEEK_CUR);
+
+
+    fread(image.data(), sizeof(unsigned char), size, f);
+
+    fclose(f);
+
+    return image;
+}
+
+size_t DataSet::number_of_elements_in_directory(fs::path path)
+{
+    using fs::directory_iterator;
+
+    return distance(directory_iterator(path), directory_iterator{});
 }
 
 
-void DataSet::read_images()
+void DataSet::read_bmp()
 {
-    Index images_number;
-    Index classes_number;
-    Index image_size = 28*28;
-    string path;
+    const fs::path path = data_file_name;
 
-    path = "C:/Users/Artelnics/Desktop/mnist/data/";
+    if(data_file_name.empty())
+    {
+        ostringstream buffer;
 
-    // Miramos cuantas carpetas contiene. Ese es el número de clases.
-    //classes_number = number_of_files_in_directory(std::experimental::filesystem::current_path());
-    classes_number = number_of_files_in_directory(path);
-    cout << "El numero de clases es: " << classes_number << endl;
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp() method.\n"
+               << "Data file name is empty.\n";
 
-    // Vamos a cada subdirectorio y Contamos cuantos archivos tiene
-    images_number = number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/zero/")+
-                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/one/")+
-                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/two/")+
-                    number_of_files_in_directory("C:/Users/Artelnics/Desktop/mnist/data/three/");
+        throw logic_error(buffer.str());
+    }
+/*
+    if(data_file_name.)
+    {
+        ostringstream buffer;
 
-    cout << "El numero de imagenes es: " << images_number << endl;
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp() method.\n"
+               << "Data file name does not exist.\n";
 
-    // El número total es el número de filas.
+        throw logic_error(buffer.str());
+    }
+*/
+    vector<fs::path> folder_paths;
+    vector<fs::path> image_paths;
 
-    // Cambiamos el tamaño de las matrices y vectores
+    for (const auto & entry : fs::directory_iterator(path)){
+        folder_paths.push_back(entry.path().string());
+    }
+
+    for (int i = 0 ; i < folder_paths.size() ; i++){
+        for (const auto & entry : fs::directory_iterator(folder_paths[i])){
+            image_paths.push_back(entry.path().string());
+        }
+    }
+
+    const Index classes_number = number_of_elements_in_directory(path);
+    Index images_number = 0;
+    Tensor<Index, 1> images_numbers(classes_number);
+
+    for(Index i = 0; i < classes_number; i++)
+    {
+        images_number += number_of_elements_in_directory(folder_paths[i]);
+
+        /*if(i == 0)
+        {
+            image = read_bmp("");
+
+        }*/
+    }
+
+    vector<unsigned char> image = read_bmp_image(image_paths[0].u8string());
+    Index image_size = image.size();
 
     data.resize(images_number, image_size + classes_number);
+    data.setZero();
 
-    rows_labels.resize(9);
+    rows_labels.resize(images_number);
 
-    // Rellenamos las matrices leyendo las imagenes.
+    //cout << "Data number of rows: "<< data.dimension(0) << endl;
+    //cout << "Data number of columns: "<< data.dimension(1) << endl;
 
-    //v=readBMP("C:/Users/Artelnics/Desktop/mnist/data/two/2_345.bmp");
+    Index row_index = 0;
+
+    for(Index i = 0; i < classes_number; i++)
+    {
+        Index images_number = 0;
+
+        vector<string> images_paths;
+
+        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
+        {
+            images_paths.push_back(entry.path().string());
+        }
+
+        images_number = images_paths.size();
+
+        for(Index j = 0;  j < images_number; j++)
+        {
+            image = read_bmp_image(images_paths[j]);
+
+            for(Index k = 0; k < image_size; k++)
+            {
+                data(row_index, k) = static_cast<type>(image[k]);
+            }
+
+            data(row_index, image_size + i) = 1;
+
+            rows_labels(row_index) = images_paths[j];
+
+            row_index++;
+        }
+    }
+
+    columns.resize(image_size + 1);
+
+    for(Index i = 0; i < image_size; i++)
+    {
+
+        columns(i).name = "pixel_" + to_string(i);
+        columns(i).column_use = VariableUse::Input;
+    }
+
+    Tensor<string, 1> categories;
+
+
+    columns(image_size).name = "class";
+/*
+    for (int i = 0 ; i < folder_paths.size() ; i++) {
+        const string path_str = path.u8string();
+        vector<string> folder_paths_str;
+        folder_paths_str[i]=folder_paths[i].u8string();
+        //categories(i) = folder_paths_str[i].substr(path);
+
+    }*/
+    columns(image_size).categories = categories;
+    columns(image_size).column_use = VariableUse::Target;
+
+    // input_variables_dimensions;
 
 }
-*/
 
 Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number)
 {
@@ -9985,7 +10081,7 @@ void DataSet::read_csv_1()
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "void read_csv() method.\n"
-               << "Data filename is empty.\n";
+               << "Data file name is empty.\n";
 
         throw logic_error(buffer.str());
     }
@@ -10601,7 +10697,6 @@ void DataSet::read_csv_3_complete()
             {
                 for(Index k = 0; k < columns(column_index).get_categories_number(); k++)
                 {
-
                     if(tokens(j) == missing_values_label)
                     {
                         data(sample_index, variable_index) = static_cast<type>(NAN);
@@ -10636,15 +10731,6 @@ void DataSet::read_csv_3_complete()
         }
 
         sample_index++;
-    }
-
-    for(Index j = 0; j < raw_columns_number; j++)
-    {
-        if(columns(j).type == ColumnType::Binary)
-        {
-            columns(j).categories(0) = columns(j).categories(0) + " (   1   )";
-            columns(j).categories(1) = columns(j).categories(1) + " (   0   )";
-        }
     }
 
     const Index data_file_preview_index = has_columns_names ? 3 : 2;
