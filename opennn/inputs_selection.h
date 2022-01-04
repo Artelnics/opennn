@@ -257,7 +257,7 @@ struct InputsSelectionResults
 
    /// Stopping condition of the algorithm.
 
-   InputsSelection::StoppingCondition stopping_condition;
+   InputsSelection::StoppingCondition stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
 
    /// Elapsed time during the loss of the algortihm.
 
