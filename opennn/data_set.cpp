@@ -10048,7 +10048,6 @@ void DataSet::read_bmp()
     columns.resize(image_size + 1);
     Index column_index=0;
 
-
     for(Index i = 1; i <= width;i++)
     {
         for(Index j = 1; j<=height ; j++)
@@ -10078,10 +10077,10 @@ void DataSet::read_bmp()
     samples_uses.resize(images_number);
     split_samples_random();
 
-//    input_variables_dimensions.resize(3);
-//    input_variables_dimensions(0) = channels_number;
-//    input_variables_dimensions(1) = width;
-//    input_variables_dimensions(2) = height;
+    input_variables_dimensions.resize(3);
+    input_variables_dimensions(0) = channels;
+    input_variables_dimensions(1) = width;
+    input_variables_dimensions(2) = height;
 }
 
 
