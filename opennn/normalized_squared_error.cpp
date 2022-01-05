@@ -112,16 +112,16 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
 
     for(Index i = 0; i < columns; i++)
     {
-        memcpy(targets_t_1.data() + targets_t_1.dimension(0) * i,
-               targets.data() + targets.dimension(0) * i,
-               static_cast<size_t>(rows)*sizeof(type));
+        copy(targets.data() + targets.dimension(0) * i,
+             targets.data() + targets.dimension(0) * i + rows,
+             targets_t_1.data() + targets_t_1.dimension(0) * i);
     }
 
     for(Index i = 0; i < columns; i++)
     {
-        memcpy(targets_t.data() + targets_t.dimension(0) * i,
-               targets.data() + targets.dimension(0) * i + 1,
-               static_cast<size_t>(rows)*sizeof(type));
+        copy(targets.data() + targets.dimension(0) * i + 1,
+             targets.data() + targets.dimension(0) * i + 1 + rows,
+             targets_t.data() + targets_t.dimension(0) * i);
     }
 
     //Normalization coefficient
@@ -428,9 +428,10 @@ void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
         PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation
                 = static_cast<PerceptronLayerBackPropagationLM*>(output_layer_back_propagation);
 
-        memcpy(perceptron_layer_back_propagation->delta.data(),
-               loss_index_back_propagation.errors.data(),
-               static_cast<size_t>(loss_index_back_propagation.errors.size())*sizeof(type));
+        copy(loss_index_back_propagation.errors.data(),
+             loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
+             perceptron_layer_back_propagation->delta.data());
+
 
         divide_columns(perceptron_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
     }
@@ -441,9 +442,9 @@ void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
         ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation
                 = static_cast<ProbabilisticLayerBackPropagationLM*>(output_layer_back_propagation);
 
-        memcpy(probabilistic_layer_back_propagation->delta.data(),
-               loss_index_back_propagation.errors.data(),
-               static_cast<size_t>(loss_index_back_propagation.errors.size())*sizeof(type));
+        copy(loss_index_back_propagation.errors.data(),
+             loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
+             probabilistic_layer_back_propagation->delta.data());
 
         divide_columns(probabilistic_layer_back_propagation->delta, loss_index_back_propagation.squared_errors);
     }

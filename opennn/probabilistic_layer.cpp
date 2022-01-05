@@ -224,13 +224,14 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
-    memcpy(parameters.data() ,
-           biases.data(),
-           static_cast<size_t>(biases.size())*sizeof(type));
+    copy(biases.data(),
+         biases.data() + biases.size(),
+         parameters.data());
 
-    memcpy(parameters.data() + biases.size(),
-           synaptic_weights.data(),
-           static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+    copy(synaptic_weights.data(),
+         synaptic_weights.data() + synaptic_weights.size(),
+         parameters.data() + biases.size());
+
 
     return parameters;
 
@@ -318,8 +319,13 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
     const Index biases_number = biases.size();
     const Index synaptic_weights_number = synaptic_weights.size();
 
-    memcpy(biases.data(), new_parameters.data() + index, static_cast<size_t>(biases_number)*sizeof(type));
-    memcpy(synaptic_weights.data(), new_parameters.data() + biases_number + index, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+    copy(new_parameters.data() + index,
+         new_parameters.data() + index + biases_number,
+         biases.data());
+
+    copy(new_parameters.data() + biases_number + index,
+         new_parameters.data() + biases_number + index + synaptic_weights_number,
+         synaptic_weights.data());
 }
 
 
@@ -556,8 +562,13 @@ void ProbabilisticLayer::insert_parameters(const Tensor<type, 1>& parameters, co
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    memcpy(biases.data() , parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
-    memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+    copy(parameters.data(),
+         parameters.data() + biases_number,
+         biases.data());
+
+    copy(parameters.data() + biases_number,
+         parameters.data() + biases_number + synaptic_weights_number,
+         synaptic_weights.data());
 }
 
 
@@ -812,13 +823,14 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
             static_cast<ProbabilisticLayerBackPropagation*>(back_propagation);
 
-    memcpy(gradient.data() + index,
-           probabilistic_layer_back_propagation->biases_derivatives.data(),
-           static_cast<size_t>(biases_number)*sizeof(type));
+    copy(probabilistic_layer_back_propagation->biases_derivatives.data(),
+         probabilistic_layer_back_propagation->biases_derivatives.data() + biases_number,
+         gradient.data() + index);
 
-    memcpy(gradient.data() + index + biases_number,
-           probabilistic_layer_back_propagation->synaptic_weights_derivatives.data(),
-           static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+    copy(probabilistic_layer_back_propagation->synaptic_weights_derivatives.data(),
+         probabilistic_layer_back_propagation->synaptic_weights_derivatives.data() + synaptic_weights_number,
+         gradient.data() + index + biases_number);
+
 }
 
 
@@ -902,9 +914,9 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationL
     const Index batch_samples_number = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.dimension(0);
     const Index layer_parameters_number = get_parameters_number();
 
-    memcpy(squared_errors_Jacobian.data() + index,
-           probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data(),
-           static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
+    copy(probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data(),
+         probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data()+ layer_parameters_number*batch_samples_number,
+         squared_errors_Jacobian.data() + index);
 }
 
 

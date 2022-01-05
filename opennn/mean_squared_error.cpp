@@ -171,10 +171,6 @@ void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
         ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation
                 = static_cast<ProbabilisticLayerBackPropagationLM*>(output_layer_back_propagation);
 
-//        memcpy(probabilistic_layer_back_propagation->delta.data(),
-//               loss_index_back_propagation.errors.data(),
-//               static_cast<size_t>(loss_index_back_propagation.errors.size())*sizeof(type));
-
         copy(loss_index_back_propagation.errors.data(),
              loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
              probabilistic_layer_back_propagation->delta.data());
