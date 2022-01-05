@@ -147,23 +147,19 @@ Tensor<type, 1> RecurrentLayer::get_parameters() const
 
     Tensor<type, 1> parameters(parameters_number);
 
-    Index current_position = 0;
+//    Index current_position = 0;
 
-    // Biases
+    memcpy(parameters.data() ,
+           biases.data(),
+           static_cast<size_t>(biases.size())*sizeof(type));
 
-    for(Index i = 0; i < biases.size(); i++) fill_n(parameters.data()+current_position+i, 1, biases(i));
+    memcpy(parameters.data() + biases.size(),
+           input_weights.data(),
+           static_cast<size_t>(input_weights.size())*sizeof(type));
 
-    current_position += biases.size();
-
-    // Weights
-
-    for(Index i = 0; i < input_weights.size(); i++) fill_n(parameters.data()+current_position+i, 1, input_weights(i));
-
-    current_position += input_weights.size();
-
-    // Recurrent weights
-
-    for(Index i = 0; i < recurrent_weights.size(); i++) fill_n(parameters.data()+current_position+i, 1, recurrent_weights(i));
+    memcpy(parameters.data() + biases.size() + input_weights.size(),
+           recurrent_weights.data(),
+           static_cast<size_t>(recurrent_weights.size())*sizeof(type));
 
     return parameters;
 }
