@@ -389,6 +389,18 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
     }
 }
 
+//void fill_submatrix(const Tensor<type, 2>& matrix,
+//    const Tensor<Index, 1>& rows_indices,
+//    const Tensor<Index, 1>& columns_indices,
+//    Tensor<type, 2>& submatrix)
+//{
+//    Map<const Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> matrix_map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
+
+//    Map<Matrix<type, Eigen::Dynamic, Eigen::Dynamic>> submatrix_map(submatrix.data(), submatrix.dimension(0), submatrix.dimension(1));
+
+//    submatrix_map = matrix_map(rows_indices, columns_indices);
+//}
+
 
 Index count_NAN(const Tensor<type, 1>& x)
 {
