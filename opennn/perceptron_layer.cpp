@@ -151,13 +151,25 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
-    memcpy(parameters.data() ,
-           biases.data(),
-           static_cast<size_t>(biases.size())*sizeof(type));
+// memcpy version
 
-    memcpy(parameters.data() + biases.size(),
-           synaptic_weights.data(),
-           static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+//    memcpy(parameters.data() ,
+//           biases.data(),
+//           static_cast<size_t>(biases.size())*sizeof(type));
+
+//    memcpy(parameters.data() + biases.size(),
+//           synaptic_weights.data(),
+//           static_cast<size_t>(synaptic_weights.size())*sizeof(type));
+
+// copy version
+
+    copy(biases.data(),
+         biases.data() + biases.size(),
+         parameters.data());
+
+    copy(synaptic_weights.data(),
+         synaptic_weights.data() + synaptic_weights.size(),
+         parameters.data() + biases.size());
 
     return parameters;
 }
@@ -338,13 +350,25 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    memcpy(biases.data(),
-           new_parameters.data() + index,
-           static_cast<size_t>(biases_number)*sizeof(type));
+// memcpy version
 
-    memcpy(synaptic_weights.data(),
-           new_parameters.data() + biases_number + index,
-           static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+//    memcpy(biases.data(),
+//           new_parameters.data() + index,
+//           static_cast<size_t>(biases_number)*sizeof(type));
+
+//    memcpy(synaptic_weights.data(),
+//           new_parameters.data() + biases_number + index,
+//           static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+
+// copy version
+
+    copy( new_parameters.data() + index,
+          new_parameters.data() + biases_number + index,
+          biases.data());
+
+    copy( new_parameters.data() + biases_number+ index,
+          new_parameters.data() + biases_number + synaptic_weights_number + index,
+          synaptic_weights.data());
 }
 
 
@@ -963,9 +987,18 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(LayerBackPropagationLM *
     const Index batch_samples_number = perceptron_layer_back_propagation_lm->squared_errors_Jacobian.dimension(0);
     const Index layer_parameters_number = get_parameters_number();
 
-    memcpy(squared_errors_Jacobian.data() + index,
-           perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data(),
-           static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
+// memcpy version
+
+//    memcpy(squared_errors_Jacobian.data() + index,
+//           perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data(),
+//           static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
+
+// copy version
+
+    copy(perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data(),
+         perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data()+ layer_parameters_number*batch_samples_number,
+         squared_errors_Jacobian.data() + index);
+
 }
 
 
@@ -997,13 +1030,25 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
     const Index biases_number = get_biases_number();
     const Index synaptic_weights_number = get_synaptic_weights_number();
 
-    memcpy(gradient.data() + index,
-           perceptron_layer_back_propagation->biases_derivatives.data(),
-           static_cast<size_t>(biases_number)*sizeof(type));
+// memcpy version
 
-    memcpy(gradient.data() + index + biases_number,
-           perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
-           static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+//    memcpy(gradient.data() + index,
+//           perceptron_layer_back_propagation->biases_derivatives.data(),
+//           static_cast<size_t>(biases_number)*sizeof(type));
+
+//    memcpy(gradient.data() + index + biases_number,
+//           perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
+//           static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+
+// copy version
+
+    copy(perceptron_layer_back_propagation->biases_derivatives.data(),
+         perceptron_layer_back_propagation->biases_derivatives.data() + biases_number,
+         gradient.data() + index);
+
+    copy(perceptron_layer_back_propagation->synaptic_weights_derivatives.data(),
+         perceptron_layer_back_propagation->synaptic_weights_derivatives.data() + synaptic_weights_number,
+         gradient.data() + index + biases_number);
 }
 
 
