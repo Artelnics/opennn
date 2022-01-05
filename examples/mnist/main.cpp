@@ -54,8 +54,8 @@ int main()
         data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
 
         data_set.read_bmp();
-        Tensor<string, 1> categories;
 
+        data_set.save("C:/Users/Artelnics/Desktop/mnist/data_set_1.xml");
 
         //data_set.set_input();
 
