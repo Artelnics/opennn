@@ -82,7 +82,7 @@ public:
 
    /// Enumeration of available separators for the data file.
 
-   enum class Separator{Space, Tab, Comma, Semicolon};
+   enum class Separator{None, Space, Tab, Comma, Semicolon};
 
    /// Enumeration of available methods for missing values in the data.
 
@@ -437,6 +437,7 @@ public:
    void set_columns_number(const Index&);
 
    void set_columns_scalers(const Scaler&);
+
 
    void set_binary_simple_columns();
 

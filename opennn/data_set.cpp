@@ -9957,6 +9957,12 @@ void DataSet::read_bmp()
         throw logic_error(buffer.str());
     }
 */
+
+    has_columns_names = true;
+    has_rows_labels = true;
+
+    separator = Separator::None;
+
     vector<fs::path> folder_paths;
     vector<fs::path> image_paths;
 
@@ -9964,7 +9970,7 @@ void DataSet::read_bmp()
         folder_paths.push_back(entry.path().string());
     }
 
-    for (int i = 0 ; i < folder_paths.size() ; i++){
+    for (Index i = 0 ; i < folder_paths.size() ; i++){
         for (const auto & entry : fs::directory_iterator(folder_paths[i])){
             image_paths.push_back(entry.path().string());
         }
@@ -9985,16 +9991,27 @@ void DataSet::read_bmp()
         }*/
     }
 
-    vector<unsigned char> image = read_bmp_image(image_paths[0].u8string());
+
+    string info_img = image_paths[0].u8string();
+    vector<unsigned char> image = read_bmp_image(info_img);
     Index image_size = image.size();
+
+    FILE* f = fopen(info_img.data(), "rb");
+
+    unsigned char info[54];
+
+    fread(info, sizeof(unsigned char), 54, f);
+    const int width = *(int*)&info[18];
+    const int height = *(int*)&info[22];
+    const int bits_per_pixel = *(int*)&info[28];
+    int channels;
+
+    bits_per_pixel == 24 ? channels = 3 : channels = 1;
 
     data.resize(images_number, image_size + classes_number);
     data.setZero();
 
     rows_labels.resize(images_number);
-
-    //cout << "Data number of rows: "<< data.dimension(0) << endl;
-    //cout << "Data number of columns: "<< data.dimension(1) << endl;
 
     Index row_index = 0;
 
@@ -10029,32 +10046,44 @@ void DataSet::read_bmp()
     }
 
     columns.resize(image_size + 1);
+    Index column_index=0;
 
-    for(Index i = 0; i < image_size; i++)
+
+    for(Index i = 1; i <= width;i++)
     {
+        for(Index j = 1; j<=height ; j++)
+        {
+            columns(column_index).name= "pixel_"+to_string(channels)+"_"+to_string(j)+"_"+to_string(i);
+            columns(column_index).column_use = VariableUse::Input;
+            column_index++;
+        }
 
-        columns(i).name = "pixel_" + to_string(i);
-        columns(i).column_use = VariableUse::Input;
     }
-
-    Tensor<string, 1> categories;
 
 
     columns(image_size).name = "class";
-/*
-    for (int i = 0 ; i < folder_paths.size() ; i++) {
-        const string path_str = path.u8string();
-        vector<string> folder_paths_str;
-        folder_paths_str[i]=folder_paths[i].u8string();
-        //categories(i) = folder_paths_str[i].substr(path);
 
-    }*/
+    Tensor<string, 1> categories(classes_number);
+
+    for(Index i = 0 ; i < classes_number ; i++)
+    {
+       categories(i) = folder_paths[i].filename().u8string();
+    }
+
+    cout<<categories<<endl;
+
     columns(image_size).categories = categories;
     columns(image_size).column_use = VariableUse::Target;
 
-    // input_variables_dimensions;
+    samples_uses.resize(images_number);
+    split_samples_random();
 
+//    input_variables_dimensions.resize(3);
+//    input_variables_dimensions(0) = channels_number;
+//    input_variables_dimensions(1) = width;
+//    input_variables_dimensions(2) = height;
 }
+
 
 Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number)
 {
