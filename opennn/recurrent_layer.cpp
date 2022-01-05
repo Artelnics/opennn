@@ -147,19 +147,17 @@ Tensor<type, 1> RecurrentLayer::get_parameters() const
 
     Tensor<type, 1> parameters(parameters_number);
 
-//    Index current_position = 0;
+    copy(biases.data(),
+         biases.data() + biases.size(),
+         parameters.data());
 
-    memcpy(parameters.data() ,
-           biases.data(),
-           static_cast<size_t>(biases.size())*sizeof(type));
+    copy(input_weights.data(),
+         input_weights.data() + input_weights.size(),
+         parameters.data() + biases.size());
 
-    memcpy(parameters.data() + biases.size(),
-           input_weights.data(),
-           static_cast<size_t>(input_weights.size())*sizeof(type));
-
-    memcpy(parameters.data() + biases.size() + input_weights.size(),
-           recurrent_weights.data(),
-           static_cast<size_t>(recurrent_weights.size())*sizeof(type));
+    copy(recurrent_weights.data(),
+         recurrent_weights.data() + recurrent_weights.size(),
+         parameters.data() + biases.size() + input_weights.size());
 
     return parameters;
 }
@@ -413,17 +411,17 @@ check_size(new_parameters, get_parameters_number(), LOG);
     const Index inputs_weights_number = get_input_weights_number();
     const Index recurrent_weights_number = get_recurrent_weights_number();
 
-    memcpy(biases.data(),
-           new_parameters.data() + index,
-           static_cast<size_t>(biases_number)*sizeof(type));
+    copy(new_parameters.data() + index,
+         new_parameters.data() + index + biases_number,
+         biases.data());
 
-    memcpy(input_weights.data(),
-           new_parameters.data() + index + biases_number,
-           static_cast<size_t>(inputs_weights_number)*sizeof(type));
+    copy(new_parameters.data() + index + biases_number,
+         new_parameters.data() + index + biases_number + inputs_weights_number,
+         input_weights.data());
 
-    memcpy(recurrent_weights.data(),
-           new_parameters.data() + biases_number + inputs_weights_number + index,
-           static_cast<size_t>(recurrent_weights_number)*sizeof(type));
+    copy(new_parameters.data() + biases_number + inputs_weights_number + index,
+         new_parameters.data() + biases_number + inputs_weights_number + index + recurrent_weights_number,
+         recurrent_weights.data());
 }
 
 
@@ -1024,21 +1022,22 @@ void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation, con
 
     // Biases
 
-    memcpy(gradient.data() + index,
-           recurrent_layer_back_propagation->biases_derivatives.data(),
-           static_cast<size_t>(neurons_number)*sizeof(type));
+    copy(recurrent_layer_back_propagation->biases_derivatives.data(),
+         recurrent_layer_back_propagation->biases_derivatives.data() + neurons_number,
+         gradient.data() + index);
 
     // Input weights
 
-    memcpy(gradient.data() + index + neurons_number,
-           recurrent_layer_back_propagation->input_weights_derivatives.data(),
-           static_cast<size_t>(inputs_number*neurons_number)*sizeof(type));
+    copy(recurrent_layer_back_propagation->input_weights_derivatives.data(),
+         recurrent_layer_back_propagation->input_weights_derivatives.data() + inputs_number*neurons_number,
+         gradient.data() + index + neurons_number);
 
     // Recurrent weights
 
-    memcpy(gradient.data() + index + neurons_number + inputs_number*neurons_number,
-           recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
-           static_cast<size_t>(neurons_number*neurons_number)*sizeof(type));
+    copy(recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
+         recurrent_layer_back_propagation->recurrent_weights_derivatives.data() + neurons_number*neurons_number,
+         gradient.data() + index + neurons_number + inputs_number*neurons_number);
+
 }
 
 

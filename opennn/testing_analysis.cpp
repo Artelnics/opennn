@@ -2841,7 +2841,9 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<t
 
     Tensor<Index, 1> true_positives_indices(index);
 
-    memcpy(true_positives_indices.data(), true_positives_indices_copy.data(), static_cast<size_t>(index)*sizeof(Index));
+    copy( true_positives_indices_copy.data(),
+          true_positives_indices_copy.data() + index,
+          true_positives_indices.data());
 
     return true_positives_indices;
 }
@@ -2874,7 +2876,9 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_positive_samples(const Tensor<
 
     Tensor<Index, 1> false_positives_indices(index);
 
-    memcpy(false_positives_indices.data(), false_positives_indices_copy.data(), static_cast<size_t>(index)*sizeof(Index));
+    copy(false_positives_indices_copy.data(),
+         false_positives_indices_copy.data() + index,
+         false_positives_indices.data());
 
     return false_positives_indices;
 }
@@ -2907,7 +2911,9 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<
 
     Tensor<Index, 1> false_negatives_indices(index);
 
-    memcpy(false_negatives_indices.data(), false_negatives_indices_copy.data(), static_cast<size_t>(index)*sizeof(Index));
+    copy(false_negatives_indices_copy.data(),
+         false_negatives_indices_copy.data() + index,
+         false_negatives_indices.data());
 
     return false_negatives_indices;
 }
@@ -2940,7 +2946,9 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<t
 
     Tensor<Index, 1> true_negatives_indices(index);
 
-    memcpy(true_negatives_indices.data(), true_negatives_indices_copy.data(), static_cast<size_t>(index)*sizeof(Index));
+    copy(true_negatives_indices_copy.data(),
+         true_negatives_indices_copy.data() + index,
+         true_negatives_indices.data());
 
     return true_negatives_indices;
 }
