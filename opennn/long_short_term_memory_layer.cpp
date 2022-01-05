@@ -218,59 +218,81 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     Tensor<type, 1> parameters(parameters_number);
 
-    Index current_position = 0;
+    Index current_position = forget_biases.size();
 
     // Biases
 
-    for(Index i = 0; i < forget_biases.size(); i++) fill_n(parameters.data()+current_position+i, 1, forget_biases(i));
+    memcpy(parameters.data(),
+           forget_biases.data(),
+           static_cast<size_t>(forget_biases.size())*sizeof(type));
 
-    current_position += forget_biases.size();
-
-    for(Index i = 0; i < input_biases.size(); i++) fill_n(parameters.data()+current_position+i, 1, input_biases(i));
+    memcpy(parameters.data() + current_position,
+           input_biases.data(),
+           static_cast<size_t>(input_biases.size())*sizeof(type));
 
     current_position += input_biases.size();
 
-    for(Index i = 0; i < state_biases.size(); i++) fill_n(parameters.data()+current_position+i, 1, state_biases(i));
+    memcpy(parameters.data() + current_position,
+           state_biases.data(),
+           static_cast<size_t>(state_biases.size())*sizeof(type));
 
     current_position += state_biases.size();
 
-    for(Index i = 0; i < output_biases.size(); i++) fill_n(parameters.data()+current_position+i, 1, output_biases(i));
+    memcpy(parameters.data() + current_position,
+           output_biases.data(),
+           static_cast<size_t>(output_biases.size())*sizeof(type));
 
     current_position += output_biases.size();
 
     // Weights
 
-    for(Index i = 0; i < forget_weights.size(); i++) fill_n(parameters.data()+current_position+i, 1, forget_weights(i));
+    memcpy(parameters.data() + current_position,
+           forget_weights.data(),
+           static_cast<size_t>(forget_weights.size())*sizeof(type));
 
     current_position += forget_weights.size();
 
-    for(Index i = 0; i < input_weights.size(); i++) fill_n(parameters.data()+current_position+i, 1, input_weights(i));
+    memcpy(parameters.data() + current_position,
+           input_weights.data(),
+           static_cast<size_t>(input_weights.size())*sizeof(type));
 
     current_position += input_weights.size();
 
-    for(Index i = 0; i < state_weights.size(); i++) fill_n(parameters.data()+current_position+i, 1, state_weights(i));
+    memcpy(parameters.data() + current_position,
+           state_weights.data(),
+           static_cast<size_t>(state_weights.size())*sizeof(type));
 
     current_position += state_weights.size();
 
-    for(Index i = 0; i < output_weights.size(); i++) fill_n(parameters.data()+current_position+i, 1, output_weights(i));
+    memcpy(parameters.data() + current_position,
+           output_weights.data(),
+           static_cast<size_t>(output_weights.size())*sizeof(type));
 
     current_position += output_weights.size();
 
     // Recurrent weights
 
-    for(Index i = 0; i < forget_recurrent_weights.size(); i++) fill_n(parameters.data()+current_position+i, 1, forget_recurrent_weights(i));
+    memcpy(parameters.data() + current_position,
+           forget_recurrent_weights.data(),
+           static_cast<size_t>(forget_recurrent_weights.size())*sizeof(type));
 
     current_position += forget_recurrent_weights.size();
 
-    for(Index i = 0; i < input_recurrent_weights.size(); i++) fill_n(parameters.data()+current_position+i, 1, input_recurrent_weights(i));
+    memcpy(parameters.data() + current_position,
+           input_recurrent_weights.data(),
+           static_cast<size_t>(input_recurrent_weights.size())*sizeof(type));
 
     current_position += input_recurrent_weights.size();
 
-    for(Index i = 0; i < state_recurrent_weights.size(); i++) fill_n(parameters.data()+current_position+i, 1, state_recurrent_weights(i));
+    memcpy(parameters.data() + current_position,
+           state_recurrent_weights.data(),
+           static_cast<size_t>(state_recurrent_weights.size())*sizeof(type));
 
     current_position += state_recurrent_weights.size();
 
-    for(Index i = 0; i < output_recurrent_weights.size(); i++) fill_n(parameters.data()+current_position+i, 1, output_recurrent_weights(i));
+    memcpy(parameters.data() + current_position,
+           output_recurrent_weights.data(),
+           static_cast<size_t>(output_recurrent_weights.size())*sizeof(type));
 
     return parameters;
 }
