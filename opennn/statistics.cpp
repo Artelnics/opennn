@@ -870,7 +870,7 @@ type variance(const Tensor<type, 1>& vector)
         if(!isnan(vector(i)))
         {
             sum += vector(i);
-            squared_sum += vector(i) * vector(i);
+            squared_sum += double(vector(i)) * double(vector(i));
 
             count++;
         }
@@ -922,7 +922,7 @@ type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
         if(!isnan(vector(index)))
         {
             sum += vector(index);
-            squared_sum += vector(index) * vector(index);
+            squared_sum += double(vector(index)) * double(vector(index));
 
             count++;
         }
@@ -1122,7 +1122,7 @@ type kurtosis(const Tensor<type, 1>& vector)
     {
         if(!isnan(vector(i)))
         {
-            sum += (vector(i) - mean_value)*(vector(i) - mean_value)*(vector(i) - mean_value)*(vector(i) - mean_value);
+            sum += (vector(i) - mean_value)* (vector(i) - mean_value)* (vector(i) - mean_value)*(vector(i) - mean_value);
 
             count++;
         }
@@ -1842,7 +1842,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
 
         for(Index j = 0; j < columns_indices_size; j++)
         {
-            const Index column_index = columns_indices(j);
+            column_index = columns_indices(j);
 
             const type value = matrix(row_index,column_index);
 
@@ -1853,7 +1853,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
             if(value > maximums(j)) maximums(j) = value;
 
             sums(j) += double(value);
-            squared_sums(j) += double(value*value);
+            squared_sums(j) += double(value)*double(value);
             count(j)++;
         }
     }
@@ -2053,7 +2053,7 @@ Descriptives descriptives(const Tensor<type, 1>& vector)
             if(vector(i) > maximum) maximum = vector(i);
 
             sum += vector(i);
-            squared_sum += vector(i) *vector(i);
+            squared_sum += double(vector(i)) *double(vector(i));
 
             count++;
         }
@@ -2130,7 +2130,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
     for(Index i = 0; i < new_size; i++)
     {
         const type normal_distribution = static_cast<type>(0.5)
-                * type(erfc(double(mean - sorted_vector(i))))/static_cast<type>((standard_deviation*static_cast<type>(sqrt(2))));
+                * type(erfc(double(mean) - double(sorted_vector(i))))/static_cast<type>((standard_deviation*static_cast<type>(sqrt(2))));
 
         const type uniform_distribution = (sorted_vector(i)-minimum)/(maximum - minimum);
 
@@ -2722,7 +2722,7 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-        normal_distribution = static_cast<type>(0.5) * static_cast<type>(erfc(double(mean_value - sorted_vector(i))))/(standard_deviation*static_cast<type>(sqrt(2.0)));
+        normal_distribution = static_cast<type>(0.5) * static_cast<type>(erfc(double(mean_value) - double(sorted_vector(i))))/(standard_deviation*static_cast<type>(sqrt(2.0)));
         counter = 0;
 
         for(Index j = 0; j < n; j++)
@@ -2848,7 +2848,7 @@ type normality_parameter(const Tensor<type, 1>& vector)
 {
     const type max = maximum(vector);
     const type min = minimum(vector);
-
+    /*
     const Index n = vector.dimension(0);
 
     const type mean_value = mean(vector);
@@ -2870,7 +2870,7 @@ type normality_parameter(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < n; i++)
     {
-        normal_distribution = static_cast<type>(0.5) * static_cast<type>(erfc(double(mean_value - sorted_vector(i))))/(standard_deviation*static_cast<type>(sqrt(2.0)));
+        normal_distribution = static_cast<type>(0.5) * static_cast<type>(erfc(double(mean_value) - double(sorted_vector(i))))/(standard_deviation*static_cast<type>(sqrt(2.0)));
         counter = 0;
 
         for(Index j = 0; j < n; j++)
@@ -2901,7 +2901,7 @@ type normality_parameter(const Tensor<type, 1>& vector)
             previous_empirical_distribution = empirical_distribution;
         }
     }
-
+    */
     const type uniform_area = (max - min)/static_cast<type>(2.0);
 
     return uniform_area;
