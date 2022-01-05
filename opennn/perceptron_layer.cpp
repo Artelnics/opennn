@@ -151,15 +151,13 @@ Tensor<type, 1> PerceptronLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
-    for(Index i = 0; i < biases.size(); i++)
-    {
-        fill_n(parameters.data()+i, 1, biases(i));
-    }
+    memcpy(parameters.data() ,
+           biases.data(),
+           static_cast<size_t>(biases.size())*sizeof(type));
 
-    for(Index i = 0; i < synaptic_weights.size(); i++)
-    {
-        fill_n(parameters.data()+ biases.size() +i, 1, synaptic_weights(i));
-    }
+    memcpy(parameters.data() + biases.size(),
+           synaptic_weights.data(),
+           static_cast<size_t>(synaptic_weights.size())*sizeof(type));
 
     return parameters;
 }
