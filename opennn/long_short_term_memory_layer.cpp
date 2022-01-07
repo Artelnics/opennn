@@ -805,7 +805,7 @@ void LongShortTermMemoryLayer::set_activation_function(const string& new_activat
                << "void set_activation_function(const string&) method.\n"
                << "Unknown activation function: " << new_activation_function_name << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -877,7 +877,7 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& n
                << "void set_recurrent_activation_function(const string&) method.\n"
                << "Unknown activation function: " << new_recurrent_activation_function_name << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -1258,7 +1258,7 @@ void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& comb
                << "void calculate_activations(const Tensor<type, 1>&) const method.\n"
                << "Size of combinations must be equal to number of neurons.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1306,7 +1306,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
                << "Tensor<type, 2> calculate_activations(const Tensor<type, 1>&) const method.\n"
                << "Size of combinations must be equal to number of neurons.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1359,7 +1359,7 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
                << "void calculate_recurrent_activations(const Tensor<type, 2>&) const method.\n"
                << "Number of columns("<< combinations_columns_number <<") of combinations must be equal to number of neurons("<<neurons_number<<").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1409,7 +1409,7 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
                << "void calculate_activations(const Tensor<type, 2>&) const method.\n"
                << "Size of combinations must be equal to number of neurons.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1459,7 +1459,7 @@ void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<ty
                << "void calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
                << "Number of columns("<< combinations_columns_number <<") of combinations must be equal to number of neurons("<<neurons_number<<").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1510,7 +1510,7 @@ void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<ty
                << "void calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
                << "Size of combinations must be equal to number of neurons.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1560,7 +1560,7 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(const
                << "void calculate_recurrent_activations_derivatives(const Tensor<type, 2>&) const method.\n"
                << "Size of combinations must be equal to number of neurons.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1608,7 +1608,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
                << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                << "Number of columns ("<<inputs_columns_number<<") of inputs matrix must be equal to number of inputs ("<<inputs_number<<").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 #endif
 
@@ -1747,7 +1747,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(Probabilisti
                    << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
                    << "Number of columns in delta (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(next_forward_propagation->activations_derivatives.dimension(1) != next_layer_neurons_number)
@@ -1758,7 +1758,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(Probabilisti
                    << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
                    << "Dimension 1 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(next_forward_propagation->activations_derivatives.dimension(2) != next_layer_neurons_number)
@@ -1769,7 +1769,7 @@ void LongShortTermMemoryLayer::calculate_hidden_delta_probabilistic(Probabilisti
                    << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
                    << "Dimension 2 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         const Index step = next_layer_neurons_number*next_layer_neurons_number;
@@ -2457,9 +2457,9 @@ void LongShortTermMemoryLayer::calculate_input_weights_error_gradient(const Tens
         }
         else
         {
-            memcpy(forward_propagation->previous_cell_state_activations.data(),
-                   forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
-                   static_cast<size_t>(neurons_number)*sizeof(type));
+            copy(forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->cell_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_cell_state_activations.data());
 
             forget_combinations_weights_derivatives = hidden_states_weights_derivatives.contract(forget_recurrent_weights, A_B);
 
@@ -2763,9 +2763,9 @@ void LongShortTermMemoryLayer::calculate_output_weights_error_gradient(const Ten
         }
         else
         {
-            memcpy(forward_propagation->previous_cell_state_activations.data(),
-                   forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
-                   static_cast<size_t>(neurons_number)*sizeof(type));
+            copy(forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->cell_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_cell_state_activations.data());
 
             forget_combinations_weights_derivatives = hidden_states_weights_derivatives.contract(forget_recurrent_weights, A_B);
             multiply_rows(forget_combinations_weights_derivatives, forward_propagation->current_forget_activations_derivatives);
@@ -2889,13 +2889,13 @@ void LongShortTermMemoryLayer::calculate_forget_recurrent_weights_error_gradient
         }
         else
         {
-            memcpy(forward_propagation->previous_hidden_state_activations.data(),
-                   forward_propagation->hidden_states_activations.data() + (copy_index-neurons_number),
-                   static_cast<size_t>(neurons_number)*sizeof(type));
+            copy(forward_propagation->hidden_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->hidden_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_hidden_state_activations.data());
 
-            memcpy(forward_propagation->previous_cell_state_activations.data(),
-                   forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
-                   static_cast<size_t>(neurons_number)*sizeof(type));
+            copy(forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->cell_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 forward_propagation->previous_cell_state_activations.data());
 
             forget_combinations_recurrent_weights_derivatives = hidden_states_recurrent_weights_derivatives.contract(forget_recurrent_weights, A_B);
             input_combinations_recurrent_weights_derivatives = hidden_states_recurrent_weights_derivatives.contract(input_recurrent_weights, A_B);
@@ -3479,46 +3479,6 @@ void LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tenso
     {
         back_propagation->current_layer_deltas = back_propagation->delta.chip(sample, 0);
 
-       /*memcpy(forward_propagation->current_forget_activations.data(),
-               forward_propagation->forget_activations.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof(type));
-
-        memcpy(forward_propagation->current_forget_activations_derivatives.data(),
-               forward_propagation->forget_activations_derivatives.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof(type));
-
-        memcpy(forward_propagation->current_input_activations.data(),
-               forward_propagation->input_activations.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof(type));
-
-        memcpy(forward_propagation->current_input_activations_derivatives.data(),
-               forward_propagation->input_activations_derivatives.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof(type));
-
-        memcpy(forward_propagation->current_state_activations.data(),
-               forward_propagation->state_activations.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof(type));
-
-        memcpy(forward_propagation->current_state_activations_derivatives.data(),
-               forward_propagation->state_activations_derivatives.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof(type));
-
-        memcpy(forward_propagation->current_output_activations.data(),
-               forward_propagation->output_activations.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof(type));
-
-        memcpy(forward_propagation->current_output_activations_derivatives.data(),
-               forward_propagation->output_activations_derivatives.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof(type));
-
-        memcpy(forward_propagation->current_cell_state_activations.data(),
-               forward_propagation->cell_states_activations.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof(type));
-
-        memcpy(forward_propagation->current_hidden_states_derivatives.data(),
-               forward_propagation->hidden_states_activations_derivatives.data()+copy_index,
-               static_cast<size_t>(neurons_number)*sizeof(type));*/
-
         copy(forward_propagation->forget_activations.data() + copy_index,
              forward_propagation->forget_activations.data() + copy_index + neurons_number,
              forward_propagation->current_forget_activations.data());
@@ -3559,7 +3519,6 @@ void LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tenso
              forward_propagation->hidden_states_activations_derivatives.data() + copy_index + neurons_number,
              forward_propagation->current_hidden_states_derivatives.data());
 
-
         if(sample%timesteps == 0)
         {
             back_propagation->forget_combinations_biases_derivatives.setZero();
@@ -3572,9 +3531,9 @@ void LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tenso
         }
         else
         {
-            memcpy(previous_cell_state_activations.data(),
-                   forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
-                   static_cast<size_t>(neurons_number)*sizeof(type));
+            copy(forward_propagation->cell_states_activations.data() + (copy_index-neurons_number),
+                 forward_propagation->cell_states_activations.data() + (copy_index-neurons_number) + neurons_number,
+                 previous_cell_state_activations.data());
 
             back_propagation->forget_combinations_biases_derivatives
                     = back_propagation->hidden_states_biases_derivatives.contract(forget_recurrent_weights, A_B);
@@ -3926,7 +3885,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
                << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
                << "Size of inputs name must be equal to number of layer inputs.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_name_size = outputs_names.size();
@@ -3939,7 +3898,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
                << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
                << "Size of outputs name must be equal to number of neurons.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -4938,7 +4897,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "PerceptronLayer element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Layer name
@@ -4951,7 +4910,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "LayerName element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(layer_name_element->GetText())
@@ -4969,7 +4928,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "InputsNumber element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(inputs_number_element->GetText())
@@ -4987,7 +4946,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "NeuronsNumber element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(neurons_number_element->GetText())
@@ -5005,7 +4964,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "TimeStep element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(time_step_element->GetText())
@@ -5023,7 +4982,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "ActivationFunction element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(activation_function_element->GetText())
@@ -5041,7 +5000,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "ActivationFunction element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(recurrent_activation_function_element->GetText())
@@ -5059,7 +5018,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Parameters element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(parameters_element->GetText())

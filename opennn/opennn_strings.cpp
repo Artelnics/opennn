@@ -184,7 +184,7 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 
             type_vector(i) = type(stof(buffer.str()));
         }
-        catch(const logic_error&)
+        catch(const invalid_argument&)
         {
             type_vector(i) = static_cast<type>(nan(""));
         }
@@ -346,7 +346,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -369,7 +369,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -391,7 +391,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -413,7 +413,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -435,7 +435,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -457,7 +457,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -479,7 +479,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -513,7 +513,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -546,7 +546,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -579,7 +579,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -613,7 +613,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -669,7 +669,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                << "time_t date_to_timestamp(const string&) method.\n"
                << "Date format (" << date << ") is not implemented.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(is_numeric_string(date))

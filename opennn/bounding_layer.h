@@ -112,7 +112,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-protected:
+private:
 
    // MEMBERS
 

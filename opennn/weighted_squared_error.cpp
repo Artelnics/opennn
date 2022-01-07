@@ -410,7 +410,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Weighted squared element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Positives weight
@@ -425,7 +425,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_positives_weight(static_cast<type>(atof(string.c_str())));
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -443,7 +443,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_negatives_weight(static_cast<type>(atof(string.c_str())));
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -468,7 +468,7 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2>& x, 
                << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
                << "Other number of rows must be equal to this number of rows.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index other_columns_number = y.dimension(1);
@@ -481,7 +481,7 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2>& x, 
                << "double minkowski_error(const Matrix<double>&, const double&) method.\n"
                << "Other number of columns must be equal to this number of columns.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif

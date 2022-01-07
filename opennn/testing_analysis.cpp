@@ -63,7 +63,7 @@ NeuralNetwork* TestingAnalysis::get_neural_network_pointer() const
                << "NeuralNetwork* get_neural_network_pointer() const method.\n"
                << "Neural network pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -86,7 +86,7 @@ DataSet* TestingAnalysis::get_data_set_pointer() const
                << "DataSet* get_data_set_pointer() const method.\n"
                << "Data set pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -175,7 +175,7 @@ void TestingAnalysis::check() const
                << "void check() const method.\n"
                << "Neural network pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(!data_set_pointer)
@@ -184,7 +184,7 @@ void TestingAnalysis::check() const
                << "void check() const method.\n"
                << "Data set pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -212,7 +212,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
                << "Tensor<Correlation, 1> linear_correlation() const method.\n"
                << "Number of testing samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -282,7 +282,7 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
                << "LinearRegressionResults perform_linear_regression_analysis() const method.\n"
                << "Number of testing samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Tensor<type, 2> testing_inputs = data_set_pointer->get_testing_input_data();
@@ -359,7 +359,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
                << "Tensor<Tensor<type, 2>, 1> calculate_error_data() const.\n"
                << "Number of testing samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -384,7 +384,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
                << "Tensor<Tensor<type, 2>, 1> calculate_error_data() const.\n"
                << "Unscaling layer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -443,7 +443,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
                << "Tensor<Tensor<type, 2>, 1> calculate_error_data() const.\n"
                << "Number of testing samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -466,7 +466,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
                << "Tensor<Tensor<type, 1>, 1> calculate_percentage_error_data() const.\n"
                << "Unscaling layer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -782,7 +782,7 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
                << "Tensor<type, 1> calculate_training_errors() const.\n"
                << "Number of training samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -832,7 +832,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
                << "Tensor<type, 1> calculate_binary_classification_training_errors() const.\n"
                << "Number of training samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -893,7 +893,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_erro
                << "Tensor<type, 1> calculate_multiple_classification_training_errors() const.\n"
                << "Number of training samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -943,7 +943,7 @@ Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
                << "Tensor<type, 1> calculate_selection_errors() const.\n"
                << "Number of selection samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -993,7 +993,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_error
                << "Tensor<type, 1> calculate_binary_classification_selection_errors() const.\n"
                << "Number of selection samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1045,7 +1045,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_err
                << "Tensor<type, 1> calculate_multiple_classification_selection_errors() const.\n"
                << "Number of selection samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1105,7 +1105,7 @@ Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
                << "Tensor<Tensor<type, 2>, 1> calculate_testing_errors() const.\n"
                << "Number of testing samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1166,7 +1166,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors(
                << "Tensor<type, 1> calculate_binary_classification_testing_errors() const.\n"
                << "Number of testing samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1228,7 +1228,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
                << "Tensor<type, 1> calculate_multiple_classification_testing_errors() const.\n"
                << "Number of testing samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1348,7 +1348,7 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
                << "type calculate_testing_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>&) const.\n"
                << "Number of outputs must be one.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1462,7 +1462,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
                    << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
                    << "Unknown case.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -1481,7 +1481,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
                << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
                << "Number of elements in confusion matrix (" << confusion_sum << ") must be equal to number of testing samples (" << testing_samples_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     return confusion;
@@ -1505,7 +1505,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
                << "Tensor<Index, 2> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const method.\n"
                << "Number of targets (" << targets_number << ") must be equal to number of outputs (" << outputs.dimension(1) << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     Tensor<Index, 2> confusion(targets_number, targets_number);
@@ -1566,7 +1566,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
                << "Tensor<Index, 2> calculate_confusion() const method.\n"
                << "Pointer to neural network in neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
@@ -1581,7 +1581,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
                << "Tensor<Index, 2> calculate_confusion() const method." << endl
                << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(outputs_number != data_set_pointer->get_target_variables_number())
@@ -1592,7 +1592,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
                << "Tensor<Index, 2> calculate_confusion() const method." << endl
                << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1647,7 +1647,7 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() cons
                << "RocCurveResults perform_roc_analysis() const method.\n"
                << "Pointer to neural network in neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
@@ -1662,7 +1662,7 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() cons
                << "RocCurveResults perform_roc_analysis() const method." << endl
                << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -1675,7 +1675,7 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() cons
                << "RocCurveResults perform_roc_analysis() const method." << endl
                << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1752,7 +1752,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
                << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of positive samples ("<< total_positives <<") must be greater than zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(total_negatives == 0)
@@ -1763,7 +1763,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
                << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of negative samples ("<< total_negatives <<") must be greater than zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index maximum_points_number = 501;
@@ -1792,7 +1792,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
                << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of of target variables ("<< targets.dimension(1) <<") must be one.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(outputs.dimension(1) != 1)
@@ -1803,7 +1803,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
                << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of of output variables ("<< targets.dimension(1) <<") must be one.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Sort by ascending values of outputs vector
@@ -1880,7 +1880,7 @@ type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& targets,
                << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of positive samples("<< total_positives <<") must be greater than zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(total_negatives == 0)
@@ -1891,7 +1891,7 @@ type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& targets,
                << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of negative samples("<< total_negatives <<") must be greater than zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     Index testing_samples_number = targets.dimension(0);
@@ -1957,7 +1957,7 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
                << "Tensor<type, 2> calculate_roc_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of positive samples("<< total_positives <<") must be greater than zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(total_negatives == 0)
@@ -1968,7 +1968,7 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
                << "Tensor<type, 2> calculate_roc_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of negative samples("<< total_negatives <<") must be greater than zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Tensor<type, 2> roc_curve = calculate_roc_curve(targets, outputs);
@@ -2006,7 +2006,7 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
                << "calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const.\n"
                << "Number of positive samples("<< total_positives <<") must be greater than zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(total_negatives == 0)
@@ -2017,7 +2017,7 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
                << "calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const.\n"
                << "Number of negative samples("<< total_negatives <<") must be greater than zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const type Q_1 = area_under_curve/(static_cast<type>(2.0) -area_under_curve);
@@ -2155,7 +2155,7 @@ Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
                << "Tensor<type, 2> perform_cumulative_gain_analysis() const method.\n"
                << "Pointer to neural network in neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -2174,7 +2174,7 @@ Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
                << "Tensor<type, 2> perform_cumulative_gain_analysis() const method." << endl
                << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -2187,7 +2187,7 @@ Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
                << "Tensor<type, 2> perform_cumulative_gain_analysis() const method." << endl
                << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -2220,7 +2220,7 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
                << "Tensor<type, 2> calculate_cumulative_gain(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of positive samples(" << total_positives << ") must be greater than zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index testing_samples_number = targets.dimension(0);
@@ -2296,7 +2296,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
                << "Tensor<type, 2> calculate_negative_cumulative_gain(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
                << "Number of negative samples(" << total_negatives << ") must be greater than zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index testing_samples_number = targets.dimension(0);
@@ -2371,7 +2371,7 @@ Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
                << "Tensor<type, 2> perform_lift_chart_analysis() const method.\n"
                << "Pointer to neural network in neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
@@ -2386,7 +2386,7 @@ Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
                << "Tensor<type, 2> perform_lift_chart_analysis() const method." << endl
                << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -2399,7 +2399,7 @@ Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
                << "Tensor<type, 2> perform_lift_chart_analysis() const method." << endl
                << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -2465,7 +2465,7 @@ TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Sm
                << "Tensor<type, 2> perform_Kolmogorov_Smirnov_analysis() const method.\n"
                << "Pointer to neural network in neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -2484,7 +2484,7 @@ TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Sm
                << "Tensor<type, 2> perform_Kolmogorov_Smirnov_analysis() const method." << endl
                << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -2497,7 +2497,7 @@ TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Sm
                << "Tensor<type, 2> perform_Kolmogorov_Smirnov_analysis() const method." << endl
                << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -2537,7 +2537,7 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
                << "Tensor<type, 2> calculate_maximum_gain() const method.\n"
                << "Positive and negative cumulative gain matrix must have the same rows number.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -2580,7 +2580,7 @@ Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
                << "Tensor<type, 2> perform_calibration_plot_analysis() const method.\n"
                << "Pointer to neural network in neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
@@ -2595,7 +2595,7 @@ Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
                << "Tensor<type, 2> perform_calibration_plot_analysis() const method." << endl
                << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -2608,7 +2608,7 @@ Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
                << "Tensor<type, 2> perform_calibration_plot_analysis() const method." << endl
                << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -2751,7 +2751,7 @@ TestingAnalysis::BinaryClassifcationRates TestingAnalysis::calculate_binary_clas
                << "BinaryClassificationRates calculate_binary_classification_rates() const method.\n"
                << "Pointer to neural network in neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
@@ -2766,7 +2766,7 @@ TestingAnalysis::BinaryClassifcationRates TestingAnalysis::calculate_binary_clas
                << "BinaryClassificationRates calculate_binary_classification_rates() const method." << endl
                << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -2779,7 +2779,7 @@ TestingAnalysis::BinaryClassifcationRates TestingAnalysis::calculate_binary_clas
                << "BinaryClassificationRates calculate_binary_classification_rates() const method." << endl
                << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -3057,7 +3057,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
                << "BinaryClassificationRates calculate_binary_classification_rates() const method.\n"
                << "Pointer to neural network in neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
@@ -3072,7 +3072,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
                << "BinaryClassificationRates calculate_binary_classification_rates() const method." << endl
                << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -3085,7 +3085,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
                << "BinaryClassificationRates calculate_binary_classification_rates() const method." << endl
                << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -3437,7 +3437,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
                << "Tensor<type, 1> calculate_error_autocorrelation() const method.\n"
                << "Pointer to neural network in neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
@@ -3452,7 +3452,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
                << "Tensor<type, 1> calculate_error_autocorrelation() const method." << endl
                << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -3465,7 +3465,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
                << "Tensor<type, 1> calculate_error_autocorrelation() const method." << endl
                << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -3510,7 +3510,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
                << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method.\n"
                << "Pointer to neural network in neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
@@ -3526,7 +3526,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
                << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method." << endl
                << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -3539,7 +3539,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
                << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method." << endl
                << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -3600,7 +3600,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
                << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
                << "Data set is nullptr." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index targets_number = data_set_pointer->get_target_variables_number();
@@ -3617,7 +3617,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
                << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
                << "Number of inputs in neural network is not equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
     else if(outputs_number != 1)
     {
@@ -3627,7 +3627,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
                << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
                << "Number of outputs in neural network must be one." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
     else if(targets_number != 1)
     {
@@ -3637,7 +3637,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
                << "Tensor<type, 1> calculate_binary_classification_tests() const." << endl
                << "Number of targets in data set must be one." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -3898,7 +3898,7 @@ type TestingAnalysis::calculate_logloss() const
                << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method.\n"
                << "Pointer to neural network in neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
@@ -3913,7 +3913,7 @@ type TestingAnalysis::calculate_logloss() const
                << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method." << endl
                << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -3926,7 +3926,7 @@ type TestingAnalysis::calculate_logloss() const
                << "Tensor<type, 1> calculate_inputs_errors_cross_correlation() const method." << endl
                << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -3995,7 +3995,7 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Testing analysis element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Display
@@ -4010,7 +4010,7 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_display(new_display_string != "0");
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -4052,7 +4052,7 @@ void TestingAnalysis::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     from_XML(document);
@@ -4082,7 +4082,7 @@ Tensor<type, 2> TestingAnalysis::delete_row(const Tensor<type, 2>& tensor, const
              << "Index of row must be less than number of rows.\n"
              << "row index: " << row_index << "rows_number" << rows_number << "\n";
 
-      throw logic_error(buffer.str());
+      throw invalid_argument(buffer.str());
    }
    else if(rows_number < 2)
    {
@@ -4092,7 +4092,7 @@ Tensor<type, 2> TestingAnalysis::delete_row(const Tensor<type, 2>& tensor, const
              << "Matrix<T> delete_row(const size_t&) const.\n"
              << "Number of rows must be equal or greater than two.\n";
 
-      throw logic_error(buffer.str());
+      throw invalid_argument(buffer.str());
    }
 
    #endif

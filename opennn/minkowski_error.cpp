@@ -80,7 +80,7 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
                << "void set_Minkowski_parameter(const type&) method.\n"
                << "The Minkowski parameter must be comprised between 1 and 2.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Set Minkowski parameter
@@ -270,7 +270,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Minkowski error element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Minkowski parameter
@@ -290,7 +290,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_Minkowski_parameter(new_Minkowski_parameter);
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }

@@ -172,7 +172,7 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
                    << "void scale_logarithmic(Tensor<type, 2>&, const Index&, const Descriptives&) method.\n"
                    << "Logarithmic scale method cannot be used with non-positive variables. \n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 

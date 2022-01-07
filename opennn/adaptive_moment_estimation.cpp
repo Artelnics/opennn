@@ -186,7 +186,7 @@ void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximu
                << "void set_maximum_epochs_number(const type&) method.\n"
                << "Maximum epochs number must be equal or greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -212,7 +212,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -326,7 +326,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     bool stop_training = false;
 
-    time_t beginning_time, current_time;
+    time_t beginning_time;
+    time_t current_time;
+
     time(&beginning_time);
     type elapsed_time = type(0);
 
@@ -546,7 +548,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 /// @param optimization_data New moment estimation data.
 
 void AdaptiveMomentEstimation::update_parameters(LossIndexBackPropagation& back_propagation,
-                              AdaptiveMomentEstimationData& optimization_data)
+                              AdaptiveMomentEstimationData& optimization_data) const
 {
    
     const type learning_rate =
@@ -673,7 +675,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Adaptive moment estimation element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // DataSetBatch size
@@ -688,7 +690,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_batch_samples_number(new_batch_size);
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -706,7 +708,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_loss_goal(new_loss_goal);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -725,7 +727,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -744,7 +746,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -763,7 +765,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }

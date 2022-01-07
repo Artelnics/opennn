@@ -143,7 +143,7 @@ public:
            const DataSetBatch&,
            NeuralNetworkForwardPropagation&,
            LossIndexBackPropagation&,
-           ConjugateGradientData&);
+           ConjugateGradientData&) const;
 
 private:
 

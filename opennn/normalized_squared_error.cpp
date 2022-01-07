@@ -151,7 +151,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
                << " The columns number of targets("<< target_t_variables_number <<") must be equal("<< target_t_1_variables_number<<").\n"
                << " The samples number of targets("<< target_t_1_samples_number <<") must be equal("<< target_t_samples_number<<").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 #endif
 
@@ -253,7 +253,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
                << "type calculate_normalization_coefficient(const Tensor<type, 2>& targets, const Tensor<type, 1>& targets_mean) function.\n"
                << " The columns number of targets("<< targets_number <<") must be equal("<< means_number<<").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 #endif
 
@@ -293,7 +293,7 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
                << "calculate_error() method.\n"
                << "Normalization coefficient is NAN.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 #endif
 
@@ -325,7 +325,7 @@ void NormalizedSquaredError::calculate_error_lm(const DataSetBatch& batch,
                << "calculate_error() method.\n"
                << "Normalization coefficient is NAN.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 #endif
 
@@ -457,7 +457,7 @@ void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
     }
 }
@@ -543,7 +543,7 @@ void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Normalized squared element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 

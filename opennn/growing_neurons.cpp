@@ -87,7 +87,7 @@ void GrowingNeurons::set_neurons_increment(const Index& new_neurons_increment)
                << "void set_neurons_increment(const Index&) method.\n"
                << "New_step(" << new_neurons_increment << ") must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -111,7 +111,7 @@ void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_sel
                << "void set_maximum_selection_failures(const Index&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -134,7 +134,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
                 << "TrainingStrategy* training_strategy_pointer const method.\n"
                 << "training_strategy_pointer is nullptr.\n";
 
-         throw logic_error(buffer.str());
+         throw invalid_argument(buffer.str());
     }
 
     #endif
@@ -514,7 +514,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "GrowingNeurons element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Minimum neurons
@@ -529,7 +529,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
             {
                 minimum_neurons = new_minimum_neurons;
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -548,7 +548,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
             {
                 maximum_neurons = new_maximum_neurons;
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -567,7 +567,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_neurons_increment(new_step);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -586,7 +586,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_trials_number(new_trials_number);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -605,7 +605,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_selection_error_goal(new_selection_error_goal);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -624,7 +624,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_selection_failures(new_maximum_selection_failures);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -643,7 +643,7 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -684,7 +684,7 @@ void GrowingNeurons::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     from_XML(document);

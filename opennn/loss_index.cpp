@@ -240,7 +240,7 @@ void LossIndex::set_regularization_method(const string& new_regularization_metho
                << "void set_regularization_method(const string&) const method.\n"
                << "Unknown regularization method: " << new_regularization_method << ".";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -302,7 +302,7 @@ void LossIndex::check() const
                << "void check() const.\n"
                << "Pointer to neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Data set
@@ -313,7 +313,7 @@ void LossIndex::check() const
                << "void check() const method.\n"
                << "Pointer to data set is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -531,7 +531,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
                << "void calculate_squared_errors_jacobian_lm(const DataSetBatch&, NeuralNetworkForwardPropagation&, LossIndexBackPropagationLM&) const method "
                << "Levenberg - Marquardt algorithm can only be used with Perceptron and Probabilistic layers.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
     else
     {
@@ -577,7 +577,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
                    << "void calculate_squared_errors_jacobian_lm(const DataSetBatch&, NeuralNetworkForwardPropagation&, LossIndexBackPropagationLM&) const method "
                    << "Probabilistic layer can only occupy the last position in the neural network. Please, check network structure.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         default:
@@ -588,7 +588,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
                    << "void calculate_squared_errors_jacobian_lm(const DataSetBatch&, NeuralNetworkForwardPropagation&, LossIndexBackPropagationLM&) const method "
                    << "Levenberg - Marquardt algorithm can only be used with Perceptron and Probabilistic layers.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         }
     }
@@ -900,7 +900,7 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Regularization tag not found.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const string new_regularization_method = root_element->Attribute("Type");
@@ -917,7 +917,7 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
         {
             set_regularization_weight(new_regularization_weight);
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -988,7 +988,7 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Mean squared element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Regularization

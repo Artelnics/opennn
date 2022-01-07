@@ -84,7 +84,7 @@ void Layer::set_parameters_constant(const type&)
            << "set_parameters_constant(const type&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -96,7 +96,7 @@ void Layer::set_parameters_random()
            << "set_parameters_random() method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -108,7 +108,7 @@ void Layer::set_parameters(const Tensor<type, 1>&, const Index&)
            << "set_parameters(const Tensor<type, 1>&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -120,7 +120,7 @@ Index Layer::get_parameters_number() const
            << "get_parameters_number() method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -132,7 +132,7 @@ Tensor<type, 1> Layer::get_parameters() const
            << "get_parameters() method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -144,7 +144,7 @@ Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2>&)
            << "calculate_outputs(const Tensor<type, 2>&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -158,7 +158,7 @@ Index Layer::get_inputs_number() const
            << "get_inputs_number() const method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -170,7 +170,7 @@ Index Layer::get_neurons_number() const
            << "get_neurons_number() const method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -182,7 +182,7 @@ void Layer::set_inputs_number(const Index& )
            << "set_inputs_number(const Index& ) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -194,7 +194,7 @@ void Layer::set_neurons_number(const Index& )
            << "set_neurons_number(const Index& ) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 

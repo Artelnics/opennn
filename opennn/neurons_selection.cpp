@@ -53,7 +53,7 @@ TrainingStrategy* NeuronsSelection::get_training_strategy_pointer() const
                << "DataSet* get_training_strategy_pointer() const method.\n"
                << "Training strategy pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -196,7 +196,7 @@ void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neuro
                << "void set_maximum_neurons_number(const Index&) method.\n"
                << "maximum_neurons(" << new_maximum_neurons << ") must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(new_maximum_neurons < minimum_neurons)
@@ -207,7 +207,7 @@ void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neuro
                << "void set_maximum_neurons_number(const Index&) method.\n"
                << "maximum_neurons(" << new_maximum_neurons << ") must be equal or greater than minimum_neurons(" << minimum_neurons << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -231,7 +231,7 @@ void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
                << "void set_minimum_neurons(const Index&) method.\n"
                << "minimum_neurons(" << new_minimum_neurons << ") must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(new_minimum_neurons >= maximum_neurons)
@@ -241,7 +241,7 @@ void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
                << "void set_minimum_neurons(const Index&) method.\n"
                << "minimum_neurons(" << new_minimum_neurons << ") must be less than maximum_neurons(" << maximum_neurons << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -264,7 +264,7 @@ void NeuronsSelection::set_trials_number(const Index& new_trials_number)
                << "void set_trials_number(const Index&) method.\n"
                << "Number of assays must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -299,7 +299,7 @@ void NeuronsSelection::set_selection_error_goal(const type& new_selection_error_
                << "void set_selection_error_goal(const type&) method.\n"
                << "Selection loss goal must be greater or equal than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -323,7 +323,7 @@ void NeuronsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs
                << "void set_maximum_epochs_number(const Index&) method.\n"
                << "Maximum epochs number must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -347,7 +347,7 @@ void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -395,7 +395,7 @@ void NeuronsSelection::check() const
                << "void check() const method.\n"
                << "Pointer to training strategy is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Loss index
@@ -408,7 +408,7 @@ void NeuronsSelection::check() const
                << "void check() const method.\n"
                << "Pointer to loss index is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Neural network
@@ -421,7 +421,7 @@ void NeuronsSelection::check() const
                << "void check() const method.\n"
                << "Pointer to neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(neural_network_pointer->is_empty())
@@ -430,7 +430,7 @@ void NeuronsSelection::check() const
                << "void check() const method.\n"
                << "Multilayer Perceptron is empty.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(neural_network_pointer->get_layers_number() == 1)
@@ -439,7 +439,7 @@ void NeuronsSelection::check() const
                << "void check() const method.\n"
                << "Number of layers in neural network must be greater than 1.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Data set
@@ -452,7 +452,7 @@ void NeuronsSelection::check() const
                << "void check() const method.\n"
                << "Pointer to data set is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
@@ -463,7 +463,7 @@ void NeuronsSelection::check() const
                << "void check() const method.\n"
                << "Number of selection samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -482,7 +482,7 @@ const string NeuronsSelection::write_time(const type& time) const
                << "const string write_time(const type& time) const method.\n"
                << "Time must be lower than 10e5 seconds.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(time < static_cast<type>(0))
@@ -493,7 +493,7 @@ const string NeuronsSelection::write_time(const type& time) const
                << "const string write_time(const type& time) const method.\n"
                << "Time must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 #endif
 

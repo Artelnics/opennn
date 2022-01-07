@@ -479,7 +479,7 @@ struct NeuralNetworkBackPropagationLM
                 buffer << "OpenNN Exception: NeuralNetwork class.\n"
                        << "Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n";
 
-                throw logic_error(buffer.str());
+                throw invalid_argument(buffer.str());
             }
             }
         }

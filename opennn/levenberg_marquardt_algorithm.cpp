@@ -192,7 +192,7 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type& new_d
                << "void set_damping_parameter_factor(const type&) method." << endl
                << "Damping parameter factor must be greater than zero." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -216,7 +216,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type& new_
                << "void set_minimum_damping_parameter(const type&) method." << endl
                << "Minimum damping parameter must be greater than zero." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -240,7 +240,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
                << "void set_maximum_damping_parameter(const type&) method." << endl
                << "Maximum damping parameter must be greater than zero." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -303,7 +303,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -331,7 +331,7 @@ void LevenbergMarquardtAlgorithm::check() const
                << "void check() const method.\n"
                << "Pointer to loss index is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
@@ -342,7 +342,7 @@ void LevenbergMarquardtAlgorithm::check() const
                << "void check() const method.\n"
                << "The loss funcional has no data set." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -353,7 +353,7 @@ void LevenbergMarquardtAlgorithm::check() const
                << "void check() const method.\n"
                << "Pointer to neural network is nullptr." << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -365,15 +365,15 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
     if(loss_index_pointer->get_error_type() == "MINKOWSKI_ERROR")
     {
-        throw logic_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
+        throw invalid_argument("Levenberg-Marquard algorithm cannot work with Minkowski error.");
     }
     else if(loss_index_pointer->get_error_type() == "CROSS_ENTROPY_ERROR")
     {
-        throw logic_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
+        throw invalid_argument("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
     }
     else if(loss_index_pointer->get_error_type() == "WEIGHTED_SQUARED_ERROR")
     {
-        throw logic_error("Levenberg-Marquard algorithm is not implemented yet with weighted squared error.");
+        throw invalid_argument("Levenberg-Marquard algorithm is not implemented yet with weighted squared error.");
     }
 
     ostringstream buffer;
@@ -854,7 +854,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Levenberg-Marquardt algorithm element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Damping parameter factor
@@ -870,7 +870,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_damping_parameter_factor(new_damping_parameter_factor);
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -888,7 +888,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_minimum_loss_decrease(new_minimum_loss_decrease);
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -906,7 +906,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_loss_goal(new_loss_goal);
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -926,7 +926,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_maximum_selection_failures(new_maximum_selection_failures);
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -944,7 +944,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_maximum_epochs_number(new_maximum_epochs_number);
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -962,7 +962,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         {
             set_maximum_time(new_maximum_time);
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -980,7 +980,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }

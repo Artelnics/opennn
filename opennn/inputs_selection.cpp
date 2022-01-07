@@ -51,7 +51,7 @@ TrainingStrategy* InputsSelection::get_training_strategy_pointer() const
                << "DataSet* get_training_strategy_pointer() const method.\n"
                << "Training strategy pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -174,7 +174,7 @@ void InputsSelection::set_trials_number(const Index& new_trials_number)
                << "void set_trials_number(const Index&) method.\n"
                << "Number of assays must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -209,7 +209,7 @@ void InputsSelection::set_selection_error_goal(const type& new_selection_error_g
                << "void set_selection_error_goal(const type&) method.\n"
                << "Selection loss goal must be greater or equal than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -242,7 +242,7 @@ void InputsSelection::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -266,7 +266,7 @@ void InputsSelection::set_maximum_correlation(const type& new_maximum_correlatio
                << "void set_maximum_correlation(const type&) method.\n"
                << "Maximum correlation must be comprised between 0 and 1.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -290,7 +290,7 @@ void InputsSelection::set_minimum_correlation(const type& new_minimum_correlatio
                << "void set_minimum_correlation(const type&) method.\n"
                << "Minimum correaltion must be comprised between 0 and 1.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -320,7 +320,7 @@ void InputsSelection::check() const
                << "void check() const method.\n"
                << "Pointer to training strategy is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Loss index
@@ -335,7 +335,7 @@ void InputsSelection::check() const
                << "void check() const method.\n"
                << "Pointer to neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -346,7 +346,7 @@ void InputsSelection::check() const
                << "void check() const method.\n"
                << "Neural network is empty.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Data set
@@ -357,7 +357,7 @@ void InputsSelection::check() const
                << "void check() const method.\n"
                << "Pointer to data set is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
@@ -370,7 +370,7 @@ void InputsSelection::check() const
                << "void check() const method.\n"
                << "Number of selection samples is zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -422,7 +422,7 @@ const string InputsSelection::write_time(const type& time) const
                << "const string write_time(const type& time) const method.\n"
                << "Time must be lower than 10e5 seconds.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(time < static_cast<type>(0))
@@ -433,7 +433,7 @@ const string InputsSelection::write_time(const type& time) const
                << "const string write_time(const type& time) const method.\n"
                << "Time must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 #endif
 
@@ -468,7 +468,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& us
                << "const Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index) method.\n"
                << "Size of uses vector("<< uses.size() <<") must be greater than " <<  inputs_number << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 #endif
 

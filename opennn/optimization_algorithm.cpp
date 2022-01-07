@@ -63,7 +63,7 @@ LossIndex* OptimizationAlgorithm::get_loss_index_pointer() const
                << "LossIndex* get_loss_index_pointer() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -194,7 +194,7 @@ void OptimizationAlgorithm::set_display_period(const Index& new_display_period)
                << "void set_display_period(const Index&) method.\n"
                << "Display period must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -219,7 +219,7 @@ void OptimizationAlgorithm::set_save_period(const Index& new_save_period)
                << "void set_save_period(const Index&) method.\n"
                << "Save period must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -269,7 +269,7 @@ void OptimizationAlgorithm::check() const
                << "void check() const method.\n"
                << "Pointer to loss index is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -280,7 +280,7 @@ void OptimizationAlgorithm::check() const
                << "void check() const method.\n"
                << "Pointer to neural network is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -326,7 +326,7 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Optimization algorithm element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Display
@@ -341,7 +341,7 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display_string != "0");
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -399,7 +399,7 @@ void OptimizationAlgorithm::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     from_XML(document);
@@ -493,7 +493,7 @@ const string OptimizationAlgorithm::write_time(const type& time) const
                << "const string write_time(const type& time) const method.\n"
                << "Time must be lower than 10e5 seconds.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(time < static_cast<type>(0))
@@ -504,7 +504,7 @@ const string OptimizationAlgorithm::write_time(const type& time) const
                << "const string write_time(const type& time) const method.\n"
                << "Time must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 #endif
 

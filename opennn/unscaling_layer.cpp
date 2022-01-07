@@ -154,7 +154,7 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
                    << "string write_expression() const method.\n"
                    << "Unknown inputs scaling method.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -204,7 +204,7 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
                    << "Tensor<string, 1> write_unscaling_method() const.\n"
                    << "Unknown unscaling method.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -251,7 +251,7 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_method_text() const
                    << "Tensor<string, 1> write_unscaling_method() const.\n"
                    << "Unknown unscaling method.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -408,7 +408,7 @@ void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descrip
                << "void set_descriptives(const Tensor<Descriptives, 1>&) method.\n"
                << "Size of descriptives (" << new_descriptives_size << ") must be equal to number of unscaling neurons (" << neurons_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -496,7 +496,7 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
                << "set_scalers(const string& new_scaling_methods_string) method.\n"
                << "Neurons number (" << neurons_number << ")must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -528,7 +528,7 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
         buffer << "OpenNN Exception: ScalingLayer class.\n"
                << "set_scalers(const string& new_scaling_methods_string) method.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -551,7 +551,7 @@ void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_
                << "void set_scalers(const Tensor<string, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -588,7 +588,7 @@ void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_unscaling_methods_
                    << "void set_scalers(const Tensor<string, 1>&) method.\n"
                    << "Unknown scaling method: " << new_unscaling_methods_string(i) << ".\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -640,7 +640,7 @@ void UnscalingLayer::check_range(const Tensor<type, 1>& outputs) const
                << "void check_range(const Tensor<type, 1>&) const method.\n"
                << "Size of outputs must be equal to number of unscaling neurons.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -707,7 +707,7 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                << "Size of inputs (" << columns_number << ") must be equal to number of scaling neurons (" << neurons_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -773,7 +773,7 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                            << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                            << "Unknown scaling method.\n";
 
-                    throw logic_error(buffer.str());
+                    throw invalid_argument(buffer.str());
                 }
             }
         }
@@ -900,7 +900,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Unscaling layer element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Unscaling neurons number
@@ -913,7 +913,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Unscaling neurons number element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index neurons_number = static_cast<Index>(atoi(neurons_number_element->GetText()));
@@ -935,7 +935,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Descriptives of unscaling neuron " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         descriptives_element->QueryUnsignedAttribute("Index", &index);
@@ -946,7 +946,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Index " << index << " is not correct.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         // Minimum
@@ -959,7 +959,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Minimum element " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(minimum_element->GetText())
@@ -977,7 +977,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Maximum element " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(maximum_element->GetText())
@@ -995,7 +995,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Mean element " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(mean_element->GetText())
@@ -1013,7 +1013,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Standard deviation element " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(standard_deviation_element->GetText())
@@ -1031,7 +1031,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Unscaling method element " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         const string new_method = unscaling_method_element->GetText();
@@ -1070,7 +1070,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_display(new_display_string != "0");
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
@@ -1141,7 +1141,7 @@ string UnscalingLayer::write_expression_c() const
                    << "string write_expression() const method.\n"
                    << "Unknown inputs scaling method.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -1215,7 +1215,7 @@ string UnscalingLayer::write_expression_python() const
                    << "string write_expression() const method.\n"
                    << "Unknown inputs scaling method.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
