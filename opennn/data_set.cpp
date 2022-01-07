@@ -9930,6 +9930,7 @@ size_t DataSet::number_of_elements_in_directory(fs::path path)
 
     return distance(directory_iterator(path), directory_iterator{});
     */
+    return size_t();
 }
 
 
