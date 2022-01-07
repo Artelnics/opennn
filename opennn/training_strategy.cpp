@@ -9,7 +9,7 @@
 #include "training_strategy.h"
 #include "optimization_algorithm.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

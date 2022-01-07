@@ -25,7 +25,7 @@
 #include "inputs_selection.h"
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This concrete class represents a growing inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.

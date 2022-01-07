@@ -8,7 +8,7 @@
 
 #include "opennn_strings.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Returns the number of strings delimited by separator.

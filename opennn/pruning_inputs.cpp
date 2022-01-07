@@ -8,7 +8,7 @@
 
 #include "pruning_inputs.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

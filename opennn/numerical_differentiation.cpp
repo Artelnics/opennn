@@ -8,7 +8,7 @@
 
 #include "numerical_differentiation.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

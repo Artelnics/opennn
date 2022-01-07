@@ -99,7 +99,7 @@ void PerceptronLayerTest::test_set_default()
     perceptron_layer.set_default();
 
     assert_true(perceptron_layer.get_display(), LOG);
-    assert_true(perceptron_layer.get_type() == OpenNN::Layer::Type::Perceptron, LOG);
+    assert_true(perceptron_layer.get_type() == opennn::Layer::Type::Perceptron, LOG);
 }
 
 

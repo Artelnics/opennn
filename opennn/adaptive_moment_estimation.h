@@ -33,7 +33,7 @@
 #include "optimization_algorithm.h"
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct AdaptiveMomentEstimationData;

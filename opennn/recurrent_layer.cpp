@@ -8,7 +8,7 @@
 
 #include "recurrent_layer.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

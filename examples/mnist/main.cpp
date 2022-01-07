@@ -37,7 +37,7 @@
 #include "../../opennn/opennn_strings.h"
 
 using namespace std;
-using namespace OpenNN;
+using namespace opennn;
 
 int main()
 {   
@@ -71,11 +71,11 @@ int main()
             cout << "Column " << i << ": " << endl;
             cout << "   Name: " << columns(i).name << endl;
 
-            if(columns(i).column_use == OpenNN::DataSet::VariableUse::Input) cout << "   Use: input" << endl;
-            else if(columns(i).column_use == OpenNN::DataSet::VariableUse::Target) cout << "   Use: target" << endl;
-            else if(columns(i).column_use == OpenNN::DataSet::VariableUse::UnusedVariable) cout << "   Use: unused" << endl;
+            if(columns(i).column_use == opennn::DataSet::VariableUse::Input) cout << "   Use: input" << endl;
+            else if(columns(i).column_use == opennn::DataSet::VariableUse::Target) cout << "   Use: target" << endl;
+            else if(columns(i).column_use == opennn::DataSet::VariableUse::UnusedVariable) cout << "   Use: unused" << endl;
 
-            if(columns(i).type == OpenNN::DataSet::ColumnType::Categorical) cout << "   Categories: " << columns(i).categories << endl;
+            if(columns(i).type == opennn::DataSet::ColumnType::Categorical) cout << "   Categories: " << columns(i).categories << endl;
 
             cout << endl;
         }
@@ -156,7 +156,7 @@ int main()
 #include "../../opennn/opennn_strings.h"
 
 using namespace std;
-using namespace OpenNN;
+using namespace opennn;
 
 int main()
 {
@@ -188,11 +188,11 @@ int main()
             cout << "Column " << i << ": " << endl;
             cout << "   Name: " << columns(i).name << endl;
 
-            if(columns(i).column_use == OpenNN::DataSet::VariableUse::Input) cout << "   Use: input" << endl;
-            else if(columns(i).column_use == OpenNN::DataSet::VariableUse::Target) cout << "   Use: target" << endl;
-            else if(columns(i).column_use == OpenNN::DataSet::VariableUse::UnusedVariable) cout << "   Use: unused" << endl;
+            if(columns(i).column_use == opennn::DataSet::VariableUse::Input) cout << "   Use: input" << endl;
+            else if(columns(i).column_use == opennn::DataSet::VariableUse::Target) cout << "   Use: target" << endl;
+            else if(columns(i).column_use == opennn::DataSet::VariableUse::UnusedVariable) cout << "   Use: unused" << endl;
 
-            if(columns(i).type == OpenNN::DataSet::ColumnType::Categorical) cout << "   Categories: " << columns(i).categories << endl;
+            if(columns(i).type == opennn::DataSet::ColumnType::Categorical) cout << "   Categories: " << columns(i).categories << endl;
 
             cout << endl;
         }

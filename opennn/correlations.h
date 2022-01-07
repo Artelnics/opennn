@@ -27,7 +27,7 @@
 #include "statistics.h"
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This enumeration represents the different regression methods provided by OpenNN.

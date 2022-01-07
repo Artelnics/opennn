@@ -27,7 +27,7 @@
 #include "pruning_inputs.h"
 #include "genetic_algorithm.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents the concept of model selection[1] algorithm in OpenNN.

@@ -26,7 +26,7 @@
 
 #include "opennn_strings.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct PerceptronLayerForwardPropagation;

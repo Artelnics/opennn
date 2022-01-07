@@ -8,7 +8,7 @@
 
 #include "cross_entropy_error.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

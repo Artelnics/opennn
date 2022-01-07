@@ -27,7 +27,7 @@
 #include "probabilistic_layer.h"
 #include "perceptron_layer.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct LongShortTermMemoryLayerForwardPropagation;

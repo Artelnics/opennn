@@ -16,7 +16,7 @@
 #include "opennn_tests.h"
 #include "../opennn/opennn.h"
 
-using namespace OpenNN;
+using namespace opennn;
 
 int main()
 {
@@ -530,11 +530,11 @@ int main()
 
           // convolutional layer
 
-          ConvolutionalLayerTest convolutional_layer_test;
-          convolutional_layer_test.run_test_case();
-          tests_count += convolutional_layer_test.get_tests_count();
-          tests_passed_count += convolutional_layer_test.get_tests_passed_count();
-          tests_failed_count += convolutional_layer_test.get_tests_failed_count();
+//          ConvolutionalLayerTest convolutional_layer_test;
+//          convolutional_layer_test.run_test_case();
+//          tests_count += convolutional_layer_test.get_tests_count();
+//          tests_passed_count += convolutional_layer_test.get_tests_passed_count();
+//          tests_failed_count += convolutional_layer_test.get_tests_failed_count();
 
           // recurrent layer
 

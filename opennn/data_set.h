@@ -45,7 +45,7 @@ using namespace std;
 using namespace Eigen;
 namespace fs = std::experimental::filesystem;
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents the concept of data set for data modelling problems, such as approximation, classification or forecasting.

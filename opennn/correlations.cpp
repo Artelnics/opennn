@@ -11,7 +11,7 @@
 #include "neural_network.h"
 #include "training_strategy.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Calculates autocorrelation for a given number of maximum lags.
@@ -68,16 +68,16 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
         if(!x_binary && !y_binary)
         {
             const Correlation linear_correlation
-                    = OpenNN::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+                    = opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
 
             const Correlation exponential_correlation
-                    = OpenNN::exponential_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+                    = opennn::exponential_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
 
             const Correlation logarithmic_correlation
-                    = OpenNN::logarithmic_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+                    = opennn::logarithmic_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
 
             const Correlation power_correlation
-                    = OpenNN::power_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+                    = opennn::power_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
 
             Correlation strongest_correlation = linear_correlation;
 
@@ -94,28 +94,28 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
         }
         else if(!x_binary && y_binary)
         {
-            return OpenNN::logistic_correlation_vector_vector(thread_pool_device, x.reshape(vector), y.reshape(vector));
+            return opennn::logistic_correlation_vector_vector(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
         else if(x_binary && !y_binary)
         {
-            return OpenNN::logistic_correlation_vector_vector(thread_pool_device, y.reshape(vector), x.reshape(vector));
+            return opennn::logistic_correlation_vector_vector(thread_pool_device, y.reshape(vector), x.reshape(vector));
         }
         else if(x_binary && y_binary)
         {
-            return OpenNN::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
+            return opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
     }
     else if(x_columns != 1 && y_columns == 1)
     {
-        return OpenNN::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
+        return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
     }
     else if(x_columns == 1 && y_columns != 1)
     {
-        return OpenNN::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
+        return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
     }
     else if(x_columns != 1 && y_columns != 1)
     {
-        return OpenNN::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
+        return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
     }
     else
     {
@@ -552,7 +552,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 {
     Correlation correlation;
 
-    const Tensor<type, 2> data = OpenNN::assemble_vector_matrix(x, y);
+    const Tensor<type, 2> data = opennn::assemble_vector_matrix(x, y);
 
     Tensor<Index, 1> input_columns_indices(1);
     input_columns_indices(0) = 0;
@@ -602,7 +602,7 @@ Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice* thread_po
                                                const Tensor<type, 2>& x,
                                                const Tensor<type, 1>& y)
 {
-    return OpenNN::logistic_correlation_vector_matrix(thread_pool_device, y, x);
+    return opennn::logistic_correlation_vector_matrix(thread_pool_device, y, x);
 }
 
 
@@ -612,7 +612,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 {
     Correlation correlation;
 
-    const Tensor<type, 2> data = OpenNN::assemble_matrix_matrix(x, y);
+    const Tensor<type, 2> data = opennn::assemble_matrix_matrix(x, y);
 
     Tensor<Index, 1> input_columns_indices(1);
     input_columns_indices(0) = 0;

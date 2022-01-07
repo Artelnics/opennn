@@ -27,7 +27,7 @@
 #include "inputs_selection.h"
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 /// This concrete class represents a genetic algorithm, inspired by the process of natural selection[1] such as mutation,
 /// crossover and selection.

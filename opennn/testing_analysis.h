@@ -29,7 +29,7 @@
 
 //Eigen includes
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class contains tools for testing neural networks in different learning tasks.

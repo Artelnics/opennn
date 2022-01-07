@@ -22,7 +22,7 @@
 using namespace std;
 using namespace Eigen;
 
-namespace OpenNN
+namespace opennn
 {
     Index count_tokens(const string&, const char&);
 

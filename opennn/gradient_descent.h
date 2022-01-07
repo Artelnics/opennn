@@ -30,7 +30,7 @@
 #include "learning_rate_algorithm.h"
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct GradientDescentData;

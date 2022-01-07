@@ -36,7 +36,7 @@
 
 using Eigen::MatrixXd;
 
-namespace OpenNN
+namespace opennn
 {
 
 struct QuasiNewtonMehtodData;

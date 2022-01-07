@@ -25,7 +25,7 @@
 #include "data_set.h"
 #include "neural_network.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct LossIndexBackPropagation;

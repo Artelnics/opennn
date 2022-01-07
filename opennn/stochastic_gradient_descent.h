@@ -28,7 +28,7 @@
 #include "loss_index.h"
 #include "optimization_algorithm.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct StochasticGradientDescentData;

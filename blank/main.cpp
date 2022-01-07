@@ -20,7 +20,7 @@
 #include "../opennn/opennn.h"
 #include "../opennn/layer.h"
 
-using namespace OpenNN;
+using namespace opennn;
 using namespace std;
 using namespace Eigen;
 
@@ -29,6 +29,8 @@ int main()
     try
     {
         cout << "OpenNN. Blank application." << endl;
+
+//        Log().Get(logINFO) << "My Message";
 
         cout << "Good bye!" << endl;
 

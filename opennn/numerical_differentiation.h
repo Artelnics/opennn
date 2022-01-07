@@ -24,7 +24,7 @@
 using namespace std;
 using namespace Eigen;
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class contains methods for numerical differentiation of functions.

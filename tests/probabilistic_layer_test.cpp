@@ -85,7 +85,7 @@ void ProbabilisticLayerTest::test_set_default()
 
     probabilistic_layer.set_default();
 
-    assert_true(probabilistic_layer.get_activation_function() == OpenNN::ProbabilisticLayer::ActivationFunction::Softmax, LOG);
+    assert_true(probabilistic_layer.get_activation_function() == opennn::ProbabilisticLayer::ActivationFunction::Softmax, LOG);
     assert_true(abs(probabilistic_layer.get_decision_threshold() - type(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(probabilistic_layer.get_display(), LOG);
 
@@ -93,7 +93,7 @@ void ProbabilisticLayerTest::test_set_default()
 
     probabilistic_layer.set_default();
 
-    assert_true(probabilistic_layer.get_activation_function() == OpenNN::ProbabilisticLayer::ActivationFunction::Logistic, LOG);
+    assert_true(probabilistic_layer.get_activation_function() == opennn::ProbabilisticLayer::ActivationFunction::Logistic, LOG);
 }
 
 

@@ -31,7 +31,7 @@
 
 #include "../eigen/Eigen/Dense"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct LevenbergMarquardtAlgorithmData;

@@ -29,7 +29,7 @@
 #include "perceptron_layer.h"
 #include "convolutional_layer.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents the Pooling Layer in Convolutional Neural Network(CNN).

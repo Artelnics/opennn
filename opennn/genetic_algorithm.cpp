@@ -8,7 +8,7 @@
 
 #include "genetic_algorithm.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

@@ -27,7 +27,7 @@
 #include "loss_index.h"
 #include "optimization_algorithm.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// A learning rate that is adjusted according to an algorithm during training to minimize training time.
@@ -108,7 +108,7 @@ public:
 
            losses.setValues({A.second, U.second, B.second});
 
-           const Index minimal_index = OpenNN::minimal_index(losses);
+           const Index minimal_index = opennn::minimal_index(losses);
 
            if(minimal_index == 0) return A;
            else if(minimal_index == 1) return U;

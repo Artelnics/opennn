@@ -26,7 +26,7 @@
 #include "inputs_selection.h"
 
 
-namespace OpenNN
+namespace opennn
 {
 struct InputsSelectionResults;
 

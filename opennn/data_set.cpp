@@ -8,10 +8,10 @@
 
 #include "data_set.h"
 
-using namespace  OpenNN;
+using namespace  opennn;
 namespace fs = std::experimental::filesystem;
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.
@@ -5921,7 +5921,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
 
             const Tensor<type, 2> target_column_data = get_column_data(target_index, used_samples_indices);
 
-            correlations(i,j) = OpenNN::correlation(thread_pool_device, input_column_data, target_column_data);
+            correlations(i,j) = opennn::correlation(thread_pool_device, input_column_data, target_column_data);
 
             cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
         }
@@ -6062,7 +6062,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
 
             const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
 
-            correlations(i,j) = OpenNN::correlation(thread_pool_device, input_i, input_j);
+            correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
 
             if(correlations(i,j).r > type(1))
             {
@@ -9430,7 +9430,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 
         const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-        autocorrelations_vector = OpenNN::autocorrelations(thread_pool_device, current_input_i, new_lags_number);
+        autocorrelations_vector = opennn::autocorrelations(thread_pool_device, current_input_i, new_lags_number);
 
         for(Index j = 0; j < new_lags_number; j++)
         {
@@ -9557,7 +9557,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
             const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
             const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-            cross_correlations_vector = OpenNN::cross_correlations(thread_pool_device, current_input_i, current_input_j, new_lags_number);
+            cross_correlations_vector = opennn::cross_correlations(thread_pool_device, current_input_i, current_input_j, new_lags_number);
 
             for(Index k = 0; k < new_lags_number; k++)
             {

@@ -25,7 +25,7 @@
 #include "neurons_selection.h"
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct GrowingNeuronsResults;

@@ -8,7 +8,7 @@
 
 #include "testing_analysis.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.
@@ -237,7 +237,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        linear_correlation[i] = OpenNN::linear_correlation(thread_pool_device, output.chip(i,1), target.chip(i,1));
+        linear_correlation[i] = opennn::linear_correlation(thread_pool_device, output.chip(i,1), target.chip(i,1));
     }
 
     return linear_correlation;
@@ -302,7 +302,7 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
         const Tensor<type, 1> targets = testing_targets.chip(i,1);
         const Tensor<type, 1> outputs = testing_outputs.chip(i,1);
 
-        const Correlation linear_correlation = OpenNN::linear_correlation(thread_pool_device, outputs, targets);
+        const Correlation linear_correlation = opennn::linear_correlation(thread_pool_device, outputs, targets);
 
         linear_regression_results[i].targets = targets;
         linear_regression_results[i].outputs = outputs;
@@ -576,7 +576,7 @@ Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_descrip
 
         Tensor<type, 2> matrix(matrix_error);
 
-        descriptives[i] = OpenNN::descriptives(matrix);
+        descriptives[i] = opennn::descriptives(matrix);
 
         index += testing_samples_number*3;
     }

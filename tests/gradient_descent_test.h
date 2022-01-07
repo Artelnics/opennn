@@ -13,7 +13,7 @@
 
 #include "../opennn/unit_testing.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 class GradientDescentTest : public UnitTesting 

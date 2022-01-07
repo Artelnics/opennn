@@ -8,7 +8,7 @@
 
 #include "response_optimization.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

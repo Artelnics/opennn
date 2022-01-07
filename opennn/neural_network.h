@@ -34,7 +34,7 @@
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
 
-namespace OpenNN
+namespace opennn
 {
     struct NeuralNetworkForwardPropagation;
     struct NeuralNetworkBackPropagation;

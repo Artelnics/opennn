@@ -9,7 +9,7 @@
 #include "conjugate_gradient.h"
 #include "training_strategy.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.
