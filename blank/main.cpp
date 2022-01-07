@@ -30,8 +30,6 @@ int main()
     {
         cout << "OpenNN. Blank application." << endl;
 
-//        Log().Get(logINFO) << "My Message";
-
         cout << "Good bye!" << endl;
 
         return 0;

@@ -492,7 +492,7 @@ void RecurrentLayer::set_activation_function(const string& new_activation_functi
                << "void set_activation_function(const string&) method.\n"
                << "Unknown activation function: " << new_activation_function_name << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -672,7 +672,7 @@ void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 1>& co
                << "Number of combinations_1d columns (" << combinations_columns_number
                << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
      }
 
      #endif
@@ -722,7 +722,7 @@ void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 2>& co
                << "Number of combinations_2d columns (" << combinations_columns_number
                << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
      }
 
      #endif
@@ -853,7 +853,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                << "Number of columns("<<inputs_columns_number<<") of inputs matrix must be equal to number of inputs("<<inputs_number<<").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 #endif
 
@@ -966,7 +966,7 @@ void RecurrentLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerForw
                    << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,RecurrentLayerBackPropagation*) const.\n"
                    << "Number of columns in delta (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(next_forward_propagation->activations_derivatives.dimension(1) != next_layer_neurons_number)
@@ -977,7 +977,7 @@ void RecurrentLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerForw
                    << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,RecurrentLayerBackPropagation*) const.\n"
                    << "Dimension 1 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(next_forward_propagation->activations_derivatives.dimension(2) != next_layer_neurons_number)
@@ -988,7 +988,7 @@ void RecurrentLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerForw
                    << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,RecurrentLayerBackPropagation*) const.\n"
                    << "Dimension 2 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         const Index step = next_layer_neurons_number*next_layer_neurons_number;
@@ -1247,7 +1247,7 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names,
                << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
                << "Size of inputs name must be equal to number of layer inputs.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index outputs_name_size = outputs_names.size();
@@ -1260,7 +1260,7 @@ string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names,
                << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
                << "Size of outputs name must be equal to number of neurons.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1313,7 +1313,7 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "RecurrentLayer element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Inputs number
@@ -1326,7 +1326,7 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "InputsNumber element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(inputs_number_element->GetText())
@@ -1344,7 +1344,7 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "NeuronsNumber element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(neurons_number_element->GetText())
@@ -1362,7 +1362,7 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "ActivationFunction element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(activation_function_element->GetText())
@@ -1380,7 +1380,7 @@ void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Parameters element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(parameters_element->GetText())

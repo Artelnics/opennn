@@ -61,7 +61,7 @@ void CrossEntropyError::calculate_error(const DataSetBatch& batch,
                << "calculate_error() method.\n"
                << "Last trainable layer is not probabilistic: " << last_trainable_layer_pointer->get_type_string() << endl;
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -233,7 +233,7 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Cross entropy error element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Regularization

@@ -122,7 +122,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
                    << "void set_input_condition() method.\n"
                    << "For Minimum condition, size of values must be 0.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         return;
@@ -135,7 +135,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
                    << "void set_input_condition() method.\n"
                    << "For Maximum condition, size of values must be 0.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         return;
@@ -148,7 +148,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
                    << "void set_input_condition() method.\n"
                    << "For LessEqualTo condition, size of values must be 1.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         inputs_minimums[index] = values[0];
@@ -164,7 +164,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
                    << "void set_input_condition() method.\n"
                    << "For LessEqualTo condition, size of values must be 1.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         inputs_maximums[index] = values[0];
@@ -179,7 +179,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
                    << "void set_input_condition() method.\n"
                    << "For LessEqualTo condition, size of values must be 1.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         inputs_minimums[index] = values[0];
@@ -194,7 +194,7 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
                    << "void set_input_condition() method.\n"
                    << "For Between condition, size of values must be 2.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         inputs_minimums[index] = values[0];
@@ -221,7 +221,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
                    << "void set_output_condition() method.\n"
                    << "For Minimum condition, size of values must be 0.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         return;
@@ -234,7 +234,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
                    << "void set_output_condition() method.\n"
                    << "For Maximum condition, size of values must be 0.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         return;
@@ -247,7 +247,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
                    << "void set_output_condition() method.\n"
                    << "For LessEqualTo condition, size of values must be 1.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         outputs_minimums[index] = values[0];
@@ -263,7 +263,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
                    << "void set_output_condition() method.\n"
                    << "For LessEqualTo condition, size of values must be 1.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         outputs_maximums[index] = values[0];
@@ -278,7 +278,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
                    << "void set_output_condition() method.\n"
                    << "For LessEqualTo condition, size of values must be 1.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         outputs_minimums[index] = values[0];
@@ -293,7 +293,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
                    << "void set_output_condition() method.\n"
                    << "For Between condition, size of values must be 2.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         outputs_minimums[index] = values[0];

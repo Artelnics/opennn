@@ -127,7 +127,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         print();
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(has_probabilistic_layer())
@@ -138,7 +138,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
                << "NeuralNetwork::add_layer() method.\n"
                << "No layers can be added after a probabilistic layer.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(layer_pointer->get_type_string() == "Pooling")
@@ -149,7 +149,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
                << "NeuralNetwork::add_layer() method.\n"
                << "Pooling Layer is not available yet. It will be included in future versions.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(layer_pointer->get_type_string() == "Convolutional")
@@ -160,7 +160,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
                << "NeuralNetwork::add_layer() method.\n"
                << "Convolutional Layer is not available yet. It will be included in future versions.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Layer::Type layer_type = layer_pointer->get_type();
@@ -186,7 +186,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
                << "Layer type " << layer_pointer->get_type_string() << " cannot be added in position " << layers_pointers.size()
                << " in the neural network architecture.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -487,7 +487,7 @@ ScalingLayer* NeuralNetwork::get_scaling_layer_pointer() const
            << "ScalingLayer* get_scaling_layer_pointer() const method.\n"
            << "No scaling layer in neural network.\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -511,7 +511,7 @@ UnscalingLayer* NeuralNetwork::get_unscaling_layer_pointer() const
            << "UnscalingLayer* get_unscaling_layer_pointer() const method.\n"
            << "No unscaling layer in neural network.\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -535,7 +535,7 @@ BoundingLayer* NeuralNetwork::get_bounding_layer_pointer() const
            << "BoundingLayer* get_bounding_layer_pointer() const method.\n"
            << "No bounding layer in neural network.\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -559,7 +559,7 @@ ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer_pointer() const
            << "ProbabilisticLayer* get_probabilistic_layer_pointer() const method.\n"
            << "No probabilistic layer in neural network.\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 /// Returns a pointer to the long short-term memory layer of this neural network, if it exits.
@@ -582,7 +582,7 @@ LongShortTermMemoryLayer* NeuralNetwork::get_long_short_term_memory_layer_pointe
            << "LongShortTermMemoryLayer* get_long_short_term_memory_layer_pointer() const method.\n"
            << "No long-short-term memory layer in neural network.\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -606,7 +606,7 @@ RecurrentLayer* NeuralNetwork::get_recurrent_layer_pointer() const
            << "RecurrentLayer* get_recurrent_layer_pointer() const method.\n"
            << "No recurrent layer in neural network.\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -822,7 +822,7 @@ void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
                << "void set_inputs_number(const Index&) method.\n"
                << "The number of inputs (" << new_inputs_number << ") must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1122,7 +1122,7 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
                << "void set_parameters(const Tensor<type, 1>&) method.\n"
                << "Size (" << size << ") must be grater or equal to number of parameters (" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1329,7 +1329,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
                << "void perturbate_parameters(const type&) method.\n"
                << "Perturbation must be equal or greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1524,7 +1524,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
                << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1560,7 +1560,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
                << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1872,7 +1872,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Neural network element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Inputs
@@ -1940,7 +1940,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display_string != "0");
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1961,7 +1961,7 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
                << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Inputs element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Inputs number
@@ -1974,7 +1974,7 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
                << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Inputs number element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     Index new_inputs_number = 0;
@@ -2003,7 +2003,7 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
                        << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Input index number (" << i+1 << ") does not match (" << input_element->Attribute("Item") << ").\n";
 
-                throw logic_error(buffer.str());
+                throw invalid_argument(buffer.str());
             }
 
             if(!input_element->GetText())
@@ -2031,7 +2031,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
                << "void layers_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Layers element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Layers types
@@ -2044,7 +2044,7 @@ void NeuralNetwork::layers_from_XML(const tinyxml2::XMLDocument& document)
                << "void layers_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Layers types element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     Tensor<string, 1> layers_types;
@@ -2265,7 +2265,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
                << "void outputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Outputs element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Outputs number
@@ -2278,7 +2278,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
                << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Outputs number element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     Index new_outputs_number = 0;
@@ -2307,7 +2307,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
                        << "void outputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Output index number (" << i+1 << ") does not match (" << output_element->Attribute("Item") << ").\n";
 
-                throw logic_error(buffer.str());
+                throw invalid_argument(buffer.str());
             }
 
             if(!output_element->GetText())
@@ -2371,7 +2371,7 @@ void NeuralNetwork::save_parameters(const string& file_name) const
                << "void save_parameters(const string&) const method.\n"
                << "Cannot open parameters data file.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Tensor<type, 1> parameters = get_parameters();
@@ -2402,7 +2402,7 @@ void NeuralNetwork::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
 
     }
 
@@ -2428,7 +2428,7 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
                << "void load_parameters_binary(const string&) method.\n"
                << "Cannot open binary file: " << file_name << "\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     streamsize size = sizeof(double);
@@ -2748,7 +2748,7 @@ void NeuralNetwork::save_expression_c(const string& file_name)
                << "void  save_expression(const string&) method.\n"
                << "Cannot open expression text file.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     file << write_expression_c();
@@ -2772,7 +2772,7 @@ void NeuralNetwork::save_expression_python(const string& file_name)
                << "void  save_expression_python(const string&) method.\n"
                << "Cannot open expression text file.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     file << write_expression_python();
@@ -2799,7 +2799,7 @@ void NeuralNetwork::save_outputs(const Tensor<type, 2>& inputs, const string & f
                << "void  save_expression_python(const string&) method.\n"
                << "Cannot open expression text file.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Tensor<string, 1> outputs_names = get_outputs_names();

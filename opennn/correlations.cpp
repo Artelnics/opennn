@@ -119,7 +119,7 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else
     {
-        throw logic_error("Correlations Exception: Unknown case.");
+        throw invalid_argument("Correlations Exception: Unknown case.");
     }
 
     return correlation;
@@ -144,7 +144,7 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
                << "Tensor<type, 1> calculate_cross_correlation(const Tensor<type, 1>&) method.\n"
                << "Both vectors must have the same size.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     Tensor<type, 1> cross_correlation(maximum_lags_number);
@@ -188,7 +188,7 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
                "exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Y size must be equal to X size.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -366,7 +366,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
                << "Correlation linear_correlation(const Tensor<type, 1>&) const method.\n"
                << "Y size must be equal to X size.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -465,7 +465,7 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
                "method.\n"
                << "Y size must be equal to X size.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -678,7 +678,7 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
                   "method.\n"
                << "Y size must be equal to X size.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif

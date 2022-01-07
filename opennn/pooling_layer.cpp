@@ -68,7 +68,7 @@ Tensor<type, 4> PoolingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
                << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) method.\n"
                << "Number of inputs dimensions (" << input_variables_dimensions_number << ") must be 4 (batch, filters, rows, columns).\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif

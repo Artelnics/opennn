@@ -68,7 +68,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                << "void calculate_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index old_gradient_size = old_gradient.size();
@@ -79,7 +79,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                << "void calculate_training_direction() const method.\n"
                << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -90,7 +90,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                << "void calculate_training_direction() const method.\n"
                << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index old_training_direction_size = old_training_direction.size();
@@ -102,7 +102,7 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
                << "Size of old training direction (" << old_training_direction_size
                << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -111,10 +111,13 @@ void ConjugateGradient::calculate_conjugate_gradient_training_direction(const Te
     {
     case TrainingDirectionMethod::FR:
         calculate_FR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
-
         return;
+
     case TrainingDirectionMethod::PR:
         calculate_PR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
+        return;
+
+    default:
         return;
     }
 }
@@ -137,7 +140,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
 
                << "Loss index pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -152,7 +155,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -163,7 +166,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -222,7 +225,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                << "void calculate_FR_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -237,7 +240,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                << "void calculate_FR_training_direction() const method.\n"
                << "Size of old gradient (" << old_gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -248,7 +251,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                << "void calculate_FR_training_direction() const method.\n"
                << "Size of gradient (" << gradient_size << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index old_training_direction_size = old_training_direction.size();
@@ -260,7 +263,7 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
                << "Size of old training direction (" << old_training_direction_size
                << ") is not equal to number of parameters (" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -297,7 +300,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -312,7 +315,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -323,7 +326,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
                << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -383,7 +386,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                << "void calculate_PR_training_direction() const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -398,7 +401,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                << "void calculate_PR_training_direction() const method.\n"
                << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index gradient_size = gradient.size();
@@ -409,7 +412,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                << "void calculate_PR_training_direction() const method.\n"
                << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index old_training_direction_size = old_training_direction.size();
@@ -421,7 +424,7 @@ void ConjugateGradient::calculate_PR_training_direction(const Tensor<type, 1>& o
                << "Size of old training direction(" << old_training_direction_size
                << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -598,7 +601,7 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
                << "void set_training_direction_method(const string&) method.\n"
                << "Unknown training direction method: " << new_training_direction_method_name << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -646,7 +649,7 @@ void ConjugateGradient::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -682,7 +685,7 @@ void ConjugateGradient::set_save_period(const Index& new_save_period)
                << "void set_save_period(const type&) method.\n"
                << "Save period must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -706,7 +709,8 @@ TrainingResults ConjugateGradient::perform_training()
 
     // Elapsed time
 
-    time_t beginning_time, current_time;
+    time_t beginning_time;
+    time_t current_time;
     time(&beginning_time);
     type elapsed_time = type(0);
 
@@ -844,7 +848,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -962,7 +966,7 @@ void ConjugateGradient::update_parameters(
         const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,
-        ConjugateGradientData& optimization_data)
+        ConjugateGradientData& optimization_data) const
 {
     const Index parameters_number = back_propagation.parameters.dimension(0);
 
@@ -1025,13 +1029,13 @@ void ConjugateGradient::update_parameters(
             }
             else if(back_propagation.gradient(i) > type(0))
             {
-                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();;
+                back_propagation.parameters(i) -= numeric_limits<type>::epsilon();
 
                 optimization_data.parameters_increment(i) = -numeric_limits<type>::epsilon();
             }
             else if(back_propagation.gradient(i) < type(0))
             {
-                back_propagation.parameters(i) += numeric_limits<type>::epsilon();;
+                back_propagation.parameters(i) += numeric_limits<type>::epsilon();
 
                 optimization_data.parameters_increment(i) = numeric_limits<type>::epsilon();
             }
@@ -1073,9 +1077,9 @@ string ConjugateGradient::write_training_direction_method() const
 
     case TrainingDirectionMethod::FR:
         return "FR";
+    default:
+        return string();
     }
-
-    return string();
 }
 
 
@@ -1090,13 +1094,11 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Training direction method
 
-    {
-        file_stream.OpenElement("TrainingDirectionMethod");
+    file_stream.OpenElement("TrainingDirectionMethod");
 
-        file_stream.PushText(write_training_direction_method().c_str());
+    file_stream.PushText(write_training_direction_method().c_str());
 
-        file_stream.CloseElement();
-    }
+    file_stream.CloseElement();
 
     // Learning rate algorithm
 
@@ -1104,78 +1106,71 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Minimum loss decrease
 
-    {
-        file_stream.OpenElement("MinimumLossDecrease");
+    file_stream.OpenElement("MinimumLossDecrease");
 
-        buffer.str("");
-        buffer << minimum_loss_decrease;
+    buffer.str("");
+    buffer << minimum_loss_decrease;
 
-        file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
-    }
+    file_stream.CloseElement();
 
     // Loss goal
 
-    {
-        file_stream.OpenElement("LossGoal");
+    file_stream.OpenElement("LossGoal");
 
-        buffer.str("");
-        buffer << training_loss_goal;
+    buffer.str("");
+    buffer << training_loss_goal;
 
-        file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
-    }
+    file_stream.CloseElement();
 
     // Maximum selection error increases
-    {
-        file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
-        buffer.str("");
-        buffer << maximum_selection_failures;
+    file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
-        file_stream.PushText(buffer.str().c_str());
+    buffer.str("");
+    buffer << maximum_selection_failures;
 
-        file_stream.CloseElement();
-    }
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
 
     // Maximum iterations number
-    {
-        file_stream.OpenElement("MaximumEpochsNumber");
 
-        buffer.str("");
-        buffer << maximum_epochs_number;
+    file_stream.OpenElement("MaximumEpochsNumber");
 
-        file_stream.PushText(buffer.str().c_str());
+    buffer.str("");
+    buffer << maximum_epochs_number;
 
-        file_stream.CloseElement();
-    }
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
 
     // Maximum time
 
-    {
-        file_stream.OpenElement("MaximumTime");
+    file_stream.OpenElement("MaximumTime");
 
-        buffer.str("");
-        buffer << maximum_time;
+    buffer.str("");
+    buffer << maximum_time;
 
-        file_stream.PushText(buffer.str().c_str());
+    file_stream.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
-    }
+    file_stream.CloseElement();
 
     // Hardware use
-    {
-        file_stream.OpenElement("HardwareUse");
 
-        buffer.str("");
-        buffer << hardware_use;
+    file_stream.OpenElement("HardwareUse");
 
-        file_stream.PushText(buffer.str().c_str());
+    buffer.str("");
+    buffer << hardware_use;
 
-        file_stream.CloseElement();
-    }
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
 
     file_stream.CloseElement();
 }
@@ -1196,234 +1191,233 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Conjugate gradient element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Training direction method
+
+    const tinyxml2::XMLElement* training_direction_method_element = root_element->FirstChildElement("TrainingDirectionMethod");
+
+    if(training_direction_method_element)
     {
-        const tinyxml2::XMLElement* training_direction_method_element = root_element->FirstChildElement("TrainingDirectionMethod");
+        const string new_training_direction_method = training_direction_method_element->GetText();
 
-        if(training_direction_method_element)
+        try
         {
-            const string new_training_direction_method = training_direction_method_element->GetText();
-
-            try
-            {
-                set_training_direction_method(new_training_direction_method);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
+            set_training_direction_method(new_training_direction_method);
+        }
+        catch(const invalid_argument& e)
+        {
+            cerr << e.what() << endl;
         }
     }
+
 
     // Learning rate algorithm
+
+    const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
+
+    if(learning_rate_algorithm_element)
     {
-        const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
+        tinyxml2::XMLDocument learning_rate_algorithm_document;
+        tinyxml2::XMLNode* element_clone;
 
-        if(learning_rate_algorithm_element)
-        {
-            tinyxml2::XMLDocument learning_rate_algorithm_document;
-            tinyxml2::XMLNode* element_clone;
+        element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
 
-            element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
+        learning_rate_algorithm_document.InsertFirstChild(element_clone);
 
-            learning_rate_algorithm_document.InsertFirstChild(element_clone);
-
-            learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
-        }
+        learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }
+
 
     // Minimum loss decrease
+
+    const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
+
+    if(minimum_loss_decrease_element)
     {
-        const tinyxml2::XMLElement* minimum_loss_decrease_element = root_element->FirstChildElement("MinimumLossDecrease");
+        const type new_minimum_loss_decrease = static_cast<type>(atof(minimum_loss_decrease_element->GetText()));
 
-        if(minimum_loss_decrease_element)
+        try
         {
-            const type new_minimum_loss_decrease = static_cast<type>(atof(minimum_loss_decrease_element->GetText()));
-
-            try
-            {
-                set_minimum_loss_decrease(new_minimum_loss_decrease);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
+            set_minimum_loss_decrease(new_minimum_loss_decrease);
+        }
+        catch(const invalid_argument& e)
+        {
+            cerr << e.what() << endl;
         }
     }
+
 
     // Loss goal
+
+    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
+
+    if(loss_goal_element)
     {
-        const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
+        const type new_loss_goal = static_cast<type>(atof(loss_goal_element->GetText()));
 
-        if(loss_goal_element)
+        try
         {
-            const type new_loss_goal = static_cast<type>(atof(loss_goal_element->GetText()));
-
-            try
-            {
-                set_loss_goal(new_loss_goal);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
+            set_loss_goal(new_loss_goal);
+        }
+        catch(const invalid_argument& e)
+        {
+            cerr << e.what() << endl;
         }
     }
+
 
     // Maximum selection error increases
+
+    const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
+
+    if(maximum_selection_failures_element)
     {
-        const tinyxml2::XMLElement* maximum_selection_failures_element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
+        const Index new_maximum_selection_failures = static_cast<Index>(atoi(maximum_selection_failures_element->GetText()));
 
-        if(maximum_selection_failures_element)
+        try
         {
-            const Index new_maximum_selection_failures = static_cast<Index>(atoi(maximum_selection_failures_element->GetText()));
-
-            try
-            {
-                set_maximum_selection_failures(new_maximum_selection_failures);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
+            set_maximum_selection_failures(new_maximum_selection_failures);
+        }
+        catch(const invalid_argument& e)
+        {
+            cerr << e.what() << endl;
         }
     }
+
 
     // Maximum epochs number
+
+    const tinyxml2::XMLElement* maximum_iterations_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
+
+    if(maximum_iterations_number_element)
     {
-        const tinyxml2::XMLElement* maximum_iterations_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
+        const Index new_maximum_iterations_number = static_cast<Index>(atoi(maximum_iterations_number_element->GetText()));
 
-        if(maximum_iterations_number_element)
+        try
         {
-            const Index new_maximum_iterations_number = static_cast<Index>(atoi(maximum_iterations_number_element->GetText()));
-
-            try
-            {
-                set_maximum_epochs_number(new_maximum_iterations_number);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
+            set_maximum_epochs_number(new_maximum_iterations_number);
+        }
+        catch(const invalid_argument& e)
+        {
+            cerr << e.what() << endl;
         }
     }
+
 
     // Maximum time
+
+    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
+
+    if(maximum_time_element)
     {
-        const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
+        const type new_maximum_time = static_cast<type>(atof(maximum_time_element->GetText()));
 
-        if(maximum_time_element)
+        try
         {
-            const type new_maximum_time = static_cast<type>(atof(maximum_time_element->GetText()));
-
-            try
-            {
-                set_maximum_time(new_maximum_time);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
+            set_maximum_time(new_maximum_time);
+        }
+        catch(const invalid_argument& e)
+        {
+            cerr << e.what() << endl;
         }
     }
 
-      // Display period
-      {
-         const tinyxml2::XMLElement* display_period_element = root_element->FirstChildElement("DisplayPeriod");
 
-         if(display_period_element)
-         {
-            const Index new_display_period = static_cast<Index>(atoi(display_period_element->GetText()));
+    // Display period
 
-            try
-            {
-               set_display_period(new_display_period);
-            }
-            catch(const logic_error& e)
-            {
-               cerr << e.what() << endl;
-            }
-         }
-      }
+    const tinyxml2::XMLElement* display_period_element = root_element->FirstChildElement("DisplayPeriod");
 
-         // Save period
-         {
-             const tinyxml2::XMLElement* element = root_element->FirstChildElement("SavePeriod");
+    if(display_period_element)
+    {
+        const Index new_display_period = static_cast<Index>(atoi(display_period_element->GetText()));
 
-             if(element)
-             {
-                const Index new_save_period = static_cast<Index>(atoi(element->GetText()));
+        try
+        {
+            set_display_period(new_display_period);
+        }
+        catch(const invalid_argument& e)
+        {
+            cerr << e.what() << endl;
+        }
+    }
 
-                try
-                {
-                   set_save_period(new_save_period);
-                }
-                catch(const logic_error& e)
-                {
-                   cerr << e.what() << endl;
-                }
-             }
-         }
 
-         // Neural network filename
-         {
-             const tinyxml2::XMLElement* element = root_element->FirstChildElement("NeuralNetworkFileName");
+    // Save period
 
-             if(element)
-             {
-                const string new_neural_network_file_name = element->GetText();
+    const tinyxml2::XMLElement* element = root_element->FirstChildElement("SavePeriod");
 
-                try
-                {
-                   set_neural_network_file_name(new_neural_network_file_name);
-                }
-                catch(const logic_error& e)
-                {
-                   cerr << e.what() << endl;
-                }
-             }
-         }
+    if(element)
+    {
+        const Index new_save_period = static_cast<Index>(atoi(element->GetText()));
 
-      // Display
-      {
-         const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
+        try
+        {
+            set_save_period(new_save_period);
+        }
+        catch(const invalid_argument& e)
+        {
+            cerr << e.what() << endl;
+        }
+    }
 
-         if(display_element)
-         {
-            const string new_display = display_element->GetText();
+    // Neural network filename
 
-            try
-            {
-               set_display(new_display != "0");
-            }
-            catch(const logic_error& e)
-            {
-               cerr << e.what() << endl;
-            }
-         }
-      }
+    element = root_element->FirstChildElement("NeuralNetworkFileName");
+
+    if(element)
+    {
+        const string new_neural_network_file_name = element->GetText();
+
+        try
+        {
+            set_neural_network_file_name(new_neural_network_file_name);
+        }
+        catch(const invalid_argument& e)
+        {
+            cerr << e.what() << endl;
+        }
+    }
+
+
+    // Display
+
+    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
+
+    if(display_element)
+    {
+        const string new_display = display_element->GetText();
+
+        try
+        {
+            set_display(new_display != "0");
+        }
+        catch(const invalid_argument& e)
+        {
+            cerr << e.what() << endl;
+        }
+    }
+
 
     // Hardware use
+
+    element = root_element->FirstChildElement("HardwareUse");
+
+    if(element)
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+        const string new_hardware_use = element->GetText();
 
-        if(element)
+        try
         {
-            const string new_hardware_use = element->GetText();
-
-            try
-            {
-                set_hardware_use(new_hardware_use);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
+            set_hardware_use(new_hardware_use);
+        }
+        catch(const invalid_argument& e)
+        {
+            cerr << e.what() << endl;
         }
     }
+
 }
 
 

@@ -205,7 +205,7 @@ Tensor<string, 1> ScalingLayer::write_scalers() const
                    << "Tensor<string, 1> write_scalers() const method.\n"
                    << "Unknown " << i << " scaling method.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -230,7 +230,7 @@ Tensor<string, 1> ScalingLayer::write_scalers_text() const
                << "Tensor<string, 1> write_scalers() const method.\n"
                << "Neurons number must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -267,7 +267,7 @@ Tensor<string, 1> ScalingLayer::write_scalers_text() const
                    << "Tensor<string, 1> write_scalers_text() const method.\n"
                    << "Unknown " << i << " scaling method.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -439,7 +439,7 @@ void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descripti
                << "void set_descriptives(const Tensor<Descriptives, 1>&) method.\n"
                << "Size of descriptives (" << new_descriptives_size << ") is not equal to number of scaling neurons (" << neurons_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -515,7 +515,7 @@ void ScalingLayer::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
                << "void set_scalers(const Tensor<Scaler, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -542,7 +542,7 @@ void ScalingLayer::set_scalers(const Tensor<string, 1>& new_scaling_methods_stri
                << "void set_scalers(const Tensor<string, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -579,7 +579,7 @@ void ScalingLayer::set_scalers(const Tensor<string, 1>& new_scaling_methods_stri
                    << "void set_scalers(const Tensor<string, 1>&) method.\n"
                    << "Unknown scaling method: " << new_scaling_methods_string[i] << ".\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -605,7 +605,7 @@ void ScalingLayer::set_scalers(const string& new_scaling_methods_string)
                << "void set_scalers(const Tensor<string, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ")must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -642,7 +642,7 @@ void ScalingLayer::set_scalers(const string& new_scaling_methods_string)
                    << "void set_scalers(const Tensor<string, 1>&) method.\n"
                    << "Unknown scaling method: " << new_scaling_methods_string[i] << ".\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -714,7 +714,7 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
                << "void check_range(const Tensor<type, 1>&) const method.\n"
                << "Size of inputs must be equal to number of inputs.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -764,7 +764,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                    << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                    << "Size of inputs (" << columns_number << ") must be equal to number of scaling neurons (" << neurons_number << ").\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
 #endif
@@ -830,7 +830,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                            << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                            << "Unknown scaling method.\n";
 
-                    throw logic_error(buffer.str());
+                    throw invalid_argument(buffer.str());
                 }
             }
         }
@@ -858,7 +858,7 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
                    << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                    << "Size of inputs (" << columns_number << ") must be equal to number of scaling neurons (" << neurons_number << ").\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
 #endif
@@ -915,7 +915,7 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
                            << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                            << "Unknown scaling method.\n";
 
-                    throw logic_error(buffer.str());
+                    throw invalid_argument(buffer.str());
                 }
             }
         }
@@ -1045,7 +1045,7 @@ string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, con
                    << "string write_expression() const method.\n"
                    << "Unknown inputs scaling method.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -1114,7 +1114,7 @@ string ScalingLayer::write_expression_c() const
                    << "string write_expression() const method.\n"
                    << "Unknown inputs scaling method.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -1174,7 +1174,7 @@ string ScalingLayer::write_expression_python() const
                    << "string write_expression() const method.\n"
                    << "Unknown inputs scaling method.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
     }
 
@@ -1301,7 +1301,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Scaling layer element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Scaling neurons number
@@ -1314,7 +1314,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Scaling neurons number element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index neurons_number = static_cast<Index>(atoi(neurons_number_element->GetText()));
@@ -1336,7 +1336,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Scaling neuron " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         scaling_neuron_element->QueryUnsignedAttribute("Index", &index);
@@ -1347,7 +1347,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Index " << index << " is not correct.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         // Minimum
@@ -1360,7 +1360,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Minimum element " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(minimum_element->GetText())
@@ -1378,7 +1378,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Maximum element " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(maximum_element->GetText())
@@ -1396,7 +1396,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Mean element " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(mean_element->GetText())
@@ -1414,7 +1414,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Standard deviation element " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         if(standard_deviation_element->GetText())
@@ -1432,7 +1432,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Scaling method element " << i+1 << " is nullptr.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
 
         string new_method = scaling_method_element->GetText();
@@ -1475,7 +1475,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display_string != "0");
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }

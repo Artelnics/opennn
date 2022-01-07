@@ -175,7 +175,7 @@ void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
         buffer << "OpenNN Exception: MeanSquaredError class.\n"
                << "Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
     }
 }
@@ -263,7 +263,7 @@ void SumSquaredError::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Sum squared element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 

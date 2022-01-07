@@ -151,7 +151,7 @@ public:
                      << "U is less than A:\n"
                      << struct_to_string();
 
-              throw logic_error(buffer.str());
+              throw invalid_argument(buffer.str());
            }
 
            if(U.first > B.first)
@@ -161,7 +161,7 @@ public:
                      << "U is greater than A:\n"
                      << struct_to_string();
 
-              throw logic_error(buffer.str());
+              throw invalid_argument(buffer.str());
            }
 
            if(U.second >= A.second)
@@ -171,7 +171,7 @@ public:
                      << "fU is equal or greater than fA:\n"
                      << struct_to_string();
 
-              throw logic_error(buffer.str());
+              throw invalid_argument(buffer.str());
            }
 
            if(U.second >= B.second)
@@ -181,7 +181,7 @@ public:
                      << "fU is equal or greater than fB:\n"
                      << struct_to_string();
 
-              throw logic_error(buffer.str());
+              throw invalid_argument(buffer.str());
            }
        }
 

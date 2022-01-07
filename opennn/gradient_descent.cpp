@@ -153,7 +153,7 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
                << "void set_maximum_epochs_number(const type&) method.\n"
                << "Maximum epochs number must be equal or greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -206,7 +206,7 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -233,7 +233,7 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
                << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
                << "Loss index pointer is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -249,7 +249,7 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
                << "Size of gradient(" << gradient_size
                << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -273,7 +273,7 @@ void GradientDescent::update_parameters(
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
 
     if(is_zero(optimization_data.training_direction)) return;
-        //throw logic_error("Training direction is zero");
+        //throw invalid_argument("Training direction is zero");
 
     // Get initial learning_rate
 
@@ -699,7 +699,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Gradient descent element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Learning rate algorithm
@@ -733,7 +733,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_minimum_loss_decrease(new_minimum_loss_decrease);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -752,7 +752,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_loss_goal(new_loss_goal);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -771,7 +771,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_selection_failures(new_maximum_selection_failures);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -790,7 +790,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -809,7 +809,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -827,7 +827,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }

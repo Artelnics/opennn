@@ -173,7 +173,7 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
              << "void save_csv(const Tensor<type,2>&, const string&) method." << endl
              << "Cannot open matrix data file: " << filename << endl;
 
-      throw logic_error(buffer.str());
+      throw invalid_argument(buffer.str());
     }
 
     file.precision(20);
@@ -296,7 +296,7 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
 
 //        buffer << "OpenNN Exception: l2 norm of vector is not a number" << endl;
 
-//        throw logic_error(buffer.str());
+//        throw invalid_argument(buffer.str());
     }
 
     return norm(0);
@@ -424,7 +424,7 @@ void check_size(const Tensor<type, 1>& vector, const Index& size, const string& 
         buffer << "OpenNN Exception: " << log
                << "Size of vector is " << vector.size() << ", but must be " << size << ".";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -438,7 +438,7 @@ void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, c
         buffer << "OpenNN Exception: " << log
                << "Number of rows in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << ".";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(matrix.dimension(1) != columns_number)
@@ -448,7 +448,7 @@ void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, c
         buffer << "OpenNN Exception: " << log
                << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << ".";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -462,7 +462,7 @@ void check_columns_number(const Tensor<type, 2>& matrix, const Index& columns_nu
         buffer << "OpenNN Exception: " << log
                << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << ".";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 

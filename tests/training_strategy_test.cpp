@@ -117,7 +117,7 @@ void TrainingStrategyTest::test_from_XML()
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     training_strategy.from_XML(document);

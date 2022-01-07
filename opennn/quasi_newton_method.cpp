@@ -87,7 +87,7 @@ string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
            << "string write_inverse_hessian_approximation_method() const method.\n"
            << "Unknown inverse hessian approximation method.\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -186,7 +186,7 @@ void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& n
                << "void set_inverse_hessian_approximation_method(const string&) method.\n"
                << "Unknown inverse hessian approximation method: " << new_inverse_hessian_approximation_method_name << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -276,7 +276,7 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
                << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be equal or greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -326,7 +326,7 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
            "const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
            << "Unknown inverse hessian approximation method.\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -962,7 +962,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Quasi-Newton method element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Inverse hessian approximation method
@@ -977,7 +977,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_inverse_hessian_approximation_method(new_inverse_hessian_approximation_method);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1013,7 +1013,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_minimum_loss_decrease(new_minimum_loss_decrease);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1032,7 +1032,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_loss_goal(new_loss_goal);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1051,7 +1051,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_selection_failures(new_maximum_selection_failures);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1070,7 +1070,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1089,7 +1089,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1108,7 +1108,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_hardware_use(new_hardware_use);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }

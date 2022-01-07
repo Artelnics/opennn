@@ -79,7 +79,7 @@ public:
                     << "NeuralNetwork* get_neural_network_pointer() const method.\n"
                     << "Neural network pointer is nullptr.\n";
 
-             throw logic_error(buffer.str());
+             throw invalid_argument(buffer.str());
         }
 
         #endif
@@ -101,7 +101,7 @@ public:
                     << "DataSet* get_data_set_pointer() const method.\n"
                     << "DataSet pointer is nullptr.\n";
 
-             throw logic_error(buffer.str());
+             throw invalid_argument(buffer.str());
         }
 
         #endif

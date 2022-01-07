@@ -116,7 +116,7 @@ string ProbabilisticLayer::write_activation_function() const
                << "string write_activation_function() const method.\n"
                << "Unknown probabilistic method.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -150,7 +150,7 @@ string ProbabilisticLayer::write_activation_function_text() const
                << "string write_activation_function_text() const method.\n"
                << "Unknown probabilistic method.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -344,7 +344,7 @@ void ProbabilisticLayer::set_decision_threshold(const type& new_decision_thresho
                << "void set_decision_threshold(const type&) method.\n"
                << "Decision threshold(" << decision_threshold << ") must be greater than zero.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
     else if(new_decision_threshold >= 1)
     {
@@ -354,7 +354,7 @@ void ProbabilisticLayer::set_decision_threshold(const type& new_decision_thresho
                << "void set_decision_threshold(const type&) method.\n"
                << "Decision threshold(" << decision_threshold << ") must be less than one.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -410,7 +410,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
                << "void set_activation_function(const ActivationFunction&) method.\n"
                << "Activation function cannot be Competitive when the number of neurons is 1.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(neurons_number == 1 && new_activation_function == ActivationFunction::Softmax)
@@ -421,7 +421,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
                << "void set_activation_function(const ActivationFunction&) method.\n"
                << "Activation function cannot be Softmax when the number of neurons is 1.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(neurons_number != 1 && new_activation_function == ActivationFunction::Binary)
@@ -432,7 +432,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
                << "void set_activation_function(const ActivationFunction&) method.\n"
                << "Activation function cannot be Binary when the number of neurons is greater than 1.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(neurons_number != 1 && new_activation_function == ActivationFunction::Logistic)
@@ -443,7 +443,7 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
                << "void set_activation_function(const ActivationFunction&) method.\n"
                << "Activation function cannot be Logistic when the number of neurons is greater than 1.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -482,7 +482,7 @@ void ProbabilisticLayer::set_activation_function(const string& new_activation_fu
                << "void set_activation_function(const string&) method.\n"
                << "Unknown probabilistic method: " << new_activation_function << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 }
 
@@ -605,7 +605,7 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
                << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Dimensions of combinations (" << dimensions_number << ") must be 2.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     const Index neurons_number = get_neurons_number();
@@ -620,7 +620,7 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
                << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
                << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -642,7 +642,7 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
            << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
            << "Unknown probabilistic method.\n";
 
-    throw logic_error(buffer.str());
+    throw invalid_argument(buffer.str());
 }
 
 
@@ -665,7 +665,7 @@ void ProbabilisticLayer::calculate_activations_derivatives(const Tensor<type, 2>
                << "Number of combinations columns (" << combinations_columns_number
                << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -732,7 +732,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
                << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs ("
                << inputs_number << ").\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -1015,7 +1015,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Probabilistic layer element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     // Inputs number
@@ -1028,7 +1028,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Inputs number element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     Index new_inputs_number;
@@ -1048,7 +1048,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Neurons number element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     Index new_neurons_number;
@@ -1070,7 +1070,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Activation function element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(activation_function_element->GetText())
@@ -1088,7 +1088,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Parameters element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(parameters_element->GetText())
@@ -1108,7 +1108,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Decision threshold element is nullptr.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     if(decision_threshold_element->GetText())
@@ -1128,7 +1128,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_display(new_display_string != "0");
         }
-        catch(const logic_error& e)
+        catch(const invalid_argument& e)
         {
             cerr << e.what() << endl;
         }
