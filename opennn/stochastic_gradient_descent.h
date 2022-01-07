@@ -98,8 +98,7 @@ public:
 
    // Training methods
 
-   void update_parameters(LossIndexBackPropagation& back_propagation,
-                         StochasticGradientDescentData& optimization_data);
+   void update_parameters(LossIndexBackPropagation& , StochasticGradientDescentData&);
 
    TrainingResults perform_training();
 

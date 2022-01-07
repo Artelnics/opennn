@@ -222,17 +222,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     // Biases
 
-//    memcpy(parameters.data(),
-//           forget_biases.data(),
-//           static_cast<size_t>(forget_biases.size())*sizeof(type));
-
     copy(forget_biases.data(),
          forget_biases.data() + forget_biases.size(),
          parameters.data());
-
-//    memcpy(parameters.data() + current_position,
-//           input_biases.data(),
-//           static_cast<size_t>(input_biases.size())*sizeof(type));
 
     copy(input_biases.data(),
          input_biases.data() + input_biases.size(),
@@ -240,19 +232,11 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     current_position += input_biases.size();
 
-//    memcpy(parameters.data() + current_position,
-//           state_biases.data(),
-//           static_cast<size_t>(state_biases.size())*sizeof(type));
-
     copy(state_biases.data(),
          state_biases.data() + state_biases.size(),
          parameters.data() + current_position);
 
     current_position += state_biases.size();
-
-//    memcpy(parameters.data() + current_position,
-//           output_biases.data(),
-//           static_cast<size_t>(output_biases.size())*sizeof(type));
 
     copy(output_biases.data(),
          output_biases.data() + output_biases.size(),
@@ -262,19 +246,11 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     // Weights
 
-//    memcpy(parameters.data() + current_position,
-//           forget_weights.data(),
-//           static_cast<size_t>(forget_weights.size())*sizeof(type));
-
     copy(forget_weights.data(),
          forget_weights.data() + forget_weights.size(),
          parameters.data() + current_position);
 
     current_position += forget_weights.size();
-
-//    memcpy(parameters.data() + current_position,
-//           input_weights.data(),
-//           static_cast<size_t>(input_weights.size())*sizeof(type));
 
     copy(input_weights.data(),
          input_weights.data() + input_weights.size(),
@@ -282,19 +258,11 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     current_position += input_weights.size();
 
-//    memcpy(parameters.data() + current_position,
-//           state_weights.data(),
-//           static_cast<size_t>(state_weights.size())*sizeof(type));
-
     copy(state_weights.data(),
          state_weights.data() + state_weights.size(),
          parameters.data() + current_position);
 
     current_position += state_weights.size();
-
-//    memcpy(parameters.data() + current_position,
-//           output_weights.data(),
-//           static_cast<size_t>(output_weights.size())*sizeof(type));
 
     copy(output_weights.data(),
          output_weights.data() + output_weights.size(),
@@ -304,19 +272,11 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     // Recurrent weights
 
-//    memcpy(parameters.data() + current_position,
-//           forget_recurrent_weights.data(),
-//           static_cast<size_t>(forget_recurrent_weights.size())*sizeof(type));
-
     copy(forget_recurrent_weights.data(),
          forget_recurrent_weights.data() + forget_recurrent_weights.size(),
          parameters.data() + current_position);
 
     current_position += forget_recurrent_weights.size();
-
-//    memcpy(parameters.data() + current_position,
-//           input_recurrent_weights.data(),
-//           static_cast<size_t>(input_recurrent_weights.size())*sizeof(type));
 
     copy(input_recurrent_weights.data(),
          input_recurrent_weights.data() + input_recurrent_weights.size(),
@@ -324,19 +284,11 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     current_position += input_recurrent_weights.size();
 
-//    memcpy(parameters.data() + current_position,
-//           state_recurrent_weights.data(),
-//           static_cast<size_t>(state_recurrent_weights.size())*sizeof(type));
-
     copy(state_recurrent_weights.data(),
          state_recurrent_weights.data() + state_recurrent_weights.size(),
          parameters.data() + current_position);
 
     current_position += state_recurrent_weights.size();
-
-//    memcpy(parameters.data() + current_position,
-//           output_recurrent_weights.data(),
-//           static_cast<size_t>(output_recurrent_weights.size())*sizeof(type));
 
     copy(output_recurrent_weights.data(),
          output_recurrent_weights.data() + output_recurrent_weights.size(),
@@ -704,19 +656,11 @@ check_size(new_parameters, get_parameters_number(), LOG);
 
     Index size = neurons_number;
 
-//    memcpy(forget_biases.data(),
-//           new_parameters.data() + current_index,
-//           static_cast<size_t>(size)*sizeof(type));
-
     copy(new_parameters.data() + current_index,
          new_parameters.data() + current_index + size,
          forget_biases.data());
 
     current_index += size;
-
-//    memcpy(input_biases.data(),
-//           new_parameters.data() + current_index,
-//           static_cast<size_t>(size)*sizeof(type));
 
     copy(new_parameters.data() + current_index,
          new_parameters.data() + current_index + size,
@@ -724,19 +668,11 @@ check_size(new_parameters, get_parameters_number(), LOG);
 
     current_index += size;
 
-//    memcpy(state_biases.data(),
-//           new_parameters.data() + current_index,
-//           static_cast<size_t>(size)*sizeof(type));
-
     copy(new_parameters.data() + current_index,
          new_parameters.data() + current_index + size,
          state_biases.data());
 
     current_index += size;
-
-//    memcpy(output_biases.data(),
-//           new_parameters.data() + current_index,
-//           static_cast<size_t>(size)*sizeof(type));
 
     copy(new_parameters.data() + current_index,
          new_parameters.data() + current_index + size,
@@ -748,27 +684,27 @@ check_size(new_parameters, get_parameters_number(), LOG);
 
     size = inputs_number*neurons_number;
 
-    memcpy(forget_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
+    copy(new_parameters.data() + current_index,
+         new_parameters.data() + current_index + size,
+         forget_weights.data());
 
     current_index += size;
 
-    memcpy(input_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
+    copy(new_parameters.data() + current_index,
+         new_parameters.data() + current_index + size,
+         input_weights.data());
 
     current_index += size;
 
-    memcpy(state_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
+    copy(new_parameters.data() + current_index,
+         new_parameters.data() + current_index + size,
+         state_weights.data());
 
     current_index += size;
 
-    memcpy(output_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
+    copy(new_parameters.data() + current_index,
+         new_parameters.data() + current_index + size,
+         output_weights.data());
 
     current_index += size;
 
@@ -776,27 +712,27 @@ check_size(new_parameters, get_parameters_number(), LOG);
 
     size = neurons_number*neurons_number;
 
-    memcpy(forget_recurrent_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
+    copy(new_parameters.data() + current_index,
+         new_parameters.data() + current_index + size,
+         forget_recurrent_weights.data());
 
     current_index += size;
 
-    memcpy(input_recurrent_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
+    copy(new_parameters.data() + current_index,
+         new_parameters.data() + current_index + size,
+         input_recurrent_weights.data());
 
     current_index += size;
 
-    memcpy(state_recurrent_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
+    copy(new_parameters.data() + current_index,
+         new_parameters.data() + current_index + size,
+         state_recurrent_weights.data());
 
     current_index += size;
 
-    memcpy(output_recurrent_weights.data(),
-           new_parameters.data() + current_index,
-           static_cast<size_t>(size)*sizeof(type));
+    copy(new_parameters.data() + current_index,
+         new_parameters.data() + current_index + size,
+         output_recurrent_weights.data());
 
     current_index += size;
 }
@@ -1930,59 +1866,61 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2>&inputs, L
 
         // Forget (activations and activations derivatives)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->forget_activations.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_forget_activations.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_forget_activations.data(),
+             long_short_term_memory_layer_forward_propagation->current_forget_activations.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->forget_activations.data() + copy_index);
 
-        memcpy(long_short_term_memory_layer_forward_propagation->forget_activations_derivatives.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives.data(),
+             long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->forget_activations_derivatives.data() + copy_index);
 
         // Input (activations and activations derivatives)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->input_activations.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_input_activations.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_input_activations.data(),
+             long_short_term_memory_layer_forward_propagation->current_input_activations.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->input_activations.data() + copy_index);
 
-        memcpy(long_short_term_memory_layer_forward_propagation->input_activations_derivatives.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_input_activations_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_input_activations_derivatives.data(),
+             long_short_term_memory_layer_forward_propagation->current_input_activations_derivatives.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->input_activations_derivatives.data() + copy_index);
 
         // State (activations and activations derivatives)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->state_activations.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_state_activations.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_state_activations.data(),
+             long_short_term_memory_layer_forward_propagation->current_state_activations.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->state_activations.data() + copy_index);
 
-        memcpy(long_short_term_memory_layer_forward_propagation->state_activations_derivatives.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_state_activations_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_state_activations_derivatives.data(),
+             long_short_term_memory_layer_forward_propagation->current_state_activations_derivatives.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->state_activations_derivatives.data() + copy_index);
 
         // Output (activations and activations derivatives)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->output_activations.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_output_activations.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_output_activations.data(),
+             long_short_term_memory_layer_forward_propagation->current_output_activations.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->output_activations.data() + copy_index);
 
-        memcpy(long_short_term_memory_layer_forward_propagation->output_activations_derivatives.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_output_activations_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_output_activations_derivatives.data(),
+             long_short_term_memory_layer_forward_propagation->current_output_activations_derivatives.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->output_activations_derivatives.data() + copy_index);
 
         // Cell states (activations)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->cell_states_activations.data() + copy_index,
-               cell_states.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(cell_states.data(),
+             cell_states.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->cell_states_activations.data() + copy_index);
 
         // Hidden states (activations and activations derivatives)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->hidden_states_activations.data() + copy_index,
-               hidden_states.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(hidden_states.data(),
+             hidden_states.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->hidden_states_activations.data() + copy_index);
 
-        memcpy(long_short_term_memory_layer_forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data(),
+             long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->hidden_states_activations_derivatives.data() + copy_index);
+
+
 
         copy_index += neurons_number;
     }
@@ -2068,59 +2006,59 @@ void LongShortTermMemoryLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
         // Forget (activations and activations derivatives)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->forget_activations.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_forget_activations.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_forget_activations.data(),
+             long_short_term_memory_layer_forward_propagation->current_forget_activations.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->forget_activations.data() + copy_index);
 
-        memcpy(long_short_term_memory_layer_forward_propagation->forget_activations_derivatives.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives.data(),
+             long_short_term_memory_layer_forward_propagation->current_forget_activations_derivatives.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->forget_activations_derivatives.data() + copy_index);
 
         // Input (activations and activations derivatives)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->input_activations.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_input_activations.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_input_activations.data(),
+             long_short_term_memory_layer_forward_propagation->current_input_activations.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->input_activations.data() + copy_index);
 
-        memcpy(long_short_term_memory_layer_forward_propagation->input_activations_derivatives.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_input_activations_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_input_activations_derivatives.data(),
+             long_short_term_memory_layer_forward_propagation->current_input_activations_derivatives.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->input_activations_derivatives.data() + copy_index);
 
         // State (activations and activations derivatives)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->state_activations.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_state_activations.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_state_activations.data(),
+             long_short_term_memory_layer_forward_propagation->current_state_activations.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->state_activations.data() + copy_index);
 
-        memcpy(long_short_term_memory_layer_forward_propagation->state_activations_derivatives.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_state_activations_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_state_activations_derivatives.data(),
+             long_short_term_memory_layer_forward_propagation->current_state_activations_derivatives.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->state_activations_derivatives.data() + copy_index);
 
         // Output (activations and activations derivatives)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->output_activations.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_output_activations.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_output_activations.data(),
+             long_short_term_memory_layer_forward_propagation->current_output_activations.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->output_activations.data() + copy_index);
 
-        memcpy(long_short_term_memory_layer_forward_propagation->output_activations_derivatives.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_output_activations_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_output_activations_derivatives.data(),
+             long_short_term_memory_layer_forward_propagation->current_output_activations_derivatives.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->output_activations_derivatives.data() + copy_index);
 
         // Cell states (activations)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->cell_states_activations.data() + copy_index,
-               cell_states.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(cell_states.data(),
+             cell_states.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->cell_states_activations.data() + copy_index);
 
         // Hidden states (activations and activations derivatives)
 
-        memcpy(long_short_term_memory_layer_forward_propagation->hidden_states_activations.data() + copy_index,
-               hidden_states.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(hidden_states.data(),
+             hidden_states.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->hidden_states_activations.data() + copy_index);
 
-        memcpy(long_short_term_memory_layer_forward_propagation->hidden_states_activations_derivatives.data() + copy_index,
-               long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data(),
-               static_cast<size_t>(neurons_number)*sizeof(type));
+        copy(long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data(),
+             long_short_term_memory_layer_forward_propagation->current_hidden_states_derivatives.data() + neurons_number,
+             long_short_term_memory_layer_forward_propagation->hidden_states_activations_derivatives.data() + copy_index);
 
         copy_index += neurons_number;
     }
@@ -2139,57 +2077,57 @@ void LongShortTermMemoryLayer::insert_gradient(LayerBackPropagation* back_propag
 
     // Biases
 
-    memcpy(gradient.data() + index,
-           long_short_term_memory_layer_back_propagation->forget_biases_derivatives.data(),
-           static_cast<size_t>(neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->forget_biases_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->forget_biases_derivatives.data() + neurons_number,
+         gradient.data() + index);
 
-    memcpy(gradient.data() + index + neurons_number,
-           long_short_term_memory_layer_back_propagation->input_biases_derivatives.data(),
-           static_cast<size_t>(neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->input_biases_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->input_biases_derivatives.data() + neurons_number,
+         gradient.data() + index + neurons_number);
 
-    memcpy(gradient.data() + index + 2*neurons_number,
-           long_short_term_memory_layer_back_propagation->state_biases_derivatives.data(),
-           static_cast<size_t>(neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->state_biases_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->state_biases_derivatives.data() + neurons_number,
+         gradient.data() + index + 2*neurons_number);
 
-    memcpy(gradient.data() + index + 3*neurons_number,
-           long_short_term_memory_layer_back_propagation->output_biases_derivatives.data(),
-           static_cast<size_t>(neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->output_biases_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->output_biases_derivatives.data() + neurons_number,
+         gradient.data() + index + 3*neurons_number);
 
     // Weights
 
-    memcpy(gradient.data() + index + 4*neurons_number,
-           long_short_term_memory_layer_back_propagation->forget_weights_derivatives.data(),
-           static_cast<size_t>(inputs_number*neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->forget_weights_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->forget_weights_derivatives.data() + inputs_number*neurons_number,
+         gradient.data() + index + 4*neurons_number);
 
-    memcpy(gradient.data() + index + 4*neurons_number + inputs_number*neurons_number,
-           long_short_term_memory_layer_back_propagation->input_weights_derivatives.data(),
-           static_cast<size_t>(inputs_number*neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->input_weights_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->input_weights_derivatives.data() + inputs_number*neurons_number,
+         gradient.data() + index + 4*neurons_number + inputs_number*neurons_number);
 
-    memcpy(gradient.data() + index + 4*neurons_number + 2*inputs_number*neurons_number,
-           long_short_term_memory_layer_back_propagation->state_weights_derivatives.data(),
-           static_cast<size_t>(inputs_number*neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->state_weights_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->state_weights_derivatives.data() + inputs_number*neurons_number,
+         gradient.data() + index + 4*neurons_number + 2*inputs_number*neurons_number);
 
-    memcpy(gradient.data() + index + 4*neurons_number + 3*inputs_number*neurons_number,
-           long_short_term_memory_layer_back_propagation->output_weights_derivatives.data(),
-           static_cast<size_t>(inputs_number*neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->output_weights_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->output_weights_derivatives.data() + inputs_number*neurons_number,
+         gradient.data() + index + 4*neurons_number + 3*inputs_number*neurons_number);
 
     // Recurrent weights
 
-    memcpy(gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number,
-           long_short_term_memory_layer_back_propagation->forget_recurrent_weights_derivatives.data(),
-           static_cast<size_t>(neurons_number*neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->forget_recurrent_weights_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->forget_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
+         gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number);
 
-    memcpy(gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number + neurons_number*neurons_number,
-           long_short_term_memory_layer_back_propagation->input_recurrent_weights_derivatives.data(),
-           static_cast<size_t>(neurons_number*neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->input_recurrent_weights_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->input_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
+         gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number + neurons_number*neurons_number);
 
-    memcpy(gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number + 2*neurons_number*neurons_number,
-           long_short_term_memory_layer_back_propagation->state_recurrent_weights_derivatives.data(),
-           static_cast<size_t>(neurons_number*neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->state_recurrent_weights_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->state_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
+         gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number + 2*neurons_number*neurons_number);
 
-    memcpy(gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number + 3*neurons_number*neurons_number,
-           long_short_term_memory_layer_back_propagation->output_recurrent_weights_derivatives.data(),
-           static_cast<size_t>(neurons_number*neurons_number)*sizeof(type));
+    copy(long_short_term_memory_layer_back_propagation->output_recurrent_weights_derivatives.data(),
+         long_short_term_memory_layer_back_propagation->output_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
+         gradient.data() + index + 4*neurons_number + 4*inputs_number*neurons_number + 3*neurons_number*neurons_number);
 }
 
 
