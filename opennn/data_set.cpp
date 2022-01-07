@@ -9925,14 +9925,17 @@ vector<unsigned char> DataSet::read_bmp_image(const string& filename)
 
 size_t DataSet::number_of_elements_in_directory(fs::path path)
 {
+    /* Not working in linux
     using fs::directory_iterator;
 
     return distance(directory_iterator(path), directory_iterator{});
+    */
 }
 
 
 void DataSet::read_bmp()
 {
+    /*
     const fs::path path = data_file_name;
 
     if(data_file_name.empty())
@@ -9945,18 +9948,18 @@ void DataSet::read_bmp()
 
         throw invalid_argument(buffer.str());
     }
-/*
-    if(data_file_name.)
-    {
-        ostringstream buffer;
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_bmp() method.\n"
-               << "Data file name does not exist.\n";
+//    if(data_file_name.)
+//    {
+//        ostringstream buffer;
 
-        throw invalid_argument(buffer.str());
-    }
-*/
+//        buffer << "OpenNN Exception: DataSet class.\n"
+//               << "void read_bmp() method.\n"
+//               << "Data file name does not exist.\n";
+
+//        throw invalid_argument(buffer.str());
+//    }
+
 
     has_columns_names = true;
     has_rows_labels = true;
@@ -9984,11 +9987,11 @@ void DataSet::read_bmp()
     {
         images_number += number_of_elements_in_directory(folder_paths[i]);
 
-        /*if(i == 0)
-        {
-            image = read_bmp("");
+//        if(i == 0)
+//        {
+//            image = read_bmp("");
 
-        }*/
+//        }
     }
 
 
@@ -10081,6 +10084,7 @@ void DataSet::read_bmp()
     input_variables_dimensions(0) = channels;
     input_variables_dimensions(1) = width;
     input_variables_dimensions(2) = height;
+    */
 }
 
 
