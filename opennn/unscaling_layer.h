@@ -27,7 +27,7 @@
 #include "opennn_strings.h"
 
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents a layer of unscaling neurons.

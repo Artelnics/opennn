@@ -8,7 +8,7 @@
 
 #include "scaling.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 void scale_minimum_maximum_binary(Tensor<type, 2>& matrix,
@@ -134,9 +134,9 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 
     Tensor<type, 2> scaled_x(rows_number, columns_number);
 
-    const Tensor<type, 1> columns_minimums = OpenNN::columns_minimums(x);
+    const Tensor<type, 1> columns_minimums = opennn::columns_minimums(x);
 
-    const Tensor<type, 1> columns_maximums = OpenNN::columns_maximums(x);
+    const Tensor<type, 1> columns_maximums = opennn::columns_maximums(x);
 
     const type min_range = type(-1);
     const type max_range = type(1);

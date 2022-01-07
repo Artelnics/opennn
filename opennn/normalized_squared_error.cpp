@@ -8,7 +8,7 @@
 
 #include "normalized_squared_error.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

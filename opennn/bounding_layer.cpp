@@ -8,7 +8,7 @@
 
 #include "bounding_layer.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

@@ -8,7 +8,7 @@
 
 #include "neural_network.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

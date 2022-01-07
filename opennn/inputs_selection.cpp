@@ -8,7 +8,7 @@
 
 #include "inputs_selection.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

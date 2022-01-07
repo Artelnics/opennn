@@ -25,7 +25,7 @@
 #include "layer.h"
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct ConvolutionalLayerForwardPropagation;

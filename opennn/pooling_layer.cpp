@@ -8,7 +8,7 @@
 
 #include "pooling_layer.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.
@@ -319,12 +319,12 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
 {
         switch(next_layer_pointer->get_pooling_method())
         {
-            case OpenNN::PoolingLayer::PoolingMethod::NoPooling:
+            case opennn::PoolingLayer::PoolingMethod::NoPooling:
             {
                 return next_layer_delta;
             }
 
-            case OpenNN::PoolingLayer::PoolingMethod::AveragePooling:
+            case opennn::PoolingLayer::PoolingMethod::AveragePooling:
             {
                 // Current layer's values
 
@@ -380,7 +380,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
 //                return hidden_delta/(next_layers_pool_rows*next_layers_pool_columns);
             }
 
-            case OpenNN::PoolingLayer::PoolingMethod::MaxPooling:
+            case opennn::PoolingLayer::PoolingMethod::MaxPooling:
             {
                 // Current layer's values
 

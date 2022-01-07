@@ -371,7 +371,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
     inputs(1,1,1,1) = type(2.222f);
 
     activations_4d.resize(2,2,2,2);
-    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::ActivationFunction::Threshold);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::Threshold);
     convolutional_layer.calculate_activations(inputs, activations_4d);
 
     assert_true(activations_4d(0,0,0,0) - type(0) < type(NUMERIC_LIMITS_MIN) &&
@@ -392,7 +392,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
                 activations_4d(1,1,1,1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
 
-    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::ActivationFunction::SymmetricThreshold);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::SymmetricThreshold);
 
     convolutional_layer.calculate_activations(inputs, activations_4d);
 
@@ -417,7 +417,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     // Test
 
-    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
     convolutional_layer.calculate_activations(inputs, activations_4d);
 
     assert_true(abs(activations_4d(0,0,0,0) - type(-0.804416f)) < type(NUMERIC_LIMITS_MIN) &&
@@ -439,7 +439,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     // Test
 
-    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
     convolutional_layer.calculate_activations(inputs, activations_4d);
 
     assert_true(activations_4d(0,0,0,0) - type(0) <type(NUMERIC_LIMITS_MIN),LOG);
@@ -498,7 +498,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
     inputs(1,1,1,0) = type(2.221f);
     inputs(1,1,1,1) = type(2.222f);
 
-    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::ActivationFunction::Threshold);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::Threshold);
 
     convolutional_layer.calculate_activations_derivatives(inputs,
                                                           activations,
@@ -540,7 +540,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
     inputs(1,1,1,0) = type(2.221f);
     inputs(1,1,1,1) = type(2.222f);
 
-    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::ActivationFunction::SymmetricThreshold);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::SymmetricThreshold);
 
     convolutional_layer.calculate_activations_derivatives(inputs,
                                                           activations,
@@ -565,7 +565,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
                 (activations_derivatives(1, 0, 1, 1) - result(1, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
                 (activations_derivatives(1, 1, 1, 1) - result(1, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN), LOG);
 
-    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
 
     convolutional_layer.calculate_activations_derivatives(inputs,
                                                           activations,
@@ -605,7 +605,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
                 abs(activations_derivatives(1,1,1,0) - result(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activations_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
 
     convolutional_layer.calculate_activations_derivatives(inputs,
                                                           activations,
@@ -646,7 +646,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
                 (activations_derivatives(1, 1, 1, 1) - result(1, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN), LOG);
 
 
-    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::ActivationFunction::SoftPlus);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::SoftPlus);
     convolutional_layer.calculate_activations_derivatives(inputs,
                                                           activations,
                                                           activations_derivatives);
@@ -908,7 +908,7 @@ void ConvolutionalLayerTest::test_insert_padding()
 
     convolutional_layer.set_row_stride(1);
     convolutional_layer.set_column_stride(1);
-    convolutional_layer.set_convolution_type(OpenNN::ConvolutionalLayer::ConvolutionType::Same);
+    convolutional_layer.set_convolution_type(opennn::ConvolutionalLayer::ConvolutionType::Same);
     convolutional_layer.set(inputs_dimensions, kernels_dimensions);
 
     convolutional_layer.insert_padding(inputs, padded);
@@ -966,7 +966,7 @@ void ConvolutionalLayerTest::test_insert_padding()
                 padded(6, 5, 0, 0) == type(0) &&
                 padded(6, 6, 0, 0) == type(0), LOG);
 
-    convolutional_layer.set_convolution_type(OpenNN::ConvolutionalLayer::ConvolutionType::Valid);
+    convolutional_layer.set_convolution_type(opennn::ConvolutionalLayer::ConvolutionType::Valid);
     convolutional_layer.set(inputs_dimensions, kernels_dimensions);
 
     convolutional_layer.insert_padding(inputs, padded);
@@ -1006,7 +1006,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
     kernels_dimensions.setValues({2, 3, 2, 2});
 
     convolutional_layer.set(inputs_dimensions, kernels_dimensions);
-    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
 
     inputs.setConstant(type(1));
     biases(0) = type(0);
@@ -1066,7 +1066,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
                 abs(forward_propagation.activations(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
                 forward_propagation.activations_derivatives(0, 0, 0, 0) == type(1), LOG);
 
-    convolutional_layer.set_activation_function(OpenNN::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
 
 //    convolutional_layer.forward_propagate(inputs, forward_propagation);
 

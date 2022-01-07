@@ -8,7 +8,7 @@
 
 #include "quasi_newton_method.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

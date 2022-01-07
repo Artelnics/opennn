@@ -8,7 +8,7 @@
 
 #include "layer.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 Layer::~Layer()

@@ -8,7 +8,7 @@
 
 #include "adaptive_moment_estimation.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

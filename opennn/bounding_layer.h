@@ -24,7 +24,7 @@
 
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents a layer of bounding neurons. 

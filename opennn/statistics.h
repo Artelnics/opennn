@@ -24,7 +24,7 @@
 using namespace std;
 using namespace Eigen;
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This structure contains the simplest Descriptives for a set, variable, etc. It includes :

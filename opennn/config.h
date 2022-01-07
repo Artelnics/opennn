@@ -47,7 +47,7 @@
 #define TOSTRING(x) STRING(x)
 #define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
 
-namespace OpenNN
+namespace opennn
 {
     typedef float type;
 }

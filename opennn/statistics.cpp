@@ -8,7 +8,7 @@
 
 #include "statistics.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.
@@ -1387,7 +1387,7 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
     }
 
 
-    const Tensor<type, 1> quartiles = OpenNN::quartiles(vector);
+    const Tensor<type, 1> quartiles = opennn::quartiles(vector);
 
     box_plot.minimum = minimum(vector);
     box_plot.first_quartile = quartiles(0);
@@ -1409,7 +1409,7 @@ BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
     if(vector.dimension(0) == 0 || indices.dimension(0) == 0) return box_plot;
 
-    const Tensor<type, 1> quartiles = OpenNN::quartiles(vector, indices);
+    const Tensor<type, 1> quartiles = opennn::quartiles(vector, indices);
 
     box_plot.minimum = minimum(vector, indices);
     box_plot.first_quartile = quartiles(0);
@@ -1796,7 +1796,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
     {
         column = matrix.chip(i,1);
 
-        descriptives(i) = OpenNN::descriptives(column);
+        descriptives(i) = opennn::descriptives(column);
     }
 
     return descriptives;
@@ -2118,7 +2118,7 @@ Index perform_distribution_distance_analysis(const Tensor<type, 1>& vector)
 
     sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
 
-    const Descriptives descriptives = OpenNN::descriptives(vector);
+    const Descriptives descriptives = opennn::descriptives(vector);
 
     const type mean = descriptives.mean;
     const type standard_deviation = descriptives.standard_deviation;
@@ -2709,7 +2709,7 @@ type normal_distribution_distance(const Tensor<type, 1>& vector)
     const Index n = vector.dimension(0);
 
     const type mean_value = mean(vector);
-    const type standard_deviation = OpenNN::standard_deviation(vector);
+    const type standard_deviation = opennn::standard_deviation(vector);
 
     type normal_distribution; // Normal distribution
     type empirical_distribution; // Empirical distribution
@@ -2756,7 +2756,7 @@ type half_normal_distribution_distance(const Tensor<type, 1>& vector)
 
     const Index n = vector.dimension(0);
 
-    const type standard_deviation = OpenNN::standard_deviation(vector);
+    const type standard_deviation = opennn::standard_deviation(vector);
 
     type half_normal_distribution; 
     type empirical_distribution; 
@@ -2852,7 +2852,7 @@ type normality_parameter(const Tensor<type, 1>& vector)
     const Index n = vector.dimension(0);
 
     const type mean_value = mean(vector);
-    const type standard_deviation = OpenNN::standard_deviation(vector);
+    const type standard_deviation = opennn::standard_deviation(vector);
 
     type normal_distribution;
     type empirical_distribution;
@@ -3136,7 +3136,7 @@ Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>& matrix, const In
 
     Tensor<Index, 2> maximal_columns_indices(maximum_number, columns_number);
 
-    Tensor<type, 1> columns_minimums = OpenNN::columns_minimums(matrix);
+    Tensor<type, 1> columns_minimums = opennn::columns_minimums(matrix);
 
     for(Index j = 0; j < columns_number; j++)
     {

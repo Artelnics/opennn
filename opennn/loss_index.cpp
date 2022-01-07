@@ -8,7 +8,7 @@
 
 #include "loss_index.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

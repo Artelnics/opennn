@@ -21,7 +21,7 @@
 using namespace std;
 using namespace Eigen;
 
-namespace OpenNN
+namespace opennn
 {
 
 void initialize_sequential(Tensor<type, 1>&);

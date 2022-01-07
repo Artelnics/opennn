@@ -31,7 +31,7 @@
 using namespace std;
 using namespace Eigen;
 
-namespace OpenNN {
+namespace opennn {
 
 class Layer;
 

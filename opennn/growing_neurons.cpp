@@ -8,7 +8,7 @@
 
 #include "growing_neurons.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

@@ -25,7 +25,7 @@
 #include "loss_index.h"
 #include "data_set.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents the sum squared peformance term functional. 

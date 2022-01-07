@@ -8,7 +8,7 @@
 
 #include "levenberg_marquardt_algorithm.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

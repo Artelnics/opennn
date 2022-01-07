@@ -25,7 +25,7 @@
 #include "scaling.h"
 #include "opennn_strings.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents a layer of scaling neurons.

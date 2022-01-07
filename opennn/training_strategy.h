@@ -40,7 +40,7 @@
 #include "adaptive_moment_estimation.h"
 
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents the concept of training strategy for a neural network in OpenNN.

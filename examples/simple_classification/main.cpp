@@ -19,7 +19,7 @@
 
 #include "../../opennn/opennn.h"
 
-using namespace OpenNN;
+using namespace opennn;
 
 int main()
 {

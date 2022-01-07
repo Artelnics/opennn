@@ -25,7 +25,7 @@
 using namespace std;
 using namespace Eigen;
 
-namespace OpenNN
+namespace opennn
 {
 /// Enumeration of the available methods for scaling and unscaling the data.
 

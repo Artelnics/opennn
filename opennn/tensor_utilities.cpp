@@ -11,7 +11,7 @@
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 
 
-namespace OpenNN
+namespace opennn
 {
 
 void initialize_sequential(Tensor<type, 1>& vector)

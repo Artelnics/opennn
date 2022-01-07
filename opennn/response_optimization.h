@@ -23,7 +23,7 @@
 #include "config.h"
 #include "neural_network.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct ResponseOptimizationResults;

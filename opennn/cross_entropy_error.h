@@ -21,7 +21,7 @@
 #include "data_set.h"
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents the cross-entropy error term, used for predicting probabilities.

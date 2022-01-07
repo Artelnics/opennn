@@ -8,7 +8,7 @@
 
 #include "stochastic_gradient_descent.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

@@ -23,7 +23,7 @@
 #include "config.h"
 #include "training_strategy.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct NeuronsSelectionResults;

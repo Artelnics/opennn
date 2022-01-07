@@ -8,7 +8,7 @@
 
 #include "perceptron_layer.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

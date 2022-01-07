@@ -28,7 +28,7 @@
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 struct ConjugateGradientData;
