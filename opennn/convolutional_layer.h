@@ -134,7 +134,7 @@ public:
 
     // Combinations
 
-    void calculate_convolutions(Tensor<type, 4>&, Tensor<type, 4>&);
+    void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void calculate_convolutions(const Tensor<type, 4>&,
                                 const Tensor<type, 2>&,
