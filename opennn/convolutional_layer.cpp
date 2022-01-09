@@ -79,7 +79,7 @@ bool ConvolutionalLayer::is_empty() const
 
 /// Calculate convolutions
 
-void ConvolutionalLayer::calculate_convolutions(Tensor<type, 4>& inputs, Tensor<type, 4> & combinations)
+void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4> & combinations) const
 {
 
     const Index images_number = inputs.dimension(3);
@@ -124,16 +124,19 @@ void ConvolutionalLayer::calculate_convolutions(Tensor<type, 4>& inputs, Tensor<
 
     const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
+    Tensor<type, 4> inputs_pointer = inputs;
+    Tensor<type, 4> synaptic_weights_pointer = synaptic_weights;
+
     #pragma omp parallel for
     for(int i =0; i<images_number ;i++)
     {
-        const TensorMap<Tensor<type, 3>> single_image(inputs.data()+i*next_image,
+        const TensorMap<Tensor<type, 3>> single_image(inputs_pointer.data()+i*next_image,
                                                       inputs.dimension(0),
                                                       inputs.dimension(1),
                                                       inputs.dimension(2));
         for(int j = 0; j<kernels_number; j++)
         {
-            const TensorMap<Tensor<type, 3>> single_kernel(synaptic_weights.data()+j*next_kernel,
+            const TensorMap<Tensor<type, 3>> single_kernel(synaptic_weights_pointer.data()+j*next_kernel,
                                                            synaptic_weights.dimension(0),
                                                            synaptic_weights.dimension(1),
                                                            synaptic_weights.dimension(2));
