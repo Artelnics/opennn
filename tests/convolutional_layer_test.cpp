@@ -272,19 +272,18 @@ void ConvolutionalLayerTest::test_calculate_combinations()
     const Index rows_kernel = 3;
     const Index cols_kernel = 3;
 
-    Tensor<type, 4> inputs(input_images, channels, rows_input, cols_input);
-    Tensor<type, 4> kernels(input_kernels, channels, rows_kernel, cols_kernel);
+    Tensor<type, 4> inputs(rows_input,cols_input,channels,input_images);
+    Tensor<type, 4> kernels(rows_kernel,cols_kernel,channels,input_kernels);
 
-    Tensor<type, 4> combinations(input_images,
+    Tensor<type, 4> combinations((rows_input - rows_kernel) + 1,
+                                 (cols_input - cols_kernel) + 1,
                                  input_kernels,
-                                 (rows_input - rows_kernel) + 1,
-                                 (cols_input - cols_kernel) + 1);
+                                 input_images);
 
     Tensor<type, 1> biases(channels);
 
     inputs.setConstant(type(1.));
     kernels.setConstant(type(1./12.));
-    combinations.setZero();
 
     biases(0) = type(0.);
     biases(1) = type(1.);
@@ -293,8 +292,8 @@ void ConvolutionalLayerTest::test_calculate_combinations()
     Tensor<Index, 1> new_inputs_dimension(4);
     Tensor<Index, 1> new_kernels_dimensions(4);
 
-    new_inputs_dimension.setValues({input_images, channels, rows_input, cols_input});
-    new_kernels_dimensions.setValues({input_kernels, channels, rows_kernel, cols_kernel});
+    new_inputs_dimension.setValues({rows_input, cols_input, channels,input_images});
+    new_kernels_dimensions.setValues({rows_kernel, cols_kernel,channels,input_kernels});
 
     ConvolutionalLayer convolutional_layer(new_inputs_dimension, new_kernels_dimensions);
 
@@ -304,19 +303,18 @@ void ConvolutionalLayerTest::test_calculate_combinations()
     convolutional_layer.calculate_convolutions(inputs, combinations);
 
     assert_true(abs(combinations(0, 0, 0, 0) - type(2.25)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 1, 0, 0) - type(3.25)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 2, 0, 0) - type(4.25)) < type(NUMERIC_LIMITS_MIN), LOG);
+                abs(combinations(0, 0, 1, 0) - type(3.25)) < type(NUMERIC_LIMITS_MIN)&&
+                abs(combinations(0, 0, 2, 0) - type(4.25)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-    inputs.resize(2, 2, 5, 5);
+    inputs.resize(5, 5, 2, 2);
     kernels.resize(2, 2, 2, 2);
-    combinations.resize(2, 2, 4, 4);
+    combinations.resize(4, 4, 2, 2);
     biases.resize(2);
 
-    inputs.chip(0, 0).setConstant(type(1.));
-    inputs.chip(1, 0).setConstant(type(2.));
-    kernels.chip(0, 0).setConstant(type(1./8.));
-    kernels.chip(1, 0).setConstant(type(1./4.));
-
+    inputs.chip(0, 3).setConstant(type(1.));
+    inputs.chip(1, 3).setConstant(type(2.));
+    kernels.chip(0, 3).setConstant(type(1./8.));
+    kernels.chip(1, 3).setConstant(type(1./4.));
 
     biases(0) = type(0);
     biases(1) = type(1);
@@ -326,9 +324,10 @@ void ConvolutionalLayerTest::test_calculate_combinations()
     convolutional_layer.calculate_convolutions(inputs, combinations);
 
     assert_true(abs(combinations(0, 0, 0, 0) - type(1.)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(0, 1, 0, 0) - type(3.)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(1, 0, 0, 0) - type(2.)) < type(NUMERIC_LIMITS_MIN)&&
-                abs(combinations(1, 1, 0, 0) - type(5.)) < type(NUMERIC_LIMITS_MIN), LOG);
+                abs(combinations(0, 0, 1, 0) - type(3.)) < type(NUMERIC_LIMITS_MIN)&&
+                abs(combinations(0, 0, 0, 1) - type(2.)) < type(NUMERIC_LIMITS_MIN)&&
+                abs(combinations(0, 0, 1, 1) - type(5.)) < type(NUMERIC_LIMITS_MIN), LOG);
+
 }
 
 
@@ -340,7 +339,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
     Tensor<type, 4> activations_4d;
     Tensor<type, 4> result;
 
-    result.resize(2, 2, 2, 2);
+    result.resize(2,2,2,2);
     inputs.resize(2,2,2,2);
 
     Tensor<Index, 1> new_inputs_dimensions(4);
@@ -888,8 +887,6 @@ void ConvolutionalLayerTest::test_insert_padding()
 {
     cout << "test_insert_padding\n";
 /*
-
-
     Tensor<type, 4> inputs;
     Tensor<type, 4> kernels;
     Tensor<type, 4> padded;
@@ -903,11 +900,15 @@ void ConvolutionalLayerTest::test_insert_padding()
 
     Tensor<Index, 1> inputs_dimensions(4);
     inputs_dimensions.setValues({5, 5, 3, 1});
+
     Tensor<Index, 1> kernels_dimensions(4);
     kernels_dimensions.setValues({3, 3, 3, 1});
 
-    convolutional_layer.set_row_stride(1);
-    convolutional_layer.set_column_stride(1);
+//    convolutional_layer.set_row_stride(1);
+//    convolutional_layer.set_column_stride(1);
+
+    ConvolutionalLayer convolutional_layer(inputs_dimensions, kernels_dimensions);
+
     convolutional_layer.set_convolution_type(opennn::ConvolutionalLayer::ConvolutionType::Same);
     convolutional_layer.set(inputs_dimensions, kernels_dimensions);
 
@@ -1079,120 +1080,139 @@ void ConvolutionalLayerTest::test_forward_propagate()
 void ConvolutionalLayerTest::test_memcpy_approach()
 {
 
-    cout<<"memcpy approach Tensor<type, 3>(rows_input, cols_input, channel)"<<endl;
+//    const int images_number = 1;
+//    const int kernel_number = 1;
 
-    const int images_number = 10000;
-    const int kernel_number = 10000;
+//    const int channel = 3;
 
-    const int channel = 3;
+//    const int rows_input = 4;
+//    const int cols_input = 4;
 
-    const int rows_input = 4;
-    const int cols_input = 4;
+//    const int kernel_rows = 2;
+//    const int kernel_cols = 2;
 
-    const int kernel_rows = 2;
-    const int kernel_cols = 2;
+//    Tensor<type, 4> input(rows_input, cols_input, channel, images_number);
+//    Tensor<type, 4> kernel(kernel_rows, kernel_cols, channel, kernel_number);
+//    Tensor<type, 4> result((rows_input-kernel_rows)+1,
+//                           (cols_input-kernel_cols)+1,
+//                            kernel_number,
+//                            images_number);
 
-    Tensor<type, 4> input(rows_input, cols_input, channel, images_number);
-    Tensor<type, 4> kernel(kernel_rows, kernel_cols, channel, kernel_number);
-    Tensor<type, 4> result((rows_input-kernel_rows)+1,
-                           (cols_input-kernel_cols)+1,
-                            kernel_number,
-                            images_number);
+//    Tensor<type, 3> tmp_result((rows_input-kernel_rows)+1,
+//                               (cols_input-kernel_cols)+1,
+//                               1);
 
-    Tensor<type, 3> tmp_result((rows_input-kernel_rows)+1,
-                               (cols_input-kernel_cols)+1,
-                               1);
+//    const Index output_size_rows_cols = ((rows_input-kernel_rows)+1)*((cols_input-kernel_cols)+1);
 
-    const Index output_size_rows_cols = ((rows_input-kernel_rows)+1)*((cols_input-kernel_cols)+1);
+////    float* ptr_result = (float*) malloc(output_size_rows_cols*kernel_number*images_number*sizeof(float));
 
-    float* ptr_result = (float*) malloc(output_size_rows_cols*kernel_number*images_number*sizeof(float));
+//    input.setConstant(1.0);
 
-    input.setConstant(1.0);
+//    input.chip(0,2).setConstant(1.);
+//    input.chip(1,2).setConstant(2.);
+//    input.chip(2,2).setConstant(3.);
 
-    input.chip(0,2).setConstant(1.);
-    input.chip(1,2).setConstant(2.);
-    input.chip(2,2).setConstant(3.);
+//    kernel.setConstant(type(1./12.));
+//    kernel.chip(1,3).setConstant(type(1./6.));
 
-    kernel.setConstant(type(1./12.));
-    kernel.chip(1,3).setConstant(type(1./6.));
+//    time_t beginning_time, current_time;
+//    time(&beginning_time);
+//    type elapsed_time = type(0);
 
-    time_t beginning_time, current_time;
-    time(&beginning_time);
-    type elapsed_time = type(0);
+//    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
-    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
+//    #pragma omp parallel for
+//    for(int i =0; i<images_number ;i++)
+//    {
+//        const Index next_image = input.dimension(0)*input.dimension(1)*input.dimension(2);
 
-    #pragma omp parallel for
-    for(int i =0; i<images_number ;i++)
-    {
-        const Index next_image = input.dimension(0)*input.dimension(1)*input.dimension(2);
+//        const TensorMap<Tensor<type, 3>> single_image(input.data()+i*next_image, input.dimension(0), input.dimension(1), input.dimension(2));
 
-        const TensorMap<Tensor<type, 3>> single_image(input.data()+i*next_image, input.dimension(0), input.dimension(1), input.dimension(2));
+//        for(int j =0; j<kernel_number; j++)
+//        {
+//            const Index next_kernel = kernel.dimension(0)*kernel.dimension(1)*kernel.dimension(2);
 
-        for(int j =0; j<kernel_number; j++)
-        {
-            const Index next_kernel = kernel.dimension(0)*kernel.dimension(1)*kernel.dimension(2);
+//            const TensorMap<Tensor<type, 3>> single_kernel(kernel.data()+j*next_kernel , kernel.dimension(0), kernel.dimension(1), kernel.dimension(2));
 
-            const TensorMap<Tensor<type, 3>> single_kernel(kernel.data()+j*next_kernel , kernel.dimension(0), kernel.dimension(1), kernel.dimension(2));
+//            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims);
 
-            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims);
+//            memcpy(result.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
+//                   tmp_result.data(), output_size_rows_cols*sizeof(float));
+//         }
+//    }
 
-            memcpy(ptr_result +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
-                   tmp_result.data(), output_size_rows_cols*sizeof(float));
-         }
-    }
+//    cout<<result<<endl;
+//    cout<<"bye world";
 
-    time(&current_time);
+//    time(&current_time);
 
-    elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+//    result.data() == ptr_result;
 
-    cout<<"elapsed_time with memcpy approach: " << elapsed_time<<endl;
+//    Tensor<float, 3> t_3d(2, 3, 4);
+
+//    TensorMap<Tensor<int, 4>> t_4d(ptr_result, 2, 4, 2, 8);
+
+//    TensorMap<Tensor<float, 1>> t_12(ptr_result, 12);
+
+
+
+//    Tensor<float, 3> r(ptr_result, rows_input-kernel_rows)+1, cols_input-kernel_cols)+1, kernel_number, images_number);
+
+
+//            result_(ptr_result,((rows_input-kernel_rows)+1,
+//                                         (cols_input-kernel_cols)+1,
+//                                                kernel_number,
+//                                                images_number));
+
+//    elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+
+//    cout<<"elapsed_time with memcpy approach: " << elapsed_time<<endl;
 
     // Chip
 
-    Tensor<type, 4> input_2(images_number, channel, rows_input, cols_input);
-    Tensor<type, 4> kernel_2(kernel_number, channel, kernel_rows, kernel_cols);
-    Tensor<type, 4> result_2(images_number,
-                             kernel_number,
-                            (rows_input-kernel_rows)+1,
-                            (cols_input-kernel_cols)+1);
+//    Tensor<type, 4> input_2(images_number, channel, rows_input, cols_input);
+//    Tensor<type, 4> kernel_2(kernel_number, channel, kernel_rows, kernel_cols);
+//    Tensor<type, 4> result_2(images_number,
+//                             kernel_number,
+//                            (rows_input-kernel_rows)+1,
+//                            (cols_input-kernel_cols)+1);
 
-    input_2.setConstant(1.0);
+//    input_2.setConstant(1.0);
 
-    input_2.chip(0,1).setConstant(1.);
-    input_2.chip(1,1).setConstant(2.);
-    input_2.chip(2,1).setConstant(3.);
+//    input_2.chip(0,1).setConstant(1.);
+//    input_2.chip(1,1).setConstant(2.);
+//    input_2.chip(2,1).setConstant(3.);
 
-    kernel_2.setConstant(type(1./12.));
-    kernel_2.chip(1,0).setConstant(type(1./6.));
+//    kernel_2.setConstant(type(1./12.));
+//    kernel_2.chip(1,0).setConstant(type(1./6.));
 
-    Tensor<type, 3> kernel_tmp;
+//    Tensor<type, 3> kernel_tmp;
 
 
 
-    time_t beginning_time_2, current_time_2;
-    time(&beginning_time_2);
-    type elapsed_time_2 = type(0);
+//    time_t beginning_time_2, current_time_2;
+//    time(&beginning_time_2);
+//    type elapsed_time_2 = type(0);
 
-    #pragma omp parallel for
-    for(Index i = 0; i < images_number; i++)
-    {
-        for(Index j = 0; j < kernel_number; j++)
-        {
-            kernel_tmp = kernel_2.chip(j, 0);
+//    #pragma omp parallel for
+//    for(Index i = 0; i < images_number; i++)
+//    {
+//        for(Index j = 0; j < kernel_number; j++)
+//        {
+//            kernel_tmp = kernel_2.chip(j, 0);
 
-            result_2.chip(i, 0).chip(j, 0) = input_2.chip(i, 0).convolve(kernel_tmp, dims);
-        }
-    }
+//            result_2.chip(i, 0).chip(j, 0) = input_2.chip(i, 0).convolve(kernel_tmp, dims);
+//        }
+//    }
 
-    time(&current_time_2);
+//    time(&current_time_2);
 
-    elapsed_time_2 = static_cast<type>(difftime(current_time_2, beginning_time_2));
+//    elapsed_time_2 = static_cast<type>(difftime(current_time_2, beginning_time_2));
 
 //        cout<<result_2(0, 0, 0, 0)<<endl;
 //        cout<<result_2(0, 1, 0, 0)<<endl;
 
-    cout<<"elapsed_time with chip approach: " << elapsed_time_2<<endl;
+//    cout<<"elapsed_time with chip approach: " << elapsed_time_2<<endl;
 
 }
 

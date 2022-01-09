@@ -11246,12 +11246,16 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
     }
     else if(input_variables_dimensions.size() == 4)
     {
-        const Index samples_number = input_variables_dimensions(0);
-        const Index channels_number = input_variables_dimensions(1);
-        const Index rows_number = input_variables_dimensions(2);
-        const Index columns_number = input_variables_dimensions(3);
 
-        inputs_4d.resize(samples_number, channels_number, rows_number, columns_number);
+        //@todo check that it works properly
+        //inputs_4d(row,column,channel,image)
+
+        const Index rows_number = input_variables_dimensions(0);
+        const Index columns_number = input_variables_dimensions(1);
+        const Index channels_number = input_variables_dimensions(2);
+        const Index samples_number = input_variables_dimensions(3);
+
+        inputs_4d.resize(rows_number, columns_number,channels_number,samples_number);
 
         Index index = 0;
 
@@ -11265,7 +11269,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                 {
                     for(Index column = 0; column < columns_number; column++)
                     {
-                        inputs_4d(image, channel, row, column) = data(image, index);
+                        inputs_4d(row,column,channel,image) = data(image, index);
                         index++;
                     }
                 }
