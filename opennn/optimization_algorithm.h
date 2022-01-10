@@ -236,7 +236,7 @@ struct TrainingResults
     void save(const string&) const;
 
     void print(const string& message = string())
-    {             
+    {
         cout << message << endl;
 
         const Index epochs_number = training_error_history.size();

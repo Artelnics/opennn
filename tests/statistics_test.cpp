@@ -774,7 +774,7 @@ void StatisticsTest::test_variance()
     vector.resize(3);
     vector.setValues({type(1),static_cast<type>(NAN),type(2)});
 
-    assert_true(abs(variance(vector) - variance(vector)) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(abs(variance(vector) - type(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 

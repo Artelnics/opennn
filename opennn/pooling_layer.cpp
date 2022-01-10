@@ -465,6 +465,7 @@ Tensor<type, 4> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_
                 }
 
                 return hidden_delta;
+                break;
             }
         }
 

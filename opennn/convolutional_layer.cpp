@@ -526,11 +526,11 @@ void ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer
             case opennn::PoolingLayer::PoolingMethod::NoPooling:
             {
 //                return next_layer_delta;
+                break;
             }
-
             case opennn::PoolingLayer::PoolingMethod::AveragePooling:
             {
-                // Current layer's values
+            // Current layer's values
 
                 const Index images_number = next_layer_delta.dimension(0);
                 const Index kernels_number = get_kernels_number();
@@ -583,8 +583,8 @@ void ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer
                 }
 
 //                return (hidden_delta*activations_derivatives)/(next_layers_pool_rows*next_layers_pool_columns);
+                break;
             }
-
             case opennn::PoolingLayer::PoolingMethod::MaxPooling:
             {
                 // Current layer's values
@@ -671,6 +671,7 @@ void ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer
                 }
 
 //                return hidden_delta*activations_derivatives;
+                break;
             }
         }
 }

@@ -482,25 +482,19 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("Scaler");
 
-    if(scaler == Scaler::NoScaling)
+    switch(scaler)
     {
-        file_stream.PushText("NoScaling");
-    }
-    else if(scaler == Scaler::MinimumMaximum)
-    {
-        file_stream.PushText("MinimumMaximum");
-    }
-    else if(scaler == Scaler::MeanStandardDeviation)
-    {
-        file_stream.PushText("MeanStandardDeviation");
-    }
-    else if(scaler == Scaler::StandardDeviation)
-    {
-        file_stream.PushText("StandardDeviation");
-    }
-    else if(scaler == Scaler::Logarithm)
-    {
-        file_stream.PushText("Logarithm");
+        case Scaler::NoScaling: file_stream.PushText("NoScaling"); break;
+
+        case Scaler::MinimumMaximum: file_stream.PushText("MinimumMaximum"); break;
+
+        case Scaler::MeanStandardDeviation: file_stream.PushText("MeanStandardDeviation"); break;
+
+        case Scaler::StandardDeviation: file_stream.PushText("StandardDeviation"); break;
+
+        case Scaler::Logarithm: file_stream.PushText("Logarithm"); break;
+
+        default: break;
     }
 
     file_stream.CloseElement();
@@ -509,21 +503,19 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("ColumnUse");
 
-    if(column_use == VariableUse::Input)
+    switch(column_use)
     {
-        file_stream.PushText("Input");
-    }
-    else if(column_use == VariableUse::Target)
-    {
-        file_stream.PushText("Target");
-    }
-    else if(column_use == VariableUse::UnusedVariable)
-    {
-        file_stream.PushText("Unused");
-    }
-    else
-    {
-        file_stream.PushText("Time");
+        case VariableUse::Input: file_stream.PushText("Input"); break;
+
+        case VariableUse::Target: file_stream.PushText("Target"); break;
+
+        case VariableUse::UnusedVariable: file_stream.PushText("UnusedVariable"); break;
+
+        case VariableUse::Time: file_stream.PushText("Time"); break;
+
+        case VariableUse::Id: file_stream.PushText("Id"); break;
+
+        default: break;
     }
 
     file_stream.CloseElement();
@@ -532,25 +524,19 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("Type");
 
-    if(type == ColumnType::Numeric)
+    switch(type)
     {
-        file_stream.PushText("Numeric");
-    }
-    else if(type == ColumnType::Binary)
-    {
-        file_stream.PushText("Binary");
-    }
-    else if(type == ColumnType::Categorical)
-    {
-        file_stream.PushText("Categorical");
-    }
-    else if(type == ColumnType::Constant)
-    {
-        file_stream.PushText("Constant");
-    }
-    else
-    {
-        file_stream.PushText("DateTime");
+        case ColumnType::Numeric: file_stream.PushText("Numeric"); break;
+
+        case ColumnType::Binary: file_stream.PushText("Binary"); break;
+
+        case ColumnType::Categorical: file_stream.PushText("Categorical"); break;
+
+        case ColumnType::Constant: file_stream.PushText("Constant"); break;
+
+        case ColumnType::DateTime: file_stream.PushText("DateTime"); break;
+
+        default: break;
     }
 
     file_stream.CloseElement();
@@ -581,21 +567,19 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < categories_uses.size(); i++)
         {
-            if(categories_uses(i) == VariableUse::Input)
+            switch(categories_uses(i))
             {
-                file_stream.PushText("Input");
-            }
-            else if(categories_uses(i) == VariableUse::Target)
-            {
-                file_stream.PushText("Target");
-            }
-            else if(categories_uses(i) == VariableUse::Time)
-            {
-                file_stream.PushText("Time");
-            }
-            else
-            {
-                file_stream.PushText("Unused");
+                case VariableUse::Input: file_stream.PushText("Input"); break;
+
+                case VariableUse::Target: file_stream.PushText("Target"); break;
+
+                case VariableUse::Time: file_stream.PushText("Time"); break;
+
+                case VariableUse::UnusedVariable: file_stream.PushText("Unused"); break;
+
+                case VariableUse::Id: file_stream.PushText("Id"); break;
+
+                default: break;
             }
 
             if(i != categories_uses.size()-1)
@@ -618,36 +602,26 @@ void DataSet::Column::print() const
     switch (column_use)
     {
     case VariableUse::Input:
-    {
         cout << "Input" << endl;
-    }
         break;
 
     case VariableUse::Target:
-    {
         cout << "Target" << endl;
-
-    }
         break;
 
     case VariableUse::UnusedVariable:
-    {
         cout << "Unused" << endl;
-
-    }
         break;
 
     case VariableUse::Time:
-    {
         cout << "Time" << endl;
-
-    }
         break;
 
     case VariableUse::Id:
-    {
         cout << "Id" << endl;
-    }
+        break;
+
+    default:
         break;
     }
 
@@ -656,38 +630,28 @@ void DataSet::Column::print() const
     switch (type)
     {
     case ColumnType::Numeric:
-    {
         cout << "Numeric" << endl;
-    }
         break;
 
     case ColumnType::Binary:
-    {
         cout << "Binary" << endl;
-
         cout << "Categories: " << categories << endl;
-    }
         break;
 
     case ColumnType::Categorical:
-    {
         cout << "Categorical" << endl;
-
         cout << "Categories: " << categories << endl;
-    }
         break;
 
     case ColumnType::DateTime:
-    {
         cout << "DateTime" << endl;
-
-    }
         break;
 
     case ColumnType::Constant:
-    {
         cout << "Constant" << endl;
-    }
+        break;
+
+    default:
         break;
     }
 
@@ -713,6 +677,9 @@ void DataSet::Column::print() const
 
     case Scaler::Logarithm:
         cout << "Logarithm" << endl;
+        break;
+
+    default:
         break;
     }
 }
@@ -1017,52 +984,57 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).type == ColumnType::Numeric)
+        switch(columns(i).type)
         {
-            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-            else sample_string += to_string(double(data(sample_index, variable_index)));
+            case ColumnType::Numeric:
+                if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+                else sample_string += to_string(double(data(sample_index, variable_index)));
+                variable_index++;
+                break;
 
-            variable_index++;
-        }
-        else if(columns(i).type == ColumnType::Binary)
-        {
-            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-            else sample_string += columns(i).categories(static_cast<Index>(data(sample_index, variable_index)));
+            case ColumnType::Binary:
+                if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+                else sample_string += columns(i).categories(static_cast<Index>(data(sample_index, variable_index)));
+                variable_index++;
+                break;
 
-            variable_index++;
-        }
-        else if(columns(i).type == ColumnType::DateTime)
-        {
-            // @todo do something
+            case ColumnType::DateTime:
+                // @todo do something
+                if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+                else sample_string += to_string(double(data(sample_index, variable_index)));
+                variable_index++;
+                break;
 
-            if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
-            else sample_string += to_string(double(data(sample_index, variable_index)));
-
-            variable_index++;
-        }
-        else if(columns(i).type == ColumnType::Categorical)
-        {
-            if(isnan(data(sample_index, variable_index)))
-            {
-                sample_string += missing_values_label;
-            }
-            else
-            {
-                const Index categories_number = columns(i).get_categories_number();
-
-                for(Index j = 0; j < categories_number; j++)
+            case ColumnType::Categorical:
+                if(isnan(data(sample_index, variable_index)))
                 {
-                    if(abs(data(sample_index, variable_index+j) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN))
-                    {
-                        sample_string += columns(i).categories(j);
-                        break;
-                    }
+                    sample_string += missing_values_label;
                 }
+                else
+                {
+                    const Index categories_number = columns(i).get_categories_number();
 
-                variable_index += categories_number;
-            }
+                    for(Index j = 0; j < categories_number; j++)
+                    {
+                        if(abs(data(sample_index, variable_index+j) - static_cast<type>(1)) < type(NUMERIC_LIMITS_MIN))
+                        {
+                            sample_string += columns(i).categories(j);
+                            break;
+                        }
+                    }
+                    variable_index += categories_number;
+                }
+                break;
+
+            case ColumnType::Constant:
+                if(isnan(data(sample_index, variable_index))) sample_string += missing_values_label;
+                else sample_string += to_string(double(data(sample_index, variable_index)));
+                variable_index++;
+                break;
+
+            default:
+                break;
         }
-
         if(i != columns_number-1) sample_string += separator + " ";
     }
 
@@ -3507,17 +3479,13 @@ void DataSet::set_binary_simple_columns()
                 && data(row_index, variable_index) != values(1))
                 {
                     values(different_values) = data(row_index, variable_index);
-
                     different_values++;
                 }
 
-                if(row_index == (data.dimension(0)-1))
+                if(row_index == (data.dimension(0)-1) && different_values == 1)
                 {
-                    if(different_values == 1)
-                    {
-                        is_binary = false;
-                        break;
-                    }
+                    is_binary = false;
+                    break;
                 }
 
                 if(different_values > 2)
@@ -3579,15 +3547,12 @@ void DataSet::check_constant_columns()
         if(columns(column).type == ColumnType::Numeric)
         {
             // @todo avoid chip
-
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
-
             if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
             {
                 columns(column).type = ColumnType::Constant;
                 columns(column).column_use = VariableUse::UnusedVariable;
             }
-
             variable_index++;
         }
         else if(columns(column).type == ColumnType::DateTime)
@@ -3619,6 +3584,38 @@ void DataSet::check_constant_columns()
 
             variable_index += columns(column).get_categories_number();
         }
+//        switch(columns(column).type)
+//        {
+//            case ColumnType::DateTime:
+//                columns(column).column_use = VariableUse::UnusedVariable;
+//                variable_index++;
+//                break;
+
+//            case ColumnType::Constant:
+//                variable_index++;
+//                break;
+
+//            case ColumnType::Binary:
+//                if(columns(column).get_categories_number() == 1)
+//                {
+//                    columns(column).type = ColumnType::Constant;
+//                    columns(column).column_use = VariableUse::UnusedVariable;
+//                }
+//                variable_index++;
+//                break;
+
+//            case ColumnType::Categorical:
+
+//                if(columns(column).get_categories_number() == 1)
+//                {
+//                    columns(column).type = ColumnType::Constant;
+//                    columns(column).column_use = VariableUse::UnusedVariable;
+//                }
+//                variable_index += columns(column).get_categories_number();
+//                break;
+
+//        default: break;
+//        }
     }
 }
 
@@ -3788,9 +3785,11 @@ char DataSet::get_separator_char() const
 
     case Separator::Semicolon:
         return ';';
+
+    default:
+        return char();
     }
 
-    return char();
 }
 
 
@@ -3811,9 +3810,10 @@ string DataSet::get_separator_string() const
 
     case Separator::Semicolon:
         return "Semicolon";
-    }
 
-    return string();
+    default:
+        return string();
+    }
 }
 
 
