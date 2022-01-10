@@ -8079,7 +8079,6 @@ void DataSet::load_data_binary()
     for(Index i = 0; i < rows_number*columns_number; i++)
     {
         file.read(reinterpret_cast<char*>(&value), size);
-
         data(i) = value;
     }
 
@@ -8992,6 +8991,7 @@ Tensor<type, 1> DataSet::calculate_average_reachability(Tensor<list<Index>, 1>& 
     return average_reachability;
 }
 
+/// @todo check average_reachabilities length
 
 Tensor<type, 1> DataSet::calculate_local_outlier_factor(Tensor<list<Index>, 1>& k_nearest_indexes,
                                                         const Tensor<type, 1>& average_reachabilities,
@@ -9000,11 +9000,13 @@ Tensor<type, 1> DataSet::calculate_local_outlier_factor(Tensor<list<Index>, 1>& 
     const Index samples_number = get_used_samples_number();
     Tensor<type, 1> LOF_value(samples_number);
 
+    long double sum;
+
     #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
     {
-        long double sum = 0.0;
+        sum = 0.0;
 
         for(auto & neighbor_index : k_nearest_indexes(i))
             sum += average_reachabilities(i) / average_reachabilities(neighbor_index);
@@ -10701,7 +10703,7 @@ void DataSet::read_csv_3_complete()
                         data(sample_index, variable_index) = static_cast<type>(stod(tokens(j)));
                         variable_index++;
                     }
-                    catch(invalid_argument)
+                    catch(const invalid_argument& e)
                     {
                         ostringstream buffer;
 
