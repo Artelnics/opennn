@@ -45,8 +45,9 @@ int main()
         {
             if(abs(correlation_results(i).r - type(1)) < type(NUMERIC_LIMITS_MIN)
             || abs(correlation_results(i).r + type(1)) < type(NUMERIC_LIMITS_MIN))
-
-            cout << "Gene " << i << " correlation: " << correlation_results(i).r << endl;
+            {
+                cout << "Gene " << i << " correlation: " << correlation_results(i).r << endl;
+            }
         }
 
         return 0;
