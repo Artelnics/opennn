@@ -29,15 +29,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include <list>
-//#include <experimental/filesystem>
-
-#if __cplusplus >= 201703L
-  #include <filesystem>
-  namespace fs = std::filesystem;
-#else
-  #include <experimental/filesystem>
-  namespace fs = std::experimental::filesystem;
-#endif
+#include <filesystem>
+#include <experimental/filesystem>
 
 // OpenNN includes
 
@@ -48,9 +41,17 @@
 #include "opennn_strings.h"
 #include "tensor_utilities.h"
 
+// Filesystem namespace
+
+#if __cplusplus >= 201703L
+  namespace fs = std::filesystem;
+#else
+  namespace fs = std::experimental::filesystem;
+#endif
+
 using namespace std;
 using namespace Eigen;
-namespace fs = std::experimental::filesystem;
+using namespace fs;
 
 namespace opennn
 {
