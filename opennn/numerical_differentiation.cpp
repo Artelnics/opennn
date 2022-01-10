@@ -77,7 +77,7 @@ void NumericalDifferentiation::set_default()
 
 type NumericalDifferentiation::calculate_eta() const
 {
-    return pow(static_cast<type>(10.0), static_cast<type>(-1.0*precision_digits));
+    return pow(static_cast<type>(10.0), static_cast<type>(-1.0)*type(precision_digits));
 }
 
 

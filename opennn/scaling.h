@@ -22,9 +22,6 @@
 #include "config.h"
 #include "statistics.h"
 
-using namespace std;
-using namespace Eigen;
-
 namespace opennn
 {
 /// Enumeration of the available methods for scaling and unscaling the data.

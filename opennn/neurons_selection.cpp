@@ -532,9 +532,10 @@ string NeuronsSelectionResults::write_stopping_condition() const
 
         case NeuronsSelection::StoppingCondition::MaximumNeurons:
             return "MaximumNeurons";
-    }
 
-    return string();
+        default:
+            return string();
+    }
 }
 
 }

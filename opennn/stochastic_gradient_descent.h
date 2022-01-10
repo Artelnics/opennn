@@ -98,7 +98,7 @@ public:
 
    // Training methods
 
-   void update_parameters(LossIndexBackPropagation& , StochasticGradientDescentData&);
+   void update_parameters(LossIndexBackPropagation& , StochasticGradientDescentData&) const;
 
    TrainingResults perform_training();
 

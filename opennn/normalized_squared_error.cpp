@@ -531,7 +531,7 @@ void NormalizedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 /// Loads a root mean squared error object from an XML document.
 /// @param document Pointer to a TinyXML document with the object data.
 
-void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
+void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document) const
 {
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("NormalizedSquaredError");
 

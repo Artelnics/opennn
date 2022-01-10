@@ -101,7 +101,7 @@ public:
 
     // Utilities
 
-    Index get_input_index(const Tensor<DataSet::VariableUse, 1>&, const Index&);
+    Index get_input_index(const Tensor<DataSet::VariableUse, 1>&, const Index&) const;
 
     /// Performs the inputs selection for a neural network.
 

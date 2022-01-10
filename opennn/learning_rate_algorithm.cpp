@@ -103,9 +103,9 @@ string LearningRateAlgorithm::write_learning_rate_method() const
 
     case LearningRateMethod::BrentMethod:
         return "BrentMethod";
+    default:
+        return string();
     }
-
-    return string();
 }
 
 
@@ -350,6 +350,8 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
                 case LearningRateMethod::GoldenSection: V.first = calculate_golden_section_learning_rate(triplet); break;
 
                 case LearningRateMethod::BrentMethod: V.first = calculate_Brent_method_learning_rate(triplet); break;
+
+                default: break;
             }
         }
         catch(const invalid_argument& error)

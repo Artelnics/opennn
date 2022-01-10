@@ -542,9 +542,8 @@ string ModelSelection::write_neurons_selection_method() const
     {
     case NeuronsSelectionMethod::GROWING_NEURONS:
         return "GROWING_NEURONS";
+    default: return string();
     }
-
-    return string();
 }
 
 
@@ -560,9 +559,9 @@ string ModelSelection::write_inputs_selection_method() const
 
     case InputsSelectionMethod::GENETIC_ALGORITHM:
         return "GENETIC_ALGORITHM";
+    default:
+        return string();
     }
-
-    return string();
 }
 
 
@@ -581,11 +580,12 @@ void ModelSelection::save(const string& file_name) const
 {
     FILE * file = fopen(file_name.c_str(), "w");
 
-    tinyxml2::XMLPrinter printer(file);
-
-    write_XML(printer);
-
-    fclose(file);
+    if(file)
+    {
+        tinyxml2::XMLPrinter printer(file);
+        write_XML(printer);
+        fclose(file);
+    }
 }
 
 

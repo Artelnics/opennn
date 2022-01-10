@@ -174,9 +174,9 @@ public:
 
    // Parameters initialization methods
 
-   void set_parameters_constant(const type&);
+   void set_parameters_constant(const type&) const;
 
-   void set_parameters_random();
+   void set_parameters_random() const;
 
    // Parameters
 
@@ -221,8 +221,8 @@ public:
    string write_expression_python() const;
    string write_expression_c() const;
 
-   void save_expression_c(const string&);
-   void save_expression_python(const string&);
+   void save_expression_c(const string&) const;
+   void save_expression_python(const string&) const;
 
    void save_outputs(const Tensor<type, 2>&, const string&);
 

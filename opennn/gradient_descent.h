@@ -103,7 +103,7 @@ public:
            const DataSetBatch&,
            NeuralNetworkForwardPropagation&,
            LossIndexBackPropagation&,
-           GradientDescentData&);
+           GradientDescentData&) const;
 
    TrainingResults perform_training();   
 

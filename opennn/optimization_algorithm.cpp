@@ -373,11 +373,12 @@ void OptimizationAlgorithm::save(const string& file_name) const
 {
     FILE * file = fopen(file_name.c_str(), "w");
 
-    tinyxml2::XMLPrinter printer(file);
-
-    write_XML(printer);
-
-    fclose(file);
+    if(file)
+    {
+        tinyxml2::XMLPrinter printer(file);
+        write_XML(printer);
+        fclose(file);
+    }
 }
 
 
@@ -426,9 +427,10 @@ string TrainingResults::write_stopping_condition() const
 
     case OptimizationAlgorithm::StoppingCondition::MaximumTime:
         return "Maximum training time";
-    }
 
-    return string();
+    default:
+        return string();
+    }
 }
 
 

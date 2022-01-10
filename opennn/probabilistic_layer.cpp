@@ -634,6 +634,8 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
     case ActivationFunction::Competitive: competitive(combinations, activations); return;
 
     case ActivationFunction::Softmax: softmax(combinations, activations); return;
+
+    default: return;
     }
 
     ostringstream buffer;
@@ -1296,6 +1298,8 @@ string ProbabilisticLayer::write_activations_c() const
                 }
             }
             break;
+         default:
+            break;
         }
     }
 
@@ -1391,6 +1395,9 @@ string ProbabilisticLayer::write_activations_python() const
 
             }
             break;
+
+        default:
+            break;
         }
     }
 
@@ -1482,6 +1489,8 @@ string ProbabilisticLayer::write_activations(const Tensor<string, 1>& outputs_na
                 }
 
             }
+            break;
+        default:
             break;
         }
     }

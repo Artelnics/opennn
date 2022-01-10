@@ -343,9 +343,9 @@ string LongShortTermMemoryLayer::write_activation_function() const
     case ActivationFunction::HardSigmoid: return "HardSigmoid";
 
     case ActivationFunction::ExponentialLinear: return "ExponentialLinear";
-    }
 
-    return string();
+    default: return string();
+    }
 }
 
 
@@ -377,9 +377,9 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function() const
     case ActivationFunction::HardSigmoid: return "HardSigmoid";
 
     case ActivationFunction::ExponentialLinear: return "ExponentialLinear";
-    }
 
-    return string();
+    default: return string();
+    }
 }
 
 
@@ -1238,6 +1238,8 @@ check_dimensions(activations, combinations.dimension(0), get_neurons_number(), L
     case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, activations); return;
 
     case ActivationFunction::ExponentialLinear: exponential_linear(combinations, activations); return;
+
+    default: rectified_linear(combinations, activations); return;
     }
 }
 
@@ -1286,6 +1288,8 @@ void LongShortTermMemoryLayer::calculate_activations(const Tensor<type, 1>& comb
     case ActivationFunction::HardSigmoid: hard_sigmoid(combinations_1d, activations_1d); return;
 
     case ActivationFunction::ExponentialLinear: exponential_linear(combinations_1d, activations_1d); return;
+
+    default: rectified_linear(combinations_1d, activations_1d); return;
     }
 }
 
@@ -1336,6 +1340,8 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
     case ActivationFunction::HardSigmoid: hard_sigmoid(combinations_1d, activations_1d); break;
 
     case ActivationFunction::ExponentialLinear: exponential_linear(combinations_1d, activations_1d); break;
+
+    default: rectified_linear(combinations_1d, activations_1d); break;
     }
 
     return activations_1d;
@@ -1387,6 +1393,8 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
     case ActivationFunction::HardSigmoid: hard_sigmoid(combinations, activations); break;
 
     case ActivationFunction::ExponentialLinear: exponential_linear(combinations, activations); break;
+
+    default: rectified_linear(combinations, activations); break;
     }
 }
 
@@ -1437,6 +1445,8 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(const Tensor<type
     case ActivationFunction::HardSigmoid: hard_sigmoid(combinations_1d, recurrent_activations_1d); break;
 
     case ActivationFunction::ExponentialLinear: exponential_linear(combinations_1d, recurrent_activations_1d); break;
+
+    default: rectified_linear(combinations_1d, recurrent_activations_1d); break;
     }
 }
 
@@ -1487,6 +1497,8 @@ void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<ty
     case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations, activations, activations_derivatives_2d); return;
 
     case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations, activations, activations_derivatives_2d); return;
+
+    default: rectified_linear_derivatives(combinations, activations, activations_derivatives_2d); return;
     }
 }
 
@@ -1538,6 +1550,8 @@ void LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<ty
     case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
     case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+
+    default: rectified_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
     }
 }
 
@@ -1588,6 +1602,8 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations_derivatives(const
     case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
 
     case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
+
+    default: rectified_linear_derivatives(combinations_1d, activations_1d, activations_derivatives_1d); return;
     }
 }
 
@@ -4101,6 +4117,10 @@ string LongShortTermMemoryLayer::write_combinations_c() const
         case ActivationFunction::HardSigmoid:
             ///@todo
             break;
+
+        default:
+            buffer << "forget_gate_combinations[" << i << "] < 0.0 ? 0.0 : forget_gate_combinations[" << i << "];\n";
+            break;
         }
     }
 
@@ -4181,6 +4201,10 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
         case ActivationFunction::HardSigmoid:
             ///@todo
+            break;
+
+        default:
+            buffer << "input_gate_combinations[" << i << "] < 0.0 ? 0.0 : input_gate_combinations[" << i << "];\n";
             break;
         }
     }
@@ -4263,6 +4287,10 @@ string LongShortTermMemoryLayer::write_combinations_c() const
         case ActivationFunction::HardSigmoid:
             ///@todo
             break;
+
+        default:
+            buffer << "state_gate_combinations[" << i << "] < 0.0 ? 0.0 : state_gate_combinations[" << i << "];\n";
+            break;
         }
     }
 
@@ -4344,6 +4372,10 @@ string LongShortTermMemoryLayer::write_combinations_c() const
         case ActivationFunction::HardSigmoid:
             ///@todo
             break;
+
+        default:
+            buffer << "output_gate_combinations[" << i << "] < 0.0 ? 0.0 : output_gate_combinations[" << i << "];\n";
+            break;
         }
     }
 
@@ -4410,6 +4442,10 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
         case ActivationFunction::HardSigmoid:
             ///@todo
+            break;
+
+        default:
+            buffer << "cell_states[" << i << "] < 0.0 ? 0.0 : cell_states[" << i << "];\n";
             break;
         }
     }
@@ -4536,6 +4572,10 @@ string LongShortTermMemoryLayer::write_combinations_python() const
         case ActivationFunction::HardSigmoid:
             ///@todo
             break;
+
+        default:
+            buffer << "np.maximum(0.0, forget_gate_combinations[" << i << "])\n";
+            break;
         }
     }
 
@@ -4618,6 +4658,10 @@ string LongShortTermMemoryLayer::write_combinations_python() const
 
         case ActivationFunction::HardSigmoid:
             ///@todo
+            break;
+
+        default:
+            buffer << "np.maximum(0.0, input_gate_combinations[" << i << "])\n";
             break;
         }
     }
@@ -4702,6 +4746,10 @@ string LongShortTermMemoryLayer::write_combinations_python() const
         case ActivationFunction::HardSigmoid:
             ///@todo
             break;
+
+        default:
+            buffer << "np.maximum(0.0, state_gate_combinations[" << i << "])\n";
+            break;
         }
     }
 
@@ -4785,6 +4833,10 @@ string LongShortTermMemoryLayer::write_combinations_python() const
         case ActivationFunction::HardSigmoid:
             ///@todo
             break;
+
+        default:
+            buffer << "np.maximum(0.0, output_gate_combinations[" << i << "])\n";
+            break;
         }
     }
 
@@ -4852,6 +4904,10 @@ string LongShortTermMemoryLayer::write_combinations_python() const
 
         case ActivationFunction::HardSigmoid:
             ///@todo
+            break;
+
+        default:
+            buffer << "np.maximum(0.0, self.cell_states[" << i << "])\n";
             break;
         }
     }

@@ -79,6 +79,9 @@ string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
 
     case InverseHessianApproximationMethod::BFGS:
         return "BFGS";
+
+    default:
+        return string();
     }
 
     ostringstream buffer;
@@ -310,12 +313,13 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
     {
     case InverseHessianApproximationMethod::DFP:
         calculate_DFP_inverse_hessian(optimization_data);
-
         return;
 
     case InverseHessianApproximationMethod::BFGS:
         calculate_BFGS_inverse_hessian(optimization_data);
+        return;
 
+    default:
         return;
     }
 
@@ -480,7 +484,7 @@ void QuasiNewtonMethod::update_parameters(
         const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,
-        QuasiNewtonMehtodData& optimization_data)
+        QuasiNewtonMehtodData& optimization_data) const
 {
     #ifdef OPENNN_DEBUG
 

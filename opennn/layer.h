@@ -28,9 +28,6 @@
 #include "statistics.h"
 #include "data_set.h"
 
-using namespace std;
-using namespace Eigen;
-
 namespace opennn {
 
 class Layer;
