@@ -29,16 +29,6 @@
 #include <list>
 #include <vector>
 
-#if __cplusplus >= 201703L
-  #include <filesystem>
-  namespace fs = std::filesystem;
-#else
-  #include <experimental/filesystem>
-  namespace fs = std::experimental::filesystem;
-#endif
-
-
-
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
@@ -59,7 +49,7 @@ int main()
 
         DataSet data_set;//("../data/mnist_train.csv", ',', true);
 
-        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
+        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data");
 
         data_set.read_bmp();
 
