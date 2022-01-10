@@ -277,7 +277,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
     {
         not_NAN_row(i) = true;
 
-        if(float(isnan(y(i))))
+        if(isnan(y(i)))
         {
             not_NAN_row(i) = false;
         }
@@ -285,7 +285,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const
         {
             for(Index j = 0; j < x_columns_number; j++)
             {
-                if(float(isnan(x(i,j))))
+                if(isnan(x(i,j)))
                 {
                     not_NAN_row(i) = false;
                     break;
