@@ -9925,18 +9925,18 @@ vector<unsigned char> DataSet::read_bmp_image(const string& filename)
 
 size_t DataSet::number_of_elements_in_directory(fs::path path)
 {
-    /* Not working in linux
+    // Not working in linux
     using fs::directory_iterator;
 
     return distance(directory_iterator(path), directory_iterator{});
-    */
+    //
     return size_t();
 }
 
 
 void DataSet::read_bmp()
 {
-    /*
+    //
     const fs::path path = data_file_name;
 
     if(data_file_name.empty())
@@ -10039,6 +10039,7 @@ void DataSet::read_bmp()
             for(Index k = 0; k < image_size; k++)
             {
                 data(row_index, k) = static_cast<type>(image[k]);
+                cout<< data(row_index, k) <<" ";
             }
 
             data(row_index, image_size + i) = 1;
@@ -10085,7 +10086,7 @@ void DataSet::read_bmp()
     input_variables_dimensions(0) = channels;
     input_variables_dimensions(1) = width;
     input_variables_dimensions(2) = height;
-    */
+    //
 }
 
 

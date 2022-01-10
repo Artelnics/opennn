@@ -28,8 +28,16 @@
 #include <limits.h>
 #include <list>
 #include <vector>
-#include <filesystem>
-#include <experimental/filesystem>
+
+#if __cplusplus >= 201703L
+  #include <filesystem>
+  namespace fs = std::filesystem;
+#else
+  #include <experimental/filesystem>
+  namespace fs = std::experimental::filesystem;
+#endif
+
+
 
 // OpenNN includes
 
