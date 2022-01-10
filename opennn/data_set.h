@@ -132,15 +132,15 @@ public:
 
        /// Column name.
 
-       string name;
+       string name = "";
 
        /// Column use.
 
-       VariableUse column_use;
+       VariableUse column_use = VariableUse::Input;
 
        /// Column type.
 
-       ColumnType type;
+       ColumnType type = ColumnType::Numeric;
 
        /// Categories within the column.
 
@@ -150,7 +150,8 @@ public:
 
        Tensor<VariableUse, 1> categories_uses;
 
-       Scaler scaler;
+       Scaler scaler= Scaler::MeanStandardDeviation;
+
 
        // Methods
 

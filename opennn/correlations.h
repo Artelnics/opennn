@@ -51,12 +51,12 @@ struct Correlation
         case CorrelationMethod::Logarithmic: return "logarithmic";
         case CorrelationMethod::Exponential: return "exponential";
         case CorrelationMethod::Power: return "power";
+        default:
+            return string();
         }
-
-        return string();
     }
 
-    void print()
+    void print() const
     {
         cout << "Correlation" << endl;
         cout << "Type: " << write_correlation_type() << endl;
