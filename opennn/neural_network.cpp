@@ -1271,7 +1271,7 @@ Index NeuralNetwork::get_recurrent_layers_number() const
 
 /// Initializes all the biases and synaptic weights with a given value.
 
-void NeuralNetwork::set_parameters_constant(const type& value)
+void NeuralNetwork::set_parameters_constant(const type& value) const
 {
     const Index trainable_layers_number = get_trainable_layers_number();
 
@@ -1289,7 +1289,7 @@ void NeuralNetwork::set_parameters_constant(const type& value)
 /// @param minimum Minimum initialization value.
 /// @param maximum Maximum initialization value.
 
-void NeuralNetwork::set_parameters_random()
+void NeuralNetwork::set_parameters_random() const
 {
     const Index trainable_layers_number = get_trainable_layers_number();
 
@@ -1665,9 +1665,11 @@ Tensor<string, 2> NeuralNetwork::get_information() const
 
             information(i,2) = perceptron_layer->write_activation_function();
         }
-        else
+        else if(layer_type == "Probabilistic")
         {
+            ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(trainable_layers_pointers(i));
 
+            information(i,2) = probabilistic_layer->write_activation_function();
         }
     }
 
@@ -2348,11 +2350,12 @@ void NeuralNetwork::save(const string& file_name) const
 {
     FILE * file = fopen(file_name.c_str(), "w");
 
-    tinyxml2::XMLPrinter printer(file);
-
-    write_XML(printer);
-
-    fclose(file);
+    if(file)
+    {
+        tinyxml2::XMLPrinter printer(file);
+        write_XML(printer);
+        fclose(file);
+    }
 }
 
 
@@ -2621,7 +2624,7 @@ string NeuralNetwork::write_expression_python() const
     buffer <<"Example:"<<endl;
     buffer <<""<<endl;
     buffer <<"\tmodel = NeuralNetwork()\t"<<endl;
-    buffer <<"\tsample = [input_1, input_2, input_3, input_4, ...] 	 \t"<<endl;
+    buffer <<"\tsample = [input_1, input_2, input_3, input_4, ...]\t"<<endl;
     buffer <<"\toutputs = model.calculate_output(sample)"<<endl;
     buffer <<""<<endl;
     buffer <<"\tInputs Names: \t"<<endl;
@@ -2736,7 +2739,7 @@ string NeuralNetwork::write_expression_python() const
 /// Saves the mathematical expression represented by the neural network to a text file.
 /// @param file_name Name of the expression text file.
 
-void NeuralNetwork::save_expression_c(const string& file_name)
+void NeuralNetwork::save_expression_c(const string& file_name) const
 {
     ofstream file(file_name.c_str());
 
@@ -2760,7 +2763,7 @@ void NeuralNetwork::save_expression_c(const string& file_name)
 /// Saves the python function of the expression represented by the neural network to a text file.
 /// @param file_name Name of the expression text file.
 
-void NeuralNetwork::save_expression_python(const string& file_name)
+void NeuralNetwork::save_expression_python(const string& file_name) const
 {
     ofstream file(file_name.c_str());
 

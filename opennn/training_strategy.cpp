@@ -96,9 +96,9 @@ LossIndex* TrainingStrategy::get_loss_index_pointer()
         case LossMethod::WEIGHTED_SQUARED_ERROR: return &weighted_squared_error;
 
         case LossMethod::CROSS_ENTROPY_ERROR: return &cross_entropy_error;
-    }
 
-    return nullptr;
+        default: return nullptr;
+    }
 }
 
 
@@ -119,9 +119,9 @@ OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
         case OptimizationMethod::QUASI_NEWTON_METHOD: return &quasi_Newton_method;
 
         case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM: return &Levenberg_Marquardt_algorithm;
-    }
 
-    return nullptr;
+        default: return nullptr;
+    }
 }
 
 
@@ -291,9 +291,10 @@ string TrainingStrategy::write_loss_method() const
 
     case LossMethod::CROSS_ENTROPY_ERROR:
         return "CROSS_ENTROPY_ERROR";
-    }
 
-    return string();
+    default:
+        return string();
+    }
 }
 
 
@@ -404,9 +405,10 @@ string TrainingStrategy::write_loss_method_text() const
 
     case LossMethod::CROSS_ENTROPY_ERROR:
         return "Cross entropy error";
-    }
 
-    return string();
+    default:
+        return string();
+    }
 }
 
 
@@ -707,7 +709,7 @@ void TrainingStrategy::set_maximum_time(const type&  maximum_time)
 /// <li> Display: true.
 /// </ul>
 
-void TrainingStrategy::set_default()
+void TrainingStrategy::set_default() const
 {
 }
 
@@ -778,6 +780,8 @@ TrainingResults TrainingStrategy::perform_training()
 
         return adaptive_moment_estimation.perform_training();
     }
+    default:
+        return TrainingResults(0);
     }
 
     return TrainingResults(0);
@@ -881,6 +885,7 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
     case LossMethod::CROSS_ENTROPY_ERROR : cross_entropy_error.write_regularization_XML(file_stream); break;
     case LossMethod::WEIGHTED_SQUARED_ERROR : weighted_squared_error.write_regularization_XML(file_stream); break;
     case LossMethod::SUM_SQUARED_ERROR : sum_squared_error.write_regularization_XML(file_stream); break;
+    default: break;
     }
 
     file_stream.CloseElement();
@@ -1190,11 +1195,12 @@ void TrainingStrategy::save(const string& file_name) const
 {
     FILE * file = fopen(file_name.c_str(), "w");
 
-    tinyxml2::XMLPrinter printer(file);
-
-    write_XML(printer);
-
-    fclose(file);
+    if(file)
+    {
+        tinyxml2::XMLPrinter printer(file);
+        write_XML(printer);
+        fclose(file);
+    }
 }
 
 

@@ -401,9 +401,9 @@ string InputsSelectionResults::write_stopping_condition() const
 
     case InputsSelection::StoppingCondition::CorrelationGoal:
         return "CorrelationGoal";
+    default:
+        return string();
     }
-
-    return string();
 }
 
 
@@ -456,7 +456,7 @@ const string InputsSelection::write_time(const type& time) const
 /// @param uses Vector of the uses of the variables.
 /// @param inputs_number Index of the input to find.
 
-Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& inputs_number)
+Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& inputs_number) const
 {
 #ifdef OPENNN_DEBUG
 

@@ -1256,9 +1256,10 @@ string PerceptronLayer::write_activation_function_expression() const
 
     case ActivationFunction::HardSigmoid:
         return "hard_sigmoid";
-    }
 
-    return string();
+    default:
+        return string();
+    }
 }
 
 
@@ -1344,9 +1345,11 @@ string PerceptronLayer::write_activations_c() const
         case ActivationFunction::HardSigmoid:
             ///@todo
             break;
+
+        default:
+            break;
         }
     }
-
     return buffer.str();
 }
 
@@ -1435,6 +1438,9 @@ string PerceptronLayer::write_activations_python() const
 
         case ActivationFunction::HardSigmoid:
             ///@todo
+            break;
+
+        default:
             break;
         }
     }

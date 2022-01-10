@@ -53,37 +53,37 @@ void ResponseOptimization::set_evaluations_number(const Index& new_evaluations_n
 }
 
 
-Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_inputs_conditions()
+Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_inputs_conditions() const
 {
     return inputs_conditions;
 }
 
 
-Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_outputs_conditions()
+Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_outputs_conditions() const
 {
     return outputs_conditions;
 }
 
 
-Tensor<type, 1> ResponseOptimization::get_inputs_minimums()
+Tensor<type, 1> ResponseOptimization::get_inputs_minimums() const
 {
     return inputs_minimums;
 }
 
 
-Tensor<type, 1> ResponseOptimization::get_inputs_maximums()
+Tensor<type, 1> ResponseOptimization::get_inputs_maximums() const
 {
     return inputs_maximums;
 }
 
 
-Tensor<type, 1> ResponseOptimization::get_outputs_minimums()
+Tensor<type, 1> ResponseOptimization::get_outputs_minimums() const
 {
     return outputs_minimums;
 }
 
 
-Tensor<type, 1> ResponseOptimization::get_outputs_maximums()
+Tensor<type, 1> ResponseOptimization::get_outputs_maximums() const
 {
     return outputs_maximums;
 }
@@ -201,6 +201,9 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
         inputs_maximums[index] = values[1];
 
         return;
+
+    default:
+        return;
     }
 }
 
@@ -299,6 +302,9 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
         outputs_minimums[index] = values[0];
         outputs_maximums[index] = values[1];
 
+        return;
+
+    default:
         return;
     }
 }

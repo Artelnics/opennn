@@ -53,13 +53,13 @@ public:
 
    // Get methods
 
-   Tensor<Condition, 1> get_inputs_conditions();
-   Tensor<Condition, 1> get_outputs_conditions();
+   Tensor<Condition, 1> get_inputs_conditions() const;
+   Tensor<Condition, 1> get_outputs_conditions() const;
 
-   Tensor<type, 1> get_inputs_minimums();
-   Tensor<type, 1> get_inputs_maximums();
-   Tensor<type, 1> get_outputs_minimums();
-   Tensor<type, 1> get_outputs_maximums();
+   Tensor<type, 1> get_inputs_minimums() const;
+   Tensor<type, 1> get_inputs_maximums() const;
+   Tensor<type, 1> get_outputs_minimums() const;
+   Tensor<type, 1> get_outputs_maximums() const;
 
    // Set methods
 

@@ -634,9 +634,9 @@ string LossIndex::write_regularization_method() const
 
     case RegularizationMethod::L2:
         return "L2_NORM";
-    }
 
-    return string();
+    default: return string();
+    }
 }
 
 
@@ -654,9 +654,9 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
         case RegularizationMethod::L1: return l1_norm(thread_pool_device, parameters);
 
         case RegularizationMethod::L2: return l2_norm(thread_pool_device, parameters);
-    }
 
-    return type(0);
+    default: return type(0);
+    }
 }
 
 
@@ -952,6 +952,8 @@ void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) cons
         file_stream.PushAttribute("Type", "NO_REGULARIZATION");
     }
     break;
+
+    default: break;
     }
 
     // Regularization weight

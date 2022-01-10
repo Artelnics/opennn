@@ -102,8 +102,6 @@ public:
 
    // Stopping criteria
 
-
-
    void set_minimum_loss_decrease(const type&);
    void set_loss_goal(const type&);
 
@@ -124,7 +122,7 @@ public:
    const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
    const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
 
-   void update_parameters(const DataSetBatch& , NeuralNetworkForwardPropagation& , LossIndexBackPropagation& , QuasiNewtonMehtodData& );
+   void update_parameters(const DataSetBatch& , NeuralNetworkForwardPropagation& , LossIndexBackPropagation& , QuasiNewtonMehtodData&) const;
 
    TrainingResults perform_training();
 

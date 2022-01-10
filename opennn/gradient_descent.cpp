@@ -268,12 +268,23 @@ void GradientDescent::update_parameters(
         const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
         LossIndexBackPropagation& back_propagation,
-        GradientDescentData& optimization_data)
+        GradientDescentData& optimization_data) const
 {
     calculate_training_direction(back_propagation.gradient, optimization_data.training_direction);
 
-    if(is_zero(optimization_data.training_direction)) return;
-        //throw invalid_argument("Training direction is zero");
+    ostringstream buffer;
+
+    if(is_zero(optimization_data.training_direction))
+    {
+//        buffer << "OpenNN Exception: GradientDescent class.\n"
+//               << "void GradientDescent::update_parameters(const DataSetBatch& batch, \n"
+//               << "NeuralNetworkForwardPropagation& forward_propagation,LossIndexBackPropagation& back_propagation, \n"
+//               << "GradientDescentData& optimization_data) const method.\n"
+//               << "Training direction is zero.\n";
+
+//        throw invalid_argument(buffer.str());
+        return;
+    }
 
     // Get initial learning_rate
 

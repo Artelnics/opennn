@@ -106,7 +106,7 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
 
     const Index batch_samples_number = batch.get_samples_number();
 
-    back_propagation.error = minkowski_error(0)/batch_samples_number;
+    back_propagation.error = minkowski_error(0)/type(batch_samples_number);
 }
 
 

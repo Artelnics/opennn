@@ -1279,11 +1279,12 @@ void GeneticAlgorithm::save(const string& file_name) const
 {
     FILE * file = fopen(file_name.c_str(), "w");
 
-    tinyxml2::XMLPrinter printer(file);
-
-    write_XML(printer);
-
-    fclose(file);
+    if(file)
+    {
+        tinyxml2::XMLPrinter printer(file);
+        write_XML(printer);
+        fclose(file);
+    }
 }
 
 

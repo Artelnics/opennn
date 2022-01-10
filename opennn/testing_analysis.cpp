@@ -802,7 +802,7 @@ Tensor<type, 1> TestingAnalysis::calculate_training_errors() const
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
     errors(0) = sum_squared_error(0);
-    errors(1) = errors(0)/training_samples_number;
+    errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
 
@@ -854,7 +854,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_training_errors
     errors(0) = sum_squared_error(0);
 
     // MSE
-    errors(1) = errors(0)/training_samples_number;
+    errors(1) = errors(0)/type(training_samples_number);
 
     // RMSE
     errors(2) = sqrt(errors(1));
@@ -913,7 +913,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_training_erro
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
     errors(0) = sum_squared_error(0);
-    errors(1) = errors(0)/training_samples_number;
+    errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
     errors(4) = calculate_cross_entropy_error(targets, outputs); // NO
@@ -963,7 +963,7 @@ Tensor<type, 1> TestingAnalysis::calculate_selection_errors() const
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
     errors(0) = sum_squared_error(0);
-    errors(1) = errors(0)/selection_samples_number;
+    errors(1) = errors(0)/type(selection_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
 
@@ -1013,7 +1013,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_selection_error
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
     errors(0) = sum_squared_error(0);
-    errors(1) = errors(0)/selection_samples_number;
+    errors(1) = errors(0)/type(selection_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
     errors(4) = calculate_cross_entropy_error(targets, outputs);
@@ -1065,7 +1065,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_selection_err
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
     errors(0) = sum_squared_error(0);
-    errors(1) = errors(0)/selection_samples_number;
+    errors(1) = errors(0)/type(selection_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
     errors(4) = calculate_cross_entropy_error(targets, outputs);
@@ -1125,7 +1125,7 @@ Tensor<type, 1> TestingAnalysis::calculate_testing_errors() const
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
     errors(0) = sum_squared_error(0);
-    errors(1) = errors(0)/testing_samples_number;
+    errors(1) = errors(0)/type(testing_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
 
@@ -1186,7 +1186,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_testing_errors(
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
     errors(0) = sum_squared_error(0);
-    errors(1) = errors(0)/testing_samples_number;
+    errors(1) = errors(0)/type(testing_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
     errors(4) = calculate_cross_entropy_error(targets, outputs);
@@ -1248,7 +1248,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_testing_error
     const Tensor<type, 0> sum_squared_error = (outputs-targets).square().sum().sqrt();
 
     errors(0) = sum_squared_error(0);
-    errors(1) = errors(0)/testing_samples_number;
+    errors(1) = errors(0)/type(testing_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
 
@@ -2682,8 +2682,8 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
         }
         else
         {
-            calibration_plot(i, 0) = sum/static_cast<type>(count);
-            calibration_plot(i, 1) = static_cast<type>(positives)/static_cast<type>(count);
+            calibration_plot(i, 0) = type(sum)/type(count);
+            calibration_plot(i, 1) = type(positives)/type(count);
         }
     }
 
@@ -3150,7 +3150,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
 
 Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tensor<type, 2>& targets,
                                                                       const Tensor<type, 2>& outputs,
-                                                                      const Tensor<string, 1>& labels)
+                                                                      const Tensor<string, 1>& labels) const
 {
     const Index samples_number = targets.dimension(0);
 
@@ -3193,7 +3193,7 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
 
 Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<type, 2>& targets,
                                                                       const Tensor<type, 2>& outputs,
-                                                                      const Tensor<string, 1>& labels)
+                                                                      const Tensor<string, 1>& labels) const
 {
     const Index samples_number = targets.dimension(0);
 
@@ -3346,7 +3346,7 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
 void TestingAnalysis::save_well_classified_samples_probability_histogram(const Tensor<type, 2>& targets,
                                                                            const Tensor<type, 2>& outputs,
                                                                            const Tensor<string, 1>& labels,
-                                                                           const string& histogram_file_name)
+                                                                           const string& histogram_file_name) const
 {
     const Tensor<string, 2> well_classified_samples = calculate_well_classified_samples(targets,
                                                                                             outputs,
@@ -3365,7 +3365,7 @@ void TestingAnalysis::save_well_classified_samples_probability_histogram(const T
 
 
 void TestingAnalysis::save_well_classified_samples_probability_histogram(const Tensor<string, 2>& well_classified_samples,
-                                                                           const string& histogram_file_name)
+                                                                           const string& histogram_file_name) const
 {
 
     Tensor<type, 1> well_classified_numerical_probabilities(well_classified_samples.dimension(0));
@@ -3825,7 +3825,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
     }
     else
     {
-        Matthews_correlation_coefficient = static_cast<type>(true_positive * true_negative - false_positive * false_negative) / static_cast<type>(sqrt(((true_positive + false_positive) *(true_positive + false_negative) *(true_negative + false_positive) *(true_negative + false_negative))))
+        Matthews_correlation_coefficient = static_cast<type>(true_positive * true_negative - false_positive * false_negative) / static_cast<type>(sqrt((true_positive + false_positive) *(true_positive + false_negative) *(true_negative + false_positive) *(true_negative + false_negative)))
                                            ;
     }
 
@@ -4027,11 +4027,12 @@ void TestingAnalysis::save(const string& file_name) const
 
     pFile = fopen(file_name.c_str(), "w");
 
-    tinyxml2::XMLPrinter document(pFile);
-
-    write_XML(document);
-
-    fclose(pFile);
+    if(pFile)
+    {
+        tinyxml2::XMLPrinter printer(pFile);
+        write_XML(printer);
+        fclose(pFile);
+    }
 }
 
 

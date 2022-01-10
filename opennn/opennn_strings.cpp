@@ -73,7 +73,7 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
     // Find first "non-delimiter"
 
     Index index = 0;
-    Index old_pos;
+    Index old_pos = lastPos;
 
     string::size_type pos = str.find_first_of(separator, lastPos);
 
@@ -128,8 +128,7 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
 
     Index index = 0;
 
-    Index old_pos;
-
+    Index old_pos = last_position;
 
     while(string::npos != position || string::npos != last_position)
     {
@@ -660,6 +659,8 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         return mktime(&time_structure);
     }
     else if(is_numeric_string(date)){
+        time_t time_t_date = stoi(date);
+        return time_t_date;
     }
     else
     {
@@ -670,16 +671,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                << "Date format (" << date << ") is not implemented.\n";
 
         throw invalid_argument(buffer.str());
-    }
-
-    if(is_numeric_string(date))
-    {
-        time_t time_t_date = stoi(date);
-        return time_t_date;
-    }
-    else
-    {
-        return mktime(&time_structure);
     }
 }
 

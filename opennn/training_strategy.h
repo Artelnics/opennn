@@ -134,7 +134,7 @@ public:
 
     void set();
     void set(NeuralNetwork*, DataSet*);
-    void set_default();
+    void set_default() const;
 
     void set_threads_number(const int&);
 

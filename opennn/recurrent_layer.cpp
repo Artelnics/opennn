@@ -261,9 +261,10 @@ string RecurrentLayer::write_activation_function() const
     case ActivationFunction::HardSigmoid: return "HardSigmoid";
 
     case ActivationFunction::ExponentialLinear: return "ExponentialLinear";
-    }
 
-    return string();
+    default:
+        return string();
+    }
 }
 
 
@@ -649,6 +650,8 @@ void RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations_1
         case ActivationFunction::HardSigmoid: hard_sigmoid(combinations_1d, activations_1d); return;
 
         case ActivationFunction::ExponentialLinear: exponential_linear(combinations_1d, activations_1d); return;
+
+        default: return;
     }
 }
 
@@ -700,6 +703,8 @@ void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 1>& co
          case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
 
          case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_1d, activations_1d,  activations_derivatives_1d); return;
+
+         default: return;
      }
 }
 
@@ -750,6 +755,8 @@ void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 2>& co
          case ActivationFunction::HardSigmoid: hard_sigmoid_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
 
          case ActivationFunction::ExponentialLinear: exponential_linear_derivatives(combinations_2d, activations_2d,  activations_derivatives_2d); return;
+
+         default: return;
      }
 }
 
@@ -1546,6 +1553,9 @@ string RecurrentLayer::write_activations_python() const
 
         case ActivationFunction::HardSigmoid:
             ///@todo
+            break;
+
+        default:
             break;
         }
     }

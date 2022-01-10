@@ -281,7 +281,7 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 /// Set hardware to use. Default: Multi-core.
 
 void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back_propagation,
-                      StochasticGradientDescentData& optimization_data)
+                      StochasticGradientDescentData& optimization_data) const
 {
     
     const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
