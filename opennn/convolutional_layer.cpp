@@ -245,29 +245,61 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation
             = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
 
+#ifdef OPENNN_DEBUG
+
     const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
 
-    convolutional_layer_forward_propagation->combinations.resize(outputs_dimensions(0),
-                                               outputs_dimensions(1),
-                                               outputs_dimensions(2),
-                                               outputs_dimensions(3));
+    if(outputs_dimensions[0] != convolutional_layer_forward_propagation->combinations.dimension(0))
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "ConvolutionalLayer::forward_propagate.\n"
+               << "outputs_dimensions[0]" <<outputs_dimensions[0] <<"must me equal to" << convolutional_layer_forward_propagation->combinations.dimension(0)<<".\n";
 
-    convolutional_layer_forward_propagation->activations.resize(outputs_dimensions(0),
-                                              outputs_dimensions(1),
-                                              outputs_dimensions(2),
-                                              outputs_dimensions(3));
+        throw invalid_argument(buffer.str());
+    }
 
-    convolutional_layer_forward_propagation->activations_derivatives.resize(outputs_dimensions(0),
-                                                          outputs_dimensions(1),
-                                                          outputs_dimensions(2),
-                                                          outputs_dimensions(3));
+    if(outputs_dimensions[1] != convolutional_layer_forward_propagation->combinations.dimension(1))
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "ConvolutionalLayer::forward_propagate.\n"
+               << "outputs_dimensions[1]" <<outputs_dimensions[1] <<"must me equal to" << convolutional_layer_forward_propagation->combinations.dimension(1)<<".\n";
 
-//    calculate_convolutions(inputs,
-//                           convolutional_layer_forward_propagation->combinations);
+        throw invalid_argument(buffer.str());
+    }
 
-    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
-                                      convolutional_layer_forward_propagation->activations,
-                                      convolutional_layer_forward_propagation->activations_derivatives);
+    if(outputs_dimensions[2] != convolutional_layer_forward_propagation->combinations.dimension(2))
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "ConvolutionalLayer::forward_propagate.\n"
+               << "outputs_dimensions[2]" <<outputs_dimensions[2] <<"must me equal to" << convolutional_layer_forward_propagation->combinations.dimension(2)<<".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(outputs_dimensions[3] != convolutional_layer_forward_propagation->combinations.dimension(3))
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "ConvolutionalLayer::forward_propagate.\n"
+               << "outputs_dimensions[3]" <<outputs_dimensions[3] <<"must me equal to" << convolutional_layer_forward_propagation->combinations.dimension(3)<<".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+#endif
+
+
+    calculate_convolutions(inputs,
+                           convolutional_layer_forward_propagation->combinations);
+
+    cout<<convolutional_layer_forward_propagation->combinations<<endl;
+
+//    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
+//                                      convolutional_layer_forward_propagation->activations,
+//                                      convolutional_layer_forward_propagation->activations_derivatives);
 
 //    to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);
 //    to_2d(convolutional_layer_forward_propagation->activations_4d, convolutional_layer_forward_propagation->activations);
@@ -275,21 +307,21 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
 }
 
 
-void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>&inputs, LayerForwardPropagation* forward_propagation)
-{
-    const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
-                                                     input_variables_dimensions(2), // rows number
-                                                     input_variables_dimensions(1), // channels number
-                                                     inputs.dimension(0)}; // images number
-    const Eigen::array<Eigen::Index, 2> shuffle_dims_2D = {1, 0};
-    const Eigen::array<Eigen::Index, 4> shuffle_dims_4D = {3, 2, 1, 0};
+//void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>&inputs, LayerForwardPropagation* forward_propagation)
+//{
+//    const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
+//                                                     input_variables_dimensions(2), // rows number
+//                                                     input_variables_dimensions(1), // channels number
+//                                                     inputs.dimension(0)}; // images number
+//    const Eigen::array<Eigen::Index, 2> shuffle_dims_2D = {1, 0};
+//    const Eigen::array<Eigen::Index, 4> shuffle_dims_4D = {3, 2, 1, 0};
 
-    const Tensor<type, 4> inputs_4d = inputs.shuffle(shuffle_dims_2D).reshape(four_dims).shuffle(shuffle_dims_4D);
+//    const Tensor<type, 4> inputs_4d = inputs.shuffle(shuffle_dims_2D).reshape(four_dims).shuffle(shuffle_dims_4D);
 
-    forward_propagate(inputs_4d, forward_propagation);
-}
+//    forward_propagate(inputs_4d, forward_propagation);
+//}
 
-
+/*
 void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
                                            Tensor<type, 1> potential_parameters,
                                            LayerForwardPropagation* forward_propagation)
@@ -361,8 +393,8 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4>& inputs,
                                       convolutional_layer_forward_propagation->activations,
                                       convolutional_layer_forward_propagation->activations_derivatives);
 }
-
-
+*/
+/*
 void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                            Tensor<type, 1> potential_parameters,
                                            LayerForwardPropagation* forward_propagation)
@@ -381,13 +413,13 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
     forward_propagate(inputs_4d, potential_parameters, forward_propagation);
 }
-
-
+*/
+/*
 void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation*,
                                                 LayerBackPropagation*,
                                                 LayerBackPropagation*) const
 {
-/*
+
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation = static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation);
 
     const Type next_layer_type = next_layer_pointer->get_type();
@@ -433,7 +465,7 @@ void ConvolutionalLayer::calculate_hidden_delta(LayerForwardPropagation*,
                                              next_layer_delta,
                                              hidden_delta);
     }
-*/
+
 }
 
 
@@ -805,7 +837,7 @@ void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer
     hidden_delta.device(*thread_pool_device) = hidden_delta * activations_derivatives;
 }
 
-
+*/
 void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
@@ -916,11 +948,15 @@ ConvolutionalLayer::ActivationFunction ConvolutionalLayer::get_activation_functi
 
 Index ConvolutionalLayer::get_outputs_rows_number() const
 {
-    const Index kernels_rows_number = get_kernels_rows_number();
+    return (input_variables_dimensions(0) - get_kernels_rows_number()+1);
 
-    const Index padding_height = get_padding_height();
+    ///@todo padding
 
-    return ((input_variables_dimensions(2) - kernels_rows_number + 2 * padding_height)/row_stride) + 1;
+//    const Index kernels_rows_number = get_kernels_rows_number();
+
+//    const Index padding_height = get_padding_height();
+
+//    return ((input_variables_dimensions(2) - kernels_rows_number + 2 * padding_height)/row_stride) + 1;
 }
 
 
@@ -928,11 +964,15 @@ Index ConvolutionalLayer::get_outputs_rows_number() const
 
 Index ConvolutionalLayer::get_outputs_columns_number() const
 {
-    const Index kernels_columns_number = get_kernels_columns_number();
+    return (input_variables_dimensions(1) - get_kernels_columns_number()+1);
 
-    const Index padding_width = get_padding_width();
+    ///@todo padding
 
-    return ((input_variables_dimensions(3) - kernels_columns_number + 2 * padding_width)/column_stride) + 1;
+//    const Index kernels_columns_number = get_kernels_columns_number();
+
+//    const Index padding_width = get_padding_width();
+
+//    return ((input_variables_dimensions(3) - kernels_columns_number + 2 * padding_width)/column_stride) + 1;
 }
 
 
@@ -942,10 +982,10 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(4);
 
-    outputs_dimensions(0) = input_variables_dimensions(0); // Number of images
-    outputs_dimensions(1) = get_kernels_number();
-    outputs_dimensions(2) = get_outputs_rows_number();
-    outputs_dimensions(3) = get_outputs_columns_number();
+    outputs_dimensions(0) = get_outputs_rows_number(); // Rows
+    outputs_dimensions(1) = get_outputs_columns_number(); // Cols
+    outputs_dimensions(2) = get_kernels_number(); // Number of kernels (Channels)
+    outputs_dimensions(3) = input_variables_dimensions(3); // Number of images
 
     return outputs_dimensions;
 }
@@ -987,7 +1027,7 @@ Index ConvolutionalLayer::get_row_stride() const
 
 Index ConvolutionalLayer::get_kernels_number() const
 {
-    return synaptic_weights.dimension(0);
+    return synaptic_weights.dimension(3);
 }
 
 
@@ -995,7 +1035,7 @@ Index ConvolutionalLayer::get_kernels_number() const
 
 Index ConvolutionalLayer::get_kernels_channels_number() const
 {
-    return synaptic_weights.dimension(1);
+    return synaptic_weights.dimension(2);
 }
 
 
@@ -1003,7 +1043,7 @@ Index ConvolutionalLayer::get_kernels_channels_number() const
 
 Index  ConvolutionalLayer::get_kernels_rows_number() const
 {
-    return synaptic_weights.dimension(2);
+    return synaptic_weights.dimension(0);
 }
 
 
@@ -1011,7 +1051,7 @@ Index  ConvolutionalLayer::get_kernels_rows_number() const
 
 Index ConvolutionalLayer::get_kernels_columns_number() const
 {
-    return synaptic_weights.dimension(3);
+    return synaptic_weights.dimension(1);
 }
 
 
