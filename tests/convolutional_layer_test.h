@@ -48,9 +48,9 @@ public:
 
   // Outputs
 
-  void test_calculate_outputs();
+//  void test_calculate_outputs();
 
-  void test_calculate_outputs_2d();
+//  void test_calculate_outputs_2d();
 
   void test_insert_padding();
 
@@ -68,9 +68,11 @@ public:
 
 private:
 
-//  ConvolutionalLayer convolutional_layer;
+    ConvolutionalLayer convolutional_layer;
 
-  NumericalDifferentiation numerical_differentiation;
+    ConvolutionalLayerForwardPropagation foward_propagation;
+
+    NumericalDifferentiation numerical_differentiation;
 };
 
 #endif

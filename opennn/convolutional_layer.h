@@ -149,42 +149,44 @@ public:
 
    // Outputs
 
-   void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*);
-   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
 
-   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*);
-   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*);
+   void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*);
+
+
+//   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
+//   void forward_propagate(const Tensor<type, 4>&, Tensor<type, 1>, LayerForwardPropagation*);
+//   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*);
 
    // Delta methods
 
-   void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerBackPropagation*) const;
+//   void calculate_hidden_delta(LayerForwardPropagation*,
+//                               LayerBackPropagation*,
+//                               LayerBackPropagation*) const;
 
 
-   void calculate_hidden_delta_convolutional(ConvolutionalLayer*,
-                                             const Tensor<type, 4>&,
-                                             const Tensor<type, 4>&,
-                                             const Tensor<type, 4>&,
-                                             Tensor<type, 2>&) const;
+//   void calculate_hidden_delta_convolutional(ConvolutionalLayer*,
+//                                             const Tensor<type, 4>&,
+//                                             const Tensor<type, 4>&,
+//                                             const Tensor<type, 4>&,
+//                                             Tensor<type, 2>&) const;
 
-   void calculate_hidden_delta_pooling(PoolingLayer*,
-                                       const Tensor<type, 4>&,
-                                       const Tensor<type, 4>&,
-                                       const Tensor<type, 2>&,
-                                       Tensor<type, 2>&) const;
+//   void calculate_hidden_delta_pooling(PoolingLayer*,
+//                                       const Tensor<type, 4>&,
+//                                       const Tensor<type, 4>&,
+//                                       const Tensor<type, 2>&,
+//                                       Tensor<type, 2>&) const;
 
-   void calculate_hidden_delta_perceptron(const PerceptronLayer*,
-                                          const Tensor<type, 4>&,
-                                          const Tensor<type, 2>&,
-                                          const Tensor<type, 2>&,
-                                          Tensor<type, 2>&) const;
+//   void calculate_hidden_delta_perceptron(const PerceptronLayer*,
+//                                          const Tensor<type, 4>&,
+//                                          const Tensor<type, 2>&,
+//                                          const Tensor<type, 2>&,
+//                                          Tensor<type, 2>&) const;
 
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayer*,
-                                             const Tensor<type, 4>&,
-                                             const Tensor<type, 4>&,
-                                             const Tensor<type, 2>&,
-                                             Tensor<type, 2>&) const;
+//   void calculate_hidden_delta_probabilistic(ProbabilisticLayer*,
+//                                             const Tensor<type, 4>&,
+//                                             const Tensor<type, 4>&,
+//                                             const Tensor<type, 2>&,
+//                                             Tensor<type, 2>&) const;
 
    // Gradient methods
 
@@ -216,6 +218,8 @@ protected:
    Index row_stride = 1;
 
    Index column_stride = 1;
+
+   //0->rows, 1->cols, 2->channels, 3->batch
 
    Tensor<Index, 1> input_variables_dimensions;
 
@@ -260,18 +264,16 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
         batch_samples_number = new_batch_samples_number;
 
-        combinations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
-        activations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
+        combinations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
+        activations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
 
-        activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);
+        //activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);
     }
-
 
     void print() const
     {
 
     }
-
 
     Tensor<type, 4> combinations;
     Tensor<type, 4> activations;
