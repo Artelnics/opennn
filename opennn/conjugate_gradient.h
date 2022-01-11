@@ -108,7 +108,7 @@ public:
 
    // Utilities
 
-   void set_save_period(const Index&);
+   virtual void set_save_period(const Index&);
 
    // Training direction methods
 
@@ -194,7 +194,7 @@ struct ConjugateGradientData : public OptimizationAlgorithmData
 
     void set(ConjugateGradient*);
 
-    void print() const;
+    virtual void print() const;
 
     ConjugateGradient* conjugate_gradient_pointer = nullptr;
 

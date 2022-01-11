@@ -62,7 +62,7 @@ public:
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
 
-   string get_hardware_use() const;
+   virtual string get_hardware_use() const;
 
    // Stopping criteria   
 
@@ -193,7 +193,7 @@ struct GradientDescentData : public OptimizationAlgorithmData
     }
 
 
-    void print() const
+    virtual void print() const
     {
         cout << "Training direction:" << endl;
         cout << training_direction << endl;

@@ -186,7 +186,7 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
     void set(AdaptiveMomentEstimation*);
 
-    void print() const;
+    virtual void print() const;
 
     AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
 

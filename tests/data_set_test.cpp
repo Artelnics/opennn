@@ -881,16 +881,16 @@ void DataSetTest::test_read_csv()
     data_set.set_separator('\t');
     data_set.set_missing_values_label("NaN");
     data_string =
-            "f	52	1100	32	145490	4	no\n"
-            "f	57	8715	1	242542	1	NaN\n"
-            "m	44	5145	28	79100	5	no\n"
-            "f	57	2857	16	1	1	NaN\n"
-            "f	47	3368	44	63939	1	yes\n"
-            "f	59	5697	14	45278	1	no\n"
-            "m	86	1843	1	132799	2	yes\n"
-            "m	67	4394	25	6670	2	no\n"
-            "m	40	6619	23	168081	1	no\n"
-            "f	12	4204	17	1	2	no\n";
+            "f\t52\t1100\t32\t145490\t4\tno\n"
+            "f\t57\t8715\t1\t242542\t1\tNaN\n"
+            "m\t44\t5145\t28\t79100\t5\tno\n"
+            "f\t57\t2857\t16\t1\t1\tNaN\n"
+            "f\t47\t3368\t44\t63939\t1\tyes\n"
+            "f\t59\t5697\t14\t45278\t1\tno\n"
+            "m\t86\t1843\t1\t132799\t2\tyes\n"
+            "m\t67\t4394\t25\t6670\t2\tno\n"
+            "m\t40\t6619\t23\t168081\t1\tno\n"
+            "f\t12\t4204\t17\t1\t2\tno\n";
 
     file.open(data_file_name.c_str());
     file << data_string;

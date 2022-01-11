@@ -147,7 +147,7 @@ public:
 
    // Outputs
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) override;
 
    void forward_propagate(const Tensor<type, 2>&,
                           LayerForwardPropagation*);
@@ -160,7 +160,7 @@ public:
 
    void calculate_error_gradient(const Tensor<type, 2>&,
                                  LayerForwardPropagation*,
-                                 LayerBackPropagation*) const;
+                                 LayerBackPropagation*) const override;
 
    void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const;
 

@@ -1106,7 +1106,7 @@ Tensor<Tensor<type, 1>, 1> NeuralNetwork::get_trainable_layers_parameters(const 
 /// Sets all the parameters(biases and synaptic weights) from a single vector.
 /// @param new_parameters New set of parameter values.
 
-void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
+void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters) const
 {
 #ifdef OPENNN_DEBUG
 

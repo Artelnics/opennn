@@ -200,7 +200,7 @@ public:
 
    // Long short-term memory layer outputs
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) override;
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
@@ -226,7 +226,7 @@ public:
 
    void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const;
 
-   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, LayerBackPropagation*) const;
+   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, LayerBackPropagation*) const override;
 
    void calculate_forget_weights_error_gradient(const Tensor<type, 2>&,
                                                 LongShortTermMemoryLayerForwardPropagation*,

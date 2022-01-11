@@ -149,11 +149,6 @@ void WeightedSquaredError::set_weights()
         negatives_weight = type(1);
         positives_weight = static_cast<type>(negatives)/static_cast<type>(positives);
     }
-    else
-    {
-        positives_weight = type(1);
-        negatives_weight = type(1);
-    }
 }
 
 

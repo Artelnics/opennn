@@ -58,7 +58,7 @@ public:
 
     // Set methods
 
-    void set_default();
+    virtual void set_default();
 
     void set_neurons_increment(const Index&);
 

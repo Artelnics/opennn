@@ -49,7 +49,7 @@ int main()
 
         DataSet data_set;//("../data/mnist_train.csv", ',', true);
 
-        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data");
+        data_set.set_data_file_name("C:/Users/Artelnics2019/Desktop/mnist/data");
 
         data_set.read_bmp();
 

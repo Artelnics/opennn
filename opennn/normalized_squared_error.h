@@ -64,7 +64,7 @@ public:
     void set_selection_normalization_coefficient();
     void set_selection_normalization_coefficient(const type&);
 
-    void set_default();
+    virtual void set_default();
 
     void set_data_set_pointer(DataSet* new_data_set_pointer);
 
@@ -105,7 +105,7 @@ public:
    string get_error_type() const;
    string get_error_type_text() const;
 
-   void from_XML(const tinyxml2::XMLDocument&) const;
+   virtual void from_XML(const tinyxml2::XMLDocument&) const;
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 

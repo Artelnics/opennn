@@ -466,6 +466,7 @@ void check_columns_number(const Tensor<type, 2>& matrix, const Index& columns_nu
     }
 }
 
+
 Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     const Index rows_number = x.size();
@@ -564,6 +565,37 @@ bool is_less_than(const Tensor<type, 1>& column, const type& value)
     const Tensor<bool, 0> is_less = (if_sentence.select(sentence, else_sentence)).any();
 
     return is_less(0);
+}
+
+Tensor<Index, 1> push_back(const Tensor<Index, 1>& old_vector, const Index& new_string)
+{
+    const Index old_size = old_vector.size();
+
+    const Index new_size = old_size+1;
+
+    Tensor<Index, 1> new_vector(new_size);
+
+    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+
+    new_vector(new_size-1) = new_string;
+
+    return new_vector;
+}
+
+
+Tensor<string, 1> push_back(const Tensor<string, 1>& old_vector, const string& new_string)
+{
+    const Index old_size = old_vector.size();
+
+    const Index new_size = old_size+1;
+
+    Tensor<string, 1> new_vector(new_size);
+
+    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+
+    new_vector(new_size-1) = new_string;
+
+    return new_vector;
 }
 
 

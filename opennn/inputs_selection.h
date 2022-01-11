@@ -79,7 +79,7 @@ public:
 
     void set(TrainingStrategy*);
 
-    void set_default();
+    virtual void set_default();
 
     void set_trials_number(const Index&);
 

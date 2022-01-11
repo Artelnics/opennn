@@ -97,7 +97,7 @@ public:
 
    // Lower and upper bounds
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) override;
 
    // Expression methods
 

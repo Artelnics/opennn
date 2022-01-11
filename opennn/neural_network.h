@@ -170,7 +170,7 @@ public:
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
    Tensor<Tensor<type, 1>, 1> get_trainable_layers_parameters(const Tensor<type, 1>&) const;
 
-   void set_parameters(Tensor<type, 1>&);
+   void set_parameters(Tensor<type, 1>&) const;
 
    // Parameters initialization methods
 

@@ -71,7 +71,7 @@ public:
 
     // Set methods
 
-    void set_default();
+    virtual void set_default();
 
     void set_population(const Tensor<bool, 2>&);
     void set_individuals_number(const Index&);

@@ -9,6 +9,7 @@
 #include "data_set.h"
 
 using namespace  opennn;
+using namespace std;
 using namespace fs;
 
 namespace opennn
@@ -8355,7 +8356,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 }
                 else if(is_float)
                 {
-                    input_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), NULL));
+                    input_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), nullptr));
                 }
                 else
                 {
@@ -8422,7 +8423,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                 }
                 else if(is_float)
                 {
-                    input_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), NULL));
+                    input_data(line_number, variable_index) = type(strtof(tokens(token_index).data(), nullptr));
                 }
                 else
                 {
@@ -8645,7 +8646,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 /// @param cleaning_parameter Parameter used to detect outliers
 /// @todo
 
-void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
+void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter) const
 {
     const Tensor<Tensor<Index, 1>, 1> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 
@@ -9128,12 +9129,12 @@ Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& t
         if(data(sample_index, current_variable) < division_value)
         {
             one_side_count++;
-            one_side_samples.push_back(sample_index);
+            one_side_samples.emplace_back(sample_index);
         }
         else
         {
             other_side_count++;
-            other_side_samples.push_back(sample_index);
+            other_side_samples.emplace_back(sample_index);
         }
     }
 
@@ -9141,15 +9142,15 @@ Index DataSet::split_isolation_tree(Tensor<type, 2> & tree, list<list<Index>>& t
     {
         if(one_side_count != 1)
         {
-            tree_simulation.push_back(one_side_samples);
-            tree_index.push_back(current_tree_index*2+1);
+            tree_simulation.emplace_back(one_side_samples);
+            tree_index.emplace_back(current_tree_index*2+1);
             delta_next_depth_nodes++;
         }
 
         if(other_side_count != 1)
         {
-            tree_simulation.push_back(other_side_samples);
-            tree_index.push_back(current_tree_index*2+2);
+            tree_simulation.emplace_back(other_side_samples);
+            tree_index.emplace_back(current_tree_index*2+2);
             delta_next_depth_nodes++;
         }
 
@@ -9179,11 +9180,11 @@ Tensor<type, 2> DataSet::create_isolation_tree(const Tensor<Index, 1>& indices, 
     tree.setConstant(numeric_limits<type>::infinity());
 
     for(Index i = 0; i < used_samples_number; i++)
-        current_node_samples.push_back(indices(i));
+        current_node_samples.emplace_back(indices(i));
 
-    tree_simulation.push_back(current_node_samples);
+    tree_simulation.emplace_back(current_node_samples);
     tree(0, 2) = type(used_samples_number);
-    tree_index.push_back(0);
+    tree_index.emplace_back(0);
 
     current_node_samples.clear();
 
@@ -9900,6 +9901,18 @@ vector<unsigned char> DataSet::read_bmp_image(const string& filename)
 {
     FILE* f = fopen(filename.data(), "rb");
 
+    if(!f)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp_image() method.\n"
+               << "Couldn't open the file.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+
     unsigned char info[54];
 
     fread(info, sizeof(unsigned char), 54, f);
@@ -9925,20 +9938,18 @@ vector<unsigned char> DataSet::read_bmp_image(const string& filename)
     return image;
 }
 
-size_t DataSet::number_of_elements_in_directory(fs::path path)
+size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 {
-    // Not working in linux
     using fs::directory_iterator;
 
     return distance(directory_iterator(path), directory_iterator{});
-    //
+
     return size_t();
 }
 
 
 void DataSet::read_bmp()
 {
-    //
     const fs::path path = data_file_name;
 
     if(data_file_name.empty())
@@ -9973,12 +9984,12 @@ void DataSet::read_bmp()
     vector<fs::path> image_paths;
 
     for (const auto & entry : fs::directory_iterator(path)){
-        folder_paths.push_back(entry.path().string());
+        folder_paths.emplace_back(entry.path().string());
     }
 
     for (Index i = 0 ; i < folder_paths.size() ; i++){
         for (const auto & entry : fs::directory_iterator(folder_paths[i])){
-            image_paths.push_back(entry.path().string());
+            image_paths.emplace_back(entry.path().string());
         }
     }
 
@@ -10029,7 +10040,7 @@ void DataSet::read_bmp()
 
         for (const auto & entry : fs::directory_iterator(folder_paths[i]))
         {
-            images_paths.push_back(entry.path().string());
+            images_paths.emplace_back(entry.path().string());
         }
 
         images_number = images_paths.size();
@@ -10438,7 +10449,7 @@ void DataSet::read_csv_3_simple()
             }
             else if(is_float)
             {
-                data(sample_index, column_index) = type(strtof(tokens(j).data(), NULL));
+                data(sample_index, column_index) = type(strtof(tokens(j).data(), nullptr));
                 column_index++;
             }
             else
@@ -11132,39 +11143,6 @@ void DataSet::fix_repeated_names()
         set_variables_names(variables_names);
     }
 }
-
-
-Tensor<Index, 1> DataSet::push_back(const Tensor<Index, 1>& old_vector, const Index& new_string) const
-{
-    const Index old_size = old_vector.size();
-
-    const Index new_size = old_size+1;
-
-    Tensor<Index, 1> new_vector(new_size);
-
-    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
-
-    new_vector(new_size-1) = new_string;
-
-    return new_vector;
-}
-
-
-Tensor<string, 1> DataSet::push_back(const Tensor<string, 1>& old_vector, const string& new_string) const
-{
-    const Index old_size = old_vector.size();
-
-    const Index new_size = old_size+1;
-
-    Tensor<string, 1> new_vector(new_size);
-
-    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
-
-    new_vector(new_size-1) = new_string;
-
-    return new_vector;
-}
-
 
 void DataSet::initialize_sequential(Tensor<Index, 1>& new_tensor,
         const Index& start, const Index& step, const Index& end) const
