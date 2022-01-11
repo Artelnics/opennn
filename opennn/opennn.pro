@@ -99,6 +99,7 @@ HEADERS += \
     response_optimization.h \
     tensor_utilities.h \
     unit_testing.h \
+    flatten_layer.h \
     opennn.h
 
 SOURCES += \
@@ -149,4 +150,5 @@ SOURCES += \
     genetic_algorithm.cpp \
     testing_analysis.cpp \
     response_optimization.cpp \
+    flatten_layer.cpp \
     unit_testing.cpp

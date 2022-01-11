@@ -10,6 +10,7 @@ convolutional_layer.cpp
 correlations.cpp
 cross_entropy_error.cpp
 data_set.cpp
+flatten_layer.cpp
 genetic_algorithm.cpp
 gradient_descent.cpp
 growing_inputs.cpp
