@@ -686,201 +686,147 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 }
 
 
-void ConvolutionalLayerTest::test_calculate_outputs()
+void ConvolutionalLayerTest::test_forward_propagate()
 {
-    /*
-    cout << "test_calculate_outputs\n";
+    cout << "test_forward_propagate\n";
 
+    const Index input_images = 1;
+    const Index input_kernels = 2;
+
+    const Index channels = 3;
+
+    const Index rows_input = 6;
+    const Index cols_input = 6;
+    const Index rows_kernel = 3;
+    const Index cols_kernel = 3;
+
+    Tensor<type,4> inputs(rows_input, cols_input, channels, input_images);
+    Tensor<type,4> kernel(rows_kernel, cols_kernel, channels, input_kernels);
+    Tensor<type,1> bias(input_kernels);
+
+    inputs.setConstant(1.);
+    kernel.setConstant(2.);
+    bias.setConstant(2.);
+
+    convolutional_layer.set(inputs, kernel, bias);
+
+    foward_propagation.set(input_images, &convolutional_layer);
+
+    convolutional_layer.forward_propagate(inputs, &foward_propagation);
+
+
+
+//    Tensor<Index, 1> new_inputs_dimension(4);
+//    Tensor<Index, 1> new_kernels_dimensions(4);
+
+//    new_inputs_dimension.setValues({rows_input, cols_input, channels,input_images});
+//    new_kernels_dimensions.setValues({rows_kernel, cols_kernel,channels,input_kernels});
+
+//    ConvolutionalLayer convolutional_layer(new_inputs_dimension, new_kernels_dimensions);
+
+//    convolutional_layer.set_synaptic_weights_constant(2.);
+//    convolutional_layer.set_biases_constant(1.);
+
+
+//    convolutional_layer.forward_propagate(inputs)
+
+
+
+/*
     Tensor<type, 4> inputs;
+    Tensor<type, 4> activations;
+    Tensor<type, 4> activations_derivatives;
+    ConvolutionalLayerForwardPropagation forward_propagation;
+
     Tensor<type, 4> kernels;
-    Tensor<type, 4> outputs;
     Tensor<type, 1> biases;
 
-    // One image, One filter
-    inputs.resize(5, 5, 3, 1);
-    kernels.resize(2, 2, 3, 1);
-    biases.resize(1);
 
-    inputs.setConstant(type(1));
-    kernels.setConstant(type(0.25));
-    biases.setConstant(type(0));
+
+//    inputs.resize(3, 3, 3, 2);
+//    kernels.resize(2, , 3, 2);
+//    biases.resize(2);
+
+    inputs.resize(2, 3, 3, 3);
+    kernels.resize(2, 3, 2, 2);
+    biases.resize(2);
 
     Tensor<Index, 1> inputs_dimensions(4);
-    inputs_dimensions.setValues({5, 5, 3, 1});
+    inputs_dimensions.setValues({2, 3, 3, 3});
     Tensor<Index, 1> kernels_dimensions(4);
-    kernels_dimensions.setValues({2, 2, 3, 1});
-
-    ConvolutionalLayer convolutional_layer
+    kernels_dimensions.setValues({2, 3, 2, 2});
 
     convolutional_layer.set(inputs_dimensions, kernels_dimensions);
-
-    convolutional_layer.set_synaptic_weights(kernels);
-    convolutional_layer.set_biases(biases);
-    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
-    convolutional_layer.calculate_outputs(inputs, outputs);
-
-    assert_true(outputs(0, 0, 0, 0) == type(3) &&
-                outputs(0, 1, 0, 0) == type(3) &&
-                outputs(0, 2, 0, 0) == type(3) &&
-                outputs(0, 3, 0, 0) == type(3) &&
-                outputs(1, 0, 0, 0) == type(3) &&
-                outputs(1, 1, 0, 0) == type(3) &&
-                outputs(1, 2, 0, 0) == type(3) &&
-                outputs(1, 3, 0, 0) == type(3) &&
-                outputs(2, 0, 0, 0) == type(3) &&
-                outputs(2, 1, 0, 0) == type(3) &&
-                outputs(2, 2, 0, 0) == type(3) &&
-                outputs(2, 3, 0, 0) == type(3) &&
-                outputs(3, 0, 0, 0) == type(3) &&
-                outputs(3, 1, 0, 0) == type(3) &&
-                outputs(3, 2, 0, 0) == type(3) &&
-                outputs(3, 3, 0, 0) == type(3), LOG);
-
-    // One image, multiple filters
-
-    inputs.resize(5, 5, 3, 1);
-    kernels.resize(2, 2, 3, 2);
-    biases.resize(2);
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
 
     inputs.setConstant(type(1));
-    kernels.setConstant(type(0.25));
-    biases.setConstant(type(0));
-
-    inputs_dimensions.setValues({5, 5, 3, 1});
-    kernels_dimensions.setValues({2, 2, 3, 2});
-
-    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
-
-    convolutional_layer.set_synaptic_weights(kernels);
-    convolutional_layer.set_biases(biases);
-    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
-    convolutional_layer.calculate_outputs(inputs, outputs);
-
-    assert_true(outputs(0, 0, 0, 0) == type(type(3)) &&
-                outputs(0, 1, 0, 0) == type(type(3)) &&
-                outputs(0, 2, 0, 0) == type(type(3)) &&
-                outputs(0, 3, 0, 0) == type(type(3)) &&
-                outputs(1, 0, 0, 0) == type(type(3)) &&
-                outputs(1, 1, 0, 0) == type(type(3)) &&
-                outputs(1, 2, 0, 0) == type(type(3)) &&
-                outputs(1, 3, 0, 0) == type(type(3)) &&
-                outputs(2, 0, 0, 0) == type(type(3)) &&
-                outputs(2, 1, 0, 0) == type(type(3)) &&
-                outputs(2, 2, 0, 0) == type(type(3)) &&
-                outputs(2, 3, 0, 0) == type(type(3)) &&
-                outputs(3, 0, 0, 0) == type(type(3)) &&
-                outputs(3, 1, 0, 0) == type(type(3)) &&
-                outputs(3, 2, 0, 0) == type(type(3)) &&
-                outputs(3, 3, 0, 0) == type(type(3)) &&
-                outputs(0, 0, 1, 0) == type(type(3)) &&
-                outputs(0, 1, 1, 0) == type(type(3)) &&
-                outputs(0, 2, 1, 0) == type(type(3)) &&
-                outputs(0, 3, 1, 0) == type(type(3)) &&
-                outputs(1, 0, 1, 0) == type(type(3)) &&
-                outputs(1, 1, 1, 0) == type(type(3)) &&
-                outputs(1, 2, 1, 0) == type(type(3)) &&
-                outputs(1, 3, 1, 0) == type(type(3)) &&
-                outputs(2, 0, 1, 0) == type(type(3)) &&
-                outputs(2, 1, 1, 0) == type(type(3)) &&
-                outputs(2, 2, 1, 0) == type(type(3)) &&
-                outputs(2, 3, 1, 0) == type(type(3)) &&
-                outputs(3, 0, 1, 0) == type(type(3)) &&
-                outputs(3, 1, 1, 0) == type(type(3)) &&
-                outputs(3, 2, 1, 0) == type(type(3)) &&
-                outputs(3, 3, 1, 0) == type(type(3)), LOG);
-
-    // Multiple images, multiple filters
-
-    inputs.resize(5, 5, 3, 2);
-    kernels.resize(2, 2, 3, 2);
-    biases.resize(2);
-
-    inputs.setConstant(type(1));
-    kernels.setConstant(type(0.25));
     biases(0) = type(0);
     biases(1) = type(1);
+    kernels.setConstant(type(1.0/12.0));
 
-    inputs.chip(1, 3).setConstant(type(2));
-
-    inputs_dimensions.setValues({5, 5, 3, 2});
-    kernels_dimensions.setValues({2, 2, 3, 2});
-
-    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
-
-    convolutional_layer.set_synaptic_weights(kernels);
     convolutional_layer.set_biases(biases);
-    convolutional_layer.set_activation_function(ConvolutionalLayer::ActivationFunction::RectifiedLinear);
-    convolutional_layer.calculate_outputs(inputs, outputs);
+    convolutional_layer.set_synaptic_weights(kernels);
 
-    assert_true(outputs(0, 0, 0, 0) == type(3) &&
-                outputs(0, 1, 0, 0) == type(3) &&
-                outputs(0, 2, 0, 0) == type(3) &&
-                outputs(0, 3, 0, 0) == type(3) &&
-                outputs(1, 0, 0, 0) == type(3) &&
-                outputs(1, 1, 0, 0) == type(3) &&
-                outputs(1, 2, 0, 0) == type(3) &&
-                outputs(1, 3, 0, 0) == type(3) &&
-                outputs(2, 0, 0, 0) == type(3) &&
-                outputs(2, 1, 0, 0) == type(3) &&
-                outputs(2, 2, 0, 0) == type(3) &&
-                outputs(2, 3, 0, 0) == type(3) &&
-                outputs(3, 0, 0, 0) == type(3) &&
-                outputs(3, 1, 0, 0) == type(3) &&
-                outputs(3, 2, 0, 0) == type(3) &&
-                outputs(3, 3, 0, 0) == type(3) &&
-                outputs(0, 0, 1, 0) == type(4) &&
-                outputs(0, 1, 1, 0) == type(4) &&
-                outputs(0, 2, 1, 0) == type(4) &&
-                outputs(0, 3, 1, 0) == type(4) &&
-                outputs(1, 0, 1, 0) == type(4) &&
-                outputs(1, 1, 1, 0) == type(4) &&
-                outputs(1, 2, 1, 0) == type(4) &&
-                outputs(1, 3, 1, 0) == type(4) &&
-                outputs(2, 0, 1, 0) == type(4) &&
-                outputs(2, 1, 1, 0) == type(4) &&
-                outputs(2, 2, 1, 0) == type(4) &&
-                outputs(2, 3, 1, 0) == type(4) &&
-                outputs(3, 0, 1, 0) == type(4) &&
-                outputs(3, 1, 1, 0) == type(4) &&
-                outputs(3, 2, 1, 0) == type(4) &&
-                outputs(3, 3, 1, 0) == type(4) &&
-                outputs(0, 0, 0, 1) == type(6) &&
-                outputs(0, 1, 0, 1) == type(6) &&
-                outputs(0, 2, 0, 1) == type(6) &&
-                outputs(0, 3, 0, 1) == type(6) &&
-                outputs(1, 0, 0, 1) == type(6) &&
-                outputs(1, 1, 0, 1) == type(6) &&
-                outputs(1, 2, 0, 1) == type(6) &&
-                outputs(1, 3, 0, 1) == type(6) &&
-                outputs(2, 0, 0, 1) == type(6) &&
-                outputs(2, 1, 0, 1) == type(6) &&
-                outputs(2, 2, 0, 1) == type(6) &&
-                outputs(2, 3, 0, 1) == type(6) &&
-                outputs(3, 0, 0, 1) == type(6) &&
-                outputs(3, 1, 0, 1) == type(6) &&
-                outputs(3, 2, 0, 1) == type(6) &&
-                outputs(3, 3, 0, 1) == type(6) &&
-                outputs(0, 0, 1, 1) == type(7) &&
-                outputs(0, 1, 1, 1) == type(7) &&
-                outputs(0, 2, 1, 1) == type(7) &&
-                outputs(0, 3, 1, 1) == type(7) &&
-                outputs(1, 0, 1, 1) == type(7) &&
-                outputs(1, 1, 1, 1) == type(7) &&
-                outputs(1, 2, 1, 1) == type(7) &&
-                outputs(1, 3, 1, 1) == type(7) &&
-                outputs(2, 0, 1, 1) == type(7) &&
-                outputs(2, 1, 1, 1) == type(7) &&
-                outputs(2, 2, 1, 1) == type(7) &&
-                outputs(2, 3, 1, 1) == type(7) &&
-                outputs(3, 0, 1, 1) == type(7) &&
-                outputs(3, 1, 1, 1) == type(7) &&
-                outputs(3, 2, 1, 1) == type(7) &&
-                outputs(3, 3, 1, 1) == type(7), LOG);
+//    convolutional_layer.forward_propagate(inputs, forward_propagation);
 
-    inputs.resize(5, 5, 3, 2);
-    kernels.resize(3, 3, 3, 2);
-    biases.resize(2);
-*/}
+    assert_true(forward_propagation.activations.dimension(0) == 2 &&
+                forward_propagation.activations.dimension(1) == 2 &&
+                forward_propagation.activations.dimension(2) == 2 &&
+                forward_propagation.activations.dimension(3) == 2, LOG);
+
+    assert_true(forward_propagation.activations_derivatives.dimension(0) == 2 &&
+                forward_propagation.activations_derivatives.dimension(1) == 2 &&
+                forward_propagation.activations_derivatives.dimension(2) == 2 &&
+                forward_propagation.activations_derivatives.dimension(3) == 2, LOG);
+
+    assert_true(abs(forward_propagation.activations(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(0, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(0, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(0, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(0, 1, 0, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(0, 1, 0, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(0, 1, 1, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(0, 1, 1, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(1, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(1, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(1, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(1, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(1, 1, 0, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(1, 1, 0, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(1, 1, 1, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(1, 1, 1, 1) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+
+    assert_true(abs(forward_propagation.activations_derivatives(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(0, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(0, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(0, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(0, 1, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(0, 1, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(0, 1, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(0, 1, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(1, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(1, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(1, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(1, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(1, 1, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(1, 1, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(1, 1, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(1, 1, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+
+    assert_true(abs(forward_propagation.combinations(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                forward_propagation.activations_derivatives(0, 0, 0, 0) == type(1), LOG);
+
+    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
+
+//    convolutional_layer.forward_propagate(inputs, forward_propagation);
+
+    assert_true(abs(forward_propagation.combinations(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations(0, 0, 0, 0) - type(0.761594f)) < type(NUMERIC_LIMITS_MIN) &&
+                abs(forward_propagation.activations_derivatives(0, 0, 0, 0) - type(0.419974f)) < type(NUMERIC_LIMITS_MIN), LOG);
+
+*/
+}
 
 
 void ConvolutionalLayerTest::test_insert_padding()
@@ -979,102 +925,7 @@ void ConvolutionalLayerTest::test_insert_padding()
 }
 
 
-void ConvolutionalLayerTest::test_forward_propagate()
-{
-    cout << "test_forward_propagate\n";
-/*
-    Tensor<type, 4> inputs;
-    Tensor<type, 4> activations;
-    Tensor<type, 4> activations_derivatives;
-    ConvolutionalLayerForwardPropagation forward_propagation;
 
-    Tensor<type, 4> kernels;
-    Tensor<type, 1> biases;
-
-
-
-//    inputs.resize(3, 3, 3, 2);
-//    kernels.resize(2, , 3, 2);
-//    biases.resize(2);
-
-    inputs.resize(2, 3, 3, 3);
-    kernels.resize(2, 3, 2, 2);
-    biases.resize(2);
-
-    Tensor<Index, 1> inputs_dimensions(4);
-    inputs_dimensions.setValues({2, 3, 3, 3});
-    Tensor<Index, 1> kernels_dimensions(4);
-    kernels_dimensions.setValues({2, 3, 2, 2});
-
-    convolutional_layer.set(inputs_dimensions, kernels_dimensions);
-    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::RectifiedLinear);
-
-    inputs.setConstant(type(1));
-    biases(0) = type(0);
-    biases(1) = type(1);
-    kernels.setConstant(type(1.0/12.0));
-
-    convolutional_layer.set_biases(biases);
-    convolutional_layer.set_synaptic_weights(kernels);
-
-//    convolutional_layer.forward_propagate(inputs, forward_propagation);
-
-    assert_true(forward_propagation.activations.dimension(0) == 2 &&
-                forward_propagation.activations.dimension(1) == 2 &&
-                forward_propagation.activations.dimension(2) == 2 &&
-                forward_propagation.activations.dimension(3) == 2, LOG);
-
-    assert_true(forward_propagation.activations_derivatives.dimension(0) == 2 &&
-                forward_propagation.activations_derivatives.dimension(1) == 2 &&
-                forward_propagation.activations_derivatives.dimension(2) == 2 &&
-                forward_propagation.activations_derivatives.dimension(3) == 2, LOG);
-
-    assert_true(abs(forward_propagation.activations(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 1, 0, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 1, 0, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 1, 1, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 1, 1, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(1, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(1, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(1, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(1, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(1, 1, 0, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(1, 1, 0, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(1, 1, 1, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(1, 1, 1, 1) - type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    assert_true(abs(forward_propagation.activations_derivatives(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(0, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(0, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(0, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(0, 1, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(0, 1, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(0, 1, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(0, 1, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(1, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(1, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(1, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(1, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(1, 1, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(1, 1, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(1, 1, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(1, 1, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    assert_true(abs(forward_propagation.combinations(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                forward_propagation.activations_derivatives(0, 0, 0, 0) == type(1), LOG);
-
-    convolutional_layer.set_activation_function(opennn::ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
-
-//    convolutional_layer.forward_propagate(inputs, forward_propagation);
-
-    assert_true(abs(forward_propagation.combinations(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations(0, 0, 0, 0) - type(0.761594f)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(forward_propagation.activations_derivatives(0, 0, 0, 0) - type(0.419974f)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/}
 
 
 void ConvolutionalLayerTest::test_memcpy_approach()
@@ -1246,7 +1097,7 @@ void ConvolutionalLayerTest::run_test_case()
 
    // Outputs
 
-   test_calculate_outputs();
+//   test_calculate_outputs();
 
    // Padding
 
