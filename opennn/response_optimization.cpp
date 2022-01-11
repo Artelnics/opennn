@@ -519,6 +519,7 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
     Tensor<type, 1> objective(samples_number);
+    objective.setZero();
 
     for(Index i = 0; i < samples_number; i++)
     {

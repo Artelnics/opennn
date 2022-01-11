@@ -77,7 +77,7 @@ public:
 
    // Serialization methods
       
-   void from_XML(const tinyxml2::XMLDocument&);
+   virtual void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 

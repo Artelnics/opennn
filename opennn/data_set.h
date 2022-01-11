@@ -620,7 +620,7 @@ public:
 
    Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = type(1.5)) const;
 
-   void unuse_Tukey_outliers(const type& = type(1.5));
+   void unuse_Tukey_outliers(const type& = type(1.5)) const;
 
    // Local outlier factor
 
@@ -727,9 +727,6 @@ public:
    void fix_repeated_names();
 
    // Eigen methods
-
-   Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&) const;
-   Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&) const;
 
    void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
    void intialize_sequential(Tensor<type, 1>&, const type&, const type&, const type&) const;
@@ -849,7 +846,7 @@ private:
 
    // Image treatment
 
-   static size_t number_of_elements_in_directory(fs::path path);
+   static size_t number_of_elements_in_directory(const fs::path& path);
 
    static vector<unsigned char> read_bmp_image(const string& filename);
 
@@ -880,7 +877,6 @@ private:
    Tensor<type, 1> calculate_average_reachability(Tensor<list<Index>, 1>&, const Index&) const;
 
    Tensor<type, 1> calculate_local_outlier_factor(Tensor<list<Index>, 1>&, const Tensor<type, 1>&, const Index &) const;
-
 
    //Isolation Forest
 

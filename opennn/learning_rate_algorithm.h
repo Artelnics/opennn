@@ -238,7 +238,7 @@ public:
 
    void set_display(const bool&);
 
-   void set_default();
+   virtual void set_default();
 
    // Learning rate methods
 

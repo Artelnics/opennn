@@ -228,7 +228,7 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
         old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
     }
 
-    void print() const
+    virtual void print() const
     {
         cout << "Training Direction:" << endl;
         cout << training_direction << endl;

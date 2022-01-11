@@ -469,7 +469,7 @@ void PerceptronLayerTest::test_set_parameters_random()
 {
     cout << "test_set_parameters_random\n";
 
-    Tensor<type, 1> parameters;;
+    Tensor<type, 1> parameters;
 
     // Test
     perceptron_layer.set(1,1);

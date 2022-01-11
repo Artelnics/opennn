@@ -89,11 +89,15 @@ void TrainingStrategyTest::test_to_XML()
 
     pFile = fopen(file_name.c_str(), "w");
 
-    tinyxml2::XMLPrinter document(pFile);
+    if(pFile)
+    {
 
-    training_strategy.write_XML(document);
+        tinyxml2::XMLPrinter document(pFile);
 
-    fclose(pFile);
+        training_strategy.write_XML(document);
+
+        fclose(pFile);
+    }
 }
 
 

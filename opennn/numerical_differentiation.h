@@ -320,7 +320,7 @@ public:
 
         type h;
 
-        Tensor<type, 1> x_forward(x);
+        Tensor<type, 1> x_forward = x;
         Tensor<type, 1> x_backward(x);
 
         type y_forward;

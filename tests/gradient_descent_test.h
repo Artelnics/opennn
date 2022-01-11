@@ -43,7 +43,6 @@ private:
 
    Index samples_number;
    Index inputs_number;
-   Index neurons_number;
    Index outputs_number;
 
    DataSet data_set;
