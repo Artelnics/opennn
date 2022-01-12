@@ -21,7 +21,6 @@
 // OpenNN includes
 
 #include "layer.h"
-#include "opennn_strings.h"
 #include "config.h"
 
 namespace opennn
@@ -29,12 +28,16 @@ namespace opennn
 
 struct FlattenLayerForwardPropagation;
 
+class PoolingLayer;
+class PerceptronLayer;
 
-/// This class represents a layer of scaling neurons.
 
-///
-/// Scaling layers are included in the definition of a neural network. 
-/// They are used to normalize variables so they are in an appropriate range for computer processing.  
+/// This class represents a flatten layer.
+
+
+/// Flatten layers are included in the definition of a neural network.
+/// They are used to resize the input data to make it usable for the
+/// perceptron layer.
 
 class FlattenLayer : public Layer
 {
@@ -46,10 +49,6 @@ public:
     explicit FlattenLayer();
 
     explicit FlattenLayer(const Index&);
-
-    // Destructors
-
-    virtual ~FlattenLayer();
 
     // Get methods
     Index get_inputs_batch() const;
@@ -126,6 +125,8 @@ protected:
            const Index outputs_columns_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_columns_number();
 
            batch_samples_number = new_batch_samples_number;
+
+           outputs.resize(outputs_rows_number, outputs_columns_number);
        }
 
 
@@ -133,6 +134,8 @@ protected:
        {
 
        }
+
+       Tensor<type, 2> outputs;
 
     };
 
