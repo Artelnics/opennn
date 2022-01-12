@@ -21,13 +21,6 @@ FlattenLayer::FlattenLayer() : Layer()
 }
 
 
-/// Destructor.
-
-FlattenLayer::~FlattenLayer()
-{
-}
-
-
 /// Returns the number of images by batch.
 
 Index FlattenLayer::get_inputs_batch() const
@@ -118,9 +111,9 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 
 
 /// Obtain the connection between the convolutional and the conventional part
-/// of a neural network. That is a column vector in which each of its elements
-/// links to a neuron in the perceptron layer.
-/// @param inputs
+/// of a neural network. That is a matrix which links to the perceptron layer.
+/// @param inputs 4d tensor(batch, channels, width, height)
+/// @return result 2d tensor(batch, number of pixels)
 
 Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs)
 {
@@ -129,11 +122,10 @@ Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs
     const Index width = inputs.dimension(2);
     const Index heights = inputs.dimension(3);
 
-    inputs(batch, channels, width, heights);
     Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
-    Tensor<type, 2> result = inputs.reshape(new_dims);
+    Tensor<type, 2> result2d = inputs.reshape(new_dims);
 
-    return result;
+    return result2d;
 }
 
 void FlattenLayer::forward_propagate(const Tensor<type, 2> &inputs, LayerForwardPropagation* forward_propagation)
@@ -142,6 +134,33 @@ void FlattenLayer::forward_propagate(const Tensor<type, 2> &inputs, LayerForward
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
 
+#ifdef OPENNN_DEBUG
+
+    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
+
+    if(outputs_dimensions[0] != flatten_layer_forward_propagation->outputs.dimension(0))
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: FlattenLayer class.\n"
+               << "FlattenLayer::forward_propagate.\n"
+               << "outputs_dimensions[0]" <<outputs_dimensions[0] <<"must be equal to" << flatten_layer_forward_propagation->outputs.dimension(0)<<".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(outputs_dimensions[1] != flatten_layer_forward_propagation->outputs.dimension(1))
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: FlattenLayer class.\n"
+               << "FlattenLayer::forward_propagate.\n"
+               << "outputs_dimensions[1]" <<outputs_dimensions[1] <<"must be equal to" << flatten_layer_forward_propagation->outputs.dimension(1)<<".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+#endif
+
+    cout<<flatten_layer_forward_propagation->outputs<<endl;
 }
 
 }

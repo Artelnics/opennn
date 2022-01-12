@@ -254,7 +254,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
         ostringstream buffer;
         buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
                << "ConvolutionalLayer::forward_propagate.\n"
-               << "outputs_dimensions[0]" <<outputs_dimensions[0] <<"must me equal to" << convolutional_layer_forward_propagation->combinations.dimension(0)<<".\n";
+               << "outputs_dimensions[0]" <<outputs_dimensions[0] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(0)<<".\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -264,7 +264,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
         ostringstream buffer;
         buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
                << "ConvolutionalLayer::forward_propagate.\n"
-               << "outputs_dimensions[1]" <<outputs_dimensions[1] <<"must me equal to" << convolutional_layer_forward_propagation->combinations.dimension(1)<<".\n";
+               << "outputs_dimensions[1]" <<outputs_dimensions[1] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(1)<<".\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -274,7 +274,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
         ostringstream buffer;
         buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
                << "ConvolutionalLayer::forward_propagate.\n"
-               << "outputs_dimensions[2]" <<outputs_dimensions[2] <<"must me equal to" << convolutional_layer_forward_propagation->combinations.dimension(2)<<".\n";
+               << "outputs_dimensions[2]" <<outputs_dimensions[2] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(2)<<".\n";
 
         throw invalid_argument(buffer.str());
     }
@@ -284,7 +284,7 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
         ostringstream buffer;
         buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
                << "ConvolutionalLayer::forward_propagate.\n"
-               << "outputs_dimensions[3]" <<outputs_dimensions[3] <<"must me equal to" << convolutional_layer_forward_propagation->combinations.dimension(3)<<".\n";
+               << "outputs_dimensions[3]" <<outputs_dimensions[3] <<"must be equal to" << convolutional_layer_forward_propagation->combinations.dimension(3)<<".\n";
 
         throw invalid_argument(buffer.str());
     }
