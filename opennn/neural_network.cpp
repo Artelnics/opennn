@@ -261,6 +261,22 @@ bool NeuralNetwork::has_convolutional_layer() const
     return false;
 }
 
+/// Returns true if the neural network object has a flaten object inside,
+/// and false otherwise.
+
+bool NeuralNetwork::has_flatten_layer() const
+{
+    const Index layers_number = get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers[i]->get_type() == Layer::Type::Flatten) return true;
+    }
+
+    return false;
+}
+
+
 
 /// Returns true if the neural network object has a recurrent layer object inside,
 /// and false otherwise.
@@ -1400,6 +1416,10 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         break;
 
         case Layer::Type::Convolutional: /// @todo
+
+        break;
+
+        case Layer::Type::Flatten: /// @todo
 
         break;
 

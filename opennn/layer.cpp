@@ -60,6 +60,10 @@ string Layer::get_type_string() const
 
     case Type::Unscaling:
         return "Unscaling";
+
+    case Type::Flatten:
+        return "Flatten";
+
     default:
         return string();
     }

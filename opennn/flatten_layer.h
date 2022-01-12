@@ -41,84 +41,67 @@ class FlattenLayer : public Layer
 
 public:
 
-   // Constructors
+    // Constructors
 
-   explicit FlattenLayer();
+    explicit FlattenLayer();
 
-   explicit FlattenLayer(const Index&);
+    explicit FlattenLayer(const Index&);
 
-   // Destructors
+    // Destructors
 
-   virtual ~FlattenLayer();
+    virtual ~FlattenLayer();
 
-/*   // Get methods
-   
-   Index get_inputs_number() const;
-   Index get_neurons_number() const;
-
-   // Display messages
-
-   const bool& get_display() const;
-
-   // Set methods
-
-   void set();
-   void set(const Index&);
-   void set(const Tensor<Index, 1>&);
-   void set(const tinyxml2::XMLDocument&);
-
-   void set_inputs_number(const Index&);
-   void set_neurons_number(const Index&);
-
-   void set_default();
-
-   // Display messages
-
-   void set_display(const bool&);
-
-   // Check methods
-
-   bool is_empty() const;
-
-   void check_range(const Tensor<type, 1>&) const;
-*/
-
-   // Outputs
+    // Get methods
+    Index get_inputs_batch() const;
+    Index get_inputs_channels_number() const;
+    Index get_inputs_width() const;
+    Index get_inputs_height() const;
 
 
-   Tensor<type, 2> calculate_outputs_2d(const Tensor<type, 4>&);
+    Tensor<Index, 1> get_outputs_dimensions() const;
 
-   void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*);
+    Index get_outputs_rows_number() const;
+
+    Index get_outputs_columns_number() const;
+
+    // Set methods
+
+    void set();
+    void set(const Index&);
+    void set(const Tensor<Index, 1>&);
+    void set(const tinyxml2::XMLDocument&);
+
+    void set_inputs_number(const Index&);
+
+    void set_default();
+
+    // Display messages
+
+    void set_display(const bool&);
+
+    // Check methods
+
+    bool is_empty() const;
+
+    void check_range(const Tensor<type, 1>&) const;
+
+    // Outputs
+
+    Tensor<type, 2> calculate_outputs_2d(const Tensor<type, 4>&);
+
+    void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
 
 
-   // input batch channels widht height
-   // ooutput batch variables
-
-
-   // Expression methods
-/*
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_expression_c() const;
-
-   string write_expression_python() const;
-
-   // Serialization methods
-   
-   virtual void from_XML(const tinyxml2::XMLDocument&);
-
-   void write_XML(tinyxml2::XMLPrinter&) const;
-*/
 protected:
 
-   Tensor<Index, 1> input_variables_dimensions;
+    Tensor<Index, 1> input_variables_dimensions;
 
-   /// Display warning messages to screen.
+    /// Display warning messages to screen.
 
-   bool display = true;
+    bool display = true;
 
-   struct FlattenLayerForwardPropagation : LayerForwardPropagation
-   {
+    struct FlattenLayerForwardPropagation : LayerForwardPropagation
+    {
        // Default constructor
 
        explicit FlattenLayerForwardPropagation()
@@ -139,18 +122,10 @@ protected:
        {
            layer_pointer = new_layer_pointer;
 
-           const Index neurons_number = layer_pointer->get_neurons_number();
-
-//           const Index kernels_number = static_cast<FlattenLayer*>(layer_pointer)->get_kernels_number();
-//           const Index outputs_rows_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_rows_number();
-//           const Index outputs_columns_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_columns_number();
+           const Index outputs_rows_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_rows_number();
+           const Index outputs_columns_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_columns_number();
 
            batch_samples_number = new_batch_samples_number;
-
-//           combinations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
-//           activations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
-
-           activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);
        }
 
 
@@ -159,11 +134,7 @@ protected:
 
        }
 
-
-       Tensor<type, 4> combinations;
-       Tensor<type, 4> activations;
-       Tensor<type, 4> activations_derivatives;
-   };
+    };
 
 };
 

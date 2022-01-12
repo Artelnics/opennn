@@ -11,23 +11,13 @@
 namespace opennn
 {
 
+
 /// Default constructor.
-/// It creates a scaling layer object with no scaling neurons.
+/// It creates a flatten layer.
 
 FlattenLayer::FlattenLayer() : Layer()
 {
-    //set();
-}
-
-
-/// Scaling neurons number constructor.
-/// This constructor creates a scaling layer with a given size.
-/// It initializes the members of this object with the default values.
-/// @param new_neurons_number Number of scaling neurons in the layer.
-
-FlattenLayer::FlattenLayer(const Index& new_neurons_number) : Layer()
-{
-    //set(new_neurons_number);
+    set();
 }
 
 
@@ -35,6 +25,95 @@ FlattenLayer::FlattenLayer(const Index& new_neurons_number) : Layer()
 
 FlattenLayer::~FlattenLayer()
 {
+}
+
+
+/// Returns the number of images by batch.
+
+Index FlattenLayer::get_inputs_batch() const
+{
+    return input_variables_dimensions[0];
+}
+
+
+/// Returns the number of channels of the image.
+
+Index FlattenLayer::get_inputs_channels_number() const
+{
+    return input_variables_dimensions[1];
+}
+
+
+/// Returns the number of columns of the image.
+
+Index FlattenLayer::get_inputs_width() const
+{
+    return input_variables_dimensions[2];
+}
+
+
+/// Returns the number of rows of the image.
+
+Index FlattenLayer::get_inputs_height() const
+{
+    return input_variables_dimensions[3];
+}
+
+
+/// Returns the number of rows of the output which matches with the batch size.
+
+Index FlattenLayer::get_outputs_rows_number() const
+{
+    return (get_inputs_batch());
+}
+
+
+/// Returns the number of columns which mathes with the number of pixels of an image.
+
+Index FlattenLayer::get_outputs_columns_number() const
+{
+    return (get_inputs_channels_number()*get_inputs_width()*get_inputs_height());
+}
+
+
+/// Returns a vector containing the batch and number of pixels of an image in result of resizing the
+/// input tensor taken by the flatten layer.
+
+Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
+{
+    Tensor<Index, 1> outputs_dimensions(2);
+
+    outputs_dimensions(0) = get_outputs_rows_number(); // Batch
+    outputs_dimensions(1) = get_outputs_columns_number() ; // Number of pixels of the image
+
+    return outputs_dimensions;
+}
+
+
+/// Sets and initializes the layer's parameters in accordance with the dimensions taken as input.
+/// @todo change to memcpy approach
+/// @param new_inputs_dimensions A vector containing the desired inputs' dimensions (number of images (batch), number of channels, width, height).
+
+void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
+{
+
+#ifdef OPENNN_DEBUG
+
+    const Index inputs_dimensions_number = new_inputs_dimensions.size();
+
+    if(inputs_dimensions_number != 4)
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: FlattenLayer class.\n"
+               << "FlattenLayer(const Tensor<Index, 1>&) constructor.\n"
+               << "Number of inputs dimensions (" << inputs_dimensions_number << ") must be 4 (number of images, channels, width, height).\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+#endif
+
+    input_variables_dimensions = new_inputs_dimensions;
 }
 
 
@@ -57,14 +136,13 @@ Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs
     return result;
 }
 
-void FlattenLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForwardPropagation* forward_propagation)
+void FlattenLayer::forward_propagate(const Tensor<type, 2> &inputs, LayerForwardPropagation* forward_propagation)
 {
 
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
 
 }
-
 
 }
 
