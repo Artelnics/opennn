@@ -76,7 +76,7 @@ Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 {
     Tensor<Index, 1> outputs_dimensions(2);
 
-    outputs_dimensions(0) = get_outputs_rows_number(); // Batch images
+    outputs_dimensions(0) = get_outputs_rows_number(); // Batch
     outputs_dimensions(1) = get_outputs_columns_number() ; // Number of pixels of the image
 
     return outputs_dimensions;
