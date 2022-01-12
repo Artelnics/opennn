@@ -69,12 +69,14 @@ void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>& rows_indices
 void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, Tensor<type, 2>&);
 
 Index count_NAN(const Tensor<type, 1>&);
+Index count_NAN(const Tensor<type, 2>&);
 
 void check_size(const Tensor<type, 1>&, const Index&, const string&);
 
 void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const string&);
 
 void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
+void check_rows_number(const Tensor<type, 2>&, const Index&, const string& );
 
 bool is_less_than(const Tensor<type, 1>&, const type&);
 

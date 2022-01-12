@@ -111,10 +111,7 @@ bool is_constant(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
-        for(Index j = 0; j < size; j++)
-        {
-            if((vector(i) - vector(j)) != type(0)) return false;
-        }
+        if((vector(0) - vector(i)) != type(0)) return false;
     }
 
     return true;
@@ -219,9 +216,6 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
     file.close();
 }
 
-
-/// @todo It does not work well.
-
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
 {        
     const Index size = vector.size();
@@ -258,9 +252,9 @@ void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
 }
 
 
-Tensor<type, 2> kronecker_product(const Tensor<type, 1>& vector, const Tensor<type, 1>& other_vector)
+Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const Index size = vector.size();
+    const Index size = x.size();
 
     Tensor<type, 2> direct(size, size);
 
@@ -270,7 +264,7 @@ Tensor<type, 2> kronecker_product(const Tensor<type, 1>& vector, const Tensor<ty
     {
         for(Index j = 0; j < size; j++)
         {
-            direct(i, j) = vector(i) * other_vector(j);
+            direct(i, j) = x(i) * y(j);
         }
     }
 
@@ -310,13 +304,11 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
 
     if(isnan(norm(0)))
     {
-//        cout << "OpenNN Warning: l2 norm of vector is NaN" << endl;
+        ostringstream buffer;
 
-//        ostringstream buffer;
+        buffer << "OpenNN Exception: l2 norm of vector is not a number." << endl;
 
-//        buffer << "OpenNN Exception: l2 norm of vector is not a number" << endl;
-
-//        throw invalid_argument(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     return norm(0);
@@ -357,7 +349,7 @@ void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
 {
     const Index rows_number = matrix.dimension(0);
 
-     #pragma omp parallel for
+    #pragma omp parallel for
     for(Index i = 0; i < rows_number; i++)
         matrix(i,i) += value;
 }
@@ -434,6 +426,25 @@ Index count_NAN(const Tensor<type, 1>& x)
     return NAN_number;
 }
 
+Index count_NAN(const Tensor<type, 2>& x)
+{
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1);
+
+    Index count = 0;
+
+    #pragma omp parallel for reduction(+: count)
+
+    for(Index row_index = 0; row_index < rows_number; row_index++)
+    {
+        for(Index column_index = 0; column_index < columns_number; column_index++)
+        {
+            if(isnan(x(row_index, column_index))) count++;
+        }
+    }
+
+    return count;
+}
 
 void check_size(const Tensor<type, 1>& vector, const Index& size, const string& log)
 {
@@ -441,8 +452,8 @@ void check_size(const Tensor<type, 1>& vector, const Index& size, const string& 
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: " << log
-               << "Size of vector is " << vector.size() << ", but must be " << size << ".";
+        buffer << "OpenNN Exception: " << log <<  endl
+               << "Size of vector is " << vector.size() << ", but must be " << size << "." << endl;
 
         throw invalid_argument(buffer.str());
     }
@@ -455,8 +466,8 @@ void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, c
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: " << log
-               << "Number of rows in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << ".";
+        buffer << "OpenNN Exception: " << log <<  endl
+               << "Number of rows in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << "." <<  endl;
 
         throw invalid_argument(buffer.str());
     }
@@ -465,8 +476,8 @@ void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, c
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: " << log
-               << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << ".";
+        buffer << "OpenNN Exception: " << log <<  endl
+               << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << "." <<  endl;
 
         throw invalid_argument(buffer.str());
     }
@@ -479,8 +490,21 @@ void check_columns_number(const Tensor<type, 2>& matrix, const Index& columns_nu
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: " << log
-               << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << ".";
+        buffer << "OpenNN Exception: " << log <<  endl
+               << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << "." <<  endl;
+
+        throw invalid_argument(buffer.str());
+    }
+}
+
+void check_rows_number(const Tensor<type, 2>& matrix, const Index& rows_number, const string& log)
+{
+    if(matrix.dimension(1) != rows_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << log <<  endl
+               << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << "." <<  endl;
 
         throw invalid_argument(buffer.str());
     }
@@ -574,7 +598,7 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<ty
 
 bool is_less_than(const Tensor<type, 1>& column, const type& value)
 {
-    const Tensor<bool, 1> if_sentence = column <= column.constant(value);
+    const Tensor<bool, 1> if_sentence = (column <= column.constant(value));
 
     Tensor<bool, 1> sentence(column.size());
     sentence.setConstant(true);
@@ -587,7 +611,7 @@ bool is_less_than(const Tensor<type, 1>& column, const type& value)
     return is_less(0);
 }
 
-Tensor<Index, 1> push_back(const Tensor<Index, 1>& old_vector, const Index& new_string)
+Tensor<Index, 1> push_back(const Tensor<Index, 1>& old_vector, const Index& new_element)
 {
     const Index old_size = old_vector.size();
 
@@ -597,7 +621,7 @@ Tensor<Index, 1> push_back(const Tensor<Index, 1>& old_vector, const Index& new_
 
     for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
 
-    new_vector(new_size-1) = new_string;
+    new_vector(new_size-1) = new_element;
 
     return new_vector;
 }
