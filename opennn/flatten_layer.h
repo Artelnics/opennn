@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S C A L I N G   L A Y E R   C L A S S   H E A D E R                   
+//   F L A T T E N   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -21,11 +21,14 @@
 // OpenNN includes
 
 #include "layer.h"
-#include "scaling.h"
 #include "opennn_strings.h"
+#include "config.h"
 
 namespace opennn
 {
+
+struct FlattenLayerForwardPropagation;
+
 
 /// This class represents a layer of scaling neurons.
 
@@ -33,47 +36,25 @@ namespace opennn
 /// Scaling layers are included in the definition of a neural network. 
 /// They are used to normalize variables so they are in an appropriate range for computer processing.  
 
-class ScalingLayer : public Layer
+class FlattenLayer : public Layer
 {
 
 public:
 
    // Constructors
 
-   explicit ScalingLayer();
+   explicit FlattenLayer();
 
-   explicit ScalingLayer(const Index&);
-   explicit ScalingLayer(const Tensor<Index, 1>&);
-
-   explicit ScalingLayer(const Tensor<Descriptives, 1>&);
+   explicit FlattenLayer(const Index&);
 
    // Destructors
 
-   virtual ~ScalingLayer();
+   virtual ~FlattenLayer();
 
-   // Get methods
+/*   // Get methods
    
-   Tensor<Index, 1> get_outputs_dimensions() const;
-
    Index get_inputs_number() const;
    Index get_neurons_number() const;
-
-   // Inputs descriptives
-
-   Tensor<Descriptives, 1> get_descriptives() const;
-   Descriptives get_descriptives(const Index&) const;
-
-   Tensor<type, 1> get_minimums() const;
-   Tensor<type, 1> get_maximums() const;
-   Tensor<type, 1> get_means() const;
-   Tensor<type, 1> get_standard_deviations() const;
-
-   // Variables scaling and unscaling
-
-   const Tensor<Scaler, 1> get_scaling_methods() const;
-
-   Tensor<string, 1> write_scalers() const;
-   Tensor<string, 1> write_scalers_text() const;
 
    // Display messages
 
@@ -84,34 +65,12 @@ public:
    void set();
    void set(const Index&);
    void set(const Tensor<Index, 1>&);
-   void set(const Tensor<Descriptives, 1>&);
-   void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
 
    void set_inputs_number(const Index&);
    void set_neurons_number(const Index&);
 
    void set_default();
-
-   // Descriptives
-
-   void set_descriptives(const Tensor<Descriptives, 1>&);
-   void set_item_descriptives(const Index&, const Descriptives&);
-
-   void set_minimum(const Index&, const type&);
-   void set_maximum(const Index&, const type&);
-   void set_mean(const Index&, const type&);
-   void set_standard_deviation(const Index&, const type&);
-
-   void set_min_max_range(const type& min, const type& max);
-
-   // Scaling method
-
-   void set_scalers(const Tensor<Scaler, 1>&);
-   void set_scalers(const Tensor<string, 1>&);
-
-   void set_scalers(const Scaler&);
-   void set_scalers(const string&);
 
    // Display messages
 
@@ -122,20 +81,22 @@ public:
    bool is_empty() const;
 
    void check_range(const Tensor<type, 1>&) const;
+*/
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
+   // Outputs
+
+
+   Tensor<type, 2> calculate_outputs_2d(const Tensor<type, 4>&);
+
+   void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*);
+
+
+   // input batch channels widht height
+   // ooutput batch variables
+
 
    // Expression methods
-
-   string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
+/*
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression_c() const;
@@ -147,27 +108,62 @@ public:
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-
+*/
 protected:
 
    Tensor<Index, 1> input_variables_dimensions;
 
-   /// Descriptives of input variables.
-
-   Tensor<Descriptives, 1> descriptives;
-
-   /// Vector of scaling methods for each variable.
-
-   Tensor<Scaler, 1> scalers;
-
-   /// min and max range for minmaxscaling
-
-   type min_range;
-   type max_range;
-
-   /// Display warning messages to screen. 
+   /// Display warning messages to screen.
 
    bool display = true;
+
+   struct FlattenLayerForwardPropagation : LayerForwardPropagation
+   {
+       // Default constructor
+
+       explicit FlattenLayerForwardPropagation()
+           : LayerForwardPropagation()
+       {
+       }
+
+       // Constructor
+
+       explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+           : LayerForwardPropagation()
+       {
+           set(new_batch_samples_number, new_layer_pointer);
+       }
+
+
+       void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+       {
+           layer_pointer = new_layer_pointer;
+
+           const Index neurons_number = layer_pointer->get_neurons_number();
+
+//           const Index kernels_number = static_cast<FlattenLayer*>(layer_pointer)->get_kernels_number();
+//           const Index outputs_rows_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_rows_number();
+//           const Index outputs_columns_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_columns_number();
+
+           batch_samples_number = new_batch_samples_number;
+
+//           combinations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
+//           activations.resize(batch_samples_number, kernels_number, outputs_rows_number, outputs_columns_number);
+
+           activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);
+       }
+
+
+       void print() const
+       {
+
+       }
+
+
+       Tensor<type, 4> combinations;
+       Tensor<type, 4> activations;
+       Tensor<type, 4> activations_derivatives;
+   };
 
 };
 
