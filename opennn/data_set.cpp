@@ -3480,13 +3480,17 @@ void DataSet::set_binary_simple_columns()
                 && data(row_index, variable_index) != values(1))
                 {
                     values(different_values) = data(row_index, variable_index);
+
                     different_values++;
                 }
 
-                if(row_index == (data.dimension(0)-1) && different_values == 1)
+                if(row_index == (data.dimension(0)-1))
                 {
-                    is_binary = false;
-                    break;
+                    if(different_values == 1)
+                    {
+                        is_binary = false;
+                        break;
+                    }
                 }
 
                 if(different_values > 2)
@@ -3504,18 +3508,23 @@ void DataSet::set_binary_simple_columns()
 
                 if(values(0) == type(0) && values(1) == type(1))
                 {
-                    columns(column_index).categories(0) = "Negative " + std::to_string(static_cast<int>(values(0)));
-                    columns(column_index).categories(1) = "Positive " + std::to_string(static_cast<int>(values(1)));
+                    columns(column_index).categories(1) ="(    " + std::to_string(static_cast<int>(values(1))) + "    )";
+                    columns(column_index).categories(0) ="(    " + std::to_string(static_cast<int>(values(0))) + "    )";
                 }
                 else if(values(0) == type(1) && values(1) == type(0))
                 {
-                    columns(column_index).categories(0) = "Positive " + std::to_string(static_cast<int>(values(0)));
-                    columns(column_index).categories(1) = "Negative " + std::to_string(static_cast<int>(values(1)));
+                    columns(column_index).categories(1) = "(    " + std::to_string(static_cast<int>(values(1))) + "    )";
+                    columns(column_index).categories(0) = "(    " + std::to_string(static_cast<int>(values(0))) + "    )";
                 }
-                else
+                else if(values(0) > values(1))
                 {
-                    columns(column_index).categories(0) = "Class_1";
-                    columns(column_index).categories(1) = "Class_2";
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0))) + " (   1   )";
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1))) + " (   0   )";
+                }
+                else if(values(0) < values(1))
+                {
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0))) + " (   0   )";
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1))) + " (   1   )";
                 }
 
                 const VariableUse column_use = columns(column_index).column_use;
@@ -10779,6 +10788,15 @@ void DataSet::read_csv_3_complete()
         }
 
         sample_index++;
+    }
+
+    for(Index j = 0; j < raw_columns_number; j++)
+    {
+        if(columns(j).type == ColumnType::Binary)
+        {
+            columns(j).categories(0) = columns(j).categories(0) + " (   1   )";
+            columns(j).categories(1) = columns(j).categories(1) + " (   0   )";
+        }
     }
 
     const Index data_file_preview_index = has_columns_names ? 3 : 2;
