@@ -36,14 +36,6 @@ ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index_pointer)
     set_default();
 }
 
-
-/// Destructor.
-
-ConjugateGradient::~ConjugateGradient()
-{
-}
-
-
 /// Returns the conjugate gradient training direction.
 /// @param old_gradient Gradient vector in the previous iteration.
 /// @param gradient Current gradient vector.
@@ -1434,14 +1426,6 @@ ConjugateGradientData::ConjugateGradientData(): OptimizationAlgorithmData()
 ConjugateGradientData::ConjugateGradientData(ConjugateGradient* new_conjugate_gradient_pointer) : OptimizationAlgorithmData()
 {
     set(new_conjugate_gradient_pointer);
-}
-
-
-/// Destructor
-
-ConjugateGradientData::~ConjugateGradientData()
-{
-
 }
 
 

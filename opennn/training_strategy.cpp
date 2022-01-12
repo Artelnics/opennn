@@ -18,10 +18,6 @@ namespace opennn
 
 TrainingStrategy::TrainingStrategy()
 {
-    data_set_pointer = nullptr;
-
-    neural_network_pointer = nullptr;
-
     set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
 
     set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
@@ -52,14 +48,6 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
     set_loss_index_data_set_pointer(data_set_pointer);
 
     set_default();
-}
-
-
-/// Destructor.
-/// This destructor deletes the loss index and optimization algorithm objects.
-
-TrainingStrategy::~TrainingStrategy()
-{
 }
 
 

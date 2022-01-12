@@ -30,13 +30,6 @@ GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy_pointer)
 }
 
 
-/// Destructor.
-
-GrowingInputs::~GrowingInputs()
-{
-}
-
-
 /// Returns the maximum number of inputs in the growing inputs selection algorithm.
 
 const Index& GrowingInputs::get_maximum_inputs_number() const

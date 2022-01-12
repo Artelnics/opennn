@@ -15,11 +15,6 @@ namespace opennn
 
 Descriptives::Descriptives()
 {
-    name = "Descriptives";
-    minimum = type(-1.0);
-    maximum = type(1);
-    mean = type(0);
-    standard_deviation = type(1);
 }
 
 
@@ -28,18 +23,12 @@ Descriptives::Descriptives()
 Descriptives::Descriptives(const type& new_minimum, const type& new_maximum,
                            const type& new_mean, const type& new_standard_deviation)
 {
-    name = "Descriptives";
+
     minimum = new_minimum;
     maximum = new_maximum;
     mean = new_mean;
     standard_deviation = new_standard_deviation;
 }
-
-
-/// Destructor.
-
-Descriptives::~Descriptives()
-{}
 
 
 void Descriptives::set(const type& new_minimum, const type& new_maximum,
@@ -210,11 +199,6 @@ Histogram::Histogram() {
     centers.resize(0);
     frequencies.resize(0);
 }
-
-
-/// Destructor.
-
-Histogram::~Histogram() {}
 
 
 /// Bins number constructor.

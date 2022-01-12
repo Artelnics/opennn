@@ -45,10 +45,6 @@ public:
 
    explicit NormalizedSquaredError();   
 
-    // Destructor
-
-   virtual ~NormalizedSquaredError();
-
    // Get methods
 
     type get_normalization_coefficient() const;

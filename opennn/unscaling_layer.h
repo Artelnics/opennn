@@ -49,10 +49,6 @@ public:
 
    explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
 
-   // Destructor
-
-   virtual ~UnscalingLayer();
-
    // Get methods  
 
    Index get_inputs_number() const;

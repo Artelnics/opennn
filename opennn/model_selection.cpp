@@ -30,13 +30,6 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
 }
 
 
-/// Destructor.
-
-ModelSelection::~ModelSelection()
-{
-}
-
-
 /// Returns a pointer to the training strategy object.
 
 TrainingStrategy* ModelSelection::get_training_strategy_pointer() const

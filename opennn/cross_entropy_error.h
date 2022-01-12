@@ -40,10 +40,6 @@ public:
 
    explicit CrossEntropyError(NeuralNetwork*, DataSet*);
 
-   // Destructor
-
-   virtual ~CrossEntropyError();
-
    // Error methods
 
    void calculate_error(const DataSetBatch&,

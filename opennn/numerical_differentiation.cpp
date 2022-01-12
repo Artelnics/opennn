@@ -20,13 +20,6 @@ NumericalDifferentiation::NumericalDifferentiation()
 }
 
 
-/// Destructor.
-
-NumericalDifferentiation::~NumericalDifferentiation()
-{
-
-}
-
 /// Returns the number of precision digits required for the derivatives.
 
 const Index& NumericalDifferentiation::get_precision_digits() const

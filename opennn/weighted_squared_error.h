@@ -45,10 +45,6 @@ public:
 
    explicit WeightedSquaredError(NeuralNetwork*, DataSet*); 
 
-   // Destructor
-
-   virtual ~WeightedSquaredError(); 
-
    // Get methods
 
    type get_positives_weight() const;

@@ -42,10 +42,6 @@ public:
 
    explicit BoundingLayer(const Index&);
 
-   // Destructor
-   
-   virtual ~BoundingLayer();
-
    // Enumerations
 
    /// Enumeration of the available methods for bounding the output variables.

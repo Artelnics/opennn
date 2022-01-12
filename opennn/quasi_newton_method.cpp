@@ -36,14 +36,6 @@ QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index_pointer)
 }
 
 
-/// Destructor.
-/// It does not delete any object.
-
-QuasiNewtonMethod::~QuasiNewtonMethod()
-{
-}
-
-
 /// Returns a constant reference to the learning rate algorithm object inside the quasi-Newton method object.
 
 const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() const

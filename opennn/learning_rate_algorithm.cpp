@@ -16,7 +16,6 @@ namespace opennn
 /// It also initializes the class members to their default values.
 
 LearningRateAlgorithm::LearningRateAlgorithm()
-    : loss_index_pointer(nullptr)
 {
     set_default();
 }

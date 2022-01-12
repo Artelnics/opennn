@@ -40,8 +40,6 @@ struct Correlation
 {
     explicit Correlation() {}
 
-    virtual ~Correlation() {}
-
     string write_correlation_type() const
     {
         switch(correlation_type)

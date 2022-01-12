@@ -130,11 +130,6 @@ DataSet::Column::Column(const string& new_name,
     categories_uses = new_categories_uses;
 }
 
-/// Column destructor.
-
-DataSet::Column::~Column()
-{}
-
 
 void DataSet::Column::set_scaler(const Scaler& new_scaler)
 {

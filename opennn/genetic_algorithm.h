@@ -51,10 +51,6 @@ public:
 
     explicit GeneticAlgorithm(TrainingStrategy*);
 
-    // Destructor
-
-    virtual ~GeneticAlgorithm();
-
     // Get methods
 
     const Tensor<bool, 2>& get_population() const;

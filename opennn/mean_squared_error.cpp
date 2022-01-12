@@ -34,13 +34,6 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer, Da
 }
 
 
-/// Destructor.
-
-MeanSquaredError::~MeanSquaredError()
-{
-}
-
-
 /// \brief MeanSquaredError::calculate_error
 /// \param batch
 /// \param forward_propagation

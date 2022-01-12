@@ -33,15 +33,6 @@ MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer, DataSe
     set_default();
 }
 
-
-/// Destructor.
-/// It does not delete any pointer.
-
-MinkowskiError::~MinkowskiError()
-{
-}
-
-
 /// Returns the Minkowski exponent value used to calculate the error.
 
 type MinkowskiError::get_Minkowski_parameter() const

@@ -46,10 +46,6 @@ public:
 
     explicit GrowingNeurons(TrainingStrategy*);
 
-    // Destructor
-
-    virtual ~GrowingNeurons();
-
     // Get methods
 
     const Index& get_step() const;

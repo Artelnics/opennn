@@ -40,15 +40,6 @@ PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& ne
     layer_name = "perceptron_layer";
 }
 
-
-/// Destructor.
-/// This destructor does not delete any pointer.
-
-PerceptronLayer::~PerceptronLayer()
-{
-}
-
-
 /// Returns the number of inputs to the layer.
 
 Index PerceptronLayer::get_inputs_number() const

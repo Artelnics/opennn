@@ -16,8 +16,6 @@ namespace opennn
 /// It also initializes all the rest of the class members to their default values.
 
 LossIndex::LossIndex()
-    : neural_network_pointer(nullptr),
-      data_set_pointer(nullptr)
 {
     set_default();
 }

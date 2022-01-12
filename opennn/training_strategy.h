@@ -63,10 +63,6 @@ public:
 
     explicit TrainingStrategy(NeuralNetwork*, DataSet*);
 
-    // Destructor
-
-    virtual ~TrainingStrategy();
-
     // Enumerations
 
     /// Enumeration of the available error terms in OpenNN.

@@ -54,9 +54,6 @@ public:
 
    explicit LongShortTermMemoryLayer(const Index&, const Index&);
 
-   // Destructor
-
-   virtual ~LongShortTermMemoryLayer();
 
    // Get methods
 

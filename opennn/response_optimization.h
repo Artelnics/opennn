@@ -45,8 +45,6 @@ public:
 
     explicit ResponseOptimization(NeuralNetwork*);
 
-   virtual ~ResponseOptimization();
-
     ///Enumeration of the available conditions for response optimization.
 
    enum class Condition{Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};

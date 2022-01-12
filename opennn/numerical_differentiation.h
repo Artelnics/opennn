@@ -39,10 +39,6 @@ public:
 
     explicit NumericalDifferentiation();
 
-    // Destructor
-
-    virtual ~NumericalDifferentiation();
-
     /// Enumeration of the available methods for numerical differentiation.
 
     const Index& get_precision_digits() const;

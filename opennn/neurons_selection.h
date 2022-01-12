@@ -45,10 +45,6 @@ public:
 
     explicit NeuronsSelection(TrainingStrategy*);
 
-    // Destructor
-
-    virtual ~NeuronsSelection();
-
     // Enumerators
 
     /// Enumeration of all possible conditions of stop for the algorithms.

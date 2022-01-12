@@ -15,7 +15,6 @@ namespace opennn
 /// It creates a optimization algorithm object not associated with any loss index object.
 
 OptimizationAlgorithm::OptimizationAlgorithm()
-    : loss_index_pointer(nullptr)
 {
     const int n = omp_get_max_threads();
     thread_pool = new ThreadPool(n);

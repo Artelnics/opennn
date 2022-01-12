@@ -36,14 +36,6 @@ ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number, const Ind
 }
 
 
-/// Destructor.
-/// This destructor does not delete any pointer.
-
-ProbabilisticLayer::~ProbabilisticLayer()
-{
-}
-
-
 Index ProbabilisticLayer::get_inputs_number() const
 {
     return synaptic_weights.dimension(0);

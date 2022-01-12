@@ -44,10 +44,6 @@ public:
 
    explicit MinkowskiError(NeuralNetwork*, DataSet*);
 
-   // Destructor
-
-   virtual ~MinkowskiError();
-
    // Get methods
 
    type get_Minkowski_parameter() const;

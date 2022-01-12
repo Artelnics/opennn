@@ -34,14 +34,6 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_ind
 }
 
 
-/// Destructor.
-/// This destructor does not delete any object.
-
-LevenbergMarquardtAlgorithm::~LevenbergMarquardtAlgorithm()
-{
-}
-
-
 /// Returns the minimum loss improvement during training.
 
 const type& LevenbergMarquardtAlgorithm::get_minimum_loss_decrease() const

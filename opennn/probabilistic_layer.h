@@ -57,10 +57,6 @@ public:
 
    explicit ProbabilisticLayer(const Index&, const Index&);
 
-   // Destructor
-
-   virtual ~ProbabilisticLayer();
-
    // Enumerations
 
    /// Enumeration of the available methods for interpreting variables as probabilities.

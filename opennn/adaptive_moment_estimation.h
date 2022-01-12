@@ -60,7 +60,7 @@ public:
 
    explicit AdaptiveMomentEstimation(LossIndex*);   
 
-   virtual ~AdaptiveMomentEstimation();
+   //virtual ~AdaptiveMomentEstimation();
    
    // Training operators
 
@@ -181,8 +181,6 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
     explicit AdaptiveMomentEstimationData();
 
     explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation*);
-
-    virtual ~AdaptiveMomentEstimationData();
 
     void set(AdaptiveMomentEstimation*);
 

@@ -134,10 +134,6 @@ public:
               const Tensor<string, 1>& = Tensor<string, 1>(),
               const Tensor<VariableUse, 1>& = Tensor<VariableUse, 1>());
 
-       /// Destructor.
-
-       virtual ~Column();
-
        /// Column name.
 
        string name = "";

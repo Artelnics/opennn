@@ -55,10 +55,6 @@ public:
 
    explicit LevenbergMarquardtAlgorithm(LossIndex*);
 
-   // Destructor
-
-   virtual ~LevenbergMarquardtAlgorithm();
-
    // Get methods
 
    // Stopping criteria

@@ -17,8 +17,6 @@ namespace opennn
 /// By default, it constructs the function regression testing object.
 
 TestingAnalysis::TestingAnalysis()
-    : neural_network_pointer(nullptr),
-      data_set_pointer(nullptr)
 {
     set_default();
 }

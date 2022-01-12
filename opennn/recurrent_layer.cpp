@@ -38,14 +38,6 @@ RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, const Index& new_
 }
 
 
-/// Destructor.
-/// This destructor does not delete any pointer.
-
-RecurrentLayer::~RecurrentLayer()
-{
-}
-
-
 /// Returns the number of inputs to the layer.
 
 Index RecurrentLayer::get_inputs_number() const

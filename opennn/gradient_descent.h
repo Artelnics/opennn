@@ -55,10 +55,6 @@ public:
 
    explicit GradientDescent(LossIndex*);
 
-   // Destructor
-
-   virtual ~GradientDescent();   
-
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
 

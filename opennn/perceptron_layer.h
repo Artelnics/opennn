@@ -62,10 +62,6 @@ public:
 
    explicit PerceptronLayer(const Index&, const Index&, const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
 
-   // Destructor
-   
-   virtual ~PerceptronLayer();
-
    // Get methods
 
    bool is_empty() const;

@@ -35,13 +35,6 @@ NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network
 }
 
 
-/// Destructor.
-
-NormalizedSquaredError::~NormalizedSquaredError()
-{
-}
-
-
 /// Returns the normalization coefficient.
 
 type NormalizedSquaredError::get_normalization_coefficient() const

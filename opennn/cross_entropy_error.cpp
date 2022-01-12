@@ -33,13 +33,6 @@ CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer, 
 }
 
 
-/// Destructor.
-
-CrossEntropyError::~CrossEntropyError()
-{
-}
-
-
 // \brief CrossEntropyError::calculate_error.
 // \param batch
 // \param forward_propagation

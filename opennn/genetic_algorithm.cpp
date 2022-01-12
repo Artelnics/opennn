@@ -29,14 +29,6 @@ GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy_point
     set_default();
 }
 
-
-/// Destructor.
-
-GeneticAlgorithm::~GeneticAlgorithm()
-{
-}
-
-
 /// Returns the population matrix.
 
 const Tensor<bool, 2>& GeneticAlgorithm::get_population() const

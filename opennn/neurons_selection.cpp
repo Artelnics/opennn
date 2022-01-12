@@ -15,8 +15,6 @@ namespace opennn
 
 NeuronsSelection::NeuronsSelection()
 {
-    training_strategy_pointer = nullptr;
-
     set_default();
 }
 
@@ -25,17 +23,9 @@ NeuronsSelection::NeuronsSelection()
 /// @param new_training_strategy_pointer Pointer to a training strategy object.
 
 NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy_pointer)
+    : training_strategy_pointer(new_training_strategy_pointer)
 {
-    training_strategy_pointer = new_training_strategy_pointer;
-
     set_default();
-}
-
-
-/// Destructor.
-
-NeuronsSelection::~NeuronsSelection()
-{
 }
 
 
