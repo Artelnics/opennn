@@ -30,6 +30,7 @@
 #include "bounding_layer.h"
 #include "probabilistic_layer.h"
 #include "convolutional_layer.h"
+#include "flatten_layer.h"
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
@@ -86,6 +87,7 @@ public:
    bool has_bounding_layer() const;
    bool has_probabilistic_layer() const;
    bool has_convolutional_layer() const;
+   bool has_flatten_layer() const;
    bool is_empty() const;  
 
    const Tensor<string, 1>& get_inputs_names() const;
@@ -319,6 +321,12 @@ struct NeuralNetworkForwardPropagation
                 layers(i) = new ConvolutionalLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
+
+//            case Layer::Type::Flatten:
+//            {
+//                layers(i) = new FlattenLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+//            }
+//            break;
 
             default: break;
             }
