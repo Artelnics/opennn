@@ -30,13 +30,6 @@ GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy_pointer)
 }
 
 
-/// Destructor.
-
-GrowingNeurons::~GrowingNeurons()
-{
-}
-
-
 /// Returns the number of the hidden perceptrons pointed in each iteration of the growing neurons algorithm.
 
 const Index& GrowingNeurons::get_step() const

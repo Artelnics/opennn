@@ -47,10 +47,6 @@ struct Descriptives {
 
   explicit Descriptives(const type&, const type&, const type&, const type&);
 
-  /// Destructor.
-
-  virtual ~Descriptives();
-
   // Set methods
 
   void set(const type&, const type&, const type&, const type&);
@@ -75,15 +71,15 @@ struct Descriptives {
 
   /// Name of variable
 
-  string name;
+  string name = "Descriptives";
 
   /// Smallest value of a set, function, etc.
 
-  type minimum = type(0);
+  type minimum = type(-1.0);
 
   /// Biggest value of a set, function, etc.
 
-  type maximum = type(0);
+  type maximum = type(1);
 
   /// Mean value of a set, function, etc.
 
@@ -91,7 +87,7 @@ struct Descriptives {
 
   /// Standard deviation value of a set, function, etc.
 
-  type standard_deviation = type(0);
+  type standard_deviation = type(1);
 
 };
 
@@ -126,9 +122,6 @@ struct BoxPlot {
   // Values constructor.
 
   explicit BoxPlot(const type&, const type&, const type&, const type&, const type&);
-
-  virtual ~BoxPlot() {}
-
 
   void set(const type&, const type&, const type&, const type&, const type&);
 };
@@ -166,10 +159,6 @@ struct Histogram
   /// Probabillities constructor
 
   explicit Histogram(const Tensor<type, 1>&);
-
-  /// Destructor.
-
-  virtual ~Histogram();
 
   // Methods
 

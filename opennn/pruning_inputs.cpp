@@ -30,13 +30,6 @@ PruningInputs::PruningInputs(TrainingStrategy* new_training_strategy_pointer)
 }
 
 
-/// Destructor.
-
-PruningInputs::~PruningInputs()
-{
-}
-
-
 /// Returns the minimum number of inputs in the pruning inputs selection algorithm.
 
 const Index& PruningInputs::get_minimum_inputs_number() const

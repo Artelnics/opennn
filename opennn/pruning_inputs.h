@@ -45,8 +45,6 @@ public:
 
     explicit PruningInputs(TrainingStrategy*); 
 
-    virtual ~PruningInputs();
-
     // Get methods
 
     const Index& get_minimum_inputs_number() const;

@@ -45,8 +45,6 @@ public:
 
    explicit SumSquaredError(NeuralNetwork*, DataSet*);   
 
-   virtual ~SumSquaredError();
-
    // Back propagation
 
    void calculate_error(const DataSetBatch&,

@@ -47,10 +47,6 @@ public:
 
     explicit InputsSelection(TrainingStrategy*);
 
-    // Destructor
-
-    virtual ~InputsSelection();
-
     // Enumerations
 
     /// Enumeration of all possible conditions of stop for the algorithms.

@@ -48,13 +48,6 @@ ScalingLayer::ScalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : La
 }
 
 
-/// Destructor.
-
-ScalingLayer::~ScalingLayer()
-{
-}
-
-
 Tensor<Index, 1> ScalingLayer::get_outputs_dimensions() const
 {
     return input_variables_dimensions;

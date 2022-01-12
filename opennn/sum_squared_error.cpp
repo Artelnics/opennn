@@ -32,13 +32,6 @@ SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer, Data
 }
 
 
-/// Destructor.
-
-SumSquaredError::~SumSquaredError()
-{
-}
-
-
 void SumSquaredError::calculate_error(const DataSetBatch&,
                      const NeuralNetworkForwardPropagation&,
                      LossIndexBackPropagation& back_propagation) const

@@ -35,13 +35,6 @@ UnscalingLayer::UnscalingLayer(const Tensor<Descriptives, 1>& new_descriptives) 
 }
 
 
-/// Destructor.
-
-UnscalingLayer::~UnscalingLayer()
-{
-}
-
-
 /// Returns the number of inputs
 
 Index UnscalingLayer::get_inputs_number() const

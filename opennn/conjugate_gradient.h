@@ -59,8 +59,6 @@ public:
 
    explicit ConjugateGradient(LossIndex*);   
 
-   virtual ~ConjugateGradient();
-
    // Get methods
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
@@ -189,8 +187,6 @@ struct ConjugateGradientData : public OptimizationAlgorithmData
     explicit ConjugateGradientData();
 
     explicit ConjugateGradientData(ConjugateGradient*);
-
-    virtual ~ConjugateGradientData();
 
     void set(ConjugateGradient*);
 

@@ -44,10 +44,6 @@ public:
 
     explicit GrowingInputs(TrainingStrategy*);
 
-    // Destructor
-
-    virtual ~GrowingInputs();
-
     // Get methods
 
     const Index& get_maximum_inputs_number() const;

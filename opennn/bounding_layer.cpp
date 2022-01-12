@@ -34,14 +34,6 @@ BoundingLayer::BoundingLayer(const Index& neurons_number) : Layer()
 }
 
 
-/// Destructor.
-/// This destructor does not delete any pointer.
-
-BoundingLayer::~BoundingLayer()
-{
-}
-
-
 /// Returns the method used for bounding layer.
 
 const BoundingLayer::BoundingMethod& BoundingLayer::get_bounding_method() const

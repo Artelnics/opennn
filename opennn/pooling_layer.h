@@ -52,9 +52,6 @@ public:
 
     explicit PoolingLayer(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
-    // Destructor
-
-    virtual ~PoolingLayer();
 
     // Get methods
 

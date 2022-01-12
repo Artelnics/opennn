@@ -34,11 +34,11 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index_poi
 }
 
 
-/// Destructor.
+///// Destructor.
 
-AdaptiveMomentEstimation::~AdaptiveMomentEstimation()
-{
-}
+//AdaptiveMomentEstimation::~AdaptiveMomentEstimation()
+//{
+//}
 
 
 /// Returns batch samples number.
@@ -776,11 +776,11 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Default constructor
+///// Default constructor
 
-AdaptiveMomentEstimationData::AdaptiveMomentEstimationData()
-{
-}
+//AdaptiveMomentEstimationData::AdaptiveMomentEstimationData()
+//{
+//}
 
 
 /// Adaptive Moment Estimation constructor.
@@ -790,13 +790,6 @@ AdaptiveMomentEstimationData::AdaptiveMomentEstimationData()
 AdaptiveMomentEstimationData::AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
 {
     set(new_adaptive_moment_estimation_pointer);
-}
-
-
-/// Destructor
-
-AdaptiveMomentEstimationData::~AdaptiveMomentEstimationData()
-{
 }
 
 

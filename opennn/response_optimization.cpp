@@ -20,9 +20,8 @@ ResponseOptimization::ResponseOptimization()
 
 
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_pointer)
+    : neural_network_pointer(new_neural_network_pointer)
 {
-    neural_network_pointer = new_neural_network_pointer;
-
     const Index inputs_number = neural_network_pointer->get_inputs_number();
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
@@ -37,13 +36,6 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
 
     outputs_minimums = neural_network_pointer->get_bounding_layer_pointer()->get_lower_bounds();
     outputs_maximums = neural_network_pointer->get_bounding_layer_pointer()->get_upper_bounds();
-}
-
-
-/// Destructor.
-
-ResponseOptimization::~ResponseOptimization()
-{
 }
 
 

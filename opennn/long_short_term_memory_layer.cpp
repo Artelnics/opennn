@@ -40,14 +40,6 @@ LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_numbe
 }
 
 
-/// Destructor.
-/// This destructor does not delete any pointer.
-
-LongShortTermMemoryLayer::~LongShortTermMemoryLayer()
-{
-}
-
-
 /// Returns the number of inputs to the layer.
 
 Index LongShortTermMemoryLayer::get_inputs_number() const

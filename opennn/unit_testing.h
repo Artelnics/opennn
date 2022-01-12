@@ -33,8 +33,6 @@ public:
 
    explicit UnitTesting();   
 
-   virtual ~UnitTesting();
-
    // Get methods
 
    Index get_tests_count() const;
@@ -74,19 +72,19 @@ protected:
 
    /// Number of performed tests.
 
-   Index tests_count;
+   Index tests_count = 0;
 
    /// Number of tests which have passed the test case.
  
-   Index tests_passed_count;
+   Index tests_passed_count = 0;
 
    /// Number of tests which have failed the test case.
 
-   Index tests_failed_count;
+   Index tests_failed_count = 0;
 
    /// Number of iterations in random tests loops.
 
-   Index random_tests_number;
+   Index random_tests_number = 0;
 
    /// True if messages from this class are displayed and false otherwise.
 

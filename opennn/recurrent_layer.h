@@ -58,10 +58,6 @@ public:
 
    explicit RecurrentLayer(const Index&, const Index&);
 
-   // Destructor
-   
-   virtual ~RecurrentLayer();
-
    // Get methods
 
    bool is_empty() const;

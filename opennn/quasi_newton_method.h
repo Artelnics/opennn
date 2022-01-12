@@ -65,10 +65,6 @@ public:
 
    explicit QuasiNewtonMethod(LossIndex*);
 
-   // Destructor
-
-   virtual ~QuasiNewtonMethod();
-
    // Get methods
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;

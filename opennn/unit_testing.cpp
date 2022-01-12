@@ -10,18 +10,6 @@
 
 UnitTesting::UnitTesting()
 {
-    tests_count = 0;
-    tests_passed_count = 0;
-    tests_failed_count = 0;
-
-    random_tests_number = 0;
-}
-
-
-/// Destructor.
-
-UnitTesting::~UnitTesting()
-{
 }
 
 

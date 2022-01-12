@@ -36,13 +36,6 @@ GradientDescent::GradientDescent(LossIndex* new_loss_index_pointer)
 }
 
 
-/// Destructor.
-
-GradientDescent::~GradientDescent()
-{
-}
-
-
 /// Returns a constant reference to the learning rate algorithm object inside the gradient descent object.
 
 const LearningRateAlgorithm& GradientDescent::get_learning_rate_algorithm() const

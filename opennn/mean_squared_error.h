@@ -45,10 +45,6 @@ public:
    
    explicit MeanSquaredError(NeuralNetwork*, DataSet*);
 
-   // Destructor
-
-   virtual ~MeanSquaredError(); 
-
    // Back propagation
 
    void calculate_error(const DataSetBatch&,

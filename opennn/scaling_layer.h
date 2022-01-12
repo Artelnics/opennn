@@ -48,10 +48,6 @@ public:
 
    explicit ScalingLayer(const Tensor<Descriptives, 1>&);
 
-   // Destructors
-
-   virtual ~ScalingLayer();
-
    // Get methods
    
    Tensor<Index, 1> get_outputs_dimensions() const;

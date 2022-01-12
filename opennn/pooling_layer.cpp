@@ -44,13 +44,6 @@ PoolingLayer::PoolingLayer(const Tensor<Index, 1>& new_input_variables_dimension
 }
 
 
-/// Destructor
-
-PoolingLayer::~PoolingLayer()
-{
-}
-
-
 /// Returns the output of the pooling layer applied to a batch of images.
 /// @param inputs The batch of images.
 

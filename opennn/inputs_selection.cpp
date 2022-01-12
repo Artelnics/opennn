@@ -14,7 +14,6 @@ namespace opennn
 /// Default constructor.
 
 InputsSelection::InputsSelection()
-    : training_strategy_pointer(nullptr)
 {
     set_default();
 }
@@ -27,13 +26,6 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy_pointer
     : training_strategy_pointer(new_training_strategy_pointer)
 {
     set_default();
-}
-
-
-/// Destructor.
-
-InputsSelection::~InputsSelection()
-{
 }
 
 

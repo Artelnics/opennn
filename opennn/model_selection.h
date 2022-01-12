@@ -48,10 +48,6 @@ public:
 
     explicit ModelSelection(TrainingStrategy*);
 
-    // Destructor
-
-    virtual ~ModelSelection();
-
     /// Enumeration of all the available neurons selection algorithms.
 
     enum class NeuronsSelectionMethod{GROWING_NEURONS};

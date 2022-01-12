@@ -51,10 +51,6 @@ public:
 
    explicit StochasticGradientDescent(LossIndex*);
 
-   // Destructor
-
-   virtual ~StochasticGradientDescent();
-   
    //Training operators
 
    const type& get_initial_learning_rate() const;

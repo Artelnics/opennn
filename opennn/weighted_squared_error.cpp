@@ -37,13 +37,6 @@ WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network_poi
 }
 
 
-/// Destructor.
-
-WeightedSquaredError::~WeightedSquaredError()
-{
-}
-
-
 /// Returns the weight of the positives.
 
 type WeightedSquaredError::get_positives_weight() const
