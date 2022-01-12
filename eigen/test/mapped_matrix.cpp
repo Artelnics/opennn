@@ -7,10 +7,6 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_NO_STATIC_ASSERT
-#define EIGEN_NO_STATIC_ASSERT // turn static asserts into runtime asserts in order to check them
-#endif
-
 #include "main.h"
 
 #define EIGEN_TESTMAP_MAX_SIZE 256
@@ -178,7 +174,7 @@ void map_not_aligned_on_scalar()
   internal::aligned_delete(array1, (size+1)*(size+1)+1);
 }
 
-void test_mapped_matrix()
+EIGEN_DECLARE_TEST(mapped_matrix)
 {
   for(int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST_1( map_class_vector(Matrix<float, 1, 1>()) );
@@ -202,7 +198,6 @@ void test_mapped_matrix()
     CALL_SUBTEST_8( map_static_methods(RowVector3d()) );
     CALL_SUBTEST_9( map_static_methods(VectorXcd(8)) );
     CALL_SUBTEST_10( map_static_methods(VectorXf(12)) );
-    
     CALL_SUBTEST_11( map_not_aligned_on_scalar<double>() );
   }
 }

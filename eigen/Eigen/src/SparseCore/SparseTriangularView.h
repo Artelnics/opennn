@@ -11,6 +11,8 @@
 #ifndef EIGEN_SPARSE_TRIANGULARVIEW_H
 #define EIGEN_SPARSE_TRIANGULARVIEW_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 /** \ingroup SparseCore_Module

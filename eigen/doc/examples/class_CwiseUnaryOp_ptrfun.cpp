@@ -1,7 +1,5 @@
 #include <Eigen/Core>
 #include <iostream>
-using namespace Eigen;
-using namespace std;
 
 // define function to be applied coefficient-wise
 double ramp(double x)
@@ -14,7 +12,7 @@ double ramp(double x)
 
 int main(int, char**)
 {
-  Matrix4d m1 = Matrix4d::Random();
-  cout << m1 << endl << "becomes: " << endl << m1.unaryExpr(ptr_fun(ramp)) << endl;
+  Eigen::Matrix4d m1 = Eigen::Matrix4d::Random();
+  std::cout << m1 << std::endl << "becomes: " << std::endl << m1.unaryExpr(std::ptr_fun(ramp)) << std::endl;
   return 0;
 }

@@ -10,6 +10,8 @@
 #ifndef EIGEN_COREITERATORS_H
 #define EIGEN_COREITERATORS_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 /* This file contains the respective InnerIterator definition of the expressions defined in Eigen/Core
@@ -48,6 +50,11 @@ public:
     * Explicit zeros are not skipped over. To skip explicit zeros, see class SparseView
     */
   EIGEN_STRONG_INLINE InnerIterator& operator++()   { m_iter.operator++(); return *this; }
+  EIGEN_STRONG_INLINE InnerIterator& operator+=(Index i) { m_iter.operator+=(i); return *this; }
+  EIGEN_STRONG_INLINE InnerIterator operator+(Index i) 
+  { InnerIterator result(*this); result+=i; return result; }
+    
+
   /// \returns the column or row index of the current coefficient.
   EIGEN_STRONG_INLINE Index index() const           { return m_iter.index(); }
   /// \returns the row index of the current coefficient.

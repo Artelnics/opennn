@@ -11,12 +11,24 @@
 #ifndef EIGEN_GENERAL_PRODUCT_H
 #define EIGEN_GENERAL_PRODUCT_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 enum {
   Large = 2,
   Small = 3
 };
+
+// Define the threshold value to fallback from the generic matrix-matrix product
+// implementation (heavy) to the lightweight coeff-based product one.
+// See generic_product_impl<Lhs,Rhs,DenseShape,DenseShape,GemmProduct>
+// in products/GeneralMatrixMatrix.h for more details.
+// TODO This threshold should also be used in the compile-time selector below.
+#ifndef EIGEN_GEMM_TO_COEFFBASED_THRESHOLD
+// This default value has been obtained on a Haswell architecture.
+#define EIGEN_GEMM_TO_COEFFBASED_THRESHOLD 20
+#endif
 
 namespace internal {
 
@@ -25,7 +37,7 @@ template<int Rows, int Cols, int Depth> struct product_type_selector;
 template<int Size, int MaxSize> struct product_size_category
 {
   enum {
-    #ifndef EIGEN_CUDA_ARCH
+    #ifndef EIGEN_GPU_COMPILE_PHASE
     is_large = MaxSize == Dynamic ||
                Size >= EIGEN_CACHEFRIENDLY_PRODUCT_THRESHOLD ||
                (Size==Dynamic && MaxSize>=EIGEN_CACHEFRIENDLY_PRODUCT_THRESHOLD),
@@ -40,17 +52,17 @@ template<int Size, int MaxSize> struct product_size_category
 
 template<typename Lhs, typename Rhs> struct product_type
 {
-  typedef typename remove_all<Lhs>::type _Lhs;
-  typedef typename remove_all<Rhs>::type _Rhs;
+  typedef typename remove_all<Lhs>::type Lhs_;
+  typedef typename remove_all<Rhs>::type Rhs_;
   enum {
-    MaxRows = traits<_Lhs>::MaxRowsAtCompileTime,
-    Rows    = traits<_Lhs>::RowsAtCompileTime,
-    MaxCols = traits<_Rhs>::MaxColsAtCompileTime,
-    Cols    = traits<_Rhs>::ColsAtCompileTime,
-    MaxDepth = EIGEN_SIZE_MIN_PREFER_FIXED(traits<_Lhs>::MaxColsAtCompileTime,
-                                           traits<_Rhs>::MaxRowsAtCompileTime),
-    Depth = EIGEN_SIZE_MIN_PREFER_FIXED(traits<_Lhs>::ColsAtCompileTime,
-                                        traits<_Rhs>::RowsAtCompileTime)
+    MaxRows = traits<Lhs_>::MaxRowsAtCompileTime,
+    Rows    = traits<Lhs_>::RowsAtCompileTime,
+    MaxCols = traits<Rhs_>::MaxColsAtCompileTime,
+    Cols    = traits<Rhs_>::ColsAtCompileTime,
+    MaxDepth = min_size_prefer_fixed(traits<Lhs_>::MaxColsAtCompileTime,
+                                     traits<Rhs_>::MaxRowsAtCompileTime),
+    Depth = min_size_prefer_fixed(traits<Lhs_>::ColsAtCompileTime,
+                                  traits<Rhs_>::RowsAtCompileTime)
   };
 
   // the splitting into different lines of code here, introducing the _select enums and the typedef below,
@@ -153,13 +165,13 @@ template<typename Scalar,int Size,int MaxSize,bool Cond> struct gemv_static_vect
 template<typename Scalar,int Size,int MaxSize>
 struct gemv_static_vector_if<Scalar,Size,MaxSize,false>
 {
-  EIGEN_STRONG_INLINE  Scalar* data() { eigen_internal_assert(false && "should never be called"); return 0; }
+  EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Scalar* data() { eigen_internal_assert(false && "should never be called"); return 0; }
 };
 
 template<typename Scalar,int Size>
 struct gemv_static_vector_if<Scalar,Size,Dynamic,true>
 {
-  EIGEN_STRONG_INLINE Scalar* data() { return 0; }
+  EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Scalar* data() { return 0; }
 };
 
 template<typename Scalar,int Size,int MaxSize>
@@ -170,12 +182,13 @@ struct gemv_static_vector_if<Scalar,Size,MaxSize,true>
     PacketSize      = internal::packet_traits<Scalar>::size
   };
   #if EIGEN_MAX_STATIC_ALIGN_BYTES!=0
-  internal::plain_array<Scalar,EIGEN_SIZE_MIN_PREFER_FIXED(Size,MaxSize),0,EIGEN_PLAIN_ENUM_MIN(AlignedMax,PacketSize)> m_data;
+  internal::plain_array<Scalar, internal::min_size_prefer_fixed(Size, MaxSize), 0,
+                        internal::plain_enum_min(AlignedMax, PacketSize)> m_data;
   EIGEN_STRONG_INLINE Scalar* data() { return m_data.array; }
   #else
   // Some architectures cannot align on the stack,
   // => let's manually enforce alignment by allocating more data and return the address of the first aligned element.
-  internal::plain_array<Scalar,EIGEN_SIZE_MIN_PREFER_FIXED(Size,MaxSize)+(ForceAlignment?EIGEN_MAX_ALIGN_BYTES:0),0> m_data;
+  internal::plain_array<Scalar, internal::min_size_prefer_fixed(Size, MaxSize)+(ForceAlignment?EIGEN_MAX_ALIGN_BYTES:0),0> m_data;
   EIGEN_STRONG_INLINE Scalar* data() {
     return ForceAlignment
             ? reinterpret_cast<Scalar*>((internal::UIntPtr(m_data.array) & ~(std::size_t(EIGEN_MAX_ALIGN_BYTES-1))) + EIGEN_MAX_ALIGN_BYTES)
@@ -213,13 +226,12 @@ template<> struct gemv_dense_selector<OnTheRight,ColMajor,true>
     typedef internal::blas_traits<Rhs> RhsBlasTraits;
     typedef typename RhsBlasTraits::DirectLinearAccessType ActualRhsType;
   
-    typedef Map<Matrix<ResScalar,Dynamic,1>, EIGEN_PLAIN_ENUM_MIN(AlignedMax,internal::packet_traits<ResScalar>::size)> MappedDest;
+    typedef Map<Matrix<ResScalar,Dynamic,1>, plain_enum_min(AlignedMax, internal::packet_traits<ResScalar>::size)> MappedDest;
 
     ActualLhsType actualLhs = LhsBlasTraits::extract(lhs);
     ActualRhsType actualRhs = RhsBlasTraits::extract(rhs);
 
-    ResScalar actualAlpha = alpha * LhsBlasTraits::extractScalarFactor(lhs)
-                                  * RhsBlasTraits::extractScalarFactor(rhs);
+    ResScalar actualAlpha = combine_scalar_factors(alpha, lhs, rhs);
 
     // make sure Dest is a compile-time vector type (bug 1166)
     typedef typename conditional<Dest::IsVectorAtCompileTime, Dest, typename Dest::ColXpr>::type ActualDest;
@@ -229,7 +241,7 @@ template<> struct gemv_dense_selector<OnTheRight,ColMajor,true>
       // on, the other hand it is good for the cache to pack the vector anyways...
       EvalToDestAtCompileTime = (ActualDest::InnerStrideAtCompileTime==1),
       ComplexByReal = (NumTraits<LhsScalar>::IsComplex) && (!NumTraits<RhsScalar>::IsComplex),
-      MightCannotUseDest = (!EvalToDestAtCompileTime) || ComplexByReal
+      MightCannotUseDest = ((!EvalToDestAtCompileTime) || ComplexByReal) && (ActualDest::MaxSizeAtCompileTime!=0)
     };
 
     typedef const_blas_data_mapper<LhsScalar,Index,ColMajor> LhsMapper;
@@ -310,13 +322,12 @@ template<> struct gemv_dense_selector<OnTheRight,RowMajor,true>
     typename add_const<ActualLhsType>::type actualLhs = LhsBlasTraits::extract(lhs);
     typename add_const<ActualRhsType>::type actualRhs = RhsBlasTraits::extract(rhs);
 
-    ResScalar actualAlpha = alpha * LhsBlasTraits::extractScalarFactor(lhs)
-                                  * RhsBlasTraits::extractScalarFactor(rhs);
+    ResScalar actualAlpha = combine_scalar_factors(alpha, lhs, rhs);
 
     enum {
       // FIXME find a way to allow an inner stride on the result if packet_traits<Scalar>::size==1
       // on, the other hand it is good for the cache to pack the vector anyways...
-      DirectlyUseRhs = ActualRhsTypeCleaned::InnerStrideAtCompileTime==1
+      DirectlyUseRhs = ActualRhsTypeCleaned::InnerStrideAtCompileTime==1 || ActualRhsTypeCleaned::MaxSizeAtCompileTime==0
     };
 
     gemv_static_vector_if<RhsScalar,ActualRhsTypeCleaned::SizeAtCompileTime,ActualRhsTypeCleaned::MaxSizeAtCompileTime,!DirectlyUseRhs> static_rhs;
@@ -386,7 +397,8 @@ template<> struct gemv_dense_selector<OnTheRight,RowMajor,false>
   */
 template<typename Derived>
 template<typename OtherDerived>
-inline const Product<Derived, OtherDerived>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+const Product<Derived, OtherDerived>
 MatrixBase<Derived>::operator*(const MatrixBase<OtherDerived> &other) const
 {
   // A note regarding the function declaration: In MSVC, this function will sometimes
@@ -428,6 +440,7 @@ MatrixBase<Derived>::operator*(const MatrixBase<OtherDerived> &other) const
   */
 template<typename Derived>
 template<typename OtherDerived>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
 const Product<Derived,OtherDerived,LazyProduct>
 MatrixBase<Derived>::lazyProduct(const MatrixBase<OtherDerived> &other) const
 {

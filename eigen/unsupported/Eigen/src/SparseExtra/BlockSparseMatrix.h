@@ -11,6 +11,8 @@
 #ifndef EIGEN_SPARSEBLOCKMATRIX_H
 #define EIGEN_SPARSEBLOCKMATRIX_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 /** \ingroup SparseCore_Module
   *
@@ -46,21 +48,21 @@ namespace Eigen {
   * It is obviously required to describe the block layout beforehand by calling either
   * setBlockSize() for fixed-size blocks or setBlockLayout for variable-size blocks.
   *
-  * \tparam _Scalar The Scalar type
+  * \tparam Scalar_ The Scalar type
   * \tparam _BlockAtCompileTime The block layout option. It takes the following values
   * Dynamic : block size known at runtime
   * a numeric number : fixed-size block known at compile time
   */
-template<typename _Scalar, int _BlockAtCompileTime=Dynamic, int _Options=ColMajor, typename _StorageIndex=int> class BlockSparseMatrix;
+template<typename Scalar_, int _BlockAtCompileTime=Dynamic, int Options_=ColMajor, typename StorageIndex_=int> class BlockSparseMatrix;
 
 template<typename BlockSparseMatrixT> class BlockSparseMatrixView;
 
 namespace internal {
-template<typename _Scalar, int _BlockAtCompileTime, int _Options, typename _Index>
-struct traits<BlockSparseMatrix<_Scalar,_BlockAtCompileTime,_Options, _Index> >
+template<typename Scalar_, int _BlockAtCompileTime, int Options_, typename Index_>
+struct traits<BlockSparseMatrix<Scalar_,_BlockAtCompileTime,Options_, Index_> >
 {
-  typedef _Scalar Scalar;
-  typedef _Index Index;
+  typedef Scalar_ Scalar;
+  typedef Index_ Index;
   typedef Sparse StorageKind; // FIXME Where is it used ??
   typedef MatrixXpr XprKind;
   enum {
@@ -69,7 +71,7 @@ struct traits<BlockSparseMatrix<_Scalar,_BlockAtCompileTime,_Options, _Index> >
     MaxRowsAtCompileTime = Dynamic,
     MaxColsAtCompileTime = Dynamic,
     BlockSize = _BlockAtCompileTime,
-    Flags = _Options | NestByRefBit | LvalueBit,
+    Flags = Options_ | NestByRefBit | LvalueBit,
     CoeffReadCost = NumTraits<Scalar>::ReadCost,
     SupportedAccessPatterns = InnerRandomAccessPattern
   };
@@ -280,17 +282,17 @@ class BlockSparseTimeDenseProduct
     BlockSparseTimeDenseProduct& operator=(const BlockSparseTimeDenseProduct&);
 };
 
-template<typename _Scalar, int _BlockAtCompileTime, int _Options, typename _StorageIndex>
-class BlockSparseMatrix : public SparseMatrixBase<BlockSparseMatrix<_Scalar,_BlockAtCompileTime, _Options,_StorageIndex> >
+template<typename Scalar_, int _BlockAtCompileTime, int Options_, typename StorageIndex_>
+class BlockSparseMatrix : public SparseMatrixBase<BlockSparseMatrix<Scalar_,_BlockAtCompileTime, Options_,StorageIndex_> >
 {
   public:
-    typedef _Scalar Scalar;
+    typedef Scalar_ Scalar;
     typedef typename NumTraits<Scalar>::Real RealScalar;
-    typedef _StorageIndex StorageIndex;
-    typedef typename internal::ref_selector<BlockSparseMatrix<_Scalar, _BlockAtCompileTime, _Options, _StorageIndex> >::type Nested;
+    typedef StorageIndex_ StorageIndex;
+    typedef typename internal::ref_selector<BlockSparseMatrix<Scalar_, _BlockAtCompileTime, Options_, StorageIndex_> >::type Nested;
 
     enum {
-      Options = _Options,
+      Options = Options_,
       Flags = Options,
       BlockSize=_BlockAtCompileTime,
       RowsAtCompileTime = Dynamic,
@@ -968,13 +970,13 @@ class BlockSparseMatrix : public SparseMatrixBase<BlockSparseMatrix<_Scalar,_Blo
     Index m_blockSize; // Size of a block for fixed-size blocks, otherwise -1
 };
 
-template<typename _Scalar, int _BlockAtCompileTime, int _Options, typename _StorageIndex>
-class BlockSparseMatrix<_Scalar, _BlockAtCompileTime, _Options, _StorageIndex>::BlockInnerIterator
+template<typename Scalar_, int _BlockAtCompileTime, int Options_, typename StorageIndex_>
+class BlockSparseMatrix<Scalar_, _BlockAtCompileTime, Options_, StorageIndex_>::BlockInnerIterator
 {
   public:
 
     enum{
-      Flags = _Options
+      Flags = Options_
     };
 
     BlockInnerIterator(const BlockSparseMatrix& mat, const Index outer)
@@ -1010,14 +1012,14 @@ class BlockSparseMatrix<_Scalar, _BlockAtCompileTime, _Options, _StorageIndex>::
     inline operator bool() const { return (m_id < m_end); }
 
   protected:
-    const BlockSparseMatrix<_Scalar, _BlockAtCompileTime, _Options, StorageIndex>& m_mat;
+    const BlockSparseMatrix<Scalar_, _BlockAtCompileTime, Options_, StorageIndex>& m_mat;
     const Index m_outer;
     Index m_id;
     Index m_end;
 };
 
-template<typename _Scalar, int _BlockAtCompileTime, int _Options, typename _StorageIndex>
-class BlockSparseMatrix<_Scalar, _BlockAtCompileTime, _Options, _StorageIndex>::InnerIterator
+template<typename Scalar_, int _BlockAtCompileTime, int Options_, typename StorageIndex_>
+class BlockSparseMatrix<Scalar_, _BlockAtCompileTime, Options_, StorageIndex_>::InnerIterator
 {
   public:
     InnerIterator(const BlockSparseMatrix& mat, Index outer)

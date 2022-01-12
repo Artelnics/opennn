@@ -10,6 +10,8 @@
 #ifndef EIGEN_FORCEALIGNEDACCESS_H
 #define EIGEN_FORCEALIGNEDACCESS_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 /** \class ForceAlignedAccess
@@ -41,10 +43,14 @@ template<typename ExpressionType> class ForceAlignedAccess
 
     EIGEN_DEVICE_FUNC explicit inline ForceAlignedAccess(const ExpressionType& matrix) : m_expression(matrix) {}
 
-    EIGEN_DEVICE_FUNC inline Index rows() const { return m_expression.rows(); }
-    EIGEN_DEVICE_FUNC inline Index cols() const { return m_expression.cols(); }
-    EIGEN_DEVICE_FUNC inline Index outerStride() const { return m_expression.outerStride(); }
-    EIGEN_DEVICE_FUNC inline Index innerStride() const { return m_expression.innerStride(); }
+    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
+    inline Index rows() const EIGEN_NOEXCEPT { return m_expression.rows(); }
+    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
+    inline Index cols() const EIGEN_NOEXCEPT { return m_expression.cols(); }
+    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
+    inline Index outerStride() const EIGEN_NOEXCEPT { return m_expression.outerStride(); }
+    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
+    inline Index innerStride() const EIGEN_NOEXCEPT { return m_expression.innerStride(); }
 
     EIGEN_DEVICE_FUNC inline const CoeffReturnType coeff(Index row, Index col) const
     {

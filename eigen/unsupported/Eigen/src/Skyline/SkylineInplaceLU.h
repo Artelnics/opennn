@@ -10,6 +10,8 @@
 #ifndef EIGEN_SKYLINEINPLACELU_H
 #define EIGEN_SKYLINEINPLACELU_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 /** \ingroup Skyline_Module
@@ -41,7 +43,7 @@ public:
 
     /** Sets the relative threshold value used to prune zero coefficients during the decomposition.
      *
-     * Setting a value greater than zero speeds up computation, and yields to an imcomplete
+     * Setting a value greater than zero speeds up computation, and yields to an incomplete
      * factorization with fewer non zero coefficients. Such approximate factors are especially
      * useful to initialize an iterative solver.
      *
@@ -116,7 +118,7 @@ protected:
  * using the default algorithm.
  */
 template<typename MatrixType>
-//template<typename _Scalar>
+//template<typename Scalar_>
 void SkylineInplaceLU<MatrixType>::compute() {
     const size_t rows = m_lu.rows();
     const size_t cols = m_lu.cols();
@@ -349,4 +351,4 @@ bool SkylineInplaceLU<MatrixType>::solve(const MatrixBase<BDerived> &b, MatrixBa
 
 } // end namespace Eigen
 
-#endif // EIGEN_SKYLINELU_H
+#endif // EIGEN_SKYLINEINPLACELU_H

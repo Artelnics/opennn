@@ -7,7 +7,6 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#define EIGEN_NO_STATIC_ASSERT
 #include "main.h"
 
 template<typename T>
@@ -16,11 +15,25 @@ struct other_matrix_type
   typedef int type;
 };
 
-template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
-struct other_matrix_type<Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> >
+template<typename Scalar_, int Rows_, int Cols_, int Options_, int MaxRows_, int MaxCols_>
+struct other_matrix_type<Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> >
 {
-  typedef Matrix<_Scalar, _Rows, _Cols, _Options^RowMajor, _MaxRows, _MaxCols> type;
+  typedef Matrix<Scalar_, Rows_, Cols_, Options_^RowMajor, MaxRows_, MaxCols_> type;
 };
+
+template <typename MatrixType>
+typename internal::enable_if<(MatrixType::RowsAtCompileTime==1 || MatrixType::RowsAtCompileTime==Dynamic), void>::type
+check_row_swap(MatrixType& m1) {
+  // test assertion on mismatching size -- matrix case
+  VERIFY_RAISES_ASSERT(m1.swap(m1.row(0)));
+  // test assertion on mismatching size -- xpr case
+  VERIFY_RAISES_ASSERT(m1.row(0).swap(m1));
+}
+
+template <typename MatrixType>
+typename internal::enable_if<!(MatrixType::RowsAtCompileTime==1 || MatrixType::RowsAtCompileTime==Dynamic), void>::type
+check_row_swap(MatrixType& /* unused */) {
+}
 
 template<typename MatrixType> void swap(const MatrixType& m)
 {
@@ -28,8 +41,8 @@ template<typename MatrixType> void swap(const MatrixType& m)
   typedef typename MatrixType::Scalar Scalar;
 
   eigen_assert((!internal::is_same<MatrixType,OtherMatrixType>::value));
-  typename MatrixType::Index rows = m.rows();
-  typename MatrixType::Index cols = m.cols();
+  Index rows = m.rows();
+  Index cols = m.cols();
   
   // construct 3 matrix guaranteed to be distinct
   MatrixType m1 = MatrixType::Random(rows,cols);
@@ -73,17 +86,11 @@ template<typename MatrixType> void swap(const MatrixType& m)
   VERIFY_IS_APPROX(m3,m1_copy);
   m1 = m1_copy;
   m3 = m3_copy;
-  
-  if(m1.rows()>1)
-  {
-    // test assertion on mismatching size -- matrix case
-    VERIFY_RAISES_ASSERT(m1.swap(m1.row(0)));
-    // test assertion on mismatching size -- xpr case
-    VERIFY_RAISES_ASSERT(m1.row(0).swap(m1));
-  }
+
+  check_row_swap(m1);
 }
 
-void test_swap()
+EIGEN_DECLARE_TEST(swap)
 {
   int s = internal::random<int>(1,EIGEN_TEST_MAX_SIZE);
   CALL_SUBTEST_1( swap(Matrix3f()) ); // fixed size, no vectorization 

@@ -10,6 +10,8 @@
 #ifndef EIGEN_SPARSEPRODUCT_H
 #define EIGEN_SPARSEPRODUCT_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 /** \returns an expression of the product of two sparse matrices.
@@ -17,7 +19,7 @@ namespace Eigen {
   * The automatic pruning of the small values can be achieved by calling the pruned() function
   * in which case a totally different product algorithm is employed:
   * \code
-  * C = (A*B).pruned();             // supress numerical zeros (exact)
+  * C = (A*B).pruned();             // suppress numerical zeros (exact)
   * C = (A*B).pruned(ref);
   * C = (A*B).pruned(ref,epsilon);
   * \endcode
@@ -163,6 +165,18 @@ protected:
 };
 
 } // end namespace internal
+
+// sparse matrix = sparse-product (can be sparse*sparse, sparse*perm, etc.)
+template<typename Scalar, int Options_, typename StorageIndex_>
+template<typename Lhs, typename Rhs>
+SparseMatrix<Scalar,Options_,StorageIndex_>& SparseMatrix<Scalar,Options_,StorageIndex_>::operator=(const Product<Lhs,Rhs,AliasFreeProduct>& src)
+{
+  // std::cout << "in Assignment : " << DstOptions << "\n";
+  SparseMatrix dst(src.rows(),src.cols());
+  internal::generic_product_impl<Lhs, Rhs>::evalTo(dst,src.lhs(),src.rhs());
+  this->swap(dst);
+  return *this;
+}
 
 } // end namespace Eigen
 

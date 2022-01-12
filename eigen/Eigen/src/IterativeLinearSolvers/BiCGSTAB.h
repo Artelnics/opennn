@@ -11,6 +11,8 @@
 #ifndef EIGEN_BICGSTAB_H
 #define EIGEN_BICGSTAB_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 namespace internal {
@@ -108,17 +110,17 @@ bool bicgstab(const MatrixType& mat, const Rhs& rhs, Dest& x,
 
 }
 
-template< typename _MatrixType,
-          typename _Preconditioner = DiagonalPreconditioner<typename _MatrixType::Scalar> >
+template< typename MatrixType_,
+          typename Preconditioner_ = DiagonalPreconditioner<typename MatrixType_::Scalar> >
 class BiCGSTAB;
 
 namespace internal {
 
-template< typename _MatrixType, typename _Preconditioner>
-struct traits<BiCGSTAB<_MatrixType,_Preconditioner> >
+template< typename MatrixType_, typename Preconditioner_>
+struct traits<BiCGSTAB<MatrixType_,Preconditioner_> >
 {
-  typedef _MatrixType MatrixType;
-  typedef _Preconditioner Preconditioner;
+  typedef MatrixType_ MatrixType;
+  typedef Preconditioner_ Preconditioner;
 };
 
 }
@@ -129,8 +131,8 @@ struct traits<BiCGSTAB<_MatrixType,_Preconditioner> >
   * This class allows to solve for A.x = b sparse linear problems using a bi conjugate gradient
   * stabilized algorithm. The vectors x and b can be either dense or sparse.
   *
-  * \tparam _MatrixType the type of the sparse matrix A, can be a dense or a sparse matrix.
-  * \tparam _Preconditioner the type of the preconditioner. Default is DiagonalPreconditioner
+  * \tparam MatrixType_ the type of the sparse matrix A, can be a dense or a sparse matrix.
+  * \tparam Preconditioner_ the type of the preconditioner. Default is DiagonalPreconditioner
   *
   * \implsparsesolverconcept
   *
@@ -154,8 +156,8 @@ struct traits<BiCGSTAB<_MatrixType,_Preconditioner> >
   *
   * \sa class SimplicialCholesky, DiagonalPreconditioner, IdentityPreconditioner
   */
-template< typename _MatrixType, typename _Preconditioner>
-class BiCGSTAB : public IterativeSolverBase<BiCGSTAB<_MatrixType,_Preconditioner> >
+template< typename MatrixType_, typename Preconditioner_>
+class BiCGSTAB : public IterativeSolverBase<BiCGSTAB<MatrixType_,Preconditioner_> >
 {
   typedef IterativeSolverBase<BiCGSTAB> Base;
   using Base::matrix;
@@ -164,10 +166,10 @@ class BiCGSTAB : public IterativeSolverBase<BiCGSTAB<_MatrixType,_Preconditioner
   using Base::m_info;
   using Base::m_isInitialized;
 public:
-  typedef _MatrixType MatrixType;
+  typedef MatrixType_ MatrixType;
   typedef typename MatrixType::Scalar Scalar;
   typedef typename MatrixType::RealScalar RealScalar;
-  typedef _Preconditioner Preconditioner;
+  typedef Preconditioner_ Preconditioner;
 
 public:
 
@@ -191,32 +193,16 @@ public:
 
   /** \internal */
   template<typename Rhs,typename Dest>
-  void _solve_with_guess_impl(const Rhs& b, Dest& x) const
+  void _solve_vector_with_guess_impl(const Rhs& b, Dest& x) const
   {    
-    bool failed = false;
-    for(Index j=0; j<b.cols(); ++j)
-    {
-      m_iterations = Base::maxIterations();
-      m_error = Base::m_tolerance;
-      
-      typename Dest::ColXpr xj(x,j);
-      if(!internal::bicgstab(matrix(), b.col(j), xj, Base::m_preconditioner, m_iterations, m_error))
-        failed = true;
-    }
-    m_info = failed ? NumericalIssue
+    m_iterations = Base::maxIterations();
+    m_error = Base::m_tolerance;
+    
+    bool ret = internal::bicgstab(matrix(), b, x, Base::m_preconditioner, m_iterations, m_error);
+
+    m_info = (!ret) ? NumericalIssue
            : m_error <= Base::m_tolerance ? Success
            : NoConvergence;
-    m_isInitialized = true;
-  }
-
-  /** \internal */
-  using Base::_solve_impl;
-  template<typename Rhs,typename Dest>
-  void _solve_impl(const MatrixBase<Rhs>& b, Dest& x) const
-  {
-    x.resize(this->rows(),b.cols());
-    x.setZero();
-    _solve_with_guess_impl(b,x);
   }
 
 protected:

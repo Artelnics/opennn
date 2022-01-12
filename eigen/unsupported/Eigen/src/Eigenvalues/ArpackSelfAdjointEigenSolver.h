@@ -10,7 +10,9 @@
 #ifndef EIGEN_ARPACKGENERALIZEDSELFADJOINTEIGENSOLVER_H
 #define EIGEN_ARPACKGENERALIZEDSELFADJOINTEIGENSOLVER_H
 
-#include <Eigen/Dense>
+#include "../../../../Eigen/Dense"
+
+#include "./InternalHeaderCheck.h"
 
 namespace Eigen { 
 
@@ -285,7 +287,7 @@ public:
 
   /** \brief Reports whether previous computation was successful.
    *
-   * \returns \c Success if computation was succesful, \c NoConvergence otherwise.
+   * \returns \c Success if computation was successful, \c NoConvergence otherwise.
    */
   ComputationInfo info() const
   {

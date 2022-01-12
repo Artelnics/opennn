@@ -16,6 +16,8 @@
 * It corresponds to the level 3 SYRK and level 2 SYR Blas routines.
 **********************************************************************/
 
+#include "../InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 
@@ -55,14 +57,14 @@ struct selfadjoint_product_selector<MatrixType,OtherType,UpLo,true>
     typedef typename MatrixType::Scalar Scalar;
     typedef internal::blas_traits<OtherType> OtherBlasTraits;
     typedef typename OtherBlasTraits::DirectLinearAccessType ActualOtherType;
-    typedef typename internal::remove_all<ActualOtherType>::type _ActualOtherType;
+    typedef typename internal::remove_all<ActualOtherType>::type ActualOtherType_;
     typename internal::add_const_on_value_type<ActualOtherType>::type actualOther = OtherBlasTraits::extract(other.derived());
 
     Scalar actualAlpha = alpha * OtherBlasTraits::extractScalarFactor(other.derived());
 
     enum {
       StorageOrder = (internal::traits<MatrixType>::Flags&RowMajorBit) ? RowMajor : ColMajor,
-      UseOtherDirectly = _ActualOtherType::InnerStrideAtCompileTime==1
+      UseOtherDirectly = ActualOtherType_::InnerStrideAtCompileTime==1
     };
     internal::gemv_static_vector_if<Scalar,OtherType::SizeAtCompileTime,OtherType::MaxSizeAtCompileTime,!UseOtherDirectly> static_other;
 
@@ -70,7 +72,7 @@ struct selfadjoint_product_selector<MatrixType,OtherType,UpLo,true>
       (UseOtherDirectly ? const_cast<Scalar*>(actualOther.data()) : static_other.data()));
       
     if(!UseOtherDirectly)
-      Map<typename _ActualOtherType::PlainObject>(actualOtherPtr, actualOther.size()) = actualOther;
+      Map<typename ActualOtherType_::PlainObject>(actualOtherPtr, actualOther.size()) = actualOther;
     
     selfadjoint_rank1_update<Scalar,Index,StorageOrder,UpLo,
                               OtherBlasTraits::NeedToConjugate  && NumTraits<Scalar>::IsComplex,
@@ -87,21 +89,21 @@ struct selfadjoint_product_selector<MatrixType,OtherType,UpLo,false>
     typedef typename MatrixType::Scalar Scalar;
     typedef internal::blas_traits<OtherType> OtherBlasTraits;
     typedef typename OtherBlasTraits::DirectLinearAccessType ActualOtherType;
-    typedef typename internal::remove_all<ActualOtherType>::type _ActualOtherType;
+    typedef typename internal::remove_all<ActualOtherType>::type ActualOtherType_;
     typename internal::add_const_on_value_type<ActualOtherType>::type actualOther = OtherBlasTraits::extract(other.derived());
 
     Scalar actualAlpha = alpha * OtherBlasTraits::extractScalarFactor(other.derived());
 
     enum {
       IsRowMajor = (internal::traits<MatrixType>::Flags&RowMajorBit) ? 1 : 0,
-      OtherIsRowMajor = _ActualOtherType::Flags&RowMajorBit ? 1 : 0
+      OtherIsRowMajor = ActualOtherType_::Flags&RowMajorBit ? 1 : 0
     };
 
     Index size = mat.cols();
     Index depth = actualOther.cols();
 
     typedef internal::gemm_blocking_space<IsRowMajor ? RowMajor : ColMajor,Scalar,Scalar,
-              MatrixType::MaxColsAtCompileTime, MatrixType::MaxColsAtCompileTime, _ActualOtherType::MaxColsAtCompileTime> BlockingType;
+              MatrixType::MaxColsAtCompileTime, MatrixType::MaxColsAtCompileTime, ActualOtherType_::MaxColsAtCompileTime> BlockingType;
 
     BlockingType blocking(size, size, depth, 1, false);
 
@@ -111,7 +113,7 @@ struct selfadjoint_product_selector<MatrixType,OtherType,UpLo,false>
       Scalar, OtherIsRowMajor ? ColMajor : RowMajor, (!OtherBlasTraits::NeedToConjugate) && NumTraits<Scalar>::IsComplex,
       IsRowMajor ? RowMajor : ColMajor, MatrixType::InnerStrideAtCompileTime, UpLo>
       ::run(size, depth,
-            &actualOther.coeffRef(0,0), actualOther.outerStride(), &actualOther.coeffRef(0,0), actualOther.outerStride(),
+            actualOther.data(), actualOther.outerStride(), actualOther.data(), actualOther.outerStride(),
             mat.data(), mat.innerStride(), mat.outerStride(), actualAlpha, blocking);
   }
 };
@@ -120,7 +122,7 @@ struct selfadjoint_product_selector<MatrixType,OtherType,UpLo,false>
 
 template<typename MatrixType, unsigned int UpLo>
 template<typename DerivedU>
-SelfAdjointView<MatrixType,UpLo>& SelfAdjointView<MatrixType,UpLo>
+EIGEN_DEVICE_FUNC SelfAdjointView<MatrixType,UpLo>& SelfAdjointView<MatrixType,UpLo>
 ::rankUpdate(const MatrixBase<DerivedU>& u, const Scalar& alpha)
 {
   selfadjoint_product_selector<MatrixType,DerivedU,UpLo>::run(_expression().const_cast_derived(), u.derived(), alpha);

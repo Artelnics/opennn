@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
@@ -24,21 +25,22 @@
 
 #ifdef EIGEN_GOOGLEHASH_SUPPORT
   #include <google/dense_hash_map>
+  #include <google/sparse_hash_map>
 #endif
 
 /**
   * \defgroup SparseExtra_Module SparseExtra module
   *
-  * This module contains some experimental features extending the sparse module.
+  * This module contains some experimental features extending the sparse module:
+  * - A RandomSetter which is a wrapper object allowing to set/update a sparse matrix with random access.
+  * - MatrixMarket format(https://math.nist.gov/MatrixMarket/formats.html) readers and writers for sparse and dense matrices.
   *
   * \code
-  * #include <Eigen/SparseExtra>
+  * #include <unsupported/Eigen/SparseExtra>
   * \endcode
   */
 
 
-#include "src/SparseExtra/DynamicSparseMatrix.h"
-#include "src/SparseExtra/BlockOfDynamicSparseMatrix.h"
 #include "src/SparseExtra/RandomSetter.h"
 
 #include "src/SparseExtra/MarketIO.h"

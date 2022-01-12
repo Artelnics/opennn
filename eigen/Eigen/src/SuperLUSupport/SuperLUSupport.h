@@ -10,6 +10,8 @@
 #ifndef EIGEN_SUPERLUSUPPORT_H
 #define EIGEN_SUPERLUSUPPORT_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 #if defined(SUPERLU_MAJOR_VERSION) && (SUPERLU_MAJOR_VERSION >= 5)
@@ -217,12 +219,12 @@ struct SluMatrix : SuperMatrix
     res.setScalarType<typename MatrixType::Scalar>();
 
     // FIXME the following is not very accurate
-    if (MatrixType::Flags & Upper)
+    if (int(MatrixType::Flags) & int(Upper))
       res.Mtype = SLU_TRU;
-    if (MatrixType::Flags & Lower)
+    if (int(MatrixType::Flags) & int(Lower))
       res.Mtype = SLU_TRL;
 
-    eigen_assert(((MatrixType::Flags & SelfAdjoint)==0) && "SelfAdjoint matrix shape not supported by SuperLU");
+    eigen_assert(((int(MatrixType::Flags) & int(SelfAdjoint))==0) && "SelfAdjoint matrix shape not supported by SuperLU");
 
     return res;
   }
@@ -295,14 +297,14 @@ SluMatrix asSluMatrix(MatrixType& mat)
 
 /** View a Super LU matrix as an Eigen expression */
 template<typename Scalar, int Flags, typename Index>
-MappedSparseMatrix<Scalar,Flags,Index> map_superlu(SluMatrix& sluMat)
+Map<SparseMatrix<Scalar,Flags,Index> > map_superlu(SluMatrix& sluMat)
 {
   eigen_assert(((Flags&RowMajor)==RowMajor && sluMat.Stype == SLU_NR)
          || ((Flags&ColMajor)==ColMajor && sluMat.Stype == SLU_NC));
 
   Index outerSize = (Flags&RowMajor)==RowMajor ? sluMat.ncol : sluMat.nrow;
 
-  return MappedSparseMatrix<Scalar,Flags,Index>(
+  return Map<SparseMatrix<Scalar,Flags,Index> >(
     sluMat.nrow, sluMat.ncol, sluMat.storage.outerInd[outerSize],
     sluMat.storage.outerInd, sluMat.storage.innerInd, reinterpret_cast<Scalar*>(sluMat.storage.values) );
 }
@@ -313,7 +315,7 @@ MappedSparseMatrix<Scalar,Flags,Index> map_superlu(SluMatrix& sluMat)
   * \class SuperLUBase
   * \brief The base class for the direct and incomplete LU factorization of SuperLU
   */
-template<typename _MatrixType, typename Derived>
+template<typename MatrixType_, typename Derived>
 class SuperLUBase : public SparseSolverBase<Derived>
 {
   protected:
@@ -321,7 +323,7 @@ class SuperLUBase : public SparseSolverBase<Derived>
     using Base::derived;
     using Base::m_isInitialized;
   public:
-    typedef _MatrixType MatrixType;
+    typedef MatrixType_ MatrixType;
     typedef typename MatrixType::Scalar Scalar;
     typedef typename MatrixType::RealScalar RealScalar;
     typedef typename MatrixType::StorageIndex StorageIndex;
@@ -352,7 +354,7 @@ class SuperLUBase : public SparseSolverBase<Derived>
     
     /** \brief Reports whether previous computation was successful.
       *
-      * \returns \c Success if computation was succesful,
+      * \returns \c Success if computation was successful,
       *          \c NumericalIssue if the matrix.appears to be negative.
       */
     ComputationInfo info() const
@@ -476,7 +478,7 @@ class SuperLUBase : public SparseSolverBase<Derived>
   * using the SuperLU library. The sparse matrix A must be squared and invertible. The vectors or matrices
   * X and B can be either dense or sparse.
   *
-  * \tparam _MatrixType the type of the sparse matrix A, it must be a SparseMatrix<>
+  * \tparam MatrixType_ the type of the sparse matrix A, it must be a SparseMatrix<>
   *
   * \warning This class is only for the 4.x versions of SuperLU. The 3.x and 5.x versions are not supported.
   *
@@ -484,12 +486,12 @@ class SuperLUBase : public SparseSolverBase<Derived>
   *
   * \sa \ref TutorialSparseSolverConcept, class SparseLU
   */
-template<typename _MatrixType>
-class SuperLU : public SuperLUBase<_MatrixType,SuperLU<_MatrixType> >
+template<typename MatrixType_>
+class SuperLU : public SuperLUBase<MatrixType_,SuperLU<MatrixType_> >
 {
   public:
-    typedef SuperLUBase<_MatrixType,SuperLU> Base;
-    typedef _MatrixType MatrixType;
+    typedef SuperLUBase<MatrixType_,SuperLU> Base;
+    typedef MatrixType_ MatrixType;
     typedef typename Base::Scalar Scalar;
     typedef typename Base::RealScalar RealScalar;
     typedef typename Base::StorageIndex StorageIndex;
@@ -650,9 +652,8 @@ void SuperLU<MatrixType>::_solve_impl(const MatrixBase<Rhs> &b, MatrixBase<Dest>
 {
   eigen_assert(m_factorizationIsOk && "The decomposition is not in a valid state for solving, you must first call either compute() or analyzePattern()/factorize()");
 
-  const Index size = m_matrix.rows();
   const Index rhsCols = b.cols();
-  eigen_assert(size==b.rows());
+  eigen_assert(m_matrix.rows()==b.rows());
 
   m_sluOptions.Trans = NOTRANS;
   m_sluOptions.Fact = FACTORED;
@@ -831,19 +832,19 @@ typename SuperLU<MatrixType>::Scalar SuperLU<MatrixType>::determinant() const
   *
   * \warning This class is only for the 4.x versions of SuperLU. The 3.x and 5.x versions are not supported.
   *
-  * \tparam _MatrixType the type of the sparse matrix A, it must be a SparseMatrix<>
+  * \tparam MatrixType_ the type of the sparse matrix A, it must be a SparseMatrix<>
   *
   * \implsparsesolverconcept
   *
   * \sa \ref TutorialSparseSolverConcept, class IncompleteLUT, class ConjugateGradient, class BiCGSTAB
   */
 
-template<typename _MatrixType>
-class SuperILU : public SuperLUBase<_MatrixType,SuperILU<_MatrixType> >
+template<typename MatrixType_>
+class SuperILU : public SuperLUBase<MatrixType_,SuperILU<MatrixType_> >
 {
   public:
-    typedef SuperLUBase<_MatrixType,SuperILU> Base;
-    typedef _MatrixType MatrixType;
+    typedef SuperLUBase<MatrixType_,SuperILU> Base;
+    typedef MatrixType_ MatrixType;
     typedef typename Base::Scalar Scalar;
     typedef typename Base::RealScalar RealScalar;
 
@@ -974,9 +975,8 @@ void SuperILU<MatrixType>::_solve_impl(const MatrixBase<Rhs> &b, MatrixBase<Dest
 {
   eigen_assert(m_factorizationIsOk && "The decomposition is not in a valid state for solving, you must first call either compute() or analyzePattern()/factorize()");
 
-  const int size = m_matrix.rows();
   const int rhsCols = b.cols();
-  eigen_assert(size==b.rows());
+  eigen_assert(m_matrix.rows()==b.rows());
 
   m_sluOptions.Trans = NOTRANS;
   m_sluOptions.Fact = FACTORED;

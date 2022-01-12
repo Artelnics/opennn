@@ -88,7 +88,7 @@ You may wonder, isn't it overengineering to have the storage in a separate class
 
 Let's look at this constructor, in src/Core/DenseStorage.h. You can see that there are many partial template specializations of DenseStorages here, treating separately the cases where dimensions are Dynamic or fixed at compile-time. The partial specialization that we are looking at is:
 \code
-template<typename T, int _Cols> class DenseStorage<T, Dynamic, Dynamic, _Cols>
+template<typename T, int Cols_> class DenseStorage<T, Dynamic, Dynamic, Cols_>
 \endcode
 
 Here, the constructor called is DenseStorage::DenseStorage(int size, int rows, int columns)
@@ -101,7 +101,7 @@ inline DenseStorage(int size, int rows, int) : m_data(internal::aligned_new<T>(s
 
 Here, the \a m_data member is the actual array of coefficients of the matrix. As you see, it is dynamically allocated. Rather than calling new[] or malloc(), as you can see, we have our own internal::aligned_new defined in src/Core/util/Memory.h. What it does is that if vectorization is enabled, then it uses a platform-specific call to allocate a 128-bit-aligned array, as that is very useful for vectorization with both SSE2 and AltiVec. If vectorization is disabled, it amounts to the standard new[].
 
-As you can see, the constructor also sets the \a m_rows member to \a size. Notice that there is no \a m_columns member: indeed, in this partial specialization of DenseStorage, we know the number of columns at compile-time, since the _Cols template parameter is different from Dynamic. Namely, in our case, _Cols is 1, which is to say that our vector is just a matrix with 1 column. Hence, there is no need to store the number of columns as a runtime variable.
+As you can see, the constructor also sets the \a m_rows member to \a size. Notice that there is no \a m_columns member: indeed, in this partial specialization of DenseStorage, we know the number of columns at compile-time, since the Cols_ template parameter is different from Dynamic. Namely, in our case, Cols_ is 1, which is to say that our vector is just a matrix with 1 column. Hence, there is no need to store the number of columns as a runtime variable.
 
 When you call VectorXf::data() to get the pointer to the array of coefficients, it returns DenseStorage::data() which returns the \a m_data member.
 
@@ -211,6 +211,11 @@ Let's now jump to src/Core/CwiseBinaryOp.h to see how it is defined. As you can 
 Thus, the operator+ hasn't performed any actual computation. To summarize, the operation \a v + \a w just returned an object of type CwiseBinaryOp which did nothing else than just storing references to \a v and \a w.
 
 \section Assignment The assignment
+
+<div class="warningbox">
+<strong>PLEASE HELP US IMPROVING THIS SECTION.</strong>
+This page reflects how %Eigen worked until 3.2, but since %Eigen 3.3 the assignment is more sophisticated as it involves an Assignment expression, and the creation of so called evaluator which are responsible for the evaluation of each kind of expressions.
+</div>
 
 At this point, the expression \a v + \a w has finished evaluating, so, in the process of compiling the line of code
 \code

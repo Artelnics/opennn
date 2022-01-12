@@ -10,16 +10,18 @@
 #ifndef EIGEN_SELECT_H
 #define EIGEN_SELECT_H
 
-namespace Eigen { 
+#include "./InternalHeaderCheck.h"
+
+namespace Eigen {
 
 /** \class Select
   * \ingroup Core_Module
   *
   * \brief Expression of a coefficient wise version of the C++ ternary operator ?:
   *
-  * \param ConditionMatrixType the type of the \em condition expression which must be a boolean matrix
-  * \param ThenMatrixType the type of the \em then expression
-  * \param ElseMatrixType the type of the \em else expression
+  * \tparam ConditionMatrixType the type of the \em condition expression which must be a boolean matrix
+  * \tparam ThenMatrixType the type of the \em then expression
+  * \tparam ElseMatrixType the type of the \em else expression
   *
   * This class represents an expression of a coefficient wise version of the C++ ternary operator ?:.
   * It is the return type of DenseBase::select() and most of the time this is the only way it is used.
@@ -67,8 +69,10 @@ class Select : public internal::dense_xpr_base< Select<ConditionMatrixType, Then
       eigen_assert(m_condition.cols() == m_then.cols() && m_condition.cols() == m_else.cols());
     }
 
-    inline EIGEN_DEVICE_FUNC Index rows() const { return m_condition.rows(); }
-    inline EIGEN_DEVICE_FUNC Index cols() const { return m_condition.cols(); }
+    inline EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
+    Index rows() const EIGEN_NOEXCEPT { return m_condition.rows(); }
+    inline EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
+    Index cols() const EIGEN_NOEXCEPT { return m_condition.cols(); }
 
     inline EIGEN_DEVICE_FUNC
     const Scalar coeff(Index i, Index j) const
@@ -120,7 +124,7 @@ class Select : public internal::dense_xpr_base< Select<ConditionMatrixType, Then
   */
 template<typename Derived>
 template<typename ThenDerived,typename ElseDerived>
-inline const Select<Derived,ThenDerived,ElseDerived>
+inline EIGEN_DEVICE_FUNC const Select<Derived,ThenDerived,ElseDerived>
 DenseBase<Derived>::select(const DenseBase<ThenDerived>& thenMatrix,
                             const DenseBase<ElseDerived>& elseMatrix) const
 {
@@ -134,7 +138,7 @@ DenseBase<Derived>::select(const DenseBase<ThenDerived>& thenMatrix,
   */
 template<typename Derived>
 template<typename ThenDerived>
-inline const Select<Derived,ThenDerived, typename ThenDerived::ConstantReturnType>
+inline EIGEN_DEVICE_FUNC const Select<Derived,ThenDerived, typename ThenDerived::ConstantReturnType>
 DenseBase<Derived>::select(const DenseBase<ThenDerived>& thenMatrix,
                            const typename ThenDerived::Scalar& elseScalar) const
 {
@@ -149,7 +153,7 @@ DenseBase<Derived>::select(const DenseBase<ThenDerived>& thenMatrix,
   */
 template<typename Derived>
 template<typename ElseDerived>
-inline const Select<Derived, typename ElseDerived::ConstantReturnType, ElseDerived >
+inline EIGEN_DEVICE_FUNC const Select<Derived, typename ElseDerived::ConstantReturnType, ElseDerived >
 DenseBase<Derived>::select(const typename ElseDerived::Scalar& thenScalar,
                            const DenseBase<ElseDerived>& elseMatrix) const
 {

@@ -1,8 +1,6 @@
 #include <Eigen/Core>
 #include <iostream>
 
-using namespace Eigen;
-
 // [circulant_func]
 template<class ArgType>
 class circulant_functor {
@@ -10,8 +8,8 @@ class circulant_functor {
 public:
   circulant_functor(const ArgType& arg) : m_vec(arg) {}
 
-  const typename ArgType::Scalar& operator() (Index row, Index col) const {
-    Index index = row - col;
+  const typename ArgType::Scalar& operator() (Eigen::Index row, Eigen::Index col) const {
+    Eigen::Index index = row - col;
     if (index < 0) index += m_vec.size();
     return m_vec(index);
   }
@@ -21,10 +19,10 @@ public:
 // [square]
 template<class ArgType>
 struct circulant_helper {
-  typedef Matrix<typename ArgType::Scalar,
+  typedef Eigen::Matrix<typename ArgType::Scalar,
                  ArgType::SizeAtCompileTime,
                  ArgType::SizeAtCompileTime,
-                 ColMajor,
+                 Eigen::ColMajor,
                  ArgType::MaxSizeAtCompileTime,
                  ArgType::MaxSizeAtCompileTime> MatrixType;
 };
@@ -32,7 +30,7 @@ struct circulant_helper {
 
 // [makeCirculant]
 template <class ArgType>
-CwiseNullaryOp<circulant_functor<ArgType>, typename circulant_helper<ArgType>::MatrixType>
+Eigen::CwiseNullaryOp<circulant_functor<ArgType>, typename circulant_helper<ArgType>::MatrixType>
 makeCirculant(const Eigen::MatrixBase<ArgType>& arg)
 {
   typedef typename circulant_helper<ArgType>::MatrixType MatrixType;

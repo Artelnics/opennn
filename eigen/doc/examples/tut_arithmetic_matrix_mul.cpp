@@ -1,13 +1,12 @@
 #include <iostream>
 #include <Eigen/Dense>
 
-using namespace Eigen;
 int main()
 {
-  Matrix2d mat;
+  Eigen::Matrix2d mat;
   mat << 1, 2,
          3, 4;
-  Vector2d u(-1,1), v(2,0);
+  Eigen::Vector2d u(-1,1), v(2,0);
   std::cout << "Here is mat*mat:\n" << mat*mat << std::endl;
   std::cout << "Here is mat*u:\n" << mat*u << std::endl;
   std::cout << "Here is u^T*mat:\n" << u.transpose()*mat << std::endl;

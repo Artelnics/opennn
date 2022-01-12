@@ -10,6 +10,8 @@
 #ifndef EIGEN_TRANSLATION_H
 #define EIGEN_TRANSLATION_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 /** \geometry_module \ingroup Geometry_Module
@@ -18,23 +20,23 @@ namespace Eigen {
   *
   * \brief Represents a translation transformation
   *
-  * \tparam _Scalar the scalar type, i.e., the type of the coefficients.
-  * \tparam _Dim the  dimension of the space, can be a compile time value or Dynamic
+  * \tparam Scalar_ the scalar type, i.e., the type of the coefficients.
+  * \tparam Dim_ the  dimension of the space, can be a compile time value or Dynamic
   *
   * \note This class is not aimed to be used to store a translation transformation,
   * but rather to make easier the constructions and updates of Transform objects.
   *
   * \sa class Scaling, class Transform
   */
-template<typename _Scalar, int _Dim>
+template<typename Scalar_, int Dim_>
 class Translation
 {
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF_VECTORIZABLE_FIXED_SIZE(_Scalar,_Dim)
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF_VECTORIZABLE_FIXED_SIZE(Scalar_,Dim_)
   /** dimension of the space */
-  enum { Dim = _Dim };
+  enum { Dim = Dim_ };
   /** the scalar type of the coefficients */
-  typedef _Scalar Scalar;
+  typedef Scalar_ Scalar;
   /** corresponding vector type */
   typedef Matrix<Scalar,Dim,1> VectorType;
   /** corresponding linear transformation matrix type */
@@ -70,18 +72,18 @@ public:
   /** Constructs and initialize the translation transformation from a vector of translation coefficients */
   EIGEN_DEVICE_FUNC explicit inline Translation(const VectorType& vector) : m_coeffs(vector) {}
 
-  /** \brief Retruns the x-translation by value. **/
+  /** \brief Returns the x-translation by value. **/
   EIGEN_DEVICE_FUNC inline Scalar x() const { return m_coeffs.x(); }
-  /** \brief Retruns the y-translation by value. **/
+  /** \brief Returns the y-translation by value. **/
   EIGEN_DEVICE_FUNC inline Scalar y() const { return m_coeffs.y(); }
-  /** \brief Retruns the z-translation by value. **/
+  /** \brief Returns the z-translation by value. **/
   EIGEN_DEVICE_FUNC inline Scalar z() const { return m_coeffs.z(); }
 
-  /** \brief Retruns the x-translation as a reference. **/
+  /** \brief Returns the x-translation as a reference. **/
   EIGEN_DEVICE_FUNC inline Scalar& x() { return m_coeffs.x(); }
-  /** \brief Retruns the y-translation as a reference. **/
+  /** \brief Returns the y-translation as a reference. **/
   EIGEN_DEVICE_FUNC inline Scalar& y() { return m_coeffs.y(); }
-  /** \brief Retruns the z-translation as a reference. **/
+  /** \brief Returns the z-translation as a reference. **/
   EIGEN_DEVICE_FUNC inline Scalar& z() { return m_coeffs.z(); }
 
   EIGEN_DEVICE_FUNC const VectorType& vector() const { return m_coeffs; }

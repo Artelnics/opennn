@@ -10,20 +10,52 @@
 #ifndef EIGEN_EMULATE_ARRAY_H
 #define EIGEN_EMULATE_ARRAY_H
 
-
-
-// The array class is only available starting with cxx11. Emulate our own here
-// if needed. Beware, msvc still doesn't advertise itself as a c++11 compiler!
-// Moreover, CUDA doesn't support the STL containers, so we use our own instead.
-#if (__cplusplus <= 199711L && EIGEN_COMP_MSVC < 1900) || defined(__CUDACC__) || defined(EIGEN_AVOID_STL_ARRAY)
+// CUDA doesn't support the STL containers, so we use our own instead.
+#if defined(EIGEN_GPUCC) || defined(EIGEN_AVOID_STL_ARRAY)
 
 namespace Eigen {
 template <typename T, size_t n> class array {
+
  public:
+  typedef T value_type;
+  typedef T* iterator;
+  typedef const T* const_iterator;
+
   EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE T& operator[] (size_t index) { return values[index]; }
+  EIGEN_STRONG_INLINE iterator begin() { return values; }
   EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE const T& operator[] (size_t index) const { return values[index]; }
+  EIGEN_STRONG_INLINE const_iterator begin() const { return values; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE iterator end() { return values + n; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const_iterator end() const { return values + n; }
+
+
+#if !defined(EIGEN_GPUCC)
+  typedef std::reverse_iterator<iterator> reverse_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE reverse_iterator rbegin() { return reverse_iterator(end());}
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE reverse_iterator rend() { return reverse_iterator(begin()); }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+#endif
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& operator[] (size_t index) { eigen_internal_assert(index < size()); return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& operator[] (size_t index) const { eigen_internal_assert(index < size()); return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& at(size_t index) { eigen_assert(index < size()); return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& at(size_t index) const { eigen_assert(index < size()); return values[index]; }
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE T& front() { return values[0]; }
@@ -34,6 +66,7 @@ template <typename T, size_t n> class array {
   EIGEN_STRONG_INLINE T& back() { return values[n-1]; }
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE const T& back() const { return values[n-1]; }
+
 
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
   static std::size_t size() { return n; }
@@ -117,13 +150,11 @@ template <typename T, size_t n> class array {
     values[7] = v8;
   }
 
-#if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
     eigen_assert(l.size() == n);
     internal::smart_copy(l.begin(), l.end(), values);
   }
-#endif
 };
 
 
@@ -167,11 +198,10 @@ template <typename T> class array<T, 0> {
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() : dummy() { }
 
-#if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC array(std::initializer_list<T> l) : dummy() {
+    EIGEN_UNUSED_VARIABLE(l);
     eigen_assert(l.size() == 0);
   }
-#endif
 
  private:
   T dummy;
@@ -191,30 +221,26 @@ EIGEN_DEVICE_FUNC bool operator==(const array<T,N>& lhs, const array<T,N>& rhs) 
 
 
 namespace internal {
-template<std::size_t I, class T, std::size_t N>
+template<std::size_t I_, class T, std::size_t N>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T& array_get(array<T,N>& a) {
-  return a[I];
+  return a[I_];
 }
-template<std::size_t I, class T, std::size_t N>
+template<std::size_t I_, class T, std::size_t N>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const T& array_get(const array<T,N>& a) {
-  return a[I];
+  return a[I_];
 }
 
-template <typename T> struct array_size;
 template<class T, std::size_t N> struct array_size<array<T,N> > {
-  static const size_t value = N;
+  enum { value = N };
 };
-template <typename T> struct array_size;
 template<class T, std::size_t N> struct array_size<array<T,N>& > {
-  static const size_t value = N;
+  enum { value = N };
 };
-template <typename T> struct array_size;
 template<class T, std::size_t N> struct array_size<const array<T,N> > {
-  static const size_t value = N;
+  enum { value = N };
 };
-template <typename T> struct array_size;
 template<class T, std::size_t N> struct array_size<const array<T,N>& > {
-  static const size_t value = N;
+  enum { value = N };
 };
 
 }  // end namespace internal
@@ -222,8 +248,9 @@ template<class T, std::size_t N> struct array_size<const array<T,N>& > {
 
 #else
 
-// The compiler supports c++11, and we're not targetting cuda: use std::array as Eigen::array
+// The compiler supports c++11, and we're not targeting cuda: use std::array as Eigen::array
 #include <array>
+
 namespace Eigen {
 
 template <typename T, std::size_t N> using array = std::array<T, N>;
@@ -238,27 +265,19 @@ namespace internal {
  *                       this may not be constexpr
  */
 #if defined(__GLIBCXX__) && __GLIBCXX__ < 20120322
-#define STD_GET_ARR_HACK             a._M_instance[I]
+#define STD_GET_ARR_HACK             a._M_instance[I_]
 #elif defined(_LIBCPP_VERSION)
-#define STD_GET_ARR_HACK             a.__elems_[I]
+#define STD_GET_ARR_HACK             a.__elems_[I_]
 #else
-#define STD_GET_ARR_HACK             std::template get<I, T, N>(a)
+#define STD_GET_ARR_HACK             std::template get<I_, T, N>(a)
 #endif
 
-template<std::size_t I, class T, std::size_t N> constexpr inline T&       array_get(std::array<T,N>&       a) { return (T&)       STD_GET_ARR_HACK; }
-template<std::size_t I, class T, std::size_t N> constexpr inline T&&      array_get(std::array<T,N>&&      a) { return (T&&)      STD_GET_ARR_HACK; }
-template<std::size_t I, class T, std::size_t N> constexpr inline T const& array_get(std::array<T,N> const& a) { return (T const&) STD_GET_ARR_HACK; }
+template<std::size_t I_, class T, std::size_t N> constexpr inline T&       array_get(std::array<T,N>&       a) { return (T&)       STD_GET_ARR_HACK; }
+template<std::size_t I_, class T, std::size_t N> constexpr inline T&&      array_get(std::array<T,N>&&      a) { return (T&&)      STD_GET_ARR_HACK; }
+template<std::size_t I_, class T, std::size_t N> constexpr inline T const& array_get(std::array<T,N> const& a) { return (T const&) STD_GET_ARR_HACK; }
 
 #undef STD_GET_ARR_HACK
 
-template <typename T> struct array_size;
-template<class T, std::size_t N> struct array_size<const std::array<T,N> > {
-  static const size_t value = N;
-};
-template <typename T> struct array_size;
-template<class T, std::size_t N> struct array_size<std::array<T,N> > {
-  static const size_t value = N;
-};
 }  // end namespace internal
 }  // end namespace Eigen
 

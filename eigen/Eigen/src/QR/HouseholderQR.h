@@ -12,7 +12,21 @@
 #ifndef EIGEN_QR_H
 #define EIGEN_QR_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
+
+namespace internal {
+template<typename MatrixType_> struct traits<HouseholderQR<MatrixType_> >
+ : traits<MatrixType_>
+{
+  typedef MatrixXpr XprKind;
+  typedef SolverStorage StorageKind;
+  typedef int StorageIndex;
+  enum { Flags = 0 };
+};
+
+} // end namespace internal
 
 /** \ingroup QR_Module
   *
@@ -21,7 +35,7 @@ namespace Eigen {
   *
   * \brief Householder QR decomposition of a matrix
   *
-  * \tparam _MatrixType the type of the matrix of which we are computing the QR decomposition
+  * \tparam MatrixType_ the type of the matrix of which we are computing the QR decomposition
   *
   * This class performs a QR decomposition of a matrix \b A into matrices \b Q and \b R
   * such that 
@@ -41,21 +55,20 @@ namespace Eigen {
   *
   * \sa MatrixBase::householderQr()
   */
-template<typename _MatrixType> class HouseholderQR
+template<typename MatrixType_> class HouseholderQR
+        : public SolverBase<HouseholderQR<MatrixType_> >
 {
   public:
 
-    typedef _MatrixType MatrixType;
+    typedef MatrixType_ MatrixType;
+    typedef SolverBase<HouseholderQR> Base;
+    friend class SolverBase<HouseholderQR>;
+
+    EIGEN_GENERIC_PUBLIC_INTERFACE(HouseholderQR)
     enum {
-      RowsAtCompileTime = MatrixType::RowsAtCompileTime,
-      ColsAtCompileTime = MatrixType::ColsAtCompileTime,
       MaxRowsAtCompileTime = MatrixType::MaxRowsAtCompileTime,
       MaxColsAtCompileTime = MatrixType::MaxColsAtCompileTime
     };
-    typedef typename MatrixType::Scalar Scalar;
-    typedef typename MatrixType::RealScalar RealScalar;
-    // FIXME should be int
-    typedef typename MatrixType::StorageIndex StorageIndex;
     typedef Matrix<Scalar, RowsAtCompileTime, RowsAtCompileTime, (MatrixType::Flags&RowMajorBit) ? RowMajor : ColMajor, MaxRowsAtCompileTime, MaxRowsAtCompileTime> MatrixQType;
     typedef typename internal::plain_diag_type<MatrixType>::type HCoeffsType;
     typedef typename internal::plain_row_type<MatrixType>::type RowVectorType;
@@ -121,6 +134,7 @@ template<typename _MatrixType> class HouseholderQR
       computeInPlace();
     }
 
+    #ifdef EIGEN_PARSED_BY_DOXYGEN
     /** This method finds a solution x to the equation Ax=b, where A is the matrix of which
       * *this is the QR decomposition, if any exists.
       *
@@ -137,11 +151,8 @@ template<typename _MatrixType> class HouseholderQR
       */
     template<typename Rhs>
     inline const Solve<HouseholderQR, Rhs>
-    solve(const MatrixBase<Rhs>& b) const
-    {
-      eigen_assert(m_isInitialized && "HouseholderQR is not initialized.");
-      return Solve<HouseholderQR, Rhs>(*this, b.derived());
-    }
+    solve(const MatrixBase<Rhs>& b) const;
+    #endif
 
     /** This method returns an expression of the unitary matrix Q as a sequence of Householder transformations.
       *
@@ -204,28 +215,27 @@ template<typename _MatrixType> class HouseholderQR
 
     inline Index rows() const { return m_qr.rows(); }
     inline Index cols() const { return m_qr.cols(); }
-    
+
     /** \returns a const reference to the vector of Householder coefficients used to represent the factor \c Q.
       * 
       * For advanced uses only.
       */
     const HCoeffsType& hCoeffs() const { return m_hCoeffs; }
-    
+
     #ifndef EIGEN_PARSED_BY_DOXYGEN
     template<typename RhsType, typename DstType>
-    EIGEN_DEVICE_FUNC
     void _solve_impl(const RhsType &rhs, DstType &dst) const;
+
+    template<bool Conjugate, typename RhsType, typename DstType>
+    void _solve_impl_transposed(const RhsType &rhs, DstType &dst) const;
     #endif
 
   protected:
-    
-    static void check_template_parameters()
-    {
-      EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar);
-    }
+
+    EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar)
 
     void computeInPlace();
-    
+
     MatrixType m_qr;
     HCoeffsType m_hCoeffs;
     RowVectorType m_temp;
@@ -292,7 +302,7 @@ template<typename MatrixQR, typename HCoeffs,
   bool InnerStrideIsOne = (MatrixQR::InnerStrideAtCompileTime == 1 && HCoeffs::InnerStrideAtCompileTime == 1)>
 struct householder_qr_inplace_blocked
 {
-  // This is specialized for MKL-supported Scalar types in HouseholderQR_MKL.h
+  // This is specialized for LAPACK-supported Scalar types in HouseholderQR_LAPACKE.h
   static void run(MatrixQR& mat, HCoeffs& hCoeffs, Index maxBlockSize=32,
       typename MatrixQR::Scalar* tempData = 0)
   {
@@ -345,20 +355,15 @@ struct householder_qr_inplace_blocked
 } // end namespace internal
 
 #ifndef EIGEN_PARSED_BY_DOXYGEN
-template<typename _MatrixType>
+template<typename MatrixType_>
 template<typename RhsType, typename DstType>
-void HouseholderQR<_MatrixType>::_solve_impl(const RhsType &rhs, DstType &dst) const
+void HouseholderQR<MatrixType_>::_solve_impl(const RhsType &rhs, DstType &dst) const
 {
   const Index rank = (std::min)(rows(), cols());
-  eigen_assert(rhs.rows() == rows());
 
   typename RhsType::PlainObject c(rhs);
 
-  // Note that the matrix Q = H_0^* H_1^*... so its inverse is Q^* = (H_0 H_1 ...)^T
-  c.applyOnTheLeft(householderSequence(
-    m_qr.leftCols(rank),
-    m_hCoeffs.head(rank)).transpose()
-  );
+  c.applyOnTheLeft(householderQ().setLength(rank).adjoint() );
 
   m_qr.topLeftCorner(rank, rank)
       .template triangularView<Upper>()
@@ -366,6 +371,25 @@ void HouseholderQR<_MatrixType>::_solve_impl(const RhsType &rhs, DstType &dst) c
 
   dst.topRows(rank) = c.topRows(rank);
   dst.bottomRows(cols()-rank).setZero();
+}
+
+template<typename MatrixType_>
+template<bool Conjugate, typename RhsType, typename DstType>
+void HouseholderQR<MatrixType_>::_solve_impl_transposed(const RhsType &rhs, DstType &dst) const
+{
+  const Index rank = (std::min)(rows(), cols());
+
+  typename RhsType::PlainObject c(rhs);
+
+  m_qr.topLeftCorner(rank, rank)
+      .template triangularView<Upper>()
+      .transpose().template conjugateIf<Conjugate>()
+      .solveInPlace(c.topRows(rank));
+
+  dst.topRows(rank) = c.topRows(rank);
+  dst.bottomRows(rows()-rank).setZero();
+
+  dst.applyOnTheLeft(householderQ().setLength(rank).template conjugateIf<!Conjugate>() );
 }
 #endif
 
@@ -378,8 +402,6 @@ void HouseholderQR<_MatrixType>::_solve_impl(const RhsType &rhs, DstType &dst) c
 template<typename MatrixType>
 void HouseholderQR<MatrixType>::computeInPlace()
 {
-  check_template_parameters();
-  
   Index rows = m_qr.rows();
   Index cols = m_qr.cols();
   Index size = (std::min)(rows,cols);

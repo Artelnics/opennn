@@ -11,6 +11,8 @@
 #ifndef EIGEN_VECTORBLOCK_H
 #define EIGEN_VECTORBLOCK_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 namespace internal {
@@ -35,7 +37,7 @@ struct traits<VectorBlock<VectorType, Size> >
   * It is the return type of DenseBase::segment(Index,Index) and DenseBase::segment<int>(Index) and
   * most of the time this is the only way it is used.
   *
-  * However, if you want to directly maniputate sub-vector expressions,
+  * However, if you want to directly manipulate sub-vector expressions,
   * for instance if you want to write a function returning such an expression, you
   * will need to use this class.
   *
@@ -66,28 +68,25 @@ template<typename VectorType, int Size> class VectorBlock
     };
   public:
     EIGEN_DENSE_PUBLIC_INTERFACE(VectorBlock)
+    EIGEN_STATIC_ASSERT_VECTOR_ONLY(VectorBlock)
 
     using Base::operator=;
 
     /** Dynamic-size constructor
       */
-    EIGEN_DEVICE_FUNC
-    inline VectorBlock(VectorType& vector, Index start, Index size)
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+    VectorBlock(VectorType& vector, Index start, Index size)
       : Base(vector,
              IsColVector ? start : 0, IsColVector ? 0 : start,
              IsColVector ? size  : 1, IsColVector ? 1 : size)
-    {
-      EIGEN_STATIC_ASSERT_VECTOR_ONLY(VectorBlock);
-    }
+    { }
 
     /** Fixed-size constructor
       */
-    EIGEN_DEVICE_FUNC
-    inline VectorBlock(VectorType& vector, Index start)
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+    VectorBlock(VectorType& vector, Index start)
       : Base(vector, IsColVector ? start : 0, IsColVector ? 0 : start)
-    {
-      EIGEN_STATIC_ASSERT_VECTOR_ONLY(VectorBlock);
-    }
+    { }
 };
 
 

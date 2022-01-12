@@ -7,13 +7,13 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_FFT_H
-#define EIGEN_FFT_H
+#ifndef EIGEN_FFT_MODULE_H
+#define EIGEN_FFT_MODULE_H
 
 #include <complex>
 #include <vector>
 #include <map>
-#include <Eigen/Core>
+#include "../../Eigen/Core"
 
 
 /**
@@ -67,6 +67,8 @@
   * transform, only half the spectrum is actually used if the output type is real.
   */
  
+
+#include "../../Eigen/src/Core/util/DisableStupidWarnings.h"
 
 #ifdef EIGEN_FFTW_DEFAULT
 // FFTW: faster, GPL -- incompatible with Eigen in LGPL form, bigger code size
@@ -129,8 +131,6 @@ protected:
   const T_SrcMat & m_src;
   T_FftIfc & m_ifc;
   Index m_nfft;
-private:
-  fft_fwd_proxy& operator=(const fft_fwd_proxy&);
 };
 
 template<typename T_SrcMat,typename T_FftIfc> 
@@ -149,8 +149,6 @@ protected:
   const T_SrcMat & m_src;
   T_FftIfc & m_ifc;
   Index m_nfft;
-private:
-  fft_inv_proxy& operator=(const fft_inv_proxy&);
 };
 
 
@@ -205,11 +203,11 @@ class FFT
     }
     */
 
-    template <typename _Input>
+    template <typename Input_>
     inline
-    void fwd( std::vector<Complex> & dst, const std::vector<_Input> & src) 
+    void fwd( std::vector<Complex> & dst, const std::vector<Input_> & src)
     {
-      if ( NumTraits<_Input>::IsComplex == 0 && HasFlag(HalfSpectrum) )
+      if ( NumTraits<Input_>::IsComplex == 0 && HasFlag(HalfSpectrum) )
         dst.resize( (src.size()>>1)+1); // half the bins + Nyquist bin
       else
         dst.resize(src.size());
@@ -345,12 +343,12 @@ class FFT
       }
     }
 
-    template <typename _Output>
+    template <typename Output_>
     inline
-    void inv( std::vector<_Output> & dst, const std::vector<Complex> & src,Index nfft=-1)
+    void inv( std::vector<Output_> & dst, const std::vector<Complex> & src,Index nfft=-1)
     {
       if (nfft<1)
-        nfft = ( NumTraits<_Output>::IsComplex == 0 && HasFlag(HalfSpectrum) ) ? 2*(src.size()-1) : src.size();
+        nfft = ( NumTraits<Output_>::IsComplex == 0 && HasFlag(HalfSpectrum) ) ? 2*(src.size()-1) : src.size();
       dst.resize( nfft );
       inv( &dst[0],&src[0],nfft);
     }
@@ -415,5 +413,7 @@ void fft_inv_proxy<T_SrcMat,T_FftIfc>::evalTo(T_DestMat& dst) const
 }
 
 }
+
+#include "../../Eigen/src/Core/util/ReenableStupidWarnings.h"
+
 #endif
-/* vim: set filetype=cpp et sw=2 ts=2 ai: */

@@ -10,7 +10,9 @@
 #ifndef EIGEN_BASIC_PRECONDITIONERS_H
 #define EIGEN_BASIC_PRECONDITIONERS_H
 
-namespace Eigen { 
+#include "./InternalHeaderCheck.h"
+
+namespace Eigen {
 
 /** \ingroup IterativeLinearSolvers_Module
   * \brief A preconditioner based on the digonal entries
@@ -21,7 +23,7 @@ namespace Eigen {
     A.diagonal().asDiagonal() . x = b
     \endcode
   *
-  * \tparam _Scalar the type of the scalar.
+  * \tparam Scalar_ the type of the scalar.
   *
   * \implsparsesolverconcept
   *
@@ -32,10 +34,10 @@ namespace Eigen {
   *
   * \sa class LeastSquareDiagonalPreconditioner, class ConjugateGradient
   */
-template <typename _Scalar>
+template <typename Scalar_>
 class DiagonalPreconditioner
 {
-    typedef _Scalar Scalar;
+    typedef Scalar_ Scalar;
     typedef Matrix<Scalar,Dynamic,1> Vector;
   public:
     typedef typename Vector::StorageIndex StorageIndex;
@@ -52,15 +54,15 @@ class DiagonalPreconditioner
       compute(mat);
     }
 
-    Index rows() const { return m_invdiag.size(); }
-    Index cols() const { return m_invdiag.size(); }
-    
+    EIGEN_CONSTEXPR Index rows() const EIGEN_NOEXCEPT { return m_invdiag.size(); }
+    EIGEN_CONSTEXPR Index cols() const EIGEN_NOEXCEPT { return m_invdiag.size(); }
+
     template<typename MatType>
     DiagonalPreconditioner& analyzePattern(const MatType& )
     {
       return *this;
     }
-    
+
     template<typename MatType>
     DiagonalPreconditioner& factorize(const MatType& mat)
     {
@@ -77,7 +79,7 @@ class DiagonalPreconditioner
       m_isInitialized = true;
       return *this;
     }
-    
+
     template<typename MatType>
     DiagonalPreconditioner& compute(const MatType& mat)
     {
@@ -99,7 +101,7 @@ class DiagonalPreconditioner
                 && "DiagonalPreconditioner::solve(): invalid number of rows of the right hand side matrix b");
       return Solve<DiagonalPreconditioner, Rhs>(*this, b.derived());
     }
-    
+
     ComputationInfo info() { return Success; }
 
   protected:
@@ -116,20 +118,20 @@ class DiagonalPreconditioner
     (A.adjoint() * A).diagonal().asDiagonal() * x = b
     \endcode
   *
-  * \tparam _Scalar the type of the scalar.
+  * \tparam Scalar_ the type of the scalar.
   *
   * \implsparsesolverconcept
   *
   * The diagonal entries are pre-inverted and stored into a dense vector.
-  * 
+  *
   * \sa class LeastSquaresConjugateGradient, class DiagonalPreconditioner
   */
-template <typename _Scalar>
-class LeastSquareDiagonalPreconditioner : public DiagonalPreconditioner<_Scalar>
+template <typename Scalar_>
+class LeastSquareDiagonalPreconditioner : public DiagonalPreconditioner<Scalar_>
 {
-    typedef _Scalar Scalar;
+    typedef Scalar_ Scalar;
     typedef typename NumTraits<Scalar>::Real RealScalar;
-    typedef DiagonalPreconditioner<_Scalar> Base;
+    typedef DiagonalPreconditioner<Scalar_> Base;
     using Base::m_invdiag;
   public:
 
@@ -146,7 +148,7 @@ class LeastSquareDiagonalPreconditioner : public DiagonalPreconditioner<_Scalar>
     {
       return *this;
     }
-    
+
     template<typename MatType>
     LeastSquareDiagonalPreconditioner& factorize(const MatType& mat)
     {
@@ -178,13 +180,13 @@ class LeastSquareDiagonalPreconditioner : public DiagonalPreconditioner<_Scalar>
       Base::m_isInitialized = true;
       return *this;
     }
-    
+
     template<typename MatType>
     LeastSquareDiagonalPreconditioner& compute(const MatType& mat)
     {
       return factorize(mat);
     }
-    
+
     ComputationInfo info() { return Success; }
 
   protected:
@@ -205,19 +207,19 @@ class IdentityPreconditioner
 
     template<typename MatrixType>
     explicit IdentityPreconditioner(const MatrixType& ) {}
-    
+
     template<typename MatrixType>
     IdentityPreconditioner& analyzePattern(const MatrixType& ) { return *this; }
-    
+
     template<typename MatrixType>
     IdentityPreconditioner& factorize(const MatrixType& ) { return *this; }
 
     template<typename MatrixType>
     IdentityPreconditioner& compute(const MatrixType& ) { return *this; }
-    
+
     template<typename Rhs>
     inline const Rhs& solve(const Rhs& b) const { return b; }
-    
+
     ComputationInfo info() { return Success; }
 };
 

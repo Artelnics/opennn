@@ -11,6 +11,8 @@
 #ifndef EIGEN_GMRES_H
 #define EIGEN_GMRES_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 namespace internal {
@@ -63,6 +65,15 @@ bool gmres(const MatrixType & mat, const Rhs & rhs, Dest & x, const Precondition
   typedef typename Dest::Scalar Scalar;
   typedef Matrix < Scalar, Dynamic, 1 > VectorType;
   typedef Matrix < Scalar, Dynamic, Dynamic, ColMajor> FMatrixType;
+
+  const RealScalar considerAsZero = (std::numeric_limits<RealScalar>::min)();
+
+  if(rhs.norm() <= considerAsZero) 
+  {
+    x.setZero();
+    tol_error = 0;
+    return true;
+  }
 
   RealScalar tol = tol_error;
   const Index maxIters = iters;
@@ -207,17 +218,17 @@ bool gmres(const MatrixType & mat, const Rhs & rhs, Dest & x, const Precondition
 
 }
 
-template< typename _MatrixType,
-          typename _Preconditioner = DiagonalPreconditioner<typename _MatrixType::Scalar> >
+template< typename MatrixType_,
+          typename Preconditioner_ = DiagonalPreconditioner<typename MatrixType_::Scalar> >
 class GMRES;
 
 namespace internal {
 
-template< typename _MatrixType, typename _Preconditioner>
-struct traits<GMRES<_MatrixType,_Preconditioner> >
+template< typename MatrixType_, typename Preconditioner_>
+struct traits<GMRES<MatrixType_,Preconditioner_> >
 {
-  typedef _MatrixType MatrixType;
-  typedef _Preconditioner Preconditioner;
+  typedef MatrixType_ MatrixType;
+  typedef Preconditioner_ Preconditioner;
 };
 
 }
@@ -228,8 +239,8 @@ struct traits<GMRES<_MatrixType,_Preconditioner> >
   * This class allows to solve for A.x = b sparse linear problems using a generalized minimal
   * residual method. The vectors x and b can be either dense or sparse.
   *
-  * \tparam _MatrixType the type of the sparse matrix A, can be a dense or a sparse matrix.
-  * \tparam _Preconditioner the type of the preconditioner. Default is DiagonalPreconditioner
+  * \tparam MatrixType_ the type of the sparse matrix A, can be a dense or a sparse matrix.
+  * \tparam Preconditioner_ the type of the preconditioner. Default is DiagonalPreconditioner
   *
   * The maximal number of iterations and tolerance value can be controlled via the setMaxIterations()
   * and setTolerance() methods. The defaults are the size of the problem for the maximal number of iterations
@@ -256,8 +267,8 @@ struct traits<GMRES<_MatrixType,_Preconditioner> >
   *
   * \sa class SimplicialCholesky, DiagonalPreconditioner, IdentityPreconditioner
   */
-template< typename _MatrixType, typename _Preconditioner>
-class GMRES : public IterativeSolverBase<GMRES<_MatrixType,_Preconditioner> >
+template< typename MatrixType_, typename Preconditioner_>
+class GMRES : public IterativeSolverBase<GMRES<MatrixType_,Preconditioner_> >
 {
   typedef IterativeSolverBase<GMRES> Base;
   using Base::matrix;
@@ -271,10 +282,10 @@ private:
 
 public:
   using Base::_solve_impl;
-  typedef _MatrixType MatrixType;
+  typedef MatrixType_ MatrixType;
   typedef typename MatrixType::Scalar Scalar;
   typedef typename MatrixType::RealScalar RealScalar;
-  typedef _Preconditioner Preconditioner;
+  typedef Preconditioner_ Preconditioner;
 
 public:
 
@@ -307,31 +318,14 @@ public:
 
   /** \internal */
   template<typename Rhs,typename Dest>
-  void _solve_with_guess_impl(const Rhs& b, Dest& x) const
+  void _solve_vector_with_guess_impl(const Rhs& b, Dest& x) const
   {
-    bool failed = false;
-    for(Index j=0; j<b.cols(); ++j)
-    {
-      m_iterations = Base::maxIterations();
-      m_error = Base::m_tolerance;
-
-      typename Dest::ColXpr xj(x,j);
-      if(!internal::gmres(matrix(), b.col(j), xj, Base::m_preconditioner, m_iterations, m_restart, m_error))
-        failed = true;
-    }
-    m_info = failed ? NumericalIssue
+    m_iterations = Base::maxIterations();
+    m_error = Base::m_tolerance;
+    bool ret = internal::gmres(matrix(), b, x, Base::m_preconditioner, m_iterations, m_restart, m_error);
+    m_info = (!ret) ? NumericalIssue
           : m_error <= Base::m_tolerance ? Success
           : NoConvergence;
-    m_isInitialized = true;
-  }
-
-  /** \internal */
-  template<typename Rhs,typename Dest>
-  void _solve_impl(const Rhs& b, MatrixBase<Dest> &x) const
-  {
-    x = b;
-    if(x.squaredNorm() == 0) return; // Check Zero right hand side
-    _solve_with_guess_impl(b,x.derived());
   }
 
 protected:

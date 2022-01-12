@@ -10,6 +10,8 @@
 #ifndef EIGEN_AUTODIFF_VECTOR_H
 #define EIGEN_AUTODIFF_VECTOR_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 /* \class AutoDiffScalar

@@ -10,6 +10,8 @@
 #ifndef KDBVH_H_INCLUDED
 #define KDBVH_H_INCLUDED
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 namespace internal {
@@ -55,23 +57,23 @@ struct get_boxes_helper<ObjectList, VolumeList, int> {
 /** \class KdBVH
  *  \brief A simple bounding volume hierarchy based on AlignedBox
  *
- *  \param _Scalar The underlying scalar type of the bounding boxes
- *  \param _Dim The dimension of the space in which the hierarchy lives
+ *  \param Scalar_ The underlying scalar type of the bounding boxes
+ *  \param Dim_ The dimension of the space in which the hierarchy lives
  *  \param _Object The object type that lives in the hierarchy.  It must have value semantics.  Either bounding_box(_Object) must
- *                 be defined and return an AlignedBox<_Scalar, _Dim> or bounding boxes must be provided to the tree initializer.
+ *                 be defined and return an AlignedBox<Scalar_, Dim_> or bounding boxes must be provided to the tree initializer.
  *
  *  This class provides a simple (as opposed to optimized) implementation of a bounding volume hierarchy analogous to a Kd-tree.
  *  Given a sequence of objects, it computes their bounding boxes, constructs a Kd-tree of their centers
  *  and builds a BVH with the structure of that Kd-tree.  When the elements of the tree are too expensive to be copied around,
  *  it is useful for _Object to be a pointer.
  */
-template<typename _Scalar, int _Dim, typename _Object> class KdBVH
+template<typename Scalar_, int Dim_, typename _Object> class KdBVH
 {
 public:
-  enum { Dim = _Dim };
+  enum { Dim = Dim_ };
   typedef _Object Object;
   typedef std::vector<Object, aligned_allocator<Object> > ObjectList;
-  typedef _Scalar Scalar;
+  typedef Scalar_ Scalar;
   typedef AlignedBox<Scalar, Dim> Volume;
   typedef std::vector<Volume, aligned_allocator<Volume> > VolumeList;
   typedef int Index;
@@ -171,7 +173,7 @@ private:
   typedef internal::vector_int_pair<Scalar, Dim> VIPair;
   typedef std::vector<VIPair, aligned_allocator<VIPair> > VIPairList;
   typedef Matrix<Scalar, Dim, 1> VectorType;
-  struct VectorComparator //compares vectors, or, more specificall, VIPairs along a particular dimension
+  struct VectorComparator //compares vectors, or more specifically, VIPairs along a particular dimension
   {
     VectorComparator(int inDim) : dim(inDim) {}
     inline bool operator()(const VIPair &v1, const VIPair &v2) const { return v1.first[dim] < v2.first[dim]; }

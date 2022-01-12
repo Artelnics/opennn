@@ -12,6 +12,8 @@
 #ifndef KRONECKER_TENSOR_PRODUCT_H
 #define KRONECKER_TENSOR_PRODUCT_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 /*!
@@ -198,11 +200,11 @@ void KroneckerProductSparse<Lhs,Rhs>::evalTo(Dest& dst) const
 
 namespace internal {
 
-template<typename _Lhs, typename _Rhs>
-struct traits<KroneckerProduct<_Lhs,_Rhs> >
+template<typename Lhs_, typename Rhs_>
+struct traits<KroneckerProduct<Lhs_,Rhs_> >
 {
-  typedef typename remove_all<_Lhs>::type Lhs;
-  typedef typename remove_all<_Rhs>::type Rhs;
+  typedef typename remove_all<Lhs_>::type Lhs;
+  typedef typename remove_all<Rhs_>::type Rhs;
   typedef typename ScalarBinaryOpTraits<typename Lhs::Scalar, typename Rhs::Scalar>::ReturnType Scalar;
   typedef typename promote_index_type<typename Lhs::StorageIndex, typename Rhs::StorageIndex>::type StorageIndex;
 
@@ -216,12 +218,12 @@ struct traits<KroneckerProduct<_Lhs,_Rhs> >
   typedef Matrix<Scalar,Rows,Cols> ReturnType;
 };
 
-template<typename _Lhs, typename _Rhs>
-struct traits<KroneckerProductSparse<_Lhs,_Rhs> >
+template<typename Lhs_, typename Rhs_>
+struct traits<KroneckerProductSparse<Lhs_,Rhs_> >
 {
   typedef MatrixXpr XprKind;
-  typedef typename remove_all<_Lhs>::type Lhs;
-  typedef typename remove_all<_Rhs>::type Rhs;
+  typedef typename remove_all<Lhs_>::type Lhs;
+  typedef typename remove_all<Rhs_>::type Rhs;
   typedef typename ScalarBinaryOpTraits<typename Lhs::Scalar, typename Rhs::Scalar>::ReturnType Scalar;
   typedef typename cwise_promote_storage_type<typename traits<Lhs>::StorageKind, typename traits<Rhs>::StorageKind, scalar_product_op<typename Lhs::Scalar, typename Rhs::Scalar> >::ret StorageKind;
   typedef typename promote_index_type<typename Lhs::StorageIndex, typename Rhs::StorageIndex>::type StorageIndex;
@@ -235,10 +237,10 @@ struct traits<KroneckerProductSparse<_Lhs,_Rhs> >
     MaxRowsAtCompileTime = size_at_compile_time<traits<Lhs>::MaxRowsAtCompileTime, traits<Rhs>::MaxRowsAtCompileTime>::ret,
     MaxColsAtCompileTime = size_at_compile_time<traits<Lhs>::MaxColsAtCompileTime, traits<Rhs>::MaxColsAtCompileTime>::ret,
 
-    EvalToRowMajor = (LhsFlags & RhsFlags & RowMajorBit),
+    EvalToRowMajor = (int(LhsFlags) & int(RhsFlags) & RowMajorBit),
     RemovedBits = ~(EvalToRowMajor ? 0 : RowMajorBit),
 
-    Flags = ((LhsFlags | RhsFlags) & HereditaryBits & RemovedBits)
+    Flags = ((int(LhsFlags) | int(RhsFlags)) & HereditaryBits & RemovedBits)
           | EvalBeforeNestingBit,
     CoeffReadCost = HugeCost
   };

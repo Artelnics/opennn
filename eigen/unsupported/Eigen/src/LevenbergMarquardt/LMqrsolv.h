@@ -15,6 +15,8 @@
 #ifndef EIGEN_LMQRSOLV_H
 #define EIGEN_LMQRSOLV_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 namespace internal {
@@ -73,7 +75,7 @@ void lmqrsolv(
             qtbpj = -givens.s() * wa[k] + givens.c() * qtbpj;
             wa[k] = temp;
 
-            /*           accumulate the tranformation in the row of s. */
+            /*           accumulate the transformation in the row of s. */
             for (i = k+1; i<n; ++i) {
                 temp = givens.c() * s(i,k) + givens.s() * sdiag[i];
                 sdiag[i] = -givens.s() * s(i,k) + givens.c() * sdiag[i];
@@ -98,9 +100,9 @@ void lmqrsolv(
     x = iPerm * wa; 
 }
 
-template <typename Scalar, int _Options, typename Index>
+template <typename Scalar, int Options_, typename Index>
 void lmqrsolv(
-  SparseMatrix<Scalar,_Options,Index> &s,
+  SparseMatrix<Scalar,Options_,Index> &s,
   const PermutationMatrix<Dynamic,Dynamic> &iPerm,
   const Matrix<Scalar,Dynamic,1> &diag,
   const Matrix<Scalar,Dynamic,1> &qtb,

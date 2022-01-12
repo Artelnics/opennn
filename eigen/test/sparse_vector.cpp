@@ -111,7 +111,7 @@ template<typename Scalar,typename StorageIndex> void sparse_vector(int rows, int
   // check copy to dense vector with transpose
   refV3.resize(0);
   VERIFY_IS_APPROX(refV3 = v1.transpose(),v1.toDense()); 
-  VERIFY_IS_APPROX(DenseVector(v1),v1.toDense()); 
+  VERIFY_IS_APPROX(DenseVector(v1),v1.toDense());
 
   // test conservative resize
   {
@@ -144,8 +144,33 @@ template<typename Scalar,typename StorageIndex> void sparse_vector(int rows, int
   }
 
 }
+void test_pruning() {
+    using SparseVectorType = SparseVector<double, 0, int>;
 
-void test_sparse_vector()
+    SparseVectorType vec;
+    auto init_vec = [&](){;
+        vec.resize(10);
+        vec.insert(3) = 0.1;
+        vec.insert(5) = 1.0;
+        vec.insert(8) = -0.1;
+        vec.insert(9) = -0.2;
+    };
+    init_vec();
+
+    VERIFY_IS_EQUAL(vec.nonZeros(), 4);
+    VERIFY_IS_EQUAL(vec.prune(0.1, 1.0), 2);
+    VERIFY_IS_EQUAL(vec.nonZeros(), 2);
+    VERIFY_IS_EQUAL(vec.coeff(5), 1.0);
+    VERIFY_IS_EQUAL(vec.coeff(9), -0.2);
+
+    init_vec();
+    VERIFY_IS_EQUAL(vec.prune([](double v) { return v >= 0; }), 2);
+    VERIFY_IS_EQUAL(vec.nonZeros(), 2);
+    VERIFY_IS_EQUAL(vec.coeff(3), 0.1);
+    VERIFY_IS_EQUAL(vec.coeff(5), 1.0);
+}
+
+EIGEN_DECLARE_TEST(sparse_vector)
 {
   for(int i = 0; i < g_repeat; i++) {
     int r = Eigen::internal::random<int>(1,500), c = Eigen::internal::random<int>(1,500);
@@ -159,5 +184,7 @@ void test_sparse_vector()
     CALL_SUBTEST_1(( sparse_vector<double,long int>(r, c) ));
     CALL_SUBTEST_1(( sparse_vector<double,short>(r, c) ));
   }
+
+  CALL_SUBTEST_1(test_pruning());
 }
 

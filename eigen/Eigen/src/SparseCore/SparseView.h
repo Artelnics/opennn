@@ -11,6 +11,8 @@
 #ifndef EIGEN_SPARSEVIEW_H
 #define EIGEN_SPARSEVIEW_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 namespace internal {
@@ -45,7 +47,7 @@ template<typename MatrixType>
 class SparseView : public SparseMatrixBase<SparseView<MatrixType> >
 {
   typedef typename MatrixType::Nested MatrixTypeNested;
-  typedef typename internal::remove_all<MatrixTypeNested>::type _MatrixTypeNested;
+  typedef typename internal::remove_all<MatrixTypeNested>::type MatrixTypeNested_;
   typedef SparseMatrixBase<SparseView > Base;
 public:
   EIGEN_SPARSE_PUBLIC_INTERFACE(SparseView)

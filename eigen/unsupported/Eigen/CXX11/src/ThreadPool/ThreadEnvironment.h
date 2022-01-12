@@ -10,6 +10,8 @@
 #ifndef EIGEN_CXX11_THREADPOOL_THREAD_ENVIRONMENT_H
 #define EIGEN_CXX11_THREADPOOL_THREAD_ENVIRONMENT_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 struct StlThreadEnvironment {
@@ -23,6 +25,8 @@ struct StlThreadEnvironment {
    public:
     EnvThread(std::function<void()> f) : thr_(std::move(f)) {}
     ~EnvThread() { thr_.join(); }
+    // This function is called when the threadpool is cancelled.
+    void OnCancel() { }
 
    private:
     std::thread thr_;

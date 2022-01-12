@@ -9,6 +9,8 @@
 #ifndef METIS_SUPPORT_H
 #define METIS_SUPPORT_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 /**
  * Get the fill-reducing ordering from the METIS package

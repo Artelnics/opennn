@@ -113,10 +113,10 @@ void testChkder()
 }
 
 // Generic functor
-template<typename _Scalar, int NX=Dynamic, int NY=Dynamic>
+template<typename Scalar_, int NX=Dynamic, int NY=Dynamic>
 struct Functor
 {
-  typedef _Scalar Scalar;
+  typedef Scalar_ Scalar;
   enum {
     InputsAtCompileTime = NX,
     ValuesAtCompileTime = NY
@@ -1789,7 +1789,7 @@ void testNistEckerle4(void)
   VERIFY_IS_APPROX(x[2], 4.5154121844E+02);
 }
 
-void test_NonLinearOptimization()
+EIGEN_DECLARE_TEST(NonLinearOptimization)
 {
     // Tests using the examples provided by (c)minpack
     CALL_SUBTEST/*_1*/(testChkder());

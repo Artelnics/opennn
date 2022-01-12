@@ -10,10 +10,6 @@
 
 #if defined(EIGEN_TEST_PART_7)
 
-#ifndef EIGEN_NO_STATIC_ASSERT
-#define EIGEN_NO_STATIC_ASSERT // turn static asserts into runtime asserts in order to check them
-#endif
-
 // ignore double-promotion diagnostic for clang and gcc, if we check for static assertion anyway:
 // TODO do the same for MSVC?
 #if defined(__clang__)
@@ -48,28 +44,6 @@ using namespace std;
   g_called = false; \
   VERIFY_IS_APPROX(XPR,REF); \
   VERIFY( g_called && #XPR" not properly optimized");
-
-template<int SizeAtCompileType>
-void raise_assertion(Index size = SizeAtCompileType)
-{
-  // VERIFY_RAISES_ASSERT(mf+md); // does not even compile
-  Matrix<float, SizeAtCompileType, 1> vf; vf.setRandom(size);
-  Matrix<double, SizeAtCompileType, 1> vd; vd.setRandom(size);
-  VERIFY_RAISES_ASSERT(vf=vd);
-  VERIFY_RAISES_ASSERT(vf+=vd);
-  VERIFY_RAISES_ASSERT(vf-=vd);
-  VERIFY_RAISES_ASSERT(vd=vf);
-  VERIFY_RAISES_ASSERT(vd+=vf);
-  VERIFY_RAISES_ASSERT(vd-=vf);
-
-  //   vd.asDiagonal() * mf;    // does not even compile
-  //   vcd.asDiagonal() * mf;   // does not even compile
-
-#if 0 // we get other compilation errors here than just static asserts
-  VERIFY_RAISES_ASSERT(vd.dot(vf));
-#endif
-}
-
 
 template<int SizeAtCompileType> void mixingtypes(int size = SizeAtCompileType)
 {
@@ -309,8 +283,9 @@ template<int SizeAtCompileType> void mixingtypes(int size = SizeAtCompileType)
   VERIFY_IS_APPROX( rcd.noalias() -= mcd + md*md,           - ((md*md).eval().template cast<CD>()) );
 }
 
-void test_mixingtypes()
+EIGEN_DECLARE_TEST(mixingtypes)
 {
+  g_called = false; // Silence -Wunneeded-internal-declaration.
   for(int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST_1(mixingtypes<3>());
     CALL_SUBTEST_2(mixingtypes<4>());
@@ -319,10 +294,5 @@ void test_mixingtypes()
     CALL_SUBTEST_4(mixingtypes<3>());
     CALL_SUBTEST_5(mixingtypes<4>());
     CALL_SUBTEST_6(mixingtypes<Dynamic>(internal::random<int>(1,EIGEN_TEST_MAX_SIZE)));
-    CALL_SUBTEST_7(raise_assertion<Dynamic>(internal::random<int>(1,EIGEN_TEST_MAX_SIZE)));
   }
-  CALL_SUBTEST_7(raise_assertion<0>());
-  CALL_SUBTEST_7(raise_assertion<3>());
-  CALL_SUBTEST_7(raise_assertion<4>());
-  CALL_SUBTEST_7(raise_assertion<Dynamic>(0));
 }

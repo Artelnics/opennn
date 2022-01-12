@@ -13,6 +13,8 @@
 #ifndef EIGEN_NUMERICAL_DIFF_H
 #define EIGEN_NUMERICAL_DIFF_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 enum NumericalDiffMode {
@@ -32,11 +34,11 @@ enum NumericalDiffMode {
   *
   * Currently only "Forward" and "Central" scheme are implemented.
   */
-template<typename _Functor, NumericalDiffMode mode=Forward>
-class NumericalDiff : public _Functor
+template<typename Functor_, NumericalDiffMode mode=Forward>
+class NumericalDiff : public Functor_
 {
 public:
-    typedef _Functor Functor;
+    typedef Functor_ Functor;
     typedef typename Functor::Scalar Scalar;
     typedef typename Functor::InputType InputType;
     typedef typename Functor::ValueType ValueType;

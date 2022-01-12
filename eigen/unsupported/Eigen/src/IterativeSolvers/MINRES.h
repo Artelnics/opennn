@@ -3,15 +3,18 @@
 //
 // Copyright (C) 2012 Giacomo Po <gpo@ucla.edu>
 // Copyright (C) 2011-2014 Gael Guennebaud <gael.guennebaud@inria.fr>
+// Copyright (C) 2018 David Hyde <dabh@stanford.edu>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-#ifndef EIGEN_MINRES_H_
-#define EIGEN_MINRES_H_
+#ifndef EIGEN_MINRES_H
+#define EIGEN_MINRES_H
 
+
+#include "./InternalHeaderCheck.h"
 
 namespace Eigen {
     
@@ -64,8 +67,6 @@ namespace Eigen {
             eigen_assert(beta_new2 >= 0.0 && "PRECONDITIONER IS NOT POSITIVE DEFINITE");
             RealScalar beta_new(sqrt(beta_new2));
             const RealScalar beta_one(beta_new);
-            v_new /= beta_new;
-            w_new /= beta_new;
             // Initialize other variables
             RealScalar c(1.0); // the cosine of the Givens rotation
             RealScalar c_old(1.0);
@@ -83,18 +84,18 @@ namespace Eigen {
                 /* Note that there are 4 variants on the Lanczos algorithm. These are
                  * described in Paige, C. C. (1972). Computational variants of
                  * the Lanczos method for the eigenproblem. IMA Journal of Applied
-                 * Mathematics, 10(3), 373–381. The current implementation corresponds 
+                 * Mathematics, 10(3), 373-381. The current implementation corresponds 
                  * to the case A(2,7) in the paper. It also corresponds to 
-                 * algorithm 6.14 in Y. Saad, Iterative Methods ￼￼￼for Sparse Linear
+                 * algorithm 6.14 in Y. Saad, Iterative Methods for Sparse Linear
                  * Systems, 2003 p.173. For the preconditioned version see 
                  * A. Greenbaum, Iterative Methods for Solving Linear Systems, SIAM (1987).
                  */
                 const RealScalar beta(beta_new);
                 v_old = v; // update: at first time step, this makes v_old = 0 so value of beta doesn't matter
-//                const VectorType v_old(v); // NOT SURE IF CREATING v_old EVERY ITERATION IS EFFICIENT
+                v_new /= beta_new; // overwrite v_new for next iteration
+                w_new /= beta_new; // overwrite w_new for next iteration
                 v = v_new; // update
                 w = w_new; // update
-//                const VectorType w(w_new); // NOT SURE IF CREATING w EVERY ITERATION IS EFFICIENT
                 v_new.noalias() = mat*w - beta*v_old; // compute v_new
                 const RealScalar alpha = v_new.dot(w);
                 v_new -= alpha*v; // overwrite v_new
@@ -102,8 +103,6 @@ namespace Eigen {
                 beta_new2 = v_new.dot(w_new); // compute beta_new
                 eigen_assert(beta_new2 >= 0.0 && "PRECONDITIONER IS NOT POSITIVE DEFINITE");
                 beta_new = sqrt(beta_new2); // compute beta_new
-                v_new /= beta_new; // overwrite v_new for next iteration
-                w_new /= beta_new; // overwrite w_new for next iteration
                 
                 // Givens rotation
                 const RealScalar r2 =s*alpha+c*c_old*beta; // s, s_old, c and c_old are still from previous iteration
@@ -117,7 +116,6 @@ namespace Eigen {
                 
                 // Update solution
                 p_oold = p_old;
-//                const VectorType p_oold(p_old); // NOT SURE IF CREATING p_oold EVERY ITERATION IS EFFICIENT
                 p_old = p;
                 p.noalias()=(w-r2*p_old-r3*p_oold) /r1; // IS NOALIAS REQUIRED?
                 x += beta_one*c*eta*p;
@@ -142,17 +140,17 @@ namespace Eigen {
         
     }
     
-    template< typename _MatrixType, int _UpLo=Lower,
-    typename _Preconditioner = IdentityPreconditioner>
+    template< typename MatrixType_, int UpLo_=Lower,
+    typename Preconditioner_ = IdentityPreconditioner>
     class MINRES;
     
     namespace internal {
         
-        template< typename _MatrixType, int _UpLo, typename _Preconditioner>
-        struct traits<MINRES<_MatrixType,_UpLo,_Preconditioner> >
+        template< typename MatrixType_, int UpLo_, typename Preconditioner_>
+        struct traits<MINRES<MatrixType_,UpLo_,Preconditioner_> >
         {
-            typedef _MatrixType MatrixType;
-            typedef _Preconditioner Preconditioner;
+            typedef MatrixType_ MatrixType;
+            typedef Preconditioner_ Preconditioner;
         };
         
     }
@@ -164,10 +162,10 @@ namespace Eigen {
      * of Paige and Saunders (1975). The sparse matrix A must be symmetric (possibly indefinite).
      * The vectors x and b can be either dense or sparse.
      *
-     * \tparam _MatrixType the type of the sparse matrix A, can be a dense or a sparse matrix.
-     * \tparam _UpLo the triangular part that will be used for the computations. It can be Lower,
+     * \tparam MatrixType_ the type of the sparse matrix A, can be a dense or a sparse matrix.
+     * \tparam UpLo_ the triangular part that will be used for the computations. It can be Lower,
      *               Upper, or Lower|Upper in which the full matrix entries will be considered. Default is Lower.
-     * \tparam _Preconditioner the type of the preconditioner. Default is DiagonalPreconditioner
+     * \tparam Preconditioner_ the type of the preconditioner. Default is DiagonalPreconditioner
      *
      * The maximal number of iterations and tolerance value can be controlled via the setMaxIterations()
      * and setTolerance() methods. The defaults are the size of the problem for the maximal number of iterations
@@ -195,8 +193,8 @@ namespace Eigen {
      *
      * \sa class ConjugateGradient, BiCGSTAB, SimplicialCholesky, DiagonalPreconditioner, IdentityPreconditioner
      */
-    template< typename _MatrixType, int _UpLo, typename _Preconditioner>
-    class MINRES : public IterativeSolverBase<MINRES<_MatrixType,_UpLo,_Preconditioner> >
+    template< typename MatrixType_, int UpLo_, typename Preconditioner_>
+    class MINRES : public IterativeSolverBase<MINRES<MatrixType_,UpLo_,Preconditioner_> >
     {
         
         typedef IterativeSolverBase<MINRES> Base;
@@ -207,12 +205,12 @@ namespace Eigen {
         using Base::m_isInitialized;
     public:
         using Base::_solve_impl;
-        typedef _MatrixType MatrixType;
+        typedef MatrixType_ MatrixType;
         typedef typename MatrixType::Scalar Scalar;
         typedef typename MatrixType::RealScalar RealScalar;
-        typedef _Preconditioner Preconditioner;
+        typedef Preconditioner_ Preconditioner;
         
-        enum {UpLo = _UpLo};
+        enum {UpLo = UpLo_};
         
     public:
         
@@ -237,7 +235,7 @@ namespace Eigen {
 
         /** \internal */
         template<typename Rhs,typename Dest>
-        void _solve_with_guess_impl(const Rhs& b, Dest& x) const
+        void _solve_vector_with_guess_impl(const Rhs& b, Dest& x) const
         {
             typedef typename Base::MatrixWrapper MatrixWrapper;
             typedef typename Base::ActualMatrixType ActualMatrixType;
@@ -248,7 +246,7 @@ namespace Eigen {
                               &&  (!NumTraits<Scalar>::IsComplex)
             };
             typedef typename internal::conditional<TransposeInput,Transpose<const ActualMatrixType>, ActualMatrixType const&>::type RowMajorWrapper;
-            EIGEN_STATIC_ASSERT(EIGEN_IMPLIES(MatrixWrapper::MatrixFree,UpLo==(Lower|Upper)),MATRIX_FREE_CONJUGATE_GRADIENT_IS_COMPATIBLE_WITH_UPPER_UNION_LOWER_MODE_ONLY);
+            EIGEN_STATIC_ASSERT(internal::check_implication(MatrixWrapper::MatrixFree, UpLo==(Lower|Upper)),MATRIX_FREE_CONJUGATE_GRADIENT_IS_COMPATIBLE_WITH_UPPER_UNION_LOWER_MODE_ONLY);
             typedef typename internal::conditional<UpLo==(Lower|Upper),
                                                   RowMajorWrapper,
                                                   typename MatrixWrapper::template ConstSelfAdjointViewReturnType<UpLo>::Type
@@ -257,26 +255,9 @@ namespace Eigen {
             m_iterations = Base::maxIterations();
             m_error = Base::m_tolerance;
             RowMajorWrapper row_mat(matrix());
-            for(int j=0; j<b.cols(); ++j)
-            {
-                m_iterations = Base::maxIterations();
-                m_error = Base::m_tolerance;
-                
-                typename Dest::ColXpr xj(x,j);
-                internal::minres(SelfAdjointWrapper(row_mat), b.col(j), xj,
-                                 Base::m_preconditioner, m_iterations, m_error);
-            }
-            
-            m_isInitialized = true;
+            internal::minres(SelfAdjointWrapper(row_mat), b, x,
+                             Base::m_preconditioner, m_iterations, m_error);
             m_info = m_error <= Base::m_tolerance ? Success : NoConvergence;
-        }
-        
-        /** \internal */
-        template<typename Rhs,typename Dest>
-        void _solve_impl(const Rhs& b, MatrixBase<Dest> &x) const
-        {
-            x.setZero();
-            _solve_with_guess_impl(b,x.derived());
         }
         
     protected:
@@ -286,4 +267,3 @@ namespace Eigen {
 } // end namespace Eigen
 
 #endif // EIGEN_MINRES_H
-
