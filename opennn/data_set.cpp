@@ -11016,22 +11016,7 @@ Index DataSet::count_rows_with_nan() const
 
 Index DataSet::count_nan() const
 {
-    const Index rows_number = data.dimension(0);
-    const Index columns_number = data.dimension(1);
-
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-
-    for(Index row_index = 0; row_index < rows_number; row_index++)
-    {
-        for(Index column_index = 0; column_index < columns_number; column_index++)
-        {
-            if(isnan(data(row_index, column_index))) count++;
-        }
-    }
-
-    return count;
+    return count_NAN(data);
 }
 
 
