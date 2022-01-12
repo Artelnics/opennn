@@ -36,11 +36,9 @@ TrainingStrategy::TrainingStrategy()
 /// It also loads the members of this object from NeuralNetwork and DataSet class.
 
 TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
+    : neural_network_pointer(new_neural_network_pointer),
+      data_set_pointer(new_data_set_pointer)
 {
-    data_set_pointer = new_data_set_pointer;
-
-    neural_network_pointer = new_neural_network_pointer;
-
     set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
     set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
 

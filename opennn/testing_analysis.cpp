@@ -29,11 +29,9 @@ TestingAnalysis::TestingAnalysis()
 /// @param new_data_set_pointer Pointer to a data set object.
 
 TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
+    : neural_network_pointer(new_neural_network_pointer),
+      data_set_pointer(new_data_set_pointer)
 {
-    data_set_pointer = new_data_set_pointer;
-
-    neural_network_pointer = new_neural_network_pointer;
-
     set_default();
 }
 
@@ -3650,29 +3648,20 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
     const Index false_negative = confusion(0,1);
     const Index true_negative = confusion(1,1);
 
-    // Classification accuracy
+    // Classification accuracy and error rate
 
     type classification_accuracy;
-
-    if(true_positive + true_negative + false_positive + false_negative == 0)
-    {
-        classification_accuracy = type(0);
-    }
-    else
-    {
-        classification_accuracy = static_cast<type>(true_positive + true_negative)/static_cast<type>(true_positive + true_negative + false_positive + false_negative);
-    }
-
-    // Error rate
 
     type error_rate;
 
     if(true_positive + true_negative + false_positive + false_negative == 0)
     {
+        classification_accuracy = type(0);
         error_rate = type(0);
     }
     else
     {
+        classification_accuracy = static_cast<type>(true_positive + true_negative)/static_cast<type>(true_positive + true_negative + false_positive + false_negative);
         error_rate = static_cast<type>(false_positive + false_negative)/static_cast<type>(true_positive + true_negative + false_positive + false_negative);
     }
 
@@ -3687,6 +3676,19 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
     else
     {
         sensitivity = static_cast<type>(true_positive)/static_cast<type>(true_positive + false_negative);
+    }
+
+    // False positive rate
+
+    type false_positive_rate;
+
+    if(false_positive + true_negative == 0)
+    {
+        false_positive_rate = type(0);
+    }
+    else
+    {
+        false_positive_rate = static_cast<type>(false_positive)/static_cast<type>(false_positive + true_negative);
     }
 
     // Specificity
@@ -3760,19 +3762,6 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
     else
     {
         f1_score = static_cast<type>(2.0)* type(true_positive)/(static_cast<type>(2.0)* type(true_positive) + type(false_positive) + type(false_negative));
-    }
-
-    // False positive rate
-
-    type false_positive_rate;
-
-    if(false_positive + true_negative == 0)
-    {
-        false_positive_rate = type(0);
-    }
-    else
-    {
-        false_positive_rate = static_cast<type>(false_positive)/static_cast<type>(false_positive + true_negative);
     }
 
     // False discovery rate
