@@ -161,6 +161,26 @@ bool are_equal(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2,
 }
 
 
+Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
+{
+    if (x.size() != y.size() || x.dimension(0) != y.dimension(0) || x.dimension(1) != y.dimension(1))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Tensor utilities class.\n"
+            << "Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 2>& y) method.\n"
+            << "Input vectors must have equal sizes.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
+
+    for (int i = 0; i < x.size(); i++) { result(i) = (x(i) == y(i)); };
+    
+    return result;
+}
+
 void save_csv(const Tensor<type,2>& data, const string& filename)
 {
     ofstream file(filename);

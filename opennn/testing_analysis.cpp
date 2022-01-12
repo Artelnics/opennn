@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "testing_analysis.h"
+#include "tensor_utilities.h"
 
 namespace opennn
 {
@@ -1372,8 +1373,8 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
         negatives_weight = weights[1];
     }
 
-    const Tensor<bool, 2> if_sentence = targets == targets.constant(type(1));
-    const Tensor<bool, 2> else_sentence = targets == targets.constant(type(0));
+    const Tensor<bool, 2> if_sentence = elements_are_equal(targets, targets.constant(type(1)));
+    const Tensor<bool, 2> else_sentence = elements_are_equal(targets, targets.constant(type(0)));
 
     Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
 

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "weighted_squared_error.h"
+#include "tensor_utilities.h"
 
 namespace opennn
 {
@@ -211,8 +212,8 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
     const Tensor<type, 2>& targets = batch.targets_2d;
     const Tensor<type, 2>& outputs = probabilistic_layer_back_propagation->activations;
 
-    const Tensor<bool, 2> if_sentence = targets == targets.constant(type(1));
-    const Tensor<bool, 2> else_sentence = targets == targets.constant(type(0));
+    const Tensor<bool, 2> if_sentence = elements_are_equal(targets, targets.constant(type(1)));
+    const Tensor<bool, 2> else_sentence = elements_are_equal(targets, targets.constant(type(0)));
 
     Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
     f_1 = back_propagation.errors.square()*positives_weight;
@@ -274,8 +275,8 @@ void WeightedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
     const type coefficient = static_cast<type>(2.0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-    const Tensor<bool, 2> if_sentence = targets == targets.constant(type(1));
-    const Tensor<bool, 2> else_sentence = targets == targets.constant(type(0));
+    const Tensor<bool, 2> if_sentence = elements_are_equal(targets, targets.constant(type(1)));
+    const Tensor<bool, 2> else_sentence = elements_are_equal(targets, targets.constant(type(0)));
 
     Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
     f_1 = (coefficient*positives_weight)*back_propagation.errors;
@@ -481,8 +482,8 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2>& x, 
 
 #endif
 
-    const Tensor<bool, 2> if_sentence = y == y.constant(type(1));
-    const Tensor<bool, 2> else_sentence = y == y.constant(type(0));
+    const Tensor<bool, 2> if_sentence = elements_are_equal(y, y.constant(type(1)));
+    const Tensor<bool, 2> else_sentence = elements_are_equal(y, y.constant(type(0)));
 
     Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
 
@@ -517,7 +518,7 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;
 
-    const Tensor<bool, 2> if_sentence = outputs == outputs.constant(type(1));
+    const Tensor<bool, 2> if_sentence = elements_are_equal(outputs, outputs.constant(type(1)));
 
     Tensor<type, 2> f_1(outputs.dimension(0), outputs.dimension(1));
     f_1 = (outputs - targets)*positives_weight;
