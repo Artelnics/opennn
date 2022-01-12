@@ -9950,6 +9950,7 @@ size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 
 void DataSet::read_bmp()
 {
+    /*
     const fs::path path = data_file_name;
 
     if(data_file_name.empty())
@@ -10099,7 +10100,7 @@ void DataSet::read_bmp()
     input_variables_dimensions(0) = channels;
     input_variables_dimensions(1) = width;
     input_variables_dimensions(2) = height;
-    //
+    //*/
 }
 
 
