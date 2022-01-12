@@ -9016,7 +9016,7 @@ Tensor<type, 1> DataSet::calculate_local_outlier_factor(Tensor<list<Index>, 1>& 
         for(auto & neighbor_index : k_nearest_indexes(i))
             sum += average_reachabilities(i) / average_reachabilities(neighbor_index);
 
-        LOF_value(i) = sum/k ;
+        LOF_value(i) = type(sum/k) ;
     }
     return LOF_value;
 }
@@ -9323,7 +9323,7 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
 {
     const Index samples_number = get_used_samples_number();
     const Index fixed_subs_set_samples = min(samples_number, subs_set_samples);
-    const Index max_depth = ceil(log2(fixed_subs_set_samples))*2;
+    const Index max_depth = Index(ceil(log2(fixed_subs_set_samples))*2);
     const Tensor<Tensor<type, 2>, 1> forest = create_isolation_forest(n_trees, fixed_subs_set_samples, max_depth);
 
     const Tensor<type, 1> average_paths = calculate_average_forest_paths(forest, max_depth);
