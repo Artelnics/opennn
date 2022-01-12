@@ -7,6 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 namespace internal {
@@ -173,10 +175,10 @@ namespace internal {
       }
   };
 
-  template <typename _Scalar>
+  template <typename Scalar_>
   struct fftw_impl
   {
-      typedef _Scalar Scalar;
+      typedef Scalar_ Scalar;
       typedef std::complex<Scalar> Complex;
 
       inline
@@ -259,5 +261,3 @@ namespace internal {
 } // end namespace internal
 
 } // end namespace Eigen
-
-/* vim: set filetype=cpp et sw=2 ts=2 ai: */

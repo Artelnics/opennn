@@ -10,6 +10,8 @@
 #ifndef EIGEN_CXX11_TENSORSYMMETRY_SYMMETRY_H
 #define EIGEN_CXX11_TENSORSYMMETRY_SYMMETRY_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 enum {

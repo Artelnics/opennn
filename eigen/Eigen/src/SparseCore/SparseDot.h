@@ -10,6 +10,8 @@
 #ifndef EIGEN_SPARSE_DOT_H
 #define EIGEN_SPARSE_DOT_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 template<typename Derived>

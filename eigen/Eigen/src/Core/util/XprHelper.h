@@ -14,13 +14,15 @@
 // just a workaround because GCC seems to not really like empty structs
 // FIXME: gcc 4.3 generates bad code when strict-aliasing is enabled
 // so currently we simply disable this optimization for gcc 4.3
-#if EIGEN_COMP_GNUC && !EIGEN_GNUC_AT(4,3)
+#if EIGEN_COMP_GNUC
   #define EIGEN_EMPTY_STRUCT_CTOR(X) \
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE X() {} \
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE X(const X& ) {}
 #else
   #define EIGEN_EMPTY_STRUCT_CTOR(X)
 #endif
+
+#include "../InternalHeaderCheck.h"
 
 namespace Eigen {
 
@@ -37,16 +39,14 @@ inline IndexDest convert_index(const IndexSrc& idx) {
 // true if T can be considered as an integral index (i.e., and integral type or enum)
 template<typename T> struct is_valid_index_type
 {
-  enum { value =
-#if EIGEN_HAS_TYPE_TRAITS
-    internal::is_integral<T>::value || std::is_enum<T>::value
-#elif EIGEN_COMP_MSVC
-    internal::is_integral<T>::value || __is_enum(T)
-#else
-    // without C++11, we use is_convertible to Index instead of is_integral in order to treat enums as Index.
-    internal::is_convertible<T,Index>::value && !internal::is_same<T,float>::value && !is_same<T,double>::value
-#endif
+  enum { value = internal::is_integral<T>::value || std::is_enum<T>::value
   };
+};
+
+// true if both types are not valid index types
+template<typename RowIndices, typename ColIndices>
+struct valid_indexed_view_overload {
+  enum { value = !(internal::is_valid_index_type<RowIndices>::value && internal::is_valid_index_type<ColIndices>::value) };
 };
 
 // promote_scalar_arg is an helper used in operation between an expression and a scalar, like:
@@ -123,19 +123,23 @@ struct promote_index_type
 template<typename T, int Value> class variable_if_dynamic
 {
   public:
-    EIGEN_EMPTY_STRUCT_CTOR(variable_if_dynamic)
+    EIGEN_DEFAULT_EMPTY_CONSTRUCTOR_AND_DESTRUCTOR(variable_if_dynamic)
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE explicit variable_if_dynamic(T v) { EIGEN_ONLY_USED_FOR_DEBUG(v); eigen_assert(v == T(Value)); }
-    EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T value() { return T(Value); }
-    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void setValue(T) {}
+    EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR
+    T value() { return T(Value); }
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR
+    operator T() const { return T(Value); }
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+    void setValue(T v) const { EIGEN_ONLY_USED_FOR_DEBUG(v); eigen_assert(v == T(Value)); }
 };
 
 template<typename T> class variable_if_dynamic<T, Dynamic>
 {
     T m_value;
-    EIGEN_DEVICE_FUNC variable_if_dynamic() { eigen_assert(false); }
   public:
-    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE explicit variable_if_dynamic(T value) : m_value(value) {}
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE explicit variable_if_dynamic(T value = 0) EIGEN_NO_THROW : m_value(value) {}
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T value() const { return m_value; }
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE operator T() const { return m_value; }
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void setValue(T value) { m_value = value; }
 };
 
@@ -146,8 +150,10 @@ template<typename T, int Value> class variable_if_dynamicindex
   public:
     EIGEN_EMPTY_STRUCT_CTOR(variable_if_dynamicindex)
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE explicit variable_if_dynamicindex(T v) { EIGEN_ONLY_USED_FOR_DEBUG(v); eigen_assert(v == T(Value)); }
-    EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T value() { return T(Value); }
-    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void setValue(T) {}
+    EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR
+    T value() { return T(Value); }
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+    void setValue(T) {}
 };
 
 template<typename T> class variable_if_dynamicindex<T, DynamicIndex>
@@ -172,16 +178,7 @@ template<typename T> struct functor_traits
 
 template<typename T> struct packet_traits;
 
-template<typename T> struct unpacket_traits
-{
-  typedef T type;
-  typedef T half;
-  enum
-  {
-    size = 1,
-    alignment = 1
-  };
-};
+template<typename T> struct unpacket_traits;
 
 template<int Size, typename PacketType,
          bool Stop = Size==Dynamic || (Size%unpacket_traits<PacketType>::size)==0 || is_same<PacketType,typename unpacket_traits<PacketType>::half>::value>
@@ -244,24 +241,24 @@ template<typename T> struct compute_default_alignment<T,Dynamic> {
   enum { value = EIGEN_MAX_ALIGN_BYTES };
 };
 
-template<typename _Scalar, int _Rows, int _Cols,
-         int _Options = AutoAlign |
-                          ( (_Rows==1 && _Cols!=1) ? RowMajor
-                          : (_Cols==1 && _Rows!=1) ? ColMajor
+template<typename Scalar_, int Rows_, int Cols_,
+         int Options_ = AutoAlign |
+                          ( (Rows_==1 && Cols_!=1) ? RowMajor
+                          : (Cols_==1 && Rows_!=1) ? ColMajor
                           : EIGEN_DEFAULT_MATRIX_STORAGE_ORDER_OPTION ),
-         int _MaxRows = _Rows,
-         int _MaxCols = _Cols
+         int MaxRows_ = Rows_,
+         int MaxCols_ = Cols_
 > class make_proper_matrix_type
 {
     enum {
-      IsColVector = _Cols==1 && _Rows!=1,
-      IsRowVector = _Rows==1 && _Cols!=1,
-      Options = IsColVector ? (_Options | ColMajor) & ~RowMajor
-              : IsRowVector ? (_Options | RowMajor) & ~ColMajor
-              : _Options
+      IsColVector = Cols_==1 && Rows_!=1,
+      IsRowVector = Rows_==1 && Cols_!=1,
+      Options = IsColVector ? (Options_ | ColMajor) & ~RowMajor
+              : IsRowVector ? (Options_ | RowMajor) & ~ColMajor
+              : Options_
     };
   public:
-    typedef Matrix<_Scalar, _Rows, _Cols, Options, _MaxRows, _MaxCols> type;
+    typedef Matrix<Scalar_, Rows_, Cols_, Options, MaxRows_, MaxCols_> type;
 };
 
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
@@ -275,9 +272,9 @@ class compute_matrix_flags
     enum { ret = DirectAccessBit | LvalueBit | NestByRefBit | row_major_bit };
 };
 
-template<int _Rows, int _Cols> struct size_at_compile_time
+template<int Rows_, int Cols_> struct size_at_compile_time
 {
-  enum { ret = (_Rows==Dynamic || _Cols==Dynamic) ? Dynamic : _Rows * _Cols };
+  enum { ret = (Rows_==Dynamic || Cols_==Dynamic) ? Dynamic : Rows_ * Cols_ };
 };
 
 template<typename XprType> struct size_of_xpr_at_compile_time
@@ -347,16 +344,16 @@ template<typename T> struct eval<T,DiagonalShape>
 };
 
 // for matrices, no need to evaluate, just use a const reference to avoid a useless copy
-template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
-struct eval<Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>, Dense>
+template<typename Scalar_, int Rows_, int Cols_, int Options_, int MaxRows_, int MaxCols_>
+struct eval<Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>, Dense>
 {
-  typedef const Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>& type;
+  typedef const Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>& type;
 };
 
-template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
-struct eval<Array<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>, Dense>
+template<typename Scalar_, int Rows_, int Cols_, int Options_, int MaxRows_, int MaxCols_>
+struct eval<Array<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>, Dense>
 {
-  typedef const Array<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>& type;
+  typedef const Array<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>& type;
 };
 
 
@@ -400,7 +397,7 @@ template<typename T> struct plain_matrix_type_row_major
   typedef Matrix<typename traits<T>::Scalar,
                 Rows,
                 Cols,
-                (MaxCols==1&&MaxRows!=1) ? RowMajor : ColMajor,
+                (MaxCols==1&&MaxRows!=1) ? ColMajor : RowMajor,
                 MaxRows,
                 MaxCols
           > type;
@@ -417,7 +414,7 @@ struct ref_selector
     T const&,
     const T
   >::type type;
-  
+
   typedef typename conditional<
     bool(traits<T>::Flags & NestByRefBit),
     T &,
@@ -455,7 +452,7 @@ template<typename T, int n, typename PlainObject = typename plain_object_eval<T>
 {
   enum {
     ScalarReadCost = NumTraits<typename traits<T>::Scalar>::ReadCost,
-    CoeffReadCost = evaluator<T>::CoeffReadCost,  // NOTE What if an evaluator evaluate itself into a tempory?
+    CoeffReadCost = evaluator<T>::CoeffReadCost,  // NOTE What if an evaluator evaluate itself into a temporary?
                                                   //      Then CoeffReadCost will be small (e.g., 1) but we still have to evaluate, especially if n>1.
                                                   //      This situation is already taken care by the EvalBeforeNestingBit flag, which is turned ON
                                                   //      for all evaluator creating a temporary. This flag is then propagated by the parent evaluators.
@@ -506,8 +503,8 @@ struct generic_xpr_base<Derived, XprKind, Dense>
 template<typename XprType, typename CastType> struct cast_return_type
 {
   typedef typename XprType::Scalar CurrentScalarType;
-  typedef typename remove_all<CastType>::type _CastType;
-  typedef typename _CastType::Scalar NewScalarType;
+  typedef typename remove_all<CastType>::type CastType_;
+  typedef typename CastType_::Scalar NewScalarType;
   typedef typename conditional<is_same<CurrentScalarType,NewScalarType>::value,
                               const XprType&,CastType>::type type;
 };
@@ -596,14 +593,14 @@ template<typename ExpressionType, typename Scalar = typename ExpressionType::Sca
 struct plain_row_type
 {
   typedef Matrix<Scalar, 1, ExpressionType::ColsAtCompileTime,
-                 ExpressionType::PlainObject::Options | RowMajor, 1, ExpressionType::MaxColsAtCompileTime> MatrixRowType;
+                 int(ExpressionType::PlainObject::Options) | int(RowMajor), 1, ExpressionType::MaxColsAtCompileTime> MatrixRowType;
   typedef Array<Scalar, 1, ExpressionType::ColsAtCompileTime,
-                 ExpressionType::PlainObject::Options | RowMajor, 1, ExpressionType::MaxColsAtCompileTime> ArrayRowType;
+                 int(ExpressionType::PlainObject::Options) | int(RowMajor), 1, ExpressionType::MaxColsAtCompileTime> ArrayRowType;
 
   typedef typename conditional<
     is_same< typename traits<ExpressionType>::XprKind, MatrixXpr >::value,
     MatrixRowType,
-    ArrayRowType 
+    ArrayRowType
   >::type type;
 };
 
@@ -618,15 +615,16 @@ struct plain_col_type
   typedef typename conditional<
     is_same< typename traits<ExpressionType>::XprKind, MatrixXpr >::value,
     MatrixColType,
-    ArrayColType 
+    ArrayColType
   >::type type;
 };
 
 template<typename ExpressionType, typename Scalar = typename ExpressionType::Scalar>
 struct plain_diag_type
 {
-  enum { diag_size = EIGEN_SIZE_MIN_PREFER_DYNAMIC(ExpressionType::RowsAtCompileTime, ExpressionType::ColsAtCompileTime),
-         max_diag_size = EIGEN_SIZE_MIN_PREFER_FIXED(ExpressionType::MaxRowsAtCompileTime, ExpressionType::MaxColsAtCompileTime)
+  enum { diag_size = internal::min_size_prefer_dynamic(ExpressionType::RowsAtCompileTime, ExpressionType::ColsAtCompileTime),
+         max_diag_size = min_size_prefer_fixed(ExpressionType::MaxRowsAtCompileTime,
+                                               ExpressionType::MaxColsAtCompileTime)
   };
   typedef Matrix<Scalar, diag_size, 1, ExpressionType::PlainObject::Options & ~RowMajor, max_diag_size, 1> MatrixDiagType;
   typedef Array<Scalar, diag_size, 1, ExpressionType::PlainObject::Options & ~RowMajor, max_diag_size, 1> ArrayDiagType;
@@ -634,7 +632,7 @@ struct plain_diag_type
   typedef typename conditional<
     is_same< typename traits<ExpressionType>::XprKind, MatrixXpr >::value,
     MatrixDiagType,
-    ArrayDiagType 
+    ArrayDiagType
   >::type type;
 };
 
@@ -671,24 +669,39 @@ template<typename T> struct is_diagonal<DiagonalWrapper<T> >
 template<typename T, int S> struct is_diagonal<DiagonalMatrix<T,S> >
 { enum { ret = true }; };
 
+
+template<typename T> struct is_identity
+{ enum { value = false }; };
+
+template<typename T> struct is_identity<CwiseNullaryOp<internal::scalar_identity_op<typename T::Scalar>, T> >
+{ enum { value = true }; };
+
+
 template<typename S1, typename S2> struct glue_shapes;
 template<> struct glue_shapes<DenseShape,TriangularShape> { typedef TriangularShape type;  };
 
 template<typename T1, typename T2>
-bool is_same_dense(const T1 &mat1, const T2 &mat2, typename enable_if<has_direct_access<T1>::ret&&has_direct_access<T2>::ret, T1>::type * = 0)
+struct possibly_same_dense {
+  enum { value = has_direct_access<T1>::ret && has_direct_access<T2>::ret && is_same<typename T1::Scalar,typename T2::Scalar>::value };
+};
+
+template<typename T1, typename T2>
+EIGEN_DEVICE_FUNC
+bool is_same_dense(const T1 &mat1, const T2 &mat2, typename enable_if<possibly_same_dense<T1,T2>::value>::type * = 0)
 {
   return (mat1.data()==mat2.data()) && (mat1.innerStride()==mat2.innerStride()) && (mat1.outerStride()==mat2.outerStride());
 }
 
 template<typename T1, typename T2>
-bool is_same_dense(const T1 &, const T2 &, typename enable_if<!(has_direct_access<T1>::ret&&has_direct_access<T2>::ret), T1>::type * = 0)
+EIGEN_DEVICE_FUNC
+bool is_same_dense(const T1 &, const T2 &, typename enable_if<!possibly_same_dense<T1,T2>::value>::type * = 0)
 {
   return false;
 }
 
 // Internal helper defining the cost of a scalar division for the type T.
 // The default heuristic can be specialized for each scalar type and architecture.
-template<typename T,bool Vectorized=false,typename EnaleIf = void>
+template<typename T,bool Vectorized=false,typename EnableIf = void>
 struct scalar_div_cost {
   enum { value = 8*NumTraits<T>::MulCost };
 };
@@ -735,7 +748,7 @@ std::string demangle_flags(int f)
   if(f&DirectAccessBit)             res += " | Direct";
   if(f&NestByRefBit)                res += " | NestByRef";
   if(f&NoPreferredStorageOrderBit)  res += " | NoPreferredStorageOrderBit";
-  
+
   return res;
 }
 #endif
@@ -832,7 +845,7 @@ struct ScalarBinaryOpTraits<void,void,BinaryOp>
 #define EIGEN_CHECK_BINARY_COMPATIBILIY(BINOP,LHS,RHS) \
   EIGEN_STATIC_ASSERT((Eigen::internal::has_ReturnType<ScalarBinaryOpTraits<LHS, RHS,BINOP> >::value), \
     YOU_MIXED_DIFFERENT_NUMERIC_TYPES__YOU_NEED_TO_USE_THE_CAST_METHOD_OF_MATRIXBASE_TO_CAST_NUMERIC_TYPES_EXPLICITLY)
-    
+
 } // end namespace Eigen
 
 #endif // EIGEN_XPRHELPER_H

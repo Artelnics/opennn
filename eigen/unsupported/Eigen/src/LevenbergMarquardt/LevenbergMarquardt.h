@@ -20,6 +20,8 @@
 #define EIGEN_LEVENBERGMARQUARDT_H
 
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 namespace LevenbergMarquardtSpace {
     enum Status {
@@ -38,10 +40,10 @@ namespace LevenbergMarquardtSpace {
     };
 }
 
-template <typename _Scalar, int NX=Dynamic, int NY=Dynamic>
+template <typename Scalar_, int NX=Dynamic, int NY=Dynamic>
 struct DenseFunctor
 {
-  typedef _Scalar Scalar;
+  typedef Scalar_ Scalar;
   enum {
     InputsAtCompileTime = NX,
     ValuesAtCompileTime = NY
@@ -65,11 +67,11 @@ struct DenseFunctor
   // should be defined in derived classes
 };
 
-template <typename _Scalar, typename _Index>
+template <typename Scalar_, typename Index_>
 struct SparseFunctor
 {
-  typedef _Scalar Scalar;
-  typedef _Index Index;
+  typedef Scalar_ Scalar;
+  typedef Index_ Index;
   typedef Matrix<Scalar,Dynamic,1> InputType;
   typedef Matrix<Scalar,Dynamic,1> ValueType;
   typedef SparseMatrix<Scalar, ColMajor, Index> JacobianType;
@@ -106,18 +108,18 @@ void lmpar2(const QRSolver &qr, const VectorType  &diag, const VectorType  &qtb,
   * Check wikipedia for more information.
   * http://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
   */
-template<typename _FunctorType>
+template<typename FunctorType_>
 class LevenbergMarquardt : internal::no_assignment_operator
 {
   public:
-    typedef _FunctorType FunctorType;
+    typedef FunctorType_ FunctorType;
     typedef typename FunctorType::QRSolver QRSolver;
     typedef typename FunctorType::JacobianType JacobianType;
     typedef typename JacobianType::Scalar Scalar;
     typedef typename JacobianType::RealScalar RealScalar; 
     typedef typename QRSolver::StorageIndex PermIndex;
     typedef Matrix<Scalar,Dynamic,1> FVectorType;
-    typedef PermutationMatrix<Dynamic,Dynamic> PermutationType;
+    typedef PermutationMatrix<Dynamic,Dynamic,int> PermutationType;
   public:
     LevenbergMarquardt(FunctorType& functor) 
     : m_functor(functor),m_nfev(0),m_njev(0),m_fnorm(0.0),m_gnorm(0),
@@ -233,9 +235,9 @@ class LevenbergMarquardt : internal::no_assignment_operator
     
     /** 
      * \brief Reports whether the minimization was successful
-     * \returns \c Success if the minimization was succesful,
+     * \returns \c Success if the minimization was successful,
      *         \c NumericalIssue if a numerical problem arises during the 
-     *          minimization process, for exemple during the QR factorization
+     *          minimization process, for example during the QR factorization
      *         \c NoConvergence if the minimization did not converge after 
      *          the maximum number of function evaluation allowed
      *          \c InvalidInput if the input matrix is invalid

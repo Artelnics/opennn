@@ -1,11 +1,11 @@
 #include <Eigen/Dense>
 #include <iostream>
 
-using namespace Eigen;
+using Eigen::MatrixXf;
 
 void copyUpperTriangularPart(MatrixXf& dst, const MatrixXf& src)
 {
-  dst.triangularView<Upper>() = src.triangularView<Upper>();
+  dst.triangularView<Eigen::Upper>() = src.triangularView<Eigen::Upper>();
 }
 
 int main()

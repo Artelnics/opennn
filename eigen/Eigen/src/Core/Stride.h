@@ -10,7 +10,9 @@
 #ifndef EIGEN_STRIDE_H
 #define EIGEN_STRIDE_H
 
-namespace Eigen { 
+#include "./InternalHeaderCheck.h"
+
+namespace Eigen {
 
 /** \class Stride
   * \ingroup Core_Module
@@ -31,23 +33,31 @@ namespace Eigen {
   * arguments to the constructor.
   *
   * Indeed, this class takes two template parameters:
-  *  \tparam _OuterStrideAtCompileTime the outer stride, or Dynamic if you want to specify it at runtime.
-  *  \tparam _InnerStrideAtCompileTime the inner stride, or Dynamic if you want to specify it at runtime.
+  *  \tparam OuterStrideAtCompileTime_ the outer stride, or Dynamic if you want to specify it at runtime.
+  *  \tparam InnerStrideAtCompileTime_ the inner stride, or Dynamic if you want to specify it at runtime.
   *
   * Here is an example:
   * \include Map_general_stride.cpp
   * Output: \verbinclude Map_general_stride.out
   *
+  * Both strides can be negative. However, a negative stride of -1 cannot be specified at compile time
+  * because of the ambiguity with Dynamic which is defined to -1 (historically, negative strides were
+  * not allowed).
+  *
+  * Note that for compile-time vectors (ColsAtCompileTime==1 or RowsAtCompile==1),
+  * the inner stride is the pointer increment between two consecutive elements,
+  * regardless of storage layout.
+  *
   * \sa class InnerStride, class OuterStride, \ref TopicStorageOrders
   */
-template<int _OuterStrideAtCompileTime, int _InnerStrideAtCompileTime>
+template<int OuterStrideAtCompileTime_, int InnerStrideAtCompileTime_>
 class Stride
 {
   public:
     typedef Eigen::Index Index; ///< \deprecated since Eigen 3.3
     enum {
-      InnerStrideAtCompileTime = _InnerStrideAtCompileTime,
-      OuterStrideAtCompileTime = _OuterStrideAtCompileTime
+      InnerStrideAtCompileTime = InnerStrideAtCompileTime_,
+      OuterStrideAtCompileTime = OuterStrideAtCompileTime_
     };
 
     /** Default constructor, for use when strides are fixed at compile time */
@@ -55,6 +65,8 @@ class Stride
     Stride()
       : m_outer(OuterStrideAtCompileTime), m_inner(InnerStrideAtCompileTime)
     {
+      // FIXME: for Eigen 4 we should use DynamicIndex instead of Dynamic.
+      // FIXME: for Eigen 4 we should also unify this API with fix<>
       eigen_assert(InnerStrideAtCompileTime != Dynamic && OuterStrideAtCompileTime != Dynamic);
     }
 
@@ -63,7 +75,6 @@ class Stride
     Stride(Index outerStride, Index innerStride)
       : m_outer(outerStride), m_inner(innerStride)
     {
-      eigen_assert(innerStride>=0 && outerStride>=0);
     }
 
     /** Copy constructor */
@@ -73,10 +84,10 @@ class Stride
     {}
 
     /** \returns the outer stride */
-    EIGEN_DEVICE_FUNC
+    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
     inline Index outer() const { return m_outer.value(); }
     /** \returns the inner stride */
-    EIGEN_DEVICE_FUNC
+    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR
     inline Index inner() const { return m_inner.value(); }
 
   protected:

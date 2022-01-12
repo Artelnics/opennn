@@ -11,6 +11,8 @@
 #ifndef EIGEN_CWISE_BINARY_OP_H
 #define EIGEN_CWISE_BINARY_OP_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 namespace internal {
@@ -43,10 +45,10 @@ struct traits<CwiseBinaryOp<BinaryOp, Lhs, Rhs> >
                                       typename traits<Rhs>::StorageIndex>::type StorageIndex;
   typedef typename Lhs::Nested LhsNested;
   typedef typename Rhs::Nested RhsNested;
-  typedef typename remove_reference<LhsNested>::type _LhsNested;
-  typedef typename remove_reference<RhsNested>::type _RhsNested;
+  typedef typename remove_reference<LhsNested>::type LhsNested_;
+  typedef typename remove_reference<RhsNested>::type RhsNested_;
   enum {
-    Flags = cwise_promote_storage_order<typename traits<Lhs>::StorageKind,typename traits<Rhs>::StorageKind,_LhsNested::Flags & RowMajorBit,_RhsNested::Flags & RowMajorBit>::value
+    Flags = cwise_promote_storage_order<typename traits<Lhs>::StorageKind,typename traits<Rhs>::StorageKind,LhsNested_::Flags & RowMajorBit,RhsNested_::Flags & RowMajorBit>::value
   };
 };
 } // end namespace internal
@@ -74,7 +76,7 @@ class CwiseBinaryOpImpl;
   * \sa MatrixBase::binaryExpr(const MatrixBase<OtherDerived> &,const CustomBinaryOp &) const, class CwiseUnaryOp, class CwiseNullaryOp
   */
 template<typename BinaryOp, typename LhsType, typename RhsType>
-class CwiseBinaryOp : 
+class CwiseBinaryOp :
   public CwiseBinaryOpImpl<
           BinaryOp, LhsType, RhsType,
           typename internal::cwise_promote_storage_type<typename internal::traits<LhsType>::StorageKind,
@@ -83,7 +85,7 @@ class CwiseBinaryOp :
   internal::no_assignment_operator
 {
   public:
-    
+
     typedef typename internal::remove_all<BinaryOp>::type Functor;
     typedef typename internal::remove_all<LhsType>::type Lhs;
     typedef typename internal::remove_all<RhsType>::type Rhs;
@@ -95,46 +97,46 @@ class CwiseBinaryOp :
                                                       BinaryOp>::ret>::Base Base;
     EIGEN_GENERIC_PUBLIC_INTERFACE(CwiseBinaryOp)
 
+    EIGEN_CHECK_BINARY_COMPATIBILIY(BinaryOp,typename Lhs::Scalar,typename Rhs::Scalar)
+    EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE(Lhs, Rhs)
+
     typedef typename internal::ref_selector<LhsType>::type LhsNested;
     typedef typename internal::ref_selector<RhsType>::type RhsNested;
-    typedef typename internal::remove_reference<LhsNested>::type _LhsNested;
-    typedef typename internal::remove_reference<RhsNested>::type _RhsNested;
+    typedef typename internal::remove_reference<LhsNested>::type LhsNested_;
+    typedef typename internal::remove_reference<RhsNested>::type RhsNested_;
 
-    EIGEN_DEVICE_FUNC
-    EIGEN_STRONG_INLINE CwiseBinaryOp(const Lhs& aLhs, const Rhs& aRhs, const BinaryOp& func = BinaryOp())
+#if EIGEN_COMP_MSVC
+    //Required for Visual Studio or the Copy constructor will probably not get inlined!
+    EIGEN_STRONG_INLINE
+    CwiseBinaryOp(const CwiseBinaryOp<BinaryOp,LhsType,RhsType>&) = default;
+#endif
+
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+    CwiseBinaryOp(const Lhs& aLhs, const Rhs& aRhs, const BinaryOp& func = BinaryOp())
       : m_lhs(aLhs), m_rhs(aRhs), m_functor(func)
     {
-      EIGEN_CHECK_BINARY_COMPATIBILIY(BinaryOp,typename Lhs::Scalar,typename Rhs::Scalar);
-      // require the sizes to match
-      EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE(Lhs, Rhs)
       eigen_assert(aLhs.rows() == aRhs.rows() && aLhs.cols() == aRhs.cols());
     }
 
-    EIGEN_DEVICE_FUNC
-    EIGEN_STRONG_INLINE Index rows() const {
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR
+    Index rows() const EIGEN_NOEXCEPT {
       // return the fixed size type if available to enable compile time optimizations
-      if (internal::traits<typename internal::remove_all<LhsNested>::type>::RowsAtCompileTime==Dynamic)
-        return m_rhs.rows();
-      else
-        return m_lhs.rows();
+      return internal::traits<typename internal::remove_all<LhsNested>::type>::RowsAtCompileTime==Dynamic ? m_rhs.rows() : m_lhs.rows();
     }
-    EIGEN_DEVICE_FUNC
-    EIGEN_STRONG_INLINE Index cols() const {
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR
+    Index cols() const EIGEN_NOEXCEPT {
       // return the fixed size type if available to enable compile time optimizations
-      if (internal::traits<typename internal::remove_all<LhsNested>::type>::ColsAtCompileTime==Dynamic)
-        return m_rhs.cols();
-      else
-        return m_lhs.cols();
+      return internal::traits<typename internal::remove_all<LhsNested>::type>::ColsAtCompileTime==Dynamic ? m_rhs.cols() : m_lhs.cols();
     }
 
     /** \returns the left hand side nested expression */
-    EIGEN_DEVICE_FUNC
-    const _LhsNested& lhs() const { return m_lhs; }
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+    const LhsNested_& lhs() const { return m_lhs; }
     /** \returns the right hand side nested expression */
-    EIGEN_DEVICE_FUNC
-    const _RhsNested& rhs() const { return m_rhs; }
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+    const RhsNested_& rhs() const { return m_rhs; }
     /** \returns the functor representing the binary operation */
-    EIGEN_DEVICE_FUNC
+    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     const BinaryOp& functor() const { return m_functor; }
 
   protected:
@@ -158,7 +160,7 @@ public:
   */
 template<typename Derived>
 template<typename OtherDerived>
-EIGEN_STRONG_INLINE Derived &
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived &
 MatrixBase<Derived>::operator-=(const MatrixBase<OtherDerived> &other)
 {
   call_assignment(derived(), other.derived(), internal::sub_assign_op<Scalar,typename OtherDerived::Scalar>());
@@ -171,7 +173,7 @@ MatrixBase<Derived>::operator-=(const MatrixBase<OtherDerived> &other)
   */
 template<typename Derived>
 template<typename OtherDerived>
-EIGEN_STRONG_INLINE Derived &
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived &
 MatrixBase<Derived>::operator+=(const MatrixBase<OtherDerived>& other)
 {
   call_assignment(derived(), other.derived(), internal::add_assign_op<Scalar,typename OtherDerived::Scalar>());
@@ -181,4 +183,3 @@ MatrixBase<Derived>::operator+=(const MatrixBase<OtherDerived>& other)
 } // end namespace Eigen
 
 #endif // EIGEN_CWISE_BINARY_OP_H
-

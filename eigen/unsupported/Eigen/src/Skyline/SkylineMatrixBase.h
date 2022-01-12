@@ -12,7 +12,9 @@
 
 #include "SkylineUtil.h"
 
-namespace Eigen { 
+#include "./InternalHeaderCheck.h"
+
+namespace Eigen {
 
 /** \ingroup Skyline_Module
  *
@@ -85,8 +87,8 @@ public:
     typedef typename NumTraits<Scalar>::Real RealScalar;
 
     /** type of the equivalent square matrix */
-    typedef Matrix<Scalar, EIGEN_SIZE_MAX(RowsAtCompileTime, ColsAtCompileTime),
-                           EIGEN_SIZE_MAX(RowsAtCompileTime, ColsAtCompileTime) > SquareMatrixType;
+    typedef Matrix<Scalar, internal::max_size_prefer_dynamic(RowsAtCompileTime, ColsAtCompileTime),
+                           internal::max_size_prefer_dynamic(RowsAtCompileTime, ColsAtCompileTime) > SquareMatrixType;
 
     inline const Derived& derived() const {
         return *static_cast<const Derived*> (this);
@@ -102,18 +104,18 @@ public:
 #endif // not EIGEN_PARSED_BY_DOXYGEN
 
     /** \returns the number of rows. \sa cols(), RowsAtCompileTime */
-    inline Index rows() const {
+    inline EIGEN_CONSTEXPR Index rows() const EIGEN_NOEXCEPT {
         return derived().rows();
     }
 
     /** \returns the number of columns. \sa rows(), ColsAtCompileTime*/
-    inline Index cols() const {
+    inline EIGEN_CONSTEXPR Index cols() const EIGEN_NOEXCEPT {
         return derived().cols();
     }
 
     /** \returns the number of coefficients, which is \a rows()*cols().
      * \sa rows(), cols(), SizeAtCompileTime. */
-    inline Index size() const {
+    inline EIGEN_CONSTEXPR Index size() const EIGEN_NOEXCEPT {
         return rows() * cols();
     }
 
@@ -209,4 +211,4 @@ protected:
 
 } // end namespace Eigen
 
-#endif // EIGEN_SkylineMatrixBase_H
+#endif // EIGEN_SKYLINEMATRIXBASE_H

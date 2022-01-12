@@ -10,6 +10,8 @@
 #ifndef EIGEN_ROTATION2D_H
 #define EIGEN_ROTATION2D_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 /** \geometry_module \ingroup Geometry_Module
@@ -18,7 +20,7 @@ namespace Eigen {
   *
   * \brief Represents a rotation/orientation in a 2 dimensional space.
   *
-  * \tparam _Scalar the scalar type, i.e., the type of the coefficients
+  * \tparam Scalar_ the scalar type, i.e., the type of the coefficients
   *
   * This class is equivalent to a single scalar representing a counter clock wise rotation
   * as a single angle in radian. It provides some additional features such as the automatic
@@ -31,16 +33,16 @@ namespace Eigen {
 
 namespace internal {
 
-template<typename _Scalar> struct traits<Rotation2D<_Scalar> >
+template<typename Scalar_> struct traits<Rotation2D<Scalar_> >
 {
-  typedef _Scalar Scalar;
+  typedef Scalar_ Scalar;
 };
 } // end namespace internal
 
-template<typename _Scalar>
-class Rotation2D : public RotationBase<Rotation2D<_Scalar>,2>
+template<typename Scalar_>
+class Rotation2D : public RotationBase<Rotation2D<Scalar_>,2>
 {
-  typedef RotationBase<Rotation2D<_Scalar>,2> Base;
+  typedef RotationBase<Rotation2D<Scalar_>,2> Base;
 
 public:
 
@@ -48,7 +50,7 @@ public:
 
   enum { Dim = 2 };
   /** the scalar type of the coefficients */
-  typedef _Scalar Scalar;
+  typedef Scalar_ Scalar;
   typedef Matrix<Scalar,2,1> Vector2;
   typedef Matrix<Scalar,2,2> Matrix2;
 
@@ -175,7 +177,7 @@ template<typename Scalar>
 template<typename Derived>
 EIGEN_DEVICE_FUNC Rotation2D<Scalar>& Rotation2D<Scalar>::fromRotationMatrix(const MatrixBase<Derived>& mat)
 {
-  EIGEN_USING_STD_MATH(atan2)
+  EIGEN_USING_STD(atan2)
   EIGEN_STATIC_ASSERT(Derived::RowsAtCompileTime==2 && Derived::ColsAtCompileTime==2,YOU_MADE_A_PROGRAMMING_MISTAKE)
   m_angle = atan2(mat.coeff(1,0), mat.coeff(0,0));
   return *this;
@@ -187,8 +189,8 @@ template<typename Scalar>
 typename Rotation2D<Scalar>::Matrix2
 EIGEN_DEVICE_FUNC Rotation2D<Scalar>::toRotationMatrix(void) const
 {
-  EIGEN_USING_STD_MATH(sin)
-  EIGEN_USING_STD_MATH(cos)
+  EIGEN_USING_STD(sin)
+  EIGEN_USING_STD(cos)
   Scalar sinA = sin(m_angle);
   Scalar cosA = cos(m_angle);
   return (Matrix2() << cosA, -sinA, sinA, cosA).finished();

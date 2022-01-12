@@ -7,6 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#define EIGEN_NO_STATIC_ASSERT
+
 #include "main.h"
 #include <unsupported/Eigen/AlignedVector3>
 
@@ -70,13 +72,16 @@ void alignedvector3()
     VERIFY_IS_APPROX(f6,r1-r4);
   }
   
+  FastType f8, f9(0,0,0);
+  VERIFY_IS_APPROX(f9-f1,-f1);
+
   std::stringstream ss1, ss2;
   ss1 << f1;
   ss2 << r1;
   VERIFY(ss1.str()==ss2.str());
 }
 
-void test_alignedvector3()
+EIGEN_DECLARE_TEST(alignedvector3)
 {
   for(int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST( alignedvector3<float>() );

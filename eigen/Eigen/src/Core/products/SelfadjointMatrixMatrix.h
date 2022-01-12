@@ -10,6 +10,8 @@
 #ifndef EIGEN_SELFADJOINT_MATRIX_MATRIX_H
 #define EIGEN_SELFADJOINT_MATRIX_MATRIX_H
 
+#include "../InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 namespace internal {
@@ -45,14 +47,23 @@ struct symm_pack_lhs
   }
   void operator()(Scalar* blockA, const Scalar* _lhs, Index lhsStride, Index cols, Index rows)
   {
-    enum { PacketSize = packet_traits<Scalar>::size };
+    typedef typename unpacket_traits<typename packet_traits<Scalar>::type>::half HalfPacket;
+    typedef typename unpacket_traits<typename unpacket_traits<typename packet_traits<Scalar>::type>::half>::half QuarterPacket;
+    enum { PacketSize = packet_traits<Scalar>::size,
+           HalfPacketSize = unpacket_traits<HalfPacket>::size,
+           QuarterPacketSize = unpacket_traits<QuarterPacket>::size,
+           HasHalf = (int)HalfPacketSize < (int)PacketSize,
+           HasQuarter = (int)QuarterPacketSize < (int)HalfPacketSize};
+
     const_blas_data_mapper<Scalar,Index,StorageOrder> lhs(_lhs,lhsStride);
     Index count = 0;
     //Index peeled_mc3 = (rows/Pack1)*Pack1;
     
     const Index peeled_mc3 = Pack1>=3*PacketSize ? (rows/(3*PacketSize))*(3*PacketSize) : 0;
     const Index peeled_mc2 = Pack1>=2*PacketSize ? peeled_mc3+((rows-peeled_mc3)/(2*PacketSize))*(2*PacketSize) : 0;
-    const Index peeled_mc1 = Pack1>=1*PacketSize ? (rows/(1*PacketSize))*(1*PacketSize) : 0;
+    const Index peeled_mc1 = Pack1>=1*PacketSize ? peeled_mc2+((rows-peeled_mc2)/(1*PacketSize))*(1*PacketSize) : 0;
+    const Index peeled_mc_half = Pack1>=HalfPacketSize ? peeled_mc1+((rows-peeled_mc1)/(HalfPacketSize))*(HalfPacketSize) : 0;
+    const Index peeled_mc_quarter = Pack1>=QuarterPacketSize ? peeled_mc_half+((rows-peeled_mc_half)/(QuarterPacketSize))*(QuarterPacketSize) : 0;
     
     if(Pack1>=3*PacketSize)
       for(Index i=0; i<peeled_mc3; i+=3*PacketSize)
@@ -66,8 +77,16 @@ struct symm_pack_lhs
       for(Index i=peeled_mc2; i<peeled_mc1; i+=1*PacketSize)
         pack<1*PacketSize>(blockA, lhs, cols, i, count);
 
+    if(HasHalf && Pack1>=HalfPacketSize)
+      for(Index i=peeled_mc1; i<peeled_mc_half; i+=HalfPacketSize)
+        pack<HalfPacketSize>(blockA, lhs, cols, i, count);
+
+    if(HasQuarter && Pack1>=QuarterPacketSize)
+      for(Index i=peeled_mc_half; i<peeled_mc_quarter; i+=QuarterPacketSize)
+        pack<QuarterPacketSize>(blockA, lhs, cols, i, count);
+
     // do the same with mr==1
-    for(Index i=peeled_mc1; i<rows; i++)
+    for(Index i=peeled_mc_quarter; i<rows; i++)
     {
       for(Index k=0; k<i; k++)
         blockA[count++] = lhs(i, k);                   // normal
@@ -295,10 +314,10 @@ struct product_selfadjoint_matrix<Scalar,Index,LhsStorageOrder,LhsSelfAdjoint,Co
     const Scalar& alpha, level3_blocking<Scalar,Scalar>& blocking)
   {
     product_selfadjoint_matrix<Scalar, Index,
-      EIGEN_LOGICAL_XOR(RhsSelfAdjoint,RhsStorageOrder==RowMajor) ? ColMajor : RowMajor,
-      RhsSelfAdjoint, NumTraits<Scalar>::IsComplex && EIGEN_LOGICAL_XOR(RhsSelfAdjoint,ConjugateRhs),
-      EIGEN_LOGICAL_XOR(LhsSelfAdjoint,LhsStorageOrder==RowMajor) ? ColMajor : RowMajor,
-      LhsSelfAdjoint, NumTraits<Scalar>::IsComplex && EIGEN_LOGICAL_XOR(LhsSelfAdjoint,ConjugateLhs),
+      logical_xor(RhsSelfAdjoint,RhsStorageOrder==RowMajor) ? ColMajor : RowMajor,
+      RhsSelfAdjoint, NumTraits<Scalar>::IsComplex && logical_xor(RhsSelfAdjoint, ConjugateRhs),
+      logical_xor(LhsSelfAdjoint,LhsStorageOrder==RowMajor) ? ColMajor : RowMajor,
+      LhsSelfAdjoint, NumTraits<Scalar>::IsComplex && logical_xor(LhsSelfAdjoint, ConjugateLhs),
       ColMajor,ResInnerStride>
       ::run(cols, rows,  rhs, rhsStride,  lhs, lhsStride,  res, resIncr, resStride,  alpha, blocking);
   }
@@ -355,7 +374,7 @@ EIGEN_DONT_INLINE void product_selfadjoint_matrix<Scalar,Index,LhsStorageOrder,t
     gebp_kernel<Scalar, Scalar, Index, ResMapper, Traits::mr, Traits::nr, ConjugateLhs, ConjugateRhs> gebp_kernel;
     symm_pack_lhs<Scalar, Index, Traits::mr, Traits::LhsProgress, LhsStorageOrder> pack_lhs;
     gemm_pack_rhs<Scalar, Index, RhsMapper, Traits::nr,RhsStorageOrder> pack_rhs;
-    gemm_pack_lhs<Scalar, Index, LhsTransposeMapper, Traits::mr, Traits::LhsProgress, LhsStorageOrder==RowMajor?ColMajor:RowMajor, true> pack_lhs_transposed;
+    gemm_pack_lhs<Scalar, Index, LhsTransposeMapper, Traits::mr, Traits::LhsProgress, typename Traits::LhsPacket4Packing, LhsStorageOrder==RowMajor?ColMajor:RowMajor, true> pack_lhs_transposed;
 
     for(Index k2=0; k2<size; k2+=kc)
     {
@@ -390,7 +409,7 @@ EIGEN_DONT_INLINE void product_selfadjoint_matrix<Scalar,Index,LhsStorageOrder,t
       for(Index i2=k2+kc; i2<size; i2+=mc)
       {
         const Index actual_mc = (std::min)(i2+mc,size)-i2;
-        gemm_pack_lhs<Scalar, Index, LhsMapper, Traits::mr, Traits::LhsProgress, LhsStorageOrder,false>()
+        gemm_pack_lhs<Scalar, Index, LhsMapper, Traits::mr, Traits::LhsProgress, typename Traits::LhsPacket4Packing, LhsStorageOrder,false>()
           (blockA, lhs.getSubMapper(i2, k2), actual_kc, actual_mc);
 
         gebp_kernel(res.getSubMapper(i2, 0), blockA, blockB, actual_mc, actual_kc, cols, alpha);
@@ -442,7 +461,7 @@ EIGEN_DONT_INLINE void product_selfadjoint_matrix<Scalar,Index,LhsStorageOrder,f
     ei_declare_aligned_stack_constructed_variable(Scalar, blockB, sizeB, blocking.blockB());
 
     gebp_kernel<Scalar, Scalar, Index, ResMapper, Traits::mr, Traits::nr, ConjugateLhs, ConjugateRhs> gebp_kernel;
-    gemm_pack_lhs<Scalar, Index, LhsMapper, Traits::mr, Traits::LhsProgress, LhsStorageOrder> pack_lhs;
+    gemm_pack_lhs<Scalar, Index, LhsMapper, Traits::mr, Traits::LhsProgress, typename Traits::LhsPacket4Packing, LhsStorageOrder> pack_lhs;
     symm_pack_rhs<Scalar, Index, Traits::nr,RhsStorageOrder> pack_rhs;
 
     for(Index k2=0; k2<size; k2+=kc)
@@ -504,10 +523,10 @@ struct selfadjoint_product_impl<Lhs,LhsMode,false,Rhs,RhsMode,false>
     BlockingType blocking(lhs.rows(), rhs.cols(), lhs.cols(), 1, false);
 
     internal::product_selfadjoint_matrix<Scalar, Index,
-      EIGEN_LOGICAL_XOR(LhsIsUpper,internal::traits<Lhs>::Flags &RowMajorBit) ? RowMajor : ColMajor, LhsIsSelfAdjoint,
-      NumTraits<Scalar>::IsComplex && EIGEN_LOGICAL_XOR(LhsIsUpper,bool(LhsBlasTraits::NeedToConjugate)),
-      EIGEN_LOGICAL_XOR(RhsIsUpper,internal::traits<Rhs>::Flags &RowMajorBit) ? RowMajor : ColMajor, RhsIsSelfAdjoint,
-      NumTraits<Scalar>::IsComplex && EIGEN_LOGICAL_XOR(RhsIsUpper,bool(RhsBlasTraits::NeedToConjugate)),
+      internal::logical_xor(LhsIsUpper, internal::traits<Lhs>::Flags &RowMajorBit) ? RowMajor : ColMajor, LhsIsSelfAdjoint,
+      NumTraits<Scalar>::IsComplex && internal::logical_xor(LhsIsUpper, bool(LhsBlasTraits::NeedToConjugate)),
+      internal::logical_xor(RhsIsUpper, internal::traits<Rhs>::Flags &RowMajorBit) ? RowMajor : ColMajor, RhsIsSelfAdjoint,
+      NumTraits<Scalar>::IsComplex && internal::logical_xor(RhsIsUpper, bool(RhsBlasTraits::NeedToConjugate)),
       internal::traits<Dest>::Flags&RowMajorBit  ? RowMajor : ColMajor,
       Dest::InnerStrideAtCompileTime>
       ::run(

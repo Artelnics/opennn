@@ -12,6 +12,8 @@
 #ifndef EIGEN_LMCOVAR_H
 #define EIGEN_LMCOVAR_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 namespace internal {

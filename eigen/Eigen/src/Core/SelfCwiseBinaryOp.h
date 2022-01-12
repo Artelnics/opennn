@@ -10,6 +10,8 @@
 #ifndef EIGEN_SELFCWISEBINARYOP_H
 #define EIGEN_SELFCWISEBINARYOP_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 // TODO generalize the scalar type of 'other'

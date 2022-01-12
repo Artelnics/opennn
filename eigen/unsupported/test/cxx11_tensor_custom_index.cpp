@@ -20,7 +20,6 @@ using Eigen::Tensor;
 template <int DataLayout>
 static void test_map_as_index()
 {
-#ifdef EIGEN_HAS_SFINAE
   Tensor<float, 4, DataLayout> tensor(2, 3, 5, 7);
   tensor.setRandom();
 
@@ -35,14 +34,12 @@ static void test_map_as_index()
 
   VERIFY_IS_EQUAL(tensor.coeff(coeffC), tensor.coeff(coeff));
   VERIFY_IS_EQUAL(tensor.coeffRef(coeffC), tensor.coeffRef(coeff));
-#endif
 }
 
 
 template <int DataLayout>
 static void test_matrix_as_index()
 {
-#ifdef EIGEN_HAS_SFINAE
   Tensor<float, 4, DataLayout> tensor(2, 3, 5, 7);
   tensor.setRandom();
 
@@ -53,14 +50,12 @@ static void test_matrix_as_index()
 
   VERIFY_IS_EQUAL(tensor.coeff(coeffC), tensor.coeff(coeff));
   VERIFY_IS_EQUAL(tensor.coeffRef(coeffC), tensor.coeffRef(coeff));
-#endif
 }
 
 
 template <int DataLayout>
 static void test_varlist_as_index()
 {
-#ifdef EIGEN_HAS_SFINAE
   Tensor<float, 4, DataLayout> tensor(2, 3, 5, 7);
   tensor.setRandom();
 
@@ -68,14 +63,12 @@ static void test_varlist_as_index()
 
   VERIFY_IS_EQUAL(tensor.coeff({1,2,4,1}), tensor.coeff(coeff));
   VERIFY_IS_EQUAL(tensor.coeffRef({1,2,4,1}), tensor.coeffRef(coeff));
-#endif
 }
 
 
 template <int DataLayout>
 static void test_sizes_as_index()
 {
-#ifdef EIGEN_HAS_SFINAE
   Tensor<float, 4, DataLayout> tensor(2, 3, 5, 7);
   tensor.setRandom();
 
@@ -84,11 +77,10 @@ static void test_sizes_as_index()
 
   VERIFY_IS_EQUAL(tensor.coeff(coeffC), tensor.coeff(coeff));
   VERIFY_IS_EQUAL(tensor.coeffRef(coeffC), tensor.coeffRef(coeff));
-#endif
 }
 
 
-void test_cxx11_tensor_custom_index() {
+EIGEN_DECLARE_TEST(cxx11_tensor_custom_index) {
   test_map_as_index<ColMajor>();
   test_map_as_index<RowMajor>();
   test_matrix_as_index<ColMajor>();

@@ -1,23 +1,20 @@
 #include <iostream>
 #include <Eigen/Dense>
 
-using namespace std;
-using namespace Eigen;
-
 int main()
 {
-   Matrix2f A, b;
-   LLT<Matrix2f> llt;
+   Eigen::Matrix2f A, b;
+   Eigen::LLT<Eigen::Matrix2f> llt;
    A << 2, -1, -1, 3;
    b << 1, 2, 3, 1;
-   cout << "Here is the matrix A:\n" << A << endl;
-   cout << "Here is the right hand side b:\n" << b << endl;
-   cout << "Computing LLT decomposition..." << endl;
+   std::cout << "Here is the matrix A:\n" << A << std::endl;
+   std::cout << "Here is the right hand side b:\n" << b << std::endl;
+   std::cout << "Computing LLT decomposition..." << std::endl;
    llt.compute(A);
-   cout << "The solution is:\n" << llt.solve(b) << endl;
+   std::cout << "The solution is:\n" << llt.solve(b) << std::endl;
    A(1,1)++;
-   cout << "The matrix A is now:\n" << A << endl;
-   cout << "Computing LLT decomposition..." << endl;
+   std::cout << "The matrix A is now:\n" << A << std::endl;
+   std::cout << "Computing LLT decomposition..." << std::endl;
    llt.compute(A);
-   cout << "The solution is now:\n" << llt.solve(b) << endl;
+   std::cout << "The solution is now:\n" << llt.solve(b) << std::endl;
 }

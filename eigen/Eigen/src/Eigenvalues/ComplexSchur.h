@@ -14,6 +14,8 @@
 
 #include "./HessenbergDecomposition.h"
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 namespace internal {
@@ -27,7 +29,7 @@ template<typename MatrixType, bool IsComplex> struct complex_schur_reduce_to_hes
   *
   * \brief Performs a complex Schur decomposition of a real or complex square matrix
   *
-  * \tparam _MatrixType the type of the matrix of which we are
+  * \tparam MatrixType_ the type of the matrix of which we are
   * computing the Schur decomposition; this is expected to be an
   * instantiation of the Matrix class template.
   *
@@ -48,10 +50,10 @@ template<typename MatrixType, bool IsComplex> struct complex_schur_reduce_to_hes
   *
   * \sa class RealSchur, class EigenSolver, class ComplexEigenSolver
   */
-template<typename _MatrixType> class ComplexSchur
+template<typename MatrixType_> class ComplexSchur
 {
   public:
-    typedef _MatrixType MatrixType;
+    typedef MatrixType_ MatrixType;
     enum {
       RowsAtCompileTime = MatrixType::RowsAtCompileTime,
       ColsAtCompileTime = MatrixType::ColsAtCompileTime,
@@ -60,12 +62,12 @@ template<typename _MatrixType> class ComplexSchur
       MaxColsAtCompileTime = MatrixType::MaxColsAtCompileTime
     };
 
-    /** \brief Scalar type for matrices of type \p _MatrixType. */
+    /** \brief Scalar type for matrices of type \p MatrixType_. */
     typedef typename MatrixType::Scalar Scalar;
     typedef typename NumTraits<Scalar>::Real RealScalar;
     typedef Eigen::Index Index; ///< \deprecated since Eigen 3.3
 
-    /** \brief Complex scalar type for \p _MatrixType. 
+    /** \brief Complex scalar type for \p MatrixType_.
       *
       * This is \c std::complex<Scalar> if #Scalar is real (e.g.,
       * \c float or \c double) and just \c Scalar if #Scalar is
@@ -76,7 +78,7 @@ template<typename _MatrixType> class ComplexSchur
     /** \brief Type for the matrices in the Schur decomposition.
       *
       * This is a square matrix with entries of type #ComplexScalar. 
-      * The size is the same as the size of \p _MatrixType.
+      * The size is the same as the size of \p MatrixType_.
       */
     typedef Matrix<ComplexScalar, RowsAtCompileTime, ColsAtCompileTime, Options, MaxRowsAtCompileTime, MaxColsAtCompileTime> ComplexMatrixType;
 
@@ -212,7 +214,7 @@ template<typename _MatrixType> class ComplexSchur
 
     /** \brief Reports whether previous computation was successful.
       *
-      * \returns \c Success if computation was succesful, \c NoConvergence otherwise.
+      * \returns \c Success if computation was successful, \c NoConvergence otherwise.
       */
     ComputationInfo info() const
     {
@@ -259,7 +261,7 @@ template<typename _MatrixType> class ComplexSchur
     friend struct internal::complex_schur_reduce_to_hessenberg<MatrixType, NumTraits<Scalar>::IsComplex>;
 };
 
-/** If m_matT(i+1,i) is neglegible in floating point arithmetic
+/** If m_matT(i+1,i) is negligible in floating point arithmetic
   * compared to m_matT(i,i) and m_matT(j,j), then set it to zero and
   * return true, else return false. */
 template<typename MatrixType>

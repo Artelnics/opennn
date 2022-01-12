@@ -11,6 +11,8 @@
 #ifndef EIGEN_SPARSE_QR_H
 #define EIGEN_SPARSE_QR_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 template<typename MatrixType, typename OrderingType> class SparseQR;
@@ -41,15 +43,16 @@ namespace internal {
 /**
   * \ingroup SparseQR_Module
   * \class SparseQR
-  * \brief Sparse left-looking rank-revealing QR factorization
+  * \brief Sparse left-looking QR factorization with numerical column pivoting
   * 
-  * This class implements a left-looking rank-revealing QR decomposition 
-  * of sparse matrices. When a column has a norm less than a given tolerance
+  * This class implements a left-looking QR decomposition of sparse matrices
+  * with numerical column pivoting.
+  * When a column has a norm less than a given tolerance
   * it is implicitly permuted to the end. The QR factorization thus obtained is 
   * given by A*P = Q*R where R is upper triangular or trapezoidal. 
   * 
   * P is the column permutation which is the product of the fill-reducing and the
-  * rank-revealing permutations. Use colsPermutation() to get it.
+  * numerical permutations. Use colsPermutation() to get it.
   * 
   * Q is the orthogonal matrix represented as products of Householder reflectors. 
   * Use matrixQ() to get an expression and matrixQ().adjoint() to get the adjoint.
@@ -58,26 +61,37 @@ namespace internal {
   * R is the sparse triangular or trapezoidal matrix. The later occurs when A is rank-deficient.
   * matrixR().topLeftCorner(rank(), rank()) always returns a triangular factor of full rank.
   * 
-  * \tparam _MatrixType The type of the sparse matrix A, must be a column-major SparseMatrix<>
-  * \tparam _OrderingType The fill-reducing ordering method. See the \link OrderingMethods_Module 
+  * \tparam MatrixType_ The type of the sparse matrix A, must be a column-major SparseMatrix<>
+  * \tparam OrderingType_ The fill-reducing ordering method. See the \link OrderingMethods_Module
   *  OrderingMethods \endlink module for the list of built-in and external ordering methods.
   * 
   * \implsparsesolverconcept
   *
+  * The numerical pivoting strategy and default threshold are the same as in SuiteSparse QR, and
+  * detailed in the following paper:
+  * <i>
+  * Tim Davis, "Algorithm 915, SuiteSparseQR: Multifrontal Multithreaded Rank-Revealing
+  * Sparse QR Factorization, ACM Trans. on Math. Soft. 38(1), 2011.
+  * </i>
+  * Even though it is qualified as "rank-revealing", this strategy might fail for some 
+  * rank deficient problems. When this class is used to solve linear or least-square problems
+  * it is thus strongly recommended to check the accuracy of the computed solution. If it
+  * failed, it usually helps to increase the threshold with setPivotThreshold.
+  * 
   * \warning The input sparse matrix A must be in compressed mode (see SparseMatrix::makeCompressed()).
   * \warning For complex matrices matrixQ().transpose() will actually return the adjoint matrix.
   * 
   */
-template<typename _MatrixType, typename _OrderingType>
-class SparseQR : public SparseSolverBase<SparseQR<_MatrixType,_OrderingType> >
+template<typename MatrixType_, typename OrderingType_>
+class SparseQR : public SparseSolverBase<SparseQR<MatrixType_,OrderingType_> >
 {
   protected:
-    typedef SparseSolverBase<SparseQR<_MatrixType,_OrderingType> > Base;
+    typedef SparseSolverBase<SparseQR<MatrixType_,OrderingType_> > Base;
     using Base::m_isInitialized;
   public:
     using Base::_solve_impl;
-    typedef _MatrixType MatrixType;
-    typedef _OrderingType OrderingType;
+    typedef MatrixType_ MatrixType;
+    typedef OrderingType_ OrderingType;
     typedef typename MatrixType::Scalar Scalar;
     typedef typename MatrixType::RealScalar RealScalar;
     typedef typename MatrixType::StorageIndex StorageIndex;
@@ -331,7 +345,7 @@ void SparseQR<MatrixType,OrderingType>::analyzePattern(const MatrixType& mat)
   m_R.resize(m, n);
   m_Q.resize(m, diagSize);
   
-  // Allocate space for nonzero elements : rough estimation
+  // Allocate space for nonzero elements: rough estimation
   m_R.reserve(2*mat.nonZeros()); //FIXME Get a more accurate estimation through symbolic factorization with the etree
   m_Q.reserve(2*mat.nonZeros());
   m_hcoeffs.resize(diagSize);
@@ -640,7 +654,8 @@ struct SparseQR_QProduct : ReturnByValue<SparseQR_QProduct<SparseQRType, Derived
       // Compute res = Q * other column by column
       for(Index j = 0; j < res.cols(); j++)
       {
-        for (Index k = diagSize-1; k >=0; k--)
+        Index start_k = internal::is_identity<Derived>::value ? numext::mini(j,diagSize-1) : diagSize-1;
+        for (Index k = start_k; k >=0; k--)
         {
           Scalar tau = Scalar(0);
           tau = m_qr.m_Q.col(k).dot(res.col(j));

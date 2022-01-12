@@ -30,6 +30,8 @@
 #ifndef SPARSELU_PIVOTL_H
 #define SPARSELU_PIVOTL_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 namespace internal {
   

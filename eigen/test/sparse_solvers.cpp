@@ -62,7 +62,7 @@ template<typename Scalar> void sparse_solvers(int rows, int cols)
     {
       SparseMatrix<Scalar> cm2(m2);
       //Index rows, Index cols, Index nnz, Index* outerIndexPtr, Index* innerIndexPtr, Scalar* valuePtr
-      MappedSparseMatrix<Scalar> mm2(rows, cols, cm2.nonZeros(), cm2.outerIndexPtr(), cm2.innerIndexPtr(), cm2.valuePtr());
+      Map<SparseMatrix<Scalar> > mm2(rows, cols, cm2.nonZeros(), cm2.outerIndexPtr(), cm2.innerIndexPtr(), cm2.valuePtr());
       VERIFY_IS_APPROX(refMat2.conjugate().template triangularView<Upper>().solve(vec2),
                        mm2.conjugate().template triangularView<Upper>().solve(vec3));
     }
@@ -98,10 +98,23 @@ template<typename Scalar> void sparse_solvers(int rows, int cols)
     initSparse<Scalar>(density, refMat2, m2, ForceNonZeroDiag|MakeLowerTriangular, &zeroCoords, &nonzeroCoords);
     VERIFY_IS_APPROX(refMat2.template triangularView<Lower>().solve(vec2),
                      m2.template triangularView<Lower>().solve(vec3));
+
+    // test empty triangular matrix
+    {
+      m2.resize(0,0);
+      refMatB.resize(0,refMatB.cols());
+      DenseMatrix res = m2.template triangularView<Lower>().solve(refMatB);
+      VERIFY_IS_EQUAL(res.rows(),0);
+      VERIFY_IS_EQUAL(res.cols(),refMatB.cols());
+      res = refMatB;
+      m2.template triangularView<Lower>().solveInPlace(res);
+      VERIFY_IS_EQUAL(res.rows(),0);
+      VERIFY_IS_EQUAL(res.cols(),refMatB.cols());
+    }
   }
 }
 
-void test_sparse_solvers()
+EIGEN_DECLARE_TEST(sparse_solvers)
 {
   for(int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST_1(sparse_solvers<double>(8, 8) );

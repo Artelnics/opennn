@@ -10,6 +10,8 @@
 #ifndef EIGEN_SPARSEMATRIXBASE_H
 #define EIGEN_SPARSEMATRIXBASE_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 /** \ingroup SparseCore_Module
@@ -87,6 +89,11 @@ template<typename Derived> class SparseMatrixBase
           * we are dealing with a column-vector (if there is only one column) or with
           * a row-vector (if there is only one row). */
 
+      NumDimensions = int(MaxSizeAtCompileTime) == 1 ? 0 : bool(IsVectorAtCompileTime) ? 1 : 2,
+        /**< This value is equal to Tensor::NumDimensions, i.e. 0 for scalars, 1 for vectors,
+         * and 2 for matrices.
+         */
+
       Flags = internal::traits<Derived>::Flags,
         /**< This stores expression \ref flags flags which may or may not be inherited by new expressions
           * constructed from this one. See the \ref flags "list of flags".
@@ -98,7 +105,7 @@ template<typename Derived> class SparseMatrixBase
                              : int(IsRowMajor) ? int(ColsAtCompileTime) : int(RowsAtCompileTime),
 
       #ifndef EIGEN_PARSED_BY_DOXYGEN
-      _HasDirectAccess = (int(Flags)&DirectAccessBit) ? 1 : 0 // workaround sunCC
+      HasDirectAccess_ = (int(Flags)&DirectAccessBit) ? 1 : 0 // workaround sunCC
       #endif
     };
 
@@ -124,7 +131,7 @@ template<typename Derived> class SparseMatrixBase
 
     /** \internal the return type of coeff()
       */
-    typedef typename internal::conditional<_HasDirectAccess, const Scalar&, Scalar>::type CoeffReturnType;
+    typedef typename internal::conditional<HasDirectAccess_, const Scalar&, Scalar>::type CoeffReturnType;
 
     /** \internal Represents a matrix with all coefficients equal to one another*/
     typedef CwiseNullaryOp<internal::scalar_constant_op<Scalar>,Matrix<Scalar,Dynamic,Dynamic> > ConstantReturnType;
@@ -132,8 +139,8 @@ template<typename Derived> class SparseMatrixBase
     /** type of the equivalent dense matrix */
     typedef Matrix<Scalar,RowsAtCompileTime,ColsAtCompileTime> DenseMatrixType;
     /** type of the equivalent square matrix */
-    typedef Matrix<Scalar,EIGEN_SIZE_MAX(RowsAtCompileTime,ColsAtCompileTime),
-                          EIGEN_SIZE_MAX(RowsAtCompileTime,ColsAtCompileTime)> SquareMatrixType;
+    typedef Matrix<Scalar, internal::max_size_prefer_dynamic(RowsAtCompileTime, ColsAtCompileTime),
+                           internal::max_size_prefer_dynamic(RowsAtCompileTime, ColsAtCompileTime)> SquareMatrixType;
 
     inline const Derived& derived() const { return *static_cast<const Derived*>(this); }
     inline Derived& derived() { return *static_cast<Derived*>(this); }
@@ -349,18 +356,6 @@ template<typename Derived> class SparseMatrixBase
     TransposeReturnType transpose() { return TransposeReturnType(derived()); }
     const ConstTransposeReturnType transpose() const { return ConstTransposeReturnType(derived()); }
     const AdjointReturnType adjoint() const { return AdjointReturnType(transpose()); }
-
-    // inner-vector
-    typedef Block<Derived,IsRowMajor?1:Dynamic,IsRowMajor?Dynamic:1,true>       InnerVectorReturnType;
-    typedef Block<const Derived,IsRowMajor?1:Dynamic,IsRowMajor?Dynamic:1,true> ConstInnerVectorReturnType;
-    InnerVectorReturnType innerVector(Index outer);
-    const ConstInnerVectorReturnType innerVector(Index outer) const;
-
-    // set of inner-vectors
-    typedef Block<Derived,Dynamic,Dynamic,true> InnerVectorsReturnType;
-    typedef Block<const Derived,Dynamic,Dynamic,true> ConstInnerVectorsReturnType;
-    InnerVectorsReturnType innerVectors(Index outerStart, Index outerSize);
-    const ConstInnerVectorsReturnType innerVectors(Index outerStart, Index outerSize) const;
 
     DenseMatrixType toDense() const
     {

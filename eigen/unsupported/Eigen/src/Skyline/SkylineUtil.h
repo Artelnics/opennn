@@ -10,6 +10,8 @@
 #ifndef EIGEN_SKYLINEUTIL_H
 #define EIGEN_SKYLINEUTIL_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 #ifdef NDEBUG
@@ -49,7 +51,7 @@ EIGEN_STRONG_INLINE Derived& operator Op(const Other& scalar) \
   EIGEN_SKYLINE_INHERIT_SCALAR_ASSIGNMENT_OPERATOR(Derived, *=) \
   EIGEN_SKYLINE_INHERIT_SCALAR_ASSIGNMENT_OPERATOR(Derived, /=)
 
-#define _EIGEN_SKYLINE_GENERIC_PUBLIC_INTERFACE(Derived, BaseClass) \
+#define EIGEN_SKYLINE_GENERIC_PUBLIC_INTERFACE_(Derived, BaseClass) \
   typedef BaseClass Base; \
   typedef typename Eigen::internal::traits<Derived>::Scalar Scalar; \
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar; \
@@ -58,13 +60,13 @@ EIGEN_STRONG_INLINE Derived& operator Op(const Other& scalar) \
   enum {  Flags = Eigen::internal::traits<Derived>::Flags, };
 
 #define EIGEN_SKYLINE_GENERIC_PUBLIC_INTERFACE(Derived) \
-  _EIGEN_SKYLINE_GENERIC_PUBLIC_INTERFACE(Derived, Eigen::SkylineMatrixBase<Derived>)
+  EIGEN_SKYLINE_GENERIC_PUBLIC_INTERFACE_(Derived, Eigen::SkylineMatrixBase<Derived>)
 
 template<typename Derived> class SkylineMatrixBase;
-template<typename _Scalar, int _Flags = 0> class SkylineMatrix;
-template<typename _Scalar, int _Flags = 0> class DynamicSkylineMatrix;
-template<typename _Scalar, int _Flags = 0> class SkylineVector;
-template<typename _Scalar, int _Flags = 0> class MappedSkylineMatrix;
+template<typename Scalar_, int Flags_ = 0> class SkylineMatrix;
+template<typename Scalar_, int Flags_ = 0> class DynamicSkylineMatrix;
+template<typename Scalar_, int Flags_ = 0> class SkylineVector;
+template<typename Scalar_, int Flags_ = 0> class MappedSkylineMatrix;
 
 namespace internal {
 
@@ -73,13 +75,13 @@ template<typename Lhs, typename Rhs, int ProductMode = skyline_product_mode<Lhs,
 
 template<typename T> class eval<T,IsSkyline>
 {
-    typedef typename traits<T>::Scalar _Scalar;
+    typedef typename traits<T>::Scalar Scalar_;
     enum {
-          _Flags = traits<T>::Flags
+          Flags_ = traits<T>::Flags
     };
 
   public:
-    typedef SkylineMatrix<_Scalar, _Flags> type;
+    typedef SkylineMatrix<Scalar_, Flags_> type;
 };
 
 } // end namespace internal

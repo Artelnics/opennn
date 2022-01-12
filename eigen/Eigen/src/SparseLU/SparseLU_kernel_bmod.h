@@ -11,6 +11,8 @@
 #ifndef SPARSELU_KERNEL_BMOD_H
 #define SPARSELU_KERNEL_BMOD_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 namespace internal {
   

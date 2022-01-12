@@ -8,15 +8,15 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_MATRIX_FUNCTIONS
-#define EIGEN_MATRIX_FUNCTIONS
+#ifndef EIGEN_MATRIX_FUNCTIONS_MODULE_H
+#define EIGEN_MATRIX_FUNCTIONS_MODULE_H
 
 #include <cfloat>
 #include <list>
 
-#include <Eigen/Core>
-#include <Eigen/LU>
-#include <Eigen/Eigenvalues>
+#include "../../Eigen/Core"
+#include "../../Eigen/LU"
+#include "../../Eigen/Eigenvalues"
 
 /**
   * \defgroup MatrixFunctions_Module Matrix functions module
@@ -53,11 +53,15 @@
   *
   */
 
+#include "../../Eigen/src/Core/util/DisableStupidWarnings.h"
+
 #include "src/MatrixFunctions/MatrixExponential.h"
 #include "src/MatrixFunctions/MatrixFunction.h"
 #include "src/MatrixFunctions/MatrixSquareRoot.h"
 #include "src/MatrixFunctions/MatrixLogarithm.h"
 #include "src/MatrixFunctions/MatrixPower.h"
+
+#include "../../Eigen/src/Core/util/ReenableStupidWarnings.h"
 
 
 /** 
@@ -496,5 +500,4 @@ Output: \verbinclude MatrixSquareRoot.out
 
 */
 
-#endif // EIGEN_MATRIX_FUNCTIONS
-
+#endif // EIGEN_MATRIX_FUNCTIONS_MODULE_H

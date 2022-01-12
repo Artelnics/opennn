@@ -42,8 +42,19 @@
     #pragma clang diagnostic push
   #endif
   #pragma clang diagnostic ignored "-Wconstant-logical-operand"
+  #if __clang_major__ >= 3 && __clang_minor__ >= 5
+    #pragma clang diagnostic ignored "-Wabsolute-value"
+  #endif
+  #if __clang_major__ >= 10
+    #pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
+  #endif
+  #if ( defined(__ALTIVEC__) || defined(__VSX__) ) && __cplusplus < 201103L
+    // warning: generic selections are a C11-specific feature
+    // ignoring warnings thrown at vec_ctf in Altivec/PacketMath.h
+    #pragma clang diagnostic ignored "-Wc11-extensions"
+  #endif
 
-#elif defined __GNUC__
+#elif defined __GNUC__ && !defined(__FUJITSU)
 
   #if (!defined(EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS)) &&  (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
     #pragma GCC diagnostic push
@@ -64,23 +75,47 @@
 #endif
 
 #if defined __NVCC__
+  #define EIGEN_MAKE_PRAGMA(X) _Pragma(#X)
+  #if defined __NVCC_DIAG_PRAGMA_SUPPORT__
+    #define EIGEN_NV_DIAG_SUPPRESS(X) EIGEN_MAKE_PRAGMA(nv_diag_suppress X)
+  #else
+    #define EIGEN_NV_DIAG_SUPPRESS(X) EIGEN_MAKE_PRAGMA(diag_suppress X)
+  #endif
+
+  EIGEN_NV_DIAG_SUPPRESS(boolean_controlling_expr_is_constant)
   // Disable the "statement is unreachable" message
-  #pragma diag_suppress code_is_unreachable
+  EIGEN_NV_DIAG_SUPPRESS(code_is_unreachable)
   // Disable the "dynamic initialization in unreachable code" message
-  #pragma diag_suppress initialization_not_reachable
+  EIGEN_NV_DIAG_SUPPRESS(initialization_not_reachable)
   // Disable the "invalid error number" message that we get with older versions of nvcc
-  #pragma diag_suppress 1222
+  EIGEN_NV_DIAG_SUPPRESS(1222)
   // Disable the "calling a __host__ function from a __host__ __device__ function is not allowed" messages (yes, there are many of them and they seem to change with every version of the compiler)
-  #pragma diag_suppress 2527
-  #pragma diag_suppress 2529
-  #pragma diag_suppress 2651
-  #pragma diag_suppress 2653
-  #pragma diag_suppress 2668
-  #pragma diag_suppress 2669
-  #pragma diag_suppress 2670
-  #pragma diag_suppress 2671
-  #pragma diag_suppress 2735
-  #pragma diag_suppress 2737
+  EIGEN_NV_DIAG_SUPPRESS(2527)
+  EIGEN_NV_DIAG_SUPPRESS(2529)
+  EIGEN_NV_DIAG_SUPPRESS(2651)
+  EIGEN_NV_DIAG_SUPPRESS(2653)
+  EIGEN_NV_DIAG_SUPPRESS(2668)
+  EIGEN_NV_DIAG_SUPPRESS(2669)
+  EIGEN_NV_DIAG_SUPPRESS(2670)
+  EIGEN_NV_DIAG_SUPPRESS(2671)
+  EIGEN_NV_DIAG_SUPPRESS(2735)
+  EIGEN_NV_DIAG_SUPPRESS(2737)
+  EIGEN_NV_DIAG_SUPPRESS(2739)
+  EIGEN_NV_DIAG_SUPPRESS(2885)
+  EIGEN_NV_DIAG_SUPPRESS(2888)
+  EIGEN_NV_DIAG_SUPPRESS(2976)
+  EIGEN_NV_DIAG_SUPPRESS(2979)
+  EIGEN_NV_DIAG_SUPPRESS(20011)
+  EIGEN_NV_DIAG_SUPPRESS(20014)
+  // Disable the "// __device__ annotation is ignored on a function(...) that is
+  //              explicitly defaulted on its first declaration" message.
+  // The __device__ annotation seems to actually be needed in some cases,
+  // otherwise resulting in kernel runtime errors.
+  EIGEN_NV_DIAG_SUPPRESS(2886)
+  EIGEN_NV_DIAG_SUPPRESS(2977)
+  EIGEN_NV_DIAG_SUPPRESS(20012)
+  #undef EIGEN_NV_DIAG_SUPPRESS
+  #undef EIGEN_MAKE_PRAGMA
 #endif
 
 #else

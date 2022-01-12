@@ -27,18 +27,6 @@
 #error GNU C++ Compiler (g++) only supports required C++ features since version 4.6.
 #endif
 
-/* Check that the compiler at least claims to support C++11. It might not be sufficient
- * because the compiler may not implement it correctly, but at least we'll know.
- * On the other hand, visual studio still doesn't claim to support C++11 although it's
- * compliant enugh for our purpose.
- */
-#if (__cplusplus <= 199711L) && (EIGEN_COMP_MSVC < 1900)
-#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
-#pragma GCC diagnostic error "-Wfatal-errors"
-#endif
-#error This library needs at least a C++11 compliant compiler. If you use g++/clang, please enable the -std=c++11 compiler flag. (-std=c++0x on older versions.)
-#endif
-
 namespace Eigen {
 
 namespace internal {
@@ -47,9 +35,9 @@ namespace internal {
  */
 
 
-template<std::size_t I, class T> constexpr inline T&       array_get(std::vector<T>&       a) { return a[I]; }
-template<std::size_t I, class T> constexpr inline T&&      array_get(std::vector<T>&&      a) { return a[I]; }
-template<std::size_t I, class T> constexpr inline T const& array_get(std::vector<T> const& a) { return a[I]; }
+template<std::size_t I_, class T> constexpr inline T&       array_get(std::vector<T>&       a) { return a[I_]; }
+template<std::size_t I_, class T> constexpr inline T&&      array_get(std::vector<T>&&      a) { return a[I_]; }
+template<std::size_t I_, class T> constexpr inline T const& array_get(std::vector<T> const& a) { return a[I_]; }
 
 /* Suppose you have a template of the form
  * template<typename T> struct X;

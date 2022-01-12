@@ -9,10 +9,10 @@
 #include <unsupported/Eigen/NumericalDiff>
     
 // Generic functor
-template<typename _Scalar, int NX=Dynamic, int NY=Dynamic>
+template<typename Scalar_, int NX=Dynamic, int NY=Dynamic>
 struct Functor
 {
-  typedef _Scalar Scalar;
+  typedef Scalar_ Scalar;
   enum {
     InputsAtCompileTime = NX,
     ValuesAtCompileTime = NY
@@ -24,7 +24,7 @@ struct Functor
   int m_inputs, m_values;
   
   Functor() : m_inputs(InputsAtCompileTime), m_values(ValuesAtCompileTime) {}
-  Functor(int inputs, int values) : m_inputs(inputs), m_values(values) {}
+  Functor(int inputs_, int values_) : m_inputs(inputs_), m_values(values_) {}
   
   int inputs() const { return m_inputs; }
   int values() const { return m_values; }
@@ -107,7 +107,7 @@ void test_central()
     VERIFY_IS_APPROX(jac, actual_jac);
 }
 
-void test_NumericalDiff()
+EIGEN_DECLARE_TEST(NumericalDiff)
 {
     CALL_SUBTEST(test_forward());
     CALL_SUBTEST(test_central());

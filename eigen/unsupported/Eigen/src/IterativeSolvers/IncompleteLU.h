@@ -10,16 +10,18 @@
 #ifndef EIGEN_INCOMPLETE_LU_H
 #define EIGEN_INCOMPLETE_LU_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
-template <typename _Scalar>
-class IncompleteLU : public SparseSolverBase<IncompleteLU<_Scalar> >
+template <typename Scalar_>
+class IncompleteLU : public SparseSolverBase<IncompleteLU<Scalar_> >
 {
   protected:
-    typedef SparseSolverBase<IncompleteLU<_Scalar> > Base;
+    typedef SparseSolverBase<IncompleteLU<Scalar_> > Base;
     using Base::m_isInitialized;
     
-    typedef _Scalar Scalar;
+    typedef Scalar_ Scalar;
     typedef Matrix<Scalar,Dynamic,1> Vector;
     typedef typename Vector::Index Index;
     typedef SparseMatrix<Scalar,RowMajor> FactorType;

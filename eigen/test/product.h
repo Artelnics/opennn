@@ -17,6 +17,17 @@ bool areNotApprox(const MatrixBase<Derived1>& m1, const MatrixBase<Derived2>& m2
                           * (std::max)(m1.cwiseAbs2().maxCoeff(), m2.cwiseAbs2().maxCoeff()));
 }
 
+template <typename LhsType, typename RhsType>
+typename internal::enable_if<RhsType::SizeAtCompileTime==Dynamic,void>::type
+check_mismatched_product(LhsType& lhs, const RhsType& rhs) {
+  VERIFY_RAISES_ASSERT(lhs = rhs*rhs);
+}
+
+template <typename LhsType, typename RhsType>
+typename internal::enable_if<RhsType::SizeAtCompileTime!=Dynamic,void>::type
+check_mismatched_product(LhsType& /*unused*/, const RhsType& /*unused*/) {
+}
+
 template<typename MatrixType> void product(const MatrixType& m)
 {
   /* this test covers the following files:
@@ -77,8 +88,9 @@ template<typename MatrixType> void product(const MatrixType& m)
   // again, test operator() to check const-qualification
   VERIFY_IS_APPROX(MatrixType::Identity(rows, cols)(r,c), static_cast<Scalar>(r==c));
 
-  if (rows!=cols)
-     VERIFY_RAISES_ASSERT(m3 = m1*m1);
+  if (rows!=cols) {
+    check_mismatched_product(m3, m1);
+  }
 
   // test the previous tests were not screwed up because operator* returns 0
   // (we use the more accurate default epsilon)
@@ -226,6 +238,8 @@ template<typename MatrixType> void product(const MatrixType& m)
     ColSquareMatrixType A(cols,cols); A.setRandom();
     // CwiseBinaryOp
     VERIFY_IS_APPROX(x = y + A*x, A*z);
+    x = z;
+    VERIFY_IS_APPROX(x = y - A*x, A*(-z));
     x = z;
     // CwiseUnaryOp
     VERIFY_IS_APPROX(x = Scalar(1.)*(A*x), A*z);

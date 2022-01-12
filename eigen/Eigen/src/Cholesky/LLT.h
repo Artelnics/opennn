@@ -10,9 +10,21 @@
 #ifndef EIGEN_LLT_H
 #define EIGEN_LLT_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 namespace internal{
+
+template<typename MatrixType_, int UpLo_> struct traits<LLT<MatrixType_, UpLo_> >
+ : traits<MatrixType_>
+{
+  typedef MatrixXpr XprKind;
+  typedef SolverStorage StorageKind;
+  typedef int StorageIndex;
+  enum { Flags = 0 };
+};
+
 template<typename MatrixType, int UpLo> struct LLT_Traits;
 }
 
@@ -22,8 +34,8 @@ template<typename MatrixType, int UpLo> struct LLT_Traits;
   *
   * \brief Standard Cholesky decomposition (LL^T) of a matrix and associated features
   *
-  * \tparam _MatrixType the type of the matrix of which we are computing the LL^T Cholesky decomposition
-  * \tparam _UpLo the triangular part that will be used for the decompositon: Lower (default) or Upper.
+  * \tparam MatrixType_ the type of the matrix of which we are computing the LL^T Cholesky decomposition
+  * \tparam UpLo_ the triangular part that will be used for the decomposition: Lower (default) or Upper.
   *               The other triangular part won't be read.
   *
   * This class performs a LL^T Cholesky decomposition of a symmetric, positive definite
@@ -48,29 +60,28 @@ template<typename MatrixType, int UpLo> struct LLT_Traits;
   *
   * This class supports the \link InplaceDecomposition inplace decomposition \endlink mechanism.
   *
-  * Note that during the decomposition, only the lower (or upper, as defined by _UpLo) triangular part of A is considered.
+  * Note that during the decomposition, only the lower (or upper, as defined by UpLo_) triangular part of A is considered.
   * Therefore, the strict lower part does not have to store correct values.
   *
   * \sa MatrixBase::llt(), SelfAdjointView::llt(), class LDLT
   */
-template<typename _MatrixType, int _UpLo> class LLT
+template<typename MatrixType_, int UpLo_> class LLT
+        : public SolverBase<LLT<MatrixType_, UpLo_> >
 {
   public:
-    typedef _MatrixType MatrixType;
+    typedef MatrixType_ MatrixType;
+    typedef SolverBase<LLT> Base;
+    friend class SolverBase<LLT>;
+
+    EIGEN_GENERIC_PUBLIC_INTERFACE(LLT)
     enum {
-      RowsAtCompileTime = MatrixType::RowsAtCompileTime,
-      ColsAtCompileTime = MatrixType::ColsAtCompileTime,
       MaxColsAtCompileTime = MatrixType::MaxColsAtCompileTime
     };
-    typedef typename MatrixType::Scalar Scalar;
-    typedef typename NumTraits<typename MatrixType::Scalar>::Real RealScalar;
-    typedef Eigen::Index Index; ///< \deprecated since Eigen 3.3
-    typedef typename MatrixType::StorageIndex StorageIndex;
 
     enum {
       PacketSize = internal::packet_traits<Scalar>::size,
       AlignmentMask = int(PacketSize)-1,
-      UpLo = _UpLo
+      UpLo = UpLo_
     };
 
     typedef internal::LLT_Traits<MatrixType,UpLo> Traits;
@@ -100,7 +111,7 @@ template<typename _MatrixType, int _UpLo> class LLT
       compute(matrix.derived());
     }
 
-    /** \brief Constructs a LDLT factorization from a given matrix
+    /** \brief Constructs a LLT factorization from a given matrix
       *
       * This overloaded constructor is provided for \link InplaceDecomposition inplace decomposition \endlink when
       * \c MatrixType is a Eigen::Ref.
@@ -129,6 +140,7 @@ template<typename _MatrixType, int _UpLo> class LLT
       return Traits::getL(m_matrix);
     }
 
+    #ifdef EIGEN_PARSED_BY_DOXYGEN
     /** \returns the solution x of \f$ A x = b \f$ using the current decomposition of A.
       *
       * Since this LLT class assumes anyway that the matrix A is invertible, the solution
@@ -141,13 +153,8 @@ template<typename _MatrixType, int _UpLo> class LLT
       */
     template<typename Rhs>
     inline const Solve<LLT, Rhs>
-    solve(const MatrixBase<Rhs>& b) const
-    {
-      eigen_assert(m_isInitialized && "LLT is not initialized.");
-      eigen_assert(m_matrix.rows()==b.rows()
-                && "LLT::solve(): invalid number of rows of the right hand side matrix b");
-      return Solve<LLT, Rhs>(*this, b.derived());
-    }
+    solve(const MatrixBase<Rhs>& b) const;
+    #endif
 
     template<typename Derived>
     void solveInPlace(const MatrixBase<Derived> &bAndX) const;
@@ -180,7 +187,7 @@ template<typename _MatrixType, int _UpLo> class LLT
 
     /** \brief Reports whether previous computation was successful.
       *
-      * \returns \c Success if computation was succesful,
+      * \returns \c Success if computation was successful,
       *          \c NumericalIssue if the matrix.appears not to be positive definite.
       */
     ComputationInfo info() const
@@ -194,26 +201,25 @@ template<typename _MatrixType, int _UpLo> class LLT
       * This method is provided for compatibility with other matrix decompositions, thus enabling generic code such as:
       * \code x = decomposition.adjoint().solve(b) \endcode
       */
-    const LLT& adjoint() const { return *this; };
+    const LLT& adjoint() const EIGEN_NOEXCEPT { return *this; }
 
-    inline Index rows() const { return m_matrix.rows(); }
-    inline Index cols() const { return m_matrix.cols(); }
+    inline EIGEN_CONSTEXPR Index rows() const EIGEN_NOEXCEPT { return m_matrix.rows(); }
+    inline EIGEN_CONSTEXPR Index cols() const EIGEN_NOEXCEPT { return m_matrix.cols(); }
 
     template<typename VectorType>
-    LLT rankUpdate(const VectorType& vec, const RealScalar& sigma = 1);
+    LLT & rankUpdate(const VectorType& vec, const RealScalar& sigma = 1);
 
     #ifndef EIGEN_PARSED_BY_DOXYGEN
     template<typename RhsType, typename DstType>
-    EIGEN_DEVICE_FUNC
     void _solve_impl(const RhsType &rhs, DstType &dst) const;
+
+    template<bool Conjugate, typename RhsType, typename DstType>
+    void _solve_impl_transposed(const RhsType &rhs, DstType &dst) const;
     #endif
 
   protected:
 
-    static void check_template_parameters()
-    {
-      EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar);
-    }
+    EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar)
 
     /** \internal
       * Used to compute and store L
@@ -420,12 +426,10 @@ template<typename MatrixType> struct LLT_Traits<MatrixType,Upper>
   * Example: \include TutorialLinAlgComputeTwice.cpp
   * Output: \verbinclude TutorialLinAlgComputeTwice.out
   */
-template<typename MatrixType, int _UpLo>
+template<typename MatrixType, int UpLo_>
 template<typename InputType>
-LLT<MatrixType,_UpLo>& LLT<MatrixType,_UpLo>::compute(const EigenBase<InputType>& a)
+LLT<MatrixType,UpLo_>& LLT<MatrixType,UpLo_>::compute(const EigenBase<InputType>& a)
 {
-  check_template_parameters();
-
   eigen_assert(a.rows()==a.cols());
   const Index size = a.rows();
   m_matrix.resize(size, size);
@@ -437,7 +441,7 @@ LLT<MatrixType,_UpLo>& LLT<MatrixType,_UpLo>::compute(const EigenBase<InputType>
   // TODO move this code to SelfAdjointView
   for (Index col = 0; col < size; ++col) {
     RealScalar abs_col_sum;
-    if (_UpLo == Lower)
+    if (UpLo_ == Lower)
       abs_col_sum = m_matrix.col(col).tail(size - col).template lpNorm<1>() + m_matrix.row(col).head(col).template lpNorm<1>();
     else
       abs_col_sum = m_matrix.col(col).head(col).template lpNorm<1>() + m_matrix.row(col).tail(size - col).template lpNorm<1>();
@@ -457,9 +461,9 @@ LLT<MatrixType,_UpLo>& LLT<MatrixType,_UpLo>::compute(const EigenBase<InputType>
   * then after it we have LL^* = A + sigma * v v^* where \a v must be a vector
   * of same dimension.
   */
-template<typename _MatrixType, int _UpLo>
+template<typename MatrixType_, int UpLo_>
 template<typename VectorType>
-LLT<_MatrixType,_UpLo> LLT<_MatrixType,_UpLo>::rankUpdate(const VectorType& v, const RealScalar& sigma)
+LLT<MatrixType_,UpLo_> & LLT<MatrixType_,UpLo_>::rankUpdate(const VectorType& v, const RealScalar& sigma)
 {
   EIGEN_STATIC_ASSERT_VECTOR_ONLY(VectorType);
   eigen_assert(v.size()==m_matrix.cols());
@@ -473,12 +477,21 @@ LLT<_MatrixType,_UpLo> LLT<_MatrixType,_UpLo>::rankUpdate(const VectorType& v, c
 }
 
 #ifndef EIGEN_PARSED_BY_DOXYGEN
-template<typename _MatrixType,int _UpLo>
+template<typename MatrixType_,int UpLo_>
 template<typename RhsType, typename DstType>
-void LLT<_MatrixType,_UpLo>::_solve_impl(const RhsType &rhs, DstType &dst) const
+void LLT<MatrixType_,UpLo_>::_solve_impl(const RhsType &rhs, DstType &dst) const
 {
-  dst = rhs;
-  solveInPlace(dst);
+  _solve_impl_transposed<true>(rhs, dst);
+}
+
+template<typename MatrixType_,int UpLo_>
+template<bool Conjugate, typename RhsType, typename DstType>
+void LLT<MatrixType_,UpLo_>::_solve_impl_transposed(const RhsType &rhs, DstType &dst) const
+{
+    dst = rhs;
+
+    matrixL().template conjugateIf<!Conjugate>().solveInPlace(dst);
+    matrixU().template conjugateIf<!Conjugate>().solveInPlace(dst);
 }
 #endif
 
@@ -495,9 +508,9 @@ void LLT<_MatrixType,_UpLo>::_solve_impl(const RhsType &rhs, DstType &dst) const
   *
   * \sa LLT::solve(), MatrixBase::llt()
   */
-template<typename MatrixType, int _UpLo>
+template<typename MatrixType, int UpLo_>
 template<typename Derived>
-void LLT<MatrixType,_UpLo>::solveInPlace(const MatrixBase<Derived> &bAndX) const
+void LLT<MatrixType,UpLo_>::solveInPlace(const MatrixBase<Derived> &bAndX) const
 {
   eigen_assert(m_isInitialized && "LLT is not initialized.");
   eigen_assert(m_matrix.rows()==bAndX.rows());
@@ -508,8 +521,8 @@ void LLT<MatrixType,_UpLo>::solveInPlace(const MatrixBase<Derived> &bAndX) const
 /** \returns the matrix represented by the decomposition,
  * i.e., it returns the product: L L^*.
  * This function is provided for debug purpose. */
-template<typename MatrixType, int _UpLo>
-MatrixType LLT<MatrixType,_UpLo>::reconstructedMatrix() const
+template<typename MatrixType, int UpLo_>
+MatrixType LLT<MatrixType,UpLo_>::reconstructedMatrix() const
 {
   eigen_assert(m_isInitialized && "LLT is not initialized.");
   return matrixL() * matrixL().adjoint().toDenseMatrix();

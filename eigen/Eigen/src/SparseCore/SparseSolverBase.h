@@ -10,6 +10,8 @@
 #ifndef EIGEN_SPARSESOLVERBASE_H
 #define EIGEN_SPARSESOLVERBASE_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 namespace internal {

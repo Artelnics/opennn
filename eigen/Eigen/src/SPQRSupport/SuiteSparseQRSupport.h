@@ -11,6 +11,8 @@
 #ifndef EIGEN_SUITESPARSEQRSUPPORT_H
 #define EIGEN_SUITESPARSEQRSUPPORT_H
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
   
   template<typename MatrixType> class SPQR; 
@@ -50,21 +52,21 @@ namespace Eigen {
   * R is the sparse triangular factor. Use matrixQR() to get it as SparseMatrix.
   * NOTE : The Index type of R is always SuiteSparse_long. You can get it with SPQR::Index
   *
-  * \tparam _MatrixType The type of the sparse matrix A, must be a column-major SparseMatrix<>
+  * \tparam MatrixType_ The type of the sparse matrix A, must be a column-major SparseMatrix<>
   *
   * \implsparsesolverconcept
   *
   *
   */
-template<typename _MatrixType>
-class SPQR : public SparseSolverBase<SPQR<_MatrixType> >
+template<typename MatrixType_>
+class SPQR : public SparseSolverBase<SPQR<MatrixType_> >
 {
   protected:
-    typedef SparseSolverBase<SPQR<_MatrixType> > Base;
+    typedef SparseSolverBase<SPQR<MatrixType_> > Base;
     using Base::m_isInitialized;
   public:
-    typedef typename _MatrixType::Scalar Scalar;
-    typedef typename _MatrixType::RealScalar RealScalar;
+    typedef typename MatrixType_::Scalar Scalar;
+    typedef typename MatrixType_::RealScalar RealScalar;
     typedef SuiteSparse_long StorageIndex ;
     typedef SparseMatrix<Scalar, ColMajor, StorageIndex> MatrixType;
     typedef Map<PermutationMatrix<Dynamic, Dynamic, StorageIndex> > PermutationType;
@@ -74,13 +76,35 @@ class SPQR : public SparseSolverBase<SPQR<_MatrixType> >
     };
   public:
     SPQR() 
-      : m_ordering(SPQR_ORDERING_DEFAULT), m_allow_tol(SPQR_DEFAULT_TOL), m_tolerance (NumTraits<Scalar>::epsilon()), m_useDefaultThreshold(true)
+      : m_analysisIsOk(false),
+        m_factorizationIsOk(false),
+        m_isRUpToDate(false),
+        m_ordering(SPQR_ORDERING_DEFAULT),
+        m_allow_tol(SPQR_DEFAULT_TOL),
+        m_tolerance (NumTraits<Scalar>::epsilon()),
+        m_cR(0),
+        m_E(0),
+        m_H(0),
+        m_HPinv(0),
+        m_HTau(0),
+        m_useDefaultThreshold(true)
     { 
       cholmod_l_start(&m_cc);
     }
     
-    explicit SPQR(const _MatrixType& matrix)
-    : m_ordering(SPQR_ORDERING_DEFAULT), m_allow_tol(SPQR_DEFAULT_TOL), m_tolerance (NumTraits<Scalar>::epsilon()), m_useDefaultThreshold(true)
+    explicit SPQR(const MatrixType_& matrix)
+      : m_analysisIsOk(false),
+        m_factorizationIsOk(false),
+        m_isRUpToDate(false),
+        m_ordering(SPQR_ORDERING_DEFAULT),
+        m_allow_tol(SPQR_DEFAULT_TOL),
+        m_tolerance (NumTraits<Scalar>::epsilon()),
+        m_cR(0),
+        m_E(0),
+        m_H(0),
+        m_HPinv(0),
+        m_HTau(0),
+        m_useDefaultThreshold(true)
     {
       cholmod_l_start(&m_cc);
       compute(matrix);
@@ -100,7 +124,7 @@ class SPQR : public SparseSolverBase<SPQR<_MatrixType> >
       std::free(m_HPinv);
     }
 
-    void compute(const _MatrixType& matrix)
+    void compute(const MatrixType_& matrix)
     {
       if(m_isInitialized) SPQR_free();
 
@@ -220,7 +244,7 @@ class SPQR : public SparseSolverBase<SPQR<_MatrixType> >
     
     /** \brief Reports whether previous computation was successful.
       *
-      * \returns \c Success if computation was succesful,
+      * \returns \c Success if computation was successful,
       *          \c NumericalIssue if the sparse QR can not be computed
       */
     ComputationInfo info() const

@@ -13,6 +13,8 @@
 #include "SkylineStorage.h"
 #include "SkylineMatrixBase.h"
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen { 
 
 /** \ingroup Skyline_Module
@@ -24,16 +26,16 @@ namespace Eigen {
  * This class implements a skyline matrix using the very uncommon storage
  * scheme.
  *
- * \param _Scalar the scalar type, i.e. the type of the coefficients
- * \param _Options Union of bit flags controlling the storage scheme. Currently the only possibility
+ * \param Scalar_ the scalar type, i.e. the type of the coefficients
+ * \param Options_ Union of bit flags controlling the storage scheme. Currently the only possibility
  *                 is RowMajor. The default is 0 which means column-major.
  *
  *
  */
 namespace internal {
-template<typename _Scalar, int _Options>
-struct traits<SkylineMatrix<_Scalar, _Options> > {
-    typedef _Scalar Scalar;
+template<typename Scalar_, int Options_>
+struct traits<SkylineMatrix<Scalar_, Options_> > {
+    typedef Scalar_ Scalar;
     typedef Sparse StorageKind;
 
     enum {
@@ -41,15 +43,15 @@ struct traits<SkylineMatrix<_Scalar, _Options> > {
         ColsAtCompileTime = Dynamic,
         MaxRowsAtCompileTime = Dynamic,
         MaxColsAtCompileTime = Dynamic,
-        Flags = SkylineBit | _Options,
+        Flags = SkylineBit | Options_,
         CoeffReadCost = NumTraits<Scalar>::ReadCost,
     };
 };
 }
 
-template<typename _Scalar, int _Options>
+template<typename Scalar_, int Options_>
 class SkylineMatrix
-: public SkylineMatrixBase<SkylineMatrix<_Scalar, _Options> > {
+: public SkylineMatrixBase<SkylineMatrix<Scalar_, Options_> > {
 public:
     EIGEN_SKYLINE_GENERIC_PUBLIC_INTERFACE(SkylineMatrix)
     EIGEN_SKYLINE_INHERIT_ASSIGNMENT_OPERATOR(SkylineMatrix, +=)
@@ -206,26 +208,26 @@ public:
             if (col > row) //upper matrix
             {
                 const Index minOuterIndex = inner - m_data.upperProfile(inner);
-                eigen_assert(outer >= minOuterIndex && "you try to acces a coeff that do not exist in the storage");
+                eigen_assert(outer >= minOuterIndex && "You tried to access a coeff that does not exist in the storage");
                 return this->m_data.upper(m_colStartIndex[inner] + outer - (inner - m_data.upperProfile(inner)));
             }
             if (col < row) //lower matrix
             {
                 const Index minInnerIndex = outer - m_data.lowerProfile(outer);
-                eigen_assert(inner >= minInnerIndex && "you try to acces a coeff that do not exist in the storage");
+                eigen_assert(inner >= minInnerIndex && "You tried to access a coeff that does not exist in the storage");
                 return this->m_data.lower(m_rowStartIndex[outer] + inner - (outer - m_data.lowerProfile(outer)));
             }
         } else {
             if (outer > inner) //upper matrix
             {
                 const Index maxOuterIndex = inner + m_data.upperProfile(inner);
-                eigen_assert(outer <= maxOuterIndex && "you try to acces a coeff that do not exist in the storage");
+                eigen_assert(outer <= maxOuterIndex && "You tried to access a coeff that does not exist in the storage");
                 return this->m_data.upper(m_colStartIndex[inner] + (outer - inner));
             }
             if (outer < inner) //lower matrix
             {
                 const Index maxInnerIndex = outer + m_data.lowerProfile(outer);
-                eigen_assert(inner <= maxInnerIndex && "you try to acces a coeff that do not exist in the storage");
+                eigen_assert(inner <= maxInnerIndex && "You tried to access a coeff that does not exist in the storage");
                 return this->m_data.lower(m_rowStartIndex[outer] + (inner - outer));
             }
         }
@@ -300,11 +302,11 @@ public:
 
         if (IsRowMajor) {
             const Index minInnerIndex = outer - m_data.lowerProfile(outer);
-            eigen_assert(inner >= minInnerIndex && "you try to acces a coeff that do not exist in the storage");
+            eigen_assert(inner >= minInnerIndex && "You tried to access a coeff that does not exist in the storage");
             return this->m_data.lower(m_rowStartIndex[outer] + inner - (outer - m_data.lowerProfile(outer)));
         } else {
             const Index maxInnerIndex = outer + m_data.lowerProfile(outer);
-            eigen_assert(inner <= maxInnerIndex && "you try to acces a coeff that do not exist in the storage");
+            eigen_assert(inner <= maxInnerIndex && "You tried to access a coeff that does not exist in the storage");
             return this->m_data.lower(m_rowStartIndex[outer] + (inner - outer));
         }
     }
@@ -336,11 +338,11 @@ public:
 
         if (IsRowMajor) {
             const Index minOuterIndex = inner - m_data.upperProfile(inner);
-            eigen_assert(outer >= minOuterIndex && "you try to acces a coeff that do not exist in the storage");
+            eigen_assert(outer >= minOuterIndex && "You tried to access a coeff that does not exist in the storage");
             return this->m_data.upper(m_colStartIndex[inner] + outer - (inner - m_data.upperProfile(inner)));
         } else {
             const Index maxOuterIndex = inner + m_data.upperProfile(inner);
-            eigen_assert(outer <= maxOuterIndex && "you try to acces a coeff that do not exist in the storage");
+            eigen_assert(outer <= maxOuterIndex && "You tried to access a coeff that does not exist in the storage");
             return this->m_data.upper(m_colStartIndex[inner] + (outer - inner));
         }
     }
@@ -375,8 +377,8 @@ public:
     /** Removes all non zeros */
     inline void setZero() {
         m_data.clear();
-        memset(m_colStartIndex, 0, (m_outerSize + 1) * sizeof (Index));
-        memset(m_rowStartIndex, 0, (m_outerSize + 1) * sizeof (Index));
+        std::fill_n(m_colStartIndex, m_outerSize + 1, Index(0));
+        std::fill_n(m_rowStartIndex, m_outerSize + 1, Index(0));
     }
 
     /** \returns the number of non zero coefficients */
@@ -435,7 +437,7 @@ public:
                     }
 
                     //zeros new data
-                    memset(this->_upperPtr() + start, 0, (bandIncrement - 1) * sizeof (Scalar));
+                    std::fill_n(this->_upperPtr() + start, bandIncrement - 1, Scalar(0));
 
                     return m_data.upper(m_colStartIndex[inner]);
                 } else {
@@ -466,7 +468,7 @@ public:
                     }
 
                     //zeros new data
-                    memset(this->_lowerPtr() + start, 0, (bandIncrement - 1) * sizeof (Scalar));
+                    std::fill_n(this->_lowerPtr() + start, bandIncrement - 1, Scalar(0));
                     return m_data.lower(m_rowStartIndex[outer]);
                 } else {
                     return m_data.lower(m_rowStartIndex[outer] + inner - (outer - m_data.lowerProfile(outer)));
@@ -493,7 +495,7 @@ public:
                     for (Index innerIdx = inner + 1; innerIdx < outerSize() + 1; innerIdx++) {
                         m_rowStartIndex[innerIdx] += bandIncrement;
                     }
-                    memset(this->_upperPtr() + m_rowStartIndex[inner] + previousProfile + 1, 0, (bandIncrement - 1) * sizeof (Scalar));
+                    std::fill_n(this->_upperPtr() + m_rowStartIndex[inner] + previousProfile + 1, bandIncrement - 1, Scalar(0));
                     return m_data.upper(m_rowStartIndex[inner] + m_data.upperProfile(inner));
                 } else {
                     return m_data.upper(m_rowStartIndex[inner] + (outer - inner));
@@ -520,7 +522,7 @@ public:
                     for (Index innerIdx = outer + 1; innerIdx < outerSize() + 1; innerIdx++) {
                         m_colStartIndex[innerIdx] += bandIncrement;
                     }
-                    memset(this->_lowerPtr() + m_colStartIndex[outer] + previousProfile + 1, 0, (bandIncrement - 1) * sizeof (Scalar));
+                    std::fill_n(this->_lowerPtr() + m_colStartIndex[outer] + previousProfile + 1, bandIncrement - 1, Scalar(0));
                     return m_data.lower(m_colStartIndex[outer] + m_data.lowerProfile(outer));
                 } else {
                     return m_data.lower(m_colStartIndex[outer] + (inner - outer));
@@ -619,8 +621,8 @@ public:
         m_data.clear();
 
         m_outerSize = diagSize;
-        memset(m_colStartIndex, 0, (cols + 1) * sizeof (Index));
-        memset(m_rowStartIndex, 0, (rows + 1) * sizeof (Index));
+        std::fill_n(m_colStartIndex, cols + 1, Index(0));
+        std::fill_n(m_rowStartIndex, rows + 1, Index(0));
     }
 
     void resizeNonZeros(Index size) {
@@ -731,15 +733,15 @@ public:
     Scalar sum() const;
 };
 
-template<typename Scalar, int _Options>
-class SkylineMatrix<Scalar, _Options>::InnerUpperIterator {
+template<typename Scalar, int Options_>
+class SkylineMatrix<Scalar, Options_>::InnerUpperIterator {
 public:
 
     InnerUpperIterator(const SkylineMatrix& mat, Index outer)
     : m_matrix(mat), m_outer(outer),
-    m_id(_Options == RowMajor ? mat.m_colStartIndex[outer] : mat.m_rowStartIndex[outer] + 1),
+    m_id(Options_ == RowMajor ? mat.m_colStartIndex[outer] : mat.m_rowStartIndex[outer] + 1),
     m_start(m_id),
-    m_end(_Options == RowMajor ? mat.m_colStartIndex[outer + 1] : mat.m_rowStartIndex[outer + 1] + 1) {
+    m_end(Options_ == RowMajor ? mat.m_colStartIndex[outer + 1] : mat.m_rowStartIndex[outer + 1] + 1) {
     }
 
     inline InnerUpperIterator & operator++() {
@@ -793,16 +795,16 @@ protected:
     const Index m_end;
 };
 
-template<typename Scalar, int _Options>
-class SkylineMatrix<Scalar, _Options>::InnerLowerIterator {
+template<typename Scalar, int Options_>
+class SkylineMatrix<Scalar, Options_>::InnerLowerIterator {
 public:
 
     InnerLowerIterator(const SkylineMatrix& mat, Index outer)
     : m_matrix(mat),
     m_outer(outer),
-    m_id(_Options == RowMajor ? mat.m_rowStartIndex[outer] : mat.m_colStartIndex[outer] + 1),
+    m_id(Options_ == RowMajor ? mat.m_rowStartIndex[outer] : mat.m_colStartIndex[outer] + 1),
     m_start(m_id),
-    m_end(_Options == RowMajor ? mat.m_rowStartIndex[outer + 1] : mat.m_colStartIndex[outer + 1] + 1) {
+    m_end(Options_ == RowMajor ? mat.m_rowStartIndex[outer + 1] : mat.m_colStartIndex[outer + 1] + 1) {
     }
 
     inline InnerLowerIterator & operator++() {
@@ -859,4 +861,4 @@ protected:
 
 } // end namespace Eigen
 
-#endif // EIGEN_SkylineMatrix_H
+#endif // EIGEN_SKYLINEMATRIX_H

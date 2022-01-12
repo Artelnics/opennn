@@ -17,6 +17,8 @@
   #define EIGEN_INTERNAL_TENSOR_STORAGE_CTOR_PLUGIN
 #endif
 
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 /** \internal
@@ -45,8 +47,6 @@ class TensorStorage
   static const std::size_t MinSize = max_n_1<Size>::size;
   EIGEN_ALIGN_MAX T m_data[MinSize];
 
-  FixedDimensions m_dimensions;
-
  public:
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE TensorStorage() {
@@ -57,13 +57,16 @@ class TensorStorage
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE const T *data() const { return m_data; }
 
-  EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE const FixedDimensions& dimensions() const { return m_dimensions; }
+  static EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const FixedDimensions& dimensions()
+  {
+    static const FixedDimensions* singleton_dimensions = new FixedDimensions();
+    return *singleton_dimensions;
+  }
 
   EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE DenseIndex size() const { return m_dimensions.TotalSize(); }
+  EIGEN_STRONG_INLINE DenseIndex size() const { return Size; }
 };
-
 
 // pure dynamic
 template<typename T, typename IndexType, int NumIndices_, int Options_>
@@ -85,12 +88,10 @@ class TensorStorage<T, DSizes<IndexType, NumIndices_>, Options_>
         : m_data(internal::conditional_aligned_new_auto<T,(Options_&DontAlign)==0>(size)), m_dimensions(dimensions)
       { EIGEN_INTERNAL_TENSOR_STORAGE_CTOR_PLUGIN }
 
-#if EIGEN_HAS_VARIADIC_TEMPLATES
     template <typename... DenseIndex>
     EIGEN_DEVICE_FUNC TensorStorage(DenseIndex... indices) : m_dimensions(indices...) {
       m_data = internal::conditional_aligned_new_auto<T,(Options_&DontAlign)==0>(internal::array_prod(m_dimensions));
     }
-#endif
 
     EIGEN_DEVICE_FUNC TensorStorage(const Self& other)
       : m_data(internal::conditional_aligned_new_auto<T,(Options_&DontAlign)==0>(internal::array_prod(other.m_dimensions)))
@@ -104,6 +105,18 @@ class TensorStorage<T, DSizes<IndexType, NumIndices_>, Options_>
         Self tmp(other);
         this->swap(tmp);
       }
+      return *this;
+    }
+
+    EIGEN_DEVICE_FUNC TensorStorage(Self&& other) : TensorStorage()
+    {
+      *this = std::move(other);
+    }
+    
+    EIGEN_DEVICE_FUNC Self& operator=(Self&& other)
+    {
+      numext::swap(m_data, other.m_data);
+      numext::swap(m_dimensions, other.m_dimensions);
       return *this;
     }
 

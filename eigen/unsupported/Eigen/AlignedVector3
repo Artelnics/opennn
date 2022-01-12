@@ -7,10 +7,12 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_ALIGNED_VECTOR3
-#define EIGEN_ALIGNED_VECTOR3
+#ifndef EIGEN_ALIGNED_VECTOR3_MODULE_H
+#define EIGEN_ALIGNED_VECTOR3_MODULE_H
 
-#include <Eigen/Geometry>
+#include "../../Eigen/Geometry"
+
+#include "../../Eigen/src/Core/util/DisableStupidWarnings.h"
 
 namespace Eigen {
 
@@ -35,23 +37,23 @@ namespace Eigen {
   *
   */
 // TODO specialize Cwise
-template<typename _Scalar> class AlignedVector3;
+template<typename Scalar_> class AlignedVector3;
 
 namespace internal {
-template<typename _Scalar> struct traits<AlignedVector3<_Scalar> >
-  : traits<Matrix<_Scalar,3,1,0,4,1> >
+template<typename Scalar_> struct traits<AlignedVector3<Scalar_> >
+  : traits<Matrix<Scalar_,3,1,0,4,1> >
 {
 };
 }
 
-template<typename _Scalar> class AlignedVector3
-  : public MatrixBase<AlignedVector3<_Scalar> >
+template<typename Scalar_> class AlignedVector3
+  : public MatrixBase<AlignedVector3<Scalar_> >
 {
-    typedef Matrix<_Scalar,4,1> CoeffType;
+    typedef Matrix<Scalar_,4,1> CoeffType;
     CoeffType m_coeffs;
   public:
 
-    typedef MatrixBase<AlignedVector3<_Scalar> > Base;	
+    typedef MatrixBase<AlignedVector3<Scalar_> > Base;
     EIGEN_DENSE_PUBLIC_INTERFACE(AlignedVector3)
     using Base::operator*;
 
@@ -75,6 +77,9 @@ template<typename _Scalar> class AlignedVector3
     inline Scalar& coeffRef(Index index)
     { return m_coeffs.coeffRef(index);}
 
+
+    inline AlignedVector3()
+    {}
 
     inline AlignedVector3(const Scalar& x, const Scalar& y, const Scalar& z)
       : m_coeffs(x, y, z, Scalar(0))
@@ -128,6 +133,9 @@ template<typename _Scalar> class AlignedVector3
 
     inline AlignedVector3 operator-(const AlignedVector3& other) const
     { return AlignedVector3(m_coeffs - other.m_coeffs); }
+
+    inline AlignedVector3 operator-() const
+    { return AlignedVector3(-m_coeffs); }
 
     inline AlignedVector3 operator-=(const AlignedVector3& other)
     { m_coeffs -= other.m_coeffs; return *this; }
@@ -199,10 +207,10 @@ template<typename _Scalar> class AlignedVector3
 
 namespace internal {
 
-template<typename _Scalar>
-struct eval<AlignedVector3<_Scalar>, Dense>
+template<typename Scalar_>
+struct eval<AlignedVector3<Scalar_>, Dense>
 {
- typedef const AlignedVector3<_Scalar>& type;
+ typedef const AlignedVector3<Scalar_>& type;
 };
 
 template<typename Scalar>
@@ -221,4 +229,6 @@ struct evaluator<AlignedVector3<Scalar> >
 
 }
 
-#endif // EIGEN_ALIGNED_VECTOR3
+#include "../../Eigen/src/Core/util/ReenableStupidWarnings.h"
+
+#endif // EIGEN_ALIGNED_VECTOR3_MODULE_H
