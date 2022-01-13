@@ -160,6 +160,8 @@ void FlattenLayer::forward_propagate(const Tensor<type, 2> &inputs, LayerForward
 
 #endif
 
+    calculate_outputs_2d(inputs);
+
     cout<<flatten_layer_forward_propagation->outputs<<endl;
 }
 
