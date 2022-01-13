@@ -295,13 +295,12 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
     calculate_convolutions(inputs,
                            convolutional_layer_forward_propagation->combinations);
 
-//    cout<<convolutional_layer_forward_propagation->combinations<<endl;
+    calculate_activations(convolutional_layer_forward_propagation->combinations,
+                          convolutional_layer_forward_propagation->activations);
 
-    for(int i =0; i< inputs.size();i++) cout<<*(convolutional_layer_forward_propagation->combinations.data() + i)<<endl;
-
-//    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
-//                                      convolutional_layer_forward_propagation->activations,
-//                                      convolutional_layer_forward_propagation->activations_derivatives);
+    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
+                                      convolutional_layer_forward_propagation->activations,
+                                      convolutional_layer_forward_propagation->activations_derivatives);
 
 //    to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);
 //    to_2d(convolutional_layer_forward_propagation->activations_4d, convolutional_layer_forward_propagation->activations);
