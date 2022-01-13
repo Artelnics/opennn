@@ -481,7 +481,7 @@ void TrainingResults::resize_selection_error_history(const Index& new_size)
 
 /// Writes the time from seconds in format HH:mm:ss.
 
-const string OptimizationAlgorithm::write_time(const type& time) const
+string OptimizationAlgorithm::write_time(const type& time) const
 {
 
 #ifdef OPENNN_DEBUG

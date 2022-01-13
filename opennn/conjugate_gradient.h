@@ -83,9 +83,9 @@ public:
 
    // Set methods
 
-   void set_default();
+   void set_default() final;
 
-   void set_loss_index_pointer(LossIndex*);
+   void set_loss_index_pointer(LossIndex*) final;
 
    // Training operators
 
@@ -125,17 +125,17 @@ public:
 
    // Training methods
 
-   TrainingResults perform_training();   
+   TrainingResults perform_training() final;
 
-   string write_optimization_algorithm_type() const;
+   string write_optimization_algorithm_type() const final;
 
    // Serialization methods
 
-   Tensor<string, 2> to_string_matrix() const;
+   Tensor<string, 2> to_string_matrix() const final;
 
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
    void update_parameters(
            const DataSetBatch&,

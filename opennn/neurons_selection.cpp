@@ -460,7 +460,7 @@ void NeuronsSelection::check() const
 
 /// Writes the time from seconds in format HH:mm:ss.
 
-const string NeuronsSelection::write_time(const type& time) const
+string NeuronsSelection::write_time(const type& time) const
 {
 #ifdef OPENNN_DEBUG
 

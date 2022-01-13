@@ -327,13 +327,14 @@ void ModelSelection::check() const
 
 NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {
-    switch(neurons_selection_method)
+    if(neurons_selection_method == NeuronsSelectionMethod::GROWING_NEURONS)
     {
-    case NeuronsSelectionMethod::GROWING_NEURONS:
         return growing_neurons.perform_neurons_selection();
     }
-    return NeuronsSelectionResults();
-
+    else
+    {
+        return NeuronsSelectionResults();
+    }
 }
 
 
@@ -531,11 +532,13 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
 string ModelSelection::write_neurons_selection_method() const
 {
-    switch(neurons_selection_method)
+    if(neurons_selection_method ==  NeuronsSelectionMethod::GROWING_NEURONS)
     {
-    case NeuronsSelectionMethod::GROWING_NEURONS:
         return "GROWING_NEURONS";
-    default: return string();
+    }
+    else
+    {
+        return string();
     }
 }
 

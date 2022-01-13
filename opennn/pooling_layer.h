@@ -109,7 +109,7 @@ public:
 
     // Outputs
 
-    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) override;
+    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) final;
 
     void calculate_activations(const Tensor<type, 4>&,  Tensor<type, 4>&) {}
 
@@ -149,7 +149,7 @@ public:
 
     void calculate_error_gradient(const Tensor<type, 2>&,
                                   LayerForwardPropagation*,
-                                  LayerBackPropagation*) const override;
+                                  LayerBackPropagation*) const final;
 
 protected:
 

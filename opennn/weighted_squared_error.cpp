@@ -199,7 +199,7 @@ void WeightedSquaredError::calculate_error(const DataSetBatch& batch,
 
     LayerForwardPropagation* output_layer_forward_propagation = forward_propagation.layers(trainable_layers_number-1);
 
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_back_propagation
+    const ProbabilisticLayerForwardPropagation* probabilistic_layer_back_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
     const Tensor<type, 2>& targets = batch.targets_2d;
@@ -506,7 +506,7 @@ void WeightedSquaredError::calculate_squared_errors_lm(const DataSetBatch& batch
 
     const Tensor<type, 2>& targets = batch.targets_2d;
 
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
+    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(output_layer_forward_propagation);
 
     const Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->activations;

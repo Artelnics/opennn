@@ -1449,8 +1449,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
     for(Index i = 1; i < size; i++)
     {
-        if(find(unique_values.data(), unique_values.data()+unique_values.size(), vector(i))
-                == unique_values.data()+unique_values.size())
+        if( find( unique_values.data(), unique_values.data() + unique_values.size(), vector(i) )
+                == unique_values.data() + unique_values.size() )
         {
             unique_values_number++;
 
@@ -1483,7 +1483,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
             for(Index j = 0; j < unique_values_number; j++)
             {
-                if(vector(i) - centers(j) < static_cast<type>(1e-6))
+                if(vector(i) - centers(j) < type(NUMERIC_LIMITS_MIN))
                 {
                     frequencies(j)++;
                     break;
@@ -1802,7 +1802,8 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
 
     Tensor<Descriptives, 1> descriptives(columns_indices_size);
 
-    Index row_index, column_index;
+    Index row_index;
+    Index column_index;
 
     Tensor<type, 1> minimums(columns_indices_size);
     minimums.setConstant(numeric_limits<type>::max());

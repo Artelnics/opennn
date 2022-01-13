@@ -65,8 +65,8 @@ public:
 
    // Get methods
 
-   Index get_inputs_number() const;
-   Index get_neurons_number() const;
+   Index get_inputs_number() const override;
+   Index get_neurons_number() const final;
 
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
@@ -85,13 +85,13 @@ public:
    void set(const Index&, const Index&);
    void set(const ProbabilisticLayer&);
 
-   void set_inputs_number(const Index&);
-   void set_neurons_number(const Index&);
+   void set_inputs_number(const Index&) final;
+   void set_neurons_number(const Index&) final;
 
    void set_biases(const Tensor<type, 2>&);
    void set_synaptic_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index& index=0);
+   void set_parameters(const Tensor<type, 1>&, const Index& index=0) final;
    void set_decision_threshold(const type&);
 
    void set_activation_function(const ActivationFunction&);
@@ -107,8 +107,8 @@ public:
    Tensor<type, 2> get_biases(Tensor<type, 1>&) const;
    Tensor<type, 2> get_synaptic_weights(Tensor<type, 1>&) const;
 
-   Index get_parameters_number() const;
-   Tensor<type, 1> get_parameters() const;
+   Index get_parameters_number() const final;
+   Tensor<type, 1> get_parameters() const final;
 
    // Display messages
 
@@ -120,9 +120,9 @@ public:
    void set_synaptic_weights_constant(const type&);
    void set_synaptic_weights_constant_Glorot();
 
-   void set_parameters_constant(const type&);
+   void set_parameters_constant(const type&) final;
 
-   void set_parameters_random();
+   void set_parameters_random() final;
 
    void insert_parameters(const Tensor<type, 1>&, const Index&);
 
@@ -143,32 +143,32 @@ public:
 
    // Outputs
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) override;
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
 
    void forward_propagate(const Tensor<type, 2>&,
-                          LayerForwardPropagation*);
+                          LayerForwardPropagation*) final;
 
    void forward_propagate(const Tensor<type, 2>&,
                           Tensor<type, 1>,
-                          LayerForwardPropagation*);
+                          LayerForwardPropagation*) final;
 
    // Gradient methods
 
    void calculate_error_gradient(const Tensor<type, 2>&,
                                  LayerForwardPropagation*,
-                                 LayerBackPropagation*) const override;
+                                 LayerBackPropagation*) const final;
 
-   void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const;
+   void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const final;
 
    // Squared errors methods
 
    void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
                                              LayerForwardPropagation*,
-                                             LayerBackPropagationLM*);
+                                             LayerBackPropagationLM*) final;
 
    void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
                                           const Index&,
-                                          Tensor<type, 2>&) const;
+                                          Tensor<type, 2>&) const final;
 
    // Expression methods
 
@@ -178,23 +178,23 @@ public:
    string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_no_probabilistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
    string write_combinations(const Tensor<string, 1>&) const;
    string write_activations(const Tensor<string, 1>&) const;
 
-   string write_expression_c() const;
+   string write_expression_c() const final;
    string write_combinations_c() const;
    string write_activations_c() const;
 
-   string write_expression_python() const;
+   string write_expression_python() const final;
    string write_combinations_python() const;
    string write_activations_python() const;
 
    // Serialization methods
 
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 
 protected:

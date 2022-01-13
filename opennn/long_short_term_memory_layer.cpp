@@ -4444,7 +4444,6 @@ string LongShortTermMemoryLayer::write_combinations_c() const
 
     buffer << endl;
 
-
     // Hidden state
 
     for(Index i = 0; i < neurons_number; i++)

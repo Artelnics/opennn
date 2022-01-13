@@ -70,7 +70,7 @@ public:
     void set(const Tensor<Index, 1>&);
     void set(const tinyxml2::XMLDocument&);
 
-    void set_inputs_number(const Index&);
+    void set_inputs_number(const Index&) final;
 
     void set_default();
 
