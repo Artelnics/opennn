@@ -295,7 +295,9 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
     calculate_convolutions(inputs,
                            convolutional_layer_forward_propagation->combinations);
 
-    cout<<convolutional_layer_forward_propagation->combinations<<endl;
+//    cout<<convolutional_layer_forward_propagation->combinations<<endl;
+
+    for(int i =0; i< inputs.size();i++) cout<<*(convolutional_layer_forward_propagation->combinations.data() + i)<<endl;
 
 //    calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
 //                                      convolutional_layer_forward_propagation->activations,
