@@ -9955,7 +9955,6 @@ size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 
 void DataSet::read_bmp()
 {
-    /*
     const fs::path path = data_file_name;
 
     if(data_file_name.empty())
@@ -9989,6 +9988,7 @@ void DataSet::read_bmp()
     vector<fs::path> folder_paths;
     vector<fs::path> image_paths;
 
+
     for (const auto & entry : fs::directory_iterator(path)){
         folder_paths.emplace_back(entry.path().string());
     }
@@ -10006,12 +10006,6 @@ void DataSet::read_bmp()
     for(Index i = 0; i < classes_number; i++)
     {
         images_number += number_of_elements_in_directory(folder_paths[i]);
-
-//        if(i == 0)
-//        {
-//            image = read_bmp("");
-
-//        }
     }
 
 
@@ -10058,7 +10052,7 @@ void DataSet::read_bmp()
             for(Index k = 0; k < image_size; k++)
             {
                 data(row_index, k) = static_cast<type>(image[k]);
-                cout<< data(row_index, k) <<" ";
+                //cout<< data(row_index, k) <<" ";
             }
 
             data(row_index, image_size + i) = 1;
@@ -10074,7 +10068,7 @@ void DataSet::read_bmp()
 
     for(Index i = 1; i <= width;i++)
     {
-        for(Index j = 1; j<=height ; j++)
+        for(Index j = 1; j <= height ; j++)
         {
             columns(column_index).name= "pixel_"+to_string(channels)+"_"+to_string(j)+"_"+to_string(i);
             columns(column_index).column_use = VariableUse::Input;
@@ -10082,7 +10076,6 @@ void DataSet::read_bmp()
         }
 
     }
-
 
     columns(image_size).name = "class";
 
@@ -10093,19 +10086,37 @@ void DataSet::read_bmp()
        categories(i) = folder_paths[i].filename().u8string();
     }
 
-    cout<<categories<<endl;
-
     columns(image_size).categories = categories;
     columns(image_size).column_use = VariableUse::Target;
 
     samples_uses.resize(images_number);
     split_samples_random();
+    input_variables_dimensions = get_input_variables_dimensions();
 
-    input_variables_dimensions.resize(3);
     input_variables_dimensions(0) = channels;
     input_variables_dimensions(1) = width;
-    input_variables_dimensions(2) = height;
-    //*/
+    input_variables_dimensions(3) = height;
+
+    DataSet* data_set_pointer;
+    Index batch_size_training = 0;
+    Index batch_samples_number = 10;
+    const Index training_samples_number = get_training_samples_number();
+    const Tensor<Index, 1> training_samples_indices = get_training_samples_indices();
+    bool shuffle = true;
+
+    training_samples_number < batch_samples_number
+            ? batch_size_training = training_samples_number
+            : batch_size_training = batch_samples_number;
+    DataSetBatch batch(batch_size_training, data_set_pointer);
+
+    const Index training_batches_number = training_samples_number/batch_size_training;
+    Tensor<Index, 2> training_batches(training_batches_number, batch_size_training);
+
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    training_batches = get_batches(training_samples_indices, batch_size_training, shuffle);
+
+    batch.fill(training_batches, input_variables_indices, target_variables_indices);
 }
 
 
@@ -11223,16 +11234,16 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
     {
         fill_submatrix(data, samples, inputs, inputs_2d.data());
     }
-    else if(input_variables_dimensions.size() == 4)
+    else if(input_variables_dimensions.size() == 3)
     {
-
         //@todo check that it works properly
         //inputs_4d(row,column,channel,image)
 
-        const Index rows_number = input_variables_dimensions(0);
+        const Index samples_number = get_samples_number();
+
+        const Index channels_number = input_variables_dimensions(0);
         const Index columns_number = input_variables_dimensions(1);
-        const Index channels_number = input_variables_dimensions(2);
-        const Index samples_number = input_variables_dimensions(3);
+        const Index rows_number = input_variables_dimensions(2);
 
         inputs_4d.resize(rows_number, columns_number,channels_number,samples_number);
 
@@ -11248,7 +11259,8 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                 {
                     for(Index column = 0; column < columns_number; column++)
                     {
-                        inputs_4d(row,column,channel,image) = data(image, index);
+                        inputs_4d(row, column,channel,image) = data(image, index);
+                        cout<< inputs_4d(row, column,channel,image) <<" ";
                         index++;
                     }
                 }
