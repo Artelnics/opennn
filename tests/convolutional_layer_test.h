@@ -70,7 +70,7 @@ private:
 
     ConvolutionalLayer convolutional_layer;
 
-    ConvolutionalLayerForwardPropagation foward_propagation;
+    ConvolutionalLayerForwardPropagation forward_propagation;
 
     NumericalDifferentiation numerical_differentiation;
 };
