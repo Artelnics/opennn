@@ -190,7 +190,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(1) == 1, LOG);
         assert_true(back_propagation.error - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-3), LOG);
+        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-3)), LOG);
 
     }
 
@@ -236,7 +236,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         assert_true(back_propagation.error >= 0, LOG);
 
-        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, 1.0e-2), LOG);
+        assert_true(are_equal(back_propagation.gradient, gradient_numerical_differentiation, type(1.0e-2)), LOG);
     }
 
 
@@ -507,7 +507,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
     Tensor<type, 1> targets_mean;
     Tensor<type, 2> target_data;
 
-    type normalization_coefficient;
+//    type normalization_coefficient;
 
     // Test
 

@@ -15,6 +15,8 @@
 
 #define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
 
+#define _CRT_SECURE_NO_WARNINGS
+
 // For numeric limits
 
 #define NOMINMAX

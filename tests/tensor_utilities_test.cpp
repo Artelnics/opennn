@@ -30,7 +30,7 @@ void TensorUtilitiesTest::test_fill_submatrix()
     // Test
 
     matrix.resize(1, 1);
-    matrix.setConstant(3.1416);
+    matrix.setConstant(type(3.1416));
 
     rows_indices.resize(1);
     rows_indices.setZero();
@@ -42,7 +42,7 @@ void TensorUtilitiesTest::test_fill_submatrix()
 
     fill_submatrix(matrix, rows_indices, columns_indices, submatrix.data());
 
-    assert_true(is_equal(submatrix, 3.1416), LOG);
+    assert_true(is_equal(submatrix, type(3.1416)), LOG);
 }
 
 
