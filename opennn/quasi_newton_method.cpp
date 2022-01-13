@@ -326,7 +326,7 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
 }
 
 
-const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1>& left_matrix, Tensor<type, 1>& right_matrix) const
+Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1>& left_matrix, Tensor<type, 1>& right_matrix) const
 {
     // Transform Tensors into Dense matrix
 
@@ -353,7 +353,7 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1>& left
 /// @param left_matrix Matrix.
 /// @param right_matrix Matrix.
 
-const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left_matrix, Tensor<type, 2>& right_matrix) const
+Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left_matrix, Tensor<type, 2>& right_matrix) const
 {
     // Transform Tensors into Dense matrix
 
@@ -675,7 +675,8 @@ TrainingResults QuasiNewtonMethod::perform_training()
     type old_loss = type(0);
     type loss_decrease = numeric_limits<type>::max();
 
-    time_t beginning_time, current_time;
+    time_t beginning_time;
+    time_t current_time;
     time(&beginning_time);
     type elapsed_time;
 

@@ -116,7 +116,6 @@ protected:
            set(new_batch_samples_number, new_layer_pointer);
        }
 
-
        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
        {
            layer_pointer = new_layer_pointer;
@@ -127,12 +126,6 @@ protected:
            batch_samples_number = new_batch_samples_number;
 
            outputs.resize(outputs_rows_number, outputs_columns_number);
-       }
-
-
-       void print() const
-       {
-
        }
 
        Tensor<type, 2> outputs;

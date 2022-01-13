@@ -105,7 +105,7 @@ Tensor<type, 1> UnscalingLayer::get_maximums() const
 /// Returns the method used for unscaling
 ///(no unscaling, minimum and maximum or mean and standard deviation).
 
-const Tensor<Scaler, 1> UnscalingLayer::get_unscaling_method() const
+Tensor<Scaler, 1> UnscalingLayer::get_unscaling_method() const
 {
     return scalers;
 }

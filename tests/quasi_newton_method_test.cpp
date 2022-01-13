@@ -192,22 +192,9 @@ void QuasiNewtonMethodTest::test_perform_training()
 
 //    assert_true(loss < old_loss, LOG);
 
-    // Minimum parameters increment norm
-
-    neural_network.set_parameters_constant(type(3.1415927));
-
-    type minimum_parameters_increment_norm = type(0.1);
-
-    quasi_newton_method.set_loss_goal(type(0));
-    quasi_newton_method.set_minimum_loss_decrease(0.0);
-    quasi_newton_method.set_maximum_epochs_number(10);
-    quasi_newton_method.set_maximum_time(1000.0);
-
-    quasi_newton_method.perform_training();
-
     // Loss goal
 
-    neural_network.set_parameters_constant(3.1415927);
+    neural_network.set_parameters_constant(type(3.1415927));
 
     type training_loss_goal = 100.0;
 

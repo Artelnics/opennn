@@ -938,7 +938,7 @@ Index NeuralNetwork::get_outputs_number() const
 {
     if(layers_pointers.size() > 0)
     {
-        Layer* last_layer = layers_pointers[layers_pointers.size()-1];
+        const Layer* last_layer = layers_pointers[layers_pointers.size()-1];
 
         return last_layer->get_neurons_number();
     }
@@ -1586,7 +1586,8 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 #endif
 
     Tensor<type, 4> outputs_4d;
-    Tensor<type, 2> outputs, inputs_2d;
+    Tensor<type, 2> outputs;
+    Tensor<type, 2> inputs_2d;
 
     const Index layers_number = get_layers_number();
 
@@ -1681,13 +1682,13 @@ Tensor<string, 2> NeuralNetwork::get_information() const
 
         if(layer_type == "Perceptron")
         {
-            PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(trainable_layers_pointers(i));
+            const PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(trainable_layers_pointers(i));
 
             information(i,2) = perceptron_layer->write_activation_function();
         }
         else if(layer_type == "Probabilistic")
         {
-            ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(trainable_layers_pointers(i));
+            const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(trainable_layers_pointers(i));
 
             information(i,2) = probabilistic_layer->write_activation_function();
         }
@@ -1755,7 +1756,7 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
             information(probabilistic_layer_index,0) = to_string(trainable_layers_pointers(i)->get_inputs_number());
             information(probabilistic_layer_index,1) = to_string(trainable_layers_pointers(i)->get_neurons_number());
 
-            ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(trainable_layers_pointers(i));
+            const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(trainable_layers_pointers(i));
 
             information(probabilistic_layer_index,2) = probabilistic_layer->write_activation_function();
 
@@ -2507,7 +2508,7 @@ string NeuralNetwork::write_expression_c() const
 
     if(has_long_short_term_memory_layer())
     {
-        LongShortTermMemoryLayer* long_short_term_memory_pointer = get_long_short_term_memory_layer_pointer();
+        const LongShortTermMemoryLayer* long_short_term_memory_pointer = get_long_short_term_memory_layer_pointer();
         Index timestep = long_short_term_memory_pointer->get_timesteps();
         Index neurons_number = long_short_term_memory_pointer->get_neurons_number();
 

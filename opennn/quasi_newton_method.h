@@ -87,14 +87,14 @@ public:
 
    // Set methods
 
-   void set_loss_index_pointer(LossIndex*);
+   void set_loss_index_pointer(LossIndex*) override;
 
    void set_inverse_hessian_approximation_method(const InverseHessianApproximationMethod&);
    void set_inverse_hessian_approximation_method(const string&);
 
-   void set_display(const bool&);
+   void set_display(const bool&) final;
 
-   void set_default();
+   void set_default() final;
 
    // Stopping criteria
 
@@ -115,22 +115,22 @@ public:
    void initialize_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
    void calculate_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
 
-   const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
-   const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
+   Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
+   Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void update_parameters(const DataSetBatch& , NeuralNetworkForwardPropagation& , LossIndexBackPropagation& , QuasiNewtonMehtodData&) const;
 
-   TrainingResults perform_training();
+   TrainingResults perform_training() final;
 
-   string write_optimization_algorithm_type() const;
+   string write_optimization_algorithm_type() const final;
 
    // Serialization methods
    
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
    
-   Tensor<string, 2> to_string_matrix() const;
+   Tensor<string, 2> to_string_matrix() const final;
 
 private: 
 
@@ -189,9 +189,9 @@ struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
     {
         quasi_newton_method_pointer = new_quasi_newton_method_pointer;
 
-        LossIndex* loss_index_pointer = quasi_newton_method_pointer->get_loss_index_pointer();
+        const LossIndex* loss_index_pointer = quasi_newton_method_pointer->get_loss_index_pointer();
 
-        NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
         const Index parameters_number = neural_network_pointer->get_parameters_number();
 

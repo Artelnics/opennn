@@ -88,19 +88,6 @@ void GradientDescentTest::test_perform_training()
 
     //assert_true(loss < old_loss, LOG);
 
-    // Minimum parameters increment norm
-
-    neural_network.set_parameters_constant(type(-1));
-
-    type minimum_parameters_increment_norm = type(0.1);
-
-    gradient_descent.set_loss_goal(type(0));
-    gradient_descent.set_minimum_loss_decrease(0.0);
-    gradient_descent.set_maximum_epochs_number(1000);
-    gradient_descent.set_maximum_time(1000.0);
-
-    gradient_descent.perform_training();
-
     // Loss goal
 
     neural_network.set_parameters_constant(type(-1));
@@ -120,9 +107,10 @@ void GradientDescentTest::test_perform_training()
 
     neural_network.set_parameters_constant(type(-1));
 
-    type minimum_loss_decrease = 0.1;
+    type minimum_loss_decrease = type(0.1);
 
     gradient_descent.set_loss_goal(type(0));
+    gradient_descent.set_minimum_loss_decrease(minimum_loss_decrease);
     gradient_descent.set_maximum_epochs_number(1000);
     gradient_descent.set_maximum_time(1000.0);
 

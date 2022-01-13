@@ -208,7 +208,8 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     // Model selection
 
-    time_t beginning_time, current_time;
+    time_t beginning_time;
+    time_t current_time;
     type elapsed_time = type(0);
 
     time(&beginning_time);
