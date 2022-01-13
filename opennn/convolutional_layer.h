@@ -140,7 +140,6 @@ public:
                                 const Tensor<type, 2>&,
                                 const Tensor<type, 4>&,
                                 Tensor<type, 4>&) const;
-
     // Activation
 
     void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
@@ -148,7 +147,6 @@ public:
     void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
 
    // Outputs
-
 
    void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*);
 
@@ -256,8 +254,6 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
     {
         layer_pointer = new_layer_pointer;
 
-        const Index neurons_number = layer_pointer->get_neurons_number();
-
         const Index kernels_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_number();
         const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
         const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
@@ -266,8 +262,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
         combinations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
         activations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
-
-        //activations_derivatives.resize(batch_samples_number, neurons_number, neurons_number, neurons_number);
+        activations_derivatives.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
     }
 
     void print() const
