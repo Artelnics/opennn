@@ -49,6 +49,8 @@
 
 namespace opennn
 {
-    typedef float type;
+
+    using type = float;
+//    typedef float type;
 }
 

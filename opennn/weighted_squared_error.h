@@ -63,47 +63,47 @@ public:
 
    void set_weights();
 
-   void set_normalization_coefficient();
+   void set_normalization_coefficient() override;
 
-   void set_data_set_pointer(DataSet*);
+   void set_data_set_pointer(DataSet*) final;
 
    type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y) const;
 
-   string get_error_type() const;
+   string get_error_type() const final;
 
-   string get_error_type_text() const;
+   string get_error_type_text() const final;
 
    // Back propagation
 
    void calculate_error(const DataSetBatch&,
                         const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const;
+                        LossIndexBackPropagation&) const final;
 
    void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const;
+                               LossIndexBackPropagation&) const final;
 
    // Back propagation LM
 
    void calculate_squared_errors_lm(const DataSetBatch&,
                                     const NeuralNetworkForwardPropagation&,
-                                    LossIndexBackPropagationLM&) const;
+                                    LossIndexBackPropagationLM&) const final;
 
    void calculate_error_lm(const DataSetBatch&,
                            const NeuralNetworkForwardPropagation&,
-                           LossIndexBackPropagationLM&) const;
+                           LossIndexBackPropagationLM&) const final;
 
    void calculate_error_gradient_lm(const DataSetBatch&,
-                              LossIndexBackPropagationLM&) const;
+                              LossIndexBackPropagationLM&) const final;
 
    void calculate_error_hessian_lm(const DataSetBatch&,
-                                           LossIndexBackPropagationLM&) const;
+                                           LossIndexBackPropagationLM&) const final;
 
    // Serialization methods
 
    void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const;   
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
 

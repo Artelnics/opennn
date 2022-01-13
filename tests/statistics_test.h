@@ -99,8 +99,6 @@ public:
 
    void run_test_case();
 
-private:
-
 };
 
 #endif

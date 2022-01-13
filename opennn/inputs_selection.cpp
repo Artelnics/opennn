@@ -401,7 +401,7 @@ string InputsSelectionResults::write_stopping_condition() const
 
 /// Writes the time from seconds in format HH:mm:ss.
 
-const string InputsSelection::write_time(const type& time) const
+string InputsSelection::write_time(const type& time) const
 {
 
 #ifdef OPENNN_DEBUG

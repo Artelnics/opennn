@@ -66,8 +66,8 @@ public:
 
    bool is_empty() const;
 
-   Index get_inputs_number() const;
-   Index get_neurons_number() const;
+   Index get_inputs_number() const override;
+   Index get_neurons_number() const final;
 
    // Parameters
 
@@ -79,8 +79,8 @@ public:
 
    Index get_biases_number() const;
    Index get_synaptic_weights_number() const;
-   Index get_parameters_number() const;
-   Tensor<type, 1> get_parameters() const;
+   Index get_parameters_number() const final;
+   Tensor<type, 1> get_parameters() const final;
 
    // Activation functions
 
@@ -102,15 +102,15 @@ public:
 
    // Architecture
 
-   void set_inputs_number(const Index&);
-   void set_neurons_number(const Index&);
+   void set_inputs_number(const Index&) final;
+   void set_neurons_number(const Index&) final;
 
    // Parameters
 
    void set_biases(const Tensor<type, 2>&);
    void set_synaptic_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index& index=0);
+   void set_parameters(const Tensor<type, 1>&, const Index& index=0) final;
 
    // Activation functions
 
@@ -125,10 +125,9 @@ public:
    void set_biases_constant(const type&);
    void set_synaptic_weights_constant(const type&);
    
+   void set_parameters_constant(const type&) final;
 
-   void set_parameters_constant(const type&);
-
-   void set_parameters_random();
+   void set_parameters_random() final;
 
    // Perceptron layer combinations
 
@@ -148,21 +147,21 @@ public:
 
    // Perceptron layer outputs
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) override;
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
 
    void forward_propagate(const Tensor<type, 2>&,
-                          LayerForwardPropagation*);
+                          LayerForwardPropagation*) final;
 
 
    void forward_propagate(const Tensor<type, 2>&,
                           Tensor<type, 1>,
-                          LayerForwardPropagation*);
+                          LayerForwardPropagation*) final;
 
    // Delta methods
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
-                               LayerBackPropagation*) const;
+                               LayerBackPropagation*) const final;
 
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,
@@ -176,7 +175,7 @@ public:
 
    void calculate_hidden_delta_lm(LayerForwardPropagation*,
                                   LayerBackPropagationLM*,
-                                  LayerBackPropagationLM*) const;
+                                  LayerBackPropagationLM*) const final;
 
    void calculate_hidden_delta_perceptron_lm(PerceptronLayerForwardPropagation*,
                                              PerceptronLayerBackPropagationLM*,
@@ -190,40 +189,40 @@ public:
 
    void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
                                              LayerForwardPropagation*,
-                                             LayerBackPropagationLM*);
+                                             LayerBackPropagationLM*) final;
 
    void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
                                           const Index&,
-                                          Tensor<type, 2>&) const;
+                                          Tensor<type, 2>&) const final;
 
    // Gradient methods
 
    void calculate_error_gradient(const Tensor<type, 2>&,
                                  LayerForwardPropagation*,
-                                 LayerBackPropagation*) const override;
+                                 LayerBackPropagation*) const final;
 
    void insert_gradient(LayerBackPropagation*,
                         const Index&,
-                        Tensor<type, 1>&) const;
+                        Tensor<type, 1>&) const final;
 
    // Expression methods   
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    string write_activation_function_expression() const;
 
-   string write_expression_c() const;
+   string write_expression_c() const final;
    string write_combinations_c() const;
    string write_activations_c() const;
 
    string write_combinations_python() const;
    string write_activations_python() const;
-   string write_expression_python() const;
+   string write_expression_python() const final;
 
    // Serialization methods
 
-   void from_XML(const tinyxml2::XMLDocument&);
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void from_XML(const tinyxml2::XMLDocument&) final;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 

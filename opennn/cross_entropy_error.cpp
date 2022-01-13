@@ -143,7 +143,7 @@ void CrossEntropyError::calculate_binary_output_delta(const DataSetBatch& batch,
 {
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
+    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1));
 
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation

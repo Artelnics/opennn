@@ -8679,7 +8679,7 @@ Tensor<Index, 1> DataSet::select_outliers_via_contamination(const Tensor<type, 1
     }
 
     sort(ordered_ranks.data(), ordered_ranks.data() + samples_number,
-        [](Tensor<type, 1> & a, Tensor<type, 1> & b) -> bool
+        [](Tensor<type, 1> & a, Tensor<type, 1> & b)
     {
         return a(1) < b(1);
     });
@@ -8877,7 +8877,7 @@ void DataSet::create_kd_tree(Tensor<Tensor<type, 1>, 1>& tree, const Tensor<Tens
     auto specific_sort = [&tree](const Index & first, const Index & last, const Index & split_variable)
     {
         sort(tree.data() + first, tree.data() + last,
-            [&split_variable](const Tensor<type, 1> & a, const Tensor<type, 1> & b) -> bool
+            [&split_variable](const Tensor<type, 1> & a, const Tensor<type, 1> & b)
         {
             return a(split_variable) > b(split_variable);
         });
@@ -9013,7 +9013,7 @@ Tensor<type, 1> DataSet::calculate_local_outlier_factor(Tensor<list<Index>, 1>& 
     {
         sum = 0.0;
 
-        for(auto & neighbor_index : k_nearest_indexes(i))
+        for(const auto & neighbor_index : k_nearest_indexes(i))
             sum += average_reachabilities(i) / average_reachabilities(neighbor_index);
 
         LOF_value(i) = type(sum/k) ;
@@ -9102,7 +9102,7 @@ void DataSet::calculate_min_max_indices_list(list<Index>& elements, const Index&
 {
     type value;
     min = max = data(elements.front(), variable_index);
-    for(auto & sample_index : elements)
+    for(const auto & sample_index : elements)
     {
         value = data(sample_index, variable_index);
         if(min > value) min = value;
@@ -9199,7 +9199,8 @@ Tensor<type, 2> DataSet::create_isolation_tree(const Tensor<Index, 1>& indices, 
 
     Index current_index;
 
-    type min, max;
+    type min;
+    type max;
 
     while(current_depth < max_depth && !(tree_simulation.empty()))
     {
@@ -10412,8 +10413,6 @@ void DataSet::read_csv_3_simple()
 
     // Read data
 
-    Index j = 0;
-
     const Index raw_columns_number = has_rows_labels ? get_columns_number() + 1 : get_columns_number();
 
     Tensor<string, 1> tokens(raw_columns_number);
@@ -10439,7 +10438,7 @@ void DataSet::read_csv_3_simple()
 
         fill_tokens(line, separator_char, tokens);
 
-        for(j = 0; j < raw_columns_number; j++)
+        for(Index j = 0; j < raw_columns_number; j++)
         {
             trim(tokens(j));
 
@@ -11084,7 +11083,7 @@ void DataSet::fix_repeated_names()
         if(!result.second) result.first->second++;
     }
 
-    for(auto & element : columns_count_map)
+    for(const auto & element : columns_count_map)
     {
         if(element.second > 1)
         {
@@ -11119,7 +11118,7 @@ void DataSet::fix_repeated_names()
             if(!result.second) result.first->second++;
         }
 
-        for(auto & element : variables_count_map)
+        for(const auto & element : variables_count_map)
         {
             if(element.second > 1)
             {

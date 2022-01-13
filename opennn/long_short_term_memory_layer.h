@@ -59,8 +59,8 @@ public:
 
    bool is_empty() const;
 
-   Index get_inputs_number() const;
-   Index get_neurons_number() const;
+   Index get_inputs_number() const final;
+   Index get_neurons_number() const final;
 
    // Parameters
 
@@ -81,8 +81,8 @@ public:
 
    Index get_timesteps() const;
 
-   Index get_parameters_number() const;
-   Tensor<type, 1> get_parameters() const;
+   Index get_parameters_number() const override;
+   Tensor<type, 1> get_parameters() const final;
 
    // Activation functions
 
@@ -106,8 +106,8 @@ public:
 
    // Architecture
 
-   void set_inputs_number(const Index&);
-   void set_neurons_number(const Index&);
+   void set_inputs_number(const Index&) final;
+   void set_neurons_number(const Index&) final;
    void set_input_shape(const Tensor<Index, 1>&);
 
    // Parameters
@@ -127,7 +127,7 @@ public:
    void set_state_recurrent_weights(const Tensor<type, 2>&);
    void set_output_recurrent_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index& = 0);
+   void set_parameters(const Tensor<type, 1>&, const Index& = 0) final;
 
    // Activation functions
 
@@ -169,9 +169,9 @@ public:
    void set_hidden_states_constant(const type&);
    void set_cell_states_constant(const type&);
 
-   void set_parameters_constant(const type&);
+   void set_parameters_constant(const type&) final;
 
-   void set_parameters_random();
+   void set_parameters_random() final;
 
    // Long short-term memory layer combinations
 
@@ -197,11 +197,11 @@ public:
 
    // Long short-term memory layer outputs
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) override;
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
-                               LayerBackPropagation*) const;
+                               LayerBackPropagation*) const final;
 
 
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
@@ -215,15 +215,15 @@ public:
 
    // Forward propagate
 
-   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*) final;
 
-   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, LayerForwardPropagation*) final;
 
    // Eror gradient
 
-   void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const;
+   void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const final;
 
-   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, LayerBackPropagation*) const override;
+   void calculate_error_gradient(const Tensor<type, 2>&, LayerForwardPropagation*, LayerBackPropagation*) const final;
 
    void calculate_forget_weights_error_gradient(const Tensor<type, 2>&,
                                                 LongShortTermMemoryLayerForwardPropagation*,
@@ -275,21 +275,21 @@ public:
 
    // Expression methods
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
    string write_recurrent_activation_function_expression() const;
    string write_activation_function_expression() const;
 
-   string write_expression_c() const;
+   string write_expression_c() const final;
    string write_combinations_c() const;
 
-   string write_expression_python() const;
+   string write_expression_python() const final;
    string write_combinations_python() const;
 
    // Serialization methods
 
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 

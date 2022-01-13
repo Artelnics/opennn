@@ -966,7 +966,8 @@ void ConvolutionalLayerTest::test_memcpy_approach()
 //    kernel.setConstant(type(1./12.));
 //    kernel.chip(1,3).setConstant(type(1./6.));
 
-//    time_t beginning_time, current_time;
+//    time_t beginning_time;
+//    time_t current_time;
 //    time(&beginning_time);
 //    type elapsed_time = type(0);
 
@@ -1041,7 +1042,8 @@ void ConvolutionalLayerTest::test_memcpy_approach()
 
 
 
-//    time_t beginning_time_2, current_time_2;
+//    time_t beginning_time_2;
+//    time_t current_time_2;
 //    time(&beginning_time_2);
 //    type elapsed_time_2 = type(0);
 

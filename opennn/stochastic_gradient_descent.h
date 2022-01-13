@@ -65,9 +65,9 @@ public:
 
    // Set methods
 
-   void set_loss_index_pointer(LossIndex*);
+   void set_loss_index_pointer(LossIndex*) override;
 
-   void set_default();
+   void set_default() final;
 
    void set_batch_samples_number(const Index& new_batch_samples_number)
    {
@@ -96,17 +96,17 @@ public:
 
    void update_parameters(LossIndexBackPropagation& , StochasticGradientDescentData&) const;
 
-   TrainingResults perform_training();
+   TrainingResults perform_training() final;
 
-   string write_optimization_algorithm_type() const;
+   string write_optimization_algorithm_type() const final;
 
    // Serialization methods
 
-   Tensor<string, 2> to_string_matrix() const;
+   Tensor<string, 2> to_string_matrix() const final;
 
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;   
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
 
@@ -176,9 +176,9 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
     {
         stochastic_gradient_descent_pointer = new_stochastic_gradient_descent_pointer;
 
-        LossIndex* loss_index_pointer = stochastic_gradient_descent_pointer->get_loss_index_pointer();
+        const LossIndex* loss_index_pointer = stochastic_gradient_descent_pointer->get_loss_index_pointer();
 
-        NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
         const Index parameters_number = neural_network_pointer->get_parameters_number();
 

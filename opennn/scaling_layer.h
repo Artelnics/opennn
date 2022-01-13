@@ -52,8 +52,8 @@ public:
    
    Tensor<Index, 1> get_outputs_dimensions() const;
 
-   Index get_inputs_number() const;
-   Index get_neurons_number() const;
+   Index get_inputs_number() const final;
+   Index get_neurons_number() const final;
 
    // Inputs descriptives
 
@@ -67,7 +67,7 @@ public:
 
    // Variables scaling and unscaling
 
-   const Tensor<Scaler, 1> get_scaling_methods() const;
+   Tensor<Scaler, 1> get_scaling_methods() const;
 
    Tensor<string, 1> write_scalers() const;
    Tensor<string, 1> write_scalers_text() const;
@@ -85,8 +85,8 @@ public:
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
 
-   void set_inputs_number(const Index&);
-   void set_neurons_number(const Index&);
+   void set_inputs_number(const Index&) final;
+   void set_neurons_number(const Index&) final;
 
    void set_default();
 
@@ -120,8 +120,8 @@ public:
 
    void check_range(const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
+   Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) final;
 
    // Expression methods
 
@@ -133,17 +133,17 @@ public:
 
    string write_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-   string write_expression_c() const;
+   string write_expression_c() const final;
 
-   string write_expression_python() const;
+   string write_expression_python() const final;
 
    // Serialization methods
    
-   virtual void from_XML(const tinyxml2::XMLDocument&);
+   virtual void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 

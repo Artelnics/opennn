@@ -55,8 +55,8 @@ public:
    // Get methods
 
 
-   Index get_inputs_number() const;
-   Index get_neurons_number() const;
+   Index get_inputs_number() const final;
+   Index get_neurons_number() const final;
 
    const BoundingMethod& get_bounding_method() const;
 
@@ -75,8 +75,8 @@ public:
    void set(const tinyxml2::XMLDocument&);
    void set(const BoundingLayer&);
 
-   void set_inputs_number(const Index&);
-   void set_neurons_number(const Index&);
+   void set_inputs_number(const Index&) final;
+   void set_neurons_number(const Index&) final;
 
    void set_bounding_method(const BoundingMethod&);
    void set_bounding_method(const string&);
@@ -93,20 +93,20 @@ public:
 
    // Lower and upper bounds
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) override;
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
 
    // Expression methods
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-   string write_expression_c() const;
-   string write_expression_python() const;
+   string write_expression_c() const final;
+   string write_expression_python() const final;
 
    // Serialization methods
 
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
 

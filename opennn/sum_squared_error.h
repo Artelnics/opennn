@@ -49,38 +49,37 @@ public:
 
    void calculate_error(const DataSetBatch&,
                         const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const;
+                        LossIndexBackPropagation&) const override;
 
    void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const;
+                               LossIndexBackPropagation&) const final;
 
    // Back propagation LM
 
    void calculate_error_lm(const DataSetBatch&,
                            const NeuralNetworkForwardPropagation&,
-                           LossIndexBackPropagationLM&) const;
+                           LossIndexBackPropagationLM&) const final;
 
    void calculate_output_delta_lm(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagationLM&) const;
+                               LossIndexBackPropagationLM&) const final;
 
    void calculate_error_gradient_lm(const DataSetBatch&,
-                              LossIndexBackPropagationLM&) const;
+                              LossIndexBackPropagationLM&) const final;
 
    void calculate_error_hessian_lm(const DataSetBatch&,
-                                        LossIndexBackPropagationLM&) const;
+                                        LossIndexBackPropagationLM&) const final;
 
    // Serialization methods
 
-   string get_error_type() const;
-   string get_error_type_text() const;
+   string get_error_type() const final;
+   string get_error_type_text() const final;
       
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
-private:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/sum_squared_error_cuda.h"

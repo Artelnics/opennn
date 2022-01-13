@@ -54,7 +54,7 @@ public:
 
     // Set methods
 
-    virtual void set_default();
+    virtual void set_default() override;
 
     void set_maximum_inputs_number(const Index&);
 
@@ -64,7 +64,7 @@ public:
 
     // Order selection methods
 
-    InputsSelectionResults perform_inputs_selection();
+    InputsSelectionResults perform_inputs_selection() final;
 
     // Serialization methods
 

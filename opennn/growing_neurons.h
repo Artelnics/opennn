@@ -62,7 +62,7 @@ public:
 
     // Order selection methods
 
-    NeuronsSelectionResults perform_neurons_selection();
+    NeuronsSelectionResults perform_neurons_selection() final;
 
     // Serialization methods
 

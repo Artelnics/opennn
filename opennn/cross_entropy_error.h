@@ -44,7 +44,7 @@ public:
 
    void calculate_error(const DataSetBatch&,
                         const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const;
+                        LossIndexBackPropagation&) const final;
 
    void calculate_binary_error(const DataSetBatch&,
                         const NeuralNetworkForwardPropagation&,
@@ -58,7 +58,7 @@ public:
 
    void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const;
+                               LossIndexBackPropagation&) const final;
 
    void calculate_binary_output_delta(const DataSetBatch&,
                                       NeuralNetworkForwardPropagation&,
@@ -68,14 +68,14 @@ public:
                                         NeuralNetworkForwardPropagation&,
                                         LossIndexBackPropagation&) const;
 
-   string get_error_type() const;
-   string get_error_type_text() const;
+   string get_error_type() const final;
+   string get_error_type_text() const final;
 
    // Serialization methods
       
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/cross_entropy_error_cuda.h"
