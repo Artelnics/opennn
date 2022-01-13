@@ -62,8 +62,8 @@ public:
 
    bool is_empty() const;
 
-   Index get_inputs_number() const;
-   Index get_neurons_number() const;
+   Index get_inputs_number() const override;
+   Index get_neurons_number() const final;
 
    const Tensor<type, 1>& get_hidden_states() const;
 
@@ -79,8 +79,8 @@ public:
    Index get_input_weights_number() const;
    Index get_recurrent_weights_number() const;
 
-   Index get_parameters_number() const;
-   Tensor<type, 1> get_parameters() const;
+   Index get_parameters_number() const final;
+   Tensor<type, 1> get_parameters() const final;
 
    Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
    Tensor<type, 2> get_input_weights(const Tensor<type, 1>&) const;
@@ -106,8 +106,8 @@ public:
 
    // Architecture
 
-   void set_inputs_number(const Index&);
-   void set_neurons_number(const Index&);
+   void set_inputs_number(const Index&) final;
+   void set_neurons_number(const Index&) final;
    void set_input_shape(const Tensor<Index, 1>&);
 
    // Parameters
@@ -120,7 +120,7 @@ public:
 
    void set_recurrent_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index& = 0);
+   void set_parameters(const Tensor<type, 1>&, const Index& = 0) final;
 
    // Activation functions
 
@@ -141,9 +141,9 @@ public:
    void set_recurrent_weights_constant(const type&);
    void initialize_input_weights_Glorot(const type&, const type&);
 
-   void set_parameters_constant(const type&);
+   void set_parameters_constant(const type&) final;
 
-   void set_parameters_random();
+   void set_parameters_random() final;
 
    // neuron layer combinations
 
@@ -167,15 +167,15 @@ public:
 
    // neuron layer outputs
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) final;
 
-   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*) final;
 
-   void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, LayerForwardPropagation*);
+   void forward_propagate(const Tensor<type, 2>&, const Tensor<type, 1>, LayerForwardPropagation*) final;
 
    void calculate_hidden_delta(LayerForwardPropagation*,
                                LayerBackPropagation*,
-                               LayerBackPropagation*) const;
+                               LayerBackPropagation*) const final;
 
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,
@@ -187,11 +187,11 @@ public:
 
    // Gradient
 
-   void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const;
+   void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const final;
 
    void calculate_error_gradient(const Tensor<type, 2>&,
                                  LayerForwardPropagation*,
-                                 LayerBackPropagation*) const;
+                                 LayerBackPropagation*) const final;
 
    void calculate_biases_error_gradient(const Tensor<type, 2>&,
                                         RecurrentLayerForwardPropagation*,
@@ -207,19 +207,19 @@ public:
 
    // Expression methods
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    string write_activation_function_expression() const;
 
-   string write_expression_python() const;
+   string write_expression_python() const final;
    string write_combinations_python() const;
    string write_activations_python() const;
 
    // Serialization methods
 
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 

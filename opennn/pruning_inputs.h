@@ -65,7 +65,7 @@ public:
 
     // Order selection methods
 
-    InputsSelectionResults perform_inputs_selection();
+    InputsSelectionResults perform_inputs_selection() final;
 
     // Serialization methods
 

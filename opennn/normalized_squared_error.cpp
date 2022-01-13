@@ -349,7 +349,7 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
     LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
+    const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
@@ -412,7 +412,7 @@ void NormalizedSquaredError::calculate_output_delta_lm(const DataSetBatch& ,
 
     LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
+    const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
     switch(output_layer_pointer->get_type())
     {

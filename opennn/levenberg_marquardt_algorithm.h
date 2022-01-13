@@ -78,7 +78,7 @@ public:
 
    // Set methods
 
-   void set_default();
+   void set_default() override;
 
    void set_damping_parameter(const type&);
 
@@ -99,9 +99,9 @@ public:
 
    // Training methods
 
-   void check() const;
+   void check() const final;
 
-   TrainingResults perform_training();
+   TrainingResults perform_training() final;
 
    void update_parameters(
            const DataSetBatch&,
@@ -109,15 +109,15 @@ public:
            LossIndexBackPropagationLM&,
            LevenbergMarquardtAlgorithmData&);
 
-   string write_optimization_algorithm_type() const;
+   string write_optimization_algorithm_type() const final;
 
    // Serialization methods
 
-   Tensor<string, 2> to_string_matrix() const;
+   Tensor<string, 2> to_string_matrix() const final;
    
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
    
 private:
 
@@ -183,9 +183,9 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
     {
         Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_method_pointer;
 
-        LossIndex* loss_index_pointer = Levenberg_Marquardt_algorithm->get_loss_index_pointer();
+        const LossIndex* loss_index_pointer = Levenberg_Marquardt_algorithm->get_loss_index_pointer();
 
-        NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
         const Index parameters_number = neural_network_pointer->get_parameters_number();
 

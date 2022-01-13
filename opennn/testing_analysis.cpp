@@ -2695,7 +2695,7 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
 
     while(contains(calibration_plot.chip(0,1), type(-1)))
      {
-         for(Index i = 1; i < points_number - points_number_subtracted+1; i++)
+         for(Index i = 1; i < (points_number - points_number_subtracted + 1); i++)
          {
              if(abs(calibration_plot(i, 0) + type(1)) < type(NUMERIC_LIMITS_MIN))
              {
@@ -3153,7 +3153,8 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
 
     Tensor<string, 2> well_lassified_samples(samples_number, 4);
 
-    Index predicted_class, actual_class;
+    Index predicted_class;
+    Index actual_class;
     Index number_of_well_classified = 0;
     string class_name;
 
@@ -3194,7 +3195,8 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
 {
     const Index samples_number = targets.dimension(0);
 
-    Index predicted_class, actual_class;
+    Index predicted_class;
+    Index actual_class;
     string class_name;
 
     const Tensor<string, 1> target_variables_names = neural_network_pointer->get_outputs_names();
@@ -3648,20 +3650,29 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
     const Index false_negative = confusion(0,1);
     const Index true_negative = confusion(1,1);
 
-    // Classification accuracy and error rate
+    // Classification accuracy
 
     type classification_accuracy;
+
+    if(true_positive + true_negative + false_positive + false_negative == 0)
+    {
+        classification_accuracy = type(0);
+    }
+    else
+    {
+        classification_accuracy = static_cast<type>(true_positive + true_negative)/static_cast<type>(true_positive + true_negative + false_positive + false_negative);
+    }
+
+    // Error rate
 
     type error_rate;
 
     if(true_positive + true_negative + false_positive + false_negative == 0)
     {
-        classification_accuracy = type(0);
         error_rate = type(0);
     }
     else
     {
-        classification_accuracy = static_cast<type>(true_positive + true_negative)/static_cast<type>(true_positive + true_negative + false_positive + false_negative);
         error_rate = static_cast<type>(false_positive + false_negative)/static_cast<type>(true_positive + true_negative + false_positive + false_negative);
     }
 
@@ -3695,7 +3706,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
     type specificity;
 
-    if(true_negative + false_positive == 0)
+    if(false_positive + true_negative== 0)
     {
         specificity = type(0);
     }
@@ -4051,7 +4062,7 @@ bool TestingAnalysis::contains(const Tensor<type, 1>& tensor, const type& value)
 {
     Tensor<type, 1> copy(tensor);
 
-    type* it = find(copy.data(), copy.data()+copy.size(), value);
+    const type* it = find(copy.data(), copy.data()+copy.size(), value);
 
     return it != (copy.data()+copy.size());
 }

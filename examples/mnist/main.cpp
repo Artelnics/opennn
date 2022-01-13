@@ -49,82 +49,62 @@ int main()
 
         DataSet data_set;//("../data/mnist_train.csv", ',', true);
 
-        data_set.set_data_file_name("C:/Users/Artelnics2019/Desktop/mnist/data");
+        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
+
+
 
         data_set.read_bmp();
-
         data_set.save("C:/Users/Artelnics/Desktop/mnist/data_set_1.xml");
 
-        //data_set.set_input();
-
-        //data_set.set_column_use(0, DataSet::VariableUse::Target);
-/*
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
-        const Tensor<DataSet::Column, 1> columns = data_set.get_columns();
-
-        for(Index i = 0; i < columns.size(); i++)
-        {
-            cout << "Column " << i << ": " << endl;
-            cout << "   Name: " << columns(i).name << endl;
-
-            if(columns(i).column_use == opennn::DataSet::VariableUse::Input) cout << "   Use: input" << endl;
-            else if(columns(i).column_use == opennn::DataSet::VariableUse::Target) cout << "   Use: target" << endl;
-            else if(columns(i).column_use == opennn::DataSet::VariableUse::UnusedVariable) cout << "   Use: unused" << endl;
-
-            if(columns(i).type == opennn::DataSet::ColumnType::Categorical) cout << "   Categories: " << columns(i).categories << endl;
-
-            cout << endl;
-        }
-
-        cout << "Input variables number: " << data_set.get_target_variables_number() << endl;
-        cout << "Target variables number: " << data_set.get_target_variables_number() << endl;
-
         // Neural network
 
-        Index hidden_neurons_number = 50;
+        const Index hidden_neurons_number = 3;
 
         NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
-
-        PerceptronLayer* perceptron_layer_pointer = neural_network.get_first_perceptron_layer_pointer();
-        perceptron_layer_pointer->set_activation_function("RectifiedLinear");
-
-        Tensor<Layer*, 1> layers_pointers = neural_network.get_trainable_layers_pointers();
-
-        for(Index i = 0; i < layers_pointers.size(); i++)
-        {
-            cout << "Layer " << i << ": " << endl;
-            cout << "   Type: " << layers_pointers(i)->get_type_string() << endl;
-
-            if(layers_pointers(i)->get_type_string() == "Perceptron") cout << "   Activation: " << static_cast<PerceptronLayer*>(layers_pointers(i))->write_activation_function() << endl;
-            if(layers_pointers(i)->get_type_string() == "Probabilistic") cout << "   Activation: " << static_cast<ProbabilisticLayer*>(layers_pointers(i))->write_activation_function() << endl;
-        }
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.set_display_period(100);
-        training_strategy.set_maximum_epochs_number(1000);
-
         training_strategy.perform_training();
 
+        /*
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
+        vector<unsigned char> zero, one;
+
+        zero = data_set.read_bmp_image("C:/Users/Artelnics/Desktop/mnist/");
+        one = data_set.read_bmp_image("C:/Users/Artelnics/Desktop/mnist/");
+
+        vector<type> zero_int, one_int;
+
+        for(Index i = 0 ; i < zero.size() ; i++ )
+        {
+            zero_int[i]=(type)zero[i];
+            one_int[i]=(type)one[i];
+        }
+
+        Tensor<type, 2> inputs(2, zero.size());
+        Tensor<type, 2> outputs;
+
+        inputs.setValues({zero_int,one_int});
+
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-        const Tensor<type, 1> multiple_classification_tests = testing_analysis.calculate_multiple_classification_tests();
+        outputs = neural_network.calculate_outputs(inputs);
 
-        cout << "Confusion matrix: " << endl;
-        cout << confusion << endl;
+        cout << "\nInputs:\n" << inputs << endl;
 
-        cout << "Accuracy: " << multiple_classification_tests(0)*type(100) << "%" << endl;
-        cout << "Error: " << multiple_classification_tests(1)*type(100) << "%" << endl;
-*/
+        cout << "\nOutputs:\n" << outputs << endl;
+
+        cout << "\nConfusion matrix:\n" << confusion << endl;
+        */
+
         cout << "Bye!" << endl;
 
         return 0;

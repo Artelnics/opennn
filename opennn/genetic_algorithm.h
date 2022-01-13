@@ -67,7 +67,7 @@ public:
 
     // Set methods
 
-    virtual void set_default();
+    virtual void set_default() final;
 
     void set_population(const Tensor<bool, 2>&);
     void set_individuals_number(const Index&);
@@ -105,7 +105,7 @@ public:
 
     // Inputs selection methods
 
-    InputsSelectionResults perform_inputs_selection();
+    InputsSelectionResults perform_inputs_selection()  final;
 
     // Serialization methods
 

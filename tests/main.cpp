@@ -752,7 +752,7 @@ int main()
 
       return 0;
    }
-   catch(exception& e)
+   catch(const exception& e)
    {
       cerr << e.what() << endl;		 
 

@@ -58,20 +58,20 @@ public:
 
    void calculate_error(const DataSetBatch& batch,
                         const NeuralNetworkForwardPropagation& forward_propagation,
-                        LossIndexBackPropagation& back_propagation) const;
+                        LossIndexBackPropagation& back_propagation) const override;
 
    void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const;
+                               LossIndexBackPropagation&) const final;
 
    // Serialization methods
 
-   string get_error_type() const;
-   string get_error_type_text() const;
+   string get_error_type() const final;
+   string get_error_type_text() const final;
 
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
 

@@ -154,7 +154,7 @@ Tensor<type, 1> ScalingLayer::get_standard_deviations() const
 
 /// Returns the methods used for scaling.
 
-const Tensor<Scaler, 1> ScalingLayer::get_scaling_methods() const
+Tensor<Scaler, 1> ScalingLayer::get_scaling_methods() const
 {
     return scalers;
 }

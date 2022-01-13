@@ -1433,9 +1433,9 @@ void ConjugateGradientData::set(ConjugateGradient* new_conjugate_gradient_pointe
 {
     conjugate_gradient_pointer = new_conjugate_gradient_pointer;
 
-    LossIndex* loss_index_pointer = conjugate_gradient_pointer->get_loss_index_pointer();
+    const LossIndex* loss_index_pointer = conjugate_gradient_pointer->get_loss_index_pointer();
 
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
 

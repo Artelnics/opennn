@@ -1688,7 +1688,7 @@ void DataSetTest::test_calculate_selection_negatives()
     input_variables_indices.setValues({0, 1});
     target_variables_indices.resize(1);
     target_variables_indices.setValues({2});
-    Index target_index = 2;
+//    Index target_index = 2;
 
     data_set.set_testing();
     data_set.set_selection(selection_indices);

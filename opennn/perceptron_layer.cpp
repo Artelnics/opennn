@@ -965,7 +965,7 @@ void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
 {
-    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
+    const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
             static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
 
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =

@@ -76,7 +76,7 @@ public:
 
    /// Writes the time from seconds in format HH:mm:ss.
 
-   const string write_time(const type&) const;
+   string write_time(const type&) const;
 
    // Set methods
 

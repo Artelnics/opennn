@@ -81,7 +81,7 @@ int main()
 
         return 0;
     }
-    catch(exception& e)
+    catch(const exception& e)
     {
         cout << e.what() << endl;
 

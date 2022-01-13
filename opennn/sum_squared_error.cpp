@@ -70,7 +70,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch&,
 
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
 
-     Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
+     const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
      const type coefficient = static_cast<type>(2.0);
 
@@ -131,7 +131,7 @@ void SumSquaredError::calculate_output_delta_lm(const DataSetBatch&,
 
     LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
 
-    Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
+    const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
     switch(output_layer_pointer->get_type())
     {

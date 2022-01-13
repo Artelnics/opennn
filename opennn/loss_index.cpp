@@ -552,7 +552,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
         {
         case Layer::Type::Perceptron:
         {
-            PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+            const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
                     = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1));
 
             trainable_layers_pointers(i)->calculate_squared_errors_Jacobian_lm(perceptron_layer_forward_propagation->activations,
@@ -796,7 +796,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
         {
         case Layer::Type::Perceptron:
         {
-            PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
+            const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
                     = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1));
 
             trainable_layers_pointers(i)->
@@ -808,7 +808,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
 
         case Layer::Type::Probabilistic:
         {
-            ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
+            const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
                     = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1));
 
             trainable_layers_pointers(i)->
@@ -820,7 +820,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
 
         case Layer::Type::Recurrent:
         {
-            RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
+            const RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation
                     = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1));
 
             trainable_layers_pointers(i)->
@@ -832,7 +832,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
 
         case Layer::Type::LongShortTermMemory:
         {
-            LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
+            const LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation
                     = static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1));
 
             trainable_layers_pointers(i)->

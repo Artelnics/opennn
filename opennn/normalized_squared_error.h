@@ -52,7 +52,7 @@ public:
 
    // Set methods
 
-    void set_normalization_coefficient();
+    void set_normalization_coefficient() override;
     void set_normalization_coefficient(const type&);
 
     void set_time_series_normalization_coefficient();
@@ -62,7 +62,7 @@ public:
 
     virtual void set_default();
 
-    void set_data_set_pointer(DataSet* new_data_set_pointer);
+    void set_data_set_pointer(DataSet* new_data_set_pointer) final;
 
    // Normalization coefficients 
 
@@ -74,36 +74,36 @@ public:
      
    void calculate_error(const DataSetBatch&,
                         const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const;
+                        LossIndexBackPropagation&) const final;
 
    void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const;
+                               LossIndexBackPropagation&) const final;
 
     // Back propagation LM
 
    void calculate_error_lm(const DataSetBatch&,
                            const NeuralNetworkForwardPropagation&,
-                           LossIndexBackPropagationLM&) const;
+                           LossIndexBackPropagationLM&) const final;
 
    void calculate_output_delta_lm(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagationLM&) const;
+                               LossIndexBackPropagationLM&) const final;
 
    void calculate_error_gradient_lm(const DataSetBatch&,
-                              LossIndexBackPropagationLM&) const;
+                              LossIndexBackPropagationLM&) const final;
 
    void calculate_error_hessian_lm(const DataSetBatch&,
-                                        LossIndexBackPropagationLM&) const;
+                                        LossIndexBackPropagationLM&) const final;
 
    // Serialization methods
 
-   string get_error_type() const;
-   string get_error_type_text() const;
+   string get_error_type() const final;
+   string get_error_type_text() const final;
 
    virtual void from_XML(const tinyxml2::XMLDocument&) const;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
 
