@@ -690,23 +690,34 @@ void ConvolutionalLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
 
-    const Index input_images = 1;
-    const Index input_kernels = 2;
+    const Index input_images = 2;
+    const Index input_kernels = 3;
 
     const Index channels = 3;
 
-    const Index rows_input = 6;
-    const Index cols_input = 6;
+    const Index rows_input = 3;
+    const Index cols_input = 3;
     const Index rows_kernel = 3;
     const Index cols_kernel = 3;
 
     Tensor<type,4> inputs(rows_input, cols_input, channels, input_images);
     Tensor<type,4> kernel(rows_kernel, cols_kernel, channels, input_kernels);
     Tensor<type,1> bias(input_kernels);
-
     inputs.setConstant(1.);
-    kernel.setConstant(2.);
-    bias.setConstant(2.);
+
+    inputs.chip(0,3).chip(0,2).setConstant(2.);
+    inputs.chip(0,3).chip(1,2).setConstant(3.);
+    inputs.chip(0,3).chip(2,2).setConstant(4.);
+
+    kernel.chip(0,3).setConstant(1./3.);
+    kernel.chip(1,3).setConstant(1./9.);
+    kernel.chip(2,3).setConstant(1./27.);
+
+
+
+
+
+//for(int i =0; i< inputs.size();i++) cout<<*(inputs.data() + i)<<endl;
 
     convolutional_layer.set(inputs, kernel, bias);
 
