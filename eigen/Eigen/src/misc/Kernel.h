@@ -10,8 +10,6 @@
 #ifndef EIGEN_MISC_KERNEL_H
 #define EIGEN_MISC_KERNEL_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {
@@ -36,10 +34,10 @@ struct traits<kernel_retval_base<DecompositionType> >
   > ReturnType;
 };
 
-template<typename DecompositionType_> struct kernel_retval_base
- : public ReturnByValue<kernel_retval_base<DecompositionType_> >
+template<typename _DecompositionType> struct kernel_retval_base
+ : public ReturnByValue<kernel_retval_base<_DecompositionType> >
 {
-  typedef DecompositionType_ DecompositionType;
+  typedef _DecompositionType DecompositionType;
   typedef ReturnByValue<kernel_retval_base> Base;
 
   explicit kernel_retval_base(const DecompositionType& dec)

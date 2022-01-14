@@ -8,8 +8,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_CORE_MODULE_H
-#define EIGEN_CORE_MODULE_H
+#ifndef EIGEN_CORE_H
+#define EIGEN_CORE_H
 
 // first thing Eigen does: stop the compiler from reporting useless warnings.
 #include "src/Core/util/DisableStupidWarnings.h"
@@ -36,7 +36,7 @@
 
 // Disable the ipa-cp-clone optimization flag with MinGW 6.x or newer (enabled by default with -O3)
 // See http://eigen.tuxfamily.org/bz/show_bug.cgi?id=556 for details.
-#if EIGEN_COMP_MINGW && EIGEN_GNUC_AT_MOST(5,5)
+#if EIGEN_COMP_MINGW && EIGEN_GNUC_AT_LEAST(4,6) && EIGEN_GNUC_AT_MOST(5,5)
   #pragma GCC optimize ("-fno-ipa-cp-clone")
 #endif
 
@@ -67,7 +67,6 @@
 #endif
 
 #ifdef EIGEN_HAS_OPENMP
-#include <atomic>
 #include <omp.h>
 #endif
 
@@ -95,10 +94,14 @@
 // for min/max:
 #include <algorithm>
 
+#if EIGEN_HAS_CXX11
 #include <array>
+#endif
 
 // for std::is_nothrow_move_assignable
+#ifdef EIGEN_INCLUDE_TYPE_TRAITS
 #include <type_traits>
+#endif
 
 // for outputting debug info
 #ifdef EIGEN_DEBUG_ASSIGN
@@ -106,8 +109,7 @@
 #endif
 
 // required for __cpuid, needs to be included after cmath
-// also required for _BitScanReverse on Windows on ARM
-#if EIGEN_COMP_MSVC && (EIGEN_ARCH_i386_OR_x86_64 || EIGEN_ARCH_ARM64) && !EIGEN_OS_WINCE
+#if EIGEN_COMP_MSVC && EIGEN_ARCH_i386_OR_x86_64 && !EIGEN_OS_WINCE
   #include <intrin.h>
 #endif
 
@@ -163,7 +165,6 @@ using std::ptrdiff_t;
 #include "src/Core/util/XprHelper.h"
 #include "src/Core/util/Memory.h"
 #include "src/Core/util/IntegralConstant.h"
-#include "src/Core/util/Serializer.h"
 #include "src/Core/util/SymbolicIndex.h"
 
 #include "src/Core/NumTraits.h"
@@ -255,14 +256,10 @@ using std::ptrdiff_t;
 #include "src/Core/functors/StlFunctors.h"
 #include "src/Core/functors/AssignmentFunctors.h"
 
-// Specialized functors for GPU.
-#ifdef EIGEN_GPUCC
-#include "src/Core/arch/GPU/Complex.h"
-#endif
-
-// Specializations of vectorized activation functions for NEON.
-#ifdef EIGEN_VECTORIZE_NEON
-#include "src/Core/arch/NEON/UnaryFunctors.h"
+// Specialized functors to enable the processing of complex numbers
+// on CUDA devices
+#ifdef EIGEN_CUDACC
+#include "src/Core/arch/CUDA/Complex.h"
 #endif
 
 #include "src/Core/util/IndexedViewHelper.h"
@@ -384,4 +381,4 @@ using std::ptrdiff_t;
 
 #include "src/Core/util/ReenableStupidWarnings.h"
 
-#endif // EIGEN_CORE_MODULE_H
+#endif // EIGEN_CORE_H

@@ -11,8 +11,6 @@
 #ifndef EIGEN_GMRES_H
 #define EIGEN_GMRES_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -218,17 +216,17 @@ bool gmres(const MatrixType & mat, const Rhs & rhs, Dest & x, const Precondition
 
 }
 
-template< typename MatrixType_,
-          typename Preconditioner_ = DiagonalPreconditioner<typename MatrixType_::Scalar> >
+template< typename _MatrixType,
+          typename _Preconditioner = DiagonalPreconditioner<typename _MatrixType::Scalar> >
 class GMRES;
 
 namespace internal {
 
-template< typename MatrixType_, typename Preconditioner_>
-struct traits<GMRES<MatrixType_,Preconditioner_> >
+template< typename _MatrixType, typename _Preconditioner>
+struct traits<GMRES<_MatrixType,_Preconditioner> >
 {
-  typedef MatrixType_ MatrixType;
-  typedef Preconditioner_ Preconditioner;
+  typedef _MatrixType MatrixType;
+  typedef _Preconditioner Preconditioner;
 };
 
 }
@@ -239,8 +237,8 @@ struct traits<GMRES<MatrixType_,Preconditioner_> >
   * This class allows to solve for A.x = b sparse linear problems using a generalized minimal
   * residual method. The vectors x and b can be either dense or sparse.
   *
-  * \tparam MatrixType_ the type of the sparse matrix A, can be a dense or a sparse matrix.
-  * \tparam Preconditioner_ the type of the preconditioner. Default is DiagonalPreconditioner
+  * \tparam _MatrixType the type of the sparse matrix A, can be a dense or a sparse matrix.
+  * \tparam _Preconditioner the type of the preconditioner. Default is DiagonalPreconditioner
   *
   * The maximal number of iterations and tolerance value can be controlled via the setMaxIterations()
   * and setTolerance() methods. The defaults are the size of the problem for the maximal number of iterations
@@ -267,8 +265,8 @@ struct traits<GMRES<MatrixType_,Preconditioner_> >
   *
   * \sa class SimplicialCholesky, DiagonalPreconditioner, IdentityPreconditioner
   */
-template< typename MatrixType_, typename Preconditioner_>
-class GMRES : public IterativeSolverBase<GMRES<MatrixType_,Preconditioner_> >
+template< typename _MatrixType, typename _Preconditioner>
+class GMRES : public IterativeSolverBase<GMRES<_MatrixType,_Preconditioner> >
 {
   typedef IterativeSolverBase<GMRES> Base;
   using Base::matrix;
@@ -282,10 +280,10 @@ private:
 
 public:
   using Base::_solve_impl;
-  typedef MatrixType_ MatrixType;
+  typedef _MatrixType MatrixType;
   typedef typename MatrixType::Scalar Scalar;
   typedef typename MatrixType::RealScalar RealScalar;
-  typedef Preconditioner_ Preconditioner;
+  typedef _Preconditioner Preconditioner;
 
 public:
 

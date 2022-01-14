@@ -8,8 +8,6 @@
 #ifndef EIGEN_SPECIALFUNCTIONS_HALF_H
 #define EIGEN_SPECIALFUNCTIONS_HALF_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace numext {
 

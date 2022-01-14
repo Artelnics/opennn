@@ -10,8 +10,6 @@
 #ifndef EIGEN_PACKET_MATH_SVE_H
 #define EIGEN_PACKET_MATH_SVE_H
 
-#include "../../InternalHeaderCheck.h"
-
 namespace Eigen
 {
 namespace internal

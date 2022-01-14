@@ -68,8 +68,6 @@
 
 #ifndef EIGEN_LU_STRUCTS
 #define EIGEN_LU_STRUCTS
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
   

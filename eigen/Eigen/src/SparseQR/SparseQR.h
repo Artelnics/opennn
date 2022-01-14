@@ -11,8 +11,6 @@
 #ifndef EIGEN_SPARSE_QR_H
 #define EIGEN_SPARSE_QR_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 template<typename MatrixType, typename OrderingType> class SparseQR;
@@ -61,8 +59,8 @@ namespace internal {
   * R is the sparse triangular or trapezoidal matrix. The later occurs when A is rank-deficient.
   * matrixR().topLeftCorner(rank(), rank()) always returns a triangular factor of full rank.
   * 
-  * \tparam MatrixType_ The type of the sparse matrix A, must be a column-major SparseMatrix<>
-  * \tparam OrderingType_ The fill-reducing ordering method. See the \link OrderingMethods_Module
+  * \tparam _MatrixType The type of the sparse matrix A, must be a column-major SparseMatrix<>
+  * \tparam _OrderingType The fill-reducing ordering method. See the \link OrderingMethods_Module 
   *  OrderingMethods \endlink module for the list of built-in and external ordering methods.
   * 
   * \implsparsesolverconcept
@@ -82,16 +80,16 @@ namespace internal {
   * \warning For complex matrices matrixQ().transpose() will actually return the adjoint matrix.
   * 
   */
-template<typename MatrixType_, typename OrderingType_>
-class SparseQR : public SparseSolverBase<SparseQR<MatrixType_,OrderingType_> >
+template<typename _MatrixType, typename _OrderingType>
+class SparseQR : public SparseSolverBase<SparseQR<_MatrixType,_OrderingType> >
 {
   protected:
-    typedef SparseSolverBase<SparseQR<MatrixType_,OrderingType_> > Base;
+    typedef SparseSolverBase<SparseQR<_MatrixType,_OrderingType> > Base;
     using Base::m_isInitialized;
   public:
     using Base::_solve_impl;
-    typedef MatrixType_ MatrixType;
-    typedef OrderingType_ OrderingType;
+    typedef _MatrixType MatrixType;
+    typedef _OrderingType OrderingType;
     typedef typename MatrixType::Scalar Scalar;
     typedef typename MatrixType::RealScalar RealScalar;
     typedef typename MatrixType::StorageIndex StorageIndex;

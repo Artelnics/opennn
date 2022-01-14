@@ -10,8 +10,6 @@
 #ifndef EIGEN_TRANSPOSITIONS_H
 #define EIGEN_TRANSPOSITIONS_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 template<typename Derived>
@@ -115,11 +113,11 @@ class TranspositionsBase
 };
 
 namespace internal {
-template<int SizeAtCompileTime, int MaxSizeAtCompileTime, typename StorageIndex_>
-struct traits<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,StorageIndex_> >
- : traits<PermutationMatrix<SizeAtCompileTime,MaxSizeAtCompileTime,StorageIndex_> >
+template<int SizeAtCompileTime, int MaxSizeAtCompileTime, typename _StorageIndex>
+struct traits<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,_StorageIndex> >
+ : traits<PermutationMatrix<SizeAtCompileTime,MaxSizeAtCompileTime,_StorageIndex> >
 {
-  typedef Matrix<StorageIndex_, SizeAtCompileTime, 1, 0, MaxSizeAtCompileTime, 1> IndicesType;
+  typedef Matrix<_StorageIndex, SizeAtCompileTime, 1, 0, MaxSizeAtCompileTime, 1> IndicesType;
   typedef TranspositionsStorage StorageKind;
 };
 }
@@ -153,8 +151,8 @@ struct traits<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,StorageIndex
   * \sa class PermutationMatrix
   */
 
-template<int SizeAtCompileTime, int MaxSizeAtCompileTime, typename StorageIndex_>
-class Transpositions : public TranspositionsBase<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,StorageIndex_> >
+template<int SizeAtCompileTime, int MaxSizeAtCompileTime, typename _StorageIndex>
+class Transpositions : public TranspositionsBase<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,_StorageIndex> >
 {
     typedef internal::traits<Transpositions> Traits;
   public:
@@ -201,19 +199,19 @@ class Transpositions : public TranspositionsBase<Transpositions<SizeAtCompileTim
 
 
 namespace internal {
-template<int SizeAtCompileTime, int MaxSizeAtCompileTime, typename StorageIndex_, int PacketAccess_>
-struct traits<Map<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,StorageIndex_>,PacketAccess_> >
- : traits<PermutationMatrix<SizeAtCompileTime,MaxSizeAtCompileTime,StorageIndex_> >
+template<int SizeAtCompileTime, int MaxSizeAtCompileTime, typename _StorageIndex, int _PacketAccess>
+struct traits<Map<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,_StorageIndex>,_PacketAccess> >
+ : traits<PermutationMatrix<SizeAtCompileTime,MaxSizeAtCompileTime,_StorageIndex> >
 {
-  typedef Map<const Matrix<StorageIndex_,SizeAtCompileTime,1,0,MaxSizeAtCompileTime,1>, PacketAccess_> IndicesType;
-  typedef StorageIndex_ StorageIndex;
+  typedef Map<const Matrix<_StorageIndex,SizeAtCompileTime,1,0,MaxSizeAtCompileTime,1>, _PacketAccess> IndicesType;
+  typedef _StorageIndex StorageIndex;
   typedef TranspositionsStorage StorageKind;
 };
 }
 
-template<int SizeAtCompileTime, int MaxSizeAtCompileTime, typename StorageIndex_, int PacketAccess>
-class Map<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,StorageIndex_>,PacketAccess>
- : public TranspositionsBase<Map<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,StorageIndex_>,PacketAccess> >
+template<int SizeAtCompileTime, int MaxSizeAtCompileTime, typename _StorageIndex, int PacketAccess>
+class Map<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,_StorageIndex>,PacketAccess>
+ : public TranspositionsBase<Map<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,_StorageIndex>,PacketAccess> >
 {
     typedef internal::traits<Map> Traits;
   public:
@@ -262,17 +260,17 @@ class Map<Transpositions<SizeAtCompileTime,MaxSizeAtCompileTime,StorageIndex_>,P
 };
 
 namespace internal {
-template<typename IndicesType_>
-struct traits<TranspositionsWrapper<IndicesType_> >
- : traits<PermutationWrapper<IndicesType_> >
+template<typename _IndicesType>
+struct traits<TranspositionsWrapper<_IndicesType> >
+ : traits<PermutationWrapper<_IndicesType> >
 {
   typedef TranspositionsStorage StorageKind;
 };
 }
 
-template<typename IndicesType_>
+template<typename _IndicesType>
 class TranspositionsWrapper
- : public TranspositionsBase<TranspositionsWrapper<IndicesType_> >
+ : public TranspositionsBase<TranspositionsWrapper<_IndicesType> >
 {
     typedef internal::traits<TranspositionsWrapper> Traits;
   public:

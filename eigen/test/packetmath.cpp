@@ -48,7 +48,7 @@ inline bool REF_MUL(const bool& a, const bool& b) {
 
 template <typename T>
 inline T REF_FREXP(const T& x, T& exp) {
-  int iexp = 0;
+  int iexp;
   EIGEN_USING_STD(frexp)
   const T out = static_cast<T>(frexp(x, &iexp));
   exp = static_cast<T>(iexp);
@@ -713,7 +713,6 @@ void packetmath_real() {
   for (int i = 0; i < size; ++i) {
     data1[i] = Scalar(internal::random<double>(-87, 88));
     data2[i] = Scalar(internal::random<double>(-87, 88));
-    data1[0] = -NumTraits<Scalar>::infinity();
   }
   CHECK_CWISE1_IF(PacketTraits::HasExp, std::exp, internal::pexp);
   
@@ -848,7 +847,7 @@ void packetmath_real() {
     }
   }
 
-#if EIGEN_HAS_C99_MATH
+#if EIGEN_HAS_C99_MATH && (EIGEN_COMP_CXXVER >= 11)
   data1[0] = NumTraits<Scalar>::infinity();
   data1[1] = Scalar(-1);
   CHECK_CWISE1_IF(PacketTraits::HasLog1p, std::log1p, internal::plog1p);
@@ -890,10 +889,8 @@ void packetmath_real() {
         data1[0] = std::numeric_limits<Scalar>::denorm_min();
         data1[1] = -std::numeric_limits<Scalar>::denorm_min();
         h.store(data2, internal::plog(h.load(data1)));
-        // TODO(rmlarsen): Re-enable for bfloat16.
-        if (!internal::is_same<Scalar, bfloat16>::value) {
-          VERIFY_IS_APPROX(std::log(std::numeric_limits<Scalar>::denorm_min()), data2[0]);
-        }
+        // TODO(rmlarsen): Reenable.
+        //        VERIFY_IS_EQUAL(std::log(std::numeric_limits<Scalar>::denorm_min()), data2[0]);
         VERIFY((numext::isnan)(data2[1]));
       }
 #endif
@@ -920,7 +917,7 @@ void packetmath_real() {
       if (std::numeric_limits<Scalar>::has_denorm == std::denorm_present) {
         data1[1] = -std::numeric_limits<Scalar>::denorm_min();
       } else {
-        data1[1] = -((std::numeric_limits<Scalar>::min)());
+        data1[1] = -NumTraits<Scalar>::epsilon();
       }
       h.store(data2, internal::psqrt(h.load(data1)));
       VERIFY((numext::isnan)(data2[0]));

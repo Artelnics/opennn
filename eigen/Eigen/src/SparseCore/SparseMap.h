@@ -10,8 +10,6 @@
 #ifndef EIGEN_SPARSE_MAP_H
 #define EIGEN_SPARSE_MAP_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

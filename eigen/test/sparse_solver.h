@@ -88,7 +88,7 @@ void check_sparse_solving(Solver& solver, const typename Solver::MatrixType& A, 
     
     x.setZero();
     // test with Map
-    Map<SparseMatrix<Scalar,Mat::Options,StorageIndex>> Am(A.rows(), A.cols(), A.nonZeros(), const_cast<StorageIndex*>(A.outerIndexPtr()), const_cast<StorageIndex*>(A.innerIndexPtr()), const_cast<Scalar*>(A.valuePtr()));
+    MappedSparseMatrix<Scalar,Mat::Options,StorageIndex> Am(A.rows(), A.cols(), A.nonZeros(), const_cast<StorageIndex*>(A.outerIndexPtr()), const_cast<StorageIndex*>(A.innerIndexPtr()), const_cast<Scalar*>(A.valuePtr()));
     solver.compute(Am);
     VERIFY(solver.info() == Success && "factorization failed when using Map");
     DenseRhs dx(refX);
@@ -217,7 +217,7 @@ void check_sparse_solving(Eigen::SparseLU<Eigen::SparseMatrix<Scalar> >& solver,
 
     x1.setZero();
     // test with Map
-    Map<SparseMatrix<Scalar,Mat::Options,StorageIndex> > Am(A.rows(), A.cols(), A.nonZeros(), const_cast<StorageIndex*>(A.outerIndexPtr()), const_cast<StorageIndex*>(A.innerIndexPtr()), const_cast<Scalar*>(A.valuePtr()));
+    MappedSparseMatrix<Scalar,Mat::Options,StorageIndex> Am(A.rows(), A.cols(), A.nonZeros(), const_cast<StorageIndex*>(A.outerIndexPtr()), const_cast<StorageIndex*>(A.innerIndexPtr()), const_cast<Scalar*>(A.valuePtr()));
     solver.compute(Am);
     VERIFY(solver.info() == Success && "factorization failed when using Map");
     DenseRhs dx(refX1);

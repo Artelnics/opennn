@@ -59,8 +59,6 @@
 
 #endif
 
-#include "../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -568,10 +566,17 @@ template<typename T> struct smart_memmove_helper<T,false> {
   }
 };
 
+#if EIGEN_HAS_RVALUE_REFERENCES
 template<typename T> EIGEN_DEVICE_FUNC T* smart_move(T* start, T* end, T* target)
 {
   return std::move(start, end, target);
 }
+#else
+template<typename T> EIGEN_DEVICE_FUNC T* smart_move(T* start, T* end, T* target)
+{
+  return std::copy(start, end, target);
+}
+#endif
 
 /*****************************************************************************
 *** Implementation of runtime stack allocation (falling back to malloc)    ***
@@ -848,7 +853,7 @@ template<typename T> void swap(scoped_array<T> &a,scoped_array<T> &b)
 /** \class aligned_allocator
 * \ingroup Core_Module
 *
-* \brief STL compatible allocator to use with types requiring a non-standard alignment.
+* \brief STL compatible allocator to use with types requiring a non standrad alignment.
 *
 * The memory is aligned as for dynamically aligned matrix/array types such as MatrixXd.
 * By default, it will thus provide at least 16 bytes alignment and more in following cases:
@@ -936,7 +941,7 @@ public:
          __asm__ __volatile__ ("cpuid": "=a" (abcd[0]), "=b" (abcd[1]), "=c" (abcd[2]), "=d" (abcd[3]) : "0" (func), "2" (id) );
 #    endif
 #  elif EIGEN_COMP_MSVC
-#    if EIGEN_ARCH_i386_OR_x86_64
+#    if (EIGEN_COMP_MSVC > 1500) && EIGEN_ARCH_i386_OR_x86_64
 #      define EIGEN_CPUID(abcd,func,id) __cpuidex((int*)abcd,func,id)
 #    endif
 #  endif

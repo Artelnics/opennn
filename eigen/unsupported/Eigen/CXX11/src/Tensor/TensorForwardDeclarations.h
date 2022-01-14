@@ -10,8 +10,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_FORWARD_DECLARATIONS_H
 #define EIGEN_CXX11_TENSOR_TENSOR_FORWARD_DECLARATIONS_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 // MakePointer class is used as a container of the address space of the pointer
@@ -31,7 +29,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T* constCast(const T* data) {
 }
 
 // The StorageMemory class is a container of the device specific pointer
-// used for referring to a Pointer on TensorEvaluator class. While the TensorExpression
+// used for refering to a Pointer on TensorEvaluator class. While the TensorExpression
 // is a device-agnostic type and need MakePointer class for type conversion,
 // the TensorEvaluator class can be specialized for a device, hence it is possible
 // to construct different types of temproray storage memory in TensorEvaluator
@@ -63,8 +61,8 @@ template<typename BinaryOp, typename LeftXprType, typename RightXprType> class T
 template<typename TernaryOp, typename Arg1XprType, typename Arg2XprType, typename Arg3XprType> class TensorCwiseTernaryOp;
 template<typename IfXprType, typename ThenXprType, typename ElseXprType> class TensorSelectOp;
 template<typename Op, typename Dims, typename XprType, template <class> class MakePointer_ = MakePointer > class TensorReductionOp;
-template<typename XprType> class TensorIndexPairOp;
-template<typename ReduceOp, typename Dims, typename XprType> class TensorPairReducerOp;
+template<typename XprType> class TensorIndexTupleOp;
+template<typename ReduceOp, typename Dims, typename XprType> class TensorTupleReducerOp;
 template<typename Axis, typename LeftXprType, typename RightXprType> class TensorConcatenationOp;
 template<typename Dimensions, typename LeftXprType, typename RightXprType, typename OutputKernelType> class TensorContractionOp;
 template<typename TargetType, typename XprType> class TensorConversionOp;

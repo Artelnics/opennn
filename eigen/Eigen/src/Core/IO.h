@@ -11,8 +11,6 @@
 #ifndef EIGEN_IO_H
 #define EIGEN_IO_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 enum { DontAlignCols = 1 };

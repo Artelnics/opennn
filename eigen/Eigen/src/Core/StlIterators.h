@@ -10,8 +10,6 @@
 #ifndef EIGEN_STLITERATORS_H
 #define EIGEN_STLITERATORS_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -258,10 +256,10 @@ protected:
   internal::variable_if_dynamic<Index, XprType::InnerStrideAtCompileTime> m_incr;
 };
 
-template<typename XprType_>
-struct indexed_based_stl_iterator_traits<generic_randaccess_stl_iterator<XprType_> >
+template<typename _XprType>
+struct indexed_based_stl_iterator_traits<generic_randaccess_stl_iterator<_XprType> >
 {
-  typedef XprType_ XprType;
+  typedef _XprType XprType;
   typedef generic_randaccess_stl_iterator<typename internal::remove_const<XprType>::type> non_const_iterator;
   typedef generic_randaccess_stl_iterator<typename internal::add_const<XprType>::type> const_iterator;
 };
@@ -303,10 +301,10 @@ public:
   pointer   operator->()        const { return &((*mp_xpr)(m_index)); }
 };
 
-template<typename XprType_, DirectionType Direction>
-struct indexed_based_stl_iterator_traits<subvector_stl_iterator<XprType_,Direction> >
+template<typename _XprType, DirectionType Direction>
+struct indexed_based_stl_iterator_traits<subvector_stl_iterator<_XprType,Direction> >
 {
-  typedef XprType_ XprType;
+  typedef _XprType XprType;
   typedef subvector_stl_iterator<typename internal::remove_const<XprType>::type, Direction> non_const_iterator;
   typedef subvector_stl_iterator<typename internal::add_const<XprType>::type, Direction> const_iterator;
 };
@@ -351,10 +349,10 @@ public:
   pointer   operator->()        const { return (*mp_xpr).template subVector<Direction>(m_index); }
 };
 
-template<typename XprType_, DirectionType Direction>
-struct indexed_based_stl_iterator_traits<subvector_stl_reverse_iterator<XprType_,Direction> >
+template<typename _XprType, DirectionType Direction>
+struct indexed_based_stl_iterator_traits<subvector_stl_reverse_iterator<_XprType,Direction> >
 {
-  typedef XprType_ XprType;
+  typedef _XprType XprType;
   typedef subvector_stl_reverse_iterator<typename internal::remove_const<XprType>::type, Direction> non_const_iterator;
   typedef subvector_stl_reverse_iterator<typename internal::add_const<XprType>::type, Direction> const_iterator;
 };

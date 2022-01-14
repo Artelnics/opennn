@@ -10,8 +10,6 @@
 #ifndef EIGEN_SWAP_H
 #define EIGEN_SWAP_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {

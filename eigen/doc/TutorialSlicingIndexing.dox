@@ -15,7 +15,7 @@ All the aforementioned operations are handled through the generic DenseBase::ope
 Each argument can be:
   - An integer indexing a single row or column, including symbolic indices.
   - The symbol Eigen::all representing the whole set of respective rows or columns in increasing order.
-  - An ArithmeticSequence as constructed by the Eigen::seq, Eigen::seqN, or Eigen::placeholders::lastN functions.
+  - An ArithmeticSequence as constructed by the Eigen::seq, Eigen::seqN, or Eigen::lastN functions.
   - Any 1D vector/array of integers including %Eigen's vector/array, expressions, std::vector, std::array, as well as plain C arrays: `int[N]`.
 
 More generally, it can accepts any object exposing the following two member functions:
@@ -112,10 +112,9 @@ Here are some examples for a 2D array/matrix \c A and a 1D array/vector \c v.
 </tr>
 </table>
 
-As seen in the last example, referencing the <i> last n </i> elements (or rows/columns) is a bit cumbersome to write.
+As seen in the last exemple, referencing the <i> last n </i> elements (or rows/columns) is a bit cumbersome to write.
 This becomes even more tricky and error prone with a non-default increment.
-Here comes \link Eigen::placeholders::lastN(SizeType) Eigen::placeholders::lastN(size) \endlink, and
-\link Eigen::placeholders::lastN(SizeType,IncrType) Eigen::placeholders::lastN(size,incr) \endlink:
+Here comes \link Eigen::lastN(SizeType) Eigen::lastN(size) \endlink, and \link Eigen::lastN(SizeType,IncrType) Eigen::lastN(size,incr) \endlink:
 
 <table class="manual">
 <tr>
@@ -222,7 +221,7 @@ i = ind[i];
 \endcode
 
 This means you can easily build your own fancy sequence generator and pass it to `operator()`.
-Here is an example enlarging a given matrix while padding the additional first rows and columns through repetition:
+Here is an exemple enlarging a given matrix while padding the additional first rows and columns through repetition:
 
 <table class="example">
 <tr><th>Example:</th><th>Output:</th></tr>

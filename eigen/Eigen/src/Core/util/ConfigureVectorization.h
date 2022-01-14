@@ -30,13 +30,27 @@
  *
  * If we made alignment depend on whether or not EIGEN_VECTORIZE is defined, it would be impossible to link
  * vectorized and non-vectorized code.
+ * 
+ * FIXME: this code can be cleaned up once we switch to proper C++11 only.
  */
 #if (defined EIGEN_CUDACC)
   #define EIGEN_ALIGN_TO_BOUNDARY(n) __align__(n)
   #define EIGEN_ALIGNOF(x) __alignof(x)
-#else
+#elif EIGEN_HAS_ALIGNAS
   #define EIGEN_ALIGN_TO_BOUNDARY(n) alignas(n)
   #define EIGEN_ALIGNOF(x) alignof(x)
+#elif EIGEN_COMP_GNUC || EIGEN_COMP_PGI || EIGEN_COMP_IBM || EIGEN_COMP_ARM
+  #define EIGEN_ALIGN_TO_BOUNDARY(n) __attribute__((aligned(n)))
+  #define EIGEN_ALIGNOF(x) __alignof(x)
+#elif EIGEN_COMP_MSVC
+  #define EIGEN_ALIGN_TO_BOUNDARY(n) __declspec(align(n))
+  #define EIGEN_ALIGNOF(x) __alignof(x)
+#elif EIGEN_COMP_SUNCC
+  // FIXME not sure about this one:
+  #define EIGEN_ALIGN_TO_BOUNDARY(n) __attribute__((aligned(n)))
+  #define EIGEN_ALIGNOF(x) __alignof(x)
+#else
+  #error Please tell me what is the equivalent of alignas(n) and alignof(x) for your compiler
 #endif
 
 // If the user explicitly disable vectorization, then we also disable alignment
@@ -91,12 +105,18 @@
   // try to keep heap alignment even when we have to disable static alignment.
   #if EIGEN_COMP_GNUC && !(EIGEN_ARCH_i386_OR_x86_64 || EIGEN_ARCH_ARM_OR_ARM64 || EIGEN_ARCH_PPC || EIGEN_ARCH_IA64 || EIGEN_ARCH_MIPS)
   #define EIGEN_GCC_AND_ARCH_DOESNT_WANT_STACK_ALIGNMENT 1
+  #elif EIGEN_ARCH_ARM_OR_ARM64 && EIGEN_COMP_GNUC_STRICT && EIGEN_GNUC_AT_MOST(4, 6)
+  // Old versions of GCC on ARM, at least 4.4, were once seen to have buggy static alignment support.
+  // Not sure which version fixed it, hopefully it doesn't affect 4.7, which is still somewhat in use.
+  // 4.8 and newer seem definitely unaffected.
+  #define EIGEN_GCC_AND_ARCH_DOESNT_WANT_STACK_ALIGNMENT 1
   #else
   #define EIGEN_GCC_AND_ARCH_DOESNT_WANT_STACK_ALIGNMENT 0
   #endif
 
   // static alignment is completely disabled with GCC 3, Sun Studio, and QCC/QNX
   #if !EIGEN_GCC_AND_ARCH_DOESNT_WANT_STACK_ALIGNMENT \
+  && !EIGEN_GCC3_OR_OLDER \
   && !EIGEN_COMP_SUNCC \
   && !EIGEN_OS_QNX
     #define EIGEN_ARCH_WANTS_STACK_ALIGNMENT 1
@@ -181,12 +201,14 @@
 // removed as gcc 4.1 and msvc 2008 are not supported anyways.
 #if EIGEN_COMP_MSVC
   #include <malloc.h> // for _aligned_malloc -- need it regardless of whether vectorization is enabled
-  // a user reported that in 64-bit mode, MSVC doesn't care to define _M_IX86_FP.
-  #if (defined(_M_IX86_FP) && (_M_IX86_FP >= 2)) || EIGEN_ARCH_x86_64
-    #define EIGEN_SSE2_ON_MSVC_2008_OR_LATER
+  #if (EIGEN_COMP_MSVC >= 1500) // 2008 or later
+    // a user reported that in 64-bit mode, MSVC doesn't care to define _M_IX86_FP.
+    #if (defined(_M_IX86_FP) && (_M_IX86_FP >= 2)) || EIGEN_ARCH_x86_64
+      #define EIGEN_SSE2_ON_MSVC_2008_OR_LATER
+    #endif
   #endif
 #else
-  #if (defined __SSE2__) && ( (!EIGEN_COMP_GNUC) || EIGEN_COMP_ICC || EIGEN_COMP_GNUC )
+  #if (defined __SSE2__) && ( (!EIGEN_COMP_GNUC) || EIGEN_COMP_ICC || EIGEN_GNUC_AT_LEAST(4,2) )
     #define EIGEN_SSE2_ON_NON_MSVC_BUT_NOT_OLD_GCC
   #endif
 #endif
@@ -416,15 +438,13 @@
   #include <arm_fp16.h>
 #endif
 
-#if defined(__F16C__) && (!defined(EIGEN_GPUCC) && (!EIGEN_COMP_CLANG || EIGEN_COMP_CLANG>=380))
+#if defined(__F16C__) && (!defined(EIGEN_GPUCC) && (!defined(EIGEN_COMP_CLANG) || EIGEN_COMP_CLANG>=380))
   // We can use the optimized fp16 to float and float to fp16 conversion routines
   #define EIGEN_HAS_FP16_C
 
-  #if EIGEN_COMP_GNUC
-    // Make sure immintrin.h is included, even if e.g. vectorization is
-    // explicitly disabled (see also issue #2395).
-    // Note that FP16C intrinsics for gcc and clang are included by immintrin.h,
-    // as opposed to emmintrin.h as suggested by Intel:
+  #if defined(EIGEN_COMP_CLANG)
+    // Workaround for clang: The FP16C intrinsics for clang are included by
+    // immintrin.h, as opposed to emmintrin.h as suggested by Intel:
     // https://software.intel.com/sites/landingpage/IntrinsicsGuide/#othertechs=FP16C&expand=1711
     #include <immintrin.h>
   #endif
@@ -448,14 +468,10 @@
   #include <hip/hip_vector_types.h>
   #define EIGEN_HAS_HIP_FP16
   #include <hip/hip_fp16.h>
-  #define EIGEN_HAS_HIP_BF16
-  #include <hip/hip_bfloat16.h>
 #endif
 
 
 /** \brief Namespace containing all symbols from the %Eigen library. */
-#include "../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 inline static const char *SimdInstructionSetsInUse(void) {

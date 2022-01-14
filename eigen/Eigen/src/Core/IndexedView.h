@@ -10,8 +10,6 @@
 #ifndef EIGEN_INDEXED_VIEW_H
 #define EIGEN_INDEXED_VIEW_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -23,8 +21,8 @@ struct traits<IndexedView<XprType, RowIndices, ColIndices> >
   enum {
     RowsAtCompileTime = int(array_size<RowIndices>::value),
     ColsAtCompileTime = int(array_size<ColIndices>::value),
-    MaxRowsAtCompileTime = RowsAtCompileTime,
-    MaxColsAtCompileTime = ColsAtCompileTime,
+    MaxRowsAtCompileTime = RowsAtCompileTime != Dynamic ? int(RowsAtCompileTime) : Dynamic,
+    MaxColsAtCompileTime = ColsAtCompileTime != Dynamic ? int(ColsAtCompileTime) : Dynamic,
 
     XprTypeIsRowMajor = (int(traits<XprType>::Flags)&RowMajorBit) != 0,
     IsRowMajor = (MaxRowsAtCompileTime==1&&MaxColsAtCompileTime!=1) ? 1
@@ -44,8 +42,8 @@ struct traits<IndexedView<XprType, RowIndices, ColIndices> >
     IsBlockAlike = InnerIncr==1 && OuterIncr==1,
     IsInnerPannel = HasSameStorageOrderAsXprType && is_same<AllRange<InnerSize>,typename conditional<XprTypeIsRowMajor,ColIndices,RowIndices>::type>::value,
 
-    InnerStrideAtCompileTime = InnerIncr<0 || InnerIncr==DynamicIndex || XprInnerStride==Dynamic || InnerIncr==UndefinedIncr ? Dynamic : XprInnerStride * InnerIncr,
-    OuterStrideAtCompileTime = OuterIncr<0 || OuterIncr==DynamicIndex || XprOuterstride==Dynamic || OuterIncr==UndefinedIncr ? Dynamic : XprOuterstride * OuterIncr,
+    InnerStrideAtCompileTime = InnerIncr<0 || InnerIncr==DynamicIndex || XprInnerStride==Dynamic ? Dynamic : XprInnerStride * InnerIncr,
+    OuterStrideAtCompileTime = OuterIncr<0 || OuterIncr==DynamicIndex || XprOuterstride==Dynamic ? Dynamic : XprOuterstride * OuterIncr,
 
     ReturnAsScalar = is_same<RowIndices,SingleRange>::value && is_same<ColIndices,SingleRange>::value,
     ReturnAsBlock = (!ReturnAsScalar) && IsBlockAlike,
@@ -98,7 +96,7 @@ class IndexedViewImpl;
   *  - decltype(ArrayXi::LinSpaced(...))
   *  - Any view/expressions of the previous types
   *  - Eigen::ArithmeticSequence
-  *  - Eigen::internal::AllRange     (helper for Eigen::placeholders::all)
+  *  - Eigen::internal::AllRange      (helper for Eigen::all)
   *  - Eigen::internal::SingleRange  (helper for single index)
   *  - etc.
   *
@@ -124,10 +122,10 @@ public:
   {}
 
   /** \returns number of rows */
-  Index rows() const { return internal::index_list_size(m_rowIndices); }
+  Index rows() const { return internal::size(m_rowIndices); }
 
   /** \returns number of columns */
-  Index cols() const { return internal::index_list_size(m_colIndices); }
+  Index cols() const { return internal::size(m_colIndices); }
 
   /** \returns the nested expression */
   const typename internal::remove_all<XprType>::type&

@@ -10,8 +10,6 @@
 #ifndef EIGEN_SOLVERBASE_H
 #define EIGEN_SOLVERBASE_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

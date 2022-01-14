@@ -14,8 +14,6 @@
 #include <iostream>
 #include <vector>
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal 
@@ -49,14 +47,14 @@ namespace internal
   }
 
   template <typename RealScalar>
-  inline void  GetDenseElt (const std::string& line, RealScalar& val)
+  inline void  GetVectorElt (const std::string& line, RealScalar& val)
   {
     std::istringstream newline(line);
     newline >> val;  
   }
 
   template <typename RealScalar>
-  inline void GetDenseElt (const std::string& line, std::complex<RealScalar>& val)
+  inline void GetVectorElt (const std::string& line, std::complex<RealScalar>& val)
   {
     RealScalar valR, valI; 
     std::istringstream newline(line);
@@ -96,34 +94,23 @@ namespace internal
 
 
   template<typename Scalar>
-  inline void putDenseElt(Scalar value, std::ofstream& out)
+  inline void putVectorElt(Scalar value, std::ofstream& out)
   {
     out << value << "\n"; 
   }
   template<typename Scalar>
-  inline void putDenseElt(std::complex<Scalar> value, std::ofstream& out)
+  inline void putVectorElt(std::complex<Scalar> value, std::ofstream& out)
   {
     out << value.real() << " " << value.imag()<< "\n"; 
   }
 
 } // end namespace internal
 
-
-/**
- * \ingroup SparseExtra_Module
- * @brief Reads the header of a matrixmarket file and determines the properties of a matrix
- * 
- * @param filename of the file
- * @param sym if the matrix is hermitian,symmetric or none of the latter (sym=0) 
- * @param iscomplex if the matrix has complex or real coefficients 
- * @param isdense if the matrix is dense or sparse
- * @return true if the file was found
- */
-inline bool getMarketHeader(const std::string& filename, int& sym, bool& iscomplex, bool& isdense)
+inline bool getMarketHeader(const std::string& filename, int& sym, bool& iscomplex, bool& isvector)
 {
   sym = 0; 
   iscomplex = false;
-  isdense = false;
+  isvector = false;
   std::ifstream in(filename.c_str(),std::ios::in);
   if(!in)
     return false;
@@ -135,22 +122,14 @@ inline bool getMarketHeader(const std::string& filename, int& sym, bool& iscompl
   std::stringstream fmtline(line); 
   std::string substr[5];
   fmtline>> substr[0] >> substr[1] >> substr[2] >> substr[3] >> substr[4];
-  if(substr[2].compare("array") == 0) isdense = true;
+  if(substr[2].compare("array") == 0) isvector = true;
   if(substr[3].compare("complex") == 0) iscomplex = true;
   if(substr[4].compare("symmetric") == 0) sym = Symmetric;
   else if (substr[4].compare("Hermitian") == 0) sym = SelfAdjoint;
   
   return true;
 }
-/**
- * \ingroup SparseExtra_Module
- * @brief Loads a sparse matrix from a matrixmarket format file.
- * 
- * @tparam SparseMatrixType to read into, symmetries are not supported
- * @param mat SparseMatrix to read into, current values are overwritten
- * @param filename to parse matrix from
- * @return returns true if file exists. Returns false if the parsing did not succeed.
- */
+  
 template<typename SparseMatrixType>
 bool loadMarket(SparseMatrixType& mat, const std::string& filename)
 {
@@ -205,108 +184,50 @@ bool loadMarket(SparseMatrixType& mat, const std::string& filename)
         elements.push_back(T(i,j,value));
       }
       else
-      {
-        std::cerr << "Invalid read: " << i << "," << j << "\n";   
-        return false;
-      }     
+        std::cerr << "Invalid read: " << i << "," << j << "\n";        
     }
   }
 
   mat.setFromTriplets(elements.begin(), elements.end());
-  if(count!=NNZ){
+  if(count!=NNZ)
     std::cerr << count << "!=" << NNZ << "\n";
-    return false;
-  }
+  
   input.close();
   return true;
 }
 
-
-/**
- * \ingroup SparseExtra_Module
- * @brief Loads a dense Matrix or Vector from a matrixmarket file. If a statically sized matrix has to be parsed and the file contains the wrong dimensions it is undefined behaviour.
- * 
- * @tparam DenseMatrixType to read into
- * @param mat DenseMatrix to read into, current values are overwritten, symmetries are not supported
- * @param filename to parse matrix from
- * @return true if parsing was successful. Returns false if the parsing did not succeed.
- */
-template<typename DenseType>
-bool loadMarketDense(DenseType& mat, const std::string& filename)
+template<typename VectorType>
+bool loadMarketVector(VectorType& vec, const std::string& filename)
 {
-   typedef typename DenseType::Scalar Scalar;
+   typedef typename VectorType::Scalar Scalar;
   std::ifstream in(filename.c_str(), std::ios::in);
   if(!in)
     return false;
   
   std::string line; 
-  Index rows(0), cols(0); 
+  int n(0), col(0); 
   do 
   { // Skip comments
     std::getline(in, line); eigen_assert(in.good());
   } while (line[0] == '%');
   std::istringstream newline(line);
-  newline  >> rows >> cols; 
-
-  bool sizes_not_positive=(rows<1 || cols<1);
-  bool wrong_input_rows = (DenseType::MaxRowsAtCompileTime != Dynamic && rows > DenseType::MaxRowsAtCompileTime) ||
-                          (DenseType::RowsAtCompileTime!=Dynamic && rows!=DenseType::RowsAtCompileTime);
-  bool wrong_input_cols = (DenseType::MaxColsAtCompileTime != Dynamic && cols > DenseType::MaxColsAtCompileTime) ||
-                          (DenseType::ColsAtCompileTime!=Dynamic && cols!=DenseType::ColsAtCompileTime);
-
-  if(sizes_not_positive || wrong_input_rows || wrong_input_cols){
-    if(sizes_not_positive){
-      std::cerr<< "non-positive row or column size in file" << filename << "\n";
-    }else{
-      std::cerr<< "Input matrix can not be resized to"<<rows<<" x "<<cols<< "as given in " << filename << "\n";
-    }
-    in.close();
-    return false;
-  }
-
-  mat.resize(rows,cols);
-  Index row = 0;
-  Index col = 0; 
-  Index n=0;
+  newline  >> n >> col; 
+  eigen_assert(n>0 && col>0);
+  vec.resize(n);
+  int i = 0; 
   Scalar value; 
-  while ( std::getline(in, line) && (row < rows) && (col < cols)){
-    internal::GetDenseElt(line, value); 
-    //matrixmarket format is column major
-    mat(row,col) = value; 
-    row++;
-    if(row==rows){
-      row=0;
-      col++;
-    }
-    n++;
+  while ( std::getline(in, line) && (i < n) ){
+    internal::GetVectorElt(line, value); 
+    vec(i++) = value; 
   }
   in.close();
-  if (n!=mat.size()){
+  if (i!=n){
     std::cerr<< "Unable to read all elements from file " << filename << "\n";
     return false;
   }
   return true;
 }
-/**
- * \ingroup SparseExtra_Module
- * @brief Same functionality as loadMarketDense, deprecated
- */
-template<typename VectorType>
-bool loadMarketVector(VectorType& vec, const std::string& filename)
-{
- return loadMarketDense(vec, filename);
-}
 
-/**
- * \ingroup SparseExtra_Module
- * @brief writes a sparse Matrix to a marketmarket format file
- * 
- * @tparam SparseMatrixType to write to file
- * @param mat matrix to write to file
- * @param filename filename to write to 
- * @param sym at the moment no symmetry operations are supported
- * @return true if writing succeeded
- */
 template<typename SparseMatrixType>
 bool saveMarket(const SparseMatrixType& mat, const std::string& filename, int sym = 0)
 {
@@ -333,22 +254,11 @@ bool saveMarket(const SparseMatrixType& mat, const std::string& filename, int sy
   return true;
 }
 
-
-/**
- * \ingroup SparseExtra_Module
- * @brief writes a dense Matrix or vector to a marketmarket format file
- * 
- * @tparam DenseMatrixType to write to file
- * @param mat matrix to write to file
- * @param filename filename to write to 
- * @return true if writing succeeded
- */
-
-template<typename DenseType>
-bool saveMarketDense (const DenseType& mat, const std::string& filename)
+template<typename VectorType>
+bool saveMarketVector (const VectorType& vec, const std::string& filename)
 {
- typedef typename DenseType::Scalar Scalar;
- typedef typename DenseType::RealScalar RealScalar;
+ typedef typename VectorType::Scalar Scalar;
+ typedef typename VectorType::RealScalar RealScalar;
  std::ofstream out(filename.c_str(),std::ios::out);
   if(!out)
     return false;
@@ -359,24 +269,12 @@ bool saveMarketDense (const DenseType& mat, const std::string& filename)
       out << "%%MatrixMarket matrix array complex general\n"; 
   else
     out << "%%MatrixMarket matrix array real general\n"; 
-  out << mat.rows() << " "<< mat.cols() << "\n";
-  for (Index i=0; i < mat.cols(); i++){
-    for (Index j=0; j < mat.rows(); j++){
-      internal::putDenseElt(mat(j,i), out); 
-    }
+  out << vec.size() << " "<< 1 << "\n";
+  for (int i=0; i < vec.size(); i++){
+    internal::putVectorElt(vec(i), out); 
   }
   out.close();
   return true; 
-}
-
-/**
- * \ingroup SparseExtra_Module
- * @brief Same functionality as saveMarketDense, deprecated
- */
-template<typename VectorType>
-bool saveMarketVector (const VectorType& vec, const std::string& filename)
-{
-  return saveMarketDense(vec, filename);
 }
 
 } // end namespace Eigen

@@ -1,3 +1,4 @@
+
 // This file is part of Eigen, a lightweight C++ template library
 // for linear algebra.
 //
@@ -22,7 +23,7 @@
 // The following includes of STL headers have to be done _before_ the
 // definition of macros min() and max().  The reason is that many STL
 // implementations will not work properly as the min and max symbols collide
-// with the STL functions std::min() and std::max().  The STL headers may check
+// with the STL functions std:min() and std::max().  The STL headers may check
 // for the macro definition of min/max and issue a warning or undefine the
 // macros.
 //
@@ -54,26 +55,19 @@
 #endif
 #endif
 
-// Configure GPU.
-#if defined(EIGEN_USE_HIP)
-  #if defined(__HIPCC__) && !defined(EIGEN_NO_HIP)
-    #define EIGEN_HIPCC __HIPCC__
-    #include <hip/hip_runtime.h>
-    #include <hip/hip_runtime_api.h>
-  #endif
-#elif defined(__CUDACC__) && !defined(EIGEN_NO_CUDA)
+// Same for cuda_fp16.h
+#if defined(__CUDACC__) && !defined(EIGEN_NO_CUDA)
+  // Means the compiler is either nvcc or clang with CUDA enabled
   #define EIGEN_CUDACC __CUDACC__
-  #include <cuda.h>
-  #include <cuda_runtime.h>
-  #include <cuda_runtime_api.h>
-  #if CUDA_VERSION >= 7050
-    #include <cuda_fp16.h>
-  #endif
 #endif
-
-#if defined(EIGEN_CUDACC) || defined(EIGEN_HIPCC)
-  #define EIGEN_TEST_NO_LONGDOUBLE
-  #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
+#if defined(EIGEN_CUDACC)
+#include <cuda.h>
+  #define EIGEN_CUDA_SDK_VER (CUDA_VERSION * 10)
+#else
+  #define EIGEN_CUDA_SDK_VER 0
+#endif
+#if EIGEN_CUDA_SDK_VER >= 70500
+#include <cuda_fp16.h>
 #endif
 
 // To test that all calls from Eigen code to std::min() and std::max() are
@@ -320,9 +314,35 @@ namespace Eigen
     #endif // EIGEN_EXCEPTIONS
   #endif // EIGEN_DEBUG_ASSERTS
 
+  #if defined(TEST_CHECK_STATIC_ASSERTIONS) && defined(EIGEN_EXCEPTIONS)
+    #define EIGEN_STATIC_ASSERT(a,MSG) \
+      if( (!Eigen::internal::copy_bool(a)) && (!no_more_assert) )\
+      {                                       \
+        Eigen::no_more_assert = true;         \
+        if(report_on_cerr_on_assert_failure)  \
+          eigen_plain_assert((a) && #MSG);      \
+        else                                  \
+          EIGEN_THROW_X(Eigen::eigen_static_assert_exception()); \
+      }
+    #define VERIFY_RAISES_STATIC_ASSERT(a) {                    \
+      Eigen::no_more_assert = false;                            \
+      Eigen::report_on_cerr_on_assert_failure = false;          \
+      try {                                                     \
+        a;                                                      \
+        VERIFY(Eigen::should_raise_an_assert && # a);           \
+      }                                                         \
+      catch (Eigen::eigen_static_assert_exception&) { VERIFY(true); }  \
+      Eigen::report_on_cerr_on_assert_failure = true;           \
+    }
+  #endif // TEST_CHECK_STATIC_ASSERTIONS
+
 #ifndef VERIFY_RAISES_ASSERT
   #define VERIFY_RAISES_ASSERT(a) \
     std::cout << "Can't VERIFY_RAISES_ASSERT( " #a " ) with exceptions disabled\n";
+#endif
+#ifndef VERIFY_RAISES_STATIC_ASSERT
+  #define VERIFY_RAISES_STATIC_ASSERT(a) \
+    std::cout << "Can't VERIFY_RAISES_STATIC_ASSERT( " #a " ) with exceptions disabled\n";
 #endif
 
   #if !defined(__CUDACC__) && !defined(__HIPCC__) && !defined(SYCL_DEVICE_ONLY)
@@ -332,11 +352,12 @@ namespace Eigen
 #else // EIGEN_NO_ASSERTION_CHECKING
 
   #define VERIFY_RAISES_ASSERT(a) {}
+  #define VERIFY_RAISES_STATIC_ASSERT(a) {}
 
 #endif // EIGEN_NO_ASSERTION_CHECKING
 
 #define EIGEN_INTERNAL_DEBUGGING
-#include <Eigen/QR> // required for createRandomPIMatrixOfRank and generateRandomMatrixSvs
+#include <Eigen/QR> // required for createRandomPIMatrixOfRank
 
 inline void verify_impl(bool condition, const char *testname, const char *file, int line, const char *condition_as_string)
 {
@@ -370,8 +391,6 @@ inline void verify_impl(bool condition, const char *testname, const char *file, 
 #define VERIFY_IS_NOT_MUCH_SMALLER_THAN(a, b) VERIFY(!test_isMuchSmallerThan(a, b))
 #define VERIFY_IS_APPROX_OR_LESS_THAN(a, b) VERIFY(test_isApproxOrLessThan(a, b))
 #define VERIFY_IS_NOT_APPROX_OR_LESS_THAN(a, b) VERIFY(!test_isApproxOrLessThan(a, b))
-#define VERIFY_IS_CWISE_EQUAL(a, b) VERIFY(verifyIsCwiseApprox(a, b, true))
-#define VERIFY_IS_CWISE_APPROX(a, b) VERIFY(verifyIsCwiseApprox(a, b, false))
 
 #define VERIFY_IS_UNITARY(a) VERIFY(test_isUnitary(a))
 
@@ -382,21 +401,6 @@ inline void verify_impl(bool condition, const char *testname, const char *file, 
     FUNC; \
     g_test_stack.pop_back(); \
   } while (0)
-
-
-// Forward declarations to avoid ICC warnings
-#if EIGEN_COMP_ICC
-
-template<typename T> std::string type_name();
-
-namespace Eigen {
-
-template<typename T, typename U>
-bool test_is_equal(const T& actual, const U& expected, bool expect_equal=true);
-
-} // end namespace Eigen
-
-#endif  // EIGEN_COMP_ICC
 
 
 namespace Eigen {
@@ -419,10 +423,6 @@ template<> inline long double test_precision<std::complex<long double> >() { ret
 #define EIGEN_TEST_SCALAR_TEST_OVERLOAD(TYPE)                             \
   inline bool test_isApprox(TYPE a, TYPE b)                               \
   { return internal::isApprox(a, b, test_precision<TYPE>()); }            \
-  inline bool test_isCwiseApprox(TYPE a, TYPE b, bool exact)              \
-  { return numext::equal_strict(a, b) ||                                  \
-      ((numext::isnan)(a) && (numext::isnan)(b)) ||                       \
-      (!exact && internal::isApprox(a, b, test_precision<TYPE>())); }     \
   inline bool test_isMuchSmallerThan(TYPE a, TYPE b)                      \
   { return internal::isMuchSmallerThan(a, b, test_precision<TYPE>()); }   \
   inline bool test_isApproxOrLessThan(TYPE a, TYPE b)                     \
@@ -434,8 +434,10 @@ EIGEN_TEST_SCALAR_TEST_OVERLOAD(int)
 EIGEN_TEST_SCALAR_TEST_OVERLOAD(unsigned int)
 EIGEN_TEST_SCALAR_TEST_OVERLOAD(long)
 EIGEN_TEST_SCALAR_TEST_OVERLOAD(unsigned long)
+#if EIGEN_HAS_CXX11
 EIGEN_TEST_SCALAR_TEST_OVERLOAD(long long)
 EIGEN_TEST_SCALAR_TEST_OVERLOAD(unsigned long long)
+#endif
 EIGEN_TEST_SCALAR_TEST_OVERLOAD(float)
 EIGEN_TEST_SCALAR_TEST_OVERLOAD(double)
 EIGEN_TEST_SCALAR_TEST_OVERLOAD(half)
@@ -590,22 +592,6 @@ inline bool verifyIsApprox(const Type1& a, const Type2& b)
   return ret;
 }
 
-// verifyIsCwiseApprox is a wrapper to test_isCwiseApprox that outputs the relative difference magnitude if the test fails.
-template<typename Type1, typename Type2>
-inline bool verifyIsCwiseApprox(const Type1& a, const Type2& b, bool exact)
-{
-  bool ret = test_isCwiseApprox(a,b,exact);
-  if(!ret) {
-    if (exact) {
-      std::cerr << "Values are not an exact match";
-    } else {
-      std::cerr << "Difference too large wrt tolerance " << get_test_precision(a);
-    }
-    std::cerr << ", relative error is: " << test_relative_error(a,b) << std::endl;
-  }
-  return ret;
-}
-
 // The idea behind this function is to compare the two scalars a and b where
 // the scalar ref is a hint about the expected order of magnitude of a and b.
 // WARNING: the scalar a and b must be positive
@@ -639,33 +625,14 @@ inline bool test_isUnitary(const MatrixBase<Derived>& m)
   return m.isUnitary(test_precision<typename internal::traits<Derived>::Scalar>());
 }
 
-// Checks component-wise, works with infs and nans.
-template<typename Derived1, typename Derived2>
-bool test_isCwiseApprox(const DenseBase<Derived1>& m1,
-                        const DenseBase<Derived2>& m2,
-                        bool exact) {
-  if (m1.rows() != m2.rows()) {
-    return false;
-  }
-  if (m1.cols() != m2.cols()) {
-    return false;
-  }
-  for (Index r = 0; r < m1.rows(); ++r) {
-    for (Index c = 0; c < m1.cols(); ++c) {
-      if (m1(r, c) != m2(r, c)
-          && !((numext::isnan)(m1(r, c)) && (numext::isnan)(m2(r, c))) 
-          && (exact || !test_isApprox(m1(r, c), m2(r, c)))) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
+// Forward declaration to avoid ICC warning
+template<typename T, typename U>
+bool test_is_equal(const T& actual, const U& expected, bool expect_equal=true);
 
 template<typename T, typename U>
 bool test_is_equal(const T& actual, const U& expected, bool expect_equal)
 {
-    if (numext::equal_strict(actual, expected) == expect_equal)
+    if ((actual==expected) == expect_equal)
         return true;
     // false:
     std::cerr
@@ -674,49 +641,86 @@ bool test_is_equal(const T& actual, const U& expected, bool expect_equal)
     return false;
 }
 
+/** Creates a random Partial Isometry matrix of given rank.
+  *
+  * A partial isometry is a matrix all of whose singular values are either 0 or 1.
+  * This is very useful to test rank-revealing algorithms.
+  */
+// Forward declaration to avoid ICC warning
+template<typename MatrixType>
+void createRandomPIMatrixOfRank(Index desired_rank, Index rows, Index cols, MatrixType& m);
+template<typename MatrixType>
+void createRandomPIMatrixOfRank(Index desired_rank, Index rows, Index cols, MatrixType& m)
+{
+  typedef typename internal::traits<MatrixType>::Scalar Scalar;
+  enum { Rows = MatrixType::RowsAtCompileTime, Cols = MatrixType::ColsAtCompileTime };
 
+  typedef Matrix<Scalar, Dynamic, 1> VectorType;
+  typedef Matrix<Scalar, Rows, Rows> MatrixAType;
+  typedef Matrix<Scalar, Cols, Cols> MatrixBType;
 
-/**
- * Check if number is "not a number" (NaN).
- *
- * @tparam T input type
- * @param x input value
- * @return true, if input value is "not a number" (NaN)
- */
+  if(desired_rank == 0)
+  {
+    m.setZero(rows,cols);
+    return;
+  }
+
+  if(desired_rank == 1)
+  {
+    // here we normalize the vectors to get a partial isometry
+    m = VectorType::Random(rows).normalized() * VectorType::Random(cols).normalized().transpose();
+    return;
+  }
+
+  MatrixAType a = MatrixAType::Random(rows,rows);
+  MatrixType d = MatrixType::Identity(rows,cols);
+  MatrixBType  b = MatrixBType::Random(cols,cols);
+
+  // set the diagonal such that only desired_rank non-zero entries reamain
+  const Index diag_size = (std::min)(d.rows(),d.cols());
+  if(diag_size != desired_rank)
+    d.diagonal().segment(desired_rank, diag_size-desired_rank) = VectorType::Zero(diag_size-desired_rank);
+
+  HouseholderQR<MatrixAType> qra(a);
+  HouseholderQR<MatrixBType> qrb(b);
+  m = qra.householderQ() * d * qrb.householderQ();
+}
+
+// Forward declaration to avoid ICC warning
+template<typename PermutationVectorType>
+void randomPermutationVector(PermutationVectorType& v, Index size);
+template<typename PermutationVectorType>
+void randomPermutationVector(PermutationVectorType& v, Index size)
+{
+  typedef typename PermutationVectorType::Scalar Scalar;
+  v.resize(size);
+  for(Index i = 0; i < size; ++i) v(i) = Scalar(i);
+  if(size == 1) return;
+  for(Index n = 0; n < 3 * size; ++n)
+  {
+    Index i = internal::random<Index>(0, size-1);
+    Index j;
+    do j = internal::random<Index>(0, size-1); while(j==i);
+    std::swap(v(i), v(j));
+  }
+}
+
 template<typename T> bool isNotNaN(const T& x)
 {
   return x==x;
 }
 
-/**
- * Check if number is plus infinity.
- *
- * @tparam T input type
- * @param x input value
- * @return true, if input value is plus infinity
- */
 template<typename T> bool isPlusInf(const T& x)
 {
   return x > NumTraits<T>::highest();
 }
 
-/**
- * Check if number is minus infinity.
- *
- * @tparam T input type
- * @param x input value
- * @return true, if input value is minus infinity
- */
 template<typename T> bool isMinusInf(const T& x)
 {
   return x < NumTraits<T>::lowest();
 }
 
 } // end namespace Eigen
-
-
-#include "random_matrix_helper.h"
-
 
 template<typename T> struct GetDifferentType;
 
@@ -725,6 +729,8 @@ template<> struct GetDifferentType<double> { typedef float type; };
 template<typename T> struct GetDifferentType<std::complex<T> >
 { typedef std::complex<typename GetDifferentType<T>::type> type; };
 
+// Forward declaration to avoid ICC warning
+template<typename T> std::string type_name();
 template<typename T> std::string type_name()                    { return "other"; }
 template<> std::string type_name<float>()                       { return "float"; }
 template<> std::string type_name<double>()                      { return "double"; }
@@ -737,11 +743,6 @@ template<> std::string type_name<std::complex<int> >()          { return "comple
 
 using namespace Eigen;
 
-/**
- * Set number of repetitions for unit test from input string.
- *
- * @param str input string
- */
 inline void set_repeat_from_string(const char *str)
 {
   errno = 0;
@@ -754,11 +755,6 @@ inline void set_repeat_from_string(const char *str)
   g_has_set_repeat = true;
 }
 
-/**
- * Set seed for randomized unit tests from input string.
- *
- * @param str input string
- */
 inline void set_seed_from_string(const char *str)
 {
   errno = 0;
@@ -859,5 +855,3 @@ int main(int argc, char *argv[])
   // 4503 - decorated name length exceeded, name was truncated
   #pragma warning( disable : 4503)
 #endif
-
-#include "gpu_test_helper.h"

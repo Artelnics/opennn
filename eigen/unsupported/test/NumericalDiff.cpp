@@ -9,10 +9,10 @@
 #include <unsupported/Eigen/NumericalDiff>
     
 // Generic functor
-template<typename Scalar_, int NX=Dynamic, int NY=Dynamic>
+template<typename _Scalar, int NX=Dynamic, int NY=Dynamic>
 struct Functor
 {
-  typedef Scalar_ Scalar;
+  typedef _Scalar Scalar;
   enum {
     InputsAtCompileTime = NX,
     ValuesAtCompileTime = NY

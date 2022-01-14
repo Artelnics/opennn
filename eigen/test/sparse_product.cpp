@@ -461,58 +461,6 @@ void test_mixing_types()
   VERIFY_IS_APPROX( dC2 = sC1 * dR1.col(0), dC3 = sC1 * dR1.template cast<Cplx>().col(0) );
 }
 
-// Test mixed storage types
-template<int OrderA, int OrderB, int OrderC>
-void test_mixed_storage_imp() {
-  typedef float Real;
-  typedef Matrix<Real,Dynamic,Dynamic> DenseMat;
-
-  // Case: Large inputs but small result
-  {
-    SparseMatrix<Real, OrderA> A(8, 512);
-    SparseMatrix<Real, OrderB> B(512, 8);
-    DenseMat refA(8, 512);
-    DenseMat refB(512, 8);
-
-    initSparse<Real>(0.1, refA, A);
-    initSparse<Real>(0.1, refB, B);
-
-    SparseMatrix<Real, OrderC, std::int8_t> result;
-    SparseMatrix<Real, OrderC> result_large;
-    DenseMat refResult;
-
-    VERIFY_IS_APPROX( result = (A * B), refResult = refA * refB );
-  }
-
-  // Case: Small input but large result
-  {
-    SparseMatrix<Real, OrderA, std::int8_t> A(127, 8);
-    SparseMatrix<Real, OrderB, std::int8_t> B(8, 127);
-    DenseMat refA(127, 8);
-    DenseMat refB(8, 127);
-
-    initSparse<Real>(0.01, refA, A);
-    initSparse<Real>(0.01, refB, B);
-
-    SparseMatrix<Real, OrderC> result;
-    SparseMatrix<Real, OrderC> result_large;
-    DenseMat refResult;
-
-    VERIFY_IS_APPROX( result = (A * B), refResult = refA * refB );
-  }
-}
-
-void test_mixed_storage() {
-  test_mixed_storage_imp<RowMajor, RowMajor, RowMajor>();
-  test_mixed_storage_imp<RowMajor, RowMajor, ColMajor>();
-  test_mixed_storage_imp<RowMajor, ColMajor, RowMajor>();
-  test_mixed_storage_imp<RowMajor, ColMajor, ColMajor>();
-  test_mixed_storage_imp<ColMajor, RowMajor, RowMajor>();
-  test_mixed_storage_imp<ColMajor, RowMajor, ColMajor>();
-  test_mixed_storage_imp<ColMajor, ColMajor, RowMajor>();
-  test_mixed_storage_imp<ColMajor, ColMajor, ColMajor>();
-}
-
 EIGEN_DECLARE_TEST(sparse_product)
 {
   for(int i = 0; i < g_repeat; i++) {
@@ -525,6 +473,5 @@ EIGEN_DECLARE_TEST(sparse_product)
     CALL_SUBTEST_4( (sparse_product_regression_test<SparseMatrix<double,RowMajor>, Matrix<double, Dynamic, Dynamic, RowMajor> >()) );
 
     CALL_SUBTEST_5( (test_mixing_types<float>()) );
-    CALL_SUBTEST_5( (test_mixed_storage()) );
   }
 }

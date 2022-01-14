@@ -11,8 +11,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_TRACE_H
 #define EIGEN_CXX11_TENSOR_TENSOR_TRACE_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \class TensorTrace
@@ -32,7 +30,7 @@ struct traits<TensorTraceOp<Dims, XprType> > : public traits<XprType>
   typedef typename XprTraits::StorageKind StorageKind;
   typedef typename XprTraits::Index Index;
   typedef typename XprType::Nested Nested;
-  typedef typename remove_reference<Nested>::type Nested_;
+  typedef typename remove_reference<Nested>::type _Nested;
   static const int NumDimensions = XprTraits::NumDimensions - array_size<Dims>::value;
   static const int Layout = XprTraits::Layout;
 };

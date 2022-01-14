@@ -13,8 +13,6 @@
 #ifndef EIGEN_PRODUCTEVALUATORS_H
 #define EIGEN_PRODUCTEVALUATORS_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -429,8 +427,8 @@ struct generic_product_impl<Lhs,Rhs,DenseShape,DenseShape,CoeffBasedProductMode>
   //  3 - it makes this fallback consistent with the heavy GEMM routine.
   //  4 - it fully by-passes huge stack allocation attempts when multiplying huge fixed-size matrices.
   //      (see https://stackoverflow.com/questions/54738495)
-  // For small fixed sizes matrices, however, the gains are less obvious, it is sometimes x2 faster, but sometimes x3 slower,
-  // and the behavior depends also a lot on the compiler... This is why this re-writing strategy is currently
+  // For small fixed sizes matrices, howver, the gains are less obvious, it is sometimes x2 faster, but sometimes x3 slower,
+  // and the behavior depends also a lot on the compiler... This is why this re-writting strategy is currently
   // enabled only when falling back from the main GEMM.
   template<typename Dst, typename Func>
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
@@ -537,7 +535,7 @@ struct product_evaluator<Product<Lhs, Rhs, LazyProduct>, ProductTag, DenseShape,
   enum {
     RowsAtCompileTime = LhsNestedCleaned::RowsAtCompileTime,
     ColsAtCompileTime = RhsNestedCleaned::ColsAtCompileTime,
-    InnerSize = min_size_prefer_fixed(LhsNestedCleaned::ColsAtCompileTime, RhsNestedCleaned::RowsAtCompileTime),
+    InnerSize = EIGEN_SIZE_MIN_PREFER_FIXED(LhsNestedCleaned::ColsAtCompileTime, RhsNestedCleaned::RowsAtCompileTime),
     MaxRowsAtCompileTime = LhsNestedCleaned::MaxRowsAtCompileTime,
     MaxColsAtCompileTime = RhsNestedCleaned::MaxColsAtCompileTime
   };
@@ -566,8 +564,8 @@ struct product_evaluator<Product<Lhs, Rhs, LazyProduct>, ProductTag, DenseShape,
     RhsVecPacketSize = unpacket_traits<RhsVecPacketType>::size,
 
     // Here, we don't care about alignment larger than the usable packet size.
-    LhsAlignment = plain_enum_min(LhsEtorType::Alignment, LhsVecPacketSize*int(sizeof(typename LhsNestedCleaned::Scalar))),
-    RhsAlignment = plain_enum_min(RhsEtorType::Alignment, RhsVecPacketSize*int(sizeof(typename RhsNestedCleaned::Scalar))),
+    LhsAlignment = EIGEN_PLAIN_ENUM_MIN(LhsEtorType::Alignment,LhsVecPacketSize*int(sizeof(typename LhsNestedCleaned::Scalar))),
+    RhsAlignment = EIGEN_PLAIN_ENUM_MIN(RhsEtorType::Alignment,RhsVecPacketSize*int(sizeof(typename RhsNestedCleaned::Scalar))),
 
     SameType = is_same<typename LhsNestedCleaned::Scalar,typename RhsNestedCleaned::Scalar>::value,
 
@@ -587,8 +585,8 @@ struct product_evaluator<Product<Lhs, Rhs, LazyProduct>, ProductTag, DenseShape,
     LhsOuterStrideBytes = int(LhsNestedCleaned::OuterStrideAtCompileTime) * int(sizeof(typename LhsNestedCleaned::Scalar)),
     RhsOuterStrideBytes = int(RhsNestedCleaned::OuterStrideAtCompileTime) * int(sizeof(typename RhsNestedCleaned::Scalar)),
 
-    Alignment = bool(CanVectorizeLhs) ? (LhsOuterStrideBytes<=0 || (int(LhsOuterStrideBytes) % plain_enum_max(1, LhsAlignment))!=0 ? 0 : LhsAlignment)
-              : bool(CanVectorizeRhs) ? (RhsOuterStrideBytes<=0 || (int(RhsOuterStrideBytes) % plain_enum_max(1, RhsAlignment))!=0 ? 0 : RhsAlignment)
+    Alignment = bool(CanVectorizeLhs) ? (LhsOuterStrideBytes<=0 || (int(LhsOuterStrideBytes) % EIGEN_PLAIN_ENUM_MAX(1,LhsAlignment))!=0 ? 0 : LhsAlignment)
+              : bool(CanVectorizeRhs) ? (RhsOuterStrideBytes<=0 || (int(RhsOuterStrideBytes) % EIGEN_PLAIN_ENUM_MAX(1,RhsAlignment))!=0 ? 0 : RhsAlignment)
               : 0,
 
     /* CanVectorizeInner deserves special explanation. It does not affect the product flags. It is not used outside
@@ -838,22 +836,22 @@ public:
     MatrixFlags = evaluator<MatrixType>::Flags,
     DiagFlags = evaluator<DiagonalType>::Flags,
 
-    StorageOrder_ = (Derived::MaxRowsAtCompileTime==1 && Derived::MaxColsAtCompileTime!=1) ? RowMajor
+    _StorageOrder = (Derived::MaxRowsAtCompileTime==1 && Derived::MaxColsAtCompileTime!=1) ? RowMajor
                   : (Derived::MaxColsAtCompileTime==1 && Derived::MaxRowsAtCompileTime!=1) ? ColMajor
                   : MatrixFlags & RowMajorBit ? RowMajor : ColMajor,
-    SameStorageOrder_ = StorageOrder_ == (MatrixFlags & RowMajorBit ? RowMajor : ColMajor),
+    _SameStorageOrder = _StorageOrder == (MatrixFlags & RowMajorBit ? RowMajor : ColMajor),
 
-    ScalarAccessOnDiag_ =  !((int(StorageOrder_) == ColMajor && int(ProductOrder) == OnTheLeft)
-                           ||(int(StorageOrder_) == RowMajor && int(ProductOrder) == OnTheRight)),
-    SameTypes_ = is_same<typename MatrixType::Scalar, typename DiagonalType::Scalar>::value,
+    _ScalarAccessOnDiag =  !((int(_StorageOrder) == ColMajor && int(ProductOrder) == OnTheLeft)
+                           ||(int(_StorageOrder) == RowMajor && int(ProductOrder) == OnTheRight)),
+    _SameTypes = is_same<typename MatrixType::Scalar, typename DiagonalType::Scalar>::value,
     // FIXME currently we need same types, but in the future the next rule should be the one
-    //Vectorizable_ = bool(int(MatrixFlags)&PacketAccessBit) && ((!_PacketOnDiag) || (SameTypes_ && bool(int(DiagFlags)&PacketAccessBit))),
-    Vectorizable_ =   bool(int(MatrixFlags)&PacketAccessBit)
-                  &&  SameTypes_
-                  && (SameStorageOrder_ || (MatrixFlags&LinearAccessBit)==LinearAccessBit)
-                  && (ScalarAccessOnDiag_ || (bool(int(DiagFlags)&PacketAccessBit))),
-    LinearAccessMask_ = (MatrixType::RowsAtCompileTime==1 || MatrixType::ColsAtCompileTime==1) ? LinearAccessBit : 0,
-    Flags = ((HereditaryBits|LinearAccessMask_) & (unsigned int)(MatrixFlags)) | (Vectorizable_ ? PacketAccessBit : 0),
+    //_Vectorizable = bool(int(MatrixFlags)&PacketAccessBit) && ((!_PacketOnDiag) || (_SameTypes && bool(int(DiagFlags)&PacketAccessBit))),
+    _Vectorizable =   bool(int(MatrixFlags)&PacketAccessBit)
+                  &&  _SameTypes
+                  && (_SameStorageOrder || (MatrixFlags&LinearAccessBit)==LinearAccessBit)
+                  && (_ScalarAccessOnDiag || (bool(int(DiagFlags)&PacketAccessBit))),
+    _LinearAccessMask = (MatrixType::RowsAtCompileTime==1 || MatrixType::ColsAtCompileTime==1) ? LinearAccessBit : 0,
+    Flags = ((HereditaryBits|_LinearAccessMask) & (unsigned int)(MatrixFlags)) | (_Vectorizable ? PacketAccessBit : 0),
     Alignment = evaluator<MatrixType>::Alignment,
 
     AsScalarProduct =     (DiagonalType::SizeAtCompileTime==1)
@@ -889,7 +887,7 @@ protected:
   {
     enum {
       InnerSize = (MatrixType::Flags & RowMajorBit) ? MatrixType::ColsAtCompileTime : MatrixType::RowsAtCompileTime,
-      DiagonalPacketLoadMode = plain_enum_min(LoadMode,((InnerSize%16) == 0) ? int(Aligned16) : int(evaluator<DiagonalType>::Alignment)) // FIXME hardcoded 16!!
+      DiagonalPacketLoadMode = EIGEN_PLAIN_ENUM_MIN(LoadMode,((InnerSize%16) == 0) ? int(Aligned16) : int(evaluator<DiagonalType>::Alignment)) // FIXME hardcoded 16!!
     };
     return internal::pmul(m_matImpl.template packet<LoadMode,PacketType>(row, col),
                           m_diagImpl.template packet<DiagonalPacketLoadMode,PacketType>(id));
@@ -915,7 +913,7 @@ struct product_evaluator<Product<Lhs, Rhs, ProductKind>, ProductTag, DiagonalSha
   typedef typename Lhs::DiagonalVectorType DiagonalType;
 
 
-  enum { StorageOrder = Base::StorageOrder_ };
+  enum { StorageOrder = Base::_StorageOrder };
 
   EIGEN_DEVICE_FUNC explicit product_evaluator(const XprType& xpr)
     : Base(xpr.rhs(), xpr.lhs().diagonal())
@@ -959,7 +957,7 @@ struct product_evaluator<Product<Lhs, Rhs, ProductKind>, ProductTag, DenseShape,
   typedef Product<Lhs, Rhs, ProductKind> XprType;
   typedef typename XprType::PlainObject PlainObject;
 
-  enum { StorageOrder = Base::StorageOrder_ };
+  enum { StorageOrder = Base::_StorageOrder };
 
   EIGEN_DEVICE_FUNC explicit product_evaluator(const XprType& xpr)
     : Base(xpr.lhs(), xpr.rhs().diagonal())

@@ -10,8 +10,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_UINT128_H
 #define EIGEN_CXX11_TENSOR_TENSOR_UINT128_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
 
@@ -80,14 +78,14 @@ template <typename HL, typename LL, typename HR, typename LR>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 bool operator == (const TensorUInt128<HL, LL>& lhs, const TensorUInt128<HR, LR>& rhs)
 {
-  return (lhs.high == rhs.high) && (lhs.low == rhs.low);
+  return (lhs.high == rhs.high) & (lhs.low == rhs.low);
 }
 
 template <typename HL, typename LL, typename HR, typename LR>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 bool operator != (const TensorUInt128<HL, LL>& lhs, const TensorUInt128<HR, LR>& rhs)
 {
-  return (lhs.high != rhs.high) || (lhs.low != rhs.low);
+  return (lhs.high != rhs.high) | (lhs.low != rhs.low);
 }
 
 template <typename HL, typename LL, typename HR, typename LR>

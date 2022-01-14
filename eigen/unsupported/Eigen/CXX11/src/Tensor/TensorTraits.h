@@ -10,8 +10,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_TRAITS_H
 #define EIGEN_CXX11_TENSOR_TENSOR_TRAITS_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
 
@@ -124,16 +122,16 @@ struct traits<TensorRef<PlainObjectType> >
 };
 
 
-template<typename Scalar_, int NumIndices_, int Options, typename IndexType_>
-struct eval<Tensor<Scalar_, NumIndices_, Options, IndexType_>, Eigen::Dense>
+template<typename _Scalar, int NumIndices_, int Options, typename IndexType_>
+struct eval<Tensor<_Scalar, NumIndices_, Options, IndexType_>, Eigen::Dense>
 {
-  typedef const Tensor<Scalar_, NumIndices_, Options, IndexType_>EIGEN_DEVICE_REF type;
+  typedef const Tensor<_Scalar, NumIndices_, Options, IndexType_>EIGEN_DEVICE_REF type;
 };
 
-template<typename Scalar_, int NumIndices_, int Options, typename IndexType_>
-struct eval<const Tensor<Scalar_, NumIndices_, Options, IndexType_>, Eigen::Dense>
+template<typename _Scalar, int NumIndices_, int Options, typename IndexType_>
+struct eval<const Tensor<_Scalar, NumIndices_, Options, IndexType_>, Eigen::Dense>
 {
-  typedef const Tensor<Scalar_, NumIndices_, Options, IndexType_>EIGEN_DEVICE_REF type;
+  typedef const Tensor<_Scalar, NumIndices_, Options, IndexType_>EIGEN_DEVICE_REF type;
 };
 
 template<typename Scalar_, typename Dimensions, int Options, typename IndexType_>

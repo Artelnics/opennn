@@ -10,8 +10,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_BROADCASTING_H
 #define EIGEN_CXX11_TENSOR_TENSOR_BROADCASTING_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \class TensorBroadcasting
@@ -30,7 +28,7 @@ struct traits<TensorBroadcastingOp<Broadcast, XprType> > : public traits<XprType
   typedef typename XprTraits::StorageKind StorageKind;
   typedef typename XprTraits::Index Index;
   typedef typename XprType::Nested Nested;
-  typedef typename remove_reference<Nested>::type Nested_;
+  typedef typename remove_reference<Nested>::type _Nested;
   static const int NumDimensions = XprTraits::NumDimensions;
   static const int Layout = XprTraits::Layout;
   typedef typename XprTraits::PointerType PointerType;
@@ -107,7 +105,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
   typedef typename XprType::CoeffReturnType CoeffReturnType;
   typedef typename PacketType<CoeffReturnType, Device>::type PacketReturnType;
   static const int PacketSize = PacketType<CoeffReturnType, Device>::size;
-  protected: //  all the non-static fields must have the same access control, otherwise the TensorEvaluator won't be standard layout;
+  protected: //  all the non-static fields must have the same access control, otherwise the TensorEvaluator wont be standard layout;
   bool isCopy, nByOne, oneByN;
   public:
   typedef StorageMemory<CoeffReturnType, Device> Storage;
@@ -129,7 +127,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
   typedef DSizes<Index, 2 * NumDims> BroadcastDimensions;
 
   //===- Tensor block evaluation strategy (see TensorBlock.h) -------------===//
-  typedef internal::TensorBlockDescriptor<NumDims, Index> TensorBlockDesc;
+ typedef internal::TensorBlockDescriptor<NumDims, Index> TensorBlockDesc;
   typedef internal::TensorBlockScratchAllocator<Device> TensorBlockScratch;
 
   typedef typename TensorEvaluator<const ArgType, Device>::TensorBlock
@@ -146,7 +144,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
   {
 
     // The broadcasting op doesn't change the rank of the tensor. One can't broadcast a scalar
-    // and store the result in a scalar. Instead one should reshape the scalar into a N-D
+    // and store the result in a scalar. Instead one should reshape the scalar into a a N-D
     // tensor with N >= 1 of 1 element first and then broadcast.
     EIGEN_STATIC_ASSERT((NumDims > 0), YOU_MADE_A_PROGRAMMING_MISTAKE);
     const InputDimensions& input_dims = m_impl.dimensions();
@@ -412,24 +410,25 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
   template<int LoadMode>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetOneByN(Index index) const
   {
-    // Consider the flattened tensor [v0, ..., vN],
-    // Concatenates m_broadcast[dim] copies,
-    //    [v0, ..., vN, v0, ..., vN, ... ]
-    // with dim == NumDims - 1 for col-major, dim == 0 for row-major.
     EIGEN_STATIC_ASSERT((PacketSize > 1), YOU_MADE_A_PROGRAMMING_MISTAKE)
     eigen_assert(index+PacketSize-1 < dimensions().TotalSize());
 
-    // Size of flattened tensor.
-    const Index M = (static_cast<int>(Layout) == static_cast<int>(ColMajor)) ?
-                      m_inputStrides[NumDims - 1] : m_inputStrides[0];
-    Index inputIndex = index % M;
-    if (inputIndex + PacketSize <= M) {
+    Index dim, inputIndex;
+
+    if (static_cast<int>(Layout) == static_cast<int>(ColMajor)) {
+      dim = NumDims - 1;
+    } else {
+      dim = 0;
+    }
+
+    inputIndex = index % m_inputStrides[dim];
+    if (inputIndex + PacketSize <= m_inputStrides[dim]) {
       return m_impl.template packet<Unaligned>(inputIndex);
     } else {
       EIGEN_ALIGN_MAX typename internal::remove_const<CoeffReturnType>::type values[PacketSize];
       EIGEN_UNROLL_LOOP
       for (int i = 0; i < PacketSize; ++i) {
-        if (inputIndex > M - 1) {
+        if (inputIndex > m_inputStrides[dim]-1) {
           inputIndex = 0;
         }
         values[i] = m_impl.coeff(inputIndex++);
@@ -441,30 +440,32 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
   template<int LoadMode>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetNByOne(Index index) const
   {
-    // Consider the flattened tensor [v0, ..., vN],
-    // Interleaves m_broadcast[dim] copies,
-    //    [v0, v0, ..., v1, v1, ..., vN, vN, ... ]
-    // with dim == 0 for col-major, dim == NumDims - 1 for row-major.
     EIGEN_STATIC_ASSERT((PacketSize > 1), YOU_MADE_A_PROGRAMMING_MISTAKE)
-    eigen_assert(index + PacketSize-1 < dimensions().TotalSize());
+    eigen_assert(index+PacketSize-1 < dimensions().TotalSize());
 
-    const Index M = (static_cast<int>(Layout) == static_cast<int>(ColMajor)) ?
-                      m_broadcast[0] : m_broadcast[NumDims - 1];
+    EIGEN_ALIGN_MAX typename internal::remove_const<CoeffReturnType>::type values[PacketSize];
+    Index dim, inputIndex, outputOffset;
 
-    Index inputIndex   = index / M;
-    Index outputOffset = index % M;
-    if (outputOffset + PacketSize <= M) {
-      return internal::pset1<PacketReturnType>(m_impl.coeff(inputIndex));
+    if (static_cast<int>(Layout) == static_cast<int>(ColMajor)) {
+      dim = 1;
     } else {
-      EIGEN_ALIGN_MAX typename internal::remove_const<CoeffReturnType>::type values[PacketSize];
+      dim = NumDims - 2;
+    }
+
+    inputIndex   = index / m_outputStrides[dim];
+    outputOffset = index % m_outputStrides[dim];
+    if (outputOffset + PacketSize <= m_outputStrides[dim]) {
+      values[0] = m_impl.coeff(inputIndex);
+      return internal::pload1<PacketReturnType>(values);
+    } else {
       EIGEN_UNROLL_LOOP
-      for (int i = 0; i < PacketSize; ++i) {
-        if (outputOffset < M) {
+      for (int i = 0, cur = 0; i < PacketSize; ++i, ++cur) {
+        if (outputOffset + cur < m_outputStrides[dim]) {
           values[i] = m_impl.coeff(inputIndex);
-          ++outputOffset;
         } else {
           values[i] = m_impl.coeff(++inputIndex);
-          outputOffset = 1;  // Next offset.
+          outputOffset = 0;
+          cur = 0;
         }
       }
       return internal::pload<PacketReturnType>(values);

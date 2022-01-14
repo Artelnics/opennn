@@ -74,7 +74,8 @@
 #include <boost/math/special_functions.hpp>
 #include <boost/math/complex.hpp>
 
-typedef boost::multiprecision::number<boost::multiprecision::cpp_dec_float<100>, boost::multiprecision::et_on> Real;
+namespace mp = boost::multiprecision;
+typedef mp::number<mp::cpp_dec_float<100>, mp::et_on> Real;
 
 namespace Eigen {
   template<> struct NumTraits<Real> : GenericNumTraits<Real> {

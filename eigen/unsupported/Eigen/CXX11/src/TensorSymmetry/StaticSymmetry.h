@@ -10,8 +10,6 @@
 #ifndef EIGEN_CXX11_TENSORSYMMETRY_STATICSYMMETRY_H
 #define EIGEN_CXX11_TENSORSYMMETRY_STATICSYMMETRY_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

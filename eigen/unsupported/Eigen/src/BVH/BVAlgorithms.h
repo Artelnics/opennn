@@ -10,8 +10,6 @@
 #ifndef EIGEN_BVALGORITHMS_H
 #define EIGEN_BVALGORITHMS_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {

@@ -19,8 +19,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_SYCL_H
 #define EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_SYCL_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace TensorSycl {
@@ -112,7 +110,7 @@ struct TTPanelSize {
   // BC : determines if supporting bank conflict is required
   static EIGEN_CONSTEXPR bool BC = true;
   // DoubleBuffer: determines if double buffering technique should be used (This can be disabled by
-  // EIGEN_SYCL_DISABLE_DOUBLE_BUFFER macro when the device does not have sufficient local memory)
+  // EIGEN_SYCL_DISABLE_DOUBLE_BUFFER macro when the device doesnot have sufficient  local memory)
   static EIGEN_CONSTEXPR bool DoubleBuffer =
 #ifdef EIGEN_SYCL_DISABLE_DOUBLE_BUFFER
       false;
@@ -430,7 +428,7 @@ struct ThreadProperties {
  Otherwise, the result of contraction will be written iin a temporary buffer. This is the case when Tall/Skinny
  contraction is used. So in this case, a final reduction step is required to compute final output.
 
- * \tparam contraction_tp: it is an enum value representing whether the local memory/no local memory implementation of
+ * \tparam contraction_tp: it is an enum value representing whether the local memroy/no local memory implementation of
  the algorithm to be used
  *
  * \param scratch: local memory containing tiles of LHS and RHS tensors for each work-group
@@ -495,7 +493,7 @@ class TensorContractionKernel {
    * the TiledMemory for both local and private memory, the MemHolder structs is used as a helper to abstract out
    * different type of memory needed when local/no_local memory computation is called.
    *
-   * \tparam contraction_type: it is an enum value representing whether the local memory/no local memory implementation
+   * \tparam contraction_type: it is an enum value representing whether the local memroy/no local memory implementation
    of the algorithm to be used
    * \tparam the private memory size
    * \param ptr the tile memory pointer type
@@ -522,10 +520,10 @@ class TensorContractionKernel {
    * \param rhs_scratch_extract : determines the RHS tile memory. It is either private or local memory based on the
    * selected contraction_type.
    *
-   * \param lhs_extract_index: determines the position of each thread on a local memory for lhs input. When private
+   * \param lhs_extract_index: determins the position of each thread on a local memory for lhs input. When private
    * memory is used this is set to zero as this is not applicable in case of private memory.
    *
-   * \param rhs_extract_index: determines the position of each thread on a local memory for rhs input. When private
+   * \param rhs_extract_index: determins the position of each thread on a local memory for rhs input. When private
    * memory is used this is set to zero as this is not applicable in case of private memory.
    *
    * \param lhs_scratch_compute : determines the  location to load for computation for lhs_local memory. This is the
@@ -1236,7 +1234,7 @@ struct GeneralVectorTensor {
  *
  * \param out_res: determines the output tensor containing the contraction result
  *
- * \param rng: determines the total input data size
+ * \param rng: determins the total input data size
  */
 template <typename OutScalar, typename LhsScalar, typename RhsScalar, typename OutAccessor, typename LhsMapper,
           typename RhsMapper, typename StorageIndex, bool Vectorizable>

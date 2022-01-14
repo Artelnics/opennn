@@ -10,8 +10,6 @@
 #ifndef EIGEN_TERNARY_FUNCTORS_H
 #define EIGEN_TERNARY_FUNCTORS_H
 
-#include "../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

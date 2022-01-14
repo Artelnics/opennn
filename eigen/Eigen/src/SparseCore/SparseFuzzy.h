@@ -10,8 +10,6 @@
 #ifndef EIGEN_SPARSE_FUZZY_H
 #define EIGEN_SPARSE_FUZZY_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
   
 template<typename Derived>

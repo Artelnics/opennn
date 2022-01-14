@@ -10,8 +10,6 @@
 
 #ifndef EIGEN_QUATERNION_H
 #define EIGEN_QUATERNION_H
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 
@@ -238,8 +236,8 @@ protected:
   *
   * \brief The quaternion class used to represent 3D orientations and rotations
   *
-  * \tparam Scalar_ the scalar type, i.e., the type of the coefficients
-  * \tparam Options_ controls the memory alignment of the coefficients. Can be \# AutoAlign or \# DontAlign. Default is AutoAlign.
+  * \tparam _Scalar the scalar type, i.e., the type of the coefficients
+  * \tparam _Options controls the memory alignment of the coefficients. Can be \# AutoAlign or \# DontAlign. Default is AutoAlign.
   *
   * This class represents a quaternion \f$ w+xi+yj+zk \f$ that is a convenient representation of
   * orientations and rotations of objects in three dimensions. Compared to other representations
@@ -258,12 +256,12 @@ protected:
   */
 
 namespace internal {
-template<typename Scalar_,int Options_>
-struct traits<Quaternion<Scalar_,Options_> >
+template<typename _Scalar,int _Options>
+struct traits<Quaternion<_Scalar,_Options> >
 {
-  typedef Quaternion<Scalar_,Options_> PlainObject;
-  typedef Scalar_ Scalar;
-  typedef Matrix<Scalar_,4,1,Options_> Coefficients;
+  typedef Quaternion<_Scalar,_Options> PlainObject;
+  typedef _Scalar Scalar;
+  typedef Matrix<_Scalar,4,1,_Options> Coefficients;
   enum{
     Alignment = internal::traits<Coefficients>::Alignment,
     Flags = LvalueBit
@@ -271,14 +269,14 @@ struct traits<Quaternion<Scalar_,Options_> >
 };
 }
 
-template<typename Scalar_, int Options_>
-class Quaternion : public QuaternionBase<Quaternion<Scalar_,Options_> >
+template<typename _Scalar, int _Options>
+class Quaternion : public QuaternionBase<Quaternion<_Scalar,_Options> >
 {
 public:
-  typedef QuaternionBase<Quaternion<Scalar_,Options_> > Base;
+  typedef QuaternionBase<Quaternion<_Scalar,_Options> > Base;
   enum { NeedsAlignment = internal::traits<Quaternion>::Alignment>0 };
 
-  typedef Scalar_ Scalar;
+  typedef _Scalar Scalar;
 
   EIGEN_INHERIT_ASSIGNMENT_OPERATORS(Quaternion)
   using Base::operator*=;
@@ -309,7 +307,7 @@ public:
 
   /** Constructs and initializes a quaternion from either:
     *  - a rotation matrix expression,
-    *  - a 4D vector expression representing quaternion coefficients in the order [\c x, \c y, \c z, \c w].
+    *  - a 4D vector expression representing quaternion coefficients.
     */
   template<typename Derived>
   EIGEN_DEVICE_FUNC explicit inline Quaternion(const MatrixBase<Derived>& other) { *this = other; }
@@ -319,6 +317,7 @@ public:
   EIGEN_DEVICE_FUNC explicit inline Quaternion(const Quaternion<OtherScalar, OtherOptions>& other)
   { m_coeffs = other.coeffs().template cast<Scalar>(); }
 
+#if EIGEN_HAS_RVALUE_REFERENCES
   // We define a copy constructor, which means we don't get an implicit move constructor or assignment operator.
   /** Default move constructor */
   EIGEN_DEVICE_FUNC inline Quaternion(Quaternion&& other) EIGEN_NOEXCEPT_IF(std::is_nothrow_move_constructible<Scalar>::value)
@@ -331,6 +330,7 @@ public:
     m_coeffs = std::move(other.coeffs());
     return *this;
   }
+#endif
 
   EIGEN_DEVICE_FUNC static Quaternion UnitRandom();
 
@@ -341,17 +341,20 @@ public:
   EIGEN_DEVICE_FUNC inline const Coefficients& coeffs() const { return m_coeffs;}
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(bool(NeedsAlignment))
-
+  
 #ifdef EIGEN_QUATERNION_PLUGIN
 # include EIGEN_QUATERNION_PLUGIN
 #endif
 
 protected:
   Coefficients m_coeffs;
-
+  
 #ifndef EIGEN_PARSED_BY_DOXYGEN
-  EIGEN_STATIC_ASSERT( (Options_ & DontAlign) == Options_,
-                       INVALID_MATRIX_TEMPLATE_PARAMETERS)
+    static EIGEN_STRONG_INLINE void _check_template_params()
+    {
+      EIGEN_STATIC_ASSERT( (_Options & DontAlign) == _Options,
+        INVALID_MATRIX_TEMPLATE_PARAMETERS)
+    }
 #endif
 };
 
@@ -367,19 +370,19 @@ typedef Quaternion<double> Quaterniond;
 ***************************************************************************/
 
 namespace internal {
-  template<typename Scalar_, int Options_>
-  struct traits<Map<Quaternion<Scalar_>, Options_> > : traits<Quaternion<Scalar_, (int(Options_)&Aligned)==Aligned ? AutoAlign : DontAlign> >
+  template<typename _Scalar, int _Options>
+  struct traits<Map<Quaternion<_Scalar>, _Options> > : traits<Quaternion<_Scalar, (int(_Options)&Aligned)==Aligned ? AutoAlign : DontAlign> >
   {
-    typedef Map<Matrix<Scalar_,4,1>, Options_> Coefficients;
+    typedef Map<Matrix<_Scalar,4,1>, _Options> Coefficients;
   };
 }
 
 namespace internal {
-  template<typename Scalar_, int Options_>
-  struct traits<Map<const Quaternion<Scalar_>, Options_> > : traits<Quaternion<Scalar_, (int(Options_)&Aligned)==Aligned ? AutoAlign : DontAlign> >
+  template<typename _Scalar, int _Options>
+  struct traits<Map<const Quaternion<_Scalar>, _Options> > : traits<Quaternion<_Scalar, (int(_Options)&Aligned)==Aligned ? AutoAlign : DontAlign> >
   {
-    typedef Map<const Matrix<Scalar_,4,1>, Options_> Coefficients;
-    typedef traits<Quaternion<Scalar_, (int(Options_)&Aligned)==Aligned ? AutoAlign : DontAlign> > TraitsBase;
+    typedef Map<const Matrix<_Scalar,4,1>, _Options> Coefficients;
+    typedef traits<Quaternion<_Scalar, (int(_Options)&Aligned)==Aligned ? AutoAlign : DontAlign> > TraitsBase;
     enum {
       Flags = TraitsBase::Flags & ~LvalueBit
     };
@@ -389,22 +392,22 @@ namespace internal {
 /** \ingroup Geometry_Module
   * \brief Quaternion expression mapping a constant memory buffer
   *
-  * \tparam Scalar_ the type of the Quaternion coefficients
-  * \tparam Options_ see class Map
+  * \tparam _Scalar the type of the Quaternion coefficients
+  * \tparam _Options see class Map
   *
   * This is a specialization of class Map for Quaternion. This class allows to view
   * a 4 scalar memory buffer as an Eigen's Quaternion object.
   *
   * \sa class Map, class Quaternion, class QuaternionBase
   */
-template<typename Scalar_, int Options_>
-class Map<const Quaternion<Scalar_>, Options_ >
-  : public QuaternionBase<Map<const Quaternion<Scalar_>, Options_> >
+template<typename _Scalar, int _Options>
+class Map<const Quaternion<_Scalar>, _Options >
+  : public QuaternionBase<Map<const Quaternion<_Scalar>, _Options> >
 {
   public:
-    typedef QuaternionBase<Map<const Quaternion<Scalar_>, Options_> > Base;
+    typedef QuaternionBase<Map<const Quaternion<_Scalar>, _Options> > Base;
 
-    typedef Scalar_ Scalar;
+    typedef _Scalar Scalar;
     typedef typename internal::traits<Map>::Coefficients Coefficients;
     EIGEN_INHERIT_ASSIGNMENT_OPERATORS(Map)
     using Base::operator*=;
@@ -414,7 +417,7 @@ class Map<const Quaternion<Scalar_>, Options_ >
       * The pointer \a coeffs must reference the four coefficients of Quaternion in the following order:
       * \code *coeffs == {x, y, z, w} \endcode
       *
-      * If the template parameter Options_ is set to #Aligned, then the pointer coeffs must be aligned. */
+      * If the template parameter _Options is set to #Aligned, then the pointer coeffs must be aligned. */
     EIGEN_DEVICE_FUNC explicit EIGEN_STRONG_INLINE Map(const Scalar* coeffs) : m_coeffs(coeffs) {}
 
     EIGEN_DEVICE_FUNC inline const Coefficients& coeffs() const { return m_coeffs;}
@@ -426,22 +429,22 @@ class Map<const Quaternion<Scalar_>, Options_ >
 /** \ingroup Geometry_Module
   * \brief Expression of a quaternion from a memory buffer
   *
-  * \tparam Scalar_ the type of the Quaternion coefficients
-  * \tparam Options_ see class Map
+  * \tparam _Scalar the type of the Quaternion coefficients
+  * \tparam _Options see class Map
   *
   * This is a specialization of class Map for Quaternion. This class allows to view
   * a 4 scalar memory buffer as an Eigen's  Quaternion object.
   *
   * \sa class Map, class Quaternion, class QuaternionBase
   */
-template<typename Scalar_, int Options_>
-class Map<Quaternion<Scalar_>, Options_ >
-  : public QuaternionBase<Map<Quaternion<Scalar_>, Options_> >
+template<typename _Scalar, int _Options>
+class Map<Quaternion<_Scalar>, _Options >
+  : public QuaternionBase<Map<Quaternion<_Scalar>, _Options> >
 {
   public:
-    typedef QuaternionBase<Map<Quaternion<Scalar_>, Options_> > Base;
+    typedef QuaternionBase<Map<Quaternion<_Scalar>, _Options> > Base;
 
-    typedef Scalar_ Scalar;
+    typedef _Scalar Scalar;
     typedef typename internal::traits<Map>::Coefficients Coefficients;
     EIGEN_INHERIT_ASSIGNMENT_OPERATORS(Map)
     using Base::operator*=;
@@ -451,7 +454,7 @@ class Map<Quaternion<Scalar_>, Options_ >
       * The pointer \a coeffs must reference the four coefficients of Quaternion in the following order:
       * \code *coeffs == {x, y, z, w} \endcode
       *
-      * If the template parameter Options_ is set to #Aligned, then the pointer coeffs must be aligned. */
+      * If the template parameter _Options is set to #Aligned, then the pointer coeffs must be aligned. */
     EIGEN_DEVICE_FUNC explicit EIGEN_STRONG_INLINE Map(Scalar* coeffs) : m_coeffs(coeffs) {}
 
     EIGEN_DEVICE_FUNC inline Coefficients& coeffs() { return m_coeffs; }

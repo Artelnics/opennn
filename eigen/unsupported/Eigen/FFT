@@ -7,8 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_FFT_MODULE_H
-#define EIGEN_FFT_MODULE_H
+#ifndef EIGEN_FFT_H
+#define EIGEN_FFT_H
 
 #include <complex>
 #include <vector>
@@ -203,11 +203,11 @@ class FFT
     }
     */
 
-    template <typename Input_>
+    template <typename _Input>
     inline
-    void fwd( std::vector<Complex> & dst, const std::vector<Input_> & src)
+    void fwd( std::vector<Complex> & dst, const std::vector<_Input> & src) 
     {
-      if ( NumTraits<Input_>::IsComplex == 0 && HasFlag(HalfSpectrum) )
+      if ( NumTraits<_Input>::IsComplex == 0 && HasFlag(HalfSpectrum) )
         dst.resize( (src.size()>>1)+1); // half the bins + Nyquist bin
       else
         dst.resize(src.size());
@@ -343,12 +343,12 @@ class FFT
       }
     }
 
-    template <typename Output_>
+    template <typename _Output>
     inline
-    void inv( std::vector<Output_> & dst, const std::vector<Complex> & src,Index nfft=-1)
+    void inv( std::vector<_Output> & dst, const std::vector<Complex> & src,Index nfft=-1)
     {
       if (nfft<1)
-        nfft = ( NumTraits<Output_>::IsComplex == 0 && HasFlag(HalfSpectrum) ) ? 2*(src.size()-1) : src.size();
+        nfft = ( NumTraits<_Output>::IsComplex == 0 && HasFlag(HalfSpectrum) ) ? 2*(src.size()-1) : src.size();
       dst.resize( nfft );
       inv( &dst[0],&src[0],nfft);
     }

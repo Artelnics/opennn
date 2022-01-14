@@ -13,8 +13,6 @@
 #ifndef EIGEN_HYBRIDNONLINEARSOLVER_H
 #define EIGEN_HYBRIDNONLINEARSOLVER_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace HybridNonLinearSolverSpace { 

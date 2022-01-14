@@ -10,8 +10,6 @@
 #ifndef EIGEN_SPARSE_SELFADJOINTVIEW_H
 #define EIGEN_SPARSE_SELFADJOINTVIEW_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
   
 /** \ingroup SparseCore_Module
@@ -42,13 +40,13 @@ void permute_symm_to_fullsymm(const MatrixType& mat, SparseMatrix<typename Matri
 
 }
 
-template<typename MatrixType, unsigned int Mode_> class SparseSelfAdjointView
-  : public EigenBase<SparseSelfAdjointView<MatrixType,Mode_> >
+template<typename MatrixType, unsigned int _Mode> class SparseSelfAdjointView
+  : public EigenBase<SparseSelfAdjointView<MatrixType,_Mode> >
 {
   public:
     
     enum {
-      Mode = Mode_,
+      Mode = _Mode,
       TransposeMode = ((Mode & Upper) ? Lower : 0) | ((Mode & Lower) ? Upper : 0),
       RowsAtCompileTime = internal::traits<SparseSelfAdjointView>::RowsAtCompileTime,
       ColsAtCompileTime = internal::traits<SparseSelfAdjointView>::ColsAtCompileTime
@@ -59,7 +57,7 @@ template<typename MatrixType, unsigned int Mode_> class SparseSelfAdjointView
     typedef typename MatrixType::StorageIndex StorageIndex;
     typedef Matrix<StorageIndex,Dynamic,1> VectorI;
     typedef typename internal::ref_selector<MatrixType>::non_const_type MatrixTypeNested;
-    typedef typename internal::remove_all<MatrixTypeNested>::type MatrixTypeNested_;
+    typedef typename internal::remove_all<MatrixTypeNested>::type _MatrixTypeNested;
     
     explicit inline SparseSelfAdjointView(MatrixType& matrix) : m_matrix(matrix)
     {
@@ -70,7 +68,7 @@ template<typename MatrixType, unsigned int Mode_> class SparseSelfAdjointView
     inline Index cols() const { return m_matrix.cols(); }
 
     /** \internal \returns a reference to the nested matrix */
-    const MatrixTypeNested_& matrix() const { return m_matrix; }
+    const _MatrixTypeNested& matrix() const { return m_matrix; }
     typename internal::remove_reference<MatrixTypeNested>::type& matrix() { return m_matrix; }
 
     /** \returns an expression of the matrix product between a sparse self-adjoint matrix \c *this and a sparse matrix \a rhs.
@@ -126,9 +124,9 @@ template<typename MatrixType, unsigned int Mode_> class SparseSelfAdjointView
     
     /** \returns an expression of P H P^-1 */
     // TODO implement twists in a more evaluator friendly fashion
-    SparseSymmetricPermutationProduct<MatrixTypeNested_,Mode> twistedBy(const PermutationMatrix<Dynamic,Dynamic,StorageIndex>& perm) const
+    SparseSymmetricPermutationProduct<_MatrixTypeNested,Mode> twistedBy(const PermutationMatrix<Dynamic,Dynamic,StorageIndex>& perm) const
     {
-      return SparseSymmetricPermutationProduct<MatrixTypeNested_,Mode>(m_matrix, perm);
+      return SparseSymmetricPermutationProduct<_MatrixTypeNested,Mode>(m_matrix, perm);
     }
 
     template<typename SrcMatrixType,int SrcMode>
@@ -262,6 +260,15 @@ struct Assignment<DstXprType, SrcXprType, Functor, SparseSelfAdjoint2Sparse>
     run(tmp, src, AssignOpType());
     dst -= tmp;
   }
+  
+  template<typename DestScalar>
+  static void run(DynamicSparseMatrix<DestScalar,ColMajor,StorageIndex>& dst, const SrcXprType &src, const AssignOpType&/*func*/)
+  {
+    // TODO directly evaluate into dst;
+    SparseMatrix<DestScalar,ColMajor,StorageIndex> tmp(dst.rows(),dst.cols());
+    internal::permute_symm_to_fullsymm<SrcXprType::Mode>(src.matrix(), tmp);
+    dst = tmp;
+  }
 };
 
 } // end namespace internal
@@ -340,7 +347,7 @@ struct generic_product_impl<LhsView, Rhs, SparseSelfAdjointShape, DenseShape, Pr
   template<typename Dest>
   static void scaleAndAddTo(Dest& dst, const LhsView& lhsView, const Rhs& rhs, const typename Dest::Scalar& alpha)
   {
-    typedef typename LhsView::MatrixTypeNested_ Lhs;
+    typedef typename LhsView::_MatrixTypeNested Lhs;
     typedef typename nested_eval<Lhs,Dynamic>::type LhsNested;
     typedef typename nested_eval<Rhs,Dynamic>::type RhsNested;
     LhsNested lhsNested(lhsView.matrix());
@@ -357,7 +364,7 @@ struct generic_product_impl<Lhs, RhsView, DenseShape, SparseSelfAdjointShape, Pr
   template<typename Dest>
   static void scaleAndAddTo(Dest& dst, const Lhs& lhs, const RhsView& rhsView, const typename Dest::Scalar& alpha)
   {
-    typedef typename RhsView::MatrixTypeNested_ Rhs;
+    typedef typename RhsView::_MatrixTypeNested Rhs;
     typedef typename nested_eval<Lhs,Dynamic>::type LhsNested;
     typedef typename nested_eval<Rhs,Dynamic>::type RhsNested;
     LhsNested lhsNested(lhs);
@@ -509,7 +516,7 @@ void permute_symm_to_fullsymm(const MatrixType& mat, SparseMatrix<typename Matri
   }
 }
 
-template<int SrcMode_,int DstMode_,typename MatrixType,int DstOrder>
+template<int _SrcMode,int _DstMode,typename MatrixType,int DstOrder>
 void permute_symm_to_symm(const MatrixType& mat, SparseMatrix<typename MatrixType::Scalar,DstOrder,typename MatrixType::StorageIndex>& _dest, const typename MatrixType::StorageIndex* perm)
 {
   typedef typename MatrixType::StorageIndex StorageIndex;
@@ -522,8 +529,8 @@ void permute_symm_to_symm(const MatrixType& mat, SparseMatrix<typename MatrixTyp
   enum {
     SrcOrder = MatrixType::IsRowMajor ? RowMajor : ColMajor,
     StorageOrderMatch = int(SrcOrder) == int(DstOrder),
-    DstMode = DstOrder==RowMajor ? (DstMode_==Upper ? Lower : Upper) : DstMode_,
-    SrcMode = SrcOrder==RowMajor ? (SrcMode_==Upper ? Lower : Upper) : SrcMode_
+    DstMode = DstOrder==RowMajor ? (_DstMode==Upper ? Lower : Upper) : _DstMode,
+    SrcMode = SrcOrder==RowMajor ? (_SrcMode==Upper ? Lower : Upper) : _SrcMode
   };
 
   MatEval matEval(mat);

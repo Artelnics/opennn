@@ -7,6 +7,10 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#ifndef EIGEN_NO_STATIC_ASSERT
+#define EIGEN_NO_STATIC_ASSERT // turn static asserts into runtime asserts in order to check them
+#endif
+
 #include "main.h"
 
 #define EIGEN_TESTMAP_MAX_SIZE 256

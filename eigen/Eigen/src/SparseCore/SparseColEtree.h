@@ -31,8 +31,6 @@
 #ifndef SPARSE_COLETREE_H
 #define SPARSE_COLETREE_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

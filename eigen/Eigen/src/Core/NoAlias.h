@@ -10,8 +10,6 @@
 #ifndef EIGEN_NOALIAS_H
 #define EIGEN_NOALIAS_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \class NoAlias

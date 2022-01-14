@@ -10,8 +10,6 @@
 #ifndef EIGEN_MATH_FUNCTIONS_GPU_H
 #define EIGEN_MATH_FUNCTIONS_GPU_H
 
-#include "../../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

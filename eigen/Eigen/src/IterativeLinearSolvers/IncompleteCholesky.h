@@ -14,8 +14,6 @@
 #include <vector>
 #include <list>
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 /**
   * \brief Modified Incomplete Cholesky with dual threshold
@@ -24,9 +22,9 @@ namespace Eigen {
   *              Limited memory, SIAM J. Sci. Comput.  21(1), pp. 24-45, 1999
   *
   * \tparam Scalar the scalar type of the input matrices
-  * \tparam UpLo_ The triangular part that will be used for the computations. It can be Lower
+  * \tparam _UpLo The triangular part that will be used for the computations. It can be Lower
     *               or Upper. Default is Lower.
-  * \tparam OrderingType_ The ordering method to use, either AMDOrdering<> or NaturalOrdering<>. Default is AMDOrdering<int>,
+  * \tparam _OrderingType The ordering method to use, either AMDOrdering<> or NaturalOrdering<>. Default is AMDOrdering<int>,
   *                       unless EIGEN_MPL2_ONLY is defined, in which case the default is NaturalOrdering<int>.
   *
   * \implsparsesolverconcept
@@ -43,15 +41,15 @@ namespace Eigen {
   * the info() method, then you can either increase the initial shift, or better use another preconditioning technique.
   *
   */
-template <typename Scalar, int UpLo_ = Lower, typename OrderingType_ = AMDOrdering<int> >
-class IncompleteCholesky : public SparseSolverBase<IncompleteCholesky<Scalar,UpLo_,OrderingType_> >
+template <typename Scalar, int _UpLo = Lower, typename _OrderingType = AMDOrdering<int> >
+class IncompleteCholesky : public SparseSolverBase<IncompleteCholesky<Scalar,_UpLo,_OrderingType> >
 {
   protected:
-    typedef SparseSolverBase<IncompleteCholesky<Scalar,UpLo_,OrderingType_> > Base;
+    typedef SparseSolverBase<IncompleteCholesky<Scalar,_UpLo,_OrderingType> > Base;
     using Base::m_isInitialized;
   public:
     typedef typename NumTraits<Scalar>::Real RealScalar;
-    typedef OrderingType_ OrderingType;
+    typedef _OrderingType OrderingType;
     typedef typename OrderingType::PermutationType PermutationType;
     typedef typename PermutationType::StorageIndex StorageIndex;
     typedef SparseMatrix<Scalar,ColMajor,StorageIndex> FactorType;
@@ -59,7 +57,7 @@ class IncompleteCholesky : public SparseSolverBase<IncompleteCholesky<Scalar,UpL
     typedef Matrix<RealScalar,Dynamic,1> VectorRx;
     typedef Matrix<StorageIndex,Dynamic, 1> VectorIx;
     typedef std::vector<std::list<StorageIndex> > VectorList;
-    enum { UpLo = UpLo_ };
+    enum { UpLo = _UpLo };
     enum {
       ColsAtCompileTime = Dynamic,
       MaxColsAtCompileTime = Dynamic
@@ -187,9 +185,9 @@ class IncompleteCholesky : public SparseSolverBase<IncompleteCholesky<Scalar,UpL
 //   C-J. Lin and J. J. Moré, Incomplete Cholesky Factorizations with
 //   Limited memory, SIAM J. Sci. Comput.  21(1), pp. 24-45, 1999
 //   http://ftp.mcs.anl.gov/pub/tech_reports/reports/P682.pdf
-template<typename Scalar, int UpLo_, typename OrderingType>
-template<typename MatrixType_>
-void IncompleteCholesky<Scalar,UpLo_, OrderingType>::factorize(const MatrixType_& mat)
+template<typename Scalar, int _UpLo, typename OrderingType>
+template<typename _MatrixType>
+void IncompleteCholesky<Scalar,_UpLo, OrderingType>::factorize(const _MatrixType& mat)
 {
   using std::sqrt;
   eigen_assert(m_analysisIsOk && "analyzePattern() should be called first");
@@ -201,12 +199,12 @@ void IncompleteCholesky<Scalar,UpLo_, OrderingType>::factorize(const MatrixType_
   {
     // The temporary is needed to make sure that the diagonal entry is properly sorted
     FactorType tmp(mat.rows(), mat.cols());
-    tmp = mat.template selfadjointView<UpLo_>().twistedBy(m_perm);
+    tmp = mat.template selfadjointView<_UpLo>().twistedBy(m_perm);
     m_L.template selfadjointView<Lower>() = tmp.template selfadjointView<Lower>();
   }
   else
   {
-    m_L.template selfadjointView<Lower>() = mat.template selfadjointView<UpLo_>();
+    m_L.template selfadjointView<Lower>() = mat.template selfadjointView<_UpLo>();
   }
 
   Index n = m_L.cols();
@@ -371,8 +369,8 @@ void IncompleteCholesky<Scalar,UpLo_, OrderingType>::factorize(const MatrixType_
   } while(m_info!=Success);
 }
 
-template<typename Scalar, int UpLo_, typename OrderingType>
-inline void IncompleteCholesky<Scalar,UpLo_, OrderingType>::updateList(Ref<const VectorIx> colPtr, Ref<VectorIx> rowIdx, Ref<VectorSx> vals, const Index& col, const Index& jk, VectorIx& firstElt, VectorList& listCol)
+template<typename Scalar, int _UpLo, typename OrderingType>
+inline void IncompleteCholesky<Scalar,_UpLo, OrderingType>::updateList(Ref<const VectorIx> colPtr, Ref<VectorIx> rowIdx, Ref<VectorSx> vals, const Index& col, const Index& jk, VectorIx& firstElt, VectorList& listCol)
 {
   if (jk < colPtr(col+1) )
   {

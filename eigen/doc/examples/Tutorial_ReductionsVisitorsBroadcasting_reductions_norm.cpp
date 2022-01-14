@@ -1,10 +1,13 @@
 #include <Eigen/Dense>
 #include <iostream>
 
+using namespace std;
+using namespace Eigen;
+
 int main()
 {
-  Eigen::VectorXf v(2);
-  Eigen::MatrixXf m(2,2), n(2,2);
+  VectorXf v(2);
+  MatrixXf m(2,2), n(2,2);
   
   v << -1,
        2;
@@ -12,14 +15,14 @@ int main()
   m << 1,-2,
        -3,4;
 
-  std::cout << "v.squaredNorm() = " << v.squaredNorm() << std::endl;
-  std::cout << "v.norm() = " << v.norm() << std::endl;
-  std::cout << "v.lpNorm<1>() = " << v.lpNorm<1>() << std::endl;
-  std::cout << "v.lpNorm<Infinity>() = " << v.lpNorm<Eigen::Infinity>() << std::endl;
+  cout << "v.squaredNorm() = " << v.squaredNorm() << endl;
+  cout << "v.norm() = " << v.norm() << endl;
+  cout << "v.lpNorm<1>() = " << v.lpNorm<1>() << endl;
+  cout << "v.lpNorm<Infinity>() = " << v.lpNorm<Infinity>() << endl;
 
-  std::cout << std::endl;
-  std::cout << "m.squaredNorm() = " << m.squaredNorm() << std::endl;
-  std::cout << "m.norm() = " << m.norm() << std::endl;
-  std::cout << "m.lpNorm<1>() = " << m.lpNorm<1>() << std::endl;
-  std::cout << "m.lpNorm<Infinity>() = " << m.lpNorm<Eigen::Infinity>() << std::endl;
+  cout << endl;
+  cout << "m.squaredNorm() = " << m.squaredNorm() << endl;
+  cout << "m.norm() = " << m.norm() << endl;
+  cout << "m.lpNorm<1>() = " << m.lpNorm<1>() << endl;
+  cout << "m.lpNorm<Infinity>() = " << m.lpNorm<Infinity>() << endl;
 }

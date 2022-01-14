@@ -11,19 +11,17 @@
 #ifndef EIGEN_BIDIAGONALIZATION_H
 #define EIGEN_BIDIAGONALIZATION_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {
 // UpperBidiagonalization will probably be replaced by a Bidiagonalization class, don't want to make it stable API.
 // At the same time, it's useful to keep for now as it's about the only thing that is testing the BandMatrix class.
 
-template<typename MatrixType_> class UpperBidiagonalization
+template<typename _MatrixType> class UpperBidiagonalization
 {
   public:
 
-    typedef MatrixType_ MatrixType;
+    typedef _MatrixType MatrixType;
     enum {
       RowsAtCompileTime = MatrixType::RowsAtCompileTime,
       ColsAtCompileTime = MatrixType::ColsAtCompileTime,
@@ -357,8 +355,8 @@ void upperbidiagonalization_inplace_blocked(MatrixType& A, BidiagType& bidiagona
   }
 }
 
-template<typename MatrixType_>
-UpperBidiagonalization<MatrixType_>& UpperBidiagonalization<MatrixType_>::computeUnblocked(const MatrixType_& matrix)
+template<typename _MatrixType>
+UpperBidiagonalization<_MatrixType>& UpperBidiagonalization<_MatrixType>::computeUnblocked(const _MatrixType& matrix)
 {
   Index rows = matrix.rows();
   Index cols = matrix.cols();
@@ -379,8 +377,8 @@ UpperBidiagonalization<MatrixType_>& UpperBidiagonalization<MatrixType_>::comput
   return *this;
 }
 
-template<typename MatrixType_>
-UpperBidiagonalization<MatrixType_>& UpperBidiagonalization<MatrixType_>::compute(const MatrixType_& matrix)
+template<typename _MatrixType>
+UpperBidiagonalization<_MatrixType>& UpperBidiagonalization<_MatrixType>::compute(const _MatrixType& matrix)
 {
   Index rows = matrix.rows();
   Index cols = matrix.cols();

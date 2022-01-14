@@ -10,8 +10,6 @@
 #ifndef EIGEN_TRIANGULAR_SOLVER_MATRIX_H
 #define EIGEN_TRIANGULAR_SOLVER_MATRIX_H
 
-#include "../InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {
@@ -63,7 +61,7 @@ EIGEN_DONT_INLINE void triangular_solve_matrix<Scalar,Index,OnTheLeft,Mode,Conju
     typedef gebp_traits<Scalar,Scalar> Traits;
 
     enum {
-      SmallPanelWidth   = plain_enum_max(Traits::mr, Traits::nr),
+      SmallPanelWidth   = EIGEN_PLAIN_ENUM_MAX(Traits::mr,Traits::nr),
       IsLower = (Mode&Lower) == Lower
     };
 
@@ -216,7 +214,7 @@ EIGEN_DONT_INLINE void triangular_solve_matrix<Scalar,Index,OnTheRight,Mode,Conj
     typedef gebp_traits<Scalar,Scalar> Traits;
     enum {
       RhsStorageOrder   = TriStorageOrder,
-      SmallPanelWidth   = plain_enum_max(Traits::mr, Traits::nr),
+      SmallPanelWidth   = EIGEN_PLAIN_ENUM_MAX(Traits::mr,Traits::nr),
       IsLower = (Mode&Lower) == Lower
     };
 

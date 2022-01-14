@@ -13,8 +13,6 @@
 
 #include "StemFunction.h"
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
 

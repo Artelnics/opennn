@@ -31,8 +31,6 @@
 #define SPARSELU_COLUMN_DFS_H
 
 template <typename Scalar, typename StorageIndex> class SparseLUImpl;
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

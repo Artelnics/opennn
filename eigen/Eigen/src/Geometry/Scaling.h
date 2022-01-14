@@ -10,8 +10,6 @@
 #ifndef EIGEN_SCALING_H
 #define EIGEN_SCALING_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 /** \geometry_module \ingroup Geometry_Module
@@ -20,7 +18,7 @@ namespace Eigen {
   *
   * \brief Represents a generic uniform scaling transformation
   *
-  * \tparam Scalar_ the scalar type, i.e., the type of the coefficients.
+  * \tparam _Scalar the scalar type, i.e., the type of the coefficients.
   *
   * This class represent a uniform scaling transformation. It is the return
   * type of Scaling(Scalar), and most of the time this is the only way it
@@ -47,12 +45,12 @@ namespace internal
   };
 }
 
-template<typename Scalar_>
+template<typename _Scalar>
 class UniformScaling
 {
 public:
   /** the scalar type of the coefficients */
-  typedef Scalar_ Scalar;
+  typedef _Scalar Scalar;
 
 protected:
 

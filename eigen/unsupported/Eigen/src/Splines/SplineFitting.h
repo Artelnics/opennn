@@ -15,13 +15,10 @@
 #include <numeric>
 #include <vector>
 
-#include "./InternalHeaderCheck.h"
-
 #include "SplineFwd.h"
 
 #include "../../../../Eigen/LU"
 #include "../../../../Eigen/QR"
-
 
 namespace Eigen
 {

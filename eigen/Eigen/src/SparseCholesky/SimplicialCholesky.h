@@ -10,8 +10,6 @@
 #ifndef EIGEN_SIMPLICIAL_CHOLESKY_H
 #define EIGEN_SIMPLICIAL_CHOLESKY_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 enum SimplicialCholeskyMode {
@@ -273,17 +271,17 @@ class SimplicialCholeskyBase : public SparseSolverBase<Derived>
     RealScalar m_shiftScale;
 };
 
-template<typename MatrixType_, int UpLo_ = Lower, typename Ordering_ = AMDOrdering<typename MatrixType_::StorageIndex> > class SimplicialLLT;
-template<typename MatrixType_, int UpLo_ = Lower, typename Ordering_ = AMDOrdering<typename MatrixType_::StorageIndex> > class SimplicialLDLT;
-template<typename MatrixType_, int UpLo_ = Lower, typename Ordering_ = AMDOrdering<typename MatrixType_::StorageIndex> > class SimplicialCholesky;
+template<typename _MatrixType, int _UpLo = Lower, typename _Ordering = AMDOrdering<typename _MatrixType::StorageIndex> > class SimplicialLLT;
+template<typename _MatrixType, int _UpLo = Lower, typename _Ordering = AMDOrdering<typename _MatrixType::StorageIndex> > class SimplicialLDLT;
+template<typename _MatrixType, int _UpLo = Lower, typename _Ordering = AMDOrdering<typename _MatrixType::StorageIndex> > class SimplicialCholesky;
 
 namespace internal {
 
-template<typename MatrixType_, int UpLo_, typename Ordering_> struct traits<SimplicialLLT<MatrixType_,UpLo_,Ordering_> >
+template<typename _MatrixType, int _UpLo, typename _Ordering> struct traits<SimplicialLLT<_MatrixType,_UpLo,_Ordering> >
 {
-  typedef MatrixType_ MatrixType;
-  typedef Ordering_ OrderingType;
-  enum { UpLo = UpLo_ };
+  typedef _MatrixType MatrixType;
+  typedef _Ordering OrderingType;
+  enum { UpLo = _UpLo };
   typedef typename MatrixType::Scalar                         Scalar;
   typedef typename MatrixType::StorageIndex                   StorageIndex;
   typedef SparseMatrix<Scalar, ColMajor, StorageIndex>        CholMatrixType;
@@ -293,11 +291,11 @@ template<typename MatrixType_, int UpLo_, typename Ordering_> struct traits<Simp
   static inline MatrixU getU(const CholMatrixType& m) { return MatrixU(m.adjoint()); }
 };
 
-template<typename MatrixType_,int UpLo_, typename Ordering_> struct traits<SimplicialLDLT<MatrixType_,UpLo_,Ordering_> >
+template<typename _MatrixType,int _UpLo, typename _Ordering> struct traits<SimplicialLDLT<_MatrixType,_UpLo,_Ordering> >
 {
-  typedef MatrixType_ MatrixType;
-  typedef Ordering_ OrderingType;
-  enum { UpLo = UpLo_ };
+  typedef _MatrixType MatrixType;
+  typedef _Ordering OrderingType;
+  enum { UpLo = _UpLo };
   typedef typename MatrixType::Scalar                             Scalar;
   typedef typename MatrixType::StorageIndex                       StorageIndex;
   typedef SparseMatrix<Scalar, ColMajor, StorageIndex>            CholMatrixType;
@@ -307,11 +305,11 @@ template<typename MatrixType_,int UpLo_, typename Ordering_> struct traits<Simpl
   static inline MatrixU getU(const CholMatrixType& m) { return MatrixU(m.adjoint()); }
 };
 
-template<typename MatrixType_, int UpLo_, typename Ordering_> struct traits<SimplicialCholesky<MatrixType_,UpLo_,Ordering_> >
+template<typename _MatrixType, int _UpLo, typename _Ordering> struct traits<SimplicialCholesky<_MatrixType,_UpLo,_Ordering> >
 {
-  typedef MatrixType_ MatrixType;
-  typedef Ordering_ OrderingType;
-  enum { UpLo = UpLo_ };
+  typedef _MatrixType MatrixType;
+  typedef _Ordering OrderingType;
+  enum { UpLo = _UpLo };
 };
 
 }
@@ -327,21 +325,21 @@ template<typename MatrixType_, int UpLo_, typename Ordering_> struct traits<Simp
   * In order to reduce the fill-in, a symmetric permutation P is applied prior to the factorization
   * such that the factorized matrix is P A P^-1.
   *
-  * \tparam MatrixType_ the type of the sparse matrix A, it must be a SparseMatrix<>
-  * \tparam UpLo_ the triangular part that will be used for the computations. It can be Lower
+  * \tparam _MatrixType the type of the sparse matrix A, it must be a SparseMatrix<>
+  * \tparam _UpLo the triangular part that will be used for the computations. It can be Lower
   *               or Upper. Default is Lower.
-  * \tparam Ordering_ The ordering method to use, either AMDOrdering<> or NaturalOrdering<>. Default is AMDOrdering<>
+  * \tparam _Ordering The ordering method to use, either AMDOrdering<> or NaturalOrdering<>. Default is AMDOrdering<>
   *
   * \implsparsesolverconcept
   *
   * \sa class SimplicialLDLT, class AMDOrdering, class NaturalOrdering
   */
-template<typename MatrixType_, int UpLo_, typename Ordering_>
-    class SimplicialLLT : public SimplicialCholeskyBase<SimplicialLLT<MatrixType_,UpLo_,Ordering_> >
+template<typename _MatrixType, int _UpLo, typename _Ordering>
+    class SimplicialLLT : public SimplicialCholeskyBase<SimplicialLLT<_MatrixType,_UpLo,_Ordering> >
 {
 public:
-    typedef MatrixType_ MatrixType;
-    enum { UpLo = UpLo_ };
+    typedef _MatrixType MatrixType;
+    enum { UpLo = _UpLo };
     typedef SimplicialCholeskyBase<SimplicialLLT> Base;
     typedef typename MatrixType::Scalar Scalar;
     typedef typename MatrixType::RealScalar RealScalar;
@@ -418,21 +416,21 @@ public:
   * In order to reduce the fill-in, a symmetric permutation P is applied prior to the factorization
   * such that the factorized matrix is P A P^-1.
   *
-  * \tparam MatrixType_ the type of the sparse matrix A, it must be a SparseMatrix<>
-  * \tparam UpLo_ the triangular part that will be used for the computations. It can be Lower
+  * \tparam _MatrixType the type of the sparse matrix A, it must be a SparseMatrix<>
+  * \tparam _UpLo the triangular part that will be used for the computations. It can be Lower
   *               or Upper. Default is Lower.
-  * \tparam Ordering_ The ordering method to use, either AMDOrdering<> or NaturalOrdering<>. Default is AMDOrdering<>
+  * \tparam _Ordering The ordering method to use, either AMDOrdering<> or NaturalOrdering<>. Default is AMDOrdering<>
   *
   * \implsparsesolverconcept
   *
   * \sa class SimplicialLLT, class AMDOrdering, class NaturalOrdering
   */
-template<typename MatrixType_, int UpLo_, typename Ordering_>
-    class SimplicialLDLT : public SimplicialCholeskyBase<SimplicialLDLT<MatrixType_,UpLo_,Ordering_> >
+template<typename _MatrixType, int _UpLo, typename _Ordering>
+    class SimplicialLDLT : public SimplicialCholeskyBase<SimplicialLDLT<_MatrixType,_UpLo,_Ordering> >
 {
 public:
-    typedef MatrixType_ MatrixType;
-    enum { UpLo = UpLo_ };
+    typedef _MatrixType MatrixType;
+    enum { UpLo = _UpLo };
     typedef SimplicialCholeskyBase<SimplicialLDLT> Base;
     typedef typename MatrixType::Scalar Scalar;
     typedef typename MatrixType::RealScalar RealScalar;
@@ -509,12 +507,12 @@ public:
   *
   * \sa class SimplicialLDLT, class SimplicialLLT
   */
-template<typename MatrixType_, int UpLo_, typename Ordering_>
-    class SimplicialCholesky : public SimplicialCholeskyBase<SimplicialCholesky<MatrixType_,UpLo_,Ordering_> >
+template<typename _MatrixType, int _UpLo, typename _Ordering>
+    class SimplicialCholesky : public SimplicialCholeskyBase<SimplicialCholesky<_MatrixType,_UpLo,_Ordering> >
 {
 public:
-    typedef MatrixType_ MatrixType;
-    enum { UpLo = UpLo_ };
+    typedef _MatrixType MatrixType;
+    enum { UpLo = _UpLo };
     typedef SimplicialCholeskyBase<SimplicialCholesky> Base;
     typedef typename MatrixType::Scalar Scalar;
     typedef typename MatrixType::RealScalar RealScalar;

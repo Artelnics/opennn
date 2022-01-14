@@ -45,6 +45,9 @@ template<typename MatrixType> void selfadjoint(const MatrixType& m)
   m4 = m2;
   m4 -= m1.template selfadjointView<Lower>();
   VERIFY_IS_APPROX(m4, m2-m3);
+
+  VERIFY_RAISES_STATIC_ASSERT(m2.template selfadjointView<StrictlyUpper>());
+  VERIFY_RAISES_STATIC_ASSERT(m2.template selfadjointView<UnitLower>());
 }
 
 void bug_159()

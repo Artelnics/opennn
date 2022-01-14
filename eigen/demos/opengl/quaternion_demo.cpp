@@ -132,11 +132,11 @@ inline static Frame lerpFrame(float alpha, const Frame& a, const Frame& b)
                Quaternionf(lerp(alpha,OrientationType(a.orientation),OrientationType(b.orientation))));
 }
 
-template<typename Scalar_> class EulerAngles
+template<typename _Scalar> class EulerAngles
 {
 public:
   enum { Dim = 3 };
-  typedef Scalar_ Scalar;
+  typedef _Scalar Scalar;
   typedef Matrix<Scalar,3,3> Matrix3;
   typedef Matrix<Scalar,3,1> Vector3;
   typedef Quaternion<Scalar> QuaternionType;

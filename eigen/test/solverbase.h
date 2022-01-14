@@ -31,10 +31,6 @@ void check_solverbase(const MatrixType& matrix, const SolverType& solver, Index 
   solver_solution2         = RhsType::Random(rows,cols2);
   solver_solution2         = solver.adjoint().solve(m2);
   VERIFY_IS_APPROX(m2, matrix.adjoint()*solver_solution2);
-  // test with temporary expression as rhs
-  m2 = DstType::Random(cols,cols2);
-  solver_solution = solver.solve(matrix*m2);
-  VERIFY_IS_APPROX(matrix*m2, matrix*solver_solution);
 }
 
 #endif // TEST_SOLVERBASE_H

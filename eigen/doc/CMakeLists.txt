@@ -10,6 +10,9 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   endif()
 endif()
 
+# some examples and snippets needs c++11, so let's check it once
+check_cxx_compiler_flag("-std=c++11" EIGEN_COMPILER_SUPPORT_CPP11)
+
 option(EIGEN_INTERNAL_DOCUMENTATION "Build internal documentation" OFF)
 option(EIGEN_DOC_USE_MATHJAX "Use MathJax for rendering math in HTML docs" ON)
 

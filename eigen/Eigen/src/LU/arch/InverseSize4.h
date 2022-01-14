@@ -35,8 +35,6 @@
 #ifndef EIGEN_INVERSE_SIZE_4_H
 #define EIGEN_INVERSE_SIZE_4_H
 
-#include "../InternalHeaderCheck.h"
-
 namespace Eigen
 {
 namespace internal
@@ -58,10 +56,10 @@ struct compute_inverse_size4<Architecture::Target, float, MatrixType, ResultType
 
     const float* data = matrix.data();
     const Index stride = matrix.innerStride();
-    Packet4f L1_ = ploadt<Packet4f,MatrixAlignment>(data);
-    Packet4f L2_ = ploadt<Packet4f,MatrixAlignment>(data + stride*4);
-    Packet4f L3_ = ploadt<Packet4f,MatrixAlignment>(data + stride*8);
-    Packet4f L4_ = ploadt<Packet4f,MatrixAlignment>(data + stride*12);
+    Packet4f _L1 = ploadt<Packet4f,MatrixAlignment>(data);
+    Packet4f _L2 = ploadt<Packet4f,MatrixAlignment>(data + stride*4);
+    Packet4f _L3 = ploadt<Packet4f,MatrixAlignment>(data + stride*8);
+    Packet4f _L4 = ploadt<Packet4f,MatrixAlignment>(data + stride*12);
 
     // Four 2x2 sub-matrices of the input matrix
     // input = [[A, B],
@@ -70,17 +68,17 @@ struct compute_inverse_size4<Architecture::Target, float, MatrixType, ResultType
 
     if (!StorageOrdersMatch)
     {
-      A = vec4f_unpacklo(L1_, L2_);
-      B = vec4f_unpacklo(L3_, L4_);
-      C = vec4f_unpackhi(L1_, L2_);
-      D = vec4f_unpackhi(L3_, L4_);
+      A = vec4f_unpacklo(_L1, _L2);
+      B = vec4f_unpacklo(_L3, _L4);
+      C = vec4f_unpackhi(_L1, _L2);
+      D = vec4f_unpackhi(_L3, _L4);
     }
     else
     {
-      A = vec4f_movelh(L1_, L2_);
-      B = vec4f_movehl(L2_, L1_);
-      C = vec4f_movelh(L3_, L4_);
-      D = vec4f_movehl(L4_, L3_);
+      A = vec4f_movelh(_L1, _L2);
+      B = vec4f_movehl(_L2, _L1);
+      C = vec4f_movelh(_L3, _L4);
+      D = vec4f_movehl(_L4, _L3);
     }
 
     Packet4f AB, DC;

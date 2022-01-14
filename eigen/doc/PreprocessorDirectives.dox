@@ -55,17 +55,29 @@ By default, %Eigen strive to automatically detect and enable language features a
 the information provided by the compiler.
 
  - \b EIGEN_MAX_CPP_VER - disables usage of C++ features requiring a version greater than EIGEN_MAX_CPP_VER.
-   Possible values are: 14, 17, etc. If not defined (the default), %Eigen enables all features supported
+   Possible values are: 03, 11, 14, 17, etc. If not defined (the default), %Eigen enables all features supported
    by the compiler.
 
 Individual features can be explicitly enabled or disabled by defining the following token to 0 or 1 respectively.
-For instance, one might limit the C++ version to C++14 by defining EIGEN_MAX_CPP_VER=14, but still enable C99 math
+For instance, one might limit the C++ version to C++03 by defining EIGEN_MAX_CPP_VER=03, but still enable C99 math
 functions by defining EIGEN_HAS_C99_MATH=1.
 
  - \b EIGEN_HAS_C99_MATH - controls the usage of C99 math functions such as erf, erfc, lgamma, etc.
+   Automatic detection disabled if EIGEN_MAX_CPP_VER<11.
  - \b EIGEN_HAS_CXX11_MATH - controls the implementation of some functions such as round, logp1, isinf, isnan, etc.
+   Automatic detection disabled if EIGEN_MAX_CPP_VER<11.
+ - \b EIGEN_HAS_RVALUE_REFERENCES - defines whether rvalue references are supported
+   Automatic detection disabled if EIGEN_MAX_CPP_VER<11.
  - \b EIGEN_HAS_STD_RESULT_OF - defines whether std::result_of is supported
+   Automatic detection disabled if EIGEN_MAX_CPP_VER<11.
+ - \b EIGEN_HAS_VARIADIC_TEMPLATES - defines whether variadic templates are supported
+   Automatic detection disabled if EIGEN_MAX_CPP_VER<11.
  - \b EIGEN_HAS_CONSTEXPR - defines whether relaxed const expression are supported
+   Automatic detection disabled if EIGEN_MAX_CPP_VER<14.
+ - \b EIGEN_HAS_CXX11_CONTAINERS - defines whether STL's containers follows C++11 specifications
+   Automatic detection disabled if EIGEN_MAX_CPP_VER<11.
+ - \b EIGEN_HAS_CXX11_NOEXCEPT - defines whether noexcept is supported
+   Automatic detection disabled if EIGEN_MAX_CPP_VER<11.
  - \b EIGEN_NO_IO - Disables any usage and support for `<iostreams>`.
 
 \section TopicPreprocessorDirectivesAssertions Assertions
@@ -92,7 +104,7 @@ run time. However, these assertions do cost time and can thus be turned off.
  - \b \c EIGEN_MAX_ALIGN_BYTES - Must be a power of two, or 0. Defines an upper bound on the memory boundary in bytes on which dynamically and statically allocated data may be aligned by %Eigen. If not defined, a default value is automatically computed based on architecture, compiler, and OS.
  This option is typically used to enforce binary compatibility between code/libraries compiled with different SIMD options. For instance, one may compile AVX code and enforce ABI compatibility with existing SSE code by defining \c EIGEN_MAX_ALIGN_BYTES=16. In the other way round, since by default AVX implies 32 bytes alignment for best performance, one can compile SSE code to be ABI compatible with AVX code by defining \c EIGEN_MAX_ALIGN_BYTES=32.
  - \b \c EIGEN_MAX_STATIC_ALIGN_BYTES - Same as \c EIGEN_MAX_ALIGN_BYTES but for statically allocated data only. By default, if only  \c EIGEN_MAX_ALIGN_BYTES is defined, then \c EIGEN_MAX_STATIC_ALIGN_BYTES == \c EIGEN_MAX_ALIGN_BYTES, otherwise a default value is automatically computed based on architecture, compiler, and OS (can be smaller than the default value of EIGEN_MAX_ALIGN_BYTES on architectures that do not support stack alignment).
- Let us emphasize that \c EIGEN_MAX_*_ALIGN_BYTES define only a desirable upper bound. In practice data is aligned to largest power-of-two common divisor of \c EIGEN_MAX_STATIC_ALIGN_BYTES and the size of the data, such that memory is not wasted.
+ Let us emphasize that \c EIGEN_MAX_*_ALIGN_BYTES define only a diserable upper bound. In practice data is aligned to largest power-of-two common divisor of \c EIGEN_MAX_STATIC_ALIGN_BYTES and the size of the data, such that memory is not wasted.
  - \b \c EIGEN_DONT_PARALLELIZE - if defined, this disables multi-threading. This is only relevant if you enabled OpenMP.
    See \ref TopicMultiThreading for details.
  - \b \c EIGEN_DONT_VECTORIZE - disables explicit vectorization when defined. Not defined by default, unless 

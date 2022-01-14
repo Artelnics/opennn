@@ -11,8 +11,6 @@
 #ifndef EIGEN_RESHAPED_H
 #define EIGEN_RESHAPED_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \class Reshaped
@@ -445,7 +443,7 @@ struct reshaped_evaluator<ArgType, Rows, Cols, Order, /* HasDirectAccess */ true
     : mapbase_evaluator<XprType, typename XprType::PlainObject>(xpr)
   {
     // TODO: for the 3.4 release, this should be turned to an internal assertion, but let's keep it as is for the beta lifetime
-    eigen_assert(((internal::UIntPtr(xpr.data()) % plain_enum_max(1, evaluator<XprType>::Alignment)) == 0) && "data is not aligned");
+    eigen_assert(((internal::UIntPtr(xpr.data()) % EIGEN_PLAIN_ENUM_MAX(1,evaluator<XprType>::Alignment)) == 0) && "data is not aligned");
   }
 };
 

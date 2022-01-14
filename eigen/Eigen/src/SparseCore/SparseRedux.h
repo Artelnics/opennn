@@ -10,8 +10,6 @@
 #ifndef EIGEN_SPARSEREDUX_H
 #define EIGEN_SPARSEREDUX_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 template<typename Derived>
@@ -27,9 +25,9 @@ SparseMatrixBase<Derived>::sum() const
   return res;
 }
 
-template<typename Scalar_, int Options_, typename Index_>
-typename internal::traits<SparseMatrix<Scalar_,Options_,Index_> >::Scalar
-SparseMatrix<Scalar_,Options_,Index_>::sum() const
+template<typename _Scalar, int _Options, typename _Index>
+typename internal::traits<SparseMatrix<_Scalar,_Options,_Index> >::Scalar
+SparseMatrix<_Scalar,_Options,_Index>::sum() const
 {
   eigen_assert(rows()>0 && cols()>0 && "you are using a non initialized matrix");
   if(this->isCompressed())
@@ -38,9 +36,9 @@ SparseMatrix<Scalar_,Options_,Index_>::sum() const
     return Base::sum();
 }
 
-template<typename Scalar_, int Options_, typename Index_>
-typename internal::traits<SparseVector<Scalar_,Options_, Index_> >::Scalar
-SparseVector<Scalar_,Options_,Index_>::sum() const
+template<typename _Scalar, int _Options, typename _Index>
+typename internal::traits<SparseVector<_Scalar,_Options, _Index> >::Scalar
+SparseVector<_Scalar,_Options,_Index>::sum() const
 {
   eigen_assert(rows()>0 && cols()>0 && "you are using a non initialized matrix");
   return Matrix<Scalar,1,Dynamic>::Map(m_data.valuePtr(), m_data.size()).sum();

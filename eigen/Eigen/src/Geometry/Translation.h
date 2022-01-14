@@ -10,8 +10,6 @@
 #ifndef EIGEN_TRANSLATION_H
 #define EIGEN_TRANSLATION_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 /** \geometry_module \ingroup Geometry_Module
@@ -20,23 +18,23 @@ namespace Eigen {
   *
   * \brief Represents a translation transformation
   *
-  * \tparam Scalar_ the scalar type, i.e., the type of the coefficients.
-  * \tparam Dim_ the  dimension of the space, can be a compile time value or Dynamic
+  * \tparam _Scalar the scalar type, i.e., the type of the coefficients.
+  * \tparam _Dim the  dimension of the space, can be a compile time value or Dynamic
   *
   * \note This class is not aimed to be used to store a translation transformation,
   * but rather to make easier the constructions and updates of Transform objects.
   *
   * \sa class Scaling, class Transform
   */
-template<typename Scalar_, int Dim_>
+template<typename _Scalar, int _Dim>
 class Translation
 {
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF_VECTORIZABLE_FIXED_SIZE(Scalar_,Dim_)
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF_VECTORIZABLE_FIXED_SIZE(_Scalar,_Dim)
   /** dimension of the space */
-  enum { Dim = Dim_ };
+  enum { Dim = _Dim };
   /** the scalar type of the coefficients */
-  typedef Scalar_ Scalar;
+  typedef _Scalar Scalar;
   /** corresponding vector type */
   typedef Matrix<Scalar,Dim,1> VectorType;
   /** corresponding linear transformation matrix type */

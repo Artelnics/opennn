@@ -11,8 +11,6 @@
 #ifndef EIGEN_REDUX_H
 #define EIGEN_REDUX_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {
@@ -240,7 +238,7 @@ struct redux_impl<Func, Evaluator, LinearVectorizedTraversal, NoUnrolling>
     const int packetAlignment = unpacket_traits<PacketScalar>::alignment;
     enum {
       alignment0 = (bool(Evaluator::Flags & DirectAccessBit) && bool(packet_traits<Scalar>::AlignedOnScalar)) ? int(packetAlignment) : int(Unaligned),
-      alignment = plain_enum_max(alignment0, Evaluator::Alignment)
+      alignment = EIGEN_PLAIN_ENUM_MAX(alignment0, Evaluator::Alignment)
     };
     const Index alignedStart = internal::first_default_aligned(xpr);
     const Index alignedSize2 = ((size-alignedStart)/(2*packetSize))*(2*packetSize);
@@ -355,12 +353,12 @@ struct redux_impl<Func, Evaluator, LinearVectorizedTraversal, CompleteUnrolling>
 };
 
 // evaluator adaptor
-template<typename XprType_>
-class redux_evaluator : public internal::evaluator<XprType_>
+template<typename _XprType>
+class redux_evaluator : public internal::evaluator<_XprType>
 {
-  typedef internal::evaluator<XprType_> Base;
+  typedef internal::evaluator<_XprType> Base;
 public:
-  typedef XprType_ XprType;
+  typedef _XprType XprType;
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
   explicit redux_evaluator(const XprType &xpr) : Base(xpr) {}
   

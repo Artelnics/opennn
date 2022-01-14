@@ -91,7 +91,15 @@ static void test_vectorized_broadcasting()
     }
   }
 
+#if EIGEN_HAS_VARIADIC_TEMPLATES
   tensor.resize(11,3,5);
+#else
+  array<Index, 3> new_dims;
+  new_dims[0] = 11;
+  new_dims[1] = 3;
+  new_dims[2] = 5;
+  tensor.resize(new_dims);
+#endif
 
   tensor.setRandom();
   broadcast = tensor.broadcast(broadcasts);
@@ -140,7 +148,15 @@ static void test_static_broadcasting()
     }
   }
 
+#if EIGEN_HAS_VARIADIC_TEMPLATES
   tensor.resize(11,3,5);
+#else
+  array<Index, 3> new_dims;
+  new_dims[0] = 11;
+  new_dims[1] = 3;
+  new_dims[2] = 5;
+  tensor.resize(new_dims);
+#endif
 
   tensor.setRandom();
   broadcast = tensor.broadcast(broadcasts);
@@ -241,22 +257,6 @@ static void test_simple_broadcasting_n_by_one()
 }
 
 template <int DataLayout>
-static void test_size_one_broadcasting()
-{
-  Tensor<float, 1, DataLayout> tensor(1);
-  tensor.setRandom();
-  array<ptrdiff_t, 1> broadcasts = {64};
-  Tensor<float, 1, DataLayout> broadcast;
-  broadcast = tensor.broadcast(broadcasts);
-
-  VERIFY_IS_EQUAL(broadcast.dimension(0), broadcasts[0]);
-
-  for (int i = 0; i < broadcasts[0]; ++i) {
-    VERIFY_IS_EQUAL(tensor(0), broadcast(i));
-  }
-}
-
-template <int DataLayout>
 static void test_simple_broadcasting_one_by_n_by_one_1d()
 {
   Tensor<float, 3, DataLayout> tensor(1,7,1);
@@ -328,6 +328,4 @@ EIGEN_DECLARE_TEST(cxx11_tensor_broadcasting)
   CALL_SUBTEST(test_simple_broadcasting_one_by_n_by_one_2d<ColMajor>());
   CALL_SUBTEST(test_simple_broadcasting_one_by_n_by_one_1d<RowMajor>());
   CALL_SUBTEST(test_simple_broadcasting_one_by_n_by_one_2d<RowMajor>());
-  CALL_SUBTEST(test_size_one_broadcasting<ColMajor>());
-  CALL_SUBTEST(test_size_one_broadcasting<RowMajor>());
 }

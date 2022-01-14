@@ -13,8 +13,6 @@
 // This file contains many lightweight helper classes used to
 // implement and control fast level 2 and level 3 BLAS-like routines.
 
-#include "../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -310,15 +308,15 @@ public:
   }
 
   // storePacketBlock_helper defines a way to access values inside the PacketBlock, this is essentially required by the Complex types.
-  template<typename SubPacket, typename Scalar_, int n, int idx>
+  template<typename SubPacket, typename ScalarT, int n, int idx>
   struct storePacketBlock_helper
   {
-    storePacketBlock_helper<SubPacket, Scalar_, n, idx-1> spbh;
+    storePacketBlock_helper<SubPacket, ScalarT, n, idx-1> spbh;
     EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void store(const blas_data_mapper<Scalar, Index, StorageOrder, AlignmentType, Incr>* sup, Index i, Index j, const PacketBlock<SubPacket, n>& block) const {
       spbh.store(sup, i,j,block);
       for(int l = 0; l < unpacket_traits<SubPacket>::size; l++)
       {
-        Scalar_ *v = &sup->operator()(i+l, j+idx);
+        ScalarT *v = &sup->operator()(i+l, j+idx);
         *v = block.packet[idx][l];
       }
     }
@@ -354,8 +352,8 @@ public:
     }
   };
 
-  template<typename SubPacket, typename Scalar_, int n>
-  struct storePacketBlock_helper<SubPacket, Scalar_, n, -1>
+  template<typename SubPacket, typename ScalarT, int n>
+  struct storePacketBlock_helper<SubPacket, ScalarT, n, -1>
   {
     EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void store(const blas_data_mapper<Scalar, Index, StorageOrder, AlignmentType, Incr>*, Index, Index, const PacketBlock<SubPacket, n>& ) const {
     }
@@ -405,7 +403,7 @@ template<typename XprType> struct blas_traits
 {
   typedef typename traits<XprType>::Scalar Scalar;
   typedef const XprType& ExtractType;
-  typedef XprType ExtractType_;
+  typedef XprType _ExtractType;
   enum {
     IsComplex = NumTraits<Scalar>::IsComplex,
     IsTransposed = false,
@@ -418,7 +416,7 @@ template<typename XprType> struct blas_traits
   };
   typedef typename conditional<bool(HasUsableDirectAccess),
     ExtractType,
-    typename ExtractType_::PlainObject
+    typename _ExtractType::PlainObject
     >::type DirectLinearAccessType;
   static inline EIGEN_DEVICE_FUNC ExtractType extract(const XprType& x) { return x; }
   static inline EIGEN_DEVICE_FUNC const Scalar extractScalarFactor(const XprType&) { return Scalar(1); }
@@ -500,8 +498,8 @@ struct blas_traits<Transpose<NestedXpr> >
   typedef typename NestedXpr::Scalar Scalar;
   typedef blas_traits<NestedXpr> Base;
   typedef Transpose<NestedXpr> XprType;
-  typedef Transpose<const typename Base::ExtractType_>  ExtractType; // const to get rid of a compile error; anyway blas traits are only used on the RHS
-  typedef Transpose<const typename Base::ExtractType_> ExtractType_;
+  typedef Transpose<const typename Base::_ExtractType>  ExtractType; // const to get rid of a compile error; anyway blas traits are only used on the RHS
+  typedef Transpose<const typename Base::_ExtractType> _ExtractType;
   typedef typename conditional<bool(Base::HasUsableDirectAccess),
     ExtractType,
     typename ExtractType::PlainObject

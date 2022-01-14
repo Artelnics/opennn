@@ -10,8 +10,6 @@
 #ifndef EIGEN_ALLANDANY_H
 #define EIGEN_ALLANDANY_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {
@@ -136,7 +134,7 @@ EIGEN_DEVICE_FUNC inline Eigen::Index DenseBase<Derived>::count() const
   * \sa allFinite()
   */
 template<typename Derived>
-EIGEN_DEVICE_FUNC inline bool DenseBase<Derived>::hasNaN() const
+inline bool DenseBase<Derived>::hasNaN() const
 {
 #if EIGEN_COMP_MSVC || (defined __FAST_MATH__)
   return derived().array().isNaN().any();
@@ -150,7 +148,7 @@ EIGEN_DEVICE_FUNC inline bool DenseBase<Derived>::hasNaN() const
   * \sa hasNaN()
   */
 template<typename Derived>
-EIGEN_DEVICE_FUNC inline bool DenseBase<Derived>::allFinite() const
+inline bool DenseBase<Derived>::allFinite() const
 {
 #if EIGEN_COMP_MSVC || (defined __FAST_MATH__)
   return derived().array().isFinite().all();

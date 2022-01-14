@@ -15,8 +15,6 @@
 #ifndef EIGEN_MATH_FUNCTIONS_SSE_H
 #define EIGEN_MATH_FUNCTIONS_SSE_H
 
-#include "../../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -75,6 +73,8 @@ Packet4f pcos<Packet4f>(const Packet4f& _x)
   return pcos_float(_x);
 }
 
+#if EIGEN_FAST_MATH
+
 // Functions for sqrt.
 // The EIGEN_FAST_MATH version uses the _mm_rsqrt_ps approximation and one step
 // of Newton's method, at a cost of 1-2 bits of precision as opposed to the
@@ -83,13 +83,11 @@ Packet4f pcos<Packet4f>(const Packet4f& _x)
 // it can be inlined and pipelined with other computations, further reducing its
 // effective latency. This is similar to Quake3's fast inverse square root.
 // For detail see here: http://www.beyond3d.com/content/articles/8/
-#if EIGEN_FAST_MATH
-template<>
-EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS EIGEN_UNUSED
+template<> EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS EIGEN_UNUSED
 Packet4f psqrt<Packet4f>(const Packet4f& _x)
 {
-  const Packet4f minus_half_x = pmul(_x, pset1<Packet4f>(-0.5f));
-  const Packet4f denormal_mask = pandnot(
+  Packet4f minus_half_x = pmul(_x, pset1<Packet4f>(-0.5f));
+  Packet4f denormal_mask = pandnot(
       pcmp_lt(_x, pset1<Packet4f>((std::numeric_limits<float>::min)())),
       pcmp_lt(_x, pzero(_x)));
 
@@ -118,10 +116,10 @@ Packet16b psqrt<Packet16b>(const Packet16b& x) { return x; }
 
 template<> EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS EIGEN_UNUSED
 Packet4f prsqrt<Packet4f>(const Packet4f& _x) {
-  EIGEN_DECLARE_CONST_Packet4f(one_point_five, 1.5f);
-  EIGEN_DECLARE_CONST_Packet4f(minus_half, -0.5f);
-  EIGEN_DECLARE_CONST_Packet4f_FROM_INT(inf, 0x7f800000u);
-  EIGEN_DECLARE_CONST_Packet4f_FROM_INT(flt_min, 0x00800000u);
+  _EIGEN_DECLARE_CONST_Packet4f(one_point_five, 1.5f);
+  _EIGEN_DECLARE_CONST_Packet4f(minus_half, -0.5f);
+  _EIGEN_DECLARE_CONST_Packet4f_FROM_INT(inf, 0x7f800000u);
+  _EIGEN_DECLARE_CONST_Packet4f_FROM_INT(flt_min, 0x00800000u);
 
   Packet4f neg_half = pmul(_x, p4f_minus_half);
 

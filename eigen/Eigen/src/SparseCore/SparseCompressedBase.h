@@ -10,8 +10,6 @@
 #ifndef EIGEN_SPARSE_COMPRESSED_BASE_H
 #define EIGEN_SPARSE_COMPRESSED_BASE_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 template<typename Derived> class SparseCompressedBase;

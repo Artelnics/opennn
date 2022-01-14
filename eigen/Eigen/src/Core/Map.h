@@ -11,8 +11,6 @@
 #ifndef EIGEN_MAP_H
 #define EIGEN_MAP_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -131,6 +129,7 @@ template<typename PlainObjectType, int MapOptions, typename StrideType> class Ma
     explicit inline Map(PointerArgType dataPtr, const StrideType& stride = StrideType())
       : Base(cast_to_pointer_type(dataPtr)), m_stride(stride)
     {
+      PlainObjectType::Base::_check_template_params();
     }
 
     /** Constructor in the dynamic-size vector case.
@@ -143,6 +142,7 @@ template<typename PlainObjectType, int MapOptions, typename StrideType> class Ma
     inline Map(PointerArgType dataPtr, Index size, const StrideType& stride = StrideType())
       : Base(cast_to_pointer_type(dataPtr), size), m_stride(stride)
     {
+      PlainObjectType::Base::_check_template_params();
     }
 
     /** Constructor in the dynamic-size matrix case.
@@ -156,6 +156,7 @@ template<typename PlainObjectType, int MapOptions, typename StrideType> class Ma
     inline Map(PointerArgType dataPtr, Index rows, Index cols, const StrideType& stride = StrideType())
       : Base(cast_to_pointer_type(dataPtr), rows, cols), m_stride(stride)
     {
+      PlainObjectType::Base::_check_template_params();
     }
 
     EIGEN_INHERIT_ASSIGNMENT_OPERATORS(Map)

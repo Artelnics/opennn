@@ -20,8 +20,6 @@
 
 #ifndef EIGEN_MATH_FUNCTIONS_SYCL_H
 #define EIGEN_MATH_FUNCTIONS_SYCL_H
-#include "../../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

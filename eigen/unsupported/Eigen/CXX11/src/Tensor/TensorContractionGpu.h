@@ -14,8 +14,6 @@
 
 #if defined(EIGEN_USE_GPU) && defined(EIGEN_GPUCC)
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 template<typename Scalar, typename Index, typename LhsMapper,
@@ -1372,8 +1370,8 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
     // columns in right side
     const Index n = this->m_j_size;
 
-    // zero out the result buffer (which must be of size at least m * n * sizeof(Scalar))
-    this->m_device.fill(buffer, buffer + m * n, Scalar(0));
+    // zero out the result buffer (which must be of size at least m * n * sizeof(Scalar)
+    this->m_device.memset(buffer, 0, m * n * sizeof(Scalar));
 
     typedef internal::TensorContractionInputMapper<LhsScalar, Index, internal::Lhs,
                                                    LeftEvaluator, left_nocontract_t,

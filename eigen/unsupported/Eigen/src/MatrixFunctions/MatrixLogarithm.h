@@ -11,8 +11,6 @@
 #ifndef EIGEN_MATRIX_LOGARITHM
 #define EIGEN_MATRIX_LOGARITHM
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal { 

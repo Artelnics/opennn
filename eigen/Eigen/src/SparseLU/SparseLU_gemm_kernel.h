@@ -10,8 +10,6 @@
 #ifndef EIGEN_SPARSELU_GEMM_KERNEL_H
 #define EIGEN_SPARSELU_GEMM_KERNEL_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

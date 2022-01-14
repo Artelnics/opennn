@@ -10,8 +10,6 @@
 #ifndef EIGEN_SPARSETRIANGULARSOLVER_H
 #define EIGEN_SPARSETRIANGULARSOLVER_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {

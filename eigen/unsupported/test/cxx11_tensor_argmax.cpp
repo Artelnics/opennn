@@ -14,57 +14,57 @@
 
 using Eigen::Tensor;
 using Eigen::array;
-using Eigen::Pair;
+using Eigen::Tuple;
 
 template <int DataLayout>
-static void test_simple_index_pairs()
+static void test_simple_index_tuples()
 {
   Tensor<float, 4, DataLayout> tensor(2,3,5,7);
   tensor.setRandom();
   tensor = (tensor + tensor.constant(0.5)).log();
 
-  Tensor<Pair<DenseIndex, float>, 4, DataLayout> index_pairs(2,3,5,7);
-  index_pairs = tensor.index_pairs();
+  Tensor<Tuple<DenseIndex, float>, 4, DataLayout> index_tuples(2,3,5,7);
+  index_tuples = tensor.index_tuples();
 
   for (DenseIndex n = 0; n < 2*3*5*7; ++n) {
-    const Pair<DenseIndex, float>& v = index_pairs.coeff(n);
+    const Tuple<DenseIndex, float>& v = index_tuples.coeff(n);
     VERIFY_IS_EQUAL(v.first, n);
     VERIFY_IS_EQUAL(v.second, tensor.coeff(n));
   }
 }
 
 template <int DataLayout>
-static void test_index_pairs_dim()
+static void test_index_tuples_dim()
 {
   Tensor<float, 4, DataLayout> tensor(2,3,5,7);
   tensor.setRandom();
   tensor = (tensor + tensor.constant(0.5)).log();
 
-  Tensor<Pair<DenseIndex, float>, 4, DataLayout> index_pairs(2,3,5,7);
+  Tensor<Tuple<DenseIndex, float>, 4, DataLayout> index_tuples(2,3,5,7);
 
-  index_pairs = tensor.index_pairs();
+  index_tuples = tensor.index_tuples();
 
   for (Eigen::DenseIndex n = 0; n < tensor.size(); ++n) {
-    const Pair<DenseIndex, float>& v = index_pairs(n); //(i, j, k, l);
+    const Tuple<DenseIndex, float>& v = index_tuples(n); //(i, j, k, l);
     VERIFY_IS_EQUAL(v.first, n);
     VERIFY_IS_EQUAL(v.second, tensor(n));
   }
 }
 
 template <int DataLayout>
-static void test_argmax_pair_reducer()
+static void test_argmax_tuple_reducer()
 {
   Tensor<float, 4, DataLayout> tensor(2,3,5,7);
   tensor.setRandom();
   tensor = (tensor + tensor.constant(0.5)).log();
 
-  Tensor<Pair<DenseIndex, float>, 4, DataLayout> index_pairs(2,3,5,7);
-  index_pairs = tensor.index_pairs();
+  Tensor<Tuple<DenseIndex, float>, 4, DataLayout> index_tuples(2,3,5,7);
+  index_tuples = tensor.index_tuples();
 
-  Tensor<Pair<DenseIndex, float>, 0, DataLayout> reduced;
+  Tensor<Tuple<DenseIndex, float>, 0, DataLayout> reduced;
   DimensionList<DenseIndex, 4> dims;
-  reduced = index_pairs.reduce(
-      dims, internal::ArgMaxPairReducer<Pair<DenseIndex, float> >());
+  reduced = index_tuples.reduce(
+      dims, internal::ArgMaxTupleReducer<Tuple<DenseIndex, float> >());
 
   Tensor<float, 0, DataLayout> maxi = tensor.maximum();
 
@@ -72,9 +72,9 @@ static void test_argmax_pair_reducer()
 
   array<DenseIndex, 3> reduce_dims;
   for (int d = 0; d < 3; ++d) reduce_dims[d] = d;
-  Tensor<Pair<DenseIndex, float>, 1, DataLayout> reduced_by_dims(7);
-  reduced_by_dims = index_pairs.reduce(
-      reduce_dims, internal::ArgMaxPairReducer<Pair<DenseIndex, float> >());
+  Tensor<Tuple<DenseIndex, float>, 1, DataLayout> reduced_by_dims(7);
+  reduced_by_dims = index_tuples.reduce(
+      reduce_dims, internal::ArgMaxTupleReducer<Tuple<DenseIndex, float> >());
 
   Tensor<float, 1, DataLayout> max_by_dims = tensor.maximum(reduce_dims);
 
@@ -84,19 +84,19 @@ static void test_argmax_pair_reducer()
 }
 
 template <int DataLayout>
-static void test_argmin_pair_reducer()
+static void test_argmin_tuple_reducer()
 {
   Tensor<float, 4, DataLayout> tensor(2,3,5,7);
   tensor.setRandom();
   tensor = (tensor + tensor.constant(0.5)).log();
 
-  Tensor<Pair<DenseIndex, float>, 4, DataLayout> index_pairs(2,3,5,7);
-  index_pairs = tensor.index_pairs();
+  Tensor<Tuple<DenseIndex, float>, 4, DataLayout> index_tuples(2,3,5,7);
+  index_tuples = tensor.index_tuples();
 
-  Tensor<Pair<DenseIndex, float>, 0, DataLayout> reduced;
+  Tensor<Tuple<DenseIndex, float>, 0, DataLayout> reduced;
   DimensionList<DenseIndex, 4> dims;
-  reduced = index_pairs.reduce(
-      dims, internal::ArgMinPairReducer<Pair<DenseIndex, float> >());
+  reduced = index_tuples.reduce(
+      dims, internal::ArgMinTupleReducer<Tuple<DenseIndex, float> >());
 
   Tensor<float, 0, DataLayout> mini = tensor.minimum();
 
@@ -104,9 +104,9 @@ static void test_argmin_pair_reducer()
 
   array<DenseIndex, 3> reduce_dims;
   for (int d = 0; d < 3; ++d) reduce_dims[d] = d;
-  Tensor<Pair<DenseIndex, float>, 1, DataLayout> reduced_by_dims(7);
-  reduced_by_dims = index_pairs.reduce(
-      reduce_dims, internal::ArgMinPairReducer<Pair<DenseIndex, float> >());
+  Tensor<Tuple<DenseIndex, float>, 1, DataLayout> reduced_by_dims(7);
+  reduced_by_dims = index_tuples.reduce(
+      reduce_dims, internal::ArgMinTupleReducer<Tuple<DenseIndex, float> >());
 
   Tensor<float, 1, DataLayout> min_by_dims = tensor.minimum(reduce_dims);
 
@@ -275,14 +275,14 @@ static void test_argmin_dim()
 
 EIGEN_DECLARE_TEST(cxx11_tensor_argmax)
 {
-  CALL_SUBTEST(test_simple_index_pairs<RowMajor>());
-  CALL_SUBTEST(test_simple_index_pairs<ColMajor>());
-  CALL_SUBTEST(test_index_pairs_dim<RowMajor>());
-  CALL_SUBTEST(test_index_pairs_dim<ColMajor>());
-  CALL_SUBTEST(test_argmax_pair_reducer<RowMajor>());
-  CALL_SUBTEST(test_argmax_pair_reducer<ColMajor>());
-  CALL_SUBTEST(test_argmin_pair_reducer<RowMajor>());
-  CALL_SUBTEST(test_argmin_pair_reducer<ColMajor>());
+  CALL_SUBTEST(test_simple_index_tuples<RowMajor>());
+  CALL_SUBTEST(test_simple_index_tuples<ColMajor>());
+  CALL_SUBTEST(test_index_tuples_dim<RowMajor>());
+  CALL_SUBTEST(test_index_tuples_dim<ColMajor>());
+  CALL_SUBTEST(test_argmax_tuple_reducer<RowMajor>());
+  CALL_SUBTEST(test_argmax_tuple_reducer<ColMajor>());
+  CALL_SUBTEST(test_argmin_tuple_reducer<RowMajor>());
+  CALL_SUBTEST(test_argmin_tuple_reducer<ColMajor>());
   CALL_SUBTEST(test_simple_argmax<RowMajor>());
   CALL_SUBTEST(test_simple_argmax<ColMajor>());
   CALL_SUBTEST(test_simple_argmin<RowMajor>());

@@ -10,9 +10,8 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_INDEX_LIST_H
 #define EIGEN_CXX11_TENSOR_TENSOR_INDEX_LIST_H
 
-#include "./InternalHeaderCheck.h"
 
-#if EIGEN_HAS_CONSTEXPR
+#if EIGEN_HAS_CONSTEXPR && EIGEN_HAS_VARIADIC_TEMPLATES
 
 #define EIGEN_HAS_INDEX_LIST
 
@@ -380,10 +379,10 @@ template<typename FirstType, typename... OtherTypes> struct array_size<const Ind
 };
 
 template<typename FirstType, typename... OtherTypes> struct array_size<IndexPairList<FirstType, OtherTypes...> > {
-  static const size_t value = 1 + sizeof...(OtherTypes);
+  static const size_t value = std::tuple_size<std::tuple<FirstType, OtherTypes...> >::value;
 };
 template<typename FirstType, typename... OtherTypes> struct array_size<const IndexPairList<FirstType, OtherTypes...> > {
-  static const size_t value = 1 + sizeof...(OtherTypes);
+  static const size_t value = std::tuple_size<std::tuple<FirstType, OtherTypes...> >::value;
 };
 
 template<Index N, typename FirstType, typename... OtherTypes> EIGEN_DEVICE_FUNC constexpr Index array_get(IndexList<FirstType, OtherTypes...>& a) {

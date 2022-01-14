@@ -33,8 +33,6 @@
 
 #include "../../../../Eigen/Core"
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {
@@ -165,7 +163,7 @@ void constrained_cg(const TMatrix& A, const CMatrix& C, VectorX& x,
     p = z + gamma*p;
 
     ++iter;
-    // one dimensional optimization
+    // one dimensionnal optimization
     q = A * p;
     lambda = rho / q.dot(p);
     for (Index i = 0; i < C.rows(); ++i)

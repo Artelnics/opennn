@@ -29,7 +29,7 @@ void check_kronecker_product(const MatrixType& ab)
 {
   VERIFY_IS_EQUAL(ab.rows(), 6);
   VERIFY_IS_EQUAL(ab.cols(), 6);
-  VERIFY_IS_EQUAL(ab.size(),  36);
+  VERIFY_IS_EQUAL(ab.nonZeros(),  36);
   VERIFY_IS_APPROX(ab.coeff(0,0), -0.4017367630386106);
   VERIFY_IS_APPROX(ab.coeff(0,1),  0.1056863433932735);
   VERIFY_IS_APPROX(ab.coeff(0,2), -0.7255206194554212);

@@ -11,8 +11,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_RANDOM_H
 #define EIGEN_CXX11_TENSOR_TENSOR_RANDOM_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
 
@@ -133,7 +131,7 @@ template <typename T> class UniformRandomGenerator {
     m_state = PCG_XSH_RS_state(seed);
     #ifdef EIGEN_USE_SYCL
     // In SYCL it is not possible to build PCG_XSH_RS_state in one step.
-    // Therefore, we need two steps to initializate the m_state.
+    // Therefor, we need two step to initializate the m_state.
     // IN SYCL, the constructor of the functor is s called on the CPU
     // and we get the clock seed here from the CPU. However, This seed is
     //the same for all the thread. As unlike CUDA, the thread.ID, BlockID, etc is not a global function.
@@ -142,7 +140,7 @@ template <typename T> class UniformRandomGenerator {
     // but for SYCL ((CLOCK * 6364136223846793005ULL) + 0xda3e39cb94b95bdbULL) is passed to each thread and each thread adds
     // the  (global_thread_id* 6364136223846793005ULL) for itself only once, in order to complete the construction
     // similar to CUDA Therefore, the thread Id injection is not available at this stage.
-    //However when the operator() is called the thread ID will be available. So inside the opeator,
+    //However when the operator() is called the thread ID will be avilable. So inside the opeator,
     // we add the thrreadID, BlockId,... (which is equivalent of i)
     //to the seed and construct the unique m_state per thead similar to cuda.
     m_exec_once =false;
@@ -246,13 +244,13 @@ template <typename T> class NormalRandomGenerator {
     m_state = PCG_XSH_RS_state(seed);
     #ifdef EIGEN_USE_SYCL
     // In SYCL it is not possible to build PCG_XSH_RS_state in one step.
-    // Therefore, we need two steps to initializate the m_state.
+    // Therefor, we need two steps to initializate the m_state.
     // IN SYCL, the constructor of the functor is s called on the CPU
     // and we get the clock seed here from the CPU. However, This seed is
     //the same for all the thread. As unlike CUDA, the thread.ID, BlockID, etc is not a global function.
     // and only  available on the Operator() function (which is called on the GPU).
     // Therefore, the thread Id injection is not available at this stage. However when the operator()
-    //is called the thread ID will be available. So inside the operator,
+    //is called the thread ID will be avilable. So inside the opeator,
     // we add the thrreadID, BlockId,... (which is equivalent of i)
     //to the seed and construct the unique m_state per thead similar to cuda.
     m_exec_once =false;

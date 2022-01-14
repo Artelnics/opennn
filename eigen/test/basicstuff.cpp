@@ -7,19 +7,10 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#define EIGEN_NO_STATIC_ASSERT
+
 #include "main.h"
 #include "random_without_cast_overflow.h"
-
-template <typename MatrixType>
-typename internal::enable_if<(MatrixType::RowsAtCompileTime==1 || MatrixType::ColsAtCompileTime==1),void>::type
-check_index(const MatrixType& m) {
-  VERIFY_RAISES_ASSERT(m[0]);
-  VERIFY_RAISES_ASSERT((m+m)[0]);
-}
-
-template <typename MatrixType>
-typename internal::enable_if<!(MatrixType::RowsAtCompileTime==1 || MatrixType::ColsAtCompileTime==1),void>::type
-check_index(const MatrixType& /*unused*/) {}
 
 template<typename MatrixType> void basicStuff(const MatrixType& m)
 {
@@ -69,8 +60,10 @@ template<typename MatrixType> void basicStuff(const MatrixType& m)
   x = v1(static_cast<unsigned int>(r1));
   x = v1(static_cast<signed long>(r1));
   x = v1(static_cast<unsigned long>(r1));
+#if EIGEN_HAS_CXX11
   x = v1(static_cast<long long int>(r1));
   x = v1(static_cast<unsigned long long int>(r1));
+#endif
 
   VERIFY_IS_APPROX(               v1,    v1);
   VERIFY_IS_NOT_APPROX(           v1,    2*v1);
@@ -108,7 +101,8 @@ template<typename MatrixType> void basicStuff(const MatrixType& m)
 
   if(cols!=1 && rows!=1)
   {
-    check_index(m1);
+    VERIFY_RAISES_ASSERT(m1[0]);
+    VERIFY_RAISES_ASSERT((m1+m1)[0]);
   }
 
   VERIFY_IS_APPROX(m3 = m1,m1);
@@ -229,8 +223,10 @@ struct casting_test_runner {
     casting_test<SrcScalar, uint16_t>::run();
     casting_test<SrcScalar, int32_t>::run();
     casting_test<SrcScalar, uint32_t>::run();
+#if EIGEN_HAS_CXX11
     casting_test<SrcScalar, int64_t>::run();
     casting_test<SrcScalar, uint64_t>::run();
+#endif
     casting_test<SrcScalar, half>::run();
     casting_test<SrcScalar, bfloat16>::run();
     casting_test<SrcScalar, float>::run();
@@ -260,8 +256,10 @@ void casting_all() {
   casting_test_runner<uint16_t>::run();
   casting_test_runner<int32_t>::run();
   casting_test_runner<uint32_t>::run();
+#if EIGEN_HAS_CXX11
   casting_test_runner<int64_t>::run();
   casting_test_runner<uint64_t>::run();
+#endif
   casting_test_runner<half>::run();
   casting_test_runner<bfloat16>::run();
   casting_test_runner<float>::run();

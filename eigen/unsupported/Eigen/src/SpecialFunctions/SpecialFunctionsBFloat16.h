@@ -8,8 +8,6 @@
 #ifndef EIGEN_SPECIALFUNCTIONS_BFLOAT16_H
 #define EIGEN_SPECIALFUNCTIONS_BFLOAT16_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace numext {
 

@@ -1,7 +1,7 @@
 // This file is part of Eigen, a lightweight C++ template library
 // for linear algebra.
 //
-// Copyright (C) 2013 Gael Guennebaud <gael.guennebaud@inria.fr>
+// Copyright (C) 20013 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
@@ -21,7 +21,7 @@
 // Deal with i387 extended precision
 #if EIGEN_ARCH_i386 && !(EIGEN_ARCH_x86_64)
 
-#if EIGEN_COMP_GNUC_STRICT
+#if EIGEN_COMP_GNUC_STRICT && EIGEN_GNUC_AT_LEAST(4,4)
 #pragma GCC optimize ("-ffloat-store")
 #else
 #undef VERIFY_IS_EQUAL
@@ -106,6 +106,9 @@ template<typename VectorType> void ref_vector(const VectorType& m)
   { RefMat    rm0 = v1.block(0,0,size,1); VERIFY_IS_EQUAL(rm0, v1); }
   { RefDynMat rv1 = v1;                   VERIFY_IS_EQUAL(rv1, v1); }
   { RefDynMat rv1 = v1.block(0,0,size,1); VERIFY_IS_EQUAL(rv1, v1); }
+  { VERIFY_RAISES_ASSERT( RefMat    rm0 = v1.block(0, 0, size, 0); EIGEN_UNUSED_VARIABLE(rm0); ); }
+  if(VectorType::SizeAtCompileTime!=1)
+  { VERIFY_RAISES_ASSERT( RefDynMat rv1 = v1.block(0, 0, size, 0); EIGEN_UNUSED_VARIABLE(rv1); ); }
 
   RefDynMat rv2 = v1.segment(i,bsize);
   VERIFY_IS_EQUAL(rv2, v1.segment(i,bsize));
@@ -317,6 +320,17 @@ void test_ref_overloads()
   test_ref_ambiguous(A, B);
 }
 
+void test_ref_fixed_size_assert()
+{
+  Vector4f v4 = Vector4f::Random();
+  VectorXf vx = VectorXf::Random(10);
+  VERIFY_RAISES_STATIC_ASSERT( Ref<Vector3f> y = v4; (void)y; );
+  VERIFY_RAISES_STATIC_ASSERT( Ref<Vector3f> y = vx.head<4>(); (void)y; );
+  VERIFY_RAISES_STATIC_ASSERT( Ref<const Vector3f> y = v4; (void)y; );
+  VERIFY_RAISES_STATIC_ASSERT( Ref<const Vector3f> y = vx.head<4>(); (void)y; );
+  VERIFY_RAISES_STATIC_ASSERT( Ref<const Vector3f> y = 2*v4; (void)y; );
+}
+
 EIGEN_DECLARE_TEST(ref)
 {
   for(int i = 0; i < g_repeat; i++) {
@@ -342,4 +356,5 @@ EIGEN_DECLARE_TEST(ref)
   }
   
   CALL_SUBTEST_7( test_ref_overloads() );
+  CALL_SUBTEST_7( test_ref_fixed_size_assert() );
 }

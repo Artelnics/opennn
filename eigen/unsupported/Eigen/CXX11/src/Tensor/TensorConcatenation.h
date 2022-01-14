@@ -10,8 +10,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_CONCATENATION_H
 #define EIGEN_CXX11_TENSOR_TENSOR_CONCATENATION_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \class TensorConcatenationOp
@@ -34,8 +32,8 @@ struct traits<TensorConcatenationOp<Axis, LhsXprType, RhsXprType> >
                                       typename traits<RhsXprType>::Index>::type Index;
   typedef typename LhsXprType::Nested LhsNested;
   typedef typename RhsXprType::Nested RhsNested;
-  typedef typename remove_reference<LhsNested>::type LhsNested_;
-  typedef typename remove_reference<RhsNested>::type RhsNested_;
+  typedef typename remove_reference<LhsNested>::type _LhsNested;
+  typedef typename remove_reference<RhsNested>::type _RhsNested;
   static const int NumDimensions = traits<LhsXprType>::NumDimensions;
   static const int Layout = traits<LhsXprType>::Layout;
   enum { Flags = 0 };

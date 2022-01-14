@@ -114,7 +114,7 @@ template<typename Scalar,typename Packet> void packetmath_real()
                   Scalar(std::pow(Scalar(10), internal::random<Scalar>(Scalar(-1),Scalar(2))));
   }
 
-#if EIGEN_HAS_C99_MATH
+#if EIGEN_HAS_C99_MATH && (EIGEN_COMP_CXXVER >= 11)
   CHECK_CWISE1_IF(internal::packet_traits<Scalar>::HasLGamma, std::lgamma, internal::plgamma);
   CHECK_CWISE1_IF(internal::packet_traits<Scalar>::HasErf, std::erf, internal::perf);
   CHECK_CWISE1_IF(internal::packet_traits<Scalar>::HasErfc, std::erfc, internal::perfc);

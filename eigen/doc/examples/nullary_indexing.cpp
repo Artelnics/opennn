@@ -1,6 +1,8 @@
 #include <Eigen/Core>
 #include <iostream>
 
+using namespace Eigen;
+
 // [functor]
 template<class ArgType, class RowIndexType, class ColIndexType>
 class indexing_functor {
@@ -8,10 +10,10 @@ class indexing_functor {
   const RowIndexType &m_rowIndices;
   const ColIndexType &m_colIndices;
 public:
-  typedef Eigen::Matrix<typename ArgType::Scalar,
+  typedef Matrix<typename ArgType::Scalar,
                  RowIndexType::SizeAtCompileTime,
                  ColIndexType::SizeAtCompileTime,
-                 ArgType::Flags&Eigen::RowMajorBit?Eigen::RowMajor:Eigen::ColMajor,
+                 ArgType::Flags&RowMajorBit?RowMajor:ColMajor,
                  RowIndexType::MaxSizeAtCompileTime,
                  ColIndexType::MaxSizeAtCompileTime> MatrixType;
 
@@ -19,7 +21,7 @@ public:
     : m_arg(arg), m_rowIndices(row_indices), m_colIndices(col_indices)
   {}
 
-  const typename ArgType::Scalar& operator() (Eigen::Index row, Eigen::Index col) const {
+  const typename ArgType::Scalar& operator() (Index row, Index col) const {
     return m_arg(m_rowIndices[row], m_colIndices[col]);
   }
 };
@@ -27,7 +29,7 @@ public:
 
 // [function]
 template <class ArgType, class RowIndexType, class ColIndexType>
-Eigen::CwiseNullaryOp<indexing_functor<ArgType,RowIndexType,ColIndexType>, typename indexing_functor<ArgType,RowIndexType,ColIndexType>::MatrixType>
+CwiseNullaryOp<indexing_functor<ArgType,RowIndexType,ColIndexType>, typename indexing_functor<ArgType,RowIndexType,ColIndexType>::MatrixType>
 mat_indexing(const Eigen::MatrixBase<ArgType>& arg, const RowIndexType& row_indices, const ColIndexType& col_indices)
 {
   typedef indexing_functor<ArgType,RowIndexType,ColIndexType> Func;
@@ -41,8 +43,8 @@ int main()
 {
   std::cout << "[main1]\n";
   Eigen::MatrixXi A = Eigen::MatrixXi::Random(4,4);
-  Eigen::Array3i ri(1,2,1);
-  Eigen::ArrayXi ci(6); ci << 3,2,1,0,0,2;
+  Array3i ri(1,2,1);
+  ArrayXi ci(6); ci << 3,2,1,0,0,2;
   Eigen::MatrixXi B = mat_indexing(A, ri, ci);
   std::cout << "A =" << std::endl;
   std::cout << A << std::endl << std::endl;
@@ -54,9 +56,11 @@ int main()
   B =  mat_indexing(A, ri+1, ci);
   std::cout << "A(ri+1,ci) =" << std::endl;
   std::cout << B << std::endl << std::endl;
-  B =  mat_indexing(A, Eigen::ArrayXi::LinSpaced(13,0,12).unaryExpr([](int x){return x%4;}), Eigen::ArrayXi::LinSpaced(4,0,3));
+#if EIGEN_COMP_CXXVER >= 11
+  B =  mat_indexing(A, ArrayXi::LinSpaced(13,0,12).unaryExpr([](int x){return x%4;}), ArrayXi::LinSpaced(4,0,3));
   std::cout << "A(ArrayXi::LinSpaced(13,0,12).unaryExpr([](int x){return x%4;}), ArrayXi::LinSpaced(4,0,3)) =" << std::endl;
   std::cout << B << std::endl << std::endl;
+#endif
   std::cout << "[main2]\n";
 }
 

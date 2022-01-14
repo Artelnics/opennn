@@ -11,8 +11,6 @@
 #ifndef EIGEN_DIAGONALPRODUCT_H
 #define EIGEN_DIAGONALPRODUCT_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 /** \returns the diagonal matrix product of \c *this by the diagonal matrix \a diagonal.

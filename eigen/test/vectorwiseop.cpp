@@ -9,6 +9,7 @@
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #define TEST_ENABLE_TEMPORARY_TRACKING
+#define EIGEN_NO_STATIC_ASSERT
 
 #include "main.h"
 
@@ -31,48 +32,76 @@ template<typename ArrayType> void vectorwiseop_array(const ArrayType& m)
   RowVectorType rowvec = RowVectorType::Random(cols);
 
   // test addition
+
   m2 = m1;
   m2.colwise() += colvec;
   VERIFY_IS_APPROX(m2, m1.colwise() + colvec);
   VERIFY_IS_APPROX(m2.col(c), m1.col(c) + colvec);
+
+  VERIFY_RAISES_ASSERT(m2.colwise() += colvec.transpose());
+  VERIFY_RAISES_ASSERT(m1.colwise() + colvec.transpose());
 
   m2 = m1;
   m2.rowwise() += rowvec;
   VERIFY_IS_APPROX(m2, m1.rowwise() + rowvec);
   VERIFY_IS_APPROX(m2.row(r), m1.row(r) + rowvec);
 
-  // test subtraction
+  VERIFY_RAISES_ASSERT(m2.rowwise() += rowvec.transpose());
+  VERIFY_RAISES_ASSERT(m1.rowwise() + rowvec.transpose());
+
+  // test substraction
+
   m2 = m1;
   m2.colwise() -= colvec;
   VERIFY_IS_APPROX(m2, m1.colwise() - colvec);
   VERIFY_IS_APPROX(m2.col(c), m1.col(c) - colvec);
+
+  VERIFY_RAISES_ASSERT(m2.colwise() -= colvec.transpose());
+  VERIFY_RAISES_ASSERT(m1.colwise() - colvec.transpose());
 
   m2 = m1;
   m2.rowwise() -= rowvec;
   VERIFY_IS_APPROX(m2, m1.rowwise() - rowvec);
   VERIFY_IS_APPROX(m2.row(r), m1.row(r) - rowvec);
 
+  VERIFY_RAISES_ASSERT(m2.rowwise() -= rowvec.transpose());
+  VERIFY_RAISES_ASSERT(m1.rowwise() - rowvec.transpose());
+
   // test multiplication
+
   m2 = m1;
   m2.colwise() *= colvec;
   VERIFY_IS_APPROX(m2, m1.colwise() * colvec);
   VERIFY_IS_APPROX(m2.col(c), m1.col(c) * colvec);
+
+  VERIFY_RAISES_ASSERT(m2.colwise() *= colvec.transpose());
+  VERIFY_RAISES_ASSERT(m1.colwise() * colvec.transpose());
 
   m2 = m1;
   m2.rowwise() *= rowvec;
   VERIFY_IS_APPROX(m2, m1.rowwise() * rowvec);
   VERIFY_IS_APPROX(m2.row(r), m1.row(r) * rowvec);
 
+  VERIFY_RAISES_ASSERT(m2.rowwise() *= rowvec.transpose());
+  VERIFY_RAISES_ASSERT(m1.rowwise() * rowvec.transpose());
+
   // test quotient
+
   m2 = m1;
   m2.colwise() /= colvec;
   VERIFY_IS_APPROX(m2, m1.colwise() / colvec);
   VERIFY_IS_APPROX(m2.col(c), m1.col(c) / colvec);
 
+  VERIFY_RAISES_ASSERT(m2.colwise() /= colvec.transpose());
+  VERIFY_RAISES_ASSERT(m1.colwise() / colvec.transpose());
+
   m2 = m1;
   m2.rowwise() /= rowvec;
   VERIFY_IS_APPROX(m2, m1.rowwise() / rowvec);
   VERIFY_IS_APPROX(m2.row(r), m1.row(r) / rowvec);
+
+  VERIFY_RAISES_ASSERT(m2.rowwise() /= rowvec.transpose());
+  VERIFY_RAISES_ASSERT(m1.rowwise() / rowvec.transpose());
 
   m2 = m1;
   // yes, there might be an aliasing issue there but ".rowwise() /="
@@ -129,30 +158,58 @@ template<typename MatrixType> void vectorwiseop_matrix(const MatrixType& m)
   m2.rowwise() = rowvec;
   for(Index i=0; i<rows; ++i)
     VERIFY_IS_APPROX(m2.row(i), rowvec);
+  if(rows>1)
+    VERIFY_RAISES_ASSERT(m2.colwise() = colvec.transpose());
+  if(cols>1)
+    VERIFY_RAISES_ASSERT(m2.rowwise() = rowvec.transpose());
 
   // test addition
+
   m2 = m1;
   m2.colwise() += colvec;
   VERIFY_IS_APPROX(m2, m1.colwise() + colvec);
   VERIFY_IS_APPROX(m2.col(c), m1.col(c) + colvec);
+
+  if(rows>1)
+  {
+    VERIFY_RAISES_ASSERT(m2.colwise() += colvec.transpose());
+    VERIFY_RAISES_ASSERT(m1.colwise() + colvec.transpose());
+  }
 
   m2 = m1;
   m2.rowwise() += rowvec;
   VERIFY_IS_APPROX(m2, m1.rowwise() + rowvec);
   VERIFY_IS_APPROX(m2.row(r), m1.row(r) + rowvec);
 
+  if(cols>1)
+  {
+    VERIFY_RAISES_ASSERT(m2.rowwise() += rowvec.transpose());
+    VERIFY_RAISES_ASSERT(m1.rowwise() + rowvec.transpose());
+  }
 
-  // test subtraction
+  // test substraction
+
   m2 = m1;
   m2.colwise() -= colvec;
   VERIFY_IS_APPROX(m2, m1.colwise() - colvec);
   VERIFY_IS_APPROX(m2.col(c), m1.col(c) - colvec);
+
+  if(rows>1)
+  {
+    VERIFY_RAISES_ASSERT(m2.colwise() -= colvec.transpose());
+    VERIFY_RAISES_ASSERT(m1.colwise() - colvec.transpose());
+  }
 
   m2 = m1;
   m2.rowwise() -= rowvec;
   VERIFY_IS_APPROX(m2, m1.rowwise() - rowvec);
   VERIFY_IS_APPROX(m2.row(r), m1.row(r) - rowvec);
 
+  if(cols>1)
+  {
+    VERIFY_RAISES_ASSERT(m2.rowwise() -= rowvec.transpose());
+    VERIFY_RAISES_ASSERT(m1.rowwise() - rowvec.transpose());
+  }
 
   // ------ partial reductions ------
 
@@ -215,8 +272,11 @@ template<typename MatrixType> void vectorwiseop_matrix(const MatrixType& m)
   VERIFY_IS_APPROX(m1.matrix().middleRows(0,0).colwise().prod().eval(), MatrixX::Ones(1,cols));
   VERIFY_IS_APPROX(m1.matrix().middleCols(0,fix<0>).rowwise().prod().eval(), MatrixX::Ones(rows,1));
   VERIFY_IS_APPROX(m1.matrix().middleRows(0,fix<0>).colwise().prod().eval(), MatrixX::Ones(1,cols));
+  
   VERIFY_IS_APPROX(m1.matrix().middleCols(0,0).rowwise().squaredNorm().eval(), MatrixX::Zero(rows,1));
 
+  VERIFY_RAISES_ASSERT(m1.real().middleCols(0,0).rowwise().minCoeff().eval());
+  VERIFY_RAISES_ASSERT(m1.real().middleRows(0,0).colwise().maxCoeff().eval());
   VERIFY_IS_EQUAL(m1.real().middleRows(0,0).rowwise().maxCoeff().eval().rows(),0);
   VERIFY_IS_EQUAL(m1.real().middleCols(0,0).colwise().maxCoeff().eval().cols(),0);
   VERIFY_IS_EQUAL(m1.real().middleRows(0,fix<0>).rowwise().maxCoeff().eval().rows(),0);

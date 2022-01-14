@@ -12,8 +12,6 @@
 #ifndef EIGEN_REVERSE_H
 #define EIGEN_REVERSE_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -26,13 +24,13 @@ struct traits<Reverse<MatrixType, Direction> >
   typedef typename traits<MatrixType>::StorageKind StorageKind;
   typedef typename traits<MatrixType>::XprKind XprKind;
   typedef typename ref_selector<MatrixType>::type MatrixTypeNested;
-  typedef typename remove_reference<MatrixTypeNested>::type MatrixTypeNested_;
+  typedef typename remove_reference<MatrixTypeNested>::type _MatrixTypeNested;
   enum {
     RowsAtCompileTime = MatrixType::RowsAtCompileTime,
     ColsAtCompileTime = MatrixType::ColsAtCompileTime,
     MaxRowsAtCompileTime = MatrixType::MaxRowsAtCompileTime,
     MaxColsAtCompileTime = MatrixType::MaxColsAtCompileTime,
-    Flags = MatrixTypeNested_::Flags & (RowMajorBit | LvalueBit)
+    Flags = _MatrixTypeNested::Flags & (RowMajorBit | LvalueBit)
   };
 };
 
