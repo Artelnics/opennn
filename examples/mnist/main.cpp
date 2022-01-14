@@ -47,29 +47,57 @@ int main()
 
         // Data set
 
-        DataSet data_set;//("../data/mnist_train.csv", ',', true);
-
-        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
-
-
+        DataSet data_set;
+        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/mini_data/");
 
         data_set.read_bmp();
-        data_set.save("C:/Users/Artelnics/Desktop/mnist/data_set_1.xml");
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
+        data_set.set_training();
+
+        const Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
+
+        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+        const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+
+        const Index batch_size = 3;
+
+        DataSetBatch data_set_batch(batch_size, &data_set);
+
+        const Tensor<Index, 2> batches = data_set.get_batches(samples_indices, batch_size, true);
+
+        data_set_batch.fill(batches.chip(0, 0), input_variables_indices, target_variables_indices);
+
+        data_set_batch.print();
+
         // Neural network
 
-        const Index hidden_neurons_number = 3;
+        NeuralNetwork neural_network;
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
+        FlattenLayer flatten_layer;
+
+        neural_network.add_layer(&flatten_layer);
+
+        ProbabilisticLayer probabilistic_layer(input_variables_number, target_variables_number);
+
+        neural_network.add_layer(&probabilistic_layer);
+
+        NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, &neural_network);
+
+        neural_network.forward_propagate(data_set_batch, neural_network_forward_propagation);
+
+
+/*
+        //NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
+        //TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.perform_training();
 
         /*

@@ -48,14 +48,14 @@ public:
 
     explicit FlattenLayer();
 
-    explicit FlattenLayer(const Index&);
+    //explicit FlattenLayer(const Index&);
 
     // Get methods
+
     Index get_inputs_batch() const;
     Index get_inputs_channels_number() const;
     Index get_inputs_width() const;
     Index get_inputs_height() const;
-
 
     Tensor<Index, 1> get_outputs_dimensions() const;
 
@@ -70,7 +70,7 @@ public:
     void set(const Tensor<Index, 1>&);
     void set(const tinyxml2::XMLDocument&);
 
-    void set_inputs_number(const Index&);
+    void set_inputs_number(const Index&) {}
 
     void set_default();
 
@@ -86,9 +86,9 @@ public:
 
     // Outputs
 
-    Tensor<type, 2> calculate_outputs_2d(const Tensor<type, 4>&);
+    void calculate_outputs_2d(const Tensor<type, 4>&, Tensor<type, 2>&);
 
-    void forward_propagate(const Tensor<type, 2>&, LayerForwardPropagation*);
+    void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*) final;
 
 
 protected:
@@ -98,42 +98,45 @@ protected:
     /// Display warning messages to screen.
 
     bool display = true;
-
-    struct FlattenLayerForwardPropagation : LayerForwardPropagation
-    {
-       // Default constructor
-
-       explicit FlattenLayerForwardPropagation()
-           : LayerForwardPropagation()
-       {
-       }
-
-       // Constructor
-
-       explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-           : LayerForwardPropagation()
-       {
-           set(new_batch_samples_number, new_layer_pointer);
-       }
-
-       void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-       {
-           layer_pointer = new_layer_pointer;
-
-           const Index outputs_rows_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_rows_number();
-           const Index outputs_columns_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_columns_number();
-
-           batch_samples_number = new_batch_samples_number;
-
-           outputs.resize(outputs_rows_number, outputs_columns_number);
-       }
-
-       Tensor<type, 2> outputs;
-
-    };
-
 };
 
+
+struct FlattenLayerForwardPropagation : LayerForwardPropagation
+{
+   // Default constructor
+
+   explicit FlattenLayerForwardPropagation() : LayerForwardPropagation()
+   {
+   }
+
+   // Constructor
+
+   explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+       : LayerForwardPropagation()
+   {
+       set(new_batch_samples_number, new_layer_pointer);
+   }
+
+   void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+   {
+       layer_pointer = new_layer_pointer;
+
+       const Index outputs_rows_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_rows_number();
+       const Index outputs_columns_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_columns_number();
+
+       batch_samples_number = new_batch_samples_number;
+
+       outputs.resize(outputs_rows_number, outputs_columns_number);
+   }
+
+   void print() const
+   {
+
+   }
+
+   Tensor<type, 2> outputs;
+
+};
 }
 
 #endif

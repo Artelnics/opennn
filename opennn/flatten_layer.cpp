@@ -17,7 +17,9 @@ namespace opennn
 
 FlattenLayer::FlattenLayer() : Layer()
 {
-    set();
+    //set();
+
+    layer_type = Type::Flatten;
 }
 
 
@@ -115,7 +117,7 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 /// @param inputs 4d tensor(batch, channels, width, height)
 /// @return result 2d tensor(batch, number of pixels)
 
-Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs)
+void FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs, Tensor<type, 2>& outputs)
 {
     const Index batch = inputs.dimension(0);
     const Index channels = inputs.dimension(1);
@@ -123,13 +125,13 @@ Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs
     const Index heights = inputs.dimension(3);
 
     Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
-    Tensor<type, 2> result2d = inputs.reshape(new_dims);
-
-    return result2d;
+    outputs = inputs.reshape(new_dims);
 }
 
-void FlattenLayer::forward_propagate(const Tensor<type, 2> &inputs, LayerForwardPropagation* forward_propagation)
+
+void FlattenLayer::forward_propagate(const Tensor<type, 4>& inputs, LayerForwardPropagation* forward_propagation)
 {
+    cout << "Hello flatten layer!" << endl;
 
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
@@ -159,10 +161,15 @@ void FlattenLayer::forward_propagate(const Tensor<type, 2> &inputs, LayerForward
     }
 
 #endif
-    calculate_outputs_2d(inputs);
 
+    const Index batch = inputs.dimension(0);
+    const Index channels = inputs.dimension(1);
+    const Index width = inputs.dimension(2);
+    const Index heights = inputs.dimension(3);
 
-    cout<<flatten_layer_forward_propagation->outputs<<endl;
+    const Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
+
+    flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
 }
 
 }

@@ -106,6 +106,7 @@ public:
    ScalingLayer* get_scaling_layer_pointer() const;
    UnscalingLayer* get_unscaling_layer_pointer() const;
    BoundingLayer* get_bounding_layer_pointer() const;
+   FlattenLayer* get_flatten_layer_pointer() const;
    ProbabilisticLayer* get_probabilistic_layer_pointer() const;
    LongShortTermMemoryLayer* get_long_short_term_memory_layer_pointer() const;
    RecurrentLayer* get_recurrent_layer_pointer() const;
@@ -259,6 +260,7 @@ protected:
 
 };
 
+
 struct NeuralNetworkForwardPropagation
 {
     /// Default constructor.
@@ -322,11 +324,11 @@ struct NeuralNetworkForwardPropagation
             }
             break;
 
-//            case Layer::Type::Flatten:
-//            {
-//                layers(i) = new FlattenLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
-//            }
-//            break;
+            case Layer::Type::Flatten:
+            {
+                layers(i) = new FlattenLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+            }
+            break;
 
             default: break;
             }
@@ -411,6 +413,13 @@ struct NeuralNetworkBackPropagation
                 layers(i) = new ConvolutionalLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
             }
             break;
+
+// 0
+            case Layer::Type::Flatten:
+//            {
+//                layers(i) = new FlattenLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+//            }
+//            break;
 
             default: break;
             }
