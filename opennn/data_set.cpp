@@ -11223,10 +11223,8 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
 
-        cout<< "Channels number: " << channels_number <<endl;
+  //      inputs_4d.setConstant(3.1416);
 
-        inputs_4d.setConstant(3.1416);
-/*
         Index index = 0;
 
         for(Index image = 0; image < samples_number; image++)
@@ -11240,13 +11238,13 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                     for(Index column = 0; column < columns_number; column++)
                     {
                         inputs_4d(row, column,channel,image) = data(image, index);
-                        cout<<"------------------------------------------------ " <<endl;
+                        //cout << inputs_4d(row, column,channel,image) <<" ";
                         index++;
                     }
                 }
             }
         }
-*/
+
     }
 
     fill_submatrix(data, samples, targets, targets_2d.data());

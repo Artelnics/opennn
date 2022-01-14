@@ -72,6 +72,7 @@ int main()
 
         data_set_batch.print();
 
+        /*
         // Neural network
 
         NeuralNetwork neural_network;
@@ -87,14 +88,12 @@ int main()
         NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, &neural_network);
 
         neural_network.forward_propagate(data_set_batch, neural_network_forward_propagation);
-
-
 /*
         //NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         // Training strategy
 
-        //TrainingStrategy training_strategy(&neural_network, &data_set);
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
