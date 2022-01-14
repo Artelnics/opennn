@@ -13,8 +13,6 @@
 #ifndef EIGEN_LEVENBERGMARQUARDT__H
 #define EIGEN_LEVENBERGMARQUARDT__H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace LevenbergMarquardtSpace {

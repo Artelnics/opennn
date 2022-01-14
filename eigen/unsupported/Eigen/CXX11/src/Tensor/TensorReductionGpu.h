@@ -10,8 +10,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_GPU_H
 #define EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_GPU_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
 
@@ -100,7 +98,6 @@ __device__ inline void atomicReduce(half2* output, half2 accum, R& reducer) {
     }
   }
 }
-#ifdef EIGEN_GPU_COMPILE_PHASE
 // reduction should be associative since reduction is not atomic in wide vector but atomic in half2 operations
 template <typename R>
 __device__ inline void atomicReduce(Packet4h2* output, Packet4h2 accum, R& reducer) {
@@ -110,7 +107,6 @@ __device__ inline void atomicReduce(Packet4h2* output, Packet4h2 accum, R& reduc
     atomicReduce(houtput+i,*(haccum+i),reducer);
   }
 }
-#endif  // EIGEN_GPU_COMPILE_PHASE
 #endif  // EIGEN_HAS_GPU_FP16
 
 template <>
@@ -217,8 +213,8 @@ __global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void FullReductionKernel(Reducer reducer
 #ifdef EIGEN_HAS_GPU_FP16
 template <typename Self,
           typename Reducer, typename Index>
-__global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void ReductionInitFullReduxKernelHalfFloat(
-    Reducer reducer, const Self input, Index num_coeffs, half* scratch) {
+__global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void ReductionInitFullReduxKernelHalfFloat(Reducer reducer, const Self input, Index num_coeffs,
+                                                      packet_traits<Eigen::half>::type* scratch) {
   eigen_assert(blockDim.x == 1);
   eigen_assert(gridDim.x == 1);
   typedef packet_traits<Eigen::half>::type packet_type;
@@ -228,16 +224,15 @@ __global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void ReductionInitFullReduxKernelHalfFlo
     half2* h2scratch = reinterpret_cast<half2*>(scratch);
     for (Index i = num_coeffs - packet_remainder; i + 2 <= num_coeffs; i += 2) {
       *h2scratch =
-          __halves2half2(input.coeff(i), input.coeff(i + 1));
+          __halves2half2(input.m_impl.coeff(i), input.m_impl.coeff(i + 1));
       h2scratch++;
     }
     if ((num_coeffs & 1) != 0) {
-      half lastCoeff = input.coeff(num_coeffs - 1);
+      half lastCoeff = input.m_impl.coeff(num_coeffs - 1);
       *h2scratch = __halves2half2(lastCoeff, reducer.initialize());
     }
   } else {
-    packet_type reduce = reducer.template initializePacket<packet_type>();
-    internal::pstoreu(scratch, reduce);
+    *scratch = reducer.template initializePacket<packet_type>();
   }
 }
 
@@ -263,9 +258,8 @@ __global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void ReductionInitKernelHalfFloat(Reduce
 
 template <int BlockSize, int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void FullReductionKernelHalfFloat(
-    Reducer reducer, const Self input, Index num_coeffs,
-    half* output, half* scratch) {
+__global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void FullReductionKernelHalfFloat(Reducer reducer, const Self input, Index num_coeffs,
+                                    half* output, packet_traits<Eigen::half>::type* scratch) {
   typedef typename packet_traits<Eigen::half>::type PacketType;
   const int packet_width = unpacket_traits<PacketType>::size;
   eigen_assert(NumPerThread % packet_width == 0);
@@ -279,20 +273,19 @@ __global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void FullReductionKernelHalfFloat(
       int rem = num_coeffs % packet_width;
       if (rem != 0) {
         half2* p_scratch = reinterpret_cast<half2*>(scratch);
-        pstoreu(scratch, reducer.template initializePacket<PacketType>());
+        *scratch = reducer.template initializePacket<PacketType>();
         for (int i = 0; i < rem / 2; i++) {
           *p_scratch = __halves2half2(
-              input.coeff(num_coeffs - packet_width + 2 * i),
-              input.coeff(num_coeffs - packet_width + 2 * i + 1));
+              input.m_impl.coeff(num_coeffs - packet_width + 2 * i),
+              input.m_impl.coeff(num_coeffs - packet_width + 2 * i + 1));
           p_scratch++;
         }
         if ((num_coeffs & 1) != 0) {
-          half last = input.coeff(num_coeffs - 1);
+          half last = input.m_impl.coeff(num_coeffs - 1);
           *p_scratch = __halves2half2(last, reducer.initialize());
         }
       } else {
-        PacketType reduce = reducer.template initializePacket<PacketType>();
-        pstoreu(scratch, reduce);
+        *scratch = reducer.template initializePacket<PacketType>();
       }
     }
     __syncthreads();
@@ -305,7 +298,7 @@ __global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void FullReductionKernelHalfFloat(
   for (Index i = 0; i < max_iter; i += BlockSize) {
     const Index index = first_index + packet_width * i;
     eigen_assert(index + packet_width < num_coeffs);
-    PacketType val = input.template packet<Unaligned>(index);
+    PacketType val = input.m_impl.template packet<Unaligned>(index);
     reducer.reducePacket(val, &accum);
   }
 
@@ -344,7 +337,7 @@ __global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void FullReductionKernelHalfFloat(
   }
 
   if ((threadIdx.x & (warpSize - 1)) == 0) {
-    atomicReduce(reinterpret_cast<PacketType*>(scratch), accum, reducer);
+    atomicReduce(scratch, accum, reducer);
   }
 
   __syncthreads();
@@ -364,21 +357,17 @@ __global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void FullReductionKernelHalfFloat(
 }
 
 template <typename Op>
-__global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void ReductionCleanupKernelHalfFloat(Op reducer, half* output, half* scratch) {
+__global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void ReductionCleanupKernelHalfFloat(Op reducer, half* output, packet_traits<Eigen::half>::type* scratch) {
   eigen_assert(threadIdx.x == 1);
+  half2* pscratch = reinterpret_cast<half2*>(scratch);
+  half tmp = __float2half(0.f);
   typedef packet_traits<Eigen::half>::type packet_type;
-  if (unpacket_traits<packet_type>::size == 1) {
-    *output = *scratch;
-  } else {
-    half2* pscratch = reinterpret_cast<half2*>(scratch);
-    half tmp = __float2half(0.f);
-    for (int i = 0; i < unpacket_traits<packet_type>::size; i += 2) {
-      reducer.reduce(__low2half(*pscratch), &tmp);
-      reducer.reduce(__high2half(*pscratch), &tmp);
-      pscratch++;
-    }
-    *output = tmp;
+  for (int i = 0; i < unpacket_traits<packet_type>::size; i += 2) {
+    reducer.reduce(__low2half(*pscratch), &tmp);
+    reducer.reduce(__high2half(*pscratch), &tmp);
+    pscratch++;
   }
+  *output = tmp;
 }
 
 #endif // EIGEN_HAS_GPU_FP16
@@ -427,11 +416,13 @@ template <typename Self, typename Op>
 struct FullReductionLauncher<Self, Op, Eigen::half, true> {
   static void run(const Self& self, Op& reducer, const GpuDevice& device, half* output, typename Self::Index num_coeffs) {
     typedef typename Self::Index Index;
+    typedef typename packet_traits<Eigen::half>::type PacketType;
 
     const int block_size = 256;
     const int num_per_thread = 128;
     const int num_blocks = divup<int>(num_coeffs, block_size * num_per_thread);
-    half* scratch = static_cast<half*>(device.scratchpad());
+    PacketType* scratch = static_cast<PacketType*>(device.scratchpad());
+    // half2* scratch = static_cast<half2*>(device.scratchpad());
 
     if (num_blocks > 1) {
       // We initialize the output and the scrathpad outside the reduction kernel when we can't be sure that there

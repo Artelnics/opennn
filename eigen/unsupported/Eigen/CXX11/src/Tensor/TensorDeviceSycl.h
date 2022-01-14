@@ -16,8 +16,6 @@
 #define EIGEN_CXX11_TENSOR_TENSOR_DEVICE_SYCL_H
 #include <unordered_set>
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace TensorSycl {
@@ -246,7 +244,7 @@ class QueueInterface {
   }
 
   /// The memcpyHostToDevice is used to copy the data from host to device
-  /// The destination pointer could be deleted before the copy happened which is
+  /// The destination pointer could be deleted before the copy happend which is
   /// why a callback function is needed. By default if none is provided, the
   /// function is blocking.
   EIGEN_STRONG_INLINE void memcpyHostToDevice(
@@ -274,7 +272,7 @@ class QueueInterface {
   }
 
   /// The memcpyDeviceToHost is used to copy the data from device to host.
-  /// The source pointer could be deleted before the copy happened which is
+  /// The source pointer could be deleted before the copy happend which is
   /// why a callback function is needed. By default if none is provided, the
   /// function is blocking.
   EIGEN_STRONG_INLINE void memcpyDeviceToHost(
@@ -329,27 +327,13 @@ class QueueInterface {
     if (n == 0) {
       return;
     }
+    n /= sizeof(buffer_scalar_t);
     auto f = [&](cl::sycl::handler &cgh) {
-      // Get a typed range accesser to ensure we fill each byte, in case
-      // `buffer_scalar_t` is not (u)int8_t.
-      auto dst_acc = get_typed_range_accessor<write_mode, uint8_t>(cgh, data, n);
-      cgh.fill(dst_acc, static_cast<uint8_t>(c));
-    };
-    cl::sycl::event e;
-    EIGEN_SYCL_TRY_CATCH(e = m_queue.submit(f));
-    async_synchronize(e);
-  }
-
-  template<typename T>
-  EIGEN_STRONG_INLINE void fill(T* begin, T* end, const T& value) const {
-    static const auto write_mode = cl::sycl::access::mode::discard_write;
-    if (begin == end) {
-      return;
-    }
-    const ptrdiff_t count = end - begin;
-    auto f = [&](cl::sycl::handler &cgh) {
-      auto dst_acc = get_typed_range_accessor<write_mode, T>(cgh, begin, count);
-      cgh.fill(dst_acc, value);
+      auto dst_acc = get_range_accessor<write_mode>(cgh, data, n);
+      // The cast to uint8_t is here to match the behaviour of the standard
+      // memset. The cast to buffer_scalar_t is needed to match the type of the
+      // accessor (in case buffer_scalar_t is not uint8_t)
+      cgh.fill(dst_acc, static_cast<buffer_scalar_t>(static_cast<uint8_t>(c)));
     };
     cl::sycl::event e;
     EIGEN_SYCL_TRY_CATCH(e = m_queue.submit(f));
@@ -375,8 +359,6 @@ class QueueInterface {
 
     auto original_buffer = pMapper.get_buffer(ptr);
     const ptrdiff_t offset = pMapper.get_offset(ptr);
-    eigen_assert(offset % sizeof(T) == 0 && "The offset must be a multiple of sizeof(T)");
-    eigen_assert(original_buffer.get_size() % sizeof(T) == 0 && "The buffer size must be a multiple of sizeof(T)");
     const ptrdiff_t typed_offset = offset / sizeof(T);
     eigen_assert(typed_offset >= 0);
     const auto typed_size = original_buffer.get_size() / sizeof(T);
@@ -411,40 +393,6 @@ class QueueInterface {
     eigen_assert(offset + n_bytes <= buffer.get_size());
     return buffer.template get_access<AcMd, global_access>(
         cgh, cl::sycl::range<1>(n_bytes), cl::sycl::id<1>(offset));
-  }
-
-  /// Get a range accessor to the virtual pointer's device memory with a
-  /// specified type and count.
-  template <cl::sycl::access::mode AcMd, typename T, typename Index>
-  EIGEN_STRONG_INLINE cl::sycl::accessor<
-      T, 1, AcMd, cl::sycl::access::target::global_buffer>
-  get_typed_range_accessor(cl::sycl::handler &cgh, const void *ptr,
-                     const Index count) const {
-    static const auto global_access = cl::sycl::access::target::global_buffer;
-    eigen_assert(count >= 0);
-    std::lock_guard<std::mutex> lock(pmapper_mutex_);
-    auto buffer = pMapper.get_buffer(ptr);
-    const ptrdiff_t offset = pMapper.get_offset(ptr);
-    eigen_assert(offset >= 0);
-
-    // Technically we should create a subbuffer for the desired range,
-    // then reinterpret that.  However, I was not able to get changes to reflect
-    // in the original buffer (only the subbuffer and reinterpretted buffer).
-    // This current implementation now has the restriction that the buffer
-    // offset and original buffer size must be a multiple of sizeof(T).
-    // Note that get_range_accessor(void*) currently has the same restriction.
-    //
-    // auto subbuffer = cl::sycl::buffer<buffer_scalar_t, 1>(buffer, 
-    //     cl::sycl::id<1>(offset), cl::sycl::range<1>(n_bytes));
-    eigen_assert(offset % sizeof(T) == 0 && "The offset must be a multiple of sizeof(T)");
-    eigen_assert(buffer.get_size() % sizeof(T) == 0 && "The buffer size must be a multiple of sizeof(T)");
-    const ptrdiff_t typed_offset = offset / sizeof(T);
-    const size_t typed_size = buffer.get_size() / sizeof(T);
-    auto reint = buffer.template reinterpret<
-        typename Eigen::internal::remove_const<T>::type>(
-        cl::sycl::range<1>(typed_size));
-    return reint.template get_access<AcMd, global_access>(
-        cgh, cl::sycl::range<1>(count), cl::sycl::id<1>(typed_offset));
   }
 
   /// Creation of sycl accessor for a buffer. This function first tries to find
@@ -715,7 +663,7 @@ class QueueInterface {
   EIGEN_STRONG_INLINE int majorDeviceVersion() const { return 1; }
 
   EIGEN_STRONG_INLINE unsigned long maxSyclThreadsPerMultiProcessor() const {
-    // OpenCL does not have such a concept
+    // OpenCL doesnot have such concept
     return 2;
   }
 
@@ -1003,11 +951,6 @@ struct SyclDevice : public SyclDeviceBase {
   EIGEN_STRONG_INLINE void memset(void *data, int c, size_t n) const {
     queue_stream()->memset(data, c, n);
   }
-  /// the fill function
-  template<typename T>
-  EIGEN_STRONG_INLINE void fill(T* begin, T* end, const T& value) const {
-    queue_stream()->fill(begin, end, value);
-  }
   /// returning the sycl queue
   EIGEN_STRONG_INLINE cl::sycl::queue &sycl_queue() const {
     return queue_stream()->sycl_queue();
@@ -1035,7 +978,7 @@ struct SyclDevice : public SyclDeviceBase {
     return queue_stream()->maxWorkItemSizes();
   }
   EIGEN_STRONG_INLINE unsigned long maxSyclThreadsPerMultiProcessor() const {
-    // OpenCL does not have such a concept
+    // OpenCL doesnot have such concept
     return queue_stream()->maxSyclThreadsPerMultiProcessor();
   }
   EIGEN_STRONG_INLINE size_t sharedMemPerBlock() const {

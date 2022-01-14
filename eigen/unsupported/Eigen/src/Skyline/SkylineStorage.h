@@ -10,8 +10,6 @@
 #ifndef EIGEN_SKYLINE_STORAGE_H
 #define EIGEN_SKYLINE_STORAGE_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 /** Stores a skyline set of values in three structures :
@@ -189,11 +187,11 @@ public:
     }
 
     inline void reset() {
-        std::fill_n(m_diag, m_diagSize, Scalar(0));
-        std::fill_n(m_upper, m_upperSize, Scalar(0));
-        std::fill_n(m_lower, m_lowerSize, Scalar(0));
-        std::fill_n(m_upperProfile, m_diagSize, Index(0));
-        std::fill_n(m_lowerProfile, m_diagSize, Index(0));
+        memset(m_diag, 0, m_diagSize * sizeof (Scalar));
+        memset(m_upper, 0, m_upperSize * sizeof (Scalar));
+        memset(m_lower, 0, m_lowerSize * sizeof (Scalar));
+        memset(m_upperProfile, 0, m_diagSize * sizeof (Index));
+        memset(m_lowerProfile, 0, m_diagSize * sizeof (Index));
     }
 
     void prune(Scalar reference, RealScalar epsilon = dummy_precision<RealScalar>()) {

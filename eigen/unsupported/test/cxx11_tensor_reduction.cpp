@@ -486,31 +486,22 @@ static void test_reduce_middle_dims() {
   }
 }
 
-template <typename ScalarType, int num_elements, int max_mean>
-void test_sum_accuracy() {
-  Tensor<double, 1> double_tensor(num_elements);
-  Tensor<ScalarType, 1> tensor(num_elements);
-  for (double prescribed_mean = 0; prescribed_mean <= max_mean; prescribed_mean = numext::maxi(1.0, prescribed_mean*3.99)) {
-    // FIXME: NormalRandomGenerator doesn't work in bfloat and half.
-    double_tensor.setRandom<Eigen::internal::NormalRandomGenerator<double>>();
-    double_tensor += double_tensor.constant(prescribed_mean);
-    tensor = double_tensor.cast<ScalarType>();
+static void test_sum_accuracy() {
+  Tensor<float, 3> tensor(101, 101, 101);
+  for (float prescribed_mean : {1.0f, 10.0f, 100.0f, 1000.0f, 10000.0f}) {
+    tensor.setRandom();
+    tensor += tensor.constant(prescribed_mean);
 
-    Tensor<ScalarType, 0> sum;
-    sum = tensor.sum();
-
-    // Compute the reference value in double precsion.
+    Tensor<float, 0> sum = tensor.sum();
     double expected_sum = 0.0;
-    double abs_sum = 0.0;
-    for (int i = 0; i < num_elements; ++i) {
-      expected_sum += static_cast<double>(tensor(i));
-      abs_sum += static_cast<double>(numext::abs(tensor(i)));
+    for (int i = 0; i < 101; ++i) {
+      for (int j = 0; j < 101; ++j) {
+        for (int k = 0; k < 101; ++k) {
+          expected_sum += static_cast<double>(tensor(i, j, k));
+        }
+      }
     }
-    // Test against probabilistic forward error bound. In reality, the error is much smaller
-    // when we use tree summation.
-    double err = Eigen::numext::abs(static_cast<double>(sum()) - expected_sum);
-    double tol = numext::sqrt(num_elements) * NumTraits<ScalarType>::epsilon() * static_cast<ScalarType>(abs_sum);
-    VERIFY_LE(err, tol);
+    VERIFY_IS_APPROX(sum(), static_cast<float>(expected_sum));
   }
 }
 
@@ -537,11 +528,5 @@ EIGEN_DECLARE_TEST(cxx11_tensor_reduction) {
   CALL_SUBTEST(test_innermost_first_dims<RowMajor>());
   CALL_SUBTEST(test_reduce_middle_dims<ColMajor>());
   CALL_SUBTEST(test_reduce_middle_dims<RowMajor>());
-  CALL_SUBTEST((test_sum_accuracy<float,10*1024*1024,8*1024>()));
-  CALL_SUBTEST((test_sum_accuracy<Eigen::bfloat16,10*1024*1024,8*1024>()));
-  // The range of half is limited to 65519 when using round-to-even,
-  // so we are severely limited in the size and mean of the tensors
-  // we can reduce without overflow.
-  CALL_SUBTEST((test_sum_accuracy<Eigen::half,4*1024,16>()));
-  CALL_SUBTEST((test_sum_accuracy<Eigen::half,10*1024*1024,0>()));
+  CALL_SUBTEST(test_sum_accuracy());
 }

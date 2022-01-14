@@ -10,7 +10,10 @@
 #define EIGEN_KRONECKER_PRODUCT_MODULE_H
 
 #include "../../Eigen/Core"
-#include "../../Eigen/SparseCore"
+
+#include "../../Eigen/src/Core/util/DisableStupidWarnings.h"
+
+#include "../../Eigen/src/SparseCore/SparseUtil.h"
 
 namespace Eigen {
 

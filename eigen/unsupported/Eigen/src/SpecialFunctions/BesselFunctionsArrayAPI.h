@@ -11,8 +11,6 @@
 #ifndef EIGEN_BESSELFUNCTIONS_ARRAYAPI_H
 #define EIGEN_BESSELFUNCTIONS_ARRAYAPI_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \returns an expression of the coefficient-wise i0(\a x) to the given

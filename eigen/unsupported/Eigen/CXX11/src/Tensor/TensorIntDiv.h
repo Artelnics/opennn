@@ -11,8 +11,6 @@
 #define EIGEN_CXX11_TENSOR_TENSOR_INTDIV_H
 
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \internal

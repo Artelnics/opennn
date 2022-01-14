@@ -10,8 +10,6 @@
 #if defined(EIGEN_USE_THREADS) && !defined(EIGEN_CXX11_TENSOR_TENSOR_DEVICE_THREAD_POOL_H)
 #define EIGEN_CXX11_TENSOR_TENSOR_DEVICE_THREAD_POOL_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 // Runs an arbitrary function and then calls Notify() on the passed in
@@ -122,11 +120,6 @@ struct ThreadPoolDevice {
 
   EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const {
     ::memset(buffer, c, n);
-  }
-
-  template<typename T>
-  EIGEN_STRONG_INLINE void fill(T* begin, T* end, const T& value) const {
-    std::fill(begin, end, value);
   }
 
   EIGEN_STRONG_INLINE int numThreads() const {

@@ -12,8 +12,6 @@
 
 #include "../../../../Eigen/Dense"
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {

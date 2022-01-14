@@ -1,7 +1,8 @@
 #include <iostream>
 #include <Eigen/Dense>
 
-using Eigen::MatrixXd;
+using namespace std;
+using namespace Eigen;
 
 int main()
 {
@@ -9,5 +10,5 @@ int main()
    MatrixXd b = MatrixXd::Random(100,50);
    MatrixXd x = A.fullPivLu().solve(b);
    double relative_error = (A*x - b).norm() / b.norm(); // norm() is L2 norm
-   std::cout << "The relative error is:\n" << relative_error << std::endl;
+   cout << "The relative error is:\n" << relative_error << endl;
 }

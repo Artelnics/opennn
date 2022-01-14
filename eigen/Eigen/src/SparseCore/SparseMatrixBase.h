@@ -10,8 +10,6 @@
 #ifndef EIGEN_SPARSEMATRIXBASE_H
 #define EIGEN_SPARSEMATRIXBASE_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 /** \ingroup SparseCore_Module
@@ -105,7 +103,7 @@ template<typename Derived> class SparseMatrixBase
                              : int(IsRowMajor) ? int(ColsAtCompileTime) : int(RowsAtCompileTime),
 
       #ifndef EIGEN_PARSED_BY_DOXYGEN
-      HasDirectAccess_ = (int(Flags)&DirectAccessBit) ? 1 : 0 // workaround sunCC
+      _HasDirectAccess = (int(Flags)&DirectAccessBit) ? 1 : 0 // workaround sunCC
       #endif
     };
 
@@ -131,7 +129,7 @@ template<typename Derived> class SparseMatrixBase
 
     /** \internal the return type of coeff()
       */
-    typedef typename internal::conditional<HasDirectAccess_, const Scalar&, Scalar>::type CoeffReturnType;
+    typedef typename internal::conditional<_HasDirectAccess, const Scalar&, Scalar>::type CoeffReturnType;
 
     /** \internal Represents a matrix with all coefficients equal to one another*/
     typedef CwiseNullaryOp<internal::scalar_constant_op<Scalar>,Matrix<Scalar,Dynamic,Dynamic> > ConstantReturnType;
@@ -139,8 +137,8 @@ template<typename Derived> class SparseMatrixBase
     /** type of the equivalent dense matrix */
     typedef Matrix<Scalar,RowsAtCompileTime,ColsAtCompileTime> DenseMatrixType;
     /** type of the equivalent square matrix */
-    typedef Matrix<Scalar, internal::max_size_prefer_dynamic(RowsAtCompileTime, ColsAtCompileTime),
-                           internal::max_size_prefer_dynamic(RowsAtCompileTime, ColsAtCompileTime)> SquareMatrixType;
+    typedef Matrix<Scalar,EIGEN_SIZE_MAX(RowsAtCompileTime,ColsAtCompileTime),
+                          EIGEN_SIZE_MAX(RowsAtCompileTime,ColsAtCompileTime)> SquareMatrixType;
 
     inline const Derived& derived() const { return *static_cast<const Derived*>(this); }
     inline Derived& derived() { return *static_cast<Derived*>(this); }

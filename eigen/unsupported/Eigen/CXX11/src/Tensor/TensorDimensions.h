@@ -11,8 +11,6 @@
 #define EIGEN_CXX11_TENSOR_TENSOR_DIMENSIONS_H
 
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \internal
@@ -111,10 +109,12 @@ struct Sizes {
   explicit EIGEN_DEVICE_FUNC Sizes(const array<DenseIndex, Base::count>& /*indices*/) {
     // todo: add assertion
   }
+#if EIGEN_HAS_VARIADIC_TEMPLATES
   template <typename... DenseIndex> EIGEN_DEVICE_FUNC Sizes(DenseIndex...) { }
   explicit EIGEN_DEVICE_FUNC Sizes(std::initializer_list<std::ptrdiff_t> /*l*/) {
     // todo: add assertion
   }
+#endif
 
   template <typename T> Sizes& operator = (const T& /*other*/) {
     // add assertion failure if the size of other is different
@@ -171,16 +171,28 @@ template <std::ptrdiff_t V1=0, std::ptrdiff_t V2=0, std::ptrdiff_t V3=0, std::pt
   explicit Sizes(const array<DenseIndex, Base::count>& /*indices*/) {
     // todo: add assertion
   }
-
   template <typename T> Sizes& operator = (const T& /*other*/) {
     // add assertion failure if the size of other is different
     return *this;
   }
 
+#if EIGEN_HAS_VARIADIC_TEMPLATES
   template <typename... DenseIndex> Sizes(DenseIndex... /*indices*/) { }
   explicit Sizes(std::initializer_list<std::ptrdiff_t>) {
     // todo: add assertion
   }
+#else
+  EIGEN_DEVICE_FUNC explicit Sizes(const DenseIndex) {
+  }
+  EIGEN_DEVICE_FUNC Sizes(const DenseIndex, const DenseIndex) {
+  }
+  EIGEN_DEVICE_FUNC Sizes(const DenseIndex, const DenseIndex, const DenseIndex) {
+  }
+  EIGEN_DEVICE_FUNC Sizes(const DenseIndex, const DenseIndex, const DenseIndex, const DenseIndex) {
+  }
+  EIGEN_DEVICE_FUNC Sizes(const DenseIndex, const DenseIndex, const DenseIndex, const DenseIndex, const DenseIndex) {
+  }
+#endif
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index operator[] (const Index index) const {
     switch (index) {
@@ -323,10 +335,39 @@ struct DSizes : array<DenseIndex, NumDims> {
   }
 #endif
 
+#if EIGEN_HAS_VARIADIC_TEMPLATES
   template<typename... IndexTypes> EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE explicit DSizes(DenseIndex firstDimension, DenseIndex secondDimension, IndexTypes... otherDimensions) : Base({{firstDimension, secondDimension, otherDimensions...}}) {
     EIGEN_STATIC_ASSERT(sizeof...(otherDimensions) + 2 == NumDims, YOU_MADE_A_PROGRAMMING_MISTAKE)
   }
+#else
+  EIGEN_DEVICE_FUNC DSizes(const DenseIndex i0, const DenseIndex i1) {
+    eigen_assert(NumDims == 2);
+    (*this)[0] = i0;
+    (*this)[1] = i1;
+  }
+  EIGEN_DEVICE_FUNC DSizes(const DenseIndex i0, const DenseIndex i1, const DenseIndex i2) {
+    eigen_assert(NumDims == 3);
+    (*this)[0] = i0;
+    (*this)[1] = i1;
+    (*this)[2] = i2;
+  }
+  EIGEN_DEVICE_FUNC DSizes(const DenseIndex i0, const DenseIndex i1, const DenseIndex i2, const DenseIndex i3) {
+    eigen_assert(NumDims == 4);
+    (*this)[0] = i0;
+    (*this)[1] = i1;
+    (*this)[2] = i2;
+    (*this)[3] = i3;
+  }
+  EIGEN_DEVICE_FUNC DSizes(const DenseIndex i0, const DenseIndex i1, const DenseIndex i2, const DenseIndex i3, const DenseIndex i4) {
+    eigen_assert(NumDims == 5);
+    (*this)[0] = i0;
+    (*this)[1] = i1;
+    (*this)[2] = i2;
+    (*this)[3] = i3;
+    (*this)[4] = i4;
+  }
+#endif
 
   EIGEN_DEVICE_FUNC DSizes& operator = (const array<DenseIndex, NumDims>& other) {
     *static_cast<Base*>(this) = other;

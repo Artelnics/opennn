@@ -10,8 +10,6 @@
 #ifndef EIGEN_PACKET_MATH_SSE_H
 #define EIGEN_PACKET_MATH_SSE_H
 
-#include "../../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -108,16 +106,16 @@ EIGEN_STRONG_INLINE Packet2d vec2d_unpackhi(const Packet2d& a, const Packet2d& b
 #define vec2d_duplane(a,p) \
   vec2d_swizzle2(a,a,(p<<1)|p)
 
-#define EIGEN_DECLARE_CONST_Packet4f(NAME,X) \
+#define _EIGEN_DECLARE_CONST_Packet4f(NAME,X) \
   const Packet4f p4f_##NAME = pset1<Packet4f>(X)
 
-#define EIGEN_DECLARE_CONST_Packet2d(NAME,X) \
+#define _EIGEN_DECLARE_CONST_Packet2d(NAME,X) \
   const Packet2d p2d_##NAME = pset1<Packet2d>(X)
 
-#define EIGEN_DECLARE_CONST_Packet4f_FROM_INT(NAME,X) \
+#define _EIGEN_DECLARE_CONST_Packet4f_FROM_INT(NAME,X) \
   const Packet4f p4f_##NAME = pset1frombits<Packet4f>(X)
 
-#define EIGEN_DECLARE_CONST_Packet4i(NAME,X) \
+#define _EIGEN_DECLARE_CONST_Packet4i(NAME,X) \
   const Packet4i p4i_##NAME = pset1<Packet4i>(X)
 
 
@@ -182,6 +180,7 @@ struct packet_traits<double> : default_packet_traits {
     HasRint = 1
   };
 };
+#endif
 template<> struct packet_traits<int>    : default_packet_traits
 {
   typedef Packet4i type;
@@ -195,7 +194,7 @@ template<> struct packet_traits<int>    : default_packet_traits
     HasBlend = 1
   };
 };
-#endif
+
 template<> struct packet_traits<bool> : default_packet_traits
 {
   typedef Packet16b type;
@@ -234,7 +233,7 @@ template<> struct unpacket_traits<Packet2d> {
 template<> struct unpacket_traits<Packet4i> {
   typedef int       type;
   typedef Packet4i  half;
-  enum {size=4, alignment=Aligned16, vectorizable=true, masked_load_available=false, masked_store_available=false};
+  enum {size=4, alignment=Aligned16, vectorizable=false, masked_load_available=false, masked_store_available=false};
 };
 template<> struct unpacket_traits<Packet16b> {
   typedef bool       type;
@@ -247,9 +246,18 @@ template<> struct scalar_div_cost<float,true> { enum { value = 7 }; };
 template<> struct scalar_div_cost<double,true> { enum { value = 8 }; };
 #endif
 
+#if EIGEN_COMP_MSVC==1500
+// Workaround MSVC 9 internal compiler error.
+// TODO: It has been detected with win64 builds (amd64), so let's check whether it also happens in 32bits+SSE mode
+// TODO: let's check whether there does not exist a better fix, like adding a pset0() function. (it crashed on pset1(0)).
+template<> EIGEN_STRONG_INLINE Packet4f pset1<Packet4f>(const float&  from) { return _mm_set_ps(from,from,from,from); }
+template<> EIGEN_STRONG_INLINE Packet2d pset1<Packet2d>(const double& from) { return _mm_set_pd(from,from); }
+template<> EIGEN_STRONG_INLINE Packet4i pset1<Packet4i>(const int&    from) { return _mm_set_epi32(from,from,from,from); }
+#else
 template<> EIGEN_STRONG_INLINE Packet4f pset1<Packet4f>(const float&  from) { return _mm_set_ps1(from); }
 template<> EIGEN_STRONG_INLINE Packet2d pset1<Packet2d>(const double& from) { return _mm_set1_pd(from); }
 template<> EIGEN_STRONG_INLINE Packet4i pset1<Packet4i>(const int&    from) { return _mm_set1_epi32(from); }
+#endif
 template<> EIGEN_STRONG_INLINE Packet16b pset1<Packet16b>(const bool&    from) { return _mm_set1_epi8(static_cast<char>(from)); }
 
 template<> EIGEN_STRONG_INLINE Packet4f pset1frombits<Packet4f>(unsigned int from) { return _mm_castsi128_ps(pset1<Packet4i>(from)); }
@@ -613,7 +621,7 @@ template<> EIGEN_STRONG_INLINE Packet4i pabs(const Packet4i& a)
 #ifdef EIGEN_VECTORIZE_SSE4_1
 template<> EIGEN_STRONG_INLINE Packet4f pround<Packet4f>(const Packet4f& a)
 {
-  // Unfortunately _mm_round_ps doesn't have a rounding mode to implement numext::round.
+  // Unfortunatly _mm_round_ps doesn't have a rounding mode to implement numext::round.
   const Packet4f mask = pset1frombits<Packet4f>(0x80000000u);
   const Packet4f prev0dot5 = pset1frombits<Packet4f>(0x3EFFFFFFu);
   return _mm_round_ps(padd(por(pand(a, mask), prev0dot5), a), _MM_FROUND_TO_ZERO);
@@ -712,7 +720,15 @@ template<> EIGEN_STRONG_INLINE Packet16b pload<Packet16b>(const bool*     from) 
 #if EIGEN_COMP_MSVC
   template<> EIGEN_STRONG_INLINE Packet4f ploadu<Packet4f>(const float*  from) {
     EIGEN_DEBUG_UNALIGNED_LOAD
+    #if (EIGEN_COMP_MSVC==1600)
+    // NOTE Some version of MSVC10 generates bad code when using _mm_loadu_ps
+    // (i.e., it does not generate an unaligned load!!
+    __m128 res = _mm_loadl_pi(_mm_set1_ps(0.0f), (const __m64*)(from));
+    res = _mm_loadh_pi(res, (const __m64*)(from+2));
+    return res;
+    #else
     return _mm_loadu_ps(from);
+    #endif
   }
 #else
 // NOTE: with the code below, MSVC's compiler crashes!
@@ -1264,106 +1280,6 @@ template<> EIGEN_STRONG_INLINE double pmadd(const double& a, const double& b, co
 }
 #endif
 
-#ifdef EIGEN_VECTORIZE_SSE4_1
-// Helpers for half->float and float->half conversions.
-// Currently only used by the AVX code.
-EIGEN_STRONG_INLINE __m128i half2floatsse(__m128i h) {
- __m128i input = _mm_cvtepu16_epi32(h);
-
-  // Direct vectorization of half_to_float, C parts in the comments.
-  __m128i shifted_exp = _mm_set1_epi32(0x7c00 << 13);
-  // o.u = (h.x & 0x7fff) << 13; // exponent/mantissa bits
-  __m128i ou = _mm_slli_epi32(_mm_and_si128(input, _mm_set1_epi32(0x7fff)), 13);
-  // exp = shifted_exp & o.u;   // just the exponent
-  __m128i exp = _mm_and_si128(ou, shifted_exp);
-  // o.u += (127 - 15) << 23;
-  ou = _mm_add_epi32(ou, _mm_set1_epi32((127 - 15) << 23));
-
-  // Inf/NaN?
-  __m128i naninf_mask = _mm_cmpeq_epi32(exp, shifted_exp);
-  // Inf/NaN adjust
-  __m128i naninf_adj =
-      _mm_and_si128(_mm_set1_epi32((128 - 16) << 23), naninf_mask);
-  // extra exp adjust for  Inf/NaN
-  ou = _mm_add_epi32(ou, naninf_adj);
-
-  // Zero/Denormal?
-  __m128i zeroden_mask = _mm_cmpeq_epi32(exp, _mm_setzero_si128());
-  __m128i zeroden_adj = _mm_and_si128(zeroden_mask, _mm_set1_epi32(1 << 23));
-  // o.u += 1 << 23;
-  ou = _mm_add_epi32(ou, zeroden_adj);
-  // magic.u = 113 << 23
-  __m128i magic = _mm_and_si128(zeroden_mask, _mm_set1_epi32(113 << 23));
-  // o.f -= magic.f
-  ou = _mm_castps_si128(
-      _mm_sub_ps(_mm_castsi128_ps(ou), _mm_castsi128_ps(magic)));
-
-  __m128i sign =
-      _mm_slli_epi32(_mm_and_si128(input, _mm_set1_epi32(0x8000)), 16);
-  // o.u |= (h.x & 0x8000) << 16;    // sign bit
-  ou = _mm_or_si128(ou, sign);
-  // return o.f;
-  // We are actually returning uint version, to make
-  // _mm256_insertf128_si256 work.
-  return ou;
-}
-
-EIGEN_STRONG_INLINE __m128i float2half(__m128 f) {
-  __m128i o = _mm_setzero_si128();
-
-  // unsigned int sign_mask = 0x80000000u;
-  __m128i sign = _mm_set1_epi32(0x80000000u);
-  // unsigned int sign = f.u & sign_mask;
-  sign = _mm_and_si128(sign, _mm_castps_si128(f));
-  // f.u ^= sign;
-  f = _mm_xor_ps(f, _mm_castsi128_ps(sign));
-
-  __m128i fu = _mm_castps_si128(f);
-
-  __m128i f16max = _mm_set1_epi32((127 + 16) << 23);
-  __m128i f32infty = _mm_set1_epi32(255 << 23);
-  // if (f.u >= f16max.u) // result is Inf or NaN (all exponent bits set)
-  // there is no _mm_cmpge_epi32, so use lt and swap operands
-  __m128i infnan_mask = _mm_cmplt_epi32(f16max, _mm_castps_si128(f));
-  __m128i inf_mask = _mm_cmpgt_epi32(_mm_castps_si128(f), f32infty);
-  __m128i nan_mask = _mm_andnot_si128(inf_mask, infnan_mask);
-  __m128i inf_value = _mm_and_si128(inf_mask, _mm_set1_epi32(0x7e00));
-  __m128i nan_value = _mm_and_si128(nan_mask, _mm_set1_epi32(0x7c00));
-  // o.x = (f.u > f32infty.u) ? 0x7e00 : 0x7c00; // NaN->qNaN and Inf->Inf
-  __m128i naninf_value = _mm_or_si128(inf_value, nan_value);
-
-  __m128i denorm_magic = _mm_set1_epi32(((127 - 15) + (23 - 10) + 1) << 23);
-  __m128i subnorm_mask =
-      _mm_cmplt_epi32(_mm_castps_si128(f), _mm_set1_epi32(113 << 23));
-  //  f.f += denorm_magic.f;
-  f = _mm_add_ps(f, _mm_castsi128_ps(denorm_magic));
-  // f.u - denorm_magic.u
-  o = _mm_sub_epi32(_mm_castps_si128(f), denorm_magic);
-  o = _mm_and_si128(o, subnorm_mask);
-  // Correct result for inf/nan/zero/subnormal, 0 otherwise
-  o = _mm_or_si128(o, naninf_value);
-
-  __m128i mask = _mm_or_si128(infnan_mask, subnorm_mask);
-  o = _mm_and_si128(o, mask);
-
-  // mant_odd = (f.u >> 13) & 1;
-  __m128i mand_odd = _mm_and_si128(_mm_srli_epi32(fu, 13), _mm_set1_epi32(0x1));
-  // f.u += 0xc8000fffU;
-  fu = _mm_add_epi32(fu, _mm_set1_epi32(0xc8000fffU));
-  // f.u += mant_odd;
-  fu = _mm_add_epi32(fu, mand_odd);
-  fu = _mm_andnot_si128(mask, fu);
-  // f.u >> 13
-  fu = _mm_srli_epi32(fu, 13);
-  o = _mm_or_si128(fu, o);
-
-  // o.x |= static_cast<numext::uint16_t>(sign >> 16);
-  o = _mm_or_si128(o, _mm_srli_epi32(sign, 16));
-
-  // 16 bit values
-  return _mm_and_si128(o, _mm_set1_epi32(0xffff));
-}
-#endif
 
 // Packet math for Eigen::half
 // Disable the following code since it's broken on too many platforms / compilers.

@@ -8,10 +8,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_COMPLEX32_ZVECTOR_H
-#define EIGEN_COMPLEX32_ZVECTOR_H
-
-#include "../../InternalHeaderCheck.h"
+#ifndef EIGEN_COMPLEX32_ALTIVEC_H
+#define EIGEN_COMPLEX32_ALTIVEC_H
 
 namespace Eigen {
 
@@ -93,18 +91,8 @@ template<> struct packet_traits<std::complex<double> >  : default_packet_traits
   };
 };
 
-template<> struct unpacket_traits<Packet2cf> {
-  typedef std::complex<float>  type;
-  enum {size=2, alignment=Aligned16, vectorizable=true, masked_load_available=false, masked_store_available=false};
-  typedef Packet2cf half;
-  typedef Packet4f as_real;
-};
-template<> struct unpacket_traits<Packet1cd> {
-  typedef std::complex<double> type;
-  enum {size=1, alignment=Aligned16, vectorizable=true, masked_load_available=false, masked_store_available=false};
-  typedef Packet1cd half;
-  typedef Packet2d as_real;
-};
+template<> struct unpacket_traits<Packet2cf> { typedef std::complex<float>  type; enum {size=2, alignment=Aligned16, vectorizable=true, masked_load_available=false, masked_store_available=false}; typedef Packet2cf half; };
+template<> struct unpacket_traits<Packet1cd> { typedef std::complex<double> type; enum {size=1, alignment=Aligned16, vectorizable=true, masked_load_available=false, masked_store_available=false}; typedef Packet1cd half; };
 
 /* Forward declaration */
 EIGEN_STRONG_INLINE void ptranspose(PacketBlock<Packet2cf,2>& kernel);
@@ -162,7 +150,7 @@ template<> EIGEN_STRONG_INLINE void prefetch<std::complex<double> >(const std::c
 
 template<> EIGEN_STRONG_INLINE std::complex<double>  pfirst<Packet1cd>(const Packet1cd& a)
 {
-  EIGEN_ALIGN16 std::complex<double> res;
+  std::complex<double> EIGEN_ALIGN16 res;
   pstore<std::complex<double> >(&res, a);
 
   return res;
@@ -181,7 +169,10 @@ EIGEN_MAKE_CONJ_HELPER_CPLX_REAL(Packet1cd,Packet2d)
 
 template<> EIGEN_STRONG_INLINE Packet1cd pdiv<Packet1cd>(const Packet1cd& a, const Packet1cd& b)
 {
-  return pdiv_complex(a, b);
+  // TODO optimize it for AltiVec
+  Packet1cd res = pmul(a,pconj(b));
+  Packet2d s = vec_madd(b.v, b.v, p2d_ZERO_);
+  return Packet1cd(pdiv(res.v, s + vec_perm(s, s, p16uc_REVERSE64)));
 }
 
 EIGEN_STRONG_INLINE Packet1cd pcplxflip/*<Packet1cd>*/(const Packet1cd& x)
@@ -204,7 +195,7 @@ template<> EIGEN_STRONG_INLINE void pstoreu<std::complex<float> >(std::complex<f
 
 template<> EIGEN_STRONG_INLINE std::complex<float>  pfirst<Packet2cf>(const Packet2cf& a)
 {
-  EIGEN_ALIGN16 std::complex<float> res[2];
+  std::complex<float> EIGEN_ALIGN16 res[2];
   pstore<std::complex<float> >(res, a);
 
   return res[0];
@@ -234,14 +225,14 @@ template<> EIGEN_STRONG_INLINE Packet2cf pset1<Packet2cf>(const std::complex<flo
 
 template<> EIGEN_DEVICE_FUNC inline Packet2cf pgather<std::complex<float>, Packet2cf>(const std::complex<float>* from, Index stride)
 {
-  EIGEN_ALIGN16 std::complex<float> af[2];
+  std::complex<float> EIGEN_ALIGN16 af[2];
   af[0] = from[0*stride];
   af[1] = from[1*stride];
   return pload<Packet2cf>(af);
 }
 template<> EIGEN_DEVICE_FUNC inline void pscatter<std::complex<float>, Packet2cf>(std::complex<float>* to, const Packet2cf& from, Index stride)
 {
-  EIGEN_ALIGN16 std::complex<float> af[2];
+  std::complex<float> EIGEN_ALIGN16 af[2];
   pstore<std::complex<float> >((std::complex<float> *) af, from);
   to[0*stride] = af[0];
   to[1*stride] = af[1];
@@ -317,7 +308,11 @@ EIGEN_MAKE_CONJ_HELPER_CPLX_REAL(Packet2cf,Packet4f)
 
 template<> EIGEN_STRONG_INLINE Packet2cf pdiv<Packet2cf>(const Packet2cf& a, const Packet2cf& b)
 {
-  return pdiv_complex(a, b);
+  // TODO optimize it for AltiVec
+  Packet2cf res;
+  res.cd[0] = pdiv<Packet1cd>(a.cd[0], b.cd[0]);
+  res.cd[1] = pdiv<Packet1cd>(a.cd[1], b.cd[1]);
+  return res;
 }
 
 EIGEN_STRONG_INLINE Packet2cf pcplxflip/*<Packet2cf>*/(const Packet2cf& x)
@@ -399,7 +394,10 @@ EIGEN_MAKE_CONJ_HELPER_CPLX_REAL(Packet2cf,Packet4f)
 
 template<> EIGEN_STRONG_INLINE Packet2cf pdiv<Packet2cf>(const Packet2cf& a, const Packet2cf& b)
 {
-  return pdiv_complex(a, b);
+  // TODO optimize it for AltiVec
+  Packet2cf res = pmul(a, pconj(b));
+  Packet4f s = pmul<Packet4f>(b.v, b.v);
+  return Packet2cf(pdiv(res.v, padd<Packet4f>(s, vec_perm(s, s, p16uc_COMPLEX32_REV))));
 }
 
 template<> EIGEN_STRONG_INLINE Packet2cf pcplxflip<Packet2cf>(const Packet2cf& x)
@@ -425,4 +423,4 @@ template<> EIGEN_STRONG_INLINE Packet2cf pblend(const Selector<2>& ifPacket, con
 
 } // end namespace Eigen
 
-#endif // EIGEN_COMPLEX32_ZVECTOR_H
+#endif // EIGEN_COMPLEX32_ALTIVEC_H

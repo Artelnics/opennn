@@ -7,6 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#define EIGEN_NO_STATIC_ASSERT
+
 #include "main.h"
 
 #undef VERIFY_IS_APPROX
@@ -160,10 +162,12 @@ EIGEN_DECLARE_TEST(integer_types)
 
     CALL_SUBTEST_6( integer_type_tests(Matrix<unsigned short, 4, 4>()) );
 
+#if EIGEN_HAS_CXX11
     CALL_SUBTEST_7( integer_type_tests(Matrix<long long, 11, 13>()) );
     CALL_SUBTEST_7( signed_integer_type_tests(Matrix<long long, 11, 13>()) );
 
     CALL_SUBTEST_8( integer_type_tests(Matrix<unsigned long long, Dynamic, 5>(1, 5)) );
+#endif
   }
   CALL_SUBTEST_9( integer_types_extra<0>() );
 }

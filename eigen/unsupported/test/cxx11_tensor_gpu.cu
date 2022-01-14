@@ -17,6 +17,8 @@
 
 #include <unsupported/Eigen/CXX11/src/Tensor/TensorGpuHipCudaDefines.h>
 
+#define EIGEN_GPU_TEST_C99_MATH  EIGEN_HAS_CXX11
+
 using Eigen::Tensor;
 
 void test_gpu_nullary() {
@@ -62,47 +64,6 @@ void test_gpu_nullary() {
 
   gpuFree(d_in1);
   gpuFree(d_in2);
-}
-
-// Tests that there are no indexing overflows when computing tensors with the
-// max representable size.
-template <typename IndexType,
-          IndexType N = (std::numeric_limits<IndexType>::max)()>
-void test_gpu_nullary_max_size()
-{
-  typedef int8_t DataType;
-  typedef Tensor<DataType, 1, 0, IndexType> TensorType;
-  typedef Eigen::array<IndexType, 1> ArrayType;
-
-  const IndexType n = N;
-  TensorType in1((ArrayType(n)));
-  in1.setZero();
-
-  std::size_t in1_bytes = in1.size() * sizeof(DataType);
-
-  DataType* d_in1;
-  gpuMalloc((void**)(&d_in1), in1_bytes);
-
-  gpuMemcpy(d_in1, in1.data(), in1_bytes, gpuMemcpyHostToDevice);
-
-  Eigen::GpuStreamDevice stream;
-  Eigen::GpuDevice gpu_device(&stream);
-
-  Eigen::TensorMap<TensorType> gpu_in1(d_in1, ArrayType(n));
-
-  gpu_in1.device(gpu_device) = gpu_in1.constant(123);
-
-  TensorType new1((ArrayType(n)));
-
-  assert(gpuMemcpyAsync(new1.data(), d_in1, in1_bytes, gpuMemcpyDeviceToHost,
-                        gpu_device.stream()) == gpuSuccess);
-  assert(gpuStreamSynchronize(gpu_device.stream()) == gpuSuccess);
-
-  for (IndexType i = 0; i < n; ++i) {
-    VERIFY_IS_EQUAL(new1(ArrayType(i)), 123);
-  }
-
-  gpuFree(d_in1);
 }
 
 void test_gpu_elementwise_small() {
@@ -658,6 +619,7 @@ void test_gpu_convolution_3d()
 }
 
 
+#if EIGEN_GPU_TEST_C99_MATH
 template <typename Scalar>
 void test_gpu_lgamma(const Scalar stddev)
 {
@@ -696,6 +658,7 @@ void test_gpu_lgamma(const Scalar stddev)
   gpuFree(d_in);
   gpuFree(d_out);
 }
+#endif
 
 template <typename Scalar>
 void test_gpu_digamma()
@@ -718,8 +681,8 @@ void test_gpu_digamma()
   expected_out(2) = Scalar(1.2561176684318);
   expected_out(3) = Scalar(2.398239129535781);
   expected_out(4) = Scalar(9.210340372392849);
-  expected_out(5) = std::numeric_limits<Scalar>::quiet_NaN();
-  expected_out(6) = std::numeric_limits<Scalar>::quiet_NaN();
+  expected_out(5) = std::numeric_limits<Scalar>::infinity();
+  expected_out(6) = std::numeric_limits<Scalar>::infinity();
 
   std::size_t bytes = in.size() * sizeof(Scalar);
 
@@ -741,8 +704,11 @@ void test_gpu_digamma()
   assert(gpuMemcpyAsync(out.data(), d_out, bytes, gpuMemcpyDeviceToHost, gpu_device.stream()) == gpuSuccess);
   assert(gpuStreamSynchronize(gpu_device.stream()) == gpuSuccess);
 
-  for (int i = 0; i < 7; ++i) {
-    VERIFY_IS_CWISE_APPROX(out(i), expected_out(i));
+  for (int i = 0; i < 5; ++i) {
+    VERIFY_IS_APPROX(out(i), expected_out(i));
+  }
+  for (int i = 5; i < 7; ++i) {
+    VERIFY_IS_EQUAL(out(i), expected_out(i));
   }
 
   gpuFree(d_in);
@@ -775,7 +741,7 @@ void test_gpu_zeta()
   expected_out(0) = std::numeric_limits<Scalar>::infinity();
   expected_out(1) = Scalar(1.61237534869);
   expected_out(2) = Scalar(0.234848505667);
-  expected_out(3) = std::numeric_limits<Scalar>::quiet_NaN();
+  expected_out(3) = Scalar(1.03086757337e-5);
   expected_out(4) = Scalar(0.367879440865);
   expected_out(5) = Scalar(0.054102025820864097);
 
@@ -803,8 +769,13 @@ void test_gpu_zeta()
   assert(gpuMemcpyAsync(out.data(), d_out, bytes, gpuMemcpyDeviceToHost, gpu_device.stream()) == gpuSuccess);
   assert(gpuStreamSynchronize(gpu_device.stream()) == gpuSuccess);
 
-  for (int i = 0; i < 6; ++i) {
-    VERIFY_IS_CWISE_APPROX(out(i), expected_out(i));
+  VERIFY_IS_EQUAL(out(0), expected_out(0));
+  VERIFY((std::isnan)(out(3)));
+
+  for (int i = 1; i < 6; ++i) {
+    if (i != 3) {
+      VERIFY_IS_APPROX(out(i), expected_out(i));
+    }
   }
 
   gpuFree(d_in_x);
@@ -1019,6 +990,7 @@ void test_gpu_igammac()
   gpuFree(d_out);
 }
 
+#if EIGEN_GPU_TEST_C99_MATH
 template <typename Scalar>
 void test_gpu_erf(const Scalar stddev)
 {
@@ -1096,7 +1068,7 @@ void test_gpu_erfc(const Scalar stddev)
   gpuFree(d_in);
   gpuFree(d_out);
 }
-
+#endif
 template <typename Scalar>
 void test_gpu_ndtri()
 {
@@ -1145,8 +1117,13 @@ void test_gpu_ndtri()
   assert(gpuMemcpyAsync(out.data(), d_out, bytes, gpuMemcpyDeviceToHost, gpu_device.stream()) == gpuSuccess);
   assert(gpuStreamSynchronize(gpu_device.stream()) == gpuSuccess);
 
-  for (int i = 0; i < 6; ++i) {    
-    VERIFY_IS_CWISE_APPROX(out(i), expected_out(i));
+  VERIFY_IS_EQUAL(out(0), expected_out(0));
+  VERIFY((std::isnan)(out(3)));
+
+  for (int i = 1; i < 6; ++i) {
+    if (i != 3) {
+      VERIFY_IS_APPROX(out(i), expected_out(i));
+    }
   }
 
   gpuFree(d_in_x);
@@ -1285,8 +1262,12 @@ void test_gpu_betainc()
   assert(gpuMemcpyAsync(out.data(), d_out, bytes, gpuMemcpyDeviceToHost, gpu_device.stream()) == gpuSuccess);
   assert(gpuStreamSynchronize(gpu_device.stream()) == gpuSuccess);
 
-  for (int i = 0; i < 125; ++i) {
-    VERIFY_IS_CWISE_APPROX(out(i), expected_out(i));
+  for (int i = 1; i < 125; ++i) {
+    if ((std::isnan)(expected_out(i))) {
+      VERIFY((std::isnan)(out(i)));
+    } else {
+      VERIFY_IS_APPROX(out(i), expected_out(i));
+    }
   }
 
   gpuFree(d_in_x);
@@ -1560,10 +1541,6 @@ void test_gpu_gamma_sample_der_alpha()
 EIGEN_DECLARE_TEST(cxx11_tensor_gpu)
 {
   CALL_SUBTEST_1(test_gpu_nullary());
-  CALL_SUBTEST_1(test_gpu_nullary_max_size<int16_t>());
-  CALL_SUBTEST_1(test_gpu_nullary_max_size<int32_t>());
-  CALL_SUBTEST_1((test_gpu_nullary_max_size<
-                  int64_t, (std::numeric_limits<int32_t>::max)() + 100ll>()));
   CALL_SUBTEST_1(test_gpu_elementwise_small());
   CALL_SUBTEST_1(test_gpu_elementwise());
   CALL_SUBTEST_1(test_gpu_props());
@@ -1583,6 +1560,7 @@ EIGEN_DECLARE_TEST(cxx11_tensor_gpu)
   CALL_SUBTEST_3(test_gpu_convolution_3d<RowMajor>());
 #endif
 
+#if EIGEN_GPU_TEST_C99_MATH
   // std::erf, std::erfc, and so on where only added in c++11. We use them
   // as a golden reference to validate the results produced by Eigen. Therefore
   // we can only run these tests if we use a c++11 compiler.
@@ -1659,5 +1637,7 @@ EIGEN_DECLARE_TEST(cxx11_tensor_gpu)
 
   CALL_SUBTEST_6(test_gpu_gamma_sample_der_alpha<float>());
   CALL_SUBTEST_6(test_gpu_gamma_sample_der_alpha<double>());
+#endif
+
 #endif
 }

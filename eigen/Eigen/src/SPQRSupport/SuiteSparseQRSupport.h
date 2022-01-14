@@ -11,8 +11,6 @@
 #ifndef EIGEN_SUITESPARSEQRSUPPORT_H
 #define EIGEN_SUITESPARSEQRSUPPORT_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
   
   template<typename MatrixType> class SPQR; 
@@ -52,21 +50,21 @@ namespace Eigen {
   * R is the sparse triangular factor. Use matrixQR() to get it as SparseMatrix.
   * NOTE : The Index type of R is always SuiteSparse_long. You can get it with SPQR::Index
   *
-  * \tparam MatrixType_ The type of the sparse matrix A, must be a column-major SparseMatrix<>
+  * \tparam _MatrixType The type of the sparse matrix A, must be a column-major SparseMatrix<>
   *
   * \implsparsesolverconcept
   *
   *
   */
-template<typename MatrixType_>
-class SPQR : public SparseSolverBase<SPQR<MatrixType_> >
+template<typename _MatrixType>
+class SPQR : public SparseSolverBase<SPQR<_MatrixType> >
 {
   protected:
-    typedef SparseSolverBase<SPQR<MatrixType_> > Base;
+    typedef SparseSolverBase<SPQR<_MatrixType> > Base;
     using Base::m_isInitialized;
   public:
-    typedef typename MatrixType_::Scalar Scalar;
-    typedef typename MatrixType_::RealScalar RealScalar;
+    typedef typename _MatrixType::Scalar Scalar;
+    typedef typename _MatrixType::RealScalar RealScalar;
     typedef SuiteSparse_long StorageIndex ;
     typedef SparseMatrix<Scalar, ColMajor, StorageIndex> MatrixType;
     typedef Map<PermutationMatrix<Dynamic, Dynamic, StorageIndex> > PermutationType;
@@ -92,7 +90,7 @@ class SPQR : public SparseSolverBase<SPQR<MatrixType_> >
       cholmod_l_start(&m_cc);
     }
     
-    explicit SPQR(const MatrixType_& matrix)
+    explicit SPQR(const _MatrixType& matrix)
       : m_analysisIsOk(false),
         m_factorizationIsOk(false),
         m_isRUpToDate(false),
@@ -124,7 +122,7 @@ class SPQR : public SparseSolverBase<SPQR<MatrixType_> >
       std::free(m_HPinv);
     }
 
-    void compute(const MatrixType_& matrix)
+    void compute(const _MatrixType& matrix)
     {
       if(m_isInitialized) SPQR_free();
 

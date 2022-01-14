@@ -10,8 +10,6 @@
 #ifndef EIGEN_PACKET_MATH_ALTIVEC_H
 #define EIGEN_PACKET_MATH_ALTIVEC_H
 
-#include "../../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -41,34 +39,34 @@ typedef eigen_packet_wrapper<__vector unsigned short int,0> Packet8bf;
 
 // We don't want to write the same code all the time, but we need to reuse the constants
 // and it doesn't really work to declare them global, so we define macros instead
-#define EIGEN_DECLARE_CONST_FAST_Packet4f(NAME,X) \
+#define _EIGEN_DECLARE_CONST_FAST_Packet4f(NAME,X) \
   Packet4f p4f_##NAME = {X, X, X, X}
 
-#define EIGEN_DECLARE_CONST_FAST_Packet4i(NAME,X) \
+#define _EIGEN_DECLARE_CONST_FAST_Packet4i(NAME,X) \
   Packet4i p4i_##NAME = vec_splat_s32(X)
 
-#define EIGEN_DECLARE_CONST_FAST_Packet4ui(NAME,X) \
+#define _EIGEN_DECLARE_CONST_FAST_Packet4ui(NAME,X) \
   Packet4ui p4ui_##NAME = {X, X, X, X}
 
-#define EIGEN_DECLARE_CONST_FAST_Packet8us(NAME,X) \
+#define _EIGEN_DECLARE_CONST_FAST_Packet8us(NAME,X) \
   Packet8us p8us_##NAME = {X, X, X, X, X, X, X, X}
 
-#define EIGEN_DECLARE_CONST_FAST_Packet16uc(NAME,X) \
+#define _EIGEN_DECLARE_CONST_FAST_Packet16uc(NAME,X) \
   Packet16uc p16uc_##NAME = {X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X}
 
-#define EIGEN_DECLARE_CONST_Packet4f(NAME,X) \
+#define _EIGEN_DECLARE_CONST_Packet4f(NAME,X) \
   Packet4f p4f_##NAME = pset1<Packet4f>(X)
 
-#define EIGEN_DECLARE_CONST_Packet4i(NAME,X) \
+#define _EIGEN_DECLARE_CONST_Packet4i(NAME,X) \
   Packet4i p4i_##NAME = pset1<Packet4i>(X)
 
-#define EIGEN_DECLARE_CONST_Packet2d(NAME,X) \
+#define _EIGEN_DECLARE_CONST_Packet2d(NAME,X) \
   Packet2d p2d_##NAME = pset1<Packet2d>(X)
 
-#define EIGEN_DECLARE_CONST_Packet2l(NAME,X) \
+#define _EIGEN_DECLARE_CONST_Packet2l(NAME,X) \
   Packet2l p2l_##NAME = pset1<Packet2l>(X)
 
-#define EIGEN_DECLARE_CONST_Packet4f_FROM_INT(NAME,X) \
+#define _EIGEN_DECLARE_CONST_Packet4f_FROM_INT(NAME,X) \
   const Packet4f p4f_##NAME = reinterpret_cast<Packet4f>(pset1<Packet4i>(X))
 
 #define DST_CHAN 1
@@ -76,15 +74,15 @@ typedef eigen_packet_wrapper<__vector unsigned short int,0> Packet8bf;
 #define __UNPACK_TYPE__(PACKETNAME) typename unpacket_traits<PACKETNAME>::type 
 
 // These constants are endian-agnostic
-static EIGEN_DECLARE_CONST_FAST_Packet4f(ZERO, 0); //{ 0.0, 0.0, 0.0, 0.0}
-static EIGEN_DECLARE_CONST_FAST_Packet4i(ZERO, 0); //{ 0, 0, 0, 0,}
-static EIGEN_DECLARE_CONST_FAST_Packet4i(ONE,1); //{ 1, 1, 1, 1}
-static EIGEN_DECLARE_CONST_FAST_Packet4i(MINUS16,-16); //{ -16, -16, -16, -16}
-static EIGEN_DECLARE_CONST_FAST_Packet4i(MINUS1,-1); //{ -1, -1, -1, -1}
-static EIGEN_DECLARE_CONST_FAST_Packet4ui(SIGN, 0x80000000u);
-static EIGEN_DECLARE_CONST_FAST_Packet4ui(PREV0DOT5, 0x3EFFFFFFu);
-static EIGEN_DECLARE_CONST_FAST_Packet8us(ONE,1); //{ 1, 1, 1, 1, 1, 1, 1, 1}
-static EIGEN_DECLARE_CONST_FAST_Packet16uc(ONE,1);
+static _EIGEN_DECLARE_CONST_FAST_Packet4f(ZERO, 0); //{ 0.0, 0.0, 0.0, 0.0}
+static _EIGEN_DECLARE_CONST_FAST_Packet4i(ZERO, 0); //{ 0, 0, 0, 0,}
+static _EIGEN_DECLARE_CONST_FAST_Packet4i(ONE,1); //{ 1, 1, 1, 1}
+static _EIGEN_DECLARE_CONST_FAST_Packet4i(MINUS16,-16); //{ -16, -16, -16, -16}
+static _EIGEN_DECLARE_CONST_FAST_Packet4i(MINUS1,-1); //{ -1, -1, -1, -1}
+static _EIGEN_DECLARE_CONST_FAST_Packet4ui(SIGN, 0x80000000u);
+static _EIGEN_DECLARE_CONST_FAST_Packet4ui(PREV0DOT5, 0x3EFFFFFFu);
+static _EIGEN_DECLARE_CONST_FAST_Packet8us(ONE,1); //{ 1, 1, 1, 1, 1, 1, 1, 1}
+static _EIGEN_DECLARE_CONST_FAST_Packet16uc(ONE,1);
 static Packet4f p4f_MZERO = (Packet4f) vec_sl((Packet4ui)p4i_MINUS1, (Packet4ui)p4i_MINUS1); //{ 0x80000000, 0x80000000, 0x80000000, 0x80000000}
 #ifndef __VSX__
 static Packet4f p4f_ONE = vec_ctf(p4i_ONE, 0); //{ 1.0, 1.0, 1.0, 1.0}
@@ -1182,7 +1180,7 @@ template<> EIGEN_STRONG_INLINE Packet8us pabs(const Packet8us& a) { return a; }
 template<> EIGEN_STRONG_INLINE Packet16c pabs(const Packet16c& a) { return vec_abs(a); }
 template<> EIGEN_STRONG_INLINE Packet16uc pabs(const Packet16uc& a) { return a; }
 template<> EIGEN_STRONG_INLINE Packet8bf  pabs(const Packet8bf& a) {
-  EIGEN_DECLARE_CONST_FAST_Packet8us(abs_mask,0x7FFF);
+  _EIGEN_DECLARE_CONST_FAST_Packet8us(abs_mask,0x7FFF);
   return pand<Packet8us>(p8us_abs_mask, a);
 }
 
@@ -1194,38 +1192,38 @@ template<int N> EIGEN_STRONG_INLINE Packet4i plogical_shift_left(const Packet4i&
 { return vec_sl(a,reinterpret_cast<Packet4ui>(pset1<Packet4i>(N))); }
 template<int N> EIGEN_STRONG_INLINE Packet4f plogical_shift_left(const Packet4f& a)
 {
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(mask, N);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(mask, N);
   Packet4ui r = vec_sl(reinterpret_cast<Packet4ui>(a), p4ui_mask);
   return reinterpret_cast<Packet4f>(r);
 }
 
 template<int N> EIGEN_STRONG_INLINE Packet4f plogical_shift_right(const Packet4f& a)
 {
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(mask, N);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(mask, N);
   Packet4ui r = vec_sr(reinterpret_cast<Packet4ui>(a), p4ui_mask);
   return reinterpret_cast<Packet4f>(r);
 }
 
 template<int N> EIGEN_STRONG_INLINE Packet4ui plogical_shift_right(const Packet4ui& a)
 {
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(mask, N);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(mask, N);
   return vec_sr(a, p4ui_mask);
 }
 
 template<int N> EIGEN_STRONG_INLINE Packet4ui plogical_shift_left(const Packet4ui& a)
 {
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(mask, N);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(mask, N);
   return vec_sl(a, p4ui_mask);
 }
 
 template<int N> EIGEN_STRONG_INLINE Packet8us plogical_shift_left(const Packet8us& a)
 {
-  const EIGEN_DECLARE_CONST_FAST_Packet8us(mask, N);
+  const _EIGEN_DECLARE_CONST_FAST_Packet8us(mask, N);
   return vec_sl(a, p8us_mask);
 }
 template<int N> EIGEN_STRONG_INLINE Packet8us plogical_shift_right(const Packet8us& a)
 {
-  const EIGEN_DECLARE_CONST_FAST_Packet8us(mask, N);
+  const _EIGEN_DECLARE_CONST_FAST_Packet8us(mask, N);
   return vec_sr(a, p8us_mask);
 }
 
@@ -1234,7 +1232,7 @@ EIGEN_STRONG_INLINE Packet4f Bf16ToF32Even(const Packet8bf& bf){
 }
 
 EIGEN_STRONG_INLINE Packet4f Bf16ToF32Odd(const Packet8bf& bf){
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(high_mask, 0xFFFF0000);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(high_mask, 0xFFFF0000);
   return pand<Packet4f>(
     reinterpret_cast<Packet4f>(bf.m_val),
     reinterpret_cast<Packet4f>(p4ui_high_mask)
@@ -1244,7 +1242,7 @@ EIGEN_STRONG_INLINE Packet4f Bf16ToF32Odd(const Packet8bf& bf){
 // Simple interleaving of bool masks, prevents true values from being
 // converted to NaNs.
 EIGEN_STRONG_INLINE Packet8bf F32ToBf16Bool(Packet4f even, Packet4f odd) {
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(high_mask, 0xFFFF0000);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(high_mask, 0xFFFF0000);
   Packet4f bf_odd, bf_even;
   bf_odd = pand(reinterpret_cast<Packet4f>(p4ui_high_mask), odd);
   bf_even = plogical_shift_right<16>(even);
@@ -1256,18 +1254,18 @@ EIGEN_STRONG_INLINE Packet8bf F32ToBf16(Packet4f p4f){
   Packet4ui lsb = plogical_shift_right<16>(input);
   lsb = pand<Packet4ui>(lsb, reinterpret_cast<Packet4ui>(p4i_ONE));
 
-  EIGEN_DECLARE_CONST_FAST_Packet4ui(BIAS,0x7FFFu);
+  _EIGEN_DECLARE_CONST_FAST_Packet4ui(BIAS,0x7FFFu);
   Packet4ui rounding_bias = padd<Packet4ui>(lsb, p4ui_BIAS);
   input = padd<Packet4ui>(input, rounding_bias);
 
   //Test NaN and Subnormal - Begin
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(exp_mask, 0x7F800000);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(exp_mask, 0x7F800000);
   Packet4ui exp = pand<Packet4ui>(p4ui_exp_mask, reinterpret_cast<Packet4ui>(p4f));
 
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(mantissa_mask, 0x7FFFFF);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(mantissa_mask, 0x7FFFFF);
   Packet4ui mantissa = pand<Packet4ui>(p4ui_mantissa_mask, reinterpret_cast<Packet4ui>(p4f));
 
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(max_exp, 0x7F800000);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(max_exp, 0x7F800000);
   Packet4bi is_max_exp = vec_cmpeq(exp, p4ui_max_exp);
   Packet4bi is_zero_exp = vec_cmpeq(exp, reinterpret_cast<Packet4ui>(p4i_ZERO));
 
@@ -1282,7 +1280,7 @@ EIGEN_STRONG_INLINE Packet8bf F32ToBf16(Packet4f p4f){
       reinterpret_cast<Packet4ui>(is_mant_zero)
   );
 
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(nan, 0x7FC00000);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(nan, 0x7FC00000);
   input = vec_sel(input, p4ui_nan, nan_selector);
   input = vec_sel(input, reinterpret_cast<Packet4ui>(p4f), subnormal_selector);
   //Test NaN and Subnormal - End
@@ -2210,7 +2208,7 @@ template<> EIGEN_STRONG_INLINE Packet8us pcast<Packet8bf, Packet8us>(const Packe
   Packet4f float_odd = Bf16ToF32Odd(a);
   Packet4ui int_even = pcast<Packet4f, Packet4ui>(float_even);
   Packet4ui int_odd = pcast<Packet4f, Packet4ui>(float_odd);
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(low_mask, 0x0000FFFF);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(low_mask, 0x0000FFFF);
   Packet4ui low_even = pand<Packet4ui>(int_even, p4ui_low_mask);
   Packet4ui low_odd = pand<Packet4ui>(int_odd, p4ui_low_mask);
 
@@ -2233,7 +2231,7 @@ template<> EIGEN_STRONG_INLINE Packet8us pcast<Packet8bf, Packet8us>(const Packe
 
 template<> EIGEN_STRONG_INLINE Packet8bf pcast<Packet8us, Packet8bf>(const Packet8us& a) {
   //short -> int -> float -> bfloat16
-  const EIGEN_DECLARE_CONST_FAST_Packet4ui(low_mask, 0x0000FFFF);
+  const _EIGEN_DECLARE_CONST_FAST_Packet4ui(low_mask, 0x0000FFFF);
   Packet4ui int_cast = reinterpret_cast<Packet4ui>(a);
   Packet4ui int_even = pand<Packet4ui>(int_cast, p4ui_low_mask);
   Packet4ui int_odd = plogical_shift_right<16>(int_cast);

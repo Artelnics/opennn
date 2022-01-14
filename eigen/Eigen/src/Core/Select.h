@@ -10,8 +10,6 @@
 #ifndef EIGEN_SELECT_H
 #define EIGEN_SELECT_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \class Select
@@ -19,9 +17,9 @@ namespace Eigen {
   *
   * \brief Expression of a coefficient wise version of the C++ ternary operator ?:
   *
-  * \tparam ConditionMatrixType the type of the \em condition expression which must be a boolean matrix
-  * \tparam ThenMatrixType the type of the \em then expression
-  * \tparam ElseMatrixType the type of the \em else expression
+  * \param ConditionMatrixType the type of the \em condition expression which must be a boolean matrix
+  * \param ThenMatrixType the type of the \em then expression
+  * \param ElseMatrixType the type of the \em else expression
   *
   * This class represents an expression of a coefficient wise version of the C++ ternary operator ?:.
   * It is the return type of DenseBase::select() and most of the time this is the only way it is used.

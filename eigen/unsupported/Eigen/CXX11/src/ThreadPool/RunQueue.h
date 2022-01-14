@@ -7,10 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_CXX11_THREADPOOL_RUNQUEUE_H
-#define EIGEN_CXX11_THREADPOOL_RUNQUEUE_H
-
-#include "./InternalHeaderCheck.h"
+#ifndef EIGEN_CXX11_THREADPOOL_RUNQUEUE_H_
+#define EIGEN_CXX11_THREADPOOL_RUNQUEUE_H_
 
 namespace Eigen {
 
@@ -235,4 +233,4 @@ class RunQueue {
 
 }  // namespace Eigen
 
-#endif  // EIGEN_CXX11_THREADPOOL_RUNQUEUE_H
+#endif  // EIGEN_CXX11_THREADPOOL_RUNQUEUE_H_

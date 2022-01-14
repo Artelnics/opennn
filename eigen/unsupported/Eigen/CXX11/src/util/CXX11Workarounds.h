@@ -27,6 +27,18 @@
 #error GNU C++ Compiler (g++) only supports required C++ features since version 4.6.
 #endif
 
+/* Check that the compiler at least claims to support C++11. It might not be sufficient
+ * because the compiler may not implement it correctly, but at least we'll know.
+ * On the other hand, visual studio still doesn't claim to support C++11 although it's
+ * compliant enugh for our purpose.
+ */
+#if (EIGEN_COMP_CXXVER < 11)
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#pragma GCC diagnostic error "-Wfatal-errors"
+#endif
+#error This library needs at least a C++11 compliant compiler. If you use g++/clang, please enable the -std=c++11 compiler flag. (-std=c++0x on older versions.)
+#endif
+
 namespace Eigen {
 
 namespace internal {

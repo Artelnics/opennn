@@ -10,8 +10,6 @@
 #ifndef EIGEN_NULLARY_FUNCTORS_H
 #define EIGEN_NULLARY_FUNCTORS_H
 
-#include "../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -154,7 +152,7 @@ template<typename Functor> struct functor_has_linear_access { enum { ret = !has_
 
 // For unreliable compilers, let's specialize the has_*ary_operator
 // helpers so that at least built-in nullary functors work fine.
-#if !( EIGEN_COMP_MSVC || EIGEN_COMP_GNUC || (EIGEN_COMP_ICC>=1600))
+#if !( (EIGEN_COMP_MSVC>1600) || (EIGEN_GNUC_AT_LEAST(4,8)) || (EIGEN_COMP_ICC>=1600))
 template<typename Scalar,typename IndexType>
 struct has_nullary_operator<scalar_constant_op<Scalar>,IndexType> { enum { value = 1}; };
 template<typename Scalar,typename IndexType>

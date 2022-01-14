@@ -25,7 +25,7 @@
  * buffer is given as an input and all the threads within a work-group scan and
  * reduces the boundaries between the blocks (generated from the previous
  * kernel). and write the data on the temporary buffer. If the second kernel is
- * required, the third and final kernel (ScanAdjustmentKernelFunctor) will
+ * required, the third and final kerenl (ScanAdjustmentKernelFunctor) will
  * adjust the final result into the output buffer.
  * The original algorithm for the parallel prefix sum can be found here:
  *
@@ -36,8 +36,6 @@
 
 #ifndef UNSUPPORTED_EIGEN_CXX11_SRC_TENSOR_TENSOR_SYCL_SYCL_HPP
 #define UNSUPPORTED_EIGEN_CXX11_SRC_TENSOR_TENSOR_SYCL_SYCL_HPP
-
-#include "./InternalHeaderCheck.h"
 
 namespace Eigen {
 namespace TensorSycl {

@@ -21,8 +21,6 @@
 #ifndef EIGEN_TYPE_CASTING_SYCL_H
 #define EIGEN_TYPE_CASTING_SYCL_H
 
-#include "../../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

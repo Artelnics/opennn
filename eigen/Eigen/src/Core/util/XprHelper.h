@@ -14,15 +14,13 @@
 // just a workaround because GCC seems to not really like empty structs
 // FIXME: gcc 4.3 generates bad code when strict-aliasing is enabled
 // so currently we simply disable this optimization for gcc 4.3
-#if EIGEN_COMP_GNUC
+#if EIGEN_COMP_GNUC && !EIGEN_GNUC_AT(4,3)
   #define EIGEN_EMPTY_STRUCT_CTOR(X) \
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE X() {} \
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE X(const X& ) {}
 #else
   #define EIGEN_EMPTY_STRUCT_CTOR(X)
 #endif
-
-#include "../InternalHeaderCheck.h"
 
 namespace Eigen {
 
@@ -39,7 +37,15 @@ inline IndexDest convert_index(const IndexSrc& idx) {
 // true if T can be considered as an integral index (i.e., and integral type or enum)
 template<typename T> struct is_valid_index_type
 {
-  enum { value = internal::is_integral<T>::value || std::is_enum<T>::value
+  enum { value =
+#if EIGEN_HAS_TYPE_TRAITS
+    internal::is_integral<T>::value || std::is_enum<T>::value
+#elif EIGEN_COMP_MSVC
+    internal::is_integral<T>::value || __is_enum(T)
+#else
+    // without C++11, we use is_convertible to Index instead of is_integral in order to treat enums as Index.
+    internal::is_convertible<T,Index>::value && !internal::is_same<T,float>::value && !is_same<T,double>::value
+#endif
   };
 };
 
@@ -241,24 +247,24 @@ template<typename T> struct compute_default_alignment<T,Dynamic> {
   enum { value = EIGEN_MAX_ALIGN_BYTES };
 };
 
-template<typename Scalar_, int Rows_, int Cols_,
-         int Options_ = AutoAlign |
-                          ( (Rows_==1 && Cols_!=1) ? RowMajor
-                          : (Cols_==1 && Rows_!=1) ? ColMajor
+template<typename _Scalar, int _Rows, int _Cols,
+         int _Options = AutoAlign |
+                          ( (_Rows==1 && _Cols!=1) ? RowMajor
+                          : (_Cols==1 && _Rows!=1) ? ColMajor
                           : EIGEN_DEFAULT_MATRIX_STORAGE_ORDER_OPTION ),
-         int MaxRows_ = Rows_,
-         int MaxCols_ = Cols_
+         int _MaxRows = _Rows,
+         int _MaxCols = _Cols
 > class make_proper_matrix_type
 {
     enum {
-      IsColVector = Cols_==1 && Rows_!=1,
-      IsRowVector = Rows_==1 && Cols_!=1,
-      Options = IsColVector ? (Options_ | ColMajor) & ~RowMajor
-              : IsRowVector ? (Options_ | RowMajor) & ~ColMajor
-              : Options_
+      IsColVector = _Cols==1 && _Rows!=1,
+      IsRowVector = _Rows==1 && _Cols!=1,
+      Options = IsColVector ? (_Options | ColMajor) & ~RowMajor
+              : IsRowVector ? (_Options | RowMajor) & ~ColMajor
+              : _Options
     };
   public:
-    typedef Matrix<Scalar_, Rows_, Cols_, Options, MaxRows_, MaxCols_> type;
+    typedef Matrix<_Scalar, _Rows, _Cols, Options, _MaxRows, _MaxCols> type;
 };
 
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
@@ -272,9 +278,9 @@ class compute_matrix_flags
     enum { ret = DirectAccessBit | LvalueBit | NestByRefBit | row_major_bit };
 };
 
-template<int Rows_, int Cols_> struct size_at_compile_time
+template<int _Rows, int _Cols> struct size_at_compile_time
 {
-  enum { ret = (Rows_==Dynamic || Cols_==Dynamic) ? Dynamic : Rows_ * Cols_ };
+  enum { ret = (_Rows==Dynamic || _Cols==Dynamic) ? Dynamic : _Rows * _Cols };
 };
 
 template<typename XprType> struct size_of_xpr_at_compile_time
@@ -344,16 +350,16 @@ template<typename T> struct eval<T,DiagonalShape>
 };
 
 // for matrices, no need to evaluate, just use a const reference to avoid a useless copy
-template<typename Scalar_, int Rows_, int Cols_, int Options_, int MaxRows_, int MaxCols_>
-struct eval<Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>, Dense>
+template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+struct eval<Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>, Dense>
 {
-  typedef const Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>& type;
+  typedef const Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>& type;
 };
 
-template<typename Scalar_, int Rows_, int Cols_, int Options_, int MaxRows_, int MaxCols_>
-struct eval<Array<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>, Dense>
+template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+struct eval<Array<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>, Dense>
 {
-  typedef const Array<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>& type;
+  typedef const Array<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>& type;
 };
 
 
@@ -503,8 +509,8 @@ struct generic_xpr_base<Derived, XprKind, Dense>
 template<typename XprType, typename CastType> struct cast_return_type
 {
   typedef typename XprType::Scalar CurrentScalarType;
-  typedef typename remove_all<CastType>::type CastType_;
-  typedef typename CastType_::Scalar NewScalarType;
+  typedef typename remove_all<CastType>::type _CastType;
+  typedef typename _CastType::Scalar NewScalarType;
   typedef typename conditional<is_same<CurrentScalarType,NewScalarType>::value,
                               const XprType&,CastType>::type type;
 };
@@ -622,9 +628,8 @@ struct plain_col_type
 template<typename ExpressionType, typename Scalar = typename ExpressionType::Scalar>
 struct plain_diag_type
 {
-  enum { diag_size = internal::min_size_prefer_dynamic(ExpressionType::RowsAtCompileTime, ExpressionType::ColsAtCompileTime),
-         max_diag_size = min_size_prefer_fixed(ExpressionType::MaxRowsAtCompileTime,
-                                               ExpressionType::MaxColsAtCompileTime)
+  enum { diag_size = EIGEN_SIZE_MIN_PREFER_DYNAMIC(ExpressionType::RowsAtCompileTime, ExpressionType::ColsAtCompileTime),
+         max_diag_size = EIGEN_SIZE_MIN_PREFER_FIXED(ExpressionType::MaxRowsAtCompileTime, ExpressionType::MaxColsAtCompileTime)
   };
   typedef Matrix<Scalar, diag_size, 1, ExpressionType::PlainObject::Options & ~RowMajor, max_diag_size, 1> MatrixDiagType;
   typedef Array<Scalar, diag_size, 1, ExpressionType::PlainObject::Options & ~RowMajor, max_diag_size, 1> ArrayDiagType;

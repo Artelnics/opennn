@@ -1,15 +1,15 @@
 #include <iostream>
 #include <Eigen/Dense>
 
-using Eigen::Matrix3d;
-using Eigen::Vector3d;
+using namespace Eigen;
+using namespace std;
 
 int main()
 {
   Matrix3d m = Matrix3d::Random();
   m = (m + Matrix3d::Constant(1.2)) * 50;
-  std::cout << "m =" << std::endl << m << std::endl;
+  cout << "m =" << endl << m << endl;
   Vector3d v(1,2,3);
   
-  std::cout << "m * v =" << std::endl << m * v << std::endl;
+  cout << "m * v =" << endl << m * v << endl;
 }

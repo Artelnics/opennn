@@ -16,8 +16,6 @@
 #ifndef EIGEN_SVDBASE_H
 #define EIGEN_SVDBASE_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -54,7 +52,7 @@ template<typename Derived> struct traits<SVDBase<Derived> >
  * singular vectors. Asking for \em thin \a U or \a V means asking for only their \a m first columns to be formed. So \a U is then a n-by-m matrix,
  * and \a V is then a p-by-m matrix. Notice that thin \a U and \a V are all you need for (least squares) solving.
  * 
- * The status of the computation can be retrieved using the \a info() method. Unless \a info() returns \a Success, the results should be not
+ * The status of the computation can be retrived using the \a info() method. Unless \a info() returns \a Success, the results should be not
  * considered well defined.
  *  
  * If the input matrix has inf or nan coefficients, the result of the computation is undefined, and \a info() will return \a InvalidInput, but the computation is guaranteed to
@@ -77,10 +75,10 @@ public:
   enum {
     RowsAtCompileTime = MatrixType::RowsAtCompileTime,
     ColsAtCompileTime = MatrixType::ColsAtCompileTime,
-    DiagSizeAtCompileTime = internal::min_size_prefer_dynamic(RowsAtCompileTime,ColsAtCompileTime),
+    DiagSizeAtCompileTime = EIGEN_SIZE_MIN_PREFER_DYNAMIC(RowsAtCompileTime,ColsAtCompileTime),
     MaxRowsAtCompileTime = MatrixType::MaxRowsAtCompileTime,
     MaxColsAtCompileTime = MatrixType::MaxColsAtCompileTime,
-    MaxDiagSizeAtCompileTime = internal::min_size_prefer_fixed(MaxRowsAtCompileTime,MaxColsAtCompileTime),
+    MaxDiagSizeAtCompileTime = EIGEN_SIZE_MIN_PREFER_FIXED(MaxRowsAtCompileTime,MaxColsAtCompileTime),
     MatrixOptions = MatrixType::Options
   };
 
@@ -251,7 +249,10 @@ public:
 
 protected:
 
-  EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar)
+  static void check_template_parameters()
+  {
+    EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar);
+  }
 
   void _check_compute_assertions() const {
     eigen_assert(m_isInitialized && "SVD is not initialized.");
@@ -294,7 +295,9 @@ protected:
       m_computeThinV(false),
       m_computationOptions(0),
       m_rows(-1), m_cols(-1), m_diagSize(0)
-  { }
+  {
+    check_template_parameters();
+  }
 
 
 };
@@ -355,7 +358,7 @@ bool SVDBase<MatrixType>::allocate(Index rows, Index cols, unsigned int computat
   m_computeThinV = (computationOptions & ComputeThinV) != 0;
   eigen_assert(!(m_computeFullU && m_computeThinU) && "SVDBase: you can't ask for both full and thin U");
   eigen_assert(!(m_computeFullV && m_computeThinV) && "SVDBase: you can't ask for both full and thin V");
-  eigen_assert(internal::check_implication(m_computeThinU || m_computeThinV, MatrixType::ColsAtCompileTime==Dynamic) &&
+  eigen_assert(EIGEN_IMPLIES(m_computeThinU || m_computeThinV, MatrixType::ColsAtCompileTime==Dynamic) &&
 	       "SVDBase: thin U and V are only available when your matrix has a dynamic number of columns.");
 
   m_diagSize = (std::min)(m_rows, m_cols);

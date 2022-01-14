@@ -10,8 +10,6 @@
 #ifndef EIGEN_SELFADJOINT_MATRIX_VECTOR_H
 #define EIGEN_SELFADJOINT_MATRIX_VECTOR_H
 
-#include "../InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {
@@ -57,12 +55,12 @@ void selfadjoint_matrix_vector_product<Scalar,Index,StorageOrder,UpLo,ConjugateL
     FirstTriangular = IsRowMajor == IsLower
   };
 
-  conj_helper<Scalar,Scalar,NumTraits<Scalar>::IsComplex && logical_xor(ConjugateLhs,  IsRowMajor), ConjugateRhs> cj0;
-  conj_helper<Scalar,Scalar,NumTraits<Scalar>::IsComplex && logical_xor(ConjugateLhs, !IsRowMajor), ConjugateRhs> cj1;
+  conj_helper<Scalar,Scalar,NumTraits<Scalar>::IsComplex && EIGEN_LOGICAL_XOR(ConjugateLhs,  IsRowMajor), ConjugateRhs> cj0;
+  conj_helper<Scalar,Scalar,NumTraits<Scalar>::IsComplex && EIGEN_LOGICAL_XOR(ConjugateLhs, !IsRowMajor), ConjugateRhs> cj1;
   conj_helper<RealScalar,Scalar,false, ConjugateRhs> cjd;
 
-  conj_helper<Packet,Packet,NumTraits<Scalar>::IsComplex && logical_xor(ConjugateLhs,  IsRowMajor), ConjugateRhs> pcj0;
-  conj_helper<Packet,Packet,NumTraits<Scalar>::IsComplex && logical_xor(ConjugateLhs, !IsRowMajor), ConjugateRhs> pcj1;
+  conj_helper<Packet,Packet,NumTraits<Scalar>::IsComplex && EIGEN_LOGICAL_XOR(ConjugateLhs,  IsRowMajor), ConjugateRhs> pcj0;
+  conj_helper<Packet,Packet,NumTraits<Scalar>::IsComplex && EIGEN_LOGICAL_XOR(ConjugateLhs, !IsRowMajor), ConjugateRhs> pcj1;
 
   Scalar cjAlpha = ConjugateRhs ? numext::conj(alpha) : alpha;
 
@@ -183,7 +181,7 @@ struct selfadjoint_product_impl<Lhs,LhsMode,false,Rhs,0,true>
   {
     typedef typename Dest::Scalar ResScalar;
     typedef typename Rhs::Scalar RhsScalar;
-    typedef Map<Matrix<ResScalar,Dynamic,1>, plain_enum_min(AlignedMax,internal::packet_traits<ResScalar>::size)> MappedDest;
+    typedef Map<Matrix<ResScalar,Dynamic,1>, EIGEN_PLAIN_ENUM_MIN(AlignedMax,internal::packet_traits<ResScalar>::size)> MappedDest;
     
     eigen_assert(dest.rows()==a_lhs.rows() && dest.cols()==a_rhs.cols());
 

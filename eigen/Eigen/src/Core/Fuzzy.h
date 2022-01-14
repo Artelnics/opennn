@@ -11,8 +11,6 @@
 #ifndef EIGEN_FUZZY_H
 #define EIGEN_FUZZY_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal

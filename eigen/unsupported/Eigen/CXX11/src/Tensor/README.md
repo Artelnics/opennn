@@ -1466,9 +1466,9 @@ the input tensor.
     Eigen::Tensor<int, 2> a(4, 3);
     a.setValues({{0, 100, 200}, {300, 400, 500},
                  {600, 700, 800}, {900, 1000, 1100}});
-    Eigen::array<Eigen::Index, 2> offsets = {1, 0};
-    Eigen::array<Eigen::Index, 2> extents = {2, 2};
-    Eigen::Tensor<int, 2> slice = a.slice(offsets, extents);
+    Eigen::array<int, 2> offsets = {1, 0};
+    Eigen::array<int, 2> extents = {2, 2};
+    Eigen::Tensor<int, 1> slice = a.slice(offsets, extents);
     cout << "a" << endl << a << endl;
     =>
     a
@@ -1794,45 +1794,6 @@ but you can easily cast the tensors to floats to do the division:
 
 TODO
 
-## Tensor Printing
-Tensors can be printed into a stream object (e.g. `std::cout`) using different formatting options.
-
-	Eigen::Tensor<float, 3> tensor3d = {4, 3, 2};
-	tensor3d.setValues( {{{1, 2}, {3, 4}, {5, 6}}, {{7, 8}, {9, 10}, {11, 12}}, {{13, 14}, {15, 16}, {17, 18}}, {{19, 20}, {21, 22}, {23, 24}}} );
-	std::cout << tensor3d.format(Eigen::TensorIOFormat::Plain()) << std::endl;
-	==>
-	 1  2 
-	 3  4 
-	 5  6 
-	
-	 7  8 
-	 9 10
-	11 12
-	
-	13 14
-	15 16
-	17 18
-	
-	19 20
-	21 22
-	23 24
-
-
-In the example, we used the predefined format `Eigen::TensorIOFormat::Plain`.
-Here is the list of all predefined formats from which you can choose:
-- `Eigen::TensorIOFormat::Plain()` for a plain output without braces. Different submatrices are separated by a blank line.
-- `Eigen::TensorIOFormat::Numpy()` for numpy-like output.
-- `Eigen::TensorIOFormat::Native()` for a `c++` like output which can be directly copy-pasted to setValues().
-- `Eigen::TensorIOFormat::Legacy()` for a backwards compatible printing of tensors.
-
-If you send the tensor directly to the stream the default format is called which is `Eigen::IOFormats::Plain()`.
-
-You can define your own format by explicitly providing a `Eigen::TensorIOFormat` class instance. Here, you can specify:
-- The overall prefix and suffix with `std::string tenPrefix` and `std::string tenSuffix`
-- The prefix, separator and suffix for each new element, row, matrix, 3d subtensor, ... with `std::vector<std::string> prefix`, `std::vector<std::string> separator` and `std::vector<std::string> suffix`. Note that the first entry in each of the vectors refer to the last dimension of the tensor, e.g. `separator[0]` will be printed between adjacent elements,  `separator[1]` will be printed between adjacent matrices, ...
-- `char fill`: character which will be placed if the elements are aligned.
-- `int precision`
-- `int flags`: an OR-ed combination of flags, the default value is 0, the only currently available flag is `Eigen::DontAlignCols` which allows to disable the alignment of columns, resulting in faster code.
 
 ## Representation of scalar values
 

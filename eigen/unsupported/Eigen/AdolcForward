@@ -7,8 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_ADLOC_FORWARD_MODULE_H
-#define EIGEN_ADLOC_FORWARD_MODULE_H
+#ifndef EIGEN_ADLOC_FORWARD
+#define EIGEN_ADLOC_FORWARD
 
 //--------------------------------------------------------------------------------
 //
@@ -156,4 +156,4 @@ protected:
 
 }
 
-#endif // EIGEN_ADLOC_FORWARD_MODULE_H
+#endif // EIGEN_ADLOC_FORWARD

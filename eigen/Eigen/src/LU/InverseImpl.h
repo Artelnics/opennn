@@ -11,8 +11,6 @@
 #ifndef EIGEN_INVERSE_IMPL_H
 #define EIGEN_INVERSE_IMPL_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {
@@ -311,7 +309,7 @@ struct Assignment<DstXprType, Inverse<XprType>, internal::assign_op<typename Dst
     if((dst.rows()!=dstRows) || (dst.cols()!=dstCols))
       dst.resize(dstRows, dstCols);
     
-    const int Size = plain_enum_min(XprType::ColsAtCompileTime, DstXprType::ColsAtCompileTime);
+    const int Size = EIGEN_PLAIN_ENUM_MIN(XprType::ColsAtCompileTime,DstXprType::ColsAtCompileTime);
     EIGEN_ONLY_USED_FOR_DEBUG(Size);
     eigen_assert(( (Size<=1) || (Size>4) || (extract_data(src.nestedExpression())!=extract_data(dst)))
               && "Aliasing problem detected in inverse(), you need to do inverse().eval() here.");

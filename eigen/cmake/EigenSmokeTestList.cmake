@@ -61,9 +61,6 @@ set(ei_smoke_test_list
   mapped_matrix_1
   mapstaticmethods_1
   mapstride_1
-  unaryviewstride_1
-  unaryviewstride_2
-  unaryviewstride_3
   matrix_square_root_1
   meta
   minres_2
@@ -131,5 +128,4 @@ set(ei_smoke_test_list
   unalignedassert
   unalignedcount
   vectorwiseop_1
-  visitor_1
-  vectorization_logic_1)
+  visitor_1)

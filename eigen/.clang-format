@@ -1,5 +1,0 @@
----
-Language:     Cpp
-BasedOnStyle: Google
-ColumnLimit:  120
-SortIncludes: false

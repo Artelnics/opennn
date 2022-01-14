@@ -8,8 +8,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_BLOCK_H
 #define EIGEN_CXX11_TENSOR_TENSOR_BLOCK_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
 

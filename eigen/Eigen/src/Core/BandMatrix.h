@@ -10,8 +10,6 @@
 #ifndef EIGEN_BANDMATRIX_H
 #define EIGEN_BANDMATRIX_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -43,7 +41,7 @@ class BandMatrixBase : public EigenBase<Derived>
       DataRowsAtCompileTime = ((Supers!=Dynamic) && (Subs!=Dynamic))
                             ? 1 + Supers + Subs
                             : Dynamic,
-      SizeAtCompileTime = min_size_prefer_dynamic(RowsAtCompileTime,ColsAtCompileTime)
+      SizeAtCompileTime = EIGEN_SIZE_MIN_PREFER_DYNAMIC(RowsAtCompileTime,ColsAtCompileTime)
     };
 
   public:
@@ -98,8 +96,8 @@ class BandMatrixBase : public EigenBase<Derived>
         DiagonalSize = (RowsAtCompileTime==Dynamic || ColsAtCompileTime==Dynamic)
                      ? Dynamic
                      : (ActualIndex<0
-                     ? min_size_prefer_dynamic(ColsAtCompileTime, RowsAtCompileTime + ActualIndex)
-                     : min_size_prefer_dynamic(RowsAtCompileTime, ColsAtCompileTime - ActualIndex))
+                     ? EIGEN_SIZE_MIN_PREFER_DYNAMIC(ColsAtCompileTime, RowsAtCompileTime + ActualIndex)
+                     : EIGEN_SIZE_MIN_PREFER_DYNAMIC(RowsAtCompileTime, ColsAtCompileTime - ActualIndex))
       };
       typedef Block<CoefficientsType,1, DiagonalSize> BuildType;
       typedef typename internal::conditional<Conjugate,
@@ -163,12 +161,12 @@ class BandMatrixBase : public EigenBase<Derived>
   *
   * \brief Represents a rectangular matrix with a banded storage
   *
-  * \tparam Scalar_ Numeric type, i.e. float, double, int
-  * \tparam Rows_ Number of rows, or \b Dynamic
-  * \tparam Cols_ Number of columns, or \b Dynamic
-  * \tparam Supers_ Number of super diagonal
-  * \tparam Subs_ Number of sub diagonal
-  * \tparam Options_ A combination of either \b #RowMajor or \b #ColMajor, and of \b #SelfAdjoint
+  * \tparam _Scalar Numeric type, i.e. float, double, int
+  * \tparam _Rows Number of rows, or \b Dynamic
+  * \tparam _Cols Number of columns, or \b Dynamic
+  * \tparam _Supers Number of super diagonal
+  * \tparam _Subs Number of sub diagonal
+  * \tparam _Options A combination of either \b #RowMajor or \b #ColMajor, and of \b #SelfAdjoint
   *                  The former controls \ref TopicStorageOrders "storage order", and defaults to
   *                  column-major. The latter controls whether the matrix represents a selfadjoint
   *                  matrix in which case either Supers of Subs have to be null.
@@ -176,29 +174,29 @@ class BandMatrixBase : public EigenBase<Derived>
   * \sa class TridiagonalMatrix
   */
 
-template<typename Scalar_, int Rows_, int Cols_, int Supers_, int Subs_, int Options_>
-struct traits<BandMatrix<Scalar_,Rows_,Cols_,Supers_,Subs_,Options_> >
+template<typename _Scalar, int _Rows, int _Cols, int _Supers, int _Subs, int _Options>
+struct traits<BandMatrix<_Scalar,_Rows,_Cols,_Supers,_Subs,_Options> >
 {
-  typedef Scalar_ Scalar;
+  typedef _Scalar Scalar;
   typedef Dense StorageKind;
   typedef Eigen::Index StorageIndex;
   enum {
     CoeffReadCost = NumTraits<Scalar>::ReadCost,
-    RowsAtCompileTime = Rows_,
-    ColsAtCompileTime = Cols_,
-    MaxRowsAtCompileTime = Rows_,
-    MaxColsAtCompileTime = Cols_,
+    RowsAtCompileTime = _Rows,
+    ColsAtCompileTime = _Cols,
+    MaxRowsAtCompileTime = _Rows,
+    MaxColsAtCompileTime = _Cols,
     Flags = LvalueBit,
-    Supers = Supers_,
-    Subs = Subs_,
-    Options = Options_,
+    Supers = _Supers,
+    Subs = _Subs,
+    Options = _Options,
     DataRowsAtCompileTime = ((Supers!=Dynamic) && (Subs!=Dynamic)) ? 1 + Supers + Subs : Dynamic
   };
   typedef Matrix<Scalar, DataRowsAtCompileTime, ColsAtCompileTime, int(Options) & int(RowMajor) ? RowMajor : ColMajor> CoefficientsType;
 };
 
-template<typename Scalar_, int Rows, int Cols, int Supers, int Subs, int Options>
-class BandMatrix : public BandMatrixBase<BandMatrix<Scalar_,Rows,Cols,Supers,Subs,Options> >
+template<typename _Scalar, int Rows, int Cols, int Supers, int Subs, int Options>
+class BandMatrix : public BandMatrixBase<BandMatrix<_Scalar,Rows,Cols,Supers,Subs,Options> >
 {
   public:
 
@@ -235,32 +233,32 @@ class BandMatrix : public BandMatrixBase<BandMatrix<Scalar_,Rows,Cols,Supers,Sub
     internal::variable_if_dynamic<Index, Subs>   m_subs;
 };
 
-template<typename CoefficientsType_,int Rows_, int Cols_, int Supers_, int Subs_,int Options_>
+template<typename _CoefficientsType,int _Rows, int _Cols, int _Supers, int _Subs,int _Options>
 class BandMatrixWrapper;
 
-template<typename CoefficientsType_,int Rows_, int Cols_, int Supers_, int Subs_,int Options_>
-struct traits<BandMatrixWrapper<CoefficientsType_,Rows_,Cols_,Supers_,Subs_,Options_> >
+template<typename _CoefficientsType,int _Rows, int _Cols, int _Supers, int _Subs,int _Options>
+struct traits<BandMatrixWrapper<_CoefficientsType,_Rows,_Cols,_Supers,_Subs,_Options> >
 {
-  typedef typename CoefficientsType_::Scalar Scalar;
-  typedef typename CoefficientsType_::StorageKind StorageKind;
-  typedef typename CoefficientsType_::StorageIndex StorageIndex;
+  typedef typename _CoefficientsType::Scalar Scalar;
+  typedef typename _CoefficientsType::StorageKind StorageKind;
+  typedef typename _CoefficientsType::StorageIndex StorageIndex;
   enum {
-    CoeffReadCost = internal::traits<CoefficientsType_>::CoeffReadCost,
-    RowsAtCompileTime = Rows_,
-    ColsAtCompileTime = Cols_,
-    MaxRowsAtCompileTime = Rows_,
-    MaxColsAtCompileTime = Cols_,
+    CoeffReadCost = internal::traits<_CoefficientsType>::CoeffReadCost,
+    RowsAtCompileTime = _Rows,
+    ColsAtCompileTime = _Cols,
+    MaxRowsAtCompileTime = _Rows,
+    MaxColsAtCompileTime = _Cols,
     Flags = LvalueBit,
-    Supers = Supers_,
-    Subs = Subs_,
-    Options = Options_,
+    Supers = _Supers,
+    Subs = _Subs,
+    Options = _Options,
     DataRowsAtCompileTime = ((Supers!=Dynamic) && (Subs!=Dynamic)) ? 1 + Supers + Subs : Dynamic
   };
-  typedef CoefficientsType_ CoefficientsType;
+  typedef _CoefficientsType CoefficientsType;
 };
 
-template<typename CoefficientsType_,int Rows_, int Cols_, int Supers_, int Subs_,int Options_>
-class BandMatrixWrapper : public BandMatrixBase<BandMatrixWrapper<CoefficientsType_,Rows_,Cols_,Supers_,Subs_,Options_> >
+template<typename _CoefficientsType,int _Rows, int _Cols, int _Supers, int _Subs,int _Options>
+class BandMatrixWrapper : public BandMatrixBase<BandMatrixWrapper<_CoefficientsType,_Rows,_Cols,_Supers,_Subs,_Options> >
 {
   public:
 
@@ -268,7 +266,7 @@ class BandMatrixWrapper : public BandMatrixBase<BandMatrixWrapper<CoefficientsTy
     typedef typename internal::traits<BandMatrixWrapper>::CoefficientsType CoefficientsType;
     typedef typename internal::traits<BandMatrixWrapper>::StorageIndex StorageIndex;
 
-    explicit inline BandMatrixWrapper(const CoefficientsType& coeffs, Index rows=Rows_, Index cols=Cols_, Index supers=Supers_, Index subs=Subs_)
+    explicit inline BandMatrixWrapper(const CoefficientsType& coeffs, Index rows=_Rows, Index cols=_Cols, Index supers=_Supers, Index subs=_Subs)
       : m_coeffs(coeffs),
         m_rows(rows), m_supers(supers), m_subs(subs)
     {
@@ -293,9 +291,9 @@ class BandMatrixWrapper : public BandMatrixBase<BandMatrixWrapper<CoefficientsTy
   protected:
 
     const CoefficientsType& m_coeffs;
-    internal::variable_if_dynamic<Index, Rows_>   m_rows;
-    internal::variable_if_dynamic<Index, Supers_> m_supers;
-    internal::variable_if_dynamic<Index, Subs_>   m_subs;
+    internal::variable_if_dynamic<Index, _Rows>   m_rows;
+    internal::variable_if_dynamic<Index, _Supers> m_supers;
+    internal::variable_if_dynamic<Index, _Subs>   m_subs;
 };
 
 /**
@@ -332,16 +330,16 @@ class TridiagonalMatrix : public BandMatrix<Scalar,Size,Size,Options&SelfAdjoint
 
 struct BandShape {};
 
-template<typename Scalar_, int Rows_, int Cols_, int Supers_, int Subs_, int Options_>
-struct evaluator_traits<BandMatrix<Scalar_,Rows_,Cols_,Supers_,Subs_,Options_> >
-  : public evaluator_traits_base<BandMatrix<Scalar_,Rows_,Cols_,Supers_,Subs_,Options_> >
+template<typename _Scalar, int _Rows, int _Cols, int _Supers, int _Subs, int _Options>
+struct evaluator_traits<BandMatrix<_Scalar,_Rows,_Cols,_Supers,_Subs,_Options> >
+  : public evaluator_traits_base<BandMatrix<_Scalar,_Rows,_Cols,_Supers,_Subs,_Options> >
 {
   typedef BandShape Shape;
 };
 
-template<typename CoefficientsType_,int Rows_, int Cols_, int Supers_, int Subs_,int Options_>
-struct evaluator_traits<BandMatrixWrapper<CoefficientsType_,Rows_,Cols_,Supers_,Subs_,Options_> >
-  : public evaluator_traits_base<BandMatrixWrapper<CoefficientsType_,Rows_,Cols_,Supers_,Subs_,Options_> >
+template<typename _CoefficientsType,int _Rows, int _Cols, int _Supers, int _Subs,int _Options>
+struct evaluator_traits<BandMatrixWrapper<_CoefficientsType,_Rows,_Cols,_Supers,_Subs,_Options> >
+  : public evaluator_traits_base<BandMatrixWrapper<_CoefficientsType,_Rows,_Cols,_Supers,_Subs,_Options> >
 {
   typedef BandShape Shape;
 };

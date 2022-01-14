@@ -8,17 +8,8 @@ ei_set_sitename()
 ei_set_build_string()
 
 add_custom_target(buildtests)
-add_custom_target(check COMMAND "ctest" ${EIGEN_CTEST_ARGS})
+add_custom_target(check COMMAND "ctest")
 add_dependencies(check buildtests)
-
-# Convenience target for only building GPU tests.
-add_custom_target(buildtests_gpu)
-add_custom_target(check_gpu COMMAND "ctest" "--output-on-failure" 
-                                            "--no-compress-output"
-                                            "--build-no-clean"
-                                            "-T" "test"
-                                            "-L" "gpu")
-add_dependencies(check_gpu buildtests_gpu)
 
 # check whether /bin/bash exists (disabled as not used anymore)
 # find_file(EIGEN_BIN_BASH_EXISTS "/bin/bash" PATHS "/" NO_DEFAULT_PATH)

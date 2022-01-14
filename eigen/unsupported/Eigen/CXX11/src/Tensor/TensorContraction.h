@@ -10,8 +10,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_H
 #define EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \class TensorContraction
@@ -36,8 +34,8 @@ struct traits<TensorContractionOp<Dimensions, LhsXprType, RhsXprType, OutputKern
                                       typename traits<RhsXprType>::Index>::type Index;
   typedef typename LhsXprType::Nested LhsNested;
   typedef typename RhsXprType::Nested RhsNested;
-  typedef typename remove_reference<LhsNested>::type LhsNested_;
-  typedef typename remove_reference<RhsNested>::type RhsNested_;
+  typedef typename remove_reference<LhsNested>::type _LhsNested;
+  typedef typename remove_reference<RhsNested>::type _RhsNested;
 
   // From NumDims below.
   static const int NumDimensions = traits<LhsXprType>::NumDimensions + traits<RhsXprType>::NumDimensions - 2 * array_size<Dimensions>::value;
@@ -764,7 +762,7 @@ struct TensorContractionEvaluatorBase : internal::no_assignment_operator
     const Index resIncr(1);
 
     // zero out the result buffer (which must be of size at least rows * sizeof(Scalar)
-    m_device.fill(buffer, buffer + rows, Scalar(0));
+    m_device.memset(buffer, 0, rows * sizeof(Scalar));
 
     internal::general_matrix_vector_product<Index,LhsScalar,LhsMapper,ColMajor,false,RhsScalar,RhsMapper,false>::run(
         rows, cols, lhs, rhs,
@@ -871,7 +869,7 @@ struct TensorContractionEvaluatorBase : internal::no_assignment_operator
     // If a contraction kernel does not support beta, explicitly initialize
     // output buffer with zeroes.
     if (!TensorContractionKernel::HasBeta) {
-      this->m_device.fill(buffer, buffer + m * n, Scalar(0));
+      this->m_device.memset(buffer, 0, m * n * sizeof(Scalar));
     }
 
     for(Index i2=0; i2<m; i2+=mc)

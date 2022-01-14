@@ -11,8 +11,6 @@
 #ifndef EIGEN_MATRIXBASE_H
 #define EIGEN_MATRIXBASE_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \class MatrixBase
@@ -94,8 +92,8 @@ template<typename Derived> class MatrixBase
 
 #ifndef EIGEN_PARSED_BY_DOXYGEN
     /** type of the equivalent square matrix */
-    typedef Matrix<Scalar, internal::max_size_prefer_dynamic(RowsAtCompileTime, ColsAtCompileTime),
-                           internal::max_size_prefer_dynamic(RowsAtCompileTime, ColsAtCompileTime)> SquareMatrixType;
+    typedef Matrix<Scalar,EIGEN_SIZE_MAX(RowsAtCompileTime,ColsAtCompileTime),
+                          EIGEN_SIZE_MAX(RowsAtCompileTime,ColsAtCompileTime)> SquareMatrixType;
 #endif // not EIGEN_PARSED_BY_DOXYGEN
 
     /** \returns the size of the main diagonal, which is min(rows(),cols()).
@@ -139,11 +137,6 @@ template<typename Derived> class MatrixBase
       */
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     Derived& operator=(const MatrixBase& other);
-
-#if EIGEN_COMP_HAS_P0848R3
-    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE MatrixBase& operator=(
-        const MatrixBase& other) requires internal::has_trivially_copyable_storage<Derived>::value = default;
-#endif
 
     // We cannot inherit here via Base::operator= since it is causing
     // trouble with MSVC.

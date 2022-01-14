@@ -10,8 +10,6 @@
 #ifndef EIGEN_ARCH_GENERIC_PACKET_MATH_FUNCTIONS_FWD_H
 #define EIGEN_ARCH_GENERIC_PACKET_MATH_FUNCTIONS_FWD_H
 
-#include "../../InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
 
@@ -102,12 +100,6 @@ template<typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
 EIGEN_UNUSED
 Packet psqrt_complex(const Packet& a);
-
-/** \internal \returns x / y for complex types */
-template<typename Packet>
-EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
-EIGEN_UNUSED
-Packet pdiv_complex(const Packet& x, const Packet& y);
 
 template <typename Packet, int N> struct ppolevl;
 

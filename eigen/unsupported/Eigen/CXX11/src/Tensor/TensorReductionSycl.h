@@ -27,8 +27,6 @@
 
 #ifndef UNSUPPORTED_EIGEN_CXX11_SRC_TENSOR_TENSOR_REDUCTION_SYCL_HPP
 #define UNSUPPORTED_EIGEN_CXX11_SRC_TENSOR_TENSOR_REDUCTION_SYCL_HPP
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace TensorSycl {
 namespace internal {

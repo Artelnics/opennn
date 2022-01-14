@@ -34,21 +34,21 @@ class GpuHelper
         Essentially, this helper function automatically calls glMatrixMode(matrixTarget) if required
         and does a proper call to the right glMultMatrix*() function according to the scalar type
         and storage order.
-        \warning glMatrixMode() must never be called directly. If you are unsure, use forceMatrixMode().
+        \warning glMatrixMode() must never be called directly. If your're unsure, use forceMatrixMode().
         \sa Matrix, loadMatrix(), forceMatrixMode()
     */
-    template<typename Scalar, int Flags_>
-    void multMatrix(const Matrix<Scalar,4,4, Flags_, 4,4>& mat, GLenum matrixTarget);
+    template<typename Scalar, int _Flags>
+    void multMatrix(const Matrix<Scalar,4,4, _Flags, 4,4>& mat, GLenum matrixTarget);
 
     /** Load the matrix \a mat to the OpenGL matrix \a matrixTarget.
         Essentially, this helper function automatically calls glMatrixMode(matrixTarget) if required
         and does a proper call to the right glLoadMatrix*() or glLoadIdentity() function according to the scalar type
         and storage order.
-        \warning glMatrixMode() must never be called directly. If you are unsure, use forceMatrixMode().
+        \warning glMatrixMode() must never be called directly. If your're unsure, use forceMatrixMode().
         \sa Matrix, multMatrix(), forceMatrixMode()
     */
-    template<typename Scalar, int Flags_>
-    void loadMatrix(const Eigen::Matrix<Scalar,4,4, Flags_, 4,4>& mat, GLenum matrixTarget);
+    template<typename Scalar, int _Flags>
+    void loadMatrix(const Eigen::Matrix<Scalar,4,4, _Flags, 4,4>& mat, GLenum matrixTarget);
 
     template<typename Scalar, typename Derived>
     void loadMatrix(
@@ -66,8 +66,8 @@ class GpuHelper
 
     /** Push the OpenGL matrix \a matrixTarget and load \a mat.
     */
-    template<typename Scalar, int Flags_>
-    inline void pushMatrix(const Matrix<Scalar,4,4, Flags_, 4,4>& mat, GLenum matrixTarget);
+    template<typename Scalar, int _Flags>
+    inline void pushMatrix(const Matrix<Scalar,4,4, _Flags, 4,4>& mat, GLenum matrixTarget);
 
     template<typename Scalar, typename Derived>
     void pushMatrix(
@@ -113,22 +113,22 @@ extern GpuHelper gpu;
 
 /** \internal
 */
-template<bool RowMajor, int Flags_> struct GlMatrixHelper;
+template<bool RowMajor, int _Flags> struct GlMatrixHelper;
 
-template<int Flags_> struct GlMatrixHelper<false,Flags_>
+template<int _Flags> struct GlMatrixHelper<false,_Flags>
 {
-    static void loadMatrix(const Matrix<float, 4,4, Flags_, 4,4>&  mat) { glLoadMatrixf(mat.data()); }
-    static void loadMatrix(const Matrix<double,4,4, Flags_, 4,4>& mat) { glLoadMatrixd(mat.data()); }
-    static void multMatrix(const Matrix<float, 4,4, Flags_, 4,4>&  mat) { glMultMatrixf(mat.data()); }
-    static void multMatrix(const Matrix<double,4,4, Flags_, 4,4>& mat) { glMultMatrixd(mat.data()); }
+    static void loadMatrix(const Matrix<float, 4,4, _Flags, 4,4>&  mat) { glLoadMatrixf(mat.data()); }
+    static void loadMatrix(const Matrix<double,4,4, _Flags, 4,4>& mat) { glLoadMatrixd(mat.data()); }
+    static void multMatrix(const Matrix<float, 4,4, _Flags, 4,4>&  mat) { glMultMatrixf(mat.data()); }
+    static void multMatrix(const Matrix<double,4,4, _Flags, 4,4>& mat) { glMultMatrixd(mat.data()); }
 };
 
-template<int Flags_> struct GlMatrixHelper<true,Flags_>
+template<int _Flags> struct GlMatrixHelper<true,_Flags>
 {
-    static void loadMatrix(const Matrix<float, 4,4, Flags_, 4,4>&  mat) { glLoadMatrixf(mat.transpose().eval().data()); }
-    static void loadMatrix(const Matrix<double,4,4, Flags_, 4,4>& mat) { glLoadMatrixd(mat.transpose().eval().data()); }
-    static void multMatrix(const Matrix<float, 4,4, Flags_, 4,4>&  mat) { glMultMatrixf(mat.transpose().eval().data()); }
-    static void multMatrix(const Matrix<double,4,4, Flags_, 4,4>& mat) { glMultMatrixd(mat.transpose().eval().data()); }
+    static void loadMatrix(const Matrix<float, 4,4, _Flags, 4,4>&  mat) { glLoadMatrixf(mat.transpose().eval().data()); }
+    static void loadMatrix(const Matrix<double,4,4, _Flags, 4,4>& mat) { glLoadMatrixd(mat.transpose().eval().data()); }
+    static void multMatrix(const Matrix<float, 4,4, _Flags, 4,4>&  mat) { glMultMatrixf(mat.transpose().eval().data()); }
+    static void multMatrix(const Matrix<double,4,4, _Flags, 4,4>& mat) { glMultMatrixd(mat.transpose().eval().data()); }
 };
 
 inline void GpuHelper::setMatrixTarget(GLenum matrixTarget)
@@ -137,11 +137,11 @@ inline void GpuHelper::setMatrixTarget(GLenum matrixTarget)
         glMatrixMode(mCurrentMatrixTarget=matrixTarget);
 }
 
-template<typename Scalar, int Flags_>
-void GpuHelper::multMatrix(const Matrix<Scalar,4,4, Flags_, 4,4>& mat, GLenum matrixTarget)
+template<typename Scalar, int _Flags>
+void GpuHelper::multMatrix(const Matrix<Scalar,4,4, _Flags, 4,4>& mat, GLenum matrixTarget)
 {
     setMatrixTarget(matrixTarget);
-    GlMatrixHelper<Flags_&Eigen::RowMajorBit, Flags_>::multMatrix(mat);
+    GlMatrixHelper<_Flags&Eigen::RowMajorBit, _Flags>::multMatrix(mat);
 }
 
 template<typename Scalar, typename Derived>
@@ -153,11 +153,11 @@ void GpuHelper::loadMatrix(
     glLoadIdentity();
 }
 
-template<typename Scalar, int Flags_>
-void GpuHelper::loadMatrix(const Eigen::Matrix<Scalar,4,4, Flags_, 4,4>& mat, GLenum matrixTarget)
+template<typename Scalar, int _Flags>
+void GpuHelper::loadMatrix(const Eigen::Matrix<Scalar,4,4, _Flags, 4,4>& mat, GLenum matrixTarget)
 {
     setMatrixTarget(matrixTarget);
-    GlMatrixHelper<(Flags_&Eigen::RowMajorBit)!=0, Flags_>::loadMatrix(mat);
+    GlMatrixHelper<(_Flags&Eigen::RowMajorBit)!=0, _Flags>::loadMatrix(mat);
 }
 
 inline void GpuHelper::pushMatrix(GLenum matrixTarget)
@@ -166,11 +166,11 @@ inline void GpuHelper::pushMatrix(GLenum matrixTarget)
     glPushMatrix();
 }
 
-template<typename Scalar, int Flags_>
-inline void GpuHelper::pushMatrix(const Matrix<Scalar,4,4, Flags_, 4,4>& mat, GLenum matrixTarget)
+template<typename Scalar, int _Flags>
+inline void GpuHelper::pushMatrix(const Matrix<Scalar,4,4, _Flags, 4,4>& mat, GLenum matrixTarget)
 {
     pushMatrix(matrixTarget);
-    GlMatrixHelper<Flags_&Eigen::RowMajorBit,Flags_>::loadMatrix(mat);
+    GlMatrixHelper<_Flags&Eigen::RowMajorBit,_Flags>::loadMatrix(mat);
 }
 
 template<typename Scalar, typename Derived>

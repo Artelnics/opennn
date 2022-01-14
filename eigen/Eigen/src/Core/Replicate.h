@@ -10,8 +10,6 @@
 #ifndef EIGEN_REPLICATE_H
 #define EIGEN_REPLICATE_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -23,7 +21,7 @@ struct traits<Replicate<MatrixType,RowFactor,ColFactor> >
   typedef typename traits<MatrixType>::StorageKind StorageKind;
   typedef typename traits<MatrixType>::XprKind XprKind;
   typedef typename ref_selector<MatrixType>::type MatrixTypeNested;
-  typedef typename remove_reference<MatrixTypeNested>::type MatrixTypeNested_;
+  typedef typename remove_reference<MatrixTypeNested>::type _MatrixTypeNested;
   enum {
     RowsAtCompileTime = RowFactor==Dynamic || int(MatrixType::RowsAtCompileTime)==Dynamic
                       ? Dynamic
@@ -64,7 +62,7 @@ template<typename MatrixType,int RowFactor,int ColFactor> class Replicate
   : public internal::dense_xpr_base< Replicate<MatrixType,RowFactor,ColFactor> >::type
 {
     typedef typename internal::traits<Replicate>::MatrixTypeNested MatrixTypeNested;
-    typedef typename internal::traits<Replicate>::MatrixTypeNested_ MatrixTypeNested_;
+    typedef typename internal::traits<Replicate>::_MatrixTypeNested _MatrixTypeNested;
   public:
 
     typedef typename internal::dense_xpr_base<Replicate>::type Base;
@@ -96,7 +94,7 @@ template<typename MatrixType,int RowFactor,int ColFactor> class Replicate
     inline Index cols() const { return m_matrix.cols() * m_colFactor.value(); }
 
     EIGEN_DEVICE_FUNC
-    const MatrixTypeNested_& nestedExpression() const
+    const _MatrixTypeNested& nestedExpression() const
     {
       return m_matrix;
     }

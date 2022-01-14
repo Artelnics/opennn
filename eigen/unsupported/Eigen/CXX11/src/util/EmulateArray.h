@@ -10,43 +10,16 @@
 #ifndef EIGEN_EMULATE_ARRAY_H
 #define EIGEN_EMULATE_ARRAY_H
 
-// CUDA doesn't support the STL containers, so we use our own instead.
-#if defined(EIGEN_GPUCC) || defined(EIGEN_AVOID_STL_ARRAY)
+
+
+// The array class is only available starting with cxx11. Emulate our own here
+// if needed. Beware, msvc still doesn't advertise itself as a c++11 compiler!
+// Moreover, CUDA doesn't support the STL containers, so we use our own instead.
+#if (__cplusplus <= 199711L && EIGEN_COMP_MSVC < 1900) || defined(EIGEN_GPUCC) || defined(EIGEN_AVOID_STL_ARRAY)
 
 namespace Eigen {
 template <typename T, size_t n> class array {
-
  public:
-  typedef T value_type;
-  typedef T* iterator;
-  typedef const T* const_iterator;
-
-  EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE iterator begin() { return values; }
-  EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE const_iterator begin() const { return values; }
-
-  EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE iterator end() { return values + n; }
-  EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE const_iterator end() const { return values + n; }
-
-
-#if !defined(EIGEN_GPUCC)
-  typedef std::reverse_iterator<iterator> reverse_iterator;
-  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-
-  EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE reverse_iterator rbegin() { return reverse_iterator(end());}
-  EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
-
-  EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE reverse_iterator rend() { return reverse_iterator(begin()); }
-  EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
-#endif
-
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE T& operator[] (size_t index) { eigen_internal_assert(index < size()); return values[index]; }
   EIGEN_DEVICE_FUNC
@@ -66,7 +39,6 @@ template <typename T, size_t n> class array {
   EIGEN_STRONG_INLINE T& back() { return values[n-1]; }
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE const T& back() const { return values[n-1]; }
-
 
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
   static std::size_t size() { return n; }
@@ -150,11 +122,13 @@ template <typename T, size_t n> class array {
     values[7] = v8;
   }
 
+#if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
     eigen_assert(l.size() == n);
     internal::smart_copy(l.begin(), l.end(), values);
   }
+#endif
 };
 
 
@@ -198,10 +172,12 @@ template <typename T> class array<T, 0> {
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() : dummy() { }
 
+#if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC array(std::initializer_list<T> l) : dummy() {
     EIGEN_UNUSED_VARIABLE(l);
     eigen_assert(l.size() == 0);
   }
+#endif
 
  private:
   T dummy;
@@ -250,7 +226,6 @@ template<class T, std::size_t N> struct array_size<const array<T,N>& > {
 
 // The compiler supports c++11, and we're not targeting cuda: use std::array as Eigen::array
 #include <array>
-
 namespace Eigen {
 
 template <typename T, std::size_t N> using array = std::array<T, N>;

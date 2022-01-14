@@ -11,8 +11,6 @@
 #ifndef EIGEN_COMPLEX32_ALTIVEC_H
 #define EIGEN_COMPLEX32_ALTIVEC_H
 
-#include "../../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -129,20 +127,20 @@ template<> EIGEN_STRONG_INLINE Packet2cf ploaddup<Packet2cf>(const std::complex<
 template<> EIGEN_STRONG_INLINE void pstore <std::complex<float> >(std::complex<float> *   to, const Packet2cf& from) { pstore((float*)to, from.v); }
 template<> EIGEN_STRONG_INLINE void pstoreu<std::complex<float> >(std::complex<float> *   to, const Packet2cf& from) { pstoreu((float*)to, from.v); }
 
-EIGEN_STRONG_INLINE Packet2cf pload2(const std::complex<float>& from0, const std::complex<float>& from1)
+EIGEN_STRONG_INLINE Packet2cf pload2(const std::complex<float>* from0, const std::complex<float>* from1)
 {
   Packet4f res0, res1;
 #ifdef __VSX__
-  __asm__ ("lxsdx %x0,%y1" : "=wa" (res0) : "Z" (from0));
-  __asm__ ("lxsdx %x0,%y1" : "=wa" (res1) : "Z" (from1));
+  __asm__ ("lxsdx %x0,%y1" : "=wa" (res0) : "Z" (*from0));
+  __asm__ ("lxsdx %x0,%y1" : "=wa" (res1) : "Z" (*from1));
 #ifdef _BIG_ENDIAN
   __asm__ ("xxpermdi %x0, %x1, %x2, 0" : "=wa" (res0) : "wa" (res0), "wa" (res1));
 #else
   __asm__ ("xxpermdi %x0, %x2, %x1, 0" : "=wa" (res0) : "wa" (res0), "wa" (res1));
 #endif
 #else
-  *reinterpret_cast<std::complex<float> *>(&res0) = from0;
-  *reinterpret_cast<std::complex<float> *>(&res1) = from1;
+  *reinterpret_cast<std::complex<float> *>(&res0) = *from0;
+  *reinterpret_cast<std::complex<float> *>(&res1) = *from1;
   res0 = vec_perm(res0, res1, p16uc_TRANSPOSE64_HI);
 #endif
   return Packet2cf(res0);
@@ -212,7 +210,10 @@ EIGEN_MAKE_CONJ_HELPER_CPLX_REAL(Packet2cf,Packet4f)
 
 template<> EIGEN_STRONG_INLINE Packet2cf pdiv<Packet2cf>(const Packet2cf& a, const Packet2cf& b)
 {
-  return pdiv_complex(a, b);
+  // TODO optimize it for AltiVec
+  Packet2cf res = pmul(a, pconj(b));
+  Packet4f s = pmul<Packet4f>(b.v, b.v);
+  return Packet2cf(pdiv(res.v, padd<Packet4f>(s, vec_perm(s, s, p16uc_COMPLEX32_REV))));
 }
 
 template<> EIGEN_STRONG_INLINE Packet2cf pcplxflip<Packet2cf>(const Packet2cf& x)
@@ -374,7 +375,10 @@ EIGEN_MAKE_CONJ_HELPER_CPLX_REAL(Packet1cd,Packet2d)
 
 template<> EIGEN_STRONG_INLINE Packet1cd pdiv<Packet1cd>(const Packet1cd& a, const Packet1cd& b)
 {
-  return pdiv_complex(a, b);
+  // TODO optimize it for AltiVec
+  Packet1cd res = pmul(a,pconj(b));
+  Packet2d s = pmul<Packet2d>(b.v, b.v);
+  return Packet1cd(pdiv(res.v, padd<Packet2d>(s, vec_perm(s, s, p16uc_REVERSE64))));
 }
 
 EIGEN_STRONG_INLINE Packet1cd pcplxflip/*<Packet1cd>*/(const Packet1cd& x)

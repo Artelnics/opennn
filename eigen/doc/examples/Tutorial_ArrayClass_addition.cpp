@@ -1,10 +1,13 @@
 #include <Eigen/Dense>
 #include <iostream>
 
+using namespace Eigen;
+using namespace std;
+
 int main()
 {
-  Eigen::ArrayXXf a(3,3);
-  Eigen::ArrayXXf b(3,3);
+  ArrayXXf a(3,3);
+  ArrayXXf b(3,3);
   a << 1,2,3,
        4,5,6,
        7,8,9;
@@ -13,8 +16,8 @@ int main()
        1,2,3;
        
   // Adding two arrays
-  std::cout << "a + b = " << std::endl << a + b << std::endl << std::endl;
+  cout << "a + b = " << endl << a + b << endl << endl;
 
   // Subtracting a scalar from an array
-  std::cout << "a - 2 = " << std::endl << a - 2 << std::endl;
+  cout << "a - 2 = " << endl << a - 2 << endl;
 }

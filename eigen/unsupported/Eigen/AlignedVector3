@@ -7,8 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_ALIGNED_VECTOR3_MODULE_H
-#define EIGEN_ALIGNED_VECTOR3_MODULE_H
+#ifndef EIGEN_ALIGNED_VECTOR3
+#define EIGEN_ALIGNED_VECTOR3
 
 #include "../../Eigen/Geometry"
 
@@ -37,23 +37,23 @@ namespace Eigen {
   *
   */
 // TODO specialize Cwise
-template<typename Scalar_> class AlignedVector3;
+template<typename _Scalar> class AlignedVector3;
 
 namespace internal {
-template<typename Scalar_> struct traits<AlignedVector3<Scalar_> >
-  : traits<Matrix<Scalar_,3,1,0,4,1> >
+template<typename _Scalar> struct traits<AlignedVector3<_Scalar> >
+  : traits<Matrix<_Scalar,3,1,0,4,1> >
 {
 };
 }
 
-template<typename Scalar_> class AlignedVector3
-  : public MatrixBase<AlignedVector3<Scalar_> >
+template<typename _Scalar> class AlignedVector3
+  : public MatrixBase<AlignedVector3<_Scalar> >
 {
-    typedef Matrix<Scalar_,4,1> CoeffType;
+    typedef Matrix<_Scalar,4,1> CoeffType;
     CoeffType m_coeffs;
   public:
 
-    typedef MatrixBase<AlignedVector3<Scalar_> > Base;
+    typedef MatrixBase<AlignedVector3<_Scalar> > Base;	
     EIGEN_DENSE_PUBLIC_INTERFACE(AlignedVector3)
     using Base::operator*;
 
@@ -207,10 +207,10 @@ template<typename Scalar_> class AlignedVector3
 
 namespace internal {
 
-template<typename Scalar_>
-struct eval<AlignedVector3<Scalar_>, Dense>
+template<typename _Scalar>
+struct eval<AlignedVector3<_Scalar>, Dense>
 {
- typedef const AlignedVector3<Scalar_>& type;
+ typedef const AlignedVector3<_Scalar>& type;
 };
 
 template<typename Scalar>
@@ -231,4 +231,4 @@ struct evaluator<AlignedVector3<Scalar> >
 
 #include "../../Eigen/src/Core/util/ReenableStupidWarnings.h"
 
-#endif // EIGEN_ALIGNED_VECTOR3_MODULE_H
+#endif // EIGEN_ALIGNED_VECTOR3

@@ -10,8 +10,6 @@
 #ifndef EIGEN_TYPE_CASTING_SVE_H
 #define EIGEN_TYPE_CASTING_SVE_H
 
-#include "../../InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
 

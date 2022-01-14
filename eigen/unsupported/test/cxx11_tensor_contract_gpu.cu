@@ -25,6 +25,10 @@ typedef Tensor<float, 1>::DimensionPair DimPair;
 template<int DataLayout>
 void test_gpu_contraction(int m_size, int k_size, int n_size)
 {
+  std::cout << "Testing for (" << m_size << "," << k_size << "," << n_size << ")" << std::endl;
+  // with these dimensions, the output has 300 * 140 elements, which is
+  // more than 30 * 1024, which is the number of threads in blocks on
+  // a 15 SM GK110 GPU
   Tensor<float, 2, DataLayout> t_left(m_size, k_size);
   Tensor<float, 2, DataLayout> t_right(k_size, n_size);
   Tensor<float, 2, DataLayout> t_result(m_size, n_size);
@@ -167,45 +171,25 @@ void test_gpu_contraction_n() {
 
 template<int DataLayout>
 void test_gpu_contraction_sizes() {
-  int m_sizes[3][5] = {{ 31,  39,   63,   64,   65},
-                       {127, 129,  255,  257 , 511},
-                       {512, 513, 1023, 1024, 1025}};
+  int m_sizes[] = { 31,  39,   63,   64,   65,
+                   127, 129,  255,  257 , 511,
+                   512, 513, 1023, 1024, 1025};
 
-  int n_sizes[3][5] = {{ 31,  39,   63,   64,   65},
-                       {127, 129,  255,  257,  511},
-                       {512, 513, 1023, 1024, 1025}};
+  int n_sizes[] = { 31,  39,   63,   64,   65,
+                   127, 129,  255,  257,  511,
+                   512, 513, 1023, 1024, 1025};
 
-  int k_sizes[3][6] = {{ 31,   39,  63,  64,   65,   95},
-                       { 96, 127, 129,  255,  257,  511},
-                       {512, 513, 725, 1023, 1024, 1025}};
+  int k_sizes[] = {  31,   39,  63,  64,   65,
+                     95,   96, 127, 129,  255,
+                    257,  511, 512, 513, 1023,
+                   1024, 1025};
 
-  // Some selection of specific cases.
-  //  - m changes rows each iteration
-  //  - n changes rows each 3 iterations
-  //  - k changes rows each 9 iterations
-  //  - within a row, advance once column each iteration
-  const int m_cols = 5;
-  const int n_cols = 5;
-  const int k_cols = 6;
-  int m_offset = 0;
-  int n_offset = 1;
-  int k_offset = 2;
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      for (int l = 0; l < 3; ++l) {
-        int m = m_sizes[l][m_offset];
-        int n = n_sizes[j][n_offset];
-        int k = k_sizes[i][k_offset];
-        test_gpu_contraction<DataLayout>(m, n, k);
-        n_offset = (n_offset + 1) % n_cols;
-        k_offset = (k_offset + 1) % k_cols;
-      }
-      m_offset = (m_offset + 1) % m_cols;
-      if (j < 2) {
-        n_offset = (n_offset + n_cols - 3) % n_cols;  // Rewind 3.
+  for (int i = 0; i < 15; i++) {
+    for (int j = 0; j < 15; j++) {
+      for (int k = 0; k < 17; k++) {
+        test_gpu_contraction<DataLayout>(m_sizes[i], n_sizes[j], k_sizes[k]);
       }
     }
-    k_offset = (k_offset + 2 * k_cols - 9) % k_cols;  // Rewind 9.
   }
 }
 

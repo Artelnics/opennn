@@ -10,8 +10,6 @@
 #ifndef EIGEN_DENSECOEFFSBASE_H
 #define EIGEN_DENSECOEFFSBASE_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -45,7 +43,7 @@ class DenseCoeffsBase<Derived,ReadOnlyAccessors> : public EigenBase<Derived>
     // - This is the return type of the coeff() method.
     // - The LvalueBit means exactly that we can offer a coeffRef() method, which means exactly that we can get references
     // to coeffs, which means exactly that we can have coeff() return a const reference (as opposed to returning a value).
-    // - The is_arithmetic check is required since "const int", "const double", etc. will cause warnings on some systems
+    // - The is_artihmetic check is required since "const int", "const double", etc. will cause warnings on some systems
     // while the declaration of "const T", where T is a non arithmetic type does not. Always returning "const Scalar&" is
     // not possible, since the underlying expressions might not offer a valid address the reference could be referring to.
     typedef typename internal::conditional<bool(internal::traits<Derived>::Flags&LvalueBit),

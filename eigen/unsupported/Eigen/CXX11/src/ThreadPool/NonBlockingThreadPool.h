@@ -10,8 +10,6 @@
 #ifndef EIGEN_CXX11_THREADPOOL_NONBLOCKING_THREAD_POOL_H
 #define EIGEN_CXX11_THREADPOOL_NONBLOCKING_THREAD_POOL_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 template <typename Environment>

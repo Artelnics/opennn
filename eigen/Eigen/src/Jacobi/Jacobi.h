@@ -11,8 +11,6 @@
 #ifndef EIGEN_JACOBI_H
 #define EIGEN_JACOBI_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \ingroup Jacobi_Module
@@ -474,7 +472,7 @@ void /*EIGEN_DONT_INLINE*/ apply_rotation_in_the_plane(DenseBase<VectorX>& xpr_x
   apply_rotation_in_the_plane_selector<
     Scalar,OtherScalar,
     VectorX::SizeAtCompileTime,
-    plain_enum_min(evaluator<VectorX>::Alignment, evaluator<VectorY>::Alignment),
+    EIGEN_PLAIN_ENUM_MIN(evaluator<VectorX>::Alignment, evaluator<VectorY>::Alignment),
     Vectorizable>::run(x,incrx,y,incry,size,c,s);
 }
 

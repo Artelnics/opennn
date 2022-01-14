@@ -33,8 +33,6 @@
 #include <set>
 #include <unordered_map>
 
-#include "../../InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace TensorSycl {
 namespace internal {
@@ -168,7 +166,7 @@ class PointerMapper {
   /**
    * Obtain the insertion point in the pointer map for
    * a pointer of the given size.
-   * \param requiredSize Size attempted to reclaim
+   * \param requiredSize Size attemted to reclaim
    */
   typename pointerMap_t::iterator get_insertion_point(size_t requiredSize) {
     typename pointerMap_t::iterator retVal;

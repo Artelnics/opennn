@@ -10,8 +10,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_FUNCTORS_H
 #define EIGEN_CXX11_TENSOR_TENSOR_FUNCTORS_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
 
@@ -369,7 +367,7 @@ struct reducer_traits<OrReducer, Device> {
 
 // Argmin/Argmax reducers.  Returns the first occurrence if multiple locations
 // contain the same min/max value.
-template <typename T> struct ArgMaxPairReducer
+template <typename T> struct ArgMaxTupleReducer
 {
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const T t, T* accum) const {
     if (t.second < accum->second) {
@@ -387,7 +385,7 @@ template <typename T> struct ArgMaxPairReducer
 };
 
 template <typename T, typename Device>
-struct reducer_traits<ArgMaxPairReducer<T>, Device> {
+struct reducer_traits<ArgMaxTupleReducer<T>, Device> {
   enum {
     Cost = NumTraits<T>::AddCost,
     PacketAccess = false,
@@ -397,7 +395,7 @@ struct reducer_traits<ArgMaxPairReducer<T>, Device> {
 };
 
 
-template <typename T> struct ArgMinPairReducer
+template <typename T> struct ArgMinTupleReducer
 {
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const T& t, T* accum) const {
     if (t.second > accum->second) {
@@ -415,7 +413,7 @@ template <typename T> struct ArgMinPairReducer
 };
 
 template <typename T, typename Device>
-struct reducer_traits<ArgMinPairReducer<T>, Device> {
+struct reducer_traits<ArgMinTupleReducer<T>, Device> {
   enum {
     Cost = NumTraits<T>::AddCost,
     PacketAccess = false,

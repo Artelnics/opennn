@@ -10,8 +10,6 @@
 #ifndef EIGEN_KLUSUPPORT_H
 #define EIGEN_KLUSUPPORT_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /* TODO extract L, extract U, compute det, etc... */
@@ -25,7 +23,7 @@ namespace Eigen {
   *
   * \warning The input matrix A should be in a \b compressed and \b column-major form.
   * Otherwise an expensive copy will be made. You can call the inexpensive makeCompressed() to get a compressed matrix.
-  * \tparam MatrixType_ the type of the sparse matrix A, it must be a SparseMatrix<>
+  * \tparam _MatrixType the type of the sparse matrix A, it must be a SparseMatrix<>
   *
   * \implsparsesolverconcept
   *
@@ -58,15 +56,15 @@ inline klu_numeric* klu_factor(int Ap[], int Ai[], std::complex<double> Ax[], kl
 }
 
 
-template<typename MatrixType_>
-class KLU : public SparseSolverBase<KLU<MatrixType_> >
+template<typename _MatrixType>
+class KLU : public SparseSolverBase<KLU<_MatrixType> >
 {
   protected:
-    typedef SparseSolverBase<KLU<MatrixType_> > Base;
+    typedef SparseSolverBase<KLU<_MatrixType> > Base;
     using Base::m_isInitialized;
   public:
     using Base::_solve_impl;
-    typedef MatrixType_ MatrixType;
+    typedef _MatrixType MatrixType;
     typedef typename MatrixType::Scalar Scalar;
     typedef typename MatrixType::RealScalar RealScalar;
     typedef typename MatrixType::StorageIndex StorageIndex;

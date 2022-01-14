@@ -10,8 +10,6 @@
 #ifndef EIGEN_SPARSEPRODUCT_H
 #define EIGEN_SPARSEPRODUCT_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 /** \returns an expression of the product of two sparse matrices.
@@ -167,9 +165,9 @@ protected:
 } // end namespace internal
 
 // sparse matrix = sparse-product (can be sparse*sparse, sparse*perm, etc.)
-template<typename Scalar, int Options_, typename StorageIndex_>
+template<typename Scalar, int _Options, typename _StorageIndex>
 template<typename Lhs, typename Rhs>
-SparseMatrix<Scalar,Options_,StorageIndex_>& SparseMatrix<Scalar,Options_,StorageIndex_>::operator=(const Product<Lhs,Rhs,AliasFreeProduct>& src)
+SparseMatrix<Scalar,_Options,_StorageIndex>& SparseMatrix<Scalar,_Options,_StorageIndex>::operator=(const Product<Lhs,Rhs,AliasFreeProduct>& src)
 {
   // std::cout << "in Assignment : " << DstOptions << "\n";
   SparseMatrix dst(src.rows(),src.cols());

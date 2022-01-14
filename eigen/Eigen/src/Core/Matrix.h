@@ -11,39 +11,37 @@
 #ifndef EIGEN_MATRIX_H
 #define EIGEN_MATRIX_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
-template<typename Scalar_, int Rows_, int Cols_, int Options_, int MaxRows_, int MaxCols_>
-struct traits<Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> >
+template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+struct traits<Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> >
 {
 private:
-  enum { size = internal::size_at_compile_time<Rows_,Cols_>::ret };
-  typedef typename find_best_packet<Scalar_,size>::type PacketScalar;
+  enum { size = internal::size_at_compile_time<_Rows,_Cols>::ret };
+  typedef typename find_best_packet<_Scalar,size>::type PacketScalar;
   enum {
-      row_major_bit = Options_&RowMajor ? RowMajorBit : 0,
-      is_dynamic_size_storage = MaxRows_==Dynamic || MaxCols_==Dynamic,
-      max_size = is_dynamic_size_storage ? Dynamic : MaxRows_*MaxCols_,
-      default_alignment = compute_default_alignment<Scalar_,max_size>::value,
-      actual_alignment = ((Options_&DontAlign)==0) ? default_alignment : 0,
+      row_major_bit = _Options&RowMajor ? RowMajorBit : 0,
+      is_dynamic_size_storage = _MaxRows==Dynamic || _MaxCols==Dynamic,
+      max_size = is_dynamic_size_storage ? Dynamic : _MaxRows*_MaxCols,
+      default_alignment = compute_default_alignment<_Scalar,max_size>::value,
+      actual_alignment = ((_Options&DontAlign)==0) ? default_alignment : 0,
       required_alignment = unpacket_traits<PacketScalar>::alignment,
-      packet_access_bit = (packet_traits<Scalar_>::Vectorizable && (EIGEN_UNALIGNED_VECTORIZE || (actual_alignment>=required_alignment))) ? PacketAccessBit : 0
+      packet_access_bit = (packet_traits<_Scalar>::Vectorizable && (EIGEN_UNALIGNED_VECTORIZE || (actual_alignment>=required_alignment))) ? PacketAccessBit : 0
     };
 
 public:
-  typedef Scalar_ Scalar;
+  typedef _Scalar Scalar;
   typedef Dense StorageKind;
   typedef Eigen::Index StorageIndex;
   typedef MatrixXpr XprKind;
   enum {
-    RowsAtCompileTime = Rows_,
-    ColsAtCompileTime = Cols_,
-    MaxRowsAtCompileTime = MaxRows_,
-    MaxColsAtCompileTime = MaxCols_,
-    Flags = compute_matrix_flags<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>::ret,
-    Options = Options_,
+    RowsAtCompileTime = _Rows,
+    ColsAtCompileTime = _Cols,
+    MaxRowsAtCompileTime = _MaxRows,
+    MaxColsAtCompileTime = _MaxCols,
+    Flags = compute_matrix_flags<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::ret,
+    Options = _Options,
     InnerStrideAtCompileTime = 1,
     OuterStrideAtCompileTime = (Options&RowMajor) ? ColsAtCompileTime : RowsAtCompileTime,
 
@@ -51,14 +49,6 @@ public:
     EvaluatorFlags = LinearAccessBit | DirectAccessBit | packet_access_bit | row_major_bit,
     Alignment = actual_alignment
   };
-};
-
-template<typename Scalar_, int Rows_, int Cols_, int Options_, int MaxRows_, int MaxCols_>
-struct has_trivially_copyable_storage<Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> >
-{
-  // Must be identical to the type of PlainObjectBase::m_storage.
-  typedef DenseStorage<Scalar_, internal::size_at_compile_time<MaxRows_, MaxCols_>::ret, Rows_, Cols_, Options_> Storage;
-  static const bool value = std::is_trivially_copyable<Storage>::value;
 };
 }
 
@@ -73,18 +63,18 @@ struct has_trivially_copyable_storage<Matrix<Scalar_, Rows_, Cols_, Options_, Ma
   * The %Matrix class encompasses \em both fixed-size and dynamic-size objects (\ref fixedsize "note").
   *
   * The first three template parameters are required:
-  * \tparam Scalar_ Numeric type, e.g. float, double, int or std::complex<float>.
+  * \tparam _Scalar Numeric type, e.g. float, double, int or std::complex<float>.
   *                 User defined scalar types are supported as well (see \ref user_defined_scalars "here").
-  * \tparam Rows_ Number of rows, or \b Dynamic
-  * \tparam Cols_ Number of columns, or \b Dynamic
+  * \tparam _Rows Number of rows, or \b Dynamic
+  * \tparam _Cols Number of columns, or \b Dynamic
   *
   * The remaining template parameters are optional -- in most cases you don't have to worry about them.
-  * \tparam Options_ A combination of either \b #RowMajor or \b #ColMajor, and of either
+  * \tparam _Options A combination of either \b #RowMajor or \b #ColMajor, and of either
   *                 \b #AutoAlign or \b #DontAlign.
   *                 The former controls \ref TopicStorageOrders "storage order", and defaults to column-major. The latter controls alignment, which is required
   *                 for vectorization. It defaults to aligning matrices except for fixed sizes that aren't a multiple of the packet size.
-  * \tparam MaxRows_ Maximum number of rows. Defaults to \a Rows_ (\ref maxrows "note").
-  * \tparam MaxCols_ Maximum number of columns. Defaults to \a Cols_ (\ref maxrows "note").
+  * \tparam _MaxRows Maximum number of rows. Defaults to \a _Rows (\ref maxrows "note").
+  * \tparam _MaxCols Maximum number of columns. Defaults to \a _Cols (\ref maxrows "note").
   *
   * Eigen provides a number of typedefs covering the usual cases. Here are some examples:
   *
@@ -138,12 +128,12 @@ struct has_trivially_copyable_storage<Matrix<Scalar_, Rows_, Cols_, Options_, Ma
   * Note that \em dense matrices, be they Fixed-size or Dynamic-size, <em>do not</em> expand dynamically in the sense of a std::map.
   * If you want this behavior, see the Sparse module.</dd>
   *
-  * <dt><b>\anchor maxrows MaxRows_ and MaxCols_:</b></dt>
+  * <dt><b>\anchor maxrows _MaxRows and _MaxCols:</b></dt>
   * <dd>In most cases, one just leaves these parameters to the default values.
   * These parameters mean the maximum size of rows and columns that the matrix may have. They are useful in cases
   * when the exact numbers of rows and columns are not known are compile-time, but it is known at compile-time that they cannot
-  * exceed a certain value. This happens when taking dynamic-size blocks inside fixed-size matrices: in this case MaxRows_ and MaxCols_
-  * are the dimensions of the original matrix, while Rows_ and Cols_ are Dynamic.</dd>
+  * exceed a certain value. This happens when taking dynamic-size blocks inside fixed-size matrices: in this case _MaxRows and _MaxCols
+  * are the dimensions of the original matrix, while _Rows and _Cols are Dynamic.</dd>
   * </dl>
   *
   * <i><b>ABI and storage layout</b></i>
@@ -184,9 +174,9 @@ struct has_trivially_copyable_storage<Matrix<Scalar_, Rows_, Cols_, Options_, Ma
   * \ref TopicStorageOrders
   */
 
-template<typename Scalar_, int Rows_, int Cols_, int Options_, int MaxRows_, int MaxCols_>
+template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
 class Matrix
-  : public PlainObjectBase<Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> >
+  : public PlainObjectBase<Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> >
 {
   public:
 
@@ -195,7 +185,7 @@ class Matrix
       */
     typedef PlainObjectBase<Matrix> Base;
 
-    enum { Options = Options_ };
+    enum { Options = _Options };
 
     EIGEN_DENSE_PUBLIC_INTERFACE(Matrix)
 
@@ -217,12 +207,6 @@ class Matrix
     {
       return Base::_set(other);
     }
-
-#if EIGEN_COMP_HAS_P0848R3
-    EIGEN_DEVICE_FUNC
-    EIGEN_STRONG_INLINE Matrix& operator=(
-        const Matrix& other) requires internal::has_trivially_copyable_storage<Matrix>::value = default;
-#endif
 
     /** \internal
       * \brief Copies the value of the expression \a other into \c *this with automatic resizing.
@@ -274,6 +258,7 @@ class Matrix
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     Matrix() : Base()
     {
+      Base::_check_template_params();
       EIGEN_INITIALIZE_COEFFS_IF_THAT_OPTION_IS_ENABLED
     }
 
@@ -281,25 +266,24 @@ class Matrix
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     explicit Matrix(internal::constructor_without_unaligned_array_assert)
       : Base(internal::constructor_without_unaligned_array_assert())
-    { EIGEN_INITIALIZE_COEFFS_IF_THAT_OPTION_IS_ENABLED }
+    { Base::_check_template_params(); EIGEN_INITIALIZE_COEFFS_IF_THAT_OPTION_IS_ENABLED }
 
+#if EIGEN_HAS_RVALUE_REFERENCES
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     Matrix(Matrix&& other) EIGEN_NOEXCEPT_IF(std::is_nothrow_move_constructible<Scalar>::value)
-      : Base(std::move(other)) {}
+      : Base(std::move(other))
+    {
+      Base::_check_template_params();
+    }
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     Matrix& operator=(Matrix&& other) EIGEN_NOEXCEPT_IF(std::is_nothrow_move_assignable<Scalar>::value)
     {
       Base::operator=(std::move(other));
       return *this;
     }
-
-#if EIGEN_COMP_HAS_P0848R3
-    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Matrix(Matrix&& other) EIGEN_NOEXCEPT
-        requires internal::has_trivially_copyable_storage<Matrix>::value = default;
-    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Matrix& operator=(Matrix&& other) EIGEN_NOEXCEPT
-        requires internal::has_trivially_copyable_storage<Matrix>::value = default;
 #endif
 
+#if EIGEN_HAS_CXX11
     /** \copydoc PlainObjectBase(const Scalar&, const Scalar&, const Scalar&,  const Scalar&, const ArgTypes&... args)
      *
      * Example: \include Matrix_variadic_ctor_cxx11.cpp
@@ -335,6 +319,7 @@ class Matrix
       */
     EIGEN_DEVICE_FUNC
     explicit EIGEN_STRONG_INLINE Matrix(const std::initializer_list<std::initializer_list<Scalar>>& list) : Base(list) {}
+#endif // end EIGEN_HAS_CXX11
 
 #ifndef EIGEN_PARSED_BY_DOXYGEN
 
@@ -343,6 +328,7 @@ class Matrix
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     explicit Matrix(const T& x)
     {
+      Base::_check_template_params();
       Base::template _init1<T>(x);
     }
 
@@ -350,6 +336,7 @@ class Matrix
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     Matrix(const T0& x, const T1& y)
     {
+      Base::_check_template_params();
       Base::template _init2<T0,T1>(x, y);
     }
 
@@ -401,6 +388,7 @@ class Matrix
     EIGEN_DEVICE_FUNC
     EIGEN_STRONG_INLINE Matrix(const Scalar& x, const Scalar& y, const Scalar& z)
     {
+      Base::_check_template_params();
       EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Matrix, 3)
       m_storage.data()[0] = x;
       m_storage.data()[1] = y;
@@ -412,6 +400,7 @@ class Matrix
     EIGEN_DEVICE_FUNC
     EIGEN_STRONG_INLINE Matrix(const Scalar& x, const Scalar& y, const Scalar& z, const Scalar& w)
     {
+      Base::_check_template_params();
       EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Matrix, 4)
       m_storage.data()[0] = x;
       m_storage.data()[1] = y;
@@ -424,12 +413,6 @@ class Matrix
     EIGEN_DEVICE_FUNC
     EIGEN_STRONG_INLINE Matrix(const Matrix& other) : Base(other)
     { }
-
-#if EIGEN_COMP_HAS_P0848R3
-    EIGEN_DEVICE_FUNC
-    EIGEN_STRONG_INLINE Matrix(const Matrix& other) requires internal::has_trivially_copyable_storage<Matrix>::value =
-        default;
-#endif
 
     /** \brief Copy constructor for generic expressions.
       * \sa MatrixBase::operator=(const EigenBase<OtherDerived>&)
@@ -528,6 +511,8 @@ EIGEN_MAKE_TYPEDEFS_ALL_SIZES(std::complex<double>, cd)
 #undef EIGEN_MAKE_TYPEDEFS
 #undef EIGEN_MAKE_FIXED_TYPEDEFS
 
+#if EIGEN_HAS_CXX11
+
 #define EIGEN_MAKE_TYPEDEFS(Size, SizeSuffix)                     \
 /** \ingroup matrixtypedefs */                                    \
 /** \brief \cpp11 */                                              \
@@ -572,6 +557,8 @@ using RowVector = Matrix<Type, 1, Size>;
 
 #undef EIGEN_MAKE_TYPEDEFS
 #undef EIGEN_MAKE_FIXED_TYPEDEFS
+
+#endif // EIGEN_HAS_CXX11
 
 } // end namespace Eigen
 

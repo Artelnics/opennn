@@ -11,8 +11,6 @@
 #ifndef EIGEN_GEOMETRY_SIMD_H
 #define EIGEN_GEOMETRY_SIMD_H
 
-#include "../InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {

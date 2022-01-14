@@ -10,8 +10,6 @@
 #ifndef EIGEN_PRODUCT_H
 #define EIGEN_PRODUCT_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 template<typename Lhs, typename Rhs, int Option, typename StorageKind> class ProductImpl;
@@ -42,7 +40,7 @@ struct traits<Product<Lhs, Rhs, Option> >
     MaxColsAtCompileTime = RhsTraits::MaxColsAtCompileTime,
 
     // FIXME: only needed by GeneralMatrixMatrixTriangular
-    InnerSize = min_size_prefer_fixed(LhsTraits::ColsAtCompileTime, RhsTraits::RowsAtCompileTime),
+    InnerSize = EIGEN_SIZE_MIN_PREFER_FIXED(LhsTraits::ColsAtCompileTime, RhsTraits::RowsAtCompileTime),
 
     // The storage order is somewhat arbitrary here. The correct one will be determined through the evaluator.
     Flags = (MaxRowsAtCompileTime==1 && MaxColsAtCompileTime!=1) ? RowMajorBit
@@ -60,8 +58,8 @@ struct traits<Product<Lhs, Rhs, Option> >
   *
   * \brief Expression of the product of two arbitrary matrices or vectors
   *
-  * \tparam Lhs_ the type of the left-hand side expression
-  * \tparam Rhs_ the type of the right-hand side expression
+  * \tparam _Lhs the type of the left-hand side expression
+  * \tparam _Rhs the type of the right-hand side expression
   *
   * This class represents an expression of the product of two arbitrary matrices.
   *
@@ -69,16 +67,16 @@ struct traits<Product<Lhs, Rhs, Option> >
   * \tparam Option     can be DefaultProduct, AliasFreeProduct, or LazyProduct
   *
   */
-template<typename Lhs_, typename Rhs_, int Option>
-class Product : public ProductImpl<Lhs_,Rhs_,Option,
-                                   typename internal::product_promote_storage_type<typename internal::traits<Lhs_>::StorageKind,
-                                                                                   typename internal::traits<Rhs_>::StorageKind,
-                                                                                   internal::product_type<Lhs_,Rhs_>::ret>::ret>
+template<typename _Lhs, typename _Rhs, int Option>
+class Product : public ProductImpl<_Lhs,_Rhs,Option,
+                                   typename internal::product_promote_storage_type<typename internal::traits<_Lhs>::StorageKind,
+                                                                                   typename internal::traits<_Rhs>::StorageKind,
+                                                                                   internal::product_type<_Lhs,_Rhs>::ret>::ret>
 {
   public:
 
-    typedef Lhs_ Lhs;
-    typedef Rhs_ Rhs;
+    typedef _Lhs Lhs;
+    typedef _Rhs Rhs;
 
     typedef typename ProductImpl<
         Lhs, Rhs, Option,

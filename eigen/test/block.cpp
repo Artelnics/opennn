@@ -7,6 +7,7 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#define EIGEN_NO_STATIC_ASSERT // otherwise we fail at compile time on unused paths
 #include "main.h"
 
 template<typename MatrixType, typename Index, typename Scalar>
@@ -34,20 +35,6 @@ typename internal::enable_if<internal::is_same<T1,T2>::value,bool>::type
 is_same_block(const T1& a, const T2& b)
 {
   return a.isApprox(b);
-}
-
-template <typename MatrixType>
-typename internal::enable_if<((MatrixType::Flags&RowMajorBit)==0),void>::type
-check_left_top(const MatrixType& m, Index r, Index c,
-               Index rows, Index /*unused*/) {
-  VERIFY_IS_EQUAL(m.leftCols(c).coeff(r+c*rows), m(r,c));
-}
-
-template <typename MatrixType>
-typename internal::enable_if<((MatrixType::Flags&RowMajorBit)!=0),void>::type
-check_left_top(const MatrixType& m,  Index r, Index c,
-               Index /*unused*/, Index cols) {
-  VERIFY_IS_EQUAL(m.topRows(r).coeff(c+r*cols), m(r,c));
 }
 
 template<typename MatrixType> void block(const MatrixType& m)
@@ -92,8 +79,7 @@ template<typename MatrixType> void block(const MatrixType& m)
   VERIFY_IS_APPROX(m1.col(c1), m1_copy.col(c1) + s1 * m1_copy.col(c2));
   m1.col(c1).col(0) += s1 * m1_copy.col(c2);
   VERIFY_IS_APPROX(m1.col(c1), m1_copy.col(c1) + Scalar(2) * s1 * m1_copy.col(c2));
-
-  check_left_top(m1,r1,c1,rows,cols);
+  
   
   //check block()
   Matrix<Scalar,Dynamic,Dynamic> b1(1,1); b1(0,0) = m1(r1,c1);
@@ -157,6 +143,11 @@ template<typename MatrixType> void block(const MatrixType& m)
   
   // check that linear acccessors works on blocks
   m1 = m1_copy;
+  if((MatrixType::Flags&RowMajorBit)==0)
+    VERIFY_IS_EQUAL(m1.leftCols(c1).coeff(r1+c1*rows), m1(r1,c1));
+  else
+    VERIFY_IS_EQUAL(m1.topRows(r1).coeff(c1+r1*cols), m1(r1,c1));
+  
 
   // now test some block-inside-of-block.
   
@@ -222,6 +213,14 @@ template<typename MatrixType> void block(const MatrixType& m)
   VERIFY_IS_EQUAL( ((m1*1).template block<Dynamic,1>(1,0,0,1)), m1.block(1,0,0,1));
   VERIFY_IS_EQUAL( ((m1*1).template block<1,Dynamic>(0,1,1,0)), m1.block(0,1,1,0));
 
+  if (rows>=2 && cols>=2)
+  {
+    VERIFY_RAISES_ASSERT( m1 += m1.col(0) );
+    VERIFY_RAISES_ASSERT( m1 -= m1.col(0) );
+    VERIFY_RAISES_ASSERT( m1.array() *= m1.col(0).array() );
+    VERIFY_RAISES_ASSERT( m1.array() /= m1.col(0).array() );
+  }
+
   VERIFY_IS_EQUAL( m1.template subVector<Horizontal>(r1), m1.row(r1) );
   VERIFY_IS_APPROX( (m1+m1).template subVector<Horizontal>(r1), (m1+m1).row(r1) );
   VERIFY_IS_EQUAL( m1.template subVector<Vertical>(c1), m1.col(c1) );
@@ -241,34 +240,12 @@ template<typename MatrixType> void block(const MatrixType& m)
 }
 
 
-
 template<typename MatrixType>
-typename internal::enable_if<MatrixType::IsVectorAtCompileTime,void>::type
-compare_using_data_and_stride(const MatrixType& m)
+void compare_using_data_and_stride(const MatrixType& m)
 {
   Index rows = m.rows();
   Index cols = m.cols();
   Index size = m.size();
-  Index innerStride = m.innerStride();
-  Index rowStride = m.rowStride();
-  Index colStride = m.colStride();
-  const typename MatrixType::Scalar* data = m.data();
-
-  for(int j=0;j<cols;++j)
-    for(int i=0;i<rows;++i)
-      VERIFY(m.coeff(i,j) == data[i*rowStride + j*colStride]);
-
-  VERIFY(innerStride == int((&m.coeff(1))-(&m.coeff(0))));
-  for (int i=0;i<size;++i)
-    VERIFY(m.coeff(i) == data[i*innerStride]);
-}
-
-template<typename MatrixType>
-typename internal::enable_if<!MatrixType::IsVectorAtCompileTime,void>::type
-compare_using_data_and_stride(const MatrixType& m)
-{
-  Index rows = m.rows();
-  Index cols = m.cols();
   Index innerStride = m.innerStride();
   Index outerStride = m.outerStride();
   Index rowStride = m.rowStride();
@@ -279,11 +256,21 @@ compare_using_data_and_stride(const MatrixType& m)
     for(int i=0;i<rows;++i)
       VERIFY(m.coeff(i,j) == data[i*rowStride + j*colStride]);
 
-  for(int j=0;j<cols;++j)
-    for(int i=0;i<rows;++i)
-      VERIFY(m.coeff(i,j) == data[(MatrixType::Flags&RowMajorBit)
-                                  ? i*outerStride + j*innerStride
-                                  : j*outerStride + i*innerStride]);
+  if(!MatrixType::IsVectorAtCompileTime)
+  {
+    for(int j=0;j<cols;++j)
+      for(int i=0;i<rows;++i)
+        VERIFY(m.coeff(i,j) == data[(MatrixType::Flags&RowMajorBit)
+                                     ? i*outerStride + j*innerStride
+                                     : j*outerStride + i*innerStride]);
+  }
+
+  if(MatrixType::IsVectorAtCompileTime)
+  {
+    VERIFY(innerStride == int((&m.coeff(1))-(&m.coeff(0))));
+    for (int i=0;i<size;++i)
+      VERIFY(m.coeff(i) == data[i*innerStride]);
+  }
 }
 
 template<typename MatrixType>

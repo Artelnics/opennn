@@ -50,7 +50,7 @@ endforeach()
 
 if(EIGEN_Fortran_COMPILER_WORKS)
 
-if(EIGEN_BUILD_TESTING)
+if(BUILD_TESTING)
   if(EIGEN_LEAVE_TEST_IN_ALL_TARGET)
     add_subdirectory(testing) # can't do EXCLUDE_FROM_ALL here, breaks CTest
   else()

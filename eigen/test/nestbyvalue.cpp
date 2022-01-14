@@ -26,7 +26,7 @@ EIGEN_DECLARE_TEST(nestbyvalue)
   for(int i = 0; i < g_repeat; i++) {
     Index rows = internal::random<Index>(1,EIGEN_TEST_MAX_SIZE);
     Index cols = internal::random<Index>(1,EIGEN_TEST_MAX_SIZE);
-    MatrixXd a = MatrixXd::Random(rows,cols);
+    MatrixXd a = MatrixXd(rows,cols);
     nb_temporaries = 0;
     XprType x = get_xpr_with_temps(a);
     VERIFY_IS_EQUAL(nb_temporaries,6);

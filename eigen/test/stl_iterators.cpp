@@ -18,7 +18,28 @@ make_reverse_iterator( Iterator i )
   return std::reverse_iterator<Iterator>(i);
 }
 
+#if !EIGEN_HAS_CXX11
+template<class ForwardIt>
+ForwardIt is_sorted_until(ForwardIt firstIt, ForwardIt lastIt)
+{
+    if (firstIt != lastIt) {
+        ForwardIt next = firstIt;
+        while (++next != lastIt) {
+            if (*next < *firstIt)
+                return next;
+            firstIt = next;
+        }
+    }
+    return lastIt;
+}
+template<class ForwardIt>
+bool is_sorted(ForwardIt firstIt, ForwardIt lastIt)
+{
+    return ::is_sorted_until(firstIt, lastIt) == lastIt;
+}
+#else
 using std::is_sorted;
+#endif
 
 template<typename XprType>
 bool is_pointer_based_stl_iterator(const internal::pointer_based_stl_iterator<XprType> &) { return true; }
@@ -29,8 +50,10 @@ bool is_generic_randaccess_stl_iterator(const internal::generic_randaccess_stl_i
 template<typename Iter>
 bool is_default_constructible_and_assignable(const Iter& it)
 {
+#if EIGEN_HAS_CXX11
   VERIFY(std::is_default_constructible<Iter>::value);
   VERIFY(std::is_nothrow_default_constructible<Iter>::value);
+#endif
   Iter it2;
   it2 = it;
   return (it==it2);
@@ -59,10 +82,12 @@ void check_begin_end_for_loop(Xpr xpr)
     typename Xpr::const_iterator cit = xpr.begin();
     cit = xpr.cbegin();
 
+    #if EIGEN_HAS_CXX11
     auto tmp1 = xpr.begin();
     VERIFY(tmp1==xpr.begin());
     auto tmp2 = xpr.cbegin();
     VERIFY(tmp2==xpr.cbegin());
+    #endif
   }
 
   VERIFY( xpr.end() -xpr.begin()  == xpr.size() );
@@ -98,7 +123,9 @@ template<typename Scalar, int Rows, int Cols>
 void test_stl_iterators(int rows=Rows, int cols=Cols)
 {
   typedef Matrix<Scalar,Rows,1> VectorType;
+  #if EIGEN_HAS_CXX11
   typedef Matrix<Scalar,1,Cols> RowVectorType;
+  #endif
   typedef Matrix<Scalar,Rows,Cols,ColMajor> ColMatrixType;
   typedef Matrix<Scalar,Rows,Cols,RowMajor> RowMatrixType;
   VectorType v = VectorType::Random(rows);
@@ -106,7 +133,6 @@ void test_stl_iterators(int rows=Rows, int cols=Cols)
   ColMatrixType A = ColMatrixType::Random(rows,cols);
   const ColMatrixType& cA(A);
   RowMatrixType B = RowMatrixType::Random(rows,cols);
-  using Eigen::placeholders::last;
   
   Index i, j;
 
@@ -164,6 +190,7 @@ void test_stl_iterators(int rows=Rows, int cols=Cols)
     check_begin_end_for_loop(v+v);
   }
 
+#if EIGEN_HAS_CXX11
   // check swappable
   {
     using std::swap;
@@ -298,6 +325,8 @@ void test_stl_iterators(int rows=Rows, int cols=Cols)
     }
   }
 
+#endif
+
   if(rows>=3) {
     VERIFY_IS_EQUAL((v.begin()+rows/2)[1], v(rows/2+1));
 
@@ -314,7 +343,11 @@ void test_stl_iterators(int rows=Rows, int cols=Cols)
     if(rows>=2)
     {
       v(1) = v(0)-Scalar(1);
+      #if EIGEN_HAS_CXX11
       VERIFY(!is_sorted(std::begin(v),std::end(v)));
+      #else
+      VERIFY(!is_sorted(v.cbegin(),v.cend()));
+      #endif
     }
 
     // on a vector
@@ -394,6 +427,7 @@ void test_stl_iterators(int rows=Rows, int cols=Cols)
     VERIFY_IS_APPROX(v1(rows/4), v(rows/4));
   }
 
+#if EIGEN_HAS_CXX11
   // check rows/cols iterators with range-for loops
   {
     j = 0;
@@ -452,12 +486,17 @@ void test_stl_iterators(int rows=Rows, int cols=Cols)
     using VecOp = VectorwiseOp<ArrayXXi, 0>;
     STATIC_CHECK(( internal::is_same<VecOp::const_iterator, decltype(std::declval<const VecOp&>().cbegin())>::value ));
     STATIC_CHECK(( internal::is_same<VecOp::const_iterator, decltype(std::declval<const VecOp&>().cend  ())>::value ));
-    STATIC_CHECK(( internal::is_same<VecOp::const_iterator, decltype(std::cbegin(std::declval<const VecOp&>()))>::value ));
-    STATIC_CHECK(( internal::is_same<VecOp::const_iterator, decltype(std::cend  (std::declval<const VecOp&>()))>::value ));
+    #if EIGEN_COMP_CXXVER>=14
+      STATIC_CHECK(( internal::is_same<VecOp::const_iterator, decltype(std::cbegin(std::declval<const VecOp&>()))>::value ));
+      STATIC_CHECK(( internal::is_same<VecOp::const_iterator, decltype(std::cend  (std::declval<const VecOp&>()))>::value ));
+    #endif
   }
+
+#endif
 }
 
 
+#if EIGEN_HAS_CXX11
 // When the compiler sees expression IsContainerTest<C>(0), if C is an
 // STL-style container class, the first overload of IsContainerTest
 // will be viable (since both C::iterator* and C::const_iterator* are
@@ -505,6 +544,7 @@ void test_stl_container_detection(int rows=Rows, int cols=Cols)
   VERIFY_IS_EQUAL(IsContainerType<ColMatrixType>(0), rows == 1 || cols == 1);
   VERIFY_IS_EQUAL(IsContainerType<RowMatrixType>(0), rows == 1 || cols == 1);
 }
+#endif
 
 EIGEN_DECLARE_TEST(stl_iterators)
 {
@@ -514,7 +554,9 @@ EIGEN_DECLARE_TEST(stl_iterators)
     CALL_SUBTEST_1(( test_stl_iterators<int,Dynamic,Dynamic>(internal::random<int>(5,10), internal::random<int>(5,10)) ));
     CALL_SUBTEST_1(( test_stl_iterators<int,Dynamic,Dynamic>(internal::random<int>(10,200), internal::random<int>(10,200)) ));
   }
-
+  
+#if EIGEN_HAS_CXX11
   CALL_SUBTEST_1(( test_stl_container_detection<float,1,1>() ));
   CALL_SUBTEST_1(( test_stl_container_detection<float,5,5>() ));
+#endif  
 }

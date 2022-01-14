@@ -1,12 +1,15 @@
 #include <Eigen/Core>
 #include <iostream>
 
-int main()
+using namespace Eigen;
+using namespace std;
+
+int main(void)
 {
     int const N = 5;
-    Eigen::MatrixXi A(N,N);
+    MatrixXi A(N,N);
     A.setRandom();
-    std::cout << "A =\n" << A << '\n' << std::endl;
-    std::cout << "A(1..3,:) =\n" << A.middleCols(1,3) << std::endl;
+    cout << "A =\n" << A << '\n' << endl;
+    cout << "A(1..3,:) =\n" << A.middleCols(1,3) << endl;
     return 0;
 }

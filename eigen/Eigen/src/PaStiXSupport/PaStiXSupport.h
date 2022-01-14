@@ -10,8 +10,6 @@
 #ifndef EIGEN_PASTIXSUPPORT_H
 #define EIGEN_PASTIXSUPPORT_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 #if defined(DCOMPLEX)
@@ -30,40 +28,40 @@ namespace Eigen {
   *
   * \sa TutorialSparseDirectSolvers
   */
-template<typename MatrixType_, bool IsStrSym = false> class PastixLU;
-template<typename MatrixType_, int Options> class PastixLLT;
-template<typename MatrixType_, int Options> class PastixLDLT;
+template<typename _MatrixType, bool IsStrSym = false> class PastixLU;
+template<typename _MatrixType, int Options> class PastixLLT;
+template<typename _MatrixType, int Options> class PastixLDLT;
 
 namespace internal
 {
     
   template<class Pastix> struct pastix_traits;
 
-  template<typename MatrixType_>
-  struct pastix_traits< PastixLU<MatrixType_> >
+  template<typename _MatrixType>
+  struct pastix_traits< PastixLU<_MatrixType> >
   {
-    typedef MatrixType_ MatrixType;
-    typedef typename MatrixType_::Scalar Scalar;
-    typedef typename MatrixType_::RealScalar RealScalar;
-    typedef typename MatrixType_::StorageIndex StorageIndex;
+    typedef _MatrixType MatrixType;
+    typedef typename _MatrixType::Scalar Scalar;
+    typedef typename _MatrixType::RealScalar RealScalar;
+    typedef typename _MatrixType::StorageIndex StorageIndex;
   };
 
-  template<typename MatrixType_, int Options>
-  struct pastix_traits< PastixLLT<MatrixType_,Options> >
+  template<typename _MatrixType, int Options>
+  struct pastix_traits< PastixLLT<_MatrixType,Options> >
   {
-    typedef MatrixType_ MatrixType;
-    typedef typename MatrixType_::Scalar Scalar;
-    typedef typename MatrixType_::RealScalar RealScalar;
-    typedef typename MatrixType_::StorageIndex StorageIndex;
+    typedef _MatrixType MatrixType;
+    typedef typename _MatrixType::Scalar Scalar;
+    typedef typename _MatrixType::RealScalar RealScalar;
+    typedef typename _MatrixType::StorageIndex StorageIndex;
   };
 
-  template<typename MatrixType_, int Options>
-  struct pastix_traits< PastixLDLT<MatrixType_,Options> >
+  template<typename _MatrixType, int Options>
+  struct pastix_traits< PastixLDLT<_MatrixType,Options> >
   {
-    typedef MatrixType_ MatrixType;
-    typedef typename MatrixType_::Scalar Scalar;
-    typedef typename MatrixType_::RealScalar RealScalar;
-    typedef typename MatrixType_::StorageIndex StorageIndex;
+    typedef _MatrixType MatrixType;
+    typedef typename _MatrixType::Scalar Scalar;
+    typedef typename _MatrixType::RealScalar RealScalar;
+    typedef typename _MatrixType::StorageIndex StorageIndex;
   };
   
   inline void eigen_pastix(pastix_data_t **pastix_data, int pastix_comm, int n, int *ptr, int *idx, float *vals, int *perm, int * invp, float *x, int nbrhs, int *iparm, double *dparm)
@@ -136,8 +134,8 @@ class PastixBase : public SparseSolverBase<Derived>
   public:
     using Base::_solve_impl;
     
-    typedef typename internal::pastix_traits<Derived>::MatrixType MatrixType_;
-    typedef MatrixType_ MatrixType;
+    typedef typename internal::pastix_traits<Derived>::MatrixType _MatrixType;
+    typedef _MatrixType MatrixType;
     typedef typename MatrixType::Scalar Scalar;
     typedef typename MatrixType::RealScalar RealScalar;
     typedef typename MatrixType::StorageIndex StorageIndex;
@@ -399,7 +397,7 @@ bool PastixBase<Base>::_solve_impl(const MatrixBase<Rhs> &b, MatrixBase<Dest> &x
   * This interface can symmetrize the input matrix otherwise. 
   * The vectors or matrices X and B can be either dense or sparse.
   * 
-  * \tparam MatrixType_ the type of the sparse matrix A, it must be a SparseMatrix<>
+  * \tparam _MatrixType the type of the sparse matrix A, it must be a SparseMatrix<>
   * \tparam IsStrSym Indicates if the input matrix has a symmetric pattern, default is false
   * NOTE : Note that if the analysis and factorization phase are called separately, 
   * the input matrix will be symmetrized at each call, hence it is advised to 
@@ -410,11 +408,11 @@ bool PastixBase<Base>::_solve_impl(const MatrixBase<Rhs> &b, MatrixBase<Dest> &x
   * \sa \ref TutorialSparseSolverConcept, class SparseLU
   * 
   */
-template<typename MatrixType_, bool IsStrSym>
-class PastixLU : public PastixBase< PastixLU<MatrixType_> >
+template<typename _MatrixType, bool IsStrSym>
+class PastixLU : public PastixBase< PastixLU<_MatrixType> >
 {
   public:
-    typedef MatrixType_ MatrixType;
+    typedef _MatrixType MatrixType;
     typedef PastixBase<PastixLU<MatrixType> > Base;
     typedef typename Base::ColSpMatrix ColSpMatrix;
     typedef typename MatrixType::StorageIndex StorageIndex;
@@ -522,16 +520,16 @@ class PastixLU : public PastixBase< PastixLU<MatrixType_> >
   *
   * \sa \ref TutorialSparseSolverConcept, class SimplicialLLT
   */
-template<typename MatrixType_, int UpLo_>
-class PastixLLT : public PastixBase< PastixLLT<MatrixType_, UpLo_> >
+template<typename _MatrixType, int _UpLo>
+class PastixLLT : public PastixBase< PastixLLT<_MatrixType, _UpLo> >
 {
   public:
-    typedef MatrixType_ MatrixType;
-    typedef PastixBase<PastixLLT<MatrixType, UpLo_> > Base;
+    typedef _MatrixType MatrixType;
+    typedef PastixBase<PastixLLT<MatrixType, _UpLo> > Base;
     typedef typename Base::ColSpMatrix ColSpMatrix;
     
   public:
-    enum { UpLo = UpLo_ };
+    enum { UpLo = _UpLo };
     PastixLLT() : Base()
     {
       init();
@@ -606,16 +604,16 @@ class PastixLLT : public PastixBase< PastixLLT<MatrixType_, UpLo_> >
   *
   * \sa \ref TutorialSparseSolverConcept, class SimplicialLDLT
   */
-template<typename MatrixType_, int UpLo_>
-class PastixLDLT : public PastixBase< PastixLDLT<MatrixType_, UpLo_> >
+template<typename _MatrixType, int _UpLo>
+class PastixLDLT : public PastixBase< PastixLDLT<_MatrixType, _UpLo> >
 {
   public:
-    typedef MatrixType_ MatrixType;
-    typedef PastixBase<PastixLDLT<MatrixType, UpLo_> > Base;
+    typedef _MatrixType MatrixType;
+    typedef PastixBase<PastixLDLT<MatrixType, _UpLo> > Base; 
     typedef typename Base::ColSpMatrix ColSpMatrix;
     
   public:
-    enum { UpLo = UpLo_ };
+    enum { UpLo = _UpLo };
     PastixLDLT():Base()
     {
       init();

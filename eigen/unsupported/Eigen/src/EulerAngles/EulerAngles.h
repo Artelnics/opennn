@@ -10,8 +10,6 @@
 #ifndef EIGEN_EULERANGLESCLASS_H// TODO: Fix previous "EIGEN_EULERANGLES_H" definition?
 #define EIGEN_EULERANGLESCLASS_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen
 {
   /** \class EulerAngles
@@ -94,18 +92,18 @@ namespace Eigen
     *
     * More information about Euler angles: https://en.wikipedia.org/wiki/Euler_angles
     *
-    * \tparam Scalar_ the scalar type, i.e. the type of the angles.
+    * \tparam _Scalar the scalar type, i.e. the type of the angles.
     *
     * \tparam _System the EulerSystem to use, which represents the axes of rotation.
     */
-  template <typename Scalar_, class _System>
-  class EulerAngles : public RotationBase<EulerAngles<Scalar_, _System>, 3>
+  template <typename _Scalar, class _System>
+  class EulerAngles : public RotationBase<EulerAngles<_Scalar, _System>, 3>
   {
     public:
-      typedef RotationBase<EulerAngles<Scalar_, _System>, 3> Base;
+      typedef RotationBase<EulerAngles<_Scalar, _System>, 3> Base;
       
       /** the scalar type of the angles */
-      typedef Scalar_ Scalar;
+      typedef _Scalar Scalar;
       typedef typename NumTraits<Scalar>::Real RealScalar;
       
       /** the EulerSystem to use, which represents the axes of rotation. */
@@ -324,10 +322,10 @@ EIGEN_EULER_ANGLES_TYPEDEFS(double, d)
 
   namespace internal
   {
-    template<typename Scalar_, class _System>
-    struct traits<EulerAngles<Scalar_, _System> >
+    template<typename _Scalar, class _System>
+    struct traits<EulerAngles<_Scalar, _System> >
     {
-      typedef Scalar_ Scalar;
+      typedef _Scalar Scalar;
     };
     
     // set from a rotation matrix

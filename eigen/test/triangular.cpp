@@ -139,6 +139,7 @@ template<typename MatrixType> void triangular_square(const MatrixType& m)
   m3.setZero();
   m3.template triangularView<Upper>().setOnes();
   VERIFY_IS_APPROX(m2,m3);
+  VERIFY_RAISES_STATIC_ASSERT(m1.template triangularView<Eigen::Lower>().swap(m2.template triangularView<Eigen::Upper>()));
 
   m1.setRandom();
   m3 = m1.template triangularView<Upper>();

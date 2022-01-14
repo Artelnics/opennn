@@ -14,7 +14,6 @@
 #define EIGEN_USE_GPU
 
 #include "main.h"
-#include "OffByOneScalar.h"
 #include <unsupported/Eigen/CXX11/Tensor>
 
 #include <unsupported/Eigen/CXX11/src/Tensor/TensorGpuHipCudaDefines.h>
@@ -176,44 +175,6 @@ void test_3d_convolution(Context* context)
   context->out().slice(indices, sizes).device(context->device()) = context->in1().convolve(context->kernel3d(), dims);
 }
 
-// Helper method to synchronize device.
-template<typename Device>
-void synchronize(Device& device) { /*nothing*/ }
-template<>
-void synchronize(Eigen::GpuDevice& device) {
-  device.synchronize();
-}
-
-template <typename DataType, typename TensorDevice>
-void test_device_memory(const TensorDevice& device) {
-  int count = 100;
-  Eigen::array<int, 1> tensorRange = {{count}};
-  Eigen::Tensor<DataType, 1> host(tensorRange);
-  Eigen::Tensor<DataType, 1> expected(tensorRange);
-  DataType* device_data  = static_cast<DataType*>(device.allocate(count * sizeof(DataType)));
-  
-  // memset
-  const char byte_value = static_cast<char>(0xAB);
-  device.memset(device_data, byte_value, count * sizeof(DataType));
-  device.memcpyDeviceToHost(host.data(), device_data, count * sizeof(DataType));
-  synchronize(device);
-  memset(expected.data(), byte_value, count * sizeof(DataType));
-  for (size_t i=0; i<count; i++) {
-    VERIFY_IS_EQUAL(host(i), expected(i));
-  }
-  
-  // fill
-  DataType fill_value = DataType(7);
-  std::fill_n(expected.data(), count, fill_value);
-  device.fill(device_data, device_data + count, fill_value);
-  device.memcpyDeviceToHost(host.data(), device_data, count * sizeof(DataType));
-  synchronize(device);
-  for (int i=0; i<count; i++) {
-    VERIFY_IS_EQUAL(host(i), expected(i));
-  }
-  
-  device.deallocate(device_data);
-}
 
 void test_cpu() {
   Eigen::Tensor<float, 3> in1(40,50,70);
@@ -305,9 +266,6 @@ void test_cpu() {
       }
     }
   }
-  
-  test_device_memory<float>(context.device());
-  test_device_memory<OffByOneScalar<int>>(context.device());
 }
 
 void test_gpu() {
@@ -428,8 +386,6 @@ void test_gpu() {
 
 #endif
  
-  test_device_memory<float>(context.device());
-  test_device_memory<OffByOneScalar<int>>(context.device());
 }
 
 

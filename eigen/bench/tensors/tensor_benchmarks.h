@@ -564,9 +564,9 @@ for (int iter = 0; iter < 10; ++iter) {
 
     // Initialize the content of the memory pools to prevent asan from
     // complaining.
-    device_.fill(a_, a_ + m_ * k_, T(12));
-    device_.fill(b_, b_ + k_ * n_, T(23));
-    device_.fill(c_, c_ + m_ * n_, T(31));
+    device_.memset(a_, 12, m_ * k_ * sizeof(T));
+    device_.memset(b_, 23, k_ * n_ * sizeof(T));
+    device_.memset(c_, 31, m_ * n_ * sizeof(T));
 
   }
 

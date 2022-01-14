@@ -11,8 +11,6 @@
 #ifndef EIGEN_REALSVD2X2_H
 #define EIGEN_REALSVD2X2_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

@@ -20,8 +20,6 @@
 #define EIGEN_LEVENBERGMARQUARDT_H
 
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace LevenbergMarquardtSpace {
     enum Status {
@@ -40,10 +38,10 @@ namespace LevenbergMarquardtSpace {
     };
 }
 
-template <typename Scalar_, int NX=Dynamic, int NY=Dynamic>
+template <typename _Scalar, int NX=Dynamic, int NY=Dynamic>
 struct DenseFunctor
 {
-  typedef Scalar_ Scalar;
+  typedef _Scalar Scalar;
   enum {
     InputsAtCompileTime = NX,
     ValuesAtCompileTime = NY
@@ -67,11 +65,11 @@ struct DenseFunctor
   // should be defined in derived classes
 };
 
-template <typename Scalar_, typename Index_>
+template <typename _Scalar, typename _Index>
 struct SparseFunctor
 {
-  typedef Scalar_ Scalar;
-  typedef Index_ Index;
+  typedef _Scalar Scalar;
+  typedef _Index Index;
   typedef Matrix<Scalar,Dynamic,1> InputType;
   typedef Matrix<Scalar,Dynamic,1> ValueType;
   typedef SparseMatrix<Scalar, ColMajor, Index> JacobianType;
@@ -108,11 +106,11 @@ void lmpar2(const QRSolver &qr, const VectorType  &diag, const VectorType  &qtb,
   * Check wikipedia for more information.
   * http://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
   */
-template<typename FunctorType_>
+template<typename _FunctorType>
 class LevenbergMarquardt : internal::no_assignment_operator
 {
   public:
-    typedef FunctorType_ FunctorType;
+    typedef _FunctorType FunctorType;
     typedef typename FunctorType::QRSolver QRSolver;
     typedef typename FunctorType::JacobianType JacobianType;
     typedef typename JacobianType::Scalar Scalar;

@@ -11,8 +11,6 @@
 #ifndef EIGEN_DIAGONAL_H
 #define EIGEN_DIAGONAL_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \class Diagonal
@@ -20,8 +18,8 @@ namespace Eigen {
   *
   * \brief Expression of a diagonal/subdiagonal/superdiagonal in a matrix
   *
-  * \tparam MatrixType the type of the object in which we are taking a sub/main/super diagonal
-  * \tparam DiagIndex the index of the sub/super diagonal. The default is 0 and it means the main diagonal.
+  * \param MatrixType the type of the object in which we are taking a sub/main/super diagonal
+  * \param DiagIndex the index of the sub/super diagonal. The default is 0 and it means the main diagonal.
   *              A positive value means a superdiagonal, a negative value means a subdiagonal.
   *              You can also use DynamicIndex so the index can be set at runtime.
   *
@@ -40,21 +38,21 @@ struct traits<Diagonal<MatrixType,DiagIndex> >
  : traits<MatrixType>
 {
   typedef typename ref_selector<MatrixType>::type MatrixTypeNested;
-  typedef typename remove_reference<MatrixTypeNested>::type MatrixTypeNested_;
+  typedef typename remove_reference<MatrixTypeNested>::type _MatrixTypeNested;
   typedef typename MatrixType::StorageKind StorageKind;
   enum {
     RowsAtCompileTime = (int(DiagIndex) == DynamicIndex || int(MatrixType::SizeAtCompileTime) == Dynamic) ? Dynamic
-                      : (plain_enum_min(MatrixType::RowsAtCompileTime - plain_enum_max(-DiagIndex, 0),
-                                        MatrixType::ColsAtCompileTime - plain_enum_max( DiagIndex, 0))),
+                      : (EIGEN_PLAIN_ENUM_MIN(MatrixType::RowsAtCompileTime - EIGEN_PLAIN_ENUM_MAX(-DiagIndex, 0),
+                                              MatrixType::ColsAtCompileTime - EIGEN_PLAIN_ENUM_MAX( DiagIndex, 0))),
     ColsAtCompileTime = 1,
     MaxRowsAtCompileTime = int(MatrixType::MaxSizeAtCompileTime) == Dynamic ? Dynamic
-                         : DiagIndex == DynamicIndex ? min_size_prefer_fixed(MatrixType::MaxRowsAtCompileTime,
-                                                                             MatrixType::MaxColsAtCompileTime)
-                         : (plain_enum_min(MatrixType::MaxRowsAtCompileTime - plain_enum_max(-DiagIndex, 0),
-                                           MatrixType::MaxColsAtCompileTime - plain_enum_max( DiagIndex, 0))),
+                         : DiagIndex == DynamicIndex ? EIGEN_SIZE_MIN_PREFER_FIXED(MatrixType::MaxRowsAtCompileTime,
+                                                                              MatrixType::MaxColsAtCompileTime)
+                         : (EIGEN_PLAIN_ENUM_MIN(MatrixType::MaxRowsAtCompileTime - EIGEN_PLAIN_ENUM_MAX(-DiagIndex, 0),
+                                                 MatrixType::MaxColsAtCompileTime - EIGEN_PLAIN_ENUM_MAX( DiagIndex, 0))),
     MaxColsAtCompileTime = 1,
     MaskLvalueBit = is_lvalue<MatrixType>::value ? LvalueBit : 0,
-    Flags = (unsigned int)MatrixTypeNested_::Flags & (RowMajorBit | MaskLvalueBit | DirectAccessBit) & ~RowMajorBit, // FIXME DirectAccessBit should not be handled by expressions
+    Flags = (unsigned int)_MatrixTypeNested::Flags & (RowMajorBit | MaskLvalueBit | DirectAccessBit) & ~RowMajorBit, // FIXME DirectAccessBit should not be handled by expressions
     MatrixTypeOuterStride = outer_stride_at_compile_time<MatrixType>::ret,
     InnerStrideAtCompileTime = MatrixTypeOuterStride == Dynamic ? Dynamic : MatrixTypeOuterStride+1,
     OuterStrideAtCompileTime = 0
@@ -62,12 +60,12 @@ struct traits<Diagonal<MatrixType,DiagIndex> >
 };
 }
 
-template<typename MatrixType, int DiagIndex_> class Diagonal
-   : public internal::dense_xpr_base< Diagonal<MatrixType,DiagIndex_> >::type
+template<typename MatrixType, int _DiagIndex> class Diagonal
+   : public internal::dense_xpr_base< Diagonal<MatrixType,_DiagIndex> >::type
 {
   public:
 
-    enum { DiagIndex = DiagIndex_ };
+    enum { DiagIndex = _DiagIndex };
     typedef typename internal::dense_xpr_base<Diagonal>::type Base;
     EIGEN_DENSE_PUBLIC_INTERFACE(Diagonal)
 

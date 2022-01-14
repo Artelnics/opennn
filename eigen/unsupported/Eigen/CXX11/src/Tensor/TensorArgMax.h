@@ -11,58 +11,56 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_ARG_MAX_H
 #define EIGEN_CXX11_TENSOR_TENSOR_ARG_MAX_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
 
-/** \class TensorIndexPair
+/** \class TensorIndexTuple
   * \ingroup CXX11_Tensor_Module
   *
-  * \brief Tensor + Index Pair class.
+  * \brief Tensor + Index Tuple class.
   *
   *
   */
 template<typename XprType>
-struct traits<TensorIndexPairOp<XprType> > : public traits<XprType>
+struct traits<TensorIndexTupleOp<XprType> > : public traits<XprType>
 {
   typedef traits<XprType> XprTraits;
   typedef typename XprTraits::StorageKind StorageKind;
   typedef typename XprTraits::Index Index;
-  typedef Pair<Index, typename XprTraits::Scalar> Scalar;
+  typedef Tuple<Index, typename XprTraits::Scalar> Scalar;
   typedef typename XprType::Nested Nested;
-  typedef typename remove_reference<Nested>::type Nested_;
+  typedef typename remove_reference<Nested>::type _Nested;
   static const int NumDimensions = XprTraits::NumDimensions;
   static const int Layout = XprTraits::Layout;
 };
 
 template<typename XprType>
-struct eval<TensorIndexPairOp<XprType>, Eigen::Dense>
+struct eval<TensorIndexTupleOp<XprType>, Eigen::Dense>
 {
-  typedef const TensorIndexPairOp<XprType>EIGEN_DEVICE_REF type;
+  typedef const TensorIndexTupleOp<XprType>EIGEN_DEVICE_REF type;
 };
 
 template<typename XprType>
-struct nested<TensorIndexPairOp<XprType>, 1,
-              typename eval<TensorIndexPairOp<XprType> >::type>
+struct nested<TensorIndexTupleOp<XprType>, 1,
+              typename eval<TensorIndexTupleOp<XprType> >::type>
 {
-  typedef TensorIndexPairOp<XprType> type;
+  typedef TensorIndexTupleOp<XprType> type;
 };
 
 }  // end namespace internal
 
 template<typename XprType>
-class TensorIndexPairOp : public TensorBase<TensorIndexPairOp<XprType>, ReadOnlyAccessors>
+class TensorIndexTupleOp : public TensorBase<TensorIndexTupleOp<XprType>, ReadOnlyAccessors>
 {
   public:
-  typedef typename Eigen::internal::traits<TensorIndexPairOp>::Scalar Scalar;
+  typedef typename Eigen::internal::traits<TensorIndexTupleOp>::Scalar Scalar;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
-  typedef typename Eigen::internal::nested<TensorIndexPairOp>::type Nested;
-  typedef typename Eigen::internal::traits<TensorIndexPairOp>::StorageKind StorageKind;
-  typedef typename Eigen::internal::traits<TensorIndexPairOp>::Index Index;
-  typedef Pair<Index, typename XprType::CoeffReturnType> CoeffReturnType;
+  typedef typename Eigen::internal::nested<TensorIndexTupleOp>::type Nested;
+  typedef typename Eigen::internal::traits<TensorIndexTupleOp>::StorageKind StorageKind;
+  typedef typename Eigen::internal::traits<TensorIndexTupleOp>::Index Index;
+  typedef Tuple<Index, typename XprType::CoeffReturnType> CoeffReturnType;
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorIndexPairOp(const XprType& expr)
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorIndexTupleOp(const XprType& expr)
       : m_xpr(expr) {}
 
   EIGEN_DEVICE_FUNC
@@ -75,9 +73,9 @@ class TensorIndexPairOp : public TensorBase<TensorIndexPairOp<XprType>, ReadOnly
 
 // Eval as rvalue
 template<typename ArgType, typename Device>
-struct TensorEvaluator<const TensorIndexPairOp<ArgType>, Device>
+struct TensorEvaluator<const TensorIndexTupleOp<ArgType>, Device>
 {
-  typedef TensorIndexPairOp<ArgType> XprType;
+  typedef TensorIndexTupleOp<ArgType> XprType;
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
   typedef typename XprType::CoeffReturnType CoeffReturnType;
@@ -140,52 +138,52 @@ struct TensorEvaluator<const TensorIndexPairOp<ArgType>, Device>
 
 namespace internal {
 
-/** \class TensorPairIndex
+/** \class TensorTupleIndex
   * \ingroup CXX11_Tensor_Module
   *
-  * \brief Converts to Tensor<Pair<Index, Scalar> > and reduces to Tensor<Index>.
+  * \brief Converts to Tensor<Tuple<Index, Scalar> > and reduces to Tensor<Index>.
   *
   */
 template<typename ReduceOp, typename Dims, typename XprType>
-struct traits<TensorPairReducerOp<ReduceOp, Dims, XprType> > : public traits<XprType>
+struct traits<TensorTupleReducerOp<ReduceOp, Dims, XprType> > : public traits<XprType>
 {
   typedef traits<XprType> XprTraits;
   typedef typename XprTraits::StorageKind StorageKind;
   typedef typename XprTraits::Index Index;
   typedef Index Scalar;
   typedef typename XprType::Nested Nested;
-  typedef typename remove_reference<Nested>::type Nested_;
+  typedef typename remove_reference<Nested>::type _Nested;
   static const int NumDimensions = XprTraits::NumDimensions - array_size<Dims>::value;
   static const int Layout = XprTraits::Layout;
 };
 
 template<typename ReduceOp, typename Dims, typename XprType>
-struct eval<TensorPairReducerOp<ReduceOp, Dims, XprType>, Eigen::Dense>
+struct eval<TensorTupleReducerOp<ReduceOp, Dims, XprType>, Eigen::Dense>
 {
-  typedef const TensorPairReducerOp<ReduceOp, Dims, XprType>EIGEN_DEVICE_REF type;
+  typedef const TensorTupleReducerOp<ReduceOp, Dims, XprType>EIGEN_DEVICE_REF type;
 };
 
 template<typename ReduceOp, typename Dims, typename XprType>
-struct nested<TensorPairReducerOp<ReduceOp, Dims, XprType>, 1,
-              typename eval<TensorPairReducerOp<ReduceOp, Dims, XprType> >::type>
+struct nested<TensorTupleReducerOp<ReduceOp, Dims, XprType>, 1,
+              typename eval<TensorTupleReducerOp<ReduceOp, Dims, XprType> >::type>
 {
-  typedef TensorPairReducerOp<ReduceOp, Dims, XprType> type;
+  typedef TensorTupleReducerOp<ReduceOp, Dims, XprType> type;
 };
 
 }  // end namespace internal
 
 template<typename ReduceOp, typename Dims, typename XprType>
-class TensorPairReducerOp : public TensorBase<TensorPairReducerOp<ReduceOp, Dims, XprType>, ReadOnlyAccessors>
+class TensorTupleReducerOp : public TensorBase<TensorTupleReducerOp<ReduceOp, Dims, XprType>, ReadOnlyAccessors>
 {
   public:
-  typedef typename Eigen::internal::traits<TensorPairReducerOp>::Scalar Scalar;
+  typedef typename Eigen::internal::traits<TensorTupleReducerOp>::Scalar Scalar;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
-  typedef typename Eigen::internal::nested<TensorPairReducerOp>::type Nested;
-  typedef typename Eigen::internal::traits<TensorPairReducerOp>::StorageKind StorageKind;
-  typedef typename Eigen::internal::traits<TensorPairReducerOp>::Index Index;
+  typedef typename Eigen::internal::nested<TensorTupleReducerOp>::type Nested;
+  typedef typename Eigen::internal::traits<TensorTupleReducerOp>::StorageKind StorageKind;
+  typedef typename Eigen::internal::traits<TensorTupleReducerOp>::Index Index;
   typedef Index CoeffReturnType;
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorPairReducerOp(const XprType& expr,
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorTupleReducerOp(const XprType& expr,
                                                           const ReduceOp& reduce_op,
                                                           const Index return_dim,
                                                           const Dims& reduce_dims)
@@ -213,27 +211,27 @@ class TensorPairReducerOp : public TensorBase<TensorPairReducerOp<ReduceOp, Dims
 
 // Eval as rvalue
 template<typename ReduceOp, typename Dims, typename ArgType, typename Device>
-struct TensorEvaluator<const TensorPairReducerOp<ReduceOp, Dims, ArgType>, Device>
+struct TensorEvaluator<const TensorTupleReducerOp<ReduceOp, Dims, ArgType>, Device>
 {
-  typedef TensorPairReducerOp<ReduceOp, Dims, ArgType> XprType;
+  typedef TensorTupleReducerOp<ReduceOp, Dims, ArgType> XprType;
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
   typedef typename XprType::CoeffReturnType CoeffReturnType;
-  typedef typename TensorIndexPairOp<ArgType>::CoeffReturnType PairType;
-  typedef typename TensorEvaluator<const TensorReductionOp<ReduceOp, Dims, const TensorIndexPairOp<ArgType> >, Device>::Dimensions Dimensions;
-  typedef typename TensorEvaluator<const TensorIndexPairOp<ArgType> , Device>::Dimensions InputDimensions;
+  typedef typename TensorIndexTupleOp<ArgType>::CoeffReturnType TupleType;
+  typedef typename TensorEvaluator<const TensorReductionOp<ReduceOp, Dims, const TensorIndexTupleOp<ArgType> >, Device>::Dimensions Dimensions;
+  typedef typename TensorEvaluator<const TensorIndexTupleOp<ArgType> , Device>::Dimensions InputDimensions;
   static const int NumDims = internal::array_size<InputDimensions>::value;
   typedef array<Index, NumDims> StrideDims;
   typedef StorageMemory<CoeffReturnType, Device> Storage;
   typedef typename Storage::Type EvaluatorPointerType;
-  typedef StorageMemory<PairType, Device> PairStorageMem;
+  typedef StorageMemory<TupleType, Device> TupleStorageMem;
 
   enum {
     IsAligned         = /*TensorEvaluator<ArgType, Device>::IsAligned*/ false,
     PacketAccess      = /*TensorEvaluator<ArgType, Device>::PacketAccess*/ false,
     BlockAccess       = false,
     PreferBlockAccess = TensorEvaluator<ArgType, Device>::PreferBlockAccess,
-    Layout            = TensorEvaluator<const TensorReductionOp<ReduceOp, Dims, const TensorIndexPairOp<ArgType> >, Device>::Layout,
+    Layout            = TensorEvaluator<const TensorReductionOp<ReduceOp, Dims, const TensorIndexTupleOp<ArgType> >, Device>::Layout,
     CoordAccess       = false,  // to be implemented
     RawAccess         = false
   };
@@ -244,7 +242,7 @@ struct TensorEvaluator<const TensorPairReducerOp<ReduceOp, Dims, ArgType>, Devic
 
   EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
       : m_orig_impl(op.expression(), device),
-        m_impl(op.expression().index_pairs().reduce(op.reduce_dims(), op.reduce_op()), device),
+        m_impl(op.expression().index_tuples().reduce(op.reduce_dims(), op.reduce_op()), device),
         m_return_dim(op.return_dim())
   {
     gen_strides(m_orig_impl.dimensions(), m_strides);
@@ -274,7 +272,7 @@ struct TensorEvaluator<const TensorPairReducerOp<ReduceOp, Dims, ArgType>, Devic
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index index) const {
-    const PairType v = m_impl.coeff(index);
+    const TupleType v = m_impl.coeff(index);
     return (m_return_dim < 0) ? v.first : (v.first % m_stride_mod) / m_stride_div;
   }
 
@@ -318,8 +316,8 @@ struct TensorEvaluator<const TensorPairReducerOp<ReduceOp, Dims, ArgType>, Devic
   }
 
  protected:
-  TensorEvaluator<const TensorIndexPairOp<ArgType>, Device> m_orig_impl;
-  TensorEvaluator<const TensorReductionOp<ReduceOp, Dims, const TensorIndexPairOp<ArgType> >, Device> m_impl;
+  TensorEvaluator<const TensorIndexTupleOp<ArgType>, Device> m_orig_impl;
+  TensorEvaluator<const TensorReductionOp<ReduceOp, Dims, const TensorIndexTupleOp<ArgType> >, Device> m_impl;
   const Index m_return_dim;
   StrideDims m_strides;
   Index m_stride_mod;

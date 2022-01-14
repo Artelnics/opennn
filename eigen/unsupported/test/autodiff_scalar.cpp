@@ -84,7 +84,9 @@ void check_limits_specialization()
   // workaround "unused typedef" warning:
   VERIFY(!bool(internal::is_same<B, A>::value));
 
+#if EIGEN_HAS_CXX11
   VERIFY(bool(std::is_base_of<B, A>::value));
+#endif
 }
 
 EIGEN_DECLARE_TEST(autodiff_scalar)

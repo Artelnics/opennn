@@ -8,10 +8,12 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//#ifndef EIGEN_CXX11_TENSOR_MODULE_H
-#define EIGEN_CXX11_TENSOR_MODULE_H
+//#ifndef EIGEN_CXX11_TENSOR_MODULE
+//#define EIGEN_CXX11_TENSOR_MODULE
 
 #include "../../../Eigen/Core"
+
+#if EIGEN_HAS_CXX11
 
 #include "../SpecialFunctions"
 
@@ -36,19 +38,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstring>
-#include <iterator>
-#include <numeric>
 #include <random>
-
-// C++20 libstdc++'s headers have non-parenthesized calls to max() and min().
-#if EIGEN_COMP_HAS_P0848R3
-#ifdef max
-#undef max
-#endif
-#ifdef min
-#undef min
-#endif
-#endif
 #include <thread>
 
 #if defined(EIGEN_USE_THREADS) || defined(EIGEN_USE_SYCL)
@@ -85,8 +75,6 @@
 #include "src/Tensor/TensorUInt128.h"
 #include "src/Tensor/TensorIntDiv.h"
 #include "src/Tensor/TensorGlobalFunctions.h"
-
-#include "src/Tensor/TensorIO.h"
 
 #include "src/Tensor/TensorBase.h"
 #include "src/Tensor/TensorBlock.h"
@@ -141,8 +129,9 @@
 #include "src/Tensor/TensorMap.h"
 #include "src/Tensor/TensorRef.h"
 
-
+#include "src/Tensor/TensorIO.h"
 
 #include "../../../Eigen/src/Core/util/ReenableStupidWarnings.h"
 
-//#endif // EIGEN_CXX11_TENSOR_MODULE_H
+#endif  // EIGEN_HAS_CXX11
+//#endif // EIGEN_CXX11_TENSOR_MODULE

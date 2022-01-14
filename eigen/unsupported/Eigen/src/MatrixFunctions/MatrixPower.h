@@ -10,8 +10,6 @@
 #ifndef EIGEN_MATRIX_POWER
 #define EIGEN_MATRIX_POWER
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 template<typename MatrixType> class MatrixPower;

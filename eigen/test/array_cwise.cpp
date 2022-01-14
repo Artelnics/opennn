@@ -176,6 +176,7 @@ template<typename ArrayType> void array(const ArrayType& m)
     FixedArrayType f4(f1.data());
     VERIFY_IS_APPROX(f4, f1);
   }
+  #if EIGEN_HAS_CXX11
   {
     FixedArrayType f1{s1};
     VERIFY_IS_APPROX(f1, FixedArrayType::Constant(s1));
@@ -187,6 +188,7 @@ template<typename ArrayType> void array(const ArrayType& m)
     FixedArrayType f4{f1.data()};
     VERIFY_IS_APPROX(f4, f1);
   }
+  #endif
 
   // pow
   VERIFY_IS_APPROX(m1.pow(2), m1.square());
@@ -212,12 +214,14 @@ template<typename ArrayType> void array(const ArrayType& m)
     OneDArrayType o2(static_cast<int>(rows));
     VERIFY(o2.size()==rows);
   }
+  #if EIGEN_HAS_CXX11
   {
     OneDArrayType o1{rows};
     VERIFY(o1.size()==rows);
     OneDArrayType o4{int(rows)};
     VERIFY(o4.size()==rows);
   }
+  #endif
   // Check possible conflicts with 2D ctor
   typedef Array<Scalar, Dynamic, Dynamic> TwoDArrayType;
   typedef Array<Scalar, 2, 1> ArrayType2;
@@ -234,6 +238,7 @@ template<typename ArrayType> void array(const ArrayType& m)
     ArrayType2 o4(static_cast<int>(rows),static_cast<int>(cols));
     VERIFY(o4(0)==Scalar(rows) && o4(1)==Scalar(cols));
   }
+  #if EIGEN_HAS_CXX11
   {
     TwoDArrayType o1{rows,cols};
     VERIFY(o1.rows()==rows);
@@ -247,6 +252,7 @@ template<typename ArrayType> void array(const ArrayType& m)
     ArrayType2 o4{int(rows),int(cols)};
     VERIFY(o4(0)==Scalar(rows) && o4(1)==Scalar(cols));
   }
+  #endif
 }
 
 template<typename ArrayType> void comparisons(const ArrayType& m)
@@ -451,7 +457,7 @@ template<typename ArrayType> void array_real(const ArrayType& m)
   const RealScalar tiny = sqrt(std::numeric_limits<RealScalar>::epsilon());
   s1 += Scalar(tiny);
   m1 += ArrayType::Constant(rows,cols,Scalar(tiny));
-  VERIFY_IS_CWISE_APPROX(s1/m1, s1 * m1.inverse());
+  VERIFY_IS_APPROX(s1/m1, s1 * m1.inverse());
 
   // check inplace transpose
   m3 = m1;

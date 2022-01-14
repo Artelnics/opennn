@@ -249,7 +249,7 @@ sm1.outerIndexPtr(); // Pointer to the beginning of each inner vector
 \endcode
 </td>
 <td>
-If the matrix is not in compressed form, `makeCompressed()` should be called before.\n
+If the matrix is not in compressed form, makeCompressed() should be called before.\n
 Note that these functions are mostly provided for interoperability purposes with external libraries.\n
 A better access to the values of the matrix is done by using the InnerIterator class as described in \link TutorialSparse the Tutorial Sparse \endlink section</td>
 </tr>

@@ -18,6 +18,8 @@ EIGEN_DECLARE_TEST(type_alias)
   STATIC_CHECK((is_same<Matrix2f,Matrix<float,2,2> >::value));
   STATIC_CHECK((is_same<Array33i,Array<int,3,3> >::value));
 
+#if EIGEN_HAS_CXX11
+  
   STATIC_CHECK((is_same<MatrixX<double>,    MatrixXd>::value));
   STATIC_CHECK((is_same<MatrixX<int>,       MatrixXi>::value));
   STATIC_CHECK((is_same<Matrix2<int>,       Matrix2i>::value));
@@ -40,4 +42,7 @@ EIGEN_DECLARE_TEST(type_alias)
   STATIC_CHECK((is_same<RowVector<float,3>,     RowVector3f>::value));
   STATIC_CHECK((is_same<RowVector<int,Dynamic>, RowVectorXi>::value));
 
+#else
+  std::cerr << "WARNING: c++11 type aliases not tested.\n";
+#endif
 }

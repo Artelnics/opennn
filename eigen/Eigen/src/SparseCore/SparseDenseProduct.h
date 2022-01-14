@@ -10,8 +10,6 @@
 #ifndef EIGEN_SPARSEDENSEPRODUCT_H
 #define EIGEN_SPARSEDENSEPRODUCT_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {
@@ -65,26 +63,18 @@ struct sparse_time_dense_product_impl<SparseLhsType,DenseRhsType,DenseResType, t
   
   static void processRow(const LhsEval& lhsEval, const DenseRhsType& rhs, DenseResType& res, const typename Res::Scalar& alpha, Index i, Index col)
   {
-    // Two accumulators, which breaks the dependency chain on the accumulator
-    // and allows more instruction-level parallelism in the following loop
-    typename Res::Scalar tmp_a(0);
-    typename Res::Scalar tmp_b(0);
-    for(LhsInnerIterator it(lhsEval,i); it ;++it) {
-      tmp_a += it.value() * rhs.coeff(it.index(), col);
-      ++it;
-      if(it) {
-        tmp_b += it.value() * rhs.coeff(it.index(), col);
-      }
-    }
-    res.coeffRef(i, col) += alpha * (tmp_a + tmp_b);
+    typename Res::Scalar tmp(0);
+    for(LhsInnerIterator it(lhsEval,i); it ;++it)
+      tmp += it.value() * rhs.coeff(it.index(),col);
+    res.coeffRef(i,col) += alpha * tmp;
   }
   
 };
 
 // FIXME: what is the purpose of the following specialization? Is it for the BlockedSparse format?
 // -> let's disable it for now as it is conflicting with generic scalar*matrix and matrix*scalar operators
-// template<typename T1, typename T2/*, int Options_, typename StrideType_*/>
-// struct ScalarBinaryOpTraits<T1, Ref<T2/*, Options_, StrideType_*/> >
+// template<typename T1, typename T2/*, int _Options, typename _StrideType*/>
+// struct ScalarBinaryOpTraits<T1, Ref<T2/*, _Options, _StrideType*/> >
 // {
 //   enum {
 //     Defined = 1

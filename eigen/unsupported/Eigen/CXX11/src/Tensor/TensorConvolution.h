@@ -10,8 +10,6 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_CONVOLUTION_H
 #define EIGEN_CXX11_TENSOR_TENSOR_CONVOLUTION_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \class TensorConvolution
@@ -229,8 +227,8 @@ struct traits<TensorConvolutionOp<Dimensions, InputXprType, KernelXprType> >
                                       typename traits<KernelXprType>::Index>::type Index;
   typedef typename InputXprType::Nested LhsNested;
   typedef typename KernelXprType::Nested RhsNested;
-  typedef typename remove_reference<LhsNested>::type LhsNested_;
-  typedef typename remove_reference<RhsNested>::type RhsNested_;
+  typedef typename remove_reference<LhsNested>::type _LhsNested;
+  typedef typename remove_reference<RhsNested>::type _RhsNested;
   static const int NumDimensions = traits<InputXprType>::NumDimensions;
   static const int Layout = traits<InputXprType>::Layout;
   typedef typename conditional<Pointer_type_promotion<typename InputXprType::Scalar, Scalar>::val,

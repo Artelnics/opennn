@@ -10,8 +10,6 @@
 #ifndef EIGEN_FORCEALIGNEDACCESS_H
 #define EIGEN_FORCEALIGNEDACCESS_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** \class ForceAlignedAccess

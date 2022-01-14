@@ -1,13 +1,16 @@
 #include <Eigen/Dense>
 #include <iostream>
 
+using namespace Eigen;
+using namespace std;
+
 int main()
 {
-  Eigen::ArrayXXf a(2,2);
-  Eigen::ArrayXXf b(2,2);
+  ArrayXXf a(2,2);
+  ArrayXXf b(2,2);
   a << 1,2,
        3,4;
   b << 5,6,
        7,8;
-  std::cout << "a * b = " << std::endl << a * b << std::endl;
+  cout << "a * b = " << endl << a * b << endl;
 }

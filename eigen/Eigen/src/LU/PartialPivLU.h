@@ -11,18 +11,16 @@
 #ifndef EIGEN_PARTIALLU_H
 #define EIGEN_PARTIALLU_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
-template<typename MatrixType_> struct traits<PartialPivLU<MatrixType_> >
- : traits<MatrixType_>
+template<typename _MatrixType> struct traits<PartialPivLU<_MatrixType> >
+ : traits<_MatrixType>
 {
   typedef MatrixXpr XprKind;
   typedef SolverStorage StorageKind;
   typedef int StorageIndex;
-  typedef traits<MatrixType_> BaseTraits;
+  typedef traits<_MatrixType> BaseTraits;
   enum {
     Flags = BaseTraits::Flags & RowMajorBit,
     CoeffReadCost = Dynamic
@@ -48,7 +46,7 @@ struct enable_if_ref<Ref<T>,Derived> {
   *
   * \brief LU decomposition of a matrix with partial pivoting, and related features
   *
-  * \tparam MatrixType_ the type of the matrix of which we are computing the LU decomposition
+  * \tparam _MatrixType the type of the matrix of which we are computing the LU decomposition
   *
   * This class represents a LU decomposition of a \b square \b invertible matrix, with partial pivoting: the matrix A
   * is decomposed as A = PLU where L is unit-lower-triangular, U is upper-triangular, and P
@@ -75,12 +73,12 @@ struct enable_if_ref<Ref<T>,Derived> {
   *
   * \sa MatrixBase::partialPivLu(), MatrixBase::determinant(), MatrixBase::inverse(), MatrixBase::computeInverse(), class FullPivLU
   */
-template<typename MatrixType_> class PartialPivLU
-  : public SolverBase<PartialPivLU<MatrixType_> >
+template<typename _MatrixType> class PartialPivLU
+  : public SolverBase<PartialPivLU<_MatrixType> >
 {
   public:
 
-    typedef MatrixType_ MatrixType;
+    typedef _MatrixType MatrixType;
     typedef SolverBase<PartialPivLU> Base;
     friend class SolverBase<PartialPivLU>;
 
@@ -267,7 +265,10 @@ template<typename MatrixType_> class PartialPivLU
 
   protected:
 
-    EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar)
+    static void check_template_parameters()
+    {
+      EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar);
+    }
 
     void compute();
 
@@ -514,7 +515,7 @@ void partial_lu_inplace(MatrixType& lu, TranspositionType& row_transpositions, t
   partial_lu_impl
     < typename MatrixType::Scalar, MatrixType::Flags&RowMajorBit?RowMajor:ColMajor,
       typename TranspositionType::StorageIndex,
-      internal::min_size_prefer_fixed(MatrixType::RowsAtCompileTime, MatrixType::ColsAtCompileTime)>
+      EIGEN_SIZE_MIN_PREFER_FIXED(MatrixType::RowsAtCompileTime,MatrixType::ColsAtCompileTime)>
     ::blocked_lu(lu.rows(), lu.cols(), &lu.coeffRef(0,0), lu.outerStride(), &row_transpositions.coeffRef(0), nb_transpositions);
 }
 
@@ -523,6 +524,8 @@ void partial_lu_inplace(MatrixType& lu, TranspositionType& row_transpositions, t
 template<typename MatrixType>
 void PartialPivLU<MatrixType>::compute()
 {
+  check_template_parameters();
+
   // the row permutation is stored as int indices, so just to be sure:
   eigen_assert(m_lu.rows()<NumTraits<int>::highest());
 

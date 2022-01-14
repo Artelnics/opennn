@@ -11,8 +11,6 @@
 #ifndef EIGEN_GENERIC_PACKET_MATH_H
 #define EIGEN_GENERIC_PACKET_MATH_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -162,7 +160,7 @@ struct eigen_packet_wrapper
 {
   EIGEN_ALWAYS_INLINE operator T&() { return m_val; }
   EIGEN_ALWAYS_INLINE operator const T&() const { return m_val; }
-  EIGEN_ALWAYS_INLINE eigen_packet_wrapper() = default;
+  EIGEN_ALWAYS_INLINE eigen_packet_wrapper() {}
   EIGEN_ALWAYS_INLINE eigen_packet_wrapper(const T &v) : m_val(v) {}
   EIGEN_ALWAYS_INLINE eigen_packet_wrapper& operator=(const T &v) {
     m_val = v;

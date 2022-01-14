@@ -11,8 +11,6 @@
 #ifndef EIGEN_SPECIALFUNCTIONS_FUNCTORS_H
 #define EIGEN_SPECIALFUNCTIONS_FUNCTORS_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

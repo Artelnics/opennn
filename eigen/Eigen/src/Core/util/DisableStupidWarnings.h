@@ -4,7 +4,6 @@
 #ifdef _MSC_VER
   // 4100 - unreferenced formal parameter (occurred e.g. in aligned_allocator::destroy(pointer p))
   // 4101 - unreferenced local variable
-  // 4127 - conditional expression is constant
   // 4181 - qualifier applied to reference type ignored
   // 4211 - nonstandard extension used : redefined extern to static
   // 4244 - 'argument' : conversion from 'type1' to 'type2', possible loss of data
@@ -20,7 +19,7 @@
   #ifndef EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
     #pragma warning( push )
   #endif
-  #pragma warning( disable : 4100 4101 4127 4181 4211 4244 4273 4324 4503 4512 4522 4700 4714 4717 4800)
+  #pragma warning( disable : 4100 4101 4181 4211 4244 4273 4324 4503 4512 4522 4700 4714 4717 4800)
 
 #elif defined __INTEL_COMPILER
   // 2196 - routine is both "inline" and "noinline" ("noinline" assumed)
@@ -54,7 +53,7 @@
     #pragma clang diagnostic ignored "-Wc11-extensions"
   #endif
 
-#elif defined __GNUC__ && !defined(__FUJITSU)
+#elif defined __GNUC__
 
   #if (!defined(EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS)) &&  (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
     #pragma GCC diagnostic push
@@ -75,47 +74,25 @@
 #endif
 
 #if defined __NVCC__
-  #define EIGEN_MAKE_PRAGMA(X) _Pragma(#X)
-  #if defined __NVCC_DIAG_PRAGMA_SUPPORT__
-    #define EIGEN_NV_DIAG_SUPPRESS(X) EIGEN_MAKE_PRAGMA(nv_diag_suppress X)
-  #else
-    #define EIGEN_NV_DIAG_SUPPRESS(X) EIGEN_MAKE_PRAGMA(diag_suppress X)
-  #endif
-
-  EIGEN_NV_DIAG_SUPPRESS(boolean_controlling_expr_is_constant)
+  #pragma diag_suppress boolean_controlling_expr_is_constant
   // Disable the "statement is unreachable" message
-  EIGEN_NV_DIAG_SUPPRESS(code_is_unreachable)
+  #pragma diag_suppress code_is_unreachable
   // Disable the "dynamic initialization in unreachable code" message
-  EIGEN_NV_DIAG_SUPPRESS(initialization_not_reachable)
+  #pragma diag_suppress initialization_not_reachable
   // Disable the "invalid error number" message that we get with older versions of nvcc
-  EIGEN_NV_DIAG_SUPPRESS(1222)
+  #pragma diag_suppress 1222
   // Disable the "calling a __host__ function from a __host__ __device__ function is not allowed" messages (yes, there are many of them and they seem to change with every version of the compiler)
-  EIGEN_NV_DIAG_SUPPRESS(2527)
-  EIGEN_NV_DIAG_SUPPRESS(2529)
-  EIGEN_NV_DIAG_SUPPRESS(2651)
-  EIGEN_NV_DIAG_SUPPRESS(2653)
-  EIGEN_NV_DIAG_SUPPRESS(2668)
-  EIGEN_NV_DIAG_SUPPRESS(2669)
-  EIGEN_NV_DIAG_SUPPRESS(2670)
-  EIGEN_NV_DIAG_SUPPRESS(2671)
-  EIGEN_NV_DIAG_SUPPRESS(2735)
-  EIGEN_NV_DIAG_SUPPRESS(2737)
-  EIGEN_NV_DIAG_SUPPRESS(2739)
-  EIGEN_NV_DIAG_SUPPRESS(2885)
-  EIGEN_NV_DIAG_SUPPRESS(2888)
-  EIGEN_NV_DIAG_SUPPRESS(2976)
-  EIGEN_NV_DIAG_SUPPRESS(2979)
-  EIGEN_NV_DIAG_SUPPRESS(20011)
-  EIGEN_NV_DIAG_SUPPRESS(20014)
-  // Disable the "// __device__ annotation is ignored on a function(...) that is
-  //              explicitly defaulted on its first declaration" message.
-  // The __device__ annotation seems to actually be needed in some cases,
-  // otherwise resulting in kernel runtime errors.
-  EIGEN_NV_DIAG_SUPPRESS(2886)
-  EIGEN_NV_DIAG_SUPPRESS(2977)
-  EIGEN_NV_DIAG_SUPPRESS(20012)
-  #undef EIGEN_NV_DIAG_SUPPRESS
-  #undef EIGEN_MAKE_PRAGMA
+  #pragma diag_suppress 2527
+  #pragma diag_suppress 2529
+  #pragma diag_suppress 2651
+  #pragma diag_suppress 2653
+  #pragma diag_suppress 2668
+  #pragma diag_suppress 2669
+  #pragma diag_suppress 2670
+  #pragma diag_suppress 2671
+  #pragma diag_suppress 2735
+  #pragma diag_suppress 2737
+  #pragma diag_suppress 2739
 #endif
 
 #else

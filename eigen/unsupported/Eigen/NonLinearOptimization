@@ -7,8 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_NONLINEAROPTIMIZATION_MODULE_H
-#define EIGEN_NONLINEAROPTIMIZATION_MODULE_H
+#ifndef EIGEN_NONLINEAROPTIMIZATION_MODULE
+#define EIGEN_NONLINEAROPTIMIZATION_MODULE
 
 #include <vector>
 
@@ -137,4 +137,4 @@
 #include "src/NonLinearOptimization/LevenbergMarquardt.h"
 
 
-#endif // EIGEN_NONLINEAROPTIMIZATION_MODULE_H
+#endif // EIGEN_NONLINEAROPTIMIZATION_MODULE

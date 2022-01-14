@@ -12,8 +12,6 @@
 
 // This file implements sparse * permutation products
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 namespace internal {

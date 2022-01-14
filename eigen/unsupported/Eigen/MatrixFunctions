@@ -8,8 +8,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_MATRIX_FUNCTIONS_MODULE_H
-#define EIGEN_MATRIX_FUNCTIONS_MODULE_H
+#ifndef EIGEN_MATRIX_FUNCTIONS
+#define EIGEN_MATRIX_FUNCTIONS
 
 #include <cfloat>
 #include <list>
@@ -500,4 +500,5 @@ Output: \verbinclude MatrixSquareRoot.out
 
 */
 
-#endif // EIGEN_MATRIX_FUNCTIONS_MODULE_H
+#endif // EIGEN_MATRIX_FUNCTIONS
+

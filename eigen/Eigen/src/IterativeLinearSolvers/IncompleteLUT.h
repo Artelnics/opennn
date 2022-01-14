@@ -12,8 +12,6 @@
 #define EIGEN_INCOMPLETE_LUT_H
 
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -97,15 +95,15 @@ Index QuickSplit(VectorV &row, VectorI &ind, Index ncut)
   * alternatively, on GMANE:
   *   http://comments.gmane.org/gmane.comp.lib.eigen/3302
   */
-template <typename Scalar_, typename StorageIndex_ = int>
-class IncompleteLUT : public SparseSolverBase<IncompleteLUT<Scalar_, StorageIndex_> >
+template <typename _Scalar, typename _StorageIndex = int>
+class IncompleteLUT : public SparseSolverBase<IncompleteLUT<_Scalar, _StorageIndex> >
 {
   protected:
     typedef SparseSolverBase<IncompleteLUT> Base;
     using Base::m_isInitialized;
   public:
-    typedef Scalar_ Scalar;
-    typedef StorageIndex_ StorageIndex;
+    typedef _Scalar Scalar;
+    typedef _StorageIndex StorageIndex;
     typedef typename NumTraits<Scalar>::Real RealScalar;
     typedef Matrix<Scalar,Dynamic,1> Vector;
     typedef Matrix<StorageIndex,Dynamic,1> VectorI;
@@ -221,8 +219,8 @@ void IncompleteLUT<Scalar,StorageIndex>::setFillfactor(int fillfactor)
 }
 
 template <typename Scalar, typename StorageIndex>
-template<typename MatrixType_>
-void IncompleteLUT<Scalar,StorageIndex>::analyzePattern(const MatrixType_& amat)
+template<typename _MatrixType>
+void IncompleteLUT<Scalar,StorageIndex>::analyzePattern(const _MatrixType& amat)
 {
   // Compute the Fill-reducing permutation
   // Since ILUT does not perform any numerical pivoting,
@@ -242,8 +240,8 @@ void IncompleteLUT<Scalar,StorageIndex>::analyzePattern(const MatrixType_& amat)
 }
 
 template <typename Scalar, typename StorageIndex>
-template<typename MatrixType_>
-void IncompleteLUT<Scalar,StorageIndex>::factorize(const MatrixType_& amat)
+template<typename _MatrixType>
+void IncompleteLUT<Scalar,StorageIndex>::factorize(const _MatrixType& amat)
 {
   using std::sqrt;
   using std::swap;

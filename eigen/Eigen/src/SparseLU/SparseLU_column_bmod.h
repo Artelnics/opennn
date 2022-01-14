@@ -31,8 +31,6 @@
 #ifndef SPARSELU_COLUMN_BMOD_H
 #define SPARSELU_COLUMN_BMOD_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {

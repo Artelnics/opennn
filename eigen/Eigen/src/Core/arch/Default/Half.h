@@ -36,7 +36,6 @@
 #ifndef EIGEN_HALF_H
 #define EIGEN_HALF_H
 
-#include "../../InternalHeaderCheck.h"
 #include <sstream>
 
 #if defined(EIGEN_HAS_GPU_FP16) || defined(EIGEN_HAS_ARM64_FP16_SCALAR_ARITHMETIC)
@@ -208,43 +207,39 @@ struct half : public half_impl::half_base {
 namespace std {
 template<>
 struct numeric_limits<Eigen::half> {
-  static EIGEN_CONSTEXPR const bool is_specialized = true;
-  static EIGEN_CONSTEXPR const bool is_signed = true;
-  static EIGEN_CONSTEXPR const bool is_integer = false;
-  static EIGEN_CONSTEXPR const bool is_exact = false;
-  static EIGEN_CONSTEXPR const bool has_infinity = true;
-  static EIGEN_CONSTEXPR const bool has_quiet_NaN = true;
-  static EIGEN_CONSTEXPR const bool has_signaling_NaN = true;
-  static EIGEN_CONSTEXPR const float_denorm_style has_denorm = denorm_present;
-  static EIGEN_CONSTEXPR const bool has_denorm_loss = false;
-  static EIGEN_CONSTEXPR const std::float_round_style round_style = std::round_to_nearest;
-  static EIGEN_CONSTEXPR const bool is_iec559 = true;
-  // The C++ standard defines this as "true if the set of values representable
-  // by the type is finite." Half has finite precision.
-  static EIGEN_CONSTEXPR const bool is_bounded = true;
-  static EIGEN_CONSTEXPR const bool is_modulo = false;
-  static EIGEN_CONSTEXPR const int digits = 11;
-  static EIGEN_CONSTEXPR const int digits10 = 3;      // according to http://half.sourceforge.net/structstd_1_1numeric__limits_3_01half__float_1_1half_01_4.html
-  static EIGEN_CONSTEXPR const int max_digits10 = 5;  // according to http://half.sourceforge.net/structstd_1_1numeric__limits_3_01half__float_1_1half_01_4.html
-  static EIGEN_CONSTEXPR const int radix = numeric_limits<float>::radix;
-  static EIGEN_CONSTEXPR const int min_exponent = -13;
-  static EIGEN_CONSTEXPR const int min_exponent10 = -4;
-  static EIGEN_CONSTEXPR const int max_exponent = 16;
-  static EIGEN_CONSTEXPR const int max_exponent10 = 4;
-  static EIGEN_CONSTEXPR const bool traps = numeric_limits<float>::traps;
-  // IEEE754: "The implementer shall choose how tininess is detected, but shall
-  // detect tininess in the same way for all operations in radix two"
-  static EIGEN_CONSTEXPR const bool tinyness_before = std::numeric_limits<float>::tinyness_before;
+  static const bool is_specialized = true;
+  static const bool is_signed = true;
+  static const bool is_integer = false;
+  static const bool is_exact = false;
+  static const bool has_infinity = true;
+  static const bool has_quiet_NaN = true;
+  static const bool has_signaling_NaN = true;
+  static const float_denorm_style has_denorm = denorm_present;
+  static const bool has_denorm_loss = false;
+  static const std::float_round_style round_style = std::round_to_nearest;
+  static const bool is_iec559 = false;
+  static const bool is_bounded = false;
+  static const bool is_modulo = false;
+  static const int digits = 11;
+  static const int digits10 = 3;      // according to http://half.sourceforge.net/structstd_1_1numeric__limits_3_01half__float_1_1half_01_4.html
+  static const int max_digits10 = 5;  // according to http://half.sourceforge.net/structstd_1_1numeric__limits_3_01half__float_1_1half_01_4.html
+  static const int radix = 2;
+  static const int min_exponent = -13;
+  static const int min_exponent10 = -4;
+  static const int max_exponent = 16;
+  static const int max_exponent10 = 4;
+  static const bool traps = true;
+  static const bool tinyness_before = false;
 
-  static EIGEN_CONSTEXPR Eigen::half (min)() { return Eigen::half_impl::raw_uint16_to_half(0x0400); }
-  static EIGEN_CONSTEXPR Eigen::half lowest() { return Eigen::half_impl::raw_uint16_to_half(0xfbff); }
-  static EIGEN_CONSTEXPR Eigen::half (max)() { return Eigen::half_impl::raw_uint16_to_half(0x7bff); }
-  static EIGEN_CONSTEXPR Eigen::half epsilon() { return Eigen::half_impl::raw_uint16_to_half(0x1400); }
-  static EIGEN_CONSTEXPR Eigen::half round_error() { return Eigen::half_impl::raw_uint16_to_half(0x3800); }
-  static EIGEN_CONSTEXPR Eigen::half infinity() { return Eigen::half_impl::raw_uint16_to_half(0x7c00); }
-  static EIGEN_CONSTEXPR Eigen::half quiet_NaN() { return Eigen::half_impl::raw_uint16_to_half(0x7e00); }
-  static EIGEN_CONSTEXPR Eigen::half signaling_NaN() { return Eigen::half_impl::raw_uint16_to_half(0x7d00); }
-  static EIGEN_CONSTEXPR Eigen::half denorm_min() { return Eigen::half_impl::raw_uint16_to_half(0x0001); }
+  static Eigen::half (min)() { return Eigen::half_impl::raw_uint16_to_half(0x400); }
+  static Eigen::half lowest() { return Eigen::half_impl::raw_uint16_to_half(0xfbff); }
+  static Eigen::half (max)() { return Eigen::half_impl::raw_uint16_to_half(0x7bff); }
+  static Eigen::half epsilon() { return Eigen::half_impl::raw_uint16_to_half(0x0800); }
+  static Eigen::half round_error() { return Eigen::half(0.5); }
+  static Eigen::half infinity() { return Eigen::half_impl::raw_uint16_to_half(0x7c00); }
+  static Eigen::half quiet_NaN() { return Eigen::half_impl::raw_uint16_to_half(0x7e00); }
+  static Eigen::half signaling_NaN() { return Eigen::half_impl::raw_uint16_to_half(0x7d00); }
+  static Eigen::half denorm_min() { return Eigen::half_impl::raw_uint16_to_half(0x1); }
 };
 
 // If std::numeric_limits<T> is specialized, should also specialize
@@ -266,7 +261,7 @@ namespace half_impl {
 #if (defined(EIGEN_HAS_CUDA_FP16) && defined(EIGEN_CUDA_ARCH) && \
      EIGEN_CUDA_ARCH >= 530) ||                                  \
     (defined(EIGEN_HAS_HIP_FP16) && defined(HIP_DEVICE_COMPILE))
-// Note: We deliberately do *not* define this to 1 even if we have Arm's native
+// Note: We deliberatly do *not* define this to 1 even if we have Arm's native
 // fp16 type since GPU halfs are rather different from native CPU halfs.
 // TODO: Rename to something like EIGEN_HAS_NATIVE_GPU_FP16
 #define EIGEN_HAS_NATIVE_FP16

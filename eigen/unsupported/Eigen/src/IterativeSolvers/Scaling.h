@@ -10,8 +10,6 @@
 #ifndef EIGEN_ITERSCALING_H
 #define EIGEN_ITERSCALING_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /**
@@ -40,17 +38,17 @@ namespace Eigen {
   * x = scal.RightScaling().cwiseProduct(x); 
   * \endcode
   * 
-  * \tparam MatrixType_ the type of the matrix. It should be a real square sparsematrix
+  * \tparam _MatrixType the type of the matrix. It should be a real square sparsematrix
   * 
   * References : D. Ruiz and B. Ucar, A Symmetry Preserving Algorithm for Matrix Scaling, INRIA Research report RR-7552
   * 
   * \sa \ref IncompleteLUT 
   */
-template<typename MatrixType_>
+template<typename _MatrixType>
 class IterScaling
 {
   public:
-    typedef MatrixType_ MatrixType;
+    typedef _MatrixType MatrixType; 
     typedef typename MatrixType::Scalar Scalar;
     typedef typename MatrixType::Index Index;
     

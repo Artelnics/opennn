@@ -120,8 +120,6 @@
 #include "../../misc/blas.h"
 #endif
 
-#include "../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 typedef std::complex<double> dcomplex;

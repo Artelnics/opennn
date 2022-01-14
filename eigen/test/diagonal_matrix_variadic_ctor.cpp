@@ -7,7 +7,31 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#define EIGEN_NO_STATIC_ASSERT
+
 #include "main.h"
+
+template <typename Scalar>
+void assertionTest()
+{
+  typedef DiagonalMatrix<Scalar, 5> DiagMatrix5;
+  typedef DiagonalMatrix<Scalar, 7> DiagMatrix7;
+  typedef DiagonalMatrix<Scalar, Dynamic> DiagMatrixX;
+
+  Scalar raw[6];
+  for (int i = 0; i < 6; ++i) {
+    raw[i] = internal::random<Scalar>();
+  }
+
+  VERIFY_RAISES_ASSERT((DiagMatrix5{raw[0], raw[1], raw[2], raw[3]}));
+  VERIFY_RAISES_ASSERT((DiagMatrix5{raw[0], raw[1], raw[3]}));
+  VERIFY_RAISES_ASSERT((DiagMatrix7{raw[0], raw[1], raw[2], raw[3]}));
+
+  VERIFY_RAISES_ASSERT((DiagMatrixX {
+    {raw[0], raw[1], raw[2]},
+    {raw[3], raw[4], raw[5]}
+  }));
+}
 
 #define VERIFY_IMPLICIT_CONVERSION_3(DIAGTYPE, V0, V1, V2) \
   DIAGTYPE d(V0, V1, V2);                                  \
@@ -143,6 +167,14 @@ void constructorTest<float>()
 
 EIGEN_DECLARE_TEST(diagonal_matrix_variadic_ctor)
 {
+  CALL_SUBTEST_1(assertionTest<unsigned char>());
+  CALL_SUBTEST_1(assertionTest<float>());
+  CALL_SUBTEST_1(assertionTest<Index>());
+  CALL_SUBTEST_1(assertionTest<int>());
+  CALL_SUBTEST_1(assertionTest<long int>());
+  CALL_SUBTEST_1(assertionTest<std::ptrdiff_t>());
+  CALL_SUBTEST_1(assertionTest<std::complex<double>>());
+
   CALL_SUBTEST_2(constructorTest<unsigned char>());
   CALL_SUBTEST_2(constructorTest<float>());
   CALL_SUBTEST_2(constructorTest<Index>());

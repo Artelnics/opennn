@@ -7,8 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_CXX11_THREADPOOL_MODULE_H
-#define EIGEN_CXX11_THREADPOOL_MODULE_H
+#ifndef EIGEN_CXX11_THREADPOOL_MODULE
+#define EIGEN_CXX11_THREADPOOL_MODULE
 
 #include "../../../Eigen/Core"
 
@@ -30,6 +30,7 @@
 
 // The code depends on CXX11, so only include the module if the
 // compiler supports it.
+#if (EIGEN_COMP_CXXVER >= 11)
 #include <cstddef>
 #include <cstring>
 #include <time.h>
@@ -39,7 +40,9 @@
 #include <condition_variable>
 #include <deque>
 #include <mutex>
+#include <thread>
 #include <functional>
+#include <memory>
 #include <utility>
 
 // There are non-parenthesized calls to "max" in the  <unordered_map> header,
@@ -50,15 +53,6 @@
 #undef max
 #endif
 #include <unordered_map>
-
-// C++20 libstdc++'s headers also calls "max" and "min" indirectly.
-#if EIGEN_COMP_HAS_P0848R3
-#ifdef min
-#undef min
-#endif
-#endif
-#include <thread>
-#include <memory>
 
 #include "src/util/CXX11Meta.h"
 #include "src/util/MaxSizeVector.h"
@@ -73,6 +67,8 @@
 #include "src/ThreadPool/Barrier.h"
 #include "src/ThreadPool/NonBlockingThreadPool.h"
 
+#endif
+
 #include "../../../Eigen/src/Core/util/ReenableStupidWarnings.h"
 
-#endif // EIGEN_CXX11_THREADPOOL_MODULE_H
+#endif // EIGEN_CXX11_THREADPOOL_MODULE

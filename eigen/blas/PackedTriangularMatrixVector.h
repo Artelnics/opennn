@@ -31,16 +31,15 @@ struct packed_triangular_matrix_vector_product<Index,Mode,LhsScalar,ConjLhs,RhsS
     typedef typename conj_expr_if<ConjLhs,LhsMap>::type ConjLhsType;
     typedef Map<Matrix<ResScalar,Dynamic,1> > ResMap;
 
-    for (Index i = 0; i < size; ++i) {
-      Index s = IsLower && (HasUnitDiag || HasZeroDiag) ? 1 : 0;
-      Index r = IsLower ? size - i : i + 1;
-      if (!(HasUnitDiag || HasZeroDiag) || (--r > 0)) {
-        ResMap(res + (IsLower ? s + i : 0), r) += alpha * cj(rhs[i]) * ConjLhsType(LhsMap(lhs + s, r));
-      }
-      if (HasUnitDiag) {
-        res[i] += alpha * cj(rhs[i]);
-      }
-      lhs += IsLower ? size - i : i + 1;
+    for (Index i=0; i<size; ++i)
+    {
+      Index s = IsLower&&(HasUnitDiag||HasZeroDiag) ? 1 : 0;
+      Index r = IsLower ? size-i: i+1;
+      if (EIGEN_IMPLIES(HasUnitDiag||HasZeroDiag, (--r)>0))
+	ResMap(res+(IsLower ? s+i : 0),r) += alpha * cj(rhs[i]) * ConjLhsType(LhsMap(lhs+s,r));
+      if (HasUnitDiag)
+	res[i] += alpha * cj(rhs[i]);
+      lhs += IsLower ? size-i: i+1;
     }
   };
 };
@@ -62,16 +61,15 @@ struct packed_triangular_matrix_vector_product<Index,Mode,LhsScalar,ConjLhs,RhsS
     typedef Map<const Matrix<RhsScalar,Dynamic,1> > RhsMap;
     typedef typename conj_expr_if<ConjRhs,RhsMap>::type ConjRhsType;
 
-    for (Index i = 0; i < size; ++i) {
-      Index s = !IsLower && (HasUnitDiag || HasZeroDiag) ? 1 : 0;
-      Index r = IsLower ? i + 1 : size - i;
-      if (!(HasUnitDiag || HasZeroDiag) || (--r > 0)) {
-        res[i] += alpha * (ConjLhsType(LhsMap(lhs + s, r)).cwiseProduct(ConjRhsType(RhsMap(rhs + (IsLower ? 0 : s + i), r)))).sum();
-      }
-      if (HasUnitDiag) {
-        res[i] += alpha * cj(rhs[i]);
-      }
-      lhs += IsLower ? i + 1 : size - i;
+    for (Index i=0; i<size; ++i)
+    {
+      Index s = !IsLower&&(HasUnitDiag||HasZeroDiag) ? 1 : 0;
+      Index r = IsLower ? i+1 : size-i;
+      if (EIGEN_IMPLIES(HasUnitDiag||HasZeroDiag, (--r)>0))
+	res[i] += alpha * (ConjLhsType(LhsMap(lhs+s,r)).cwiseProduct(ConjRhsType(RhsMap(rhs+(IsLower ? 0 : s+i),r)))).sum();
+      if (HasUnitDiag)
+	res[i] += alpha * cj(rhs[i]);
+      lhs += IsLower ? i+1 : size-i;
     }
   };
 };

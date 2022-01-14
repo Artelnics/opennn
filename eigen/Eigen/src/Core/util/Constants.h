@@ -12,8 +12,6 @@
 #ifndef EIGEN_CONSTANTS_H
 #define EIGEN_CONSTANTS_H
 
-#include "../InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /** This value means that a positive quantity (e.g., a size) is not known at compile-time, and that instead the value is
@@ -314,7 +312,7 @@ enum SpecializedType {
 };
 
 /** \ingroup enums
-  * Enum containing possible values for the \p Options_ template parameter of
+  * Enum containing possible values for the \p _Options template parameter of
   * Matrix, Array and BandMatrix. */
 enum StorageOptions {
   /** Storage order is column major (see \ref TopicStorageOrders). */

@@ -9,8 +9,6 @@
 #ifndef SPARSELU_IMPL_H
 #define SPARSELU_IMPL_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 namespace internal {
   

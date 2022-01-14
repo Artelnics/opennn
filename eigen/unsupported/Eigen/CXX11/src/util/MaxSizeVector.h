@@ -29,7 +29,7 @@ namespace Eigen {
   */
 template <typename T>
 class MaxSizeVector {
-  static const size_t alignment = internal::plain_enum_max(EIGEN_ALIGNOF(T), sizeof(void*));
+  static const size_t alignment = EIGEN_PLAIN_ENUM_MAX(EIGEN_ALIGNOF(T), sizeof(void*));
  public:
   // Construct a new MaxSizeVector, reserve n elements.
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE

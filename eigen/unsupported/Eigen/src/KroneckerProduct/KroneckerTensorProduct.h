@@ -12,8 +12,6 @@
 #ifndef KRONECKER_TENSOR_PRODUCT_H
 #define KRONECKER_TENSOR_PRODUCT_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 /*!
@@ -200,11 +198,11 @@ void KroneckerProductSparse<Lhs,Rhs>::evalTo(Dest& dst) const
 
 namespace internal {
 
-template<typename Lhs_, typename Rhs_>
-struct traits<KroneckerProduct<Lhs_,Rhs_> >
+template<typename _Lhs, typename _Rhs>
+struct traits<KroneckerProduct<_Lhs,_Rhs> >
 {
-  typedef typename remove_all<Lhs_>::type Lhs;
-  typedef typename remove_all<Rhs_>::type Rhs;
+  typedef typename remove_all<_Lhs>::type Lhs;
+  typedef typename remove_all<_Rhs>::type Rhs;
   typedef typename ScalarBinaryOpTraits<typename Lhs::Scalar, typename Rhs::Scalar>::ReturnType Scalar;
   typedef typename promote_index_type<typename Lhs::StorageIndex, typename Rhs::StorageIndex>::type StorageIndex;
 
@@ -218,12 +216,12 @@ struct traits<KroneckerProduct<Lhs_,Rhs_> >
   typedef Matrix<Scalar,Rows,Cols> ReturnType;
 };
 
-template<typename Lhs_, typename Rhs_>
-struct traits<KroneckerProductSparse<Lhs_,Rhs_> >
+template<typename _Lhs, typename _Rhs>
+struct traits<KroneckerProductSparse<_Lhs,_Rhs> >
 {
   typedef MatrixXpr XprKind;
-  typedef typename remove_all<Lhs_>::type Lhs;
-  typedef typename remove_all<Rhs_>::type Rhs;
+  typedef typename remove_all<_Lhs>::type Lhs;
+  typedef typename remove_all<_Rhs>::type Rhs;
   typedef typename ScalarBinaryOpTraits<typename Lhs::Scalar, typename Rhs::Scalar>::ReturnType Scalar;
   typedef typename cwise_promote_storage_type<typename traits<Lhs>::StorageKind, typename traits<Rhs>::StorageKind, scalar_product_op<typename Lhs::Scalar, typename Rhs::Scalar> >::ret StorageKind;
   typedef typename promote_index_type<typename Lhs::StorageIndex, typename Rhs::StorageIndex>::type StorageIndex;

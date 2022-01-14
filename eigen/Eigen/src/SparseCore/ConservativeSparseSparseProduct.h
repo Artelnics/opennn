@@ -10,8 +10,6 @@
 #ifndef EIGEN_CONSERVATIVESPARSESPARSEPRODUCT_H
 #define EIGEN_CONSERVATIVESPARSESPARSEPRODUCT_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -126,11 +124,6 @@ static void conservative_sparse_sparse_product_impl(const Lhs& lhs, const Rhs& r
 
 namespace internal {
 
-
-// Helper template to generate new sparse matrix types
-template<class Source, int Order>
-using WithStorageOrder = SparseMatrix<typename Source::Scalar, Order, typename Source::StorageIndex>;
-
 template<typename Lhs, typename Rhs, typename ResultType,
   int LhsStorageOrder = (traits<Lhs>::Flags&RowMajorBit) ? RowMajor : ColMajor,
   int RhsStorageOrder = (traits<Rhs>::Flags&RowMajorBit) ? RowMajor : ColMajor,
@@ -145,15 +138,15 @@ struct conservative_sparse_sparse_product_selector<Lhs,Rhs,ResultType,ColMajor,C
 
   static void run(const Lhs& lhs, const Rhs& rhs, ResultType& res)
   {
-    using RowMajorMatrix = WithStorageOrder<ResultType, RowMajor>;
-    using ColMajorMatrixAux = WithStorageOrder<ResultType, ColMajor>;
+    typedef SparseMatrix<typename ResultType::Scalar,RowMajor,typename ResultType::StorageIndex> RowMajorMatrix;
+    typedef SparseMatrix<typename ResultType::Scalar,ColMajor,typename ResultType::StorageIndex> ColMajorMatrixAux;
+    typedef typename sparse_eval<ColMajorMatrixAux,ResultType::RowsAtCompileTime,ResultType::ColsAtCompileTime,ColMajorMatrixAux::Flags>::type ColMajorMatrix;
 
     // If the result is tall and thin (in the extreme case a column vector)
     // then it is faster to sort the coefficients inplace instead of transposing twice.
     // FIXME, the following heuristic is probably not very good.
     if(lhs.rows()>rhs.cols())
     {
-      using ColMajorMatrix = typename sparse_eval<ColMajorMatrixAux,ResultType::RowsAtCompileTime,ResultType::ColsAtCompileTime,ColMajorMatrixAux::Flags>::type;
       ColMajorMatrix resCol(lhs.rows(),rhs.cols());
       // perform sorted insertion
       internal::conservative_sparse_sparse_product_impl<Lhs,Rhs,ColMajorMatrix>(lhs, rhs, resCol, true);
@@ -175,8 +168,8 @@ struct conservative_sparse_sparse_product_selector<Lhs,Rhs,ResultType,RowMajor,C
 {
   static void run(const Lhs& lhs, const Rhs& rhs, ResultType& res)
   {
-    using RowMajorRhs = WithStorageOrder<Rhs, RowMajor>;
-    using RowMajorRes = WithStorageOrder<ResultType, RowMajor>;
+    typedef SparseMatrix<typename Rhs::Scalar,RowMajor,typename ResultType::StorageIndex> RowMajorRhs;
+    typedef SparseMatrix<typename ResultType::Scalar,RowMajor,typename ResultType::StorageIndex> RowMajorRes;
     RowMajorRhs rhsRow = rhs;
     RowMajorRes resRow(lhs.rows(), rhs.cols());
     internal::conservative_sparse_sparse_product_impl<RowMajorRhs,Lhs,RowMajorRes>(rhsRow, lhs, resRow);
@@ -189,8 +182,8 @@ struct conservative_sparse_sparse_product_selector<Lhs,Rhs,ResultType,ColMajor,R
 {
   static void run(const Lhs& lhs, const Rhs& rhs, ResultType& res)
   {
-    using RowMajorLhs = WithStorageOrder<Lhs, RowMajor>;
-    using RowMajorRes = WithStorageOrder<ResultType, RowMajor>;
+    typedef SparseMatrix<typename Lhs::Scalar,RowMajor,typename ResultType::StorageIndex> RowMajorLhs;
+    typedef SparseMatrix<typename ResultType::Scalar,RowMajor,typename ResultType::StorageIndex> RowMajorRes;
     RowMajorLhs lhsRow = lhs;
     RowMajorRes resRow(lhs.rows(), rhs.cols());
     internal::conservative_sparse_sparse_product_impl<Rhs,RowMajorLhs,RowMajorRes>(rhs, lhsRow, resRow);
@@ -203,9 +196,9 @@ struct conservative_sparse_sparse_product_selector<Lhs,Rhs,ResultType,RowMajor,R
 {
   static void run(const Lhs& lhs, const Rhs& rhs, ResultType& res)
   {
-    using RowMajorRes = WithStorageOrder<ResultType, RowMajor>;
-    RowMajorRes resRow(lhs.rows(), rhs.cols());
-    internal::conservative_sparse_sparse_product_impl<Rhs,Lhs,RowMajorRes>(rhs, lhs, resRow);
+    typedef SparseMatrix<typename ResultType::Scalar,RowMajor,typename ResultType::StorageIndex> RowMajorMatrix;
+    RowMajorMatrix resRow(lhs.rows(), rhs.cols());
+    internal::conservative_sparse_sparse_product_impl<Rhs,Lhs,RowMajorMatrix>(rhs, lhs, resRow);
     res = resRow;
   }
 };
@@ -218,9 +211,9 @@ struct conservative_sparse_sparse_product_selector<Lhs,Rhs,ResultType,ColMajor,C
 
   static void run(const Lhs& lhs, const Rhs& rhs, ResultType& res)
   {
-    using ColMajorRes = WithStorageOrder<ResultType, ColMajor>;
-    ColMajorRes resCol(lhs.rows(), rhs.cols());
-    internal::conservative_sparse_sparse_product_impl<Lhs,Rhs,ColMajorRes>(lhs, rhs, resCol);
+    typedef SparseMatrix<typename ResultType::Scalar,ColMajor,typename ResultType::StorageIndex> ColMajorMatrix;
+    ColMajorMatrix resCol(lhs.rows(), rhs.cols());
+    internal::conservative_sparse_sparse_product_impl<Lhs,Rhs,ColMajorMatrix>(lhs, rhs, resCol);
     res = resCol;
   }
 };
@@ -230,8 +223,8 @@ struct conservative_sparse_sparse_product_selector<Lhs,Rhs,ResultType,RowMajor,C
 {
   static void run(const Lhs& lhs, const Rhs& rhs, ResultType& res)
   {
-    using ColMajorLhs = WithStorageOrder<Lhs, ColMajor>;
-    using ColMajorRes = WithStorageOrder<ResultType, ColMajor>;
+    typedef SparseMatrix<typename Lhs::Scalar,ColMajor,typename ResultType::StorageIndex> ColMajorLhs;
+    typedef SparseMatrix<typename ResultType::Scalar,ColMajor,typename ResultType::StorageIndex> ColMajorRes;
     ColMajorLhs lhsCol = lhs;
     ColMajorRes resCol(lhs.rows(), rhs.cols());
     internal::conservative_sparse_sparse_product_impl<ColMajorLhs,Rhs,ColMajorRes>(lhsCol, rhs, resCol);
@@ -244,8 +237,8 @@ struct conservative_sparse_sparse_product_selector<Lhs,Rhs,ResultType,ColMajor,R
 {
   static void run(const Lhs& lhs, const Rhs& rhs, ResultType& res)
   {
-    using ColMajorRhs = WithStorageOrder<Rhs, ColMajor>;
-    using ColMajorRes = WithStorageOrder<ResultType, ColMajor>;
+    typedef SparseMatrix<typename Rhs::Scalar,ColMajor,typename ResultType::StorageIndex> ColMajorRhs;
+    typedef SparseMatrix<typename ResultType::Scalar,ColMajor,typename ResultType::StorageIndex> ColMajorRes;
     ColMajorRhs rhsCol = rhs;
     ColMajorRes resCol(lhs.rows(), rhs.cols());
     internal::conservative_sparse_sparse_product_impl<Lhs,ColMajorRhs,ColMajorRes>(lhs, rhsCol, resCol);
@@ -258,12 +251,12 @@ struct conservative_sparse_sparse_product_selector<Lhs,Rhs,ResultType,RowMajor,R
 {
   static void run(const Lhs& lhs, const Rhs& rhs, ResultType& res)
   {
-    using ColMajorRes = WithStorageOrder<ResultType, ColMajor>;
-    using RowMajorRes = WithStorageOrder<ResultType, RowMajor>;
-    RowMajorRes resRow(lhs.rows(),rhs.cols());
-    internal::conservative_sparse_sparse_product_impl<Rhs,Lhs,RowMajorRes>(rhs, lhs, resRow);
+    typedef SparseMatrix<typename ResultType::Scalar,RowMajor,typename ResultType::StorageIndex> RowMajorMatrix;
+    typedef SparseMatrix<typename ResultType::Scalar,ColMajor,typename ResultType::StorageIndex> ColMajorMatrix;
+    RowMajorMatrix resRow(lhs.rows(),rhs.cols());
+    internal::conservative_sparse_sparse_product_impl<Rhs,Lhs,RowMajorMatrix>(rhs, lhs, resRow);
     // sort the non zeros:
-    ColMajorRes resCol(resRow);
+    ColMajorMatrix resCol(resRow);
     res = resCol;
   }
 };
@@ -324,7 +317,7 @@ struct sparse_sparse_to_dense_product_selector<Lhs,Rhs,ResultType,RowMajor,ColMa
 {
   static void run(const Lhs& lhs, const Rhs& rhs, ResultType& res)
   {
-    using ColMajorLhs = WithStorageOrder<Lhs, ColMajor>;
+    typedef SparseMatrix<typename Lhs::Scalar,ColMajor,typename ResultType::StorageIndex> ColMajorLhs;
     ColMajorLhs lhsCol(lhs);
     internal::sparse_sparse_to_dense_product_impl<ColMajorLhs,Rhs,ResultType>(lhsCol, rhs, res);
   }
@@ -335,7 +328,7 @@ struct sparse_sparse_to_dense_product_selector<Lhs,Rhs,ResultType,ColMajor,RowMa
 {
   static void run(const Lhs& lhs, const Rhs& rhs, ResultType& res)
   {
-    using ColMajorRhs = WithStorageOrder<Rhs, ColMajor>;
+    typedef SparseMatrix<typename Rhs::Scalar,ColMajor,typename ResultType::StorageIndex> ColMajorRhs;
     ColMajorRhs rhsCol(rhs);
     internal::sparse_sparse_to_dense_product_impl<Lhs,ColMajorRhs,ResultType>(lhs, rhsCol, res);
   }

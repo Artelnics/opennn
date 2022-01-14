@@ -11,8 +11,6 @@
 #ifndef EIGEN_CWISE_BINARY_OP_H
 #define EIGEN_CWISE_BINARY_OP_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -45,10 +43,10 @@ struct traits<CwiseBinaryOp<BinaryOp, Lhs, Rhs> >
                                       typename traits<Rhs>::StorageIndex>::type StorageIndex;
   typedef typename Lhs::Nested LhsNested;
   typedef typename Rhs::Nested RhsNested;
-  typedef typename remove_reference<LhsNested>::type LhsNested_;
-  typedef typename remove_reference<RhsNested>::type RhsNested_;
+  typedef typename remove_reference<LhsNested>::type _LhsNested;
+  typedef typename remove_reference<RhsNested>::type _RhsNested;
   enum {
-    Flags = cwise_promote_storage_order<typename traits<Lhs>::StorageKind,typename traits<Rhs>::StorageKind,LhsNested_::Flags & RowMajorBit,RhsNested_::Flags & RowMajorBit>::value
+    Flags = cwise_promote_storage_order<typename traits<Lhs>::StorageKind,typename traits<Rhs>::StorageKind,_LhsNested::Flags & RowMajorBit,_RhsNested::Flags & RowMajorBit>::value
   };
 };
 } // end namespace internal
@@ -97,15 +95,12 @@ class CwiseBinaryOp :
                                                       BinaryOp>::ret>::Base Base;
     EIGEN_GENERIC_PUBLIC_INTERFACE(CwiseBinaryOp)
 
-    EIGEN_CHECK_BINARY_COMPATIBILIY(BinaryOp,typename Lhs::Scalar,typename Rhs::Scalar)
-    EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE(Lhs, Rhs)
-
     typedef typename internal::ref_selector<LhsType>::type LhsNested;
     typedef typename internal::ref_selector<RhsType>::type RhsNested;
-    typedef typename internal::remove_reference<LhsNested>::type LhsNested_;
-    typedef typename internal::remove_reference<RhsNested>::type RhsNested_;
+    typedef typename internal::remove_reference<LhsNested>::type _LhsNested;
+    typedef typename internal::remove_reference<RhsNested>::type _RhsNested;
 
-#if EIGEN_COMP_MSVC
+#if EIGEN_COMP_MSVC && EIGEN_HAS_CXX11
     //Required for Visual Studio or the Copy constructor will probably not get inlined!
     EIGEN_STRONG_INLINE
     CwiseBinaryOp(const CwiseBinaryOp<BinaryOp,LhsType,RhsType>&) = default;
@@ -115,6 +110,9 @@ class CwiseBinaryOp :
     CwiseBinaryOp(const Lhs& aLhs, const Rhs& aRhs, const BinaryOp& func = BinaryOp())
       : m_lhs(aLhs), m_rhs(aRhs), m_functor(func)
     {
+      EIGEN_CHECK_BINARY_COMPATIBILIY(BinaryOp,typename Lhs::Scalar,typename Rhs::Scalar);
+      // require the sizes to match
+      EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE(Lhs, Rhs)
       eigen_assert(aLhs.rows() == aRhs.rows() && aLhs.cols() == aRhs.cols());
     }
 
@@ -131,10 +129,10 @@ class CwiseBinaryOp :
 
     /** \returns the left hand side nested expression */
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
-    const LhsNested_& lhs() const { return m_lhs; }
+    const _LhsNested& lhs() const { return m_lhs; }
     /** \returns the right hand side nested expression */
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
-    const RhsNested_& rhs() const { return m_rhs; }
+    const _RhsNested& rhs() const { return m_rhs; }
     /** \returns the functor representing the binary operation */
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     const BinaryOp& functor() const { return m_functor; }

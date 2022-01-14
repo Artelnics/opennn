@@ -11,8 +11,6 @@
 #ifndef EIGEN_DIAGONALMATRIX_H
 #define EIGEN_DIAGONALMATRIX_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen { 
 
 #ifndef EIGEN_PARSED_BY_DOXYGEN
@@ -118,35 +116,35 @@ class DiagonalBase : public EigenBase<Derived>
   *
   * \brief Represents a diagonal matrix with its storage
   *
-  * \tparam Scalar_ the type of coefficients
-  * \tparam SizeAtCompileTime the dimension of the matrix, or Dynamic
-  * \tparam MaxSizeAtCompileTime the dimension of the matrix, or Dynamic. This parameter is optional and defaults
+  * \param _Scalar the type of coefficients
+  * \param SizeAtCompileTime the dimension of the matrix, or Dynamic
+  * \param MaxSizeAtCompileTime the dimension of the matrix, or Dynamic. This parameter is optional and defaults
   *        to SizeAtCompileTime. Most of the time, you do not need to specify it.
   *
   * \sa class DiagonalWrapper
   */
 
 namespace internal {
-template<typename Scalar_, int SizeAtCompileTime, int MaxSizeAtCompileTime>
-struct traits<DiagonalMatrix<Scalar_,SizeAtCompileTime,MaxSizeAtCompileTime> >
- : traits<Matrix<Scalar_,SizeAtCompileTime,SizeAtCompileTime,0,MaxSizeAtCompileTime,MaxSizeAtCompileTime> >
+template<typename _Scalar, int SizeAtCompileTime, int MaxSizeAtCompileTime>
+struct traits<DiagonalMatrix<_Scalar,SizeAtCompileTime,MaxSizeAtCompileTime> >
+ : traits<Matrix<_Scalar,SizeAtCompileTime,SizeAtCompileTime,0,MaxSizeAtCompileTime,MaxSizeAtCompileTime> >
 {
-  typedef Matrix<Scalar_,SizeAtCompileTime,1,0,MaxSizeAtCompileTime,1> DiagonalVectorType;
+  typedef Matrix<_Scalar,SizeAtCompileTime,1,0,MaxSizeAtCompileTime,1> DiagonalVectorType;
   typedef DiagonalShape StorageKind;
   enum {
     Flags = LvalueBit | NoPreferredStorageOrderBit
   };
 };
 }
-template<typename Scalar_, int SizeAtCompileTime, int MaxSizeAtCompileTime>
+template<typename _Scalar, int SizeAtCompileTime, int MaxSizeAtCompileTime>
 class DiagonalMatrix
-  : public DiagonalBase<DiagonalMatrix<Scalar_,SizeAtCompileTime,MaxSizeAtCompileTime> >
+  : public DiagonalBase<DiagonalMatrix<_Scalar,SizeAtCompileTime,MaxSizeAtCompileTime> >
 {
   public:
     #ifndef EIGEN_PARSED_BY_DOXYGEN
     typedef typename internal::traits<DiagonalMatrix>::DiagonalVectorType DiagonalVectorType;
     typedef const DiagonalMatrix& Nested;
-    typedef Scalar_ Scalar;
+    typedef _Scalar Scalar;
     typedef typename internal::traits<DiagonalMatrix>::StorageKind StorageKind;
     typedef typename internal::traits<DiagonalMatrix>::StorageIndex StorageIndex;
     #endif
@@ -180,6 +178,7 @@ class DiagonalMatrix
     EIGEN_DEVICE_FUNC
     inline DiagonalMatrix(const Scalar& x, const Scalar& y, const Scalar& z) : m_diagonal(x,y,z) {}
 
+    #if EIGEN_HAS_CXX11
     /** \brief Construct a diagonal matrix with fixed size from an arbitrary number of coefficients. \cpp11
       * 
       * There exists C++98 anologue constructors for fixed-size diagonal matrices having 2 or 3 coefficients.
@@ -201,6 +200,7 @@ class DiagonalMatrix
     EIGEN_DEVICE_FUNC
     explicit EIGEN_STRONG_INLINE DiagonalMatrix(const std::initializer_list<std::initializer_list<Scalar>>& list)
       : m_diagonal(list) {}
+    #endif  // EIGEN_HAS_CXX11
 
     /** Copy constructor. */
     template<typename OtherDerived>
@@ -261,7 +261,7 @@ class DiagonalMatrix
   *
   * \brief Expression of a diagonal matrix
   *
-  * \tparam DiagonalVectorType_ the type of the vector of diagonal coefficients
+  * \param _DiagonalVectorType the type of the vector of diagonal coefficients
   *
   * This class is an expression of a diagonal matrix, but not storing its own vector of diagonal coefficients,
   * instead wrapping an existing vector expression. It is the return type of MatrixBase::asDiagonal()
@@ -271,10 +271,10 @@ class DiagonalMatrix
   */
 
 namespace internal {
-template<typename DiagonalVectorType_>
-struct traits<DiagonalWrapper<DiagonalVectorType_> >
+template<typename _DiagonalVectorType>
+struct traits<DiagonalWrapper<_DiagonalVectorType> >
 {
-  typedef DiagonalVectorType_ DiagonalVectorType;
+  typedef _DiagonalVectorType DiagonalVectorType;
   typedef typename DiagonalVectorType::Scalar Scalar;
   typedef typename DiagonalVectorType::StorageIndex StorageIndex;
   typedef DiagonalShape StorageKind;
@@ -289,13 +289,13 @@ struct traits<DiagonalWrapper<DiagonalVectorType_> >
 };
 }
 
-template<typename DiagonalVectorType_>
+template<typename _DiagonalVectorType>
 class DiagonalWrapper
-  : public DiagonalBase<DiagonalWrapper<DiagonalVectorType_> >, internal::no_assignment_operator
+  : public DiagonalBase<DiagonalWrapper<_DiagonalVectorType> >, internal::no_assignment_operator
 {
   public:
     #ifndef EIGEN_PARSED_BY_DOXYGEN
-    typedef DiagonalVectorType_ DiagonalVectorType;
+    typedef _DiagonalVectorType DiagonalVectorType;
     typedef DiagonalWrapper Nested;
     #endif
 

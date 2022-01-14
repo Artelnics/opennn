@@ -10,8 +10,6 @@
 #ifndef EIGEN_SPARSE_REF_H
 #define EIGEN_SPARSE_REF_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 enum {
@@ -22,13 +20,13 @@ namespace internal {
 
 template<typename Derived> class SparseRefBase;
 
-template<typename MatScalar, int MatOptions, typename MatIndex, int Options_, typename StrideType_>
-struct traits<Ref<SparseMatrix<MatScalar,MatOptions,MatIndex>, Options_, StrideType_> >
+template<typename MatScalar, int MatOptions, typename MatIndex, int _Options, typename _StrideType>
+struct traits<Ref<SparseMatrix<MatScalar,MatOptions,MatIndex>, _Options, _StrideType> >
   : public traits<SparseMatrix<MatScalar,MatOptions,MatIndex> >
 {
   typedef SparseMatrix<MatScalar,MatOptions,MatIndex> PlainObjectType;
   enum {
-    Options = Options_,
+    Options = _Options,
     Flags = traits<PlainObjectType>::Flags | CompressedAccessBit | NestByRefBit
   };
 
@@ -42,22 +40,22 @@ struct traits<Ref<SparseMatrix<MatScalar,MatOptions,MatIndex>, Options_, StrideT
   
 };
 
-template<typename MatScalar, int MatOptions, typename MatIndex, int Options_, typename StrideType_>
-struct traits<Ref<const SparseMatrix<MatScalar,MatOptions,MatIndex>, Options_, StrideType_> >
-  : public traits<Ref<SparseMatrix<MatScalar,MatOptions,MatIndex>, Options_, StrideType_> >
+template<typename MatScalar, int MatOptions, typename MatIndex, int _Options, typename _StrideType>
+struct traits<Ref<const SparseMatrix<MatScalar,MatOptions,MatIndex>, _Options, _StrideType> >
+  : public traits<Ref<SparseMatrix<MatScalar,MatOptions,MatIndex>, _Options, _StrideType> >
 {
   enum {
     Flags = (traits<SparseMatrix<MatScalar,MatOptions,MatIndex> >::Flags | CompressedAccessBit | NestByRefBit) & ~LvalueBit
   };
 };
 
-template<typename MatScalar, int MatOptions, typename MatIndex, int Options_, typename StrideType_>
-struct traits<Ref<SparseVector<MatScalar,MatOptions,MatIndex>, Options_, StrideType_> >
+template<typename MatScalar, int MatOptions, typename MatIndex, int _Options, typename _StrideType>
+struct traits<Ref<SparseVector<MatScalar,MatOptions,MatIndex>, _Options, _StrideType> >
   : public traits<SparseVector<MatScalar,MatOptions,MatIndex> >
 {
   typedef SparseVector<MatScalar,MatOptions,MatIndex> PlainObjectType;
   enum {
-    Options = Options_,
+    Options = _Options,
     Flags = traits<PlainObjectType>::Flags | CompressedAccessBit | NestByRefBit
   };
 
@@ -70,9 +68,9 @@ struct traits<Ref<SparseVector<MatScalar,MatOptions,MatIndex>, Options_, StrideT
 
 };
 
-template<typename MatScalar, int MatOptions, typename MatIndex, int Options_, typename StrideType_>
-struct traits<Ref<const SparseVector<MatScalar,MatOptions,MatIndex>, Options_, StrideType_> >
-  : public traits<Ref<SparseVector<MatScalar,MatOptions,MatIndex>, Options_, StrideType_> >
+template<typename MatScalar, int MatOptions, typename MatIndex, int _Options, typename _StrideType>
+struct traits<Ref<const SparseVector<MatScalar,MatOptions,MatIndex>, _Options, _StrideType> >
+  : public traits<Ref<SparseVector<MatScalar,MatOptions,MatIndex>, _Options, _StrideType> >
 {
   enum {
     Flags = (traits<SparseVector<MatScalar,MatOptions,MatIndex> >::Flags | CompressedAccessBit | NestByRefBit) & ~LvalueBit
@@ -135,7 +133,7 @@ class Ref<SparseMatrixType, Options>
     template<int OtherOptions>
     inline Ref(const SparseMatrix<MatScalar,OtherOptions,MatIndex>& expr);
     template<int OtherOptions>
-    inline Ref(const Map<SparseMatrix<MatScalar,OtherOptions,MatIndex>>& expr);
+    inline Ref(const MappedSparseMatrix<MatScalar,OtherOptions,MatIndex>& expr);
   public:
 
     typedef internal::SparseRefBase<Ref> Base;
@@ -150,15 +148,15 @@ class Ref<SparseMatrixType, Options>
       eigen_assert( ((Options & int(StandardCompressedFormat))==0) || (expr.isCompressed()) );
       Base::construct(expr.derived());
     }
-
+    
     template<int OtherOptions>
-    inline Ref(Map<SparseMatrix<MatScalar,OtherOptions,MatIndex> >& expr)
+    inline Ref(MappedSparseMatrix<MatScalar,OtherOptions,MatIndex>& expr)
     {
       EIGEN_STATIC_ASSERT(bool(Traits::template match<SparseMatrix<MatScalar,OtherOptions,MatIndex> >::MatchAtCompileTime), STORAGE_LAYOUT_DOES_NOT_MATCH);
       eigen_assert( ((Options & int(StandardCompressedFormat))==0) || (expr.isCompressed()) );
       Base::construct(expr.derived());
     }
-
+    
     template<typename Derived>
     inline Ref(const SparseCompressedBase<Derived>& expr)
     #else
@@ -357,7 +355,7 @@ struct evaluator<Ref<SparseMatrix<MatScalar,MatOptions,MatIndex>, Options, Strid
   : evaluator<SparseCompressedBase<Ref<SparseMatrix<MatScalar,MatOptions,MatIndex>, Options, StrideType> > >
 {
   typedef evaluator<SparseCompressedBase<Ref<SparseMatrix<MatScalar,MatOptions,MatIndex>, Options, StrideType> > > Base;
-  typedef Ref<SparseMatrix<MatScalar,MatOptions,MatIndex>, Options, StrideType> XprType;
+  typedef Ref<SparseMatrix<MatScalar,MatOptions,MatIndex>, Options, StrideType> XprType;  
   evaluator() : Base() {}
   explicit evaluator(const XprType &mat) : Base(mat) {}
 };
@@ -367,7 +365,7 @@ struct evaluator<Ref<const SparseMatrix<MatScalar,MatOptions,MatIndex>, Options,
   : evaluator<SparseCompressedBase<Ref<const SparseMatrix<MatScalar,MatOptions,MatIndex>, Options, StrideType> > >
 {
   typedef evaluator<SparseCompressedBase<Ref<const SparseMatrix<MatScalar,MatOptions,MatIndex>, Options, StrideType> > > Base;
-  typedef Ref<const SparseMatrix<MatScalar,MatOptions,MatIndex>, Options, StrideType> XprType;
+  typedef Ref<const SparseMatrix<MatScalar,MatOptions,MatIndex>, Options, StrideType> XprType;  
   evaluator() : Base() {}
   explicit evaluator(const XprType &mat) : Base(mat) {}
 };

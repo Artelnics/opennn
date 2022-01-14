@@ -21,7 +21,6 @@
 #endif
 #endif
 
-#include "./InternalHeaderCheck.h"
 
 namespace Eigen {
 
@@ -108,7 +107,7 @@ struct preserve_inner_most_dims {
   static const bool value = false;
 };
 
-#if EIGEN_HAS_CONSTEXPR
+#if EIGEN_HAS_CONSTEXPR && EIGEN_HAS_VARIADIC_TEMPLATES
 template <typename ReducedDims, int NumTensorDims>
 struct are_inner_most_dims<ReducedDims, NumTensorDims, ColMajor>{
   static const bool tmp1 = indices_statically_known_to_increase<ReducedDims>();
@@ -167,12 +166,8 @@ struct GenericDimReducer<-1, Self, Op> {
 };
 
 template <typename Self, typename Op, bool Vectorizable = (Self::InputPacketAccess && Self::ReducerTraits::PacketAccess),
-    bool UseTreeReduction = (!Self::ReducerTraits::IsStateful &&
-                             !Self::ReducerTraits::IsExactlyAssociative &&
-                             // GPU threads can quickly run out of stack space
-                             // for moderately sized inputs.
-                             !Self::RunningOnGPU
-                             )>
+          bool UseTreeReduction = (!Self::ReducerTraits::IsStateful &&
+                                   !Self::ReducerTraits::IsExactlyAssociative)>
 struct InnerMostDimReducer {
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename Self::CoeffReturnType reduce(const Self& self, typename Self::Index firstIndex, typename Self::Index numValuesToReduce, Op& reducer) {
     typename Self::CoeffReturnType accum = reducer.initialize();
@@ -185,77 +180,42 @@ struct InnerMostDimReducer {
 
 template <typename Self, typename Op>
 struct InnerMostDimReducer<Self, Op, true, false> {
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename Self::CoeffReturnType reduce(const Self& self, typename Self::Index firstIndex, typename Self::Index numValuesToReduce, Op& reducer0) {
-    using Index = typename Self::Index;
-    constexpr Index packetSize = internal::unpacket_traits<typename Self::PacketReturnType>::size;
-    Index start = 0;
-    typename Self::PacketReturnType paccum0 = reducer0.template initializePacket<typename Self::PacketReturnType>();
-    if (!Self::ReducerTraits::IsStateful && numValuesToReduce >= 4*packetSize) {
-      const Index VectorizedSize4 = (numValuesToReduce / (4*packetSize)) * (4*packetSize);
-      typename Self::PacketReturnType paccum1 = reducer0.template initializePacket<typename Self::PacketReturnType>();
-      typename Self::PacketReturnType paccum2 = reducer0.template initializePacket<typename Self::PacketReturnType>();
-      typename Self::PacketReturnType paccum3 = reducer0.template initializePacket<typename Self::PacketReturnType>();
-      const Index offset0 = firstIndex;
-      const Index offset1 = firstIndex + packetSize;
-      const Index offset2 = firstIndex + 2*packetSize;
-      const Index offset3 = firstIndex + 3*packetSize;
-      for (Index j = 0; j < VectorizedSize4; j += 4*packetSize) {
-        reducer0.reducePacket(self.m_impl.template packet<Unaligned>(offset0 + j), &paccum0);
-        reducer0.reducePacket(self.m_impl.template packet<Unaligned>(offset1 + j), &paccum1);
-        reducer0.reducePacket(self.m_impl.template packet<Unaligned>(offset2 + j), &paccum2);
-        reducer0.reducePacket(self.m_impl.template packet<Unaligned>(offset3 + j), &paccum3);
-      }
-      reducer0.reducePacket(paccum1, &paccum0);
-      reducer0.reducePacket(paccum2, &paccum0);
-      reducer0.reducePacket(paccum3, &paccum0);
-      start = VectorizedSize4;
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename Self::CoeffReturnType reduce(const Self& self, typename Self::Index firstIndex, typename Self::Index numValuesToReduce, Op& reducer) {
+    const typename Self::Index packetSize = internal::unpacket_traits<typename Self::PacketReturnType>::size;
+    const typename Self::Index VectorizedSize = (numValuesToReduce / packetSize) * packetSize;
+    typename Self::PacketReturnType paccum = reducer.template initializePacket<typename Self::PacketReturnType>();
+    for (typename Self::Index j = 0; j < VectorizedSize; j += packetSize) {
+      reducer.reducePacket(self.m_impl.template packet<Unaligned>(firstIndex + j), &paccum);
     }
-    if (start <= (numValuesToReduce - packetSize)) {
-      const Index VectorizedSize = (numValuesToReduce / packetSize) * packetSize;
-      for (Index j = start; j < VectorizedSize; j += packetSize) {
-        reducer0.reducePacket(self.m_impl.template packet<Unaligned>(firstIndex + j), &paccum0);
-      }
-      start = VectorizedSize;
+    typename Self::CoeffReturnType accum = reducer.initialize();
+    for (typename Self::Index j = VectorizedSize; j < numValuesToReduce; ++j) {
+      reducer.reduce(self.m_impl.coeff(firstIndex + j), &accum);
     }
-    typename Self::CoeffReturnType accum = reducer0.initialize();
-    for (Index j = start; j < numValuesToReduce; ++j) {
-      reducer0.reduce(self.m_impl.coeff(firstIndex + j), &accum);
-    }
-    return reducer0.finalizeBoth(accum, paccum0);
+    return reducer.finalizeBoth(accum, paccum);
   }
 };
 
-
-#if !defined(EIGEN_HIPCC)
-
-// The following implements tree-based reduction, which improves the accuracy
-// of sum and mean reductions, since each of the n inputs only participates in
-// O(log n) additions.
-template <typename T>
-EIGEN_DEVICE_FUNC inline Index LeafSize() { return 1024; }
-template <>
-EIGEN_DEVICE_FUNC inline Index LeafSize<half>() { return 200; }
-template <>
-EIGEN_DEVICE_FUNC inline Index LeafSize<bfloat16>() { return 128; }
+#if !defined(EIGEN_HIPCC) 
+static const int kLeafSize = 1024;
 
 template <typename Self, typename Op>
 struct InnerMostDimReducer<Self, Op, false, true> {
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename Self::CoeffReturnType
   reduce(const Self& self, typename Self::Index firstIndex,
          typename Self::Index numValuesToReduce, Op& reducer) {
-    const Index kLeafSize = LeafSize<typename Self::CoeffReturnType>();
     typename Self::CoeffReturnType accum = reducer.initialize();
     if (numValuesToReduce > kLeafSize) {
       const typename Self::Index half = numValuesToReduce / 2;
-      // Recursively reduce the two halves.
       reducer.reduce(reduce(self, firstIndex, half, reducer), &accum);
       reducer.reduce(
           reduce(self, firstIndex + half, numValuesToReduce - half, reducer),
           &accum);
-      return reducer.finalize(accum);
     } else {
-      return InnerMostDimReducer<Self, Op, false, false>::reduce(self, firstIndex, numValuesToReduce, reducer);
+      for (typename Self::Index j = 0; j < numValuesToReduce; ++j) {
+        reducer.reduce(self.m_impl.coeff(firstIndex + j), &accum);
+      }
     }
+    return reducer.finalize(accum);
   }
 };
 
@@ -264,7 +224,6 @@ struct InnerMostDimReducer<Self, Op, true, true> {
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename Self::CoeffReturnType
   reduce(const Self& self, typename Self::Index firstIndex,
          typename Self::Index numValuesToReduce, Op& reducer) {
-    const Index kLeafSize = LeafSize<typename Self::CoeffReturnType>();
     const typename Self::Index packetSize =
         internal::unpacket_traits<typename Self::PacketReturnType>::size;
     typename Self::CoeffReturnType accum = reducer.initialize();
@@ -283,12 +242,36 @@ struct InnerMostDimReducer<Self, Op, true, true> {
       }
       return reducer.finalize(accum);
     } else {
-      return InnerMostDimReducer<Self, Op, true, false>::reduce(self, firstIndex, numValuesToReduce, reducer);
+      const typename Self::Index UnrollSize =
+          (numValuesToReduce / (2*packetSize)) * 2*packetSize;
+      const typename Self::Index VectorizedSize =
+          (numValuesToReduce / packetSize) * packetSize;
+      typename Self::PacketReturnType paccum =
+          reducer.template initializePacket<typename Self::PacketReturnType>();
+      typename Self::PacketReturnType paccum2 =
+          reducer.template initializePacket<typename Self::PacketReturnType>();
+      for (typename Self::Index j = 0; j < UnrollSize; j += packetSize * 2) {
+        reducer.reducePacket(
+            self.m_impl.template packet<Unaligned>(firstIndex + j), &paccum);
+        reducer.reducePacket(
+            self.m_impl.template packet<Unaligned>(firstIndex + j + packetSize),
+            &paccum2);
+      }
+      for (typename Self::Index j = UnrollSize; j < VectorizedSize; j+= packetSize) {
+        reducer.reducePacket(self.m_impl.template packet<Unaligned>(
+                                 firstIndex + j), &paccum);
+      }
+      reducer.reducePacket(paccum2, &paccum);
+      for (typename Self::Index j = VectorizedSize; j < numValuesToReduce;
+           ++j) {
+        reducer.reduce(self.m_impl.coeff(firstIndex + j), &accum);
+      }
+      return reducer.finalizeBoth(accum, paccum);
     }
   }
 };
 #endif
-
+ 
 template <int DimIndex, typename Self, typename Op, bool vectorizable = (Self::InputPacketAccess && Self::ReducerTraits::PacketAccess)>
 struct InnerMostDimPreserver {
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const Self&, typename Self::Index, Op&, typename Self::PacketReturnType*) {
@@ -309,37 +292,10 @@ struct InnerMostDimPreserver<DimIndex, Self, Op, true> {
 
 template <typename Self, typename Op>
 struct InnerMostDimPreserver<0, Self, Op, true> {
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const Self& self, typename Self::Index firstIndex, Op& reducer0, typename Self::PacketReturnType* accum0) {
-    using Index = typename Self::Index;
-    const Index stride = self.m_reducedStrides[0];
-    const Index size = self.m_reducedDims[0];
-    if (!Self::ReducerTraits::IsStateful && size >= 16) {
-      const Index unrolled_size4 = (size / 4) * 4;
-      typename Self::PacketReturnType accum1 = reducer0.template initializePacket<typename Self::PacketReturnType>();
-      typename Self::PacketReturnType accum2 = reducer0.template initializePacket<typename Self::PacketReturnType>();
-      typename Self::PacketReturnType accum3 = reducer0.template initializePacket<typename Self::PacketReturnType>();
-      for (Index j = 0; j < unrolled_size4; j += 4) {
-        const Index input0 = firstIndex + j * stride;
-        reducer0.reducePacket(self.m_impl.template packet<Unaligned>(input0), accum0);
-        const Index input1 = firstIndex + (j+1) * stride;
-        reducer0.reducePacket(self.m_impl.template packet<Unaligned>(input1), &accum1);
-        const Index input2 = firstIndex + (j+2) * stride;
-        reducer0.reducePacket(self.m_impl.template packet<Unaligned>(input2), &accum2);
-        const Index input3 = firstIndex + (j+3) * stride;
-        reducer0.reducePacket(self.m_impl.template packet<Unaligned>(input3), &accum3);
-      }
-      reducer0.reducePacket(accum1, accum0);
-      reducer0.reducePacket(accum2, accum0);
-      reducer0.reducePacket(accum3, accum0);
-      for (Index j = unrolled_size4; j < size; ++j) {
-        Index input = firstIndex + j * stride;
-        reducer0.reducePacket(self.m_impl.template packet<Unaligned>(input), accum0);
-      }
-    } else {
-      for (Index j = 0; j < size; ++j) {
-        Index input = firstIndex + j * stride;
-        reducer0.reducePacket(self.m_impl.template packet<Unaligned>(input), accum0);
-      }
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const Self& self, typename Self::Index firstIndex, Op& reducer, typename Self::PacketReturnType* accum) {
+    for (typename Self::Index j = 0; j < self.m_reducedDims[0]; ++j) {
+      const typename Self::Index input = firstIndex + j * self.m_reducedStrides[0];
+      reducer.reducePacket(self.m_impl.template packet<Unaligned>(input), accum);
     }
   }
 };
@@ -395,14 +351,15 @@ struct FullReducer<Self, Op, ThreadPoolDevice, Vectorizable> {
         self.m_impl.costPerCoeff(Vectorizable) +
         TensorOpCost(0, 0, internal::functor_traits<Op>::Cost, Vectorizable,
                      PacketSize);
-    const Index num_threads = TensorCostModel<ThreadPoolDevice>::numThreads(
+    const int num_threads = TensorCostModel<ThreadPoolDevice>::numThreads(
         num_coeffs, cost, device.numThreads());
     if (num_threads == 1) {
       *output =
           InnerMostDimReducer<Self, Op, Vectorizable>::reduce(self, 0, num_coeffs, reducer);
       return;
     }
-    const Index blocksize = num_coeffs / num_threads;
+    const Index blocksize =
+        std::floor<Index>(static_cast<float>(num_coeffs) / num_threads);
     const Index numblocks = blocksize > 0 ? num_coeffs / blocksize : 0;
     eigen_assert(num_coeffs >= numblocks * blocksize);
 
@@ -571,18 +528,6 @@ struct TensorReductionEvaluatorBase<const TensorReductionOp<Op, Dims, ArgType, M
     // Subset of strides of the input tensor for the non-reduced dimensions.
   // Indexed by output dimensions.
   static const int NumPreservedStrides = max_n_1<NumOutputDims>::size;
-  
-  // For full reductions
-#if defined(EIGEN_USE_GPU) && (defined(EIGEN_GPUCC))
-  static constexpr bool RunningOnGPU = internal::is_same<Device, Eigen::GpuDevice>::value;
-  static constexpr bool RunningOnSycl = false;
-#elif defined(EIGEN_USE_SYCL)
-static const bool RunningOnSycl = internal::is_same<typename internal::remove_all<Device>::type, Eigen::SyclDevice>::value;
-static const bool RunningOnGPU = false;
-#else
-  static constexpr bool RunningOnGPU = false;
-  static constexpr bool RunningOnSycl = false;
-#endif
 
   enum {
     IsAligned = false,
@@ -633,7 +578,7 @@ static const bool RunningOnGPU = false;
           m_fastOutputStrides[i] = internal::TensorIntDivisor<Index>(m_outputStrides[i]);
         }
       } else {
-        m_outputStrides[static_cast<size_t>(NumOutputDims - 1)] = 1;
+        m_outputStrides[NumOutputDims - 1] = 1;
         for (int i = NumOutputDims - 2; i >= 0; --i) {
           m_outputStrides[i] = m_outputStrides[i + 1] * m_dimensions[i + 1];
           m_fastOutputStrides[i] = internal::TensorIntDivisor<Index>(m_outputStrides[i]);
@@ -680,7 +625,7 @@ static const bool RunningOnGPU = false;
             ? internal::array_prod(input_dims)
             : (static_cast<int>(Layout) == static_cast<int>(ColMajor))
                   ? m_preservedStrides[0]
-                  : m_preservedStrides[static_cast<size_t>(NumOutputDims - 1)];
+                  : m_preservedStrides[NumOutputDims - 1];
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
@@ -1005,6 +950,17 @@ static const bool RunningOnGPU = false;
   // Operation to apply for computing the reduction.
   Op m_reducer;
 
+  // For full reductions
+#if defined(EIGEN_USE_GPU) && (defined(EIGEN_GPUCC))
+  static const bool RunningOnGPU = internal::is_same<Device, Eigen::GpuDevice>::value;
+  static const bool RunningOnSycl = false;
+#elif defined(EIGEN_USE_SYCL)
+static const bool RunningOnSycl = internal::is_same<typename internal::remove_all<Device>::type, Eigen::SyclDevice>::value;
+static const bool RunningOnGPU = false;
+#else
+  static const bool RunningOnGPU = false;
+  static const bool RunningOnSycl = false;
+#endif
   EvaluatorPointerType m_result;
 
   const Device EIGEN_DEVICE_REF m_device;

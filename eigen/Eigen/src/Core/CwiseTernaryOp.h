@@ -12,8 +12,6 @@
 #ifndef EIGEN_CWISE_TERNARY_OP_H
 #define EIGEN_CWISE_TERNARY_OP_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
@@ -43,10 +41,10 @@ struct traits<CwiseTernaryOp<TernaryOp, Arg1, Arg2, Arg3> > {
   typedef typename Arg1::Nested Arg1Nested;
   typedef typename Arg2::Nested Arg2Nested;
   typedef typename Arg3::Nested Arg3Nested;
-  typedef typename remove_reference<Arg1Nested>::type Arg1Nested_;
-  typedef typename remove_reference<Arg2Nested>::type Arg2Nested_;
-  typedef typename remove_reference<Arg3Nested>::type Arg3Nested_;
-  enum { Flags = Arg1Nested_::Flags & RowMajorBit };
+  typedef typename remove_reference<Arg1Nested>::type _Arg1Nested;
+  typedef typename remove_reference<Arg2Nested>::type _Arg2Nested;
+  typedef typename remove_reference<Arg3Nested>::type _Arg3Nested;
+  enum { Flags = _Arg1Nested::Flags & RowMajorBit };
 };
 }  // end namespace internal
 
@@ -93,20 +91,6 @@ class CwiseTernaryOp : public CwiseTernaryOpImpl<
   typedef typename internal::remove_all<Arg2Type>::type Arg2;
   typedef typename internal::remove_all<Arg3Type>::type Arg3;
 
-  // require the sizes to match
-  EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE(Arg1, Arg2)
-  EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE(Arg1, Arg3)
-
-  // The index types should match
-  EIGEN_STATIC_ASSERT((internal::is_same<
-                       typename internal::traits<Arg1Type>::StorageKind,
-                       typename internal::traits<Arg2Type>::StorageKind>::value),
-                      STORAGE_KIND_MUST_MATCH)
-  EIGEN_STATIC_ASSERT((internal::is_same<
-                       typename internal::traits<Arg1Type>::StorageKind,
-                       typename internal::traits<Arg3Type>::StorageKind>::value),
-                      STORAGE_KIND_MUST_MATCH)
-
   typedef typename CwiseTernaryOpImpl<
       TernaryOp, Arg1Type, Arg2Type, Arg3Type,
       typename internal::traits<Arg1Type>::StorageKind>::Base Base;
@@ -115,15 +99,29 @@ class CwiseTernaryOp : public CwiseTernaryOpImpl<
   typedef typename internal::ref_selector<Arg1Type>::type Arg1Nested;
   typedef typename internal::ref_selector<Arg2Type>::type Arg2Nested;
   typedef typename internal::ref_selector<Arg3Type>::type Arg3Nested;
-  typedef typename internal::remove_reference<Arg1Nested>::type Arg1Nested_;
-  typedef typename internal::remove_reference<Arg2Nested>::type Arg2Nested_;
-  typedef typename internal::remove_reference<Arg3Nested>::type Arg3Nested_;
+  typedef typename internal::remove_reference<Arg1Nested>::type _Arg1Nested;
+  typedef typename internal::remove_reference<Arg2Nested>::type _Arg2Nested;
+  typedef typename internal::remove_reference<Arg3Nested>::type _Arg3Nested;
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE CwiseTernaryOp(const Arg1& a1, const Arg2& a2,
                                      const Arg3& a3,
                                      const TernaryOp& func = TernaryOp())
       : m_arg1(a1), m_arg2(a2), m_arg3(a3), m_functor(func) {
+    // require the sizes to match
+    EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE(Arg1, Arg2)
+    EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE(Arg1, Arg3)
+
+    // The index types should match
+    EIGEN_STATIC_ASSERT((internal::is_same<
+                         typename internal::traits<Arg1Type>::StorageKind,
+                         typename internal::traits<Arg2Type>::StorageKind>::value),
+                        STORAGE_KIND_MUST_MATCH)
+    EIGEN_STATIC_ASSERT((internal::is_same<
+                         typename internal::traits<Arg1Type>::StorageKind,
+                         typename internal::traits<Arg3Type>::StorageKind>::value),
+                        STORAGE_KIND_MUST_MATCH)
+
     eigen_assert(a1.rows() == a2.rows() && a1.cols() == a2.cols() &&
                  a1.rows() == a3.rows() && a1.cols() == a3.cols());
   }
@@ -165,13 +163,13 @@ class CwiseTernaryOp : public CwiseTernaryOpImpl<
 
   /** \returns the first argument nested expression */
   EIGEN_DEVICE_FUNC
-  const Arg1Nested_& arg1() const { return m_arg1; }
+  const _Arg1Nested& arg1() const { return m_arg1; }
   /** \returns the first argument nested expression */
   EIGEN_DEVICE_FUNC
-  const Arg2Nested_& arg2() const { return m_arg2; }
+  const _Arg2Nested& arg2() const { return m_arg2; }
   /** \returns the third argument nested expression */
   EIGEN_DEVICE_FUNC
-  const Arg3Nested_& arg3() const { return m_arg3; }
+  const _Arg3Nested& arg3() const { return m_arg3; }
   /** \returns the functor representing the ternary operation */
   EIGEN_DEVICE_FUNC
   const TernaryOp& functor() const { return m_functor; }

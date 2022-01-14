@@ -7,15 +7,38 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#ifdef EIGEN_TEST_PART_2
+// Make sure we also check c++11 max implementation
+#define EIGEN_MAX_CPP_VER 11
+#endif
+
+#ifdef EIGEN_TEST_PART_3
+// Make sure we also check c++98 max implementation
+#define EIGEN_MAX_CPP_VER 03
+
+// We need to disable this warning when compiling with c++11 while limiting Eigen to c++98
+// Ideally we would rather configure the compiler to build in c++98 mode but this needs
+// to be done at the CMakeLists.txt level.
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+  #pragma GCC diagnostic ignored "-Wdeprecated"
+#endif
+
+#if defined(__GNUC__) && (__GNUC__ >=9)
+  #pragma GCC diagnostic ignored "-Wdeprecated-copy"
+#endif
+#if defined(__clang__) && (__clang_major__ >= 10)
+  #pragma clang diagnostic ignored "-Wdeprecated-copy"
+#endif
+
+#endif
+
 #include <valarray>
 #include <vector>
 #include "main.h"
 
-using Eigen::placeholders::all;
-using Eigen::placeholders::last;
-using Eigen::placeholders::lastp1;
-using Eigen::placeholders::lastN;
+#if EIGEN_HAS_CXX11
 #include <array>
+#endif
 
 typedef std::pair<Index,Index> IndexPair;
 
@@ -79,7 +102,11 @@ void check_indexed_view()
   ArrayXd a = ArrayXd::LinSpaced(n,0,n-1);
   Array<double,1,Dynamic> b = a.transpose();
 
+  #if EIGEN_COMP_CXXVER>=14
   ArrayXXi A = ArrayXXi::NullaryExpr(n,n, std::ref(encode));
+  #else
+  ArrayXXi A = ArrayXXi::NullaryExpr(n,n, std::ptr_fun(&encode));
+  #endif
 
   for(Index i=0; i<n; ++i)
     for(Index j=0; j<n; ++j)
@@ -193,6 +220,7 @@ void check_indexed_view()
   VERIFY( is_same_seq_type( seqN(2,fix<5>(5),fix<-2>), seqN(2,fix<5>,fix<-2>()) ) );
 
   VERIFY( is_same_seq_type( seq(2,fix<5>), seqN(2,4) ) );
+#if EIGEN_HAS_CXX11
   VERIFY( is_same_seq_type( seq(fix<2>,fix<5>), seqN(fix<2>,fix<4>) ) );
   VERIFY( is_same_seq( seqN(2,std::integral_constant<int,5>(),std::integral_constant<int,-2>()), seqN(2,fix<5>,fix<-2>()) ) );
   VERIFY( is_same_seq( seq(std::integral_constant<int,1>(),std::integral_constant<int,5>(),std::integral_constant<int,2>()),
@@ -203,6 +231,10 @@ void check_indexed_view()
 
   VERIFY( is_same_seq_type( seqN(2,std::integral_constant<int,5>()), seqN(2,fix<5>) ) );
   VERIFY( is_same_seq_type( seq(std::integral_constant<int,1>(),std::integral_constant<int,5>()), seq(fix<1>,fix<5>) ) );
+#else
+  // sorry, no compile-time size recovery in c++98/03
+  VERIFY( is_same_seq( seq(fix<2>,fix<5>), seqN(fix<2>,fix<4>) ) );
+#endif
 
   VERIFY( (A(seqN(2,fix<5>), 5)).RowsAtCompileTime == 5);
   VERIFY( (A(4, all)).ColsAtCompileTime == Dynamic);
@@ -278,6 +310,7 @@ void check_indexed_view()
                       A(seq(last-5,last-1,2), seqN(last-3,3,fix<-2>)).reverse() );
   }
 
+#if EIGEN_HAS_CXX11
   // check lastN
   VERIFY_IS_APPROX( a(lastN(3)), a.tail(3) );
   VERIFY( MATCH( a(lastN(3)), "7\n8\n9" ) );
@@ -290,6 +323,7 @@ void check_indexed_view()
 
   VERIFY_IS_APPROX( (A(std::array<int,3>{{1,3,5}}, std::array<int,4>{{9,6,3,0}})), A(seqN(1,3,2), seqN(9,4,-3)) );
 
+#if EIGEN_HAS_STATIC_ARRAY_TEMPLATE
   VERIFY_IS_APPROX( A({3, 1, 6, 5}, all), A(std::array<int,4>{{3, 1, 6, 5}}, all) );
   VERIFY_IS_APPROX( A(all,{3, 1, 6, 5}), A(all,std::array<int,4>{{3, 1, 6, 5}}) );
   VERIFY_IS_APPROX( A({1,3,5},{3, 1, 6, 5}), A(std::array<int,3>{{1,3,5}},std::array<int,4>{{3, 1, 6, 5}}) );
@@ -302,6 +336,9 @@ void check_indexed_view()
 
   VERIFY_IS_APPROX( b({3, 1, 6, 5}), b(std::array<int,4>{{3, 1, 6, 5}}) );
   VERIFY_IS_EQUAL( b({1,3,5}).SizeAtCompileTime, 3 );
+#endif
+
+#endif
 
   // check mat(i,j) with weird types for i and j
   {
@@ -359,11 +396,13 @@ void check_indexed_view()
   a(XX) = 1;
   A(XX,YY) = 1;
   // Anonymous enums only work with C++11
+#if EIGEN_HAS_CXX11
   enum { X=0, Y=1 };
   a(X) = 1;
   A(X,Y) = 1;
   A(XX,Y) = 1;
   A(X,YY) = 1;
+#endif
 
   // Check compilation of varying integer types as index types:
   Index i = n/2;
@@ -403,21 +442,13 @@ void check_indexed_view()
     VERIFY( MATCH( A(all,1)(1), "101"));
   }
 
-  // bug #2375: indexing over matrices of dim >128 should compile on gcc
-  {
-    Matrix<double, 513, 3> large_mat = Matrix<double, 513, 3>::Random();
-    std::array<int, 2> test_indices = {0, 1};
-    Matrix<double, 513, 2> thin_slice = large_mat(all, test_indices);
-    for(int col = 0; col < int(test_indices.size()); ++col)
-      for(int row = 0; row < large_mat.rows(); ++row)
-        VERIFY_IS_EQUAL( thin_slice(row, col), large_mat(row, col) );
-  }
-
+#if EIGEN_HAS_CXX11
   //Bug IndexView with a single static row should be RowMajor:
   {
     // A(1, seq(0,2,1)).cwiseAbs().colwise().replicate(2).eval();
     STATIC_CHECK(( (internal::evaluator<decltype( A(1,seq(0,2,1)) )>::Flags & RowMajorBit) == RowMajorBit ));
   }
+#endif
 
 }
 
@@ -425,6 +456,8 @@ EIGEN_DECLARE_TEST(indexed_view)
 {
 //   for(int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST_1( check_indexed_view() );
+    CALL_SUBTEST_2( check_indexed_view() );
+    CALL_SUBTEST_3( check_indexed_view() );
 //   }
 
   // static checks of some internals:

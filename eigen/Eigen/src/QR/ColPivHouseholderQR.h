@@ -11,13 +11,11 @@
 #ifndef EIGEN_COLPIVOTINGHOUSEHOLDERQR_H
 #define EIGEN_COLPIVOTINGHOUSEHOLDERQR_H
 
-#include "./InternalHeaderCheck.h"
-
 namespace Eigen {
 
 namespace internal {
-template<typename MatrixType_> struct traits<ColPivHouseholderQR<MatrixType_> >
- : traits<MatrixType_>
+template<typename _MatrixType> struct traits<ColPivHouseholderQR<_MatrixType> >
+ : traits<_MatrixType>
 {
   typedef MatrixXpr XprKind;
   typedef SolverStorage StorageKind;
@@ -33,7 +31,7 @@ template<typename MatrixType_> struct traits<ColPivHouseholderQR<MatrixType_> >
   *
   * \brief Householder rank-revealing QR decomposition of a matrix with column-pivoting
   *
-  * \tparam MatrixType_ the type of the matrix of which we are computing the QR decomposition
+  * \tparam _MatrixType the type of the matrix of which we are computing the QR decomposition
   *
   * This class performs a rank-revealing QR decomposition of a matrix \b A into matrices \b P, \b Q and \b R
   * such that
@@ -50,12 +48,12 @@ template<typename MatrixType_> struct traits<ColPivHouseholderQR<MatrixType_> >
   * 
   * \sa MatrixBase::colPivHouseholderQr()
   */
-template<typename MatrixType_> class ColPivHouseholderQR
-        : public SolverBase<ColPivHouseholderQR<MatrixType_> >
+template<typename _MatrixType> class ColPivHouseholderQR
+        : public SolverBase<ColPivHouseholderQR<_MatrixType> >
 {
   public:
 
-    typedef MatrixType_ MatrixType;
+    typedef _MatrixType MatrixType;
     typedef SolverBase<ColPivHouseholderQR> Base;
     friend class SolverBase<ColPivHouseholderQR>;
 
@@ -428,7 +426,10 @@ template<typename MatrixType_> class ColPivHouseholderQR
 
     friend class CompleteOrthogonalDecomposition<MatrixType>;
 
-    EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar)
+    static void check_template_parameters()
+    {
+      EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar);
+    }
 
     void computeInPlace();
 
@@ -480,6 +481,8 @@ ColPivHouseholderQR<MatrixType>& ColPivHouseholderQR<MatrixType>::compute(const 
 template<typename MatrixType>
 void ColPivHouseholderQR<MatrixType>::computeInPlace()
 {
+  check_template_parameters();
+
   // the column permutation is stored as int indices, so just to be sure:
   eigen_assert(m_qr.cols()<=NumTraits<int>::highest());
 
@@ -579,9 +582,9 @@ void ColPivHouseholderQR<MatrixType>::computeInPlace()
 }
 
 #ifndef EIGEN_PARSED_BY_DOXYGEN
-template<typename MatrixType_>
+template<typename _MatrixType>
 template<typename RhsType, typename DstType>
-void ColPivHouseholderQR<MatrixType_>::_solve_impl(const RhsType &rhs, DstType &dst) const
+void ColPivHouseholderQR<_MatrixType>::_solve_impl(const RhsType &rhs, DstType &dst) const
 {
   const Index nonzero_pivots = nonzeroPivots();
 
@@ -603,9 +606,9 @@ void ColPivHouseholderQR<MatrixType_>::_solve_impl(const RhsType &rhs, DstType &
   for(Index i = nonzero_pivots; i < cols(); ++i) dst.row(m_colsPermutation.indices().coeff(i)).setZero();
 }
 
-template<typename MatrixType_>
+template<typename _MatrixType>
 template<bool Conjugate, typename RhsType, typename DstType>
-void ColPivHouseholderQR<MatrixType_>::_solve_impl_transposed(const RhsType &rhs, DstType &dst) const
+void ColPivHouseholderQR<_MatrixType>::_solve_impl_transposed(const RhsType &rhs, DstType &dst) const
 {
   const Index nonzero_pivots = nonzeroPivots();
 
