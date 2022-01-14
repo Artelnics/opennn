@@ -445,7 +445,8 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
     {
         if(layers_pointers[i]->get_type() != Layer::Type::Scaling
         && layers_pointers[i]->get_type() != Layer::Type::Unscaling
-        && layers_pointers[i]->get_type() != Layer::Type::Bounding)
+        && layers_pointers[i]->get_type() != Layer::Type::Bounding
+        && layers_pointers[i]->get_type() != Layer::Type::Flatten)
         {
             trainable_layers_pointers[index] = layers_pointers[i];
             index++;
@@ -550,6 +551,29 @@ BoundingLayer* NeuralNetwork::get_bounding_layer_pointer() const
     buffer << "OpenNN Exception: NeuralNetwork class.\n"
            << "BoundingLayer* get_bounding_layer_pointer() const method.\n"
            << "No bounding layer in neural network.\n";
+
+    throw invalid_argument(buffer.str());
+}
+
+/// Returns a pointer to the flatten layer object composing this neural network object.
+
+FlattenLayer* NeuralNetwork::get_flatten_layer_pointer() const
+{
+    const Index layers_number = get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers[i]->get_type() == Layer::Type::Flatten)
+        {
+            return dynamic_cast<FlattenLayer*>(layers_pointers[i]);
+        }
+    }
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "BoundingLayer* get_flatten_layer_pointer() const method.\n"
+           << "No flatten layer in neural network.\n";
 
     throw invalid_argument(buffer.str());
 }
@@ -1369,8 +1393,11 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
 
-    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional)
+    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional
+    || trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
     {
+        cout << "I am here!" << endl;
+
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, forward_propagation.layers(0));
     }
     else
@@ -1420,7 +1447,9 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         break;
 
         case Layer::Type::Flatten: /// @todo
-
+            trainable_layers_pointers(i)
+                    ->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs,
+                                                            forward_propagation.layers(i));
         break;
 
         default: break;

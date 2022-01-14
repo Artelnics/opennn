@@ -653,6 +653,12 @@ TrainingResults QuasiNewtonMethod::perform_training()
         unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
     }
 
+    if(neural_network_pointer->has_flatten_layer())
+    {
+        FlattenLayer* flatten_layer_pointer = neural_network_pointer->get_flatten_layer_pointer();
+        //flatten_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
+    }
+
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
     training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 

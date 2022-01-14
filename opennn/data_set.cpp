@@ -10091,32 +10091,10 @@ void DataSet::read_bmp()
 
     samples_uses.resize(images_number);
     split_samples_random();
-    input_variables_dimensions = get_input_variables_dimensions();
 
-    input_variables_dimensions(0) = channels;
-    input_variables_dimensions(1) = width;
-    input_variables_dimensions(3) = height;
+    input_variables_dimensions.resize(3);
+    input_variables_dimensions.setValues({channels, width, height});
 
-    DataSet* data_set_pointer;
-    Index batch_size_training = 0;
-    Index batch_samples_number = 10;
-    const Index training_samples_number = get_training_samples_number();
-    const Tensor<Index, 1> training_samples_indices = get_training_samples_indices();
-    bool shuffle = true;
-
-    training_samples_number < batch_samples_number
-            ? batch_size_training = training_samples_number
-            : batch_size_training = batch_samples_number;
-    DataSetBatch batch(batch_size_training, data_set_pointer);
-
-    const Index training_batches_number = training_samples_number/batch_size_training;
-    Tensor<Index, 2> training_batches(training_batches_number, batch_size_training);
-
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-    training_batches = get_batches(training_samples_indices, batch_size_training, shuffle);
-
-    batch.fill(training_batches, input_variables_indices, target_variables_indices);
 }
 
 
@@ -11239,14 +11217,16 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         //@todo check that it works properly
         //inputs_4d(row,column,channel,image)
 
-        const Index samples_number = get_samples_number();
+        const Index samples_number = data_set_pointer-> get_samples_number();
 
         const Index channels_number = input_variables_dimensions(0);
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
 
-        inputs_4d.resize(rows_number, columns_number,channels_number,samples_number);
+        cout<< "Channels number: " << channels_number <<endl;
 
+        inputs_4d.setConstant(3.1416);
+/*
         Index index = 0;
 
         for(Index image = 0; image < samples_number; image++)
@@ -11260,12 +11240,13 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                     for(Index column = 0; column < columns_number; column++)
                     {
                         inputs_4d(row, column,channel,image) = data(image, index);
-                        cout<< inputs_4d(row, column,channel,image) <<" ";
+                        cout<<"------------------------------------------------ " <<endl;
                         index++;
                     }
                 }
             }
         }
+*/
     }
 
     fill_submatrix(data, samples, targets, targets_2d.data());
@@ -11289,18 +11270,18 @@ void DataSetBatch::set(const Index& new_samples_number, DataSet* new_data_set_po
 
     const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
-    if(input_variables_dimensions.rank() == 1)
+    if(input_variables_dimensions.size() == 1)
     {
         inputs_2d.resize(samples_number, input_variables_number);
     }
-    else if(input_variables_dimensions.rank() == 3)
+    else if(input_variables_dimensions.size() == 3)
     {
         const Index channels_number = input_variables_dimensions(0);
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
         inputs_4d.resize(samples_number, channels_number, rows_number, columns_number);
-    }
+   }
 
     targets_2d.resize(samples_number, target_variables_number);
 }
@@ -11316,9 +11297,22 @@ void DataSetBatch::print() const
 {
     cout << "Batch structure" << endl;
 
-    cout << "Inputs:" << endl;
-    cout << inputs_2d << endl;
+    if(inputs_2d.size() != 0)
+    {
+        cout << "Inputs 2D:" << endl;
+        cout << inputs_2d << endl;
+    }
 
+    if(inputs_4d.size() != 0)
+    {
+        cout << "Inputs dimensions:" << endl;
+        cout << inputs_4d.dimensions() << endl;
+
+        cout << "Inputs 4D:" << endl;
+        cout << inputs_4d << endl;
+    }
+
+    cout << endl;
     cout << "Targets:" << endl;
     cout << targets_2d << endl;
 }
