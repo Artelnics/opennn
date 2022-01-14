@@ -22,7 +22,6 @@ FlattenLayer::FlattenLayer() : Layer()
     layer_type = Type::Flatten;
 }
 
-
 /// Returns the number of images by batch.
 
 Index FlattenLayer::get_inputs_batch() const

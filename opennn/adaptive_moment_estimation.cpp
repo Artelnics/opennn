@@ -359,6 +359,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
+            cout<<"Batch filled !"<<endl;
             // Neural network
 
             neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
