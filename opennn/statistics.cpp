@@ -1045,6 +1045,11 @@ type asymmetry(const Tensor<type, 1>& vector)
 
     const type standard_deviation_value = standard_deviation(vector);
 
+    if(standard_deviation_value == 0)
+    {
+        return type(0);
+    }
+
     const type mean_value = mean(vector);
 
     long double sum = 0.0;
