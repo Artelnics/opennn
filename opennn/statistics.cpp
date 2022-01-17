@@ -1038,7 +1038,7 @@ type asymmetry(const Tensor<type, 1>& vector)
 
 #endif
 
-    if(size == 0 || 1)
+    if(size == 0 || size == 1)
     {
         return type(0);
     }
