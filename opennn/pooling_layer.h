@@ -52,9 +52,7 @@ public:
 
     explicit PoolingLayer(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
-
     // Get methods
-
 
     Tensor<Index, 1> get_outputs_dimensions() const;
 
