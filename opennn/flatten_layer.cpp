@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S C A L I N G   L A Y E R   C L A S S
+//   F L A T T E N   L A Y E R   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -14,6 +14,7 @@ namespace opennn
 
 /// Default constructor.
 /// It creates a flatten layer.
+/// This constructor also initializes the rest of the class members to their default values.
 
 FlattenLayer::FlattenLayer() : Layer()
 {
@@ -22,65 +23,18 @@ FlattenLayer::FlattenLayer() : Layer()
     layer_type = Type::Flatten;
 }
 
-/// Returns the number of images by batch.
 
-Index FlattenLayer::get_inputs_batch() const
+FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_input_variables_dimensions) : Layer()
 {
-    return input_variables_dimensions[0];
+    input_variables_dimensions = new_input_variables_dimensions;
+
+    layer_type = Type::Flatten;
 }
 
 
-/// Returns the number of channels of the image.
-
-Index FlattenLayer::get_inputs_channels_number() const
+Tensor<Index, 1> FlattenLayer::get_input_variables_dimensions() const
 {
-    return input_variables_dimensions[1];
-}
-
-
-/// Returns the number of columns of the image.
-
-Index FlattenLayer::get_inputs_width() const
-{
-    return input_variables_dimensions[2];
-}
-
-
-/// Returns the number of rows of the image.
-
-Index FlattenLayer::get_inputs_height() const
-{
-    return input_variables_dimensions[3];
-}
-
-
-/// Returns the number of rows of the output which matches with the batch size.
-
-Index FlattenLayer::get_outputs_rows_number() const
-{
-    return (get_inputs_batch());
-}
-
-
-/// Returns the number of columns which mathes with the number of pixels of an image.
-
-Index FlattenLayer::get_outputs_columns_number() const
-{
-    return (get_inputs_channels_number()*get_inputs_width()*get_inputs_height());
-}
-
-
-/// Returns a vector containing the batch and number of pixels of an image in result of resizing the
-/// input tensor taken by the flatten layer.
-
-Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
-{
-    Tensor<Index, 1> outputs_dimensions(2);
-
-    outputs_dimensions(0) = get_outputs_rows_number(); // Batch
-    outputs_dimensions(1) = get_outputs_columns_number() ; // Number of pixels of the image
-
-    return outputs_dimensions;
+    return input_variables_dimensions;
 }
 
 
@@ -90,23 +44,6 @@ Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 
 void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 {
-
-#ifdef OPENNN_DEBUG
-
-    const Index inputs_dimensions_number = new_inputs_dimensions.size();
-
-    if(inputs_dimensions_number != 4)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: FlattenLayer class.\n"
-               << "FlattenLayer(const Tensor<Index, 1>&) constructor.\n"
-               << "Number of inputs dimensions (" << inputs_dimensions_number << ") must be 4 (number of images, channels, width, height).\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     input_variables_dimensions = new_inputs_dimensions;
 }
 
@@ -116,15 +53,18 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 /// @param inputs 4d tensor(batch, channels, width, height)
 /// @return result 2d tensor(batch, number of pixels)
 
-void FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs, Tensor<type, 2>& outputs)
+Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs)
 {
     const Index batch = inputs.dimension(0);
     const Index channels = inputs.dimension(1);
     const Index width = inputs.dimension(2);
     const Index heights = inputs.dimension(3);
 
-    Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
-    outputs = inputs.reshape(new_dims);
+    const Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
+
+    const Tensor<type, 2> outputs = inputs.reshape(new_dims);
+
+    return outputs;
 }
 
 

@@ -3553,7 +3553,7 @@ void DataSet::check_constant_columns()
         {
             // @todo avoid chip
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
-            if(standard_deviation(numeric_column) < numeric_limits<float>::min())
+            if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
             {
                 columns(column).type = ColumnType::Constant;
                 columns(column).column_use = VariableUse::UnusedVariable;
@@ -11223,7 +11223,9 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
 
-  //      inputs_4d.setConstant(3.1416);
+//        inputs_4d.setConstant(3.1416);
+
+//        inputs_4d.resize(rows_number, columns_number, channels_number, samples);
 
         Index index = 0;
 
@@ -11235,10 +11237,10 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
             {
                 for(Index row = 0; row < rows_number; row++)
                 {
-                    for(Index column = 0; column < columns_number; column++)
+                    for(Index col = 0; col < columns_number; col++)
                     {
-                        inputs_4d(row, column,channel,image) = data(image, index);
-                        //cout << inputs_4d(row, column,channel,image) <<" ";
+                        inputs_4d(image, channel,row, col) = data(image, index);
+//                        inputs_4d(row, col,channel,image) = data(image, index);
                         index++;
                     }
                 }
