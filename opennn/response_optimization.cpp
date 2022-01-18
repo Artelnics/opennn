@@ -236,19 +236,11 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
     case Condition::EqualTo:
 
-        if(values.size() != 1)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+        buffer << "OpenNN Exception: ResponseOptimization class.\n"
                    << "void set_output_condition() method.\n"
-                   << "For LessEqualTo condition, size of values must be 1.\n";
+                   << "EqualTo condition is only available for inputs.\n";
 
-            throw invalid_argument(buffer.str());
-        }
-
-        outputs_minimums[index] = values[0];
-        outputs_maximums[index] = values[0];
-
-        return;
+        throw invalid_argument(buffer.str());
 
     case Condition::LessEqualTo:
 
@@ -271,7 +263,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
         {
             buffer << "OpenNN Exception: ResponseOptimization class.\n"
                    << "void set_output_condition() method.\n"
-                   << "For LessEqualTo condition, size of values must be 1.\n";
+                   << "For GreaterEqualTo condition, size of values must be 1.\n";
 
             throw invalid_argument(buffer.str());
         }
@@ -302,8 +294,6 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 }
 
 
-/// @todo Update method.
-
 void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>& names,
                                                          const Tensor<string, 1>& conditions_string,
                                                          const Tensor<type, 1>& values)
@@ -320,13 +310,13 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     for(Index i = 0; i < variables_number; i ++)
     {
-//        if(inputs_names.contains(names[i]))
+        if(contains(inputs_names,names[i]))
         {
             index = neural_network_pointer->get_input_index(names[i]);
 
             set_input_condition(index, conditions[i], values_conditions[i]);
         }
-//        else
+        else
         {
             index = neural_network_pointer->get_output_index(names[i]);
 
@@ -480,20 +470,19 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-//    Tensor<type, 2> envelope = (inputs.to_matrix()).assemble_columns((outputs.to_matrix()));
+//    Tensor<type, 2> envelope = (inputs.to_matrix()).assemble_columns((outputs.to_matrix())); old line
+    Tensor<type, 2> envelope = assemble_matrix_matrix(inputs,outputs);
 
     for(Index i = 0; i < outputs_number; i++)
     {
-//        envelope = envelope.filter_column_minimum_maximum(inputs_number+i, outputs_minimums[i], outputs_maximums[i]);
+//        envelope = envelope.filter_column_minimum_maximum(inputs_number+i, outputs_minimums[i], outputs_maximums[i]); old line
+        envelope = filter_column_minimum_maximum(envelope, inputs_number + i, outputs_minimums(i), outputs_maximums(i));
     }
 
-//        return envelope;
+    return envelope;
 
-    return Tensor<type, 2>();
 }
 
-
-/// @todo Update method.
 
 ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 {
@@ -542,7 +531,7 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 
     const Index optimal_index = minimal_index(objective);
 
-//    results->optimal_variables = envelope.get_row(optimal_index);
+    results->optimal_variables = envelope.chip(optimal_index, 0);
 
     results->optimum_objective = objective[optimal_index];
 

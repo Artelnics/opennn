@@ -51,6 +51,12 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 
 void scrub_missing_values(Tensor<type, 2>&, const type&);
 
+Index count_between(Tensor<type,1>&, const type&, const type&);
+void set_row(Tensor<type,2>&, const Tensor<type,1>&, const Index&);
+Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&, const Index&, const type&, const type&);
+
+Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&);
+
 type l1_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
 void l1_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
 void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
@@ -58,8 +64,6 @@ void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<typ
 type l2_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
 void l2_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
 void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
-
-Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
 
@@ -79,12 +83,15 @@ void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
 void check_rows_number(const Tensor<type, 2>&, const Index&, const string& );
 
 bool is_less_than(const Tensor<type, 1>&, const type&);
-
+bool contains(const Tensor<type,1>&, const type&);
+bool contains(const Tensor<string,1>&, const string&);
 
 Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
 Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
+
+Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
 Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&);
 Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&);
