@@ -73,16 +73,14 @@ string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
         return "BFGS";
 
     default:
-        return string();
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+               << "string write_inverse_hessian_approximation_method() const method.\n"
+               << "Unknown inverse hessian approximation method.\n";
+
+        throw invalid_argument(buffer.str());
     }
-
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-           << "string write_inverse_hessian_approximation_method() const method.\n"
-           << "Unknown inverse hessian approximation method.\n";
-
-    throw invalid_argument(buffer.str());
 }
 
 
@@ -312,17 +310,16 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
         return;
 
     default:
-        return;
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+               << "Tensor<type, 1> calculate_inverse_hessian_approximation(const Tensor<type, 1>&, "
+               "const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
+               << "Unknown inverse hessian approximation method.\n";
+
+        throw invalid_argument(buffer.str());
     }
 
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-           << "Tensor<type, 1> calculate_inverse_hessian_approximation(const Tensor<type, 1>&, "
-           "const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
-           << "Unknown inverse hessian approximation method.\n";
-
-    throw invalid_argument(buffer.str());
 }
 
 
