@@ -789,6 +789,7 @@ void StatisticsTest::test_asymmetry()
     vector.resize(3);
     vector.setZero();
 
+    cout << asymmetry(vector) << endl;
     assert_true(asymmetry(vector) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test

@@ -627,16 +627,18 @@ void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinatio
 
     case ActivationFunction::Softmax: softmax(combinations, activations); return;
 
-    default: return;
+    default:
+
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+               << "Unknown probabilistic method.\n";
+
+        throw invalid_argument(buffer.str());
     }
 
-    ostringstream buffer;
 
-    buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-           << "Unknown probabilistic method.\n";
-
-    throw invalid_argument(buffer.str());
 }
 
 

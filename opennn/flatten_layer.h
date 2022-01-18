@@ -28,12 +28,7 @@ namespace opennn
 
 struct FlattenLayerForwardPropagation;
 
-class PoolingLayer;
-class PerceptronLayer;
-
-
 /// This class represents a flatten layer.
-
 
 /// Flatten layers are included in the definition of a neural network.
 /// They are used to resize the input data to make it usable for the
@@ -48,20 +43,11 @@ public:
 
     explicit FlattenLayer();
 
-    //explicit FlattenLayer(const Index&);
+    explicit FlattenLayer(const Tensor<Index, 1>&);
 
     // Get methods
 
-    Index get_inputs_batch() const;
-    Index get_inputs_channels_number() const;
-    Index get_inputs_width() const;
-    Index get_inputs_height() const;
-
-    Tensor<Index, 1> get_outputs_dimensions() const;
-
-    Index get_outputs_rows_number() const;
-
-    Index get_outputs_columns_number() const;
+    Tensor<Index, 1> get_input_variables_dimensions() const;
 
     // Set methods
 
@@ -69,8 +55,6 @@ public:
     void set(const Index&);
     void set(const Tensor<Index, 1>&);
     void set(const tinyxml2::XMLDocument&);
-
-    void set_inputs_number(const Index&) {}
 
     void set_default();
 
@@ -82,11 +66,9 @@ public:
 
     bool is_empty() const;
 
-    void check_range(const Tensor<type, 1>&) const;
-
     // Outputs
 
-    void calculate_outputs_2d(const Tensor<type, 4>&, Tensor<type, 2>&);
+    Tensor<type, 2> calculate_outputs_2d(const Tensor<type, 4>&);
 
     void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*) final;
 
@@ -109,6 +91,7 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    {
    }
 
+
    // Constructor
 
    explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
@@ -117,17 +100,18 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
        set(new_batch_samples_number, new_layer_pointer);
    }
 
+
    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
    {
        layer_pointer = new_layer_pointer;
 
-       const Index outputs_rows_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_rows_number();
-       const Index outputs_columns_number = static_cast<FlattenLayer*>(layer_pointer)->get_outputs_columns_number();
+       const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
 
        batch_samples_number = new_batch_samples_number;
 
-       outputs.resize(outputs_rows_number, outputs_columns_number);
+       outputs.resize(batch_samples_number, input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2));
    }
+
 
    void print() const
    {

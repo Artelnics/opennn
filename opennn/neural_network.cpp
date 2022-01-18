@@ -473,7 +473,8 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
     {
         if(layers_pointers[i]->get_type() != Layer::Type::Scaling
         && layers_pointers[i]->get_type() != Layer::Type::Unscaling
-        && layers_pointers[i]->get_type() != Layer::Type::Bounding)
+        && layers_pointers[i]->get_type() != Layer::Type::Bounding
+        && layers_pointers[i]->get_type() != Layer::Type::Flatten)
         {
             trainable_layers_indices[trainable_layer_index] = i;
             trainable_layer_index++;
@@ -983,7 +984,8 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_neurons_numbers() const
     {
         if(layers_pointers(i)->get_type() != Layer::Type::Scaling
                 && layers_pointers(i)->get_type() != Layer::Type::Unscaling
-                && layers_pointers(i)->get_type() != Layer::Type::Bounding)
+                && layers_pointers(i)->get_type() != Layer::Type::Bounding
+                && layers_pointers[i]->get_type() != Layer::Type::Flatten)
         {
             layers_neurons_number(count) = layers_pointers[i]->get_neurons_number();
 
@@ -1008,7 +1010,8 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_inputs_numbers() const
     {
         if(layers_pointers(i)->get_type() != Layer::Type::Scaling
                 && layers_pointers(i)->get_type() != Layer::Type::Unscaling
-                && layers_pointers(i)->get_type() != Layer::Type::Bounding)
+                && layers_pointers(i)->get_type() != Layer::Type::Bounding
+                && layers_pointers[i]->get_type() != Layer::Type::Flatten)
         {
             layers_neurons_number(count) = layers_pointers[i]->get_inputs_number();
 
@@ -1227,7 +1230,8 @@ Index NeuralNetwork::get_trainable_layers_number() const
     {
         if(layers_pointers(i)->get_type() != Layer::Type::Scaling
         && layers_pointers(i)->get_type() != Layer::Type::Unscaling
-        && layers_pointers(i)->get_type() != Layer::Type::Bounding)
+        && layers_pointers(i)->get_type() != Layer::Type::Bounding
+        && layers_pointers[i]->get_type() != Layer::Type::Flatten)
         {
             count++;
         }               
@@ -1388,7 +1392,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
-{   
+{
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
@@ -1396,8 +1400,6 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
     if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional
     || trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
     {
-        cout << "I am here!" << endl;
-
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, forward_propagation.layers(0));
     }
     else
@@ -1535,6 +1537,13 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
             //trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
             //                                                potential_parameters,
             //                                                forward_propagation.layers(i));
+        }
+            break;
+        case Layer::Type::Flatten:
+        {
+//            trainable_layers_pointers(i)->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs,
+//                                                            potential_parameters,
+//                                                            forward_propagation.layers(i));
         }
             break;
 
