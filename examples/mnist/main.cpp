@@ -48,7 +48,7 @@ int main()
         // Data set
 
         DataSet data_set;
-        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/mini_data/");
+        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
 
         data_set.read_bmp();
 
@@ -64,7 +64,11 @@ int main()
 
         const Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
 
-        const Index batch_size = 3;
+        data_set.save("C:/Users/Artelnics/Desktop/mnist/data_set.xml");
+
+        // Data set batch
+
+        const Index batch_size = 5;
 
         DataSetBatch data_set_batch(batch_size, &data_set);
 
@@ -72,13 +76,15 @@ int main()
 
         data_set_batch.fill(batches.chip(0, 0), input_variables_indices, target_variables_indices);
 
-        data_set_batch.print();
+//        data_set_batch.print();
 
         // Neural network
 
         NeuralNetwork neural_network;
 
         FlattenLayer flatten_layer(input_variables_dimensions);
+
+        system("pause");
 
         neural_network.add_layer(&flatten_layer);
 
@@ -98,7 +104,6 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.set_maximum_epochs_number(20000);
         training_strategy.perform_training();
 
         /*
