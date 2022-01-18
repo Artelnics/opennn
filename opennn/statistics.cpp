@@ -944,11 +944,7 @@ type standard_deviation(const Tensor<type, 1>& vector)
 
     if(vector.size() == 0) return type(0);
 
-    if(variance(vector) < static_cast<type>(1e-9)){
-        return static_cast<type>(0);
-    }else{
-        return sqrt(variance(vector));
-    }
+    return sqrt(variance(vector));
 }
 
 
