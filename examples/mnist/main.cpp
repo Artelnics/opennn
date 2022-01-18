@@ -62,6 +62,8 @@ int main()
         const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
         const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
+        const Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
+
         const Index batch_size = 3;
 
         DataSetBatch data_set_batch(batch_size, &data_set);
@@ -72,12 +74,11 @@ int main()
 
         data_set_batch.print();
 
-        /*
         // Neural network
 
         NeuralNetwork neural_network;
 
-        FlattenLayer flatten_layer;
+        FlattenLayer flatten_layer(input_variables_dimensions);
 
         neural_network.add_layer(&flatten_layer);
 
@@ -88,15 +89,16 @@ int main()
         NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, &neural_network);
 
         neural_network.forward_propagate(data_set_batch, neural_network_forward_propagation);
-/*
+
         //NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_maximum_epochs_number(20000);
         training_strategy.perform_training();
 
         /*
