@@ -3553,7 +3553,7 @@ void DataSet::check_constant_columns()
         {
             // @todo avoid chip
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
-            if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
+            if(standard_deviation(numeric_column) < numeric_limits<float>::min())
             {
                 columns(column).type = ColumnType::Constant;
                 columns(column).column_use = VariableUse::UnusedVariable;
