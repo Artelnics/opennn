@@ -109,9 +109,25 @@ bool is_constant(const Tensor<type, 1>& vector)
 {
     const Index size = vector.size();
 
+    type first_not_nan_element;
+
     for(Index i = 0; i < size; i++)
     {
-        if((vector(0) - vector(i)) != type(0)) return false;
+        if(isnan(vector(i)))
+        {
+            continue;
+        }
+        else
+        {
+            first_not_nan_element = vector(i);
+            break;
+        }
+    }
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(isnan(vector(i))) continue;
+        if(abs(first_not_nan_element - vector(i)) > numeric_limits<float>::min()) return false;
     }
 
     return true;
