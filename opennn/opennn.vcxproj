@@ -27,6 +27,7 @@
     <ClInclude Include="correlations.h" />
     <ClInclude Include="cross_entropy_error.h" />
     <ClInclude Include="data_set.h" />
+    <ClInclude Include="flatten_layer.h" />
     <ClInclude Include="genetic_algorithm.h" />
     <ClInclude Include="gradient_descent.h" />
     <ClInclude Include="growing_inputs.h" />
@@ -76,6 +77,7 @@
     <ClCompile Include="correlations.cpp" />
     <ClCompile Include="cross_entropy_error.cpp" />
     <ClCompile Include="data_set.cpp" />
+    <ClCompile Include="flatten_layer.cpp" />
     <ClCompile Include="genetic_algorithm.cpp" />
     <ClCompile Include="gradient_descent.cpp" />
     <ClCompile Include="growing_inputs.cpp" />
@@ -209,7 +211,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
       <OpenMP>GenerateParallelCode</OpenMP>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -252,7 +254,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
       <OpenMP>GenerateParallelCode</OpenMP>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
