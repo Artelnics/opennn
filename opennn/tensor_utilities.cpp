@@ -268,6 +268,106 @@ void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
 }
 
 
+/// Returns the number of elements which are equal or greater than a minimum given value
+/// and equal or less than a maximum given value.
+/// @param minimum Minimum value.
+/// @param maximum Maximum value.
+
+Index count_between(const Tensor<type,1>& vector,const type& minimum, const type& maximum)
+{
+    const Index size = vector.size();
+
+    Index count = 0;
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(vector(i) >= minimum && vector(i) <= maximum) count++;
+    }
+
+    return count;
+}
+
+
+void set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_index)
+{
+    const Index columns_number = new_row.size();
+
+#ifdef __OPENNN_DEBUG__
+
+    if(row_index >= rows_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix Template.\n"
+               << "set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_index) method.\n"
+               << "Index must be less than number of rows.\n";
+
+        throw logic_error(buffer.str());
+    }
+    if(columns_number != matrix.dimension(0))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix Template.\n"
+               << "set_row(Tensor<type,2>& matrix, Tensor<type,1>& new_row, const Index& row_index) method.\n"
+               << "New row must have same columns number than original matrix.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    // Set new row
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        matrix(row_index,i) = new_row(i);
+    }
+}
+
+
+Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index& column_index, const type& minimum, const type& maximum)
+{
+#ifdef __OPENNN_DEBUG__
+
+    if(column_index >= matrix.dimension(1))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix Template.\n"
+               << "filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index& column_index, const type& minimum, const type& maximum)\n"
+               << "Column index must be less than number of columns.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+    const Tensor<type,1> column = matrix.chip(column_index,1);
+    const Index new_rows_number = count_between(column, minimum, maximum);
+
+    const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    Tensor<type,2> new_matrix(new_rows_number, columns_number);
+
+    Index row_index = 0;
+    Tensor<type,1> row(columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        if(matrix(i,column_index) >= minimum && matrix(i, column_index) <= maximum)
+        {
+            row = matrix.chip(i,0);
+
+            set_row(new_matrix, row, row_index);
+
+            row_index++;
+        }
+    }
+    return new_matrix;
+};
+
+
 Tensor<type, 2> kronecker_product(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     const Index size = x.size();
@@ -609,6 +709,57 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<ty
     return data;
 }
 
+Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index)
+{
+    const Index rows_number = tensor.dimension(0);
+    const Index columns_number = tensor.dimension(1);
+   #ifdef OPENNN_DEBUG
+
+   if(row_index > rows_number)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "Matrix<T> delete_row(const size_t&) const.\n"
+             << "Index of row must be less than number of rows.\n"
+             << "row index: " << row_index << "rows_number" << rows_number << "\n";
+
+      throw invalid_argument(buffer.str());
+   }
+   else if(rows_number < 2)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "Matrix<T> delete_row(const size_t&) const.\n"
+             << "Number of rows must be equal or greater than two.\n";
+
+      throw invalid_argument(buffer.str());
+   }
+
+   #endif
+
+   Tensor<type, 2> new_matrix(rows_number-1, columns_number);
+
+   for(Index i = 0; i < row_index; i++)
+   {
+      for(Index j = 0; j < columns_number; j++)
+      {
+        new_matrix(i,j) = tensor(i,j);
+      }
+   }
+
+   for(Index i = row_index+1; i < rows_number; i++)
+   {
+      for(Index j = 0; j < columns_number; j++)
+      {
+         new_matrix(i-1,j) = tensor(i,j);
+      }
+   }
+
+   return new_matrix;
+}
+
 
 /// Returns true if any value is less or equal than a given value, and false otherwise.
 
@@ -626,6 +777,25 @@ bool is_less_than(const Tensor<type, 1>& column, const type& value)
 
     return is_less(0);
 }
+
+bool contains(const Tensor<type,1>& vector, const type& value)
+{
+    Tensor<type, 1> copy(vector);
+
+    const type* it = find(copy.data(), copy.data()+copy.size(), value);
+
+    return it != (copy.data()+copy.size());
+};
+
+bool contains(const Tensor<string,1>& vector, const string& value)
+{
+    Tensor<string, 1> copy(vector);
+
+    const string* it = find(copy.data(), copy.data()+copy.size(), value);
+
+    return it != (copy.data()+copy.size());
+};
+
 
 Tensor<Index, 1> push_back(const Tensor<Index, 1>& old_vector, const Index& new_element)
 {

@@ -4058,65 +4058,6 @@ void TestingAnalysis::load(const string& file_name)
     from_XML(document);
 }
 
-bool TestingAnalysis::contains(const Tensor<type, 1>& tensor, const type& value) const
-{
-    Tensor<type, 1> copy(tensor);
-
-    const type* it = find(copy.data(), copy.data()+copy.size(), value);
-
-    return it != (copy.data()+copy.size());
-}
-
-Tensor<type, 2> TestingAnalysis::delete_row(const Tensor<type, 2>& tensor, const Index& row_index) const
-{
-    const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
-   #ifdef OPENNN_DEBUG
-
-   if(row_index > rows_number)
-   {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix Template.\n"
-             << "Matrix<T> delete_row(const size_t&) const.\n"
-             << "Index of row must be less than number of rows.\n"
-             << "row index: " << row_index << "rows_number" << rows_number << "\n";
-
-      throw invalid_argument(buffer.str());
-   }
-   else if(rows_number < 2)
-   {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix Template.\n"
-             << "Matrix<T> delete_row(const size_t&) const.\n"
-             << "Number of rows must be equal or greater than two.\n";
-
-      throw invalid_argument(buffer.str());
-   }
-
-   #endif
-
-   Tensor<type, 2> new_matrix(rows_number-1, columns_number);
-
-   for(Index i = 0; i < row_index; i++)
-   {
-      for(Index j = 0; j < columns_number; j++)
-      {
-        new_matrix(i,j) = tensor(i,j);
-      }
-   }
-
-   for(Index i = row_index+1; i < rows_number; i++)
-   {
-      for(Index j = 0; j < columns_number; j++)
-      {
-         new_matrix(i-1,j) = tensor(i,j);
-      }
-   }
-
-   return new_matrix;
-}
 
 }
 

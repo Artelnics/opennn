@@ -770,7 +770,6 @@ TrainingResults TrainingStrategy::perform_training()
         return TrainingResults(0);
     }
 
-    return TrainingResults(0);
 }
 
 
