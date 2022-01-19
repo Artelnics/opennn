@@ -52,6 +52,8 @@ int main()
 
         data_set.read_bmp();
 
+        data_set.scale_input_variables();
+
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
@@ -66,14 +68,14 @@ int main()
 
         // Data set batch
 
-        const Index batch_size = 200;
+        const Index batch_size = 2;
 
         DataSetBatch data_set_batch(batch_size, &data_set);
 
         const Tensor<Index, 2> batches = data_set.get_batches(samples_indices, batch_size, true);
 
         data_set_batch.fill(batches.chip(0, 0), input_variables_indices, target_variables_indices);
-/*
+
         // Neural network
 
         NeuralNetwork neural_network;
@@ -90,6 +92,8 @@ int main()
 
         neural_network.forward_propagate(data_set_batch, neural_network_forward_propagation);
 
+//        neural_network_forward_propagation.print();
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -98,6 +102,7 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.perform_training();
 
+        /*
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
@@ -141,7 +146,6 @@ int main()
         return 1;
     }
 }
-
 
 /*
 // This is an approximation application.

@@ -344,7 +344,7 @@ struct NeuralNetworkForwardPropagation
 
         for(Index i = 0; i < layers_number; i++)
         {
-            cout << "Layer " << i + 1 << endl;
+            cout << "Layer " << i + 1 << ": " << neural_network_pointer->get_layer_pointer(i)->get_type_string() << endl;
 
             layers(i)->print();
         }
@@ -415,12 +415,11 @@ struct NeuralNetworkBackPropagation
             }
             break;
 
-// 0
             case Layer::Type::Flatten:
-//            {
-//                layers(i) = new FlattenLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
-//            }
-//            break;
+            {
+                layers(i) = new FlattenLayerBackPropagation(new_batch_samples_number, trainable_layers_pointers(i));
+            }
+            break;
 
             default: break;
             }
