@@ -70,8 +70,6 @@ Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs
 
 void FlattenLayer::forward_propagate(const Tensor<type, 4>& inputs, LayerForwardPropagation* forward_propagation)
 {
-    cout << "Hello flatten layer!" << endl;
-
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
 
@@ -107,8 +105,6 @@ void FlattenLayer::forward_propagate(const Tensor<type, 4>& inputs, LayerForward
     const Index heights = inputs.dimension(3);
 
     const Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
-
-    cout<<"I am still here!"<<endl;
 
     flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
 }

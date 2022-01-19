@@ -769,7 +769,8 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
     const Tensor<Index, 1> trainable_layers_parameters_number
             = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional)
+    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional
+        ||trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
     {
         trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_4d,
                                                                forward_propagation.layers(0),
@@ -856,6 +857,18 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
         case Layer::Type::Pooling:
         {
             // @todo
+        }
+            break;
+
+        case Layer::Type::Flatten:
+        {
+//            const FlattenLayerForwardPropagation* flatten_layer_forward_propagation
+//                    = static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1));
+
+//            trainable_layers_pointers(i)->
+//                    calculate_error_gradient(flatten_layer_forward_propagation->outputs,
+//                                             forward_propagation.layers(i),
+//                                             back_propagation.neural_network.layers(i));
         }
             break;
 
