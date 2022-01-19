@@ -54,6 +54,7 @@ SOURCES += \
     scaling_test.cpp \
     convolutional_layer_test.cpp \
     pooling_layer_test.cpp \
+    response_optimization_test.cpp \
     main.cpp
 
 HEADERS += \
@@ -96,7 +97,8 @@ HEADERS += \
     statistics_test.h \
     scaling_test.h \
     convolutional_layer_test.h \
-    pooling_layer_test.h
+    pooling_layer_test.h \
+    response_optimization_test.h
 
 
 # OpenMP library

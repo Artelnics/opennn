@@ -50,12 +50,12 @@ int main()
    "normalized_squared_error | nse\n"
    "numerical_differentiation | nd\n"
    "perceptron_layer | pl\n"
-   "pooling_layer | pl"
-   "l\n"
+   "pooling_layer | pll\n"
    "probabilistic_layer | pbl\n"
    "pruning_inputs | pi\n"
    "quasi_newton_method | qnm\n"
    "recurrent_layer | rl\n"
+   "response_optimization | ro\n"
    "scaling_layer | sl\n"
    "scaling | sc\n"
    "statistics | st\n"
@@ -416,6 +416,15 @@ int main()
         tests_failed_count += testing_analysis_test.get_tests_failed_count();
       }
 
+      else if(test == "response_optimization" || test == "ro")
+      {
+        ResponseOptimizationTest response_optimization_test;
+        response_optimization_test.run_test_case();
+        tests_count += response_optimization_test.get_tests_count();
+        tests_passed_count += response_optimization_test.get_tests_passed_count();
+        tests_failed_count += response_optimization_test.get_tests_failed_count();
+      }
+
       else if(test == "suite" || test == "")
       {
           // numerical differentiation
@@ -725,6 +734,14 @@ int main()
           tests_count += testing_analysis_test.get_tests_count();
           tests_passed_count += testing_analysis_test.get_tests_passed_count();
           tests_failed_count += testing_analysis_test.get_tests_failed_count();
+
+          // R E S P O N S E   O P T I M I Z A T I O N   T E S T S
+
+          ResponseOptimizationTest response_optimization_test;
+          response_optimization_test.run_test_case();
+          tests_count += response_optimization_test.get_tests_count();
+          tests_passed_count += response_optimization_test.get_tests_passed_count();
+          tests_failed_count += response_optimization_test.get_tests_failed_count();
 
       }
 

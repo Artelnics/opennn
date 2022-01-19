@@ -59,6 +59,7 @@
 #include "tensor_utilities_test.h"
 
 #include "testing_analysis_test.h"
+#include "response_optimization_test.h"
 
 #endif
 
