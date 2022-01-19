@@ -53,6 +53,7 @@ public:
 
    Tensor<Condition, 1> get_inputs_conditions() const;
    Tensor<Condition, 1> get_outputs_conditions() const;
+   Index get_evaluations_number() const;
 
    Tensor<type, 1> get_inputs_minimums() const;
    Tensor<type, 1> get_inputs_maximums() const;

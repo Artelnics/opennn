@@ -57,6 +57,11 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_outputs_con
 }
 
 
+Index ResponseOptimization::get_evaluations_number() const
+{
+    return evaluations_number;
+}
+
 Tensor<type, 1> ResponseOptimization::get_inputs_minimums() const
 {
     return inputs_minimums;
@@ -334,15 +339,15 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
 
     for(Index i = 0; i < conditions_size; i++)
     {
-        if(conditions_string[i] == "Minimize")
+        if(conditions_string[i] == "Minimize" || conditions_string[i] == "Minimum")
         {
             conditions[i] = Condition::Minimum;
         }
-        else if(conditions_string[i] == "Maximize")
+        else if(conditions_string[i] == "Maximize" || conditions_string[i] == "Maximum")
         {
             conditions[i] = Condition::Maximum;
         }
-        else if(conditions_string[i] == "=")
+        else if(conditions_string[i] == "="|| conditions_string[i] == "EqualTo")
         {
             conditions[i] = Condition::EqualTo;
         }
@@ -351,12 +356,16 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
             conditions[i] = Condition::Between;
         }
         else if(conditions_string[i] == ">="
-                || conditions_string[i] == ">")
+                || conditions_string[i] == ">"
+                || conditions_string[i] == "GreaterEqualTo"
+                || conditions_string[i] == "GreaterThan")
         {
             conditions[i] = Condition::GreaterEqualTo;
         }
         else if(conditions_string[i] == "<="
-                || conditions_string[i] == "<")
+                || conditions_string[i] == "<"
+                || conditions_string[i] == "LessEqualTo"
+                || conditions_string[i] == "LessThan")
         {
             conditions[i] = Condition::LessEqualTo;
         }
