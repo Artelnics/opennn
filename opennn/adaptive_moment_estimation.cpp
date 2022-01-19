@@ -309,7 +309,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Loss index
 
     loss_index_pointer->set_normalization_coefficient();
-/*
+
     LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
@@ -485,7 +485,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         data_set_pointer->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
-*/
+
     return results;
 }
 

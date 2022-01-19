@@ -862,13 +862,13 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
 
         case Layer::Type::Flatten:
         {
-//            const FlattenLayerForwardPropagation* flatten_layer_forward_propagation
-//                    = static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1));
+            const FlattenLayerForwardPropagation* flatten_layer_forward_propagation
+                    = static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1));
 
-//            trainable_layers_pointers(i)->
-//                    calculate_error_gradient(flatten_layer_forward_propagation->outputs,
-//                                             forward_propagation.layers(i),
-//                                             back_propagation.neural_network.layers(i));
+            trainable_layers_pointers(i)->
+                    calculate_error_gradient(flatten_layer_forward_propagation->outputs,
+                                             forward_propagation.layers(i),
+                                             back_propagation.neural_network.layers(i));
         }
             break;
 
