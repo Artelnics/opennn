@@ -53,28 +53,39 @@ bool ConvolutionalLayer::is_empty() const
     return false;
 }
 
+/// Inserts padding to the input tensor.
+/// @param input Tensor containing the inputs.
+/// @param padded_output input tensor padded.
 
-/// @todo Add stride.
+void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output)
+{
+    switch(convolution_type)
+    {
+        case ConvolutionType::Valid: padded_output = inputs; return;
 
-//void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output)
-//{
-//    switch(convolution_type)
-//    {
-//        case ConvolutionType::Valid: padded_output = inputs; return;
+        case ConvolutionType::Same:
+        {
+            const Index input_rows_number = inputs.dimension(0);
+            const Index input_cols_number = inputs.dimension(1);
 
-//        case ConvolutionType::Same:
-//        {
-//                Eigen::array<pair<int, int>, 4> paddings;
-//                const int pad = int(0.5 *(get_kernels_rows_number() - 1));
-//                paddings[0] = make_pair(0, 0);
-//                paddings[1] = make_pair(0, 0);
-//                paddings[2] = make_pair(pad, pad);
-//                paddings[3] = make_pair(pad, pad);
-//                padded_output = inputs.pad(paddings);
-//                return;
-//        }
-//    }
-//}
+            const Index kernel_rows_number = get_kernels_rows_number();
+            const Index kernel_cols_number = get_kernels_columns_number();
+
+            Eigen::array<pair<int, int>, 4> paddings;
+
+            const int pad_rows = int(0.5 *(input_rows_number*(row_stride - 1) - row_stride + kernel_rows_number));
+            const int pad_cols = int(0.5 *(input_cols_number*(column_stride - 1) - column_stride + kernel_cols_number));
+
+            paddings[0] = make_pair(pad_rows, pad_rows);
+            paddings[1] = make_pair(pad_cols, pad_cols);
+            paddings[2] = make_pair(0, 0);
+            paddings[3] = make_pair(0, 0);
+
+            padded_output = inputs.pad(paddings);
+            return;
+        }
+    }
+}
 
 
 /// Calculate convolutions
@@ -155,25 +166,6 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                 const Tensor<type, 4>& potential_synaptic_weights,
                                                 Tensor<type, 4>& convolutions) const
 {
-//    const Index number_of_kernels = potential_synaptic_weights.dimension(0);
-//    const Index number_of_images = inputs.dimension(0);
-
-//    convolutions.resize(number_of_images, number_of_kernels, get_outputs_rows_number(), get_outputs_columns_number());
-
-//    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
-
-//    Tensor<type, 3> kernel;
-
-////    #pragma omp parallel for
-//    for(Index i = 0; i < number_of_images; i++)
-//    {
-//        for(Index j = 0; j < number_of_kernels; j++)
-//        {
-//            kernel = potential_synaptic_weights.chip(j, 0);
-
-//            convolutions.chip(i, 0).chip(j, 0) = inputs.chip(i, 0).convolve(kernel, dims) + potential_biases(j, 0);
-//        }
-//    }
 }
 
 
@@ -295,13 +287,11 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
     calculate_convolutions(inputs,
                            convolutional_layer_forward_propagation->combinations);
 
-    calculate_activations(convolutional_layer_forward_propagation->combinations,
-                          convolutional_layer_forward_propagation->activations);
-
     calculate_activations_derivatives(convolutional_layer_forward_propagation->combinations,
                                       convolutional_layer_forward_propagation->activations,
                                       convolutional_layer_forward_propagation->activations_derivatives);
 
+/// @todo check here next layer
 //    to_2d(convolutional_layer_forward_propagation->combinations_4d, convolutional_layer_forward_propagation->combinations);
 //    to_2d(convolutional_layer_forward_propagation->activations_4d, convolutional_layer_forward_propagation->activations);
 //    to_2d(convolutional_layer_forward_propagation->activations_derivatives_4d, convolutional_layer_forward_propagation->activations_derivatives_2d);
@@ -1077,7 +1067,7 @@ Index ConvolutionalLayer::get_padding_width() const
 }
 
 
-/// Returns the total number of rows of zeroes to be added to an image before applying a kernel, which depends on the padding option set.
+/// Returns the total number of rows of zeros to be added to an image before applying a kernel, which depends on the padding option set.
 
 Index ConvolutionalLayer::get_padding_height() const
 {

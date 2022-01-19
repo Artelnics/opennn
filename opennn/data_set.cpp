@@ -2864,7 +2864,6 @@ Index DataSet::get_target_variables_number() const
             {
                 if(columns(i).categories_uses(j) == VariableUse::Target) targets_number++;
             }
-
         }
         else if(columns(i).column_use == VariableUse::Target)
         {
@@ -9988,7 +9987,6 @@ void DataSet::read_bmp()
     vector<fs::path> folder_paths;
     vector<fs::path> image_paths;
 
-
     for (const auto & entry : fs::directory_iterator(path)){
         folder_paths.emplace_back(entry.path().string());
     }
@@ -10052,7 +10050,7 @@ void DataSet::read_bmp()
             for(Index k = 0; k < image_size; k++)
             {
                 data(row_index, k) = static_cast<type>(image[k]);
-                //cout<< data(row_index, k) <<" ";
+//                cout<< data(row_index, k) <<" ";
             }
 
             data(row_index, image_size + i) = 1;
@@ -10064,18 +10062,26 @@ void DataSet::read_bmp()
     }
 
     columns.resize(image_size + 1);
-    Index column_index=0;
 
-    for(Index i = 1; i <= width;i++)
+    // Input columns
+
+    Index column_index = 0;
+
+    for(Index i = 0; i < channels; i++)
     {
-        for(Index j = 1; j <= height ; j++)
+        for(Index j = 0; j < width; j++)
         {
-            columns(column_index).name= "pixel_"+to_string(channels)+"_"+to_string(j)+"_"+to_string(i);
-            columns(column_index).column_use = VariableUse::Input;
-            column_index++;
+            for(Index k = 0; k < height ; k++)
+            {
+                columns(column_index).name= "pixel_" + to_string(i+1)+ "_" + to_string(j+1) + "_" + to_string(k+1);
+                columns(column_index).type = ColumnType::Numeric;
+                columns(column_index).column_use = VariableUse::Input;
+                column_index++;
+            }
         }
-
     }
+
+    // Target columns
 
     columns(image_size).name = "class";
 
@@ -10083,18 +10089,24 @@ void DataSet::read_bmp()
 
     for(Index i = 0 ; i < classes_number ; i++)
     {
-       categories(i) = folder_paths[i].filename().u8string();
+       categories(i) = folder_paths[i].filename().u8string();   
     }
 
     columns(image_size).categories = categories;
     columns(image_size).column_use = VariableUse::Target;
+
+    columns(image_size).categories_uses.resize(classes_number);
+    columns(image_size).categories_uses.setConstant(VariableUse::Target);
+
+    columns(image_size).type = ColumnType::Categorical;
+
+//    columns(image_size).print();
 
     samples_uses.resize(images_number);
     split_samples_random();
 
     input_variables_dimensions.resize(3);
     input_variables_dimensions.setValues({channels, width, height});
-
 }
 
 
@@ -11217,19 +11229,13 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         //@todo check that it works properly
         //inputs_4d(row,column,channel,image)
 
-        const Index samples_number = data_set_pointer-> get_samples_number();
-
         const Index channels_number = input_variables_dimensions(0);
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
 
-//        inputs_4d.setConstant(3.1416);
-
-//        inputs_4d.resize(rows_number, columns_number, channels_number, samples);
-
         Index index = 0;
 
-        for(Index image = 0; image < samples_number; image++)
+        for(Index image = 0; image < batch_size; image++)
         {
             index = 0;
 
@@ -11246,10 +11252,10 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                 }
             }
         }
-
     }
 
     fill_submatrix(data, samples, targets, targets_2d.data());
+
 }
 
 
@@ -11259,9 +11265,9 @@ DataSetBatch::DataSetBatch(const Index& new_samples_number, DataSet* new_data_se
 }
 
 
-void DataSetBatch::set(const Index& new_samples_number, DataSet* new_data_set_pointer)
+void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointer)
 {
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
     data_set_pointer = new_data_set_pointer;
 
@@ -11272,7 +11278,7 @@ void DataSetBatch::set(const Index& new_samples_number, DataSet* new_data_set_po
 
     if(input_variables_dimensions.size() == 1)
     {
-        inputs_2d.resize(samples_number, input_variables_number);
+        inputs_2d.resize(batch_size, input_variables_number);
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -11280,22 +11286,22 @@ void DataSetBatch::set(const Index& new_samples_number, DataSet* new_data_set_po
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        inputs_4d.resize(samples_number, channels_number, rows_number, columns_number);
+        inputs_4d.resize(batch_size, channels_number, rows_number, columns_number);
    }
 
-    targets_2d.resize(samples_number, target_variables_number);
+    targets_2d.resize(batch_size, target_variables_number);
 }
 
 
-Index DataSetBatch::get_samples_number() const
+Index DataSetBatch::get_batch_size() const
 {
-    return samples_number;
+    return batch_size;
 }
 
 
 void DataSetBatch::print() const
 {
-    cout << "Batch structure" << endl;
+    cout << "Batch" << endl;
 
     if(inputs_2d.size() != 0)
     {
