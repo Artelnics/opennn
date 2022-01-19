@@ -727,16 +727,7 @@ Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>& x, const 
         data(i + x_size) = y(i);
     }
 
-//    std::copy(data.data(),
-//              data.data() + x_size,
-//              x.data());
-
-//    std::copy(data.data() + x_size,
-//              data.data() + x_size + y_size,
-//              x.data());
-
     return data;
-//    return Tensor<string, 1>();
 }
 
 
@@ -765,6 +756,29 @@ string tensor_string_to_text(const Tensor<string,1>&x, string& separator)
     return line;
 
 }
+/*
+Matrix<string> Matrix<T>::to_string_matrix(const size_t& precision) const
+{
+   Matrix<string> string_matrix(rows_number, columns_number);
+
+   ostringstream buffer;
+
+   for(size_t i = 0; i < rows_number; i++)
+   {
+      for(size_t j = 0; j < columns_number; j++)
+      {
+         buffer.str("");
+         buffer << setprecision(precision) <<(*this)(i,j);
+
+         string_matrix(i,j) = buffer.str();
+      }
+   }
+
+   if(!header.empty()) string_matrix.set_header(header);
+
+   return string_matrix;
+}
+*/
 
 
 Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index)
