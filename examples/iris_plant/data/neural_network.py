@@ -7,7 +7,7 @@ You can manage it with the 'NeuralNetwork' class.
 Example:
 
 	model = NeuralNetwork()	
-	sample = [input_1, input_2, input_3, input_4, ...] 	 	
+	sample = [input_1, input_2, input_3, input_4, ...]	
 	outputs = model.calculate_output(sample)
 
 	Inputs Names: 	
@@ -39,8 +39,8 @@ class NeuralNetwork:
 
 		outputs = [None] * 4
 
-		outputs[0] = (inputs[0]-5.843333244)/0.828066051
-		outputs[1] = (inputs[1]-3.057333231)/0.4358663261
+		outputs[0] = (inputs[0]-5.843333244)/0.8280661106
+		outputs[1] = (inputs[1]-3.057333231)/0.4358662963
 		outputs[2] = (inputs[2]-3.757999897)/1.765298247
 		outputs[3] = (inputs[3]-1.19933331)/0.762237668
 
@@ -51,9 +51,9 @@ class NeuralNetwork:
 
 		combinations = [None] * 3
 
-		combinations[0] = -0.627411 -0.254193*inputs[0] +0.495569*inputs[1] -0.83301*inputs[2] -0.728462*inputs[3] 
-		combinations[1] = -0.624156 -0.250754*inputs[0] +0.495621*inputs[1] -0.832303*inputs[2] -0.732059*inputs[3] 
-		combinations[2] = 2.51788 +0.706088*inputs[0] +0.179724*inputs[1] -2.99101*inputs[2] -1.60383*inputs[3] 
+		combinations[0] = 2.14189 +0.343375*inputs[0] +0.510552*inputs[1] -2.16868*inputs[2] -1.93392*inputs[3] 
+		combinations[1] = -0.674671 -0.416695*inputs[0] +0.523179*inputs[1] -0.780689*inputs[2] -0.657976*inputs[3] 
+		combinations[2] = 0.676832 +0.417168*inputs[0] -0.522941*inputs[1] +0.787032*inputs[2] +0.653458*inputs[3] 
 		
 		activations = [None] * 3
 
@@ -68,9 +68,9 @@ class NeuralNetwork:
 
 		combinations = [None] * 3
 
-		combinations[0] = 0.475693 +1.91974*inputs[0] +1.91788*inputs[1] +0.81882*inputs[2] 
-		combinations[1] = -0.79201 -1.33765*inputs[0] -1.33498*inputs[1] +2.91501*inputs[2] 
-		combinations[2] = 0.316038 -0.579922*inputs[0] -0.58773*inputs[1] -3.73743*inputs[2] 
+		combinations[0] = 0.441093 +0.748966*inputs[0] +1.89169*inputs[1] -1.89054*inputs[2] 
+		combinations[1] = -0.722887 +2.75127*inputs[0] -1.34015*inputs[1] +1.34516*inputs[2] 
+		combinations[2] = 0.283306 -3.4998*inputs[0] -0.552822*inputs[1] +0.547124*inputs[2] 
 		
 		activations = [None] * 3
 

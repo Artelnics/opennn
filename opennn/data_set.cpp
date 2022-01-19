@@ -11229,22 +11229,13 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         //@todo check that it works properly
         //inputs_4d(row,column,channel,image)
 
-        const Index samples_number = data_set_pointer-> get_samples_number();
-
         const Index channels_number = input_variables_dimensions(0);
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
 
-        const Index categories_number = data_set_pointer-> get_target_variables_number();
-
-//        inputs_4d.setConstant(3.1416);
-
-        inputs_4d.resize(samples_number, channels_number, rows_number, columns_number);
-//        targets_2d.resize(samples_number, categories_number);
-
         Index index = 0;
 
-        for(Index image = 0; image < samples_number; image++)
+        for(Index image = 0; image < batch_size; image++)
         {
             index = 0;
 
@@ -11264,6 +11255,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
     }
 
     fill_submatrix(data, samples, targets, targets_2d.data());
+
 }
 
 
@@ -11273,9 +11265,9 @@ DataSetBatch::DataSetBatch(const Index& new_samples_number, DataSet* new_data_se
 }
 
 
-void DataSetBatch::set(const Index& new_samples_number, DataSet* new_data_set_pointer)
+void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointer)
 {
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
     data_set_pointer = new_data_set_pointer;
 
@@ -11286,7 +11278,7 @@ void DataSetBatch::set(const Index& new_samples_number, DataSet* new_data_set_po
 
     if(input_variables_dimensions.size() == 1)
     {
-        inputs_2d.resize(samples_number, input_variables_number);
+        inputs_2d.resize(batch_size, input_variables_number);
     }
     else if(input_variables_dimensions.size() == 3)
     {
@@ -11294,16 +11286,16 @@ void DataSetBatch::set(const Index& new_samples_number, DataSet* new_data_set_po
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        inputs_4d.resize(samples_number, channels_number, rows_number, columns_number);
+        inputs_4d.resize(batch_size, channels_number, rows_number, columns_number);
    }
 
-    targets_2d.resize(samples_number, target_variables_number);
+    targets_2d.resize(batch_size, target_variables_number);
 }
 
 
-Index DataSetBatch::get_samples_number() const
+Index DataSetBatch::get_batch_size() const
 {
-    return samples_number;
+    return batch_size;
 }
 
 

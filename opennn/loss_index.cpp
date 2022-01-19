@@ -511,7 +511,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
 
     loss_index_back_propagation_lm.squared_errors_jacobian.setZero();
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index batch_size = batch.get_batch_size();
 
     Index mem_index = 0;
 
@@ -541,7 +541,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
                                                                         mem_index,
                                                                         loss_index_back_propagation_lm.squared_errors_jacobian);
 
-        mem_index += trainable_layers_parameters_number(0)*batch_samples_number;
+        mem_index += trainable_layers_parameters_number(0)*batch_size;
     }
 
     // Rest of the layers
@@ -563,7 +563,7 @@ void LossIndex::calculate_squared_errors_jacobian_lm(const DataSetBatch& batch,
                                                                             mem_index,
                                                                             loss_index_back_propagation_lm.squared_errors_jacobian);
 
-            mem_index += trainable_layers_parameters_number(i)*batch_samples_number;
+            mem_index += trainable_layers_parameters_number(i)*batch_size;
         }
             break;
 

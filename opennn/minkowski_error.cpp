@@ -95,9 +95,9 @@ void MinkowskiError::calculate_error(const DataSetBatch& batch,
     minkowski_error.device(*thread_pool_device)
             = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(static_cast<type>(1.0)/minkowski_parameter);
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index batch_size = batch.get_batch_size();
 
-    back_propagation.error = minkowski_error(0)/type(batch_samples_number);
+    back_propagation.error = minkowski_error(0)/type(batch_size);
 }
 
 
@@ -112,7 +112,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
     const Tensor<type, 0> p_norm_derivative =
             (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter - type(1));
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index batch_size = batch.get_batch_size();
 
     switch(output_layer_back_propagation->layer_pointer->get_type())
     {
@@ -131,7 +131,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             perceptron_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_samples_number))*perceptron_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1.0/batch_size))*perceptron_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;
@@ -152,7 +152,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             probabilistic_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_samples_number))*probabilistic_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1.0/batch_size))*probabilistic_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;
@@ -172,7 +172,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             recurrent_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_samples_number))*recurrent_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1.0/batch_size))*recurrent_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;
@@ -192,7 +192,7 @@ void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
                     = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
 
             long_short_term_memory_layer_back_propagation->delta.device(*thread_pool_device) =
-                    (type(1.0/batch_samples_number))*long_short_term_memory_layer_back_propagation->delta/p_norm_derivative();
+                    (type(1.0/batch_size))*long_short_term_memory_layer_back_propagation->delta/p_norm_derivative();
         }
     }
         break;
