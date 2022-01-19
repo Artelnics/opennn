@@ -709,6 +709,24 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<ty
     return data;
 }
 
+
+Tensor<type, 2> assemble_text_vector_vector(const Tensor<string, 1>& x, const Tensor<string, 1>& y)
+{
+    const Index rows_number = x.size();
+    const Index columns_number = 2;
+
+    Tensor<string, 2> data(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        data(i, 0) = x(i);
+        data(i, 1) = y(i);
+    }
+
+    return data;
+}
+
+
 Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index)
 {
     const Index rows_number = tensor.dimension(0);
