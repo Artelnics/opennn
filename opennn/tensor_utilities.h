@@ -11,6 +11,7 @@
 #include <math.h>
 #include <vector>
 #include <numeric>
+#include <stdio.h>
 
 // OpenNN includes
 
@@ -69,7 +70,7 @@ void sum_diagonal(Tensor<type, 2>&, const type&);
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>& columns_indices, type* submatrix);
+void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>& rows_indices, const Tensor<Index, 1>&, type*);
 void fill_submatrix(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&, Tensor<type, 2>&);
 
 Index count_NAN(const Tensor<type, 1>&);
@@ -91,7 +92,8 @@ Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type
 Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-Tensor<type, 2> assemble_text_vector_vector(const Tensor<string, 1>&, const Tensor<string, 1>&);
+//Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>&, const Tensor<string, 1>&);
+string tensor_string_to_text(Tensor<string,1>&, string&);
 
 Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 

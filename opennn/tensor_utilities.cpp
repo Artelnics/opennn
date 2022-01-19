@@ -25,7 +25,7 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
     const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
 
-//    #pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -710,20 +710,51 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<ty
 }
 
 
-Tensor<type, 2> assemble_text_vector_vector(const Tensor<string, 1>& x, const Tensor<string, 1>& y)
+//Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>& x, const Tensor<string, 1>& y)
+//{
+//    const Index x_size = x.size();
+//    const Index y_size = y.size();
+
+//    Tensor<string,1> data(x_size + y_size);
+
+//    std::copy(data.data(),
+//              data.data() + x_size,
+//              x.data());
+
+//    std::copy(data.data() + x_size,
+//              data.data() + x_size + y_size,
+//              x.data());
+
+//    return data;
+//}
+
+
+string tensor_string_to_text(Tensor<string,1>&x,string& separator)
 {
-    const Index rows_number = x.size();
-    const Index columns_number = 2;
+    #ifdef OPENNN_DEBUG
 
-    Tensor<string, 2> data(rows_number, columns_number);
-
-    for(Index i = 0; i < rows_number; i++)
+    if(x.size() == 0)
     {
-        data(i, 0) = x(i);
-        data(i, 1) = y(i);
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "Mstring tensor_string_to_text(Tensor<string,1>&x,string& separator).\n"
+              << "Input vector must have dimension greater than 1.\n"
+
+       throw invalid_argument(buffer.str());
     }
 
-    return data;
+    #endif
+    string line = x(0);
+    const Index size = x.size();
+
+    for(Index i = 1; i < size; i++)
+    {
+        line = line + separator+ x(i);
+    }
+
+    return line;
+
 }
 
 
