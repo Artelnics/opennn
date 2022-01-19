@@ -91,6 +91,8 @@ Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type
 Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
+Tensor<type, 2> assemble_text_vector_vector(const Tensor<string, 1>&, const Tensor<string, 1>&);
+
 Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
 Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&);
