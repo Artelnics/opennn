@@ -907,7 +907,7 @@ struct DataSetBatch
 
     virtual ~DataSetBatch() {}
 
-    Index get_samples_number() const;
+    Index get_batch_size() const;
 
     void set(const Index&, DataSet*);
 
@@ -915,7 +915,7 @@ struct DataSetBatch
 
     void print() const;
 
-    Index samples_number = 0;
+    Index batch_size = 0;
 
     DataSet* data_set_pointer = nullptr;
 

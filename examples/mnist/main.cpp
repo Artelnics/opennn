@@ -48,7 +48,7 @@ int main()
         // Data set
 
         DataSet data_set;
-        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/mini_data/");
+        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
 
         data_set.read_bmp();
 
@@ -64,16 +64,16 @@ int main()
 
         const Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
 
-        const Index batch_size = 3;
+        // Data set batch
+
+        const Index batch_size = 200;
 
         DataSetBatch data_set_batch(batch_size, &data_set);
 
         const Tensor<Index, 2> batches = data_set.get_batches(samples_indices, batch_size, true);
 
         data_set_batch.fill(batches.chip(0, 0), input_variables_indices, target_variables_indices);
-
-        data_set_batch.print();
-
+/*
         // Neural network
 
         NeuralNetwork neural_network;
@@ -90,18 +90,14 @@ int main()
 
         neural_network.forward_propagate(data_set_batch, neural_network_forward_propagation);
 
-        //NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
-
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.set_maximum_epochs_number(20000);
         training_strategy.perform_training();
 
-        /*
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
