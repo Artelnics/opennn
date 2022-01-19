@@ -108,6 +108,8 @@ void FlattenLayer::forward_propagate(const Tensor<type, 4>& inputs, LayerForward
 
     const Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
 
+    cout<<"I am still here!"<<endl;
+
     flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
 }
 

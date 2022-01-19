@@ -64,27 +64,21 @@ int main()
 
         const Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
 
-        data_set.save("C:/Users/Artelnics/Desktop/mnist/data_set.xml");
-
         // Data set batch
 
-        const Index batch_size = 5;
+        const Index batch_size = 200;
 
         DataSetBatch data_set_batch(batch_size, &data_set);
 
         const Tensor<Index, 2> batches = data_set.get_batches(samples_indices, batch_size, true);
 
         data_set_batch.fill(batches.chip(0, 0), input_variables_indices, target_variables_indices);
-
-//        data_set_batch.print();
-
+/*
         // Neural network
 
         NeuralNetwork neural_network;
 
         FlattenLayer flatten_layer(input_variables_dimensions);
-
-        system("pause");
 
         neural_network.add_layer(&flatten_layer);
 
@@ -96,8 +90,6 @@ int main()
 
         neural_network.forward_propagate(data_set_batch, neural_network_forward_propagation);
 
-        //NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
-
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -106,7 +98,6 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.perform_training();
 
-        /*
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
