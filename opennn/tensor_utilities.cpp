@@ -712,10 +712,10 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<ty
 
 Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>& x, const Tensor<string, 1>& y)
 {
-    const Index x_size = x.size();
-    const Index y_size = y.size();
+//    const Index x_size = x.size();
+//    const Index y_size = y.size();
 
-    Tensor<string,1> data(x_size + y_size);
+//    Tensor<string,1> data(x_size + y_size);
 
 //    std::copy(data.data(),
 //              data.data() + x_size,
@@ -725,7 +725,8 @@ Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>& x, const 
 //              data.data() + x_size + y_size,
 //              x.data());
 
-    return data;
+//    return data;
+    return Tensor<string, 1>();
 }
 
 
