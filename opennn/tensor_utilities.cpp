@@ -710,12 +710,12 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<ty
 }
 
 
-//Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>& x, const Tensor<string, 1>& y)
-//{
-//    const Index x_size = x.size();
-//    const Index y_size = y.size();
+Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>& x, const Tensor<string, 1>& y)
+{
+    const Index x_size = x.size();
+    const Index y_size = y.size();
 
-//    Tensor<string,1> data(x_size + y_size);
+    Tensor<string,1> data(x_size + y_size);
 
 //    std::copy(data.data(),
 //              data.data() + x_size,
@@ -725,28 +725,26 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<ty
 //              data.data() + x_size + y_size,
 //              x.data());
 
-//    return data;
-//}
+    return data;
+}
 
 
-string tensor_string_to_text(Tensor<string,1>&x,string& separator)
+string tensor_string_to_text(const Tensor<string,1>&x, string& separator)
 {
-    #ifdef OPENNN_DEBUG
+    const Index size = x.size();
 
     if(x.size() == 0)
     {
        ostringstream buffer;
 
-       buffer << "OpenNN Exception: Matrix Template.\n"
+       buffer << "OpenNN Exception: Tensor utilites.\n"
               << "Mstring tensor_string_to_text(Tensor<string,1>&x,string& separator).\n"
-              << "Input vector must have dimension greater than 1.\n"
+              << "Input vector must have dimension greater than 0.\n";
 
        throw invalid_argument(buffer.str());
     }
 
-    #endif
     string line = x(0);
-    const Index size = x.size();
 
     for(Index i = 1; i < size; i++)
     {
