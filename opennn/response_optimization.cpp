@@ -479,13 +479,18 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-//    Tensor<type, 2> envelope = (inputs.to_matrix()).assemble_columns((outputs.to_matrix())); old line
     Tensor<type, 2> envelope = assemble_matrix_matrix(inputs,outputs);
 
     for(Index i = 0; i < outputs_number; i++)
     {
-//        envelope = envelope.filter_column_minimum_maximum(inputs_number+i, outputs_minimums[i], outputs_maximums[i]); old line
-        envelope = filter_column_minimum_maximum(envelope, inputs_number + i, outputs_minimums(i), outputs_maximums(i));
+        if(envelope.size() != 0)
+        {
+            envelope = filter_column_minimum_maximum(envelope, inputs_number + i, outputs_minimums(i), outputs_maximums(i));
+        }
+        else
+        {
+            return Tensor<type,2>();
+        }
     }
 
     return envelope;
@@ -540,9 +545,14 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 
     const Index optimal_index = minimal_index(objective);
 
-    results->optimal_variables = envelope.chip(optimal_index, 0);
-
-    results->optimum_objective = objective[optimal_index];
+    if(envelope.size() != 0 )
+    {
+        results->optimal_variables = envelope.chip(optimal_index, 0);
+    }
+    else
+    {
+        results->optimal_variables = Tensor<type,1>();
+    }
 
     return results;
 }

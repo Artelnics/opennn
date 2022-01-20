@@ -345,6 +345,11 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
     const Tensor<type,1> column = matrix.chip(column_index,1);
     const Index new_rows_number = count_between(column, minimum, maximum);
 
+    if(new_rows_number == 0)
+    {
+        return Tensor<type,2>();
+    }
+
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
