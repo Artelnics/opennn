@@ -303,6 +303,7 @@ struct LossIndexBackPropagation
 
     void set(const Index& new_batch_samples_number, LossIndex* new_loss_index_pointer)
     {
+
         batch_samples_number = new_batch_samples_number;
 
         loss_index_pointer = new_loss_index_pointer;
@@ -331,6 +332,7 @@ struct LossIndexBackPropagation
 
         regularization_gradient.resize(parameters_number);
         regularization_gradient.setConstant(type(0));
+
     }
 
     void print() const

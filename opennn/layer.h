@@ -84,8 +84,8 @@ public:
 
     // Architecture
 
+    virtual Index get_parameters_number() const ;
     virtual Tensor<type, 1> get_parameters() const;
-    virtual Index get_parameters_number() const;
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
