@@ -31,10 +31,49 @@ FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_input_variables_dimension
     layer_type = Type::Flatten;
 }
 
+void FlattenLayer::set_parameters(const Tensor<type, 1>&, const Index&)
+{
+
+}
 
 Tensor<Index, 1> FlattenLayer::get_input_variables_dimensions() const
 {
     return input_variables_dimensions;
+}
+
+/*
+/// @todo
+Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
+{
+    return input_variables_dimensions;
+}
+*/
+
+/// @todo
+Index FlattenLayer::get_inputs_number() const
+{
+    return input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2);
+}
+
+/// Returns the number of neurons
+
+Index FlattenLayer::get_neurons_number() const
+{
+    return input_variables_dimensions(0)*input_variables_dimensions(1)*input_variables_dimensions(2);
+}
+
+
+Tensor<type, 1> FlattenLayer::get_parameters() const
+{
+    return Tensor<type,1>();
+}
+
+
+/// Returns the number of parameters of the layer.
+
+Index FlattenLayer::get_parameters_number() const
+{
+    return 0;
 }
 
 

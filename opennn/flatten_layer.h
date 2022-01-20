@@ -48,6 +48,13 @@ public:
     // Get methods
 
     Tensor<Index, 1> get_input_variables_dimensions() const;
+    Tensor<Index, 1> get_outputs_dimensions() const;
+
+    Index get_inputs_number() const;
+    Index get_neurons_number() const;
+
+    Tensor<type, 1> get_parameters() const final;
+    Index get_parameters_number() const;
 
     // Set methods
 
@@ -57,6 +64,8 @@ public:
     void set(const tinyxml2::XMLDocument&);
 
     void set_default();
+
+    void set_parameters(const Tensor<type, 1>&, const Index&) final;
 
     // Display messages
 
@@ -124,6 +133,7 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 
 };
 
+
 struct FlattenLayerBackPropagation : LayerBackPropagation
 {
 
@@ -138,7 +148,7 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
     explicit FlattenLayerBackPropagation(const Index& new_batch_size, Layer* new_layer_pointer)
         : LayerBackPropagation()
     {
-    //    set(new_batch_size, new_layer_pointer);
+//        set(new_batch_size, new_layer_pointer);
     }
 
 
