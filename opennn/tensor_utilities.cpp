@@ -348,6 +348,8 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
+    bool check_conditions = false;
+
     Tensor<type,2> new_matrix(new_rows_number, columns_number);
 
     Index row_index = 0;
@@ -362,8 +364,22 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,const Index&
             set_row(new_matrix, row, row_index);
 
             row_index++;
+
+            check_conditions = true;
         }
     }
+
+    if(!check_conditions)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TensorUtilities class.\n"
+               << "Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&,const Index&,const type&,const type&) method.\n"
+               << "Invalid conditions\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
     return new_matrix;
 };
 

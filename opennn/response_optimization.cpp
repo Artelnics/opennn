@@ -479,12 +479,10 @@ Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-//    Tensor<type, 2> envelope = (inputs.to_matrix()).assemble_columns((outputs.to_matrix())); old line
     Tensor<type, 2> envelope = assemble_matrix_matrix(inputs,outputs);
 
     for(Index i = 0; i < outputs_number; i++)
     {
-//        envelope = envelope.filter_column_minimum_maximum(inputs_number+i, outputs_minimums[i], outputs_maximums[i]); old line
         envelope = filter_column_minimum_maximum(envelope, inputs_number + i, outputs_minimums(i), outputs_maximums(i));
     }
 
