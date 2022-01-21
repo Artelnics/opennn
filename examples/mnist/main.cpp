@@ -98,7 +98,7 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-/*        training_strategy.perform_training();
+        training_strategy.perform_training();
 
         /*
         // Testing analysis
