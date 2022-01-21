@@ -103,12 +103,12 @@ public:
    /// This enumeration represents the possible uses of an sample
    /// (training, selection, testing or unused).
 
-   enum class SampleUse{Training, Selection, Testing, UnusedSample};
+   enum class SampleUse{Training, Selection, Testing, Unused};
 
    /// This enumeration represents the possible uses of an variable
    /// (input, target, time or unused).
 
-   enum class VariableUse{Id, Input, Target, Time, UnusedVariable};
+   enum class VariableUse{Id, Input, Target, Time, Unused};
 
    /// This enumeration represents the data type of a column
    /// (numeric, binary, categorical or time).

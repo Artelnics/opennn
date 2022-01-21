@@ -197,7 +197,7 @@ int main()
 
             if(columns(i).column_use == opennn::DataSet::VariableUse::Input) cout << "   Use: input" << endl;
             else if(columns(i).column_use == opennn::DataSet::VariableUse::Target) cout << "   Use: target" << endl;
-            else if(columns(i).column_use == opennn::DataSet::VariableUse::UnusedVariable) cout << "   Use: unused" << endl;
+            else if(columns(i).column_use == opennn::DataSet::VariableUse::Unused) cout << "   Use: unused" << endl;
 
             if(columns(i).type == opennn::DataSet::ColumnType::Categorical) cout << "   Categories: " << columns(i).categories << endl;
 

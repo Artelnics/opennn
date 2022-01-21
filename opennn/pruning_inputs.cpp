@@ -218,7 +218,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
-        if(epoch > 0) data_set_pointer->set_column_use(correlations_rank_ascending[epoch], DataSet::VariableUse::UnusedVariable);
+        if(epoch > 0) data_set_pointer->set_column_use(correlations_rank_ascending[epoch], DataSet::VariableUse::Unused);
 
         const Index input_columns_number = data_set_pointer->get_input_columns_number();
         const Index input_variables_number = data_set_pointer->get_input_variables_number();
