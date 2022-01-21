@@ -34,8 +34,19 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
     inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
     inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
 
-    outputs_minimums = neural_network_pointer->get_bounding_layer_pointer()->get_lower_bounds();
-    outputs_maximums = neural_network_pointer->get_bounding_layer_pointer()->get_upper_bounds();
+    if(neural_network_pointer->get_last_trainable_layer_pointer()->get_type() == Layer::Type::Bounding) // Approximation and forecasting
+    {
+        outputs_minimums = neural_network_pointer->get_bounding_layer_pointer()->get_lower_bounds();
+        outputs_maximums = neural_network_pointer->get_bounding_layer_pointer()->get_upper_bounds();
+    }
+    else // Classification case
+    {
+        outputs_minimums.resize(outputs_number);
+        outputs_minimums.setZero();
+
+        outputs_maximums.resize(outputs_number);
+        outputs_maximums.setConstant({type(1)});
+    }
 }
 
 

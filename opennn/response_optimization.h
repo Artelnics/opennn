@@ -128,6 +128,7 @@ struct ResponseOptimizationResults
         const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
         const Tensor<string, 1> outputs_names = neural_network_pointer->get_outputs_names();
 
+        cout << "\nResponse optimization results: " << endl;
         if(optimal_variables.size() == 0)
         {
             ostringstream buffer;
