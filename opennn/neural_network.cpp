@@ -1472,7 +1472,8 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data(), parameters_number);
 
-    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional)
+    if(trainable_layers_pointers(0)->get_type() == Layer::Type::Convolutional ||
+            trainable_layers_pointers(0)->get_type() == Layer::Type::Flatten)
     {
         trainable_layers_pointers(0)->forward_propagate(batch.inputs_4d, potential_parameters, forward_propagation.layers(0));
     }
@@ -1536,9 +1537,9 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
             break;
         case Layer::Type::Flatten:
         {
-//            trainable_layers_pointers(i)->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs,
-//                                                            potential_parameters,
-//                                                            forward_propagation.layers(i));
+            trainable_layers_pointers(i)->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs,
+                                                            potential_parameters,
+                                                            forward_propagation.layers(i));
         }
             break;
 

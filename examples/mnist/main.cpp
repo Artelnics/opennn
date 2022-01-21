@@ -48,8 +48,8 @@ int main()
         // Data set
 
         DataSet data_set;
-        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
-
+        data_set.set_data_file_name("//TRUENAS/Artelnics/Dipcam/Datasets/cancer-test_2/");
+//        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
         data_set.read_bmp();
 
         data_set.scale_input_variables();
@@ -68,11 +68,11 @@ int main()
 
         // Data set batch
 
-        const Index batch_size = 2;
+        const Index batch_size = 3;
 
         DataSetBatch data_set_batch(batch_size, &data_set);
 
-        const Tensor<Index, 2> batches = data_set.get_batches(samples_indices, batch_size, true);
+        const Tensor<Index, 2> batches = data_set.get_batches(samples_indices, batch_size, true); 
 
         data_set_batch.fill(batches.chip(0, 0), input_variables_indices, target_variables_indices);
 
@@ -91,8 +91,6 @@ int main()
         NeuralNetworkForwardPropagation neural_network_forward_propagation(batch_size, &neural_network);
 
         neural_network.forward_propagate(data_set_batch, neural_network_forward_propagation);
-
-//        neural_network_forward_propagation.print();
 
         // Training strategy
 

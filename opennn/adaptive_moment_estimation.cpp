@@ -357,6 +357,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
+
             // Data set
 
             batch_training.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
@@ -372,7 +373,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
-            update_parameters(training_back_propagation, optimization_data);
+//            update_parameters(training_back_propagation, optimization_data);
 
         }
 
