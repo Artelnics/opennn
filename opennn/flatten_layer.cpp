@@ -78,7 +78,7 @@ Index FlattenLayer::get_parameters_number() const
 
 
 /// Sets and initializes the layer's parameters in accordance with the dimensions taken as input.
-/// @todo change to memcpy approach
+
 /// @param new_inputs_dimensions A vector containing the desired inputs' dimensions (number of images (batch), number of channels, width, height).
 
 void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
