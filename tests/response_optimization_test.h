@@ -44,8 +44,6 @@ public:
 
     void test_calculate_inputs();
 
-    void test_calculate_envelope();
-
     void test_perform_optimization();
 
     // Unit testing methods
