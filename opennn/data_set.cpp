@@ -10023,6 +10023,10 @@ void DataSet::read_bmp()
 
     bits_per_pixel == 24 ? channels = 3 : channels = 1;
 
+    cout<<"channels 1: "<<channels<<endl;
+    cout<<"width 1: "<<width<<endl;
+    cout<<"Height 1: "<<height<<endl;
+
     data.resize(images_number, image_size + classes_number);
     data.setZero();
 
@@ -11233,6 +11237,13 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
 
+        cout<<"Number of images: "<<batch_size<<endl;
+        cout<<"Channels 2: "<<channels_number<<endl;
+        cout<<"Rows/Height 2: "<<rows_number<<endl;
+        cout<<"Columns/width 2: "<<columns_number<<endl;
+
+        cout<<"Data dimension: "<<data.dimensions()<<endl;
+
         Index index = 0;
 
         for(Index image = 0; image < batch_size; image++)
@@ -11245,8 +11256,9 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                 {
                     for(Index col = 0; col < columns_number; col++)
                     {
-                        inputs_4d(image, channel,row, col) = data(image, index);
+                        inputs_4d(image, channel, row, col) = data(image, index);
 //                        inputs_4d(row, col,channel,image) = data(image, index);
+                        cout << "Index: " << index << " " << data(image, index) << endl;
                         index++;
                     }
                 }

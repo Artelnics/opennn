@@ -96,8 +96,8 @@ Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs
 {
     const Index batch = inputs.dimension(0);
     const Index channels = inputs.dimension(1);
-    const Index width = inputs.dimension(2);
-    const Index heights = inputs.dimension(3);
+    const Index heights = inputs.dimension(2);
+    const Index width = inputs.dimension(3);
 
     const Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
 
@@ -140,8 +140,8 @@ void FlattenLayer::forward_propagate(const Tensor<type, 4>& inputs, LayerForward
 
     const Index batch = inputs.dimension(0);
     const Index channels = inputs.dimension(1);
-    const Index width = inputs.dimension(2);
-    const Index heights = inputs.dimension(3);
+    const Index heights = inputs.dimension(2);
+    const Index width = inputs.dimension(3);
 
     const Eigen::array<Index, 2> new_dims{{batch, channels*width*heights}};
 
