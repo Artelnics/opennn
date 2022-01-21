@@ -120,8 +120,6 @@ struct ResponseOptimizationResults
 
     Tensor<type, 1> optimal_variables;
 
-    type optimum_objective = type(0);
-
     void print() const
     {
         const Index inputs_number = neural_network_pointer->get_inputs_number();
@@ -130,6 +128,17 @@ struct ResponseOptimizationResults
         const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
         const Tensor<string, 1> outputs_names = neural_network_pointer->get_outputs_names();
 
+        if(optimal_variables.size() == 0)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void ResponseOptimizationResults::print() method.\n"
+                   << "Optimal variables vector is empty.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
         for(Index i = 0; i < inputs_number; i++)
         {
             cout << inputs_names[i] << ": " << optimal_variables[i] << endl;
@@ -137,10 +146,8 @@ struct ResponseOptimizationResults
 
         for(Index i = 0; i < outputs_number; i++)
         {
-            cout << outputs_names[i] << " " << optimal_variables[inputs_number+i] << endl;
+            cout << outputs_names[i] << ": " << optimal_variables[inputs_number+i] << endl;
         }
-
-        cout << "Objective: " << optimum_objective << endl;
     }
 };
 
