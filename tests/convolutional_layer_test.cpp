@@ -158,8 +158,8 @@ void ConvolutionalLayerTest::test_constructor()
     Tensor<Index, 1> new_inputs_dimensions(4);
     Tensor<Index, 1> new_kernels_dimensions(4);
 
-    new_inputs_dimensions.setValues({1, 3, 32, 64});
-    new_kernels_dimensions.setValues({1, 1, 2, 3});
+    new_inputs_dimensions.setValues({23, 64, 3, 1});
+    new_kernels_dimensions.setValues({3, 2, 1, 1});
 
     ConvolutionalLayer convolutional_layer(new_inputs_dimensions, new_kernels_dimensions);
 
@@ -328,6 +328,79 @@ void ConvolutionalLayerTest::test_calculate_combinations()
                 abs(combinations(0, 0, 0, 1) - type(2.)) < type(NUMERIC_LIMITS_MIN)&&
                 abs(combinations(0, 0, 1, 1) - type(5.)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
+
+///@todo include this in pooling
+
+void ConvolutionalLayerTest::test_calculate_average_pooling_outputs()
+{
+    cout << "test_calculate_max_pooling_outputs\n";
+
+    //input_dims
+    const Index input_images = 1;
+    const Index channels = 1;
+
+    const Index rows_input = 4;
+    const Index cols_input = 4;
+
+    //pooling dims
+    const Index rows_polling = 2;
+    const Index cols_polling = 2;
+
+    //stride
+    const Index rows_stride=1;
+    const Index cols_stride=1;
+
+    //output dims
+    const Index output_rows_number = (rows_input - rows_polling)/rows_stride + 1;
+    const Index output_cols_number = (cols_input - cols_polling)/cols_stride +1;
+
+    Tensor<type, 4> inputs(rows_input, cols_input, channels, input_images);
+    Tensor<type, 4> outputs(output_rows_number, output_cols_number, channels, input_images);
+
+    inputs.setRandom();
+
+    //pooling average
+
+    Index col = 0;
+    Index row = 0;
+
+    cout<<"inputs"<<endl;
+    cout<<inputs<<endl;
+    cout<<"-------"<<endl;
+
+    for(int i=0; i<input_images; i++)
+    {
+        for(int c=0; c<channels; c++)
+        {
+            for(int k=0; k<output_cols_number; k++)
+            {
+                for(int l=0; l<output_rows_number; l++)
+                {
+                    float tmp_result = 0;
+
+                    for(int m=0; m<cols_polling; m++)
+                    {
+                        col = m*cols_stride + k;
+
+                        for(int n=0; n<rows_polling; n++)
+                        {
+                            row = n*rows_stride + l;
+
+                            tmp_result += inputs(row,col,c,i);
+                        }
+                    }
+                    outputs(l,k,c,i) = tmp_result/(cols_polling*rows_polling);
+                }
+            }
+        }
+    }
+
+    cout<<"outputs"<<endl;
+    cout<<outputs<<endl;
+
+}
+
+
 
 
 void ConvolutionalLayerTest::test_calculate_activations()
@@ -953,6 +1026,7 @@ void ConvolutionalLayerTest::run_test_case()
    // Combinations
 
    test_calculate_combinations();
+   test_calculate_average_pooling_outputs();
 
    // Activation
 
