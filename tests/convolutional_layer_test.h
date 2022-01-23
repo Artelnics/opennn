@@ -40,6 +40,9 @@ public:
 
    void test_calculate_combinations();
 
+   ///@move to polling
+   void test_calculate_average_pooling_outputs();
+
    // Activation
 
    void test_calculate_activations();
