@@ -6056,7 +6056,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
     {
         const Index current_input_index_i = input_columns_indices(i);
 
-        const Tensor<type, 2> input_i = get_column_data(current_input_index_i);
+        const Tensor<type, 2> input_i = get_column_data(current_input_index_i);        
 
         cout << "Calculating " << columns(current_input_index_i).name << " correlations. " << endl;
 
