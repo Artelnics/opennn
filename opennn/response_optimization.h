@@ -47,7 +47,7 @@ public:
 
     ///Enumeration of the available conditions for response optimization.
 
-   enum class Condition{Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};
+   enum class Condition{None, Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};
 
    // Get methods
 

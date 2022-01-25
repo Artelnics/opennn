@@ -1159,7 +1159,7 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters) const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void set_parameters(const Tensor<type, 1>&) method.\n"
-               << "Size (" << size << ") must be grater or equal to number of parameters (" << parameters_number << ").\n";
+               << "Size (" << size << ") must be greater or equal to number of parameters (" << parameters_number << ").\n";
 
         throw invalid_argument(buffer.str());
     }
