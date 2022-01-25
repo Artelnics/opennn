@@ -26,10 +26,10 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
     inputs_conditions.resize(inputs_number);
-    inputs_conditions.setConstant(Condition::Between);
+    inputs_conditions.setConstant(Condition::None);
 
     outputs_conditions.resize(outputs_number);
-    outputs_conditions.setConstant(Condition::Minimum);
+    outputs_conditions.setConstant(Condition::None);
 
     inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
     inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
@@ -211,6 +211,20 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
 
         return;
 
+    case Condition::None:
+
+        if(values.size() != 0)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_input_condition() method.\n"
+                   << "For None condition, size of values must be 0.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+
+        return;
+
     default:
         return;
     }
@@ -305,6 +319,19 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 
         return;
 
+    case Condition::None:
+
+        if(values.size() != 0)
+        {
+            buffer << "OpenNN Exception: ResponseOptimization class.\n"
+                   << "void set_output_condition() method.\n"
+                   << "For Maximum condition, size of values must be 0.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        return;
+
     default:
         return;
     }
@@ -380,6 +407,10 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
                 || conditions_string[i] == "LessThan")
         {
             conditions[i] = Condition::LessEqualTo;
+        }
+        else
+        {
+            conditions[i] = Condition::None;
         }
     }
 
@@ -460,6 +491,13 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
 
             values_conditions[i] = current_values;
 
+            break;
+
+        case Condition::None:
+
+            current_values.resize(0);
+
+            index++;
             break;
         }
     }
