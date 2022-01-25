@@ -10085,22 +10085,49 @@ void DataSet::read_bmp()
 
     columns(image_size).name = "class";
 
-    Tensor<string, 1> categories(classes_number);
-
-    for(Index i = 0 ; i < classes_number ; i++)
+    if(classes_number == 1)
     {
-       categories(i) = folder_paths[i].filename().u8string();   
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp() method.\n"
+               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
+
+        throw invalid_argument(buffer.str());
+
+
+    }else if(classes_number == 2)
+    {
+        Index new_classes_number = 1;
+        Tensor<string, 1> categories(new_classes_number);
+
+        categories(0) = "Positive";
+
+        columns(image_size).categories = categories;
+        columns(image_size).column_use = VariableUse::Target;
+
+        columns(image_size).categories_uses.resize(new_classes_number);
+        columns(image_size).categories_uses.setConstant(VariableUse::Target);
+
+    }else
+    {
+
+        Tensor<string, 1> categories(classes_number);
+
+        for(Index i = 0 ; i < classes_number ; i++)
+        {
+           categories(i) = folder_paths[i].filename().u8string();
+        }
+
+        columns(image_size).categories = categories;
+        columns(image_size).column_use = VariableUse::Target;
+
+        columns(image_size).categories_uses.resize(classes_number);
+        columns(image_size).categories_uses.setConstant(VariableUse::Target);
+
     }
 
-    columns(image_size).categories = categories;
-    columns(image_size).column_use = VariableUse::Target;
-
-    columns(image_size).categories_uses.resize(classes_number);
-    columns(image_size).categories_uses.setConstant(VariableUse::Target);
-
     columns(image_size).type = ColumnType::Categorical;
-
-//    columns(image_size).print();
 
     samples_uses.resize(images_number);
     split_samples_random();
