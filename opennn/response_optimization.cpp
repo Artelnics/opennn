@@ -210,21 +210,6 @@ void ResponseOptimization::set_input_condition(const Index& index, const Respons
         inputs_maximums[index] = values[1];
 
         return;
-
-    case Condition::None:
-
-        if(values.size() != 0)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_input_condition() method.\n"
-                   << "For None condition, size of values must be 0.\n";
-
-            throw invalid_argument(buffer.str());
-        }
-
-
-        return;
-
     default:
         return;
     }
@@ -495,8 +480,19 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
 
         case Condition::None:
 
-            current_values.resize(0);
+            current_values.resize(2);
 
+            if(i<inputs_minimums.size())
+            {
+                current_values[0] = inputs_minimums(i);
+                current_values[1] = inputs_maximums(i);
+            }else
+            {
+                current_values[0] = outputs_minimums(i);
+                current_values[1] = outputs_maximums(i);
+            }
+
+            values_conditions[i] = current_values;
             index++;
             break;
         }
