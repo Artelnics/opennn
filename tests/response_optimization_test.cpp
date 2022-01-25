@@ -26,6 +26,9 @@ void ResponseOptimizationTest::test_constructor()
 
     ResponseOptimization response_optimization_1(&neural_network);
 
+    assert_true(response_optimization_1.get_inputs_conditions()(0) == ResponseOptimization::Condition::None, LOG);
+    assert_true(response_optimization_1.get_outputs_conditions()(0) == ResponseOptimization::Condition::None, LOG);
+
     ResponseOptimization response_optimization_2;
 }
 
