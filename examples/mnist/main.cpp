@@ -38,7 +38,7 @@ using namespace std;
 using namespace opennn;
 
 int main()
-{   
+{
     try
     {
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
@@ -49,7 +49,7 @@ int main()
 
         DataSet data_set;
         data_set.set_data_file_name("//TRUENAS/Artelnics/Dipcam/Datasets/cancer-test_2/");
-//        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
+//        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/mini_data/");
         data_set.read_bmp();
 
         data_set.scale_input_variables();

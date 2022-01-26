@@ -148,19 +148,19 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
     explicit FlattenLayerBackPropagation(const Index& new_batch_size, Layer* new_layer_pointer)
         : LayerBackPropagation()
     {
-//        set(new_batch_size, new_layer_pointer);
+        set(new_batch_size, new_layer_pointer);
     }
 
 
     void set(const Index& new_batch_size, Layer* new_layer_pointer)
     {
-//        layer_pointer = new_layer_pointer;
+        layer_pointer = new_layer_pointer;
 
-//        batch_samples_number = new_batch_size;
+        batch_samples_number = new_batch_size;
 
-//        const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
-//        // From a 2 dim tensor to a 4 dim tensor
-//        delta.resize(batch_samples_number, input_variables_dimensions(0), input_variables_dimensions(1), input_variables_dimensions(2));
+        const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
+
+        delta.resize(batch_samples_number, input_variables_dimensions(0), input_variables_dimensions(1), input_variables_dimensions(2));
     }
 
 

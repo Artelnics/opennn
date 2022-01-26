@@ -3497,28 +3497,23 @@ void DataSet::set_binary_simple_columns()
             if(is_binary)
             {
                 columns(column_index).type = ColumnType::Binary;
-                scale_minimum_maximum_binary(data, values(0), values(1), column_index);
+                scale_minimum_maximum_binary(data, values(0), values(1), variable_index);
                 columns(column_index).categories.resize(2);
 
                 if(values(0) == type(0) && values(1) == type(1))
                 {
-                    columns(column_index).categories(1) ="(    " + std::to_string(static_cast<int>(values(1))) + "    )";
-                    columns(column_index).categories(0) ="(    " + std::to_string(static_cast<int>(values(0))) + "    )";
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
                 }
                 else if(values(0) == type(1) && values(1) == type(0))
                 {
-                    columns(column_index).categories(1) = "(    " + std::to_string(static_cast<int>(values(1))) + "    )";
-                    columns(column_index).categories(0) = "(    " + std::to_string(static_cast<int>(values(0))) + "    )";
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
                 }
-                else if(values(0) > values(1))
+                else
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0))) + " (   1   )";
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1))) + " (   0   )";
-                }
-                else if(values(0) < values(1))
-                {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0))) + " (   0   )";
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1))) + " (   1   )";
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
                 }
 
                 const VariableUse column_use = columns(column_index).column_use;
@@ -6056,7 +6051,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
     {
         const Index current_input_index_i = input_columns_indices(i);
 
-        const Tensor<type, 2> input_i = get_column_data(current_input_index_i);
+        const Tensor<type, 2> input_i = get_column_data(current_input_index_i);        
 
         cout << "Calculating " << columns(current_input_index_i).name << " correlations. " << endl;
 
@@ -10085,22 +10080,49 @@ void DataSet::read_bmp()
 
     columns(image_size).name = "class";
 
-    Tensor<string, 1> categories(classes_number);
-
-    for(Index i = 0 ; i < classes_number ; i++)
+    if(classes_number == 1)
     {
-       categories(i) = folder_paths[i].filename().u8string();   
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp() method.\n"
+               << "Invalid number of categories. The minimum is 2 and you have 1.\n";
+
+        throw invalid_argument(buffer.str());
+
+
+    }else if(classes_number == 2)
+    {
+        Index new_classes_number = 1;
+        Tensor<string, 1> categories(new_classes_number);
+
+        categories(0) = "Positive";
+
+        columns(image_size).categories = categories;
+        columns(image_size).column_use = VariableUse::Target;
+
+        columns(image_size).categories_uses.resize(new_classes_number);
+        columns(image_size).categories_uses.setConstant(VariableUse::Target);
+
+    }else
+    {
+
+        Tensor<string, 1> categories(classes_number);
+
+        for(Index i = 0 ; i < classes_number ; i++)
+        {
+           categories(i) = folder_paths[i].filename().u8string();
+        }
+
+        columns(image_size).categories = categories;
+        columns(image_size).column_use = VariableUse::Target;
+
+        columns(image_size).categories_uses.resize(classes_number);
+        columns(image_size).categories_uses.setConstant(VariableUse::Target);
+
     }
 
-    columns(image_size).categories = categories;
-    columns(image_size).column_use = VariableUse::Target;
-
-    columns(image_size).categories_uses.resize(classes_number);
-    columns(image_size).categories_uses.setConstant(VariableUse::Target);
-
     columns(image_size).type = ColumnType::Categorical;
-
-//    columns(image_size).print();
 
     samples_uses.resize(images_number);
     split_samples_random();
@@ -10613,10 +10635,10 @@ void DataSet::read_csv_2_complete()
 
     const Index samples_number = static_cast<unsigned>(lines_count);
 
-    const Index variables_number = get_variables_number();
+    const Index variables_number = get_variables_number();   
 
     data.resize(static_cast<Index>(samples_number), variables_number);
-    data.setZero();
+    data.setZero();    
 
     if(has_rows_labels) rows_labels.resize(samples_number);
 
@@ -10626,7 +10648,7 @@ void DataSet::read_csv_2_complete()
 
     samples_uses.setConstant(SampleUse::Training);
 
-    split_samples_random();
+    split_samples_random();  
 }
 
 
@@ -10785,15 +10807,6 @@ void DataSet::read_csv_3_complete()
         sample_index++;
     }
 
-    for(Index j = 0; j < raw_columns_number; j++)
-    {
-        if(columns(j).type == ColumnType::Binary)
-        {
-            columns(j).categories(0) = columns(j).categories(0) + " (   1   )";
-            columns(j).categories(1) = columns(j).categories(1) + " (   0   )";
-        }
-    }
-
     const Index data_file_preview_index = has_columns_names ? 3 : 2;
 
     data_file_preview(data_file_preview_index) = tokens;
@@ -10811,7 +10824,6 @@ void DataSet::read_csv_3_complete()
     if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
-
 }
 
 

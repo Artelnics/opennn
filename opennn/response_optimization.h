@@ -45,9 +45,13 @@ public:
 
     explicit ResponseOptimization(NeuralNetwork*);
 
+    explicit ResponseOptimization(NeuralNetwork*,DataSet*);
+
+    void set_data_set(DataSet*);
+
     ///Enumeration of the available conditions for response optimization.
 
-   enum class Condition{Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};
+   enum class Condition{None, Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};
 
    // Get methods
 
@@ -84,6 +88,8 @@ public:
 private:
 
     NeuralNetwork* neural_network_pointer = nullptr;
+
+    DataSet* data_set_pointer = nullptr;
 
     Tensor<Condition, 1> inputs_conditions;
     Tensor<Condition, 1> outputs_conditions;
