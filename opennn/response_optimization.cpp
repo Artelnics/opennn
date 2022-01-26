@@ -34,7 +34,7 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
     inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
     inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
 
-    if(neural_network_pointer->get_last_trainable_layer_pointer()->get_type() == Layer::Type::Probabilistic) // Approximation and forecastingClassification case
+    if(neural_network_pointer->get_last_trainable_layer_pointer()->get_type() == Layer::Type::Probabilistic) // Classification case
     {
 
         outputs_minimums.resize(outputs_number);
@@ -47,6 +47,59 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
     {
         outputs_minimums = neural_network_pointer->get_bounding_layer_pointer()->get_lower_bounds();
         outputs_maximums = neural_network_pointer->get_bounding_layer_pointer()->get_upper_bounds();
+    }
+}
+
+
+ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_pointer,DataSet* new_data_set_pointer)
+    : neural_network_pointer(new_neural_network_pointer),
+      data_set_pointer(new_data_set_pointer)
+    {
+        const Index inputs_number = data_set_pointer->get_input_columns_number();
+        const Index outputs_number = data_set_pointer->get_target_columns_number();
+
+        inputs_conditions.resize(inputs_number);
+        inputs_conditions.setConstant(Condition::None);
+
+        outputs_conditions.resize(outputs_number);
+        outputs_conditions.setConstant(Condition::None);
+
+        inputs_minimums = data_set_pointer->calculate_input_variables_minimums();
+        inputs_maximums = data_set_pointer->calculate_input_variables_maximums();
+
+        outputs_minimums = data_set_pointer->calculate_target_variables_minimums();
+        outputs_maximums = data_set_pointer->calculate_target_variables_maximums();
+}
+
+
+void ResponseOptimization::set_data_set(DataSet* new_data_set)
+{
+    data_set_pointer = new_data_set;
+    const Index inputs_number = neural_network_pointer->get_inputs_number();
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
+
+    inputs_conditions.resize(inputs_number);
+    inputs_conditions.setConstant(Condition::None);
+
+    outputs_conditions.resize(outputs_number);
+    outputs_conditions.setConstant(Condition::None);
+
+    inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
+    inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
+
+    if(neural_network_pointer->get_last_trainable_layer_pointer()->get_type() == Layer::Type::Probabilistic) // Classification case
+    {
+
+        outputs_minimums.resize(outputs_number);
+        outputs_minimums.setZero();
+
+        outputs_maximums.resize(outputs_number);
+        outputs_maximums.setConstant({type(1)});
+    }
+    else // Approximation and forecasting
+    {
+        outputs_minimums = data_set_pointer->calculate_target_variables_minimums();
+        outputs_maximums = data_set_pointer->calculate_target_variables_maximums();
     }
 }
 
