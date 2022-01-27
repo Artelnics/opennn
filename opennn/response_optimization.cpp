@@ -358,16 +358,6 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
         return;
 
     case Condition::None:
-
-        if(values.size() != 0)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_output_condition() method.\n"
-                   << "For Maximum condition, size of values must be 0.\n";
-
-            throw invalid_argument(buffer.str());
-        }
-
         return;
 
     default:
