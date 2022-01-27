@@ -3497,28 +3497,23 @@ void DataSet::set_binary_simple_columns()
             if(is_binary)
             {
                 columns(column_index).type = ColumnType::Binary;
-                scale_minimum_maximum_binary(data, values(0), values(1), column_index);
+                scale_minimum_maximum_binary(data, values(0), values(1), variable_index);
                 columns(column_index).categories.resize(2);
 
                 if(values(0) == type(0) && values(1) == type(1))
                 {
-                    columns(column_index).categories(1) ="(    " + std::to_string(static_cast<int>(values(1))) + "    )";
-                    columns(column_index).categories(0) ="(    " + std::to_string(static_cast<int>(values(0))) + "    )";
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
                 }
                 else if(values(0) == type(1) && values(1) == type(0))
                 {
-                    columns(column_index).categories(1) = "(    " + std::to_string(static_cast<int>(values(1))) + "    )";
-                    columns(column_index).categories(0) = "(    " + std::to_string(static_cast<int>(values(0))) + "    )";
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
                 }
-                else if(values(0) > values(1))
+                else
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0))) + " (   1   )";
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1))) + " (   0   )";
-                }
-                else if(values(0) < values(1))
-                {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0))) + " (   0   )";
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1))) + " (   1   )";
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
                 }
 
                 const VariableUse column_use = columns(column_index).column_use;
@@ -10640,10 +10635,10 @@ void DataSet::read_csv_2_complete()
 
     const Index samples_number = static_cast<unsigned>(lines_count);
 
-    const Index variables_number = get_variables_number();
+    const Index variables_number = get_variables_number();   
 
     data.resize(static_cast<Index>(samples_number), variables_number);
-    data.setZero();
+    data.setZero();    
 
     if(has_rows_labels) rows_labels.resize(samples_number);
 
@@ -10653,7 +10648,7 @@ void DataSet::read_csv_2_complete()
 
     samples_uses.setConstant(SampleUse::Training);
 
-    split_samples_random();
+    split_samples_random();  
 }
 
 
@@ -10812,15 +10807,6 @@ void DataSet::read_csv_3_complete()
         sample_index++;
     }
 
-    for(Index j = 0; j < raw_columns_number; j++)
-    {
-        if(columns(j).type == ColumnType::Binary)
-        {
-            columns(j).categories(0) = columns(j).categories(0) + " (   1   )";
-            columns(j).categories(1) = columns(j).categories(1) + " (   0   )";
-        }
-    }
-
     const Index data_file_preview_index = has_columns_names ? 3 : 2;
 
     data_file_preview(data_file_preview_index) = tokens;
@@ -10838,7 +10824,6 @@ void DataSet::read_csv_3_complete()
     if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
-
 }
 
 
