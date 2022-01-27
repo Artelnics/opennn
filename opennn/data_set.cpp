@@ -9997,6 +9997,20 @@ void DataSet::read_bmp()
         }
     }
 
+    for(Index i = 0; i < image_paths.size(); i++)
+    {
+        if(image_paths[i].extension() == ".txt")
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_bmp() method.\n"
+                   << "Invalid data file type. Expecting an image, getting a .txt.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+    }
+
     const Index classes_number = number_of_elements_in_directory(path);
     Index images_number = 0;
     Tensor<Index, 1> images_numbers(classes_number);
@@ -10006,10 +10020,29 @@ void DataSet::read_bmp()
         images_number += number_of_elements_in_directory(folder_paths[i]);
     }
 
+    string info_img;
+    vector<unsigned char> image;
+    Index image_size;
+    Index size_comprobation = 0;
 
-    string info_img = image_paths[0].u8string();
-    vector<unsigned char> image = read_bmp_image(info_img);
-    Index image_size = image.size();
+    for(Index i = 0; i < image_paths.size(); i++)
+    {
+        info_img = image_paths[i].u8string();
+        image = read_bmp_image(info_img);
+        image_size = image.size();
+        size_comprobation += image_size;
+    }
+
+    if(image_size != size_comprobation/image_paths.size())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp() method.\n"
+               << "Some images of the dataset have different channel number, width and/or height.\n";
+
+        throw invalid_argument(buffer.str());
+    }
 
     FILE* f = fopen(info_img.data(), "rb");
 
@@ -10018,6 +10051,7 @@ void DataSet::read_bmp()
     fread(info, sizeof(unsigned char), 54, f);
     const int width = *(int*)&info[18];
     const int height = *(int*)&info[22];
+
     const int bits_per_pixel = *(int*)&info[28];
     int channels;
 
@@ -10099,9 +10133,9 @@ void DataSet::read_bmp()
     }else if(classes_number == 2)
     {
         Index new_classes_number = 1;
-        Tensor<string, 1> categories(new_classes_number);
 
-        categories(0) = "Positive";
+        Tensor<string, 1> categories(new_classes_number);
+        categories(0) = "True";
 
         columns(image_size).categories = categories;
         columns(image_size).column_use = VariableUse::Target;
