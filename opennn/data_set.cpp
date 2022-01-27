@@ -3502,18 +3502,23 @@ void DataSet::set_binary_simple_columns()
 
                 if(values(0) == type(0) && values(1) == type(1))
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
                 }
                 else if(values(0) == type(1) && values(1) == type(0))
                 {
                     columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
                     columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
                 }
-                else
+                else if(values(0) > values(1))
                 {
                     columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
                     columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                }
+                else if(values(0) < values(1))
+                {
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
                 }
 
                 const VariableUse column_use = columns(column_index).column_use;
