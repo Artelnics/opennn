@@ -29,7 +29,6 @@ void scale_minimum_maximum_binary(Tensor<type, 2>& matrix,
     else
     {
         slope = type(1)/(value_2 - value_1);
-
         intercept = -value_1/(value_2-value_1);
     }
 
