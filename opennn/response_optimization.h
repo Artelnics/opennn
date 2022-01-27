@@ -45,10 +45,6 @@ public:
 
     explicit ResponseOptimization(NeuralNetwork*);
 
-    explicit ResponseOptimization(NeuralNetwork*,DataSet*);
-
-    void set_data_set(DataSet*);
-
     ///Enumeration of the available conditions for response optimization.
 
    enum class Condition{None, Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};

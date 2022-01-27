@@ -56,11 +56,17 @@ private:
 
     DataSet data_set;
 
+    DataSet data_set_2;
+
     NeuralNetwork neural_network;
+
+    NeuralNetwork neural_network_2;
 
     TrainingStrategy training_strategy;
 
-    void generate_neural_network(){
+    void generate_neural_networks(){
+
+        // Simple outputs
 
         Tensor<type,2> data(2000,3);
         data.setRandom();
@@ -80,6 +86,39 @@ private:
                                      { data_set.get_input_variables_number(), 2, data_set.get_target_variables_number()});
 
         training_strategy.set(&neural_network, &data_set);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_display(false);
+        training_strategy.perform_training();
+
+        // Multiple outputs
+
+        Tensor<type,2> data_2(2000,4);
+        data_2.setRandom();
+
+        for(Index i = 0; i < data_2.dimension(0); i++)
+        {
+            data_2(i,2) = data_2(i,0) * data_2(i,0) + data_2(i,1) * data_2(i,1) + 1;
+            data_2(i,3) = data_2(i,0) * data_2(i,0) + data_2(i,1) * data_2(i,1) - 1;
+        }
+
+        data_set_2.set(data_2);
+
+        Tensor<string,1> names_2(4);
+        names_2.setValues({"x","y","z","t"});
+        data_set_2.set_variables_names(names_2);
+
+        Tensor<Index,1> inputs_index(2);
+        Tensor<Index,1> outputs_index(2);
+
+        inputs_index.setValues({0,1});
+        outputs_index.setValues({2,3});
+
+        data_set_2.set_input_target_columns(inputs_index,outputs_index);
+
+        neural_network_2.set(NeuralNetwork::ProjectType::Approximation,
+                                     { data_set_2.get_input_variables_number(), 2, data_set_2.get_target_variables_number()});
+
+        training_strategy.set(&neural_network_2, &data_set_2);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.set_display(false);
         training_strategy.perform_training();
