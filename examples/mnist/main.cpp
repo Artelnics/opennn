@@ -48,11 +48,12 @@ int main()
         // Data set
 
         DataSet data_set;
-        data_set.set_data_file_name("//TRUENAS/Artelnics/Dipcam/Datasets/cancer-test_2/");
+//        data_set.set_data_file_name("//TRUENAS/Artelnics/Dipcam/Datasets/cancer-test_2/");
 //        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
+        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
 
         data_set.read_bmp();
-/*
+
         data_set.scale_input_variables();
 
         const Index input_variables_number = data_set.get_input_variables_number();

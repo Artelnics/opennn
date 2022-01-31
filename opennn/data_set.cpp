@@ -2797,7 +2797,7 @@ Index DataSet::get_variables_number() const
             variables_number++;
         }
     }
-   
+
     return variables_number;
 }
 
@@ -3211,7 +3211,7 @@ void DataSet::set_input_columns_unused()
 void DataSet::set_input_columns(const Tensor<Index, 1>& input_columns_indices, const Tensor<bool, 1>& input_columns_use)
 {
     for(Index i = 0; i < input_columns_indices.size(); i++)
-    {                
+    {
         if(input_columns_use(i)) set_column_use(input_columns_indices(i), VariableUse::Input);
         else set_column_use(input_columns_indices(i), VariableUse::Unused);
     }
@@ -6056,7 +6056,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
     {
         const Index current_input_index_i = input_columns_indices(i);
 
-        const Tensor<type, 2> input_i = get_column_data(current_input_index_i);        
+        const Tensor<type, 2> input_i = get_column_data(current_input_index_i);
 
         cout << "Calculating " << columns(current_input_index_i).name << " correlations. " << endl;
 
@@ -9089,7 +9089,7 @@ Tensor<Index, 1> DataSet::calculate_local_outlier_factor_outliers(const Index& k
 
     Tensor<Index, 1> outlier_indexes;
 
-    contamination > type(0) 
+    contamination > type(0)
         ? outlier_indexes = select_outliers_via_contamination(LOF_value, contamination, true)
                         : outlier_indexes = select_outliers_via_standard_deviation(LOF_value, type(2.0), true);
 
@@ -9330,7 +9330,7 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
 
     Tensor<Index, 1> outlier_indexes;
 
-    contamination > type(0) 
+    contamination > type(0)
             ? outlier_indexes = select_outliers_via_contamination(average_paths, contamination, false)
                       : outlier_indexes = select_outliers_via_standard_deviation(average_paths, type(2.0), false);
 
@@ -9454,7 +9454,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 /// Calculates the cross-correlation between all the variables in the data set.
 
 Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) const
-{    
+{
     const Index samples_number = time_series_data.dimension(0);
 
     if(lags_number > samples_number)
@@ -9478,7 +9478,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     const Index input_target_columns_number = input_columns_number + target_columns_number;
 
     const Tensor<Index, 1> input_columns_indices = get_input_time_series_columns_indices();
-    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();        
+    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();
 
     Index input_target_numeric_column_number = 0;
     int counter = 0;
@@ -9486,7 +9486,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     for(Index i = 0; i < input_target_columns_number; i++)
     {
         if(i < input_columns_number)
-        {            
+        {
             const Index column_index = input_columns_indices(i);
 
             const ColumnType input_column_type = time_series_columns(column_index).type;
@@ -9987,27 +9987,31 @@ void DataSet::read_bmp()
     vector<fs::path> folder_paths;
     vector<fs::path> image_paths;
 
-    for (const auto & entry : fs::directory_iterator(path)){
+    for (const auto & entry : fs::directory_iterator(path))
+    {
         folder_paths.emplace_back(entry.path().string());
     }
 
     for (Index i = 0 ; i < folder_paths.size() ; i++){
-        for (const auto & entry : fs::directory_iterator(folder_paths[i])){
+        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
+        {
             image_paths.emplace_back(entry.path().string());
         }
     }
 
     for(Index i = 0; i < image_paths.size(); i++)
     {
-        if(image_paths[i].extension() == ".txt")
+        if(image_paths[i].extension() != ".bmp")
         {
-            ostringstream buffer;
+            fs::remove_all(image_paths[i]);
 
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void read_bmp() method.\n"
-                   << "Invalid data file type. Expecting an image, getting a .txt.\n";
+//            ostringstream buffer;
 
-            throw invalid_argument(buffer.str());
+//            buffer << "OpenNN Exception: DataSet class.\n"
+//                   << "void read_bmp() method.\n"
+//                   << "Non-bmp data file format found and deleted. Try to run the program again.\n";
+
+//            throw invalid_argument(buffer.str());
         }
     }
 
@@ -10058,6 +10062,7 @@ void DataSet::read_bmp()
     bits_per_pixel == 24 ? channels = 3 : channels = 1;
 
     data.resize(images_number, image_size + classes_number);
+
     data.setZero();
 
     rows_labels.resize(images_number);
@@ -10084,7 +10089,7 @@ void DataSet::read_bmp()
             for(Index k = 0; k < image_size; k++)
             {
                 data(row_index, k) = static_cast<type>(image[k]);
-//                cout<< data(row_index, k) <<" ";
+//                cout << data(row_index, k) << " ";
             }
 
             data(row_index, image_size + i) = 1;
@@ -10227,7 +10232,7 @@ void DataSet::read_csv_1()
     Index lines_count = 0;
 
     while(file.good())
-    {        
+    {
         getline(file, line);
 
         trim(line);
@@ -10674,10 +10679,10 @@ void DataSet::read_csv_2_complete()
 
     const Index samples_number = static_cast<unsigned>(lines_count);
 
-    const Index variables_number = get_variables_number();   
+    const Index variables_number = get_variables_number();
 
     data.resize(static_cast<Index>(samples_number), variables_number);
-    data.setZero();    
+    data.setZero();
 
     if(has_rows_labels) rows_labels.resize(samples_number);
 
@@ -10687,7 +10692,7 @@ void DataSet::read_csv_2_complete()
 
     samples_uses.setConstant(SampleUse::Training);
 
-    split_samples_random();  
+    split_samples_random();
 }
 
 
@@ -11290,13 +11295,13 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         {
             index = 0;
 
-            for(Index channel = 0; channel < channels_number; channel++)
+            for(Index row = 0; row < rows_number; row++)
             {
-                for(Index row = 0; row < rows_number; row++)
+                for(Index col = 0; col < columns_number; col++)
                 {
-                    for(Index col = 0; col < columns_number; col++)
+                    for(Index channel = 0; channel < channels_number; channel++)
                     {
-                        inputs_4d(image, channel, row, col) = data(image, index);
+                        inputs_4d(row, col, channel, image) = data(image, index);
 //                        inputs_4d(row, col,channel,image) = data(image, index);
 //                        cout << "Index: " << index << " " << data(image, index) << endl;
                         index++;
@@ -11338,7 +11343,7 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
 
-        inputs_4d.resize(batch_size, channels_number, rows_number, columns_number);
+        inputs_4d.resize(rows_number, columns_number, channels_number,batch_size);
    }
 
     targets_2d.resize(batch_size, target_variables_number);
