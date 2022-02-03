@@ -12,6 +12,7 @@ using namespace  opennn;
 using namespace std;
 using namespace fs;
 
+
 namespace opennn
 {
 
@@ -7872,7 +7873,7 @@ void DataSet::print_data_preview() const
 
 void DataSet::save_data() const
 {
-    ofstream file(data_file_name.c_str());
+    std::ofstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -7937,7 +7938,7 @@ void DataSet::save_data() const
 
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
-    ofstream file(binary_data_file_name.c_str(), ios::binary);
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
@@ -7986,7 +7987,7 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 void DataSet::save_time_series_data_binary(const string& binary_data_file_name) const
 {
-    ofstream file(binary_data_file_name.c_str(), ios::binary);
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
@@ -8051,7 +8052,7 @@ void DataSet::transform_time_series()
 
 void DataSet::load_data_binary()
 {
-    ifstream file;
+    std::ifstream file;
 
     file.open(data_file_name.c_str(), ios::binary);
 
@@ -8094,7 +8095,7 @@ void DataSet::load_data_binary()
 
 void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
-    ifstream file;
+    std::ifstream file;
 
     file.open(time_series_data_file_name.c_str(), ios::binary);
 
@@ -8138,7 +8139,7 @@ void DataSet::load_time_series_data_binary(const string& time_series_data_file_n
 
 void DataSet::check_input_csv(const string & input_data_file_name, const char & separator_char) const
 {
-    ifstream file(input_data_file_name.c_str());
+    std::ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -8213,7 +8214,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                                         const bool& has_columns_name,
                                         const bool& has_rows_label) const
 {
-    ifstream file(input_data_file_name.c_str());
+    std::ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10206,7 +10207,7 @@ void DataSet::read_csv_1()
         throw invalid_argument(buffer.str());
     }
 
-    ifstream file(data_file_name.c_str());
+    std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10355,7 +10356,7 @@ void DataSet::read_csv_1()
 
 void DataSet::read_csv_2_simple()
 {
-    ifstream file(data_file_name.c_str());
+    std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10445,7 +10446,7 @@ void DataSet::read_csv_2_simple()
 
 void DataSet::read_csv_3_simple()
 {
-    ifstream file(data_file_name.c_str());
+    std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10556,7 +10557,7 @@ void DataSet::read_csv_3_simple()
 
 void DataSet::read_csv_2_complete()
 {
-    ifstream file(data_file_name.c_str());
+    std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10698,7 +10699,7 @@ void DataSet::read_csv_2_complete()
 
 void DataSet::read_csv_3_complete()
 {
-    ifstream file(data_file_name.c_str());
+    std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {

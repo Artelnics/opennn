@@ -2419,7 +2419,7 @@ void NeuralNetwork::save(const string& file_name) const
 
 void NeuralNetwork::save_parameters(const string& file_name) const
 {
-    ofstream file(file_name.c_str());
+    std::ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
@@ -2474,7 +2474,7 @@ void NeuralNetwork::load(const string& file_name)
 
 void NeuralNetwork::load_parameters_binary(const string& file_name)
 {
-    ifstream file;
+    std::ifstream file;
 
     file.open(file_name.c_str(), ios::binary);
 
@@ -2796,7 +2796,7 @@ string NeuralNetwork::write_expression_python() const
 
 void NeuralNetwork::save_expression_c(const string& file_name) const
 {
-    ofstream file(file_name.c_str());
+    std::ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
@@ -2820,7 +2820,7 @@ void NeuralNetwork::save_expression_c(const string& file_name) const
 
 void NeuralNetwork::save_expression_python(const string& file_name) const
 {
-    ofstream file(file_name.c_str());
+    std::ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
@@ -2847,7 +2847,7 @@ void NeuralNetwork::save_outputs(const Tensor<type, 2>& inputs, const string & f
 {
     const Tensor<type, 2> outputs = calculate_outputs(inputs);
 
-    ofstream file(file_name.c_str());
+    std::ofstream file(file_name.c_str());
 
     if(!file.is_open())
     {
