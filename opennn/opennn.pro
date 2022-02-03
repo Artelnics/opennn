@@ -59,6 +59,7 @@ HEADERS += \
     scaling.h \
     correlations.h \
     tinyxml2.h \
+    filesystem.h \
     data_set.h \
     layer.h \
     scaling_layer.h \
