@@ -588,6 +588,10 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
                 }
                 j+=(categories_number-1);
             }
+            else
+            {
+                inputs(i,j) = calculate_random_uniform(inputs_minimums[j], inputs_maximums[j]);
+            }
             m++;
         }
     }
