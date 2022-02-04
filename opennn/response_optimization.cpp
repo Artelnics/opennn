@@ -18,10 +18,49 @@ ResponseOptimization::ResponseOptimization()
 {
 }
 
+ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
+    : data_set_pointer(new_data_set_pointer)
+{
+    set(new_neural_network_pointer);
+}
+
 
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_pointer)
     : neural_network_pointer(new_neural_network_pointer)
 {
+    const Index inputs_number = neural_network_pointer->get_inputs_number();
+    const Index outputs_number = neural_network_pointer->get_outputs_number();
+
+    inputs_conditions.resize(inputs_number);
+    inputs_conditions.setConstant(Condition::None);
+
+    outputs_conditions.resize(outputs_number);
+    outputs_conditions.setConstant(Condition::None);
+
+    inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
+    inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
+
+    if(neural_network_pointer->get_last_trainable_layer_pointer()->get_type() == Layer::Type::Probabilistic) // Classification case
+    {
+
+        outputs_minimums.resize(outputs_number);
+        outputs_minimums.setZero();
+
+        outputs_maximums.resize(outputs_number);
+        outputs_maximums.setConstant({type(1)});
+    }
+    else // Approximation and forecasting
+    {
+        outputs_minimums = neural_network_pointer->get_bounding_layer_pointer()->get_lower_bounds();
+        outputs_maximums = neural_network_pointer->get_bounding_layer_pointer()->get_upper_bounds();
+    }
+}
+
+
+void ResponseOptimization::set(NeuralNetwork* new_neural_network_pointer)
+{
+    neural_network_pointer = new_neural_network_pointer;
+
     const Index inputs_number = neural_network_pointer->get_inputs_number();
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
@@ -500,9 +539,56 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
     for(Index i = 0; i < evaluations_number; i++)
     {
+        Index m=0;
+
         for(Index j = 0; j < inputs_number; j++)
         {
-            inputs(i,j) = calculate_random_uniform(inputs_minimums[j], inputs_maximums[j]);
+            DataSet::ColumnType column_type = data_set_pointer->get_column_type(m);
+
+            if(column_type == DataSet::ColumnType::Numeric || column_type == DataSet::ColumnType::Constant)
+            {
+                inputs(i,j) = calculate_random_uniform(inputs_minimums[j], inputs_maximums[j]);
+            }
+
+            else if(column_type == DataSet::ColumnType::Binary)
+            {
+                if(inputs_conditions(j) == ResponseOptimization::Condition::EqualTo)
+                {
+                    inputs(i,j) = inputs_minimums[j];
+                }
+                else
+                {
+                    inputs(i,j) = rand() % 2;
+                }
+            }
+
+            else if(column_type == DataSet::ColumnType::Categorical)
+            {
+                Index categories_number = data_set_pointer->get_columns()(m).get_categories_number();
+                Index equal_index = -1;
+
+                for(Index k = 0; k < categories_number; k++)
+                {
+                    inputs(i,j + k) = 0;
+                    if(inputs_conditions(j + k) == ResponseOptimization::Condition::EqualTo)
+                    {
+                        inputs(i,j + k) = inputs_minimums(j +k);
+                        if(inputs(i, j + k) == 1)
+                        {
+                            equal_index = k;
+                        }
+                    }
+                }
+
+                if(equal_index == -1)
+                {
+                    Index random =  rand() % categories_number ;
+                    random =  rand() % categories_number ;
+                    inputs(i, j + random) = 1;
+                }
+                j+=(categories_number-1);
+            }
+            m++;
         }
     }
 

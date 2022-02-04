@@ -45,6 +45,9 @@ public:
 
     explicit ResponseOptimization(NeuralNetwork*);
 
+    explicit ResponseOptimization(NeuralNetwork*,DataSet*);
+
+
     ///Enumeration of the available conditions for response optimization.
 
    enum class Condition{None, Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum};
@@ -61,6 +64,8 @@ public:
    Tensor<type, 1> get_outputs_maximums() const;
 
    // Set methods
+
+   void set(NeuralNetwork*);
 
    void set_evaluations_number(const Index&);
 
@@ -89,6 +94,7 @@ private:
 
     Tensor<Condition, 1> inputs_conditions;
     Tensor<Condition, 1> outputs_conditions;
+    Tensor<Condition, 1> conditions;
 
     Tensor<type, 1> inputs_minimums;
     Tensor<type, 1> inputs_maximums;
@@ -117,6 +123,8 @@ struct ResponseOptimizationResults
     }
 
     virtual ~ResponseOptimizationResults(){}
+
+    DataSet* data_set = nullptr;
 
     NeuralNetwork* neural_network_pointer = nullptr;
 
