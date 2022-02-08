@@ -51,11 +51,29 @@ void ResponseOptimizationTest::test_destructor()
 
 // Set methods
 
+void ResponseOptimizationTest::test_set()
+{
+    cout << "test_set\n";
+
+    response_optimization.set(&neural_network);
+
+    assert_true(response_optimization.get_inputs_conditions()(0) == ResponseOptimization::Condition::None, LOG);
+    assert_true(response_optimization.get_outputs_conditions()(0) == ResponseOptimization::Condition::None, LOG);
+
+    response_optimization.set(&neural_network_2);
+
+    assert_true(response_optimization.get_inputs_conditions()(0) == ResponseOptimization::Condition::None, LOG);
+    assert_true(response_optimization.get_inputs_conditions()(1) == ResponseOptimization::Condition::None, LOG);
+    assert_true(response_optimization.get_outputs_conditions()(0) == ResponseOptimization::Condition::None, LOG);
+    assert_true(response_optimization.get_outputs_conditions()(1) == ResponseOptimization::Condition::None, LOG);
+}
+
+
 void ResponseOptimizationTest::test_set_evaluations_number()
 {
     cout << "test_set_evaluations_number\n";
 
-    ResponseOptimization response_optimization(&neural_network);
+    response_optimization.set(&neural_network);
 
     response_optimization.set_evaluations_number(5);
 
@@ -68,7 +86,7 @@ void ResponseOptimizationTest::test_set_input_condition()
 {
     cout << "test_set_input_condition\n";
 
-    ResponseOptimization response_optimization(&neural_network);
+    response_optimization.set(&neural_network);
 
     // Index input
 
@@ -123,7 +141,7 @@ void ResponseOptimizationTest::test_set_output_condition()
 {
     cout << "test_set_output_condition\n";
 
-    ResponseOptimization response_optimization(&neural_network_2);
+    response_optimization.set(&neural_network_2);
 
     // Index input
 
@@ -216,7 +234,7 @@ void ResponseOptimizationTest::test_set_inputs_outputs_conditions()
 {
     cout << "test_set_inputs_outputs_conditions\n";
 
-    ResponseOptimization response_optimization(&neural_network);
+    response_optimization.set(&neural_network);
 
     Tensor<string,1> names(3);
     names.setValues({"x","y","z"});
@@ -240,7 +258,7 @@ void ResponseOptimizationTest::test_set_inputs_outputs_conditions()
 
     // Multiple outputs
 
-    ResponseOptimization response_optimization_2(&neural_network_2);
+    response_optimization.set(&neural_network_2);
 
     names.resize(4);
     names.setValues({"x","y","z","t"});
@@ -249,21 +267,21 @@ void ResponseOptimizationTest::test_set_inputs_outputs_conditions()
     conditions.setValues({"Between","EqualTo","GreaterEqualTo","LessEqualTo"});
     conditions_values.resize(5);
     conditions_values.setConstant(1);
-    response_optimization_2.set_inputs_outputs_conditions(names,conditions,conditions_values);
-    assert_true(response_optimization_2.get_inputs_conditions()(0) == ResponseOptimization::Condition::Between, LOG);
-    assert_true(response_optimization_2.get_inputs_conditions()(1) == ResponseOptimization::Condition::EqualTo, LOG);
-    assert_true(response_optimization_2.get_outputs_conditions()(0) == ResponseOptimization::Condition::GreaterEqualTo, LOG);
-    assert_true(response_optimization_2.get_outputs_conditions()(1) == ResponseOptimization::Condition::LessEqualTo, LOG);
+    response_optimization.set_inputs_outputs_conditions(names,conditions,conditions_values);
+    assert_true(response_optimization.get_inputs_conditions()(0) == ResponseOptimization::Condition::Between, LOG);
+    assert_true(response_optimization.get_inputs_conditions()(1) == ResponseOptimization::Condition::EqualTo, LOG);
+    assert_true(response_optimization.get_outputs_conditions()(0) == ResponseOptimization::Condition::GreaterEqualTo, LOG);
+    assert_true(response_optimization.get_outputs_conditions()(1) == ResponseOptimization::Condition::LessEqualTo, LOG);
 
 
     conditions.setValues({"GreaterEqualTo","LessEqualTo","Maximum","Minimum"});
     conditions_values.resize(2);
     conditions_values.setConstant(1);
-    response_optimization_2.set_inputs_outputs_conditions(names,conditions,conditions_values);
-    assert_true(response_optimization_2.get_inputs_conditions()(0) == ResponseOptimization::Condition::GreaterEqualTo, LOG);
-    assert_true(response_optimization_2.get_inputs_conditions()(1) == ResponseOptimization::Condition::LessEqualTo, LOG);
-    assert_true(response_optimization_2.get_outputs_conditions()(0) == ResponseOptimization::Condition::Maximum, LOG);
-    assert_true(response_optimization_2.get_outputs_conditions()(1) == ResponseOptimization::Condition::Minimum, LOG);
+    response_optimization.set_inputs_outputs_conditions(names,conditions,conditions_values);
+    assert_true(response_optimization.get_inputs_conditions()(0) == ResponseOptimization::Condition::GreaterEqualTo, LOG);
+    assert_true(response_optimization.get_inputs_conditions()(1) == ResponseOptimization::Condition::LessEqualTo, LOG);
+    assert_true(response_optimization.get_outputs_conditions()(0) == ResponseOptimization::Condition::Maximum, LOG);
+    assert_true(response_optimization.get_outputs_conditions()(1) == ResponseOptimization::Condition::Minimum, LOG);
 
 
 };
@@ -273,7 +291,7 @@ void ResponseOptimizationTest::test_get_conditions()
 {
     cout << "test_get_conditions\n";
 
-    ResponseOptimization response_optimization(&neural_network);
+    response_optimization.set(&neural_network);
 
     Tensor<string,1> conditions_names(3);
 
@@ -289,21 +307,21 @@ void ResponseOptimizationTest::test_get_conditions()
 
     // Multiple outputs
 
-    ResponseOptimization response_optimization_2(&neural_network_2);
+    response_optimization.set(&neural_network_2);
 
     conditions_names.resize(4);
 
     conditions_names.setValues({"Between","EqualTo","Maximize","Minimize"});
-    assert_true(response_optimization_2.get_conditions(conditions_names)(0) == ResponseOptimization::Condition::Between, LOG);
-    assert_true(response_optimization_2.get_conditions(conditions_names)(1) == ResponseOptimization::Condition::EqualTo, LOG);
-    assert_true(response_optimization_2.get_conditions(conditions_names)(2) == ResponseOptimization::Condition::Maximum, LOG);
-    assert_true(response_optimization_2.get_conditions(conditions_names)(3) == ResponseOptimization::Condition::Minimum, LOG);
+    assert_true(response_optimization.get_conditions(conditions_names)(0) == ResponseOptimization::Condition::Between, LOG);
+    assert_true(response_optimization.get_conditions(conditions_names)(1) == ResponseOptimization::Condition::EqualTo, LOG);
+    assert_true(response_optimization.get_conditions(conditions_names)(2) == ResponseOptimization::Condition::Maximum, LOG);
+    assert_true(response_optimization.get_conditions(conditions_names)(3) == ResponseOptimization::Condition::Minimum, LOG);
 
     conditions_names.setValues({"EqualTo","EqualTo","GreaterEqualTo","LessEqualTo"});
-    assert_true(response_optimization_2.get_conditions(conditions_names)(0) == ResponseOptimization::Condition::EqualTo, LOG);
-    assert_true(response_optimization_2.get_conditions(conditions_names)(1) == ResponseOptimization::Condition::EqualTo, LOG);
-    assert_true(response_optimization_2.get_conditions(conditions_names)(2) == ResponseOptimization::Condition::GreaterEqualTo, LOG);
-    assert_true(response_optimization_2.get_conditions(conditions_names)(3) == ResponseOptimization::Condition::LessEqualTo, LOG);
+    assert_true(response_optimization.get_conditions(conditions_names)(0) == ResponseOptimization::Condition::EqualTo, LOG);
+    assert_true(response_optimization.get_conditions(conditions_names)(1) == ResponseOptimization::Condition::EqualTo, LOG);
+    assert_true(response_optimization.get_conditions(conditions_names)(2) == ResponseOptimization::Condition::GreaterEqualTo, LOG);
+    assert_true(response_optimization.get_conditions(conditions_names)(3) == ResponseOptimization::Condition::LessEqualTo, LOG);
 
 
 };
@@ -313,7 +331,7 @@ void ResponseOptimizationTest::test_get_values_conditions()
 {
     cout << "test_get_values_conditions\n";
 
-    ResponseOptimization response_optimization(&neural_network);
+    response_optimization.set(&neural_network);
 
     Tensor<ResponseOptimization::Condition,1> conditions(6);
     conditions.setValues({ResponseOptimization::Condition::Between,
@@ -340,7 +358,7 @@ void ResponseOptimizationTest::test_calculate_inputs()
 {
     cout << "test_calculate_inputs\n";
 
-    ResponseOptimization response_optimization(&neural_network);
+    response_optimization.set(&neural_network);
 
     Tensor<type,2> inputs = response_optimization.calculate_inputs();
 
@@ -358,7 +376,7 @@ void ResponseOptimizationTest::test_perform_optimization()
 {
     cout << "test_perform_optimization\n";
 
-    ResponseOptimization response_optimization(&neural_network);
+    response_optimization.set(&neural_network);
 
     // Empty results
 
@@ -400,14 +418,14 @@ void ResponseOptimizationTest::test_perform_optimization()
 
     // Multiple outputs case 1
 
-    ResponseOptimization response_optimization_2(&neural_network_2);
+    response_optimization.set(&neural_network_2);
 
     conditions_values.resize(1);
     conditions_values.setValues({1});
-    response_optimization_2.set_input_condition(0,ResponseOptimization::Condition::EqualTo,conditions_values);
-    response_optimization_2.set_input_condition(1,ResponseOptimization::Condition::LessEqualTo,conditions_values);
+    response_optimization.set_input_condition(0,ResponseOptimization::Condition::EqualTo,conditions_values);
+    response_optimization.set_input_condition(1,ResponseOptimization::Condition::LessEqualTo,conditions_values);
 
-    results = response_optimization_2.perform_optimization();
+    results = response_optimization.perform_optimization();
     assert_true(results->optimal_variables(0) = 1, LOG);
     assert_true(results->optimal_variables(1) <= 1, LOG);
     assert_true(1 <= results->optimal_variables(2) <= 3.0, LOG);
@@ -417,22 +435,49 @@ void ResponseOptimizationTest::test_perform_optimization()
 
     conditions_values.resize(1);
     conditions_values.setValues({1});
-    response_optimization_2.set_input_condition(0,ResponseOptimization::Condition::EqualTo,conditions_values);
-    response_optimization_2.set_input_condition(1,ResponseOptimization::Condition::LessEqualTo,conditions_values);
+    response_optimization.set_input_condition(0,ResponseOptimization::Condition::EqualTo,conditions_values);
+    response_optimization.set_input_condition(1,ResponseOptimization::Condition::LessEqualTo,conditions_values);
 
     conditions_values.resize(2);
     conditions_values.setValues({1,2});
-    response_optimization_2.set_output_condition(0,ResponseOptimization::Condition::Between,conditions_values);
+    response_optimization.set_output_condition(0,ResponseOptimization::Condition::Between,conditions_values);
     conditions_values.resize(2);
     conditions_values.setValues({-1,0});
-    response_optimization_2.set_output_condition(1,ResponseOptimization::Condition::Between,conditions_values);
+    response_optimization.set_output_condition(1,ResponseOptimization::Condition::Between,conditions_values);
 
-//    results = response_optimization_2.perform_optimization();
-//    assert_true(results->optimal_variables(0) = 1, LOG);
-//    assert_true(results->optimal_variables(1) <= 1, LOG);
-//    assert_true(1 <= results->optimal_variables(2) <= 2.0, LOG);
-//    assert_true(-1 <= results->optimal_variables(3), LOG);
-//    assert_true(0 >= results->optimal_variables(3), LOG);
+    results = response_optimization.perform_optimization();
+    assert_true(results->optimal_variables(0) = 1, LOG);
+    assert_true(results->optimal_variables(1) <= 1, LOG);
+    assert_true(1 <= results->optimal_variables(2) <= 2.0, LOG);
+    assert_true(type(-1) <= results->optimal_variables(3), LOG);
+    assert_true(results->optimal_variables(3) <= type(0), LOG);
+
+    // Multiple outputs case 2
+
+    conditions_values.resize(1);
+    conditions_values.setValues({0.5});
+    response_optimization.set_input_condition(0,ResponseOptimization::Condition::GreaterEqualTo,conditions_values);
+    conditions_values.resize(2);
+    conditions_values.setValues({0.5,1});
+    response_optimization.set_input_condition(1,ResponseOptimization::Condition::Between,conditions_values);
+
+    conditions_values.resize(0);
+    response_optimization.set_output_condition(0,ResponseOptimization::Condition::Maximum,conditions_values);
+    conditions_values.resize(2);
+    conditions_values.setValues({-1,0});
+    response_optimization.set_output_condition(1,ResponseOptimization::Condition::Between,conditions_values);
+
+    results = response_optimization.perform_optimization();
+    assert_true(results->optimal_variables(0) >= 0.5, LOG);
+
+    cout << results->optimal_variables << endl;
+
+    assert_true(results->optimal_variables(1) >= 0.5, LOG);
+    assert_true(results->optimal_variables(2) >= 0.0, LOG);
+    assert_true(results->optimal_variables(2) <= 3.0, LOG);
+    assert_true(results->optimal_variables(3) >= type(-1), LOG);
+    assert_true(results->optimal_variables(3) <= 0.0, LOG);
+
 
 };
 
