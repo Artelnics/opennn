@@ -536,44 +536,55 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
+    inputs.setZero();
+
+    const int input_columns_number = data_set_pointer->get_input_columns_number();
+
+    Tensor<Index, 1> used_columns_indices = data_set_pointer->get_used_columns_indices();
 
     for(Index i = 0; i < evaluations_number; i++)
     {
-        Index m=0;
+        Index used_column_index = 0;
 
-        for(Index j = 0; j < inputs_number; j++)
+        Index index = 0;
+
+        for(Index j = 0; j < input_columns_number; j++)
         {
-            DataSet::ColumnType column_type = data_set_pointer->get_column_type(m);
+            used_column_index = used_columns_indices(j);
+
+            DataSet::ColumnType column_type = data_set_pointer->get_column_type(used_column_index);
 
             if(column_type == DataSet::ColumnType::Numeric || column_type == DataSet::ColumnType::Constant)
             {
-                inputs(i,j) = calculate_random_uniform(inputs_minimums[j], inputs_maximums[j]);
+                inputs(i,index) = calculate_random_uniform(inputs_minimums[j], inputs_maximums[j]);
+                index++;
             }
 
             else if(column_type == DataSet::ColumnType::Binary)
             {
                 if(inputs_conditions(j) == ResponseOptimization::Condition::EqualTo)
                 {
-                    inputs(i,j) = inputs_minimums[j];
+                    inputs(i,index) = inputs_minimums[j];
                 }
                 else
                 {
-                    inputs(i,j) = rand() % 2;
+                    inputs(i,index) = rand() % 2;
                 }
+                index++;
             }
 
             else if(column_type == DataSet::ColumnType::Categorical)
             {
-                Index categories_number = data_set_pointer->get_columns()(m).get_categories_number();
+                Index categories_number = data_set_pointer->get_columns()(used_column_index).get_categories_number();
                 Index equal_index = -1;
 
                 for(Index k = 0; k < categories_number; k++)
                 {
-                    inputs(i,j + k) = 0;
+                    inputs(i,index + k) = 0;
                     if(inputs_conditions(j + k) == ResponseOptimization::Condition::EqualTo)
                     {
-                        inputs(i,j + k) = inputs_minimums(j +k);
-                        if(inputs(i, j + k) == 1)
+                        inputs(i,index + k) = inputs_minimums(j +k);
+                        if(inputs(i, index + k) == 1)
                         {
                             equal_index = k;
                         }
@@ -586,13 +597,13 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
                     random =  rand() % categories_number ;
                     inputs(i, j + random) = 1;
                 }
-                j+=(categories_number-1);
+                index+=(categories_number);
             }
             else
             {
-                inputs(i,j) = calculate_random_uniform(inputs_minimums[j], inputs_maximums[j]);
+                inputs(i,index) = calculate_random_uniform(inputs_minimums[j], inputs_maximums[j]);
+                index++;
             }
-            m++;
         }
     }
 
