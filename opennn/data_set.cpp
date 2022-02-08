@@ -787,11 +787,12 @@ void DataSet::transform_time_series_columns()
         if(i < lags_number*columns_number)
         {
             new_columns(new_column_index).name = columns(column_index).name + "_lag_" + to_string(lag_index);
+
+            new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
             new_columns(new_column_index).set_use(VariableUse::Input);
 
             new_columns(new_column_index).type = columns(column_index).type;
             new_columns(new_column_index).categories = columns(column_index).categories;
-            new_columns(new_column_index).categories_uses = columns(column_index).categories_uses;
 
             new_column_index++;
         }
@@ -804,15 +805,13 @@ void DataSet::transform_time_series_columns()
 
             if(new_columns(new_column_index).type == ColumnType::Constant)
             {
-                new_columns(new_column_index).set_use(VariableUse::Unused);
                 new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
-                new_columns(new_column_index).categories_uses.setConstant(VariableUse::Unused);
+                new_columns(new_column_index).set_use(VariableUse::Unused);
             }
             else
             {
-                new_columns(new_column_index).set_use(VariableUse::Target);
                 new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
-                new_columns(new_column_index).categories_uses.setConstant(VariableUse::Target);
+                new_columns(new_column_index).set_use(VariableUse::Target);
             }
 
             new_column_index++;
@@ -2354,15 +2353,15 @@ Tensor<Index, 1> DataSet::get_unused_columns_indices() const
 
 Tensor<Index, 1> DataSet::get_used_columns_indices() const
 {
-    const Index variables_number = get_variables_number();
+    const Index columns_number = get_columns_number();
 
-    const Index used_variables_number = get_used_variables_number();
+    const Index used_columns_number = get_used_columns_number();
 
-    Tensor<Index, 1> used_indices(used_variables_number);
+    Tensor<Index, 1> used_indices(used_columns_number);
 
     Index index = 0;
 
-    for(Index i = 0; i < variables_number; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).column_use  == VariableUse::Input
                 || columns(i).column_use  == VariableUse::Target
@@ -2838,7 +2837,10 @@ Index DataSet::get_input_variables_number() const
         {
             for(Index j = 0; j < columns(i).categories_uses.size(); j++)
             {
-                if(columns(i).categories_uses(j) == VariableUse::Input) inputs_number++;
+                if(columns(i).categories_uses(j) == VariableUse::Input)
+                {
+                    inputs_number++;
+                }
             }
         }
         else if(columns(i).column_use == VariableUse::Input)
@@ -2863,7 +2865,10 @@ Index DataSet::get_target_variables_number() const
         {
             for(Index j = 0; j < columns(i).categories_uses.size(); j++)
             {
-                if(columns(i).categories_uses(j) == VariableUse::Target) targets_number++;
+                if(columns(i).categories_uses(j) == VariableUse::Target)
+                {
+                    targets_number++;
+                }
             }
         }
         else if(columns(i).column_use == VariableUse::Target)
