@@ -556,15 +556,15 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
             if(column_type == DataSet::ColumnType::Numeric || column_type == DataSet::ColumnType::Constant)
             {
-                inputs(i,index) = calculate_random_uniform(inputs_minimums[j], inputs_maximums[j]);
+                inputs(i,index) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
                 index++;
             }
 
             else if(column_type == DataSet::ColumnType::Binary)
             {
-                if(inputs_conditions(j) == ResponseOptimization::Condition::EqualTo)
+                if(inputs_conditions(index) == ResponseOptimization::Condition::EqualTo)
                 {
-                    inputs(i,index) = inputs_minimums[j];
+                    inputs(i,index) = inputs_minimums[index];
                 }
                 else
                 {
@@ -581,9 +581,9 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
                 for(Index k = 0; k < categories_number; k++)
                 {
                     inputs(i,index + k) = 0;
-                    if(inputs_conditions(j + k) == ResponseOptimization::Condition::EqualTo)
+                    if(inputs_conditions(index + k) == ResponseOptimization::Condition::EqualTo)
                     {
-                        inputs(i,index + k) = inputs_minimums(j +k);
+                        inputs(i,index + k) = inputs_minimums(index +k);
                         if(inputs(i, index + k) == 1)
                         {
                             equal_index = k;
@@ -595,13 +595,13 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
                 {
                     Index random =  rand() % categories_number ;
                     random =  rand() % categories_number ;
-                    inputs(i, j + random) = 1;
+                    inputs(i, index + random) = 1;
                 }
                 index+=(categories_number);
             }
             else
             {
-                inputs(i,index) = calculate_random_uniform(inputs_minimums[j], inputs_maximums[j]);
+                inputs(i,index) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
                 index++;
             }
         }
