@@ -2354,15 +2354,15 @@ Tensor<Index, 1> DataSet::get_unused_columns_indices() const
 
 Tensor<Index, 1> DataSet::get_used_columns_indices() const
 {
-    const Index variables_number = get_variables_number();
+    const Index columns_number = get_columns_number();
 
-    const Index used_variables_number = get_used_variables_number();
+    const Index used_columns_number = get_used_columns_number();
 
-    Tensor<Index, 1> used_indices(used_variables_number);
+    Tensor<Index, 1> used_indices(used_columns_number);
 
     Index index = 0;
 
-    for(Index i = 0; i < variables_number; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).column_use  == VariableUse::Input
                 || columns(i).column_use  == VariableUse::Target
