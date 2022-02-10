@@ -362,7 +362,9 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     const Index variables_number = conditions_string.size();
 
-    const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
+    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
+
+    const Tensor<string, 1> outputs_names = data_set_pointer->get_target_variables_names();
 
     Index index;
 
@@ -374,7 +376,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
             set_input_condition(index, conditions[i], values_conditions[i]);
         }
-        else
+        else if(contains(outputs_names,names[i]))
         {
             index = neural_network_pointer->get_output_index(names[i]);
 
