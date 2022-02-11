@@ -2773,6 +2773,27 @@ Index DataSet::get_columns_number() const
     return columns.size();
 }
 
+/// Returns the number of channels of the images in the data set.
+
+Index DataSet::get_channels_number() const
+{
+    return input_variables_dimensions[0];
+}
+
+/// Returns the width of the images in the data set.
+
+Index DataSet::get_image_width() const
+{
+    return input_variables_dimensions[1];
+}
+
+/// Returns the height of the images in the data set.
+
+Index DataSet::get_image_height() const
+{
+    return input_variables_dimensions[2];
+}
+
 /// Returns the number of columns in the time series.
 
 Index DataSet::get_time_series_columns_number() const
@@ -6588,6 +6609,45 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
+    // Channels
+
+    {
+        file_stream.OpenElement("Channels");
+
+        buffer.str("");
+        buffer << get_channels_number();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Width
+
+    {
+        file_stream.OpenElement("Width");
+
+        buffer.str("");
+        buffer << get_image_width();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Height
+
+    {
+        file_stream.OpenElement("Height");
+
+        buffer.str("");
+        buffer << get_image_height();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
     // Lags number
     {
         file_stream.OpenElement("LagsNumber");
@@ -9586,7 +9646,6 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
     return cross_correlations;
 }
-
 
 /// Generates an artificial data_set with a given number of samples and number of variables
 /// by constant data.

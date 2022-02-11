@@ -659,6 +659,13 @@ public:
    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
    Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
 
+   // Image classification methods
+
+   Index get_channels_number() const;
+   Index get_image_width() const;
+   Index get_image_height() const;
+
+
    // Data generation
 
    void generate_constant_data(const Index&, const Index&, const type&);

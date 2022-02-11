@@ -26,7 +26,7 @@ NeuralNetwork::NeuralNetwork()
 /// It creates a neural network object with the given model type and architecture.
 /// It initializes the rest of the members to their default values.
 /// @param model_type Type of problem to be solved with the neural network
-/// (Approximation, Classification, Forecasting, ImageApproximation, ImageClassification).
+/// (Approximation, Classification, Forecasting, ImageClassification).
 /// @param architecture Architecture of the neural network({inputs_number, hidden_neurons_number, outputs_number}).
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)
