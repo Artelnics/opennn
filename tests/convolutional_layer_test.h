@@ -42,6 +42,7 @@ public:
 
    ///@move to polling
    void test_calculate_average_pooling_outputs();
+   void test_calculate_max_pooling_outputs();
 
    // Activation
 
@@ -60,6 +61,10 @@ public:
   // Forward propagate
 
   void test_forward_propagate();
+
+  //Back propagate
+
+  void test_calculate_hidden_delta_perceptron_test();
 
   // Utils
 

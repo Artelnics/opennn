@@ -164,7 +164,7 @@ void ConvolutionalLayerTest::test_constructor()
     ConvolutionalLayer convolutional_layer(new_inputs_dimensions, new_kernels_dimensions);
 
     assert_true(convolutional_layer.get_inputs_channels_number() == 3 &&
-                convolutional_layer.get_inputs_rows_number() == 32 &&
+                convolutional_layer.get_inputs_rows_number() == 23 &&
                 convolutional_layer.get_inputs_columns_number() == 64, LOG);
 }
 
@@ -364,10 +364,6 @@ void ConvolutionalLayerTest::test_calculate_average_pooling_outputs()
     Index col = 0;
     Index row = 0;
 
-    cout<<"inputs"<<endl;
-    cout<<inputs<<endl;
-    cout<<"-------"<<endl;
-
     for(int i=0; i<input_images; i++)
     {
         for(int c=0; c<channels; c++)
@@ -394,10 +390,72 @@ void ConvolutionalLayerTest::test_calculate_average_pooling_outputs()
             }
         }
     }
+}
 
-    cout<<"outputs"<<endl;
-    cout<<outputs<<endl;
 
+void ConvolutionalLayerTest::test_calculate_max_pooling_outputs()
+{
+    cout << "test_calculate_max_pooling_outputs\n";
+
+    //input_dims
+    const Index input_images = 1;
+    const Index channels = 1;
+
+    const Index rows_input = 4;
+    const Index cols_input = 4;
+
+    //pooling dims
+    const Index rows_polling = 2;
+    const Index cols_polling = 2;
+
+    //stride
+    const Index rows_stride=1;
+    const Index cols_stride=1;
+
+    //output dims
+    const Index output_rows_number = (rows_input - rows_polling)/rows_stride + 1;
+    const Index output_cols_number = (cols_input - cols_polling)/cols_stride +1;
+
+    Tensor<type, 4> inputs(rows_input, cols_input, channels, input_images);
+    Tensor<type, 4> outputs(output_rows_number, output_cols_number, channels, input_images);
+
+    inputs.setRandom();
+
+    //pooling average
+
+    Index col = 0;
+    Index row = 0;
+
+    for(int i=0; i<input_images; i++)
+    {
+        for(int c=0; c<channels; c++)
+        {
+            for(int k=0; k<output_cols_number; k++)
+            {
+                for(int l=0; l<output_rows_number; l++)
+                {
+                    float tmp_result = 0;
+
+                    float final_result = 0;
+
+                    for(int m=0; m<cols_polling; m++)
+                    {
+                        col = m*cols_stride + k;
+
+                        for(int n=0; n<rows_polling; n++)
+                        {
+                            row = n*rows_stride + l;
+
+                            tmp_result = inputs(row,col,c,i);
+
+                            if(tmp_result > final_result) final_result = tmp_result;
+                        }
+                    }
+                    outputs(l,k,c,i) = final_result;
+                }
+            }
+        }
+    }
 }
 
 
@@ -860,148 +918,124 @@ void ConvolutionalLayerTest::test_insert_padding()
 }
 
 
+void ConvolutionalLayerTest::test_calculate_hidden_delta_perceptron_test()
+{
+    cout<< "calculate_hidden_delta_perceptron_test"<<endl;
+
+    // Current layer's values
+
+    const Index images_number = 2;
+    const Index kernels_number = 2;
+    const Index output_rows_number = 4;
+    const Index output_columns_number = 4;
+
+
+    // Next layer's values
+
+    const Index neurons_perceptron = 3;
+
+    PerceptronLayer perceptronlayer(kernels_number*output_rows_number*output_columns_number,
+                                    neurons_perceptron, PerceptronLayer::ActivationFunction::Linear);
+
+    convolutional_layer.set(Tensor<type, 4>(5,5,3,1), Tensor<type, 4>(2, 2, 3, kernels_number), Tensor<type, 1>());
+
+    PerceptronLayerForwardPropagation perceptron_layer_forward_propagate(images_number, &perceptronlayer);
+    PerceptronLayerBackPropagation perceptron_layer_backpropagate(images_number, &perceptronlayer);
+    ConvolutionalLayerBackPropagation convolutional_layer_backpropagate(images_number, &convolutional_layer);
+
+
+    // initialize
+
+    Tensor<float,2> synaptic_weights_perceptron(kernels_number * output_rows_number * output_columns_number,
+                                                neurons_perceptron);
+
+    for(int i=0; i<kernels_number * output_rows_number * output_columns_number*neurons_perceptron; i++)
+    {
+        Index neuron_value = i / (kernels_number * output_rows_number * output_columns_number);
+
+        *(synaptic_weights_perceptron.data() + i) = 1.0 * neuron_value;
+    }
+
+    perceptron_layer_backpropagate.delta.setValues({{1,1,1},
+                                                    {2,2,2}});
+
+    perceptronlayer.set_synaptic_weights(synaptic_weights_perceptron);
+
+
+    convolutional_layer.calculate_hidden_delta_perceptron(&perceptron_layer_forward_propagate,
+                                                          &perceptron_layer_backpropagate,
+                                                          &convolutional_layer_backpropagate);
+
+    cout<<convolutional_layer_backpropagate.delta<<endl;
+
+}
 
 
 
 void ConvolutionalLayerTest::test_memcpy_approach()
 {
 
-//    const int images_number = 1;
-//    const int kernel_number = 1;
+    const int images_number = 1;
+    const int kernel_number = 1;
 
-//    const int channel = 3;
+    const int channel = 3;
 
-//    const int rows_input = 4;
-//    const int cols_input = 4;
+    const int rows_input = 4;
+    const int cols_input = 4;
 
-//    const int kernel_rows = 2;
-//    const int kernel_cols = 2;
+    const int kernel_rows = 2;
+    const int kernel_cols = 2;
 
-//    Tensor<type, 4> input(rows_input, cols_input, channel, images_number);
-//    Tensor<type, 4> kernel(kernel_rows, kernel_cols, channel, kernel_number);
-//    Tensor<type, 4> result((rows_input-kernel_rows)+1,
-//                           (cols_input-kernel_cols)+1,
-//                            kernel_number,
-//                            images_number);
+    Tensor<type, 4> input(rows_input, cols_input, channel, images_number);
+    Tensor<type, 4> kernel(kernel_rows, kernel_cols, channel, kernel_number);
+    Tensor<type, 4> result((rows_input-kernel_rows)+1,
+                           (cols_input-kernel_cols)+1,
+                            kernel_number,
+                            images_number);
 
-//    Tensor<type, 3> tmp_result((rows_input-kernel_rows)+1,
-//                               (cols_input-kernel_cols)+1,
-//                               1);
+    Tensor<type, 3> tmp_result((rows_input-kernel_rows)+1,
+                               (cols_input-kernel_cols)+1,
+                               1);
 
-//    const Index output_size_rows_cols = ((rows_input-kernel_rows)+1)*((cols_input-kernel_cols)+1);
+    const Index output_size_rows_cols = ((rows_input-kernel_rows)+1)*((cols_input-kernel_cols)+1);
 
-////    float* ptr_result = (float*) malloc(output_size_rows_cols*kernel_number*images_number*sizeof(float));
+    float* ptr_result = (float*) malloc(output_size_rows_cols*kernel_number*images_number*sizeof(float));
 
-//    input.setConstant(1.0);
+    input.setConstant(1.0);
 
-//    input.chip(0,2).setConstant(1.);
-//    input.chip(1,2).setConstant(2.);
-//    input.chip(2,2).setConstant(3.);
+    input.chip(0,2).setConstant(1.);
+    input.chip(1,2).setConstant(2.);
+    input.chip(2,2).setConstant(3.);
 
-//    kernel.setConstant(type(1./12.));
-//    kernel.chip(1,3).setConstant(type(1./6.));
+    kernel.setConstant(type(1./12.));
+    kernel.chip(1,3).setConstant(type(1./6.));
 
-//    time_t beginning_time;
-//    time_t current_time;
-//    time(&beginning_time);
-//    type elapsed_time = type(0);
+    time_t beginning_time;
+    time_t current_time;
+    time(&beginning_time);
+    type elapsed_time = type(0);
 
-//    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
+    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
 
-//    #pragma omp parallel for
-//    for(int i =0; i<images_number ;i++)
-//    {
-//        const Index next_image = input.dimension(0)*input.dimension(1)*input.dimension(2);
+    #pragma omp parallel for
+    for(int i =0; i<images_number ;i++)
+    {
+        const Index next_image = input.dimension(0)*input.dimension(1)*input.dimension(2);
 
-//        const TensorMap<Tensor<type, 3>> single_image(input.data()+i*next_image, input.dimension(0), input.dimension(1), input.dimension(2));
+        const TensorMap<Tensor<type, 3>> single_image(input.data()+i*next_image, input.dimension(0), input.dimension(1), input.dimension(2));
 
-//        for(int j =0; j<kernel_number; j++)
-//        {
-//            const Index next_kernel = kernel.dimension(0)*kernel.dimension(1)*kernel.dimension(2);
+        for(int j =0; j<kernel_number; j++)
+        {
+            const Index next_kernel = kernel.dimension(0)*kernel.dimension(1)*kernel.dimension(2);
 
-//            const TensorMap<Tensor<type, 3>> single_kernel(kernel.data()+j*next_kernel , kernel.dimension(0), kernel.dimension(1), kernel.dimension(2));
+            const TensorMap<Tensor<type, 3>> single_kernel(kernel.data()+j*next_kernel , kernel.dimension(0), kernel.dimension(1), kernel.dimension(2));
 
-//            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims);
+            Tensor<type, 3> tmp_result = single_image.convolve(single_kernel, dims);
 
-//            memcpy(result.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
-//                   tmp_result.data(), output_size_rows_cols*sizeof(float));
-//         }
-//    }
-
-//    cout<<result<<endl;
-//    cout<<"bye world";
-
-//    time(&current_time);
-
-//    result.data() == ptr_result;
-
-//    Tensor<float, 3> t_3d(2, 3, 4);
-
-//    TensorMap<Tensor<int, 4>> t_4d(ptr_result, 2, 4, 2, 8);
-
-//    TensorMap<Tensor<float, 1>> t_12(ptr_result, 12);
-
-
-
-//    Tensor<float, 3> r(ptr_result, rows_input-kernel_rows)+1, cols_input-kernel_cols)+1, kernel_number, images_number);
-
-
-//            result_(ptr_result,((rows_input-kernel_rows)+1,
-//                                         (cols_input-kernel_cols)+1,
-//                                                kernel_number,
-//                                                images_number));
-
-//    elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
-//    cout<<"elapsed_time with memcpy approach: " << elapsed_time<<endl;
-
-    // Chip
-
-//    Tensor<type, 4> input_2(images_number, channel, rows_input, cols_input);
-//    Tensor<type, 4> kernel_2(kernel_number, channel, kernel_rows, kernel_cols);
-//    Tensor<type, 4> result_2(images_number,
-//                             kernel_number,
-//                            (rows_input-kernel_rows)+1,
-//                            (cols_input-kernel_cols)+1);
-
-//    input_2.setConstant(1.0);
-
-//    input_2.chip(0,1).setConstant(1.);
-//    input_2.chip(1,1).setConstant(2.);
-//    input_2.chip(2,1).setConstant(3.);
-
-//    kernel_2.setConstant(type(1./12.));
-//    kernel_2.chip(1,0).setConstant(type(1./6.));
-
-//    Tensor<type, 3> kernel_tmp;
-
-
-
-//    time_t beginning_time_2;
-//    time_t current_time_2;
-//    time(&beginning_time_2);
-//    type elapsed_time_2 = type(0);
-
-//    #pragma omp parallel for
-//    for(Index i = 0; i < images_number; i++)
-//    {
-//        for(Index j = 0; j < kernel_number; j++)
-//        {
-//            kernel_tmp = kernel_2.chip(j, 0);
-
-//            result_2.chip(i, 0).chip(j, 0) = input_2.chip(i, 0).convolve(kernel_tmp, dims);
-//        }
-//    }
-
-//    time(&current_time_2);
-
-//    elapsed_time_2 = static_cast<type>(difftime(current_time_2, beginning_time_2));
-
-//        cout<<result_2(0, 0, 0, 0)<<endl;
-//        cout<<result_2(0, 1, 0, 0)<<endl;
-
-//    cout<<"elapsed_time with chip approach: " << elapsed_time_2<<endl;
-
+            memcpy(result.data() +j*output_size_rows_cols +i*output_size_rows_cols*kernel_number,
+                   tmp_result.data(), output_size_rows_cols*sizeof(float));
+         }
+    }
 }
 
 void ConvolutionalLayerTest::run_test_case()
@@ -1027,6 +1061,7 @@ void ConvolutionalLayerTest::run_test_case()
 
    test_calculate_combinations();
    test_calculate_average_pooling_outputs();
+   test_calculate_max_pooling_outputs();
 
    // Activation
 
@@ -1044,6 +1079,10 @@ void ConvolutionalLayerTest::run_test_case()
    // Forward propagate
 
    test_forward_propagate();
+
+   // Back_propagate
+
+   test_calculate_hidden_delta_perceptron_test();
 
    //Utils
    test_memcpy_approach();

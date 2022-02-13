@@ -24,6 +24,7 @@
 
 #include "layer.h"
 #include "config.h"
+#include "perceptron_layer.h"
 
 namespace opennn
 {
@@ -180,11 +181,17 @@ public:
 //                                          const Tensor<type, 2>&,
 //                                          Tensor<type, 2>&) const;
 
-//   void calculate_hidden_delta_probabilistic(ProbabilisticLayer*,
-//                                             const Tensor<type, 4>&,
-//                                             const Tensor<type, 4>&,
-//                                             const Tensor<type, 2>&,
-//                                             Tensor<type, 2>&) const;
+   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
+                                          PerceptronLayerBackPropagation*,
+                                          ConvolutionalLayerBackPropagation*) const;
+
+
+
+   void calculate_hidden_delta_probabilistic(ProbabilisticLayer*,
+                                             const Tensor<type, 4>&,
+                                             const Tensor<type, 4>&,
+                                             const Tensor<type, 2>&,
+                                             Tensor<type, 2>&) const;
 
    // Gradient methods
 
@@ -278,8 +285,6 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
 struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 {
-    const Index neurons_number = layer_pointer->get_neurons_number();
-    const Index inputs_nmumber = layer_pointer->get_inputs_number();
 
     explicit ConvolutionalLayerBackPropagation() : LayerBackPropagation()
     {
@@ -295,14 +300,35 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
     {
+        layer_pointer = new_layer_pointer;
+        batch_samples_number = new_batch_samples_number;
+
+        const Index kernels_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_kernels_number();
+        const Index outputs_rows_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_rows_number();
+        const Index outputs_columns_number = static_cast<ConvolutionalLayer*>(layer_pointer)->get_outputs_columns_number();
+
+        delta.resize(batch_samples_number, kernels_number*outputs_rows_number*outputs_columns_number);
+
+//        biases_derivatives.resize(neurons_number);
+
+//        synaptic_weights_derivatives.resize(inputs_number, neurons_number);
     }
 
 
     void print() const
     {
+        cout << "Delta:" << endl;
+        cout << delta << endl;
+
+//        cout << "Biases derivatives:" << endl;
+//        cout << biases_derivatives << endl;
+
+//        cout << "Synaptic weights derivatives:" << endl;
+//        cout << synaptic_weights_derivatives << endl;
+
     }
 
-    Tensor<type, 4> delta;
+    Tensor<type, 2> delta;
 
     Tensor<type, 4> biases_derivatives;
 
@@ -311,6 +337,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
 
 }
+
 
 #endif
 
