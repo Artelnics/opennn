@@ -34,9 +34,9 @@ vector<float> perceptron_layer_1(const vector<float>& inputs)
 {
 	vector<float> combinations(3);
 
-	combinations[0] = 2.14189 +0.343375*inputs[0] +0.510552*inputs[1] -2.16868*inputs[2] -1.93392*inputs[3];
-	combinations[1] = -0.674671 -0.416695*inputs[0] +0.523179*inputs[1] -0.780689*inputs[2] -0.657976*inputs[3];
-	combinations[2] = 0.676832 +0.417168*inputs[0] -0.522941*inputs[1] +0.787032*inputs[2] +0.653458*inputs[3];
+	combinations[0] = -0.648513 -0.310869*inputs[0] +0.46917*inputs[1] -0.8179*inputs[2] -0.712404*inputs[3];
+	combinations[1] = -0.645249 -0.301602*inputs[0] +0.468052*inputs[1] -0.819502*inputs[2] -0.717822*inputs[3];
+	combinations[2] = -2.53433 -0.717074*inputs[0] -0.212808*inputs[1] +3.04323*inputs[2] +1.531*inputs[3];
 
 	vector<float> activations(3);
 
@@ -51,9 +51,9 @@ vector<float> probabilistic_layer(const vector<float>& inputs)
 {
 	vector<float> combinations(3);
 
-	combinations[0] = 0.441093 +0.748966*inputs[0] +1.89169*inputs[1] -1.89054*inputs[2];
-	combinations[1] = -0.722887 +2.75127*inputs[0] -1.34015*inputs[1] +1.34516*inputs[2];
-	combinations[2] = 0.283306 -3.4998*inputs[0] -0.552822*inputs[1] +0.547124*inputs[2];
+	combinations[0] = 0.440813 +1.91102*inputs[0] +1.90659*inputs[1] -0.784815*inputs[2];
+	combinations[1] = -0.758312 -1.31256*inputs[0] -1.311*inputs[1] -2.96961*inputs[2];
+	combinations[2] = 0.316884 -0.59882*inputs[0] -0.595287*inputs[1] +3.75488*inputs[2];
 
 	vector<float> activations(3);
 

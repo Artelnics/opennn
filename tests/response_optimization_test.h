@@ -28,6 +28,8 @@ public:
 
     // Set methods
 
+    void test_set();
+
     void test_set_evaluations_number();
 
     void test_set_input_condition();
@@ -58,9 +60,15 @@ private:
 
     NeuralNetwork neural_network;
 
+    NeuralNetwork neural_network_2;
+
     TrainingStrategy training_strategy;
 
-    void generate_neural_network(){
+    ResponseOptimization response_optimization;
+
+    void generate_neural_networks(){
+
+        // Simple outputs
 
         Tensor<type,2> data(2000,3);
         data.setRandom();
@@ -80,6 +88,39 @@ private:
                                      { data_set.get_input_variables_number(), 2, data_set.get_target_variables_number()});
 
         training_strategy.set(&neural_network, &data_set);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_display(false);
+        training_strategy.perform_training();
+
+        // Multiple outputs
+
+        data.resize(2000,4);
+        data.setRandom();
+
+        for(Index i = 0; i < data.dimension(0); i++)
+        {
+            data(i,2) = data(i,0) * data(i,0) + data(i,1) * data(i,1) + 1;
+            data(i,3) = data(i,0) * data(i,0) + data(i,1) * data(i,1) - 1;
+        }
+
+        data_set.set(data);
+
+        Tensor<string,1> names_2(4);
+        names_2.setValues({"x","y","z","t"});
+        data_set.set_variables_names(names_2);
+
+        Tensor<Index,1> inputs_index(2);
+        Tensor<Index,1> outputs_index(2);
+
+        inputs_index.setValues({0,1});
+        outputs_index.setValues({2,3});
+
+        data_set.set_input_target_columns(inputs_index,outputs_index);
+
+        neural_network_2.set(NeuralNetwork::ProjectType::Approximation,
+                                     { data_set.get_input_variables_number(), 2, data_set.get_target_variables_number()});
+
+        training_strategy.set(&neural_network_2, &data_set);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.set_display(false);
         training_strategy.perform_training();

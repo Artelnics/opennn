@@ -160,7 +160,7 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
         const Tensor<Index, 1> input_variables_dimensions = static_cast<FlattenLayer*>(layer_pointer)->get_input_variables_dimensions();
 
-        delta.resize(batch_samples_number, input_variables_dimensions(0), input_variables_dimensions(1), input_variables_dimensions(2));
+        delta.resize(input_variables_dimensions(2), input_variables_dimensions(1), input_variables_dimensions(0), batch_samples_number);
     }
 
 
