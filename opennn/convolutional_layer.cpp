@@ -298,6 +298,66 @@ void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerF
 }
 
 
+void ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation* next_forward_propagation,
+                                                           PerceptronLayerBackPropagation* next_back_propagation,
+                                                           ConvolutionalLayerBackPropagation* back_propagation) const
+{
+    // Current layer's values
+
+    ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(back_propagation->layer_pointer);
+
+    const Index images_number = back_propagation->batch_samples_number;
+    const Index kernels_number = convolutional_layer->get_kernels_number();
+    const Index output_rows_number = convolutional_layer->get_outputs_rows_number();
+    const Index output_columns_number = convolutional_layer->get_outputs_columns_number();
+
+    const Index size = back_propagation->delta.size();
+
+    // Next layer's values
+
+    const Index neurons_perceptron = next_forward_propagation->layer_pointer->get_neurons_number();
+
+    const Tensor<type,2> synaptic_weights_perceptron = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
+
+    Index hidden_input = 0;
+
+    for(Index tensor_index = 0; tensor_index < size; tensor_index++)
+    {
+        const Index image_index = tensor_index / (kernels_number * output_rows_number * output_columns_number);
+        const Index channel_index = (tensor_index / (output_rows_number * output_columns_number)) % kernels_number;
+
+        const Index column_index  = (tensor_index / output_rows_number) % output_columns_number ;
+        const Index row_index = tensor_index % output_rows_number;
+
+        hidden_input =  row_index + column_index*output_rows_number + channel_index*output_rows_number*output_columns_number;
+
+        type sum = 0.0;
+
+        for(Index sum_index = 0; sum_index < neurons_perceptron; sum_index++)
+        {
+            const type delta_element = next_back_propagation->delta(image_index, sum_index);
+
+            const type weight = synaptic_weights_perceptron (hidden_input, sum_index);
+            sum += delta_element * weight;
+
+        }
+
+        back_propagation->delta(image_index,
+                                row_index +
+                                column_index*output_rows_number +
+                                channel_index*output_rows_number*output_columns_number) = sum;
+        }
+
+    //    back_propagation->delta.device(*thread_pool_device) = back_propagation->delta * next_forward_propagation->activations_derivatives;
+
+    //    const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
+
+    //    back_propagation->delta.device(*thread_pool_device) =
+    //            (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
+     }
+
+
+
 //void ConvolutionalLayer::forward_propagate(const Tensor<type, 2>&inputs, LayerForwardPropagation* forward_propagation)
 //{
 //    const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
@@ -702,6 +762,7 @@ void ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer
 
 /// @todo
 
+
 void ConvolutionalLayer::calculate_hidden_delta_perceptron(const PerceptronLayer* next_layer_pointer,
                                                            const Tensor<type, 4>& ,
                                                            const Tensor<type, 2>& activations_derivatives,
@@ -719,11 +780,11 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(const PerceptronLayer
 
     // Perceptron layer
 
-    const Tensor<type, 2>& next_layer_weights = next_layer_pointer->get_synaptic_weights();
+//    const Tensor<type, 2>& next_layer_weights = next_layer_pointer->get_synaptic_weights();
 
-    hidden_delta = next_layer_delta.contract(next_layer_weights, A_BT);
+//    hidden_delta = next_layer_delta.contract(next_layer_weights, A_BT);
 
-    hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
+//    hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 
         // Next layer's values
 
@@ -760,7 +821,7 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(const PerceptronLayer
 //            hidden_delta(row_index, column_index + channel_index + image_index) = sum;
         }
 }
-
+*/
 
 void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer* next_layer_pointer,
                                                               const Tensor<type, 4>& activations,
@@ -809,10 +870,11 @@ void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer
 //            const type delta_element = next_layer_delta(image_index, sum_index);
 
 //            const type weight = next_layers_weights(sum_index,
-//                                                    channel_index + (row_index * kernels_number) + (column_index * kernels_number * output_rows_number));
+//                                                    channel_index +
+            //                                        (row_index * kernels_number) +
+//                                                    (column_index * kernels_number * output_rows_number));
 
             const type delta_element = next_layer_delta(image_index, sum_index);
-
 
             const type weight = next_layers_weights(channel_index + row_index + column_index,
                                                     sum_index);
@@ -821,14 +883,14 @@ void ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer
             sum += type(0);
         }
 
-//        hidden_delta(image_index, channel_index, row_index, column_index) = sum;
+//        hidden_delta(image_indexº, channel_index, row_index, column_index) = sum;
         hidden_delta(image_index, channel_index + row_index + column_index) = sum;
     }
 
     hidden_delta.device(*thread_pool_device) = hidden_delta * activations_derivatives;
 }
 
-*/
+
 void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
@@ -939,7 +1001,7 @@ ConvolutionalLayer::ActivationFunction ConvolutionalLayer::get_activation_functi
 
 Index ConvolutionalLayer::get_outputs_rows_number() const
 {
-    return (input_variables_dimensions(0) - get_kernels_rows_number()+1);
+    return (input_variables_dimensions(0) - get_kernels_rows_number() + 1);
 
     ///@todo padding
 
@@ -1419,7 +1481,7 @@ Index ConvolutionalLayer::get_synaptic_weights_number() const
 
 Index ConvolutionalLayer::get_inputs_channels_number() const
 {
-    return input_variables_dimensions[1];
+    return input_variables_dimensions[2];
 }
 
 
@@ -1427,7 +1489,7 @@ Index ConvolutionalLayer::get_inputs_channels_number() const
 
 Index ConvolutionalLayer::get_inputs_rows_number() const
 {
-    return input_variables_dimensions[2];
+    return input_variables_dimensions[0];
 }
 
 
@@ -1435,7 +1497,7 @@ Index ConvolutionalLayer::get_inputs_rows_number() const
 
 Index ConvolutionalLayer::get_inputs_columns_number() const
 {
-    return input_variables_dimensions[3];
+    return input_variables_dimensions[1];
 }
 
 

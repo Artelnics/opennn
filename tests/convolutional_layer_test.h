@@ -62,6 +62,10 @@ public:
 
   void test_forward_propagate();
 
+  //Back propagate
+
+  void test_calculate_hidden_delta_perceptron_test();
+
   // Utils
 
   void test_memcpy_approach();
