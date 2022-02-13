@@ -18,6 +18,12 @@ ResponseOptimization::ResponseOptimization()
 {
 }
 
+ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
+    : data_set_pointer(new_data_set_pointer)
+{
+    set(new_neural_network_pointer);
+}
+
 
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_pointer)
     : neural_network_pointer(new_neural_network_pointer)
@@ -51,30 +57,10 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
 }
 
 
-ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_pointer,DataSet* new_data_set_pointer)
-    : neural_network_pointer(new_neural_network_pointer),
-      data_set_pointer(new_data_set_pointer)
-    {
-        const Index inputs_number = data_set_pointer->get_input_columns_number();
-        const Index outputs_number = data_set_pointer->get_target_columns_number();
-
-        inputs_conditions.resize(inputs_number);
-        inputs_conditions.setConstant(Condition::None);
-
-        outputs_conditions.resize(outputs_number);
-        outputs_conditions.setConstant(Condition::None);
-
-        inputs_minimums = data_set_pointer->calculate_input_variables_minimums();
-        inputs_maximums = data_set_pointer->calculate_input_variables_maximums();
-
-        outputs_minimums = data_set_pointer->calculate_target_variables_minimums();
-        outputs_maximums = data_set_pointer->calculate_target_variables_maximums();
-}
-
-
-void ResponseOptimization::set_data_set(DataSet* new_data_set)
+void ResponseOptimization::set(NeuralNetwork* new_neural_network_pointer)
 {
-    data_set_pointer = new_data_set;
+    neural_network_pointer = new_neural_network_pointer;
+
     const Index inputs_number = neural_network_pointer->get_inputs_number();
     const Index outputs_number = neural_network_pointer->get_outputs_number();
 
@@ -98,8 +84,8 @@ void ResponseOptimization::set_data_set(DataSet* new_data_set)
     }
     else // Approximation and forecasting
     {
-        outputs_minimums = data_set_pointer->calculate_target_variables_minimums();
-        outputs_maximums = data_set_pointer->calculate_target_variables_maximums();
+        outputs_minimums = neural_network_pointer->get_bounding_layer_pointer()->get_lower_bounds();
+        outputs_maximums = neural_network_pointer->get_bounding_layer_pointer()->get_upper_bounds();
     }
 }
 
@@ -358,16 +344,6 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
         return;
 
     case Condition::None:
-
-        if(values.size() != 0)
-        {
-            buffer << "OpenNN Exception: ResponseOptimization class.\n"
-                   << "void set_output_condition() method.\n"
-                   << "For Maximum condition, size of values must be 0.\n";
-
-            throw invalid_argument(buffer.str());
-        }
-
         return;
 
     default:
@@ -386,7 +362,9 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     const Index variables_number = conditions_string.size();
 
-    const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
+    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
+
+    const Tensor<string, 1> outputs_names = data_set_pointer->get_target_variables_names();
 
     Index index;
 
@@ -398,7 +376,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
             set_input_condition(index, conditions[i], values_conditions[i]);
         }
-        else
+        else if(contains(outputs_names,names[i]))
         {
             index = neural_network_pointer->get_output_index(names[i]);
 
@@ -560,12 +538,74 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
+    inputs.setZero();
+
+    const int input_columns_number = data_set_pointer->get_input_columns_number();
+
+    Tensor<Index, 1> used_columns_indices = data_set_pointer->get_used_columns_indices();
 
     for(Index i = 0; i < evaluations_number; i++)
     {
-        for(Index j = 0; j < inputs_number; j++)
+        Index used_column_index = 0;
+
+        Index index = 0;
+
+        for(Index j = 0; j < input_columns_number; j++)
         {
-            inputs(i,j) = calculate_random_uniform(inputs_minimums[j], inputs_maximums[j]);
+            used_column_index = used_columns_indices(j);
+
+            DataSet::ColumnType column_type = data_set_pointer->get_column_type(used_column_index);
+
+            if(column_type == DataSet::ColumnType::Numeric || column_type == DataSet::ColumnType::Constant)
+            {
+                inputs(i,index) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
+                index++;
+            }
+
+            else if(column_type == DataSet::ColumnType::Binary)
+            {
+                if(inputs_conditions(index) == ResponseOptimization::Condition::EqualTo)
+                {
+                    inputs(i,index) = inputs_minimums[index];
+                }
+                else
+                {
+                    inputs(i,index) = rand() % 2;
+                }
+                index++;
+            }
+
+            else if(column_type == DataSet::ColumnType::Categorical)
+            {
+                Index categories_number = data_set_pointer->get_columns()(used_column_index).get_categories_number();
+                Index equal_index = -1;
+
+                for(Index k = 0; k < categories_number; k++)
+                {
+                    inputs(i,index + k) = 0;
+                    if(inputs_conditions(index + k) == ResponseOptimization::Condition::EqualTo)
+                    {
+                        inputs(i,index + k) = inputs_minimums(index +k);
+                        if(inputs(i, index + k) == 1)
+                        {
+                            equal_index = k;
+                        }
+                    }
+                }
+
+                if(equal_index == -1)
+                {
+                    Index random =  rand() % categories_number ;
+                    random =  rand() % categories_number ;
+                    inputs(i, index + random) = 1;
+                }
+                index+=(categories_number);
+            }
+            else
+            {
+                inputs(i,index) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
+                index++;
+            }
         }
     }
 

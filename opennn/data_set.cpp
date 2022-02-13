@@ -12,6 +12,7 @@ using namespace  opennn;
 using namespace std;
 using namespace fs;
 
+
 namespace opennn
 {
 
@@ -786,11 +787,12 @@ void DataSet::transform_time_series_columns()
         if(i < lags_number*columns_number)
         {
             new_columns(new_column_index).name = columns(column_index).name + "_lag_" + to_string(lag_index);
+
+            new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
             new_columns(new_column_index).set_use(VariableUse::Input);
 
             new_columns(new_column_index).type = columns(column_index).type;
             new_columns(new_column_index).categories = columns(column_index).categories;
-            new_columns(new_column_index).categories_uses = columns(column_index).categories_uses;
 
             new_column_index++;
         }
@@ -803,15 +805,13 @@ void DataSet::transform_time_series_columns()
 
             if(new_columns(new_column_index).type == ColumnType::Constant)
             {
-                new_columns(new_column_index).set_use(VariableUse::Unused);
                 new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
-                new_columns(new_column_index).categories_uses.setConstant(VariableUse::Unused);
+                new_columns(new_column_index).set_use(VariableUse::Unused);
             }
             else
             {
-                new_columns(new_column_index).set_use(VariableUse::Target);
                 new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
-                new_columns(new_column_index).categories_uses.setConstant(VariableUse::Target);
+                new_columns(new_column_index).set_use(VariableUse::Target);
             }
 
             new_column_index++;
@@ -2353,15 +2353,15 @@ Tensor<Index, 1> DataSet::get_unused_columns_indices() const
 
 Tensor<Index, 1> DataSet::get_used_columns_indices() const
 {
-    const Index variables_number = get_variables_number();
+    const Index columns_number = get_columns_number();
 
-    const Index used_variables_number = get_used_variables_number();
+    const Index used_columns_number = get_used_columns_number();
 
-    Tensor<Index, 1> used_indices(used_variables_number);
+    Tensor<Index, 1> used_indices(used_columns_number);
 
     Index index = 0;
 
-    for(Index i = 0; i < variables_number; i++)
+    for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).column_use  == VariableUse::Input
                 || columns(i).column_use  == VariableUse::Target
@@ -2773,6 +2773,27 @@ Index DataSet::get_columns_number() const
     return columns.size();
 }
 
+/// Returns the number of channels of the images in the data set.
+
+Index DataSet::get_channels_number() const
+{
+    return input_variables_dimensions[0];
+}
+
+/// Returns the width of the images in the data set.
+
+Index DataSet::get_image_width() const
+{
+    return input_variables_dimensions[1];
+}
+
+/// Returns the height of the images in the data set.
+
+Index DataSet::get_image_height() const
+{
+    return input_variables_dimensions[2];
+}
+
 /// Returns the number of columns in the time series.
 
 Index DataSet::get_time_series_columns_number() const
@@ -2797,7 +2818,7 @@ Index DataSet::get_variables_number() const
             variables_number++;
         }
     }
-   
+
     return variables_number;
 }
 
@@ -2837,7 +2858,10 @@ Index DataSet::get_input_variables_number() const
         {
             for(Index j = 0; j < columns(i).categories_uses.size(); j++)
             {
-                if(columns(i).categories_uses(j) == VariableUse::Input) inputs_number++;
+                if(columns(i).categories_uses(j) == VariableUse::Input)
+                {
+                    inputs_number++;
+                }
             }
         }
         else if(columns(i).column_use == VariableUse::Input)
@@ -2862,7 +2886,10 @@ Index DataSet::get_target_variables_number() const
         {
             for(Index j = 0; j < columns(i).categories_uses.size(); j++)
             {
-                if(columns(i).categories_uses(j) == VariableUse::Target) targets_number++;
+                if(columns(i).categories_uses(j) == VariableUse::Target)
+                {
+                    targets_number++;
+                }
             }
         }
         else if(columns(i).column_use == VariableUse::Target)
@@ -3211,7 +3238,7 @@ void DataSet::set_input_columns_unused()
 void DataSet::set_input_columns(const Tensor<Index, 1>& input_columns_indices, const Tensor<bool, 1>& input_columns_use)
 {
     for(Index i = 0; i < input_columns_indices.size(); i++)
-    {                
+    {
         if(input_columns_use(i)) set_column_use(input_columns_indices(i), VariableUse::Input);
         else set_column_use(input_columns_indices(i), VariableUse::Unused);
     }
@@ -3502,18 +3529,23 @@ void DataSet::set_binary_simple_columns()
 
                 if(values(0) == type(0) && values(1) == type(1))
                 {
-                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
-                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
                 }
                 else if(values(0) == type(1) && values(1) == type(0))
                 {
                     columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
                     columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
                 }
-                else
+                else if(values(0) > values(1))
                 {
                     columns(column_index).categories(0) = std::to_string(static_cast<int>(values(0)));
                     columns(column_index).categories(1) = std::to_string(static_cast<int>(values(1)));
+                }
+                else if(values(0) < values(1))
+                {
+                    columns(column_index).categories(0) = std::to_string(static_cast<int>(values(1)));
+                    columns(column_index).categories(1) = std::to_string(static_cast<int>(values(0)));
                 }
 
                 const VariableUse column_use = columns(column_index).column_use;
@@ -6051,7 +6083,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
     {
         const Index current_input_index_i = input_columns_indices(i);
 
-        const Tensor<type, 2> input_i = get_column_data(current_input_index_i);        
+        const Tensor<type, 2> input_i = get_column_data(current_input_index_i);
 
         cout << "Calculating " << columns(current_input_index_i).name << " correlations. " << endl;
 
@@ -6573,6 +6605,45 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("MissingValuesLabel");
 
         file_stream.PushText(missing_values_label.c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Channels
+
+    {
+        file_stream.OpenElement("Channels");
+
+        buffer.str("");
+        buffer << get_channels_number();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Width
+
+    {
+        file_stream.OpenElement("Width");
+
+        buffer.str("");
+        buffer << get_image_width();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Height
+
+    {
+        file_stream.OpenElement("Height");
+
+        buffer.str("");
+        buffer << get_image_height();
+
+        file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
     }
@@ -7867,7 +7938,7 @@ void DataSet::print_data_preview() const
 
 void DataSet::save_data() const
 {
-    ofstream file(data_file_name.c_str());
+    std::ofstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -7932,7 +8003,7 @@ void DataSet::save_data() const
 
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
-    ofstream file(binary_data_file_name.c_str(), ios::binary);
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
@@ -7981,7 +8052,7 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 void DataSet::save_time_series_data_binary(const string& binary_data_file_name) const
 {
-    ofstream file(binary_data_file_name.c_str(), ios::binary);
+    std::ofstream file(binary_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
     {
@@ -8046,7 +8117,7 @@ void DataSet::transform_time_series()
 
 void DataSet::load_data_binary()
 {
-    ifstream file;
+    std::ifstream file;
 
     file.open(data_file_name.c_str(), ios::binary);
 
@@ -8089,7 +8160,7 @@ void DataSet::load_data_binary()
 
 void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
-    ifstream file;
+    std::ifstream file;
 
     file.open(time_series_data_file_name.c_str(), ios::binary);
 
@@ -8133,7 +8204,7 @@ void DataSet::load_time_series_data_binary(const string& time_series_data_file_n
 
 void DataSet::check_input_csv(const string & input_data_file_name, const char & separator_char) const
 {
-    ifstream file(input_data_file_name.c_str());
+    std::ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -8208,7 +8279,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
                                         const bool& has_columns_name,
                                         const bool& has_rows_label) const
 {
-    ifstream file(input_data_file_name.c_str());
+    std::ifstream file(input_data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -9084,7 +9155,7 @@ Tensor<Index, 1> DataSet::calculate_local_outlier_factor_outliers(const Index& k
 
     Tensor<Index, 1> outlier_indexes;
 
-    contamination > type(0) 
+    contamination > type(0)
         ? outlier_indexes = select_outliers_via_contamination(LOF_value, contamination, true)
                         : outlier_indexes = select_outliers_via_standard_deviation(LOF_value, type(2.0), true);
 
@@ -9325,7 +9396,7 @@ Tensor<Index, 1> DataSet::calculate_isolation_forest_outliers(const Index& n_tre
 
     Tensor<Index, 1> outlier_indexes;
 
-    contamination > type(0) 
+    contamination > type(0)
             ? outlier_indexes = select_outliers_via_contamination(average_paths, contamination, false)
                       : outlier_indexes = select_outliers_via_standard_deviation(average_paths, type(2.0), false);
 
@@ -9449,7 +9520,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 /// Calculates the cross-correlation between all the variables in the data set.
 
 Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) const
-{    
+{
     const Index samples_number = time_series_data.dimension(0);
 
     if(lags_number > samples_number)
@@ -9473,7 +9544,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     const Index input_target_columns_number = input_columns_number + target_columns_number;
 
     const Tensor<Index, 1> input_columns_indices = get_input_time_series_columns_indices();
-    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();        
+    const Tensor<Index, 1> target_columns_indices = get_target_time_series_columns_indices();
 
     Index input_target_numeric_column_number = 0;
     int counter = 0;
@@ -9481,7 +9552,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     for(Index i = 0; i < input_target_columns_number; i++)
     {
         if(i < input_columns_number)
-        {            
+        {
             const Index column_index = input_columns_indices(i);
 
             const ColumnType input_column_type = time_series_columns(column_index).type;
@@ -9575,7 +9646,6 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
     return cross_correlations;
 }
-
 
 /// Generates an artificial data_set with a given number of samples and number of variables
 /// by constant data.
@@ -9982,13 +10052,31 @@ void DataSet::read_bmp()
     vector<fs::path> folder_paths;
     vector<fs::path> image_paths;
 
-    for (const auto & entry : fs::directory_iterator(path)){
+    for (const auto & entry : fs::directory_iterator(path))
+    {
         folder_paths.emplace_back(entry.path().string());
     }
 
     for (Index i = 0 ; i < folder_paths.size() ; i++){
-        for (const auto & entry : fs::directory_iterator(folder_paths[i])){
+        for (const auto & entry : fs::directory_iterator(folder_paths[i]))
+        {
             image_paths.emplace_back(entry.path().string());
+        }
+    }
+
+    for(Index i = 0; i < image_paths.size(); i++)
+    {
+        if(image_paths[i].extension() != ".bmp")
+        {
+            fs::remove_all(image_paths[i]);
+
+//            ostringstream buffer;
+
+//            buffer << "OpenNN Exception: DataSet class.\n"
+//                   << "void read_bmp() method.\n"
+//                   << "Non-bmp data file format found and deleted. Try to run the program again.\n";
+
+//            throw invalid_argument(buffer.str());
         }
     }
 
@@ -10001,10 +10089,29 @@ void DataSet::read_bmp()
         images_number += number_of_elements_in_directory(folder_paths[i]);
     }
 
+    string info_img;
+    vector<unsigned char> image;
+    Index image_size;
+    Index size_comprobation = 0;
 
-    string info_img = image_paths[0].u8string();
-    vector<unsigned char> image = read_bmp_image(info_img);
-    Index image_size = image.size();
+    for(Index i = 0; i < image_paths.size(); i++)
+    {
+        info_img = image_paths[i].u8string();
+        image = read_bmp_image(info_img);
+        image_size = image.size();
+        size_comprobation += image_size;
+    }
+
+    if(image_size != size_comprobation/image_paths.size())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_bmp() method.\n"
+               << "Some images of the dataset have different channel number, width and/or height.\n";
+
+        throw invalid_argument(buffer.str());
+    }
 
     FILE* f = fopen(info_img.data(), "rb");
 
@@ -10013,12 +10120,14 @@ void DataSet::read_bmp()
     fread(info, sizeof(unsigned char), 54, f);
     const int width = *(int*)&info[18];
     const int height = *(int*)&info[22];
+
     const int bits_per_pixel = *(int*)&info[28];
     int channels;
 
     bits_per_pixel == 24 ? channels = 3 : channels = 1;
 
     data.resize(images_number, image_size + classes_number);
+
     data.setZero();
 
     rows_labels.resize(images_number);
@@ -10045,7 +10154,7 @@ void DataSet::read_bmp()
             for(Index k = 0; k < image_size; k++)
             {
                 data(row_index, k) = static_cast<type>(image[k]);
-//                cout<< data(row_index, k) <<" ";
+//                cout << data(row_index, k) << " ";
             }
 
             data(row_index, image_size + i) = 1;
@@ -10094,9 +10203,9 @@ void DataSet::read_bmp()
     }else if(classes_number == 2)
     {
         Index new_classes_number = 1;
-        Tensor<string, 1> categories(new_classes_number);
 
-        categories(0) = "Positive";
+        Tensor<string, 1> categories(new_classes_number);
+        categories(0) = "True";
 
         columns(image_size).categories = categories;
         columns(image_size).column_use = VariableUse::Target;
@@ -10162,7 +10271,7 @@ void DataSet::read_csv_1()
         throw invalid_argument(buffer.str());
     }
 
-    ifstream file(data_file_name.c_str());
+    std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10188,7 +10297,7 @@ void DataSet::read_csv_1()
     Index lines_count = 0;
 
     while(file.good())
-    {        
+    {
         getline(file, line);
 
         trim(line);
@@ -10311,7 +10420,7 @@ void DataSet::read_csv_1()
 
 void DataSet::read_csv_2_simple()
 {
-    ifstream file(data_file_name.c_str());
+    std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10401,7 +10510,7 @@ void DataSet::read_csv_2_simple()
 
 void DataSet::read_csv_3_simple()
 {
-    ifstream file(data_file_name.c_str());
+    std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10512,7 +10621,7 @@ void DataSet::read_csv_3_simple()
 
 void DataSet::read_csv_2_complete()
 {
-    ifstream file(data_file_name.c_str());
+    std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -10635,10 +10744,10 @@ void DataSet::read_csv_2_complete()
 
     const Index samples_number = static_cast<unsigned>(lines_count);
 
-    const Index variables_number = get_variables_number();   
+    const Index variables_number = get_variables_number();
 
     data.resize(static_cast<Index>(samples_number), variables_number);
-    data.setZero();    
+    data.setZero();
 
     if(has_rows_labels) rows_labels.resize(samples_number);
 
@@ -10648,13 +10757,13 @@ void DataSet::read_csv_2_complete()
 
     samples_uses.setConstant(SampleUse::Training);
 
-    split_samples_random();  
+    split_samples_random();
 }
 
 
 void DataSet::read_csv_3_complete()
 {
-    ifstream file(data_file_name.c_str());
+    std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
     {
@@ -11251,13 +11360,13 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         {
             index = 0;
 
-            for(Index channel = 0; channel < channels_number; channel++)
+            for(Index row = 0; row < rows_number; row++)
             {
-                for(Index row = 0; row < rows_number; row++)
+                for(Index col = 0; col < columns_number; col++)
                 {
-                    for(Index col = 0; col < columns_number; col++)
+                    for(Index channel = 0; channel < channels_number; channel++)
                     {
-                        inputs_4d(image, channel, row, col) = data(image, index);
+                        inputs_4d(row, col, channel, image) = data(image, index);
 //                        inputs_4d(row, col,channel,image) = data(image, index);
 //                        cout << "Index: " << index << " " << data(image, index) << endl;
                         index++;
@@ -11299,7 +11408,7 @@ void DataSetBatch::set(const Index& new_batch_size, DataSet* new_data_set_pointe
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
 
-        inputs_4d.resize(batch_size, channels_number, rows_number, columns_number);
+        inputs_4d.resize(rows_number, columns_number, channels_number,batch_size);
    }
 
     targets_2d.resize(batch_size, target_variables_number);
