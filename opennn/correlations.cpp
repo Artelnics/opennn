@@ -375,8 +375,15 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     linear_correlation.correlation_type = CorrelationMethod::Linear;
 
+    if(is_constant(x))
+    {
+        cout << "X is constant." << endl;
+    }
+
     if(is_constant(y))
     {
+        cout << "Y is constant." << endl;
+
         linear_correlation.a = y(0);
         linear_correlation.b = type(0);
         linear_correlation.r = type(1);
@@ -517,9 +524,15 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     training_strategy.set_display(false);
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+
+
     training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+
+//    training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
+//    training_strategy.get_weighted_squared_error_pointer()->set_weights();
+//    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
     training_strategy.perform_training();
 
