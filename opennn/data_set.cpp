@@ -2777,21 +2777,21 @@ Index DataSet::get_columns_number() const
 
 Index DataSet::get_channels_number() const
 {
-    return input_variables_dimensions[0];
+    return channels_number;
 }
 
 /// Returns the width of the images in the data set.
 
 Index DataSet::get_image_width() const
 {
-    return input_variables_dimensions[1];
+    return image_width;
 }
 
 /// Returns the height of the images in the data set.
 
 Index DataSet::get_image_height() const
 {
-    return input_variables_dimensions[2];
+    return image_height;
 }
 
 /// Returns the number of columns in the time series.
@@ -5077,6 +5077,20 @@ void DataSet::set_time_column(const string& new_time_column)
     time_column = new_time_column;
 }
 
+void DataSet::set_channels_number(const int& channels)
+{
+    channels_number = channels;
+}
+
+void DataSet::set_image_width(const int& width)
+{
+    image_width = width;
+}
+
+void DataSet::set_image_height(const int& height)
+{
+    image_height = height;
+}
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
@@ -6548,7 +6562,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("DataFile");
 
-    // File type ?
+    // File type
     {
         file_stream.OpenElement("FileType");
 
@@ -6610,7 +6624,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Channels
-
     {
         file_stream.OpenElement("Channels");
 
@@ -6623,7 +6636,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Width
-
     {
         file_stream.OpenElement("Width");
 
@@ -6636,7 +6648,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Height
-
     {
         file_stream.OpenElement("Height");
 
@@ -7074,6 +7085,66 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     else
     {
         set_missing_values_label("NA");
+    }
+
+    // Channels
+
+    const tinyxml2::XMLElement* channels_number_element = data_file_element->FirstChildElement("Channels");
+
+    if(!channels_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Channels number element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(channels_number_element->GetText())
+    {
+        const Index channels = static_cast<Index>(atoi(channels_number_element->GetText()));
+
+        set_channels_number(channels);
+    }
+
+    // Width
+
+    const tinyxml2::XMLElement* image_width_element = data_file_element->FirstChildElement("Width");
+
+    if(!image_width_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Image width element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(image_width_element->GetText())
+    {
+        const Index width = static_cast<Index>(atoi(image_width_element->GetText()));
+
+        set_image_width(width);
+    }
+
+    // Height
+
+    const tinyxml2::XMLElement* image_height_element = data_file_element->FirstChildElement("Height");
+
+    if(!image_height_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Image height element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(image_height_element->GetText())
+    {
+        const Index height = static_cast<Index>(atoi(image_height_element->GetText()));
+
+        set_image_height(height);
     }
 
     // Forecasting
@@ -10235,6 +10306,10 @@ void DataSet::read_bmp()
 
     samples_uses.resize(images_number);
     split_samples_random();
+
+    channels_number = channels;
+    image_width = width;
+    image_height = height;
 
     input_variables_dimensions.resize(3);
     input_variables_dimensions.setValues({channels, width, height});
