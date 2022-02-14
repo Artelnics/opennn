@@ -127,6 +127,7 @@ bool is_constant(const Tensor<type, 1>& vector)
     for(Index i = 0; i < size; i++)
     {
         if(isnan(vector(i))) continue;
+
         if(abs(first_not_nan_element - vector(i)) > numeric_limits<float>::min()) return false;
     }
 
