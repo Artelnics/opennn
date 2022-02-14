@@ -6623,41 +6623,41 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-//    // Channels
-//    {
-//        file_stream.OpenElement("Channels");
+    // Channels
+    {
+        file_stream.OpenElement("Channels");
 
-//        buffer.str("");
-//        buffer << get_channels_number();
+        buffer.str("");
+        buffer << get_channels_number();
 
-//        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(buffer.str().c_str());
 
-//        file_stream.CloseElement();
-//    }
+        file_stream.CloseElement();
+    }
 
-//    // Width
-//    {
-//        file_stream.OpenElement("Width");
+    // Width
+    {
+        file_stream.OpenElement("Width");
 
-//        buffer.str("");
-//        buffer << get_image_width();
+        buffer.str("");
+        buffer << get_image_width();
 
-//        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(buffer.str().c_str());
 
-//        file_stream.CloseElement();
-//    }
+        file_stream.CloseElement();
+    }
 
-//    // Height
-//    {
-//        file_stream.OpenElement("Height");
+    // Height
+    {
+        file_stream.OpenElement("Height");
 
-//        buffer.str("");
-//        buffer << get_image_height();
+        buffer.str("");
+        buffer << get_image_height();
 
-//        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(buffer.str().c_str());
 
-//        file_stream.CloseElement();
-//    }
+        file_stream.CloseElement();
+    }
 
     // Lags number
     {
@@ -7087,65 +7087,65 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         set_missing_values_label("NA");
     }
 
-//    // Channels
+    // Channels
 
-//    const tinyxml2::XMLElement* channels_number_element = data_file_element->FirstChildElement("Channels");
+    const tinyxml2::XMLElement* channels_number_element = data_file_element->FirstChildElement("Channels");
 
-//    if(!channels_number_element)
-//    {
-//        buffer << "OpenNN Exception: DataSet class.\n"
-//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//               << "Channels number element is nullptr.\n";
+    if(!channels_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Channels number element is nullptr.\n";
 
-//        throw invalid_argument(buffer.str());
-//    }
+        throw invalid_argument(buffer.str());
+    }
 
-//    if(channels_number_element->GetText())
-//    {
-//        const Index channels = static_cast<Index>(atoi(channels_number_element->GetText()));
+    if(channels_number_element->GetText())
+    {
+        const Index channels = static_cast<Index>(atoi(channels_number_element->GetText()));
 
-//        set_channels_number(channels);
-//    }
+        set_channels_number(channels);
+    }
 
-//    // Width
+    // Width
 
-//    const tinyxml2::XMLElement* image_width_element = data_file_element->FirstChildElement("Width");
+    const tinyxml2::XMLElement* image_width_element = data_file_element->FirstChildElement("Width");
 
-//    if(!image_width_element)
-//    {
-//        buffer << "OpenNN Exception: DataSet class.\n"
-//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//               << "Image width element is nullptr.\n";
+    if(!image_width_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Image width element is nullptr.\n";
 
-//        throw invalid_argument(buffer.str());
-//    }
+        throw invalid_argument(buffer.str());
+    }
 
-//    if(image_width_element->GetText())
-//    {
-//        const Index width = static_cast<Index>(atoi(image_width_element->GetText()));
+    if(image_width_element->GetText())
+    {
+        const Index width = static_cast<Index>(atoi(image_width_element->GetText()));
 
-//        set_image_width(width);
-//    }
+        set_image_width(width);
+    }
 
-//    // Height
+    // Height
 
-//    const tinyxml2::XMLElement* image_height_element = data_file_element->FirstChildElement("Height");
+    const tinyxml2::XMLElement* image_height_element = data_file_element->FirstChildElement("Height");
 
-//    if(!image_height_element)
-//    {
-//        buffer << "OpenNN Exception: DataSet class.\n"
-//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//               << "Image height element is nullptr.\n";
+    if(!image_height_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Image height element is nullptr.\n";
 
-//        throw invalid_argument(buffer.str());
-//    }
+        throw invalid_argument(buffer.str());
+    }
 
-//    if(image_height_element->GetText())
-//    {
-//        const Index height = static_cast<Index>(atoi(image_height_element->GetText()));
+    if(image_height_element->GetText())
+    {
+        const Index height = static_cast<Index>(atoi(image_height_element->GetText()));
 
-//        set_image_height(height);
-//    }
+        set_image_height(height);
+    }
 
     // Forecasting
 
