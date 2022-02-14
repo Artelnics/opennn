@@ -665,6 +665,10 @@ public:
    Index get_image_width() const;
    Index get_image_height() const;
 
+   void set_channels_number(const int&);
+   void set_image_width(const int&);
+   void set_image_height(const int&);
+
 
    // Data generation
 
@@ -867,6 +871,10 @@ private:
    static size_t number_of_elements_in_directory(const fs::path& path);
 
    static vector<unsigned char> read_bmp_image(const string& filename);
+
+   int channels_number;
+   int image_width;
+   int image_height;
 
    // Local Outlier Factor
 
