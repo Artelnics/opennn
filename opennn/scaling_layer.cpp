@@ -1213,46 +1213,67 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.PushAttribute("Index", int(i+1));
 
-        // Minimum
+//        // Minimum
 
-        file_stream.OpenElement("Minimum");
+//        file_stream.OpenElement("Minimum");
 
-        buffer.str("");
-        buffer << descriptives(i).minimum;
+//        buffer.str("");
+//        buffer << descriptives(i).minimum;
 
+//        file_stream.PushText(buffer.str().c_str());
+
+//        file_stream.CloseElement();
+
+//        // Maximum
+
+//        file_stream.OpenElement("Maximum");
+
+//        buffer.str("");
+//        buffer << descriptives(i).maximum;
+
+//        file_stream.PushText(buffer.str().c_str());
+
+//        file_stream.CloseElement();
+
+//        // Mean
+
+//        file_stream.OpenElement("Mean");
+
+//        buffer.str("");
+//        buffer << descriptives(i).mean;
+
+//        file_stream.PushText(buffer.str().c_str());
+
+//        file_stream.CloseElement();
+
+//        // Standard deviation
+
+//        file_stream.OpenElement("StandardDeviation");
+
+//        buffer.str("");
+//        buffer << descriptives(i).standard_deviation;
+
+//        file_stream.PushText(buffer.str().c_str());
+
+//        file_stream.CloseElement();
+
+        //Descriptives
+
+        file_stream.OpenElement("Descriptives");
+
+        buffer.str(""); buffer << descriptives(i).minimum;
         file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
 
-        file_stream.CloseElement();
-
-        // Maximum
-
-        file_stream.OpenElement("Maximum");
-
-        buffer.str("");
-        buffer << descriptives(i).maximum;
-
+        buffer.str(""); buffer << descriptives(i).maximum;
         file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
 
-        file_stream.CloseElement();
-
-        // Mean
-
-        file_stream.OpenElement("Mean");
-
-        buffer.str("");
-        buffer << descriptives(i).mean;
-
+        buffer.str(""); buffer << descriptives(i).mean;
         file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
 
-        file_stream.CloseElement();
-
-        // Standard deviation
-
-        file_stream.OpenElement("StandardDeviation");
-
-        buffer.str("");
-        buffer << descriptives(i).standard_deviation;
-
+        buffer.str(""); buffer << descriptives(i).standard_deviation;
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
@@ -1343,76 +1364,99 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
             throw invalid_argument(buffer.str());
         }
 
-        // Minimum
+//        // Minimum
 
-        const tinyxml2::XMLElement* minimum_element = scaling_neuron_element->FirstChildElement("Minimum");
+//        const tinyxml2::XMLElement* minimum_element = scaling_neuron_element->FirstChildElement("Minimum");
 
-        if(!minimum_element)
+//        if(!minimum_element)
+//        {
+//            buffer << "OpenNN Exception: ScalingLayer class.\n"
+//                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                   << "Minimum element " << i+1 << " is nullptr.\n";
+
+//            throw invalid_argument(buffer.str());
+//        }
+
+//        if(minimum_element->GetText())
+//        {
+//            descriptives[i].minimum = static_cast<type>(atof(minimum_element->GetText()));
+//        }
+
+//        // Maximum
+
+//        const tinyxml2::XMLElement* maximum_element = scaling_neuron_element->FirstChildElement("Maximum");
+
+//        if(!maximum_element)
+//        {
+//            buffer << "OpenNN Exception: ScalingLayer class.\n"
+//                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                   << "Maximum element " << i+1 << " is nullptr.\n";
+
+//            throw invalid_argument(buffer.str());
+//        }
+
+//        if(maximum_element->GetText())
+//        {
+//            descriptives[i].maximum = static_cast<type>(atof(maximum_element->GetText()));
+//        }
+
+//        // Mean
+
+//        const tinyxml2::XMLElement* mean_element = scaling_neuron_element->FirstChildElement("Mean");
+
+//        if(!mean_element)
+//        {
+//            buffer << "OpenNN Exception: ScalingLayer class.\n"
+//                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                   << "Mean element " << i+1 << " is nullptr.\n";
+
+//            throw invalid_argument(buffer.str());
+//        }
+
+//        if(mean_element->GetText())
+//        {
+//            descriptives[i].mean = static_cast<type>(atof(mean_element->GetText()));
+//        }
+
+//        // Standard deviation
+
+//        const tinyxml2::XMLElement* standard_deviation_element = scaling_neuron_element->FirstChildElement("StandardDeviation");
+
+//        if(!standard_deviation_element)
+//        {
+//            buffer << "OpenNN Exception: ScalingLayer class.\n"
+//                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+//                   << "Standard deviation element " << i+1 << " is nullptr.\n";
+
+//            throw invalid_argument(buffer.str());
+//        }
+
+//        if(standard_deviation_element->GetText())
+//        {
+//            descriptives[i].standard_deviation = static_cast<type>(atof(standard_deviation_element->GetText()));
+//        }
+
+        // Descriptives
+
+        const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
+
+        if(!descriptives_element)
         {
             buffer << "OpenNN Exception: ScalingLayer class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Minimum element " << i+1 << " is nullptr.\n";
+                   << "Descriptives element " << i+1 << " is nullptr.\n";
 
             throw invalid_argument(buffer.str());
         }
 
-        if(minimum_element->GetText())
+        if(descriptives_element->GetText())
         {
-            descriptives[i].minimum = static_cast<type>(atof(minimum_element->GetText()));
-        }
-
-        // Maximum
-
-        const tinyxml2::XMLElement* maximum_element = scaling_neuron_element->FirstChildElement("Maximum");
-
-        if(!maximum_element)
-        {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Maximum element " << i+1 << " is nullptr.\n";
-
-            throw invalid_argument(buffer.str());
-        }
-
-        if(maximum_element->GetText())
-        {
-            descriptives[i].maximum = static_cast<type>(atof(maximum_element->GetText()));
-        }
-
-        // Mean
-
-        const tinyxml2::XMLElement* mean_element = scaling_neuron_element->FirstChildElement("Mean");
-
-        if(!mean_element)
-        {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Mean element " << i+1 << " is nullptr.\n";
-
-            throw invalid_argument(buffer.str());
-        }
-
-        if(mean_element->GetText())
-        {
-            descriptives[i].mean = static_cast<type>(atof(mean_element->GetText()));
-        }
-
-        // Standard deviation
-
-        const tinyxml2::XMLElement* standard_deviation_element = scaling_neuron_element->FirstChildElement("StandardDeviation");
-
-        if(!standard_deviation_element)
-        {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Standard deviation element " << i+1 << " is nullptr.\n";
-
-            throw invalid_argument(buffer.str());
-        }
-
-        if(standard_deviation_element->GetText())
-        {
-            descriptives[i].standard_deviation = static_cast<type>(atof(standard_deviation_element->GetText()));
+            const char* new_descriptives_element = descriptives_element->GetText();
+            Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, '\\');
+            descriptives[i].minimum = static_cast<type>(stof(splitted_descriptives[0]));
+            descriptives[i].maximum = static_cast<type>(stof(splitted_descriptives[1]));
+            descriptives[i].mean = static_cast<type>(stof(splitted_descriptives[2]));
+            descriptives[i].standard_deviation = static_cast<type>(stof(splitted_descriptives[3]));
         }
 
         // Scaling method
