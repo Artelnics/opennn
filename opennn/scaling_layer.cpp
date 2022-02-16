@@ -835,9 +835,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
 Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
-    cout<<"Hey, I am here in the scaling layer 4d!!!"<<endl;
-
-    if(input_variables_dimensions.size() == 4)
+    if(inputs.rank() != 4)
     {
         ostringstream buffer;
 
@@ -848,9 +846,6 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
         throw invalid_argument(buffer.str());
     }
 
-
-    const Index neurons_number = get_neurons_number();
-
     Index rows = inputs.dimension(0);
     Index columns = inputs.dimension(1);
     Index channels = inputs.dimension(2);
@@ -858,10 +853,21 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 
     Tensor<type, 4> outputs(rows, columns, channels, images);
 
-    for(Index j = 0; j < neurons_number; j++)
+    for(Index i = 0; i<images; i++)
     {
-        outputs(j) = -static_cast<type>(1) + static_cast<type>(2*inputs(j)/255);
+        for(Index j = 0; j < rows; j++)
+        {
+            for(Index p = 0; p < columns; p++)
+            {
+                for(Index k = 0; k < channels; k++)
+                {
+                    outputs(j,p,k,i) = -static_cast<type>(1) + static_cast<type>(2*inputs(j,p,k,i)/255);
+                }
+            }
+        }
     }
+
+    cout << "outputs scaled" << endl;
 
     return outputs;
 }

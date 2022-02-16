@@ -1602,9 +1602,9 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs_4d)
 {
+    Tensor<type, 2> inputs_2d;
     Tensor<type, 4> outputs_4d;
     Tensor<type, 2> outputs;
-    Tensor<type, 2> inputs_2d;
 
     const Index layers_number = get_layers_number();   
 
@@ -1612,24 +1612,21 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs_4
 
     // First layer output
 
-//    outputs_4d = layers_pointers(0)->calculate_outputs_4d(inputs);
+    outputs_4d = layers_pointers(0)->calculate_outputs(inputs_4d); // Calculate outputs ScalingLayer
 
     for(Index i = 1; i < layers_number; i++)
-    {                
-        if(layers_pointers(i + 1)->get_type() == Layer::Type::Flatten)
+    {
+        if(layers_pointers(i)->get_type() == Layer::Type::Convolutional && layers_pointers(i)->get_type() == Layer::Type::Pooling)
         {
-            //outputs_4d = layers_pointers(i)->calculate_outputs_4D(outputs_4d);
+            outputs_4d = layers_pointers(i)->calculate_outputs(outputs_4d);
+        }
+        else if(layers_pointers(i)->get_type() == Layer::Type::Flatten)
+        {
+            outputs = layers_pointers(i)->calculate_outputs_2d(outputs_4d);
         }
         else
         {
-            if(layers_pointers(i)->get_type() != Layer::Type::Convolutional && layers_pointers(i)->get_type() != Layer::Type::Pooling)
-            {
-                outputs = layers_pointers(i)->calculate_outputs(outputs);
-            }
-            else
-            {
-                //outputs = layers_pointers(i)->calculate_outputs_from4D(outputs_4d);
-            }
+            outputs = layers_pointers(i)->calculate_outputs(outputs);
         }
     }
 

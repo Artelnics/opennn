@@ -96,6 +96,7 @@ void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 
 Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs)
 {
+//    cout << "Hi i am in the flaten layter calculate outputs 4d->2d!!" << endl;
     const Index batch = inputs.dimension(3);
     const Index channels = inputs.dimension(2);
     const Index heights = inputs.dimension(0);
