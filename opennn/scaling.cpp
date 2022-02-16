@@ -101,7 +101,6 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix,
     {
         matrix(i, column_index) = matrix(i, column_index)*slope + intercept;
     }
-
 }
 
 Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>& x)

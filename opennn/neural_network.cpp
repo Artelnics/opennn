@@ -1425,7 +1425,6 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         trainable_layers_pointers(i)
                 ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
                                                         forward_propagation.layers(i));
-
         break;
 
         case Layer::Type::LongShortTermMemory:
@@ -1537,7 +1536,8 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
             break;
         case Layer::Type::Flatten:
         {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs,
+            trainable_layers_pointers(i)
+                    ->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs,
                                                             potential_parameters,
                                                             forward_propagation.layers(i));
         }
@@ -1600,47 +1600,23 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 }
 
 
-Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
+Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs_4d)
 {
-#ifdef OPENNN_DEBUG
-
-    const Index inputs_dimensions_number = inputs.rank();
-
-    if(inputs_dimensions_number != 2 && inputs_dimensions_number != 4)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     Tensor<type, 4> outputs_4d;
     Tensor<type, 2> outputs;
     Tensor<type, 2> inputs_2d;
 
-    const Index layers_number = get_layers_number();
+    const Index layers_number = get_layers_number();   
 
     if(layers_number == 0) return inputs_2d;
 
     // First layer output
 
-    if(layers_pointers(1)->get_type() == Layer::Type::Convolutional)
-    {
-        //outputs_4d = layers_pointers(0)->calculate_outputs(inputs);
-    }
-    else
-    {
-        //outputs = layers_pointers(0)->calculate_outputs_from4D(inputs);
-    }
+//    outputs_4d = layers_pointers(0)->calculate_outputs_4d(inputs);
 
     for(Index i = 1; i < layers_number; i++)
-    {
-        if(layers_pointers(i + 1)->get_type() == Layer::Type::Convolutional)
+    {                
+        if(layers_pointers(i + 1)->get_type() == Layer::Type::Flatten)
         {
             //outputs_4d = layers_pointers(i)->calculate_outputs_4D(outputs_4d);
         }

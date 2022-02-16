@@ -6311,51 +6311,69 @@ void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives
 
 Tensor<Descriptives, 1> DataSet::scale_input_variables()
 {
-    const Index input_variables_number = get_input_variables_number();
+//    if(input_variables_dimensions.size() == 2)
+//    {
+        const Index input_variables_number = get_input_variables_number();
 
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-    const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
+        const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+        const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = calculate_input_variables_descriptives();
+        const Tensor<Descriptives, 1> input_variables_descriptives = calculate_input_variables_descriptives();
 
-    for(Index i = 0; i < input_variables_number; i++)
-    {
-        switch(input_variables_scalers(i))
+        for(Index i = 0; i < input_variables_number; i++)
         {
-        case Scaler::NoScaling:
-            // Do nothing
-        break;
+            switch(input_variables_scalers(i))
+            {
+            case Scaler::NoScaling:
+                // Do nothing
+            break;
 
-        case Scaler::MinimumMaximum:
-            scale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
-        break;
+            case Scaler::MinimumMaximum:
+                scale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
+            break;
 
-        case Scaler::MeanStandardDeviation:
-            scale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
-        break;
+            case Scaler::MeanStandardDeviation:
+                scale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+            break;
 
-        case Scaler::StandardDeviation:
-            scale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
-        break;
+            case Scaler::StandardDeviation:
+                scale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+            break;
 
-        case Scaler::Logarithm:
-            scale_logarithmic(data, input_variables_indices(i));
-        break;
+            case Scaler::Logarithm:
+                scale_logarithmic(data, input_variables_indices(i));
+            break;
 
-        default:
-        {
-            ostringstream buffer;
+            default:
+            {
+                ostringstream buffer;
 
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown scaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
+                buffer << "OpenNN Exception: DataSet class\n"
+                       << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
+                       << "Unknown scaling and unscaling method: " << int(input_variables_scalers(i)) << "\n";
 
-            throw invalid_argument(buffer.str());
+                throw invalid_argument(buffer.str());
+            }
+            }
         }
-        }
-    }
 
-    return input_variables_descriptives;
+        return input_variables_descriptives;
+//    }
+//    else if(input_variables_dimensions.size() == 4)
+//    {
+//        const Index input_variables_number = get_input_variables_number();
+//        Tensor<Descriptives, 1> input_variables_descriptives(input_variables_number);
+
+//        for(Index i = 0; i < input_variables_number; i++)
+//        {
+//            input_variables_descriptives(i).minimum = 0;
+//            input_variables_descriptives(i).maximum = 255;
+
+//            data(i) = - static_cast<type>(1)+ static_cast<type>(2*data(i)/255);
+//        }
+
+//        return input_variables_descriptives;
+//    }
 }
 
 
@@ -11442,7 +11460,6 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                     for(Index channel = 0; channel < channels_number; channel++)
                     {
                         inputs_4d(row, col, channel, image) = data(image, index);
-//                        inputs_4d(row, col,channel,image) = data(image, index);
 //                        cout << "Index: " << index << " " << data(image, index) << endl;
                         index++;
                     }

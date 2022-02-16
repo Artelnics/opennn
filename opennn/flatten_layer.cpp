@@ -27,6 +27,7 @@ FlattenLayer::FlattenLayer() : Layer()
 FlattenLayer::FlattenLayer(const Tensor<Index, 1>& new_input_variables_dimensions) : Layer()
 {
     input_variables_dimensions = new_input_variables_dimensions;
+    set(input_variables_dimensions);
 
     layer_type = Type::Flatten;
 }
@@ -84,6 +85,7 @@ Index FlattenLayer::get_parameters_number() const
 void FlattenLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 {
     input_variables_dimensions = new_inputs_dimensions;
+
 }
 
 
