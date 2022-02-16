@@ -835,83 +835,32 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
 Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
-    Tensor<type, 4> outputs;
+    cout<<"Hey, I am here in the scaling layer 4d!!!"<<endl;
 
-        const Index neurons_number = get_neurons_number();
-
-#ifdef OPENNN_DEBUG
-
+    if(input_variables_dimensions.size() == 4)
+    {
         ostringstream buffer;
 
-        const Index columns_number = inputs.dimension(1) * inputs.dimension(2) * inputs.dimension(3);
+        buffer << "OpenNN Exception: ScalingLayer class\n"
+               << "Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) const method.\n"
+               << "Expecting a 4-dimension tensor.\n";
 
-        if(columns_number != neurons_number)
-        {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                   << "Size of inputs (" << columns_number << ") must be equal to number of scaling neurons (" << neurons_number << ").\n";
+        throw invalid_argument(buffer.str());
+    }
 
-            throw invalid_argument(buffer.str());
-        }
 
-#endif
+    const Index neurons_number = get_neurons_number();
 
-    const Index points_number = inputs.dimension(0);
+    Index rows = inputs.dimension(0);
+    Index columns = inputs.dimension(1);
+    Index channels = inputs.dimension(2);
+    Index images = inputs.dimension(3);
 
-    for(Index i = 0; i < points_number; i++)
+    Tensor<type, 4> outputs(rows, columns, channels, images);
+
+    for(Index j = 0; j < neurons_number; j++)
     {
-        for(Index j = 0; j < neurons_number; j++)
-        {
-            const Index channel_index = j%inputs.dimension(1);
-            const Index row_index = (j/(inputs.dimension(1)))%inputs.dimension(2);
-            const Index column_index = (j/(inputs.dimension(1) * inputs.dimension(2)))%inputs.dimension(3);
-
-            if(abs(descriptives(j).minimum - descriptives(j).maximum) < type(NUMERIC_LIMITS_MIN))
-            {
-                if(display)
-                {
-                    cout << "OpenNN Warning: ScalingLayer class.\n"
-                         << "Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const method.\n"
-                         << "Standard deviation of variable " << i << " is zero.\n"
-                         << "Those variables won't be scaled.\n";
-                }
-
-                outputs(j) = inputs(j);
-            }
-            else
-            {
-                if(scalers(j) == Scaler::NoScaling)
-                {
-                    outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index);
-                }
-                else if(scalers(j) == Scaler::MinimumMaximum)
-                {
-                    outputs(i, channel_index, row_index, column_index) = static_cast<type>(2)*(inputs(i, channel_index, row_index, column_index) - descriptives(j).minimum)/(descriptives(j).maximum-descriptives(j).minimum) - static_cast<type>(1);
-                }
-                else if(scalers(j) == Scaler::MeanStandardDeviation)
-                {
-                    outputs(i, channel_index, row_index, column_index) = (inputs(i, channel_index, row_index, column_index) - descriptives(j).mean)/descriptives(j).standard_deviation;
-                }
-                else if(scalers(j) == Scaler::StandardDeviation)
-                {
-                    outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index)/descriptives(j).standard_deviation;
-                }
-                else if(scalers(j) == Scaler::Logarithm)
-                {
-                    outputs(i, channel_index, row_index, column_index) = log(inputs(i, channel_index, row_index, column_index));
-                }
-                else
-                {
-                    ostringstream buffer;
-
-                    buffer << "OpenNN Exception: ScalingLayer class\n"
-                           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-                           << "Unknown scaling method.\n";
-
-                    throw invalid_argument(buffer.str());
-                }
-            }
-        }
+        outputs(j) = -static_cast<type>(1) + static_cast<type>(2*inputs(j)/255);
     }
 
     return outputs;
@@ -1259,24 +1208,27 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         //Descriptives
 
-        file_stream.OpenElement("Descriptives");
+        if(input_variables_dimensions.size() == 2)
+        {
+            file_stream.OpenElement("Descriptives");
 
-        buffer.str(""); buffer << descriptives(i).minimum;
-        file_stream.PushText(buffer.str().c_str());
-        file_stream.PushText("\\");
+            buffer.str(""); buffer << descriptives(i).minimum;
+            file_stream.PushText(buffer.str().c_str());
+            file_stream.PushText("\\");
 
-        buffer.str(""); buffer << descriptives(i).maximum;
-        file_stream.PushText(buffer.str().c_str());
-        file_stream.PushText("\\");
+            buffer.str(""); buffer << descriptives(i).maximum;
+            file_stream.PushText(buffer.str().c_str());
+            file_stream.PushText("\\");
 
-        buffer.str(""); buffer << descriptives(i).mean;
-        file_stream.PushText(buffer.str().c_str());
-        file_stream.PushText("\\");
+            buffer.str(""); buffer << descriptives(i).mean;
+            file_stream.PushText(buffer.str().c_str());
+            file_stream.PushText("\\");
 
-        buffer.str(""); buffer << descriptives(i).standard_deviation;
-        file_stream.PushText(buffer.str().c_str());
+            buffer.str(""); buffer << descriptives(i).standard_deviation;
+            file_stream.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
+            file_stream.CloseElement();
+        }
 
         // Scaler
 
@@ -1438,25 +1390,32 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         // Descriptives
 
-        const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
-
-        if(!descriptives_element)
+        if(input_variables_dimensions.size() == 2)
         {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Descriptives element " << i+1 << " is nullptr.\n";
+            const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
 
-            throw invalid_argument(buffer.str());
-        }
+            if(!descriptives_element)
+            {
+                buffer << "OpenNN Exception: ScalingLayer class.\n"
+                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Descriptives element " << i+1 << " is nullptr.\n";
 
-        if(descriptives_element->GetText())
+                throw invalid_argument(buffer.str());
+            }
+
+            if(descriptives_element->GetText())
+            {
+                const char* new_descriptives_element = descriptives_element->GetText();
+                Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, '\\');
+                descriptives[i].minimum = static_cast<type>(stof(splitted_descriptives[0]));
+                descriptives[i].maximum = static_cast<type>(stof(splitted_descriptives[1]));
+                descriptives[i].mean = static_cast<type>(stof(splitted_descriptives[2]));
+                descriptives[i].standard_deviation = static_cast<type>(stof(splitted_descriptives[3]));
+            }
+        }else
         {
-            const char* new_descriptives_element = descriptives_element->GetText();
-            Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, '\\');
-            descriptives[i].minimum = static_cast<type>(stof(splitted_descriptives[0]));
-            descriptives[i].maximum = static_cast<type>(stof(splitted_descriptives[1]));
-            descriptives[i].mean = static_cast<type>(stof(splitted_descriptives[2]));
-            descriptives[i].standard_deviation = static_cast<type>(stof(splitted_descriptives[3]));
+            descriptives[i].minimum = static_cast<type>(0);
+            descriptives[i].maximum = static_cast<type>(255);
         }
 
         // Scaling method
@@ -1472,7 +1431,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
             throw invalid_argument(buffer.str());
         }
 
-        string new_method = scaling_method_element->GetText();
+        const string new_method = scaling_method_element->GetText();
 
         if(new_method == "NoScaling" || new_method == "No Scaling")
         {

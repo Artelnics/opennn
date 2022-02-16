@@ -100,7 +100,6 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    {
    }
 
-
    // Constructor
 
    explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)

@@ -49,7 +49,6 @@ int main()
 
         DataSet data_set;
 //        data_set.set_data_file_name("//TRUENAS/Artelnics/Dipcam/Datasets/cancer-test_2/");
-//        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
         data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
 
         data_set.read_bmp();
@@ -68,6 +67,9 @@ int main()
 
         const Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
 
+        cout<<"Data set inputs dimensions: "<<input_variables_dimensions<<endl;
+        cout<<"Data set inputs dimensions size: "<<input_variables_dimensions.size()<<endl;
+
         // Data set batch
 
         const Index batch_size = 3;
@@ -78,11 +80,25 @@ int main()
 
         data_set_batch.fill(batches.chip(0, 0), input_variables_indices, target_variables_indices);
 
-        // Neural network
+        Tensor<Index, 1> input_dataset_batch_dimenison(4);
+        input_dataset_batch_dimenison(0) = data_set_batch.inputs_4d.dimension(0);
+        input_dataset_batch_dimenison(1) = data_set_batch.inputs_4d.dimension(1);
+        input_dataset_batch_dimenison(2) = data_set_batch.inputs_4d.dimension(2);
+        input_dataset_batch_dimenison(3) = data_set_batch.inputs_4d.dimension(3);
 
+//        cout << "Inputs variables dimensions: " << input_variables_dimensions << endl;
+//        cout << "Input dataset batch dimenison: " << input_dataset_batch_dimenison << endl;
+
+        // Neural network
+/*
         NeuralNetwork neural_network;
 
-        FlattenLayer flatten_layer(input_variables_dimensions);
+//        ScalingLayer scaling_layer(input_dataset_batch_dimenison);
+        ScalingLayer scaling_layer(input_dataset_batch_dimenison);
+
+        neural_network.add_layer(&scaling_layer);
+
+        FlattenLayer flatten_layer(input_dataset_batch_dimenison);
 
         neural_network.add_layer(&flatten_layer);
 
