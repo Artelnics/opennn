@@ -835,6 +835,8 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
 Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
+
+    cout<<"Hi"<<endl;
     if(inputs.rank() != 4)
     {
         ostringstream buffer;
@@ -853,7 +855,13 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 
     Tensor<type, 4> outputs(rows, columns, channels, images);
 
-    for(Index i = 0; i<images; i++)
+    for(Index i = 0; i < inputs.size(); i++)
+    {
+        outputs(i) = -static_cast<type>(1) + static_cast<type>(2*inputs(i)/255);
+    }
+
+/*
+    for(Index i = 0; i < images; i++)
     {
         for(Index j = 0; j < rows; j++)
         {
@@ -866,9 +874,7 @@ Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
             }
         }
     }
-
-    cout << "outputs scaled" << endl;
-
+*/
     return outputs;
 }
 
@@ -1214,27 +1220,25 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         //Descriptives
 
-        if(input_variables_dimensions.size() == 2)
-        {
-            file_stream.OpenElement("Descriptives");
 
-            buffer.str(""); buffer << descriptives(i).minimum;
-            file_stream.PushText(buffer.str().c_str());
-            file_stream.PushText("\\");
+        file_stream.OpenElement("Descriptives");
 
-            buffer.str(""); buffer << descriptives(i).maximum;
-            file_stream.PushText(buffer.str().c_str());
-            file_stream.PushText("\\");
+        buffer.str(""); buffer << descriptives(i).minimum;
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
 
-            buffer.str(""); buffer << descriptives(i).mean;
-            file_stream.PushText(buffer.str().c_str());
-            file_stream.PushText("\\");
+        buffer.str(""); buffer << descriptives(i).maximum;
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
 
-            buffer.str(""); buffer << descriptives(i).standard_deviation;
-            file_stream.PushText(buffer.str().c_str());
+        buffer.str(""); buffer << descriptives(i).mean;
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
 
-            file_stream.CloseElement();
-        }
+        buffer.str(""); buffer << descriptives(i).standard_deviation;
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
 
         // Scaler
 
@@ -1396,33 +1400,33 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         // Descriptives
 
-        if(input_variables_dimensions.size() == 2)
+//        if(input_variables_dimensions.size() == 2)
+//        {
+        const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
+
+        if(!descriptives_element)
         {
-            const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
+            buffer << "OpenNN Exception: ScalingLayer class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Descriptives element " << i+1 << " is nullptr.\n";
 
-            if(!descriptives_element)
-            {
-                buffer << "OpenNN Exception: ScalingLayer class.\n"
-                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Descriptives element " << i+1 << " is nullptr.\n";
-
-                throw invalid_argument(buffer.str());
-            }
-
-            if(descriptives_element->GetText())
-            {
-                const char* new_descriptives_element = descriptives_element->GetText();
-                Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, '\\');
-                descriptives[i].minimum = static_cast<type>(stof(splitted_descriptives[0]));
-                descriptives[i].maximum = static_cast<type>(stof(splitted_descriptives[1]));
-                descriptives[i].mean = static_cast<type>(stof(splitted_descriptives[2]));
-                descriptives[i].standard_deviation = static_cast<type>(stof(splitted_descriptives[3]));
-            }
-        }else
-        {
-            descriptives[i].minimum = static_cast<type>(0);
-            descriptives[i].maximum = static_cast<type>(255);
+            throw invalid_argument(buffer.str());
         }
+
+        if(descriptives_element->GetText())
+        {
+            const char* new_descriptives_element = descriptives_element->GetText();
+            Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, '\\');
+            descriptives[i].minimum = static_cast<type>(stof(splitted_descriptives[0]));
+            descriptives[i].maximum = static_cast<type>(stof(splitted_descriptives[1]));
+            descriptives[i].mean = static_cast<type>(stof(splitted_descriptives[2]));
+            descriptives[i].standard_deviation = static_cast<type>(stof(splitted_descriptives[3]));
+        }
+//        }else
+//        {
+//            descriptives[i].minimum = static_cast<type>(0);
+//            descriptives[i].maximum = static_cast<type>(255);
+//        }
 
         // Scaling method
 
