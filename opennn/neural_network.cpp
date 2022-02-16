@@ -755,6 +755,12 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
         this->add_layer(bounding_layer_pointer);
     }
+    else if(model_type == ProjectType::ImageClassification)
+    {
+
+
+    }
+
 
     outputs_names.resize(outputs_number);
 
@@ -1836,10 +1842,12 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Layers information
+    // Layers information    
 
     for(Index i = 0; i < layers_pointers.size(); i++)
     {
+//        if(has_convolutional_layer() && layers_pointers[i]->get_type() == Layer::Type::Scaling) continue;
+
         layers_pointers[i]->write_XML(file_stream);
     }
 

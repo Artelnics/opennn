@@ -6574,6 +6574,9 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
+    time_t start, finish;
+    time(&start);
+
     file_stream.OpenElement("DataSet");
 
     // Data file
@@ -6972,6 +6975,10 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Close data set
 
     file_stream.CloseElement();
+
+    time(&finish);
+
+    cout << "XML writing time: " << difftime(finish, start) << endl;
 }
 
 
