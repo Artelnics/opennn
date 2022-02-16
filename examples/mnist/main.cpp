@@ -67,12 +67,9 @@ int main()
 
         const Tensor<Index, 1> input_variables_dimensions = data_set.get_input_variables_dimensions();
 
-        cout<<"Data set inputs dimensions: "<<input_variables_dimensions<<endl;
-        cout<<"Data set inputs dimensions size: "<<input_variables_dimensions.size()<<endl;
-
         // Data set batch
 
-        const Index batch_size = 3;
+        const Index batch_size = 5;
 
         DataSetBatch data_set_batch(batch_size, &data_set);
 
@@ -81,19 +78,23 @@ int main()
         data_set_batch.fill(batches.chip(0, 0), input_variables_indices, target_variables_indices);
 
         Tensor<Index, 1> input_dataset_batch_dimenison(4);
+
         input_dataset_batch_dimenison(0) = data_set_batch.inputs_4d.dimension(0);
         input_dataset_batch_dimenison(1) = data_set_batch.inputs_4d.dimension(1);
         input_dataset_batch_dimenison(2) = data_set_batch.inputs_4d.dimension(2);
         input_dataset_batch_dimenison(3) = data_set_batch.inputs_4d.dimension(3);
 
-//        cout << "Inputs variables dimensions: " << input_variables_dimensions << endl;
-//        cout << "Input dataset batch dimenison: " << input_dataset_batch_dimenison << endl;
+        cout<<"input_dataset_batch_dimenison(0): "<<input_dataset_batch_dimenison(0)<<endl;
+        cout<<"input_dataset_batch_dimenison(1): "<<input_dataset_batch_dimenison(1)<<endl;
+        cout<<"input_dataset_batch_dimenison(2): "<<input_dataset_batch_dimenison(2)<<endl;
+        cout<<"input_dataset_batch_dimenison(3): "<<input_dataset_batch_dimenison(3)<<endl;
 
         // Neural network
-/*
+
         NeuralNetwork neural_network;
 
 //        ScalingLayer scaling_layer(input_dataset_batch_dimenison);
+
         ScalingLayer scaling_layer(input_dataset_batch_dimenison);
 
         neural_network.add_layer(&scaling_layer);
@@ -116,11 +117,16 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_maximum_epochs_number(10);
         training_strategy.perform_training();
 
-        /*
         // Testing analysis
 
+        Tensor<type, 4> inputs_4d;
+        Tensor<type, 2> outputs;
+        outputs = neural_network.calculate_outputs(data_set_batch.inputs_4d);
+
+ /*
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         vector<unsigned char> zero, one;
