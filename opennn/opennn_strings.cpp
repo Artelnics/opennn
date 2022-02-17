@@ -659,18 +659,24 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         return mktime(&time_structure);
     }
     else if(is_numeric_string(date)){
+    }
+    else
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: DataSet Class.\n"
+               << "time_t date_to_timestamp(const string&) method.\n"
+               << "Date format (" << date << ") is not implemented.\n";
+        throw logic_error(buffer.str());
+    }
+
+    if(is_numeric_string(date))
+    {
         time_t time_t_date = stoi(date);
         return time_t_date;
     }
     else
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet Class.\n"
-               << "time_t date_to_timestamp(const string&) method.\n"
-               << "Date format (" << date << ") is not implemented.\n";
-
-        throw invalid_argument(buffer.str());
+        return mktime(&time_structure);
     }
 }
 
