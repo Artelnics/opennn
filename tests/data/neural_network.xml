@@ -9,17 +9,11 @@
       <ScalingLayer>
          <ScalingNeuronsNumber>2</ScalingNeuronsNumber>
          <ScalingNeuron Index="1">
-            <Minimum>-1</Minimum>
-            <Maximum>1</Maximum>
-            <Mean>0</Mean>
-            <StandardDeviation>1</StandardDeviation>
+            <Descriptives>-1\1\0\1</Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
          <ScalingNeuron Index="2">
-            <Minimum>-1</Minimum>
-            <Maximum>1</Maximum>
-            <Mean>0</Mean>
-            <StandardDeviation>1</StandardDeviation>
+            <Descriptives>-1\1\0\1</Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
       </ScalingLayer>
@@ -28,14 +22,14 @@
          <InputsNumber>2</InputsNumber>
          <NeuronsNumber>4</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>0.0142334 -0.150842 0.0906616 -0.00795898 -0.183667 0.140002 0.0338013 -0.0055542 -0.123132 -0.134766 0.00710449 0.0189209</Parameters>
+         <Parameters>0.0472412 -0.0837036 0.193726 0.160669 -0.0966797 -0.17876 -0.199231 0.149634 -0.0212769 0.0501465 0.00258788 0.116821</Parameters>
       </PerceptronLayer>
       <PerceptronLayer>
          <LayerName>perceptron_layer_2</LayerName>
          <InputsNumber>4</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <ActivationFunction>Linear</ActivationFunction>
-         <Parameters>0.196033 -0.147375 0.0423096 -0.174841 0.13009 -0.0726562 -0.017981 0.130835 0.189453 -0.0322754 0.162573 -0.186951 -0.115552 0.0179321 0.12583</Parameters>
+         <Parameters>-0.155579 -0.104236 -0.0960571 -0.00113526 0.137622 -0.0946777 -0.113184 -0.0210327 0.121326 -0.14834 0.146887 -0.0727417 -0.186462 0.195801 -0.0440063</Parameters>
       </PerceptronLayer>
       <UnscalingLayer>
          <UnscalingNeuronsNumber>3</UnscalingNeuronsNumber>

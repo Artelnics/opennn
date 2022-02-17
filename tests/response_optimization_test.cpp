@@ -234,7 +234,7 @@ void ResponseOptimizationTest::test_set_inputs_outputs_conditions()
 {
     cout << "test_set_inputs_outputs_conditions\n";
 
-    response_optimization.set(&neural_network);
+    ResponseOptimization response_optimization(&neural_network,&data_set);
 
     Tensor<string,1> names(3);
     names.setValues({"x","y","z"});
@@ -358,7 +358,7 @@ void ResponseOptimizationTest::test_calculate_inputs()
 {
     cout << "test_calculate_inputs\n";
 
-    response_optimization.set(&neural_network);
+    ResponseOptimization response_optimization(&neural_network, &data_set);
 
     Tensor<type,2> inputs = response_optimization.calculate_inputs();
 
@@ -376,7 +376,7 @@ void ResponseOptimizationTest::test_perform_optimization()
 {
     cout << "test_perform_optimization\n";
 
-    response_optimization.set(&neural_network);
+    ResponseOptimization response_optimization(&neural_network,&data_set);
 
     // Empty results
 
@@ -469,8 +469,6 @@ void ResponseOptimizationTest::test_perform_optimization()
 
     results = response_optimization.perform_optimization();
     assert_true(results->optimal_variables(0) >= 0.5, LOG);
-
-    cout << results->optimal_variables << endl;
 
     assert_true(results->optimal_variables(1) >= 0.5, LOG);
     assert_true(results->optimal_variables(2) >= 0.0, LOG);

@@ -262,10 +262,14 @@ void TestingAnalysisTest::test_linear_regression()
 
     linear_correlation = testing_analysis.linear_correlation();
 
+    cout << linear_correlation(0).a << endl;
+    cout << linear_correlation(0).b << endl;
+    cout << linear_correlation(0).r << endl;
+
     assert_true(linear_correlation.size() == 1, LOG);
-    assert_true(static_cast<double>(linear_correlation(0).a) == 0.0, LOG);
-    assert_true(static_cast<double>(linear_correlation(0).b) == 0.0, LOG);
-    assert_true(static_cast<double>(linear_correlation(0).r) == 1.0, LOG);
+    assert_true(isnan(linear_correlation(0).a), LOG);
+    assert_true(isnan(linear_correlation(0).b), LOG);
+    assert_true(isnan(linear_correlation(0).r), LOG);
 }
 
 
