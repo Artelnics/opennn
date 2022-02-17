@@ -67,6 +67,8 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     {
         if(!x_binary && !y_binary)
         {
+            cout << "nonbinary nonbinary" << endl;
+
             const Correlation linear_correlation
                     = opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
 
@@ -94,14 +96,17 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
         }
         else if(!x_binary && y_binary)
         {
+            cout << "nonbinary binary" << endl;
             return opennn::logistic_correlation_vector_vector(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
         else if(x_binary && !y_binary)
         {
+            cout << "binary nonbinary" << endl;
             return opennn::logistic_correlation_vector_vector(thread_pool_device, y.reshape(vector), x.reshape(vector));
         }
         else if(x_binary && y_binary)
         {
+            cout << "binary binary" << endl;
             return opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
     }
@@ -375,21 +380,37 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     linear_correlation.correlation_type = CorrelationMethod::Linear;
 
-    if(is_constant(x))
+    if(is_constant(x) && !is_constant(y))
     {
-        cout << "X is constant." << endl;
-    }
-
-    if(is_constant(y))
-    {
-        cout << "Y is constant." << endl;
-
-        linear_correlation.a = y(0);
-        linear_correlation.b = type(0);
-        linear_correlation.r = type(1);
+        cout << "Warning: Column X is constant." << endl;
+        linear_correlation.a = NAN;
+        linear_correlation.b = NAN;
+        linear_correlation.r = NAN;
 
         return linear_correlation;
     }
+    else if(!is_constant(x) && is_constant(y))
+    {
+        cout << "Warning: Column Y is constant." << endl;
+
+        linear_correlation.a = y(0);
+        linear_correlation.b = type(0);
+        linear_correlation.r = NAN;
+
+        return linear_correlation;
+    }
+    else if(is_constant(x) && is_constant(y))
+    {
+        cout << "Warning: Column X and column Y is constant." << endl;
+
+        linear_correlation.a = NAN;
+        linear_correlation.b = NAN;
+        linear_correlation.r = NAN;
+
+        return linear_correlation;
+    }
+
+
 
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
@@ -434,7 +455,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
         if(sqrt((static_cast<double>(n) * s_xx() - s_x() * s_x()) *(static_cast<double>(n) * s_yy() - s_y() * s_y())) < NUMERIC_LIMITS_MIN)
         {
-            linear_correlation.r = type(1);
+            linear_correlation.r = NAN;
         }
         else
         {

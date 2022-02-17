@@ -173,7 +173,7 @@ void CorrelationsTest::test_logistic_correlation()
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x,y);
 
-    assert_true(abs(correlation.r) - static_cast<type>(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(isnan(correlation.r), LOG);
 
     // Test
 
