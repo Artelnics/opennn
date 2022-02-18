@@ -6463,6 +6463,10 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
             unscale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
         break;
 
+        case Scaler::Logarithm:
+            unscale_logarithmic(data, input_variables_indices(i));
+        break;
+
         default:
         {
             ostringstream buffer;
@@ -6978,7 +6982,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     time(&finish);
 
-    cout << "XML writing time: " << difftime(finish, start) << endl;
+    cout << "NeuralEngine XML writing time: " << difftime(finish, start) << endl;
 }
 
 
