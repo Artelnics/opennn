@@ -881,6 +881,17 @@ bool contains(const Tensor<type,1>& vector, const type& value)
     return it != (copy.data()+copy.size());
 };
 
+
+bool contains(const Tensor<Index,1>& vector, const Index& value)
+{
+    Tensor<Index, 1> copy(vector);
+
+    const Index* it = find(copy.data(), copy.data()+copy.size(), value);
+
+    return it != (copy.data()+copy.size());
+};
+
+
 bool contains(const Tensor<string,1>& vector, const string& value)
 {
     Tensor<string, 1> copy(vector);

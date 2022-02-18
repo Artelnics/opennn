@@ -67,8 +67,6 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     {
         if(!x_binary && !y_binary)
         {
-            cout << "nonbinary nonbinary" << endl;
-
             const Correlation linear_correlation
                     = opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
 
@@ -96,17 +94,14 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
         }
         else if(!x_binary && y_binary)
         {
-            cout << "nonbinary binary" << endl;
             return opennn::logistic_correlation_vector_vector(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
         else if(x_binary && !y_binary)
         {
-            cout << "binary nonbinary" << endl;
             return opennn::logistic_correlation_vector_vector(thread_pool_device, y.reshape(vector), x.reshape(vector));
         }
         else if(x_binary && y_binary)
         {
-            cout << "binary binary" << endl;
             return opennn::linear_correlation(thread_pool_device, x.reshape(vector), y.reshape(vector));
         }
     }

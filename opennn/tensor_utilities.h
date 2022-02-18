@@ -86,6 +86,7 @@ void check_rows_number(const Tensor<type, 2>&, const Index&, const string& );
 bool is_less_than(const Tensor<type, 1>&, const type&);
 bool contains(const Tensor<type,1>&, const type&);
 bool contains(const Tensor<string,1>&, const string&);
+bool contains(const Tensor<Index,1>&, const Index&);
 
 Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
