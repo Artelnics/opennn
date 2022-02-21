@@ -934,6 +934,21 @@ Tensor<string, 1> push_back(const Tensor<string, 1>& old_vector, const string& n
 }
 
 
+Tensor<type, 1> push_back(const Tensor<type, 1>& old_vector, const type& new_value)
+{
+    const Index old_size = old_vector.size();
+
+    const Index new_size = old_size+1;
+
+    Tensor<type, 1> new_vector(new_size);
+
+    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+
+    new_vector(new_size-1) = new_value;
+
+    return new_vector;
+}
+
 }
 
 
