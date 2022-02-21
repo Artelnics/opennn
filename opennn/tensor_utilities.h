@@ -100,6 +100,7 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
 Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&);
 Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&);
+Tensor<type, 1> push_back(const Tensor<type, 1>&, const type&);
 
 }
 
