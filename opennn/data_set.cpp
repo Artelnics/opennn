@@ -3501,7 +3501,6 @@ void DataSet::set_binary_simple_columns()
                 && data(row_index, variable_index) != values(1))
                 {
                     values(different_values) = data(row_index, variable_index);
-
                     different_values++;
                 }
 
@@ -10364,6 +10363,8 @@ Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number
 
 void DataSet::read_csv_1()
 {
+    cout << "read csv 1" << endl;
+
     if(data_file_name.empty())
     {
         ostringstream buffer;
@@ -10405,6 +10406,8 @@ void DataSet::read_csv_1()
         getline(file, line);
 
         trim(line);
+
+        cout << line << endl;
 
         erase(line, '"');
 
@@ -10495,15 +10498,13 @@ void DataSet::read_csv_1()
                                                                  && is_numeric_string(data_file_preview(lines_number-2)(i)) ))
 */
         {
-
-
             columns(column_index).type = ColumnType::DateTime;
             column_index++;
         }
         else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-                || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-                || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-                || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(1)(i).empty()))
+                || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(2)(i).empty())
+                || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(lines_number-2)(i).empty())
+                || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(lines_number-1)(i).empty()))
         {
             columns(column_index).type = ColumnType::Numeric;
             column_index++;
@@ -10614,6 +10615,8 @@ void DataSet::read_csv_2_simple()
 
 void DataSet::read_csv_3_simple()
 {
+    cout << "read csv 3 simple" << endl;
+
     std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
@@ -10725,6 +10728,8 @@ void DataSet::read_csv_3_simple()
 
 void DataSet::read_csv_2_complete()
 {
+    cout << "read csv 2" << endl;
+
     std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
@@ -10841,6 +10846,11 @@ void DataSet::read_csv_2_complete()
             {
                 columns(j).type = ColumnType::Binary;
             }
+            else if(columns(j).categories.size() == 3
+               && contains(columns(j).categories, missing_values_label))
+            {
+                columns(j).type = ColumnType::Binary;
+            }
         }
     }
 
@@ -10867,6 +10877,8 @@ void DataSet::read_csv_2_complete()
 
 void DataSet::read_csv_3_complete()
 {
+    cout << "read csv 3" << endl;
+
     std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
