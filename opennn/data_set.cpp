@@ -10363,8 +10363,6 @@ Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number
 
 void DataSet::read_csv_1()
 {
-    cout << "read csv 1" << endl;
-
     if(data_file_name.empty())
     {
         ostringstream buffer;
@@ -10406,8 +10404,6 @@ void DataSet::read_csv_1()
         getline(file, line);
 
         trim(line);
-
-        cout << line << endl;
 
         erase(line, '"');
 
@@ -10615,8 +10611,6 @@ void DataSet::read_csv_2_simple()
 
 void DataSet::read_csv_3_simple()
 {
-    cout << "read csv 3 simple" << endl;
-
     std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
@@ -10728,8 +10722,6 @@ void DataSet::read_csv_3_simple()
 
 void DataSet::read_csv_2_complete()
 {
-    cout << "read csv 2" << endl;
-
     std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
@@ -10818,7 +10810,7 @@ void DataSet::read_csv_2_complete()
             {
                 if(find(columns(column_index).categories.data(), columns(column_index).categories.data() + columns(column_index).categories.size(), tokens(j)) == (columns(column_index).categories.data() + columns(column_index).categories.size()))
                 {
-                    if(tokens(j) == missing_values_label)
+                    if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != std::string::npos )
                     {
                         column_index++;
                         continue;
@@ -10846,10 +10838,15 @@ void DataSet::read_csv_2_complete()
             {
                 columns(j).type = ColumnType::Binary;
             }
-            else if(columns(j).categories.size() == 3
-               && contains(columns(j).categories, missing_values_label))
+            else if(columns(j).categories.size() == 3)
             {
-                columns(j).type = ColumnType::Binary;
+                if(contains(columns(j).categories, missing_values_label)
+                    || columns(j).categories(0).find(missing_values_label) != std::string::npos
+                    || columns(j).categories(1).find(missing_values_label) != std::string::npos
+                    || columns(j).categories(2).find(missing_values_label) != std::string::npos)
+                {
+                    columns(j).type = ColumnType::Binary;
+                }
             }
         }
     }
@@ -10877,8 +10874,6 @@ void DataSet::read_csv_2_complete()
 
 void DataSet::read_csv_3_complete()
 {
-    cout << "read csv 3" << endl;
-
     std::ifstream file(data_file_name.c_str());
 
     if(!file.is_open())
