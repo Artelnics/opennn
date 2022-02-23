@@ -107,14 +107,17 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else if(x_columns != 1 && y_columns == 1)
     {
+        cout << "case 1" << endl;
         return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
     }
     else if(x_columns == 1 && y_columns != 1)
     {
+        cout << "case 2" << endl;
         return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
     }
     else if(x_columns != 1 && y_columns != 1)
     {
+        cout << "case 3" << endl;
         return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
     }
     else
@@ -641,16 +644,21 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 {
     Correlation correlation;
 
-    const Tensor<type, 2> data = opennn::assemble_matrix_matrix(x, y);
+    pair<Tensor<type,2>, Tensor<type,2>> filtered_matrixes = filter_missing_values_matrix_matrix(x,y);
 
-    Tensor<Index, 1> input_columns_indices(x.dimension(1));
-    for(Index i = 0; i < x.dimension(1); i++)
+    Tensor<type,2> x_filtered = filtered_matrixes.first;
+    Tensor<type,2> y_filtered = filtered_matrixes.second;
+
+    const Tensor<type, 2> data = opennn::assemble_matrix_matrix(x_filtered, y_filtered);
+
+    Tensor<Index, 1> input_columns_indices(x_filtered.dimension(1));
+    for(Index i = 0; i < x_filtered.dimension(1); i++)
     {
         input_columns_indices(i) = i;
     }
 
-    Tensor<Index, 1> target_columns_indices(y.dimension(1));
-    for(Index i = 0; i < y.dimension(1); i++)
+    Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
+    for(Index i = 0; i < y_filtered.dimension(1); i++)
     {
         target_columns_indices(i) = x.dimension(1)+i;
     }
