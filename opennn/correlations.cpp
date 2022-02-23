@@ -107,17 +107,14 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else if(x_columns != 1 && y_columns == 1)
     {
-        cout << "case 1" << endl;
         return opennn::logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
     }
     else if(x_columns == 1 && y_columns != 1)
     {
-        cout << "case 2" << endl;
         return opennn::logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
     }
     else if(x_columns != 1 && y_columns != 1)
     {
-        cout << "case 3" << endl;
         return opennn::logistic_correlation_matrix_matrix(thread_pool_device, x, y);
     }
     else

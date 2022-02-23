@@ -5440,19 +5440,22 @@ Index DataSet::calculate_used_negatives(const Index& target_index) const
     {
         const Index training_index = used_indices(i);
 
-        if(abs(data(training_index, target_index)) < type(NUMERIC_LIMITS_MIN))
+        if(data(training_index, target_index) != type(NAN))
         {
-            negatives++;
-        }
-        else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN))
-        {
-            ostringstream buffer;
+            if(abs(data(training_index, target_index)) < type(NUMERIC_LIMITS_MIN))
+            {
+                negatives++;
+            }
+            else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN))
+            {
+                ostringstream buffer;
 
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Index calculate_used_negatives(const Index&) const method.\n"
-                   << "Training sample is neither a positive nor a negative: " << data(training_index, target_index) << endl;
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "Index calculate_used_negatives(const Index&) const method.\n"
+                       << "Training sample is neither a positive nor a negative: " << training_index << "-" << target_index << "-" << data(training_index, target_index) << endl;
 
-            throw invalid_argument(buffer.str());
+                throw invalid_argument(buffer.str());
+            }
         }
     }
 
@@ -5967,7 +5970,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
 
             correlations(i,j) = opennn::correlation(thread_pool_device, input_column_data, target_column_data);
 
-            cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
+//            cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
         }
     }
 
