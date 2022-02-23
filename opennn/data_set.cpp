@@ -10810,7 +10810,7 @@ void DataSet::read_csv_2_complete()
             {
                 if(find(columns(column_index).categories.data(), columns(column_index).categories.data() + columns(column_index).categories.size(), tokens(j)) == (columns(column_index).categories.data() + columns(column_index).categories.size()))
                 {
-                    if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != std::string::npos )
+                    if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != std::string::npos)
                     {
                         column_index++;
                         continue;
@@ -10837,16 +10837,6 @@ void DataSet::read_csv_2_complete()
             if(columns(j).categories.size() == 2)
             {
                 columns(j).type = ColumnType::Binary;
-            }
-            else if(columns(j).categories.size() == 3)
-            {
-                if(contains(columns(j).categories, missing_values_label)
-                    || columns(j).categories(0).find(missing_values_label) != std::string::npos
-                    || columns(j).categories(1).find(missing_values_label) != std::string::npos
-                    || columns(j).categories(2).find(missing_values_label) != std::string::npos)
-                {
-                    columns(j).type = ColumnType::Binary;
-                }
             }
         }
     }
@@ -11005,7 +10995,7 @@ void DataSet::read_csv_3_complete()
             }
             else if(columns(column_index).type == ColumnType::Binary)
             {
-                if(tokens(j) == missing_values_label)
+                if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                 {
                     data(sample_index, variable_index) = static_cast<type>(NAN);
                 }
