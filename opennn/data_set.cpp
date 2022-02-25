@@ -3501,7 +3501,6 @@ void DataSet::set_binary_simple_columns()
                 && data(row_index, variable_index) != values(1))
                 {
                     values(different_values) = data(row_index, variable_index);
-
                     different_values++;
                 }
 
@@ -5441,19 +5440,22 @@ Index DataSet::calculate_used_negatives(const Index& target_index) const
     {
         const Index training_index = used_indices(i);
 
-        if(abs(data(training_index, target_index)) < type(NUMERIC_LIMITS_MIN))
+        if(data(training_index, target_index) != type(NAN))
         {
-            negatives++;
-        }
-        else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN))
-        {
-            ostringstream buffer;
+            if(abs(data(training_index, target_index)) < type(NUMERIC_LIMITS_MIN))
+            {
+                negatives++;
+            }
+            else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN))
+            {
+                ostringstream buffer;
 
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Index calculate_used_negatives(const Index&) const method.\n"
-                   << "Training sample is neither a positive nor a negative: " << data(training_index, target_index) << endl;
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "Index calculate_used_negatives(const Index&) const method.\n"
+                       << "Training sample is neither a positive nor a negative: " << training_index << "-" << target_index << "-" << data(training_index, target_index) << endl;
 
-            throw invalid_argument(buffer.str());
+                throw invalid_argument(buffer.str());
+            }
         }
     }
 
@@ -5968,7 +5970,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
 
             correlations(i,j) = opennn::correlation(thread_pool_device, input_column_data, target_column_data);
 
-            cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
+//            cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
         }
     }
 
@@ -6461,6 +6463,10 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
 
         case Scaler::StandardDeviation:
             unscale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+        break;
+
+        case Scaler::Logarithm:
+            unscale_logarithmic(data, input_variables_indices(i));
         break;
 
         default:
@@ -6978,7 +6984,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     time(&finish);
 
-    cout << "XML writing time: " << difftime(finish, start) << endl;
+    cout << "NeuralEngine XML writing time: " << difftime(finish, start) << endl;
 }
 
 
@@ -10491,15 +10497,13 @@ void DataSet::read_csv_1()
                                                                  && is_numeric_string(data_file_preview(lines_number-2)(i)) ))
 */
         {
-
-
             columns(column_index).type = ColumnType::DateTime;
             column_index++;
         }
         else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-                || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-                || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-                || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(1)(i).empty()))
+                || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(2)(i).empty())
+                || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(lines_number-2)(i).empty())
+                || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(lines_number-1)(i).empty()))
         {
             columns(column_index).type = ColumnType::Numeric;
             column_index++;
@@ -10809,7 +10813,7 @@ void DataSet::read_csv_2_complete()
             {
                 if(find(columns(column_index).categories.data(), columns(column_index).categories.data() + columns(column_index).categories.size(), tokens(j)) == (columns(column_index).categories.data() + columns(column_index).categories.size()))
                 {
-                    if(tokens(j) == missing_values_label)
+                    if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != std::string::npos)
                     {
                         column_index++;
                         continue;
@@ -10994,7 +10998,7 @@ void DataSet::read_csv_3_complete()
             }
             else if(columns(column_index).type == ColumnType::Binary)
             {
-                if(tokens(j) == missing_values_label)
+                if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                 {
                     data(sample_index, variable_index) = static_cast<type>(NAN);
                 }
