@@ -1538,9 +1538,11 @@ void DataSetTest::test_calculate_input_target_correlations()
 }
 
 
-void DataSetTest::test_calculate_total_input_correlations()
+void DataSetTest::test_calculate_input_columns_correlations()
 {
-    cout << "test_calculate_total_input_correlations\n";
+    cout << "test_calculate_input_columns_correlations\n";
+
+    // Test 1 (numeric and numeric trivial case)
 
     data.resize(3, 4);
 
@@ -1557,15 +1559,169 @@ void DataSetTest::test_calculate_total_input_correlations()
     Tensor<Index, 1> target_variables_indices(1);
     target_variables_indices.setValues({2});
 
-    Tensor<type, 1> solution(2);
-    solution.setValues({ type(1), type(1)});
+    data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
 
-    /// @todo non existing method
-    //    data_set.set_input_variables_indices(input_variables_indices);
+    Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_columns_correlations();
 
-    //    Tensor<type, 1> correlations_inputs = data_set.calculate_total_input_correlations();
+    assert_true(inputs_correlations(0,0).r == 1, LOG);
+    assert_true(inputs_correlations(1,0).r == 1, LOG);
+    assert_true(inputs_correlations(1,1).r == 1, LOG);
+    assert_true(inputs_correlations(2,0).r == 1, LOG);
+    assert_true(inputs_correlations(2,1).r == 1, LOG);
+    assert_true(inputs_correlations(2,2).r == 1, LOG);
 
-    //    assert_true(correlations_inputs == solution, LOG);
+    // Test 2 (numeric and numeric non trivial case)
+
+    data.resize(3, 4);
+
+    data.setValues({
+                       {type(1), type(2), type(4), type(1)},
+                       {type(2), type(3), type(9), type(2)},
+                       {type(3), type(1), type(10), type(2)} });
+
+    data_set.set_data(data);
+
+    input_variables_indices.setValues({0, 1});
+
+    target_variables_indices.setValues({2,3});
+
+    data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
+
+    inputs_correlations = data_set.calculate_input_columns_correlations();
+
+    for(Index i = 0; i <  data_set.get_input_columns_number() ; i++)
+    {
+        assert_true( inputs_correlations(i,i).r == 1, LOG);
+        for(Index j = 0; i < j ; j++)
+        {
+            assert_true(-1 < inputs_correlations(i,j).r && inputs_correlations(i,j).r < 1, LOG);
+        }
+    }
+
+    // Test 3 (binary and binary non trivial case)
+
+    data.setValues({
+                       {type(0), type(0), type(1), type(1)},
+                       {type(1), type(0), type(0), type(2)},
+                       {type(1), type(0), type(0), type(2)} });
+
+    data_set.set_data(data);
+
+    input_variables_indices.resize(3);
+    input_variables_indices.setValues({0, 1, 2});
+
+    target_variables_indices.setValues({3});
+
+    data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
+
+    inputs_correlations = data_set.calculate_input_columns_correlations();
+
+    assert_true(inputs_correlations(0,0).r == 1, LOG);
+    assert_true(inputs_correlations(0,0).correlation_type == CorrelationMethod::Linear, LOG);
+    assert_true(isnan(inputs_correlations(1,0).r), LOG);
+    assert_true(inputs_correlations(1,0).correlation_type == CorrelationMethod::Linear, LOG);
+    assert_true(isnan(inputs_correlations(1,1).r), LOG);
+    assert_true(inputs_correlations(1,1).correlation_type == CorrelationMethod::Linear, LOG);
+    assert_true(inputs_correlations(2,0).r == -1, LOG);
+    assert_true(inputs_correlations(2,0).correlation_type == CorrelationMethod::Linear, LOG);
+    assert_true(isnan(inputs_correlations(2,1).r), LOG);
+    assert_true(inputs_correlations(2,1).correlation_type == CorrelationMethod::Linear, LOG);
+    assert_true(inputs_correlations(2,2).r == 1, LOG);
+    assert_true(inputs_correlations(2,2).correlation_type == CorrelationMethod::Linear, LOG);
+
+    // Test 4 (binary and binary trivial case)
+
+    data.setValues({
+                       {type(0), type(0), type(0), type(1)},
+                       {type(1), type(1), type(1), type(2)},
+                       {type(1), type(1), type(1), type(2)} });
+
+    data_set.set_data(data);
+
+    input_variables_indices.resize(3);
+    input_variables_indices.setValues({0, 1, 2});
+
+    target_variables_indices.setValues({3});
+
+    data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
+
+    inputs_correlations = data_set.calculate_input_columns_correlations();
+
+    for(Index i = 0; i < data_set.get_input_columns_number(); i++)
+    {
+        for(Index j = 0; i < j ; j++)
+        {
+            assert_true(inputs_correlations(i,j).r == 1, LOG);
+            assert_true(inputs_correlations(i,j).correlation_type == CorrelationMethod::Linear, LOG);
+        }
+    }
+
+    // Test 5 (categorical and categorical)
+
+    data_set.set("C:/opennn/datasets/correlation_tests.csv",';', false);
+
+    input_variables_indices.resize(4);
+    input_variables_indices.setValues({0, 3, 4, 5});
+
+    target_variables_indices.setValues({6});
+
+    data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
+
+    inputs_correlations = data_set.calculate_input_columns_correlations();
+
+    assert_true(inputs_correlations(0,0).r == 1, LOG);
+    assert_true(inputs_correlations(0,0).correlation_type == CorrelationMethod::Logistic, LOG);
+
+    assert_true(inputs_correlations(1,0).r == 1, LOG);
+    assert_true(inputs_correlations(1,0).correlation_type == CorrelationMethod::Logistic, LOG);
+    assert_true(inputs_correlations(1,1).r == 1, LOG);
+    assert_true(inputs_correlations(1,1).correlation_type == CorrelationMethod::Logistic, LOG);
+
+    assert_true(-1 < inputs_correlations(2,0).r && inputs_correlations(2,0).r < 1, LOG);
+    assert_true(inputs_correlations(2,0).correlation_type == CorrelationMethod::Logistic, LOG);
+    assert_true(-1 < inputs_correlations(2,1).r && inputs_correlations(2,1).r < 1, LOG);
+    assert_true(inputs_correlations(2,1).correlation_type == CorrelationMethod::Logistic, LOG);
+    assert_true(inputs_correlations(2,2).r == 1, LOG);
+    assert_true(inputs_correlations(2,2).correlation_type == CorrelationMethod::Logistic, LOG); // CHECK
+
+    assert_true(-1 < inputs_correlations(3,0).r && inputs_correlations(3,0).r < 1, LOG);
+    assert_true(inputs_correlations(3,0).correlation_type == CorrelationMethod::Logistic, LOG);
+    assert_true(-1 < inputs_correlations(3,1).r && inputs_correlations(3,1).r < 1, LOG);
+    assert_true(inputs_correlations(3,1).correlation_type == CorrelationMethod::Logistic, LOG);
+    assert_true(-1 < inputs_correlations(3,2).r && inputs_correlations(3,2).r < 1, LOG);
+    assert_true(inputs_correlations(3,2).correlation_type == CorrelationMethod::Logistic, LOG);
+    assert_true(inputs_correlations(3,3).r == 1, LOG);
+    assert_true(inputs_correlations(3,3).correlation_type == CorrelationMethod::Logistic, LOG); // CHECK
+
+    // Test 6 (numeric and binary)
+
+    data_set.set("C:/opennn/datasets/correlation_tests.csv",';', false);
+
+    input_variables_indices.resize(2);
+    input_variables_indices.setValues({1, 2});
+
+    target_variables_indices.resize(1);
+    target_variables_indices.setValues({6});
+
+    data_set.set_input_target_columns(input_variables_indices, target_variables_indices);
+
+    inputs_correlations = data_set.calculate_input_columns_correlations();
+
+    data_set.print_inputs_correlations();
+
+    assert_true(inputs_correlations(0,0).r == 1, LOG);
+    assert_true(inputs_correlations(0,0).correlation_type == CorrelationMethod::Linear, LOG);
+
+    assert_true(-1 < inputs_correlations(1,0).r && inputs_correlations(1,0).r < 1, LOG);
+    assert_true(inputs_correlations(1,0).correlation_type == CorrelationMethod::Logistic, LOG);
+    assert_true(inputs_correlations(1,1).r == 1, LOG);
+    assert_true(inputs_correlations(1,1).correlation_type == CorrelationMethod::Linear, LOG);
+
+    // Test 8 (numeric and categorical)
+
+    // Test 9 (binary and categorical)
+
+
 }
 
 
@@ -1790,8 +1946,8 @@ void DataSetTest::run_test_case()
     // Correlations
 
     test_calculate_input_target_correlations();
-    test_calculate_total_input_correlations();
-
+    test_calculate_input_columns_correlations();
+/*
     // Classification methods
 
     test_calculate_target_distribution();
@@ -1838,7 +1994,7 @@ void DataSetTest::run_test_case()
     test_calculate_autocorrelations();
 
     test_fill();
-
+*/
     cout << "End of data set test case.\n\n";
 }
 
