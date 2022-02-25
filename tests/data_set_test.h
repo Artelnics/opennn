@@ -73,7 +73,7 @@ public:
    void test_calculate_autocorrelations();
    void test_calculate_cross_correlations();
    void test_calculate_input_target_correlations();
-   void test_calculate_total_input_correlations();
+   void test_calculate_input_columns_correlations();
 
    // Histrogram methods
 
