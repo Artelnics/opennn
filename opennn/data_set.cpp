@@ -6111,11 +6111,13 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
 
             correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
 
-            if(correlations(i,j).r > type(1))
+            if(correlations(i,j).r > type(0.99))
             {
                 correlations(i,j).r = type(1);
             }
-        }
+
+            cout << correlations(i,j).r << endl;
+         }
     }
 
     for(Index i = 0; i < input_columns_number; i++)
