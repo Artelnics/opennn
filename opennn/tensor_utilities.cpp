@@ -881,6 +881,17 @@ bool contains(const Tensor<type,1>& vector, const type& value)
     return it != (copy.data()+copy.size());
 };
 
+
+bool contains(const Tensor<Index,1>& vector, const Index& value)
+{
+    Tensor<Index, 1> copy(vector);
+
+    const Index* it = find(copy.data(), copy.data()+copy.size(), value);
+
+    return it != (copy.data()+copy.size());
+};
+
+
 bool contains(const Tensor<string,1>& vector, const string& value)
 {
     Tensor<string, 1> copy(vector);
@@ -922,6 +933,21 @@ Tensor<string, 1> push_back(const Tensor<string, 1>& old_vector, const string& n
     return new_vector;
 }
 
+
+Tensor<type, 1> push_back(const Tensor<type, 1>& old_vector, const type& new_value)
+{
+    const Index old_size = old_vector.size();
+
+    const Index new_size = old_size+1;
+
+    Tensor<type, 1> new_vector(new_size);
+
+    for(Index i = 0; i < old_size; i++) new_vector(i) = old_vector(i);
+
+    new_vector(new_size-1) = new_value;
+
+    return new_vector;
+}
 
 }
 
