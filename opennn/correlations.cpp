@@ -651,13 +651,13 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     Tensor<Index, 1> input_columns_indices(x_filtered.dimension(1));
     for(Index i = 0; i < x_filtered.dimension(1); i++)
     {
-        input_columns_indices(i) = i;
+            input_columns_indices(i) = i;
     }
 
     Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
     for(Index i = 0; i < y_filtered.dimension(1); i++)
     {
-        target_columns_indices(i) = x.dimension(1)+i;
+            target_columns_indices(i) = x.dimension(1)+i;
     }
 
     DataSet data_set(data);
@@ -671,6 +671,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number});
     neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    neural_network.get_scaling_layer_pointer()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 

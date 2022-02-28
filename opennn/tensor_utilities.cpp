@@ -98,7 +98,7 @@ bool is_binary(const Tensor<type, 2>& matrix)
 
     for(Index i = 0; i < size; i++)
     {
-        if(matrix(i) != type(0) && matrix(i) != type(1)) return false;
+        if(matrix(i) != type(0) && matrix(i) != type(1) && !isnan(matrix(i)) ) return false;
     }
 
     return true;
