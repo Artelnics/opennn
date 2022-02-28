@@ -770,7 +770,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     {
         for(Index j = 0; j < neurons_number; j++)
         {
-            if(abs(descriptives(j).minimum - descriptives(j).maximum) < type(NUMERIC_LIMITS_MIN))
+            if(abs(descriptives(j).standard_deviation) < type(NUMERIC_LIMITS_MIN))
             {
                 if(display)
                 {
@@ -780,7 +780,7 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
                          << "Those variables won't be scaled.\n";
                 }
 
-                outputs(j) = inputs(j);
+                outputs(i,j) = inputs(i,j);
             }
             else
             {
@@ -836,7 +836,6 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 Tensor<type, 4> ScalingLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
 
-    cout<<"Hi"<<endl;
     if(inputs.rank() != 4)
     {
         ostringstream buffer;

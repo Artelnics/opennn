@@ -6115,8 +6115,6 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
             {
                 correlations(i,j).r = type(1);
             }
-
-            cout << correlations(i,j).r << endl;
          }
     }
 
