@@ -299,7 +299,12 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
         const Tensor<type, 1> targets = testing_targets.chip(i,1);
         const Tensor<type, 1> outputs = testing_outputs.chip(i,1);
 
-        const Correlation linear_correlation = opennn::linear_correlation(thread_pool_device, outputs, targets);
+        Correlation linear_correlation = opennn::linear_correlation(thread_pool_device, outputs, targets);
+
+        if(is_constant(outputs))
+        {
+            linear_correlation.r = 0;
+        }
 
         linear_regression_results[i].targets = targets;
         linear_regression_results[i].outputs = outputs;

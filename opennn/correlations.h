@@ -116,8 +116,8 @@ struct Correlation
     // Missing values methods
 
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values_matrix_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
+    pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);
     pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
 }
 
