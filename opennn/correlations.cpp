@@ -408,7 +408,7 @@ Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlation
 }
 
 
-/// Calculate the coefficients of a linear regression (a, b) and the correlation among the variables.
+/// Calculate the coefficients of a goodness-of-fit (a, b) and the correlation among the variables.
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
@@ -458,7 +458,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     }
     else if(is_constant(x) && is_constant(y))
     {
-        cout << "Warning: Column X and column Y is constant." << endl;
+        cout << "Warning: Column X and column Y are constant." << endl;
 
         linear_correlation.a = NAN;
         linear_correlation.b = NAN;

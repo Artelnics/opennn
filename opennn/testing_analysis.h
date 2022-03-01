@@ -53,17 +53,13 @@ public:
 
    virtual ~TestingAnalysis();
 
-    /// Structure with the results from a linear regression analysis.
+    /// Structure with the results from a goodness-of-fit analysis.
 
-    struct LinearRegressionAnalysis
+    struct GoodnessOfFitAnalysis
     {
        /// Target data from data set and output data from neural network.
 
-       type correlation = type(0);
-
-       type intercept = type(0);
-
-       type slope = type(0);
+       type determination = type(0);
 
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
@@ -76,10 +72,8 @@ public:
 
        void print() const
        {
-           cout << "Linear regression analysis" << endl;
-           cout << "Correlation: " << correlation << endl;
-           cout << "Intercept: " << intercept << endl;
-           cout << "Slope: " << slope << endl;
+           cout << "Goodness-of-fit analysis" << endl;
+           cout << "Determination: " << determination << endl;
        }
 
     };
@@ -127,7 +121,7 @@ public:
 
     /// Structure with the binary classification rates
 
-    struct BinaryClassifcationRates
+    struct BinaryClassificationRates
     {
         /// Vector with the indices of the samples which are true positive.
 
@@ -207,15 +201,17 @@ public:
    type calculate_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>& = Tensor<type, 1>()) const;
    type calculate_Minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type = type(1.5)) const;
 
-   // Linear regression analysis methods
+   type calculate_determination_coefficient(const Tensor<type,1>&, const Tensor<type,1>&) const;
+
+   // Goodness-of-fit analysis methods
 
    Tensor<Correlation, 1> linear_correlation() const;
    Tensor<Correlation, 1> linear_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void print_linear_regression_correlations() const;
 
-   Tensor<LinearRegressionAnalysis, 1> perform_linear_regression_analysis() const;
-   void print_linear_regression_analysis() const;
+   Tensor<GoodnessOfFitAnalysis, 1> perform_goodness_of_fit_analysis() const;
+   void print_goodness_of_fit_analysis() const;
 
    // Binary classifcation methods
 
@@ -275,7 +271,7 @@ public:
 
    // Binary classification rates
 
-   BinaryClassifcationRates calculate_binary_classification_rates() const;
+   BinaryClassificationRates calculate_binary_classification_rates() const;
 
    Tensor<Index, 1> calculate_true_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
    Tensor<Index, 1> calculate_false_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;

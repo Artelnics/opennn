@@ -186,7 +186,7 @@ void TestingAnalysis::check() const
 }
 
 
-/// Performs a linear regression analysis between the testing samples in the data set and
+/// Performs a goodness-of-fit analysis between the testing samples in the data set and
 /// the corresponding neural network outputs.
 /// It returns all the provided parameters in a vector of vectors.
 /// The number of elements in the vector is equal to the number of output variables.
@@ -256,14 +256,14 @@ void TestingAnalysis::print_linear_regression_correlations() const
 }
 
 
-/// Performs a linear regression analysis of a neural network on the testing indices of a data set.
-/// It returns a linear regression analysis results structure, which consists of:
+/// Performs a goodness of fit analysis of a neural network on the testing indices of a data set.
+/// It returns a goodness of fit analysis results structure, which consists of:
 /// <ul>
-/// <li> Linear regression parameters.
+/// <li> Goodness of fit parameters.
 /// <li> Scaled target and output data.
 /// </ul>
 
-Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_linear_regression_analysis() const
+Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodness_of_fit_analysis() const
 {
     check();
 
@@ -276,7 +276,7 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "LinearRegressionResults perform_linear_regression_analysis() const method.\n"
+               << "GoodnessOfFit perform_linear_regression_analysis() const method.\n"
                << "Number of testing samples is zero.\n";
 
         throw invalid_argument(buffer.str());
@@ -292,35 +292,29 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
 
     // Approximation testing stuff
 
-    Tensor<LinearRegressionAnalysis, 1> linear_regression_results(outputs_number);
+    Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
 
     for(Index i = 0;  i < outputs_number; i++)
-    {
-        const Tensor<type, 1> targets = testing_targets.chip(i,1);
-        const Tensor<type, 1> outputs = testing_outputs.chip(i,1);
+    {        
+        const Tensor<type,1> targets = testing_targets.chip(i,1);
+        const Tensor<type,1> outputs = testing_outputs.chip(i,1);
 
-        Correlation linear_correlation = opennn::linear_correlation(thread_pool_device, outputs, targets);
+        type determination_coefficient = calculate_determination_coefficient(outputs, targets);
 
-        if(is_constant(outputs))
-        {
-            linear_correlation.r = 0;
-        }
+        goodness_of_fit_results[i].targets = targets;
+        goodness_of_fit_results[i].outputs = outputs;
 
-        linear_regression_results[i].targets = targets;
-        linear_regression_results[i].outputs = outputs;
+        goodness_of_fit_results[i].determination = determination_coefficient;
 
-        linear_regression_results[i].intercept = linear_correlation.a;
-        linear_regression_results[i].slope = linear_correlation.b;
-        linear_regression_results[i].correlation = linear_correlation.r;
     }
 
-    return linear_regression_results;
+    return goodness_of_fit_results;
 }
 
 
-void TestingAnalysis::print_linear_regression_analysis() const
+void TestingAnalysis::print_goodness_of_fit_analysis() const
 {
-    const Tensor<LinearRegressionAnalysis, 1> linear_regression_analysis = perform_linear_regression_analysis();
+    const Tensor<GoodnessOfFitAnalysis, 1> linear_regression_analysis = perform_goodness_of_fit_analysis();
 
     for(Index i = 0; i < linear_regression_analysis.size(); i++)
     {
@@ -1412,6 +1406,42 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets, 
 
     return Minkoski_error();
 }
+
+
+type TestingAnalysis::calculate_determination_coefficient(const Tensor<type,1>& outputs, const Tensor<type,1>& targets) const
+{
+#ifdef OPENNN_DEBUG
+
+    const Index outputs_number = outputs.dimension(0);
+
+    ostringstream buffer;
+
+    if(targets.size() != outputs_number)
+    {
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "type calculate_determination_coefficient(const Tensor<type, 1>&, const Tensor<type, 1>&) const.\n"
+               << "Outputs and targets dimensions must be equal.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+#endif
+
+    type numerador = 0;
+    const Tensor<type, 0> targets_mean = targets.mean();
+    type  denominador = 0;
+
+    // @todo Implementation with tensor operations
+    for(Index i = 0; i < outputs.size(); i++)
+    {
+        numerador += (targets(i) - outputs(i))*(targets(i) - outputs(i));
+        denominador += (targets(i) - targets_mean(0))*(targets(i) - targets_mean(0));
+    }
+
+    type determination_coefficient = type(1) - (numerador/denominador);
+
+    return determination_coefficient;
+};
 
 
 /// Returns the confusion matrix for a binary classification problem.
@@ -2739,7 +2769,7 @@ Tensor<Histogram, 1> TestingAnalysis::calculate_output_histogram(const Tensor<ty
 /// <li> True negative samples
 /// </ul>
 
-TestingAnalysis::BinaryClassifcationRates TestingAnalysis::calculate_binary_classification_rates() const
+TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates() const
 {
 #ifdef OPENNN_DEBUG
 
@@ -2804,7 +2834,7 @@ TestingAnalysis::BinaryClassifcationRates TestingAnalysis::calculate_binary_clas
         decision_threshold = type(0.5);
     }
 
-    BinaryClassifcationRates binary_classification_rates;
+    BinaryClassificationRates binary_classification_rates;
 
     binary_classification_rates.true_positives_indices = calculate_true_positive_samples(targets, outputs, testing_indices, decision_threshold);
     binary_classification_rates.false_positives_indices = calculate_false_positive_samples(targets, outputs, testing_indices, decision_threshold);
