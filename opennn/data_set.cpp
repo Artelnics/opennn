@@ -5326,42 +5326,21 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                 Tensor<Index, 1> binary_frequencies(2);
                 binary_frequencies.setZero();
 
-                if(abs(data(used_samples_indices(0), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
+                for(Index j = 0; j < used_samples_number; j++)
                 {
-                    for(Index j = 0; j < used_samples_number; j++)
+                    if(abs(data(used_samples_indices(j), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
                     {
-                        if(abs(data(used_samples_indices(j), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
-                        {
-                            binary_frequencies(0)++;
-                        }
-                        else
-                        {
-                            binary_frequencies(1)++;
-                        }
+                        binary_frequencies(0)++;
                     }
+                    else
+                    {
+                        binary_frequencies(1)++;
+                    }
+                }
 
                 histograms(used_column_index).frequencies = binary_frequencies;
                 variable_index++;
                 used_column_index++;
-                }
-                else
-                {
-                    for(Index j = 0; j < used_samples_number; j++)
-                    {
-                        if(abs(data(used_samples_indices(j), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
-                        {
-                            binary_frequencies(1)++;
-                        }
-                        else
-                        {
-                            binary_frequencies(0)++;
-                        }
-                    }
-
-                histograms(used_column_index).frequencies = binary_frequencies;
-                variable_index++;
-                used_column_index++;
-                }
             }
         }
         else // Time @todo
