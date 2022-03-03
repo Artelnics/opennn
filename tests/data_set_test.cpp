@@ -1547,6 +1547,7 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     input_columns_indices.setValues({0, 1});
 
+    target_columns_indices.resize(2);
     target_columns_indices.setValues({2,3});
 
     data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
@@ -1560,9 +1561,9 @@ void DataSetTest::test_calculate_input_target_correlations()
     // Test 3 (binary and binary non trivial case)
 
     data.setValues({
-                       {type(0), type(0), type(1), type(1)},
-                       {type(1), type(0), type(0), type(2)},
-                       {type(1), type(0), type(0), type(2)} });
+                       {type(0), type(0), type(1), type(0)},
+                       {type(1), type(0), type(0), type(1)},
+                       {type(1), type(0), type(0), type(1)} });
 
     data_set.set_data(data);
 
@@ -1578,7 +1579,6 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     assert_true(input_target_correlations(0,0).r == 1, LOG);
     assert_true(input_target_correlations(0,0).correlation_type == CorrelationMethod::Linear, LOG);
-    input_target_correlations(0,0).print();
 
     assert_true(isnan(input_target_correlations(1,0).r), LOG);
     assert_true(input_target_correlations(1,0).correlation_type == CorrelationMethod::Linear, LOG);
@@ -1586,13 +1586,12 @@ void DataSetTest::test_calculate_input_target_correlations()
     assert_true(input_target_correlations(2,0).r == -1, LOG);
     assert_true(input_target_correlations(2,0).correlation_type == CorrelationMethod::Linear, LOG);
 
-    /*
     // Test 4 (binary and binary trivial case)
 
     data.setValues({
-                       {type(0), type(0), type(0), type(1)},
-                       {type(1), type(1), type(1), type(2)},
-                       {type(1), type(1), type(1), type(2)} });
+                       {type(0), type(0), type(0), type(0)},
+                       {type(1), type(1), type(1), type(1)},
+                       {type(1), type(1), type(1), type(1)} });
 
     data_set.set_data(data);
 
@@ -1644,7 +1643,7 @@ void DataSetTest::test_calculate_input_target_correlations()
     assert_true(input_target_correlations(2,1).correlation_type == CorrelationMethod::Logistic, LOG);
 
     assert_true(input_target_correlations(2,2).r == 1, LOG);
-    assert_true(input_target_correlations(2,2).correlation_type == CorrelationMethod::Logistic, LOG); // CHECK
+    assert_true(input_target_correlations(2,2).correlation_type == CorrelationMethod::Logistic, LOG);
 
     // Test 6 (numeric and binary)
 
@@ -1853,7 +1852,7 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     assert_true(input_target_correlations(2,2).r == 1, LOG);
     assert_true(input_target_correlations(2,2).correlation_type == CorrelationMethod::Logistic, LOG);
-*/
+
 }
 
 
@@ -2442,9 +2441,9 @@ void DataSetTest::run_test_case()
 
     // Correlations
 
-    test_calculate_input_target_correlations();/*
+    test_calculate_input_target_correlations();
     test_calculate_input_columns_correlations();
-
+/*
     // Classification methods
 
     test_calculate_target_distribution();
