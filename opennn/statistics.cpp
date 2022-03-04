@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "statistics.h"
+#include "tensor_utilities.h"
 
 namespace opennn
 {
@@ -2515,17 +2516,27 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 
     type median = type(0);
 
-    Tensor<type, 1> sorted_column(matrix.chip(column_index,1));
+    Tensor<type, 1> sorted_column(0);
+
+    Tensor<type, 1> column = matrix.chip(column_index,1);
+
+    for(Index i = 0; i < column.size(); i++)
+    {
+        if(!isnan(column(i)))
+        {
+            sorted_column = push_back(sorted_column,column(i));
+        }
+    }
 
     sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
     if(rows_number % 2 == 0)
     {
-        median = (sorted_column[rows_number*2/4] + sorted_column[rows_number*2/4+1])/ type(2);
+        median = (sorted_column[sorted_column.size()*2/4] + sorted_column[sorted_column.size()*2/4+1])/ type(2);
     }
     else
     {
-        median = sorted_column[rows_number*2/4];
+        median = sorted_column[sorted_column.size()*2/4];
     }
 
     return median;
@@ -2553,17 +2564,27 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
     {
         column_index = columns_indices(j);
 
-        Tensor<type, 1> sorted_column(matrix.chip(column_index, 1));
+        Tensor<type, 1> sorted_column(0);
+
+        Tensor<type, 1> column = matrix.chip(column_index, 1);
+
+        for(Index i = 0; i < column.size(); i++)
+        {
+            if(!isnan(column(i)))
+            {
+                sorted_column = push_back(sorted_column,column(i));
+            }
+        }
 
         sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
         if(rows_number % 2 == 0)
         {
-            median(j) = (sorted_column[rows_number*2/4] + sorted_column[rows_number*2/4+1])/type(2);
+            median(j) = (sorted_column[sorted_column.size()*2/4] + sorted_column[sorted_column.size()*2/4+1])/type(2);
         }
         else
         {
-            median(j) = sorted_column[rows_number*2/4];
+            median(j) = sorted_column[sorted_column.size()*2/4];
         }
     }
 
@@ -2664,7 +2685,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
     {
         column_index = columns_indices(j);
 
-        Tensor<type, 1> sorted_column(row_indices_size);
+        Tensor<type, 1> sorted_column(0);
 
         for(Index k = 0; k < row_indices_size; k++)
         {
@@ -2672,19 +2693,21 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
 
             if(!isnan(matrix(row_index, column_index)))
             {
-                sorted_column(k) = matrix(row_index, column_index);
+                sorted_column = push_back(sorted_column, matrix(row_index,column_index));
             }
         }
 
         sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
-        if(row_indices_size % 2 == 0)
+        const Index sorted_list_size = sorted_column.size();
+
+        if(sorted_list_size % 2 == 0)
         {
-            median(j) = (sorted_column[sorted_column.size()*2/4] + sorted_column[sorted_column.size()*2/4 + 1])/ type(2);
+            median(j) = (sorted_column[sorted_list_size*2/4] + sorted_column[sorted_list_size*2/4 + 1])/ type(2);
         }
         else
         {
-            median(j) = sorted_column[sorted_column.size() * 2 / 4];
+            median(j) = sorted_column[sorted_list_size * 2 / 4];
         }
     }
 
