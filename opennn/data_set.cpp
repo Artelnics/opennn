@@ -5407,7 +5407,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 /// Counts the number of used negatives of the selected target.
 /// @param target_index Index of the target to evaluate.
 
-Index DataSet::calculate_used_negatives(const Index& target_index) const
+Index DataSet::calculate_used_negatives(const Index& target_index)
 {
     Index negatives = 0;
 
@@ -5425,7 +5425,7 @@ Index DataSet::calculate_used_negatives(const Index& target_index) const
             {
                 negatives++;
             }
-            else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN))
+            else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN)) // @todo check if condition is alright
             {
                 ostringstream buffer;
 
@@ -9947,18 +9947,20 @@ void DataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
+    const Index target_variables_number = target_variables_indices.size();
 
     Index current_variable;
     Index current_sample;
 
 #pragma omp parallel for schedule(dynamic)
 
-    for(Index j = 0; j < variables_number; j++)
+    for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
         current_variable = used_variables_indices(j);
 
@@ -9972,6 +9974,20 @@ void DataSet::impute_missing_values_mean()
             }
         }
     }
+    for(Index j = 0; j < target_variables_number; j++)
+    {
+        current_variable = target_variables_indices(j);
+        for(Index i = 0; i < samples_number; i++)
+        {
+            current_sample = used_samples_indices(i);
+
+            if(isnan(data(current_sample, current_variable)))
+            {
+                set_sample_use(i, "Unused");
+            }
+        }
+
+    }
 }
 
 
@@ -9981,23 +9997,51 @@ void DataSet::impute_missing_values_median()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_columns_indices();
+    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     const Tensor<type, 1> medians = median(data, used_samples_indices, used_variables_indices);
 
     const Index variables_number = used_variables_indices.size();
     const Index samples_number = used_samples_indices.size();
+    const Index target_variables_number = target_variables_indices.size();
+
+    Index current_variable;
+    Index current_sample;
 
 #pragma omp parallel for schedule(dynamic)
 
-    for(Index j = 0; j < variables_number; j++)
+    for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        for(Index i = 0 ; i < samples_number ; i++)
+        current_variable = used_variables_indices(j);
+
+        for(Index i = 0; i < samples_number; i++)
         {
-            if(isnan(data(used_samples_indices(i),used_variables_indices(j)))) data(used_samples_indices(i),used_variables_indices(j)) = medians(j);
+            current_sample = used_samples_indices(i);
+
+            if(isnan(data(current_sample, current_variable)))
+            {
+                data(current_sample,current_variable) = medians(j);
+            }
         }
     }
-}
 
+#pragma omp parallel for schedule(dynamic)
+
+    for(Index j = 0; j < target_variables_number; j++)
+    {
+        current_variable = target_variables_indices(j);
+        for(Index i = 0; i < samples_number; i++)
+        {
+            current_sample = used_samples_indices(i);
+
+            if(isnan(data(current_sample, current_variable)))
+            {
+                set_sample_use(i, "Unused");
+            }
+        }
+
+    }
+}
 
 /// General method for dealing with missing values.
 /// It switches among the different scrubbing methods available,

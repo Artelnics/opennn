@@ -572,7 +572,7 @@ public:
    Tensor<type, 1> calculate_used_targets_mean() const;
    Tensor<type, 1> calculate_selection_targets_mean() const;
 
-   Index calculate_used_negatives(const Index&) const;
+   Index calculate_used_negatives(const Index&);
    Index calculate_training_negatives(const Index&) const;
    Index calculate_selection_negatives(const Index&) const;
    Index calculate_testing_negatives(const Index&) const;
