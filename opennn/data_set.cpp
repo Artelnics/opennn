@@ -10023,7 +10023,6 @@ void DataSet::impute_missing_values_median()
             if(isnan(data(current_sample, current_variable)))
             {
                 data(current_sample,current_variable) = medians(j);
-//                data(current_sample,current_variable) = means(j);
             }
         }
     }
