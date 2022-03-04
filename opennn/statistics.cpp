@@ -2670,18 +2670,21 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
         {
             const Index row_index = row_indices(k);
 
-            sorted_column(k) = matrix(row_index, column_index);
+            if(!isnan(matrix(row_index, column_index)))
+            {
+                sorted_column(k) = matrix(row_index, column_index);
+            }
         }
 
         sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
         if(row_indices_size % 2 == 0)
         {
-            median(j) = (sorted_column[row_indices_size*2/4] + sorted_column[row_indices_size*2/4 + 1])/ type(2);
+            median(j) = (sorted_column[sorted_column.size()*2/4] + sorted_column[sorted_column.size()*2/4 + 1])/ type(2);
         }
         else
         {
-            median(j) = sorted_column[row_indices_size * 2 / 4];
+            median(j) = sorted_column[sorted_column.size() * 2 / 4];
         }
     }
 
