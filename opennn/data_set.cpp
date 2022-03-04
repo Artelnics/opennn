@@ -9996,13 +9996,15 @@ void DataSet::impute_missing_values_mean()
 void DataSet::impute_missing_values_median()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> used_variables_indices = get_used_columns_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     const Tensor<type, 1> medians = median(data, used_samples_indices, used_variables_indices);
 
-    const Index variables_number = used_variables_indices.size();
+    const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
+
     const Index samples_number = used_samples_indices.size();
+    const Index variables_number = used_variables_indices.size();
     const Index target_variables_number = target_variables_indices.size();
 
     Index current_variable;
@@ -10021,12 +10023,10 @@ void DataSet::impute_missing_values_median()
             if(isnan(data(current_sample, current_variable)))
             {
                 data(current_sample,current_variable) = medians(j);
+//                data(current_sample,current_variable) = means(j);
             }
         }
     }
-
-#pragma omp parallel for schedule(dynamic)
-
     for(Index j = 0; j < target_variables_number; j++)
     {
         current_variable = target_variables_indices(j);
