@@ -5961,9 +5961,26 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() co
 
 bool DataSet::has_nan() const
 {
-    for(Index i = 0; i < data.size(); i++) if(isnan(data(i))) return true;
+    const type rows_number = data.dimension(0);
+
+//    const type columns_number = data.dimension(1);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        if(samples_uses(i) != SampleUse::Unused)
+        {
+            if(has_nan_row(i)) return true;
+        }
+    }
 
     return false;
+
+//    for(Index i = 0; i < data.size(); i++)
+//    {
+//        if(isnan(data(i))) return true;
+//    }
+
+//    return false;
 }
 
 
@@ -6089,6 +6106,8 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
             const Tensor<type, 2> input_j = get_column_data(current_input_index_j);
 
             correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
+
+            cout << correlations(i,j).r << endl;
 
             if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
             {
@@ -10068,6 +10087,7 @@ void DataSet::scrub_missing_values()
 
         break;
     }
+
 }
 
 
@@ -11023,6 +11043,14 @@ void DataSet::read_csv_3_complete()
                 if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                 {
                     data(sample_index, variable_index) = static_cast<type>(NAN);
+                }
+                else if( tokens(j).compare("yes") == 0 || tokens(j).compare("Yes") == 0 )
+                {
+                    data(sample_index, variable_index) = type(1);
+                }
+                else if( tokens(j).compare("no") == 0 || tokens(j).compare("No") == 0)
+                {
+                    data(sample_index, variable_index) = type(0);
                 }
                 else if(columns(column_index).categories.size() > 0 && tokens(j) == columns(column_index).categories(0))
                 {
