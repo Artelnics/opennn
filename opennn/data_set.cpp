@@ -6981,8 +6981,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 
     time(&finish);
-
-    cout << "NeuralEngine XML writing time: " << difftime(finish, start) << endl;
 }
 
 
