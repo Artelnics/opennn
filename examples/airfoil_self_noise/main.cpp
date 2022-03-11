@@ -31,7 +31,7 @@ int main()
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        DataSet data_set("../data/R_100000_samples_101_variables.csv", ',', true);
+        DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
 
         const Index inputs_number = data_set.get_input_variables_number();
         const Index targets_number = data_set.get_target_variables_number();
@@ -41,19 +41,9 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        ModelSelection model_selection(&training_strategy);
-
-        model_selection.set_inputs_selection_method(ModelSelection::InputsSelectionMethod::GENETIC_ALGORITHM);
-
-        GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
-
-        genetic_algorithm_pointer->set_individuals_number(10);
-
-        model_selection.perform_inputs_selection();
+        // @todo
 
         cout << "Good bye!" << endl;
-
-        system("pause");
 
         return 0;
     }
