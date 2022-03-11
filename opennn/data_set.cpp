@@ -6107,8 +6107,6 @@ Tensor<Correlation, 2> DataSet::calculate_input_columns_correlations() const
 
             correlations(i,j) = opennn::correlation(thread_pool_device, input_i, input_j);
 
-            cout << correlations(i,j).r << endl;
-
             if(correlations(i,j).r > (type(1) - NUMERIC_LIMITS_MIN))
             {
                 correlations(i,j).r = type(1);

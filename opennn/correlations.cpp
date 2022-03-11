@@ -755,7 +755,6 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     }
 
     const Tensor<type, 2> data = opennn::assemble_matrix_matrix(x_filtered, y_filtered);
-//    const Tensor<type, 2> data = opennn::assemble_matrix_matrix(x, y);
 
     Tensor<Index, 1> input_columns_indices(x_filtered.dimension(1));
     for(Index i = 0; i < x_filtered.dimension(1); i++)
@@ -779,7 +778,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     const Index target_variables_number = data_set.get_target_variables_number();
 
     NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number});
-    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
     neural_network.get_scaling_layer_pointer()->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -788,7 +787,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
 
     training_strategy.set_display(false);
 
