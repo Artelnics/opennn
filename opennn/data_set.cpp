@@ -10236,7 +10236,7 @@ void DataSet::read_bmp()
 
     for(Index i = 0; i < image_paths.size(); i++)
     {
-        info_img = image_paths[i].u8string();
+        info_img = image_paths[i].string();
         image = read_bmp_image(info_img);
         image_size = image.size();
         size_comprobation += image_size;
