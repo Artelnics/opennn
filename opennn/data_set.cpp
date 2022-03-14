@@ -11036,15 +11036,24 @@ void DataSet::read_csv_3_complete()
             }
             else if(columns(column_index).type == ColumnType::Binary)
             {
+                string lower_case_token = tokens(j);
+                transform(lower_case_token.begin(), lower_case_token.end(), lower_case_token.begin(), ::tolower);
+
                 if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                 {
                     data(sample_index, variable_index) = static_cast<type>(NAN);
                 }
-                else if( tokens(j).compare("yes") == 0 || tokens(j).compare("Yes") == 0 )
+                else if( lower_case_token.compare("yes") == 0 ||
+                         lower_case_token.compare("positive") == 0 ||
+                         lower_case_token.compare("+") == 0 ||
+                         lower_case_token.compare("true") == 0 )
                 {
                     data(sample_index, variable_index) = type(1);
                 }
-                else if( tokens(j).compare("no") == 0 || tokens(j).compare("No") == 0)
+                else if( lower_case_token.compare("no") == 0 ||
+                         lower_case_token.compare("negative") == 0 ||
+                         lower_case_token.compare("-") == 0 ||
+                         lower_case_token.compare("false") == 0 )
                 {
                     data(sample_index, variable_index) = type(0);
                 }
