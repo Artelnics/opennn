@@ -11039,21 +11039,21 @@ void DataSet::read_csv_3_complete()
                 string lower_case_token = tokens(j);
                 transform(lower_case_token.begin(), lower_case_token.end(), lower_case_token.begin(), ::tolower);
 
+                Tensor<string,1> positive_words(4);
+                Tensor<string,1> negative_words(4);
+
+                positive_words.setValues({"yes","positive","+","true"});
+                positive_words.setValues({"no","negative","-","false"});
+
                 if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                 {
                     data(sample_index, variable_index) = static_cast<type>(NAN);
                 }
-                else if( lower_case_token.compare("yes") == 0 ||
-                         lower_case_token.compare("positive") == 0 ||
-                         lower_case_token.compare("+") == 0 ||
-                         lower_case_token.compare("true") == 0 )
+                else if( contains(positive_words, lower_case_token) )
                 {
                     data(sample_index, variable_index) = type(1);
                 }
-                else if( lower_case_token.compare("no") == 0 ||
-                         lower_case_token.compare("negative") == 0 ||
-                         lower_case_token.compare("-") == 0 ||
-                         lower_case_token.compare("false") == 0 )
+                else if( contains(negative_words, lower_case_token) )
                 {
                     data(sample_index, variable_index) = type(0);
                 }
