@@ -10038,13 +10038,13 @@ else
                             k++;
                         }
 
-                        if(k == samples_number)
+                        if(k == samples_number && i < samples_number - steps_ahead)
                         {
                                 ostringstream buffer;
 
                                 buffer << "OpenNN Exception: DataSet class.\n"
-                                       << "void DataSet::impute_missing_values_mean() const"
-                                       << "The last " << (samples_number - i) << " samples are all missing, delete them.\n";
+                                       << "void DataSet::impute_missing_values_mean() const.\n"
+                                       << "The last " << (samples_number - i) + 1 << " samples are all missing, delete them.\n";
 
                                 throw invalid_argument(buffer.str());
                          }
