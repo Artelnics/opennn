@@ -9973,6 +9973,8 @@ void DataSet::impute_missing_values_mean()
     Index current_variable;
     Index current_sample;
 
+    if(lags_number == 0 && steps_ahead == 0)
+{
 #pragma omp parallel for schedule(dynamic)
 
     for(Index j = 0; j < variables_number - target_variables_number; j++)
@@ -10003,6 +10005,59 @@ void DataSet::impute_missing_values_mean()
         }
 
     }
+}
+else
+{
+        type preview_value = 0;
+        type next_value = 0;
+
+        for(Index j = 0; j < lags_number + steps_ahead; j++)
+        {
+            current_variable = used_variables_indices(j);
+
+            for(Index i = 0; i < samples_number; i++)
+            {
+                current_sample = used_samples_indices(i);
+
+                if(!isnan(data(current_sample,current_variable)))
+                {
+                    preview_value = data(current_sample,current_variable);
+                }
+
+                if(isnan(data(current_sample, current_variable)))
+                {
+                    if(i < lags_number || i > samples_number - steps_ahead)
+                    {
+                        data(current_sample,current_variable) = means(j);
+                    }
+                    else
+                    {
+                        Index k = i;
+                        while(isnan(data(used_samples_indices(k), current_variable)) && k < samples_number)
+                        {
+                            k++;
+                        }
+
+                        if(k == samples_number)
+                        {
+                                ostringstream buffer;
+
+                                buffer << "OpenNN Exception: DataSet class.\n"
+                                       << "void DataSet::impute_missing_values_mean() const"
+                                       << "The last " << (samples_number - i) << " samples are all missing, delete them.\n";
+
+                                throw invalid_argument(buffer.str());
+                         }
+
+                        next_value = data(used_samples_indices(k), current_variable);
+
+                        data(current_sample,current_variable) = (preview_value + next_value)/2;
+                    }
+                }
+            }
+        }
+}
+
 }
 
 
