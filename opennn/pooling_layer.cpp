@@ -917,7 +917,9 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-//    set_convolution_type(convolution_type_element->GetText());
+    const string convolution_type_string = convolution_type_element->GetText();
+
+//    set_convolution_type(convolution_type_string);
 
     // Input variables dimensions element
 
@@ -932,7 +934,9 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-//    set_input_variables_dimenisons();
+    const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
+
+//    set_input_variables_dimenisons(input_variables_dimensions_string);
 
     // Column stride
 
@@ -1019,6 +1023,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         set_padding_width(static_cast<Index>(stoi(padding_width_string)));
     }
+
 }
 
 }
