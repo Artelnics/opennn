@@ -81,6 +81,11 @@ public:
 
     void forward_propagate(const Tensor<type, 4>&, LayerForwardPropagation*) final;
 
+    // Serialization methods
+
+    void from_XML(const tinyxml2::XMLDocument&) final;
+
+    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 
@@ -97,7 +102,7 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
    // Default constructor
 
    explicit FlattenLayerForwardPropagation() : LayerForwardPropagation()
-   {
+   {        
    }
 
    // Constructor
