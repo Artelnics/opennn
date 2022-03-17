@@ -727,8 +727,8 @@ Tensor<Index, 1> PoolingLayer::get_input_variables_dimensions() const
 }
 
 
-/// Returns a string with the name of the layer activation function.
-/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
+/// Returns a string with the name of the pooling layer method.
+/// This can be NoPooling, MaxPooling and AveragePooling.
 
 string PoolingLayer::write_pooling_method() const
 {
