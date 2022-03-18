@@ -806,6 +806,33 @@ void PoolingLayer::set_pooling_method(const PoolingMethod& new_pooling_method)
 }
 
 
+void PoolingLayer::set_pooling_method(const string& new_pooling_method)
+{
+    if(new_pooling_method == "NoPooling")
+    {
+        pooling_method = PoolingMethod::NoPooling;
+    }
+    else if(new_pooling_method == "MaxPooling")
+    {
+        pooling_method = PoolingMethod::MaxPooling;
+    }
+    else if(new_pooling_method == "AveragePooling")
+    {
+        pooling_method = PoolingMethod::AveragePooling;
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: PoolingLayer class.\n"
+               << "void set_pooling_type(const string&) method.\n"
+               << "Unknown pooling type: " << new_pooling_method << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+}
+
+
 /// Sets the layer type to Layer::Pooling.
 
 void PoolingLayer::set_default()
@@ -937,7 +964,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const string pooling_method_string = pooling_method_element->GetText();
 
-//    set_pooling_method(pooling_method_string)
+    set_pooling_method(pooling_method_string);
 
     // Input variables dimensions element
 
