@@ -1459,7 +1459,7 @@ void ConvolutionalLayer::set_activation_function(const string& new_activation_fu
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
                << "void set_activation_function(const string&) method.\n"
                << "Unknown activation function: " << new_activation_function_name << ".\n";
 
@@ -1635,7 +1635,11 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
+    // Convolutional layer
+
     file_stream.OpenElement("ConvolutionalLayer");
+
+    // Convolutional type
 
 //    file_stream.OpenElement("ConvolutionType");
 
@@ -1646,6 +1650,8 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 //    file_stream.CloseElement();
 
+    // Input variables dimensions
+
     file_stream.OpenElement("InputDimensions");
 
     buffer.str("");
@@ -1654,6 +1660,8 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
+
+    // Synaptic weights
 
     file_stream.OpenElement("SynapticWeights");
 
@@ -1664,6 +1672,8 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Column stride
+
     file_stream.OpenElement("ColumnStride");
 
     buffer.str("");
@@ -1672,6 +1682,8 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
+
+    // Row stride
 
     file_stream.OpenElement("RowStride");
 
@@ -1682,6 +1694,8 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Biases
+
     file_stream.OpenElement("Biases");
 
     buffer.str("");
@@ -1691,11 +1705,15 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Activation function
+
     file_stream.OpenElement("ActivationFunction");
 
     file_stream.PushText(write_activation_function().c_str());
 
     file_stream.CloseElement();
+
+    // Parameters
 
     file_stream.OpenElement("Parameters");
 
@@ -1716,6 +1734,8 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
+
+    // Convolution layer
 
     const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("ConvolutionalLayer");
 
@@ -1741,6 +1761,8 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
+    const string convolution_type_string = convolution_type_element->GetText();
+
 //    set_convolution_type(convolution_type_element->GetText());
 
     // Input variables dimensions element
@@ -1755,6 +1777,8 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         throw invalid_argument(buffer.str());
     }
+
+    const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
 
 //    set_input_variables_dimenisons();
 
@@ -1771,7 +1795,9 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-//    synaptic_weights = static_cast<Index>(atoi(synaptic_weights_element->GetText()));
+    const string synaptic_weights_string = synaptic_weights_element->GetText();
+
+//    set_synaptic_weights(synaptic_weights_string);
 
     // Column stride
 
@@ -1848,7 +1874,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!parameters_element)
     {
-        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Parameters element is nullptr.\n";
 
