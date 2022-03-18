@@ -43,7 +43,8 @@ public:
 
     /// Enumeration of the available activation functions for the convolutional layer.
 
-    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
+    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear,
+                                  ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
     enum class ConvolutionType{Valid, Same};
 
@@ -66,6 +67,8 @@ public:
     Index get_synaptic_weights_number() const;
 
     ActivationFunction get_activation_function() const;
+
+    string write_activation_function() const;
 
     Tensor<Index, 1> get_outputs_dimensions() const;
 
@@ -93,6 +96,8 @@ public:
     Index get_inputs_rows_number() const;
     Index get_inputs_columns_number() const;
 
+    Tensor<Index, 1> get_input_variables_dimenisons() const;
+
     Index get_inputs_number() const;
     Index get_neurons_number() const;
 
@@ -106,6 +111,7 @@ public:
     void set(const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 1>&);
 
     void set_activation_function(const ActivationFunction&);
+    void set_activation_function(const string&);
 
     void set_biases(const Tensor<type, 1>&);
 
@@ -118,6 +124,8 @@ public:
     void set_row_stride(const Index&);
 
     void set_column_stride(const Index&);
+
+    void set_input_variables_dimenisons(const Tensor<Index,1>&);
 
     // Initialization
 
@@ -208,6 +216,9 @@ public:
                         Tensor<type, 1>&) const;
 
    void to_2d(const Tensor<type, 4>&, Tensor<type, 2>&) const;
+
+   void from_XML(const tinyxml2::XMLDocument&) final;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 

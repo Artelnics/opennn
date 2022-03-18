@@ -49,7 +49,7 @@ int main()
 
         DataSet data_set;
 //        data_set.set_data_file_name("//TRUENAS/Artelnics/Dipcam/Datasets/cancer-test_2/");
-        data_set.set_data_file_name("C:/Users/Artelnics/Desktop/mnist/data/");
+        data_set.set_data_file_name("C:/Users/alvaromartin/Documents/mnist/");
 
         data_set.read_bmp();
 
@@ -117,7 +117,7 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.set_maximum_epochs_number(10);
+//        training_strategy.set_maximum_epochs_number(10);
         training_strategy.perform_training();
 
         // Testing analysis
