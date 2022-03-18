@@ -996,6 +996,7 @@ ConvolutionalLayer::ActivationFunction ConvolutionalLayer::get_activation_functi
     return activation_function;
 }
 
+
 /// Returns a string with the name of the layer activation function.
 /// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
 
@@ -1101,6 +1102,23 @@ Tensor<Index, 1> ConvolutionalLayer::get_input_variables_dimensions() const
 ConvolutionalLayer::ConvolutionType ConvolutionalLayer::get_convolution_type() const
 {
     return convolution_type;
+}
+
+/// Returns a string with the name of the convolution type.
+/// This can be Valid and Same.
+
+string ConvolutionalLayer::write_convolution_type() const
+{
+    switch(convolution_type)
+    {
+    case ConvolutionType::Valid:
+        return "Valid";
+
+    case ConvolutionType::Same:
+        return "Same";
+    }
+
+    return string();
 }
 
 
@@ -1495,6 +1513,30 @@ void ConvolutionalLayer::set_convolution_type(const ConvolutionalLayer::Convolut
 }
 
 
+/// Sets the padding option.
+/// @param new_convolution_type The desired convolution type.
+void ConvolutionalLayer::set_convolution_type(const string& new_convolution_type)
+{
+    if(new_convolution_type == "Valid")
+    {
+        convolution_type = ConvolutionType::Valid;
+    }
+    else if(new_convolution_type == "Same")
+    {
+        convolution_type = ConvolutionType::Same;
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void set_convolution_type(const string&) method.\n"
+               << "Unknown convolution type: " << new_convolution_type << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+}
+
 /// Sets the kernels' row stride.
 /// @param new_stride_row The desired row stride.
 
@@ -1641,14 +1683,11 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Convolutional type
 
-//    file_stream.OpenElement("ConvolutionType");
+    file_stream.OpenElement("ConvolutionType");
 
-//    buffer.str("");
-//    buffer << get_convolution_type();
+    file_stream.PushText(write_convolution_type().c_str());
 
-//    file_stream.PushText(buffer.str().c_str());
-
-//    file_stream.CloseElement();
+    file_stream.CloseElement();
 
     // Input variables dimensions
 
@@ -1656,17 +1695,6 @@ void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << get_input_variables_dimensions();
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Synaptic weights
-
-    file_stream.OpenElement("SynapticWeights");
-
-    buffer.str("");
-    buffer << get_synaptic_weights();
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1763,7 +1791,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const string convolution_type_string = convolution_type_element->GetText();
 
-//    set_convolution_type(convolution_type_element->GetText());
+    set_convolution_type(convolution_type_string);
 
     // Input variables dimensions element
 
@@ -1780,24 +1808,7 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
 
-//    set_input_variables_dimenisons();
-
-    // Synaptic weigths element
-
-    const tinyxml2::XMLElement* synaptic_weights_element = convolutional_layer_element->FirstChildElement("SynapticWeights");
-
-    if(!synaptic_weights_element)
-    {
-        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Convolutional synaptic weights element is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const string synaptic_weights_string = synaptic_weights_element->GetText();
-
-//    set_synaptic_weights(synaptic_weights_string);
+//    set_input_variables_dimenisons(input_variables_dimensions_string);
 
     // Column stride
 
@@ -1863,10 +1874,9 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-    if(activation_function_element->GetText())
-    {
-//        set_activation_function(activation_function_element->GetText());
-    }
+    const string activation_function_string = activation_function_element->GetText();
+
+    set_activation_function(activation_function_string);
 
     // Parameters
 
@@ -1885,9 +1895,8 @@ void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         const string parameters_string = parameters_element->GetText();
 
-//        set_parameters(to_type_vector(parameters_string, ' '));
+        set_parameters(to_type_vector(parameters_string, ' '));
     }
-
 }
 
 }
