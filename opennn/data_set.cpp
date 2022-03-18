@@ -11092,13 +11092,15 @@ void DataSet::read_csv_3_complete()
             else if(columns(column_index).type == ColumnType::Binary)
             {
                 string lower_case_token = tokens(j);
+
+                trim(lower_case_token);
                 transform(lower_case_token.begin(), lower_case_token.end(), lower_case_token.begin(), ::tolower);
 
                 Tensor<string,1> positive_words(4);
                 Tensor<string,1> negative_words(4);
 
                 positive_words.setValues({"yes","positive","+","true"});
-                positive_words.setValues({"no","negative","-","false"});
+                negative_words.setValues({"no","negative","-","false"});
 
                 if(tokens(j) == missing_values_label || tokens(j).find(missing_values_label) != string::npos)
                 {
