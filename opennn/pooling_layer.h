@@ -86,6 +86,10 @@ public:
 
     PoolingMethod get_pooling_method() const;
 
+    Tensor<Index, 1> get_input_variables_dimensions() const;
+
+    string write_pooling_method() const;
+
     // Set methods
 
     void set_inputs_number(const Index&) {}
@@ -148,6 +152,9 @@ public:
     void calculate_error_gradient(const Tensor<type, 2>&,
                                   LayerForwardPropagation*,
                                   LayerBackPropagation*) const final;
+
+    void from_XML(const tinyxml2::XMLDocument&) final;
+    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 

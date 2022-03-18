@@ -719,6 +719,35 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 }
 
 
+/// Returns the input_variables_dimensions.
+
+Tensor<Index, 1> PoolingLayer::get_input_variables_dimensions() const
+{
+    return input_variables_dimensions;
+}
+
+
+/// Returns a string with the name of the pooling layer method.
+/// This can be NoPooling, MaxPooling and AveragePooling.
+
+string PoolingLayer::write_pooling_method() const
+{
+    switch(pooling_method)
+    {
+    case PoolingMethod::NoPooling:
+        return "NoPooling";
+
+    case PoolingMethod::MaxPooling:
+        return "MaxPooling";
+
+    case PoolingMethod::AveragePooling:
+        return "AveragePooling";
+    }
+
+    return string();
+}
+
+
 /// Sets the number of rows of the layer's input.
 /// @param new_input_rows_number The desired rows number.
 
@@ -783,6 +812,220 @@ void PoolingLayer::set_default()
 {
     layer_type = Layer::Type::Pooling;
 }
+
+/// Serializes the convolutional layer object into an XML document of the TinyXML.
+/// See the OpenNN manual for more information about the format of this document.
+
+void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    file_stream.OpenElement("PoolingLayer");
+
+    file_stream.OpenElement("PoolingMethod");
+
+    file_stream.PushText(write_pooling_method().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("InputDimensions");
+
+    buffer.str("");
+    buffer << get_input_variables_dimensions();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("ColumnStride");
+
+    buffer.str("");
+    buffer << get_column_stride();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("RowStride");
+
+    buffer.str("");
+    buffer << get_row_stride();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("PoolColumnsNumber");
+
+    buffer.str("");
+    buffer << get_pool_columns_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("PoolRowsNumber");
+
+    buffer.str("");
+    buffer << get_pool_rows_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("PaddingWidth");
+
+    buffer.str("");
+    buffer << get_padding_width();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.CloseElement();
+}
+
+
+/// Deserializes a TinyXML document into this convolutional layer object.
+/// @param document TinyXML document containing the member data.
+
+void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("PoolingLayer");
+
+    if(!convolutional_layer_element)
+    {
+        buffer << "OpenNN Exception: PoolingLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Pooling layer element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Pooling method element
+
+    const tinyxml2::XMLElement* convolution_type_element = convolutional_layer_element->FirstChildElement("PoolingMethod");
+
+    if(!convolution_type_element)
+    {
+        buffer << "OpenNN Exception: PoolingLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Pooling method element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string convolution_type_string = convolution_type_element->GetText();
+
+//    set_convolution_type(convolution_type_string);
+
+    // Input variables dimensions element
+
+    const tinyxml2::XMLElement* input_variables_dimensions_element = convolutional_layer_element->FirstChildElement("InputDimensions");
+
+    if(!input_variables_dimensions_element)
+    {
+        buffer << "OpenNN Exception: PoolingLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Pooling input variables dimensions element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string input_variables_dimensions_string = input_variables_dimensions_element->GetText();
+
+//    set_input_variables_dimenisons(input_variables_dimensions_string);
+
+    // Column stride
+
+    const tinyxml2::XMLElement* column_stride_element = convolutional_layer_element->FirstChildElement("ColumnStride");
+
+    if(!column_stride_element)
+    {
+        buffer << "OpenNN Exception: PoolingLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Pooling column stride element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string column_stride_string = column_stride_element->GetText();
+
+    set_column_stride(static_cast<Index>(stoi(column_stride_string)));
+
+    // Row stride
+
+    const tinyxml2::XMLElement* row_stride_element = convolutional_layer_element->FirstChildElement("RowStride");
+
+    if(!row_stride_element)
+    {
+        buffer << "OpenNN Exception: PoolingLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Pooling row stride element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string row_stride_string = row_stride_element->GetText();
+
+    set_row_stride(static_cast<Index>(stoi(row_stride_string)));
+
+    // Pool columns number
+
+    const tinyxml2::XMLElement* pool_columns_number_element = convolutional_layer_element->FirstChildElement("PoolColumnsNumber");
+
+    if(!pool_columns_number_element)
+    {
+        buffer << "OpenNN Exception: PoolingLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Pooling columns number element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string pool_columns_number_string = pool_columns_number_element->GetText();
+
+    // Pool rows number
+
+    const tinyxml2::XMLElement* pool_rows_number_element = convolutional_layer_element->FirstChildElement("PoolRowsNumber");
+
+    if(!pool_rows_number_element)
+    {
+        buffer << "OpenNN Exception: PoolingLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Pooling rows number element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string pool_rows_number_string = pool_rows_number_element->GetText();
+
+    set_pool_size(static_cast<Index>(stoi(pool_rows_number_string)), static_cast<Index>(stoi(pool_columns_number_string)));
+
+    // Padding Width
+
+    const tinyxml2::XMLElement* padding_width_element = convolutional_layer_element->FirstChildElement("PaddingWidth");
+
+    if(!padding_width_element)
+    {
+        buffer << "OpenNN Exception: PoolingLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Padding width element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(padding_width_element->GetText())
+    {
+        const string padding_width_string = padding_width_element->GetText();
+
+        set_padding_width(static_cast<Index>(stoi(padding_width_string)));
+    }
+
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

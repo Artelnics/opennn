@@ -996,6 +996,50 @@ ConvolutionalLayer::ActivationFunction ConvolutionalLayer::get_activation_functi
     return activation_function;
 }
 
+/// Returns a string with the name of the layer activation function.
+/// This can be Logistic, HyperbolicTangent, Threshold, SymmetricThreshold, Linear, RectifiedLinear, ScaledExponentialLinear.
+
+string ConvolutionalLayer::write_activation_function() const
+{
+    switch(activation_function)
+    {
+    case ActivationFunction::Logistic:
+        return "Logistic";
+
+    case ActivationFunction::HyperbolicTangent:
+        return "HyperbolicTangent";
+
+    case ActivationFunction::Threshold:
+        return "Threshold";
+
+    case ActivationFunction::SymmetricThreshold:
+        return "SymmetricThreshold";
+
+    case ActivationFunction::Linear:
+        return "Linear";
+
+    case ActivationFunction::RectifiedLinear:
+        return "RectifiedLinear";
+
+    case ActivationFunction::ScaledExponentialLinear:
+        return "ScaledExponentialLinear";
+
+    case ActivationFunction::SoftPlus:
+        return "SoftPlus";
+
+    case ActivationFunction::SoftSign:
+        return "SoftSign";
+
+    case ActivationFunction::HardSigmoid:
+        return "HardSigmoid";
+
+    case ActivationFunction::ExponentialLinear:
+        return "ExponentialLinear";
+    }
+
+    return string();
+}
+
 
 /// Returns the number of rows the result of applying the layer's kernels to an image will have.
 
@@ -1360,6 +1404,69 @@ void ConvolutionalLayer::set_activation_function(const ConvolutionalLayer::Activ
     activation_function = new_activation_function;
 }
 
+/// Sets a new activation(or transfer) function in a single layer.
+/// The second argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
+/// @param new_activation_function Activation function for that layer.
+
+void ConvolutionalLayer::set_activation_function(const string& new_activation_function_name)
+{
+
+    if(new_activation_function_name == "Logistic")
+    {
+        activation_function = ActivationFunction::Logistic;
+    }
+    else if(new_activation_function_name == "HyperbolicTangent")
+    {
+        activation_function = ActivationFunction::HyperbolicTangent;
+    }
+    else if(new_activation_function_name == "Threshold")
+    {
+        activation_function = ActivationFunction::Threshold;
+    }
+    else if(new_activation_function_name == "SymmetricThreshold")
+    {
+        activation_function = ActivationFunction::SymmetricThreshold;
+    }
+    else if(new_activation_function_name == "Linear")
+    {
+        activation_function = ActivationFunction::Linear;
+    }
+    else if(new_activation_function_name == "RectifiedLinear")
+    {
+        activation_function = ActivationFunction::RectifiedLinear;
+    }
+    else if(new_activation_function_name == "ScaledExponentialLinear")
+    {
+        activation_function = ActivationFunction::ScaledExponentialLinear;
+    }
+    else if(new_activation_function_name == "SoftPlus")
+    {
+        activation_function = ActivationFunction::SoftPlus;
+    }
+    else if(new_activation_function_name == "SoftSign")
+    {
+        activation_function = ActivationFunction::SoftSign;
+    }
+    else if(new_activation_function_name == "HardSigmoid")
+    {
+        activation_function = ActivationFunction::HardSigmoid;
+    }
+    else if(new_activation_function_name == "ExponentialLinear")
+    {
+        activation_function = ActivationFunction::ExponentialLinear;
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void set_activation_function(const string&) method.\n"
+               << "Unknown activation function: " << new_activation_function_name << ".\n";
+
+        throw invalid_argument(buffer.str());
+    }
+}
+
 
 /// Sets the layer's biases.
 /// @param new_biases The desired biases.
@@ -1413,6 +1520,11 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
     }
 
     column_stride = new_stride_column;
+}
+
+void ConvolutionalLayer::set_input_variables_dimenisons(const Tensor<Index,1>& new_input_variables_dimensions)
+{
+    input_variables_dimensions = new_input_variables_dimensions;
 }
 
 
@@ -1500,6 +1612,12 @@ Index ConvolutionalLayer::get_inputs_columns_number() const
     return input_variables_dimensions[1];
 }
 
+/// Returns the dimensions of the input.
+
+Tensor<Index, 1> ConvolutionalLayer::get_input_variables_dimenisons() const
+{
+    return input_variables_dimensions;
+}
 
 void ConvolutionalLayer::to_2d(const Tensor<type, 4>& input_4d, Tensor<type, 2>& output_2d) const
 {
@@ -1507,6 +1625,243 @@ void ConvolutionalLayer::to_2d(const Tensor<type, 4>& input_4d, Tensor<type, 2>&
     {Eigen::array<Index, 2>({input_4d.dimension(0), input_4d.dimension(1) * input_4d.dimension(2) * input_4d.dimension(3)})};
 
     output_2d = input_4d.reshape(dimensions);
+}
+
+
+/// Serializes the convolutional layer object into an XML document of the TinyXML.
+/// See the OpenNN manual for more information about the format of this document.
+
+void ConvolutionalLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    file_stream.OpenElement("ConvolutionalLayer");
+
+//    file_stream.OpenElement("ConvolutionType");
+
+//    buffer.str("");
+//    buffer << get_convolution_type();
+
+//    file_stream.PushText(buffer.str().c_str());
+
+//    file_stream.CloseElement();
+
+    file_stream.OpenElement("InputDimensions");
+
+    buffer.str("");
+    buffer << get_input_variables_dimensions();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("SynapticWeights");
+
+    buffer.str("");
+    buffer << get_synaptic_weights();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("ColumnStride");
+
+    buffer.str("");
+    buffer << get_column_stride();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("RowStride");
+
+    buffer.str("");
+    buffer << get_row_stride();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("Biases");
+
+    buffer.str("");
+    buffer << get_biases();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("ActivationFunction");
+
+    file_stream.PushText(write_activation_function().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.OpenElement("Parameters");
+
+    buffer.str("");
+    buffer << get_parameters();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.CloseElement();
+}
+
+
+/// Deserializes a TinyXML document into this convolutional layer object.
+/// @param document TinyXML document containing the member data.
+
+void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("ConvolutionalLayer");
+
+    if(!convolutional_layer_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Convolutional layer element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Convolution type element
+
+    const tinyxml2::XMLElement* convolution_type_element = convolutional_layer_element->FirstChildElement("ConvolutionType");
+
+    if(!convolution_type_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Convolution type element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+//    set_convolution_type(convolution_type_element->GetText());
+
+    // Input variables dimensions element
+
+    const tinyxml2::XMLElement* input_variables_dimensions_element = convolutional_layer_element->FirstChildElement("InputDimensions");
+
+    if(!input_variables_dimensions_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Convolutional input variables dimensions element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+//    set_input_variables_dimenisons();
+
+    // Synaptic weigths element
+
+    const tinyxml2::XMLElement* synaptic_weights_element = convolutional_layer_element->FirstChildElement("SynapticWeights");
+
+    if(!synaptic_weights_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Convolutional synaptic weights element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+//    synaptic_weights = static_cast<Index>(atoi(synaptic_weights_element->GetText()));
+
+    // Column stride
+
+    const tinyxml2::XMLElement* column_stride_element = convolutional_layer_element->FirstChildElement("ColumnStride");
+
+    if(!column_stride_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Convolutional column stride element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string column_stride_string = column_stride_element->GetText();
+
+    set_column_stride(static_cast<Index>(stoi(column_stride_string)));
+
+    // Row stride
+
+    const tinyxml2::XMLElement* row_stride_element = convolutional_layer_element->FirstChildElement("RowStride");
+
+    if(!row_stride_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Convolutional row stride element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string row_stride_string = row_stride_element->GetText();
+
+    set_row_stride(static_cast<Index>(stoi(row_stride_string)));
+
+    // Biases element
+
+    const tinyxml2::XMLElement* biases_element = convolutional_layer_element->FirstChildElement("Biases");
+
+    if(!biases_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Convolutional biases element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    const string biases_string = biases_element->GetText();
+
+    set_biases(to_type_vector(biases_string, ' '));
+
+    // Activation function
+
+    const tinyxml2::XMLElement* activation_function_element = convolutional_layer_element->FirstChildElement("ActivationFunction");
+
+    if(!activation_function_element)
+    {
+        buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "ActivationFunction element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(activation_function_element->GetText())
+    {
+//        set_activation_function(activation_function_element->GetText());
+    }
+
+    // Parameters
+
+    const tinyxml2::XMLElement* parameters_element = convolutional_layer_element->FirstChildElement("Parameters");
+
+    if(!parameters_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Parameters element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    if(parameters_element->GetText())
+    {
+        const string parameters_string = parameters_element->GetText();
+
+//        set_parameters(to_type_vector(parameters_string, ' '));
+    }
+
 }
 
 }

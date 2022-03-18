@@ -151,6 +151,66 @@ void FlattenLayer::forward_propagate(const Tensor<type, 4>& inputs, LayerForward
     flatten_layer_forward_propagation->outputs = inputs.reshape(new_dims);
 }
 
+
+/// Serializes the flatten layer object into an XML document of the TinyXML.
+/// See the OpenNN manual for more information about the format of this document.
+
+void FlattenLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    file_stream.OpenElement("FlattenLayer");
+
+    file_stream.OpenElement("InputVariablesDimensions");
+
+    buffer.str("");
+    buffer << get_input_variables_dimensions();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    file_stream.CloseElement();
+}
+
+
+/// Deserializes a TinyXML document into this flatten layer object.
+/// @param document TinyXML document containing the member data.
+
+void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    const tinyxml2::XMLElement* flatten_layer_element = document.FirstChildElement("FlattenLayer");
+
+    if(!flatten_layer_element)
+    {
+        buffer << "OpenNN Exception: FlattenLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "FlattenLayer element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+    // Bounding neurons number
+
+    const tinyxml2::XMLElement* input_variables_dimensions_element = flatten_layer_element->FirstChildElement("InputVariablesDimensions");
+
+    if(!input_variables_dimensions_element)
+    {
+        buffer << "OpenNN Exception: FlattenLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "FlattenInputVariablesDimensions element is nullptr.\n";
+
+        throw invalid_argument(buffer.str());
+    }
+
+//    Tensor<Index,1> new_input_variables_dimensions = input_variables_dimensions_element->GetText();
+
+//    set(new_input_variables_dimensions);
+
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
