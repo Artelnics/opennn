@@ -820,13 +820,19 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
+    // Pooling layer
+
     file_stream.OpenElement("PoolingLayer");
+
+    // Pooling method
 
     file_stream.OpenElement("PoolingMethod");
 
     file_stream.PushText(write_pooling_method().c_str());
 
     file_stream.CloseElement();
+
+    // Inputs variables dimensions
 
     file_stream.OpenElement("InputDimensions");
 
@@ -837,6 +843,8 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Column stride
+
     file_stream.OpenElement("ColumnStride");
 
     buffer.str("");
@@ -845,6 +853,8 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
+
+    //Row stride
 
     file_stream.OpenElement("RowStride");
 
@@ -855,6 +865,8 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Pool columns number
+
     file_stream.OpenElement("PoolColumnsNumber");
 
     buffer.str("");
@@ -864,6 +876,8 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Pool rows number
+
     file_stream.OpenElement("PoolRowsNumber");
 
     buffer.str("");
@@ -872,6 +886,8 @@ void PoolingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
+
+    // Padding width
 
     file_stream.OpenElement("PaddingWidth");
 
@@ -893,9 +909,11 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
 
-    const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("PoolingLayer");
+    // Pooling layer
 
-    if(!convolutional_layer_element)
+    const tinyxml2::XMLElement* pooling_layer_element = document.FirstChildElement("PoolingLayer");
+
+    if(!pooling_layer_element)
     {
         buffer << "OpenNN Exception: PoolingLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -906,9 +924,9 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Pooling method element
 
-    const tinyxml2::XMLElement* convolution_type_element = convolutional_layer_element->FirstChildElement("PoolingMethod");
+    const tinyxml2::XMLElement* pooling_method_element = pooling_layer_element->FirstChildElement("PoolingMethod");
 
-    if(!convolution_type_element)
+    if(!pooling_method_element)
     {
         buffer << "OpenNN Exception: PoolingLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -917,13 +935,13 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw invalid_argument(buffer.str());
     }
 
-    const string convolution_type_string = convolution_type_element->GetText();
+    const string pooling_method_string = pooling_method_element->GetText();
 
-//    set_convolution_type(convolution_type_string);
+//    set_pooling_method(pooling_method_string)
 
     // Input variables dimensions element
 
-    const tinyxml2::XMLElement* input_variables_dimensions_element = convolutional_layer_element->FirstChildElement("InputDimensions");
+    const tinyxml2::XMLElement* input_variables_dimensions_element = pooling_layer_element->FirstChildElement("InputDimensions");
 
     if(!input_variables_dimensions_element)
     {
@@ -940,7 +958,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Column stride
 
-    const tinyxml2::XMLElement* column_stride_element = convolutional_layer_element->FirstChildElement("ColumnStride");
+    const tinyxml2::XMLElement* column_stride_element = pooling_layer_element->FirstChildElement("ColumnStride");
 
     if(!column_stride_element)
     {
@@ -957,7 +975,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Row stride
 
-    const tinyxml2::XMLElement* row_stride_element = convolutional_layer_element->FirstChildElement("RowStride");
+    const tinyxml2::XMLElement* row_stride_element = pooling_layer_element->FirstChildElement("RowStride");
 
     if(!row_stride_element)
     {
@@ -974,7 +992,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Pool columns number
 
-    const tinyxml2::XMLElement* pool_columns_number_element = convolutional_layer_element->FirstChildElement("PoolColumnsNumber");
+    const tinyxml2::XMLElement* pool_columns_number_element = pooling_layer_element->FirstChildElement("PoolColumnsNumber");
 
     if(!pool_columns_number_element)
     {
@@ -989,7 +1007,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Pool rows number
 
-    const tinyxml2::XMLElement* pool_rows_number_element = convolutional_layer_element->FirstChildElement("PoolRowsNumber");
+    const tinyxml2::XMLElement* pool_rows_number_element = pooling_layer_element->FirstChildElement("PoolRowsNumber");
 
     if(!pool_rows_number_element)
     {
@@ -1006,7 +1024,7 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Padding Width
 
-    const tinyxml2::XMLElement* padding_width_element = convolutional_layer_element->FirstChildElement("PaddingWidth");
+    const tinyxml2::XMLElement* padding_width_element = pooling_layer_element->FirstChildElement("PaddingWidth");
 
     if(!padding_width_element)
     {
@@ -1023,7 +1041,6 @@ void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         set_padding_width(static_cast<Index>(stoi(padding_width_string)));
     }
-
 }
 
 }
