@@ -663,7 +663,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 {
     Correlation correlation;
 
-    pair<Tensor<type,1>, Tensor<type,2>> filtered_elements = filter_missing_values_vector_matrix(x,y);
+    pair<Tensor<type,1>, Tensor<type,2>> filtered_elements = opennn::filter_missing_values_vector_matrix(x, y);
 
     Tensor<type,1> x_filtered = filtered_elements.first;
     Tensor<type,2> y_filtered = filtered_elements.second;
@@ -677,13 +677,13 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
         return correlation;
     }
 
-    const Tensor<type, 2> data = opennn::assemble_vector_matrix(x_filtered, y_filtered);
+    const Tensor<type, 2> data = opennn::assemble_matrix_vector(y_filtered, x_filtered);
 
-    Tensor<Index, 1> input_columns_indices(1);
-    input_columns_indices(0) = 0;
+    Tensor<Index, 1> input_columns_indices(y_filtered.dimension(1));
+    for(Index i = 0; i < y_filtered.dimension(1); i++) input_columns_indices(i) = i;
 
-    Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
-    for(Index i = 0; i < y.dimension(1); i++) target_columns_indices(i) = 1+i;
+    Tensor<Index, 1> target_columns_indices(1);
+    target_columns_indices(0) = y_filtered.dimension(1);
 
     DataSet data_set(data);
 
@@ -700,11 +700,11 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
+
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
     training_strategy.set_display(false);
 
@@ -727,10 +727,71 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
 
 Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice* thread_pool_device,
-                                               const Tensor<type, 2>& x,
-                                               const Tensor<type, 1>& y)
+                                               const Tensor<type, 2>& y,
+                                               const Tensor<type, 1>& x)
 {
-    return opennn::logistic_correlation_vector_matrix(thread_pool_device, y, x);
+    Correlation correlation;
+
+    pair<Tensor<type,1>, Tensor<type,2>> filtered_elements = opennn::filter_missing_values_vector_matrix(x, y);
+
+    Tensor<type,1> x_filtered = filtered_elements.first;
+    Tensor<type,2> y_filtered = filtered_elements.second;
+
+    if(x_filtered.size() == 0)
+    {
+        correlation.r = static_cast<type>(NAN);
+
+        correlation.correlation_type = CorrelationMethod::Logistic;
+
+        return correlation;
+    }
+
+    const Tensor<type, 2> data = opennn::assemble_matrix_vector(y_filtered, x_filtered);
+
+    Tensor<Index, 1> input_columns_indices(y_filtered.dimension(1));
+    for(Index i = 0; i < y_filtered.dimension(1); i++) input_columns_indices(i) = i;
+
+    Tensor<Index, 1> target_columns_indices(1);
+    target_columns_indices(0) = y_filtered.dimension(1);
+
+    DataSet data_set(data);
+
+    data_set.set_input_target_columns(input_columns_indices, target_columns_indices);
+
+    data_set.set_training();
+
+    const Index input_variables_number = data_set.get_input_variables_number();
+    const Index target_variables_number = data_set.get_target_variables_number();
+
+    NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, target_variables_number});
+    neural_network.get_probabilistic_layer_pointer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    neural_network.get_scaling_layer_pointer()->set_display(false);
+
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
+
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+    training_strategy.set_display(false);
+
+    training_strategy.perform_training();
+
+    // Logistic correlation
+
+    const Tensor<type, 2> inputs = data_set.get_input_data();
+    const Tensor<type, 2> targets = data_set.get_target_data();
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+
+    const Eigen::array<Index, 1> vector{{targets.size()}};
+
+    correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
+
+    correlation.correlation_type = CorrelationMethod::Logistic;
+
+    return correlation;
 }
 
 
