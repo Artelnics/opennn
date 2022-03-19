@@ -274,10 +274,12 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
         const Index neurons_number = layer_pointer->get_neurons_number();
 
         combinations.resize(batch_samples_number, neurons_number);
-
         activations.resize(batch_samples_number, neurons_number);
-
         activations_derivatives.resize(batch_samples_number, neurons_number);
+
+        combinations.setZero();
+        activations.setZero();
+        activations_derivatives.setZero();
     }
 
     void print() const

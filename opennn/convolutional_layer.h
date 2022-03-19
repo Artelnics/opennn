@@ -52,6 +52,8 @@ public:
 
     explicit ConvolutionalLayer();
 
+    explicit ConvolutionalLayer(const Index&, const Index&, const ActivationFunction& = ConvolutionalLayer::ActivationFunction::Linear);
+
     explicit ConvolutionalLayer(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     // Destructor
@@ -108,7 +110,6 @@ public:
     // Set methods
 
     void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-
     void set(const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 1>&);
 
     void set_activation_function(const ActivationFunction&);
@@ -128,6 +129,8 @@ public:
     void set_column_stride(const Index&);
 
     void set_input_variables_dimenisons(const Tensor<Index,1>&);
+
+    void set_name(const string&);
 
     // Initialization
 
@@ -283,11 +286,22 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
         combinations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
         activations.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
         activations_derivatives.resize(outputs_rows_number, outputs_columns_number, kernels_number, batch_samples_number);
+
+        combinations.setZero();
+        activations.setZero();
+        activations_derivatives.setZero();
     }
 
     void print() const
     {
+        cout << "Combinations:" << endl;
+        cout << combinations << endl;
 
+        cout << "Activations:" << endl;
+        cout << activations << endl;
+
+        cout << "Activations derivatives:" << endl;
+        cout << activations_derivatives << endl;
     }
 
     Tensor<type, 4> combinations;

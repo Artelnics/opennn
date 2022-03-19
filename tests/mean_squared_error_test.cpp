@@ -489,6 +489,71 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
         assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, jacobian_numerical_differentiation, type(1.0e-2)), LOG);
         */
     }
+    // Test convolutional
+    {
+        const Index input_images = 1;
+        const Index input_kernels = 3;
+
+        const Index channels = 3;
+
+        const Index rows_input = 4;
+        const Index cols_input = 4;
+        const Index rows_kernel = 3;
+        const Index cols_kernel = 3;
+
+        //set dimensions
+
+        Tensor<type,4> input_batch(rows_input, cols_input, channels, input_images);
+        Tensor<type,4> kernel(rows_kernel, cols_kernel, channels, input_kernels);
+        Tensor<type,1> bias(input_kernels);
+
+        const Index inputs_number_convolution = (rows_input)*(cols_input)*channels*input_images;
+        const Index output_number_convolution = (rows_input - rows_kernel + 1)*(cols_input - cols_kernel + 1)*input_kernels*input_images;
+
+        //set values
+
+        input_batch.setConstant(1.);
+
+        input_batch.chip(0,3).chip(0,2).setConstant(2.);
+        input_batch.chip(0,3).chip(1,2).setConstant(3.);
+        input_batch.chip(0,3).chip(2,2).setConstant(4.);
+
+        kernel.chip(0,3).setConstant(type(1./3.));
+        kernel.chip(1,3).setConstant(type(1./9.));
+        kernel.chip(2,3).setConstant(type(1./27.));
+        bias.setValues({0, 0, 0});
+
+        neural_network.set(NeuralNetwork::ProjectType::ImageClassification,
+                           {inputs_number_convolution, output_number_convolution, 1});
+
+        cout<<neural_network.get_layers_names()<<endl;
+
+        ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(neural_network.get_layer_pointer(0));
+        PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+
+        //set_dims //this should be inside nn contructor.
+        convolutional_layer->set(input_batch, kernel, bias);
+
+        //set values
+        convolutional_layer->set_synaptic_weights(kernel);
+        convolutional_layer->set_biases(bias);
+
+        perceptron_layer->set_synaptic_weights_constant(1.);
+        perceptron_layer->set_biases_constant(0);
+
+        //start
+
+        batch.inputs_4d = input_batch;
+
+        forward_propagation.set(input_images, &neural_network);
+
+        neural_network.forward_propagate(batch, forward_propagation);
+
+        forward_propagation.print();
+
+    }
+
+
 }
 
 

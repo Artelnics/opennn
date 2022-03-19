@@ -24,6 +24,13 @@ ConvolutionalLayer::ConvolutionalLayer() : Layer()
     layer_type = Layer::Type::Convolutional;
 }
 
+ConvolutionalLayer::ConvolutionalLayer(const Index& new_inputs_number,
+                                       const Index& new_outputs_number,
+                                       const ConvolutionalLayer::ActivationFunction& new_activation_function) : Layer()
+{
+    layer_type = Layer::Type::Convolutional;
+}
+
 
 /// Inputs' dimensions modifier constructor.
 /// After setting new dimensions for the inputs, it creates and initializes a ConvolutionalLayer object
@@ -1359,9 +1366,8 @@ void ConvolutionalLayer::set(const Tensor<type, 4>& new_inputs, const Tensor<typ
 
 #endif
 
-//        input_variables_dimensions.set(new_inputs_dimensions);
-
     Tensor<Index, 1> new_inputs_dimensions(4);
+
     new_inputs_dimensions(0) = new_inputs.dimension(0);
     new_inputs_dimensions(1) = new_inputs.dimension(1);
     new_inputs_dimensions(2) = new_inputs.dimension(2);
@@ -1567,6 +1573,11 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 void ConvolutionalLayer::set_input_variables_dimenisons(const Tensor<Index,1>& new_input_variables_dimensions)
 {
     input_variables_dimensions = new_input_variables_dimensions;
+}
+
+void ConvolutionalLayer::set_name(const string& new_layer_name)
+{
+    layer_name = new_layer_name;
 }
 
 

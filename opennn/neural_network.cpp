@@ -152,17 +152,6 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
         throw invalid_argument(buffer.str());
     }
 
-    if(layer_pointer->get_type_string() == "Convolutional")
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "NeuralNetwork::add_layer() method.\n"
-               << "Convolutional Layer is not available yet. It will be included in future versions.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
     const Layer::Type layer_type = layer_pointer->get_type();
 
     if(check_layer_type(layer_type))
@@ -692,7 +681,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
     ScalingLayer* scaling_layer_pointer = new ScalingLayer(inputs_number);
 
-    this->add_layer(scaling_layer_pointer);
+//    this->add_layer(scaling_layer_pointer);
 
     if(model_type == ProjectType::Approximation)
     {
@@ -757,8 +746,20 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::ImageClassification)
     {
+        /// @todo it's necessary to pass the kernels dims (size and total number of kernels)
+        /// to the constructor.
 
+        ConvolutionalLayer* convolutional_layer_pointer = new ConvolutionalLayer(architecture[0], architecture[1]);
 
+        convolutional_layer_pointer->set_name("convolutional_layer_" + to_string(0));
+
+        this->add_layer(convolutional_layer_pointer);
+
+        /// @todo change this to probabilistic
+
+        PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[1], architecture[2]);
+
+        this->add_layer(perceptron_layer_pointer);
     }
 
 
@@ -789,37 +790,37 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
                         const Tensor<Index, 1>& filters_dimensions,
                         const Index& outputs_number)
 {
-    delete_layers();
+//    delete_layers();
 
-    ScalingLayer* scaling_layer = new ScalingLayer(input_variables_dimensions);
-    this->add_layer(scaling_layer);
+//    ScalingLayer* scaling_layer = new ScalingLayer(input_variables_dimensions);
+//    this->add_layer(scaling_layer);
 
-    Tensor<Index, 1> outputs_dimensions = scaling_layer->get_outputs_dimensions();
+//    Tensor<Index, 1> outputs_dimensions = scaling_layer->get_outputs_dimensions();
 
-    for(Index i = 0; i < blocks_number; i++)
-    {
-        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
-        add_layer(convolutional_layer);
+//    for(Index i = 0; i < blocks_number; i++)
+//    {
+//        ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(outputs_dimensions, filters_dimensions);
+//        add_layer(convolutional_layer);
 
-        outputs_dimensions = convolutional_layer->get_outputs_dimensions();
+//        outputs_dimensions = convolutional_layer->get_outputs_dimensions();
 
-        // Pooling layer 1
+//        // Pooling layer 1
 
-        PoolingLayer* pooling_layer_1 = new PoolingLayer(outputs_dimensions);
-        add_layer(pooling_layer_1);
+//        PoolingLayer* pooling_layer_1 = new PoolingLayer(outputs_dimensions);
+//        add_layer(pooling_layer_1);
 
-        outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
-    }
+//        outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
+//    }
 
-    const Tensor<Index, 0> outputs_dimensions_sum = outputs_dimensions.sum();
+//    const Tensor<Index, 0> outputs_dimensions_sum = outputs_dimensions.sum();
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions_sum(0), 18);
-    add_layer(perceptron_layer);
+//    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions_sum(0), 18);
+//    add_layer(perceptron_layer);
 
-    const Index perceptron_layer_outputs = perceptron_layer->get_neurons_number();
+//    const Index perceptron_layer_outputs = perceptron_layer->get_neurons_number();
 
-    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer_outputs, outputs_number);
-    add_layer(probabilistic_layer);
+//    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer_outputs, outputs_number);
+//    add_layer(probabilistic_layer);
 }
 
 
