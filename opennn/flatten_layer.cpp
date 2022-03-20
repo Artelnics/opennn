@@ -18,9 +18,7 @@ namespace opennn
 
 FlattenLayer::FlattenLayer() : Layer()
 {
-    //set();
-
-    layer_type = Type::Flatten;
+    layer_type = Layer::Type::Flatten;
 }
 
 
@@ -37,9 +35,16 @@ void FlattenLayer::set_parameters(const Tensor<type, 1>&, const Index&)
 
 }
 
+
 Tensor<Index, 1> FlattenLayer::get_input_variables_dimensions() const
 {
     return input_variables_dimensions;
+}
+
+
+void FlattenLayer::set_name(const string& new_layer_name)
+{
+    layer_name = new_layer_name;
 }
 
 /*
@@ -110,8 +115,12 @@ Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs
 }
 
 
-void FlattenLayer::forward_propagate(const Tensor<type, 4>& inputs, LayerForwardPropagation* forward_propagation)
+void FlattenLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForwardPropagation* forward_propagation)
 {
+    cout<<"-----------"<<endl;
+    cout<<"inputs"<<endl;
+    cout<<inputs<<endl;
+
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
 

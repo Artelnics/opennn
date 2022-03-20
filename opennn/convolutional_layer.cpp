@@ -1243,39 +1243,15 @@ Index ConvolutionalLayer::get_neurons_number() const
 
 Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 {
-//    Tensor<type, 1> parameters = synaptic_weights.reshape(Eigen::array<Index, 1>{get_synaptic_weights_number()});
     Tensor<type, 1> parameters(get_parameters_number());
 
-    const Index kernels_number = get_kernels_number();
-    const Index kernels_channels_number = get_kernels_channels_number();
-    const Index kernels_rows_number = get_kernels_rows_number();
-    const Index kernels_columns_number = get_kernels_columns_number();
+    memcpy(parameters.data(),
+           biases.data(), static_cast<size_t>(biases.size())*sizeof(float));
 
-
-    Index element_index = 0;
-#pragma omp for
-    for(Index i = 0; i < kernels_number; i++)
-    {
-        for(Index j = 0; j < kernels_channels_number; j++)
-        {
-            for(Index k = 0; k < kernels_rows_number; k++)
-            {
-                for(Index l = 0; l < kernels_columns_number; l++)
-                {
-                    parameters(element_index + kernels_number) = synaptic_weights(i ,j, k, l);
-                    element_index ++;
-                }
-            }
-        }
-    }
-
-    for(int i = 0; i < biases.size(); i++)
-    {
-        parameters(i) = biases(i);
-    }
+    memcpy(parameters.data() + biases.size(),
+           synaptic_weights.data(), static_cast<size_t>(synaptic_weights.size())*sizeof(float));
 
     return parameters;
-
 }
 
 

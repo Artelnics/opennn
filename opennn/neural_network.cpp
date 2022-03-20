@@ -750,15 +750,18 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
         /// to the constructor.
 
         ConvolutionalLayer* convolutional_layer_pointer = new ConvolutionalLayer(architecture[0], architecture[1]);
-
         convolutional_layer_pointer->set_name("convolutional_layer_" + to_string(0));
-
         this->add_layer(convolutional_layer_pointer);
 
+        /// @todo it's necessary to pass the output dims from convolution output
+        /// to the constructor.
+
+        FlattenLayer* flatten_layer_pointer = new FlattenLayer();
+        flatten_layer_pointer->set_name("flatten_layer_" + to_string(1));
+        this->add_layer(flatten_layer_pointer);
+
         /// @todo change this to probabilistic
-
         PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[1], architecture[2]);
-
         this->add_layer(perceptron_layer_pointer);
     }
 
@@ -1411,6 +1414,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
+
         switch(trainable_layers_pointers(i-1)->get_type())
         {
         case Layer::Type::Perceptron:
@@ -1445,11 +1449,15 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
         break;
 
-        case Layer::Type::Convolutional: /// @todo
+        case Layer::Type::Convolutional:
 
+            trainable_layers_pointers(i)
+                    ->forward_propagate(static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                                            forward_propagation.layers(i));
         break;
 
-        case Layer::Type::Flatten: /// @todo
+        case Layer::Type::Flatten:
+
             trainable_layers_pointers(i)
                     ->forward_propagate(static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1))->outputs,
                                                             forward_propagation.layers(i));
