@@ -171,7 +171,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     InputsSelectionResults inputs_selection_results(maximum_epochs_number);
 
-
     if(display) cout << "Performing growing inputs selection..." << endl;
 
     // Loss index
@@ -200,7 +199,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     sort(correlations_rank_descending.data(),
          correlations_rank_descending.data() + correlations_rank_descending.size(),
-         [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
+         [&](Index i, Index j){return total_correlations[i] > total_correlations[j];}); // CHECKED
 
     // Neural network
 
@@ -224,20 +223,22 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     bool stop = false;
 
+    // Data Set
+
     data_set_pointer->set_input_columns_unused();
 
-    for(Index i = 1; i <= maximum_epochs_number; i++)
+    data_set_pointer->scrub_missing_values();
+
+    for(Index i = 0; i < maximum_epochs_number; i++)
     {
-        data_set_pointer->set_column_use(correlations_rank_descending[i-1], DataSet::VariableUse::Input);
+        data_set_pointer->set_column_use(correlations_rank_descending[i], DataSet::VariableUse::Input);
 
         const Index input_columns_number = data_set_pointer->get_input_columns_number();
         const Index input_variables_number = data_set_pointer->get_input_variables_number();
 
-
-
         if(input_columns_number >= minimum_inputs_number)
         {
-            long long epoch = input_columns_number-minimum_inputs_number+1;
+            long long epoch = input_columns_number - minimum_inputs_number + 1;
             neural_network_pointer->set_inputs_number(input_variables_number);
 
             if(display)
@@ -249,13 +250,13 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 input_columns_names = data_set_pointer->get_input_columns_names();
 
-                for(Index i = 0; i < input_columns_number; i++) cout << "   " << input_columns_names(i) << endl;
+                for(Index j = 0; j < input_columns_number; j++) cout << "   " << input_columns_names(j) << endl;
             }
 
             type minimum_training_error = numeric_limits<type>::max();
             type minimum_selection_error = numeric_limits<type>::max();
 
-            for(Index i = 0; i < trials_number; i++)
+            for(Index j = 0; j < trials_number; j++)
             {
                 neural_network_pointer->set_parameters_random();
 
@@ -263,7 +264,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 if(display)
                 {
-                    cout << "Trial number: " << i+1 << endl;
+                    cout << "Trial number: " << j+1 << endl;
                     cout << "   Training error: " << training_results.get_training_error() << endl;
                     cout << "   Selection error: " << training_results.get_selection_error() << endl;
                 }
@@ -293,7 +294,11 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 }
             }
 
-            if(previus_selection_error < training_results.get_selection_error()) selection_failures++;
+            if(previus_selection_error < training_results.get_selection_error())
+            {
+                selection_failures++;
+                data_set_pointer->set_column_use(correlations_rank_descending[i], DataSet::VariableUse::Unused);
+            }
 
             previus_selection_error = training_results.get_selection_error();
 
@@ -357,7 +362,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 break;
             }
         }
-
     }
 
     // Set data set stuff
