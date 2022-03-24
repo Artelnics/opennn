@@ -178,6 +178,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
     type previus_selection_error = numeric_limits< type>::max();
+    type previus_training_error = numeric_limits< type>::max();
 
     // Data set
 
@@ -233,8 +234,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     {
         data_set_pointer->set_column_use(correlations_rank_descending[i], DataSet::VariableUse::Input);
 
-        const Index input_columns_number = data_set_pointer->get_input_columns_number();
-        const Index input_variables_number = data_set_pointer->get_input_variables_number();
+        Index input_columns_number = data_set_pointer->get_input_columns_number();
+        Index input_variables_number = data_set_pointer->get_input_variables_number();
 
         if(input_columns_number >= minimum_inputs_number)
         {
@@ -294,17 +295,28 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 }
             }
 
-            if(previus_selection_error < training_results.get_selection_error())
+            if(previus_training_error < minimum_training_error)
             {
+                cout << "Selection failure" << endl;
+
                 selection_failures++;
+
                 data_set_pointer->set_column_use(correlations_rank_descending[i], DataSet::VariableUse::Unused);
+
+                input_columns_number += -1;
             }
+            else
+            {
+//                previus_selection_error = training_results.get_selection_error();
+                previus_training_error = minimum_training_error;
+                previus_selection_error = minimum_selection_error;
 
-            previus_selection_error = training_results.get_selection_error();
+                inputs_selection_results.training_error_history(input_columns_number) = minimum_training_error;
+                inputs_selection_results.selection_error_history(input_columns_number) = minimum_selection_error;
 
-            inputs_selection_results.training_error_history(input_columns_number) = training_results.get_training_error();
-
-            inputs_selection_results.selection_error_history(input_columns_number) = training_results.get_selection_error();
+                cout << "Training error: " << previus_selection_error << endl;
+                cout << "Selection error: " << previus_selection_error << endl;
+            }
 
             time(&current_time);
 
