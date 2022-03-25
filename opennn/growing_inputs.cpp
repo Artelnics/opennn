@@ -68,7 +68,7 @@ void GrowingInputs::set_default()
     {
         training_strategy_pointer->get_neural_network_pointer()->get_display();
 
-        const Index inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
+        const Index inputs_number = training_strategy_pointer->get_data_set_pointer()->get_input_columns_number();
 
         maximum_selection_failures = 100;
 
@@ -235,9 +235,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     for(Index i = 0; i < maximum_epochs_number; i++)
     {
-        cout << "i: " << i << endl;
-        cout << "columns number: " << original_input_columns_number << endl;
-
         data_set_pointer->set_column_use(correlations_rank_descending[column_index], DataSet::VariableUse::Input);
 
         Index input_columns_number = data_set_pointer->get_input_columns_number();
