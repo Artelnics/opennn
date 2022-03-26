@@ -689,7 +689,7 @@ Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>& x, const Tensor<ty
 
 Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>& x, const Tensor<type, 1>& y)
 {
-    const Index rows_number = x.size();
+    const Index rows_number = y.size();
     const Index columns_number = x.dimension(1) + 1;
 
     Tensor<type, 2> data(rows_number, columns_number);
