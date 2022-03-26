@@ -68,7 +68,7 @@ void PruningInputs::set_default()
     {       
         maximum_selection_failures = 100;
 
-        maximum_inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
+        maximum_inputs_number = training_strategy_pointer->get_data_set_pointer()->get_input_columns_number();
     }
 
     minimum_inputs_number = 1;

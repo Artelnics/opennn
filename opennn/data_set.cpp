@@ -6036,8 +6036,6 @@ void DataSet::print_input_target_columns_correlations() const
 
     const Tensor<Correlation, 2> correlations = calculate_input_target_columns_correlations();
 
-    cout << "correlations: " << get_correlation_values(correlations) << endl;
-
     for(Index j = 0; j < columns_number; j++)
     {
         for(Index i = 0; i < inputs_number; i++)

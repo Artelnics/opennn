@@ -730,6 +730,8 @@ Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice* thread_po
                                                const Tensor<type, 2>& y,
                                                const Tensor<type, 1>& x)
 {
+    return logistic_correlation_vector_matrix(thread_pool_device, x,y);
+    /*
     Correlation correlation;
 
     pair<Tensor<type,1>, Tensor<type,2>> filtered_elements = opennn::filter_missing_values_vector_matrix(x, y);
@@ -791,7 +793,7 @@ Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice* thread_po
 
     correlation.correlation_type = CorrelationMethod::Logistic;
 
-    return correlation;
+    return correlation;*/
 }
 
 
