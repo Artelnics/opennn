@@ -11565,9 +11565,6 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
     }
     else if(input_variables_dimensions.size() == 3)
     {
-        //@todo check that it works properly
-        //inputs_4d(row,column,channel,image)
-
         const Index channels_number = input_variables_dimensions(0);
         const Index columns_number = input_variables_dimensions(1);
         const Index rows_number = input_variables_dimensions(2);
@@ -11585,7 +11582,6 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                     for(Index channel = 0; channel < channels_number; channel++)
                     {
                         inputs_4d(row, col, channel, image) = data(image, index);
-//                        cout << "Index: " << index << " " << data(image, index) << endl;
                         index++;
                     }
                 }
