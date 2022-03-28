@@ -184,7 +184,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     // Data set
 
-
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
     data_set_pointer->scrub_missing_values();
@@ -266,13 +265,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 training_results = training_strategy_pointer->perform_training();
 
-                if(display)
-                {
-                    cout << "Trial number: " << j+1 << endl;
-                    cout << "   Training error: " << training_results.get_training_error() << endl;
-                    cout << "   Selection error: " << training_results.get_selection_error() << endl;
-                }
-
                 if(training_results.get_selection_error() < minimum_selection_error)
                 {
                     minimum_training_error = training_results.get_training_error();
@@ -296,6 +288,13 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                     inputs_selection_results.optimum_training_error = training_results.get_training_error();
                     inputs_selection_results.optimum_selection_error = training_results.get_selection_error();
                 }
+
+                if(display)
+                {
+                    cout << "Trial number: " << j+1 << endl;
+                    cout << "   Training error: " << training_results.get_training_error() << endl;
+                    cout << "   Selection error: " << training_results.get_selection_error() << endl;
+                }
             }
 
             if(previus_training_error < minimum_training_error)
@@ -310,24 +309,20 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
             }
             else
             {
-//                previus_selection_error = training_results.get_selection_error();
                 previus_training_error = minimum_training_error;
                 previus_selection_error = minimum_selection_error;
 
                 inputs_selection_results.training_error_history(input_columns_number) = minimum_training_error;
                 inputs_selection_results.selection_error_history(input_columns_number) = minimum_selection_error;
-
-                cout << "Training error: " << previus_selection_error << endl;
-                cout << "Selection error: " << previus_selection_error << endl;
             }
-
-            column_index++;
 
             time(&current_time);
 
             elapsed_time = static_cast<type>(difftime(current_time,beginning_time));
 
             // Stopping criteria
+
+            cout << "step 3 " << endl;
 
             if(elapsed_time >= maximum_time)
             {
@@ -361,7 +356,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
             }
-            else if(input_columns_number >= maximum_inputs_number || input_columns_number >= original_input_columns_number)
+            else if(input_columns_number >= maximum_inputs_number || input_columns_number >= original_input_columns_number - 1)
             {
                 stop = true;
 
@@ -369,11 +364,11 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
             }
-            else if(column_index >= original_input_columns_number - 1)
+            else if(column_index + 1 >= correlations_rank_descending.size() - 1 )
             {
                 stop = true;
 
-                if(display) cout << "\nAll columns has been used." << endl;
+                if(display) cout << "\nAll the columns has been used." << endl;
 
                 inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
             }
@@ -387,6 +382,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 break;
             }
         }
+
+        column_index++;
+
     }
 
     // Set data set stuff
