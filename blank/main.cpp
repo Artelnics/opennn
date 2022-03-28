@@ -24,45 +24,42 @@ using namespace opennn;
 using namespace std;
 using namespace Eigen;
 
+#include "data_set.h"
+
 int main()
 {
     try
     {
-        cout << "OpenNN. Blank application." << endl;
+        DataSet data_set;
 
-        // Data Set
+        data_set.set_data_file_name("E:/opennn/blank/test-6px/");
 
-        DataSet data_set("/home/artelnics2020/Escritorio/datasets/5_year_mortality.csv",',',true);
+        data_set.read_bmp();
 
-        const Index input_number_variables = data_set.get_input_variables_number();
-        const Index target_number_variables = data_set.get_target_variables_number();
+        const Index samples_number = data_set.get_training_samples_number();
 
-        // Neural network
+        const Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
+        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+        const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification,{input_number_variables, 10, target_number_variables});
+        DataSetBatch batch(samples_number, &data_set);
 
-        // Training strategy
+        batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
+        cout<<"Batch dimensions "<<batch.inputs_4d.dimensions()<<"\n"<<endl;
 
-        // Model Selection
+        cout<<"------"<<endl;
+        cout<<"Blue image and Blue channel all values should be set to 255. \n Current Tensor: \n "<<
+               batch.inputs_4d.chip(0,3).chip(0,2)<<endl;
 
-        ModelSelection model_selection(&training_strategy);
+        cout<<"------"<<endl;
+        cout<<"Blue image and Green channel all values should be set to 0. \n Current Tensor: \n "<<
+               batch.inputs_4d.chip(0,3).chip(1,2)<<endl;
 
-        model_selection.set_inputs_selection_method(ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
+        cout<<"------"<<endl;
+        cout<<"Red image and Red channel all values should be set to 255. \n Current Tensor: \n "<<
+               batch.inputs_4d.chip(2,3).chip(2,2)<<endl;
 
-        model_selection.get_growing_inputs_pointer()->set_display(true);
-
-        model_selection.get_growing_inputs_pointer()->set_maximum_inputs_number(15);
-        model_selection.get_growing_inputs_pointer()->set_minimum_inputs_number(10);
-
-        InputsSelectionResults input_selection_results = model_selection.perform_inputs_selection();
-
-        cout << "selection error history" << input_selection_results.selection_error_history << endl;
-
-        cout << "selection error history" << input_selection_results.training_error_history << endl;
-
-        cout << "Good bye!" << endl;
 
         return 0;
     }

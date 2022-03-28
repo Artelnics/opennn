@@ -79,6 +79,7 @@ public:
     Index get_outputs_columns_number() const;
 
     ConvolutionType get_convolution_type() const;
+    string write_convolution_type() const;
 
     Index get_column_stride() const;
 
@@ -118,8 +119,9 @@ public:
     void set_synaptic_weights(const Tensor<type, 4>&);
 
     void set_convolution_type(const ConvolutionType&);
+    void set_convolution_type(const string&);
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index);
+    void set_parameters(const Tensor<type, 1>&, const Index& index = 0);
 
     void set_row_stride(const Index&);
 

@@ -106,6 +106,7 @@ public:
     void set_pool_size(const Index&, const Index&);
 
     void set_pooling_method(const PoolingMethod&);
+    void set_pooling_method(const string&);
 
     void set_default();
 
