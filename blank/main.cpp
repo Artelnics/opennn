@@ -31,9 +31,10 @@ int main()
     try
     {
         cout<<"Blank script! "<<endl;
+
         DataSet data_set;
 
-        data_set.set_data_file_name("C:/Users/alvaromartin/Documents/opennn/blank/test-6px-python-bmp/");
+        data_set.set_data_file_name("E:/opennn/blank/test-6px-python-bmp/");
 
         data_set.read_bmp();
 
@@ -47,11 +48,22 @@ int main()
 
         batch.fill(samples_indices, input_variables_indices, target_variables_indices);
 
+        Eigen::array<Eigen::Index, 4> extents = {0, 0, 0, 0};
+        Eigen::array<Eigen::Index, 4> offsets = {batch.inputs_4d.dimension(0),
+                                                 batch.inputs_4d.dimension(1)-1, //padding
+                                                 batch.inputs_4d.dimension(2),
+                                                 batch.inputs_4d.dimension(3)};
+
+       // remove padding
+        Tensor<float, 4> new_batch = batch.inputs_4d.slice(extents, offsets);
+        batch.inputs_4d = new_batch;
+
         cout<<"Batch dimensions "<<batch.inputs_4d.dimensions()<<"\n"<<endl;
 
         cout<<"------"<<endl;
+
         cout<<"Blue image and Blue channel all values should be set to 255. \n Current Tensor: \n "<<
-               batch.inputs_4d.chip(0,3).chip(0,2)<<endl;
+               batch.inputs_4d.chip(0,3).chip(0,2);
 
         cout<<"------"<<endl;
         cout<<"Blue image and Green channel all values should be set to 0. \n Current Tensor: \n "<<

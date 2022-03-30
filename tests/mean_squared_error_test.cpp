@@ -328,38 +328,55 @@ void MeanSquaredErrorTest::test_back_propagate()
     }
     // Test convolutional
    {
-       const Index input_images = 1;
+       const Index input_images = 3;
        const Index input_kernels = 3;
 
        const Index channels = 3;
 
-       const Index rows_input = 4;
-       const Index cols_input = 4;
-       const Index rows_kernel = 3;
-       const Index cols_kernel = 3;
+       const Index rows_input = 3;
+       const Index cols_input = 3;
+       const Index rows_kernel = 2;
+       const Index cols_kernel = 2;
+
+       data_set.set_data_file_name("E:/opennn/blank/test-6px-python-bmp/");
+
+       data_set.read_bmp();
+
+       const Index samples_number = data_set.get_training_samples_number();
+
+       const Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
+       const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+       const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+
+       DataSetBatch batch(samples_number, &data_set);
+
+       batch.fill(samples_indices, input_variables_indices, target_variables_indices);
+
+       Eigen::array<Eigen::Index, 4> extents = {0, 0, 0, 0};
+       Eigen::array<Eigen::Index, 4> offsets = {batch.inputs_4d.dimension(0),
+                                                batch.inputs_4d.dimension(1)-1, //padding
+                                                batch.inputs_4d.dimension(2),
+                                                batch.inputs_4d.dimension(3)};
+
+       //remove padding
+       Tensor<float, 4> new_batch = batch.inputs_4d.slice(extents, offsets);
+       batch.inputs_4d = new_batch;
 
        //set dimensions
 
-       Tensor<type,4> input_batch(rows_input, cols_input, channels, input_images);
        Tensor<type,4> kernel(rows_kernel, cols_kernel, channels, input_kernels);
        Tensor<type,1> bias(input_kernels);
 
-       const Index inputs_number_convolution = (rows_input)*(cols_input)*channels*input_images;
-       const Index output_number_convolution = (rows_input - rows_kernel + 1)*(cols_input - cols_kernel + 1)*input_kernels*input_images;
+       const Index inputs_number_convolution = (rows_input)*(cols_input)*channels;
+       const Index output_number_convolution = (rows_input - rows_kernel + 1)*(cols_input - cols_kernel + 1)*input_kernels;
 
        //set values
-
-       input_batch.setConstant(1.);
-
-       input_batch.chip(0,3).chip(0,2).setConstant(2.);
-       input_batch.chip(0,3).chip(1,2).setConstant(3.);
-       input_batch.chip(0,3).chip(2,2).setConstant(4.);
 
        kernel.chip(0,3).setConstant(type(1./3.));
        kernel.chip(1,3).setConstant(type(1./9.));
        kernel.chip(2,3).setConstant(type(1./27.));
 
-       bias.setValues({0, 0, 0});
+//       bias.setValues({0, 0, 0});
 
        neural_network.set(NeuralNetwork::ProjectType::ImageClassification,
                           {inputs_number_convolution, output_number_convolution, 1});
@@ -368,13 +385,16 @@ void MeanSquaredErrorTest::test_back_propagate()
        FlattenLayer* flatten_layer = static_cast<FlattenLayer*>(neural_network.get_layer_pointer(1));
        PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
 
-
        //set_dims //this should be inside nn contructor.
-       convolutional_layer->set(input_batch, kernel, bias);
-       convolutional_layer->set(input_batch, kernel, bias);
 
+       cout<<batch.inputs_4d<<endl;
+       system("pause");
+       convolutional_layer->set(batch.inputs_4d, kernel, bias);
+
+       /*
        //set dims //this should be inside nn contructor.
        flatten_layer->set(convolutional_layer->get_outputs_dimensions());
+
 
        //set values
        convolutional_layer->set_synaptic_weights(kernel);
@@ -385,8 +405,6 @@ void MeanSquaredErrorTest::test_back_propagate()
 
        //start
 
-       batch.inputs_4d = input_batch;
-
        forward_propagation.set(input_images, &neural_network);
        neural_network.forward_propagate(batch, forward_propagation);
        forward_propagation.print();
@@ -396,6 +414,7 @@ void MeanSquaredErrorTest::test_back_propagate()
 
        // create Dataset object to load data.
        gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+       */
    }
 }
 
