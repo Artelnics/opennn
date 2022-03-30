@@ -22,14 +22,14 @@
          <InputsNumber>2</InputsNumber>
          <NeuronsNumber>4</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>0.133226 -0.139633 0.0363499 -0.0325542 0.0512539 0.134117 -0.167238 -0.115376 -0.0569558 0.182668 -0.18056 0.118559</Parameters>
+         <Parameters>-0.115857 -0.0646362 0.0143555 0.0636352 -0.0954956 0.0734253 0.119202 0.0427734 -0.066333 -0.0568237 -0.132849 -0.159314</Parameters>
       </PerceptronLayer>
       <PerceptronLayer>
          <LayerName>perceptron_layer_2</LayerName>
          <InputsNumber>4</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <ActivationFunction>Linear</ActivationFunction>
-         <Parameters>0.175012 0.139073 0.169167 0.0426911 -0.113865 -0.0767282 0.162555 0.0366792 0.0850979 -0.19717 -0.133972 0.195926 -0.114268 0.174439 0.170221</Parameters>
+         <Parameters>0.0748413 0.134424 0.190454 -0.0446899 -0.049939 -0.166394 -0.0276978 -0.190051 0.0707886 0.162 0.0817627 -0.101672 -0.147034 -0.0194214 0.00965576</Parameters>
       </PerceptronLayer>
       <UnscalingLayer>
          <UnscalingNeuronsNumber>3</UnscalingNeuronsNumber>

@@ -151,6 +151,24 @@ void ConvolutionalLayerTest::test_eigen_convolution_3d()
     assert_true(fabs(output(1,1,0) - 464)<type(NUMERIC_LIMITS_MIN), LOG);
 }
 
+
+void ConvolutionalLayerTest::test_read_bmp()
+{
+    DataSet data_set;
+
+    data_set.set_data_file_name("C:/Users/alvaromartin/Documents/Dataset for read_bmp()/");
+
+    data_set.read_bmp();
+
+    data_set.print();
+
+    Tensor<type, 2> data = data_set.get_data();
+
+//    cout<< "Printing data: " << endl;
+//    cout<<data<<endl;
+}
+
+
 void ConvolutionalLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -1056,6 +1074,7 @@ void ConvolutionalLayerTest::run_test_case()
 
    test_eigen_convolution();
    test_eigen_convolution_3d();
+   test_read_bmp();
 
    // Combinations
 

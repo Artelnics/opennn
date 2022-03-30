@@ -10163,7 +10163,7 @@ void DataSet::read_csv()
 }
 
 
-vector<unsigned char> DataSet::read_bmp_image(const string& filename)
+Tensor<unsigned char,1> DataSet::read_bmp_image(const string& filename)
 {
     FILE* f = fopen(filename.data(), "rb");
 
@@ -10178,27 +10178,27 @@ vector<unsigned char> DataSet::read_bmp_image(const string& filename)
         throw invalid_argument(buffer.str());
     }
 
-
     unsigned char info[54];
-
     fread(info, sizeof(unsigned char), 54, f);
-    const int width = *(int*)&info[18];
+
+    int width = *(int*)&info[18];
     const int height = *(int*)&info[22];
     const int bits_per_pixel = *(int*)&info[28];
     int channels;
 
     bits_per_pixel == 24 ? channels = 3 : channels = 1;
 
-    const size_t size = channels*width*height;
+    const int paddingAmount = (4 - (width) % 4) % 4;
+    const int paddingWidth = width + paddingAmount;
+    const size_t size = channels*paddingWidth*height;
 
-    vector<unsigned char> image(size);
+    Tensor<unsigned char, 1> image(size);
+    image.setZero();
 
     int data_offset = *(int*)(&info[0x0A]);
     fseek(f, (long int)(data_offset - 54), SEEK_CUR);
 
-
     fread(image.data(), sizeof(unsigned char), size, f);
-
     fclose(f);
 
     return image;
@@ -10287,7 +10287,7 @@ void DataSet::read_bmp()
     }
 
     string info_img;
-    vector<unsigned char> image;
+    Tensor<unsigned char,1> image;
     Index image_size;
     Index size_comprobation = 0;
 
@@ -10296,6 +10296,8 @@ void DataSet::read_bmp()
         info_img = image_paths[i].string();
         image = read_bmp_image(info_img);
         image_size = image.size();
+
+        cout<<"Image size: "<<image_size<<endl;
         size_comprobation += image_size;
     }
 
@@ -10317,6 +10319,9 @@ void DataSet::read_bmp()
     fread(info, sizeof(unsigned char), 54, f);
     const int width = *(int*)&info[18];
     const int height = *(int*)&info[22];
+
+    const int paddingAmount = (4 - (width) % 4) % 4;
+    const int paddingWidth = width + paddingAmount;
 
     const int bits_per_pixel = *(int*)&info[28];
     int channels;
@@ -10362,6 +10367,8 @@ void DataSet::read_bmp()
         }
     }
 
+//    cout << data << endl;
+
     columns.resize(image_size + 1);
 
     // Input columns
@@ -10370,7 +10377,7 @@ void DataSet::read_bmp()
 
     for(Index i = 0; i < channels; i++)
     {
-        for(Index j = 0; j < width; j++)
+        for(Index j = 0; j < paddingWidth; j++)
         {
             for(Index k = 0; k < height ; k++)
             {
@@ -10434,11 +10441,11 @@ void DataSet::read_bmp()
     split_samples_random();
 
     channels_number = channels;
-    image_width = width;
+    image_width = paddingWidth;
     image_height = height;
 
     input_variables_dimensions.resize(3);
-    input_variables_dimensions.setValues({channels, width, height});
+    input_variables_dimensions.setValues({channels, paddingWidth, height});
 }
 
 
