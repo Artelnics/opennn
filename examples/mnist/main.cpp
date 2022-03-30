@@ -49,7 +49,7 @@ int main()
 
         DataSet data_set;
 //        data_set.set_data_file_name("//TRUENAS/Artelnics/Dipcam/Datasets/cancer-test_2/");
-        data_set.set_data_file_name("C:/Users/alvaromartin/Documents/mnist/");
+        data_set.set_data_file_name("C:/Users/alvaromartin/Documents/mnist _binary/");
 
         data_set.read_bmp();
 
@@ -57,6 +57,8 @@ int main()
 
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
+
+        cout << "Number of categories: " << data_set.get_target_variables_number()<< endl;
 
         data_set.set_training();
 
@@ -121,12 +123,12 @@ int main()
         training_strategy.perform_training();
 
         // Testing analysis
-
+/*
         Tensor<type, 4> inputs_4d;
         Tensor<type, 2> outputs;
         outputs = neural_network.calculate_outputs(data_set_batch.inputs_4d);
 
- /*
+
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         vector<unsigned char> zero, one;

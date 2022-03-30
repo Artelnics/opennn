@@ -141,27 +141,27 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
         throw invalid_argument(buffer.str());
     }
 
-    if(layer_pointer->get_type_string() == "Pooling")
-    {
-        ostringstream buffer;
+//    if(layer_pointer->get_type_string() == "Pooling")
+//    {
+//        ostringstream buffer;
 
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "NeuralNetwork::add_layer() method.\n"
-               << "Pooling Layer is not available yet. It will be included in future versions.\n";
+//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+//               << "NeuralNetwork::add_layer() method.\n"
+//               << "Pooling Layer is not available yet. It will be included in future versions.\n";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
-    if(layer_pointer->get_type_string() == "Convolutional")
-    {
-        ostringstream buffer;
+//    if(layer_pointer->get_type_string() == "Convolutional")
+//    {
+//        ostringstream buffer;
 
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "NeuralNetwork::add_layer() method.\n"
-               << "Convolutional Layer is not available yet. It will be included in future versions.\n";
+//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+//               << "NeuralNetwork::add_layer() method.\n"
+//               << "Convolutional Layer is not available yet. It will be included in future versions.\n";
 
-        throw invalid_argument(buffer.str());
-    }
+//        throw invalid_argument(buffer.str());
+//    }
 
     const Layer::Type layer_type = layer_pointer->get_type();
 

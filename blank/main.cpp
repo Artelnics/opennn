@@ -30,9 +30,10 @@ int main()
 {
     try
     {
+        cout<<"Blank script! "<<endl;
         DataSet data_set;
 
-        data_set.set_data_file_name("E:/opennn/blank/test-6px/");
+        data_set.set_data_file_name("C:/Users/alvaromartin/Documents/opennn/blank/test-6px-python-bmp/");
 
         data_set.read_bmp();
 
@@ -60,7 +61,7 @@ int main()
         cout<<"Red image and Red channel all values should be set to 255. \n Current Tensor: \n "<<
                batch.inputs_4d.chip(2,3).chip(2,2)<<endl;
 
-
+        cout<<"Bye!"<<endl;
         return 0;
     }
     catch(const exception& e)

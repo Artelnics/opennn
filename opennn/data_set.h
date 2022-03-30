@@ -870,11 +870,11 @@ private:
 
    static size_t number_of_elements_in_directory(const fs::path& path);
 
-   static vector<unsigned char> read_bmp_image(const string& filename);
+   static Tensor<unsigned char,1> read_bmp_image(const string& filename);
 
-   int channels_number;
-   int image_width;
-   int image_height;
+   int channels_number = 0;
+   int image_width = 0;
+   int image_height = 0;
 
    // Local Outlier Factor
 

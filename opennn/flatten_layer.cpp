@@ -42,13 +42,12 @@ Tensor<Index, 1> FlattenLayer::get_input_variables_dimensions() const
     return input_variables_dimensions;
 }
 
-/*
+
 /// @todo
 Tensor<Index, 1> FlattenLayer::get_outputs_dimensions() const
 {
     return input_variables_dimensions;
 }
-*/
 
 /// @todo
 Index FlattenLayer::get_inputs_number() const
