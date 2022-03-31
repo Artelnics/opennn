@@ -10296,8 +10296,6 @@ void DataSet::read_bmp()
         info_img = image_paths[i].string();
         image = read_bmp_image(info_img);
         image_size = image.size();
-
-        cout<<"Image size: "<<image_size<<endl;
         size_comprobation += image_size;
     }
 
@@ -10366,8 +10364,6 @@ void DataSet::read_bmp()
             row_index++;
         }
     }
-
-//    cout << data << endl;
 
     columns.resize(image_size + 1);
 
