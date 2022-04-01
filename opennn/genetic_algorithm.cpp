@@ -918,11 +918,15 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         if(selection_errors(optimal_individual_index) < inputs_selection_results.optimum_selection_error)
         {
+            data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
+
             // Neural network
 
             inputs_selection_results.optimal_inputs = population.chip(optimal_individual_index, 0);
 
-            data_set_pointer->set_input_columns(original_input_columns_indices, transform_individual_to_indexes(inputs_selection_results.optimal_inputs));
+            inputs_selection_results.optimal_inputs = transform_individual_to_indexes(inputs_selection_results.optimal_inputs);
+
+            data_set_pointer->set_input_columns(original_input_columns_indices, inputs_selection_results.optimal_inputs);
 
             inputs_selection_results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
 
@@ -1010,7 +1014,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         check_categorical_columns();
 
-        if(true)
+        if(false)
         {
             const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
 
@@ -1030,7 +1034,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     // Set data set stuff
 
-    data_set_pointer->set_input_columns(original_input_columns_indices, transform_individual_to_indexes(inputs_selection_results.optimal_inputs));
+    data_set_pointer->set_input_columns(original_input_columns_indices, inputs_selection_results.optimal_inputs);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
 
@@ -1048,6 +1052,8 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 
     if(display) inputs_selection_results.print();
+
+    inputs_selection_results.print();
 
     return inputs_selection_results;
 }
