@@ -746,8 +746,9 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::ImageClassification)
     {
-        /// @todo it's necessary to pass the kernels dims (size and total number of kernels)
-        /// to the constructor.
+        if(architecture.size() != 6) cout << "Error: Wrong architecture size" << endl;
+
+        /// @todo it's necessary to pass the kernels dims (size and total number of kernels) to the constructor.
 
         ConvolutionalLayer* convolutional_layer_pointer = new ConvolutionalLayer(architecture[0], architecture[1]);
         convolutional_layer_pointer->set_name("convolutional_layer_" + to_string(0));

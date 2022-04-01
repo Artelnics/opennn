@@ -356,7 +356,13 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
     }
         break;
 
-    default: break;
+    default:
+    {
+        cout << "Unknow layer type" << endl;
+    }
+
+   break;
+
     }
 }
 
@@ -444,6 +450,7 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
         back_propagation.gradient.device(*thread_pool_device) += regularization_weight*back_propagation.regularization_gradient;
     }
+
 }
 
 
@@ -775,6 +782,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
         trainable_layers_pointers(0)->calculate_error_gradient(batch.inputs_4d,
                                                                forward_propagation.layers(0),
                                                                back_propagation.neural_network.layers(0));
+
     }
     else
     {
@@ -861,15 +869,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
             break;
 
         case Layer::Type::Flatten:
-        {
-            const FlattenLayerForwardPropagation* flatten_layer_forward_propagation
-                    = static_cast<FlattenLayerForwardPropagation*>(forward_propagation.layers(i-1));
 
-            trainable_layers_pointers(i)->
-                    calculate_error_gradient(flatten_layer_forward_propagation->outputs,
-                                             forward_propagation.layers(i),
-                                             back_propagation.neural_network.layers(i));
-        }
             break;
 
         default: break;
@@ -882,6 +882,7 @@ void LossIndex::calculate_error_gradient(const DataSetBatch& batch,
 
         index += trainable_layers_parameters_number(i);
     }
+
 }
 
 

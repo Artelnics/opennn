@@ -310,7 +310,7 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwar
                                                            ConvolutionalLayerBackPropagation* back_propagation) const
 {
     // Current layer's values
-
+/*
     ConvolutionalLayer* convolutional_layer = static_cast<ConvolutionalLayer*>(back_propagation->layer_pointer);
 
     const Index images_number = back_propagation->batch_samples_number;
@@ -361,7 +361,8 @@ void ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronLayerForwar
 
     //    back_propagation->delta.device(*thread_pool_device) =
     //            (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
-     }
+*/
+}
 
 
 
@@ -902,6 +903,7 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
+/*
     Tensor<type, 4> layers_inputs;
 
     switch(convolution_type) {
@@ -957,6 +959,7 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& inputs,
 //            Eigen::array<Index,3>({kernel_channels_number, kernels_rows_number, kernels_columns_number}));
         }
     }
+*/
 }
 
 
@@ -964,6 +967,7 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                                   LayerForwardPropagation* forward_propagation,
                                                   LayerBackPropagation* back_propagation) const
 {
+/*
     const Eigen::array<Eigen::Index, 4> four_dims = {input_variables_dimensions(3), // columns number
                                                      input_variables_dimensions(2), // rows number
                                                      input_variables_dimensions(1), // channels number
@@ -975,11 +979,13 @@ void ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
     const Tensor<type, 4> inputs_4d = inputs.shuffle(shuffle_dims_2D).reshape(four_dims).shuffle(shuffle_dims_4D);
 
     calculate_error_gradient(inputs_4d, forward_propagation, back_propagation);
+*/
 }
 
 
 void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {
+/*
     ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
             static_cast<ConvolutionalLayerBackPropagation*>(back_propagation);
 
@@ -993,6 +999,7 @@ void ConvolutionalLayer::insert_gradient(LayerBackPropagation* back_propagation,
     memcpy(gradient.data() + index + biases_number,
            convolutional_layer_back_propagation->synaptic_weights_derivatives.data(),
            static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+*/
 }
 
 

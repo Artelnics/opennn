@@ -564,17 +564,85 @@ void MeanSquaredErrorTest::test_back_propagate()
 }
 
 
+void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
+{
+    cout << "test_calculate_gradient_convolutional_network\n";
+
+    Tensor<Index, 1> inputs_dimensions(3);
+    inputs_dimensions(0) = 1;
+    inputs_dimensions(1) = 1;
+    inputs_dimensions(2) = 1;
+
+    DataSet data_set(1,1,1);
+    data_set.set_data_constant(3.1416);
+    data_set.set_input_variables_dimensions(inputs_dimensions);
+
+    DataSetBatch batch(1, &data_set);
+//    batch.fill();
+
+//    batch.print();
+
+
+    Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
+    convolutional_layer_inputs_dimensions(0) = 1;
+    convolutional_layer_inputs_dimensions(1) = 1;
+    convolutional_layer_inputs_dimensions(2) = 1;
+    convolutional_layer_inputs_dimensions(3) = 1;
+
+    NeuralNetwork neural_network;
+
+    Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
+    convolutional_layer_kernels_dimensions(0) = 1;
+    convolutional_layer_kernels_dimensions(1) = 1;
+    convolutional_layer_kernels_dimensions(2) = 1;
+    convolutional_layer_kernels_dimensions(3) = 1;
+
+    ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
+
+    Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
+    flatten_layer_inputs_dimensions(0) = 1;
+    flatten_layer_inputs_dimensions(1) = 1;
+    flatten_layer_inputs_dimensions(2) = 1;
+    flatten_layer_inputs_dimensions(3) = 1;
+
+    FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
+
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(1, 1);
+
+    neural_network.add_layer(convolutional_layer);
+    neural_network.add_layer(flatten_layer);
+    neural_network.add_layer(perceptron_layer);
+
+    NeuralNetworkForwardPropagation forward_propagation(1, &neural_network);
+
+    neural_network.forward_propagate(batch, forward_propagation);
+//    forward_propagation.print();
+
+    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+
+    LossIndexBackPropagation back_propagation(1, &mean_squared_error);
+
+    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+    gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
+
+    cout << "Gradient: " << gradient_numerical_differentiation << endl;
+
+}
+
+
+
 void MeanSquaredErrorTest::run_test_case()
 {
     cout << "Running mean squared error test case...\n";
 
-    test_constructor();
-    test_destructor();
+//    test_constructor();
+//    test_destructor();
 
     // Back propagate methods
 
-    test_back_propagate();
-
+//    test_back_propagate();
+    test_calculate_gradient_convolutional_network();
 //    test_back_propagate_lm();
 
     cout << "End of mean squared error test case.\n\n";
