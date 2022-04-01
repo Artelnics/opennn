@@ -175,6 +175,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     if(display) cout << "Performing growing inputs selection..." << endl;
 
+    cout << "MAXIMUM INPUTS NUMBER: " << maximum_inputs_number << endl;
+
     // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
