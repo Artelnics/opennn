@@ -262,7 +262,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 
 #endif
 
-    const Index new_genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_columns_number();
+    const Index new_genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
 
     population.resize(new_individuals_number, new_genes_number);
 
@@ -410,6 +410,9 @@ void GeneticAlgorithm::initialize_population()
         }
 
     }
+
+    check_categorical_columns();
+
 }
 
 
@@ -474,13 +477,31 @@ void GeneticAlgorithm::evaluate_population()
 
         Index index = 0;
 
+        Index column_index = 0;
+
         for(Index j = 0; j < genes_number; j++)
         {
-            if(individual(j))
+            if(data_set_pointer->get_column_type(column_index) == DataSet::ColumnType::Categorical)
             {
-                input_columns_indices(index) = original_input_columns_indices(j);
-                index++;
+                const Index categories_number = data_set_pointer->get_columns()(column_index).get_categories_number();
+
+                if( !(find(individual.data() + j, individual.data() + j + categories_number, 1) == (individual.data() + j + categories_number)) )
+                {
+                    input_columns_indices(index) = original_input_columns_indices(column_index);
+                    index++;
+                }
+                j += categories_number - 1;
             }
+            else
+            {
+                if(individual(j))
+                {
+                    input_columns_indices(index) = original_input_columns_indices(column_index);
+                    index++;
+                }
+            }
+
+            column_index++;
         }
 
         data_set_pointer->set_input_target_columns(input_columns_indices, original_target_columns_indices);
@@ -506,7 +527,7 @@ void GeneticAlgorithm::evaluate_population()
         {
             cout << "Inputs: " << endl;
 
-            const Tensor<string, 1> inputs_names = neural_network_pointer->get_inputs_names();
+            const Tensor<string, 1> inputs_names = data_set_pointer->get_input_columns_names();
 
             for(Index i = 0; i < inputs_names.size(); i++) cout << "   " << inputs_names(i) << endl;
 
@@ -844,7 +865,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     if(population.dimension(1) == 0)
     {
-        set_individuals_number(8);
+        set_individuals_number(9);
     }
 
     initialize_population();
@@ -901,7 +922,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             inputs_selection_results.optimal_inputs = population.chip(optimal_individual_index, 0);
 
-            data_set_pointer->set_input_columns(original_input_columns_indices, inputs_selection_results.optimal_inputs);
+            data_set_pointer->set_input_columns(original_input_columns_indices, transform_individual_to_indexes(inputs_selection_results.optimal_inputs));
 
             inputs_selection_results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
 
@@ -912,7 +933,12 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
             inputs_selection_results.optimum_training_error = training_errors(optimal_individual_index);
 
             inputs_selection_results.optimum_selection_error = selection_errors(optimal_individual_index);
+
         }
+
+        // Needed for new input indexes setting
+
+        data_set_pointer->set_input_target_columns(original_input_columns_indices, original_target_columns_indices);
 
         time(&current_time);
 
@@ -982,7 +1008,9 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         perform_mutation();
 
-        if(false)
+        check_categorical_columns();
+
+        if(true)
         {
             const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
 
@@ -998,12 +1026,11 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
                 cout << " | " << selection_errors(i) << " | " << fitness(i) << " | " << cumulative_fitness(i) << " | " << selection(i) << " | " << endl;
             }
         }
-
     }
 
     // Set data set stuff
 
-    data_set_pointer->set_input_columns(original_input_columns_indices, inputs_selection_results.optimal_inputs);
+    data_set_pointer->set_input_columns(original_input_columns_indices, transform_individual_to_indexes(inputs_selection_results.optimal_inputs));
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
 
@@ -1024,6 +1051,93 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     return inputs_selection_results;
 }
+
+
+
+void GeneticAlgorithm::check_categorical_columns()
+{
+        TrainingStrategy* training_strategy_pointer = get_training_strategy_pointer();
+
+        DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
+
+        const Index individuals_number = get_individuals_number();
+
+        const Index variables_number = data_set_pointer->get_input_variables_number();
+
+        Index column_index = 0;
+
+        for(Index i = 0; i < variables_number; i++)
+        {
+            const DataSet::ColumnType column_type = data_set_pointer->get_column_type(column_index);
+
+            if(column_type != DataSet::ColumnType::Categorical)
+            {
+                column_index++;
+                continue;
+            }
+
+            const Index categories_number = data_set_pointer->get_columns()(column_index).get_categories_number();
+
+            for(Index j = 0; j < individuals_number; j++)
+            {
+                const Tensor<bool,1> individual = population.chip(j,0);
+
+                if( !(std::find(individual.data() + i, individual.data() + i + categories_number, 1) == (individual.data() + i + categories_number)) )
+                {
+                    const Index random_index = rand()%categories_number;
+
+                    for(Index categories_index = 0; categories_index < categories_number;categories_index++)
+                    {
+                        population(j, i + categories_index) = false;
+                    }
+
+                    population(j, i + random_index) = true;
+                }
+            }
+
+            i += categories_number - 1;
+            column_index++;
+        }
+};
+
+
+Tensor<bool, 1> GeneticAlgorithm::transform_individual_to_indexes(Tensor<bool,1> &individual)
+{
+    DataSet* data_set_pointer = training_strategy_pointer->get_data_set_pointer();
+
+    const Index genes_number = get_genes_number();
+    const Index columns_number = data_set_pointer->get_input_columns_number();
+
+    Tensor<bool, 1> new_indexes(columns_number);
+
+    Index variable_index = 0;
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(data_set_pointer->get_column_type(i) == DataSet::ColumnType::Categorical)
+        {
+            const Index categories_number = data_set_pointer->get_columns()(i).get_categories_number();
+
+            if( !( find(individual.data() + variable_index, individual.data() + variable_index + categories_number, 1 ) == individual.data() + variable_index + categories_number ) )
+            {
+                new_indexes(i) = true;
+            }
+            else
+            {
+                new_indexes(i) = false;
+            }
+            variable_index += categories_number;
+        }
+        else
+        {
+            new_indexes(i) = individual(variable_index);
+            variable_index++;
+        }
+    }
+
+    return new_indexes;
+
+};
 
 
 /// This method writes a matrix of strings the most representative atributes.

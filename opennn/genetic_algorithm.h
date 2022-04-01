@@ -19,6 +19,7 @@
 #include <iostream>
 #include <limits>
 #include <numeric>
+#include <stdio.h>
 
 // OpenNN includes
 
@@ -104,6 +105,12 @@ public:
     // Mutation methods
 
     void perform_mutation();
+
+    // Check  methods
+
+    void check_categorical_columns();
+
+    Tensor<bool, 1> transform_individual_to_indexes(Tensor<bool,1> &);
 
     // Inputs selection methods
 
