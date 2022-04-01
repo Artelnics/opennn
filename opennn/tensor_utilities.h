@@ -37,6 +37,7 @@ bool is_constant(const Tensor<type, 1>&);
 bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));
 
 bool are_equal(const Tensor<type, 1>&, const Tensor<type, 1>&, const type& = type(0));
+bool are_equal(const Tensor<bool, 1>&, const Tensor<bool, 1>&);
 bool are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = type(0));
 
 Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&);
