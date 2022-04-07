@@ -30,6 +30,7 @@ int main()
     {
         cout << "OpenNN. Blank application." << endl;
 
+
         cout << "Good bye!" << endl;
 
         return 0;
