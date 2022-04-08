@@ -168,7 +168,6 @@ public:
 
        // Methods
 
-
        Index get_variables_number() const;
 
        Index get_categories_number() const;
@@ -199,6 +198,8 @@ public:
    };
 
    // Samples get methods
+
+   ProjectType get_project_type() const;
 
    inline Index get_samples_number() const {return samples_uses.size();}
 
@@ -773,7 +774,7 @@ public:
 private:
 
 
-   ProjectType project_type;
+   DataSet::ProjectType project_type;
 
    ThreadPool* thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;

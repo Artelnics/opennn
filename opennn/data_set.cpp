@@ -4861,7 +4861,7 @@ void DataSet::set_default()
 }
 
 
-void DataSet::set_project_type(const ProjectType& new_project_type)
+void DataSet::set_project_type(const DataSet::ProjectType& new_project_type)
 {
     project_type = new_project_type;
 }
