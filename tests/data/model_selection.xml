@@ -24,17 +24,6 @@
          <MaximumEpochsNumber>1000</MaximumEpochsNumber>
          <MaximumTime>3600</MaximumTime>
       </GrowingInputs>
-      <PruningInputs>
-         <TrialsNumber>3</TrialsNumber>
-         <SelectionErrorGoal>0</SelectionErrorGoal>
-         <MaximumSelectionFailures>100</MaximumSelectionFailures>
-         <MinimumInputsNumber>1</MinimumInputsNumber>
-         <MaximumInputsNumber>20</MaximumInputsNumber>
-         <MinimumCorrelation>0</MinimumCorrelation>
-         <MaximumCorrelation>1</MaximumCorrelation>
-         <MaximumEpochsNumber>1000</MaximumEpochsNumber>
-         <MaximumTime>3600</MaximumTime>
-      </PruningInputs>
       <GeneticAlgorithm>
          <PopulationSize>10</PopulationSize>
          <ElitismSize>2</ElitismSize>

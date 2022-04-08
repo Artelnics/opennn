@@ -52,7 +52,6 @@ int main()
    "perceptron_layer | pl\n"
    "pooling_layer | pll\n"
    "probabilistic_layer | pbl\n"
-   "pruning_inputs | pi\n"
    "quasi_newton_method | qnm\n"
    "recurrent_layer | rl\n"
    "response_optimization | ro\n"
@@ -380,15 +379,6 @@ int main()
         tests_failed_count += growing_inputs_test.get_tests_failed_count();
       }
 
-      else if(test == "pruning_inputs" || test == "pi")
-      {
-        PruningInputsTest pruning_inputs_test;
-        pruning_inputs_test.run_test_case();
-        tests_count += pruning_inputs_test.get_tests_count();
-        tests_passed_count += pruning_inputs_test.get_tests_passed_count();
-        tests_failed_count += pruning_inputs_test.get_tests_failed_count();
-      }
-
       else if(test == "genetic_algorithm" || test == "ga")
       {
         GeneticAlgorithmTest genetic_algorithm_test;
@@ -710,14 +700,6 @@ int main()
           tests_count += growing_inputs_test.get_tests_count();
           tests_passed_count += growing_inputs_test.get_tests_passed_count();
           tests_failed_count += growing_inputs_test.get_tests_failed_count();
-
-          // pruning_inputs
-
-          PruningInputsTest pruning_inputs_test;
-          pruning_inputs_test.run_test_case();
-          tests_count += pruning_inputs_test.get_tests_count();
-          tests_passed_count += pruning_inputs_test.get_tests_passed_count();
-          tests_failed_count += pruning_inputs_test.get_tests_failed_count();
 
           // genetic_algorithm
 

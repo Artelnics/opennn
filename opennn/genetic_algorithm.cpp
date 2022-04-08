@@ -262,7 +262,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 
 #endif
 
-    const Index new_genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
+    Index new_genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_variables_number();
 
     population.resize(new_individuals_number, new_genes_number);
 
@@ -589,7 +589,7 @@ void GeneticAlgorithm::perform_selection()
 
     const Index individuals_number = get_individuals_number();
 
-    const Index selected_individuals_number = static_cast<Index>((individuals_number/*-elitism_size*/)/2);
+    const Index selected_individuals_number = static_cast<Index>((individuals_number)/2 - elitism_size);
 
     const Tensor<type, 1> cumulative_fitness = fitness.cumsum(0);
 
@@ -597,11 +597,24 @@ void GeneticAlgorithm::perform_selection()
 
     Index selection_count = 0;
 
+    // Elitism
+
+    if(elitism_size != 0)
+    {
+        for(Index i = 0; i < individuals_number; i++)
+        {
+            if(fitness(i) - 1 >= (individuals_number - elitism_size) && fitness(i) - 1 <= individuals_number)
+            {
+                selection(i) = true;
+            }
+        }
+    }
+
     // Roulette wheel selection
 
-    do
+    while(selection_count < selected_individuals_number)
     {
-        const type pointer = static_cast<type>(rand()/(RAND_MAX+1.0))*cumulative_fitness(individuals_number-1);
+        const type pointer = ((type) rand()/RAND_MAX) * cumulative_fitness(individuals_number-1);
 
         if(pointer < cumulative_fitness(0) && !selection(0))
         {
@@ -620,7 +633,23 @@ void GeneticAlgorithm::perform_selection()
                 selection_count++;
                 break;
             }
-        }}while(selection_count < selected_individuals_number);
+        }
+    }
+
+    if(false)
+    {
+        cout << endl << "-----------------------------" << endl;
+        for(Index i  = 0; i < population.dimension(0); i++)
+        {
+
+            cout << "Individual " << i+1 << " | ";
+            for(Index j = 0; j < get_genes_number(); j++)
+            {
+                cout << population(i,j) << " ";
+            }
+            cout << " | " << selection_errors(i) << " | " << fitness(i) << " | " << cumulative_fitness(i) << " | " << selection(i) << " | " << endl;
+        }
+    }
 
 
 #ifdef OPENNN_DEBUG
@@ -820,14 +849,14 @@ void GeneticAlgorithm::perform_mutation()
 
         // Check if its repeated
 
-        for(Index j = 0; j < individuals_number; j++)
-        {
-            Tensor<bool, 1> row = population.chip(j,0);
-            if(i!=j && are_equal(row,individual))
-            {
-                (is_repeated = true);
-            }
-        }
+//        for(Index j = 0; j < individuals_number; j++)
+//        {
+//            Tensor<bool, 1> row = population.chip(j,0);
+//            if(i!=j && are_equal(row,individual))
+//            {
+//                (is_repeated = true);
+//            }
+//        }
 
         // Perform mutation
 
@@ -865,7 +894,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     if(population.dimension(1) == 0)
     {
-        set_individuals_number(9);
+        set_individuals_number();
     }
 
     initialize_population();
@@ -1021,7 +1050,6 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
             cout << "-----------------------------" << endl;
             for(Index i  = 0; i < population.dimension(0); i++)
             {
-
                 cout << "Individual " << i+1 << " | ";
                 for(Index j = 0; j < get_genes_number(); j++)
                 {

@@ -97,7 +97,6 @@ HEADERS += \
     growing_neurons.h \
     inputs_selection.h \
     growing_inputs.h \
-    pruning_inputs.h \
     genetic_algorithm.h \
     testing_analysis.h \
     response_optimization.h \
@@ -150,7 +149,6 @@ SOURCES += \
     growing_neurons.cpp \
     inputs_selection.cpp \
     growing_inputs.cpp \
-    pruning_inputs.cpp \
     genetic_algorithm.cpp \
     testing_analysis.cpp \
     response_optimization.cpp \

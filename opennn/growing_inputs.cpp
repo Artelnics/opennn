@@ -175,8 +175,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     if(display) cout << "Performing growing inputs selection..." << endl;
 
-    cout << "MAXIMUM INPUTS NUMBER: " << maximum_inputs_number << endl;
-
     // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
@@ -187,8 +185,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
-
-    data_set_pointer->scrub_missing_values();
 
     const Tensor<Index, 1> target_columns_indices = data_set_pointer->get_target_columns_indices();
 
@@ -265,6 +261,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
             {
                 neural_network_pointer->set_parameters_random();
 
+                data_set_pointer->scrub_missing_values();
+
                 training_results = training_strategy_pointer->perform_training();
 
                 if(training_results.get_selection_error() < minimum_selection_error)
@@ -323,8 +321,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
             elapsed_time = static_cast<type>(difftime(current_time,beginning_time));
 
             // Stopping criteria
-
-            cout << "step 3 " << endl;
 
             if(elapsed_time >= maximum_time)
             {

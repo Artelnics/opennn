@@ -53,7 +53,6 @@
 #include "growing_neurons_test.h"
 #include "inputs_selection_test.h"
 #include "growing_inputs_test.h"
-#include "pruning_inputs_test.h"
 #include "genetic_algorithm_test.h"
 #include "correlations_test.h"
 #include "tensor_utilities_test.h"
