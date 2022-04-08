@@ -9991,44 +9991,44 @@ void DataSet::impute_missing_values_mean()
     Index current_sample;
 
     if(lags_number == 0 && steps_ahead == 0)
-{
-#pragma omp parallel for schedule(dynamic)
-
-    for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        current_variable = used_variables_indices(j);
+    #pragma omp parallel for schedule(dynamic)
 
-        for(Index i = 0; i < samples_number; i++)
+        for(Index j = 0; j < variables_number - target_variables_number; j++)
         {
-            current_sample = used_samples_indices(i);
+            current_variable = used_variables_indices(j);
 
-            if(isnan(data(current_sample, current_variable)))
+            for(Index i = 0; i < samples_number; i++)
             {
-                data(current_sample,current_variable) = means(j);
+                current_sample = used_samples_indices(i);
+
+                if(isnan(data(current_sample, current_variable)))
+                {
+                    data(current_sample,current_variable) = means(j);
+                }
             }
         }
-    }
-    for(Index j = 0; j < target_variables_number; j++)
-    {
-        current_variable = target_variables_indices(j);
-        for(Index i = 0; i < samples_number; i++)
+        for(Index j = 0; j < target_variables_number; j++)
         {
-            current_sample = used_samples_indices(i);
-
-            if(isnan(data(current_sample, current_variable)))
+            current_variable = target_variables_indices(j);
+            for(Index i = 0; i < samples_number; i++)
             {
-                set_sample_use(i, "Unused");
-            }
-        }
+                current_sample = used_samples_indices(i);
 
+                if(isnan(data(current_sample, current_variable)))
+                {
+                    set_sample_use(i, "Unused");
+                }
+            }
+
+        }
     }
-}
-else
-{
+    else
+    {
         type preview_value = 0;
         type next_value = 0;
 
-        for(Index j = 0; j < lags_number + steps_ahead; j++)
+        for(Index j = 0; j < get_variables_number(); j++)
         {
             current_variable = used_variables_indices(j);
 
@@ -10073,7 +10073,7 @@ else
                 }
             }
         }
-}
+    }
 
 }
 
