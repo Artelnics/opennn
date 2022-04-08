@@ -188,6 +188,18 @@ bool are_equal(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2,
     return true;
 }
 
+bool are_equal(const Tensor<bool, 2>& matrix_1, const Tensor<bool, 2>& matrix_2)
+{
+    const Index size = matrix_1.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if( matrix_1(i) != matrix_2(i)) return false;
+    }
+
+    return true;
+}
+
 
 Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
@@ -458,7 +470,8 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: l2 norm of vector is not a number." << endl;
+        buffer << "OpenNN Exception: l2 norm of vector is not a number."
+               << endl;
 
         throw invalid_argument(buffer.str());
     }

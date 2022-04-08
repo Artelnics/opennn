@@ -44,7 +44,6 @@ SOURCES += \
     neurons_selection_test.cpp \
     inputs_selection_test.cpp \
     growing_inputs_test.cpp \
-    pruning_inputs_test.cpp \
     genetic_algorithm_test.cpp \
     testing_analysis_test.cpp \
     numerical_differentiation_test.cpp \
@@ -87,7 +86,6 @@ HEADERS += \
     neurons_selection_test.h \
     inputs_selection_test.h \
     growing_inputs_test.h \
-    pruning_inputs_test.h \
     genetic_algorithm_test.h \
     testing_analysis_test.h  \
     numerical_differentiation_test.h \

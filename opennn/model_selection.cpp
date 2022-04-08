@@ -101,14 +101,6 @@ GrowingInputs* ModelSelection::get_growing_inputs_pointer()
 }
 
 
-/// Returns a pointer to the pruning inputs selection algorithm.
-
-PruningInputs* ModelSelection::get_pruning_inputs_pointer()
-{
-    return &pruning_inputs;
-}
-
-
 /// Returns a pointer to the genetic inputs selection algorithm.
 
 GeneticAlgorithm* ModelSelection::get_genetic_algorithm_pointer()
@@ -145,8 +137,6 @@ void ModelSelection::set_display(const bool& new_display)
     // Inputs selection
 
     growing_inputs.set_display(new_display);
-
-    pruning_inputs.set_display(new_display);
 
     genetic_algorithm.set_display(new_display);
 
@@ -185,7 +175,7 @@ void ModelSelection::set_neurons_selection_method(const string& new_neurons_sele
 
 
 /// Sets a new method for selecting the inputs which have more impact on the targets.
-/// @param new_inputs_selection_method Method for selecting the inputs(GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM).
+/// @param new_inputs_selection_method Method for selecting the inputs(GROWING_INPUTS, GENETIC_ALGORITHM).
 
 void ModelSelection::set_inputs_selection_method(const ModelSelection::InputsSelectionMethod& new_inputs_selection_method)
 {
@@ -201,10 +191,6 @@ void ModelSelection::set_inputs_selection_method(const string& new_inputs_select
     if(new_inputs_selection_method == "GROWING_INPUTS")
     {
         set_inputs_selection_method(InputsSelectionMethod::GROWING_INPUTS);
-    }
-    else if(new_inputs_selection_method == "PRUNING_INPUTS")
-    {
-        set_inputs_selection_method(InputsSelectionMethod::PRUNING_INPUTS);
     }
     else if(new_inputs_selection_method == "GENETIC_ALGORITHM")
     {
@@ -237,7 +223,6 @@ void ModelSelection::set(TrainingStrategy* new_training_strategy_pointer)
     // Inputs selection
 
     growing_inputs.set(new_training_strategy_pointer);
-    pruning_inputs.set(new_training_strategy_pointer);
     genetic_algorithm.set(new_training_strategy_pointer);
 }
 
@@ -348,9 +333,6 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
     case InputsSelectionMethod::GROWING_INPUTS:
         return growing_inputs.perform_inputs_selection();
 
-    case InputsSelectionMethod::PRUNING_INPUTS:
-        return pruning_inputs.perform_inputs_selection();
-
     case InputsSelectionMethod::GENETIC_ALGORITHM:
         return genetic_algorithm.perform_inputs_selection();
     }
@@ -389,7 +371,6 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 
     growing_inputs.write_XML(file_stream);
-    pruning_inputs.write_XML(file_stream);
     genetic_algorithm.write_XML(file_stream);
 
     file_stream.CloseElement();
@@ -484,27 +465,6 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             }
 
 
-            // Pruning inputs
-
-            const tinyxml2::XMLElement* pruning_inputs_element = inputs_selection_element->FirstChildElement("PruningInputs");
-
-            if(pruning_inputs_element)
-            {
-                tinyxml2::XMLDocument pruning_inputs_document;
-
-                tinyxml2::XMLElement* pruning_inputs_element_copy = pruning_inputs_document.NewElement("PruningInputs");
-
-                for(const tinyxml2::XMLNode* nodeFor=pruning_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-                {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&pruning_inputs_document );
-                    pruning_inputs_element_copy->InsertEndChild(copy );
-                }
-
-                pruning_inputs_document.InsertEndChild(pruning_inputs_element_copy);
-
-                pruning_inputs.from_XML(pruning_inputs_document);
-            }
-
             // Genetic algorithm
 
             const tinyxml2::XMLElement* genetic_algorithm_element = inputs_selection_element->FirstChildElement("GeneticAlgorithm");
@@ -549,9 +509,6 @@ string ModelSelection::write_inputs_selection_method() const
     {
     case InputsSelectionMethod::GROWING_INPUTS:
         return "GROWING_INPUTS";
-
-    case InputsSelectionMethod::PRUNING_INPUTS:
-        return "PRUNING_INPUTS";
 
     case InputsSelectionMethod::GENETIC_ALGORITHM:
         return "GENETIC_ALGORITHM";

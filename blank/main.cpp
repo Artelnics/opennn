@@ -32,48 +32,95 @@ int main()
     {
         cout<<"Blank script! "<<endl;
 
-        DataSet data_set;
+        srand(static_cast<unsigned>(time(nullptr)));
 
-        data_set.set_data_file_name("E:/opennn/blank/test-6px-python-bmp/");
+        DataSet data_set("/home/artelnics2020/Documents/NeuralDesignerProjects/NO2forecasting/madridNO2forecasting.csv",',',true);
 
-        data_set.read_bmp();
+        data_set.set_lags_number(2);
+        data_set.set_steps_ahead_number(1);
 
-        const Index samples_number = data_set.get_training_samples_number();
+        data_set.transform_time_series();
 
-        const Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
-        const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
-        const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+        data_set.print_data();
 
-        DataSetBatch batch(samples_number, &data_set);
+        data_set.set_missing_values_method(DataSet::MissingValuesMethod::Mean);
+        data_set.scrub_missing_values();
 
-        batch.fill(samples_indices, input_variables_indices, target_variables_indices);
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
 
-        Eigen::array<Eigen::Index, 4> extents = {0, 0, 0, 0};
-        Eigen::array<Eigen::Index, 4> offsets = {batch.inputs_4d.dimension(0),
-                                                 batch.inputs_4d.dimension(1)-1, //padding
-                                                 batch.inputs_4d.dimension(2),
-                                                 batch.inputs_4d.dimension(3)};
+//        data_set.print_data();
 
-       // remove padding
-        Tensor<float, 4> new_batch = batch.inputs_4d.slice(extents, offsets);
-        batch.inputs_4d = new_batch;
+        // Neural network
 
-        cout<<"Batch dimensions "<<batch.inputs_4d.dimensions()<<"\n"<<endl;
+        const Index hidden_neurons_number = 3;
 
-        cout<<"------"<<endl;
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Forecasting, {input_variables_number, hidden_neurons_number, target_variables_number});
 
-        cout<<"Blue image and Blue channel all values should be set to 255. \n Current Tensor: \n "<<
-               batch.inputs_4d.chip(0,3).chip(0,2);
+        // Training strategy
 
-        cout<<"------"<<endl;
-        cout<<"Blue image and Green channel all values should be set to 0. \n Current Tensor: \n "<<
-               batch.inputs_4d.chip(0,3).chip(1,2)<<endl;
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        cout<<"------"<<endl;
-        cout<<"Red image and Red channel all values should be set to 255. \n Current Tensor: \n "<<
-               batch.inputs_4d.chip(2,3).chip(2,2)<<endl;
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
-        cout<<"Bye!"<<endl;
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
+
+        training_strategy.set_display(true);
+
+        training_strategy.perform_training();
+
+
+        // Dataset
+        /*
+        DataSet data_set("/home/artelnics2020/Escritorio/datasets/SUMAS2.csv",',',true);
+
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
+
+        data_set.scrub_missing_values();
+
+        data_set.print();
+
+        // Neural network
+
+        const Index hidden_neurons_number = 3;
+
+        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, hidden_neurons_number, target_variables_number});
+
+        neural_network.get_first_perceptron_layer_pointer()->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+
+        // Training strategy
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+
+//        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
+
+        training_strategy.set_display(false);
+
+//        training_strategy.perform_training();
+
+        // Model Selection
+
+        ModelSelection model_selection;
+
+        model_selection.set(&training_strategy);
+
+        model_selection.set_inputs_selection_method(ModelSelection::InputsSelectionMethod::GENETIC_ALGORITHM);
+
+        model_selection.get_genetic_algorithm_pointer()->set_elitism_size(2);
+
+        model_selection.get_genetic_algorithm_pointer()->set_individuals_number(8);
+
+        model_selection.get_genetic_algorithm_pointer()->set_maximum_epochs_number(100);
+
+        model_selection.get_genetic_algorithm_pointer()->set_display(false);
+
+        model_selection.get_genetic_algorithm_pointer()->set_mutation_rate(0.01);
+
+        InputsSelectionResults inputs_selection_results = model_selection.perform_inputs_selection();
+        */
         return 0;
     }
     catch(const exception& e)

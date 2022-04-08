@@ -73,8 +73,6 @@ int main()
 
         cout << "\nConfusion matrix:\n" << confusion << endl;
 
-        cout << data_set.get_used_columns_indices() << endl;
-
 
         // Save results
 

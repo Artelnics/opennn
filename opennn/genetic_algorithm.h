@@ -74,7 +74,6 @@ public:
     void set_individuals_number(const Index& new_individuals_number=4);
     void set_genes_number(const Index&);
 
-
     void set_training_errors(const Tensor<type, 1>&);
     void set_selection_errors(const Tensor<type, 1>&);
 

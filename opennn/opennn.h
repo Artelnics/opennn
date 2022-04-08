@@ -57,7 +57,6 @@
 #include "growing_neurons.h"
 #include "inputs_selection.h"
 #include "growing_inputs.h"
-#include "pruning_inputs.h"
 #include "genetic_algorithm.h"
 
 // Testing analysis
