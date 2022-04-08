@@ -43,12 +43,6 @@
 
 // Filesystem namespace
 
-//#if __cplusplus >= 201703L
-//  namespace fs = std::filesystem;
-//#else
-//  namespace fs = std::experimental::filesystem;
-//#endif
-
 #ifdef __APPLE__
 #include <Availability.h> // for deployment target to support pre-catalina targets without std::fs
 #endif
@@ -173,6 +167,7 @@ public:
 
 
        // Methods
+
 
        Index get_variables_number() const;
 
@@ -404,6 +399,8 @@ public:
    void set(const string&, const char&, const bool&);
 
    void set_default();
+
+   void set_project_type(const ProjectType&);
 
    void set_threads_number(const int&);
 
@@ -775,6 +772,9 @@ public:
 
 private:
 
+
+   ProjectType project_type;
+
    ThreadPool* thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
 
@@ -819,6 +819,10 @@ private:
    /// Header which contains the rows label.
 
    bool has_rows_labels = false;
+
+   /// Image classification model
+
+   bool convolutional_model = false;
 
    Tensor<Tensor<string, 1>, 1> data_file_preview;
 
