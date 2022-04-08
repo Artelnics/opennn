@@ -682,6 +682,12 @@ void DataSet::Column::print() const
 }
 
 
+DataSet::ProjectType DataSet::get_project_type() const
+{
+    return project_type;
+}
+
+
 Index DataSet::Column::get_variables_number() const
 {
     if(type == ColumnType::Categorical)
@@ -4855,6 +4861,12 @@ void DataSet::set_default()
 }
 
 
+void DataSet::set_project_type(const DataSet::ProjectType& new_project_type)
+{
+    project_type = new_project_type;
+}
+
+
 /// Sets a new data matrix.
 /// The number of rows must be equal to the number of
 /// The number of columns must be equal to the number of variables.
@@ -6741,20 +6753,23 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Columns items
 
-    {
-        const Index columns_number = get_columns_number();
-
-        for(Index i = 0; i < columns_number; i++)
+//    if()
+//    {
         {
-            file_stream.OpenElement("Column");
+            const Index columns_number = get_columns_number();
 
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
+            for(Index i = 0; i < columns_number; i++)
+            {
+                file_stream.OpenElement("Column");
 
-            columns(i).write_XML(file_stream);
+                file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            file_stream.CloseElement();
+                columns(i).write_XML(file_stream);
+
+                file_stream.CloseElement();
+            }
         }
-    }
+//    }
 
     // Close columns
 
@@ -10243,6 +10258,7 @@ void DataSet::read_bmp()
 
     has_columns_names = true;
     has_rows_labels = true;
+    convolutional_model = true;
 
     separator = Separator::None;
 
@@ -10254,7 +10270,9 @@ void DataSet::read_bmp()
         folder_paths.emplace_back(entry.path().string());
     }
 
-    for (Index i = 0 ; i < folder_paths.size() ; i++){
+
+    for (Index i = 0 ; i < folder_paths.size() ; i++)
+    {
         for (const auto & entry : fs::directory_iterator(folder_paths[i]))
         {
             image_paths.emplace_back(entry.path().string());
@@ -10464,6 +10482,8 @@ Tensor<string, 1> DataSet::get_default_columns_names(const Index& columns_number
 
 void DataSet::read_csv_1()
 {
+    cout << "Path: " << data_file_name << endl;
+
     if(data_file_name.empty())
     {
         ostringstream buffer;
