@@ -731,16 +731,16 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == ProjectType::Forecasting)
     {
-        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+//        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
 //        RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
-        this->add_layer(long_short_term_memory_layer_pointer);
+//        this->add_layer(long_short_term_memory_layer_pointer);
 
-        for(Index i = 1; i < size-1; i++)
+        for(Index i = 0; i < size-1; i++)
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
-            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i));
+            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
 
             this->add_layer(perceptron_layer_pointer);
 
