@@ -197,9 +197,11 @@ public:
        void print() const;
    };
 
-   // Samples get methods
+   // Project type
 
    ProjectType get_project_type() const;
+
+   // Samples get methods
 
    inline Index get_samples_number() const {return samples_uses.size();}
 
@@ -401,6 +403,7 @@ public:
 
    void set_default();
 
+   void set_project_type_string(const string&);
    void set_project_type(const ProjectType&);
 
    void set_threads_number(const int&);

@@ -1805,6 +1805,8 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+//    ProjectType projectType =  get_project_type();
+
     // Inputs names
 
     for(Index i = 0; i < inputs_names.size(); i++)
