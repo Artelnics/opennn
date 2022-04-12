@@ -3570,6 +3570,8 @@ void DataSet::set_binary_simple_columns()
             variable_index++;
         }
     }
+
+    cout << "Binary columns checked " << endl;
 }
 
 void DataSet::check_constant_columns()
@@ -4659,7 +4661,9 @@ void DataSet::set(const string& data_file_name, const char& separator, const boo
     read_csv();
 
     set_default_columns_scalers();
+
     set_default_columns_uses();
+
 }
 
 
@@ -10352,6 +10356,7 @@ void DataSet::read_csv()
         read_csv_2_complete();
 
         read_csv_3_complete();
+
     }
 }
 
@@ -11016,6 +11021,7 @@ void DataSet::read_csv_3_simple()
     if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
 }
 
 
@@ -11352,6 +11358,7 @@ void DataSet::read_csv_3_complete()
     if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
 }
 
 
