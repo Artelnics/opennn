@@ -329,7 +329,7 @@ void LossIndex::calculate_errors(const DataSetBatch& batch,
         back_propagation.errors.device(*thread_pool_device) =
                 static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(trainable_layers_number-1))->activations -
                 batch.targets_2d;
-    }
+     }
         break;
 
     case Layer::Type::Probabilistic:
@@ -1054,6 +1054,7 @@ Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
     type error_backward;
 
     Tensor<type, 1> gradient_numerical_differentiation(parameters_number);
+    gradient_numerical_differentiation.setConstant(0);
 
     for(Index i = 0; i < parameters_number; i++)
     {

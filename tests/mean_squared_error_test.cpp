@@ -578,10 +578,10 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     data_set.set_input_variables_dimensions(inputs_dimensions);
 
     DataSetBatch batch(1, &data_set);
+
 //    batch.fill();
 
 //    batch.print();
-
 
     Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
     convolutional_layer_inputs_dimensions(0) = 1;
@@ -626,7 +626,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
     gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
 
-    cout << "Gradient: " << gradient_numerical_differentiation << endl;
+    cout << "Numerical gradient: " << gradient_numerical_differentiation << endl;
 
 }
 

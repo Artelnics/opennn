@@ -45,9 +45,11 @@ void MeanSquaredError::calculate_error(const DataSetBatch& batch,
 {
     Tensor<type, 0> sum_squared_error;
 
+    // when convolutional does not work. Check input variables dimensions?
+
     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
-    const type coefficient = static_cast<type>(batch_samples_number);
+    const type coefficient = batch_samples_number > 0 ? static_cast<type>(batch_samples_number) : 1;
 
     sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
