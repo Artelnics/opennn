@@ -4743,6 +4743,8 @@ void DataSet::set(const Index& new_samples_number,
 
     const Index new_variables_number = new_inputs_number + new_targets_number;
 
+    // @todo check for 4d data
+
     data.resize(new_samples_number, new_variables_number);
 
     columns.resize(new_variables_number);
@@ -11554,8 +11556,8 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
 
 
 void DataSetBatch::fill(const Tensor<Index, 1>& samples,
-                          const Tensor<Index, 1>& inputs,
-                          const Tensor<Index, 1>& targets)
+                        const Tensor<Index, 1>& inputs,
+                        const Tensor<Index, 1>& targets)
 {
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 

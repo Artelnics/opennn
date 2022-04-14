@@ -573,16 +573,47 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     inputs_dimensions(1) = 1;
     inputs_dimensions(2) = 1;
 
+    Tensor<type, 2> data(2,8);
+
+    // Image 1
+
+    data(0,0) = 1;
+    data(0,1) = 5;
+    data(0,2) = 2;
+    data(0,3) = 7;
+
+    data(0,4) = 3;
+    data(0,5) = 6;
+    data(0,6) = 4;
+    data(0,7) = 8;
+
+    // Image 2
+
+    data(1,0) = 9;
+    data(1,1) = 13;
+    data(1,2) = 10;
+    data(1,3) = 14;
+
+    data(1,4) = 11;
+    data(1,5) = 15;
+    data(1,6) = 12;
+    data(1,7) = 16;
+
     DataSet data_set(1,1,1);
-    data_set.set_data_constant(3.1416);
+//    data_set.set_data_constant(3.1416);
     data_set.set_input_variables_dimensions(inputs_dimensions);
+    data_set.set_data(data);
+
+    const Tensor<Index, 1> training_samples_indices = data_set.get_training_samples_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
     DataSetBatch batch(1, &data_set);
 
-//    batch.fill();
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
-//    batch.print();
-
+    batch.print();
+/*
     Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
     convolutional_layer_inputs_dimensions(0) = 1;
     convolutional_layer_inputs_dimensions(1) = 1;
@@ -627,7 +658,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     gradient_numerical_differentiation = mean_squared_error.calculate_gradient_numerical_differentiation();
 
     cout << "Numerical gradient: " << gradient_numerical_differentiation << endl;
-
+    */
 }
 
 
