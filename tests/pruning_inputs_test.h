@@ -12,6 +12,7 @@
 // Unit testing includes
 
 #include "../opennn/unit_testing.h"
+#include "../opennn/pruning_inputs.h"
 
 class PruningInputsTest : public UnitTesting
 {
