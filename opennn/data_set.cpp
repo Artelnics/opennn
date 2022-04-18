@@ -11573,8 +11573,11 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         //inputs_4d(row,column,channel,image)
 
         const Index channels_number = input_variables_dimensions(0);
-        const Index columns_number = input_variables_dimensions(1);
-        const Index rows_number = input_variables_dimensions(2);
+//        const Index columns_number = input_variables_dimensions(1);
+//        const Index rows_number = input_variables_dimensions(2);
+
+        const Index rows_number = input_variables_dimensions(1);
+        const Index columns_number = input_variables_dimensions(2);
 
         Index index = 0;
 

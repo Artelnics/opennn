@@ -569,11 +569,11 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     cout << "test_calculate_gradient_convolutional_network\n";
 
     Tensor<Index, 1> inputs_dimensions(3);
-    inputs_dimensions(0) = 1;
-    inputs_dimensions(1) = 1;
-    inputs_dimensions(2) = 1;
+    inputs_dimensions(0) = 2;
+    inputs_dimensions(1) = 2;
+    inputs_dimensions(2) = 2;
 
-    Tensor<type, 2> data(2,8);
+    Tensor<type, 2> data(2,9);
 
     // Image 1
 
@@ -587,6 +587,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     data(0,6) = 4;
     data(0,7) = 8;
 
+    data(0,8) = 0; // Target
+
     // Image 2
 
     data(1,0) = 9;
@@ -599,7 +601,9 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     data(1,6) = 12;
     data(1,7) = 16;
 
-    DataSet data_set(1,1,1);
+    data(1,8) = 1; // Target
+
+    DataSet data_set(2,1,1);
 //    data_set.set_data_constant(3.1416);
     data_set.set_input_variables_dimensions(inputs_dimensions);
     data_set.set_data(data);
@@ -608,24 +612,24 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
-    DataSetBatch batch(1, &data_set);
+    DataSetBatch batch(2, &data_set);
 
     batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     batch.print();
-/*
+
     Tensor<Index, 1> convolutional_layer_inputs_dimensions(4);
-    convolutional_layer_inputs_dimensions(0) = 1;
-    convolutional_layer_inputs_dimensions(1) = 1;
-    convolutional_layer_inputs_dimensions(2) = 1;
-    convolutional_layer_inputs_dimensions(3) = 1;
+    convolutional_layer_inputs_dimensions(0) = 2;
+    convolutional_layer_inputs_dimensions(1) = 2;
+    convolutional_layer_inputs_dimensions(2) = 2;
+    convolutional_layer_inputs_dimensions(3) = 2;
 
     NeuralNetwork neural_network;
 
     Tensor<Index, 1> convolutional_layer_kernels_dimensions(4);
     convolutional_layer_kernels_dimensions(0) = 1;
     convolutional_layer_kernels_dimensions(1) = 1;
-    convolutional_layer_kernels_dimensions(2) = 1;
+    convolutional_layer_kernels_dimensions(2) = 2;
     convolutional_layer_kernels_dimensions(3) = 1;
 
     ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
@@ -647,8 +651,8 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     NeuralNetworkForwardPropagation forward_propagation(1, &neural_network);
 
     neural_network.forward_propagate(batch, forward_propagation);
-//    forward_propagation.print();
-
+        forward_propagation.print();
+/*
     MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
     LossIndexBackPropagation back_propagation(1, &mean_squared_error);
