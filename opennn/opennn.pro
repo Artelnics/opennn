@@ -103,6 +103,7 @@ HEADERS += \
     tensor_utilities.h \
     unit_testing.h \
     flatten_layer.h \
+    text_analytics.h \
     opennn.h
 
 SOURCES += \
@@ -153,4 +154,5 @@ SOURCES += \
     testing_analysis.cpp \
     response_optimization.cpp \
     flatten_layer.cpp \
+    text_analytics.cpp \
     unit_testing.cpp
