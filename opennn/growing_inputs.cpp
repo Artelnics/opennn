@@ -261,7 +261,10 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
             {
                 neural_network_pointer->set_parameters_random();
 
-                data_set_pointer->scrub_missing_values();
+                if(data_set_pointer->has_nan())
+                {
+                    data_set_pointer->scrub_missing_values();
+                }
 
                 training_results = training_strategy_pointer->perform_training();
 

@@ -423,8 +423,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-//        results.print_epoch(display);
-
         if(display && epoch%display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
@@ -436,7 +434,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            //if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -445,7 +443,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            //if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -454,7 +452,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(training_loss <= training_loss_goal)
         {
-            //if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_loss << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << training_loss << endl;
 
             stop_training = true;
 
@@ -463,7 +461,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(selection_failures >= maximum_selection_failures)
         {
-            //if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 

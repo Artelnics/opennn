@@ -100,7 +100,7 @@ void GeneticAlgorithm::set_default()
 
     maximum_epochs_number = 100;
 
-    mutation_rate = static_cast<type>(0.1);
+    mutation_rate = static_cast<type>(0.01);
 
     // Population stuff
 
