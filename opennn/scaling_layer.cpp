@@ -1234,8 +1234,8 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 //    cout << "Project type writting xml..................... !!!!!!!!!!!!!!!!!!!!!!!!!"<< get_project_type_string(projectType) << endl;
 
-    if(projectType != ProjectType::ImageClassification)
-    {
+//    if(projectType != ProjectType::ImageClassification)
+//    {
         const Tensor<string, 1> scaling_methods_string = write_scalers();
 
         for(Index i = 0; i < neurons_number; i++)
@@ -1282,7 +1282,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.CloseElement();
         }
-    }
+//    }
 
     // Scaling layer (end tag)
 
@@ -1333,8 +1333,8 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 //    cout << "Getting project type read xml ..........................:"<<get_project_type_string(projectType)<< endl;
 
-    if(projectType != ProjectType::ImageClassification)
-    {
+//    if(projectType != ProjectType::ImageClassification)
+//    {
         for(Index i = 0; i < neurons_number; i++)
         {
             const tinyxml2::XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
@@ -1423,23 +1423,23 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
                 scalers[i] = Scaler::NoScaling;
             }
         }
-    }
-    else
-    {
-        for(Index i = 0; i < neurons_number; i++)
-        {
-            // Descriptives
+//    }
+//    else
+//    {
+//        for(Index i = 0; i < neurons_number; i++)
+//        {
+//            // Descriptives
 
-            descriptives[i].minimum = static_cast<type>(0);
-            descriptives[i].maximum = static_cast<type>(255);
-            descriptives[i].mean = static_cast<type>(0);
-            descriptives[i].standard_deviation = static_cast<type>(1);
+//            descriptives[i].minimum = static_cast<type>(0);
+//            descriptives[i].maximum = static_cast<type>(255);
+//            descriptives[i].mean = static_cast<type>(0);
+//            descriptives[i].standard_deviation = static_cast<type>(1);
 
-            // Scaler
+//            // Scaler
 
-            scalers[i] = Scaler::MinimumMaximum;
-        }
-    }
+//            scalers[i] = Scaler::MinimumMaximum;
+//        }
+//    }
 
     // Display
     {
