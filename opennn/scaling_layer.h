@@ -39,6 +39,8 @@ class ScalingLayer : public Layer
 
 public:
 
+   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification};
+
    // Constructors
 
    explicit ScalingLayer();
@@ -50,6 +52,8 @@ public:
 
    // Get methods
    
+   ProjectType get_project_type() const;
+   string get_project_type_string(const ScalingLayer::ProjectType&) const;
    Tensor<Index, 1> get_outputs_dimensions() const;
 
    Index get_inputs_number() const final;
@@ -84,6 +88,9 @@ public:
    void set(const Tensor<Descriptives, 1>&);
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
+
+   void set_project_type(const ProjectType&);
+   void set_project_type_string(const string&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
@@ -146,6 +153,8 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
+
+   ScalingLayer::ProjectType project_type;
 
    Tensor<Index, 1> input_variables_dimensions;
 

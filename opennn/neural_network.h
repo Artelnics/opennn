@@ -93,6 +93,8 @@ public:
    const Tensor<string, 1>& get_inputs_names() const;
    string get_input_name(const Index&) const;
    Index get_input_index(const string&) const;
+   ProjectType get_project_type() const;
+   string get_project_type_string(const NeuralNetwork::ProjectType&) const;
 
    const Tensor<string, 1>& get_outputs_names() const;
    string get_output_name(const Index&) const;
@@ -128,6 +130,8 @@ public:
 
    void set_layers_pointers(Tensor<Layer*, 1>&);
 
+   void set_project_type(const ProjectType&);
+   void set_project_type_string(const string&);
    void set_inputs_names(const Tensor<string, 1>&);
    void set_outputs_names(const Tensor<string, 1>&);
 
@@ -237,6 +241,8 @@ public:
 protected:
 
    string name = "neural_network";
+
+   NeuralNetwork::ProjectType project_type;
 
    /// Names of inputs
 
