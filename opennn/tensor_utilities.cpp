@@ -591,10 +591,11 @@ Index count_NAN(const Tensor<type, 1>& x)
     return NAN_number;
 }
 
+
 Index count_NAN(const Tensor<type, 2>& x)
 {
     const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1);
+    const Index columns_number = x.dimension(1);   
 
     Index count = 0;
 
@@ -610,6 +611,7 @@ Index count_NAN(const Tensor<type, 2>& x)
 
     return count;
 }
+
 
 void check_size(const Tensor<type, 1>& vector, const Index& size, const string& log)
 {
