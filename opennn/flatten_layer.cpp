@@ -117,9 +117,9 @@ Tensor<type, 2> FlattenLayer::calculate_outputs_2d(const Tensor<type, 4>& inputs
 
 void FlattenLayer::forward_propagate(const Tensor<type, 4> &inputs, LayerForwardPropagation* forward_propagation)
 {
-    cout<<"-----------"<<endl;
-    cout<<"inputs"<<endl;
-    cout<<inputs<<endl;
+//    cout<<"-----------"<<endl;
+//    cout<<"inputs"<<endl;
+//    cout<<inputs<<endl;
 
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation
             = static_cast<FlattenLayerForwardPropagation*>(forward_propagation);
