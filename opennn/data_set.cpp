@@ -6785,34 +6785,20 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Columns items
 
-    ProjectType projectType = get_project_type();
     const Index columns_number = get_columns_number();
 
-//    if(projectType != ProjectType::ImageClassification)
-//    {
+    {
+        for(Index i = 0; i < columns_number; i++)
         {
-            for(Index i = 0; i < columns_number; i++)
-            {
-                file_stream.OpenElement("Column");
+            file_stream.OpenElement("Column");
 
-                file_stream.PushAttribute("Item", to_string(i+1).c_str());
+            file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-                columns(i).write_XML(file_stream);
+            columns(i).write_XML(file_stream);
 
-                file_stream.CloseElement();
-            }
+            file_stream.CloseElement();
         }
-//    }
-//    else
-//    {
-//        {
-//            file_stream.OpenElement("Target");
-
-//            columns(columns_number - 1).write_XML(file_stream);
-
-//            file_stream.CloseElement();
-//        }
-//    }
+    }
 
     // Close columns
 
@@ -6858,7 +6844,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Rows labels
 
-    if(has_rows_labels && projectType != ProjectType::ImageClassification)
+    if(has_rows_labels)
     {
         const Index rows_labels_number = rows_labels.dimension(0);
 
@@ -7331,285 +7317,146 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Columns
 
-    ProjectType projectType = get_project_type();
-
     const tinyxml2::XMLElement* start_element = columns_number_element;
 
     if(new_columns_number > 0)
     {
-//        if(projectType != ProjectType::ImageClassification)
-//        {
-            for(Index i = 0; i < new_columns_number; i++)
+        for(Index i = 0; i < new_columns_number; i++)
+        {
+            const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("Column");
+            start_element = column_element;
+
+            if(column_element->Attribute("Item") != to_string(i+1))
             {
-                const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("Column");
-                start_element = column_element;
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Column item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
 
-                if(column_element->Attribute("Item") != to_string(i+1))
-                {
-                    buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Column item number (" << i+1 << ") does not match (" << column_element->Attribute("Item") << ").\n";
+                throw invalid_argument(buffer.str());
+            }
 
-                    throw invalid_argument(buffer.str());
-                }
+            // Name
 
-                // Name
+            const tinyxml2::XMLElement* name_element = column_element->FirstChildElement("Name");
 
-                const tinyxml2::XMLElement* name_element = column_element->FirstChildElement("Name");
+            if(!name_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Name element is nullptr.\n";
 
-                if(!name_element)
+                throw invalid_argument(buffer.str());
+            }
+
+            if(name_element->GetText())
+            {
+                const string new_name = name_element->GetText();
+
+                columns(i).name = new_name;
+            }
+
+            // Scaler
+
+            const tinyxml2::XMLElement* scaler_element = column_element->FirstChildElement("Scaler");
+
+            if(!scaler_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Scaler element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(scaler_element->GetText())
+            {
+                const string new_scaler = scaler_element->GetText();
+
+                columns(i).set_scaler(new_scaler);
+            }
+
+            // Column use
+
+            const tinyxml2::XMLElement* column_use_element = column_element->FirstChildElement("ColumnUse");
+
+            if(!column_use_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Column use element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(column_use_element->GetText())
+            {
+                const string new_column_use = column_use_element->GetText();
+
+                columns(i).set_use(new_column_use);
+            }
+
+            // Type
+
+            const tinyxml2::XMLElement* type_element = column_element->FirstChildElement("Type");
+
+            if(!type_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Type element is nullptr.\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(type_element->GetText())
+            {
+                const string new_type = type_element->GetText();
+                columns(i).set_type(new_type);
+            }
+
+            if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary)
+            {
+                // Categories
+
+                const tinyxml2::XMLElement* categories_element = column_element->FirstChildElement("Categories");
+
+                if(!categories_element)
                 {
                     buffer << "OpenNN Exception: DataSet class.\n"
                            << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Name element is nullptr.\n";
+                           << "Categories element is nullptr.\n";
 
                     throw invalid_argument(buffer.str());
                 }
 
-                if(name_element->GetText())
+                if(categories_element->GetText())
                 {
-                    const string new_name = name_element->GetText();
+                    const string new_categories = categories_element->GetText();
 
-                    columns(i).name = new_name;
+                    columns(i).categories = get_tokens(new_categories, ';');
                 }
 
-                // Scaler
+                // Categories uses
 
-                const tinyxml2::XMLElement* scaler_element = column_element->FirstChildElement("Scaler");
+                const tinyxml2::XMLElement* categories_uses_element = column_element->FirstChildElement("CategoriesUses");
 
-                if(!scaler_element)
-                {
-                    buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Scaler element is nullptr.\n";
-
-                    throw invalid_argument(buffer.str());
-                }
-
-                if(scaler_element->GetText())
-                {
-                    const string new_scaler = scaler_element->GetText();
-
-                    columns(i).set_scaler(new_scaler);
-                }
-
-                // Column use
-
-                const tinyxml2::XMLElement* column_use_element = column_element->FirstChildElement("ColumnUse");
-
-                if(!column_use_element)
-                {
-                    buffer << "OpenNN Exception: DataSet class.\n"
-                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Column use element is nullptr.\n";
-
-                    throw invalid_argument(buffer.str());
-                }
-
-                if(column_use_element->GetText())
-                {
-                    const string new_column_use = column_use_element->GetText();
-
-                    columns(i).set_use(new_column_use);
-                }
-
-                // Type
-
-                const tinyxml2::XMLElement* type_element = column_element->FirstChildElement("Type");
-
-                if(!type_element)
+                if(!categories_uses_element)
                 {
                     buffer << "OpenNN Exception: DataSet class.\n"
                            << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Type element is nullptr.\n";
+                           << "Categories uses element is nullptr.\n";
 
                     throw invalid_argument(buffer.str());
                 }
 
-                if(type_element->GetText())
+                if(categories_uses_element->GetText())
                 {
-                    const string new_type = type_element->GetText();
-                    columns(i).set_type(new_type);
-                }
+                    const string new_categories_uses = categories_uses_element->GetText();
 
-                if(columns(i).type == ColumnType::Categorical || columns(i).type == ColumnType::Binary)
-                {
-                    // Categories
-
-                    const tinyxml2::XMLElement* categories_element = column_element->FirstChildElement("Categories");
-
-                    if(!categories_element)
-                    {
-                        buffer << "OpenNN Exception: DataSet class.\n"
-                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                               << "Categories element is nullptr.\n";
-
-                        throw invalid_argument(buffer.str());
-                    }
-
-                    if(categories_element->GetText())
-                    {
-                        const string new_categories = categories_element->GetText();
-
-                        columns(i).categories = get_tokens(new_categories, ';');
-                    }
-
-                    // Categories uses
-
-                    const tinyxml2::XMLElement* categories_uses_element = column_element->FirstChildElement("CategoriesUses");
-
-                    if(!categories_uses_element)
-                    {
-                        buffer << "OpenNN Exception: DataSet class.\n"
-                               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-                               << "Categories uses element is nullptr.\n";
-
-                        throw invalid_argument(buffer.str());
-                    }
-
-                    if(categories_uses_element->GetText())
-                    {
-                        const string new_categories_uses = categories_uses_element->GetText();
-
-                        columns(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
-                    }
+                    columns(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
                 }
             }
-//        }
-//        else
-//        {
-//            for(Index i = 0; i < new_columns_number - 1; i++)
-//            {
-//                columns(i).name = "Pixel_" + to_string(i);
-//                columns(i).scaler = Scaler::MinimumMaximum;
-//                columns(i).column_use = VariableUse::Input;
-//                columns(i).type = ColumnType::Numeric;
-//            }
-
-//            const tinyxml2::XMLElement* column_element = start_element->NextSiblingElement("Target");
-
-//            // Name
-
-//            const tinyxml2::XMLElement* name_element = column_element->FirstChildElement("Name");
-
-//            if(!name_element)
-//            {
-//                buffer << "OpenNN Exception: DataSet class.\n"
-//                       << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                       << "Name element is nullptr.\n";
-
-//                throw invalid_argument(buffer.str());
-//            }
-
-//            if(name_element->GetText())
-//            {
-//                const string new_name = name_element->GetText();
-
-//                columns(new_columns_number - 1).name = new_name;
-//            }
-
-//            // Scaler
-
-//            const tinyxml2::XMLElement* scaler_element = column_element->FirstChildElement("Scaler");
-
-//            if(!scaler_element)
-//            {
-//                buffer << "OpenNN Exception: DataSet class.\n"
-//                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                       << "Scaler element is nullptr.\n";
-
-//                throw invalid_argument(buffer.str());
-//            }
-
-//            if(scaler_element->GetText())
-//            {
-//                const string new_scaler = scaler_element->GetText();
-
-//                columns(new_columns_number - 1).set_scaler(new_scaler);
-//            }
-
-//            // Column use
-
-//            const tinyxml2::XMLElement* column_use_element = column_element->FirstChildElement("ColumnUse");
-
-//            if(!column_use_element)
-//            {
-//                buffer << "OpenNN Exception: DataSet class.\n"
-//                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                       << "Column use element is nullptr.\n";
-
-//                throw invalid_argument(buffer.str());
-//            }
-
-//            if(column_use_element->GetText())
-//            {
-//                const string new_column_use = column_use_element->GetText();
-
-//                columns(new_columns_number - 1).set_use(new_column_use);
-//            }
-
-//            // Type
-
-//            const tinyxml2::XMLElement* type_element = column_element->FirstChildElement("Type");
-
-//            if(!type_element)
-//            {
-//                buffer << "OpenNN Exception: DataSet class.\n"
-//                       << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                       << "Type element is nullptr.\n";
-
-//                throw invalid_argument(buffer.str());
-//            }
-
-//            if(type_element->GetText())
-//            {
-//                const string new_type = type_element->GetText();
-//                columns(new_columns_number - 1).set_type(new_type);
-//            }
-
-//            if(columns(new_columns_number - 1).type == ColumnType::Categorical || columns(new_columns_number - 1).type == ColumnType::Binary)
-//            {
-//                // Categories
-
-//                const tinyxml2::XMLElement* categories_element = column_element->FirstChildElement("Categories");
-
-//                if(!categories_element)
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Categories element is nullptr.\n";
-
-//                    throw invalid_argument(buffer.str());
-//                }
-
-//                if(categories_element->GetText())
-//                {
-//                    const string new_categories = categories_element->GetText();
-
-//                    columns(new_columns_number - 1).categories = get_tokens(new_categories, ';');
-//                }
-
-//                // Categories uses
-
-//                const tinyxml2::XMLElement* categories_uses_element = column_element->FirstChildElement("CategoriesUses");
-
-//                if(!categories_uses_element)
-//                {
-//                    buffer << "OpenNN Exception: DataSet class.\n"
-//                           << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                           << "Categories uses element is nullptr.\n";
-
-//                    throw invalid_argument(buffer.str());
-//                }
-
-//                if(categories_uses_element->GetText())
-//                {
-//                    const string new_categories_uses = categories_uses_element->GetText();
-
-//                    columns(new_columns_number - 1).set_categories_uses(get_tokens(new_categories_uses, ';'));
-//                }
-//            }
-//        }
+        }
     }
 
 
@@ -7798,7 +7645,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows label
 
-    if(has_rows_labels && projectType != ProjectType::ImageClassification)
+    if(has_rows_labels)
     {
         // Rows labels begin tag
 
@@ -10414,10 +10261,6 @@ size_t DataSet::number_of_elements_in_directory(const fs::path& path)
 
 void DataSet::read_bmp()
 {
-
-    cout << "Start reading bmp images..." << endl;
-
-    const clock_t begin_time = clock();
     const fs::path path = data_file_name;
 
     if(data_file_name.empty())
@@ -10647,10 +10490,6 @@ void DataSet::read_bmp()
 
     input_variables_dimensions.resize(3);
     input_variables_dimensions.setValues({channels, paddingWidth, height});
-
-    std::cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC << endl;
-
-    cout << "End reading bmp images." << endl;
 }
 
 
