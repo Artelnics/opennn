@@ -1224,65 +1224,52 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Scaling neurons
 
-    cout << "Getting project type"<< endl;
+    const Tensor<string, 1> scaling_methods_string = write_scalers();
 
-//    ProjectType projectType = get_project_type();
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        // Scaling neuron
 
-    cout << "done"<< endl;
+        file_stream.OpenElement("ScalingNeuron");
 
-   ProjectType projectType = ProjectType::ImageClassification;
+        file_stream.PushAttribute("Index", int(i+1));
 
-//    cout << "Project type writting xml..................... !!!!!!!!!!!!!!!!!!!!!!!!!"<< get_project_type_string(projectType) << endl;
+        //Descriptives
 
-//    if(projectType != ProjectType::ImageClassification)
-//    {
-        const Tensor<string, 1> scaling_methods_string = write_scalers();
+        file_stream.OpenElement("Descriptives");
 
-        for(Index i = 0; i < neurons_number; i++)
-        {
-            // Scaling neuron
+        buffer.str(""); buffer << descriptives(i).minimum;
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
 
-            file_stream.OpenElement("ScalingNeuron");
+        buffer.str(""); buffer << descriptives(i).maximum;
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
 
-            file_stream.PushAttribute("Index", int(i+1));
+        buffer.str(""); buffer << descriptives(i).mean;
+        file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText("\\");
 
-            //Descriptives
+        buffer.str(""); buffer << descriptives(i).standard_deviation;
+        file_stream.PushText(buffer.str().c_str());
 
-            file_stream.OpenElement("Descriptives");
+        file_stream.CloseElement();
 
-            buffer.str(""); buffer << descriptives(i).minimum;
-            file_stream.PushText(buffer.str().c_str());
-            file_stream.PushText("\\");
+        // Scaler
 
-            buffer.str(""); buffer << descriptives(i).maximum;
-            file_stream.PushText(buffer.str().c_str());
-            file_stream.PushText("\\");
+        file_stream.OpenElement("Scaler");
 
-            buffer.str(""); buffer << descriptives(i).mean;
-            file_stream.PushText(buffer.str().c_str());
-            file_stream.PushText("\\");
+        buffer.str("");
+        buffer << scaling_methods_string(i);
 
-            buffer.str(""); buffer << descriptives(i).standard_deviation;
-            file_stream.PushText(buffer.str().c_str());
+        file_stream.PushText(buffer.str().c_str());
 
-            file_stream.CloseElement();
+        file_stream.CloseElement();
 
-            // Scaler
+        // Scaling neuron (end tag)
 
-            file_stream.OpenElement("Scaler");
-
-            buffer.str("");
-            buffer << scaling_methods_string(i);
-
-            file_stream.PushText(buffer.str().c_str());
-
-            file_stream.CloseElement();
-
-            // Scaling neuron (end tag)
-
-            file_stream.CloseElement();
-        }
-//    }
+        file_stream.CloseElement();
+    }
 
     // Scaling layer (end tag)
 
@@ -1329,117 +1316,94 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     const tinyxml2::XMLElement* start_element = neurons_number_element;
 
-    ProjectType projectType = get_project_type();
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        const tinyxml2::XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
+        start_element = scaling_neuron_element;
 
-//    cout << "Getting project type read xml ..........................:"<<get_project_type_string(projectType)<< endl;
-
-//    if(projectType != ProjectType::ImageClassification)
-//    {
-        for(Index i = 0; i < neurons_number; i++)
+        if(!scaling_neuron_element)
         {
-            const tinyxml2::XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
-            start_element = scaling_neuron_element;
+            buffer << "OpenNN Exception: ScalingLayer class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Scaling neuron " << i+1 << " is nullptr.\n";
 
-            if(!scaling_neuron_element)
-            {
-                buffer << "OpenNN Exception: ScalingLayer class.\n"
-                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Scaling neuron " << i+1 << " is nullptr.\n";
-
-                throw invalid_argument(buffer.str());
-            }
-
-            scaling_neuron_element->QueryUnsignedAttribute("Index", &index);
-
-            if(index != i+1)
-            {
-                buffer << "OpenNN Exception: ScalingLayer class.\n"
-                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Index " << index << " is not correct.\n";
-
-                throw invalid_argument(buffer.str());
-            }
-
-            // Descriptives
-
-            const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
-
-            if(!descriptives_element)
-            {
-                buffer << "OpenNN Exception: ScalingLayer class.\n"
-                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Descriptives element " << i+1 << " is nullptr.\n";
-
-                throw invalid_argument(buffer.str());
-            }
-
-            if(descriptives_element->GetText())
-            {
-                const char* new_descriptives_element = descriptives_element->GetText();
-                Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, '\\');
-                descriptives[i].minimum = static_cast<type>(stof(splitted_descriptives[0]));
-                descriptives[i].maximum = static_cast<type>(stof(splitted_descriptives[1]));
-                descriptives[i].mean = static_cast<type>(stof(splitted_descriptives[2]));
-                descriptives[i].standard_deviation = static_cast<type>(stof(splitted_descriptives[3]));
-            }
-
-            // Scaling method
-
-            const tinyxml2::XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
-
-            if(!scaling_method_element)
-            {
-                buffer << "OpenNN Exception: ScalingLayer class.\n"
-                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Scaling method element " << i+1 << " is nullptr.\n";
-
-                throw invalid_argument(buffer.str());
-            }
-
-            const string new_method = scaling_method_element->GetText();
-
-            if(new_method == "NoScaling" || new_method == "No Scaling")
-            {
-                scalers[i] = Scaler::NoScaling;
-            }
-            else if(new_method == "MinimumMaximum" || new_method == "Minimum - Maximum")
-            {
-                scalers[i] = Scaler::MinimumMaximum;
-            }
-            else if(new_method == "MeanStandardDeviation" || new_method == "Mean - Standard deviation")
-            {
-                scalers[i] = Scaler::MeanStandardDeviation;
-            }
-            else if(new_method == "StandardDeviation")
-            {
-                scalers[i] = Scaler::StandardDeviation;
-            }
-            else if(new_method == "Logarithm")
-            {
-                scalers[i] = Scaler::Logarithm;
-            }
-            else
-            {
-                scalers[i] = Scaler::NoScaling;
-            }
+            throw invalid_argument(buffer.str());
         }
-//    }
-//    else
-//    {
-//        for(Index i = 0; i < neurons_number; i++)
-//        {
-//            // Descriptives
 
-//            descriptives[i].minimum = static_cast<type>(0);
-//            descriptives[i].maximum = static_cast<type>(255);
-//            descriptives[i].mean = static_cast<type>(0);
-//            descriptives[i].standard_deviation = static_cast<type>(1);
+        scaling_neuron_element->QueryUnsignedAttribute("Index", &index);
 
-//            // Scaler
+        if(index != i+1)
+        {
+            buffer << "OpenNN Exception: ScalingLayer class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Index " << index << " is not correct.\n";
 
-//            scalers[i] = Scaler::MinimumMaximum;
-//        }
-//    }
+            throw invalid_argument(buffer.str());
+        }
+
+        // Descriptives
+
+        const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
+
+        if(!descriptives_element)
+        {
+            buffer << "OpenNN Exception: ScalingLayer class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Descriptives element " << i+1 << " is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        if(descriptives_element->GetText())
+        {
+            const char* new_descriptives_element = descriptives_element->GetText();
+            Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, '\\');
+            descriptives[i].minimum = static_cast<type>(stof(splitted_descriptives[0]));
+            descriptives[i].maximum = static_cast<type>(stof(splitted_descriptives[1]));
+            descriptives[i].mean = static_cast<type>(stof(splitted_descriptives[2]));
+            descriptives[i].standard_deviation = static_cast<type>(stof(splitted_descriptives[3]));
+        }
+
+        // Scaling method
+
+        const tinyxml2::XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
+
+        if(!scaling_method_element)
+        {
+            buffer << "OpenNN Exception: ScalingLayer class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Scaling method element " << i+1 << " is nullptr.\n";
+
+            throw invalid_argument(buffer.str());
+        }
+
+        const string new_method = scaling_method_element->GetText();
+
+        if(new_method == "NoScaling" || new_method == "No Scaling")
+        {
+            scalers[i] = Scaler::NoScaling;
+        }
+        else if(new_method == "MinimumMaximum" || new_method == "Minimum - Maximum")
+        {
+            scalers[i] = Scaler::MinimumMaximum;
+        }
+        else if(new_method == "MeanStandardDeviation" || new_method == "Mean - Standard deviation")
+        {
+            scalers[i] = Scaler::MeanStandardDeviation;
+        }
+        else if(new_method == "StandardDeviation")
+        {
+            scalers[i] = Scaler::StandardDeviation;
+        }
+        else if(new_method == "Logarithm")
+        {
+            scalers[i] = Scaler::Logarithm;
+        }
+        else
+        {
+            scalers[i] = Scaler::NoScaling;
+        }
+    }
 
     // Display
     {

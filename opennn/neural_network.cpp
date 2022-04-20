@@ -1864,22 +1864,17 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    ProjectType projectType =  get_project_type();
-
     // Inputs names
 
-    if(projectType != ProjectType::ImageClassification)
+    for(Index i = 0; i < inputs_names.size(); i++)
     {
-        for(Index i = 0; i < inputs_names.size(); i++)
-        {
-            file_stream.OpenElement("Input");
+        file_stream.OpenElement("Input");
 
-            file_stream.PushAttribute("Index", to_string(i+1).c_str());
+        file_stream.PushAttribute("Index", to_string(i+1).c_str());
 
-            file_stream.PushText(inputs_names[i].c_str());
+        file_stream.PushText(inputs_names[i].c_str());
 
-            file_stream.CloseElement();
-        }
+        file_stream.CloseElement();
     }
 
     // Inputs (end tag)
@@ -2090,44 +2085,32 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
 
     // Inputs names
 
-    ProjectType projectType = get_project_type();
+    const tinyxml2::XMLElement* start_element = inputs_number_element;
 
-    if(projectType != ProjectType::ImageClassification)
-    {
-        const tinyxml2::XMLElement* start_element = inputs_number_element;
-
-        if(new_inputs_number > 0)
-        {
-            for(Index i = 0; i < new_inputs_number; i++)
-            {
-                const tinyxml2::XMLElement* input_element = start_element->NextSiblingElement("Input");
-                start_element = input_element;
-
-                if(input_element->Attribute("Index") != to_string(i+1))
-                {
-                    buffer << "OpenNN Exception: NeuralNetwork class.\n"
-                           << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Input index number (" << i+1 << ") does not match (" << input_element->Attribute("Item") << ").\n";
-
-                    throw invalid_argument(buffer.str());
-                }
-
-                if(!input_element->GetText())
-                {
-                    inputs_names(i) = "";
-                }
-                else
-                {
-                    inputs_names(i) = input_element->GetText();
-                }
-            }
-        }
-    }
-    else
+    if(new_inputs_number > 0)
     {
         for(Index i = 0; i < new_inputs_number; i++)
         {
-            inputs_names(i) = "Pixel #" + to_string(i);
+            const tinyxml2::XMLElement* input_element = start_element->NextSiblingElement("Input");
+            start_element = input_element;
+
+            if(input_element->Attribute("Index") != to_string(i+1))
+            {
+                buffer << "OpenNN Exception: NeuralNetwork class.\n"
+                       << "void inputs_from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Input index number (" << i+1 << ") does not match (" << input_element->Attribute("Item") << ").\n";
+
+                throw invalid_argument(buffer.str());
+            }
+
+            if(!input_element->GetText())
+            {
+                inputs_names(i) = "";
+            }
+            else
+            {
+                inputs_names(i) = input_element->GetText();
+            }
         }
     }
 }
