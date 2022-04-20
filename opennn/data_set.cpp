@@ -10037,6 +10037,7 @@ void DataSet::impute_missing_values_mean()
                 }
             }
         }
+
         for(Index j = 0; j < target_variables_number; j++)
         {
             current_variable = target_variables_indices(j);
@@ -10049,8 +10050,8 @@ void DataSet::impute_missing_values_mean()
                     set_sample_use(i, "Unused");
                 }
             }
-
         }
+
     }
     else
     {
@@ -10059,7 +10060,7 @@ void DataSet::impute_missing_values_mean()
 
         for(Index j = 0; j < get_variables_number(); j++)
         {
-            current_variable = used_variables_indices(j);
+            current_variable = j;
 
             for(Index i = 0; i < samples_number; i++)
             {
@@ -10067,6 +10068,7 @@ void DataSet::impute_missing_values_mean()
 
                 if(!isnan(data(current_sample,current_variable)))
                 {
+
                     preview_value = data(current_sample,current_variable);
                 }
 
@@ -10078,7 +10080,9 @@ void DataSet::impute_missing_values_mean()
                     }
                     else
                     {
+
                         Index k = i;
+
                         while(isnan(data(used_samples_indices(k), current_variable)) && k < samples_number)
                         {
                             k++;
