@@ -802,6 +802,18 @@ void DataSet::transform_time_series_columns()
 
             new_column_index++;
         }
+        else if(i == columns_number*(lags_number+steps_ahead) - 1)
+        {
+            new_columns(new_column_index).name = columns(column_index).name + "_ahead_" + to_string(ahead_index);
+
+            new_columns(new_column_index).type = columns(column_index).type;
+            new_columns(new_column_index).categories = columns(column_index).categories;
+
+            new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(new_column_index).set_use(VariableUse::Target);
+
+            new_column_index++;
+        }
         else
         {
             new_columns(new_column_index).name = columns(column_index).name + "_ahead_" + to_string(ahead_index);
@@ -809,19 +821,12 @@ void DataSet::transform_time_series_columns()
             new_columns(new_column_index).type = columns(column_index).type;
             new_columns(new_column_index).categories = columns(column_index).categories;
 
-            if(new_columns(new_column_index).type == ColumnType::Constant)
-            {
-                new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
-                new_columns(new_column_index).set_use(VariableUse::Unused);
-            }
-            else
-            {
-                new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
-                new_columns(new_column_index).set_use(VariableUse::Target);
-            }
+            new_columns(new_column_index).categories_uses.resize(columns(column_index).get_categories_number());
+            new_columns(new_column_index).set_use(VariableUse::Unused);
 
             new_column_index++;
         }
+
 
         if(lag_index > 0 && column_index == columns_number - 1)
         {
