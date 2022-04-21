@@ -706,17 +706,6 @@ void TrainingStrategy::set_default() const
 
 TrainingResults TrainingStrategy::perform_training()
 {
-//    if(data_set_pointer->has_nan())
-//    {
-//        ostringstream buffer;
-
-//        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-//               << "TrainingResults perform_training() const method.\n"
-//               << "Data set has missing values. Scrub them first.\n";
-
-//        throw invalid_argument(buffer.str());
-//    }
-
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
         fix_forecasting();
