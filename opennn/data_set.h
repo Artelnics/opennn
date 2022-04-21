@@ -706,6 +706,7 @@ public:
    // Data load methods
 
    void read_csv();
+   static Tensor<unsigned char,1> read_bmp_image(const string& filename);
    void read_bmp();
 
    void load_data_binary();
@@ -877,8 +878,6 @@ private:
    // Image treatment
 
    static size_t number_of_elements_in_directory(const fs::path& path);
-
-   static Tensor<unsigned char,1> read_bmp_image(const string& filename);
 
    int channels_number = 0;
    int image_width = 0;
