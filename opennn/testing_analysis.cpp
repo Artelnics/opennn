@@ -1798,25 +1798,15 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         throw invalid_argument(buffer.str());
     }
 
-    const Index maximum_points_number = 501;
+    const Index maximum_points_number = 200;
 
-    Index step_size;
+//    const Index testing_samples_number = targets.dimension(0);
 
-    const Index testing_samples_number = targets.dimension(0);
     Index points_number;
 
-    if(testing_samples_number > maximum_points_number)
-    {
-        step_size = static_cast<Index>(static_cast<type>(testing_samples_number)/static_cast<type>(maximum_points_number));
-        points_number = static_cast<Index>(static_cast<type>(testing_samples_number)/static_cast<type>(step_size));
-    }
-    else
-    {
-        points_number = testing_samples_number;
-        step_size = 1;
-    }
+    points_number = maximum_points_number;
 
-    if(targets.dimension(1) != 1)
+   if(targets.dimension(1) != 1)
     {
         ostringstream buffer;
 
@@ -1845,43 +1835,57 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 
     stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
 
-    Tensor<type, 1> sorted_targets(testing_samples_number);
-    Tensor<type, 1> sorted_outputs(testing_samples_number);
+//    Tensor<type, 1> sorted_targets(testing_samples_number);
+//    Tensor<type, 1> sorted_outputs(testing_samples_number);
 
-    for(Index i = 0; i < testing_samples_number; i++)
-    {
-        sorted_targets(i) = targets(sorted_indices(i),0);
-        sorted_outputs(i) = outputs(sorted_indices(i),0);
-    }
+//    for(Index i = 0; i < testing_samples_number; i++)
+//    {
+//        sorted_targets(i) = targets(sorted_indices(i),0);
+//        sorted_outputs(i) = outputs(sorted_indices(i),0);
+//    }
 
-    Tensor<type, 2> roc_curve(points_number+1, 3);
+    Tensor<type, 2> roc_curve(points_number + 1, 3);
     roc_curve.setZero();
 
-     #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
 
     for(Index i = 0; i < static_cast<Index>(points_number); i++)
     {
-        Index positives = 0;
-        Index negatives = 0;
+        const type threshold = i * (1/static_cast<type>(points_number));
 
-        const Index current_index = i*step_size;
+        Index true_positive = 0;
+        Index false_negative = 0;
+        Index false_positive = 0;
+        Index true_negative = 0;
 
-        const type threshold = sorted_outputs(current_index);
+        type target = type(0);
+        type output = type(0);
 
-        for(Index j = 0; j < static_cast<Index>(current_index); j++)
+        for(Index j = 0; j < points_number; j++)
         {
-             if(sorted_outputs(j) < threshold && static_cast<double>(sorted_targets(j)) == 1.0)
-             {
-                 positives++;
-             }
-             if(sorted_outputs(j) < threshold && sorted_targets(j) < type(NUMERIC_LIMITS_MIN))
-             {
-                 negatives++;
-             }
+            target = targets(j,0);
+            output = outputs(j,0);
+
+            if(target > threshold && output > threshold)
+            {
+                true_positive++;
+            }
+            else if(target >= threshold && output < threshold)
+            {
+                false_negative++;
+            }
+            else if(target <= threshold && output > threshold)
+            {
+                false_positive++;
+            }
+            else if(target < threshold && output < threshold)
+            {
+                true_negative++;
+            }
         }
 
-        roc_curve(i,0) = static_cast<type>(positives)/static_cast<type>(total_positives);
-        roc_curve(i,1) = static_cast<type>(negatives)/static_cast<type>(total_negatives);
+        roc_curve(i,0) = 1 - static_cast<type>(true_positive)/(static_cast<type>(true_positive + false_negative));
+        roc_curve(i,1) = static_cast<type>(true_negative)/(static_cast<type>(true_negative + false_positive));
         roc_curve(i,2) = static_cast<type>(threshold);
     }
 
