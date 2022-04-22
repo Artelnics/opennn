@@ -688,6 +688,27 @@ DataSet::ProjectType DataSet::get_project_type() const
 }
 
 
+string DataSet::get_project_type_string(const DataSet::ProjectType& newProjectType) const
+{
+    if(newProjectType == ProjectType::Approximation)
+    {
+        return "Approximation";
+    }
+    else if(newProjectType == ProjectType::Classification)
+    {
+        return "Classification";
+    }
+    else if(newProjectType == ProjectType::Forecasting)
+    {
+        return "Forecasting";
+    }
+    else if(newProjectType == ProjectType::ImageClassification)
+    {
+        return "ImageClassification";
+    }
+}
+
+
 Index DataSet::Column::get_variables_number() const
 {
     if(type == ColumnType::Categorical)
@@ -6636,13 +6657,27 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("DataFile");
 
-    // File type
+    if(project_type != ProjectType::ImageClassification)
     {
-        file_stream.OpenElement("FileType");
+        // File type
+        {
+            file_stream.OpenElement("FileType");
 
-        file_stream.PushText("csv");
+            file_stream.PushText("csv");
 
-        file_stream.CloseElement();
+            file_stream.CloseElement();
+        }
+    }
+    else
+    {
+        // File type
+        {
+            file_stream.OpenElement("FileType");
+
+            file_stream.PushText("bmp");
+
+            file_stream.CloseElement();
+        }
     }
 
     // Data file name
