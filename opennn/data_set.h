@@ -200,6 +200,7 @@ public:
    // Project type
 
    ProjectType get_project_type() const;
+   string get_project_type_string(const DataSet::ProjectType&) const;
 
    // Samples get methods
 
