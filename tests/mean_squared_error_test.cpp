@@ -582,10 +582,10 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     data(0,0) = 1;
     data(0,1) = 5;
     data(0,2) = 2;
-    data(0,3) = 7;
+    data(0,3) = 6;
 
     data(0,4) = 3;
-    data(0,5) = 6;
+    data(0,5) = 7;
     data(0,6) = 4;
     data(0,7) = 8;
 
@@ -636,18 +636,22 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
 
     ConvolutionalLayer* convolutional_layer = new ConvolutionalLayer(convolutional_layer_inputs_dimensions, convolutional_layer_kernels_dimensions);
 
-    convolutional_layer->set_synaptic_weights_constant(1);
+    convolutional_layer->set_synaptic_weights_constant(0.5);
     convolutional_layer->set_biases_constant(0);
 
     Tensor<Index, 1> flatten_layer_inputs_dimensions(4);
-    flatten_layer_inputs_dimensions(0) = 1;
-    flatten_layer_inputs_dimensions(1) = 1;
+    flatten_layer_inputs_dimensions(0) = 2;
+    flatten_layer_inputs_dimensions(1) = 2;
     flatten_layer_inputs_dimensions(2) = 1;
-    flatten_layer_inputs_dimensions(3) = 1;
+    flatten_layer_inputs_dimensions(3) = 2;
 
     FlattenLayer* flatten_layer = new FlattenLayer(flatten_layer_inputs_dimensions);
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(1, 1);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(4, 1);
+
+    perceptron_layer->set_synaptic_weights_constant(1);
+    perceptron_layer->set_biases_constant(0);
+    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
     neural_network.add_layer(convolutional_layer);
     neural_network.add_layer(flatten_layer);
@@ -656,7 +660,7 @@ void MeanSquaredErrorTest::test_calculate_gradient_convolutional_network()
     NeuralNetworkForwardPropagation forward_propagation(images_number, &neural_network);
 
     neural_network.forward_propagate(batch, forward_propagation);
-   // forward_propagation.print();
+    forward_propagation.print();
 
 /*
     MeanSquaredError mean_squared_error(&neural_network, &data_set);
