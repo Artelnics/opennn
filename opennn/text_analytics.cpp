@@ -23,7 +23,7 @@ namespace opennn
 
 TextAnalytics::TextAnalytics()
 {
-    set_english_stop_words();
+//    set_english_stop_words();
 }
 
 
@@ -80,15 +80,15 @@ void TextAnalytics::set_language(const Language& new_language)
 
     if(lang == ENG)
     {
-        set_english_stop_words();
+//        set_english_stop_word s();
     }
     else if(lang == SPA)
     {
-        set_spanish_stop_words();
+//        set_spanish_stop_words();
     }
     else
     {
-        clear_stop_words();
+//        clear_stop_words();
     }
 }
 
@@ -106,7 +106,7 @@ void TextAnalytics::set_language(const string& new_language_string)
     }
     else
     {
-        clear_stop_words();
+//        clear_stop_words();
     }
 }
 
@@ -125,15 +125,9 @@ void TextAnalytics::set_stop_words(const Tensor<string, 1>& new_stop_words)
 /// Deletes consecutive extra spaces in documents.
 /// @param documents Document to be proccesed.
 
-Tensor<string, 1> TextAnalytics::delete_extra_spaces(const Tensor<string, 1>& documents) const
+void TextAnalytics::delete_extra_spaces(Tensor<string, 1>& documents) const
 {
     Tensor<string, 1> new_documents(documents);
-
-//    new_documents.replace_substring("\t", " ");
-//    new_documents.replace_substring("\n", " ");
-
-    replace(new_documents.data(), new_documents.data() + new_documents.size(), "\t" ," ");
-    replace(new_documents.data(), new_documents.data() + new_documents.size(), "\n" ," ");
 
     for(Index i = 0; i < documents.size(); i++)
     {
@@ -143,106 +137,126 @@ Tensor<string, 1> TextAnalytics::delete_extra_spaces(const Tensor<string, 1>& do
         new_documents[i].erase(new_end, new_documents[i].end());
     }
 
-    return new_documents;
+    documents = new_documents;
 }
+
+
+/// Deletes line breaks and tabulations
+/// @param documents Document to be proccesed.
+
+void TextAnalytics::delete_breaks_and_tabs(Tensor<string, 1>& documents) const
+{
+    for(Index i = 0; i < documents.size(); i++)
+    {
+        string line = documents(i);
+
+        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\n' ,' ');
+        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\t' ,' ');
+    }
+}
+
 
 /// Deletes punctuation in documents.
 
-Tensor<string, 1> TextAnalytics::delete_punctuation(const Tensor<string, 1>& documents) const
+void TextAnalytics::delete_punctuation(Tensor<string, 1>& documents) const
 {
-    Tensor<string, 1> new_documents(documents);
-
-    for(Index i = 0; i < punctuation_characters.size(); i++)
+    for(Index j = 0; j < documents.size(); j++)
     {
-//        replace(new_documents.data(), new_documents.data() + new_documents.size(), punctuation_characters(i) ," ");
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '!' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '#' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '$' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '~' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '%' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '&' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '/' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '(' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ')' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '\\' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '=' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '?' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '}' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '^' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '`' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '[' ,' ');
+
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ']' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '*' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '+' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ',' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ';' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), ':' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '-' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '>' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '<' ,' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '|' ,' ');
+
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¬' ,u' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¿' ,u' ');
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), u'¡' ,u' ');
+
+
+        replace(documents(j).begin(), documents(j).end() + documents(j).size(), '.' ,' ');
     }
 
-//    new_documents.replace_substring("!", " ");
-//    new_documents.replace_substring("#", " ");
-//    new_documents.replace_substring("$", " ");
-//    new_documents.replace_substring("~", " ");
-//    new_documents.replace_substring("%", " ");
-//    new_documents.replace_substring("&", " ");
-//    new_documents.replace_substring("¬", " ");
-//    new_documents.replace_substring("/", " ");
-//    new_documents.replace_substring("\\", " ");
-//    new_documents.replace_substring(" (", " ");
-//    new_documents.replace_substring(")", " ");
-//    new_documents.replace_substring("=", " ");
-//    new_documents.replace_substring("?", " ");
-//    new_documents.replace_substring("¿", " ");
-//    new_documents.replace_substring("¡", " ");
-//    new_documents.replace_substring("}", " ");
-//    new_documents.replace_substring("^", " ");
-//    new_documents.replace_substring("`", " ");
-//    new_documents.replace_substring("[", " ");
-//    new_documents.replace_substring("]", " ");
-//    new_documents.replace_substring("*", " ");
-//    new_documents.replace_substring("]", " ");
-//    new_documents.replace_substring("+", " ");
-//    new_documents.replace_substring("´", " ");
-//    new_documents.replace_substring("{", " ");
-//    new_documents.replace_substring(",", " ");
-//    new_documents.replace_substring(";", " ");
-//    new_documents.replace_substring(":", " ");
-//    new_documents.replace_substring("-", " ");
 //    new_documents.replace_substring("“", " ");
 //    new_documents.replace_substring("”", " ");
-//    new_documents.replace_substring("\"", " ");
-//    new_documents.replace_substring(">", " ");
-//    new_documents.replace_substring("<", " ");
-//    new_documents.replace_substring("|", " ");
+//    new_documents.replace_substring("'", " ");
 
-    // Replace two spaces by one
-
-    for(size_t i = 0; i < documents.size(); i++)
-    {
-        string::iterator new_end = unique(new_documents[i].begin(), new_documents[i].end(),
-                                          [](char lhs, char rhs){ return(lhs == rhs) &&(lhs == ' '); });
-
-        new_documents[i].erase(new_end, new_documents[i].end());
-    }
-
-//    return new_documents.trimmed();
+    delete_extra_spaces(documents);
 }
 
-/*
+
 /// Transforms all the letters of the documents into lower case.
 
-Tensor<string> TextAnalytics::to_lower(const Tensor<string>& documents) const
+void TextAnalytics::to_lower(Tensor<string,1>& documents) const
 {
-    Tensor<string> new_documents(documents);
-
     const size_t documents_number = documents.size();
 
     for(size_t i = 0; i < documents_number; i++)
     {
-        transform(new_documents[i].begin(), new_documents[i].end(), new_documents[i].begin(), ::tolower);
+        transform(documents[i].begin(), documents[i].end(), documents[i].begin(), ::tolower);
     }
 
-    return new_documents.trimmed();
 }
 
+
+Tensor<string,1> TextAnalytics::split_string(string str, string delimiter) const
+{
+    Tensor<string,1> tensor(0);
+
+    size_t pos = 0;
+    std::string token;
+
+    while ((pos = str.find(delimiter)) != std::string::npos)
+    {
+        token = str.substr(0, pos);
+        std::cout << token << std::endl;
+        str.erase(0, pos + delimiter.length());
+        push_back(tensor,token);
+    }
+
+    return tensor;
+}
 
 /// Split documents into words Tensors. Each word is equivalent to a token.
 
-Tensor<Tensor<string>> TextAnalytics::tokenize(const Tensor<string>& documents) const
+Tensor<Tensor<string,1>,1> TextAnalytics::tokenize(const Tensor<string,1>& documents) const
 {
-    const size_t documents_number = documents.size();
+    const Index documents_number = documents.size();
 
-    Tensor<Tensor<string>> new_tokenized_documents(documents_number);
+    Tensor<Tensor<string,1>,1> new_tokenized_documents(documents_number);
 
     string empty_string;
 
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        new_tokenized_documents[i] = split_string(documents[i], ' ');
+//        new_tokenized_documents[i] = split_string(documents[i], ' ');
 
-        new_tokenized_documents[i] = new_tokenized_documents[i].trimmed();
+//        new_tokenized_documents[i] = new_tokenized_documents[i].trimmed();
 
-        new_tokenized_documents[i] = new_tokenized_documents[i].filter_not_equal_to("");
+//        new_tokenized_documents[i] = new_tokenized_documents[i].filter_not_equal_to("");
 
-        if(new_tokenized_documents[i].contains(empty_string))
+//        if(new_tokenized_documents[i].contains(empty_string))
         {
             cout << "Empty string" << endl;
         }
@@ -252,40 +266,51 @@ Tensor<Tensor<string>> TextAnalytics::tokenize(const Tensor<string>& documents) 
 }
 
 
-/// Join the words Tensors into strings documents
 
-Tensor<string> TextAnalytics::detokenize(const Tensor<Tensor<string>>& tokens) const
+string TextAnalytics::to_string(Tensor<string,1> token) const
 {
-    const size_t documents_number = tokens.size();
+    string palabra;
 
-    Tensor<string> new_documents(documents_number);
+    for(Index i = 0; i < token.size(); i++)
+        palabra += token(i) + " ";
 
-    for(size_t i = 0; i < documents_number; i++)
+    return palabra;
+};
+
+
+/// Join the words Tensors into strings documents
+/// @param tokens Tensor of Tensor of words we want to join
+
+Tensor<string,1> TextAnalytics::detokenize(const Tensor<Tensor<string,1>,1>& tokens) const
+{
+    const Index documents_number = tokens.size();
+
+    Tensor<string,1> new_documents(documents_number);
+
+    for(Index i = 0; i < documents_number; i++)
     {
-        new_documents[i] = tokens[i].to_text(' ');
+        new_documents[i] = to_string(tokens(i));
     }
 
     return new_documents;
 }
 
 
+
 /// Delete the words we want from the documents
 /// @param delete_words Tensor of words we want to delete
 
-Tensor<Tensor<string>> TextAnalytics::delete_words(const Tensor<Tensor<string>>& tokens, const Tensor<string>& delete_words) const
+Tensor<Tensor<string,1>,1> TextAnalytics::delete_words(const Tensor<Tensor<string,1>,1>& tokens, const Tensor<string,1>& delete_words) const
 {
-    const size_t documents_number = tokens.size();
+    const Index documents_number = tokens.size();
 
-    Tensor<Tensor<string>> new_documents(documents_number);
+    Tensor<Tensor<string,1>,1> new_documents(documents_number);
 
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        for(size_t j = 0; j < tokens[i].size(); j++)
+        for(Index j = 0; j < tokens[i].size(); j++)
         {
-            if(!delete_words.contains(tokens[i][j]))
-            {
-                new_documents[i].push_back(tokens[i][j]);
-            }
+
         }
 //        new_documents[i] = documents[i].filter_not_equal_to(delete_words);
     }
@@ -293,7 +318,7 @@ Tensor<Tensor<string>> TextAnalytics::delete_words(const Tensor<Tensor<string>>&
     return new_documents;
 }
 
-
+/*
 Tensor<Tensor<string>> TextAnalytics::delete_stop_words(const Tensor<Tensor<string>>& tokens) const
 {
     return delete_words(tokens, stop_words);
