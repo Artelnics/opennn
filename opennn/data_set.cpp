@@ -10494,17 +10494,19 @@ void DataSet::read_bmp()
 
     }else if(classes_number == 2)
     {
-        Index new_classes_number = 1;
+        Tensor<string, 1> categories(classes_number);
 
-        Tensor<string, 1> categories(new_classes_number);
-        categories(0) = "True";
+        for(Index i = 0 ; i < classes_number; i++)
+        {
+           categories(i) = folder_paths[i].filename().u8string();
+        }
 
-        columns(image_size).categories = categories;
         columns(image_size).column_use = VariableUse::Target;
+        columns(image_size).type = ColumnType::Binary;
+        columns(image_size).categories = categories;
 
-        columns(image_size).categories_uses.resize(new_classes_number);
+        columns(image_size).categories_uses.resize(classes_number);
         columns(image_size).categories_uses.setConstant(VariableUse::Target);
-
     }else
     {
 
@@ -10515,15 +10517,13 @@ void DataSet::read_bmp()
            categories(i) = folder_paths[i].filename().u8string();
         }
 
-        columns(image_size).categories = categories;
         columns(image_size).column_use = VariableUse::Target;
+        columns(image_size).type = ColumnType::Categorical;
+        columns(image_size).categories = categories;
 
         columns(image_size).categories_uses.resize(classes_number);
         columns(image_size).categories_uses.setConstant(VariableUse::Target);
-
     }
-
-    columns(image_size).type = ColumnType::Categorical;
 
     samples_uses.resize(images_number);
     split_samples_random();
