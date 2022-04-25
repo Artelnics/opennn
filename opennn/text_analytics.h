@@ -108,10 +108,15 @@ public:
 
     void load_documents(const string&);
 
-    Tensor<string ,1> delete_extra_spaces(const Tensor<string, 1>&) const;
-    Tensor<string ,1> delete_punctuation(const Tensor<string, 1>&) const;
+    void delete_extra_spaces(Tensor<string, 1>&) const;
+    void delete_breaks_and_tabs(Tensor<string, 1>&) const;
+    void delete_punctuation(Tensor<string, 1>&) const;
 
-    Tensor<string ,1> to_lower(const Tensor<string, 1>&) const;
+    void to_lower(Tensor<string, 1>&) const;
+
+
+    Tensor<string,1> split_string(string str, string delimiter = " ") const;
+    string to_string(Tensor<string,1> token) const;
 
     Tensor<Tensor<string, 1>, 1> tokenize(const Tensor<string, 1>&) const;
     Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>&) const;
@@ -212,7 +217,6 @@ private:
 
     Tensor<string, 1> stop_words;
 
-    Tensor<string, 1> punctuation_characters;
 };
 
 }
